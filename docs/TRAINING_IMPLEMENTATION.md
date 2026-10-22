@@ -14,15 +14,18 @@ This records the first tracer-owned implementation of [the training plan](TRAINI
 - Predictor-safe source/input context and supervised trace export with private reference/journal sidecar. Explicit group, dependency, loss and fragment validation.
 - Independent Node V8 vm reference comparisons on completion and reachable observable graph, plus structural reconstruction and adapter-free exact interpreter replay.
 - Deterministic source-family local-fixture generator with lineage splits, seeds, provenance, rejected-run counts, and full diagnostics.
+- Model-visible input graph handles now retain owned journal identities, with static function/code identity published before generation. A bounded serving-side `SemanticController` validates model-selected semantic values, reads, writes, branches, calls, and completions against committed state without running JavaScript or repairing model output. Its exact committed-prefix packet supports deterministic reconstruction within its declared budget.
+- `src/training/rollout.js` and `tools/evaluate-training.mjs` verify actual selected output after commit, report the first divergence and observable returned/input graph correctness, and reject invalid model events without substituting the reference trajectory.
+- The cross-repository megatoken `semantic-execution/1` adapter now exists on `werg/megatoken/main`, with explicit causal episode validation, codec-bound import, fixed lanes, teacher-conditioned supervised recurrence, and a local diagnostic converter.
 
 ## Limits / incomplete plan milestones
 
 1. The locally verified profile is **synchronous, no effects, no async and no guest exceptions**, with one small source bundle and no detached work. The legacy bounded profile is separate. Unsupported runtime property/coercion families are not silently admitted.
 2. Static def-use/liveness pruning and fully compact semantic-target optimization are incomplete. Control and state transitions are preserved conservatively.
-3. Lazy code-on-call, reference-codec token counting, parallel-ready independent groups, full segmentation/continuation, serving model-state realization, and unrestricted call parking are not implemented. Oversized input/trace produces a limit diagnostic, not a fabricated completion.
+3. Lazy code-on-call, reference-codec token counting on the tracer side, parallel-ready independent groups, multi-segment history eviction, full serving integration with real selected latent model representations, and unrestricted call parking are not implemented. The bounded controller can reconstruct a committed prefix and detect divergence but does not solve all serving semantics. Oversized input/trace produces a limit diagnostic, not a fabricated completion.
 4. A standalone, guarded canonical-json/1 host graph materializer and a bounded fulfilled/pending promise-adoption handler exist and have regression tests, but the training profile does not enable host effects or async yet. Integrating codec schemas with effect dispatch, correct promise reaction scheduling/rejection, catch/finally, real host scheduling and broad spec-backed owned operations remain profile-extension work.
-5. The megatoken Python adapter, episode-schema acceptance, teacher-conditioned loss path and generated-state rollout verifier belong to **werg/megatoken**. This repository exports a candidate schema; it does not claim that megatoken can already consume it.
-6. **Locally verified is not admitted.** The generator reports admitted=0 until all plan admission gates, including cross-repository megatoken validation and independently checked intermediate semantic coverage, are satisfied. Exact self-replay does not establish JavaScript correctness.
+5. The megatoken Python adapter, strict episode-schema validation, an explicit teacher-conditioned recurrence path, and a JSONL converter are now implemented on **werg/megatoken/main**. End-to-end actual *model* rollouts and scored serving compute remain open; the tracer's selected-trajectory validator is a deterministic diagnostic, not evidence of learned execution quality.
+6. **Locally verified is not admitted.** The generator reports admitted=0 until all plan admission gates, including independent operation-level reference coverage and end-to-end *model-selected* rollout validity, are satisfied. Exact self-replay does not establish JavaScript correctness.
 
 ## Reproducible local fixtures
 
@@ -34,3 +37,7 @@ npm run training:generate -- --seed 42 --count 16 \
 ~~~
 
 Each JSONL line has a public payload and a **private sidecar** with archived state, reference outcome and provenance. Future targets inside public.groups are training labels, never predictor inputs; only the observed prefix and earlier committed generated groups may be used for conditioning. The sidecar must never enter model attention.
+
+## Model-selected evaluation
+
+After generating a local verified JSONL reference corpus, supply a separate JSONL of **actual model-selected** episode `groups` to `npm run training:evaluate -- --selected selected.jsonl --reference training-local.jsonl --output report.json`. The evaluator commits each selected group before consulting the reference and reports exact state/return correctness and the first inconsistent category. Re-using reference groups as selected input checks only the deterministic verifier, **not a model's ability to execute**.
