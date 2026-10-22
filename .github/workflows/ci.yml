@@ -1,10 +1,10 @@
-name: Prototype tests and deterministic replay
+name: Runtime tests and selected Test262 baseline
 on:
   push:
     branches: [main]
   pull_request:
 jobs:
-  test:
+  prototype:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -18,3 +18,32 @@ jobs:
       - run: npm test
       - run: node bin/tracing.js demo --output "${RUNNER_TEMP}/demo.trace.json"
       - run: node bin/tracing.js replay "${RUNNER_TEMP}/demo.trace.json"
+  selected-test262:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      # Bootstrap once. A committed npm lock replaces this on the next commit.
+      - run: |
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          echo LOCK_BEGIN
+          cat package-lock.json
+          echo LOCK_END
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Checkout pinned official Test262 corpus
+        uses: actions/checkout@v4
+        with:
+          repository: tc39/test262
+          ref: d53ebc8b1931d9f1541e43d59650776e4b766248
+          path: .cache/test262
+          persist-credentials: false
+      - run: npm run conformance -- --output "${RUNNER_TEMP}/test262-report.json"
+      - name: Upload selected Test262 report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selected-test262-report
+          path: ${{ runner.temp }}/test262-report.json
+          if-no-files-found: ignore
