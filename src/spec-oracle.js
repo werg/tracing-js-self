@@ -44,5 +44,37 @@ export async function createSpecOracle() {
       throw new Error(`Spec reference guest completion was abrupt for ${url}`);
     return scalar(engine.ValueOfNormalCompletion(completion));
   }
-  return { compileScript, evaluateScalar };
+  function errorName(realm, value) {
+    if (value?.type !== 'Object') return null;
+    const restore = realm.pushTopContext();
+    try {
+      const name = engine.X(engine.Get(value, 'name'));
+      return name?.type === 'String' ? name.value : null;
+    } finally {
+      restore?.();
+    }
+  }
+
+  function describe(realm, completion, phase) {
+    if (completion instanceof engine.ThrowCompletion)
+      return {phase, errorName: errorName(realm, completion.Value)};
+    const value = engine.ValueOfNormalCompletion(completion);
+    if (['Undefined','Null','Boolean','String','Number','BigInt'].includes(value?.type))
+      return {phase:'normal',value:scalar(value)};
+    return {phase:'normal',valueType:value?.type ?? null};
+  }
+
+  // A separate reference-only execution surface for explicitly selected
+  // Test262 scripts. Per-script Agent/Realm, no harness or host integrations.
+  // This is NOT an authoritative owned-machine trace.
+  function runScript(source, {url='<spec-reference>'}={}) {
+    const realm = makeRealm();
+    const compiled = realm.compileScript(source, {specifier:url});
+    if (compiled instanceof engine.ThrowCompletion) return describe(realm,compiled,'parse');
+    const completion = realm.evaluateScriptSkipDebugger(
+      engine.ValueOfNormalCompletion(compiled), {specifier:url});
+    return describe(realm,completion,'runtime');
+  }
+
+  return { compileScript, evaluateScalar, runScript };
 }
