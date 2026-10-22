@@ -68,7 +68,7 @@ export function parse(source) {
   const take = () => t[p++];
   const match = x => peek().value === x && (p++, true);
   const need = x => { if (!match(x)) throw new SyntaxError(`Expected ${x}, got ${peek().value} at ${peek().start}`); };
-  const name = () => { const x = take(); if (x.kind !== 'word' || ['const','let','var','return','await','function','if','else','while','throw','try','catch','finally','break','continue','typeof','this','async','true','false','null'].includes(x.value)) throw new SyntaxError(`Expected identifier at ${x.start}`); return x.value; };
+  const name = () => { const x = take(); if (x.kind !== 'word' || ['const','let','var','return','await','function','if','else','while','throw','try','catch','finally','break','continue','typeof','this','async','true','false','null','new'].includes(x.value)) throw new SyntaxError(`Expected identifier at ${x.start}`); return x.value; };
   const semi = () => { if (match(';') || peek().value === '}' || peek().kind === 'eof') return; throw new SyntaxError(`Expected ; at ${peek().start} (automatic semicolon insertion not implemented)`); };
   function primary() {
     const x = take();
@@ -76,6 +76,14 @@ export function parse(source) {
     if (x.value === 'true' || x.value === 'false' || x.value === 'null') return {type:'Literal',value:encode(x.value === 'true'?true:x.value === 'false'?false:null),raw:x.value,start:x.start,end:x.end};
     if (x.value === 'this') return {type:'This',start:x.start,end:x.end};
     if (x.value === 'await') return {type:'Await',argument:expression(8),start:x.start,end:t[p-1].end};
+    if (x.value === 'new') {
+      const callee=take();
+      if(callee.value!=='Proxy')throw new SyntaxError('Only new Proxy(target, handler) is implemented');
+      need('(');
+      const args=[];if(!match(')')){do{args.push(expression(0,false));}while(match(','));need(')');}
+      if(args.length!==2)throw new SyntaxError('new Proxy needs target and handler');
+      return {type:'Proxy',target:args[0],handler:args[1],start:x.start,end:t[p-1].end};
+    }
     if (['!','-','+','typeof'].includes(x.value)) return {type:'Unary',operator:x.value,argument:expression(8),start:x.start,end:t[p-1].end};
     if (x.value === '(') { const e = expression(); need(')'); return {...e,parenthesized:true}; }
     if (x.value === '[') { const elements=[]; if(!match(']')){do{elements.push(expression(0,false));}while(match(','));need(']');} return {type:'Array',elements,start:x.start,end:t[p-1].end}; }
@@ -162,6 +170,7 @@ export function compile(ast) {
         case 'Call':
           if(n.callee.type==='Member'){expr(n.callee.object);expr(n.callee.property);emit('GET_METHOD',null,n.callee);}else expr(n.callee);
           for(const a of n.args)expr(a);emit('CALL',n.args.length,n);break;
+        case 'Proxy':expr(n.target);expr(n.handler);emit('NEW_PROXY',null,n);break;
         case 'Array':emit('NEW_ARRAY',null,n);for(let i=0;i<n.elements.length;i++){emit('DUP',null,n);emit('CONST',{value:['str',String(i)]},n);expr(n.elements[i]);emit('PUT_PROP',null,n);emit('POP',null,n);}break;
         case 'Object':emit('NEW_OBJECT',null,n);for(const item of n.properties){emit('DUP',null,n);emit('CONST',{value:['str',item.key]},n);expr(item.value);emit('PUT_PROP',null,n);emit('POP',null,n);}break;
         case 'Assign':
