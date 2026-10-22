@@ -36,7 +36,7 @@ function valueKey(tagged) {
   return String(decode(tagged));
 }
 function arrayIndex(key) {
-  return /^(0|[1-9]\\d*)$/.test(key) && Number(key) < 4294967295;
+  return /^(0|[1-9]\d*)$/.test(key) && Number(key) < 4294967295;
 }
 function putOwn(obj,key,value,eventId) {
   if (key === '__proto__') throw new TypeError('Prototype mutation is outside the profile');
