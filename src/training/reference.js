@@ -5,7 +5,7 @@
 import vm from 'node:vm';
 import {realizeGraph,describeGraph} from './graph.js';
 
-export function referenceOutcome({source,entry,args,initialHeap,timeout=1000}) {
+export function referenceOutcome({source,entry,args,initialHeap,timeout=1000,observeOperations=false}) {
   if(!/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(entry))
     throw new TypeError('Invalid entry identifier');
 
@@ -52,6 +52,25 @@ export function referenceOutcome({source,entry,args,initialHeap,timeout=1000}) {
   })`,context,{timeout});
   context.__trainingArgs=buildArgs(JSON.stringify({heap:initialHeap,roots:args}));
   context.__trainingResult=undefined;
+  if(observeOperations)vm.runInContext(`globalThis.__tracingOperations=[];
+    globalThis.__tracingCapture=(site,value)=>{
+      let tagged;
+      if(value===null)tagged=['null'];
+      else switch(typeof value){
+        case 'undefined':tagged=['undefined'];break;
+        case 'boolean':tagged=['bool',value];break;
+        case 'string':tagged=['str',value];break;
+        case 'bigint':tagged=['bigint',value.toString()];break;
+        case 'number':tagged=['num',Object.is(value,-0)?'-0':
+          Number.isNaN(value)?'NaN':value===Infinity?'+Infinity':
+          value===-Infinity?'-Infinity':value];break;
+        default:tagged=['unverified',typeof value];
+      }
+      if(globalThis.__tracingOperations.length>=10000)
+        throw new RangeError('Reference operation observation limit');
+      globalThis.__tracingOperations.push({site,value:tagged});
+      return value;
+    };`,context,{timeout});
   const script=new vm.Script(source+'\n__trainingResult = '+entry+'.apply(undefined,__trainingArgs);',
     {filename:'training-reference.js'});
   try{
@@ -60,7 +79,10 @@ export function referenceOutcome({source,entry,args,initialHeap,timeout=1000}) {
     return {kind:'reference.error',name:error?.name??'Error',message:String(error?.message??error)};
   }
   try {
-    return {kind:'return',graph:describeGraph([...context.__trainingArgs,context.__trainingResult])};
+    const graph=describeGraph([...context.__trainingArgs,context.__trainingResult]);
+    if(!observeOperations)return {kind:'return',graph};
+    const json=vm.runInContext('JSON.stringify(globalThis.__tracingOperations)',context,{timeout});
+    return {kind:'return',graph,operations:JSON.parse(json)};
   } catch(error) {
     return {kind:'reference.unsupported',message:String(error.message)};
   }
