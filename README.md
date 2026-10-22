@@ -74,8 +74,10 @@ replayExact(bundle); // independently recompile source and reproduce recorded st
 Mock host adapters receive `{effectId, operation, args, request}`.
 Here `args` is a deeply frozen plain JavaScript array parsed from the
 `canonical-json/1` request, **not** guest reference tags. `request.payload` is
-the immutable JSON argument array string, with a versioned operation signature
-and historical object/property versions. Cycles, repeated object identities,
+the immutable JSON argument array string with a versioned operation signature.
+Object/property versions and all guest identities remain private in the journal:
+the adapter's `request` object contains no `graphVersions` or guest handles.
+Cycles, repeated object identities,
 unsupported numeric encodings and unknown host methods fail closed before an
 effect can be dispatched. The private archived `effect.args` retains the
 original identity-bearing tuples solely for verification and replay.
