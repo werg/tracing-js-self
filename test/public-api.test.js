@@ -5,6 +5,8 @@ import {
   replayExact, causalPrefix, TraceValidationError, TraceReplayError
 } from 'tracing-js-self';
 
+import {verifyTrainingCase,SemanticController,evaluateSelectedTrajectory} from 'tracing-js-self/training';
+
 const archive = runtime => JSON.parse(JSON.stringify(runtime.exportRun()));
 const binding = (state, name) => Object.values(state.envs)
   .find(environment => Object.hasOwn(environment.bindings, name))?.bindings[name]?.token?.value;
@@ -101,4 +103,18 @@ test('package exports the validation and replay error constructors thrown by its
   const invalidSource = archive(runtime);
   invalidSource.sources[0].text = 'let answer = 43;';
   assert.throws(() => replayExact(invalidSource), TraceReplayError);
+});
+
+test('training subpath exposes the selected-state controller and supervised evaluation',()=>{
+  const checked=verifyTrainingCase({
+    source:'"use strict";function f(x){return x+1;}',entry:'f',args:[4]
+  });
+  assert.equal(checked.status,'locally_verified');
+  assert.equal(typeof SemanticController,'function');
+  const report=evaluateSelectedTrajectory({
+    groups:checked.exported.public.groups,
+    referenceOutcome:checked.exported.sidecar.reference.outcome
+  });
+  assert.equal(report.valid,true);
+  assert.equal(report.correctness,'correct');
 });
