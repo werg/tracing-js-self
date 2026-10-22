@@ -29,6 +29,14 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
       if(!['counters','envs','heap','promises','frames','effects','inputs','control'].includes(p.table)||p.kind!==`${p.table}.replace`)fail('Invalid typed mutation',e.eventId);
       if(typeof p.id!=='string'||!p.id||['__proto__','constructor','prototype'].includes(p.id))
         fail('Invalid mutation entity ID',e.eventId);
+      if(!Object.hasOwn(state,p.table)||!state[p.table]||typeof state[p.table]!=='object'||Array.isArray(state[p.table]))
+        fail('Missing or invalid mutation table',e.eventId);
+      if(p.before!==null && (!p.before||typeof p.before!=='object'||Array.isArray(p.before)||
+         !Number.isSafeInteger(p.before.version)||p.before.version<0))
+        fail('Invalid prior entity record',e.eventId);
+      if(p.after!==null && (!p.after||typeof p.after!=='object'||Array.isArray(p.after)||
+         (Object.hasOwn(p.after,'id')&&p.after.id!==p.id)))
+        fail('Invalid replacement entity record',e.eventId);
       if(patched.has(`${p.table}:${p.id}`))fail('Double application of mutation',e.eventId);
       patched.add(`${p.table}:${p.id}`);
       const previous=Object.hasOwn(state[p.table],p.id)?state[p.table][p.id]:null;
