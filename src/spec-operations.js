@@ -67,7 +67,7 @@ export function ordinaryGet(heap, receiver, name) {
   if(!original||!['object','array'].includes(original.kind))return null;
   const observation=value=>({
     kind:'property',objectId:original.id,key:name,
-    version:original.propertyVersions?.[name]??0,shapeVersion:original.shapeVersion??0,
+    version:Object.hasOwn(original.propertyVersions??{},name)?original.propertyVersions[name]:0,shapeVersion:original.shapeVersion??0,
     present:Object.hasOwn(original.properties,name),
     value:value.value,supplyingEvent:value.origin??null
   });
