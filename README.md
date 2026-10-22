@@ -10,9 +10,10 @@ The [semantic execution training-data plan](docs/TRAINING_DATA_PLAN.md) defines 
 
 ## Quick start
 
-Requires Node.js 20 or later; no third-party dependencies.
+Requires Node.js 20 or later. Install the pinned dependencies (including Acorn) with `npm ci`.
 
 ```sh
+npm ci
 npm test
 npm run demo
 node bin/tracing.js demo --output demo.trace.json
@@ -44,7 +45,7 @@ Async adapters **do not** return native promises: after the machine emits `effec
 
 ## Pinned spec-reference baseline (Node.js 24 only)
 
-The **optional** engine262 oracle compares pure scalar outcomes while retaining the existing runtime as the only trace authority. Two separate, SHA-verified official Test262 baselines are available: a 14-file **syntax-only** slice and an 11-file **selected sloppy-script execution** smoke suite (pass/known-failure/skip). Neither is full Test262 conformance. The normal `npm test` and traced runtime have no added dependencies.
+The **optional** engine262 oracle compares pure scalar outcomes while retaining the existing runtime as the only trace authority. Two separate, SHA-verified official Test262 baselines are available: a 14-file **syntax-only** slice and an 11-file **selected sloppy-script execution** smoke suite (pass/known-failure/skip). Neither is full Test262 conformance. The normal `npm test` requires the pinned Acorn dependency; engine262 remains optional.
 
 ```sh
 VERSION="$(node -p "require('./profiles/targets.lock.json').referenceEngine.npmVersion")"

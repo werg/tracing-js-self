@@ -25,18 +25,19 @@ export function trainingPrefix(bundle,{maxSourceBytes=2048}={}) {
 }
 
 export function verifyVisibleExport(exported) {
-  const serialized=JSON.stringify(exported.public);
-  for(const forbidden of ['finalState','initialState','checkpoints','stateChanges',
-    'inputArrivals','referenceOutcome','journalMapping','archiveHash','part_count']){
-    if(Object.hasOwn(exported.public,forbidden))
-      throw new Error('Private state exposed in public record: '+forbidden);
-  }
+  const allowed=['schema','profile','traceFormat','contextFormat','completionPolicy','groups'];
+  const keys=Object.keys(exported.public??{});
+  if(keys.length!==allowed.length || !keys.every(key=>allowed.includes(key)))
+    throw new Error('Unexpected public export field');
+  const descriptor=exported.public;
+  if(descriptor.profile!=='training-js/1' || descriptor.traceFormat!=='semantic-trace/1' ||
+     descriptor.contextFormat!=='semantic-context/1' ||
+     descriptor.completionPolicy!=='immediate-return')
+    throw new Error('Invalid public export descriptor');
   if(exported.public.schema!=='semantic-execution/1')throw new Error('Unknown training export');
   if(!Array.isArray(exported.public.groups)||!exported.public.groups.length)
     throw new Error('Missing meridians');
   if(exported.public.groups[0].mode!=='observed')
     throw new Error('Episode requires an observed source prefix');
-  if(!serialized.includes('semantic-context/1'))
-    throw new Error('Missing source/input context');
   return true;
 }

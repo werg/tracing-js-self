@@ -11,9 +11,9 @@ const manifestPath=option('--manifest','training-manifest.json');
 const count=Number(option('--count','16'));
 const seed=Number(option('--seed','42'));
 if(!Number.isSafeInteger(count)||count<1||count>10000 ||
-   !Number.isSafeInteger(seed)||seed<0)
-  throw new TypeError('Use --count (1..10000) and --seed (nonnegative integer)');
-let state=seed||1;
+   !Number.isSafeInteger(seed)||seed<0||seed>0xffffffff)
+  throw new TypeError('Use --count (1..10000) and --seed (0..4294967295)');
+let state=seed;
 function random(){state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;}
 const int=(min,max)=>min+Math.floor(random()*(max-min+1));
 const families=[

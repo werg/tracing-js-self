@@ -17,6 +17,8 @@ function lex(source) {
           if (i === source.length) throw new SyntaxError('Unterminated string escape');
           ch = source[i++];
           const escapes = {n:'\n',r:'\r',t:'\t',b:'\b',f:'\f',v:'\v','0':'\0'};
+          if ((ch === '0' && /[0-9]/.test(source[i] ?? '')) || /^[1-7]$/.test(ch))
+            throw new SyntaxError('Legacy octal escapes are not implemented');
           if (Object.hasOwn(escapes,ch)) ch = escapes[ch];
           else if (ch === 'x') {
             const digits = source.slice(i,i+2);

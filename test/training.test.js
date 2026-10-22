@@ -6,6 +6,7 @@ import {replayExact} from '../src/replay.js';
 import {verifyTrainingCase} from '../src/training/admit.js';
 import {validateTrainingExport} from '../src/training/export.js';
 import {parseTraining} from '../src/training/profile.js';
+import {referenceOutcome} from '../src/training/reference.js';
 import {encodeRecord,decodeRecord,fragmentLine,restoreLines} from '../src/training/format.js';
 
 const strict=code=>'"use strict";\n'+code;
@@ -21,6 +22,10 @@ test('known lexical divergences: hex escapes and undefined parameter',()=>{
   const s=Object.values(r.state.envs).find(e=>e.bindings.s).bindings.s.token.value;
   assert.deepEqual(s,['str','A']);
   verified('function f(undefined){return undefined;}', 'f',[3]);
+  for(const escape of ['\\01','\\08','\\09','\\1','\\7'])
+    assert.throws(()=>createRuntime().start('let s="'+escape+'";'),/Legacy octal escapes/);
+  const zero=createRuntime().start('let s="\\0";');
+  assert.equal(zero.drive().kind,'terminated');
 });
 test('array truncation and noncanonical property indices match a reference',()=>{
   verified('function f(){const a=[1,2]; a.length=1;return a[1];}','f');
@@ -80,4 +85,30 @@ test('the exporter rejects forged semantic records and future group dependencies
   assert(value);
   value.events[0].record=value.events[0].record.replace('"result"', '"wrongResult"');
   assert.throws(()=>validateTrainingExport(forged));
+});
+
+test('reference input graphs are created inside the restricted V8 realm',()=>{
+  const safeSource=strict('function f(a){return a;}');
+  const runtime=createRuntime().startEntry({text:safeSource,functionName:'f',args:[[1,2]]});
+  const source=strict('function f(a){return a.constructor.constructor("return process")();}');
+  const result=referenceOutcome({source,entry:'f',args:runtime.entrySpec.arguments,
+    initialHeap:runtime.initialState.heap});
+  assert.equal(result.kind,'reference.error');
+  assert.match(result.message,/Code generation from strings disallowed/);
+});
+test('the exporter rejects extra public fields and forged descriptors',()=>{
+  const exported=verified('function f(x){return x+1;}','f',[1]).exported;
+  for(const [field,value] of [
+    ['meta',{finalState:{hidden:true}}],
+    ['debug',{privateSidecar:exported.sidecar.archive}],
+    ['profile','other-profile'],
+    ['traceFormat','other-trace'],
+    ['contextFormat','other-context'],
+    ['completionPolicy','deferred']
+  ]) {
+    const forged=structuredClone(exported);
+    forged.public[field]=value;
+    assert.throws(()=>validateTrainingExport(forged),
+      /Unexpected public export field|Invalid public export descriptor/);
+  }
 });
