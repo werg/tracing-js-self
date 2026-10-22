@@ -28,3 +28,13 @@ jobs:
           name: test262-syntax-slice
           path: ${{ runner.temp }}/test262-baseline.json
           if-no-files-found: error
+
+      - name: Run pinned selected Test262 execution (11 cases)
+        run: node tools/test262-baseline.mjs --output "$RUNNER_TEMP/test262-execution.json"
+      - name: Publish selected Test262 execution report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test262-execution-selection
+          path: ${{ runner.temp }}/test262-execution.json
+          if-no-files-found: error
