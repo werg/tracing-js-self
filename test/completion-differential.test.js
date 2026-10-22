@@ -27,7 +27,7 @@ const fixtures=[
   `let result=0;try{throw 1;}catch(e){let z=e;result=z;}finally{result*=2;}`,
   `let result=0;let x=0;while(x<5){x+=1;try{if(x===2)continue;if(x===4)break;result+=x;}finally{result+=10;}}`,
   `let result=0;try{let x=0;while(x<3){x+=1;break;}result=4;}finally{result+=5;}`,
-  `let result=0;let x=0;while(x<4){x+=1;while(true){try{if(x===2)continue;if(x===3)break;}finally{result+=1;}break;}if(x===4)break;}`,
+  `let result=0;let x=0;while(x<4){x+=1;let y=0;while(y<3){y+=1;try{if(y===2)continue;if(x===3)break;result+=1;}finally{result+=2;}}}`,
   `let result=0;function f(){try{try{return 2;}finally{result+=3;}}finally{result+=5;}}result+=f();`,
   `let result='';try{try{throw 0;}finally{result+='f';}}catch(e){result+=e;}`,
   `let result=0;let e=1;try{throw 3;}catch(e){result=e;}result+=e;`,
