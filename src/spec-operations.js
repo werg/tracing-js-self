@@ -155,6 +155,10 @@ export function advanceArithmetic(record, eventId, {heap=null,invoke=null,takeRe
       const c=record.coercion;use(c.method,c.input);
       const v=c.method.value;
       if(v[0]==='ref'&&heap[v[1]]?.kind==='function'){
+        // An async valueOf returns a Promise object even before its first
+        // suspension. Its asynchronous guest reaction behavior is not part
+        // of this ordinary coercion subset.
+        if(heap[v[1]].async){unsupported('AsyncToPrimitive');break;}
         if(!invoke)throw new Error('Missing owned conversion call dispatcher');
         c.waitingFrameId=invoke(v,c.input.value);
         record.phase='coercion-return';
