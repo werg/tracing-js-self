@@ -4,11 +4,21 @@
   "private": true,
   "type": "module",
   "description": "Experimental owned-machine JavaScript semantic tracing runtime",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "test": "node --test test/*.test.js && node fixtures/reference/reference-fixture.mjs",
     "demo": "node bin/tracing.js demo",
-    "trace": "node bin/tracing.js run"
+    "trace": "node bin/tracing.js run",
+    "test:oracle": "node --test test/spec-oracle.test.js",
+    "test:test262": "node tools/test262-baseline.mjs --test262-root .cache/test262",
+    "conformance": "npm run test:oracle && npm run test:test262"
   },
-  "bin": { "tracing-js-self": "./bin/tracing.js" }
+  "bin": {
+    "tracing-js-self": "./bin/tracing.js"
+  },
+  "devDependencies": {
+    "@engine262/engine262": "0.0.1-678c2c0a5811e1d2c6616e144a5067a4783c70a4"
+  }
 }
