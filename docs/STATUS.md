@@ -24,12 +24,15 @@ This repository implements a **bounded, executable prototype** for the architect
 
 The VM currently copies small machine-state tables on each transaction, and each mutation is recorded as a typed **entity replacement**. This provides a simple, independently reconstructible baseline but is neither a production storage scheme nor the plan's finished fine-grained typed mutation algebra.
 
-## Next integration sequence
+## Next implementation sequence
 
-1. **Candidate pinned:** engine262 and a fixed Test262 slice now provide a reproducible reference baseline. **Still open:** complete clause/intrinsic inventory; replace the bounded parser and handlers with spec-backed **owned** phases, preserving the state and trace contracts (the oracle is not that replacement).
-2. Replace entity-replacement diffs with typed mutation commands, durable journal/checkpoints, stronger provenance and catalog schema validation.
-3. Complete the guest promise scheduler, exception/completion/reentry lifecycle, and independent semantic replay. Extend the current bounded interpreter's deterministic replay to the eventual spec-backed engine and typed native handoff events.
-4. Implement versioned native binding ownership, activation retention, real Node/browser services and the complete host-entry inventories, with reference fixtures.
-5. Expand the independent visibility validator and train/evaluate representations only once authoritative traces pass the runtime acceptance gate.
+The [semantic execution training-data plan](TRAINING_DATA_PLAN.md) sets the immediate priority: a verified bounded training generator with one compact semantic target and a causal megatoken exporter. This is planned work, not a change to the implemented coverage above.
+
+1. Establish an independently checked synchronous training profile, including correct parsing, admitted value/object semantics, owned completion records, direct function entry, and identity-preserving input/state comparison. Known accepted semantic divergences must be fixed or rejected before admission; replay alone is insufficient.
+2. Normalize the journal into explicit invocation, source-site, control, value, read/write, and completion records; implement the compact semantic trace and its preservation checks.
+3. Implement causal source bundles, helper inlining, bounded reusable tracks, model chunk boundaries, and exact continuation packets. Keep model cuts separate from guest scheduling and host service points.
+4. Add the megatoken exporter, teacher-conditioned supervised episodes, generated-state rollout verification, and the first admitted synchronous corpus. A bounded profile must pass its semantic and visibility gates; full Node/browser coverage is not a prerequisite.
+5. Add fully materialized external calls, owned promise adoption/rejection and async scheduling, and catch/finally under separately validated profile extensions.
+6. Scale journal/export storage and broaden spec-backed owned execution. Complete clause/intrinsic inventories, native binding ownership, durable recovery, real Node/browser services, and the full conformance harness remain requirements for the broader target described in [engine262 adoption](ENGINE262_ADOPTION.md).
 
 All missing requirements remain open in `coverage/required.json`; the demonstrator's profile is intentionally different from the plan's completed target.

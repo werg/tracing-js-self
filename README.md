@@ -4,6 +4,10 @@ An **experimental, owned-machine JavaScript semantic tracing runtime**, bootstra
 
 This is a working **bounded prototype**, **not** a complete JavaScript interpreter or complete Node/browser runtime. Unsupported language features fail explicitly rather than running guest JavaScript outside the tracer. See [implementation status and gaps](docs/STATUS.md) and [coverage ledger](coverage/required.json).
 
+## Training-data direction
+
+The [semantic execution training-data plan](docs/TRAINING_DATA_PLAN.md) defines the next implementation direction: verified executions compiled into a compact, source-anchored trace for [megatoken](https://github.com/werg/megatoken). It specifies shared-state identities and versions, helper inlining, bounded reusable tracks, causal model chunks, and fully materialized external calls. The plan is a design and delivery sequence; its proposed exporter and guarantees are not yet implemented.
+
 ## Quick start
 
 Requires Node.js 20 or later; no third-party dependencies.
