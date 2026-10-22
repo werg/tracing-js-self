@@ -28,6 +28,14 @@ export class SemanticController {
     this.codes=new Map(source.codes.map(code=>[code.id,code]));
     this.sites=new Set(source.sites.map(site=>site.id));
     this.heap=new Map();
+    this.staticFunctions=new Map();
+    for(const fn of source.staticFunctions??[]){
+      if(!this.codes.has(fn.code)||this.heap.has(fn.identity))
+        fail('context','Invalid static function allocation');
+      this.heap.set(fn.identity,{kind:'function',code:fn.code,captures:fn.captures,
+        shapeVersion:0,properties:new Map(),versions:new Map()});
+      this.staticFunctions.set(fn.name,fn.identity);
+    }
     const graph=input.graph;
     for(const obj of graph.objects??[]){
       if(this.heap.has(obj.id)||!['array','object'].includes(obj.kind))
@@ -154,12 +162,14 @@ export class SemanticController {
           const key=read.envId+':'+read.name;
           const prior=this.cells.get(key);
           const active=this.activations.get(fields.invocation);
-          const seeded=active?.params[read.name];
+          const seeded=active?.params[read.name] ??
+            (this.staticFunctions.has(read.name) ?
+              ['ref',this.staticFunctions.get(read.name)] : undefined);
           if(prior && (prior.version!==read.version || !same(prior.value,read.value)))
             fail('read','Captured binding version/value disagrees with committed state');
           if(!prior && seeded && !same(seeded,read.value))
-            fail('read','Parameter read differs from the observed entry argument');
-          if(!prior && read.version!==0)
+            fail('read','Parameter or static function read differs from observed context');
+          if(!prior && !seeded && read.version!==0)
             fail('read','Unknown binding has a noninitial read version');
           if(!prior)this.cells.set(key,{version:0,value:copy(read.value)});
         }else fail('read','Unsupported location observation');
@@ -177,10 +187,11 @@ export class SemanticController {
             fail('write','Stale lexical cell write');
           cellDraft.set(key,{version:write.version,value:copy(write.value)});
         }else if(write.kind==='property'){
-          const obj=heapDraft.get(write.object),prior=obj?.properties.get(write.key);
-          if(!obj || (obj.versions.get(write.key)??0)!==write.oldVersion ||
+          const obj=heapDraft.get(write.object);
+          const before=this.heap.get(write.object);
+          if(!obj || !before || (before.versions.get(write.key)??0)!==write.oldVersion ||
              write.version!==write.oldVersion+1 ||
-             obj.shapeVersion!==write.shapeBefore)
+             before.shapeVersion!==write.shapeBefore)
             fail('write','Stale object property or shape version');
           if(write.present)obj.properties.set(write.key,{version:write.version,value:copy(write.value)});
           else obj.properties.delete(write.key);
