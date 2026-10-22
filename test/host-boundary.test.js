@@ -73,7 +73,7 @@ test('unregistered external argument forms fail before creating or dispatching a
       'demo.store':()=>{dispatched++;return {kind:'normal',value:undefined};},
       'demo.readAsync':()=>{dispatched++;return {kind:'pending'};}
     }}).start(source);
-    assert.throws(()=>runtime.drive(),/codec|argument|string|number|cycle|alias|JSON/i,source);
+    assert.throws(()=>runtime.drive(),/codec|argument|string|number|cycle|alias|JSON|not defined/i,source);
     assert.equal(Object.keys(runtime.state.effects).length,0,source);
     assert.equal(dispatched,0,source);
     assert.equal(runtime.events.filter(e=>e.operation==='effect.dispatch').length,0);
