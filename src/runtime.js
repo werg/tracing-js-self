@@ -30,8 +30,39 @@ function lookup(draft, envId, name) {
   throw new ReferenceError(`${name} is not defined`);
 }
 function valueKey(tagged) {
-  if (!['str','num','bool'].includes(tagged[0])) throw new TypeError('Only primitive string/number/boolean keys are currently supported');
+  if (!['str','num','bool','null','undefined','bigint'].includes(tagged[0]))
+    throw new TypeError('Property keys requiring guest coercion are unsupported');
   return String(decode(tagged));
+}
+function arrayIndex(key) {
+  return /^(0|[1-9]\\d*)$/.test(key) && Number(key) < 4294967295;
+}
+function putOwn(obj,key,value,eventId) {
+  if (key === '__proto__') throw new TypeError('Prototype mutation is outside the profile');
+  if (obj.kind === 'array' && key === 'length') {
+    if (value[0] !== 'num') throw new TypeError('Array length coercion is outside the profile');
+    const length = decode(value);
+    if (!Number.isInteger(length) || length < 0 || length > 4294967295)
+      throw new RangeError('Invalid array length');
+    const old = decode(obj.properties.length.value);
+    if (length < old) for (const name of Object.keys(obj.properties))
+      if (arrayIndex(name) && Number(name) >= length) {
+        delete obj.properties[name];
+        obj.propertyVersions[name] = (obj.propertyVersions[name] ?? 0) + 1;
+        obj.shapeVersion++;
+      }
+    obj.properties.length = token(['num',length],eventId);
+    obj.propertyVersions.length = (obj.propertyVersions.length ?? 0) + 1;
+    return;
+  }
+  const existed = Object.hasOwn(obj.properties,key);
+  Object.defineProperty(obj.properties,key,{value:token(value,eventId),enumerable:true,configurable:true,writable:true});
+  obj.propertyVersions[key] = (obj.propertyVersions[key] ?? 0) + 1;
+  if (!existed) obj.shapeVersion++;
+  if (obj.kind === 'array' && arrayIndex(key) && Number(key) >= decode(obj.properties.length.value)) {
+    obj.properties.length = token(['num',Number(key)+1],eventId);
+    obj.propertyVersions.length = (obj.propertyVersions.length ?? 0) + 1;
+  }
 }
 function diff(oldState, nextState) {
   const patches=[];
@@ -58,6 +89,7 @@ export class Runtime {
     this.chunkStart=0;this.chunkBefore='q0';this.result=U;
   }
   registerSource({text,url='<inline>',goal='script'}={}) {
+    if(this.started)throw new Error('Source registry is frozen after start');
     if(goal!=='script')throw new SyntaxError('Only script goal is implemented');
     if(typeof text!=='string')throw new TypeError('Source text required');
     const sourceId=`src${this.sources.length+1}`;
@@ -86,18 +118,19 @@ export class Runtime {
     const s=this.state,global=this.newEnv(s);
     s.envs[global].bindings.host={kind:'const',initialized:true,token:token(['host','demo'])};
     s.envs[global].bindings.Promise={kind:'const',initialized:true,token:token(['intrinsic','Promise'])};
+    s.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U)};
     s.control.a0.globalEnvId=global;
     s.control.a0.activeFrameId=this.newFrame(s,source.entry,global);
     s.control.a0.status='running';this.started=true;
     this.initialState=copy(this.state);this.checkpoints.q0=copy(this.state);
     return this;
   }
-  commit(operation, callback, {siteId=null,sourceId=null,codeId=null,operands=[]}={}) {
+  commit(operation, callback, {siteId=null,sourceId=null,codeId=null,invocationId=null,operands=[]}={}) {
     const before=this.state, draft=copy(before),eventId=`a0:e${this.events.length+1}`;
     const detail=callback(draft,eventId)??{};
     const patches=diff(before,draft);
     this.state=draft;
-    const event={eventId,agentId:'a0',sequence:this.events.length+1,operation,catalogRef:`${operation}/1`,siteId,sourceId,codeId,
+    const event={eventId,agentId:'a0',sequence:this.events.length+1,operation,catalogRef:`${operation}/1`,siteId,sourceId,codeId,invocationId,
       operands:detail.operands??operands,operandOrigins:detail.origins??[],result:detail.result??null,
       readObservations:detail.reads??[],causes:detail.causes??[],stateChanges:patches,
       before:`q${this.events.length}`,after:`q${this.events.length+1}`};
@@ -108,7 +141,8 @@ export class Runtime {
     frame.status='completed';
     if(frame.asyncPromiseId){this.resolvePromise(draft,frame.asyncPromiseId,value,origin);value=['promise',frame.asyncPromiseId];}
     if(frame.callerFrameId){const caller=draft.frames[frame.callerFrameId];this.stackPush(caller,value,origin);draft.control.a0.activeFrameId=caller.id;}
-    else {draft.control.a0.activeFrameId=null;if(!frame.asyncPromiseId)this.result=value;}
+    else {draft.control.a0.activeFrameId=null;draft.control.a0.completion={kind:'return',value};
+      draft.control.a0.status='completed';if(!frame.asyncPromiseId)this.result=value;}
   }
   resolvePromise(draft,id,value,origin) {
     const p=draft.promises[id];if(!p||p.status!=='pending')throw new Error('Promise already settled or missing');
@@ -145,13 +179,13 @@ export class Runtime {
         case 'ENTER_SCOPE':f.envId=this.newEnv(s,f.envId);return {};
         case 'LEAVE_SCOPE':f.envId=s.envs[f.envId].parent;return {};
         case 'BINARY':{const b=pop(),a=pop();return {...operands(a,b),...result(primitiveBinary(arg,a.value,b.value))};}
-        case 'UNARY':{const a=pop();return {...operands(a),...result(primitiveUnary(arg,a.value))};}
+        case 'UNARY':{const a=pop();return {...operands(a),...result(primitiveUnary(arg,a.value,s.heap))};}
         case 'POP':{const a=pop();return operands(a);}
         case 'DUP':{const a=pop();st.push(a);st.push(copy(a));return operands(a);}
         case 'JUMP':f.pc=arg;return {};
         case 'JUMP_IF_FALSE':{const a=pop();if(!truthy(a.value))f.pc=arg;return {...operands(a),result:['bool',!truthy(a.value)]};}
         case 'LOGICAL_JUMP':{const a=st.at(-1),v=a.value;const pass=arg.operator==='&&'?!truthy(v):arg.operator==='||'?truthy(v):v[0]!=='null'&&v[0]!=='undefined';if(pass)f.pc=arg.to;return {...operands(a),result:['bool',pass]};}
-        case 'NEW_OBJECT':case 'NEW_ARRAY':{const id=this.next(s,'obj');s.heap[id]={id,kind:op==='NEW_ARRAY'?'array':'object',properties:{},version:0};if(op==='NEW_ARRAY')s.heap[id].properties.length=token(['num',0],eventId);return result(['ref',id]);}
+        case 'NEW_OBJECT':case 'NEW_ARRAY':{const id=this.next(s,'obj');s.heap[id]={id,kind:op==='NEW_ARRAY'?'array':'object',properties:{},propertyVersions:{},shapeVersion:0,version:0};if(op==='NEW_ARRAY'){s.heap[id].properties.length=token(['num',0],eventId);s.heap[id].propertyVersions.length=0;}return result(['ref',id]);}
         case 'GET_PROP':case 'GET_METHOD':{
           const key=pop(),base=pop(),property=valueKey(key.value);let v;
           if(base.value[0]==='host')v=['hostfn',`${base.value[1]}.${property}`];
@@ -205,10 +239,12 @@ export class Runtime {
           this.suspendAsync(s,f);return {...operands(a),causes:[{kind:'promise',promiseId}]};
         }
         case 'RETURN':{const v=pop();this.completeFrame(s,f,v.value,v.origin);return {...operands(v),result:v.value};}
-        case 'THROW':{const v=pop();throw new Error(`Guest throw (catch is not implemented): ${JSON.stringify(v.value)}`);}
+        case 'THROW':{const v=pop();f.status='thrown';s.control.a0.activeFrameId=null;
+          s.control.a0.status='guest.throw';s.control.a0.completion={kind:'throw',value:v.value};
+          return {...operands(v),result:v.value};}
         default:throw new Error(`Unknown opcode ${op}`);
       }
-    },{siteId:inst.siteId,sourceId:frame.codeId.split(':')[0],codeId:frame.codeId});
+    },{siteId:inst.siteId,sourceId:frame.codeId.split(':')[0],codeId:frame.codeId,invocationId:frame.id});
   }
   prepared() {return Object.values(this.state.effects).find(e=>e.dispatch==='prepared');}
   dispatchPrepared(effectId) {
@@ -300,7 +336,7 @@ export class Runtime {
       if(c.queue.length){this.enterQueuedJob();continue;}
       const pendingPromises=Object.values(this.state.promises).some(p=>p.status==='pending');
       const pendingEffects=Object.values(this.state.effects).some(e=>e.external==='pending');
-      const kind=c.status==='failed'?'runtime.failure':pendingPromises||pendingEffects?'waiting':'terminated';
+      const kind=c.status==='failed'?'runtime.failure':c.status==='guest.throw'?'guest.throw':pendingPromises||pendingEffects?'waiting':'terminated';
       this.seal(kind);return {kind,waitingOn:this.chunks.at(-1)?.exit.waitingOn??[],pendingEffects:this.chunks.at(-1)?.exit.pendingEffects??[]};
     }
     throw new Error(`Driver safety limit (${this.maxSteps} steps); no chunk has been misreported as complete`);
