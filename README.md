@@ -13,6 +13,7 @@ npm test
 npm run demo
 node bin/tracing.js demo --output demo.trace.json
 node bin/tracing.js validate demo.trace.json
+node bin/tracing.js replay demo.trace.json
 node bin/tracing.js causal demo.trace.json a0:e20
 node bin/tracing.js run examples/async-demo.js --output waiting.trace.json
 ```
@@ -24,6 +25,7 @@ The demo issues two asynchronous mock operations, keeps an aggregate chunk open 
 ```js
 import { createRuntime } from './src/runtime.js';
 import { validateBundle } from './src/validation.js';
+import { replayExact } from './src/replay.js';
 const runtime = createRuntime({ adapters: {
   'demo.store': () => ({ kind: 'normal', value: undefined })
 }});
@@ -31,12 +33,13 @@ runtime.start('let x = 2; x += 3; host.store("x", x);');
 const progress = runtime.drive();
 const bundle = runtime.exportRun();
 validateBundle(bundle);
+replayExact(bundle); // independently recompile source and reproduce recorded steps
 ```
 
 Async adapters **do not** return native promises: after the machine emits `effect.dispatch`, they call `recordInputArrival({effectId,kind:'completion',value})` and `deliverInput(inputId)` at the chosen legal service point. Synchronous mock calls use `kind:'immediate'`. In a future production native integration these service permissions, typed native handoffs, caller retention and transport durability must be enforced by a versioned adapter/runner.
 
 ## Main modules
 
-`src/frontend.js` implements the bounded lexer/parser and source-mapped bytecode compiler. `src/runtime.js` contains the explicit machine, committed state versions, jobs, effects and chunk accumulator. `src/values.js` implements exact scalar tagging (including signed zero, NaN, BigInt and lone UTF-16 surrogates). `src/validation.js` independently reconstructs state and checks structural invariants. `src/causal.js` materializes a restricted, input-interleaved model view without private arrival payloads.
+`src/frontend.js` implements the bounded lexer/parser and source-mapped bytecode compiler. `src/runtime.js` contains the explicit machine, committed state versions, jobs, effects and chunk accumulator. `src/values.js` implements exact scalar tagging (including signed zero, NaN, BigInt and lone UTF-16 surrogates). `src/validation.js` independently reconstructs state and checks structural invariants. `src/replay.js` recompiles the saved source and re-executes the bounded interpreter using recorded host inputs, comparing each event, source site, mutation, checkpoint, and chunk without invoking host adapters. `src/causal.js` materializes a restricted, input-interleaved model view without private arrival payloads.
 
-**Evidence boundary:** the prototype's tests establish only the behaviors they exercise. They do not pass the completion criteria from the full plan. In particular, `completeSemanticTrace: false` applies to the declared complete JavaScript target; the supported subset is instrumented at the interpreter's declared bytecode vocabulary.
+**Evidence boundary:** exact replay is an interpreter self-consistency check against its recorded journal, **not** an independent semantic oracle, real native-effect replay, proof of standards compliance, or safe execution of arbitrary full JavaScript. It requires a complete sealed run and uses the recorded external values only at their arrival events. The prototype's tests establish only the behaviors they exercise. They do not pass the completion criteria from the full plan. In particular, `completeSemanticTrace: false` applies to the declared complete JavaScript target; the supported subset is instrumented at the interpreter's declared bytecode vocabulary.
