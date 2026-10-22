@@ -117,6 +117,27 @@ test('non-reserved inherited object names are valid transport IDs and stay recon
   assert.equal(replayExact(bundle).valid, true);
 });
 
+test('generated input IDs skip earlier transport-supplied IDs in the same namespace', () => {
+  const runtime = createRuntime().start('host.readAsync("A"); host.readAsync("B");');
+  assert.equal(runtime.drive().kind, 'waiting');
+  const [firstEffect, secondEffect] = Object.values(runtime.state.effects);
+  const supplied = runtime.recordInputArrival({
+    effectId: firstEffect.id, kind: 'completion', value: 10, inputId: 'i1'
+  });
+  assert.equal(supplied.inputId, 'i1');
+  const generated = runtime.recordInputArrival({
+    effectId: secondEffect.id, kind: 'completion', value: 20
+  });
+  assert.equal(generated.inputId, 'i2');
+  assert.equal(runtime.state.counters.ids.input, 2);
+  runtime.deliverInput('i1');
+  runtime.deliverInput('i2');
+  assert.equal(runtime.drive().kind, 'terminated');
+  const bundle = archived(runtime.exportRun());
+  assert.equal(validateBundle(bundle).valid, true);
+  assert.equal(replayExact(bundle).valid, true);
+});
+
 test('initial checkpoint and exported host-table copies are authenticated against reconstruction', () => {
   const mutations = [
     b => { b.checkpoints.q0.control.a0.status = 'forged'; },
