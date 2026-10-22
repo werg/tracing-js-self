@@ -240,20 +240,27 @@ export function applySpecCommand(state, command, event, seen, fail) {
        oldCoercion.index===1?'toString':'invalid'))bad('Invalid coercion method ordinal');
     if(command.to==='coercion-return') {
       const child=state.frames[nextCoercion?.waitingFrameId];
-      if(r.phase!=='coercion-call'||!child||child.callerFrameId!==r.frameId||
+      const target=state.heap[oldCoercion.method?.value?.[1]];
+      if(r.phase!=='coercion-call'||!target||target.kind!=='function'||target.async||
+         !child||child.callerFrameId!==r.frameId||
+         child.codeId!==target.codeId||child.asyncPromiseId!==null||
+         !eq(child.thisValue,oldCoercion.input.value)||
+         state.envs[child.envId]?.parent!==target.closureEnvId||
          child.status!=='running'||state.control.a0.activeFrameId!==child.id||
          !eq(nextCoercion.method,oldCoercion.method)||
          nextCoercion.index!==oldCoercion.index)
         bad('Unowned guest method call');
     } else if(command.to==='coercion-get'){
       if(!nextCoercion||nextCoercion.index!==oldCoercion.index+1||
+         ['undefined','null','bool','num','str','bigint'].includes(event.operands[0]?.[0])||
          nextCoercion.index!==1||nextCoercion.method!==null||
          nextCoercion.waitingFrameId!==null||
          !eq(nextCoercion.input,oldCoercion.input))
         bad('Invalid conversion method fallback');
     } else if(command.to===oldCoercion.resume) {
-      if(nextCoercion!==null||command.writes.length!==1)
-        bad('Missing primitive coercion return');
+      if(nextCoercion!==null||command.writes.length!==1||
+         !eq(command.writes[0].after?.value,event.operands[0]))
+        bad('Primitive coercion return disagrees with completed guest call');
     } else if(command.to==='complete'){
       if(!completion||!['throw','unsupported'].includes(completion.type))
         bad('Missing coercion abrupt completion');
@@ -278,7 +285,7 @@ export function applySpecCommand(state, command, event, seen, fail) {
     } else if (completion.type === 'unsupported') {
       if (!keys(completion,['type','feature','message','origin']) || completion.origin !== event.eventId ||
           !(r.phase.endsWith('-primitive') || r.phase==='coercion-get' || r.phase==='coercion-call') ||
-          !['ToPrimitive(Object)','ArrayToString(complex)'].includes(completion.feature) ||
+          !['ToPrimitive(Object)','ArrayToString(complex)','AsyncToPrimitive'].includes(completion.feature) ||
           typeof completion.message !== 'string') bad('Invalid unsupported spec completion');
     } else bad('Unknown spec completion');
   } else if (completion !== null) bad('Unexpected early spec completion');
