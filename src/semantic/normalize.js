@@ -101,7 +101,10 @@ export function normalizeJournal(bundle) {
         op=r.op='request';
         const created=e.stateChanges.find(p=>p.table==='effects' && p.id===effect.effectId);
         r.effect=effect.effectId;r.operation=created?.after?.operation??null;
-        r.arguments=created?.after?.args??[];
+        r.arguments=created?.after?.request?JSON.parse(created.after.request.payload):[];
+        r.codec=created?.after?.request?.codec??null;
+        r.payload=created?.after?.request?.payload??null;
+        r.signature=created?.after?.request?.signature??null;
       } else r.op='value'; // builtin result
     }
     if(op==='return'||op==='throw') {
