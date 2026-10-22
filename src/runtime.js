@@ -105,7 +105,7 @@ export class Runtime {
   }
   next(draft,kind) {const ids=draft.counters.ids;return `${kind[0]}${++ids[kind]}`;}
   newEnv(draft,parent=null) {const id=this.next(draft,'env');draft.envs[id]={id,parent,bindings:{},version:0};return id;}
-  newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,waiters:[],version:0};return id;}
+  newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,waiters:[],adopters:[],adopting:null,version:0};return id;}
   newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[]) {
     const id=this.next(draft,'frame'),envId=this.newEnv(draft,parentEnv);
     const params=this.programs[codeId].params;
@@ -184,10 +184,36 @@ export class Runtime {
       draft.control.a0.status='completed';if(!frame.asyncPromiseId)this.result=value;}
   }
   resolvePromise(draft,id,value,origin) {
-    const p=draft.promises[id];if(!p||p.status!=='pending')throw new Error('Promise already settled or missing');
+    const p=draft.promises[id];if(!p||p.status!=='pending'||p.adopting)
+      throw new Error('Promise already settled or adopting another promise');
+    if(value[0]==='promise'){
+      const target=draft.promises[value[1]];
+      if(!target||target===p)throw new TypeError('Invalid or self-resolving guest promise');
+      // Track cycles before registering an adoption dependency.
+      for(let current=target;current?.adopting;current=draft.promises[current.adopting])
+        if(current===p || current.adopting===id)
+          throw new TypeError('Promise adoption cycle');
+      if(target.status==='pending'){
+        p.adopting=target.id;
+        target.adopters??=[];
+        target.adopters.push(id);
+        return;
+      }
+      if(target.status!=='fulfilled')throw new TypeError('Promise rejection not enabled');
+      value=target.value.value;
+      origin=target.value.origin;
+    }
     p.status='fulfilled';p.value=token(value,origin);
     for(const frameId of p.waiters)draft.control.a0.queue.push({frameId,promiseId:id});
     p.waiters=[];
+    const waiting=p.adopters??[];
+    p.adopters=[];
+    for(const adoptedId of waiting){
+      const adopted=draft.promises[adoptedId];
+      if(adopted.adopting!==id)throw new Error('Broken promise adoption link');
+      adopted.adopting=null;
+      this.resolvePromise(draft,adoptedId,value,origin);
+    }
   }
   suspendAsync(draft,frame) {
     frame.status='suspended';
@@ -250,9 +276,13 @@ export class Runtime {
           const v=pop(),key=pop(),base=pop(),property=valueKey(key.value);
           if(base.value[0]!=='ref'||!s.heap[base.value[1]]||s.heap[base.value[1]].kind==='function')throw new TypeError('Not a writable guest object');
           const obj=s.heap[base.value[1]];
-          if(this.entrySpec && obj.kind==='array' && arrayIndex(property) &&
-             Number(property)>decode(obj.properties.length.value))
-            throw new TypeError('Sparse array writes are outside training-js/1');
+          if(this.entrySpec && obj.kind==='array') {
+            const oldLength=decode(obj.properties.length.value);
+            if(arrayIndex(property) && Number(property)>oldLength)
+              throw new TypeError('Sparse array writes are outside training-js/1');
+            if(property==='length' && v.value[0]==='num' && decode(v.value)>oldLength)
+              throw new TypeError('Array length expansion is outside training-js/1');
+          }
           obj.propertyVersions ??= {};
           obj.shapeVersion ??= 0;
           putOwn(obj,property,v.value,eventId);
