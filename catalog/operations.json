@@ -213,6 +213,11 @@
       "operationId": "completion.loop.jump",
       "version": 1,
       "kind": "algorithm"
+    },
+    {
+      "operationId": "reference.this",
+      "version": 1,
+      "kind": "algorithm"
     }
   ]
 }
