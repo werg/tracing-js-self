@@ -15,7 +15,7 @@ This repository implements a **bounded, executable prototype** for the architect
 
 ## Strict synchronous training foundation (additional bounded profile)
 
-The `training-js/1` profile now provides Acorn ES2022 strict parsing with a syntax/operation allowlist, exact function entry, stable argument graphs, reference identity/array semantics fixes, committed explicit guest throw, journal normalization, semantic-trace/1 serialization, deterministic serial model groups and a local differential Node-vm comparison. A deterministic fixture generator exports **locally verified** episodes with a private audit sidecar, not admitted megatoken training examples. See [TRAINING_IMPLEMENTATION.md](TRAINING_IMPLEMENTATION.md) for implemented interfaces and remaining correctness/visibility gates.
+The `training-js/1` profile now provides Acorn ES2022 strict parsing with a syntax/operation allowlist, exact function entry, stable argument graphs, reference identity/array semantics fixes, committed explicit guest throw, journal normalization, semantic-trace/1 serialization, deterministic serial model groups and a local differential Node-vm comparison. An optional canonical-json/1 graph materializer (not yet connected to dispatch) and bounded guest-promise adoption correctness regressions have also landed. A deterministic fixture generator exports **locally verified** episodes with a private audit sidecar, not admitted megatoken training examples. See [TRAINING_IMPLEMENTATION.md](TRAINING_IMPLEMENTATION.md) for implemented interfaces and remaining correctness/visibility gates.
 
 ## Not implemented (must not be inferred)
 
