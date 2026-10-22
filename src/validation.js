@@ -25,6 +25,15 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     for(const origin of e.operandOrigins) {
       if(origin && !seen.has(origin))fail('Missing or future operand producer',e.eventId);
     }
+    const job=e.operation==='job.enter'?state.control.a0.queue[0]:null;
+    const queuedBefore=job?state.control.a0.queue.slice(1):null;
+    if(e.operation==='job.enter'){
+      if(!job || !state.promises[job.promiseId] ||
+         state.promises[job.promiseId].status==='pending' ||
+         e.causes.filter(c=>c.kind==='promise').length!==1 ||
+         e.causes.find(c=>c.kind==='promise').promiseId!==job.promiseId)
+        fail('Job entry does not consume the next settled promise observer',e.eventId);
+    }
     const patched=new Set();
     if(e.completion && !['spec.operation.complete','completion.throw','external.input.deliver',
       'job.enter','binding.read','binding.write','primitive.unary','property.read','property.write','call.enter'].includes(e.operation))
@@ -53,6 +62,8 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
       if(p.after && p.after.version!==(p.before?.version??0)+1)fail('Invalid record version',e.eventId);
       if(p.after===null)delete state[p.table][p.id];else state[p.table][p.id]=clone(p.after);
     }
+    if(job && !eq(state.control.a0.queue.slice(0,queuedBefore.length),queuedBefore))
+      fail('Promise job FIFO order changed during entry',e.eventId);
     if(bundle.manifest.schema==='semantic-tracing-run/2') {
       const delivered=e.operation==='external.input.deliver'
         ? state.inputs[e.causes.find(c=>c.kind==='input')?.inputId] : null;
@@ -83,6 +94,8 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
           const active=state.frames[state.control.a0.activeFrameId];
           const rejection=Object.values(state.frames).some(f=>f.status==='thrown'&&f.asyncPromiseId&&
             eq(f.completion,c)&&state.promises[f.asyncPromiseId]?.status==='rejected');
+          const reactionRejection=Object.values(state.frames).some(f=>f.status==='thrown'&&
+            f.reactionPromiseId&&eq(f.completion,c)&&state.promises[f.reactionPromiseId]?.status==='rejected');
           const pendingCoercion=Object.values(state.frames).some(f=>{
             const pending=f.pendingCoercionThrow, operation=state.operations[f.operationId];
             const methodId=operation?.coercion?.waitingFrameId;
@@ -90,7 +103,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
               state.frames[methodId]?.status==='thrown' &&
               eq(state.frames[methodId].completion,c);
           });
-          if(!rejection&&!pendingCoercion&&(['failed','unsupported'].includes(state.control.a0.status)||active?.status!=='running'||
+          if(!rejection&&!reactionRejection&&!pendingCoercion&&(['failed','unsupported'].includes(state.control.a0.status)||active?.status!=='running'||
              !active.handlers?.some(h=>h.phase==='catch'||h.phase==='finally')))
             fail('Guest throw was not routed to a handler or async rejection',e.eventId);
         }
