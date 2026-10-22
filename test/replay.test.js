@@ -117,3 +117,23 @@ test('a live synchronous failure can be reproduced without a host adapter', () =
   assert.equal(validateBundle(bundle).valid, true);
   assert.equal(replayExact(bundle).valid, true);
 });
+
+test('replay rejects a manually reordered internal event even when the archive reconstructs', () => {
+  const runtime = createRuntime().start('host.readAsync("A");');
+  for (let i=0; i<20 && !runtime.prepared(); i++) runtime.step();
+  const prepared = runtime.prepared();
+  assert(prepared);
+  runtime.step(); // Invalid driver order: guest POP before effect.dispatch.
+  runtime.dispatchPrepared(prepared.id);
+  while (runtime.state.control.a0.activeFrameId) runtime.step();
+  runtime.seal('waiting');
+  const bundle = archive(runtime.exportRun());
+  assert.equal(validateBundle(bundle).valid, true);
+  assert.throws(() => replayExact(bundle), /internal scheduler order/);
+});
+
+test('replay handles a terminated pure program with no external inputs', () => {
+  const runtime = createRuntime().start('let answer = 2 + 3 * 4;');
+  assert.equal(runtime.drive().kind, 'terminated');
+  assert.equal(replayExact(archive(runtime.exportRun())).externalAdapterCalls, 0);
+});
