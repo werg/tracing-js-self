@@ -252,14 +252,16 @@ export function applySpecCommand(state, command, event, seen, fail) {
         bad('Unowned guest method call');
     } else if(command.to==='coercion-get'){
       if(!nextCoercion||nextCoercion.index!==oldCoercion.index+1||
-         ['undefined','null','bool','num','str','bigint'].includes(event.operands[0]?.[0])||
+         (r.phase==='coercion-return' &&
+           ['undefined','null','bool','num','str','bigint'].includes(event.operands[0]?.[0]))||
          nextCoercion.index!==1||nextCoercion.method!==null||
          nextCoercion.waitingFrameId!==null||
          !eq(nextCoercion.input,oldCoercion.input))
         bad('Invalid conversion method fallback');
     } else if(command.to===oldCoercion.resume) {
       if(nextCoercion!==null||command.writes.length!==1||
-         !eq(command.writes[0].after?.value,event.operands[0]))
+         (r.phase==='coercion-return' &&
+           !eq(command.writes[0].after?.value,event.operands[0])))
         bad('Primitive coercion return disagrees with completed guest call');
     } else if(command.to==='complete'){
       if(!completion||!['throw','unsupported'].includes(completion.type))
