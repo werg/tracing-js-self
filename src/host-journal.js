@@ -1,6 +1,7 @@
 // Structural host-input authority checks over archived mutations only.
 // Does not import or invoke the runtime, replay guest code, or claim native/spec correctness.
 import { isDeepStrictEqual } from 'node:util';
+import {validatePreparedRequest} from './host/validate-request.js';
 
 // External payloads are scalar tuples: reconstructing arbitrary host objects is
 // not supported. Check the wire format independently of Runtime.guestValue.
@@ -25,6 +26,7 @@ export function validateHostJournal(bundle, fail) {
   const arrived = new Map(); // input ID -> effect ID
   const inputForEffect = new Map(); // bounded profile: one input per effect
   const delivered = new Set();
+  const heap = structuredClone(bundle.initialState.heap);
 
   function patches(event, table) {
     return event.stateChanges.filter(p => p.table === table);
@@ -47,7 +49,13 @@ export function validateHostJournal(bundle, fail) {
     });
   }
 
-  for (const event of bundle.events) {
+  for (const [index,event] of bundle.events.entries()) {
+    // Only earlier committed patches supply a request's materialization.
+    // A later mutation to the same object must not rewrite this historical payload.
+    if(index)for(const patch of patches(bundle.events[index-1],'heap')) {
+      if(patch.after===null)delete heap[patch.id];
+      else heap[patch.id]=structuredClone(patch.after);
+    }
     const effects = patches(event, 'effects');
     const inputs = patches(event, 'inputs');
 
@@ -66,6 +74,8 @@ export function validateHostJournal(bundle, fail) {
           !['promise', 'synchronous'].includes(p.after.kind) ||
           cause(event, 'effect', 'effectId') !== p.id || created.has(p.id))
         fail('Malformed effect creation', event.eventId);
+      try {validatePreparedRequest(heap,p.after);}
+      catch(error) {fail(error.message,event.eventId);}
       created.add(p.id);
       continue;
     }
