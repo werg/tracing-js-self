@@ -90,3 +90,10 @@ test('forged awaited rejection metadata is independently rejected',()=>{
   target.completion.value.value=['str','forged'];
   assert.throws(()=>validateBundle(b),/Awaited rejection/);
 });
+
+test('unary plus BigInt is routed through an owned TypeError',()=>{
+  const r=createRuntime().start("let error='';try{let number=+1n;}catch(e){error=e.name;}");
+  verify(r);
+  assert.deepEqual(value(r,'error'),['str','TypeError']);
+  assert(r.events.some(e=>e.operation==='primitive.unary'&&e.completion?.errorType==='TypeError'));
+});
