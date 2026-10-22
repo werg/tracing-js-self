@@ -1,9 +1,9 @@
 # First owned spec-operation path
 
-The `0.2.0` prototype executes the primitive portion of
-`ApplyStringOrNumericBinaryOperator` as an explicit, serializable phase machine.
-This is the first owned spec-operation integration, not an engine262 replacement
-or a complete ECMAScript arithmetic implementation.
+The `0.2.0` bounded prototype executes `ApplyStringOrNumericBinaryOperator`
+as explicit, serializable phases, extended from primitives to a **limited owned
+OrdinaryToPrimitive** path. This is not an engine262 replacement or complete
+ECMAScript object internal-method implementation.
 
 ## Reference and supported domain
 
@@ -18,22 +18,43 @@ revision `2d7d8d988c77e94473ba0377122cdfccdfe243ba`:
   revision used for the implementation audit.
 
 The operators are `+`, `-`, `*`, `/`, `%`, and `**`. Operands may be Undefined,
-Null, Boolean, String, Number or BigInt. Addition performs left and right
+Null, Boolean, String, Number, BigInt and bounded ordinary object/array guest identities. Addition performs left and right
 `ToPrimitive`, selects string concatenation when appropriate, and otherwise
 performs left and right `ToNumeric` and a same-type check before the numeric leaf.
 The other five operators take the numeric path directly. Each `ToNumeric`
 includes a separately recorded primitive conversion and BigInt/Number branch.
 
-**Limits:** Symbol, object coercion, getters, `@@toPrimitive`, boxed primitives,
-bitwise operators and the remaining language operations are not covered by this
-path. Object coercion produces an explicit `unsupported` outcome before any guest
-conversion method runs. Comparisons, equality, unary operations and existing
-bindings remain on the original bounded handlers.
+### New owned ordinary-object coercion path
+
+When a binary arithmetic operand is an owned ordinary object or array,
+the parent operation enters serialized `coercion-get`, `coercion-call`,
+and (for guest functions) `coercion-return` phases. The conversion record
+keeps receiver identity, method-lookup order, lookup token, target register,
+subframe and continuation. `OrdinaryToPrimitive` with number/default hint
+tries `valueOf` before `toString`; noncallable entries and object-returning
+methods fall through in order. Only a primitive result may complete the
+conversion; two exhausted methods produce owned TypeError.
+
+`[[Get]]` checks the guest's own **data** properties and then a specifically
+modeled default Object/Array method; no host prototype method executes on
+guest objects. User-defined ordinary guest functions are invoked via the
+owned VM with the receiver bound as `this`, including observable side
+effects and abrupt completions. Defaults include `Object.valueOf`,
+`Object.toString` and primitive dense-array `Array.toString`; the latter
+fails closed for holes, inherited/overridden joins or nested objects.
+
+**Limits:** No getters/setters, Proxy, Symbol/@@toPrimitive, boxed primitives,
+user-defined prototypes, inherited property descriptors, exotic `[[Get]]`,
+full Array::join semantics or sloppy global `this`. Unhandled object categories
+retain explicit `unsupported`, rather than allowing opaque native coercion.
+Comparison, equality and unary operations still follow their separately
+bounded handlers.
 
 ## What is owned, and what is still a host leaf
 
 `state.operations` holds ordinary JSON-compatible records with an owning frame,
-operator, source identity, phase, input tokens, conversion registers and completion.
+operator, source identity, phase, input tokens, conversion registers, ordinary
+coercion continuation and completion.
 `frame.operationId` is the continuation link. Every call to `Runtime.step()`
 advances one bytecode instruction or one spec phase. No suspended JavaScript
 generator, closure, native promise or engine262 activation holds this continuation.
@@ -59,7 +80,7 @@ The new operation table uses commands instead of entity replacement:
 | Command | Preconditions and change |
 | --- | --- |
 | `operation.create` | The identity is absent; install a version-1 record owned by the active frame. |
-| `operation.advance` | Match the record version and phase; perform the required single-assignment register writes and permitted phase transition. |
+| `operation.advance` | Match record version and phase; perform single-assignment register writes, permitted transition and versioned `coercionBefore/After` updates. |
 | `operation.complete` | Match the final completion and version; return to the owner or record its terminal failure. |
 
 `src/spec-validation.js` interprets these commands independently of the executor
@@ -67,25 +88,35 @@ and writer. It checks phase transitions, required registers, token provenance,
 source ownership, result types, completion metadata and version preconditions.
 All other machine tables still use the earlier entity-replacement mutations.
 
-The structural validator does not independently calculate arithmetic answers.
+The structural validator independently checks owned method lookup against the
+recorded heap, shape/property versions, subframe linkage, source and operand
+provenance, but does not independently calculate arithmetic answers.
 A coherently forged numeric answer can still reconstruct; deterministic replay
 rejects it by executing the source again. The external engine262 differential
 checks add independent scalar observations. Neither is a complete semantic proof.
 
 ## Completions and visibility
 
-Mixed Number/BigInt operands produce a recorded TypeError completion. BigInt
-division/remainder by zero and negative exponents produce recorded RangeError
-completions. An explicit guest `throw` is also recorded. These are **terminal
-bounded-profile failures**: catch/finally, stack unwinding, promise rejection
-delivery and async exception semantics are not implemented. Unexpected host
-resource failures are not relabeled as guest exceptions.
+Mixed Number/BigInt operands produce owned TypeError, while BigInt
+division/remainder by zero and negative exponents produce RangeError.
+OrdinaryToPrimitive exhaustion also produces TypeError. A conversion
+method's guest throw is carried by the parent coercion operation and
+reaches an enclosing handler without native exception propagation.
 
-Terminal failures stop the driver before queued guest jobs or additional effects
-can run. Synchronous host throws use the same terminal completion record. Their
-abruptness, like their payload, stays hidden in the causal projection until input
-delivery. Phase identities and producer links are visible; archival operation
-registers and checkpoint state are not included in that projection.
+The bounded runtime now handles synchronous catch/finally and selected
+implicit exceptions, rejects owned async-function promises on guest throws,
+adopts rejected promises and delivers await/host rejections through
+serialized job entries. Uncaught synchronous failures still stop the
+driver before queued guest work. Promise reasons and external failure
+payloads remain private until the modeled delivery point. Full promise
+reactions, thenables and host scheduling are not implemented.
+
+Structural validation, JSON archive round trips and same-interpreter
+replay cover both old scalar phases and new coercion continuations.
+The 1,958 engine262 oracle cases remain **primitive-only**; additional
+ordinary-object tests compare final primitive outputs with Node V8 and
+test method call order, identity and adversarial archive forgery. This
+finite differential evidence is not complete ECMA-262 conformance.
 
 ## Versioning and embedding
 
@@ -138,6 +169,7 @@ without adapters. This finite corpus is not an exhaustive numeric or language
 proof. The separate [Test262 execution slice](TEST262_RUNTIME_SLICE.md) keeps its
 own file/variant denominator and unsupported cases.
 
-Next work should carry the same ownership, mutation and evidence contracts into
-bindings, object internal methods and guest completion propagation, before exposing
-a [natlang environment adapter](NATLANG_INTEGRATION.md).
+Next work must expand the bounded own-data lookup to full descriptors, exotic
+internal methods, symbols, prototypes and normative ToPrimitive edge cases;
+move typed commands into bindings and other heap mutations; establish broader
+Test262 evidence and expose a validated [natlang adapter](NATLANG_INTEGRATION.md).
