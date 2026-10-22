@@ -236,7 +236,10 @@ export class Runtime {
     const encoded=guestValue(value)?copy(value):encode(value);
     let allocated;
     this.commit('external.input.arrive',s=>{
-      allocated=inputId??this.next(s,'input');if(Object.hasOwn(s.inputs,allocated))throw new Error('Duplicate input ID');
+      if(inputId===null) {
+        do { allocated=this.next(s,'input'); } while(Object.hasOwn(s.inputs,allocated));
+      } else allocated=inputId;
+      if(Object.hasOwn(s.inputs,allocated))throw new Error('Duplicate input ID');
       s.inputs[allocated]={id:allocated,effectId,kind,abrupt,value:encoded,status:'arrived',version:0};
       s.effects[effectId].inputIds.push(allocated);
       return {causes:[{kind:'effect',effectId}]};
