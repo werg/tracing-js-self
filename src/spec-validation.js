@@ -252,7 +252,7 @@ export function applySpecCommand(state, command, event, seen, fail) {
       current=state.heap[proto];
     }
     const observation={kind:'property',objectId:obj.id,key:name,
-      version:obj.propertyVersions?.[name]??0,shapeVersion:obj.shapeVersion??0,
+      version:Object.hasOwn(obj.propertyVersions??{},name)?obj.propertyVersions[name]:0,shapeVersion:obj.shapeVersion??0,
       present:Object.hasOwn(obj.properties,name),
       value:method.value,supplyingEvent:method.origin??null};
     if(!eq(nextCoercion.method,method)||!eq(event.readObservations,[observation]))
