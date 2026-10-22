@@ -1,5 +1,6 @@
 import { encode, decode, U, token, truthy, primitiveBinary, primitiveUnary } from './values.js';
 import { parse, compile } from './frontend.js';
+import { importGraph } from './training/graph.js';
 
 const copy = value => structuredClone(value);
 const equal = (a,b) => JSON.stringify(a) === JSON.stringify(b);
@@ -125,6 +126,42 @@ export class Runtime {
     this.initialState=copy(this.state);this.checkpoints.q0=copy(this.state);
     return this;
   }
+  /** Explicit invocation entry for training-js/1. The top level contains only
+   * an exact strict directive and named ordinary function declarations. */
+  startEntry({text,source=null,functionName,args=[]}={}) {
+    if(this.started)throw new Error('Run already started');
+    if(!source)source=this.registerSource({text});
+    const ast=parse(source.text);
+    if(!ast.body.length || ast.body[0].type!=='Expression' ||
+       ast.body[0].expr.type!=='Literal' ||
+       ast.body[0].expr.value[0]!=='str' || ast.body[0].expr.value[1]!=='use strict' ||
+       ast.body.slice(1).some(n=>n.type!=='Function' || n.async))
+      throw new SyntaxError('training-js/1 requires a strict function bundle without top-level effects');
+    const definitions=this.programs[source.entry].instructions.filter(x=>x.op==='DEF_FN');
+    if(new Set(definitions.map(x=>x.arg.name)).size!==definitions.length)
+      throw new SyntaxError('Duplicate function declaration');
+    const selected=definitions.find(x=>x.arg.name===functionName);
+    if(!selected)throw new ReferenceError('Unknown entry function');
+    const state=this.state, global=this.newEnv(state);
+    state.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U)};
+    state.control.a0.globalEnvId=global;
+    for(const def of definitions){
+      const id=this.next(state,'obj');
+      state.heap[id]={id,kind:'function',codeId:def.arg.codeId,
+        closureEnvId:global,async:false,version:0};
+      state.envs[global].bindings[def.arg.name]={kind:'function',initialized:true,token:token(['ref',id])};
+    }
+    const imported=importGraph(state,args,kind=>this.next(state,kind));
+    const root=this.newFrame(state,selected.arg.codeId,global,null,null,imported.map(v=>token(v)));
+    state.control.a0.activeFrameId=root;
+    state.control.a0.status='running';
+    this.entrySpec={kind:'function',sourceId:source.sourceId,functionName,arguments:imported};
+    this.started=true;
+    this.initialState=copy(state);
+    this.checkpoints.q0=copy(state);
+    return this;
+  }
+
   commit(operation, callback, {siteId=null,sourceId=null,codeId=null,invocationId=null,operands=[]}={}) {
     const before=this.state, draft=copy(before),eventId=`a0:e${this.events.length+1}`;
     const detail=callback(draft,eventId)??{};
@@ -357,10 +394,10 @@ export class Runtime {
   inspectState() {return copy(this.state);}
   inspectOpenChunk() {return {before:this.chunkBefore,eventIds:this.events.slice(this.chunkStart).map(e=>e.eventId),open:true};}
   exportRun() {
-    return copy({manifest:{schema:'semantic-tracing-run/1',profile:'bounded-js-subset/1',completeSemanticTrace:false,
+    return copy({manifest:{schema:'semantic-tracing-run/1',profile:this.entrySpec?'training-js/1':'bounded-js-subset/1',completeSemanticTrace:false,
       completeEcma262:false,completeHostIntegration:false,coverage:'docs/STATUS.md',chunkPolicy:'accumulate-until-wait/1',
       eventVersion:1,operationVersion:1,guestExecution:'owned-bytecode-machine',replay:'bounded-deterministic-reexecution/1'},
-      sources:this.sources,sites:this.sites,programs:this.programs,initialState:this.initialState,finalState:this.state,
+      sources:this.sources,sites:this.sites,programs:this.programs,entrySpec:this.entrySpec??null,initialState:this.initialState,finalState:this.state,
       events:this.events,chunks:this.chunks,checkpoints:this.checkpoints,effects:this.state.effects,inputs:this.state.inputs});
   }
 }
