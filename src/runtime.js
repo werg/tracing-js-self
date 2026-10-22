@@ -250,6 +250,9 @@ export class Runtime {
           const v=pop(),key=pop(),base=pop(),property=valueKey(key.value);
           if(base.value[0]!=='ref'||!s.heap[base.value[1]]||s.heap[base.value[1]].kind==='function')throw new TypeError('Not a writable guest object');
           const obj=s.heap[base.value[1]];
+          if(this.entrySpec && obj.kind==='array' && arrayIndex(property) &&
+             Number(property)>decode(obj.properties.length.value))
+            throw new TypeError('Sparse array writes are outside training-js/1');
           obj.propertyVersions ??= {};
           obj.shapeVersion ??= 0;
           putOwn(obj,property,v.value,eventId);
