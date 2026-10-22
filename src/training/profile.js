@@ -59,8 +59,8 @@ export function parseTraining(source) {
         })};
       case 'AssignmentExpression':
         if(!['=','+=','-='].includes(n.operator) ||
-           !['Identifier','Member'].includes(n.left.type) ||
-           (n.left.type==='Member' && n.operator!=='='))
+           !['Identifier','MemberExpression'].includes(n.left.type) ||
+           (n.left.type==='MemberExpression' && n.operator!=='='))
           reject(n,'assignment form');
         return {...loc,type:'Assign',operator:n.operator,left:expr(n.left),right:expr(n.right)};
       default:reject(n,n.type);
