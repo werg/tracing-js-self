@@ -5,12 +5,30 @@
   "browserComplete": false,
   "nodeComplete": false,
   "parser": "in-repository bounded-pratt/1",
-  "frontendOptions": {"goal":"script","automaticSemicolonInsertion":false},
+  "frontendOptions": {
+    "goal": "script",
+    "automaticSemicolonInsertion": false
+  },
   "runtimeMinimum": "Node.js 20",
-  "mockOperations": ["demo.readAsync","demo.readNumber","demo.store"],
+  "mockOperations": [
+    "demo.readAsync",
+    "demo.readNumber",
+    "demo.store"
+  ],
   "normativePublicationTarget": "ECMA-262 2026 (not yet implemented)",
   "unicodeDataRevision": null,
   "hostBuildPin": null,
-  "conformanceSuiteRevisions": {},
-  "releaseEligibility": false
+  "conformanceSuiteRevisions": {
+    "test262": "d53ebc8b1931d9f1541e43d59650776e4b766248"
+  },
+  "releaseEligibility": false,
+  "referenceEngine": {
+    "name": "engine262",
+    "role": "isolated-untraced-oracle-only",
+    "npmPackage": "@engine262/engine262",
+    "npmVersion": "0.0.1-2d7d8d988c77e94473ba0377122cdfccdfe243ba",
+    "upstreamCommit": "2d7d8d988c77e94473ba0377122cdfccdfe243ba",
+    "ciNodeMajor": 24,
+    "eligibleForOwnedMachineReplacement": false
+  }
 }
