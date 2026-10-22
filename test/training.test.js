@@ -35,7 +35,7 @@ test('identity, aliasing, loops, function calls and closures survive the referen
   verified('function f(x){function g(y){return x+y;}return g(3);}','f',[9]);
   verified('function f(x){return typeof x;}','f',[{a:1}]);
   verified('function f(){return typeof f;}','f');
-  verified('function f(x){return x?1:2;}','f',[1]);
+  verified('function f(x){if(x)return 1;return 2;}','f',[1]);
 });
 test('cycles in input graph and returned aliases are preserved',()=>{
   const obj={a:1};obj.self=obj;
