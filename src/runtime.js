@@ -83,7 +83,7 @@ function putOwn(obj,key,value,eventId) {
   }
   const existed = Object.hasOwn(obj.properties,key);
   Object.defineProperty(obj.properties,key,{value:token(value,eventId),enumerable:true,configurable:true,writable:true});
-  obj.propertyVersions[key] = (obj.propertyVersions[key] ?? 0) + 1;
+  obj.propertyVersions[key] = (Object.hasOwn(obj.propertyVersions,key) ? obj.propertyVersions[key] : 0) + 1;
   if (!existed) obj.shapeVersion++;
   if (obj.kind === 'array' && arrayIndex(key) && Number(key) >= decode(obj.properties.length.value)) {
     obj.properties.length = token(['num',Number(key)+1],eventId);
@@ -467,7 +467,7 @@ export class Runtime {
           const output=op==='GET_METHOD'?['method',v,base.value]:v;
           const obj=base.value[0]==='ref'?s.heap[base.value[1]]:null;
            return {...operands(base,key),...result(output),reads:obj?[{kind:'property',
-             objectId:obj.id,key:property,version:obj.propertyVersions?.[property]??0,
+             objectId:obj.id,key:property,version:Object.hasOwn(obj.propertyVersions??{},property)?obj.propertyVersions[property]:0,
              shapeVersion:obj.shapeVersion??0,present:Object.hasOwn(obj.properties,property),
              value:v,supplyingEvent:obj.properties[property]?.origin??null}]:[]};
         }
