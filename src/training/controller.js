@@ -3,6 +3,7 @@
 // It validates and commits only explicitly generated records and observations.
 import {isDeepStrictEqual} from 'node:util';
 import {decodeRecord,restoreLines} from './format.js';
+import {decode} from '../values.js';
 
 const same=(a,b)=>isDeepStrictEqual(a,b);
 const copy=value=>structuredClone(value);
