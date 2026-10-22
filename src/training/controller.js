@@ -91,16 +91,22 @@ export class SemanticController {
       if(fields.id!==this.open.id || track!==this.open.track || mode!==this.open.mode)
         fail('fragment','Value fragment is not a contiguous same-lane group');
       if(kind==='value-part'){
+        if(typeof fields.data!=='string' || !fields.data.length)
+          fail('fragment','Invalid empty or non-string fragment payload');
         this.open.parts.push(fields.data);
         this.history.push({mode,track,record:line});
         return {status:'fragment'};
       }
       if(kind!=='value-close')fail('fragment','Open value interrupted');
+      if(!this.open.parts.length)fail('fragment','Empty fragmented record');
       const completed=decodeRecord(this.open.parts.join(''));
+      if(this.open.id!==(completed.fields.id??('record:'+completed.kind)))
+        fail('fragment','Fragment identity disagrees with reconstructed record');
       this.open=null;
       this.#apply(completed.kind,completed.fields,mode,track);
     } else if(kind==='value-open') {
-      if(typeof fields.id!=='string')fail('fragment','Unnamed fragmented value');
+      if(typeof fields.id!=='string' || !fields.id || fields.type!=='semantic-record')
+        fail('fragment','Invalid fragmented record identity or type');
       this.open={id:fields.id,parts:[],track,mode};
       this.history.push({mode,track,record:line});
       return {status:'fragment'};
