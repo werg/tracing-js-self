@@ -69,30 +69,33 @@ export function unavailableFeatures(meta, source) {
 }
 
 export function runOwnedScript(source) {
-  try { compile(parse(source)); }
+  let ast;
+  try { ast = parse(source); }
   catch (error) {
-    if (error instanceof SyntaxError) {
-      // Early syntax rejection and unsupported compilation are distinct; a
-      // compiler rejection must not be counted as a passing Test262 parse error.
-      try { parse(source); }
-      catch (parseError) { return {phase:'parse',errorName:parseError.name,message:parseError.message}; }
-      return {phase:'compile',errorName:error.name,message:error.message};
-    }
-    throw error;
+    if (!(error instanceof SyntaxError)) throw error;
+    return {phase:'parse',errorName:error.name,message:error.message};
+  }
+  try { compile(ast); }
+  catch (error) {
+    if (!(error instanceof SyntaxError)) throw error;
+    // A compiler limitation is not a passing Test262 parse-negative case.
+    return {phase:'compile',errorName:error.name,message:error.message};
   }
   const runtime = createRuntime().start(source);
-  try {
-    const progress = runtime.drive();
-    if (progress.kind !== 'terminated') return {phase:'incomplete',status:progress.kind};
-    const bundle = runtime.exportRun();
-    validateBundle(bundle);
-    replayExact(bundle);
-    return {phase:'normal'};
-  } catch (error) {
-    // The bounded VM does not have a complete guest exception lifecycle;
-    // a host-side thrown interpreter error is only a diagnostic observation.
+  let progress;
+  try { progress = runtime.drive(); }
+  catch (error) {
+    // A host-side interpreter error is only a diagnostic observation, not a
+    // fully owned guest exception/completion record.
     return {phase:'runtime',errorName:error.name,message:error.message};
   }
+  if (progress.kind !== 'terminated') return {phase:'incomplete',status:progress.kind};
+  const bundle = runtime.exportRun();
+  // Validation/replay failures are HARNESS failures and must never be masked
+  // as ordinary guest runtime outcomes or expected Test262 failures.
+  validateBundle(bundle);
+  replayExact(bundle);
+  return {phase:'normal'};
 }
 
 export function matchesTest262Expectation(actual, negative) {
