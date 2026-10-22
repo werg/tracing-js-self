@@ -122,7 +122,6 @@ export function validateHostJournal(bundle, fail) {
           fx.before?.dispatch !== 'dispatched' ||
           fx.before?.external !== 'pending' ||
           !fx.before.inputIds?.includes(inputId) ||
-          (fx.before.kind === 'promise' && p.before.abrupt) ||
           !changedOnly(fx.before, fx.after, {
             external: p.before.abrupt ? 'rejected' : 'completed',
             ...(fx.before.kind === 'synchronous' ? { immediate: 'completed' } : {})
