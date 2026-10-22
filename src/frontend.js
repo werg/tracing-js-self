@@ -74,6 +74,7 @@ export function parse(source) {
     const x = take();
     if (x.kind === 'literal') return {type:'Literal',value:encode(x.value),raw:x.raw,start:x.start,end:x.end};
     if (x.value === 'true' || x.value === 'false' || x.value === 'null') return {type:'Literal',value:encode(x.value === 'true'?true:x.value === 'false'?false:null),raw:x.value,start:x.start,end:x.end};
+    if (x.value === 'this') return {type:'This',start:x.start,end:x.end};
     if (x.value === 'await') return {type:'Await',argument:expression(8),start:x.start,end:t[p-1].end};
     if (['!','-','+','typeof'].includes(x.value)) return {type:'Unary',operator:x.value,argument:expression(8),start:x.start,end:t[p-1].end};
     if (x.value === '(') { const e = expression(); need(')'); return {...e,parenthesized:true}; }
@@ -151,6 +152,7 @@ export function compile(ast) {
       switch(n.type){
         case 'Literal': emit('CONST',{value:n.value,raw:n.raw},n);break;
         case 'Identifier':emit('GET',n.name,n);break;
+        case 'This':emit('THIS',null,n);break;
         case 'Unary':expr(n.argument);emit('UNARY',n.operator,n);break;
         case 'Await':expr(n.argument);emit('AWAIT',null,n);break;
         case 'Binary':
