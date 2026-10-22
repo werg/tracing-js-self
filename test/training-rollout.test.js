@@ -57,3 +57,14 @@ test('a wrong shared read reports invalid output at the first inconsistent seman
   assert.equal(result.invalid.index,index);
   assert.equal(result.completion,null);
 });
+
+test('new selected references must be explicitly allocated before any return',()=>{
+  const archive=make('function f(x){return x+1;}',[4]);
+  const selected=structuredClone(archive.public.groups);
+  const row=selected.find(g=>g.mode==='generated' && g.events[0].record.startsWith('return '));
+  const payload=decodeRecord(row.events[0].record);
+  row.events[0].record=encodeRecord('return',{...payload.fields,result:['ref','unallocated']});
+  const result=evaluateSelectedTrajectory({groups:selected,referenceGroups:archive.public.groups});
+  assert.equal(result.valid,false);
+  assert.equal(result.invalid.category,'identity');
+});
