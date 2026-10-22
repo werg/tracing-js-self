@@ -390,7 +390,10 @@ export class Runtime {
       // The adapter receives only a frozen, fully materialized JSON tree;
       // guest reference handles are retained solely in the private journal.
       const args=freezeJson(JSON.parse(e.request.payload));
-      outcome=adapter({effectId,operation:e.operation,args,request:copy(e.request)});
+      const {schema,operation,signature,codec,payload,byteLength}=e.request;
+      // Archive-only graph-version identities must not escape to the adapter.
+      const request=Object.freeze({schema,operation,signature,codec,payload,byteLength});
+      outcome=adapter({effectId,operation:e.operation,args,request});
     }
     catch(error){outcome={kind:'throw',value:encode(String(error?.message??error))};}
     if(outcome && typeof outcome.then==='function')throw new TypeError('Adapters must publish asynchronous results via recordInputArrival, not native promises');
