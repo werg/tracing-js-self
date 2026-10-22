@@ -26,8 +26,9 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
       if(origin && !seen.has(origin))fail('Missing or future operand producer',e.eventId);
     }
     const patched=new Set();
-    if(e.completion && !['spec.operation.complete','completion.throw','external.input.deliver'].includes(e.operation))
-      fail('Completion metadata without a completion operation',e.eventId);
+    if(e.completion && !['spec.operation.complete','completion.throw','external.input.deliver',
+      'job.enter','binding.read','binding.write','property.read','property.write','call.enter'].includes(e.operation))
+      fail('Completion metadata without an owned completion operation',e.eventId);
     validateSpecEvent(state,e,fail);
     for(const p of e.stateChanges) {
       if(patched.has(`${p.table}:${p.id}`))fail('Double application of mutation',e.eventId);
@@ -56,25 +57,37 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
       const delivered=e.operation==='external.input.deliver'
         ? state.inputs[e.causes.find(c=>c.kind==='input')?.inputId] : null;
       const hostThrow=delivered?.abrupt && state.effects[delivered.effectId]?.kind==='synchronous';
-      if(e.operation==='completion.throw'||hostThrow) {
-        if(e.completion?.type!=='throw')fail('Missing guest throw completion',e.eventId);
-        const value=e.completion.value;
-        if(hostThrow ? !eq(value,{value:delivered.value,origin:e.eventId}) :
-            !eq(e.operands,[value?.value]) || !eq(e.operandOrigins,[value?.origin]))
-          fail('Throw completion value/provenance mismatch',e.eventId);
+      const c=e.completion;
+      if(e.operation==='completion.throw'||hostThrow||c) {
+        if(c?.type!=='throw')fail('Missing guest throw completion',e.eventId);
+        if(e.operation==='completion.throw'||hostThrow){
+          if(hostThrow ? !eq(c.value,{value:delivered.value,origin:e.eventId}) :
+             !eq(e.operands,[c.value?.value]) || !eq(e.operandOrigins,[c.value?.origin]))
+            fail('Throw completion value/provenance mismatch',e.eventId);
+        }else if(e.operation==='job.enter'){
+          const p=state.promises[e.causes.find(x=>x.kind==='promise')?.promiseId];
+          if(p?.status!=='rejected'||!eq(c.value,p.value)||
+             !eq(e.result,p.value.value))
+            fail('Awaited rejection reason/provenance mismatch',e.eventId);
+        }else if(e.operation!=='spec.operation.complete'){
+          if(!['ReferenceError','TypeError','RangeError'].includes(c.errorType) ||
+             typeof c.message!=='string'||c.origin!==e.eventId)
+            fail('Invalid classified guest exception',e.eventId);
+        }
         if(state.control.a0.status==='failed'){
           const failure=state.control.a0.failure,frame=state.frames[failure?.frameId];
-          if(!eq(failure?.completion,e.completion)||!eq(frame?.completion,e.completion)||
+          if(!eq(failure?.completion,c)||!eq(frame?.completion,c)||
              frame?.status!=='thrown'||state.control.a0.activeFrameId!==null)
             fail('Unowned terminal throw completion',e.eventId);
         }else{
           const active=state.frames[state.control.a0.activeFrameId];
-          if(state.control.a0.status!=='running'||active?.status!=='running'||
-            !active.handlers?.some(h=>h.phase==='catch'||h.phase==='finally'))
-            fail('Guest throw was not routed to a handler',e.eventId);
+          const rejection=Object.values(state.frames).some(f=>f.status==='thrown'&&f.asyncPromiseId&&
+            eq(f.completion,c)&&state.promises[f.asyncPromiseId]?.status==='rejected');
+          if(!rejection&&(state.control.a0.status!=='running'||active?.status!=='running'||
+             !active.handlers?.some(h=>h.phase==='catch'||h.phase==='finally')))
+            fail('Guest throw was not routed to a handler or async rejection',e.eventId);
         }
-      } else if(e.operation==='external.input.deliver'&&e.completion)
-        fail('Unexpected host completion metadata',e.eventId);
+      }
     }
     seen.add(e.eventId);
     if(throughEventId===e.eventId)return state;
