@@ -2,6 +2,41 @@
   "schema": "coverage-ledger/1",
   "fullTargetStatus": "NOT IMPLEMENTED",
   "profile": "bounded-js-subset/1",
-  "implemented": ["basic script parsing", "primitive literals and arithmetic", "lexical bindings with TDZ on reads", "closures via captured environments", "guest synchronous functions", "guest async functions with simple await", "objects and arrays with data properties", "selected promise resolve and job scheduling", "demo external promise and synchronous effects", "separate host arrival and delivery", "semantic journal and reconstructible mutations", "aggregate chunks across internal await", "bounded causal interleaved export", "deterministic bounded-interpreter replay against recorded external inputs (no host adapters)"],
-  "missingRequiredFamilies": ["full grammar/Annex B/early errors", "full language/exotic objects/Proxy", "full standard library and ECMA-402", "module resolution/eval/dynamic source", "browser interception/Web IDL", "Node builtin and native addon ABI", "real event-loop and host lifecycle integration", "real native representative/backing-store coherence", "multi-agent shared memory and Atomics", "weak references and GC", "live-resource restore, native replay and independent specification-level semantic replay", "complete normative operation catalog", "full transitive visibility validation", "Test262/WPT/Node application acceptance", "learning evaluation"]
+  "implemented": [
+    "basic script parsing",
+    "primitive literals and arithmetic",
+    "lexical bindings with TDZ on reads",
+    "closures via captured environments",
+    "guest synchronous functions",
+    "guest async functions with simple await",
+    "objects and arrays with data properties",
+    "selected promise resolve and job scheduling",
+    "demo external promise and synchronous effects",
+    "separate host arrival and delivery",
+    "semantic journal and reconstructible mutations",
+    "aggregate chunks across internal await",
+    "bounded causal interleaved export",
+    "deterministic bounded-interpreter replay against recorded external inputs (no host adapters)",
+    "pinned, untraced engine262 oracle with pure scalar differential fixtures",
+    "14-file official Test262 script syntax-only baseline with Git blob verification"
+  ],
+  "missingRequiredFamilies": [
+    "full grammar/Annex B/early errors",
+    "full language/exotic objects/Proxy",
+    "full standard library and ECMA-402",
+    "module resolution/eval/dynamic source",
+    "browser interception/Web IDL",
+    "Node builtin and native addon ABI",
+    "real event-loop and host lifecycle integration",
+    "real native representative/backing-store coherence",
+    "multi-agent shared memory and Atomics",
+    "weak references and GC",
+    "live-resource restore, native replay and independent specification-level semantic replay",
+    "complete normative operation catalog",
+    "full transitive visibility validation",
+    "Test262/WPT/Node application acceptance",
+    "learning evaluation",
+    "spec-backed fully owned engine262 phases/serializable interpreter continuations and clause/intrinsic mapping",
+    "full Test262 harness semantics, execution and conformance reports"
+  ]
 }
