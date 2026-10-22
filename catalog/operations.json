@@ -233,6 +233,11 @@
       "operationId": "spec.internal.return",
       "version": 1,
       "kind": "owned-spec-phase"
+    },
+    {
+      "operationId": "proxy.allocate",
+      "version": 1,
+      "kind": "algorithm"
     }
   ]
 }
