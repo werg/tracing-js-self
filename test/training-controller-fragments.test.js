@@ -24,3 +24,20 @@ test('serving controller rejects empty, invalid-type and non-string fragments',(
   assert.throws(()=>c.commitGenerated(part('e1','')),e=>e.category==='fragment');
   assert.throws(()=>c.commitGenerated(close('e1')),e=>e.category==='fragment');
 });
+
+test('failed generated fragment does not consume model event budget',()=>{
+  const c=new SemanticController(context,{maxGenerated:2});
+  c.commitGenerated(open('e1'));
+  assert.throws(()=>c.commitGenerated(part('e1','')),e=>e.category==='fragment');
+  assert.equal(c.generated,1);
+  c.commitGenerated(part('e1',encodeRecord('value',{id:'e1',result:['num',1]})));
+  assert.equal(c.generated,2);
+  assert.throws(()=>c.commitGenerated(close('e1')),e=>e.category==='profile_limit');
+});
+
+test('serving controller rejects nested record envelopes',()=>{
+  const c=new SemanticController(context);
+  c.commitGenerated(open('e1'));
+  c.commitGenerated(part('e1',open('e1')));
+  assert.throws(()=>c.commitGenerated(close('e1')),e=>e.category==='fragment');
+});

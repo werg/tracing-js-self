@@ -85,7 +85,7 @@ export class SemanticController {
     if(this.completion)fail('completion','No events may follow committed end');
     const {kind,fields}=decodeRecord(line);
     const generated=mode==='generated';
-    if(generated && ++this.generated>this.maxGenerated)
+    if(generated && this.generated>=this.maxGenerated)
       fail('profile_limit','Segment generated event budget exceeded');
     if(this.open){
       if(fields.id!==this.open.id || track!==this.open.track || mode!==this.open.mode)
@@ -94,6 +94,7 @@ export class SemanticController {
         if(typeof fields.data!=='string' || !fields.data.length)
           fail('fragment','Invalid empty or non-string fragment payload');
         this.open.parts.push(fields.data);
+        if(generated)this.generated++;
         this.history.push({mode,track,record:line});
         return {status:'fragment'};
       }
@@ -102,12 +103,15 @@ export class SemanticController {
       const completed=decodeRecord(this.open.parts.join(''));
       if(this.open.id!==(completed.fields.id??('record:'+completed.kind)))
         fail('fragment','Fragment identity disagrees with reconstructed record');
+      if(['value-open','value-part','value-close'].includes(completed.kind))
+        fail('fragment','Nested fragmented records are not permitted');
       this.open=null;
       this.#apply(completed.kind,completed.fields,mode,track);
     } else if(kind==='value-open') {
       if(typeof fields.id!=='string' || !fields.id || fields.type!=='semantic-record')
         fail('fragment','Invalid fragmented record identity or type');
       this.open={id:fields.id,parts:[],track,mode};
+      if(generated)this.generated++;
       this.history.push({mode,track,record:line});
       return {status:'fragment'};
     } else {
@@ -115,6 +119,7 @@ export class SemanticController {
         fail('fragment','Unexpected value piece');
       this.#apply(kind,fields,mode,track);
     }
+    if(generated)this.generated++;
     this.history.push({mode,track,record:line});
     if(!generated)this.observed++;
     return {status:this.completion?'completed':'committed'};
