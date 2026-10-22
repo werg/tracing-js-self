@@ -64,7 +64,6 @@ test('unregistered external argument forms fail before creating or dispatching a
   const code=[
     'host.store("k",undefined);',
     'host.store("k",-0);',
-    'host.store("k",NaN);',
     'let a={};a.self=a;host.store("k",a);',
     'let a={x:1};host.store("k",[a,a]);',
     'host.readAsync(3);',
@@ -93,4 +92,13 @@ test('external method contracts prevent extra or mistyped arguments',()=>{
     assert.throws(()=>runtime.drive(),/expects|operation key/);
     assert.equal(Object.keys(runtime.state.effects).length,0);
   }
+});
+
+test('unknown global NaN is a guest ReferenceError without dispatch',()=>{
+  const r=createRuntime().start('host.store("k",NaN);');
+  assert.equal(r.drive().kind,'runtime.failure');
+  assert.equal(r.state.control.a0.failure.completion.errorType,'ReferenceError');
+  assert.equal(Object.keys(r.state.effects).length,0);
+  const b=JSON.parse(JSON.stringify(r.exportRun()));
+  assert(validateBundle(b).valid);assert(replayExact(b).valid);
 });
