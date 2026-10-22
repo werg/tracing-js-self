@@ -16,8 +16,9 @@ const guestValue = (x) => Array.isArray(x) && (
   (x.length === 2 && (
     (x[0] === 'bool' && typeof x[1] === 'boolean') ||
     (x[0] === 'str' && typeof x[1] === 'string') ||
-    (x[0] === 'bigint' && typeof x[1] === 'string' && /^-?(0|[1-9]\d*)$/.test(x[1])) ||
-    (x[0] === 'num' && (typeof x[1] === 'number' || ['-0','NaN','+Infinity','-Infinity'].includes(x[1])))
+    (x[0] === 'bigint' && typeof x[1] === 'string' && /^(0|-?[1-9]\d*)$/.test(x[1])) ||
+    (x[0] === 'num' && ((typeof x[1] === 'number' && Number.isFinite(x[1]) && !Object.is(x[1], -0)) ||
+      ['-0','NaN','+Infinity','-Infinity'].includes(x[1])))
   ))
 );
 function lookup(draft, envId, name) {
