@@ -87,3 +87,23 @@ test('prototype-dangerous own keys still have deterministic property history',()
   assert.equal(obj.propertyVersions.toString,1);
   assert.equal(obj.propertyVersions.constructor,1);
 });
+
+test('async conversion methods are refused before starting an unowned continuation',()=>{
+  const {r,archive}=verify(`async function convert(){await Promise.resolve(1);return 2;}
+    let object={valueOf:convert};let result=object+3;`,'unsupported');
+  assert.equal(r.state.control.a0.failure.completion.feature,'AsyncToPrimitive');
+  assert.equal(Object.keys(r.state.promises).length,0);
+  assert(!archive.events.some(e=>e.operation==='async.await'));
+});
+
+test('structural validator rejects conversion child with a forged this receiver',()=>{
+  const {archive}=verify(`function convert(){return 7;}
+    let object={valueOf:convert};let result=object+1;`);
+  const tampered=wire(archive);
+  const evt=tampered.events.find(e=>e.operation==='spec.internal.call'&&
+    e.stateChanges.some(p=>p.table==='frames'&&p.before===null));
+  assert(evt);
+  const frame=evt.stateChanges.find(p=>p.table==='frames'&&p.before===null).after;
+  frame.thisValue=['undefined'];
+  assert.throws(()=>validateBundle(tampered),/Unowned guest method call/);
+});
