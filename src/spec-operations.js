@@ -76,6 +76,9 @@ export function ordinaryGet(heap, receiver, name) {
   for(;;){
     if(visited.has(current.id))return null;
     visited.add(current.id);
+    // Accessor [[Get]] needs a guest callback continuation, never silently
+    // skip a getter and fall back to an inherited/default conversion method.
+    if(Object.hasOwn(current.accessors??{},name))return null;
     if(Object.hasOwn(current.properties,name)){
       const method=current.properties[name];
       if(!method||!Array.isArray(method.value))return null;
