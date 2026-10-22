@@ -1,0 +1,128 @@
+// Structural host-input authority checks over archived mutations only.
+// Does not import or invoke the runtime, replay guest code, or claim native/spec correctness.
+import { isDeepStrictEqual } from 'node:util';
+
+export function validateHostJournal(bundle, fail) {
+  const dispatched = new Set();
+  const created = new Set();
+  const arrived = new Map(); // input ID -> effect ID
+  const inputForEffect = new Map(); // bounded profile: one input per effect
+  const delivered = new Set();
+
+  function patches(event, table) {
+    return event.stateChanges.filter(p => p.table === table);
+  }
+  function onlyPatch(event, list, id, label) {
+    if (list.length !== 1 || list[0].id !== id)
+      fail(`Expected one ${label} mutation`, event.eventId);
+    return list[0];
+  }
+  function cause(event, kind, key) {
+    const matches = event.causes.filter(c => c.kind === kind);
+    const value = matches[0]?.[key];
+    if (matches.length !== 1 || typeof value !== 'string' || !value)
+      fail(`Missing or ambiguous ${kind} cause`, event.eventId);
+    return value;
+  }
+  function changedOnly(before, after, changes) {
+    return before && after && isDeepStrictEqual(after, {
+      ...before, ...changes, version: before.version + 1
+    });
+  }
+
+  for (const event of bundle.events) {
+    const effects = patches(event, 'effects');
+    const inputs = patches(event, 'inputs');
+
+    if (event.operation === 'call.enter') {
+      if (inputs.length || effects.length > 1)
+        fail('Unexpected host mutations during call', event.eventId);
+      if (!effects.length) {
+        if (event.causes.some(c => c.kind === 'effect'))
+          fail('Effect cause without effect creation', event.eventId);
+        continue;
+      }
+      const p = effects[0];
+      if (p.before !== null || !p.after || p.after.id !== p.id ||
+          p.after.dispatch !== 'prepared' || p.after.external !== 'pending' ||
+          !Array.isArray(p.after.inputIds) || p.after.inputIds.length ||
+          !['promise', 'synchronous'].includes(p.after.kind) ||
+          cause(event, 'effect', 'effectId') !== p.id || created.has(p.id))
+        fail('Malformed effect creation', event.eventId);
+      created.add(p.id);
+      continue;
+    }
+
+    if (event.operation === 'effect.dispatch') {
+      const id = cause(event, 'effect', 'effectId');
+      const p = onlyPatch(event, effects, id, 'dispatch');
+      if (inputs.length || !created.has(id) || dispatched.has(id) ||
+          p.before?.dispatch !== 'prepared' || p.before?.external !== 'pending' ||
+          !changedOnly(p.before, p.after, { dispatch: 'dispatched' }))
+        fail('Invalid dispatch transition', event.eventId);
+      dispatched.add(id);
+      continue;
+    }
+
+    if (event.operation === 'external.input.arrive') {
+      const effectId = cause(event, 'effect', 'effectId');
+      const p = onlyPatch(event, inputs, inputs[0]?.id, 'input creation');
+      const fx = onlyPatch(event, effects, effectId, 'arrival effect');
+      if (!dispatched.has(effectId) || inputForEffect.has(effectId) ||
+          p.before !== null || p.after?.id !== p.id ||
+          p.after?.effectId !== effectId || p.after.status !== 'arrived' ||
+          typeof p.after.abrupt !== 'boolean' || !Array.isArray(p.after.value) ||
+          arrived.has(p.id) || fx.before?.dispatch !== 'dispatched' ||
+          fx.before?.external !== 'pending' ||
+          p.after.kind !== (fx.before.kind === 'promise' ? 'completion' : 'immediate') ||
+          !Array.isArray(fx.before.inputIds) ||
+          !changedOnly(fx.before, fx.after, { inputIds: [...fx.before.inputIds, p.id] }))
+        fail('Invalid host arrival linkage', event.eventId);
+      arrived.set(p.id, effectId);
+      inputForEffect.set(effectId, p.id);
+      continue;
+    }
+
+    if (event.operation === 'external.input.deliver') {
+      const inputId = cause(event, 'input', 'inputId');
+      const effectId = cause(event, 'effect', 'effectId');
+      const p = onlyPatch(event, inputs, inputId, 'input delivery');
+      const fx = onlyPatch(event, effects, effectId, 'delivery effect');
+      if (arrived.get(inputId) !== effectId || delivered.has(inputId) ||
+          p.before?.id !== inputId || p.before?.effectId !== effectId ||
+          p.before?.status !== 'arrived' ||
+          !changedOnly(p.before, p.after, { status: 'delivered' }) ||
+          fx.before?.dispatch !== 'dispatched' ||
+          fx.before?.external !== 'pending' ||
+          !fx.before.inputIds?.includes(inputId) ||
+          (fx.before.kind === 'promise' && p.before.abrupt) ||
+          !changedOnly(fx.before, fx.after, {
+            external: p.before.abrupt ? 'rejected' : 'completed',
+            ...(fx.before.kind === 'synchronous' ? { immediate: 'completed' } : {})
+          }) ||
+          !isDeepStrictEqual(event.result, p.before.value))
+        fail('Invalid host delivery transition', event.eventId);
+      delivered.add(inputId);
+      continue;
+    }
+
+    if (effects.length || inputs.length)
+      fail('Host records changed outside lifecycle operation', event.eventId);
+  }
+
+  for (const fx of Object.values(bundle.effects)) {
+    if (!created.has(fx.id) ||
+        (fx.dispatch === 'dispatched' && !dispatched.has(fx.id)) ||
+        !['prepared', 'dispatched'].includes(fx.dispatch) ||
+        !Array.isArray(fx.inputIds) || fx.inputIds.length > 1 ||
+        fx.inputIds.some(id => arrived.get(id) !== fx.id) ||
+        (fx.external !== 'pending' && !fx.inputIds.some(id => delivered.has(id))))
+      fail(`Effect ${fx.id} lifecycle is not journaled`);
+  }
+  for (const input of Object.values(bundle.inputs)) {
+    if (arrived.get(input.id) !== input.effectId ||
+        !['arrived', 'delivered'].includes(input.status) ||
+        (input.status === 'delivered') !== delivered.has(input.id))
+      fail(`Input ${input.id} lifecycle is not journaled`);
+  }
+}
