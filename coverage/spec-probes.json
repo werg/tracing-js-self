@@ -1,0 +1,102 @@
+{
+  "schema": "bounded-spec-differential-probes/1",
+  "description": "Pure source probes; both engines must independently match pinned scalar result and the bounded trace must reconstruct and replay",
+  "cases": [
+    {
+      "id": "operator-precedence",
+      "source": "let result = 2 + 3 * 4;",
+      "expected": [
+        "num",
+        14
+      ]
+    },
+    {
+      "id": "lexical-closure",
+      "source": "let value = 7; function add(n) { return value + n; } let result = add(4);",
+      "expected": [
+        "num",
+        11
+      ]
+    },
+    {
+      "id": "loop-and-mutation",
+      "source": "let total = 0; let i = 0; while (i < 4) { total += i; i += 1; } let result = total;",
+      "expected": [
+        "num",
+        6
+      ]
+    },
+    {
+      "id": "object-aliasing",
+      "source": "let obj = {n: 2}; let alias = obj; alias.n = 7; let result = obj.n;",
+      "expected": [
+        "num",
+        7
+      ]
+    },
+    {
+      "id": "array-length",
+      "source": "let xs = [4, 5]; xs[2] = 6; let result = xs.length;",
+      "expected": [
+        "num",
+        3
+      ]
+    },
+    {
+      "id": "nan",
+      "source": "let result = 0 / 0;",
+      "expected": [
+        "num",
+        "NaN"
+      ]
+    },
+    {
+      "id": "negative-zero",
+      "source": "let result = -0;",
+      "expected": [
+        "num",
+        "-0"
+      ]
+    },
+    {
+      "id": "bigint-arithmetic",
+      "source": "let result = 9007199254740993n + 2n;",
+      "expected": [
+        "bigint",
+        "9007199254740995"
+      ]
+    },
+    {
+      "id": "string-concatenation",
+      "source": "let result = 'hello ' + 9;",
+      "expected": [
+        "str",
+        "hello 9"
+      ]
+    },
+    {
+      "id": "logical-and",
+      "source": "let x = 1; let result = false && (x = 99);",
+      "expected": [
+        "bool",
+        false
+      ]
+    },
+    {
+      "id": "nullish-coalescing",
+      "source": "let result = null ?? 12;",
+      "expected": [
+        "num",
+        12
+      ]
+    },
+    {
+      "id": "abstract-primitive-equality",
+      "source": "let result = 0 == false;",
+      "expected": [
+        "bool",
+        true
+      ]
+    }
+  ]
+}
