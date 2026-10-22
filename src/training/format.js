@@ -32,7 +32,7 @@ export function semanticLine(row) {
     ...(reads.length?{reads}:{}),
     ...(writes.length?{writes}:{}),
     ...(row.decision!==undefined?{decision:row.decision,successor:row.successor}:{}),
-    ...(row.child?{child:row.child,code:row.code,receiver:row.receiver,arguments:row.arguments}:{}),
+    ...(row.child?{child:row.child,code:row.code,receiver:row.receiver,arguments:row.arguments,captures:row.captures}:{}),
     ...(row.allocations?{allocations:row.allocations}:{}),
     ...(row.destination?{destination:row.destination}:{}),
     ...(row.effect?{effect:row.effect,operation:row.operation??null}:{}),
