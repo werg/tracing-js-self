@@ -32,12 +32,13 @@ export class SemanticController {
     for(const obj of graph.objects??[]){
       if(this.heap.has(obj.id)||!['array','object'].includes(obj.kind))
         fail('context','Duplicate or unsupported owned input object');
-      const props=new Map();
+      const props=new Map(),versions=new Map();
       for(const entry of obj.properties??[]){
         if(props.has(entry.key))fail('context','Duplicate input property');
         props.set(entry.key,{value:copy(entry.value),version:entry.version});
+        versions.set(entry.key,entry.version);
       }
-      this.heap.set(obj.id,{kind:obj.kind,shapeVersion:obj.shapeVersion,properties:props});
+      this.heap.set(obj.id,{kind:obj.kind,shapeVersion:obj.shapeVersion,properties:props,versions});
     }
     this.cells=new Map();
     this.activations=new Map();
@@ -139,14 +140,14 @@ export class SemanticController {
     } else if(kind==='alloc'){
       for(const item of fields.allocations??[]) {
         if(this.heap.has(item.identity))fail('identity','Allocation identity already exists');
-        this.heap.set(item.identity,{kind:item.kind,shapeVersion:0,properties:new Map()});
+        this.heap.set(item.identity,{kind:item.kind,shapeVersion:0,properties:new Map(),versions:new Map()});
       }
     } else if(kind==='read') {
       for(const read of fields.reads??[]){
         if(read.kind==='property'){
           const obj=this.heap.get(read.objectId),property=obj?.properties.get(read.key);
           if(!obj || (property!==undefined)!==read.present ||
-             (property?.version??0)!==read.version ||
+             (obj.versions.get(read.key)??0)!==read.version ||
              !same(property?.value??['undefined'],read.value))
             fail('read','First inconsistent owned property observation');
         }else if(read.kind==='binding'){
@@ -167,7 +168,7 @@ export class SemanticController {
       // Apply model-produced patches atomically. Never calculate a missing RHS.
       const cellDraft=new Map(this.cells);
       const heapDraft=new Map([...this.heap].map(([id,obj])=>[id,{
-        ...obj,properties:new Map(obj.properties)}]));
+        ...obj,properties:new Map(obj.properties),versions:new Map(obj.versions)}]));
       for(const write of fields.writes??[]){
         if(write.kind==='cell'){
           const key=write.env+':'+write.key,old=cellDraft.get(key);
@@ -177,12 +178,13 @@ export class SemanticController {
           cellDraft.set(key,{version:write.version,value:copy(write.value)});
         }else if(write.kind==='property'){
           const obj=heapDraft.get(write.object),prior=obj?.properties.get(write.key);
-          if(!obj || (prior?.version??0)!==write.oldVersion ||
+          if(!obj || (obj.versions.get(write.key)??0)!==write.oldVersion ||
              write.version!==write.oldVersion+1 ||
              obj.shapeVersion!==write.shapeBefore)
             fail('write','Stale object property or shape version');
           if(write.present)obj.properties.set(write.key,{version:write.version,value:copy(write.value)});
           else obj.properties.delete(write.key);
+          obj.versions.set(write.key,write.version);
           obj.shapeVersion=write.shapeAfter;
         }else fail('write','Unrecognized predicted mutation kind');
       }
