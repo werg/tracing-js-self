@@ -63,6 +63,21 @@ function valueKey(tagged) {
 function arrayIndex(key) {
   return /^(0|[1-9]\d*)$/.test(key) && Number(key) < 4294967295;
 }
+// Find a getter/setter in an owned prototype chain, without running native JS.
+function propertyAccessor(heap, receiver, key) {
+  let obj=heap[receiver[1]];
+  const visited=new Set();
+  while(obj && ['object','array'].includes(obj.kind)){
+    if(visited.has(obj.id))throw new Error('Cyclic owned prototype graph');
+    visited.add(obj.id);
+    if(Object.hasOwn(obj.properties,key))return null;
+    if(Object.hasOwn(obj.accessors??{},key))return obj.accessors[key];
+    const proto=objectPrototype(obj);
+    if(proto===null||proto==='Object.prototype'||proto==='Array.prototype')return null;
+    obj=heap[proto];
+  }
+  return null;
+}
 function putOwn(obj,key,value,eventId) {
   if (key === '__proto__') throw new TypeError('Prototype mutation is not implemented by the bounded profile');
   if (obj.kind === 'array' && key === 'length') {
@@ -209,7 +224,15 @@ export class Runtime {
     if(frame.asyncPromiseId){this.resolvePromise(draft,frame.asyncPromiseId,value,origin);value=['promise',frame.asyncPromiseId];}
     if(frame.reactionPromiseId)this.resolvePromise(draft,frame.reactionPromiseId,value,origin);
     if(frame.reactionJob){draft.control.a0.activeFrameId=null;return;}
-    if(frame.callerFrameId){const caller=draft.frames[frame.callerFrameId];this.stackPush(caller,value,origin);draft.control.a0.activeFrameId=caller.id;}
+    if(frame.callerFrameId){
+      const caller=draft.frames[frame.callerFrameId],pending=caller.pendingProperty;
+      if(pending?.waitingFrameId===frame.id){
+        caller.pendingProperty=null;
+        if(pending.kind==='get'&&pending.method)value=['method',value,pending.receiver];
+        if(pending.kind==='set')value=pending.value;
+      }
+      this.stackPush(caller,value,origin);draft.control.a0.activeFrameId=caller.id;
+    }
     else {draft.control.a0.activeFrameId=null;draft.control.a0.completion={kind:'return',value};
       draft.control.a0.status='completed';if(!frame.asyncPromiseId)this.result=value;}
   }
@@ -342,6 +365,7 @@ export class Runtime {
         draft.control.a0.activeFrameId=null;
       }else if(frame.callerFrameId){
         const caller=draft.frames[frame.callerFrameId];
+        if(caller.pendingProperty?.waitingFrameId===frame.id)caller.pendingProperty=null;
         draft.control.a0.activeFrameId=caller.id;
         const waiting=caller.operationId&&draft.operations[caller.operationId]?.coercion?.waitingFrameId;
         if(waiting===frame.id)caller.pendingCoercionThrow=copy(completion);
@@ -484,7 +508,7 @@ export class Runtime {
           if(base.value[0]==='host')v=['hostfn',`${base.value[1]}.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Promise' && ['resolve','reject'].includes(property))v=['builtinfn',`Promise.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' &&
-             ['create','setPrototypeOf','getPrototypeOf'].includes(property))
+             ['create','setPrototypeOf','getPrototypeOf','defineProperty'].includes(property))
             v=['builtinfn',`Object.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' && property==='prototype')
             v=['intrinsic','Object.prototype'];
@@ -497,9 +521,24 @@ export class Runtime {
            else if(base.value[0]==='ref'){
              const obj=s.heap[base.value[1]];
              if(!obj)throw new ReferenceError('Unknown guest identity');
-             const found=ordinaryGet(s.heap,base.value,property);
-             if(!found)throw new TypeError('Unmodeled ordinary [[Get]] or exotic property');
-             v=found.method.value;read=found.observation;
+             const accessor=propertyAccessor(s.heap,base.value,property);
+             if(accessor){
+               const getter=accessor.get.value;
+               if(getter[0]==='undefined')v=U;
+               else{
+                 if(!this.callableGuest(s,getter)||s.heap[getter[1]].async)
+                   throw new TypeError('Unsupported accessor getter continuation');
+                 const target=s.heap[getter[1]];
+                 const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,null,[],base.value);
+                 f.pendingProperty={kind:'get',receiver:base.value,method:op==='GET_METHOD',waitingFrameId:id};
+                 s.control.a0.activeFrameId=id;
+                 return {...operands(base,key),causes:[{kind:'invocation',frameId:id}]};
+               }
+             }else{
+               const found=ordinaryGet(s.heap,base.value,property);
+               if(!found)throw new TypeError('Unmodeled ordinary [[Get]] or exotic property');
+               v=found.method.value;read=found.observation;
+             }
            }
           else if(['null','undefined'].includes(base.value[0]))
              guestFault('TypeError',`Cannot read properties of ${base.value[0]}`);
@@ -513,6 +552,18 @@ export class Runtime {
              guestFault('TypeError',`Cannot set properties of ${base.value[0]}`);
            if(base.value[0]!=='ref'||!s.heap[base.value[1]]||s.heap[base.value[1]].kind==='function')throw new TypeError('Not a writable guest object');
           const obj=s.heap[base.value[1]];
+          const accessor=propertyAccessor(s.heap,base.value,property);
+          if(accessor){
+            const setter=accessor.set.value;
+            if(setter[0]==='undefined')return {...operands(base,key,v),...result(v.value)};
+            if(!this.callableGuest(s,setter)||s.heap[setter[1]].async)
+              throw new TypeError('Unsupported accessor setter continuation');
+            const target=s.heap[setter[1]];
+            const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,null,[v],base.value);
+            f.pendingProperty={kind:'set',value:v.value,waitingFrameId:id};
+            s.control.a0.activeFrameId=id;
+            return {...operands(base,key,v),causes:[{kind:'invocation',frameId:id}]};
+          }
           if(this.entrySpec && obj.kind==='array') {
             const oldLength=decode(obj.properties.length.value);
             if(arrayIndex(property) && Number(property)>oldLength)
@@ -550,7 +601,7 @@ export class Runtime {
              return {...operands(fn,...args),...result(['promise',promiseId]),
                causes:[{kind:'promise',promiseId:receiver[1]}]};
            }
-           if(callable[0]==='builtinfn' && ['Object.create','Object.setPrototypeOf','Object.getPrototypeOf'].includes(callable[1])){
+           if(callable[0]==='builtinfn' && ['Object.create','Object.setPrototypeOf','Object.getPrototypeOf','Object.defineProperty'].includes(callable[1])){
             const primitiveProto=v=>{
               if(v?.[0]==='null')return null;
               if(v?.[0]==='intrinsic' && ['Object.prototype','Array.prototype'].includes(v[1]))return v[1];
@@ -558,6 +609,35 @@ export class Runtime {
               guestFault('TypeError','Prototype must be null or an owned ordinary object');
             };
             const v=args[0]?.value??U, obj=v[0]==='ref'?s.heap[v[1]]:null;
+            if(callable[1]==='Object.defineProperty'){
+              if(!obj||!['object','array'].includes(obj.kind))
+                guestFault('TypeError','Object.defineProperty requires an owned ordinary object');
+              const key=args[1]?.value??U,descValue=args[2]?.value??U;
+              const name=valueKey(key),descriptor=descValue[0]==='ref'?s.heap[descValue[1]]:null;
+              if(!descriptor||!['object','array'].includes(descriptor.kind)||
+                 Object.keys(descriptor.accessors??{}).length)
+                guestFault('TypeError','Accessor descriptor must be an owned data object');
+              const d=descriptor.properties;
+              if(!Object.hasOwn(d,'get')&&!Object.hasOwn(d,'set'))
+                throw new TypeError('Only accessor descriptors are modeled');
+              if(Object.hasOwn(d,'value')||Object.hasOwn(d,'writable'))
+                guestFault('TypeError','Invalid mixed data/accessor descriptor');
+              const getter=d.get??token(U),setter=d.set??token(U);
+              for(const method of [getter,setter])
+                if(method.value[0]!=='undefined'&&!this.callableGuest(s,method.value))
+                  guestFault('TypeError','Accessor must be a guest function or undefined');
+              if((Object.hasOwn(obj.accessors??{},name)&&!obj.accessors[name].configurable)||
+                 name==='__proto__'||(obj.kind==='array'&&name==='length'))
+                throw new TypeError('Redefinition of non-configurable or reserved property is outside the profile');
+              obj.accessors??={};
+              obj.accessors[name]={get:getter,set:setter,
+                enumerable:Object.hasOwn(d,'enumerable')?truthy(d.enumerable.value):false,
+                configurable:Object.hasOwn(d,'configurable')?truthy(d.configurable.value):false};
+              delete obj.properties[name];
+              obj.propertyVersions[name]=(Object.hasOwn(obj.propertyVersions,name)?obj.propertyVersions[name]:0)+1;
+              obj.shapeVersion++;
+              return {...operands(fn,...args),...result(v)};
+            }
             if(callable[1]==='Object.create'){
               const proto=primitiveProto(v),id=this.next(s,'obj');
               s.heap[id]={id,kind:'object',prototype:proto,properties:{},propertyVersions:{},
