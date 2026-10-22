@@ -130,7 +130,7 @@ export class Runtime {
   }
   next(draft,kind) {const ids=draft.counters.ids;return `${kind==='operation'?'op':kind[0]}${++ids[kind]}`;}
   newEnv(draft,parent=null) {const id=this.next(draft,'env');draft.envs[id]={id,parent,bindings:{},version:0};return id;}
-  newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,waiters:[],adopters:[],adopting:null,version:0};return id;}
+  newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,observers:[],adopters:[],adopting:null,version:0};return id;}
   newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[],thisValue=U) {
     const id=this.next(draft,'frame'),envId=this.newEnv(draft,parentEnv);
     const params=this.programs[codeId].params;
@@ -206,17 +206,29 @@ export class Runtime {
   completeFrame(draft,frame,value,origin) {
     frame.status='completed';
     if(frame.asyncPromiseId){this.resolvePromise(draft,frame.asyncPromiseId,value,origin);value=['promise',frame.asyncPromiseId];}
+    if(frame.reactionPromiseId)this.resolvePromise(draft,frame.reactionPromiseId,value,origin);
+    if(frame.reactionJob){draft.control.a0.activeFrameId=null;return;}
     if(frame.callerFrameId){const caller=draft.frames[frame.callerFrameId];this.stackPush(caller,value,origin);draft.control.a0.activeFrameId=caller.id;}
     else {draft.control.a0.activeFrameId=null;draft.control.a0.completion={kind:'return',value};
       draft.control.a0.status='completed';if(!frame.asyncPromiseId)this.result=value;}
+  }
+  // Await and reaction jobs share ordered owned subscriptions.
+  observePromise(draft,id,observer) {
+    const p=draft.promises[id];
+    if(!p)throw new Error('Unknown guest promise');
+    if(p.status==='pending')p.observers.push(observer);
+    else draft.control.a0.queue.push({promiseId:id,...observer});
+  }
+  callableGuest(draft,value) {
+    return value?.[0]==='ref' && draft.heap[value[1]]?.kind==='function';
   }
   settlePromise(draft,id,status,value,origin) {
     const p=draft.promises[id];
     if(!p||p.status!=='pending'||p.adopting)throw new Error('Promise already settled or adopting');
     if(!['fulfilled','rejected'].includes(status))throw new Error('Invalid promise settlement');
     p.status=status;p.value=token(value,origin);
-    for(const frameId of p.waiters)draft.control.a0.queue.push({frameId,promiseId:id});
-    p.waiters=[];
+    for(const observer of p.observers)draft.control.a0.queue.push({promiseId:id,...observer});
+    p.observers=[];
     const adopters=p.adopters??[];p.adopters=[];
     for(const adoptedId of adopters) {
       const adopted=draft.promises[adoptedId];
@@ -234,9 +246,19 @@ export class Runtime {
       throw new Error('Promise already settled or adopting another promise');
     if(value[0]==='promise'){
       const target=draft.promises[value[1]];
-      if(!target||target===p)throw new TypeError('Invalid or self-resolving guest promise');
-      for(let current=target;current?.adopting;current=draft.promises[current.adopting])
-        if(current===p || current.adopting===id)throw new TypeError('Promise adoption cycle');
+      if(!target)throw new Error('Unknown guest promise');
+      let cycle=target===p;
+      const seen=new Set();
+      for(let current=target;!cycle&&current?.adopting;current=draft.promises[current.adopting]){
+        if(seen.has(current.id)||current.adopting===id)cycle=true;
+        seen.add(current.id);
+      }
+      if(cycle){
+        const reason=this.caughtError(draft,{errorType:'TypeError',
+          message:'Chaining cycle detected for promise'},origin);
+        this.rejectPromise(draft,id,reason.value,reason.origin);
+        return;
+      }
       if(target.status==='pending'){
         p.adopting=target.id;target.adopters??=[];target.adopters.push(id);return;
       }
@@ -313,6 +335,10 @@ export class Runtime {
           this.stackPush(caller,['promise',frame.asyncPromiseId],eventId);
           draft.control.a0.activeFrameId=caller.id;
         }else draft.control.a0.activeFrameId=null;
+      }else if(frame.reactionPromiseId){
+        const reason=this.caughtError(draft,completion,eventId);
+        this.rejectPromise(draft,frame.reactionPromiseId,reason.value,reason.origin);
+        draft.control.a0.activeFrameId=null;
       }else if(frame.callerFrameId){
         const caller=draft.frames[frame.callerFrameId];
         draft.control.a0.activeFrameId=caller.id;
@@ -456,7 +482,13 @@ export class Runtime {
           const key=pop(),base=pop(),property=valueKey(key.value);let v;
           if(base.value[0]==='host')v=['hostfn',`${base.value[1]}.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Promise' && ['resolve','reject'].includes(property))v=['builtinfn',`Promise.${property}`];
-          else if(base.value[0]==='ref'){
+          else if(base.value[0]==='promise'){
+             if(!s.promises[base.value[1]])throw new ReferenceError('Unknown guest promise');
+             if(!['then','catch','finally'].includes(property))
+               throw new TypeError('Unmodeled Promise prototype property: '+property);
+             v=['builtinfn','Promise.prototype.'+property];
+           }
+           else if(base.value[0]==='ref'){
              const obj=s.heap[base.value[1]];
              if(!obj)throw new ReferenceError('Unknown guest identity');
              const inherited=!Object.hasOwn(obj.properties,property);
@@ -508,7 +540,21 @@ export class Runtime {
             s.control.a0.activeFrameId=id;
             return {...operands(fn,...args),result:['ref',callable[1]],causes:[{kind:'invocation',frameId:id}]};
           }
-          if(callable[0]==='builtinfn' && ['Object.valueOf','Object.toString','Array.toString'].includes(callable[1])){
+          if(callable[0]==='builtinfn' && callable[1].startsWith('Promise.prototype.')){
+             if(receiver[0]!=='promise'||!s.promises[receiver[1]])
+               guestFault('TypeError','Promise method called on an incompatible receiver');
+             const method=callable[1].slice('Promise.prototype.'.length);
+             const promiseId=this.newPromise(s);
+             const reaction={kind:method==='finally'?'finally':'then',resultId:promiseId,
+               onFulfilled:method==='then'?(args[0]?.value??U):U,
+               onRejected:method==='catch'?(args[0]?.value??U):
+                 method==='then'?(args[1]?.value??U):U,
+               onFinally:method==='finally'?(args[0]?.value??U):U};
+             this.observePromise(s,receiver[1],{kind:'reaction',reaction});
+             return {...operands(fn,...args),...result(['promise',promiseId]),
+               causes:[{kind:'promise',promiseId:receiver[1]}]};
+           }
+           if(callable[0]==='builtinfn' && ['Object.valueOf','Object.toString','Array.toString'].includes(callable[1])){
             const v=ordinaryBuiltin(s.heap,receiver,callable[1]);
             if(v===null)throw new TypeError('Unowned builtin receiver or array coercion');
             return {...operands(fn,...args),...result(v)};
@@ -539,8 +585,7 @@ export class Runtime {
         case 'AWAIT':{
           const a=pop(),v=a.value;if(!f.asyncPromiseId)throw new SyntaxError('await outside async function');
           const promiseId=v[0]==='promise'?v[1]:this.newPromise(s,'fulfilled',a);
-          const p=s.promises[promiseId];f.awaiting=promiseId;p.waiters.push(f.id);
-          if(p.status!=='pending'){s.control.a0.queue.push({frameId:f.id,promiseId});p.waiters.pop();}
+          f.awaiting=promiseId;this.observePromise(s,promiseId,{kind:'await',frameId:f.id});
           this.suspendAsync(s,f);return {...operands(a),causes:[{kind:'promise',promiseId}]};
         }
         case 'RETURN':{const v=pop();this.routeCompletion(s,f,{type:'return',value:v},eventId);return {...operands(v),result:v.value};}
@@ -621,8 +666,47 @@ export class Runtime {
     const item=this.state.control.a0.queue[0];
     if(!item)return;
     this.commit('job.enter',(s,eventId)=>{
-      const job=s.control.a0.queue.shift(),f=s.frames[job.frameId],p=s.promises[job.promiseId];
-      if(f.status!=='suspended'||!['fulfilled','rejected'].includes(p.status))throw new Error('Invalid promise resume');
+      const job=s.control.a0.queue.shift(),p=s.promises[job.promiseId];
+      if(job.kind==='reaction'||job.kind==='finally-pass') {
+        if(!p||!['fulfilled','rejected'].includes(p.status))
+          throw new Error('Reaction job on unsettled promise');
+        const original=p.value;
+        if(job.kind==='finally-pass') {
+          if(p.status==='rejected')this.rejectPromise(s,job.resultId,original.value,original.origin);
+          else if(job.originalStatus==='rejected')
+            this.rejectPromise(s,job.resultId,job.original.value,job.original.origin);
+          else this.resolvePromise(s,job.resultId,job.original.value,job.original.origin);
+          return {causes:[{kind:'promise',promiseId:job.promiseId}],result:original.value};
+        }
+        const reaction=job.reaction,isFinally=reaction.kind==='finally';
+        const callback=isFinally?reaction.onFinally:
+          p.status==='fulfilled'?reaction.onFulfilled:reaction.onRejected;
+        if(!this.callableGuest(s,callback)){
+          if(p.status==='rejected')this.rejectPromise(s,reaction.resultId,original.value,original.origin);
+          else this.resolvePromise(s,reaction.resultId,original.value,original.origin);
+          return {causes:[{kind:'promise',promiseId:job.promiseId}],result:original.value};
+        }
+        let targetPromiseId=reaction.resultId;
+        if(isFinally){
+          // Adopt returned guest promises before preserving original outcome.
+          targetPromiseId=this.newPromise(s);
+          this.observePromise(s,targetPromiseId,{kind:'finally-pass',
+            resultId:reaction.resultId,originalStatus:p.status,original});
+        }
+        const fn=s.heap[callback[1]];
+        const args=isFinally?[]:[original];
+        const inner=fn.async?this.newPromise(s):null;
+        const id=this.newFrame(s,fn.codeId,fn.closureEnvId,null,inner,args,U);
+        const child=s.frames[id];
+        child.reactionJob=true;
+        if(inner)this.resolvePromise(s,targetPromiseId,['promise',inner],eventId);
+        else child.reactionPromiseId=targetPromiseId;
+        s.control.a0.activeFrameId=id;
+        return {causes:[{kind:'promise',promiseId:job.promiseId},
+          {kind:'invocation',frameId:id}],result:['promise',reaction.resultId]};
+      }
+      const f=s.frames[job.frameId];
+      if(job.kind!=='await'||f.status!=='suspended'||!['fulfilled','rejected'].includes(p.status))throw new Error('Invalid promise resume');
       f.status='running';f.awaiting=null;f.callerFrameId=null;
       s.control.a0.activeFrameId=f.id;
       if(p.status==='rejected'){
