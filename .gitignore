@@ -1,3 +1,7 @@
 node_modules/
 *.trace.json
 .DS_Store
+
+# Optional pinned corpus checkout and local reports
+.cache/
+test262-execution-report*.json
