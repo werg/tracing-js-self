@@ -190,17 +190,29 @@ export class Runtime {
           const key=pop(),base=pop(),property=valueKey(key.value);let v;
           if(base.value[0]==='host')v=['hostfn',`${base.value[1]}.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Promise' && property==='resolve')v=['builtinfn','Promise.resolve'];
-          else if(base.value[0]==='ref')v=s.heap[base.value[1]]?.properties[property]?.value??U;
+          else if(base.value[0]==='ref'){
+             const obj=s.heap[base.value[1]];
+             if(!obj)throw new ReferenceError('Unknown guest identity');
+             if(!Object.hasOwn(obj.properties,property) &&
+                (property in (obj.kind==='array'?Array.prototype:Object.prototype)))
+               throw new TypeError('Inherited property lookup is outside the profile');
+             v=Object.hasOwn(obj.properties,property)?obj.properties[property].value:U;
+           }
           else throw new TypeError('Unsupported property receiver (no host fallback)');
           const output=op==='GET_METHOD'?['method',v,base.value]:v;
-          return {...operands(base,key),...result(output),reads:base.value[0]==='ref'?[{kind:'property',objectId:base.value[1],key:property,version:s.heap[base.value[1]].version}]:[]};
+          const obj=base.value[0]==='ref'?s.heap[base.value[1]]:null;
+           return {...operands(base,key),...result(output),reads:obj?[{kind:'property',
+             objectId:obj.id,key:property,version:obj.propertyVersions?.[property]??0,
+             shapeVersion:obj.shapeVersion??0,present:Object.hasOwn(obj.properties,property),
+             value:v,supplyingEvent:obj.properties[property]?.origin??null}]:[]};
         }
         case 'PUT_PROP':{
           const v=pop(),key=pop(),base=pop(),property=valueKey(key.value);
           if(base.value[0]!=='ref'||!s.heap[base.value[1]]||s.heap[base.value[1]].kind==='function')throw new TypeError('Not a writable guest object');
-          if(property==='__proto__')throw new TypeError('Prototype mutation is not implemented by the bounded profile');
-          const obj=s.heap[base.value[1]];Object.defineProperty(obj.properties,property,{value:token(v.value,v.origin),writable:true,enumerable:true,configurable:true});
-          if(obj.kind==='array'&&/^\d+$/.test(property)){const length=decode(obj.properties.length.value);if(+property>=length)obj.properties.length=token(['num',+property+1],eventId);}
+          const obj=s.heap[base.value[1]];
+          obj.propertyVersions ??= {};
+          obj.shapeVersion ??= 0;
+          putOwn(obj,property,v.value,eventId);
           return {...operands(base,key,v),...result(v.value)};
         }
         case 'CALL':{
