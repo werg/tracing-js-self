@@ -66,7 +66,7 @@ export function ordinaryGet(heap, receiver, name) {
     name==='valueOf'?'Object.valueOf':
     obj.kind==='array'?'Array.toString':'Object.toString'],null);
   return {method:t,observation:{kind:'property',objectId:obj.id,key:name,
-    version:obj.propertyVersions?.[name]??0,shapeVersion:obj.shapeVersion??0,
+    version:Object.hasOwn(obj.propertyVersions??{},name)?obj.propertyVersions[name]:0,shapeVersion:obj.shapeVersion??0,
     present:own,value:t.value,supplyingEvent:t.origin??null}};
 }
 export function ordinaryBuiltin(heap, receiver, name) {
