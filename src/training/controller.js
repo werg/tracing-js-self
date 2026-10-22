@@ -69,8 +69,13 @@ export class SemanticController {
   checkValue(value) {
     if(!Array.isArray(value) || !value.length)
       fail('value','Expected a tagged guest value');
-    if(value[0]==='ref' && !this.heap.has(value[1]))
-      fail('identity','Reference was never allocated in the committed graph');
+    if(value[0]==='ref') {
+      if(value.length!==2 || typeof value[1]!=='string' || !this.heap.has(value[1]))
+        fail('identity','Reference was never allocated in the committed graph');
+    } else {
+      try { decode(value); }
+      catch { fail('value','Unknown or invalid scalar tag in selected trace'); }
+    }
   }
   commitGenerated(line,{track='t0'}={}){return this.#commit('generated',line,track);}
   commitObserved(line,{track='t0'}={}){return this.#commit('observed',line,track);}
@@ -228,6 +233,9 @@ export class SemanticController {
         fail('completion','Terminal record contradicts committed invocation outcomes');
       this.completion={kind:root.status,value:copy(root.value)};
     } else fail('profile_limit','Unknown semantic operation: '+kind);
+    if(Array.isArray(fields.result))this.checkValue(fields.result);
+    for(const write of fields.writes??[])
+      if(write.present!==false && Array.isArray(write.value))this.checkValue(write.value);
     if(fields.id)this.producers.add(fields.id);
   }
   /** Finite-context rollover. Only already committed, model-selected semantic
