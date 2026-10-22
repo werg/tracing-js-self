@@ -95,3 +95,18 @@ test('invalid Proxy constructor arguments are catchable guest TypeErrors',()=>{
   compare(`let out='';try{let proxy=new Proxy(4,{});}
     catch(e){out=e.name;}`);
 });
+
+test('accessor-based numeric coercion fails closed with a reconstructible unsupported trace',()=>{
+  const r=createRuntime().start(`function value(){return 3;}
+    function getter(){return value;}
+    let object={};
+    Object.defineProperty(object,'valueOf',{get:getter});
+    let out=object+1;`);
+  assert.equal(r.drive().kind,'unsupported');
+  const bundle=JSON.parse(JSON.stringify(r.exportRun()));
+  assert.equal(validateBundle(bundle).valid,true);
+  assert.equal(replayExact(bundle).valid,true);
+  assert.equal(bundle.finalState.control.a0.status,'unsupported');
+  assert(bundle.events.some(e=>e.operation==='spec.internal.get'&&
+    e.completion===undefined));
+});
