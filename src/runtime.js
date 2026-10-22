@@ -440,7 +440,12 @@ export class Runtime {
           f.operationId=id;
           return {...operands(a,b),causes:[{kind:'spec-operation',operationId:id}]};
         }
-        case 'UNARY':{const a=pop();return {...operands(a),...result(primitiveUnary(arg,a.value,s.heap))};}
+        case 'UNARY':{
+          const a=pop();
+          if(arg==='+' && a.value[0]==='bigint')
+            guestFault('TypeError','Cannot convert a BigInt value to a number');
+          return {...operands(a),...result(primitiveUnary(arg,a.value,s.heap))};
+        }
         case 'POP':{const a=pop();return operands(a);}
         case 'DUP':{const a=pop();st.push(a);st.push(copy(a));return operands(a);}
         case 'JUMP':f.pc=arg;return {};
