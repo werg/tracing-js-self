@@ -66,14 +66,19 @@ export function restoreLines(lines) {
   const output=[];
   for(let i=0;i<lines.length;i++){
     const item=decodeRecord(lines[i]);
-    if(item.kind!=='value-open'){output.push(lines[i]);continue;}
+    if(item.kind!=='value-open'){
+      if(item.kind==='value-part' || item.kind==='value-close')
+        throw new Error('Orphaned value fragment');
+      output.push(lines[i]);continue;
+    }
     const id=item.fields.id;
     let joined='',closed=false;
     for(++i;i<lines.length;i++){
       const part=decodeRecord(lines[i]);
       if(part.fields.id!==id)throw new Error('Interleaved value fragments');
       if(part.kind==='value-close'){closed=true;break;}
-      if(part.kind!=='value-part')throw new Error('Invalid partial record');
+      if(part.kind!=='value-part' || typeof part.fields.data!=='string' || !part.fields.data.length)
+        throw new Error('Invalid partial record');
       joined+=part.fields.data;
     }
     if(!closed)throw new Error('Unclosed fragmented value');
