@@ -64,7 +64,10 @@ export function normalizeJournal(bundle) {
         r.child=child.frameId;
         const created=e.stateChanges.find(p=>p.table==='frames' && p.id===child.frameId);
         r.code=created?.after?.codeId??null;
-        r.receiver=args[0]?.[0]==='method'?args[0][2]:null;
+        const activationEnv=created?.after?.envId??null;
+        const createdEnv=e.stateChanges.find(p=>p.table==='envs'&&p.id===activationEnv);
+        r.captures=createdEnv?.after?.parent??null;
+        r.receiver=args[0]?.[0]==='method'?args[0][2]:['undefined'];
         r.arguments=args.slice(1);
       } else if(effect) {
         op=r.op='request';
