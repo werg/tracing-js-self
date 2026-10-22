@@ -111,7 +111,7 @@ test('unhandled throws and unsupported coercions keep distinct terminal outcomes
   const r=createRuntime().start('try {throw 1;} finally {let a=2;}');
   const bundle=check(r,'runtime.failure');
   assert.equal(bundle.finalState.control.a0.failure.completion.type,'throw');
-  const unsupported=createRuntime().start('try {let o={};let v=o+1;}catch(e){host.store("bad",2);}');
+  const unsupported=createRuntime().start('function f(){}try {let v=f+1;}catch(e){host.store("bad",2);}');
   check(unsupported,'unsupported');
   assert.equal(Object.keys(unsupported.state.effects).length,0);
 });
