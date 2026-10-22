@@ -79,22 +79,33 @@ test('primitive abrupt completions are journaled, replayed and stop later effect
   }
 });
 
-test('unsupported object coercion is distinct from an ECMAScript throw and invokes no guest method',()=>{
-  for(const expression of ['object + 1',"'x' + object",'object * 2']) {
+test('owned valueOf is an observable guest call with this and arithmetic continuation',()=>{
+  for(const [expression,expected] of [
+    ['object + 1',['num',10]],
+    ["'x' + object",['str','x9']],
+    ['object * 2',['num',18]]
+  ]) {
     let calls=0;
-    const {runtime,progress,bundle}=run('function convert(){host.store("bad",1);return 9;}'+
-      'let object={valueOf:convert};let result='+expression+';',{
+    const {runtime,progress,bundle}=run('function convert(){host.store("converted",this.tag);return 9;}'+
+      'let object={tag:1,valueOf:convert};let result='+expression+';',{
       adapters:{'demo.store':()=>{calls++;return {kind:'normal',value:undefined};}}
     });
-    assert.equal(progress.kind,'unsupported');assert.equal(calls,0);
-    assert.equal(runtime.state.control.a0.failure.completion.feature,'ToPrimitive(Object)');
-    assert.equal(Object.keys(bundle.effects).length,0);
-    assert(causalPrefix(bundle).events.some(e=>e.completion?.type==='unsupported'));
+    assert.equal(progress.kind,'terminated');assert.equal(calls,1);
+    assert.deepEqual(binding(runtime),expected);
+    assert(bundle.events.some(e=>e.operation==='spec.internal.call'));
+    assert(bundle.events.some(e=>e.operation==='reference.this'));
+    assert(bundle.events.some(e=>e.operation==='spec.internal.return'));
   }
 });
 
+test('unmodeled function object coercion stays unsupported and calls no host code',()=>{
+  const {progress,runtime}=run('function f(){}let result=f+1;');
+  assert.equal(progress.kind,'unsupported');
+  assert.equal(runtime.state.control.a0.failure.completion.feature,'ToPrimitive(Object)');
+});
+
 test('terminal guest throw or arithmetic failure cannot drain already queued jobs',()=>{
-  for(const tail of ['throw "stop";','let result=1n+1;','let result={}+1;']) {
+  for(const tail of ['throw "stop";','let result=1n+1;','function f(){}let result=f+1;']) {
     let stores=0;
     const {runtime,progress}=run('async function later(){await Promise.resolve(1);host.store("bad",2);}later();'+tail,{
       adapters:{'demo.store':()=>{stores++;return {kind:'normal',value:undefined};}}
