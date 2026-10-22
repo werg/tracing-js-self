@@ -37,7 +37,8 @@ function diff(oldState, nextState) {
   const patches=[];
   for(const table of tableNames) {
     for(const id of new Set([...Object.keys(oldState[table]),...Object.keys(nextState[table])])) {
-      const before=oldState[table][id]??null, after=nextState[table][id]??null;
+      const before=Object.hasOwn(oldState[table],id)?oldState[table][id]:null;
+      const after=Object.hasOwn(nextState[table],id)?nextState[table][id]:null;
       if(!equal(before,after)) {
         if(after && typeof after==='object')after.version=(before?.version??0)+1;
         patches.push({kind:`${table}.replace`,table,id,before:copy(before),after:copy(after)});
@@ -235,7 +236,7 @@ export class Runtime {
     const encoded=guestValue(value)?copy(value):encode(value);
     let allocated;
     this.commit('external.input.arrive',s=>{
-      allocated=inputId??this.next(s,'input');if(s.inputs[allocated])throw new Error('Duplicate input ID');
+      allocated=inputId??this.next(s,'input');if(Object.hasOwn(s.inputs,allocated))throw new Error('Duplicate input ID');
       s.inputs[allocated]={id:allocated,effectId,kind,abrupt,value:encoded,status:'arrived',version:0};
       s.effects[effectId].inputIds.push(allocated);
       return {causes:[{kind:'effect',effectId}]};
