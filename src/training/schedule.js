@@ -20,6 +20,9 @@ function inlineEligible(bundle,codeId,ancestry) {
 export function scheduleRecords(bundle,semantic,{maxBytes=512,maxGenerated=256}={}) {
   const assignments=new Map([[semantic.rootInvocation,{track:'t0',generation:0}]]);
   const generation=[0,0,0,0,0,0,0,0];
+  const parentOf=new Map();
+  const codeOf=new Map([[semantic.rootInvocation,
+    bundle.initialState.frames[semantic.rootInvocation].codeId]]);
   const groups=[];
   const metadata=[];
   let generated=0;
@@ -45,10 +48,10 @@ export function scheduleRecords(bundle,semantic,{maxBytes=512,maxGenerated=256}=
       const ancestors=[];
       let p=row.invocation;
       while(p){
-        const f=bundle.finalState.frames[p]??bundle.initialState.frames[p];
-        if(!f)break;
-        ancestors.push(f.codeId);p=f.callerFrameId;
+        ancestors.push(codeOf.get(p));p=parentOf.get(p);
       }
+      parentOf.set(row.child,row.invocation);
+      codeOf.set(row.child,row.code);
       const inline=inlineEligible(bundle,row.code,ancestors);
       let lane=track;
       if(!inline){
