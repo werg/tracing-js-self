@@ -42,7 +42,10 @@
     "8-file official Test262 execution slice: 6 non-strict passes, 2 unsupported; 8 strict variants omitted",
     "pinned engine262 textual source inventory with explicit partial/unowned classifications",
     "package-root JavaScript ESM API and embedded host-delivery tests",
-    "pinned natlang and megatoken integration contract audit"
+    "pinned natlang and megatoken integration contract audit",
+    "bounded ordinary own-data ToPrimitive with serialized [[Get]]/call/return phases, default Object methods and dense primitive Array.toString, guest receiver this and method throw propagation",
+    "enumerated guest implicit TypeError/RangeError/ReferenceError completion routing and async rejected promise creation/adoption/await/host delivery with replay",
+    "Node V8 scalar differential tests for ordinary coercion and adversarial phase/rejection replay tamper tests"
   ],
   "missingRequiredFamilies": [
     "full grammar/Annex B/early errors",
@@ -60,10 +63,10 @@
     "full transitive visibility validation",
     "Test262/WPT/Node application acceptance",
     "learning evaluation",
-    "spec-backed fully owned language phases beyond primitive arithmetic and complete normative clause/intrinsic mapping",
+    "spec-backed full object descriptors/prototypes/exotic internal methods beyond bounded arithmetic and ordinary coercion, and complete normative clause/intrinsic mapping",
     "full Test262 official harness semantics, strict/module/async/negative execution and conformance reports",
     "natlang EvalEnvironment plus module-realm adapter and actual generated-source acceptance",
     "megatoken schema-v3 export with independent causal visibility validation",
-    "general implicit abrupt completion propagation, full Error objects, async rejection delivery, labeled loop/switch/for completions"
+    "unclassified implicit abrupt completions, full Error exotics/prototypes, thenable and promise-reaction chains, labeled loop/switch/for completions"
   ]
 }
