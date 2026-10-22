@@ -196,6 +196,71 @@ export function applySpecCommand(state, command, event, seen, fail) {
     const same=r.registers.leftNumeric.value[0]===r.registers.rightNumeric.value[0];
     if (command.to!==(same?'apply':'complete') || !eq(event.result,['bool',same])) bad('Invalid numeric type branch');
   }
+  // Independently check the small owned OrdinaryToPrimitive continuation
+  // shape, including the current conversion operand and child invocation.
+  const oldCoercion=r.coercion, nextCoercion=command.coercionAfter;
+  const conversionPhase=['coercion-get','coercion-call','coercion-return'].includes(r.phase);
+  if(command.to==='coercion-get' && r.phase.endsWith('-primitive')) {
+    const left=r.phase.startsWith('left');
+    const numeric=r.phase.includes('numeric');
+    const input=numeric
+      ? (r.operator==='+'?r.registers[left?'leftPrimitive':'rightPrimitive']:r.operands[left?0:1])
+      : r.operands[left?0:1];
+    const register=left?(numeric?'leftNumericPrimitive':'leftPrimitive')
+      :(numeric?'rightNumericPrimitive':'rightPrimitive');
+    const resume=numeric?(left?'left-numeric-kind':'right-numeric-kind')
+      :(left?'right-primitive':'select');
+    if(oldCoercion!==null || input?.value?.[0]!=='ref' ||
+       !keys(nextCoercion,['side','input','register','resume','index','method','waitingFrameId']) ||
+       nextCoercion.side!==(left?'left':'right') || !eq(nextCoercion.input,input) ||
+       nextCoercion.register!==register||nextCoercion.resume!==resume||
+       nextCoercion.index!==0||nextCoercion.method!==null||nextCoercion.waitingFrameId!==null)
+      bad('Malformed owned coercion entry');
+  } else if(r.phase==='coercion-get') {
+    if(!oldCoercion||!keys(nextCoercion,Object.keys(oldCoercion))||
+       command.to!=='coercion-call'||nextCoercion.index!==oldCoercion.index||
+       !eq(nextCoercion.input,oldCoercion.input)||
+       !tokenValid(nextCoercion.method,seen)||
+       nextCoercion.waitingFrameId!==null)
+      bad('Invalid owned method lookup');
+    const obj=state.heap[oldCoercion.input.value[1]];
+    const name=oldCoercion.index===0?'valueOf':'toString';
+    const own=obj&&Object.hasOwn(obj.properties,name);
+    if(!obj||!['object','array'].includes(obj.kind))bad('Unowned internal method receiver');
+    const value=own?obj.properties[name].value:['builtinfn',
+      name==='valueOf'?'Object.valueOf':obj.kind==='array'?'Array.toString':'Object.toString'];
+    const origin=own?obj.properties[name].origin:null;
+    const observation={kind:'property',objectId:obj.id,key:name,
+      version:obj.propertyVersions?.[name]??0,shapeVersion:obj.shapeVersion??0,
+      present:own,value,supplyingEvent:origin??null};
+    if(!eq(nextCoercion.method,{value,origin})||!eq(event.readObservations,[observation]))
+      bad('Owned [[Get]] method/provenance mismatch');
+  } else if(r.phase==='coercion-call' || r.phase==='coercion-return'){
+    if(!oldCoercion||!['valueOf','toString'].includes(oldCoercion.index===0?'valueOf':
+       oldCoercion.index===1?'toString':'invalid'))bad('Invalid coercion method ordinal');
+    if(command.to==='coercion-return') {
+      const child=state.frames[nextCoercion?.waitingFrameId];
+      if(r.phase!=='coercion-call'||!child||child.callerFrameId!==r.frameId||
+         child.status!=='running'||state.control.a0.activeFrameId!==child.id||
+         !eq(nextCoercion.method,oldCoercion.method)||
+         nextCoercion.index!==oldCoercion.index)
+        bad('Unowned guest method call');
+    } else if(command.to==='coercion-get'){
+      if(!nextCoercion||nextCoercion.index!==oldCoercion.index+1||
+         nextCoercion.index!==1||nextCoercion.method!==null||
+         nextCoercion.waitingFrameId!==null||
+         !eq(nextCoercion.input,oldCoercion.input))
+        bad('Invalid conversion method fallback');
+    } else if(command.to===oldCoercion.resume) {
+      if(nextCoercion!==null||command.writes.length!==1)
+        bad('Missing primitive coercion return');
+    } else if(command.to==='complete'){
+      if(!completion||!['throw','unsupported'].includes(completion.type))
+        bad('Missing coercion abrupt completion');
+    } else bad('Invalid dynamic coercion transition');
+  } else if(!eq(oldCoercion,nextCoercion))bad('Unexpected coercion state mutation');
+  if(r.phase.endsWith('-primitive') && command.to!=='coercion-get' &&
+     !eq(oldCoercion,nextCoercion))bad('Unexpected conversion state');
   if (command.to === 'complete') {
     if (r.completion !== null || !completion) bad('Missing or repeated spec completion');
     if (completion.type === 'normal') {
@@ -212,9 +277,10 @@ export function applySpecCommand(state, command, event, seen, fail) {
               completion.errorType==='TypeError'))) bad('Invalid abrupt spec completion');
     } else if (completion.type === 'unsupported') {
       if (!keys(completion,['type','feature','message','origin']) || completion.origin !== event.eventId ||
-          !r.phase.endsWith('-primitive') || completion.feature !== 'ToPrimitive(Object)' ||
+          !(r.phase.endsWith('-primitive') || r.phase==='coercion-get' || r.phase==='coercion-call') ||
+          !['ToPrimitive(Object)','ArrayToString(complex)'].includes(completion.feature) ||
           typeof completion.message !== 'string') bad('Invalid unsupported spec completion');
     } else bad('Unknown spec completion');
   } else if (completion !== null) bad('Unexpected early spec completion');
-  r.phase = command.to; r.completion = copy(completion); r.version++;
+  r.phase = command.to; r.completion = copy(completion); r.coercion=copy(command.coercionAfter); r.version++;
 }
