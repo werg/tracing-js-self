@@ -41,10 +41,15 @@ function inputArrival(runtime, event) {
   const beforeCount = runtime.state.counters.ids.input;
   const countPatch = event.stateChanges.find(p => p.table === 'counters' && p.id === 'ids');
   const afterCount = countPatch?.after?.input ?? beforeCount;
-  if (afterCount !== beforeCount && afterCount !== beforeCount + 1) fail('Invalid input allocation', event.eventId);
+  // Generated IDs skip existing transport-supplied IDs in the iN namespace.
+  // Every skipped index must correspond to an already occupied identity.
+  if (!Number.isSafeInteger(afterCount) || afterCount < beforeCount ||
+      afterCount - beforeCount > Object.keys(runtime.state.inputs).length + 1 ||
+      (countPatch !== undefined) !== (afterCount > beforeCount))
+    fail('Invalid input allocation', event.eventId);
   runtime.recordInputArrival({
     effectId, kind: input.kind, value: input.value, abrupt: input.abrupt,
-    inputId: afterCount === beforeCount + 1 ? null : input.id
+    inputId: afterCount > beforeCount ? null : input.id
   });
 }
 // External arrivals/deliveries are transport-controlled. Every interpreter-

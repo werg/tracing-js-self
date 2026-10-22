@@ -16,8 +16,9 @@ const guestValue = (x) => Array.isArray(x) && (
   (x.length === 2 && (
     (x[0] === 'bool' && typeof x[1] === 'boolean') ||
     (x[0] === 'str' && typeof x[1] === 'string') ||
-    (x[0] === 'bigint' && typeof x[1] === 'string' && /^-?(0|[1-9]\d*)$/.test(x[1])) ||
-    (x[0] === 'num' && (typeof x[1] === 'number' || ['-0','NaN','+Infinity','-Infinity'].includes(x[1])))
+    (x[0] === 'bigint' && typeof x[1] === 'string' && /^(0|-?[1-9]\d*)$/.test(x[1])) ||
+    (x[0] === 'num' && ((typeof x[1] === 'number' && Number.isFinite(x[1]) && !Object.is(x[1], -0)) ||
+      ['-0','NaN','+Infinity','-Infinity'].includes(x[1])))
   ))
 );
 function lookup(draft, envId, name) {
@@ -36,7 +37,8 @@ function diff(oldState, nextState) {
   const patches=[];
   for(const table of tableNames) {
     for(const id of new Set([...Object.keys(oldState[table]),...Object.keys(nextState[table])])) {
-      const before=oldState[table][id]??null, after=nextState[table][id]??null;
+      const before=Object.hasOwn(oldState[table],id)?oldState[table][id]:null;
+      const after=Object.hasOwn(nextState[table],id)?nextState[table][id]:null;
       if(!equal(before,after)) {
         if(after && typeof after==='object')after.version=(before?.version??0)+1;
         patches.push({kind:`${table}.replace`,table,id,before:copy(before),after:copy(after)});
@@ -227,11 +229,17 @@ export class Runtime {
     const e=this.state.effects[effectId];if(!e||e.dispatch!=='dispatched')throw new Error('Input requires a dispatched effect');
     if(kind!==(e.kind==='promise'?'completion':'immediate'))throw new Error('Wrong input kind for host call');
     if(e.external!=='pending')throw new Error('Effect already completed');
+    if(e.inputIds.length)throw new Error('Effect already has an input arrival');
+    if(inputId!==null && (typeof inputId!=='string'||!inputId||['__proto__','constructor','prototype'].includes(inputId)))
+      throw new TypeError('Transport input ID must be a nonempty, non-reserved string');
     if(Array.isArray(value) && !guestValue(value))throw new TypeError('Unsupported canonical external payload');
     const encoded=guestValue(value)?copy(value):encode(value);
     let allocated;
     this.commit('external.input.arrive',s=>{
-      allocated=inputId??this.next(s,'input');if(s.inputs[allocated])throw new Error('Duplicate input ID');
+      if(inputId===null) {
+        do { allocated=this.next(s,'input'); } while(Object.hasOwn(s.inputs,allocated));
+      } else allocated=inputId;
+      if(Object.hasOwn(s.inputs,allocated))throw new Error('Duplicate input ID');
       s.inputs[allocated]={id:allocated,effectId,kind,abrupt,value:encoded,status:'arrived',version:0};
       s.effects[effectId].inputIds.push(allocated);
       return {causes:[{kind:'effect',effectId}]};
