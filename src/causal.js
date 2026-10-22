@@ -6,7 +6,7 @@ export function causalPrefix(bundle,{throughEventId=null}={}) {
   const limit=throughEventId ? bundle.events.findIndex(e=>e.eventId===throughEventId) : bundle.events.length-1;
   if(throughEventId && limit<0)throw new Error('Unknown boundary');
   const visible=bundle.events.slice(0,limit+1).filter(e=>e.operation!=='external.input.arrive');
-  const events={},identities=new Map(),effects=new Map();
+  const events={},identities=new Map(),effects=new Map(),invocations=new Map();
   function local(map,id,prefix){if(!map.has(id))map.set(id,`${prefix}${map.size+1}`);return map.get(id);}
   function opaque(v) {
     if(!Array.isArray(v))return v;
@@ -19,6 +19,21 @@ export function causalPrefix(bundle,{throughEventId=null}={}) {
     const id=`e${index+1}`;events[e.eventId]=id;
     const row={event:id,op:e.operation};
     if(e.siteId)row.site=e.siteId;
+    if(e.invocationId)row.invocation=local(invocations,e.invocationId,'c');
+    const invoked=e.causes?.find(c=>c.kind==='invocation');
+    if(invoked)row.child=local(invocations,invoked.frameId,'c');
+    if(e.readObservations?.length)row.reads=e.readObservations.map(read=>({
+      kind:read.kind,
+      ...(read.envId?{env:local(identities,'env:'+read.envId,'r')}:{}),
+      ...(read.objectId?{object:local(identities,'ref:'+read.objectId,'r')}:{}),
+      ...(read.name?{name:read.name}:{}),
+      ...(read.key?{key:read.key}:{}),
+      version:read.version,
+      ...(read.shapeVersion!==undefined?{shapeVersion:read.shapeVersion}:{}),
+      ...(read.present!==undefined?{present:read.present}:{}),
+      ...(read.value?{value:opaque(read.value)}:{}),
+      supplyingEvent:read.supplyingEvent?events[read.supplyingEvent]??null:null
+    }));
     if(e.operands?.length)row.operands=e.operands.map(opaque);
     if(e.operandOrigins?.length)row.producers=e.operandOrigins.map(orig=>orig?events[orig]??null:null);
     if(e.result!==null)row.result=opaque(e.result);
@@ -35,6 +50,10 @@ export function causalPrefix(bundle,{throughEventId=null}={}) {
     rows.push(row);
   }
   return {schema:'causal-interleaved-prefix/1',visibility:{futureInputs:'withheld until delivery',archiveStateAccessible:false},
-    sources:bundle.sources.map(s=>({sourceId:s.sourceId,text:s.text,url:s.url,goal:s.goal})),
+    sources:bundle.sources.filter(s=>{
+      const initial=bundle.initialState?.control?.a0?.activeFrameId;
+      const code=bundle.initialState?.frames?.[initial]?.codeId;
+      return !!code && code.startsWith(s.sourceId+':');
+    }).map(s=>({sourceId:s.sourceId,text:s.text,url:s.url,goal:s.goal})),
     events:rows};
 }
