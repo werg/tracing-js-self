@@ -29,11 +29,14 @@ earlier committed generated groups may condition the model; the sidecar and
 future target groups must remain outside its input. See
 [implemented components and unfinished gates](docs/TRAINING_IMPLEMENTATION.md).
 
-The remaining plan includes causal source bundles, compact target optimization,
-finite-context continuation, fully materialized external calls, the megatoken
-adapter, teacher-conditioned supervision and generated-state rollout verification.
-Full Node/browser coverage is not a prerequisite for admitting a correctly
-verified bounded synchronous profile.
+The megatoken adapter, teacher-conditioned trace training, bounded committed-state
+controller, and pinned cross-repository conversion test are implemented. The legacy
+bounded mock host profile now materializes immutable, versioned JSON requests
+before dispatch and independently verifies their journal provenance. The strict
+training profile remains effect-free; full source bundling, trace compaction,
+automatic corpus segmentation, broader async/host semantics, and independently
+admitted datasets are still open. Full Node/browser coverage is not a prerequisite
+for admitting a correctly verified bounded synchronous profile.
 
 ## Quick start
 
@@ -67,6 +70,15 @@ const bundle = runtime.exportRun();
 validateBundle(bundle);
 replayExact(bundle); // independently recompile source and reproduce recorded steps
 ```
+
+Mock host adapters receive `{effectId, operation, args, request}`.
+Here `args` is a deeply frozen plain JavaScript array parsed from the
+`canonical-json/1` request, **not** guest reference tags. `request.payload` is
+the immutable JSON argument array string, with a versioned operation signature
+and historical object/property versions. Cycles, repeated object identities,
+unsupported numeric encodings and unknown host methods fail closed before an
+effect can be dispatched. The private archived `effect.args` retains the
+original identity-bearing tuples solely for verification and replay.
 
 Async adapters **do not** return native promises: after the machine emits `effect.dispatch`, they call `recordInputArrival({effectId,kind:'completion',value})` and `deliverInput(inputId)` at the chosen legal service point. Synchronous mock calls use `kind:'immediate'`. In a future production native integration these service permissions, typed native handoffs, caller retention and transport durability must be enforced by a versioned adapter/runner.
 
