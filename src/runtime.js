@@ -40,7 +40,7 @@ function arrayIndex(key) {
   return /^(0|[1-9]\d*)$/.test(key) && Number(key) < 4294967295;
 }
 function putOwn(obj,key,value,eventId) {
-  if (key === '__proto__') throw new TypeError('Prototype mutation is outside the profile');
+  if (key === '__proto__') throw new TypeError('Prototype mutation is not implemented by the bounded profile');
   if (obj.kind === 'array' && key === 'length') {
     if (value[0] !== 'num') throw new TypeError('Array length coercion is outside the profile');
     const length = decode(value);
