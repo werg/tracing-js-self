@@ -303,7 +303,7 @@ export class Runtime {
   exportRun() {
     return copy({manifest:{schema:'semantic-tracing-run/1',profile:'bounded-js-subset/1',completeSemanticTrace:false,
       completeEcma262:false,completeHostIntegration:false,coverage:'docs/STATUS.md',chunkPolicy:'accumulate-until-wait/1',
-      eventVersion:1,operationVersion:1,guestExecution:'owned-bytecode-machine',replay:'state-reconstruction-only'},
+      eventVersion:1,operationVersion:1,guestExecution:'owned-bytecode-machine',replay:'bounded-deterministic-reexecution/1'},
       sources:this.sources,sites:this.sites,programs:this.programs,initialState:this.initialState,finalState:this.state,
       events:this.events,chunks:this.chunks,checkpoints:this.checkpoints,effects:this.state.effects,inputs:this.state.inputs});
   }
