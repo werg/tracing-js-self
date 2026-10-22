@@ -1,0 +1,16 @@
+{
+  "profile": "bounded-js-subset/1",
+  "ecma262Complete": false,
+  "ecma402Complete": false,
+  "browserComplete": false,
+  "nodeComplete": false,
+  "parser": "in-repository bounded-pratt/1",
+  "frontendOptions": {"goal":"script","automaticSemicolonInsertion":false},
+  "runtimeMinimum": "Node.js 20",
+  "mockOperations": ["demo.readAsync","demo.readNumber","demo.store"],
+  "normativePublicationTarget": "ECMA-262 2026 (not yet implemented)",
+  "unicodeDataRevision": null,
+  "hostBuildPin": null,
+  "conformanceSuiteRevisions": {},
+  "releaseEligibility": false
+}

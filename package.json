@@ -1,0 +1,14 @@
+{
+  "name": "tracing-js-self",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Experimental owned-machine JavaScript semantic tracing runtime",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test test/*.test.js && node fixtures/reference/reference-fixture.mjs",
+    "demo": "node bin/tracing.js demo",
+    "trace": "node bin/tracing.js run"
+  },
+  "bin": { "tracing-js-self": "./bin/tracing.js" }
+}
