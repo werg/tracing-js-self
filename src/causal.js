@@ -47,7 +47,9 @@ export function causalPrefix(bundle,{throughEventId=null}={}) {
     }
     if(e.operation==='call.enter') {
       const created=e.stateChanges.filter(p=>p.table==='effects'&&p.before===null);
-      if(created.length)row.outgoing=created.map(p=>({effect:local(effects,p.id,'fx'),operation:p.after.operation,arguments:p.after.args.map(opaque)}));
+      if(created.length)row.outgoing=created.map(p=>({effect:local(effects,p.id,'fx'),
+        operation:p.after.operation,codec:p.after.request.codec,
+        signature:p.after.request.signature,payload:p.after.request.payload}));
     }
     if(e.operation==='external.input.deliver') {
       const input=e.causes.find(x=>x.kind==='input');
