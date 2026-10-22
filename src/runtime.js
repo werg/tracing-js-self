@@ -30,7 +30,7 @@ const tableNames = ['counters','envs','heap','promises','frames','effects','inpu
 const opNames = {
   CONST:'literal.materialize', GET:'binding.read', SET:'binding.write', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate',
-  CALL:'call.enter', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate',
+  CALL:'call.enter', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
   GET_PROP:'property.read', GET_METHOD:'property.read', PUT_PROP:'property.write', ENTER_SCOPE:'environment.enter',
   LEAVE_SCOPE:'environment.leave', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
   TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
@@ -77,6 +77,26 @@ function propertyAccessor(heap, receiver, key) {
     obj=heap[proto];
   }
   return null;
+}
+function proxyRoute(heap,receiver,operation) {
+  let obj=heap[receiver[1]];
+  const visited=new Set();
+  while(obj?.kind==='proxy'){
+    if(visited.has(obj.id))throw new TypeError('Cyclic proxy target chain');
+    visited.add(obj.id);
+    const handler=heap[obj.handlerId];
+    if(!handler||!['object','array'].includes(handler.kind))
+      throw new TypeError('Unsupported proxy handler identity');
+    const trap=ordinaryGet(heap,['ref',handler.id],operation);
+    if(!trap)throw new TypeError('Proxy handler accessor trap unmodeled');
+    if(trap.method.value[0]!=='undefined')
+      return {kind:'trap',method:trap.method.value,observation:trap.observation,
+        target:['ref',obj.targetId],handler:['ref',handler.id],receiver};
+    obj=heap[obj.targetId];
+  }
+  if(!obj||!['object','array'].includes(obj.kind))
+    throw new TypeError('Unmodeled proxy target internal method');
+  return {kind:'ordinary',target:['ref',obj.id],receiver};
 }
 function putOwn(obj,key,value,eventId) {
   if (key === '__proto__') throw new TypeError('Prototype mutation is not implemented by the bounded profile');
@@ -502,6 +522,16 @@ export class Runtime {
         case 'JUMP':f.pc=arg;return {};
         case 'JUMP_IF_FALSE':{const a=pop();if(!truthy(a.value))f.pc=arg;return {...operands(a),result:['bool',!truthy(a.value)]};}
         case 'LOGICAL_JUMP':{const a=st.at(-1),v=a.value;const pass=arg.operator==='&&'?!truthy(v):arg.operator==='||'?truthy(v):v[0]!=='null'&&v[0]!=='undefined';if(pass)f.pc=arg.to;return {...operands(a),result:['bool',pass]};}
+        case 'NEW_PROXY':{
+          const handler=pop(),target=pop();
+          if(target.value[0]!=='ref'||!['object','array'].includes(s.heap[target.value[1]]?.kind)||
+             handler.value[0]!=='ref'||!['object','array'].includes(s.heap[handler.value[1]]?.kind))
+            guestFault('TypeError','Proxy requires an ordinary owned target and handler');
+          const id=this.next(s,'obj');
+          s.heap[id]={id,kind:'proxy',targetId:target.value[1],handlerId:handler.value[1],
+            properties:{},propertyVersions:{},shapeVersion:0,version:0};
+          return {...operands(target,handler),...result(['ref',id])};
+        }
         case 'NEW_OBJECT':case 'NEW_ARRAY':{const id=this.next(s,'obj');s.heap[id]={id,kind:op==='NEW_ARRAY'?'array':'object',properties:{},propertyVersions:{},shapeVersion:0,version:0};if(op==='NEW_ARRAY'){s.heap[id].properties.length=token(['num',0],eventId);s.heap[id].propertyVersions.length=0;}return result(['ref',id]);}
         case 'GET_PROP':case 'GET_METHOD':{
           const key=pop(),base=pop(),property=valueKey(key.value);let v,read=null;
@@ -521,7 +551,24 @@ export class Runtime {
            else if(base.value[0]==='ref'){
              const obj=s.heap[base.value[1]];
              if(!obj)throw new ReferenceError('Unknown guest identity');
-             const accessor=propertyAccessor(s.heap,base.value,property);
+             const route=obj.kind==='proxy'?proxyRoute(s.heap,base.value,'get'):
+               {kind:'ordinary',target:base.value,receiver:base.value};
+             if(route.kind==='trap'){
+               const target=s.heap[route.target[1]];
+               if(Object.hasOwn(target?.accessors??{},property)&&!target.accessors[property].configurable)
+                 throw new TypeError('Proxy get invariant for non-configurable accessor not modeled');
+               const trap=route.method;
+               if(!this.callableGuest(s,trap)||s.heap[trap[1]].async)
+                 throw new TypeError('Proxy get trap must be synchronous guest function');
+               const fn=s.heap[trap[1]];
+               const id=this.newFrame(s,fn.codeId,fn.closureEnvId,
+                 f.id,null,[token(route.target),key,token(base.value)],route.handler);
+               f.pendingProperty={kind:'get',receiver:base.value,method:op==='GET_METHOD',waitingFrameId:id};
+               s.control.a0.activeFrameId=id;
+               return {...operands(base,key),causes:[{kind:'invocation',frameId:id}],
+                 reads:[route.observation]};
+             }
+             const accessor=propertyAccessor(s.heap,route.target,property);
              if(accessor){
                const getter=accessor.get.value;
                if(getter[0]==='undefined')v=U;
@@ -535,7 +582,7 @@ export class Runtime {
                  return {...operands(base,key),causes:[{kind:'invocation',frameId:id}]};
                }
              }else{
-               const found=ordinaryGet(s.heap,base.value,property);
+               const found=ordinaryGet(s.heap,route.target,property);
                if(!found)throw new TypeError('Unmodeled ordinary [[Get]] or exotic property');
                v=found.method.value;read=found.observation;
              }
@@ -551,8 +598,25 @@ export class Runtime {
           if(['null','undefined'].includes(base.value[0]))
              guestFault('TypeError',`Cannot set properties of ${base.value[0]}`);
            if(base.value[0]!=='ref'||!s.heap[base.value[1]]||s.heap[base.value[1]].kind==='function')throw new TypeError('Not a writable guest object');
-          const obj=s.heap[base.value[1]];
-          const accessor=propertyAccessor(s.heap,base.value,property);
+          const object=s.heap[base.value[1]];
+          const route=object.kind==='proxy'?proxyRoute(s.heap,base.value,'set'):
+            {kind:'ordinary',target:base.value,receiver:base.value};
+          if(route.kind==='trap'){
+            const target=s.heap[route.target[1]];
+            if(Object.hasOwn(target?.accessors??{},property)&&!target.accessors[property].configurable)
+              throw new TypeError('Proxy set invariant for non-configurable accessor not modeled');
+            if(!this.callableGuest(s,route.method)||s.heap[route.method[1]].async)
+              throw new TypeError('Proxy set trap must be synchronous guest function');
+            const fn=s.heap[route.method[1]];
+            const id=this.newFrame(s,fn.codeId,fn.closureEnvId,
+              f.id,null,[token(route.target),key,v,token(base.value)],route.handler);
+            f.pendingProperty={kind:'set',value:v.value,waitingFrameId:id};
+            s.control.a0.activeFrameId=id;
+            return {...operands(base,key,v),causes:[{kind:'invocation',frameId:id}],
+              reads:[route.observation]};
+          }
+          const obj=s.heap[route.target[1]];
+          const accessor=propertyAccessor(s.heap,route.target,property);
           if(accessor){
             const setter=accessor.set.value;
             if(setter[0]==='undefined')return {...operands(base,key,v),...result(v.value)};
