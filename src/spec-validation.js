@@ -217,11 +217,13 @@ export function applySpecCommand(state, command, event, seen, fail) {
        nextCoercion.index!==0||nextCoercion.method!==null||nextCoercion.waitingFrameId!==null)
       bad('Malformed owned coercion entry');
   } else if(r.phase==='coercion-get') {
-    if(!oldCoercion||!keys(nextCoercion,Object.keys(oldCoercion))||
-       command.to!=='coercion-call'||nextCoercion.index!==oldCoercion.index||
-       !eq(nextCoercion.input,oldCoercion.input)||
-       !tokenValid(nextCoercion.method,seen)||
-       nextCoercion.waitingFrameId!==null)
+    if(!oldCoercion)bad('Invalid owned conversion receiver');
+    if(command.to==='coercion-call' &&
+       (!keys(nextCoercion,Object.keys(oldCoercion))||
+        nextCoercion.index!==oldCoercion.index||
+        !eq(nextCoercion.input,oldCoercion.input)||
+        !tokenValid(nextCoercion.method,seen)||
+        nextCoercion.waitingFrameId!==null))
       bad('Invalid owned method lookup');
     const obj=state.heap[oldCoercion.input.value[1]];
     const name=oldCoercion.index===0?'valueOf':'toString';
@@ -229,11 +231,14 @@ export function applySpecCommand(state, command, event, seen, fail) {
     // Independently traverse the owned prototype records. The read producer
     // can belong to an ancestor, while its receiving object retains its own
     // shape/version observation (verified against the journaled read).
-    let method=null,current=obj;
+    let method=null,current=obj,unmodeledAccessor=false;
     const seenPrototypes=new Set();
     for(;;){
       if(!current||seenPrototypes.has(current.id))bad('Invalid owned prototype chain');
       seenPrototypes.add(current.id);
+      if(Object.hasOwn(current.accessors??{},name)){
+        unmodeledAccessor=true;break;
+      }
       if(Object.hasOwn(current.properties,name)){
         method=current.properties[name];
         break;
@@ -251,12 +256,20 @@ export function applySpecCommand(state, command, event, seen, fail) {
       }
       current=state.heap[proto];
     }
-    const observation={kind:'property',objectId:obj.id,key:name,
-      version:Object.hasOwn(obj.propertyVersions??{},name)?obj.propertyVersions[name]:0,shapeVersion:obj.shapeVersion??0,
-      present:Object.hasOwn(obj.properties,name),
-      value:method.value,supplyingEvent:method.origin??null};
-    if(!eq(nextCoercion.method,method)||!eq(event.readObservations,[observation]))
-      bad('Owned [[Get]] method/provenance mismatch');
+    if(unmodeledAccessor){
+      if(command.to!=='complete'||completion?.type!=='unsupported'||
+         !eq(nextCoercion,oldCoercion)||!eq(event.readObservations,[]))
+        bad('Accessor coercion must fail closed without an unowned getter');
+    }else{
+      if(command.to!=='coercion-call')bad('Expected data conversion method continuation');
+      const observation={kind:'property',objectId:obj.id,key:name,
+        version:Object.hasOwn(obj.propertyVersions??{},name)?obj.propertyVersions[name]:0,
+        shapeVersion:obj.shapeVersion??0,
+        present:Object.hasOwn(obj.properties,name),
+        value:method.value,supplyingEvent:method.origin??null};
+      if(!eq(nextCoercion.method,method)||!eq(event.readObservations,[observation]))
+        bad('Owned [[Get]] method/provenance mismatch');
+    }
   } else if(r.phase==='coercion-call' || r.phase==='coercion-return'){
     if(!oldCoercion||!['valueOf','toString'].includes(oldCoercion.index===0?'valueOf':
        oldCoercion.index===1?'toString':'invalid'))bad('Invalid coercion method ordinal');
