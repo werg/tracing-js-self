@@ -11,7 +11,10 @@
     "./replay": "./src/replay.js",
     "./causal": "./src/causal.js",
     "./training": "./src/training/index.js",
-    "./natlang": "./src/natlang.js"
+    "./natlang": {
+      "types": "./src/natlang.d.ts",
+      "default": "./src/natlang.js"
+    }
   },
   "description": "Experimental owned-machine JavaScript semantic tracing runtime",
   "engines": {
