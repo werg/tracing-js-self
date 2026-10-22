@@ -40,16 +40,17 @@ Async adapters **do not** return native promises: after the machine emits `effec
 
 ## Pinned spec-reference baseline (Node.js 24 only)
 
-The **optional** engine262 oracle compares pure scalar outcomes while retaining the existing runtime as the only trace authority. A SHA-verified, fourteen-file official Test262 script-*parser* slice records both passing syntax cases and known gaps. This is **not** Test262 execution conformance. The normal \`npm test\` and traced runtime have no added dependencies.
+The **optional** engine262 oracle compares pure scalar outcomes while retaining the existing runtime as the only trace authority. Two separate, SHA-verified official Test262 baselines are available: a 14-file **syntax-only** slice and an 11-file **selected sloppy-script execution** smoke suite (pass/known-failure/skip). Neither is full Test262 conformance. The normal `npm test` and traced runtime have no added dependencies.
 
-\`\`\`sh
+```sh
 VERSION="$(node -p "require('./profiles/targets.lock.json').referenceEngine.npmVersion")"
 npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund "@engine262/engine262@$VERSION"
 node scripts/run-spec-probes.mjs
 node scripts/run-conformance.mjs --output /tmp/test262-baseline.json
-\`\`\`
+node tools/test262-baseline.mjs --output /tmp/test262-execution.json
+```
 
-The reference engine and suite commits, fixture blob hashes, ownership-blocking design gaps and acceptance gates are documented in [engine262 adoption](docs/ENGINE262_ADOPTION.md). CI publishes the JSON gap report.
+The execution smoke suite recognizes only a sloppy Script goal: no full Test262 harness, strict/module/async variants, includes, or host intrinsics. Positive tests are not a full compliance guarantee; host-side thrown interpreter errors are diagnostic, not complete guest completion records. The reference engine and suite commits, fixture blob hashes, ownership-blocking design gaps and acceptance gates are documented in [engine262 adoption](docs/ENGINE262_ADOPTION.md). CI publishes the JSON gap report.
 
 ## Main modules
 
