@@ -111,7 +111,8 @@ export function replayExact(bundle) {
   let entry = null;
   try {
     for (const src of bundle.sources) {
-      const compiled = runtime.registerSource({ text: src.text, url: src.url, goal: src.goal });
+      const compiled = runtime.registerSource({ text: src.text, url: src.url, goal: src.goal,
+        trainingProfile: src.parser === 'acorn/8.15.0:training-js/1' });
       if (compiled.entry === entryCode || runtime.programs[entryCode] && entryCode.startsWith(`${compiled.sourceId}:`)) entry = compiled;
     }
     if (!entry) fail('Initial frame has no matching registered source');
