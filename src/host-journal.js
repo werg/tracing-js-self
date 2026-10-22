@@ -2,6 +2,23 @@
 // Does not import or invoke the runtime, replay guest code, or claim native/spec correctness.
 import { isDeepStrictEqual } from 'node:util';
 
+// External payloads are scalar tuples: reconstructing arbitrary host objects is
+// not supported. Check the wire format independently of Runtime.guestValue.
+function canonicalScalar(value) {
+  if (!Array.isArray(value)) return false;
+  if (value.length === 1) return value[0] === 'null' || value[0] === 'undefined';
+  if (value.length !== 2) return false;
+  const [kind, payload] = value;
+  switch (kind) {
+    case 'bool': return typeof payload === 'boolean';
+    case 'str': return typeof payload === 'string';
+    case 'bigint': return typeof payload === 'string' && /^(0|-?[1-9]\d*)$/.test(payload);
+    case 'num':
+      return (typeof payload === 'number' && Number.isFinite(payload) &&
+        !Object.is(payload, -0)) || ['-0', 'NaN', '+Infinity', '-Infinity'].includes(payload);
+    default: return false;
+  }
+}
 export function validateHostJournal(bundle, fail) {
   const dispatched = new Set();
   const created = new Set();
@@ -71,7 +88,7 @@ export function validateHostJournal(bundle, fail) {
       if (!dispatched.has(effectId) || inputForEffect.has(effectId) ||
           p.before !== null || p.after?.id !== p.id ||
           p.after?.effectId !== effectId || p.after.status !== 'arrived' ||
-          typeof p.after.abrupt !== 'boolean' || !Array.isArray(p.after.value) ||
+          typeof p.after.abrupt !== 'boolean' || !canonicalScalar(p.after.value) ||
           arrived.has(p.id) || fx.before?.dispatch !== 'dispatched' ||
           fx.before?.external !== 'pending' ||
           p.after.kind !== (fx.before.kind === 'promise' ? 'completion' : 'immediate') ||
