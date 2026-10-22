@@ -25,7 +25,7 @@ test('ordinary object and dense primitive-array default conversion agree with No
   ]) {
     const source='let result='+expression+';';
     const {r}=verify(source);
-    const expected=vm.runInNewContext(expression);
+    const expected=vm.runInNewContext('('+expression+')');
     const tagged=typeof expected==='string'?['str',expected]:
       Number.isNaN(expected)?['num','NaN']:['num',expected];
     assert.deepEqual(find(r,'result'),tagged,source);
