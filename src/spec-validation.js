@@ -225,15 +225,37 @@ export function applySpecCommand(state, command, event, seen, fail) {
       bad('Invalid owned method lookup');
     const obj=state.heap[oldCoercion.input.value[1]];
     const name=oldCoercion.index===0?'valueOf':'toString';
-    const own=obj&&Object.hasOwn(obj.properties,name);
     if(!obj||!['object','array'].includes(obj.kind))bad('Unowned internal method receiver');
-    const value=own?obj.properties[name].value:['builtinfn',
-      name==='valueOf'?'Object.valueOf':obj.kind==='array'?'Array.toString':'Object.toString'];
-    const origin=own?obj.properties[name].origin:null;
+    // Independently traverse the owned prototype records. The read producer
+    // can belong to an ancestor, while its receiving object retains its own
+    // shape/version observation (verified against the journaled read).
+    let method=null,current=obj;
+    const seenPrototypes=new Set();
+    for(;;){
+      if(!current||seenPrototypes.has(current.id))bad('Invalid owned prototype chain');
+      seenPrototypes.add(current.id);
+      if(Object.hasOwn(current.properties,name)){
+        method=current.properties[name];
+        break;
+      }
+      const proto=Object.hasOwn(current,'prototype')?current.prototype:
+        current.kind==='array'?'Array.prototype':'Object.prototype';
+      if(proto===null){method={value:['undefined'],origin:null};break;}
+      if(proto==='Object.prototype'){
+        method={value:['builtinfn',name==='valueOf'?'Object.valueOf':'Object.toString'],origin:null};
+        break;
+      }
+      if(proto==='Array.prototype'){
+        method={value:['builtinfn',name==='valueOf'?'Object.valueOf':'Array.toString'],origin:null};
+        break;
+      }
+      current=state.heap[proto];
+    }
     const observation={kind:'property',objectId:obj.id,key:name,
-      version:Object.hasOwn(obj.propertyVersions??{},name)?obj.propertyVersions[name]:0,shapeVersion:obj.shapeVersion??0,
-      present:own,value,supplyingEvent:origin??null};
-    if(!eq(nextCoercion.method,{value,origin})||!eq(event.readObservations,[observation]))
+      version:obj.propertyVersions?.[name]??0,shapeVersion:obj.shapeVersion??0,
+      present:Object.hasOwn(obj.properties,name),
+      value:method.value,supplyingEvent:method.origin??null};
+    if(!eq(nextCoercion.method,method)||!eq(event.readObservations,[observation]))
       bad('Owned [[Get]] method/provenance mismatch');
   } else if(r.phase==='coercion-call' || r.phase==='coercion-return'){
     if(!oldCoercion||!['valueOf','toString'].includes(oldCoercion.index===0?'valueOf':
