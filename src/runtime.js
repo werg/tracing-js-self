@@ -2,7 +2,7 @@ import { encode, decode, U, token, truthy, primitiveBinary, primitiveUnary } fro
 import { parse, compile } from './frontend.js';
 import { importGraph } from './training/graph.js';
 import { parseTraining, TRAINING_PARSER } from './training/profile.js';
-import { createArithmetic, advanceArithmetic, isOwnedArithmetic, ordinaryGet, ordinaryBuiltin } from './spec-operations.js';
+import { createArithmetic, advanceArithmetic, isOwnedArithmetic, ordinaryGet, ordinaryBuiltin, objectPrototype } from './spec-operations.js';
 import { operationMutation } from './spec-mutations.js';
 import {hostOperation,prepareHostRequest} from './host/operations.js';
 import { specStep, ENGINE_REVISION } from './spec-schema.js';
@@ -145,6 +145,7 @@ export class Runtime {
     const s=this.state,global=this.newEnv(s);
     s.envs[global].bindings.host={kind:'const',initialized:true,token:token(['host','demo'])};
     s.envs[global].bindings.Promise={kind:'const',initialized:true,token:token(['intrinsic','Promise'])};
+    s.envs[global].bindings.Object={kind:'const',initialized:true,token:token(['intrinsic','Object'])};
     s.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
     s.control.a0.globalEnvId=global;
     s.control.a0.activeFrameId=this.newFrame(s,source.entry,global);
@@ -479,9 +480,14 @@ export class Runtime {
         case 'LOGICAL_JUMP':{const a=st.at(-1),v=a.value;const pass=arg.operator==='&&'?!truthy(v):arg.operator==='||'?truthy(v):v[0]!=='null'&&v[0]!=='undefined';if(pass)f.pc=arg.to;return {...operands(a),result:['bool',pass]};}
         case 'NEW_OBJECT':case 'NEW_ARRAY':{const id=this.next(s,'obj');s.heap[id]={id,kind:op==='NEW_ARRAY'?'array':'object',properties:{},propertyVersions:{},shapeVersion:0,version:0};if(op==='NEW_ARRAY'){s.heap[id].properties.length=token(['num',0],eventId);s.heap[id].propertyVersions.length=0;}return result(['ref',id]);}
         case 'GET_PROP':case 'GET_METHOD':{
-          const key=pop(),base=pop(),property=valueKey(key.value);let v;
+          const key=pop(),base=pop(),property=valueKey(key.value);let v,read=null;
           if(base.value[0]==='host')v=['hostfn',`${base.value[1]}.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Promise' && ['resolve','reject'].includes(property))v=['builtinfn',`Promise.${property}`];
+          else if(base.value[0]==='intrinsic' && base.value[1]==='Object' &&
+             ['create','setPrototypeOf','getPrototypeOf'].includes(property))
+            v=['builtinfn',`Object.${property}`];
+          else if(base.value[0]==='intrinsic' && base.value[1]==='Object' && property==='prototype')
+            v=['intrinsic','Object.prototype'];
           else if(base.value[0]==='promise'){
              if(!s.promises[base.value[1]])throw new ReferenceError('Unknown guest promise');
              if(!['then','catch','finally'].includes(property))
@@ -491,25 +497,15 @@ export class Runtime {
            else if(base.value[0]==='ref'){
              const obj=s.heap[base.value[1]];
              if(!obj)throw new ReferenceError('Unknown guest identity');
-             const inherited=!Object.hasOwn(obj.properties,property);
-             const built=(property==='valueOf'||property==='toString')
-               ? ordinaryGet(s.heap,base.value,property) : null;
-             if(inherited && built)v=built.method.value;
-             else {
-               if(inherited && (property in (obj.kind==='array'?Array.prototype:Object.prototype)))
-                 throw new TypeError('Inherited property lookup is outside the profile');
-               v=inherited?U:obj.properties[property].value;
-             }
+             const found=ordinaryGet(s.heap,base.value,property);
+             if(!found)throw new TypeError('Unmodeled ordinary [[Get]] or exotic property');
+             v=found.method.value;read=found.observation;
            }
           else if(['null','undefined'].includes(base.value[0]))
              guestFault('TypeError',`Cannot read properties of ${base.value[0]}`);
            else throw new TypeError('Unsupported property receiver (no host fallback)');
           const output=op==='GET_METHOD'?['method',v,base.value]:v;
-          const obj=base.value[0]==='ref'?s.heap[base.value[1]]:null;
-           return {...operands(base,key),...result(output),reads:obj?[{kind:'property',
-             objectId:obj.id,key:property,version:Object.hasOwn(obj.propertyVersions??{},property)?obj.propertyVersions[property]:0,
-             shapeVersion:obj.shapeVersion??0,present:Object.hasOwn(obj.properties,property),
-             value:v,supplyingEvent:obj.properties[property]?.origin??null}]:[]};
+          return {...operands(base,key),...result(output),reads:read?[read]:[]};
         }
         case 'PUT_PROP':{
           const v=pop(),key=pop(),base=pop(),property=valueKey(key.value);
@@ -554,7 +550,43 @@ export class Runtime {
              return {...operands(fn,...args),...result(['promise',promiseId]),
                causes:[{kind:'promise',promiseId:receiver[1]}]};
            }
-           if(callable[0]==='builtinfn' && ['Object.valueOf','Object.toString','Array.toString'].includes(callable[1])){
+           if(callable[0]==='builtinfn' && ['Object.create','Object.setPrototypeOf','Object.getPrototypeOf'].includes(callable[1])){
+            const primitiveProto=v=>{
+              if(v?.[0]==='null')return null;
+              if(v?.[0]==='intrinsic' && ['Object.prototype','Array.prototype'].includes(v[1]))return v[1];
+              if(v?.[0]==='ref' && ['object','array'].includes(s.heap[v[1]]?.kind))return v[1];
+              guestFault('TypeError','Prototype must be null or an owned ordinary object');
+            };
+            const v=args[0]?.value??U, obj=v[0]==='ref'?s.heap[v[1]]:null;
+            if(callable[1]==='Object.create'){
+              const proto=primitiveProto(v),id=this.next(s,'obj');
+              s.heap[id]={id,kind:'object',prototype:proto,properties:{},propertyVersions:{},
+                shapeVersion:0,version:0};
+              return {...operands(fn,...args),...result(['ref',id])};
+            }
+            if(!obj||!['object','array'].includes(obj.kind))
+              guestFault('TypeError','Prototype operation requires an owned ordinary object');
+            if(callable[1]==='Object.getPrototypeOf'){
+              const proto=objectPrototype(obj);
+              const out=proto===null?['null']:
+                proto==='Object.prototype'||proto==='Array.prototype'?['intrinsic',proto]:['ref',proto];
+              return {...operands(fn,...args),...result(out)};
+            }
+            const proto=primitiveProto(args[1]?.value??U);
+            const visited=new Set([obj.id]);
+            let current=proto;
+            while(current!==null && current!=='Object.prototype' && current!=='Array.prototype'){
+              if(visited.has(current))guestFault('TypeError','Cyclic prototype value');
+              visited.add(current);
+              const next=s.heap[current];
+              if(!next||!['object','array'].includes(next.kind))
+                throw new TypeError('Broken prototype identity');
+              current=objectPrototype(next);
+            }
+            if(objectPrototype(obj)!==proto){obj.prototype=proto;obj.shapeVersion++;}
+            return {...operands(fn,...args),...result(v)};
+          }
+          if(callable[0]==='builtinfn' && ['Object.valueOf','Object.toString','Array.toString'].includes(callable[1])){
             const v=ordinaryBuiltin(s.heap,receiver,callable[1]);
             if(v===null)throw new TypeError('Unowned builtin receiver or array coercion');
             return {...operands(fn,...args),...result(v)};
