@@ -1,0 +1,161 @@
+{
+  "schema": "spec-backend-audit/1",
+  "status": "INITIAL_FAMILY_AUDIT_NOT_CLAUSE_COMPLETE",
+  "candidate": {
+    "project": "engine262/engine262",
+    "npmPackage": "@engine262/engine262",
+    "pinnedNpmVersion": "0.0.1-2d7d8d988c77e94473ba0377122cdfccdfe243ba",
+    "license": "MIT",
+    "role": "opt-in, independent untraced reference only; runner reports selected Test262 execution and scalar differential probes",
+    "replacesOwnedInterpreter": false,
+    "upstreamCommit": "2d7d8d988c77e94473ba0377122cdfccdfe243ba"
+  },
+  "interfaceEvidence": [
+    {
+      "upstream": "src/api.mts",
+      "surface": "ManagedRealm.compileScript/evaluateScriptSkipDebugger",
+      "integration": "src/spec-oracle.js",
+      "verifiedBy": "scripts/run-spec-probes.mjs + tools/test262-baseline.mjs"
+    },
+    {
+      "upstream": "src/execution-context/Agent.mts",
+      "surface": "Agent hostDefinedOptions.onNodeEvaluation",
+      "integration": "NOT_CONNECTED",
+      "verifiedBy": null
+    },
+    {
+      "upstream": "src/index.mts",
+      "surface": "runtime-semantics, abstract-ops, completion, values",
+      "integration": "NOT_CONNECTED",
+      "verifiedBy": null
+    }
+  ],
+  "families": [
+    {
+      "name": "script grammar, static semantics, and early errors",
+      "upstream": [
+        "src/parse.mts",
+        "src/parser/"
+      ],
+      "referenceExecution": "pin-specific script parse and selected Test262 cases; no full harness",
+      "authoritativeTracing": "not integrated",
+      "blocker": "Need source-site mapping, exact early errors, AST identity and versioned traces without running opaque engine262 state."
+    },
+    {
+      "name": "primitive values and coercions",
+      "upstream": [
+        "src/value.mts",
+        "src/abstract-ops/"
+      ],
+      "referenceExecution": "scalar completions integrated",
+      "authoritativeTracing": "not integrated",
+      "blocker": "Spec ToPrimitive/ToNumber/ToString and observable reads need owned mutable records and producer links."
+    },
+    {
+      "name": "lexical environments, bindings, and closures",
+      "upstream": [
+        "src/execution-context/",
+        "src/runtime-semantics/"
+      ],
+      "referenceExecution": "scalar examples integrated",
+      "authoritativeTracing": "not integrated",
+      "blocker": "Engine262 execution contexts and environment records are live objects, not serializable controlled guest-owned state."
+    },
+    {
+      "name": "object internal methods, proxies, reflection",
+      "upstream": [
+        "src/value.mts",
+        "src/intrinsics/Proxy.mts"
+      ],
+      "referenceExecution": "candidate available",
+      "authoritativeTracing": "not integrated",
+      "blocker": "Proxy traps, property attributes, prototype chains, and accessors need full state and dynamic effect ordering."
+    },
+    {
+      "name": "functions, this, completion and exception propagation",
+      "upstream": [
+        "src/completion.mts",
+        "src/evaluator.mts"
+      ],
+      "referenceExecution": "simple examples integrated",
+      "authoritativeTracing": "not integrated",
+      "blocker": "Abrupt completions, native re-entry, caller frames, generator state and host exceptions are not owned."
+    },
+    {
+      "name": "promises, microtasks, and job queues",
+      "upstream": [
+        "src/host-defined/job-queue.mts",
+        "src/host-defined/event-loop.mts"
+      ],
+      "referenceExecution": "not tested",
+      "authoritativeTracing": "not integrated",
+      "blocker": "Agent job queue is not the tracer's explicit queue; exact scheduling/replay must be designed first."
+    },
+    {
+      "name": "modules, linking, and dynamic source",
+      "upstream": [
+        "src/modules.mts",
+        "src/api.mts"
+      ],
+      "referenceExecution": "not tested",
+      "authoritativeTracing": "not integrated",
+      "blocker": "Module resolver/cache/linking and dynamic import/eval require source registration, module records and replayable host hooks."
+    },
+    {
+      "name": "intrinsics and standard library",
+      "upstream": [
+        "src/intrinsics/"
+      ],
+      "referenceExecution": "not inventoried",
+      "authoritativeTracing": "not integrated",
+      "blocker": "Per-intrinsic/clause mapping to spec text, profile switches, native hooks and full Test262 fixtures not completed."
+    },
+    {
+      "name": "agents, shared memory, GC and weak references",
+      "upstream": [
+        "src/execution-context/Agent.mts",
+        "src/api.mts"
+      ],
+      "referenceExecution": "not tested",
+      "authoritativeTracing": "not integrated",
+      "blocker": "Need agent sequencing, typed backing-store coherence, GC/weak semantics and replayable native resources."
+    },
+    {
+      "name": "ECMA-402 and locale data",
+      "upstream": [],
+      "referenceExecution": "unverified",
+      "authoritativeTracing": "not integrated",
+      "blocker": "No audited ECMA-402 implementation or pinned locale/Unicode data."
+    },
+    {
+      "name": "Node/browser native host services",
+      "upstream": [
+        "src/host-defined/engine.mts"
+      ],
+      "referenceExecution": "not implemented",
+      "authoritativeTracing": "not integrated",
+      "blocker": "Web IDL, Node built-ins, real ABI bridge, activation retention and effects are outside the current mock host."
+    },
+    {
+      "name": "normative operation provenance and full model-visibility proof",
+      "upstream": [
+        "src/evaluator.mts"
+      ],
+      "referenceExecution": "not implemented",
+      "authoritativeTracing": "not integrated",
+      "blocker": "AST callbacks alone are not normative operation logs; typed mutation catalog/visibility validator must be complete."
+    }
+  ],
+  "acceptanceGate": {
+    "phase": "before replacing bounded VM",
+    "required": [
+      "Pinned and audited per-clause/per-intrinsic specification coverage",
+      "Spec phases executed with owned/serializable state, not mirrored opaque engine objects",
+      "No guest state or host callbacks escape trace authorization",
+      "Independent deterministic replay of both results and normative observable ordering",
+      "Full Test262 runner and declared pass/skip/fail ledger",
+      "Node/browser integration and native consistency fixtures"
+    ],
+    "satisfied": false
+  }
+}
