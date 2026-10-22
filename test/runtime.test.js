@@ -38,9 +38,13 @@ test('object identity, array lengths and history are preserved',()=>{
   assert.equal(validateBundle(r.exportRun()).valid,true);
 });
 
-test('uninitialized bindings, unsupported grammar and native fallback fail closed',()=>{
-  assert.throws(()=>run('let a = b; let b = 2;'),/before initialization/);
-  assert.throws(()=>run('eval("2 + 2");'),/not defined/);
+test('classified implicit guest faults terminate by owned completion, not by native throw',()=>{
+  for(const source of ['let a = b; let b = 2;', 'eval("2 + 2");']){
+    const {r,progress}=run(source);
+    assert.equal(progress.kind,'runtime.failure');
+    assert.equal(r.state.control.a0.failure.completion.errorType,'ReferenceError');
+    assert.equal(validateBundle(JSON.parse(JSON.stringify(r.exportRun()))).valid,true);
+  }
   assert.throws(()=>run('let x = () => 42;'),SyntaxError);
   assert.throws(()=>run('let o = {__proto__: {}};'),/not implemented/);
   assert.throws(()=>run('let a={}; a.__proto__=1;'),/not implemented/);
