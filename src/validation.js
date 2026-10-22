@@ -57,14 +57,22 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
         ? state.inputs[e.causes.find(c=>c.kind==='input')?.inputId] : null;
       const hostThrow=delivered?.abrupt && state.effects[delivered.effectId]?.kind==='synchronous';
       if(e.operation==='completion.throw'||hostThrow) {
-        const failure=state.control.a0.failure,frame=state.frames[failure?.frameId];
-        if(e.completion?.type!=='throw' || !eq(failure?.completion,e.completion) ||
-            !eq(frame?.completion,e.completion) || frame?.status!=='thrown' || state.control.a0.status!=='failed' ||
-            state.control.a0.activeFrameId!==null)fail('Unowned terminal throw completion',e.eventId);
+        if(e.completion?.type!=='throw')fail('Missing guest throw completion',e.eventId);
         const value=e.completion.value;
         if(hostThrow ? !eq(value,{value:delivered.value,origin:e.eventId}) :
             !eq(e.operands,[value?.value]) || !eq(e.operandOrigins,[value?.origin]))
           fail('Throw completion value/provenance mismatch',e.eventId);
+        if(state.control.a0.status==='failed'){
+          const failure=state.control.a0.failure,frame=state.frames[failure?.frameId];
+          if(!eq(failure?.completion,e.completion)||!eq(frame?.completion,e.completion)||
+             frame?.status!=='thrown'||state.control.a0.activeFrameId!==null)
+            fail('Unowned terminal throw completion',e.eventId);
+        }else{
+          const active=state.frames[state.control.a0.activeFrameId];
+          if(state.control.a0.status!=='running'||active?.status!=='running'||
+            !active.handlers?.some(h=>h.phase==='catch'||h.phase==='finally'))
+            fail('Guest throw was not routed to a handler',e.eventId);
+        }
       } else if(e.operation==='external.input.deliver'&&e.completion)
         fail('Unexpected host completion metadata',e.eventId);
     }

@@ -22,7 +22,10 @@ const opNames = {
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate',
   CALL:'call.enter', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate',
   GET_PROP:'property.read', GET_METHOD:'property.read', PUT_PROP:'property.write', ENTER_SCOPE:'environment.enter',
-  LEAVE_SCOPE:'environment.leave', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch'
+  LEAVE_SCOPE:'environment.leave', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
+  TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
+  BIND_CATCH:'completion.catch.bind', END_FINALLY:'completion.finally.end',
+  LOOP_ENTER:'control.loop.enter', LOOP_EXIT:'control.loop.exit', LOOP_JUMP:'completion.loop.jump'
 };
 const guestValue = (x) => Array.isArray(x) && (
   (x.length === 1 && ['undefined', 'null'].includes(x[0])) ||
@@ -122,7 +125,7 @@ export class Runtime {
     const id=this.next(draft,'frame'),envId=this.newEnv(draft,parentEnv);
     const params=this.programs[codeId].params;
     params.forEach((name,i)=>draft.envs[envId].bindings[name]={kind:'parameter',initialized:true,token:args[i]??token(U),version:0});
-    draft.frames[id]={id,codeId,pc:0,stack:[],envId,callerFrameId,asyncPromiseId,status:'running',blockedOn:null,awaiting:null,operationId:null,version:0};
+    draft.frames[id]={id,codeId,pc:0,stack:[],envId,callerFrameId,asyncPromiseId,status:'running',blockedOn:null,awaiting:null,operationId:null,handlers:[],loops:[],version:0};
     return id;
   }
   start(source) {
@@ -245,6 +248,58 @@ export class Runtime {
     draft.control.a0.failure={kind:unsupported?'unsupported':'guest-abrupt',frameId:frame.id,completion:copy(completion)};
     draft.control.a0.activeFrameId=null;
   }
+  // Owned, JSON-serializable completion routing. A handler stores the
+  // environment, operand depth and loop depth at entry; no host exception or
+  // native continuation is used to represent guest control flow.
+  caughtError(draft,completion,eventId) {
+    if(completion.value)return completion.value;
+    if(!completion.errorType)throw new Error('Unrepresentable guest throw completion');
+    const id=this.next(draft,'obj');
+    draft.heap[id]={id,kind:'object',properties:{
+      name:token(['str',completion.errorType],eventId),
+      message:token(['str',completion.message??''],eventId)
+    },propertyVersions:{name:1,message:1},shapeVersion:2,version:0};
+    // Only own name/message data properties are modeled, not Error prototypes,
+    // stacks, identity of native constructors, or instanceof.
+    return token(['ref',id],eventId);
+  }
+  routeCompletion(draft,frame,completion,eventId) {
+    const stop=completion.type==='jump'?completion.handlerDepth:0;
+    while(frame.handlers.length>stop){
+      const handler=frame.handlers.at(-1);
+      if(handler.phase==='finally'){frame.handlers.pop();continue;}
+      frame.envId=handler.envId;
+      frame.stack.length=handler.stackDepth;
+      frame.loops.length=handler.loopDepth;
+      if(completion.type==='throw' && handler.phase==='try' && handler.catchPc!==null){
+        handler.phase='catch';
+        handler.caught=this.caughtError(draft,completion,eventId);
+        frame.pc=handler.catchPc;
+        return;
+      }
+      if(handler.finallyPc!==null){
+        handler.phase='finally';handler.pending=copy(completion);
+        frame.pc=handler.finallyPc;
+        return;
+      }
+      frame.handlers.pop();
+    }
+    if(completion.type==='jump'){
+      frame.envId=completion.envId;frame.stack.length=completion.stackDepth;
+      frame.loops.length=completion.loopDepth;frame.pc=completion.targetPc;
+    }else if(completion.type==='return'){
+      this.completeFrame(draft,frame,completion.value.value,completion.value.origin);
+    }else if(completion.type==='throw'){
+      // Synchronous child activations do not terminate the run before the
+      // caller has had a chance to handle their abrupt completion.
+      if(frame.callerFrameId && !frame.asyncPromiseId){
+        frame.status='thrown';frame.completion=copy(completion);
+        const caller=draft.frames[frame.callerFrameId];
+        draft.control.a0.activeFrameId=caller.id;
+        this.routeCompletion(draft,caller,completion,eventId);
+      }else this.failFrame(draft,frame,completion);
+    }else throw new Error('Unknown guest completion');
+  }
   stepArithmetic(frame) {
     const operation=this.state.operations[frame.operationId];
     if(!operation||operation.frameId!==frame.id)throw new Error('Unowned spec continuation');
@@ -255,6 +310,8 @@ export class Runtime {
       if(current.status==='completed') {
         f.operationId=null;
         if(current.completion.type==='normal')this.stackPush(f,current.completion.value.value,eventId);
+        else if(current.completion.type==='throw')
+          this.routeCompletion(s,f,current.completion,eventId);
         else this.failFrame(s,f,current.completion);
       }
       return detail;
@@ -283,6 +340,55 @@ export class Runtime {
         case 'DEF_FN':{const e=s.envs[f.envId],id=this.next(s,'obj');s.heap[id]={id,kind:'function',codeId:arg.codeId,closureEnvId:f.envId,async:arg.async,version:0};e.bindings[arg.name]={kind:'function',initialized:true,token:token(['ref',id],eventId),version:0};return {result:['ref',id]};}
         case 'ENTER_SCOPE':f.envId=this.newEnv(s,f.envId);return {};
         case 'LEAVE_SCOPE':f.envId=s.envs[f.envId].parent;return {};
+        case 'TRY_ENTER':
+          f.handlers.push({...arg,envId:f.envId,stackDepth:st.length,
+            loopDepth:f.loops.length,phase:'try',caught:null,pending:null});
+          return {};
+        case 'TRY_NORMAL':{
+          const h=f.handlers.at(-1);
+          if(!h || !['try','catch'].includes(h.phase))
+            throw new Error('No active try/catch completion handler');
+          f.envId=h.envId;st.length=h.stackDepth;f.loops.length=h.loopDepth;
+          if(h.finallyPc!==null){
+            h.phase='finally';h.pending={type:'normal'};f.pc=h.finallyPc;
+          }else{f.handlers.pop();f.pc=h.afterPc;}
+          return {};
+        }
+        case 'BIND_CATCH':{
+          const h=f.handlers.at(-1);
+          if(h?.phase!=='catch'||!h.caught)throw new Error('No caught guest completion');
+          const caught=h.caught;
+          f.envId=this.newEnv(s,h.envId);
+          if(arg!==null)s.envs[f.envId].bindings[arg]={
+            kind:'catch',initialized:true,token:caught,version:0
+          };
+          h.caught=null;
+          return {operands:[caught.value],origins:[caught.origin],result:caught.value};
+        }
+        case 'END_FINALLY':{
+          const h=f.handlers.at(-1);
+          if(h?.phase!=='finally')throw new Error('No active finally completion');
+          f.handlers.pop();f.envId=h.envId;st.length=h.stackDepth;
+          f.loops.length=h.loopDepth;
+          if(h.pending?.type==='normal')f.pc=h.afterPc;
+          else this.routeCompletion(s,f,h.pending,eventId);
+          return {};
+        }
+        case 'LOOP_ENTER':
+          f.loops.push({...arg,envId:f.envId,stackDepth:st.length,handlerDepth:f.handlers.length});
+          return {};
+        case 'LOOP_EXIT':
+          if(!f.loops.length)throw new Error('No active loop');
+          f.loops.pop();return {};
+        case 'LOOP_JUMP':{
+          const loop=f.loops.at(-1);
+          if(!loop)throw new Error('No active loop for break/continue');
+          this.routeCompletion(s,f,{type:'jump',kind:arg,
+            targetPc:arg==='break'?loop.breakPc:loop.continuePc,
+            envId:loop.envId,stackDepth:loop.stackDepth,
+            handlerDepth:loop.handlerDepth,loopDepth:f.loops.length},eventId);
+          return {};
+        }
         case 'BINARY':{
           const b=pop(),a=pop();
           if(!isOwnedArithmetic(arg))return {...operands(a,b),...result(primitiveBinary(arg,a.value,b.value))};
@@ -373,8 +479,8 @@ export class Runtime {
           if(p.status==='fulfilled'){s.control.a0.queue.push({frameId:f.id,promiseId});p.waiters.pop();}
           this.suspendAsync(s,f);return {...operands(a),causes:[{kind:'promise',promiseId}]};
         }
-        case 'RETURN':{const v=pop();this.completeFrame(s,f,v.value,v.origin);return {...operands(v),result:v.value};}
-        case 'THROW':{const v=pop(),completion={type:'throw',value:v};this.failFrame(s,f,completion);return {...operands(v),completion};}
+        case 'RETURN':{const v=pop();this.routeCompletion(s,f,{type:'return',value:v},eventId);return {...operands(v),result:v.value};}
+        case 'THROW':{const v=pop(),completion={type:'throw',value:v};this.routeCompletion(s,f,completion,eventId);return {...operands(v),completion};}
         default:throw new Error(`Unknown opcode ${op}`);
       }
     },{siteId:inst.siteId,sourceId:frame.codeId.split(':')[0],codeId:frame.codeId,invocationId:frame.id});
@@ -436,7 +542,7 @@ export class Runtime {
         const f=s.frames[fx.frameId];
         if(f.blockedOn!==fx.id||f.status!=='blocked')throw new Error('Synchronous completion has no matching blocked frame');
         fx.immediate='completed';f.blockedOn=null;f.status='running';
-        if(i.abrupt) {completion={type:'throw',value:token(i.value,eventId)};this.failFrame(s,f,completion);}
+        if(i.abrupt) {completion={type:'throw',value:token(i.value,eventId)};this.routeCompletion(s,f,completion,eventId);}
         else this.stackPush(f,i.value,eventId);
       }
       return {result:i.value,causes:[{kind:'input',inputId},{kind:'effect',effectId:i.effectId}],...(completion?{completion}:{})};

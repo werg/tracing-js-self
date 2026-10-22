@@ -37,7 +37,7 @@
     "14-file official Test262 script syntax-only baseline with Git blob verification",
     "selected 11-file Test262 sloppy-script execution smoke ledger with pinned blobs, known failures and skips",
     "primitive arithmetic owned spec phases with serializable continuations and typed operation commands",
-    "terminal recorded guest throws and arithmetic abrupt/unsupported outcomes (no catch or rejection propagation)",
+    "bounded synchronous try/catch/finally, cross-frame throw and return routing, while break/continue (including finally), and arithmetic error catch with limited guest Error data",
     "1958 independent primitive arithmetic oracle comparisons with reconstruction and replay",
     "8-file official Test262 execution slice: 6 non-strict passes, 2 unsupported; 8 strict variants omitted",
     "pinned engine262 textual source inventory with explicit partial/unowned classifications",
@@ -63,6 +63,7 @@
     "spec-backed fully owned language phases beyond primitive arithmetic and complete normative clause/intrinsic mapping",
     "full Test262 official harness semantics, strict/module/async/negative execution and conformance reports",
     "natlang EvalEnvironment plus module-realm adapter and actual generated-source acceptance",
-    "megatoken schema-v3 export with independent causal visibility validation"
+    "megatoken schema-v3 export with independent causal visibility validation",
+    "general implicit abrupt completion propagation, full Error objects, async rejection delivery, labeled loop/switch/for completions"
   ]
 }

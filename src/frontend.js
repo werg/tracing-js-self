@@ -68,7 +68,7 @@ export function parse(source) {
   const take = () => t[p++];
   const match = x => peek().value === x && (p++, true);
   const need = x => { if (!match(x)) throw new SyntaxError(`Expected ${x}, got ${peek().value} at ${peek().start}`); };
-  const name = () => { const x = take(); if (x.kind !== 'word' || ['const','let','var','return','await','function','if','else','while','throw','typeof','async','true','false','null'].includes(x.value)) throw new SyntaxError(`Expected identifier at ${x.start}`); return x.value; };
+  const name = () => { const x = take(); if (x.kind !== 'word' || ['const','let','var','return','await','function','if','else','while','throw','try','catch','finally','break','continue','typeof','async','true','false','null'].includes(x.value)) throw new SyntaxError(`Expected identifier at ${x.start}`); return x.value; };
   const semi = () => { if (match(';') || peek().value === '}' || peek().kind === 'eof') return; throw new SyntaxError(`Expected ; at ${peek().start} (automatic semicolon insertion not implemented)`); };
   function primary() {
     const x = take();
@@ -107,6 +107,22 @@ export function parse(source) {
     if(['let','const','var'].includes(x.value)){take();const id=name();let init=null;if(match('='))init=expression();if(x.value==='const'&&!init)throw new SyntaxError('const requires initializer');semi();return {type:'Variable',kind:x.value,id,init,start:x.start,end:t[p-1].end};}
     if(match('return')) {const argument=[';','}','<eof>'].includes(peek().value)?null:expression();semi();return {type:'Return',argument,start:x.start,end:t[p-1].end};}
     if(match('throw')) {const argument=expression();semi();return {type:'Throw',argument,start:x.start,end:t[p-1].end};}
+    if(match('try')){
+      const blockBody=block();let handler=null,finalizer=null;
+      if(match('catch')){
+        let param=null;
+        if(match('(')){param=name();need(')');}
+        const body=block();
+        if(param && body.body.some(n=>(n.type==='Variable' && n.kind!=='var' || n.type==='Function') && n.id===param))
+          throw new SyntaxError('Duplicate catch parameter declaration');
+        handler={param,body};
+      }
+      if(match('finally'))finalizer=block();
+      if(!handler&&!finalizer)throw new SyntaxError('try requires catch or finally');
+      return {type:'Try',block:blockBody,handler,finalizer,start:x.start,end:t[p-1].end};
+    }
+    if(match('break')){semi();return {type:'Break',start:x.start,end:t[p-1].end};}
+    if(match('continue')){semi();return {type:'Continue',start:x.start,end:t[p-1].end};}
     if(match('if')){need('(');const test=expression();need(')');const consequent=statement();const alternate=match('else')?statement():null;return {type:'If',test,consequent,alternate,start:x.start,end:t[p-1].end};}
     if(match('while')){need('(');const test=expression();need(')');const body=statement();return {type:'While',test,body,start:x.start,end:t[p-1].end};}
     if(match(';'))return {type:'Empty',start:x.start,end:x.end};
@@ -118,7 +134,7 @@ let site=0;
 export function compile(ast) {
   site=0;const programs={};let next=0;
   function bodyProgram(body,params=[],async=false) {
-    const id=`code${++next}`, instructions=[];
+    const id=`code${++next}`, instructions=[];let loopDepth=0;
     const emit=(op,arg,node)=>{const inst={op,arg,siteId:`s${++site}`,start:node?.start??0,end:node?.end??0};instructions.push(inst);return instructions.length-1;};
     // Declarations are created before execution for a block's scope.
     function statements(nodes,scoped=false) {
@@ -166,7 +182,37 @@ export function compile(ast) {
         case 'Throw':expr(n.argument);emit('THROW',null,n);break;
         case 'Block':statements(n.body,true);break;
         case 'If':{expr(n.test);const no=emit('JUMP_IF_FALSE',null,n.test);stmt(n.consequent);if(n.alternate){const end=emit('JUMP',null,n);instructions[no].arg=instructions.length;stmt(n.alternate);instructions[end].arg=instructions.length;}else instructions[no].arg=instructions.length;break;}
-        case 'While':{const top=instructions.length;expr(n.test);const no=emit('JUMP_IF_FALSE',null,n.test);stmt(n.body);emit('JUMP',top,n);instructions[no].arg=instructions.length;break;}
+        case 'While':{
+          const entry=emit('LOOP_ENTER',null,n),top=instructions.length;
+          expr(n.test);const no=emit('JUMP_IF_FALSE',null,n.test);
+          loopDepth++;stmt(n.body);loopDepth--;
+          emit('JUMP',top,n);
+          const end=instructions.length;emit('LOOP_EXIT',null,n);
+          instructions[entry].arg={breakPc:end,continuePc:top};
+          instructions[no].arg=end;break;
+        }
+        case 'Break':case 'Continue':
+          if(!loopDepth)throw new SyntaxError(n.type.toLowerCase()+' outside loop');
+          emit('LOOP_JUMP',n.type.toLowerCase(),n);break;
+        case 'Try':{
+          const entry=emit('TRY_ENTER',null,n);
+          stmt(n.block);emit('TRY_NORMAL',null,n.block);
+          let catchPc=null,finallyPc=null;
+          if(n.handler){
+            catchPc=instructions.length;
+            emit('BIND_CATCH',n.handler.param,n.handler.body);
+            // A catch parameter and its top-level block declarations share
+            // one lexical environment, so duplicate names cannot shadow it.
+            statements(n.handler.body.body);
+            emit('TRY_NORMAL',null,n.handler.body);
+          }
+          if(n.finalizer){
+            finallyPc=instructions.length;
+            stmt(n.finalizer);emit('END_FINALLY',null,n.finalizer);
+          }
+          instructions[entry].arg={catchPc,finallyPc,afterPc:instructions.length};
+          break;
+        }
         case 'Empty':break;
         default:throw new SyntaxError(`Unsupported statement: ${n.type}`);
       }
