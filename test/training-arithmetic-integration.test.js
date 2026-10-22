@@ -106,7 +106,7 @@ test('abrupt, unsupported and pending entries cannot become training episodes',(
   for(const [operator,args,kind,completion,semanticOp] of [
     ['+',[1n,1],'runtime.failure','throw','throw'],
     ['/',[1n,0n],'runtime.failure','throw','throw'],
-    ['+',[{},1],'unsupported','unsupported','end']
+    ['+',[[{}],1],'unsupported','unsupported','end']
   ]) {
     const code=`function f(a,b){return a${operator}b;}`;
     const {runtime,progress}=run(code,args);
