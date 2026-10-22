@@ -342,13 +342,14 @@ export class Runtime {
       const pop=()=>{if(!st.length)throw new Error(`Stack underflow: ${op}`);return st.pop();};
       const result=(v)=>{this.stackPush(f,v,eventId);return {result:v};};
       const operands=(...t)=>({operands:t.map(x=>x.value),origins:t.map(x=>x.origin)});
-      switch(op){
+      try { switch(op){
         case 'CONST':return result(arg.value);
+        case 'THIS':return result(f.thisValue);
         case 'DECLARE':{const e=s.envs[f.envId];if(Object.hasOwn(e.bindings,arg.name))throw new SyntaxError(`Duplicate declaration ${arg.name}`);e.bindings[arg.name]={kind:arg.kind,initialized:false,token:null,version:0};return {};}
         case 'INIT':{const v=pop(),b=lookup(s,f.envId,arg);if(b.cell.initialized)throw new Error('Already initialized');b.cell.initialized=true;b.cell.token=v;b.cell.version++;return {...operands(v),result:v.value};}
-        case 'GET':{const b=lookup(s,f.envId,arg);if(!b.cell.initialized)throw new ReferenceError(`Cannot access '${arg}' before initialization`);this.stackPush(f,b.cell.token.value,eventId);return {result:b.cell.token.value,reads:[{kind:'binding',envId:b.env.id,name:arg,version:b.cell.version??0,
+        case 'GET':{const b=lookup(s,f.envId,arg);if(!b.cell.initialized)guestFault('ReferenceError',`Cannot access '${arg}' before initialization`);this.stackPush(f,b.cell.token.value,eventId);return {result:b.cell.token.value,reads:[{kind:'binding',envId:b.env.id,name:arg,version:b.cell.version??0,
             value:b.cell.token.value,supplyingEvent:b.cell.token.origin??null}],origins:[b.cell.token.origin]};}
-        case 'SET':{const v=pop(),b=lookup(s,f.envId,arg);if(!b.cell.initialized)throw new ReferenceError(`${arg} is not initialized`);if(b.cell.kind==='const')throw new TypeError(`Assignment to constant ${arg}`);b.cell.token=v;b.cell.version=(b.cell.version??0)+1;this.stackPush(f,v.value,eventId);return {...operands(v),result:v.value};}
+        case 'SET':{const v=pop(),b=lookup(s,f.envId,arg);if(!b.cell.initialized)guestFault('ReferenceError',`${arg} is not initialized`);if(b.cell.kind==='const')guestFault('TypeError',`Assignment to constant ${arg}`);b.cell.token=v;b.cell.version=(b.cell.version??0)+1;this.stackPush(f,v.value,eventId);return {...operands(v),result:v.value};}
         case 'DEF_FN':{const e=s.envs[f.envId],id=this.next(s,'obj');s.heap[id]={id,kind:'function',codeId:arg.codeId,closureEnvId:f.envId,async:arg.async,version:0};e.bindings[arg.name]={kind:'function',initialized:true,token:token(['ref',id],eventId),version:0};return {result:['ref',id]};}
         case 'ENTER_SCOPE':f.envId=this.newEnv(s,f.envId);return {};
         case 'LEAVE_SCOPE':f.envId=s.envs[f.envId].parent;return {};
@@ -420,7 +421,7 @@ export class Runtime {
         case 'GET_PROP':case 'GET_METHOD':{
           const key=pop(),base=pop(),property=valueKey(key.value);let v;
           if(base.value[0]==='host')v=['hostfn',`${base.value[1]}.${property}`];
-          else if(base.value[0]==='intrinsic' && base.value[1]==='Promise' && property==='resolve')v=['builtinfn','Promise.resolve'];
+          else if(base.value[0]==='intrinsic' && base.value[1]==='Promise' && ['resolve','reject'].includes(property))v=['builtinfn',`Promise.${property}`];
           else if(base.value[0]==='ref'){
              const obj=s.heap[base.value[1]];
              if(!obj)throw new ReferenceError('Unknown guest identity');
@@ -429,7 +430,9 @@ export class Runtime {
                throw new TypeError('Inherited property lookup is outside the profile');
              v=Object.hasOwn(obj.properties,property)?obj.properties[property].value:U;
            }
-          else throw new TypeError('Unsupported property receiver (no host fallback)');
+          else if(['null','undefined'].includes(base.value[0]))
+             guestFault('TypeError',`Cannot read properties of ${base.value[0]}`);
+           else throw new TypeError('Unsupported property receiver (no host fallback)');
           const output=op==='GET_METHOD'?['method',v,base.value]:v;
           const obj=base.value[0]==='ref'?s.heap[base.value[1]]:null;
            return {...operands(base,key),...result(output),reads:obj?[{kind:'property',
@@ -439,7 +442,9 @@ export class Runtime {
         }
         case 'PUT_PROP':{
           const v=pop(),key=pop(),base=pop(),property=valueKey(key.value);
-          if(base.value[0]!=='ref'||!s.heap[base.value[1]]||s.heap[base.value[1]].kind==='function')throw new TypeError('Not a writable guest object');
+          if(['null','undefined'].includes(base.value[0]))
+             guestFault('TypeError',`Cannot set properties of ${base.value[0]}`);
+           if(base.value[0]!=='ref'||!s.heap[base.value[1]]||s.heap[base.value[1]].kind==='function')throw new TypeError('Not a writable guest object');
           const obj=s.heap[base.value[1]];
           if(this.entrySpec && obj.kind==='array') {
             const oldLength=decode(obj.properties.length.value);
@@ -456,17 +461,20 @@ export class Runtime {
         case 'CALL':{
           const args=[];for(let i=0;i<arg;i++)args.unshift(pop());
           const fn=pop();let callable=fn.value;
+          const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
           if(callable[0]==='ref' && s.heap[callable[1]]?.kind==='function'){
             const target=s.heap[callable[1]],promiseId=target.async?this.newPromise(s):null;
-            const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,args);
+            const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,args,receiver);
             s.control.a0.activeFrameId=id;
             return {...operands(fn,...args),result:['ref',callable[1]],causes:[{kind:'invocation',frameId:id}]};
           }
-          if(callable[0]==='builtinfn' && callable[1]==='Promise.resolve'){
-            const v=args[0]?.value??U;
-            if(v[0]==='promise')return {...operands(fn,...args),...result(v)};
-            const p=this.newPromise(s,'fulfilled',token(v,args[0]?.origin));return {...operands(fn,...args),...result(['promise',p])};
+          if(callable[0]==='builtinfn' && ['Promise.resolve','Promise.reject'].includes(callable[1])){
+            const v=args[0]?.value??U,origin=args[0]?.origin??null;
+            if(callable[1]==='Promise.resolve' && v[0]==='promise')
+              return {...operands(fn,...args),...result(v)};
+            const p=this.newPromise(s,callable[1]==='Promise.resolve'?'fulfilled':'rejected',token(v,origin));
+            return {...operands(fn,...args),...result(['promise',p])};
           }
           if(callable[0]==='hostfn'){
             const operation=callable[1];
@@ -482,18 +490,23 @@ export class Runtime {
             else {f.status='blocked';f.blockedOn=id;}
             return {...operands(fn,...args),result:kind==='promise'?['promise',promiseId]:null,causes:[{kind:'effect',effectId:id}]};
           }
-          throw new TypeError('Not a callable guest function');
+          guestFault('TypeError','Not a callable guest function');
         }
         case 'AWAIT':{
           const a=pop(),v=a.value;if(!f.asyncPromiseId)throw new SyntaxError('await outside async function');
           const promiseId=v[0]==='promise'?v[1]:this.newPromise(s,'fulfilled',a);
           const p=s.promises[promiseId];f.awaiting=promiseId;p.waiters.push(f.id);
-          if(p.status==='fulfilled'){s.control.a0.queue.push({frameId:f.id,promiseId});p.waiters.pop();}
+          if(p.status!=='pending'){s.control.a0.queue.push({frameId:f.id,promiseId});p.waiters.pop();}
           this.suspendAsync(s,f);return {...operands(a),causes:[{kind:'promise',promiseId}]};
         }
         case 'RETURN':{const v=pop();this.routeCompletion(s,f,{type:'return',value:v},eventId);return {...operands(v),result:v.value};}
         case 'THROW':{const v=pop(),completion={type:'throw',value:v};this.routeCompletion(s,f,completion,eventId);return {...operands(v),completion};}
         default:throw new Error(`Unknown opcode ${op}`);
+      }} catch(error) {
+        if(!(error instanceof GuestFault))throw error;
+        const completion={type:'throw',errorType:error.name,message:error.message,origin:eventId};
+        this.routeCompletion(s,f,completion,eventId);
+        return {completion};
       }
     },{siteId:inst.siteId,sourceId:frame.codeId.split(':')[0],codeId:frame.codeId,invocationId:frame.id});
   }
@@ -548,8 +561,8 @@ export class Runtime {
       const i=s.inputs[inputId],fx=s.effects[i.effectId];i.status='delivered';fx.external=i.abrupt?'rejected':'completed';
       let completion=null;
       if(fx.kind==='promise'){
-        if(i.abrupt)throw new Error('Rejected external promises not yet supported by this profile');
-        this.resolvePromise(s,fx.promiseId,i.value,eventId);
+        if(i.abrupt)this.rejectPromise(s,fx.promiseId,i.value,eventId);
+        else this.resolvePromise(s,fx.promiseId,i.value,eventId);
       }else{
         const f=s.frames[fx.frameId];
         if(f.blockedOn!==fx.id||f.status!=='blocked')throw new Error('Synchronous completion has no matching blocked frame');
@@ -565,8 +578,16 @@ export class Runtime {
     if(!item)return;
     this.commit('job.enter',(s,eventId)=>{
       const job=s.control.a0.queue.shift(),f=s.frames[job.frameId],p=s.promises[job.promiseId];
-      if(f.status!=='suspended'||p.status!=='fulfilled')throw new Error('Invalid promise resume');
-      f.status='running';f.awaiting=null;f.callerFrameId=null;this.stackPush(f,p.value.value,eventId);
+      if(f.status!=='suspended'||!['fulfilled','rejected'].includes(p.status))throw new Error('Invalid promise resume');
+      f.status='running';f.awaiting=null;f.callerFrameId=null;
+      s.control.a0.activeFrameId=f.id;
+      if(p.status==='rejected'){
+        const completion={type:'throw',value:token(p.value.value,p.value.origin)};
+        this.routeCompletion(s,f,completion,eventId);
+        return {result:p.value.value,origins:[p.value.origin],
+          causes:[{kind:'promise',promiseId:job.promiseId}],completion};
+      }
+      this.stackPush(f,p.value.value,eventId);
       s.control.a0.activeFrameId=f.id;return {result:p.value.value,causes:[{kind:'promise',promiseId:job.promiseId}]};
     });
   }
