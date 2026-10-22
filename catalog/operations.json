@@ -218,6 +218,21 @@
       "operationId": "reference.this",
       "version": 1,
       "kind": "algorithm"
+    },
+    {
+      "operationId": "spec.internal.get",
+      "version": 1,
+      "kind": "owned-spec-phase"
+    },
+    {
+      "operationId": "spec.internal.call",
+      "version": 1,
+      "kind": "owned-spec-phase"
+    },
+    {
+      "operationId": "spec.internal.return",
+      "version": 1,
+      "kind": "owned-spec-phase"
     }
   ]
 }
