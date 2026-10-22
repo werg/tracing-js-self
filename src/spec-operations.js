@@ -55,19 +55,58 @@ function numeric(operator, left, right) {
   }
 }
 
-// Ordinary own-data [[Get]] plus the specifically modeled default prototype
-// methods. No host object/property access is performed on guest identities.
+// Bounded ordinary [[Get]] with explicitly owned data-property prototype
+// traversal. References never escape into host Reflect or JavaScript getters.
+// A null return is a fail-closed exotic/accessor/intrinsic operation.
+export function objectPrototype(obj) {
+  return Object.hasOwn(obj,'prototype')?obj.prototype:
+    obj.kind==='array'?'Array.prototype':'Object.prototype';
+}
 export function ordinaryGet(heap, receiver, name) {
-  const obj=heap[receiver[1]];
-  if(receiver[0]!=='ref'||!obj||!['object','array'].includes(obj.kind))
-    return null;
-  const own=Object.hasOwn(obj.properties,name);
-  const t=own ? obj.properties[name] : token(['builtinfn',
-    name==='valueOf'?'Object.valueOf':
-    obj.kind==='array'?'Array.toString':'Object.toString'],null);
-  return {method:t,observation:{kind:'property',objectId:obj.id,key:name,
-    version:Object.hasOwn(obj.propertyVersions??{},name)?obj.propertyVersions[name]:0,shapeVersion:obj.shapeVersion??0,
-    present:own,value:t.value,supplyingEvent:t.origin??null}};
+  const original=receiver[0]==='ref'?heap[receiver[1]]:null;
+  if(!original||!['object','array'].includes(original.kind))return null;
+  const observation=value=>({
+    kind:'property',objectId:original.id,key:name,
+    version:original.propertyVersions?.[name]??0,shapeVersion:original.shapeVersion??0,
+    present:Object.hasOwn(original.properties,name),
+    value:value.value,supplyingEvent:value.origin??null
+  });
+  let current=original;
+  const visited=new Set();
+  for(;;){
+    if(visited.has(current.id))return null;
+    visited.add(current.id);
+    if(Object.hasOwn(current.properties,name)){
+      const method=current.properties[name];
+      if(!method||!Array.isArray(method.value))return null;
+      return {method,observation:observation(method)};
+    }
+    const proto=objectPrototype(current);
+    if(proto===null){
+      const method=token(['undefined']);
+      return {method,observation:observation(method)};
+    }
+    if(proto==='Array.prototype'){
+      if(name==='toString'){
+        const method=token(['builtinfn','Array.toString']);
+        return {method,observation:observation(method)};
+      }
+      if(name in Array.prototype && name!=='valueOf')return null;
+      const method=name==='valueOf'?token(['builtinfn','Object.valueOf']):token(['undefined']);
+      return {method,observation:observation(method)};
+    }
+    if(proto==='Object.prototype'){
+      if(name==='valueOf'||name==='toString'){
+        const method=token(['builtinfn',name==='valueOf'?'Object.valueOf':'Object.toString']);
+        return {method,observation:observation(method)};
+      }
+      if(name in Object.prototype)return null;
+      const method=token(['undefined']);
+      return {method,observation:observation(method)};
+    }
+    current=heap[proto];
+    if(!current||!['object','array'].includes(current.kind))return null;
+  }
 }
 export function ordinaryBuiltin(heap, receiver, name) {
   const obj=receiver[0]==='ref'?heap[receiver[1]]:null;
