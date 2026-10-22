@@ -90,3 +90,29 @@ export function describeGraph(roots) {
   }
   return {roots:roots.map(visit),objects};
 }
+
+
+/** Initial model graph with the *same* identities used by the owned journal.
+ * Unlike an independent reference comparison, this must never renumber o1 as o0. */
+export function describeOwnedGraph(heap,roots,{maxNodes=256}={}) {
+  const seen=new Set(),objects=[];
+  function visit(value) {
+    if(!Array.isArray(value))throw new TypeError('Invalid guest value in input graph');
+    if(value[0]!=='ref')return structuredClone(value);
+    const id=value[1];
+    if(seen.has(id))return ['ref',id];
+    const entity=heap[id];
+    if(!entity || !['array','object'].includes(entity.kind))
+      throw new TypeError('Training graph refers to a missing or non-data identity');
+    if(seen.size>=maxNodes)throw new RangeError('Training graph node limit');
+    seen.add(id);
+    const record={id,kind:entity.kind,shapeVersion:entity.shapeVersion??0,properties:[]};
+    objects.push(record);
+    for(const [key,entry] of Object.entries(entity.properties)){
+      record.properties.push({key,value:visit(entry.value),
+        version:entity.propertyVersions?.[key]??0});
+    }
+    return ['ref',id];
+  }
+  return {roots:roots.map(visit),objects};
+}
