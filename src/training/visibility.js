@@ -16,9 +16,16 @@ export function trainingPrefix(bundle,{maxSourceBytes=2048}={}) {
   const graph=describeOwnedGraph(bundle.initialState.heap,roots);
   const sites=bundle.sites.map(s=>({id:s.siteId,code:s.codeId,start:s.start,end:s.end}));
   const codes=Object.values(bundle.programs).map(p=>({id:p.id,params:p.params,async:p.async}));
+  const global=bundle.initialState.envs[bundle.initialState.control.a0.globalEnvId];
+  const staticFunctions=Object.entries(global.bindings).flatMap(([name,binding])=>{
+    const value=binding.token?.value;
+    const fn=value?.[0]==='ref' && bundle.initialState.heap[value[1]];
+    return fn?.kind==='function' ? [{name,identity:value[1],code:fn.codeId,
+      captures:fn.closureEnvId}] : [];
+  });
   return {
     schema:'semantic-context/1',
-    source:encodeRecord('code',{sourceId:source.sourceId,text:source.text,codes,sites}),
+    source:encodeRecord('code',{sourceId:source.sourceId,text:source.text,codes,sites,staticFunctions}),
     input:encodeRecord('value',{entry:bundle.entrySpec.functionName,
       invocation:bundle.initialState.control.a0.activeFrameId,graph})
   };
