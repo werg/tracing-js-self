@@ -8,13 +8,13 @@ export function operationMutation(before, after) {
   if (!after) throw new Error('Owned operation history cannot be deleted');
   if (!before) return {kind:'operation.create', table:'operations', id:after.id, record:copy(after)};
   for (const key of Object.keys(before)) {
-    if (!['version','phase','status','registers','completion'].includes(key) && !equal(before[key], after[key]))
+    if (!['version','phase','status','registers','completion','coercion'].includes(key) && !equal(before[key], after[key]))
       throw new Error('Immutable owned-operation field changed: ' + key);
   }
   const common = {table:'operations', id:after.id, expectedVersion:before.version};
   if (after.status === 'completed') {
     if (before.phase !== 'complete' || before.status !== 'running' || after.phase !== 'done' ||
-        !equal(before.registers, after.registers) || !equal(before.completion, after.completion))
+        !equal(before.registers, after.registers) || !equal(before.completion, after.completion) || !equal(before.coercion,after.coercion))
       throw new Error('Invalid operation completion transition');
     return {kind:'operation.complete', ...common, completion:copy(after.completion)};
   }
@@ -25,5 +25,6 @@ export function operationMutation(before, after) {
     if (!equal(old, value)) writes.push({name, before:copy(old), after:copy(value)});
   }
   return {kind:'operation.advance', ...common, from:before.phase, to:after.phase, writes,
-    completionBefore:copy(before.completion), completionAfter:copy(after.completion)};
+    completionBefore:copy(before.completion), completionAfter:copy(after.completion),
+    coercionBefore:copy(before.coercion), coercionAfter:copy(after.coercion)};
 }
