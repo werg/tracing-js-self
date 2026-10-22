@@ -7,6 +7,8 @@ import { operationMutation } from './spec-mutations.js';
 import {hostOperation,prepareHostRequest} from './host/operations.js';
 import { specStep, ENGINE_REVISION } from './spec-schema.js';
 
+class GuestFault extends Error {constructor(name,message){super(message);this.name=name;}}
+const guestFault=(name,message)=>{throw new GuestFault(name,message);};
 const copy = value => structuredClone(value);
 const freezeJson = value => {
   if(value && typeof value==='object'){
@@ -25,7 +27,7 @@ const opNames = {
   LEAVE_SCOPE:'environment.leave', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
   TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
   BIND_CATCH:'completion.catch.bind', END_FINALLY:'completion.finally.end',
-  LOOP_ENTER:'control.loop.enter', LOOP_EXIT:'control.loop.exit', LOOP_JUMP:'completion.loop.jump'
+  LOOP_ENTER:'control.loop.enter', LOOP_EXIT:'control.loop.exit', LOOP_JUMP:'completion.loop.jump', THIS:'reference.this'
 };
 const guestValue = (x) => Array.isArray(x) && (
   (x.length === 1 && ['undefined', 'null'].includes(x[0])) ||
@@ -43,7 +45,7 @@ function lookup(draft, envId, name) {
     if(Object.hasOwn(env.bindings,name))return {env,name,cell:env.bindings[name]};
     envId=env.parent;
   }
-  throw new ReferenceError(`${name} is not defined`);
+  guestFault('ReferenceError',`${name} is not defined`);
 }
 function valueKey(tagged) {
   if (!['str','num','bool','null','undefined','bigint'].includes(tagged[0]))
@@ -59,7 +61,7 @@ function putOwn(obj,key,value,eventId) {
     if (value[0] !== 'num') throw new TypeError('Array length coercion is outside the profile');
     const length = decode(value);
     if (!Number.isInteger(length) || length < 0 || length > 4294967295)
-      throw new RangeError('Invalid array length');
+      guestFault('RangeError','Invalid array length');
     const old = decode(obj.properties.length.value);
     if (length < old) for (const name of Object.keys(obj.properties))
       if (arrayIndex(name) && Number(name) >= length) {
@@ -121,11 +123,11 @@ export class Runtime {
   next(draft,kind) {const ids=draft.counters.ids;return `${kind==='operation'?'op':kind[0]}${++ids[kind]}`;}
   newEnv(draft,parent=null) {const id=this.next(draft,'env');draft.envs[id]={id,parent,bindings:{},version:0};return id;}
   newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,waiters:[],adopters:[],adopting:null,version:0};return id;}
-  newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[]) {
+  newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[],thisValue=U) {
     const id=this.next(draft,'frame'),envId=this.newEnv(draft,parentEnv);
     const params=this.programs[codeId].params;
     params.forEach((name,i)=>draft.envs[envId].bindings[name]={kind:'parameter',initialized:true,token:args[i]??token(U),version:0});
-    draft.frames[id]={id,codeId,pc:0,stack:[],envId,callerFrameId,asyncPromiseId,status:'running',blockedOn:null,awaiting:null,operationId:null,handlers:[],loops:[],version:0};
+    draft.frames[id]={id,codeId,pc:0,stack:[],envId,callerFrameId,asyncPromiseId,status:'running',blockedOn:null,awaiting:null,operationId:null,handlers:[],loops:[],thisValue,version:0};
     return id;
   }
   start(source) {
@@ -200,37 +202,40 @@ export class Runtime {
     else {draft.control.a0.activeFrameId=null;draft.control.a0.completion={kind:'return',value};
       draft.control.a0.status='completed';if(!frame.asyncPromiseId)this.result=value;}
   }
+  settlePromise(draft,id,status,value,origin) {
+    const p=draft.promises[id];
+    if(!p||p.status!=='pending'||p.adopting)throw new Error('Promise already settled or adopting');
+    if(!['fulfilled','rejected'].includes(status))throw new Error('Invalid promise settlement');
+    p.status=status;p.value=token(value,origin);
+    for(const frameId of p.waiters)draft.control.a0.queue.push({frameId,promiseId:id});
+    p.waiters=[];
+    const adopters=p.adopters??[];p.adopters=[];
+    for(const adoptedId of adopters) {
+      const adopted=draft.promises[adoptedId];
+      if(adopted.adopting!==id)throw new Error('Broken promise adoption link');
+      adopted.adopting=null;
+      this.settlePromise(draft,adoptedId,status,value,origin);
+    }
+  }
+  rejectPromise(draft,id,reason,origin) {
+    // Rejection reasons are opaque guest values, including promise identities.
+    this.settlePromise(draft,id,'rejected',reason,origin);
+  }
   resolvePromise(draft,id,value,origin) {
     const p=draft.promises[id];if(!p||p.status!=='pending'||p.adopting)
       throw new Error('Promise already settled or adopting another promise');
     if(value[0]==='promise'){
       const target=draft.promises[value[1]];
       if(!target||target===p)throw new TypeError('Invalid or self-resolving guest promise');
-      // Track cycles before registering an adoption dependency.
       for(let current=target;current?.adopting;current=draft.promises[current.adopting])
-        if(current===p || current.adopting===id)
-          throw new TypeError('Promise adoption cycle');
+        if(current===p || current.adopting===id)throw new TypeError('Promise adoption cycle');
       if(target.status==='pending'){
-        p.adopting=target.id;
-        target.adopters??=[];
-        target.adopters.push(id);
-        return;
+        p.adopting=target.id;target.adopters??=[];target.adopters.push(id);return;
       }
-      if(target.status!=='fulfilled')throw new TypeError('Promise rejection not enabled');
-      value=target.value.value;
-      origin=target.value.origin;
+      this.settlePromise(draft,id,target.status,target.value.value,target.value.origin);
+      return;
     }
-    p.status='fulfilled';p.value=token(value,origin);
-    for(const frameId of p.waiters)draft.control.a0.queue.push({frameId,promiseId:id});
-    p.waiters=[];
-    const waiting=p.adopters??[];
-    p.adopters=[];
-    for(const adoptedId of waiting){
-      const adopted=draft.promises[adoptedId];
-      if(adopted.adopting!==id)throw new Error('Broken promise adoption link');
-      adopted.adopting=null;
-      this.resolvePromise(draft,adoptedId,value,origin);
-    }
+    this.settlePromise(draft,id,'fulfilled',value,origin);
   }
   suspendAsync(draft,frame) {
     frame.status='suspended';
@@ -290,10 +295,17 @@ export class Runtime {
     }else if(completion.type==='return'){
       this.completeFrame(draft,frame,completion.value.value,completion.value.origin);
     }else if(completion.type==='throw'){
-      // Synchronous child activations do not terminate the run before the
-      // caller has had a chance to handle their abrupt completion.
-      if(frame.callerFrameId && !frame.asyncPromiseId){
-        frame.status='thrown';frame.completion=copy(completion);
+      frame.status='thrown';frame.completion=copy(completion);
+      if(frame.asyncPromiseId){
+        // Async throws reject a guest promise, never the whole agent.
+        const reason=this.caughtError(draft,completion,eventId);
+        this.rejectPromise(draft,frame.asyncPromiseId,reason.value,reason.origin);
+        if(frame.callerFrameId){
+          const caller=draft.frames[frame.callerFrameId];
+          this.stackPush(caller,['promise',frame.asyncPromiseId],eventId);
+          draft.control.a0.activeFrameId=caller.id;
+        }else draft.control.a0.activeFrameId=null;
+      }else if(frame.callerFrameId){
         const caller=draft.frames[frame.callerFrameId];
         draft.control.a0.activeFrameId=caller.id;
         this.routeCompletion(draft,caller,completion,eventId);
