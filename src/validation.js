@@ -83,7 +83,14 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
           const active=state.frames[state.control.a0.activeFrameId];
           const rejection=Object.values(state.frames).some(f=>f.status==='thrown'&&f.asyncPromiseId&&
             eq(f.completion,c)&&state.promises[f.asyncPromiseId]?.status==='rejected');
-          if(!rejection&&(['failed','unsupported'].includes(state.control.a0.status)||active?.status!=='running'||
+          const pendingCoercion=Object.values(state.frames).some(f=>{
+            const pending=f.pendingCoercionThrow, operation=state.operations[f.operationId];
+            const methodId=operation?.coercion?.waitingFrameId;
+            return pending&&eq(pending,c)&&methodId&&
+              state.frames[methodId]?.status==='thrown' &&
+              eq(state.frames[methodId].completion,c);
+          });
+          if(!rejection&&!pendingCoercion&&(['failed','unsupported'].includes(state.control.a0.status)||active?.status!=='running'||
              !active.handlers?.some(h=>h.phase==='catch'||h.phase==='finally')))
             fail('Guest throw was not routed to a handler or async rejection',e.eventId);
         }
