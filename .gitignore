@@ -1,3 +1,7 @@
 node_modules/
 *.trace.json
 .DS_Store
+
+# Opt-in reference corpus and reports
+.cache/
+test262-report*.json
