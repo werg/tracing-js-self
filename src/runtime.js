@@ -109,7 +109,7 @@ export class Runtime {
   newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[]) {
     const id=this.next(draft,'frame'),envId=this.newEnv(draft,parentEnv);
     const params=this.programs[codeId].params;
-    params.forEach((name,i)=>draft.envs[envId].bindings[name]={kind:'parameter',initialized:true,token:args[i]??token(U)});
+    params.forEach((name,i)=>draft.envs[envId].bindings[name]={kind:'parameter',initialized:true,token:args[i]??token(U),version:0});
     draft.frames[id]={id,codeId,pc:0,stack:[],envId,callerFrameId,asyncPromiseId,status:'running',blockedOn:null,awaiting:null,version:0};
     return id;
   }
@@ -120,7 +120,7 @@ export class Runtime {
     const s=this.state,global=this.newEnv(s);
     s.envs[global].bindings.host={kind:'const',initialized:true,token:token(['host','demo'])};
     s.envs[global].bindings.Promise={kind:'const',initialized:true,token:token(['intrinsic','Promise'])};
-    s.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U)};
+    s.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
     s.control.a0.globalEnvId=global;
     s.control.a0.activeFrameId=this.newFrame(s,source.entry,global);
     s.control.a0.status='running';this.started=true;
@@ -145,13 +145,13 @@ export class Runtime {
     const selected=definitions.find(x=>x.arg.name===functionName);
     if(!selected)throw new ReferenceError('Unknown entry function');
     const state=this.state, global=this.newEnv(state);
-    state.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U)};
+    state.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
     state.control.a0.globalEnvId=global;
     for(const def of definitions){
       const id=this.next(state,'obj');
       state.heap[id]={id,kind:'function',codeId:def.arg.codeId,
         closureEnvId:global,async:false,version:0};
-      state.envs[global].bindings[def.arg.name]={kind:'function',initialized:true,token:token(['ref',id])};
+      state.envs[global].bindings[def.arg.name]={kind:'function',initialized:true,token:token(['ref',id]),version:0};
     }
     const imported=importGraph(state,args,kind=>this.next(state,kind));
     const root=this.newFrame(state,selected.arg.codeId,global,null,null,imported.map(v=>token(v)));
@@ -210,11 +210,12 @@ export class Runtime {
       const operands=(...t)=>({operands:t.map(x=>x.value),origins:t.map(x=>x.origin)});
       switch(op){
         case 'CONST':return result(arg.value);
-        case 'DECLARE':{const e=s.envs[f.envId];if(Object.hasOwn(e.bindings,arg.name))throw new SyntaxError(`Duplicate declaration ${arg.name}`);e.bindings[arg.name]={kind:arg.kind,initialized:false,token:null};return {};}
-        case 'INIT':{const v=pop(),b=lookup(s,f.envId,arg);if(b.cell.initialized)throw new Error('Already initialized');b.cell.initialized=true;b.cell.token=v;return {...operands(v),result:v.value};}
-        case 'GET':{const b=lookup(s,f.envId,arg);if(!b.cell.initialized)throw new ReferenceError(`Cannot access '${arg}' before initialization`);this.stackPush(f,b.cell.token.value,eventId);return {result:b.cell.token.value,reads:[{kind:'binding',envId:b.env.id,name:arg,version:b.env.version}],origins:[b.cell.token.origin]};}
-        case 'SET':{const v=pop(),b=lookup(s,f.envId,arg);if(!b.cell.initialized)throw new ReferenceError(`${arg} is not initialized`);if(b.cell.kind==='const')throw new TypeError(`Assignment to constant ${arg}`);b.cell.token=v;this.stackPush(f,v.value,eventId);return {...operands(v),result:v.value};}
-        case 'DEF_FN':{const e=s.envs[f.envId],id=this.next(s,'obj');s.heap[id]={id,kind:'function',codeId:arg.codeId,closureEnvId:f.envId,async:arg.async,version:0};e.bindings[arg.name]={kind:'function',initialized:true,token:token(['ref',id],eventId)};return {result:['ref',id]};}
+        case 'DECLARE':{const e=s.envs[f.envId];if(Object.hasOwn(e.bindings,arg.name))throw new SyntaxError(`Duplicate declaration ${arg.name}`);e.bindings[arg.name]={kind:arg.kind,initialized:false,token:null,version:0};return {};}
+        case 'INIT':{const v=pop(),b=lookup(s,f.envId,arg);if(b.cell.initialized)throw new Error('Already initialized');b.cell.initialized=true;b.cell.token=v;b.cell.version++;return {...operands(v),result:v.value};}
+        case 'GET':{const b=lookup(s,f.envId,arg);if(!b.cell.initialized)throw new ReferenceError(`Cannot access '${arg}' before initialization`);this.stackPush(f,b.cell.token.value,eventId);return {result:b.cell.token.value,reads:[{kind:'binding',envId:b.env.id,name:arg,version:b.cell.version??0,
+            value:b.cell.token.value,supplyingEvent:b.cell.token.origin??null}],origins:[b.cell.token.origin]};}
+        case 'SET':{const v=pop(),b=lookup(s,f.envId,arg);if(!b.cell.initialized)throw new ReferenceError(`${arg} is not initialized`);if(b.cell.kind==='const')throw new TypeError(`Assignment to constant ${arg}`);b.cell.token=v;b.cell.version=(b.cell.version??0)+1;this.stackPush(f,v.value,eventId);return {...operands(v),result:v.value};}
+        case 'DEF_FN':{const e=s.envs[f.envId],id=this.next(s,'obj');s.heap[id]={id,kind:'function',codeId:arg.codeId,closureEnvId:f.envId,async:arg.async,version:0};e.bindings[arg.name]={kind:'function',initialized:true,token:token(['ref',id],eventId),version:0};return {result:['ref',id]};}
         case 'ENTER_SCOPE':f.envId=this.newEnv(s,f.envId);return {};
         case 'LEAVE_SCOPE':f.envId=s.envs[f.envId].parent;return {};
         case 'BINARY':{const b=pop(),a=pop();return {...operands(a,b),...result(primitiveBinary(arg,a.value,b.value))};}
