@@ -31,14 +31,10 @@ arithmetic phase path. The training profile accepts only synchronous, effect-fre
 non-throwing entries; committed terminal guest throws in the common runtime do
 not enable an exception-training category.
 
-A standalone `canonical-json/1` graph materializer (not yet connected to effect
-dispatch) and bounded fulfilled/pending guest-promise adoption regressions also
-exist. The deterministic fixture generator emits candidate
+The bounded mock host bridge now dispatches only **versioned, immutable `canonical-json/1` request payloads**, materialized from the committed graph before the adapter sees them. Its journal independently checks the exact JSON bytes, operation signature, and historical graph versions. Adapters receive frozen plain JSON data; original guest tags remain only in the private journal. Fulfilled/pending guest-promise adoption regressions also exist. The deterministic fixture generator emits candidate
 `semantic-execution/1` episodes with a private audit sidecar and reports
 **locally verified**, with **admitted=0**. These are not accepted megatoken training
-examples. Causal source bundling, liveness-based compaction, finite-context
-continuation, the megatoken adapter and generated-state rollout verification
-remain open. See [TRAINING_IMPLEMENTATION.md](TRAINING_IMPLEMENTATION.md) for the
+examples. Causal source bundling, liveness-based compaction, automatic corpus segmentation, and actual trained-model rollout evaluation remain open. A bounded selected-trace controller and a cross-repository megatoken adapter are implemented, with diagnostic rather than production admission. See [TRAINING_IMPLEMENTATION.md](TRAINING_IMPLEMENTATION.md) for the
 implemented interfaces and admission gates.
 
 ## Not implemented (must not be inferred)
@@ -49,7 +45,7 @@ implemented interfaces and admission gates.
 - Independent/specification-level semantic replay, native side-effect/resource replay, guest-visible exception delivery, closed canonical reference fixtures, full transitive model-visibility proofs, release locks, accepted budgets, or learning improvements. The structural validator proves **state reconstruction and structural invariants**. Optional bounded replay proves that this same interpreter can reproduce the journal under recorded inputs; neither check proves ECMAScript correctness.
 - Journal durability/crash recovery, streaming storage/backpressure, globally consistent checkpoints, and real native integrations.
 - No general engine262 replacement: engine262 remains an untraced, opt-in external oracle; the first primitive arithmetic phases are an in-repository owned implementation following its pinned algorithm structure. The complete normative clause/intrinsic inventory and official Test262 runtime harness remain open.
-- No natlang `EvalEnvironment` or module-realm replacement or TypeScript lowering/source-map integration. The candidate training exporter is not yet a megatoken-native Episode adapter, accepted corpus, teacher-conditioned trace integration or generated-state rollout verifier. Package-root imports do not imply application compatibility.
+- No natlang `EvalEnvironment` or module-realm replacement or TypeScript lowering/source-map integration. The candidate training exporter now has a separately tested megatoken-native Episode adapter and explicit teacher-conditioned training path, but there is still no independently admitted corpus or measured trained-model correctness. Package-root imports do not imply application compatibility.
 
 The VM still copies machine-state tables on each transaction. The operation continuation table now uses typed commands; existing tables still use **entity replacement**. This is neither a production storage scheme nor the finished fine-grained mutation algebra. String-to-number conversion, Number formatting and typed scalar arithmetic remain declared host primitive leaves.
 
@@ -67,7 +63,7 @@ The [semantic execution training-data plan](TRAINING_DATA_PLAN.md) sets the imme
 2. Complete the compact semantic target and preservation checks over invocation, source-site, control, value, read/write and completion records. Preserve result and producer links across the new spec-phase events; add static conservative liveness/def-use compaction without selecting targets from future answers.
 3. Implement causal source bundles, helper inlining, bounded reusable tracks, model chunk boundaries, and exact continuation packets. Keep model cuts separate from guest scheduling and host service points.
 4. Connect the candidate exporter to megatoken's actual Episode/schema and training interfaces, teacher-conditioned supervision and generated-state rollout verification; then admit the first synchronous corpus. Preserve logical event identities across physical splits and independently check causal visibility. A bounded profile must pass its semantic and visibility gates; full Node/browser coverage is not a prerequisite.
-5. Integrate fully materialized external calls with dispatch, complete owned promise adoption/rejection and async scheduling, and add catch/finally under separately validated profile extensions. Implement both natlang evaluation seams against actual generated scope/module code before claiming application compatibility.
+5. Extend the now-implemented bounded JSON mock-host request dispatch to formally admitted external episodes; complete owned promise adoption/rejection and async scheduling, and add catch/finally under separately validated profile extensions. Implement both natlang evaluation seams against actual generated scope/module code before claiming application compatibility.
 6. Scale journal/export storage and broaden spec-backed owned execution to bindings, object internal methods and observable coercion. Extend typed commands beyond the operation table, preserve versioned replay/causal contracts, and upgrade the textual inventory to full normative clause/intrinsic coverage. Native activation ownership, durable recovery, real Node/browser services, independent specification-level replay and the full strict/module/async/negative Test262 harness remain broader-target requirements in [engine262 adoption](ENGINE262_ADOPTION.md).
 
 All missing requirements remain open in `coverage/required.json`; the demonstrator's profile is intentionally different from the plan's completed target.
