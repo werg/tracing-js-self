@@ -102,7 +102,7 @@ if (checked.status !== 'locally_verified') throw new Error(checked.status);
 const candidate = checked.exported; // public targets plus a private audit sidecar
 ```
 
-This entry point also exports `exportTraining` and `validateTrainingExport`.
+This entry point also exports `exportTraining`, `validateTrainingExport`, `SemanticController` and `evaluateSelectedTrajectory`. The serving controller commits model-selected semantic records without an interpreter fallback; selected-trace evaluation compares against reference outcomes only after the record has committed.
 Direct export refuses incomplete, abrupt, asynchronous or effectful runs.
 Successful arithmetic becomes a single semantic value at its completed phase,
 with the original input dependencies; its full phase trace remains in the private
