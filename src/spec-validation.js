@@ -231,7 +231,7 @@ export function applySpecCommand(state, command, event, seen, fail) {
       name==='valueOf'?'Object.valueOf':obj.kind==='array'?'Array.toString':'Object.toString'];
     const origin=own?obj.properties[name].origin:null;
     const observation={kind:'property',objectId:obj.id,key:name,
-      version:obj.propertyVersions?.[name]??0,shapeVersion:obj.shapeVersion??0,
+      version:Object.hasOwn(obj.propertyVersions??{},name)?obj.propertyVersions[name]:0,shapeVersion:obj.shapeVersion??0,
       present:own,value,supplyingEvent:origin??null};
     if(!eq(nextCoercion.method,{value,origin})||!eq(event.readObservations,[observation]))
       bad('Owned [[Get]] method/provenance mismatch');
