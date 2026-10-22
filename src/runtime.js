@@ -4,9 +4,17 @@ import { importGraph } from './training/graph.js';
 import { parseTraining, TRAINING_PARSER } from './training/profile.js';
 import { createArithmetic, advanceArithmetic, isOwnedArithmetic } from './spec-operations.js';
 import { operationMutation } from './spec-mutations.js';
+import {hostOperation,prepareHostRequest} from './host/operations.js';
 import { specStep, ENGINE_REVISION } from './spec-schema.js';
 
 const copy = value => structuredClone(value);
+const freezeJson = value => {
+  if(value && typeof value==='object'){
+    for(const member of Object.values(value))freezeJson(member);
+    Object.freeze(value);
+  }
+  return value;
+};
 const equal = (a,b) => JSON.stringify(a) === JSON.stringify(b);
 const tableNames = ['counters','envs','heap','promises','frames','effects','inputs','control','operations'];
 const opNames = {
@@ -344,10 +352,13 @@ export class Runtime {
           }
           if(callable[0]==='hostfn'){
             const operation=callable[1];
-            const kind=operation==='demo.readAsync'?'promise':['demo.store','demo.readNumber'].includes(operation)?'synchronous':null;
-            if(!kind)throw new TypeError(`Unregistered host operation ${operation}`);
+            const kind=hostOperation(operation).kind;
+            // Materialize from this transaction's committed candidate graph,
+            // before any native adapter sees the request or a promise is allocated.
+            const request=prepareHostRequest(s.heap,operation,args.map(x=>x.value));
             const id=this.next(s,'effect'),promiseId=kind==='promise'?this.newPromise(s):null;
-            s.effects[id]={id,operation,kind,args:args.map(x=>x.value),argOrigins:args.map(x=>x.origin),frameId:f.id,promiseId,
+            s.effects[id]={id,operation,kind,args:args.map(x=>x.value),argOrigins:args.map(x=>x.origin),
+              request,frameId:f.id,promiseId,
               dispatch:'prepared',external:'pending',immediate:kind==='promise'?'completed':'awaiting',outcomeIds:[],inputIds:[],version:0};
             if(kind==='promise')this.stackPush(f,['promise',promiseId],eventId);
             else {f.status='blocked';f.blockedOn=id;}
@@ -375,7 +386,12 @@ export class Runtime {
     const adapter=this.adapters[e.operation];
     if(!adapter)return;
     let outcome;
-    try {outcome=adapter({effectId,operation:e.operation,args:copy(e.args)});}
+    try {
+      // The adapter receives only a frozen, fully materialized JSON tree;
+      // guest reference handles are retained solely in the private journal.
+      const args=freezeJson(JSON.parse(e.request.payload));
+      outcome=adapter({effectId,operation:e.operation,args,request:copy(e.request)});
+    }
     catch(error){outcome={kind:'throw',value:encode(String(error?.message??error))};}
     if(outcome && typeof outcome.then==='function')throw new TypeError('Adapters must publish asynchronous results via recordInputArrival, not native promises');
     if(outcome?.kind==='normal'||outcome?.kind==='throw'){
