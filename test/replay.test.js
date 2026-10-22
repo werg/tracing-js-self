@@ -80,8 +80,8 @@ test('replay detects forged read observations and producer links', () => {
   assert.throws(() => replayExact(observation), TraceReplayError);
 
   const link = archive(original);
-  const referenced = link.events.find(e => e.operandOrigins.some(origin => origin !== null));
-  assert(referenced);
+  const referenced = link.events.find(e => e.operandOrigins.some(origin => origin !== null && origin !== 'a0:e1'));
+  assert(referenced, 'requires a producer other than the first event');
   referenced.operandOrigins = referenced.operandOrigins.map(origin => origin ? 'a0:e1' : null);
   assert.equal(validateBundle(link).valid, true);
   assert.throws(() => replayExact(link), TraceReplayError);
