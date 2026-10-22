@@ -18,7 +18,8 @@
     "bounded causal interleaved export",
     "deterministic bounded-interpreter replay against recorded external inputs (no host adapters)",
     "pinned, untraced engine262 oracle with pure scalar differential fixtures",
-    "14-file official Test262 script syntax-only baseline with Git blob verification"
+    "14-file official Test262 script syntax-only baseline with Git blob verification",
+    "selected 11-file Test262 sloppy-script execution smoke ledger with pinned blobs, known failures and skips"
   ],
   "missingRequiredFamilies": [
     "full grammar/Annex B/early errors",

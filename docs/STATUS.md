@@ -11,7 +11,7 @@ This repository implements a **bounded, executable prototype** for the architect
 - Accumulation of effects and permitted internal microtask resumption into a chunk, without token-budget cuts. A reference demo produces three chunks with A/B dispatch, B completion first, A second, and a single store of `35`.
 - Read-only structural validator, state reconstruction, and a **limited** causal interleaved projection that hides host arrival payloads and full archival state until delivery. Private input perturbation regression included.
 - Deterministic **bounded-interpreter** replay: recompile archived sources (never trust archived bytecode for execution), inject only recorded external inputs, and compare every regenerated semantic event, patch, checkpoint, chunk boundary and termination category. Replay installs no host adapters; corruption tests cover semantic results, provenance and source changes.
-- Separately pinned **engine262 reference oracle** and 14-file SHA-verified Test262 **syntax-only** baseline (plus 12 pure scalar differential probes). These do not execute Test262 tests through the tracer, count as full conformance or change the authoritative trace engine. See [adoption audit](ENGINE262_ADOPTION.md).
+- Separately pinned **engine262 reference oracle**, 14-file SHA-verified Test262 **syntax-only** slice, and 11-file SHA-verified selected Test262 sloppy-script **execution smoke** ledger (with explicit passes, known failures and skips), plus 12 pure scalar differential probes. Neither selected suite proves full Test262 conformance; the owned VM remains the trace authority. See [adoption audit](ENGINE262_ADOPTION.md).
 
 ## Not implemented (must not be inferred)
 
@@ -20,7 +20,7 @@ This repository implements a **bounded, executable prototype** for the architect
 - Full Section 29 normative catalog schemas: `catalog/operations.json` is a narrow indexed vocabulary only, not conformance evidence.
 - Independent/specification-level semantic replay, native side-effect/resource replay, guest-visible exception delivery, closed canonical reference fixtures, full transitive model-visibility proofs, release locks, accepted budgets, or learning improvements. The structural validator proves **state reconstruction and structural invariants**. Optional bounded replay proves that this same interpreter can reproduce the journal under recorded inputs; neither check proves ECMAScript correctness.
 - Journal durability/crash recovery, streaming storage/backpressure, globally consistent checkpoints, and real native integrations.
-- No spec-backed **owned-machine** integration yet: engine262 is an untraced, opt-in external oracle. The complete clause/intrinsic inventory and official Test262 runtime harness remain open.
+- No spec-backed **owned-machine** integration yet: engine262 is an untraced, opt-in external oracle. The complete clause/intrinsic inventory and **full Test262 harness** (strict/sloppy variants, modules, async, includes and host intrinsics) remain open.
 
 The VM currently copies small machine-state tables on each transaction, and each mutation is recorded as a typed **entity replacement**. This provides a simple, independently reconstructible baseline but is neither a production storage scheme nor the plan's finished fine-grained typed mutation algebra.
 

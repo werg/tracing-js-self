@@ -19,7 +19,8 @@
   "unicodeDataRevision": null,
   "hostBuildPin": null,
   "conformanceSuiteRevisions": {
-    "test262": "d53ebc8b1931d9f1541e43d59650776e4b766248"
+    "test262": "d53ebc8b1931d9f1541e43d59650776e4b766248",
+    "selectedExecution": "conformance/test262-cases.json"
   },
   "releaseEligibility": false,
   "referenceEngine": {

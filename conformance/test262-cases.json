@@ -1,0 +1,73 @@
+{
+  "schema": "tracing-test262-selection/2",
+  "profile": "bounded-js-subset/1",
+  "test262Commit": "d53ebc8b1931d9f1541e43d59650776e4b766248",
+  "referencePackage": "@engine262/engine262",
+  "referenceVersion": "0.0.1-2d7d8d988c77e94473ba0377122cdfccdfe243ba",
+  "testVariant": "sloppy-script-only",
+  "scope": "11 pinned official files; selected Script-goal execution observations, no full Test262 harness or conformance percentage.",
+  "cases": [
+    {
+      "path": "language/statements/let/global-use-before-initialization-in-prior-statement.js",
+      "gitBlobSha": "74c1e27da8023494448f616d1796c3aaadcef17e",
+      "baseline": "pass"
+    },
+    {
+      "path": "language/statements/let/global-use-before-initialization-in-declaration-statement.js",
+      "gitBlobSha": "af50dce75a5e35256493704d93caf84900590121",
+      "baseline": "pass"
+    },
+    {
+      "path": "language/statements/const/global-use-before-initialization-in-prior-statement.js",
+      "gitBlobSha": "56ba7b265e4d55dce10298356332656394ce05db",
+      "baseline": "pass"
+    },
+    {
+      "path": "language/statements/const/global-use-before-initialization-in-declaration-statement.js",
+      "gitBlobSha": "1e44bc242b71f3640d69faae49848f7aab681c6a",
+      "baseline": "pass"
+    },
+    {
+      "path": "language/expressions/addition/S11.6.1_A2.4_T1.js",
+      "gitBlobSha": "d4b53705e7ef555ee814ec9885a392a781c256ad",
+      "baseline": "xfail",
+      "reason": "Bounded parser rejects automatic-semicolon-insertion/redeclaration syntax; language semantics are not yet implemented."
+    },
+    {
+      "path": "language/expressions/subtraction/S11.6.2_A2.4_T1.js",
+      "gitBlobSha": "04e15beec5010ac5e5bc7ca2047452bd0f138bf9",
+      "baseline": "xfail",
+      "reason": "Bounded parser rejects automatic-semicolon-insertion/redeclaration syntax; language semantics are not yet implemented."
+    },
+    {
+      "path": "language/expressions/multiplication/S11.5.1_A2.4_T1.js",
+      "gitBlobSha": "0d0a49be5dabd11f993952d337d2e9d3b1f6bc3f",
+      "baseline": "xfail",
+      "reason": "Bounded parser rejects automatic-semicolon-insertion/redeclaration syntax; language semantics are not yet implemented."
+    },
+    {
+      "path": "language/expressions/division/S11.5.2_A2.4_T1.js",
+      "gitBlobSha": "66bf1712c2ed99c71d57a06887b4581c3d94a51a",
+      "baseline": "xfail",
+      "reason": "Bounded parser rejects automatic-semicolon-insertion/redeclaration syntax; language semantics are not yet implemented."
+    },
+    {
+      "path": "language/expressions/addition/S11.6.1_A2.4_T4.js",
+      "gitBlobSha": "9ecd3f69f0173df7c84d4f96fa94ad92fae2c988",
+      "baseline": "xfail",
+      "reason": "Bounded parser rejects syntax requiring ASI and sloppy undeclared assignment semantics."
+    },
+    {
+      "path": "language/statements/let/block-local-use-before-initialization-in-prior-statement.js",
+      "gitBlobSha": "c259a7e6678c0ebfeefa9a29225ad3babfdbe4d8",
+      "baseline": "skip",
+      "reason": "Requires Test262 assert.throws helper and function expressions; full harness unavailable."
+    },
+    {
+      "path": "language/literals/numeric/7.8.3-1gs.js",
+      "gitBlobSha": "9e509faa0921a25a6d700f08fbceb69b002e9649",
+      "baseline": "skip",
+      "reason": "OnlyStrict variant and legacy octal early errors are not implemented."
+    }
+  ]
+}
