@@ -2,7 +2,7 @@ import { encode, decode, U, token, truthy, primitiveBinary, primitiveUnary } fro
 import { parse, compile } from './frontend.js';
 import { importGraph } from './training/graph.js';
 import { parseTraining, TRAINING_PARSER } from './training/profile.js';
-import { createArithmetic, advanceArithmetic, isOwnedArithmetic } from './spec-operations.js';
+import { createArithmetic, advanceArithmetic, isOwnedArithmetic, ordinaryGet, ordinaryBuiltin } from './spec-operations.js';
 import { operationMutation } from './spec-mutations.js';
 import {hostOperation,prepareHostRequest} from './host/operations.js';
 import { specStep, ENGINE_REVISION } from './spec-schema.js';
@@ -127,7 +127,7 @@ export class Runtime {
     const id=this.next(draft,'frame'),envId=this.newEnv(draft,parentEnv);
     const params=this.programs[codeId].params;
     params.forEach((name,i)=>draft.envs[envId].bindings[name]={kind:'parameter',initialized:true,token:args[i]??token(U),version:0});
-    draft.frames[id]={id,codeId,pc:0,stack:[],envId,callerFrameId,asyncPromiseId,status:'running',blockedOn:null,awaiting:null,operationId:null,handlers:[],loops:[],thisValue,version:0};
+    draft.frames[id]={id,codeId,pc:0,stack:[],envId,callerFrameId,asyncPromiseId,status:'running',blockedOn:null,awaiting:null,operationId:null,pendingCoercionThrow:null,handlers:[],loops:[],thisValue,version:0};
     return id;
   }
   start(source) {
@@ -308,7 +308,9 @@ export class Runtime {
       }else if(frame.callerFrameId){
         const caller=draft.frames[frame.callerFrameId];
         draft.control.a0.activeFrameId=caller.id;
-        this.routeCompletion(draft,caller,completion,eventId);
+        const waiting=caller.operationId&&draft.operations[caller.operationId]?.coercion?.waitingFrameId;
+        if(waiting===frame.id)caller.pendingCoercionThrow=copy(completion);
+        else this.routeCompletion(draft,caller,completion,eventId);
       }else this.failFrame(draft,frame,completion);
     }else throw new Error('Unknown guest completion');
   }
@@ -318,7 +320,23 @@ export class Runtime {
     const metadata=specStep(operation);
     return this.commit(metadata.operation,(s,eventId)=>{
       const current=s.operations[operation.id],f=s.frames[frame.id];
-      const detail=advanceArithmetic(current,eventId);
+      const detail=advanceArithmetic(current,eventId,{
+        heap:s.heap,
+        invoke:(method,receiver)=>{
+          const target=s.heap[method[1]];
+          const promiseId=target.async?this.newPromise(s):null;
+          const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,[],receiver);
+          s.control.a0.activeFrameId=id;
+          return id;
+        },
+        takeReturn:waitingId=>{
+          if(s.frames[waitingId]?.status!=='completed'||!f.stack.length)
+            throw new Error('Missing owned conversion call result');
+          return f.stack.pop();
+        },
+        abrupt:f.pendingCoercionThrow
+      });
+      f.pendingCoercionThrow=null;
       if(current.status==='completed') {
         f.operationId=null;
         if(current.completion.type==='normal')this.stackPush(f,current.completion.value.value,eventId);
@@ -425,10 +443,15 @@ export class Runtime {
           else if(base.value[0]==='ref'){
              const obj=s.heap[base.value[1]];
              if(!obj)throw new ReferenceError('Unknown guest identity');
-             if(!Object.hasOwn(obj.properties,property) &&
-                (property in (obj.kind==='array'?Array.prototype:Object.prototype)))
-               throw new TypeError('Inherited property lookup is outside the profile');
-             v=Object.hasOwn(obj.properties,property)?obj.properties[property].value:U;
+             const inherited=!Object.hasOwn(obj.properties,property);
+             const built=(property==='valueOf'||property==='toString')
+               ? ordinaryGet(s.heap,base.value,property) : null;
+             if(inherited && built)v=built.method.value;
+             else {
+               if(inherited && (property in (obj.kind==='array'?Array.prototype:Object.prototype)))
+                 throw new TypeError('Inherited property lookup is outside the profile');
+               v=inherited?U:obj.properties[property].value;
+             }
            }
           else if(['null','undefined'].includes(base.value[0]))
              guestFault('TypeError',`Cannot read properties of ${base.value[0]}`);
@@ -468,6 +491,11 @@ export class Runtime {
             const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,args,receiver);
             s.control.a0.activeFrameId=id;
             return {...operands(fn,...args),result:['ref',callable[1]],causes:[{kind:'invocation',frameId:id}]};
+          }
+          if(callable[0]==='builtinfn' && ['Object.valueOf','Object.toString','Array.toString'].includes(callable[1])){
+            const v=ordinaryBuiltin(s.heap,receiver,callable[1]);
+            if(v===null)throw new TypeError('Unowned builtin receiver or array coercion');
+            return {...operands(fn,...args),...result(v)};
           }
           if(callable[0]==='builtinfn' && ['Promise.resolve','Promise.reject'].includes(callable[1])){
             const v=args[0]?.value??U,origin=args[0]?.origin??null;
