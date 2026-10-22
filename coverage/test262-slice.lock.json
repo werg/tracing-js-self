@@ -1,0 +1,76 @@
+{
+  "schema": "test262-syntax-slice/1",
+  "description": "Pinned exploratory script-parse slice; expectedBoundedAccepted snapshots the bounded parser, not full Test262 conformance",
+  "tests": [
+    {
+      "path": "test/language/statements/if/empty-statement.js",
+      "gitBlobSha": "c8a1b04fcd39b6e99487cc1a6051ac249cb87631",
+      "baselineParseAccepted": true
+    },
+    {
+      "path": "test/language/statements/if/S12.5_A1_T1.js",
+      "gitBlobSha": "9b265824024eea469dba41bfb68efcef988a4120",
+      "baselineParseAccepted": false
+    },
+    {
+      "path": "test/language/statements/if/S12.5_A1.1_T1.js",
+      "gitBlobSha": "5aefb459ed0f01ba112ca01e6c0dc2a4f770ca68",
+      "baselineParseAccepted": false
+    },
+    {
+      "path": "test/language/statements/if/S12.5_A12_T1.js",
+      "gitBlobSha": "be2ed14d68e21859d5dcce18bee64b14a919a335",
+      "baselineParseAccepted": false
+    },
+    {
+      "path": "test/language/expressions/addition/S11.6.1_A4_T9.js",
+      "gitBlobSha": "04664a8fd8d0f12501c5eaf2681f8f6d895c0adc",
+      "baselineParseAccepted": false
+    },
+    {
+      "path": "test/language/statements/if/if-let-no-else.js",
+      "gitBlobSha": "9b7785f58171fe38c33d789b4caee1d4d13cc4a3",
+      "baselineParseAccepted": true
+    },
+    {
+      "path": "test/language/statements/if/if-const-no-else.js",
+      "gitBlobSha": "14d171501280c3bc4e869c441791ce2860b59551",
+      "baselineParseAccepted": true
+    },
+    {
+      "path": "test/language/statements/if/if-let-else-stmt.js",
+      "gitBlobSha": "96359bcef6ef88f234bf2a9d378724d6cf93e6c2",
+      "baselineParseAccepted": true
+    },
+    {
+      "path": "test/language/statements/if/if-cls-no-else.js",
+      "gitBlobSha": "70956f32210dd83cfde7c960e8d96510b3dd1da7",
+      "baselineParseAccepted": false
+    },
+    {
+      "path": "test/language/statements/if/S12.5_A11.js",
+      "gitBlobSha": "93aad87bb8b2f69f5f82c9a67e0d9edafd20b3e0",
+      "baselineParseAccepted": false
+    },
+    {
+      "path": "test/language/expressions/assignment/non-simple-target.js",
+      "gitBlobSha": "a0da0c613a3f3c61b5357e61dac520cf19afdb73",
+      "baselineParseAccepted": false
+    },
+    {
+      "path": "test/language/expressions/assignment/target-null.js",
+      "gitBlobSha": "5adbb4ce41e519ab1604d6d8965177e0827a6a23",
+      "baselineParseAccepted": false
+    },
+    {
+      "path": "test/language/expressions/assignment/target-boolean.js",
+      "gitBlobSha": "c39c7b71c860cb0aeb5761d25ffb2fd47e05109b",
+      "baselineParseAccepted": false
+    },
+    {
+      "path": "test/language/expressions/assignment/target-string.js",
+      "gitBlobSha": "cd277c903265bc83606c3237f90f8b8f5b5ba84c",
+      "baselineParseAccepted": false
+    }
+  ]
+}
