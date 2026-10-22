@@ -76,13 +76,19 @@ export function restoreLines(lines) {
     for(++i;i<lines.length;i++){
       const part=decodeRecord(lines[i]);
       if(part.fields.id!==id)throw new Error('Interleaved value fragments');
-      if(part.kind==='value-close'){closed=true;break;}
+      if(part.kind==='value-close'){
+        if(!joined)throw new Error('Empty fragmented record');
+        closed=true;break;
+      }
       if(part.kind!=='value-part' || typeof part.fields.data!=='string' || !part.fields.data.length)
         throw new Error('Invalid partial record');
       joined+=part.fields.data;
     }
     if(!closed)throw new Error('Unclosed fragmented value');
-    decodeRecord(joined);
+    const restored=decodeRecord(joined);
+    const expectedId=restored.fields.id??('record:'+restored.kind);
+    if(id!==expectedId || item.fields.type!=='semantic-record')
+      throw new Error('Fragment identity or type mismatch');
     output.push(joined);
   }
   return output;

@@ -21,5 +21,10 @@ test('fragment restoration rejects orphan, missing, empty and reordered parts',(
   assert.throws(()=>restoreLines([open,part]),/Unclosed/);
   assert.throws(()=>restoreLines([open,encodeRecord('value-part',{id:'v1',data:''}),close]),/Invalid partial/);
   assert.throws(()=>restoreLines([open,encodeRecord('value-part',{id:'other',data:'x'}),close]),/Interleaved/);
-  assert.throws(()=>restoreLines([open,close]),/Missing|Unexpected|record|fields/i);
+  assert.throws(()=>restoreLines([open,close]),/Empty fragmented/);
+  const source=encodeRecord('value',{id:'actual',value:'hello'});
+  const forged=[open,encodeRecord('value-part',{id:'v1',data:source}),close];
+  assert.throws(()=>restoreLines(forged),/identity/);
+  const wrongType=encodeRecord('value-open',{id:'actual',type:'not-a-record'});
+  assert.throws(()=>restoreLines([wrongType,encodeRecord('value-part',{id:'actual',data:source}),encodeRecord('value-close',{id:'actual'})]),/type mismatch/);
 });
