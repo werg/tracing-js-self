@@ -58,7 +58,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
         ? state.inputs[e.causes.find(c=>c.kind==='input')?.inputId] : null;
       const hostThrow=delivered?.abrupt && state.effects[delivered.effectId]?.kind==='synchronous';
       const c=e.completion;
-      if(e.operation==='completion.throw'||hostThrow||c) {
+      if(e.operation==='completion.throw'||hostThrow||(c && (e.operation!=='spec.operation.complete'||c.type==='throw'))) {
         if(c?.type!=='throw')fail('Missing guest throw completion',e.eventId);
         if(e.operation==='completion.throw'||hostThrow){
           if(hostThrow ? !eq(c.value,{value:delivered.value,origin:e.eventId}) :
@@ -83,7 +83,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
           const active=state.frames[state.control.a0.activeFrameId];
           const rejection=Object.values(state.frames).some(f=>f.status==='thrown'&&f.asyncPromiseId&&
             eq(f.completion,c)&&state.promises[f.asyncPromiseId]?.status==='rejected');
-          if(!rejection&&(state.control.a0.status!=='running'||active?.status!=='running'||
+          if(!rejection&&(['failed','unsupported'].includes(state.control.a0.status)||active?.status!=='running'||
              !active.handlers?.some(h=>h.phase==='catch'||h.phase==='finally')))
             fail('Guest throw was not routed to a handler or async rejection',e.eventId);
         }
