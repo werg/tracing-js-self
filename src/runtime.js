@@ -18,6 +18,14 @@ const freezeJson = value => {
   return value;
 };
 const equal = (a,b) => JSON.stringify(a) === JSON.stringify(b);
+function requireDataOnly(value,path='state',seen=new WeakSet()){
+  if(typeof value==='function'||typeof value==='symbol')
+    throw new TypeError('Executable or symbol value in owned archive at '+path);
+  if(value && typeof value==='object' && !seen.has(value)){
+    seen.add(value);
+    for(const [k,v] of Object.entries(value))requireDataOnly(v,path+'.'+k,seen);
+  }
+}
 const tableNames = ['counters','envs','heap','promises','frames','effects','inputs','control','operations'];
 const opNames = {
   CONST:'literal.materialize', GET:'binding.read', SET:'binding.write', INIT:'binding.initialize', DECLARE:'binding.declare',
@@ -659,6 +667,7 @@ export class Runtime {
   inspectState() {return copy(this.state);}
   inspectOpenChunk() {return {before:this.chunkBefore,eventIds:this.events.slice(this.chunkStart).map(e=>e.eventId),open:true};}
   exportRun() {
+    requireDataOnly(this.state);
     return copy({manifest:{schema:'semantic-tracing-run/2',profile:this.entrySpec?'training-js/1':'bounded-js-subset/2',completeSemanticTrace:false,
       completeEcma262:false,completeHostIntegration:false,coverage:'docs/STATUS.md',chunkPolicy:'accumulate-until-wait/1',
       eventVersion:2,operationVersion:1,mutationSchema:'owned-spec-commands/1',
