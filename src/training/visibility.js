@@ -1,6 +1,6 @@
 // Public projection. Never serialize a checkpoint, future result, validation
 // answer, arrival payload, event patch, archive hash or undispatched input.
-import {realizeGraph,describeGraph} from './graph.js';
+import {describeOwnedGraph} from './graph.js';
 import {encodeRecord} from './format.js';
 
 export function trainingPrefix(bundle,{maxSourceBytes=2048}={}) {
@@ -13,7 +13,7 @@ export function trainingPrefix(bundle,{maxSourceBytes=2048}={}) {
   if(Buffer.byteLength(source.text,'utf8')>maxSourceBytes)
     throw new RangeError('Source exceeds initial bundle limit; code-on-call is not enabled');
   const roots=bundle.entrySpec.arguments;
-  const graph=describeGraph(realizeGraph(bundle.initialState.heap,roots));
+  const graph=describeOwnedGraph(bundle.initialState.heap,roots);
   const sites=bundle.sites.map(s=>({id:s.siteId,code:s.codeId,start:s.start,end:s.end}));
   const codes=Object.values(bundle.programs).map(p=>({id:p.id,params:p.params,async:p.async}));
   return {
