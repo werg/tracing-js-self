@@ -38,7 +38,8 @@ export function semanticLine(row) {
     ...(row.effect?{effect:row.effect,operation:row.operation??null}:{}),
     ...(row.promise?{promise:row.promise}:{}),
   };
-  if(row.op==='request')fields.arguments=row.arguments;
+  if(row.op==='request')Object.assign(fields,{arguments:row.arguments,
+    codec:row.codec,signature:row.signature,payload:row.payload});
   return encodeRecord(row.op,fields);
 }
 export function fragmentLine(line, {maxBytes=512}={}) {
