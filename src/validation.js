@@ -27,9 +27,12 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     const patched=new Set();
     for(const p of e.stateChanges) {
       if(!['counters','envs','heap','promises','frames','effects','inputs','control'].includes(p.table)||p.kind!==`${p.table}.replace`)fail('Invalid typed mutation',e.eventId);
+      if(typeof p.id!=='string'||!p.id||['__proto__','constructor','prototype'].includes(p.id))
+        fail('Invalid mutation entity ID',e.eventId);
       if(patched.has(`${p.table}:${p.id}`))fail('Double application of mutation',e.eventId);
       patched.add(`${p.table}:${p.id}`);
-      if(!state[p.table]||!eq(state[p.table][p.id]??null,p.before))fail('Mutation precondition mismatch',e.eventId);
+      const previous=Object.hasOwn(state[p.table],p.id)?state[p.table][p.id]:null;
+      if(!eq(previous,p.before))fail('Mutation precondition mismatch',e.eventId);
       if(p.after && p.after.version!==(p.before?.version??0)+1)fail('Invalid record version',e.eventId);
       if(p.after===null)delete state[p.table][p.id];else state[p.table][p.id]=clone(p.after);
     }
