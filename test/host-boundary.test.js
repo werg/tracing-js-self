@@ -16,6 +16,9 @@ test('host request is JSON materialized before dispatch, immutable, and never re
       assert(Object.isFrozen(args) && Object.isFrozen(args[1]) &&
         Object.isFrozen(args[1].nested),'adapter receives immutable materialized data');
       assert.equal(request.schema,'host-request/1');
+      assert(Object.isFrozen(request));
+      assert.equal(Object.hasOwn(request,'graphVersions'),false,
+        'internal graph handles stay in the verification sidecar');
       assert.equal(request.signature,'demo.store/1');
       assert.equal(request.codec,'canonical-json/1');
       assert.equal(request.payload,'["item",{"score":1,"nested":[true,null,"x"]}]');
