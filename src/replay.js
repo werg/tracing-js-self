@@ -47,6 +47,28 @@ function inputArrival(runtime, event) {
     inputId: afterCount === beforeCount + 1 ? null : input.id
   });
 }
+// External arrivals/deliveries are transport-controlled. Every interpreter-
+// controlled action, however, must respect Runtime.drive's scheduling priority;
+// otherwise a forged trace could be reproduced by calling public methods in an
+// order the driver itself would never choose.
+function nextInternalAction(runtime) {
+  if (runtime.prepared()) return 'effect.dispatch';
+  const control = runtime.state.control.a0;
+  const active = control.activeFrameId && runtime.state.frames[control.activeFrameId];
+  if (active?.status === 'running') return 'step';
+  if (active?.status === 'blocked') return 'seal';
+  if (control.queue.length) return 'job.enter';
+  return 'seal';
+}
+function assertSchedulerAction(runtime, event) {
+  if (event.operation === 'external.input.arrive' ||
+      event.operation === 'external.input.deliver') return;
+  const expected = nextInternalAction(runtime);
+  const action = event.operation === 'effect.dispatch' || event.operation === 'job.enter'
+    ? event.operation : 'step';
+  if (action !== expected)
+    fail(`Invalid internal scheduler order: ${action} while ${expected} is required`, event.eventId);
+}
 // Mirror the quiescence decision in Runtime.drive, including the priority of a
 // blocked synchronous frame over queued jobs. A chunk cannot seal mid-execution.
 function exitKind(runtime) {
@@ -119,6 +141,7 @@ export function replayExact(bundle) {
   sealExpected();
   for (const expected of bundle.events) {
     const before = runtime.events.length;
+    assertSchedulerAction(runtime, expected);
     try {
       switch (expected.operation) {
         case 'effect.dispatch':
