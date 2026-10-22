@@ -1,6 +1,7 @@
 // Read-only validation. Does not import the evaluator or call its mutation routines.
 import { readFileSync } from 'node:fs';
 import { validateHostJournal } from './host-journal.js';
+import { validateSpecEvent, applySpecCommand } from './spec-validation.js';
 const clone = x => structuredClone(x);
 const eq = (a,b) => JSON.stringify(a)===JSON.stringify(b);
 const operations = JSON.parse(readFileSync(new URL('../catalog/operations.json',import.meta.url),'utf8'));
@@ -11,7 +12,7 @@ export class TraceValidationError extends Error {
 function fail(message,eventId=null){throw new TraceValidationError(message,eventId);}
 /** Apply the canonical per-entity typed patches to an independently held state. */
 export function reconstruct(bundle,{throughEventId=null}={}) {
-  if(bundle.manifest?.schema!=='semantic-tracing-run/1')fail('Unknown run schema');
+  if(!['semantic-tracing-run/1','semantic-tracing-run/2'].includes(bundle.manifest?.schema))fail('Unknown run schema');
   const state=clone(bundle.initialState);
   const sites=new Set(bundle.sites.map(s=>s.siteId));
   const seen=new Set();
@@ -25,7 +26,16 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
       if(origin && !seen.has(origin))fail('Missing or future operand producer',e.eventId);
     }
     const patched=new Set();
+    if(e.completion && !['spec.operation.complete','completion.throw','external.input.deliver'].includes(e.operation))
+      fail('Completion metadata without a completion operation',e.eventId);
+    validateSpecEvent(state,e,fail);
     for(const p of e.stateChanges) {
+      if(patched.has(`${p.table}:${p.id}`))fail('Double application of mutation',e.eventId);
+      patched.add(`${p.table}:${p.id}`);
+      if(p.table==='operations') {
+        if(bundle.manifest.schema!=='semantic-tracing-run/2')fail('Spec commands require run schema 2',e.eventId);
+        applySpecCommand(state,p,e,seen,fail);continue;
+      }
       if(!['counters','envs','heap','promises','frames','effects','inputs','control'].includes(p.table)||p.kind!==`${p.table}.replace`)fail('Invalid typed mutation',e.eventId);
       if(typeof p.id!=='string'||!p.id||['__proto__','constructor','prototype'].includes(p.id))
         fail('Invalid mutation entity ID',e.eventId);
@@ -37,12 +47,26 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
       if(p.after!==null && (!p.after||typeof p.after!=='object'||Array.isArray(p.after)||
          (Object.hasOwn(p.after,'id')&&p.after.id!==p.id)))
         fail('Invalid replacement entity record',e.eventId);
-      if(patched.has(`${p.table}:${p.id}`))fail('Double application of mutation',e.eventId);
-      patched.add(`${p.table}:${p.id}`);
       const previous=Object.hasOwn(state[p.table],p.id)?state[p.table][p.id]:null;
       if(!eq(previous,p.before))fail('Mutation precondition mismatch',e.eventId);
       if(p.after && p.after.version!==(p.before?.version??0)+1)fail('Invalid record version',e.eventId);
       if(p.after===null)delete state[p.table][p.id];else state[p.table][p.id]=clone(p.after);
+    }
+    if(bundle.manifest.schema==='semantic-tracing-run/2') {
+      const delivered=e.operation==='external.input.deliver'
+        ? state.inputs[e.causes.find(c=>c.kind==='input')?.inputId] : null;
+      const hostThrow=delivered?.abrupt && state.effects[delivered.effectId]?.kind==='synchronous';
+      if(e.operation==='completion.throw'||hostThrow) {
+        const failure=state.control.a0.failure,frame=state.frames[failure?.frameId];
+        if(e.completion?.type!=='throw' || !eq(failure?.completion,e.completion) ||
+            !eq(frame?.completion,e.completion) || frame?.status!=='thrown' || state.control.a0.status!=='failed' ||
+            state.control.a0.activeFrameId!==null)fail('Unowned terminal throw completion',e.eventId);
+        const value=e.completion.value;
+        if(hostThrow ? !eq(value,{value:delivered.value,origin:e.eventId}) :
+            !eq(e.operands,[value?.value]) || !eq(e.operandOrigins,[value?.origin]))
+          fail('Throw completion value/provenance mismatch',e.eventId);
+      } else if(e.operation==='external.input.deliver'&&e.completion)
+        fail('Unexpected host completion metadata',e.eventId);
     }
     seen.add(e.eventId);
     if(throughEventId===e.eventId)return state;

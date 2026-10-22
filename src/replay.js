@@ -58,6 +58,7 @@ function inputArrival(runtime, event) {
 // otherwise a forged trace could be reproduced by calling public methods in an
 // order the driver itself would never choose.
 function nextInternalAction(runtime) {
+  if(['failed','unsupported'].includes(runtime.state.control.a0.status))return 'seal';
   if (runtime.prepared()) return 'effect.dispatch';
   const control = runtime.state.control.a0;
   const active = control.activeFrameId && runtime.state.frames[control.activeFrameId];
@@ -78,6 +79,8 @@ function assertSchedulerAction(runtime, event) {
 // Mirror the quiescence decision in Runtime.drive, including the priority of a
 // blocked synchronous frame over queued jobs. A chunk cannot seal mid-execution.
 function exitKind(runtime) {
+  if(runtime.state.control.a0.status==='failed')return 'runtime.failure';
+  if(runtime.state.control.a0.status==='unsupported')return 'unsupported';
   if (runtime.prepared()) return null;
   const c = runtime.state.control.a0;
   const active = c.activeFrameId && runtime.state.frames[c.activeFrameId];
@@ -86,7 +89,7 @@ function exitKind(runtime) {
   if (c.queue.length) return null;
   const pending = Object.values(runtime.state.promises).some(p => p.status === 'pending') ||
     Object.values(runtime.state.effects).some(e => e.external === 'pending');
-  return c.status === 'failed' ? 'runtime.failure' : c.status === 'guest.throw' ? 'guest.throw' : pending ? 'waiting' : 'terminated';
+  return pending ? 'waiting' : 'terminated';
 }
 
 /**
@@ -99,6 +102,8 @@ function exitKind(runtime) {
  * This is NOT an independent spec oracle or native resource restoration.
  */
 export function replayExact(bundle) {
+  if(bundle.manifest?.schema!=='semantic-tracing-run/2')
+    fail('Exact replay requires semantic-tracing-run/2; legacy runs can be structurally reconstructed');
   validateBundle(bundle);
   const runtime = createRuntime(); // Deliberately no adapters: no external calls.
   let entryCode = null;
@@ -124,6 +129,7 @@ export function replayExact(bundle) {
       if(sourceId!==entry.sourceId)fail('Entry source mismatch');
       runtime.startEntry({source:entry,functionName,args:realizeGraph(initial.heap,roots)});
     } else runtime.start(entry);
+    expectSame(runtime.exportRun().manifest,bundle.manifest,'runtime profile manifest');
     expectSame(runtime.initialState, bundle.initialState, 'initial machine state');
   } catch (error) {
     if (error instanceof TraceReplayError) throw error;
@@ -188,7 +194,7 @@ export function replayExact(bundle) {
 
   return {
     valid: true,
-    mode: 'bounded-deterministic-reexecution/1',
+    mode: 'bounded-deterministic-reexecution/2',
     eventCount: runtime.events.length,
     chunkCount: runtime.chunks.length,
     externalAdapterCalls: 0,

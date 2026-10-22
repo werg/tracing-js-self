@@ -1,4 +1,4 @@
-name: Pinned spec oracle and Test262 baseline
+name: Pinned spec oracle, owned arithmetic and Test262 evidence
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -17,19 +17,37 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Install locked parser dependency
+        run: npm ci
+      - name: Checkout exact upstream source for ownership audit
+        uses: actions/checkout@v4
+        with:
+          repository: engine262/engine262
+          ref: 2d7d8d988c77e94473ba0377122cdfccdfe243ba
+          path: .reference-engine262
+          persist-credentials: false
+      - name: Verify complete declared source inventory and classifications
+        run: node scripts/audit-engine262.mjs --engine-source .reference-engine262
       - name: Install exact published engine262 oracle
         run: |
           VERSION="$(node -p "require('./profiles/targets.lock.json').referenceEngine.npmVersion")"
           npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund "@engine262/engine262@$VERSION"
       - name: Independently compare scalar behavior and trace replay
         run: node scripts/run-spec-probes.mjs
+      - name: Compare owned arithmetic normal and abrupt outcomes
+        run: node scripts/run-owned-arithmetic-probes.mjs --output "$RUNNER_TEMP/owned-arithmetic-probes.json"
       - name: Verify pinned upstream Test262 syntax fixtures
         run: node scripts/run-conformance.mjs --output "$RUNNER_TEMP/test262-baseline.json"
+      - name: Execute pinned Test262 scalar bodies and replay their traces
+        run: node scripts/run-runtime-conformance.mjs --oracle --output "$RUNNER_TEMP/test262-runtime.json"
       - name: Archive reproducible gap report
         uses: actions/upload-artifact@v4
         with:
-          name: test262-syntax-slice
-          path: ${{ runner.temp }}/test262-baseline.json
+          name: owned-runtime-evidence
+          path: |
+            ${{ runner.temp }}/owned-arithmetic-probes.json
+            ${{ runner.temp }}/test262-baseline.json
+            ${{ runner.temp }}/test262-runtime.json
           if-no-files-found: error
 
       - name: Run pinned selected Test262 execution (11 cases)

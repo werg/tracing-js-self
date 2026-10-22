@@ -1,6 +1,6 @@
 // Deliberately bounded grammar; unsupported syntax fails closed, never through native eval.
 import { encode } from './values.js';
-const ops = ['===','!==','=>','**','==','!=','<=','>=','+=','-=','&&','||','??'];
+const ops = ['===','!==','=>','**','++','--','==','!=','<=','>=','+=','-=','&&','||','??'];
 const singles = '{}()[];,.:+-*/%<>=!?';
 function lex(source) {
   const tokens = []; let i = 0;
@@ -74,9 +74,9 @@ export function parse(source) {
     const x = take();
     if (x.kind === 'literal') return {type:'Literal',value:encode(x.value),raw:x.raw,start:x.start,end:x.end};
     if (x.value === 'true' || x.value === 'false' || x.value === 'null') return {type:'Literal',value:encode(x.value === 'true'?true:x.value === 'false'?false:null),raw:x.value,start:x.start,end:x.end};
-    if (x.value === 'await') return {type:'Await',argument:expression(7),start:x.start,end:t[p-1].end};
-    if (['!','-','+','typeof'].includes(x.value)) return {type:'Unary',operator:x.value,argument:expression(7),start:x.start,end:t[p-1].end};
-    if (x.value === '(') { const e = expression(); need(')'); return e; }
+    if (x.value === 'await') return {type:'Await',argument:expression(8),start:x.start,end:t[p-1].end};
+    if (['!','-','+','typeof'].includes(x.value)) return {type:'Unary',operator:x.value,argument:expression(8),start:x.start,end:t[p-1].end};
+    if (x.value === '(') { const e = expression(); need(')'); return {...e,parenthesized:true}; }
     if (x.value === '[') { const elements=[]; if(!match(']')){do{elements.push(expression(0,false));}while(match(','));need(']');} return {type:'Array',elements,start:x.start,end:t[p-1].end}; }
     if (x.value === '{') { const properties=[]; if(!match('}')){do{ const k=take(); if(k.kind!=='word'&&k.kind!=='literal')throw new SyntaxError('Invalid object key'); need(':'); if(String(k.value)==='__proto__')throw new SyntaxError('Object-literal prototype setters are not implemented');properties.push({key:String(k.value),value:expression(0,false)}); }while(match(','));need('}');}return {type:'Object',properties,start:x.start,end:t[p-1].end}; }
     if (x.kind === 'word') return {type:'Identifier',name:x.value,start:x.start,end:x.end};
@@ -91,6 +91,8 @@ export function parse(source) {
       const op=peek().value;
       if (['=','+=','-='].includes(op) && min<=0) {take(); const right=expression(0);if(!['Identifier','Member'].includes(left.type))throw new SyntaxError('Invalid assignment target');left={type:'Assign',operator:op,left,right,start:left.start,end:right.end};continue;}
       const prec=precedence[op];if (!prec || prec < min) break;
+      if(op==='**' && ['Unary','Await'].includes(left.type) && !left.parenthesized)
+        throw new SyntaxError('Unparenthesized unary expression before exponentiation');
       take(); const right=expression(prec+(op==='**'?0:1));left={type:'Binary',operator:op,left,right,start:left.start,end:right.end};
     }
     return left;

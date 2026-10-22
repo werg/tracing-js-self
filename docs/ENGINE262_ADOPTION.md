@@ -2,20 +2,30 @@
 
 ## Decision and evidence boundary
 
-**Reference candidate pinned, replacement not approved.** The repository retains its owned bytecode runtime as the **only** producer of authoritative semantic traces. engine262 is invoked *out of band* for spec-oriented script parsing and scalar outcome comparison; no engine262 execution is presented as a traced execution, and no engine262-owned activation is resumed from a checkpoint.
+**0.2.0 follow-on:** the repository now has a
+[pinned source inventory](ENGINE262_INVENTORY.md), the first
+[owned primitive arithmetic phases](OWNED_ARITHMETIC.md), and a small
+[Test262 execution slice](TEST262_RUNTIME_SLICE.md). These advance the original
+gates below without passing the full replacement gate: the source scan is not a
+normative clause inventory, object/host execution remains incomplete, and the
+executed slice does not implement the complete official harness.
+
+**Reference candidate pinned, full replacement gate not passed.** The repository retains its owned bytecode/spec-phase runtime as the **only** producer of authoritative semantic traces. engine262 is invoked *out of band* for spec-oriented script parsing and scalar outcome comparison; no engine262 execution is presented as a traced execution, and no engine262-owned activation is resumed from a checkpoint.
 
 - Upstream candidate: [engine262](https://github.com/engine262/engine262), commit `2d7d8d988c77e94473ba0377122cdfccdfe243ba` (MIT); published npm build `@engine262/engine262@0.0.1-2d7d8d988c77e94473ba0377122cdfccdfe243ba`.
-- Official suite source: [Test262](https://github.com/tc39/test262), commit `d53ebc8b1931d9f1541e43d59650776e4b766248`. The original 14 **syntax-only** files are pinned in `coverage/test262-slice.lock.json`; an additional 11 selected **execution smoke** files are independently pinned in `conformance/test262-cases.json`. Both runners verify Git blob SHA-1 before any parsing or evaluation. Only the selected execution runner evaluates Test262 source, in the bounded VM and the isolated engine262 reference.
-- `profiles/targets.lock.json` is the authoritative revision ledger. CI uses Node.js 24 to run the external oracle; the tracer itself continues to support Node.js 20+ without optional dependencies.
+- Official suite source: [Test262](https://github.com/tc39/test262), commit `d53ebc8b1931d9f1541e43d59650776e4b766248`. The original 14 **syntax-only** files are pinned in `coverage/test262-slice.lock.json`; 11 selected **execution smoke** files are pinned in `conformance/test262-cases.json`; eight **scalar-harness execution** files are pinned in `coverage/test262-runtime.lock.json`. All runners verify Git blob SHA-1 before parsing or evaluation. The two execution suites have distinct evidence boundaries and denominators.
+- `profiles/targets.lock.json` is the authoritative revision ledger. CI uses Node.js 24 to run the external oracle; the tracer supports Node.js 20+ with its integrity-locked Acorn parser dependency. The engine262 oracle remains optional.
 - Reproduction on Node.js 24:
   ```sh
   VERSION="$(node -p "require('./profiles/targets.lock.json').referenceEngine.npmVersion")"
   npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund "@engine262/engine262@$VERSION"
   node scripts/run-spec-probes.mjs
+  node scripts/run-owned-arithmetic-probes.mjs
   node scripts/run-conformance.mjs --output /tmp/test262-baseline.json
   node tools/test262-baseline.mjs --output /tmp/test262-execution.json
+  node scripts/run-runtime-conformance.mjs --oracle --output /tmp/test262-runtime.json
   ```
-  The GitHub Actions `Pinned spec oracle and Test262 baseline` job runs these commands and publishes **both** parse and execution reports. This initial slice is a **regression baseline**, not a Test262 conformance percentage. The installed npm package is pinned by an exact published version; an integrity-pinned dependency lockfile is still needed before release.
+  The GitHub Actions spec-reference job runs these commands, verifies the pinned source inventory, and publishes the arithmetic, parse and execution reports. These are **regression baselines**, not a Test262 conformance percentage. The optional engine262 npm package is pinned by an exact published version; an integrity-pinned lock for that reference dependency is still needed before release. The required Acorn parser already has a version and integrity pin in `package-lock.json`.
 
 ## Engine substitution feasibility
 
@@ -48,10 +58,10 @@ Upstream surfaces inspected at the pinned code lineage include `src/index.mts`, 
 
 **Selected Test262 execution smoke** (`conformance/test262-cases.json`): eleven official, unmodified files are executed against the bounded VM and a separate engine262 realm, with baseline outcomes of four passing runtime-negative TDZ cases, five expected failures and two skips. Each case checks its Git blob, and the runner rejects any unexpected pass, failure, missing expected error, wrong reference result or silently skipped unlisted feature. The runner differentiates syntax rejection from compiler refusal. `tools/test262-baseline.mjs` writes a full JSON report before returning a nonzero exit status for unexpected outcomes; CI uploads it with `if-no-files-found: error`. This is **only one sloppy Script variant**; the full Test262 harness, includes, module goal, strict and async variants, and guest exception ownership are still missing. Positive tests may refer to `Test262Error` on their failure path; no general Test262 harness has been installed.
 
-**Fail-closed policy:** spec oracle integration does not modify `Runtime.start`, the host effect bridge, the journal schema or `completeSemanticTrace: false`. Unsupported grammar must not be executed by Node's `eval`, `vm` or `Function` as a fallback. The untraced oracle cannot be exposed as an owned semantic tracing backend.
+**Fail-closed policy:** the external oracle never runs guest work on behalf of the authoritative runtime. The owned arithmetic integration deliberately versions its new journal as `/2`, while `completeSemanticTrace` remains false. Unsupported grammar must not be executed by Node's `eval`, `vm` or `Function` as a fallback. The untraced oracle cannot be exposed as an owned semantic tracing backend.
 
 ## Follow-on engineering
 
-- Land a complete clause/intrinsic audit tied to engine262's exact upstream tree and a coverage generator that refuses unclassified operations; decide how to compile generator-based spec phases to owned frames.
-- Build the first spec-backed **owned** operation path end to end (prefer one existing arithmetic/binding operation), with typed mutation commands and independent reference equivalence; only then expand.
-- Implement a real Test262 execution harness profile independently of the parse slice and grow coverage without silently reclassifying unsupported or failing cases as passes.
+- Expand the landed textual source inventory to a complete normative clause/intrinsic installation audit; preserve explicit classification and exact upstream verification.
+- Extend the landed owned primitive arithmetic path to bindings, object coercion and internal methods, with typed mutation commands and independent reference equivalence.
+- Expand the landed scalar Test262 execution profile to the official full harness, strict/module/async modes and negative phases, retaining unsupported cases and explicit variant denominators.

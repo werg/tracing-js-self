@@ -87,14 +87,31 @@ export function runOwnedScript(source) {
   catch (error) {
     // A host-side interpreter error is only a diagnostic observation, not a
     // fully owned guest exception/completion record.
-    return {phase:'runtime',errorName:error.name,message:error.message};
+    return {phase:'runtime',errorName:error.name,message:error.message,
+      evidence:'host-interpreter-diagnostic'};
   }
-  if (progress.kind !== 'terminated') return {phase:'incomplete',status:progress.kind};
+  if (!['terminated','runtime.failure','unsupported'].includes(progress.kind))
+    return {phase:'incomplete',status:progress.kind};
   const bundle = runtime.exportRun();
   // Validation/replay failures are HARNESS failures and must never be masked
   // as ordinary guest runtime outcomes or expected Test262 failures.
-  validateBundle(bundle);
-  replayExact(bundle);
+  const validation = validateBundle(bundle);
+  const replay = replayExact(bundle);
+  if (progress.kind !== 'terminated') {
+    const completion = bundle.finalState.control.a0.failure?.completion;
+    const expectedType = progress.kind === 'unsupported' ? 'unsupported' : 'throw';
+    if (completion?.type !== expectedType)
+      throw new Error('Missing recorded terminal completion for ' + progress.kind);
+    const observation = {evidence:'owned-terminal-completion',completion,
+      verification:{validated:validation.valid,replayed:replay.valid,
+        eventCount:validation.eventCount,externalAdapterCalls:replay.externalAdapterCalls}};
+    if (progress.kind === 'unsupported') return {...observation,phase:'unsupported',
+      status:progress.kind,feature:completion.feature,message:completion.message};
+    // Only an owned Error type is eligible for a Test262 runtime-negative
+    // match. A scalar throw saying "TypeError" is not a TypeError instance.
+    return {...observation,phase:'runtime',errorName:completion.errorType ?? null,
+      ...(completion.message ? {message:completion.message} : {})};
+  }
   return {phase:'normal'};
 }
 

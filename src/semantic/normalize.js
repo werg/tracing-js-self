@@ -2,7 +2,6 @@
 // This is a source-anchored derived record, not executable bytecode or a state
 // replacement. Every record retains an audit pointer to the committed event.
 import {isDeepStrictEqual} from 'node:util';
-import {decode} from '../values.js';
 import {validateBundle} from '../validation.js';
 
 const selection={
@@ -31,6 +30,7 @@ export function normalizeJournal(bundle) {
   validateBundle(bundle);
   const output=[],mapping={};
   const lastControl=new Map();
+  const arithmetic=new Map();
   const sites=new Map(bundle.sites.map(s=>[s.siteId,s]));
   const root=bundle.initialState.control.a0.activeFrameId;
   if(!root)throw new Error('No root invocation');
@@ -38,19 +38,47 @@ export function normalizeJournal(bundle) {
     // Private arrival must never be an observed or generated target.
     if(e.operation==='external.input.arrive')continue;
     let op=selection[e.operation];
+    let inputs=e,owned=null;
+    if(e.operation==='primitive.binary') {
+      const created=e.stateChanges.find(p=>p.kind==='operation.create');
+      if(created) {
+        // Starting an owned operation has not produced a value. Keep its
+        // committed inputs, never a register read from the eventual final state.
+        arithmetic.set(created.id,{event:e,record:created.record});
+        continue;
+      }
+    }
+    if(e.operation==='spec.operation.complete') {
+      const completed=e.stateChanges.find(p=>p.kind==='operation.complete');
+      owned=arithmetic.get(completed?.id);
+      if(!owned)throw new Error('Owned arithmetic completion has no committed start');
+      inputs=owned.event;
+      // The compact training trace emits one source-level operation only when
+      // its owned continuation completes. Phase values remain archive evidence.
+      op=e.completion.type==='normal'?'value':e.completion.type==='throw'?'throw':'end';
+      arithmetic.delete(completed.id);
+    }
     if(e.operation==='control.jump') {
       const change=e.stateChanges.find(p=>p.table==='frames' && p.id===e.invocationId);
       if(change && change.after.pc<=change.before.pc)op='loop';
     }
     if(!op)continue;
-    const args=e.operands??[];
+    const args=inputs.operands??[];
     const source=sites.get(e.siteId);
     const r={id:'e'+(output.length+1),journalEvent:e.eventId,op,
       invocation:e.invocationId??null,site:e.siteId??null,
       source:source?{start:source.start,end:source.end,codeId:source.codeId}:null,
-      dependsOn:[...new Set((e.operandOrigins??[]).filter(id=>mapping[id]).map(id=>mapping[id]))],
+      dependsOn:[...new Set((inputs.operandOrigins??[]).filter(id=>mapping[id]).map(id=>mapping[id]))],
       control: e.invocationId?lastControl.get(e.invocationId)??null:null,
       operands:args,result:e.result,reads:[],writes:[]};
+    if(owned)r.arithmetic={algorithm:owned.record.algorithm,operator:owned.record.operator};
+    if(e.completion) {
+      // Archive token origins are audit details; visible data dependencies use
+      // the semantic IDs above. Keep unsupported distinct from guest throws.
+      const {type,errorType,message,feature}=e.completion;
+      r.completion={type,...(errorType?{errorType}:{}),...(message?{message}:{}),
+        ...(feature?{feature}:{})};
+    }
     if(op==='branch'||op==='loop') {
       const frame=e.stateChanges.find(p=>p.table==='frames' && p.id===e.invocationId);
       r.decision=op==='branch'?e.result?.[1]: 'backedge';

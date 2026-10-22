@@ -6,10 +6,22 @@ import {trainingPrefix,verifyVisibleExport} from './visibility.js';
 import {validateBundle} from '../validation.js';
 import {replayExact} from '../replay.js';
 
+function requireCompletedEntry(bundle) {
+  const state=bundle.finalState,control=state.control.a0;
+  if(bundle.entrySpec?.kind!=='function' || control.status!=='completed' ||
+     control.activeFrameId!==null || control.failure || control.queue.length ||
+     control.completion?.kind!=='return' || Object.keys(state.effects).length ||
+     Object.keys(state.promises).length ||
+     Object.values(state.frames).some(frame=>frame.status!=='completed') ||
+     Object.values(state.operations??{}).some(operation=>operation.status!=='completed'))
+    throw new TypeError('Only completed synchronous effect-free return entries may be exported');
+}
+
 export function exportTraining(runtime,{maxBytes=512,maxGenerated=256}={}) {
   const bundle=runtime.exportRun();
   if(!bundle.entrySpec)throw new TypeError('Only direct training entries may be exported');
   validateBundle(bundle);
+  requireCompletedEntry(bundle);
   replayExact(bundle);
   const semantic=normalizeJournal(bundle);
   validateSemantic(bundle,semantic);
@@ -35,6 +47,7 @@ export function validateTrainingExport(exported) {
   const {groups}=exported.public;
   if(!Array.isArray(groups)||groups.length<4)throw new Error('Truncated training episode');
   validateSemantic(exported.sidecar.archive,exported.sidecar.semantic);
+  requireCompletedEntry(exported.sidecar.archive);
   replayExact(exported.sidecar.archive);
   const {maxBytes=512,maxGenerated=256}=exported.sidecar.limits??{};
   if(!Number.isInteger(maxBytes) || maxBytes<64 || maxBytes>1024 ||

@@ -1,0 +1,130 @@
+# JavaScript embedding and natlang integration
+
+The package entry point exposes the existing tracing runtime to Node.js ES
+modules. It is **not yet a drop-in natlang evaluator**, a TypeScript compiler,
+or a complete JavaScript/Node/browser runtime. Supported execution remains the
+profile in [STATUS.md](STATUS.md). No untraced fallback is installed.
+
+```js
+import {
+  createRuntime, validateBundle, reconstruct, replayExact, causalPrefix
+} from 'tracing-js-self';
+
+const runtime = createRuntime().start('let answer = 2 + 3 * 4;');
+const progress = runtime.drive();
+const bundle = runtime.exportRun();
+validateBundle(bundle);
+const state = reconstruct(bundle);
+replayExact(bundle); // same-interpreter consistency, without host adapters
+const modelView = causalPrefix(bundle);
+```
+
+The entry point also exports `Runtime`, the primitive `encode`/`decode` codec,
+`TraceValidationError`, and `TraceReplayError`. `drive()` distinguishes waiting
+from termination. Host adapters use the current declared mock operations;
+asynchronous completion arrives through `recordInputArrival` and is made guest
+visible separately through `deliverInput`. A native transport promise is not a
+guest continuation. `test/public-api.test.js` exercises package-name imports,
+embedded execution, both host wait paths, causal hiding, and effect-free replay.
+
+The separate `tracing-js-self/training` entry point exports `verifyTrainingCase`,
+`exportTraining`, and `validateTrainingExport` for the strict synchronous
+`training-js/1` profile. It shares the owned arithmetic phases and can compare
+completed function results and observable argument graphs with an independent
+Node V8 reference. These checks produce locally verified candidate episodes;
+they do not supply natlang's evaluator contract or megatoken admission.
+
+## Pinned natlang contract
+
+Audited against
+[`werg/natlang@9738f30fc976d72318adcc789e3051d6cab0f18b`](https://github.com/werg/natlang/tree/9738f30fc976d72318adcc789e3051d6cab0f18b).
+Its [evaluator interface](https://github.com/werg/natlang/blob/9738f30fc976d72318adcc789e3051d6cab0f18b/ts-host/src/native/evaluator.ts)
+requires:
+
+| Member | Contract |
+| --- | --- |
+| `authority`, `mode` | Evaluator identity and `fresh` or `retained` realm behavior. |
+| `scopeCapabilities` | Whether modules and network are available. |
+| `execute(request)` | Synchronous `{ result, events, logs? }`; refuses asynchronous results. |
+| `executeAsync(request)` | Promise of the same result shape. |
+| `evaluateModule(code, bindings)` | Executes a module body with live bindings and returns its completion. |
+| `declarationOf?(name)` | Optional importable-package declaration lookup. |
+| `fork()`, `close()` | Fresh environment creation and lifecycle cleanup. |
+
+An evaluation request is `{ code, scope, body, path, timeoutMs?, live? }`.
+Portable scope data becomes a frozen snapshot (`self`); live objects, functions,
+services, capture cells, and output sinks arrive by reference (`__live`). The
+[current environment](https://github.com/werg/natlang/blob/9738f30fc976d72318adcc789e3051d6cab0f18b/ts-host/src/environment.ts)
+transpiles TypeScript to ES2022, maps raw `undefined` completion to `null`,
+collects console output and host events, and cancels its pending timers on close.
+Failures carry observed events and optional stack/log evidence in `EvalFailure`;
+natlang uses `instanceof`, so a separately defined lookalike error is insufficient.
+
+There are **two execution seams** to integrate:
+
+1. [`createNatlangRuntime({ environment: () => evaluator })`](https://github.com/werg/natlang/blob/9738f30fc976d72318adcc789e3051d6cab0f18b/ts-host/src/runtime/runtime.ts)
+   supplies per-call evaluation environments.
+2. [`setModuleRealm(factory)`](https://github.com/werg/natlang/blob/9738f30fc976d72318adcc789e3051d6cab0f18b/ts-host/src/runtime/modules.ts)
+   supplies the separate retained realm for callable-folder modules. That loader
+   calls `evaluateModule` with `exports`, `module`, `require`, and natlang helper
+   bindings. Changing only the per-call factory leaves module JavaScript outside
+   the tracer. The [Node wiring](https://github.com/werg/natlang/blob/9738f30fc976d72318adcc789e3051d6cab0f18b/ts-host/src/runtime/node.ts)
+   currently installs both independently.
+
+### Open blockers and acceptance gates
+
+The [scope compiler](https://github.com/werg/natlang/blob/9738f30fc976d72318adcc789e3051d6cab0f18b/ts-host/src/scope-compiler.ts)
+already emits arrows, closures, destructuring, spread, object methods, standard
+built-ins, and `Promise.all`, beyond this runtime's supported grammar. Broader
+syntax alone also does not supply owned coercions, object internal methods,
+completion propagation, callbacks, modules, or host identity/activation handling.
+Those remain language and host implementation work, not an adapter wrapper.
+
+Before claiming natlang compatibility, exercise actual scope-compiler output
+through both seams and establish all of the following:
+
+- Scalar and async evaluations, persistent scope helpers, and live capture
+  mutation preserve results and identity; unsupported behavior fails explicitly.
+- Concurrent typed services complete in either order, with recorded guest-visible
+  delivery, callback reentry, and no repeated effects during reconstruction/replay.
+- Callable-folder modules import sibling modules and `.nl` functions with correct
+  caching and exports. Imported native packages have explicit tracing boundaries.
+- Throw/rejection paths preserve earlier effects and compatible failure evidence;
+  fork/close behavior and outstanding work ownership match the interface.
+- TypeScript lowering retains original source identities and source mappings;
+  spec/reference tests establish the required JavaScript behavior independently
+  of this interpreter's replay.
+
+These are open integration gates. Public API tests do not satisfy them, and no
+natlang adapter or changes to natlang are included here.
+
+## Megatoken: semantic chunks versus physical records
+
+Audited against
+[`werg/megatoken@285672c2e08ebad2e126022f9cb859b47999f1ae`](https://github.com/werg/megatoken/tree/285672c2e08ebad2e126022f9cb859b47999f1ae).
+Its [schema version 3](https://github.com/werg/megatoken/blob/285672c2e08ebad2e126022f9cb859b47999f1ae/src/megatoken/data/schema.py)
+has ordered `Episode.records`, source `Lineage`, logical action identities,
+writer-to-reader dependencies, and optional tracks and causal groups.
+
+A runtime semantic chunk is an execution boundary. Megatoken physical records
+are pieces of an original logical event for model processing. Its
+[current preparation defaults](https://github.com/werg/megatoken/blob/285672c2e08ebad2e126022f9cb859b47999f1ae/src/megatoken/data/parsing/config.py)
+target 512 tokens, with soft/hard maxima of 768/1,024 tokens and a 16,384-byte
+limit. These limits must not create guest yields or change external delivery
+order. Keep semantic identities while splitting a rendered logical event into
+byte-exact, contiguous physical parts, with original source spans and codec
+identity. Cached token IDs are separate from IDs observed during generation.
+
+Dependencies must point from an earlier writer to a later reader. Events in one
+`Meridian` causal group can attend to each other, so a pre-delivery state and its
+future host result must not share that group. Only assistant/document records
+can carry policy loss; role, loss mask, executed provenance, action/execution
+identity, and source-family split ancestry require deliberate adapter mapping.
+
+The [native episode adapter](https://github.com/werg/megatoken/blob/285672c2e08ebad2e126022f9cb859b47999f1ae/src/megatoken/data/adapters.py)
+can consume that schema, but this package does not yet export it. An exporter
+must validate real episodes, preserve logical payloads across physical splits,
+and prove by perturbation tests that unavailable inputs cannot change an earlier
+model-visible prefix. Archive checkpoints, private arrivals, and future outcomes
+must stay outside model-visible evidence. The current causal projection is a
+limited prototype, not a full visibility proof or evidence of learning quality.

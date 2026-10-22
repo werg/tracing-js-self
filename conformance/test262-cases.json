@@ -1,6 +1,6 @@
 {
   "schema": "tracing-test262-selection/2",
-  "profile": "bounded-js-subset/1",
+  "profile": "bounded-js-subset/2",
   "test262Commit": "d53ebc8b1931d9f1541e43d59650776e4b766248",
   "referencePackage": "@engine262/engine262",
   "referenceVersion": "0.0.1-2d7d8d988c77e94473ba0377122cdfccdfe243ba",

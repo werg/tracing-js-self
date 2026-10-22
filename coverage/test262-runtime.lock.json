@@ -1,0 +1,56 @@
+{
+  "schema": "test262-runtime-slice/1",
+  "suiteCommit": "d53ebc8b1931d9f1541e43d59650776e4b766248",
+  "profile": "bounded-scalar-test262/1",
+  "description": "Exact official bodies executed as non-strict scripts with a guest-implemented scalar SameValue harness. Strict variants, official full harness, includes, modules, async and negative tests remain unsupported.",
+  "tests": [
+    {
+      "path": "test/language/expressions/addition/coerce-bigint-to-string.js",
+      "gitBlobSha": "2e5105befea218ffe00b4d903a0ae6b314ca5c36",
+      "expectedStatus": "passed",
+      "expectedAssertions": 10
+    },
+    {
+      "path": "test/language/expressions/exponentiation/bigint-zero-base-zero-exponent.js",
+      "gitBlobSha": "6c7218c53a4ebd05ad2f60557c9e4a2b6677cca4",
+      "expectedStatus": "passed",
+      "expectedAssertions": 1
+    },
+    {
+      "path": "test/language/expressions/multiplication/line-terminator.js",
+      "gitBlobSha": "3711c705a845cfcf27c0038155def8eba91d0cee",
+      "expectedStatus": "passed",
+      "expectedAssertions": 1
+    },
+    {
+      "path": "test/language/expressions/division/line-terminator.js",
+      "gitBlobSha": "ff1ecbe6c94356076df89934d7e8d0446c111a1f",
+      "expectedStatus": "passed",
+      "expectedAssertions": 1
+    },
+    {
+      "path": "test/language/expressions/modulus/line-terminator.js",
+      "gitBlobSha": "3ec90e2d8b3920a7c3e9f75f0dfe239536174489",
+      "expectedStatus": "passed",
+      "expectedAssertions": 1
+    },
+    {
+      "path": "test/language/expressions/exponentiation/int32_min-exponent.js",
+      "gitBlobSha": "0d91d53f8bd24ff432581631072a0f6718c9247a",
+      "expectedStatus": "passed",
+      "expectedAssertions": 2
+    },
+    {
+      "path": "test/language/expressions/exponentiation/exp-operator.js",
+      "gitBlobSha": "fdf3c8fa2464889ccb86c3cdde240826de22adda",
+      "expectedStatus": "unsupported",
+      "gap": "Update expressions are outside the bounded grammar"
+    },
+    {
+      "path": "test/language/expressions/addition/bigint-and-number.js",
+      "gitBlobSha": "657b3d003a0eae741e32c34ef46c012835d6144c",
+      "expectedStatus": "unsupported",
+      "gap": "assert.throws and guest exception callbacks are outside the scalar harness"
+    }
+  ]
+}

@@ -1,7 +1,23 @@
 {
   "schema": "coverage-ledger/1",
   "fullTargetStatus": "NOT IMPLEMENTED",
-  "profile": "bounded-js-subset/1",
+  "profile": "bounded-js-subset/2",
+  "additionalProfiles": {
+    "training-js/1": {
+      "scope": "strict ES2022 allowlist; synchronous effect-free function entries",
+      "parser": "Acorn 8.15.0, package-lock integrity verified",
+      "archiveSchema": "semantic-tracing-run/2",
+      "exportSchema": "semantic-execution/1",
+      "verification": "owned trace reconstruction/replay and independent Node V8 completion/observable-graph comparison",
+      "arithmeticProjection": "completed source-anchored values with original operand dependencies; full phases retained in private archive",
+      "admitted": false,
+      "missingAdmissionGates": [
+        "independently checked intermediate semantic coverage",
+        "megatoken-native Episode adapter and schema acceptance",
+        "independent transitive visibility and generated-state rollout verification"
+      ]
+    }
+  },
   "implemented": [
     "basic script parsing",
     "primitive literals and arithmetic",
@@ -19,7 +35,14 @@
     "deterministic bounded-interpreter replay against recorded external inputs (no host adapters)",
     "pinned, untraced engine262 oracle with pure scalar differential fixtures",
     "14-file official Test262 script syntax-only baseline with Git blob verification",
-    "selected 11-file Test262 sloppy-script execution smoke ledger with pinned blobs, known failures and skips"
+    "selected 11-file Test262 sloppy-script execution smoke ledger with pinned blobs, known failures and skips",
+    "primitive arithmetic owned spec phases with serializable continuations and typed operation commands",
+    "terminal recorded guest throws and arithmetic abrupt/unsupported outcomes (no catch or rejection propagation)",
+    "1958 independent primitive arithmetic oracle comparisons with reconstruction and replay",
+    "8-file official Test262 execution slice: 6 non-strict passes, 2 unsupported; 8 strict variants omitted",
+    "pinned engine262 textual source inventory with explicit partial/unowned classifications",
+    "package-root JavaScript ESM API and embedded host-delivery tests",
+    "pinned natlang and megatoken integration contract audit"
   ],
   "missingRequiredFamilies": [
     "full grammar/Annex B/early errors",
@@ -37,7 +60,9 @@
     "full transitive visibility validation",
     "Test262/WPT/Node application acceptance",
     "learning evaluation",
-    "spec-backed fully owned engine262 phases/serializable interpreter continuations and clause/intrinsic mapping",
-    "full Test262 harness semantics, execution and conformance reports"
+    "spec-backed fully owned language phases beyond primitive arithmetic and complete normative clause/intrinsic mapping",
+    "full Test262 official harness semantics, strict/module/async/negative execution and conformance reports",
+    "natlang EvalEnvironment plus module-realm adapter and actual generated-source acceptance",
+    "megatoken schema-v3 export with independent causal visibility validation"
   ]
 }

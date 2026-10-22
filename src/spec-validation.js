@@ -1,0 +1,191 @@
+// Independent, read-only interpretation of spec mutation commands. This module
+// imports only the data vocabulary; it never calls execution/mutation routines.
+import { ARITHMETIC_OPERATORS, SPEC_REGISTERS, SPEC_TRANSITIONS, specStep } from './spec-schema.js';
+const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const copy = value => structuredClone(value);
+const own = (object, name) => Object.hasOwn(object, name);
+const keys = (value, names) => value && typeof value === 'object' && !Array.isArray(value) &&
+  eq(Object.keys(value).sort(), [...names].sort());
+
+function scalar(value) {
+  if (!Array.isArray(value)) return false;
+  if (['undefined','null'].includes(value[0])) return value.length === 1;
+  if (value.length !== 2) return false;
+  switch (value[0]) {
+    case 'bool': return typeof value[1] === 'boolean';
+    case 'str': return typeof value[1] === 'string';
+    case 'bigint': return typeof value[1] === 'string' && /^(0|-?[1-9]\d*)$/.test(value[1]);
+    case 'num': return typeof value[1] === 'number'
+      ? Number.isFinite(value[1]) && !Object.is(value[1], -0)
+      : ['-0','NaN','+Infinity','-Infinity'].includes(value[1]);
+    default: return false;
+  }
+}
+function valueValid(value) {
+  if (scalar(value)) return true;
+  if (!Array.isArray(value)) return false;
+  if (value.length === 2 && ['ref','promise','host','hostfn','intrinsic','builtinfn'].includes(value[0]))
+    return typeof value[1] === 'string' && value[1].length > 0;
+  return value.length === 3 && value[0] === 'method' && valueValid(value[1]) && valueValid(value[2]);
+}
+function tokenValid(value, seen, current = null, primitive = false) {
+  return keys(value, ['value','origin']) && (primitive ? scalar(value.value) : valueValid(value.value)) &&
+    (value.origin === null || value.origin === current || seen.has(value.origin));
+}
+
+/** Called before applying this event's changes, to verify phase/source ownership. */
+export function validateSpecEvent(state, event, fail) {
+  const commands = event.stateChanges.filter(p => p.table === 'operations');
+  const isSpec = event.operation.startsWith('spec.');
+  if (!isSpec) {
+    if (event.spec) fail('Spec metadata on a non-spec event', event.eventId);
+    if (commands.length && (event.operation !== 'primitive.binary' || commands.length !== 1 || commands[0].kind !== 'operation.create'))
+      fail('Unowned spec-operation creation', event.eventId);
+    return;
+  }
+  if (event.completion && event.operation!=='spec.operation.complete')
+    fail('Completion metadata before spec return phase',event.eventId);
+  if (commands.length !== 1) fail('Expected one owned spec command', event.eventId);
+  const command = commands[0], record = state.operations?.[command.id];
+  if (!record || record.status !== 'running') fail('Spec event has no running operation', event.eventId);
+  const frame = state.frames[record.frameId];
+  if (!frame || frame.operationId !== record.id || frame.status !== 'running' || state.control.a0.activeFrameId !== frame.id)
+    fail('Spec continuation is not owned by the active frame', event.eventId);
+  let metadata;
+  try { metadata = specStep(record); } catch { fail('Invalid spec phase operands', event.eventId); }
+  if (event.operation !== metadata.operation || !eq(event.spec, metadata.spec)) fail('Spec phase metadata mismatch', event.eventId);
+  if (event.siteId !== record.siteId || event.sourceId !== record.sourceId || event.codeId !== record.codeId ||
+      event.invocationId !== record.frameId)
+    fail('Spec continuation source mismatch', event.eventId);
+  if (!eq(event.causes, [{kind:'spec-operation',operationId:record.id}])) fail('Spec operation cause mismatch', event.eventId);
+  if (command.kind !== (record.phase === 'complete' ? 'operation.complete' : 'operation.advance'))
+    fail('Wrong spec mutation for phase', event.eventId);
+  const r = record.registers, side = record.phase.startsWith('left') ? 'left' : 'right';
+  let inputs;
+  switch(record.phase) {
+    case 'left-primitive': inputs=[record.operands[0]];break;
+    case 'right-primitive': inputs=[record.operands[1]];break;
+    case 'select': inputs=[r.leftPrimitive,r.rightPrimitive];break;
+    case 'left-string': inputs=[r.leftPrimitive];break;
+    case 'right-string': inputs=[r.rightPrimitive];break;
+    case 'concatenate': inputs=[r.leftString,r.rightString];break;
+    case 'left-numeric': case 'right-numeric':
+    case 'left-numeric-primitive': case 'right-numeric-primitive':
+      inputs=[record.operator==='+' ? r[side+'Primitive'] : record.operands[side==='left'?0:1]];break;
+    case 'left-numeric-kind': case 'right-numeric-kind':
+    case 'left-number': case 'right-number': inputs=[r[side+'NumericPrimitive']];break;
+    case 'numeric-types': case 'apply': inputs=[r.leftNumeric,r.rightNumeric];break;
+    case 'complete': inputs=record.completion?.type==='normal'?[record.completion.value]:[];break;
+  }
+  if (!inputs || inputs.some(input=>!input)) fail('Missing required spec register',event.eventId);
+  if (!eq(event.operands,inputs.map(input=>input.value)) || !eq(event.operandOrigins,inputs.map(input=>input.origin)))
+    fail('Spec operand/register provenance mismatch',event.eventId);
+}
+
+export function applySpecCommand(state, command, event, seen, fail) {
+  const bad = message => fail(message, event.eventId);
+  const id = command.id;
+  if (typeof id !== 'string' || !/^op[1-9]\d*$/.test(id) || !state.operations) bad('Invalid spec operation identity');
+  if (command.kind === 'operation.create') {
+    if (!keys(command, ['kind','table','id','record']) || own(state.operations, id)) bad('Duplicate or malformed operation creation');
+    const r = command.record;
+    if (!keys(r, ['id','frameId','algorithm','operator','siteId','sourceId','codeId','operands','registers','completion','phase','status','version']) ||
+        r.id !== id || r.version !== 1 || r.status !== 'running' || r.algorithm !== 'ApplyStringOrNumericBinaryOperator' ||
+        !ARITHMETIC_OPERATORS.includes(r.operator) || r.phase !== (r.operator === '+' ? 'left-primitive' : 'left-numeric') ||
+        r.completion !== null || !keys(r.registers, []) || !Array.isArray(r.operands) || r.operands.length !== 2 ||
+        !r.operands.every(t => tokenValid(t, seen))) bad('Invalid initial owned operation record');
+    const f = state.frames[r.frameId];
+    if (!f || f.operationId !== id || f.codeId !== r.codeId || f.status !== 'running' || state.control.a0.activeFrameId !== f.id ||
+        event.siteId !== r.siteId || event.sourceId !== r.sourceId || event.codeId !== r.codeId || event.invocationId !== r.frameId ||
+        !eq(event.operands, r.operands.map(t => t.value)) || !eq(event.operandOrigins, r.operands.map(t => t.origin)) ||
+        !eq(event.causes, [{kind:'spec-operation',operationId:id}])) bad('Operation creation ownership mismatch');
+    state.operations[id] = copy(r); return;
+  }
+  const r = state.operations[id];
+  if (!r || r.status !== 'running' || !Number.isSafeInteger(command.expectedVersion) || command.expectedVersion !== r.version)
+    bad('Owned operation version precondition mismatch');
+  if (command.kind === 'operation.complete') {
+    if (!keys(command, ['kind','table','id','expectedVersion','completion']) || r.phase !== 'complete' || !r.completion ||
+        !eq(command.completion, r.completion) || !eq(event.completion, r.completion)) bad('Invalid owned operation completion');
+    const frame = state.frames[r.frameId];
+    if (frame.operationId !== null) bad('Completed operation still attached to frame');
+    if (r.completion.type === 'normal') {
+      if (!eq(frame.stack.at(-1), {value:r.completion.value.value,origin:event.eventId}) ||
+          !eq(event.result, r.completion.value.value)) bad('Operation result not returned to owning frame');
+    } else {
+      const unsupported=r.completion.type==='unsupported',control=state.control.a0;
+      if (frame.status!==(unsupported?'unsupported':'thrown') || !eq(frame.completion,r.completion) ||
+          control.status!==(unsupported?'unsupported':'failed') || control.activeFrameId!==null ||
+          !eq(control.failure,{kind:unsupported?'unsupported':'guest-abrupt',frameId:r.frameId,completion:r.completion}))
+        bad('Abrupt operation not recorded on owning frame');
+    }
+    r.phase = 'done'; r.status = 'completed'; r.version++; return;
+  }
+  if (command.kind !== 'operation.advance' ||
+      !keys(command, ['kind','table','id','expectedVersion','from','to','writes','completionBefore','completionAfter']) ||
+      command.from !== r.phase || !SPEC_TRANSITIONS[r.phase]?.includes(command.to) ||
+      !Array.isArray(command.writes) || !eq(r.completion,command.completionBefore)) bad('Invalid owned operation transition');
+  const allowed = {
+    'left-primitive':'leftPrimitive', 'right-primitive':'rightPrimitive',
+    'left-string':'leftString', 'right-string':'rightString', concatenate:'value',
+    'left-numeric-primitive':'leftNumericPrimitive', 'right-numeric-primitive':'rightNumericPrimitive',
+    'left-numeric-kind':'leftNumeric', 'right-numeric-kind':'rightNumeric',
+    'left-number':'leftNumeric', 'right-number':'rightNumeric', apply:'value'
+  }[r.phase];
+  const completion = command.completionAfter;
+  const earlyAbrupt = completion && completion.type!=='normal';
+  const numericNumberBranch = r.phase.endsWith('-numeric-kind') && command.to.endsWith('-number');
+  const expectedWrites = allowed && !earlyAbrupt && !numericNumberBranch ? 1 : 0;
+  if (command.writes.length!==expectedWrites) bad('Missing or unexpected owned register write');
+  const written = new Set();
+  for (const write of command.writes) {
+    if (!keys(write, ['name','before','after']) || !SPEC_REGISTERS.includes(write.name) || write.name !== allowed ||
+        written.has(write.name) || own(r.registers, write.name) || write.before !== null ||
+        !tokenValid(write.after,seen,event.eventId,true) || write.after.origin !== event.eventId)
+      bad('Invalid owned register write');
+    written.add(write.name); r.registers[write.name] = copy(write.after);
+    if (!eq(event.result,write.after.value)) bad('Spec result/register mismatch');
+    if (write.name.endsWith('Numeric') && !['num','bigint'].includes(write.after.value[0])) bad('Non-numeric spec register');
+    if (write.name.endsWith('String') && write.after.value[0]!=='str') bad('Non-string spec register');
+    if (r.phase.endsWith('-number') && write.after.value[0]!=='num') bad('ToNumber must produce Number');
+    if (r.phase.endsWith('-numeric-kind') && write.after.value[0]!=='bigint') bad('ToNumeric BigInt branch type mismatch');
+    if (r.phase==='concatenate' && write.after.value[0]!=='str') bad('Concatenation must produce String');
+    if (r.phase==='apply' && write.after.value[0]!==r.registers.leftNumeric.value[0]) bad('Numeric leaf result type mismatch');
+    if ((r.phase.endsWith('-primitive') || r.phase.endsWith('-numeric-kind')) && !eq(write.after.value,event.operands[0]))
+      bad('Identity conversion changed a primitive value');
+  }
+  if (!command.writes.length && !['select','numeric-types','complete'].includes(r.phase) && event.result!==null)
+    bad('Unexpected spec phase result');
+  if (r.phase==='select') {
+    const stringBranch=r.registers.leftPrimitive.value[0]==='str'||r.registers.rightPrimitive.value[0]==='str';
+    if (command.to!==(stringBranch?'left-string':'left-numeric') || !eq(event.result,['bool',stringBranch]))
+      bad('Invalid string/numeric branch');
+  }
+  if (r.phase.endsWith('-numeric-kind')) {
+    const left=r.phase.startsWith('left'), input=r.registers[(left?'left':'right')+'NumericPrimitive'];
+    const bigint=input.value[0]==='bigint';
+    if (command.to!==(bigint?(left?'right-numeric':'numeric-types'):(left?'left-number':'right-number')))
+      bad('Invalid ToNumeric type branch');
+  }
+  if (r.phase==='numeric-types') {
+    const same=r.registers.leftNumeric.value[0]===r.registers.rightNumeric.value[0];
+    if (command.to!==(same?'apply':'complete') || !eq(event.result,['bool',same])) bad('Invalid numeric type branch');
+  }
+  if (command.to === 'complete') {
+    if (r.completion !== null || !completion) bad('Missing or repeated spec completion');
+    if (completion.type === 'normal') {
+      if (!keys(completion,['type','value']) || !tokenValid(completion.value,seen,event.eventId,true) ||
+          !eq(completion.value,r.registers.value) || !['apply','concatenate'].includes(r.phase)) bad('Invalid normal spec completion');
+    } else if (completion.type === 'throw') {
+      if (!keys(completion,['type','errorType','message','origin']) || completion.origin !== event.eventId ||
+          typeof completion.message !== 'string' ||
+          !((r.phase === 'numeric-types' && completion.errorType === 'TypeError') ||
+            (r.phase === 'apply' && completion.errorType === 'RangeError'))) bad('Invalid abrupt spec completion');
+    } else if (completion.type === 'unsupported') {
+      if (!keys(completion,['type','feature','message','origin']) || completion.origin !== event.eventId ||
+          !r.phase.endsWith('-primitive') || completion.feature !== 'ToPrimitive(Object)' ||
+          typeof completion.message !== 'string') bad('Invalid unsupported spec completion');
+    } else bad('Unknown spec completion');
+  } else if (completion !== null) bad('Unexpected early spec completion');
+  r.phase = command.to; r.completion = copy(completion); r.version++;
+}

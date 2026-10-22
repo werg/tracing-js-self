@@ -1,10 +1,10 @@
 {
-  "profile": "bounded-js-subset/1",
+  "profile": "bounded-js-subset/2",
   "ecma262Complete": false,
   "ecma402Complete": false,
   "browserComplete": false,
   "nodeComplete": false,
-  "parser": "in-repository bounded-pratt/1",
+  "parser": "in-repository bounded-pratt/2",
   "frontendOptions": {
     "goal": "script",
     "automaticSemicolonInsertion": false
@@ -23,6 +23,16 @@
     "selectedExecution": "conformance/test262-cases.json"
   },
   "releaseEligibility": false,
+  "ownedOperationProfile": {
+    "name": "primitive-arithmetic-phases/1",
+    "operators": ["+", "-", "*", "/", "%", "**"],
+    "domain": ["Undefined", "Null", "Boolean", "String", "Number", "BigInt"],
+    "operationState": "serializable-phase-records",
+    "mutationSchema": "owned-spec-commands/1",
+    "hostScalarLeaves": ["StringNumericLiteral conversion", "Number formatting", "Number and BigInt arithmetic"],
+    "objectCoercion": false,
+    "catchOrAsyncRejectionDelivery": false
+  },
   "referenceEngine": {
     "name": "engine262",
     "role": "isolated-untraced-oracle-only",

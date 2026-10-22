@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { gitBlobSha } from '../src/test262-baseline.js';
+import { Runtime } from '../src/runtime.js';
+import { TraceValidationError } from '../src/validation.js';
+import { TraceReplayError } from '../src/replay.js';
 import {
   validateSelection, checkExecutionFixture, parseExecutionMetadata,
   unavailableFeatures, runOwnedScript, matchesTest262Expectation,
@@ -61,6 +64,66 @@ test('bounded execution distinguishes parse and compiler refusal from runtime fa
   );
   assert.equal(runOwnedScript('let x=1; x+=2;').phase,'normal');
   assert.equal(runOwnedScript('host.readNumber("key");').phase,'incomplete');
+  assert.equal(runOwnedScript('let x = x + 1;').evidence,'host-interpreter-diagnostic');
+});
+
+test('recorded arithmetic exceptions retain exact Error types and verified completion evidence',()=>{
+  for (const [source,errorName] of [
+    ['let result = 1n + 1;','TypeError'],
+    ['let result = 1n / 0n;','RangeError'],
+    ['let result = 1n % 0n;','RangeError'],
+    ['let result = 2n ** -1n;','RangeError']
+  ]) {
+    const actual = runOwnedScript(source);
+    assert.equal(actual.phase,'runtime');
+    assert.equal(actual.errorName,errorName);
+    assert.equal(actual.evidence,'owned-terminal-completion');
+    assert.equal(actual.completion.type,'throw');
+    assert.equal(actual.completion.errorType,errorName);
+    assert.equal(actual.verification.validated,true);
+    assert.equal(actual.verification.replayed,true);
+    assert.equal(actual.verification.externalAdapterCalls,0);
+    assert(actual.verification.eventCount > 0);
+    assert.equal(matchesTest262Expectation(actual,{phase:'runtime',type:errorName}),true);
+  }
+});
+
+test('unsupported operations and scalar throws cannot impersonate an owned Error',()=>{
+  const unsupported = runOwnedScript('let result = {} + 1;');
+  assert.equal(unsupported.phase,'unsupported');
+  assert.equal(unsupported.completion.type,'unsupported');
+  assert.equal(unsupported.evidence,'owned-terminal-completion');
+  assert.equal(unsupported.verification.validated,true);
+  assert.equal(unsupported.verification.replayed,true);
+  assert.equal(matchesTest262Expectation(unsupported,{phase:'runtime',type:'TypeError'}),false);
+  const thrown = runOwnedScript('throw "TypeError";');
+  assert.equal(thrown.phase,'runtime');
+  assert.equal(thrown.errorName,null);
+  assert.deepEqual(thrown.completion.value.value,['str','TypeError']);
+  assert.equal(thrown.verification.replayed,true);
+  assert.equal(matchesTest262Expectation(thrown,{phase:'runtime',type:'TypeError'}),false);
+});
+
+test('terminal-outcome validation errors remain harness failures',t=>{
+  const exportRun = Runtime.prototype.exportRun;
+  t.mock.method(Runtime.prototype,'exportRun',function () {
+    const bundle = exportRun.call(this);
+    bundle.manifest.schema = 'corrupted';
+    return bundle;
+  });
+  for (const source of ['let result = 1n + 1;','let result = {} + 1;'])
+    assert.throws(()=>runOwnedScript(source),TraceValidationError);
+});
+
+test('terminal-outcome replay errors remain harness failures',t=>{
+  const exportRun = Runtime.prototype.exportRun;
+  t.mock.method(Runtime.prototype,'exportRun',function () {
+    const bundle = exportRun.call(this);
+    bundle.sources[0].text += '\nlet changed = 42;';
+    return bundle;
+  });
+  for (const source of ['let result = 1n + 1;','let result = {} + 1;'])
+    assert.throws(()=>runOwnedScript(source),TraceReplayError);
 });
 
 test('selected Test262 pass, XFAIL, XPASS and reference regressions are distinct',()=>{

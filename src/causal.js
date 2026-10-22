@@ -2,7 +2,7 @@
 // In particular, canonical inbox state, host-arrival records, state roots, indexes,
 // hashes and raw state patches are NEVER exposed to the model context.
 export function causalPrefix(bundle,{throughEventId=null}={}) {
-  if(bundle.manifest?.schema!=='semantic-tracing-run/1')throw new Error('Unsupported run bundle');
+  if(!['semantic-tracing-run/1','semantic-tracing-run/2'].includes(bundle.manifest?.schema))throw new Error('Unsupported run bundle');
   const limit=throughEventId ? bundle.events.findIndex(e=>e.eventId===throughEventId) : bundle.events.length-1;
   if(throughEventId && limit<0)throw new Error('Unknown boundary');
   const visible=bundle.events.slice(0,limit+1).filter(e=>e.operation!=='external.input.arrive');
@@ -37,6 +37,14 @@ export function causalPrefix(bundle,{throughEventId=null}={}) {
     if(e.operands?.length)row.operands=e.operands.map(opaque);
     if(e.operandOrigins?.length)row.producers=e.operandOrigins.map(orig=>orig?events[orig]??null:null);
     if(e.result!==null)row.result=opaque(e.result);
+    if(e.spec)row.spec={algorithm:e.spec.algorithm,clause:e.spec.clause,phase:e.spec.phase};
+    if(e.completion && e.completion.type!=='normal') {
+      const c=e.completion;
+      row.completion={type:c.type,...(c.errorType?{errorType:c.errorType}:{}),
+        ...(c.feature?{feature:c.feature}:{}),...(c.message?{message:c.message}:{}),
+        ...(c.value?{value:opaque(c.value.value),producer:c.value.origin?events[c.value.origin]??null:null}:{}),
+        ...(c.origin?{producer:events[c.origin]??null}:{} )};
+    }
     if(e.operation==='call.enter') {
       const created=e.stateChanges.filter(p=>p.table==='effects'&&p.before===null);
       if(created.length)row.outgoing=created.map(p=>({effect:local(effects,p.id,'fx'),operation:p.after.operation,arguments:p.after.args.map(opaque)}));
@@ -45,7 +53,7 @@ export function causalPrefix(bundle,{throughEventId=null}={}) {
       const input=e.causes.find(x=>x.kind==='input');
       const effected=e.causes.find(x=>x.kind==='effect');
       row.supplied={authority:'environment',effect:effected?local(effects,effected.effectId,'fx'):null,
-        value:opaque(e.result),input:input?local(identities,`input:${input.inputId}`,'r'):null};
+        value:opaque(e.result),completion:e.completion?.type??'normal',input:input?local(identities,`input:${input.inputId}`,'r'):null};
     }
     rows.push(row);
   }

@@ -27,6 +27,8 @@ export function semanticLine(row) {
     ...(control?{control}:{}),
     ...(row.operands.length?{operands:row.operands}:{}),
     ...(result!==null?{result}:{}),
+    ...(row.arithmetic?{arithmetic:row.arithmetic}:{}),
+    ...(row.completion?{completion:row.completion}:{}),
     ...(reads.length?{reads}:{}),
     ...(writes.length?{writes}:{}),
     ...(row.decision!==undefined?{decision:row.decision,successor:row.successor}:{}),

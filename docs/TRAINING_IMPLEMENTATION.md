@@ -5,6 +5,7 @@ This records the first tracer-owned implementation of [the training plan](TRAINI
 ## Implemented in tracing-js-self
 
 - Versioned training-js/1: Acorn 8.15.0, locked integrity, ES2022 strict scripts, exact positions, positive allowlist, no ambient globals, top-level strict directive and named synchronous function declarations.
+- The shared owned arithmetic path records primitive conversion, type checks, scalar arithmetic leaves and completions as serializable spec phases. Training entries keep the `training-js/1` language profile while their journal and exact replay use `/2`; see [owned arithmetic and its domain limits](OWNED_ARITHMETIC.md).
 - Direct function entry with identity-preserving plain object/array argument graphs, aliases, cycles, property order, input limits and explicit root completion. Exotic inputs, proxies, getters, holes and unimplemented operations fail closed.
 - Fixed escaped hex/unicode strings and undefined shadowing; reference truthiness/equality/typeof; canonical array index and length/truncation behavior; explicit guest throw completion; read and mutation versions.
 - Canonical source-anchored semantic records from the full journal, with actual read-from links, versioned writes, control decisions, invocation IDs, and validation against that journal.

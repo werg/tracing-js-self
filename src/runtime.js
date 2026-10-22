@@ -2,10 +2,13 @@ import { encode, decode, U, token, truthy, primitiveBinary, primitiveUnary } fro
 import { parse, compile } from './frontend.js';
 import { importGraph } from './training/graph.js';
 import { parseTraining, TRAINING_PARSER } from './training/profile.js';
+import { createArithmetic, advanceArithmetic, isOwnedArithmetic } from './spec-operations.js';
+import { operationMutation } from './spec-mutations.js';
+import { specStep, ENGINE_REVISION } from './spec-schema.js';
 
 const copy = value => structuredClone(value);
 const equal = (a,b) => JSON.stringify(a) === JSON.stringify(b);
-const tableNames = ['counters','envs','heap','promises','frames','effects','inputs','control'];
+const tableNames = ['counters','envs','heap','promises','frames','effects','inputs','control','operations'];
 const opNames = {
   CONST:'literal.materialize', GET:'binding.read', SET:'binding.write', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate',
@@ -74,7 +77,8 @@ function diff(oldState, nextState) {
       const after=Object.hasOwn(nextState[table],id)?nextState[table][id]:null;
       if(!equal(before,after)) {
         if(after && typeof after==='object')after.version=(before?.version??0)+1;
-        patches.push({kind:`${table}.replace`,table,id,before:copy(before),after:copy(after)});
+        patches.push(table==='operations' ? operationMutation(before,after)
+          : {kind:`${table}.replace`,table,id,before:copy(before),after:copy(after)});
       }
     }
   }
@@ -87,7 +91,7 @@ export class Runtime {
     this.maxSteps=maxSteps;
     this.sources=[];this.sites=[];this.programs={};this.events=[];this.chunks=[];
     this.checkpoints={};this.started=false;
-    this.state={counters:{ids:{version:0,env:0,obj:0,promise:0,frame:0,effect:0,input:0}},envs:{},heap:{},promises:{},frames:{},effects:{},inputs:{},control:{a0:{version:0,activeFrameId:null,queue:[],status:'new'}}};
+    this.state={counters:{ids:{version:0,env:0,obj:0,promise:0,frame:0,effect:0,input:0,operation:0}},envs:{},heap:{},promises:{},frames:{},effects:{},inputs:{},operations:{},control:{a0:{version:0,activeFrameId:null,queue:[],status:'new'}}};
     this.chunkStart=0;this.chunkBefore='q0';this.result=U;
   }
   registerSource({text,url='<inline>',goal='script',trainingProfile=false}={}) {
@@ -100,17 +104,17 @@ export class Runtime {
     for(const id of Object.keys(compiled.programs))rename[id]=`${sourceId}:${id}`;
     for(const [id,program] of Object.entries(compiled.programs))this.programs[rename[id]]={...program,id:rename[id],instructions:program.instructions.map(inst=>inst.op==='DEF_FN'?{...inst,arg:{...inst.arg,codeId:rename[inst.arg.codeId]},siteId:`${sourceId}:${inst.siteId}`}:{...inst,siteId:`${sourceId}:${inst.siteId}`})};
     this.sites.push(...compiled.sites.map(site=>({...site,siteId:`${sourceId}:${site.siteId}`,codeId:rename[site.codeId],sourceId})));
-    const record={sourceId,text,url,goal,entry:rename[compiled.entry],parser:trainingProfile?TRAINING_PARSER:'bounded-pratt/1'};
+    const record={sourceId,text,url,goal,entry:rename[compiled.entry],parser:trainingProfile?TRAINING_PARSER:'bounded-pratt/2'};
     this.sources.push(record);return record;
   }
-  next(draft,kind) {const ids=draft.counters.ids;return `${kind[0]}${++ids[kind]}`;}
+  next(draft,kind) {const ids=draft.counters.ids;return `${kind==='operation'?'op':kind[0]}${++ids[kind]}`;}
   newEnv(draft,parent=null) {const id=this.next(draft,'env');draft.envs[id]={id,parent,bindings:{},version:0};return id;}
   newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,waiters:[],adopters:[],adopting:null,version:0};return id;}
   newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[]) {
     const id=this.next(draft,'frame'),envId=this.newEnv(draft,parentEnv);
     const params=this.programs[codeId].params;
     params.forEach((name,i)=>draft.envs[envId].bindings[name]={kind:'parameter',initialized:true,token:args[i]??token(U),version:0});
-    draft.frames[id]={id,codeId,pc:0,stack:[],envId,callerFrameId,asyncPromiseId,status:'running',blockedOn:null,awaiting:null,version:0};
+    draft.frames[id]={id,codeId,pc:0,stack:[],envId,callerFrameId,asyncPromiseId,status:'running',blockedOn:null,awaiting:null,operationId:null,version:0};
     return id;
   }
   start(source) {
@@ -172,7 +176,9 @@ export class Runtime {
     const event={eventId,agentId:'a0',sequence:this.events.length+1,operation,catalogRef:`${operation}/1`,siteId,sourceId,codeId,invocationId,
       operands:detail.operands??operands,operandOrigins:detail.origins??[],result:detail.result??null,
       readObservations:detail.reads??[],causes:detail.causes??[],stateChanges:patches,
-      before:`q${this.events.length}`,after:`q${this.events.length+1}`};
+      before:`q${this.events.length}`,after:`q${this.events.length+1}`,
+      ...(detail.spec ? {spec:detail.spec} : {}),
+      ...(detail.completion ? {completion:detail.completion} : {})};
     this.events.push(event);return event;
   }
   stackPush(frame,value,origin){frame.stack.push(token(value,origin));}
@@ -222,10 +228,35 @@ export class Runtime {
       draft.control.a0.activeFrameId=frame.callerFrameId;frame.callerFrameId=null;
     } else draft.control.a0.activeFrameId=null;
   }
+  failFrame(draft,frame,completion) {
+    // Terminal bounded-profile completion, not catch/finally propagation or
+    // async rejection delivery. Preserve the distinction from unsupported code.
+    const unsupported=completion.type==='unsupported';
+    frame.status=unsupported?'unsupported':'thrown';frame.completion=copy(completion);
+    draft.control.a0.status=unsupported?'unsupported':'failed';
+    draft.control.a0.failure={kind:unsupported?'unsupported':'guest-abrupt',frameId:frame.id,completion:copy(completion)};
+    draft.control.a0.activeFrameId=null;
+  }
+  stepArithmetic(frame) {
+    const operation=this.state.operations[frame.operationId];
+    if(!operation||operation.frameId!==frame.id)throw new Error('Unowned spec continuation');
+    const metadata=specStep(operation);
+    return this.commit(metadata.operation,(s,eventId)=>{
+      const current=s.operations[operation.id],f=s.frames[frame.id];
+      const detail=advanceArithmetic(current,eventId);
+      if(current.status==='completed') {
+        f.operationId=null;
+        if(current.completion.type==='normal')this.stackPush(f,current.completion.value.value,eventId);
+        else this.failFrame(s,f,current.completion);
+      }
+      return detail;
+    },{siteId:operation.siteId,sourceId:operation.sourceId,codeId:operation.codeId,invocationId:operation.frameId});
+  }
   step() {
     if(!this.started)throw new Error('Call start first');
     const c=this.state.control.a0,frame=c.activeFrameId&&this.state.frames[c.activeFrameId];
     if(!frame||frame.status!=='running')return null;
+    if(frame.operationId)return this.stepArithmetic(frame);
     const inst=this.programs[frame.codeId].instructions[frame.pc];
     if(!inst)throw new Error('Program counter out of range');
     const {op,arg}=inst;
@@ -244,7 +275,15 @@ export class Runtime {
         case 'DEF_FN':{const e=s.envs[f.envId],id=this.next(s,'obj');s.heap[id]={id,kind:'function',codeId:arg.codeId,closureEnvId:f.envId,async:arg.async,version:0};e.bindings[arg.name]={kind:'function',initialized:true,token:token(['ref',id],eventId),version:0};return {result:['ref',id]};}
         case 'ENTER_SCOPE':f.envId=this.newEnv(s,f.envId);return {};
         case 'LEAVE_SCOPE':f.envId=s.envs[f.envId].parent;return {};
-        case 'BINARY':{const b=pop(),a=pop();return {...operands(a,b),...result(primitiveBinary(arg,a.value,b.value))};}
+        case 'BINARY':{
+          const b=pop(),a=pop();
+          if(!isOwnedArithmetic(arg))return {...operands(a,b),...result(primitiveBinary(arg,a.value,b.value))};
+          const id=this.next(s,'operation');
+          s.operations[id]=createArithmetic({id,frameId:f.id,operator:arg,left:a,right:b,
+            siteId:inst.siteId,sourceId:frame.codeId.split(':')[0],codeId:frame.codeId});
+          f.operationId=id;
+          return {...operands(a,b),causes:[{kind:'spec-operation',operationId:id}]};
+        }
         case 'UNARY':{const a=pop();return {...operands(a),...result(primitiveUnary(arg,a.value,s.heap))};}
         case 'POP':{const a=pop();return operands(a);}
         case 'DUP':{const a=pop();st.push(a);st.push(copy(a));return operands(a);}
@@ -324,9 +363,7 @@ export class Runtime {
           this.suspendAsync(s,f);return {...operands(a),causes:[{kind:'promise',promiseId}]};
         }
         case 'RETURN':{const v=pop();this.completeFrame(s,f,v.value,v.origin);return {...operands(v),result:v.value};}
-        case 'THROW':{const v=pop();f.status='thrown';s.control.a0.activeFrameId=null;
-          s.control.a0.status='guest.throw';s.control.a0.completion={kind:'throw',value:v.value};
-          return {...operands(v),result:v.value};}
+        case 'THROW':{const v=pop(),completion={type:'throw',value:v};this.failFrame(s,f,completion);return {...operands(v),completion};}
         default:throw new Error(`Unknown opcode ${op}`);
       }
     },{siteId:inst.siteId,sourceId:frame.codeId.split(':')[0],codeId:frame.codeId,invocationId:frame.id});
@@ -372,6 +409,7 @@ export class Runtime {
     const e=this.state.effects[input.effectId];
     return this.commit('external.input.deliver',(s,eventId)=>{
       const i=s.inputs[inputId],fx=s.effects[i.effectId];i.status='delivered';fx.external=i.abrupt?'rejected':'completed';
+      let completion=null;
       if(fx.kind==='promise'){
         if(i.abrupt)throw new Error('Rejected external promises not yet supported by this profile');
         this.resolvePromise(s,fx.promiseId,i.value,eventId);
@@ -379,10 +417,10 @@ export class Runtime {
         const f=s.frames[fx.frameId];
         if(f.blockedOn!==fx.id||f.status!=='blocked')throw new Error('Synchronous completion has no matching blocked frame');
         fx.immediate='completed';f.blockedOn=null;f.status='running';
-        if(i.abrupt) {s.control.a0.status='failed';f.status='thrown';s.control.a0.activeFrameId=null;}
+        if(i.abrupt) {completion={type:'throw',value:token(i.value,eventId)};this.failFrame(s,f,completion);}
         else this.stackPush(f,i.value,eventId);
       }
-      return {result:i.value,causes:[{kind:'input',inputId},{kind:'effect',effectId:i.effectId}]};
+      return {result:i.value,causes:[{kind:'input',inputId},{kind:'effect',effectId:i.effectId}],...(completion?{completion}:{})};
     });
   }
   enterQueuedJob() {
@@ -412,6 +450,11 @@ export class Runtime {
     if(!this.started)throw new Error('Start first');
     let steps=0;
     while(steps++<this.maxSteps) {
+      const terminal=this.state.control.a0.status;
+      if(terminal==='failed'||terminal==='unsupported') {
+        const kind=terminal==='failed'?'runtime.failure':'unsupported';this.seal(kind);
+        return {kind,failure:copy(this.state.control.a0.failure??null),waitingOn:[],pendingEffects:this.chunks.at(-1).exit.pendingEffects};
+      }
       const pending=this.prepared();
       if(pending){this.dispatchPrepared(pending.id);continue;}
       const c=this.state.control.a0;
@@ -421,7 +464,7 @@ export class Runtime {
       if(c.queue.length){this.enterQueuedJob();continue;}
       const pendingPromises=Object.values(this.state.promises).some(p=>p.status==='pending');
       const pendingEffects=Object.values(this.state.effects).some(e=>e.external==='pending');
-      const kind=c.status==='failed'?'runtime.failure':c.status==='guest.throw'?'guest.throw':pendingPromises||pendingEffects?'waiting':'terminated';
+      const kind=pendingPromises||pendingEffects?'waiting':'terminated';
       this.seal(kind);return {kind,waitingOn:this.chunks.at(-1)?.exit.waitingOn??[],pendingEffects:this.chunks.at(-1)?.exit.pendingEffects??[]};
     }
     throw new Error(`Driver safety limit (${this.maxSteps} steps); no chunk has been misreported as complete`);
@@ -430,9 +473,11 @@ export class Runtime {
   inspectState() {return copy(this.state);}
   inspectOpenChunk() {return {before:this.chunkBefore,eventIds:this.events.slice(this.chunkStart).map(e=>e.eventId),open:true};}
   exportRun() {
-    return copy({manifest:{schema:'semantic-tracing-run/1',profile:this.entrySpec?'training-js/1':'bounded-js-subset/1',completeSemanticTrace:false,
+    return copy({manifest:{schema:'semantic-tracing-run/2',profile:this.entrySpec?'training-js/1':'bounded-js-subset/2',completeSemanticTrace:false,
       completeEcma262:false,completeHostIntegration:false,coverage:'docs/STATUS.md',chunkPolicy:'accumulate-until-wait/1',
-      eventVersion:1,operationVersion:1,guestExecution:'owned-bytecode-machine',replay:'bounded-deterministic-reexecution/1'},
+      eventVersion:2,operationVersion:1,mutationSchema:'owned-spec-commands/1',
+      ownedArithmetic:{revision:1,referenceEngineRevision:ENGINE_REVISION,operators:['+','-','*','/','%','**'],domain:'primitive-only'},
+      guestExecution:'owned-bytecode-and-spec-phase-machine',replay:'bounded-deterministic-reexecution/2'},
       sources:this.sources,sites:this.sites,programs:this.programs,entrySpec:this.entrySpec??null,initialState:this.initialState,finalState:this.state,
       events:this.events,chunks:this.chunks,checkpoints:this.checkpoints,effects:this.state.effects,inputs:this.state.inputs});
   }

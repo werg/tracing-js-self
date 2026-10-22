@@ -57,10 +57,16 @@ test('strict profile rejects unsupported syntax and ambient globals',()=>{
 });
 test('explicit guest throws commit and reconstruct but are not admitted',()=>{
   const runtime=createRuntime().start('function f(){throw "oops";} f();');
-  assert.equal(runtime.drive().kind,'guest.throw');
+  assert.equal(runtime.drive().kind,'runtime.failure');
   const bundle=runtime.exportRun();
-  assert.deepEqual(bundle.finalState.control.a0.completion,{kind:'throw',value:['str','oops']});
-  assert(bundle.events.some(e=>e.operation==='completion.throw'));
+  const event=bundle.events.find(e=>e.operation==='completion.throw');
+  assert(event);
+  const failure=bundle.finalState.control.a0.failure;
+  assert.equal(failure.kind,'guest-abrupt');
+  assert.deepEqual(failure.completion,{type:'throw',
+    value:{value:['str','oops'],origin:event.operandOrigins[0]}});
+  assert.deepEqual(bundle.finalState.frames[failure.frameId].completion,failure.completion);
+  assert.deepEqual(event.completion,failure.completion);
   assert.equal(validateBundle(bundle).valid,true);
   assert.equal(replayExact(bundle).valid,true);
   assert.equal(verifyTrainingCase({source:strict('function f(){throw 1;}'),entry:'f'}).status,'unsupported');

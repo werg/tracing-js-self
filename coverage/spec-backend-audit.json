@@ -48,8 +48,8 @@
         "src/abstract-ops/"
       ],
       "referenceExecution": "scalar completions integrated",
-      "authoritativeTracing": "not integrated",
-      "blocker": "Spec ToPrimitive/ToNumber/ToString and observable reads need owned mutable records and producer links."
+      "authoritativeTracing": "partial primitive arithmetic phases in src/spec-operations.js; not engine262 execution substitution",
+      "blocker": "Object ToPrimitive, observable getters and Symbol conversions remain unowned; Number parsing/formatting and typed arithmetic remain declared host scalar leaves. See docs/OWNED_ARITHMETIC.md and coverage/engine262-inventory.json."
     },
     {
       "name": "lexical environments, bindings, and closures",
