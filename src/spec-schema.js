@@ -10,30 +10,39 @@ export const SPEC_REGISTERS = Object.freeze([
   'leftNumeric', 'rightNumeric', 'leftString', 'rightString', 'value'
 ]);
 export const SPEC_TRANSITIONS = Object.freeze({
-  'left-primitive': ['right-primitive', 'complete'],
-  'right-primitive': ['select', 'complete'],
+  'left-primitive': ['right-primitive', 'coercion-get', 'complete'],
+  'right-primitive': ['select', 'coercion-get', 'complete'],
   select: ['left-string', 'left-numeric'],
   'left-string': ['right-string'],
   'right-string': ['concatenate'],
   concatenate: ['complete'],
   'left-numeric': ['left-numeric-primitive'],
-  'left-numeric-primitive': ['left-numeric-kind', 'complete'],
+  'left-numeric-primitive': ['left-numeric-kind', 'coercion-get', 'complete'],
   'left-numeric-kind': ['right-numeric', 'left-number'],
   'left-number': ['right-numeric'],
   'right-numeric': ['right-numeric-primitive'],
-  'right-numeric-primitive': ['right-numeric-kind', 'complete'],
+  'right-numeric-primitive': ['right-numeric-kind', 'coercion-get', 'complete'],
   'right-numeric-kind': ['numeric-types', 'right-number'],
   'right-number': ['numeric-types'],
   'numeric-types': ['apply', 'complete'],
   apply: ['complete'],
   complete: ['done'],
+  'coercion-get': ['coercion-call','complete'],
+  'coercion-call': ['coercion-get','coercion-return','right-primitive','select','left-numeric-kind','right-numeric-kind','complete'],
+  'coercion-return': ['coercion-get','right-primitive','select','left-numeric-kind','right-numeric-kind','complete'],
   done: []
 });
 
 export function specStep(record) {
   let operation, algorithm, clause, step;
   const phase = record.phase;
-  if (phase.endsWith('-primitive')) {
+  if (phase==='coercion-get'||phase==='coercion-call'||phase==='coercion-return'){
+    algorithm='OrdinaryToPrimitive';clause='sec-ordinarytoprimitive';
+    operation=phase==='coercion-get'?'spec.internal.get':
+      phase==='coercion-call'?'spec.internal.call':'spec.internal.return';
+    step=phase==='coercion-get'?'Get conversion method':
+      phase==='coercion-call'?'Call conversion method with receiver':'Check method result';
+  } else if (phase.endsWith('-primitive')) {
     operation = 'spec.to-primitive'; algorithm = 'ToPrimitive'; clause = 'sec-toprimitive';
     step = 'primitive identity; object branch unsupported';
   } else if (phase.endsWith('-string')) {
