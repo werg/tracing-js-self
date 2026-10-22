@@ -1,6 +1,7 @@
 import { encode, decode, U, token, truthy, primitiveBinary, primitiveUnary } from './values.js';
 import { parse, compile } from './frontend.js';
 import { importGraph } from './training/graph.js';
+import { parseTraining, TRAINING_PARSER } from './training/profile.js';
 
 const copy = value => structuredClone(value);
 const equal = (a,b) => JSON.stringify(a) === JSON.stringify(b);
@@ -89,17 +90,17 @@ export class Runtime {
     this.state={counters:{ids:{version:0,env:0,obj:0,promise:0,frame:0,effect:0,input:0}},envs:{},heap:{},promises:{},frames:{},effects:{},inputs:{},control:{a0:{version:0,activeFrameId:null,queue:[],status:'new'}}};
     this.chunkStart=0;this.chunkBefore='q0';this.result=U;
   }
-  registerSource({text,url='<inline>',goal='script'}={}) {
+  registerSource({text,url='<inline>',goal='script',trainingProfile=false}={}) {
     if(this.started)throw new Error('Source registry is frozen after start');
     if(goal!=='script')throw new SyntaxError('Only script goal is implemented');
     if(typeof text!=='string')throw new TypeError('Source text required');
     const sourceId=`src${this.sources.length+1}`;
-    const compiled=compile(parse(text));
+    const compiled=compile(trainingProfile?parseTraining(text):parse(text));
     const rename={};
     for(const id of Object.keys(compiled.programs))rename[id]=`${sourceId}:${id}`;
     for(const [id,program] of Object.entries(compiled.programs))this.programs[rename[id]]={...program,id:rename[id],instructions:program.instructions.map(inst=>inst.op==='DEF_FN'?{...inst,arg:{...inst.arg,codeId:rename[inst.arg.codeId]},siteId:`${sourceId}:${inst.siteId}`}:{...inst,siteId:`${sourceId}:${inst.siteId}`})};
     this.sites.push(...compiled.sites.map(site=>({...site,siteId:`${sourceId}:${site.siteId}`,codeId:rename[site.codeId],sourceId})));
-    const record={sourceId,text,url,goal,entry:rename[compiled.entry],parser:'bounded-pratt/1'};
+    const record={sourceId,text,url,goal,entry:rename[compiled.entry],parser:trainingProfile?TRAINING_PARSER:'bounded-pratt/1'};
     this.sources.push(record);return record;
   }
   next(draft,kind) {const ids=draft.counters.ids;return `${kind[0]}${++ids[kind]}`;}
@@ -130,8 +131,9 @@ export class Runtime {
    * an exact strict directive and named ordinary function declarations. */
   startEntry({text,source=null,functionName,args=[]}={}) {
     if(this.started)throw new Error('Run already started');
-    if(!source)source=this.registerSource({text});
-    const ast=parse(source.text);
+    if(!source)source=this.registerSource({text,trainingProfile:true});
+    if(source.parser!==TRAINING_PARSER)throw new SyntaxError('Entry requires the Acorn training profile');
+    const ast=parseTraining(source.text);
     if(!ast.body.length || ast.body[0].type!=='Expression' ||
        ast.body[0].expr.type!=='Literal' ||
        ast.body[0].expr.value[0]!=='str' || ast.body[0].expr.value[1]!=='use strict' ||
