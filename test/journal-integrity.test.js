@@ -101,6 +101,22 @@ test('transport input IDs cannot shadow object prototypes or use non-string iden
   assert.equal(runtime.events.length, count);
 });
 
+test('non-reserved inherited object names are valid transport IDs and stay reconstructible', () => {
+  const runtime = createRuntime().start('host.readAsync("A");');
+  assert.equal(runtime.drive().kind, 'waiting');
+  const effectId = Object.values(runtime.state.effects)[0].id;
+  const input = runtime.recordInputArrival({
+    effectId, kind: 'completion', value: 7, inputId: 'toString'
+  });
+  assert.equal(input.inputId, 'toString');
+  runtime.deliverInput('toString');
+  assert.equal(runtime.drive().kind, 'terminated');
+  const bundle = archived(runtime.exportRun());
+  assert.deepEqual(bundle.inputs.toString.value, ['num', 7]);
+  assert.equal(validateBundle(bundle).valid, true);
+  assert.equal(replayExact(bundle).valid, true);
+});
+
 test('initial checkpoint and exported host-table copies are authenticated against reconstruction', () => {
   const mutations = [
     b => { b.checkpoints.q0.control.a0.status = 'forged'; },
