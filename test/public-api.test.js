@@ -63,7 +63,7 @@ test('embedded async delivery stays private until supplied and replay never repe
   const writes = [];
   const runtime = createRuntime({ adapters: {
     'demo.store': ({ args }) => {
-      writes.push(args.map(decode));
+      writes.push(args);
       return { kind: 'normal', value: undefined };
     }
   }}).start(`async function work() {
