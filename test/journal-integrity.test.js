@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createRuntime } from '../src/runtime.js';
 import { reconstruct, validateBundle, TraceValidationError } from '../src/validation.js';
 import { replayExact } from '../src/replay.js';
+import { validateHostJournal } from '../src/host-journal.js';
 
 const archived = value => JSON.parse(JSON.stringify(value));
 
@@ -52,6 +53,39 @@ test('runtime rejects multiple input arrivals for one single-outcome effect with
   runtime.deliverInput(first.inputId);
   assert.equal(runtime.drive().kind, 'terminated');
   assert.equal(validateBundle(archived(runtime.exportRun())).valid, true);
+});
+
+test('host inputs are canonical scalar tuples, including NaN across JSON replay', () => {
+  const runtime = createRuntime().start('host.readAsync("A");');
+  assert.equal(runtime.drive().kind, 'waiting');
+  const effectId = Object.values(runtime.state.effects)[0].id;
+  const count = runtime.events.length;
+  const invalid = [
+    ['num', NaN], ['num', Infinity], ['num', -Infinity], ['num', -0],
+    ['num', null], ['bigint', '-0'], ['bool', 0], ['ref', 'o1']
+  ];
+  for (const value of invalid) {
+    assert.throws(() => runtime.recordInputArrival({
+      effectId, kind: 'completion', value
+    }), /Unsupported canonical external payload/);
+  }
+  assert.equal(runtime.events.length, count);
+  const arrival = runtime.recordInputArrival({ effectId, kind: 'completion', value: NaN });
+  assert.deepEqual(runtime.state.inputs[arrival.inputId].value, ['num', 'NaN']);
+  runtime.deliverInput(arrival.inputId);
+  assert.equal(runtime.drive().kind, 'terminated');
+  const bundle = archived(runtime.exportRun());
+  assert.equal(validateBundle(bundle).valid, true);
+  assert.equal(replayExact(bundle).valid, true);
+});
+
+test('archived host payloads must use canonical scalar tags', () => {
+  const bundle = completedRun();
+  const arrival = bundle.events.find(e => e.operation === 'external.input.arrive');
+  arrival.stateChanges.find(p => p.table === 'inputs').after.value = ['num', null];
+  assert.throws(() => validateHostJournal(bundle, (message, eventId) => {
+    throw new TraceValidationError(message, eventId);
+  }), /Invalid host arrival linkage/);
 });
 
 test('transport input IDs cannot shadow object prototypes or use non-string identifiers', () => {
