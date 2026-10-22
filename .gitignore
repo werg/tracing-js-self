@@ -5,3 +5,7 @@ node_modules/
 # Optional pinned corpus checkout and local reports
 .cache/
 test262-execution-report*.json
+
+# Local training exports (sidecars may contain full private machine state)
+training-local.jsonl
+training-manifest.json
