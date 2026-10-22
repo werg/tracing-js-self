@@ -1,4 +1,7 @@
 name: Pinned spec oracle and Test262 baseline
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 on:
   push:
     branches: [main]

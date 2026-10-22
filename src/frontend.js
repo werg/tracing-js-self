@@ -16,9 +16,26 @@ function lex(source) {
         if (ch === '\\') {
           if (i === source.length) throw new SyntaxError('Unterminated string escape');
           ch = source[i++];
-          if (ch === 'n') ch = '\n'; else if (ch === 'r') ch = '\r'; else if (ch === 't') ch = '\t';
-          else if (ch === '0') ch = '\0';
-          else if (ch === 'u') { const code = source.slice(i, i+4); if (!/^[0-9a-f]{4}$/i.test(code)) throw new SyntaxError('Invalid Unicode escape'); ch = String.fromCharCode(parseInt(code,16)); i += 4; }
+          const escapes = {n:'\n',r:'\r',t:'\t',b:'\b',f:'\f',v:'\v','0':'\0'};
+          if (Object.hasOwn(escapes,ch)) ch = escapes[ch];
+          else if (ch === 'x') {
+            const digits = source.slice(i,i+2);
+            if (!/^[0-9a-f]{2}$/i.test(digits)) throw new SyntaxError('Invalid hex escape');
+            ch = String.fromCharCode(parseInt(digits,16)); i += 2;
+          } else if (ch === 'u') {
+            if (source[i] === '{') {
+              const end = source.indexOf('}',i+1);
+              const digits = source.slice(i+1,end);
+              if (end<0 || !/^[0-9a-f]{1,6}$/i.test(digits) ||
+                  parseInt(digits,16)>0x10ffff) throw new SyntaxError('Invalid Unicode escape');
+              ch = String.fromCodePoint(parseInt(digits,16)); i=end+1;
+            } else {
+              const digits = source.slice(i,i+4);
+              if (!/^[0-9a-f]{4}$/i.test(digits)) throw new SyntaxError('Invalid Unicode escape');
+              ch = String.fromCharCode(parseInt(digits,16)); i+=4;
+            }
+          } else if (ch === '\n') ch = '';
+          else if (ch === '\r') { if (source[i] === '\n') i++; ch = ''; }
         }
         out += ch;
       }
@@ -49,12 +66,12 @@ export function parse(source) {
   const take = () => t[p++];
   const match = x => peek().value === x && (p++, true);
   const need = x => { if (!match(x)) throw new SyntaxError(`Expected ${x}, got ${peek().value} at ${peek().start}`); };
-  const name = () => { const x = take(); if (x.kind !== 'word' || ['const','let','var','return','await','function'].includes(x.value)) throw new SyntaxError(`Expected identifier at ${x.start}`); return x.value; };
+  const name = () => { const x = take(); if (x.kind !== 'word' || ['const','let','var','return','await','function','if','else','while','throw','typeof','async','true','false','null'].includes(x.value)) throw new SyntaxError(`Expected identifier at ${x.start}`); return x.value; };
   const semi = () => { if (match(';') || peek().value === '}' || peek().kind === 'eof') return; throw new SyntaxError(`Expected ; at ${peek().start} (automatic semicolon insertion not implemented)`); };
   function primary() {
     const x = take();
     if (x.kind === 'literal') return {type:'Literal',value:encode(x.value),raw:x.raw,start:x.start,end:x.end};
-    if (x.value === 'true' || x.value === 'false' || x.value === 'null' || x.value === 'undefined') return {type:'Literal',value:encode(x.value === 'true'?true:x.value === 'false'?false:x.value === 'null'?null:undefined),raw:x.value,start:x.start,end:x.end};
+    if (x.value === 'true' || x.value === 'false' || x.value === 'null') return {type:'Literal',value:encode(x.value === 'true'?true:x.value === 'false'?false:null),raw:x.value,start:x.start,end:x.end};
     if (x.value === 'await') return {type:'Await',argument:expression(7),start:x.start,end:t[p-1].end};
     if (['!','-','+','typeof'].includes(x.value)) return {type:'Unary',operator:x.value,argument:expression(7),start:x.start,end:t[p-1].end};
     if (x.value === '(') { const e = expression(); need(')'); return e; }

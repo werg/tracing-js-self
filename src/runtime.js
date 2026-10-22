@@ -1,5 +1,7 @@
 import { encode, decode, U, token, truthy, primitiveBinary, primitiveUnary } from './values.js';
 import { parse, compile } from './frontend.js';
+import { importGraph } from './training/graph.js';
+import { parseTraining, TRAINING_PARSER } from './training/profile.js';
 
 const copy = value => structuredClone(value);
 const equal = (a,b) => JSON.stringify(a) === JSON.stringify(b);
@@ -30,8 +32,39 @@ function lookup(draft, envId, name) {
   throw new ReferenceError(`${name} is not defined`);
 }
 function valueKey(tagged) {
-  if (!['str','num','bool'].includes(tagged[0])) throw new TypeError('Only primitive string/number/boolean keys are currently supported');
+  if (!['str','num','bool','null','undefined','bigint'].includes(tagged[0]))
+    throw new TypeError('Property keys requiring guest coercion are unsupported');
   return String(decode(tagged));
+}
+function arrayIndex(key) {
+  return /^(0|[1-9]\d*)$/.test(key) && Number(key) < 4294967295;
+}
+function putOwn(obj,key,value,eventId) {
+  if (key === '__proto__') throw new TypeError('Prototype mutation is not implemented by the bounded profile');
+  if (obj.kind === 'array' && key === 'length') {
+    if (value[0] !== 'num') throw new TypeError('Array length coercion is outside the profile');
+    const length = decode(value);
+    if (!Number.isInteger(length) || length < 0 || length > 4294967295)
+      throw new RangeError('Invalid array length');
+    const old = decode(obj.properties.length.value);
+    if (length < old) for (const name of Object.keys(obj.properties))
+      if (arrayIndex(name) && Number(name) >= length) {
+        delete obj.properties[name];
+        obj.propertyVersions[name] = (obj.propertyVersions[name] ?? 0) + 1;
+        obj.shapeVersion++;
+      }
+    obj.properties.length = token(['num',length],eventId);
+    obj.propertyVersions.length = (obj.propertyVersions.length ?? 0) + 1;
+    return;
+  }
+  const existed = Object.hasOwn(obj.properties,key);
+  Object.defineProperty(obj.properties,key,{value:token(value,eventId),enumerable:true,configurable:true,writable:true});
+  obj.propertyVersions[key] = (obj.propertyVersions[key] ?? 0) + 1;
+  if (!existed) obj.shapeVersion++;
+  if (obj.kind === 'array' && arrayIndex(key) && Number(key) >= decode(obj.properties.length.value)) {
+    obj.properties.length = token(['num',Number(key)+1],eventId);
+    obj.propertyVersions.length = (obj.propertyVersions.length ?? 0) + 1;
+  }
 }
 function diff(oldState, nextState) {
   const patches=[];
@@ -57,25 +90,26 @@ export class Runtime {
     this.state={counters:{ids:{version:0,env:0,obj:0,promise:0,frame:0,effect:0,input:0}},envs:{},heap:{},promises:{},frames:{},effects:{},inputs:{},control:{a0:{version:0,activeFrameId:null,queue:[],status:'new'}}};
     this.chunkStart=0;this.chunkBefore='q0';this.result=U;
   }
-  registerSource({text,url='<inline>',goal='script'}={}) {
+  registerSource({text,url='<inline>',goal='script',trainingProfile=false}={}) {
+    if(this.started)throw new Error('Source registry is frozen after start');
     if(goal!=='script')throw new SyntaxError('Only script goal is implemented');
     if(typeof text!=='string')throw new TypeError('Source text required');
     const sourceId=`src${this.sources.length+1}`;
-    const compiled=compile(parse(text));
+    const compiled=compile(trainingProfile?parseTraining(text):parse(text));
     const rename={};
     for(const id of Object.keys(compiled.programs))rename[id]=`${sourceId}:${id}`;
     for(const [id,program] of Object.entries(compiled.programs))this.programs[rename[id]]={...program,id:rename[id],instructions:program.instructions.map(inst=>inst.op==='DEF_FN'?{...inst,arg:{...inst.arg,codeId:rename[inst.arg.codeId]},siteId:`${sourceId}:${inst.siteId}`}:{...inst,siteId:`${sourceId}:${inst.siteId}`})};
     this.sites.push(...compiled.sites.map(site=>({...site,siteId:`${sourceId}:${site.siteId}`,codeId:rename[site.codeId],sourceId})));
-    const record={sourceId,text,url,goal,entry:rename[compiled.entry],parser:'bounded-pratt/1'};
+    const record={sourceId,text,url,goal,entry:rename[compiled.entry],parser:trainingProfile?TRAINING_PARSER:'bounded-pratt/1'};
     this.sources.push(record);return record;
   }
   next(draft,kind) {const ids=draft.counters.ids;return `${kind[0]}${++ids[kind]}`;}
   newEnv(draft,parent=null) {const id=this.next(draft,'env');draft.envs[id]={id,parent,bindings:{},version:0};return id;}
-  newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,waiters:[],version:0};return id;}
+  newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,waiters:[],adopters:[],adopting:null,version:0};return id;}
   newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[]) {
     const id=this.next(draft,'frame'),envId=this.newEnv(draft,parentEnv);
     const params=this.programs[codeId].params;
-    params.forEach((name,i)=>draft.envs[envId].bindings[name]={kind:'parameter',initialized:true,token:args[i]??token(U)});
+    params.forEach((name,i)=>draft.envs[envId].bindings[name]={kind:'parameter',initialized:true,token:args[i]??token(U),version:0});
     draft.frames[id]={id,codeId,pc:0,stack:[],envId,callerFrameId,asyncPromiseId,status:'running',blockedOn:null,awaiting:null,version:0};
     return id;
   }
@@ -86,18 +120,56 @@ export class Runtime {
     const s=this.state,global=this.newEnv(s);
     s.envs[global].bindings.host={kind:'const',initialized:true,token:token(['host','demo'])};
     s.envs[global].bindings.Promise={kind:'const',initialized:true,token:token(['intrinsic','Promise'])};
+    s.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
     s.control.a0.globalEnvId=global;
     s.control.a0.activeFrameId=this.newFrame(s,source.entry,global);
     s.control.a0.status='running';this.started=true;
     this.initialState=copy(this.state);this.checkpoints.q0=copy(this.state);
     return this;
   }
-  commit(operation, callback, {siteId=null,sourceId=null,codeId=null,operands=[]}={}) {
+  /** Explicit invocation entry for training-js/1. The top level contains only
+   * an exact strict directive and named ordinary function declarations. */
+  startEntry({text,source=null,functionName,args=[]}={}) {
+    if(this.started)throw new Error('Run already started');
+    if(!source)source=this.registerSource({text,trainingProfile:true});
+    if(source.parser!==TRAINING_PARSER)throw new SyntaxError('Entry requires the Acorn training profile');
+    const ast=parseTraining(source.text);
+    if(!ast.body.length || ast.body[0].type!=='Expression' ||
+       ast.body[0].expr.type!=='Literal' ||
+       ast.body[0].expr.value[0]!=='str' || ast.body[0].expr.value[1]!=='use strict' ||
+       ast.body.slice(1).some(n=>n.type!=='Function' || n.async))
+      throw new SyntaxError('training-js/1 requires a strict function bundle without top-level effects');
+    const definitions=this.programs[source.entry].instructions.filter(x=>x.op==='DEF_FN');
+    if(new Set(definitions.map(x=>x.arg.name)).size!==definitions.length)
+      throw new SyntaxError('Duplicate function declaration');
+    const selected=definitions.find(x=>x.arg.name===functionName);
+    if(!selected)throw new ReferenceError('Unknown entry function');
+    const state=this.state, global=this.newEnv(state);
+    state.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
+    state.control.a0.globalEnvId=global;
+    for(const def of definitions){
+      const id=this.next(state,'obj');
+      state.heap[id]={id,kind:'function',codeId:def.arg.codeId,
+        closureEnvId:global,async:false,version:0};
+      state.envs[global].bindings[def.arg.name]={kind:'function',initialized:true,token:token(['ref',id]),version:0};
+    }
+    const imported=importGraph(state,args,kind=>this.next(state,kind));
+    const root=this.newFrame(state,selected.arg.codeId,global,null,null,imported.map(v=>token(v)));
+    state.control.a0.activeFrameId=root;
+    state.control.a0.status='running';
+    this.entrySpec={kind:'function',sourceId:source.sourceId,functionName,arguments:imported};
+    this.started=true;
+    this.initialState=copy(state);
+    this.checkpoints.q0=copy(state);
+    return this;
+  }
+
+  commit(operation, callback, {siteId=null,sourceId=null,codeId=null,invocationId=null,operands=[]}={}) {
     const before=this.state, draft=copy(before),eventId=`a0:e${this.events.length+1}`;
     const detail=callback(draft,eventId)??{};
     const patches=diff(before,draft);
     this.state=draft;
-    const event={eventId,agentId:'a0',sequence:this.events.length+1,operation,catalogRef:`${operation}/1`,siteId,sourceId,codeId,
+    const event={eventId,agentId:'a0',sequence:this.events.length+1,operation,catalogRef:`${operation}/1`,siteId,sourceId,codeId,invocationId,
       operands:detail.operands??operands,operandOrigins:detail.origins??[],result:detail.result??null,
       readObservations:detail.reads??[],causes:detail.causes??[],stateChanges:patches,
       before:`q${this.events.length}`,after:`q${this.events.length+1}`};
@@ -108,13 +180,40 @@ export class Runtime {
     frame.status='completed';
     if(frame.asyncPromiseId){this.resolvePromise(draft,frame.asyncPromiseId,value,origin);value=['promise',frame.asyncPromiseId];}
     if(frame.callerFrameId){const caller=draft.frames[frame.callerFrameId];this.stackPush(caller,value,origin);draft.control.a0.activeFrameId=caller.id;}
-    else {draft.control.a0.activeFrameId=null;if(!frame.asyncPromiseId)this.result=value;}
+    else {draft.control.a0.activeFrameId=null;draft.control.a0.completion={kind:'return',value};
+      draft.control.a0.status='completed';if(!frame.asyncPromiseId)this.result=value;}
   }
   resolvePromise(draft,id,value,origin) {
-    const p=draft.promises[id];if(!p||p.status!=='pending')throw new Error('Promise already settled or missing');
+    const p=draft.promises[id];if(!p||p.status!=='pending'||p.adopting)
+      throw new Error('Promise already settled or adopting another promise');
+    if(value[0]==='promise'){
+      const target=draft.promises[value[1]];
+      if(!target||target===p)throw new TypeError('Invalid or self-resolving guest promise');
+      // Track cycles before registering an adoption dependency.
+      for(let current=target;current?.adopting;current=draft.promises[current.adopting])
+        if(current===p || current.adopting===id)
+          throw new TypeError('Promise adoption cycle');
+      if(target.status==='pending'){
+        p.adopting=target.id;
+        target.adopters??=[];
+        target.adopters.push(id);
+        return;
+      }
+      if(target.status!=='fulfilled')throw new TypeError('Promise rejection not enabled');
+      value=target.value.value;
+      origin=target.value.origin;
+    }
     p.status='fulfilled';p.value=token(value,origin);
     for(const frameId of p.waiters)draft.control.a0.queue.push({frameId,promiseId:id});
     p.waiters=[];
+    const waiting=p.adopters??[];
+    p.adopters=[];
+    for(const adoptedId of waiting){
+      const adopted=draft.promises[adoptedId];
+      if(adopted.adopting!==id)throw new Error('Broken promise adoption link');
+      adopted.adopting=null;
+      this.resolvePromise(draft,adoptedId,value,origin);
+    }
   }
   suspendAsync(draft,frame) {
     frame.status='suspended';
@@ -137,36 +236,56 @@ export class Runtime {
       const operands=(...t)=>({operands:t.map(x=>x.value),origins:t.map(x=>x.origin)});
       switch(op){
         case 'CONST':return result(arg.value);
-        case 'DECLARE':{const e=s.envs[f.envId];if(Object.hasOwn(e.bindings,arg.name))throw new SyntaxError(`Duplicate declaration ${arg.name}`);e.bindings[arg.name]={kind:arg.kind,initialized:false,token:null};return {};}
-        case 'INIT':{const v=pop(),b=lookup(s,f.envId,arg);if(b.cell.initialized)throw new Error('Already initialized');b.cell.initialized=true;b.cell.token=v;return {...operands(v),result:v.value};}
-        case 'GET':{const b=lookup(s,f.envId,arg);if(!b.cell.initialized)throw new ReferenceError(`Cannot access '${arg}' before initialization`);this.stackPush(f,b.cell.token.value,eventId);return {result:b.cell.token.value,reads:[{kind:'binding',envId:b.env.id,name:arg,version:b.env.version}],origins:[b.cell.token.origin]};}
-        case 'SET':{const v=pop(),b=lookup(s,f.envId,arg);if(!b.cell.initialized)throw new ReferenceError(`${arg} is not initialized`);if(b.cell.kind==='const')throw new TypeError(`Assignment to constant ${arg}`);b.cell.token=v;this.stackPush(f,v.value,eventId);return {...operands(v),result:v.value};}
-        case 'DEF_FN':{const e=s.envs[f.envId],id=this.next(s,'obj');s.heap[id]={id,kind:'function',codeId:arg.codeId,closureEnvId:f.envId,async:arg.async,version:0};e.bindings[arg.name]={kind:'function',initialized:true,token:token(['ref',id],eventId)};return {result:['ref',id]};}
+        case 'DECLARE':{const e=s.envs[f.envId];if(Object.hasOwn(e.bindings,arg.name))throw new SyntaxError(`Duplicate declaration ${arg.name}`);e.bindings[arg.name]={kind:arg.kind,initialized:false,token:null,version:0};return {};}
+        case 'INIT':{const v=pop(),b=lookup(s,f.envId,arg);if(b.cell.initialized)throw new Error('Already initialized');b.cell.initialized=true;b.cell.token=v;b.cell.version++;return {...operands(v),result:v.value};}
+        case 'GET':{const b=lookup(s,f.envId,arg);if(!b.cell.initialized)throw new ReferenceError(`Cannot access '${arg}' before initialization`);this.stackPush(f,b.cell.token.value,eventId);return {result:b.cell.token.value,reads:[{kind:'binding',envId:b.env.id,name:arg,version:b.cell.version??0,
+            value:b.cell.token.value,supplyingEvent:b.cell.token.origin??null}],origins:[b.cell.token.origin]};}
+        case 'SET':{const v=pop(),b=lookup(s,f.envId,arg);if(!b.cell.initialized)throw new ReferenceError(`${arg} is not initialized`);if(b.cell.kind==='const')throw new TypeError(`Assignment to constant ${arg}`);b.cell.token=v;b.cell.version=(b.cell.version??0)+1;this.stackPush(f,v.value,eventId);return {...operands(v),result:v.value};}
+        case 'DEF_FN':{const e=s.envs[f.envId],id=this.next(s,'obj');s.heap[id]={id,kind:'function',codeId:arg.codeId,closureEnvId:f.envId,async:arg.async,version:0};e.bindings[arg.name]={kind:'function',initialized:true,token:token(['ref',id],eventId),version:0};return {result:['ref',id]};}
         case 'ENTER_SCOPE':f.envId=this.newEnv(s,f.envId);return {};
         case 'LEAVE_SCOPE':f.envId=s.envs[f.envId].parent;return {};
         case 'BINARY':{const b=pop(),a=pop();return {...operands(a,b),...result(primitiveBinary(arg,a.value,b.value))};}
-        case 'UNARY':{const a=pop();return {...operands(a),...result(primitiveUnary(arg,a.value))};}
+        case 'UNARY':{const a=pop();return {...operands(a),...result(primitiveUnary(arg,a.value,s.heap))};}
         case 'POP':{const a=pop();return operands(a);}
         case 'DUP':{const a=pop();st.push(a);st.push(copy(a));return operands(a);}
         case 'JUMP':f.pc=arg;return {};
         case 'JUMP_IF_FALSE':{const a=pop();if(!truthy(a.value))f.pc=arg;return {...operands(a),result:['bool',!truthy(a.value)]};}
         case 'LOGICAL_JUMP':{const a=st.at(-1),v=a.value;const pass=arg.operator==='&&'?!truthy(v):arg.operator==='||'?truthy(v):v[0]!=='null'&&v[0]!=='undefined';if(pass)f.pc=arg.to;return {...operands(a),result:['bool',pass]};}
-        case 'NEW_OBJECT':case 'NEW_ARRAY':{const id=this.next(s,'obj');s.heap[id]={id,kind:op==='NEW_ARRAY'?'array':'object',properties:{},version:0};if(op==='NEW_ARRAY')s.heap[id].properties.length=token(['num',0],eventId);return result(['ref',id]);}
+        case 'NEW_OBJECT':case 'NEW_ARRAY':{const id=this.next(s,'obj');s.heap[id]={id,kind:op==='NEW_ARRAY'?'array':'object',properties:{},propertyVersions:{},shapeVersion:0,version:0};if(op==='NEW_ARRAY'){s.heap[id].properties.length=token(['num',0],eventId);s.heap[id].propertyVersions.length=0;}return result(['ref',id]);}
         case 'GET_PROP':case 'GET_METHOD':{
           const key=pop(),base=pop(),property=valueKey(key.value);let v;
           if(base.value[0]==='host')v=['hostfn',`${base.value[1]}.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Promise' && property==='resolve')v=['builtinfn','Promise.resolve'];
-          else if(base.value[0]==='ref')v=s.heap[base.value[1]]?.properties[property]?.value??U;
+          else if(base.value[0]==='ref'){
+             const obj=s.heap[base.value[1]];
+             if(!obj)throw new ReferenceError('Unknown guest identity');
+             if(!Object.hasOwn(obj.properties,property) &&
+                (property in (obj.kind==='array'?Array.prototype:Object.prototype)))
+               throw new TypeError('Inherited property lookup is outside the profile');
+             v=Object.hasOwn(obj.properties,property)?obj.properties[property].value:U;
+           }
           else throw new TypeError('Unsupported property receiver (no host fallback)');
           const output=op==='GET_METHOD'?['method',v,base.value]:v;
-          return {...operands(base,key),...result(output),reads:base.value[0]==='ref'?[{kind:'property',objectId:base.value[1],key:property,version:s.heap[base.value[1]].version}]:[]};
+          const obj=base.value[0]==='ref'?s.heap[base.value[1]]:null;
+           return {...operands(base,key),...result(output),reads:obj?[{kind:'property',
+             objectId:obj.id,key:property,version:obj.propertyVersions?.[property]??0,
+             shapeVersion:obj.shapeVersion??0,present:Object.hasOwn(obj.properties,property),
+             value:v,supplyingEvent:obj.properties[property]?.origin??null}]:[]};
         }
         case 'PUT_PROP':{
           const v=pop(),key=pop(),base=pop(),property=valueKey(key.value);
           if(base.value[0]!=='ref'||!s.heap[base.value[1]]||s.heap[base.value[1]].kind==='function')throw new TypeError('Not a writable guest object');
-          if(property==='__proto__')throw new TypeError('Prototype mutation is not implemented by the bounded profile');
-          const obj=s.heap[base.value[1]];Object.defineProperty(obj.properties,property,{value:token(v.value,v.origin),writable:true,enumerable:true,configurable:true});
-          if(obj.kind==='array'&&/^\d+$/.test(property)){const length=decode(obj.properties.length.value);if(+property>=length)obj.properties.length=token(['num',+property+1],eventId);}
+          const obj=s.heap[base.value[1]];
+          if(this.entrySpec && obj.kind==='array') {
+            const oldLength=decode(obj.properties.length.value);
+            if(arrayIndex(property) && Number(property)>oldLength)
+              throw new TypeError('Sparse array writes are outside training-js/1');
+            if(property==='length' && v.value[0]==='num' && decode(v.value)>oldLength)
+              throw new TypeError('Array length expansion is outside training-js/1');
+          }
+          obj.propertyVersions ??= {};
+          obj.shapeVersion ??= 0;
+          putOwn(obj,property,v.value,eventId);
           return {...operands(base,key,v),...result(v.value)};
         }
         case 'CALL':{
@@ -205,10 +324,12 @@ export class Runtime {
           this.suspendAsync(s,f);return {...operands(a),causes:[{kind:'promise',promiseId}]};
         }
         case 'RETURN':{const v=pop();this.completeFrame(s,f,v.value,v.origin);return {...operands(v),result:v.value};}
-        case 'THROW':{const v=pop();throw new Error(`Guest throw (catch is not implemented): ${JSON.stringify(v.value)}`);}
+        case 'THROW':{const v=pop();f.status='thrown';s.control.a0.activeFrameId=null;
+          s.control.a0.status='guest.throw';s.control.a0.completion={kind:'throw',value:v.value};
+          return {...operands(v),result:v.value};}
         default:throw new Error(`Unknown opcode ${op}`);
       }
-    },{siteId:inst.siteId,sourceId:frame.codeId.split(':')[0],codeId:frame.codeId});
+    },{siteId:inst.siteId,sourceId:frame.codeId.split(':')[0],codeId:frame.codeId,invocationId:frame.id});
   }
   prepared() {return Object.values(this.state.effects).find(e=>e.dispatch==='prepared');}
   dispatchPrepared(effectId) {
@@ -300,7 +421,7 @@ export class Runtime {
       if(c.queue.length){this.enterQueuedJob();continue;}
       const pendingPromises=Object.values(this.state.promises).some(p=>p.status==='pending');
       const pendingEffects=Object.values(this.state.effects).some(e=>e.external==='pending');
-      const kind=c.status==='failed'?'runtime.failure':pendingPromises||pendingEffects?'waiting':'terminated';
+      const kind=c.status==='failed'?'runtime.failure':c.status==='guest.throw'?'guest.throw':pendingPromises||pendingEffects?'waiting':'terminated';
       this.seal(kind);return {kind,waitingOn:this.chunks.at(-1)?.exit.waitingOn??[],pendingEffects:this.chunks.at(-1)?.exit.pendingEffects??[]};
     }
     throw new Error(`Driver safety limit (${this.maxSteps} steps); no chunk has been misreported as complete`);
@@ -309,10 +430,10 @@ export class Runtime {
   inspectState() {return copy(this.state);}
   inspectOpenChunk() {return {before:this.chunkBefore,eventIds:this.events.slice(this.chunkStart).map(e=>e.eventId),open:true};}
   exportRun() {
-    return copy({manifest:{schema:'semantic-tracing-run/1',profile:'bounded-js-subset/1',completeSemanticTrace:false,
+    return copy({manifest:{schema:'semantic-tracing-run/1',profile:this.entrySpec?'training-js/1':'bounded-js-subset/1',completeSemanticTrace:false,
       completeEcma262:false,completeHostIntegration:false,coverage:'docs/STATUS.md',chunkPolicy:'accumulate-until-wait/1',
       eventVersion:1,operationVersion:1,guestExecution:'owned-bytecode-machine',replay:'bounded-deterministic-reexecution/1'},
-      sources:this.sources,sites:this.sites,programs:this.programs,initialState:this.initialState,finalState:this.state,
+      sources:this.sources,sites:this.sites,programs:this.programs,entrySpec:this.entrySpec??null,initialState:this.initialState,finalState:this.state,
       events:this.events,chunks:this.chunks,checkpoints:this.checkpoints,effects:this.state.effects,inputs:this.state.inputs});
   }
 }

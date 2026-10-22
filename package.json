@@ -11,9 +11,13 @@
     "test": "node --test test/*.test.js && node fixtures/reference/reference-fixture.mjs",
     "demo": "node bin/tracing.js demo",
     "trace": "node bin/tracing.js run",
-    "test:selected-test262": "node tools/test262-baseline.mjs"
+    "test:selected-test262": "node tools/test262-baseline.mjs",
+    "training:generate": "node tools/generate-training.mjs"
   },
   "bin": {
     "tracing-js-self": "./bin/tracing.js"
+  },
+  "dependencies": {
+    "acorn": "8.15.0"
   }
 }

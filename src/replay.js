@@ -5,6 +5,7 @@
 import { isDeepStrictEqual } from 'node:util';
 import { createRuntime } from './runtime.js';
 import { validateBundle } from './validation.js';
+import { realizeGraph } from './training/graph.js';
 
 export class TraceReplayError extends Error {
   constructor(message, eventId = null, cause = null) {
@@ -85,7 +86,7 @@ function exitKind(runtime) {
   if (c.queue.length) return null;
   const pending = Object.values(runtime.state.promises).some(p => p.status === 'pending') ||
     Object.values(runtime.state.effects).some(e => e.external === 'pending');
-  return c.status === 'failed' ? 'runtime.failure' : pending ? 'waiting' : 'terminated';
+  return c.status === 'failed' ? 'runtime.failure' : c.status === 'guest.throw' ? 'guest.throw' : pending ? 'waiting' : 'terminated';
 }
 
 /**
@@ -110,14 +111,19 @@ export function replayExact(bundle) {
   let entry = null;
   try {
     for (const src of bundle.sources) {
-      const compiled = runtime.registerSource({ text: src.text, url: src.url, goal: src.goal });
-      if (compiled.entry === entryCode) entry = compiled;
+      const compiled = runtime.registerSource({ text: src.text, url: src.url, goal: src.goal,
+        trainingProfile: src.parser === 'acorn/8.15.0:training-js/1' });
+      if (compiled.entry === entryCode || runtime.programs[entryCode] && entryCode.startsWith(`${compiled.sourceId}:`)) entry = compiled;
     }
     if (!entry) fail('Initial frame has no matching registered source');
     expectSame(runtime.sources, bundle.sources, 'source descriptors');
     expectSame(runtime.sites, bundle.sites, 'compiled source sites');
     expectSame(runtime.programs, bundle.programs, 'compiled bytecode');
-    runtime.start(entry);
+    if(bundle.entrySpec?.kind==='function') {
+      const {functionName,arguments:roots,sourceId}=bundle.entrySpec;
+      if(sourceId!==entry.sourceId)fail('Entry source mismatch');
+      runtime.startEntry({source:entry,functionName,args:realizeGraph(initial.heap,roots)});
+    } else runtime.start(entry);
     expectSame(runtime.initialState, bundle.initialState, 'initial machine state');
   } catch (error) {
     if (error instanceof TraceReplayError) throw error;
