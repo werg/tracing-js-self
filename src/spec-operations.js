@@ -11,7 +11,7 @@ export function createArithmetic({ id, frameId, operator, left, right, siteId, s
   if (!isOwnedArithmetic(operator)) throw new Error('Unsupported owned operator: ' + operator);
   return {id, frameId, algorithm:'ApplyStringOrNumericBinaryOperator', operator,
     siteId, sourceId, codeId, operands:[left, right], registers:{}, completion:null,
-    phase:operator === '+' ? 'left-primitive' : 'left-numeric', status:'running', version:0};
+    phase:operator === '+' ? 'left-primitive' : 'left-numeric', status:'running', coercion:null, version:0};
 }
 
 function toNumber(value) {
@@ -55,12 +55,49 @@ function numeric(operator, left, right) {
   }
 }
 
+// Ordinary own-data [[Get]] plus the specifically modeled default prototype
+// methods. No host object/property access is performed on guest identities.
+export function ordinaryGet(heap, receiver, name) {
+  const obj=heap[receiver[1]];
+  if(receiver[0]!=='ref'||!obj||!['object','array'].includes(obj.kind))
+    return null;
+  const own=Object.hasOwn(obj.properties,name);
+  const t=own ? obj.properties[name] : token(['builtinfn',
+    name==='valueOf'?'Object.valueOf':
+    obj.kind==='array'?'Array.toString':'Object.toString'],null);
+  return {method:t,observation:{kind:'property',objectId:obj.id,key:name,
+    version:obj.propertyVersions?.[name]??0,shapeVersion:obj.shapeVersion??0,
+    present:own,value:t.value,supplyingEvent:t.origin??null}};
+}
+export function ordinaryBuiltin(heap, receiver, name) {
+  const obj=receiver[0]==='ref'?heap[receiver[1]]:null;
+  if(!obj||!['object','array'].includes(obj.kind))return null;
+  if(name==='Object.valueOf')return receiver;
+  if(name==='Object.toString')return ['str',obj.kind==='array'?'[object Array]':'[object Object]'];
+  if(name==='Array.toString') {
+    if(obj.kind!=='array'||Object.hasOwn(obj.properties,'join'))return null;
+    const length=decode(obj.properties.length.value);
+    // The implemented Array::join leaf covers dense primitive data arrays.
+    // Accessors, sparse/inherited indices and nested objects fail closed.
+    if(!Number.isSafeInteger(length)||length>10000)return null;
+    const parts=[];
+    for(let i=0;i<length;i++){
+      const property=obj.properties[String(i)];
+      if(!property)return null;
+      const value=property.value;
+      if(!primitives.has(value[0]))return null;
+      parts.push(['null','undefined'].includes(value[0])?'':String(decode(value)));
+    }
+    return ['str',parts.join(',')];
+  }
+  return null;
+}
 /** Mutate only a plain owned operation record, completing exactly one phase. */
-export function advanceArithmetic(record, eventId) {
+export function advanceArithmetic(record, eventId, {heap=null,invoke=null,takeReturn=null,abrupt=null}={}) {
   if (record.status !== 'running') throw new Error('Arithmetic operation already completed');
   const metadata = specStep(record);
   const r = record.registers;
-  let operands = [], result = null;
+  let operands = [], result = null, reads=[];
   const use = (...values) => { operands = values; };
   const write = (name, value) => { result = value; r[name] = token(value, eventId); };
   const complete = completion => { record.completion = completion; record.phase = 'complete'; };
@@ -68,16 +105,82 @@ export function advanceArithmetic(record, eventId) {
     write('value', value);
     complete({type:'normal', value:token(value, eventId)});
   };
-  const unsupported = () => complete({type:'unsupported', feature:'ToPrimitive(Object)',
-    message:'Object coercion is not implemented; no guest method was invoked', origin:eventId});
+  const unsupported = (feature='ToPrimitive(Object)') => complete({type:'unsupported',feature,
+    message:'Guest conversion is outside the bounded owned object profile',origin:eventId});
+  const startCoercion=(input,left,register,resume)=>{
+    if(input.value[0]!=='ref'||!heap?.[input.value[1]]||
+       !['array','object'].includes(heap[input.value[1]].kind)) {
+      unsupported();return;
+    }
+    record.coercion={side:left?'left':'right',input,register,resume,index:0,
+      method:null,waitingFrameId:null};
+    record.phase='coercion-get';
+  };
+  const finishCoercion=value=>{
+    const c=record.coercion;
+    if(primitives.has(value[0])) {
+      write(c.register,value);
+      record.phase=c.resume;
+      record.coercion=null;
+    } else {
+      c.index++;
+      c.method=null;c.waitingFrameId=null;
+      if(c.index===2)complete({type:'throw',errorType:'TypeError',
+        message:'Cannot convert object to primitive value',origin:eventId});
+      else record.phase='coercion-get';
+    }
+  };
 
   switch (record.phase) {
     case 'left-primitive': case 'right-primitive': {
       const left = record.phase === 'left-primitive';
       const input = record.operands[left ? 0 : 1]; use(input);
-      if (!primitives.has(input.value[0])) { unsupported(); break; }
+      if (!primitives.has(input.value[0])) {
+        startCoercion(input,left,left?'leftPrimitive':'rightPrimitive',left?'right-primitive':'select');break;
+      }
       write(left ? 'leftPrimitive' : 'rightPrimitive', input.value);
       record.phase = left ? 'right-primitive' : 'select'; break;
+    }
+    case 'coercion-get': {
+      const c=record.coercion;use(c.input);
+      const name=c.index===0?'valueOf':'toString';
+      const obtained=ordinaryGet(heap,c.input.value,name);
+      if(!obtained){unsupported();break;}
+      c.method=obtained.method;
+      reads=[obtained.observation];
+      record.phase='coercion-call';
+      break;
+    }
+    case 'coercion-call': {
+      const c=record.coercion;use(c.method,c.input);
+      const v=c.method.value;
+      if(v[0]==='ref'&&heap[v[1]]?.kind==='function'){
+        if(!invoke)throw new Error('Missing owned conversion call dispatcher');
+        c.waitingFrameId=invoke(v,c.input.value);
+        record.phase='coercion-return';
+      }else if(v[0]==='builtinfn' && ['Object.valueOf','Object.toString','Array.toString'].includes(v[1])){
+        const value=ordinaryBuiltin(heap,c.input.value,v[1]);
+        if(value===null){unsupported('ArrayToString(complex)');break;}
+        finishCoercion(value);
+      }else{
+        // A non-callable property is skipped, as in OrdinaryToPrimitive.
+        finishCoercion(c.input.value);
+      }
+      break;
+    }
+    case 'coercion-return': {
+      const c=record.coercion;
+      if(abrupt){
+        if(abrupt.type!=='throw')throw new Error('Invalid conversion call abrupt completion');
+        use(abrupt.value??c.input);
+        complete(abrupt);
+      }else{
+        if(!takeReturn)throw new Error('Missing owned conversion return');
+        const returned=takeReturn(c.waitingFrameId);
+        use(returned);
+        finishCoercion(returned.value);
+      }
+      break;
     }
     case 'select':
       use(r.leftPrimitive, r.rightPrimitive);
@@ -101,7 +204,9 @@ export function advanceArithmetic(record, eventId) {
     case 'left-numeric-primitive': case 'right-numeric-primitive': {
       const left = record.phase === 'left-numeric-primitive';
       const input = (left ? r.leftPrimitive : r.rightPrimitive) ?? record.operands[left ? 0 : 1]; use(input);
-      if (!primitives.has(input.value[0])) { unsupported(); break; }
+      if (!primitives.has(input.value[0])) {
+        startCoercion(input,left,left?'leftNumericPrimitive':'rightNumericPrimitive',left?'left-numeric-kind':'right-numeric-kind');break;
+      }
       write(left ? 'leftNumericPrimitive' : 'rightNumericPrimitive', input.value);
       record.phase = left ? 'left-numeric-kind' : 'right-numeric-kind'; break;
     }
@@ -151,6 +256,6 @@ export function advanceArithmetic(record, eventId) {
     default: throw new Error('Unknown owned arithmetic phase');
   }
   return {...metadata, operands:operands.map(x => x.value), origins:operands.map(x => x.origin),
-    result, causes:[{kind:'spec-operation', operationId:record.id}],
+    result, reads, causes:[{kind:'spec-operation', operationId:record.id}],
     ...(record.status === 'completed' ? {completion:record.completion} : {})};
 }
