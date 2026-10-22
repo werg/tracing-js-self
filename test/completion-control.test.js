@@ -51,7 +51,7 @@ test('normal, exceptional and return completions execute finally exactly once',(
 test('finally completion overrides pending return; outer handler catches throws',()=>{
   const runtime=run(`function change(){try{return 2;}finally{return 9;}}
     function fail(){try{return 4;}finally{throw "from-finally";}}
-    let first=change(),second='';
+    let first=change();let second='';
     try {fail();}catch(e){second=e;}`);
   assert.deepEqual(binding(runtime,'first'),['num',9]);
   assert.deepEqual(binding(runtime,'second'),['str','from-finally']);
@@ -84,7 +84,7 @@ test('break and continue restore lexical scopes and respect nested finally bound
 });
 
 test('owned arithmetic TypeError/RangeError are catchable guest data errors',()=>{
-  const runtime=run(`let name='', message='', other='';
+  const runtime=run(`let name='';let message='';let other='';
     try{let x=1n+2;}catch(e){name=e.name;message=e.message;}
     try{let y=7n/0n;}catch(e){other=e.name;}`);
   assert.deepEqual(binding(runtime,'name'),['str','TypeError']);

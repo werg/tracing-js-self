@@ -114,10 +114,24 @@ export function applySpecCommand(state, command, event, seen, fail) {
           !eq(event.result, r.completion.value.value)) bad('Operation result not returned to owning frame');
     } else {
       const unsupported=r.completion.type==='unsupported',control=state.control.a0;
-      if (frame.status!==(unsupported?'unsupported':'thrown') || !eq(frame.completion,r.completion) ||
-          control.status!==(unsupported?'unsupported':'failed') || control.activeFrameId!==null ||
-          !eq(control.failure,{kind:unsupported?'unsupported':'guest-abrupt',frameId:r.frameId,completion:r.completion}))
-        bad('Abrupt operation not recorded on owning frame');
+      if(unsupported){
+        if(frame.status!=='unsupported'||!eq(frame.completion,r.completion)||
+          control.status!=='unsupported'||control.activeFrameId!==null||
+          !eq(control.failure,{kind:'unsupported',frameId:r.frameId,completion:r.completion}))
+          bad('Unsupported operation did not terminate at its owning frame');
+      }else if(control.status==='failed'){
+        const failure=control.failure, terminal=state.frames[failure?.frameId];
+        if(failure?.kind!=='guest-abrupt'||!eq(failure.completion,r.completion)||
+          terminal?.status!=='thrown'||!eq(terminal.completion,r.completion)||
+          control.activeFrameId!==null)
+          bad('Uncaught arithmetic throw did not terminate');
+      }else{
+        const active=state.frames[control.activeFrameId];
+        if(control.status!=='running'||active?.status!=='running'||
+           !['running','thrown'].includes(frame.status)||
+           !active.handlers?.some(h=>h.phase==='catch'||h.phase==='finally'))
+          bad('Arithmetic throw did not reach an owned catch/finally handler');
+      }
     }
     r.phase = 'done'; r.status = 'completed'; r.version++; return;
   }
