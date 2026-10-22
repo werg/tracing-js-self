@@ -230,6 +230,73 @@ export class SemanticController {
     } else fail('profile_limit','Unknown semantic operation: '+kind);
     if(fields.id)this.producers.add(fields.id);
   }
+  /** Finite-context rollover. Only already committed, model-selected semantic
+   * state enters the observed packet. A new model session may reload this packet
+   * and reset its t0..t7 registry; invocation/object/cell identities do not reset.
+   * The packet is trusted SERVER state, not a user-supplied model prediction. */
+  segmentPacket() {
+    if(this.open)fail('fragment','Cannot segment in the middle of an open value');
+    if(this.completion)fail('completion','A completed execution has no continuation');
+    const heap=[...this.heap].map(([id,obj])=>[id,{...obj,
+      properties:[...obj.properties],versions:[...obj.versions]}]);
+    const state={heap,cells:[...this.cells],activations:[...this.activations],
+      staticFunctions:[...this.staticFunctions],pendingChild:copy(this.pendingChild),
+      root:this.root,completion:copy(this.completion),producers:[...this.producers]};
+    const context=[
+      'code '+JSON.stringify(this.source),
+      'value '+JSON.stringify(this.input)
+    ];
+    const packet={schema:'semantic-continuation/2',source:'committed-model-state',
+      context,state,limits:{maxGenerated:this.maxGenerated,
+        maxPacketBytes:this.maxPacketBytes}};
+    if(Buffer.byteLength(JSON.stringify(packet),'utf8')>this.maxPacketBytes)
+      fail('profile_limit','Exact live state exceeds the continuation transport capacity');
+    return packet;
+  }
+  static fromSegmentPacket(packet) {
+    if(packet?.schema!=='semantic-continuation/2' ||
+       packet.source!=='committed-model-state' ||
+       !Array.isArray(packet.context) || !packet.state)
+      fail('context','Invalid semantic segment handoff');
+    const controller=new SemanticController(packet.context,packet.limits);
+    const state=packet.state;
+    if(!Array.isArray(state.heap)||!Array.isArray(state.cells) ||
+       !Array.isArray(state.activations)||!Array.isArray(state.producers))
+      fail('context','Malformed segmented live graph');
+    const heap=new Map();
+    for(const [id,obj] of state.heap) {
+      if(typeof id!=='string'||heap.has(id)||!Array.isArray(obj.properties)||
+         !Array.isArray(obj.versions))fail('context','Duplicate or corrupt packet object');
+      const properties=new Map(obj.properties),versions=new Map(obj.versions);
+      if(properties.size!==obj.properties.length||versions.size!==obj.versions.length)
+        fail('context','Duplicate packet location');
+      for(const [key,property] of properties)
+        if(!Number.isSafeInteger(property.version)||property.version<0||
+           versions.get(key)!==property.version)
+          fail('context','Inconsistent property version in packet');
+      heap.set(id,{...obj,properties,versions});
+    }
+    const activations=new Map(state.activations),cells=new Map(state.cells);
+    if(heap.size!==state.heap.length || activations.size!==state.activations.length ||
+       cells.size!==state.cells.length ||
+       new Set(state.producers).size!==state.producers.length)
+      fail('context','Duplicate packet semantic identity');
+    for(const [key,cell] of cells)
+      if(typeof key!=='string'||!Number.isSafeInteger(cell.version)||cell.version<0)
+        fail('context','Invalid packet lexical cell');
+    if(state.root!==null && !activations.has(state.root))
+      fail('context','Missing resumed root activation');
+    if(state.completion)fail('completion','Completed packet cannot be resumed');
+    controller.heap=heap;controller.activations=activations;
+    controller.cells=cells;controller.staticFunctions=new Map(state.staticFunctions);
+    controller.pendingChild=copy(state.pendingChild);
+    controller.root=state.root;controller.completion=null;
+    controller.producers=new Set(state.producers);
+    // A fresh model session begins here. Only the committed live state survives,
+    // not the previous session's attention tokens or generated chunk counter.
+    controller.generated=0;controller.history=[];controller.observed=0;
+    return controller;
+  }
   continuationPacket() {
     if(this.open)fail('fragment','Cannot segment while a value definition is incomplete');
     const packet={schema:'semantic-continuation/1',limits:{
