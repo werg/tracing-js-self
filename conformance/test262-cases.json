@@ -1,0 +1,61 @@
+{
+  "schema": "tracing-test262-selection/1",
+  "profile": "bounded-js-subset/1",
+  "test262Commit": "d53ebc8b1931d9f1541e43d59650776e4b766248",
+  "referencePackage": "@engine262/engine262",
+  "referenceVersion": "0.0.1-678c2c0a5811e1d2c6616e144a5067a4783c70a4",
+  "scope": "Selected Script-goal tests in their unmodified official source, without a guest test262 harness. No full-suite claim.",
+  "cases": [
+    {
+      "path": "language/statements/let/global-use-before-initialization-in-prior-statement.js",
+      "baseline": "pass"
+    },
+    {
+      "path": "language/statements/let/global-use-before-initialization-in-declaration-statement.js",
+      "baseline": "pass"
+    },
+    {
+      "path": "language/statements/const/global-use-before-initialization-in-prior-statement.js",
+      "baseline": "pass"
+    },
+    {
+      "path": "language/statements/const/global-use-before-initialization-in-declaration-statement.js",
+      "baseline": "pass"
+    },
+    {
+      "path": "language/expressions/addition/S11.6.1_A2.4_T1.js",
+      "baseline": "xfail",
+      "reason": "Duplicate var declarations rejected by bounded compiler (var semantics incomplete)."
+    },
+    {
+      "path": "language/expressions/subtraction/S11.6.2_A2.4_T1.js",
+      "baseline": "xfail",
+      "reason": "Duplicate var declarations rejected by bounded compiler (var semantics incomplete)."
+    },
+    {
+      "path": "language/expressions/multiplication/S11.5.1_A2.4_T1.js",
+      "baseline": "xfail",
+      "reason": "Duplicate var declarations rejected by bounded compiler (var semantics incomplete)."
+    },
+    {
+      "path": "language/expressions/division/S11.5.2_A2.4_T1.js",
+      "baseline": "xfail",
+      "reason": "Duplicate var declarations rejected by bounded compiler (var semantics incomplete)."
+    },
+    {
+      "path": "language/expressions/addition/S11.6.1_A2.4_T4.js",
+      "baseline": "xfail",
+      "reason": "Sloppy global binding creation via assignment is not implemented."
+    },
+    {
+      "path": "language/statements/let/block-local-use-before-initialization-in-prior-statement.js",
+      "baseline": "skip",
+      "reason": "Requires assert.throws and function expressions; no faithful test262 harness in bounded VM."
+    },
+    {
+      "path": "language/literals/numeric/7.8.3-1gs.js",
+      "baseline": "skip",
+      "reason": "onlyStrict variant and octal early-error parsing are not implemented in bounded parser."
+    }
+  ]
+}
