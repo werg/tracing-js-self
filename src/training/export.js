@@ -24,7 +24,8 @@ export function exportTraining(runtime,{maxBytes=512,maxGenerated=256}={}) {
       completionPolicy:'immediate-return',groups},
     sidecar:{schema:'semantic-supervision/1',sourceLineage:null,
       semantic,archive:bundle,assignments:scheduled.assignments,
-      generatedChunks:scheduled.generatedChunks,contextGroups:observed.length,referenceStatus:'not-checked'}
+      generatedChunks:scheduled.generatedChunks,contextGroups:observed.length,
+      limits:{maxBytes,maxGenerated},referenceStatus:'not-checked'}
   };
   validateTrainingExport(exported);
   return exported;
@@ -33,6 +34,12 @@ export function validateTrainingExport(exported) {
   verifyVisibleExport(exported);
   const {groups}=exported.public;
   if(!Array.isArray(groups)||groups.length<4)throw new Error('Truncated training episode');
+  validateSemantic(exported.sidecar.archive,exported.sidecar.semantic);
+  replayExact(exported.sidecar.archive);
+  const {maxBytes=512,maxGenerated=256}=exported.sidecar.limits??{};
+  if(!Number.isInteger(maxBytes) || maxBytes<64 || maxBytes>1024 ||
+     !Number.isInteger(maxGenerated) || maxGenerated<1)
+    throw new Error('Invalid local serialization limits');
   const seenGroups=new Map(),trace=[],context=[];
   const prefixCount=exported.sidecar.contextGroups;
   let open=null;
@@ -47,7 +54,7 @@ export function validateTrainingExport(exported) {
       if(!/^t[0-7]$/.test(event.track)||used.has(event.track))
         throw new Error('Invalid or duplicate lane event');
       used.add(event.track);
-      if(Buffer.byteLength(event.record,'utf8')>512)
+      if(Buffer.byteLength(event.record,'utf8')>maxBytes)
         throw new Error('Record exceeds configured hard payload budget');
       const {kind,fields}=decodeRecord(event.record);
       if(i<prefixCount && group.mode!=='observed')
@@ -81,15 +88,20 @@ export function validateTrainingExport(exported) {
   const expectedPrefix=trainingPrefix(exported.sidecar.archive);
   if(!isDeepStrictEqual(restoreLines(context),[expectedPrefix.source,expectedPrefix.input]))
     throw new Error('Initial context is not the source/input-only projection');
-  const restored=restoreLines(trace);
-  const expect=[
-    encodeRecord('enter',{invocation:exported.sidecar.semantic.rootInvocation,
-      entry:exported.sidecar.archive.entrySpec.functionName}),
-    ...exported.sidecar.semantic.events.map(semanticLine),
-    encodeRecord('end',{invocation:exported.sidecar.semantic.rootInvocation,
-      kind:exported.sidecar.archive.finalState.control.a0.completion?.kind??'pending'})
-  ];
-  if(!isDeepStrictEqual(restored,expect))
-    throw new Error('Compact semantic records disagree with the verified semantic projection');
+  const scheduled=scheduleRecords(exported.sidecar.archive,exported.sidecar.semantic,
+    {maxBytes,maxGenerated});
+  const expectedTrace=scheduled.groups.flatMap(g=>g.events.map(e=>e.record));
+  if(!isDeepStrictEqual(trace,expectedTrace))
+    throw new Error('Compact trace, lane or chunk allocation disagrees with committed semantic policy');
+  const expectedContext=[...fragmentLine(expectedPrefix.source,{maxBytes}),
+    ...fragmentLine(expectedPrefix.input,{maxBytes})];
+  if(!isDeepStrictEqual(context,expectedContext))
+    throw new Error('Observed context fragments differ from the declared source');
+  const expectedGroups=[
+    ...expectedContext.map(record=>({mode:'observed',events:[{track:'t0',record}]})),
+    ...scheduled.groups
+  ].map((g,i)=>({...g,id:'m'+(i+1),loss:g.mode==='generated'?'semantic':'none'}));
+  if(!isDeepStrictEqual(groups,expectedGroups))
+    throw new Error('Meridian order, track selection or observed/generated policy divergence');
   return {valid:true,groups:groups.length,generated:groups.filter(g=>g.mode==='generated').length};
 }
