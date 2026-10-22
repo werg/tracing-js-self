@@ -34,6 +34,50 @@ completed function results and observable argument graphs with an independent
 Node V8 reference. These checks produce locally verified candidate episodes;
 they do not supply natlang's evaluator contract or megatoken admission.
 
+## Opt-in bounded EvalEnvironment bridge
+
+`tracing-js-self/natlang` now exports `createBoundedNatlangEnvironment`.
+It implements the **shape** of natlang's per-evaluation `EvalEnvironment` for
+self-contained, synchronous `training-js/1` programs. This is *not* a
+drop-in runtime replacement for typical natlang-generated code.
+
+```js
+import {createBoundedNatlangEnvironment} from 'tracing-js-self/natlang';
+// Obtain EvalFailure from the SAME natlang installation used by the caller.
+const env=createBoundedNatlangEnvironment({
+  EvalFailure, // natlang's actual class; required for instanceof compatibility
+  onTrace(bundle,request) {
+    // Persist only validated local candidate traces with their source labels.
+    recordCandidate(bundle,request.path);
+  }
+});
+const result=env.execute({
+  code:'self.x + 3',scope:{x:4},body:false,path:'natlang://probe'
+});
+// result.result === 7; owned trace delivered to onTrace, never host-evaluated.
+env.close();
+```
+
+The bridge wraps the supplied guest expression/body as one explicitly strict
+entry function, imports plain portable `self` data through the bounded graph
+codec, runs the Acorn-owned training frontend/bytecode machine, validates the
+archive and exact replay, then returns a decoded value and natlang-shaped
+`typescript.eval` host event. It accepts no live object/capture-cell bindings,
+ambient packages/network, native timeouts or retained mode. Invalid TypeScript,
+unsupported expressions, unfinished runs and unsafe scope graphs throw natlang's
+real `EvalFailure`; the `onTrace` success hook is not called on failure.
+
+`executeAsync` awaits a supported synchronous case but **does not implement
+async guest semantics**. `evaluateModule` rejects execution explicitly.
+`fork` and `close` are owned lifecycle methods. There is no untraced fallback.
+
+Integration into natlang must still check actual generated scope compiler
+output, implement the separate `setModuleRealm` seam, pass live captures and
+helper service callbacks by owned reference, and preserve TS source maps.
+These are mandatory requirements before advertising application compatibility.
+`test/natlang-bridge.test.js` supplies contract-shape and replay smoke tests,
+not acceptance of the broad natlang runtime.
+
 ## Pinned natlang contract
 
 Audited against
@@ -95,8 +139,8 @@ through both seams and establish all of the following:
   spec/reference tests establish the required JavaScript behavior independently
   of this interpreter's replay.
 
-These are open integration gates. Public API tests do not satisfy them, and no
-natlang adapter or changes to natlang are included here.
+These are open integration gates. The bounded opt-in adapter above does not
+satisfy them; no production natlang runtime wiring changes are included here.
 
 ## Megatoken: semantic chunks versus physical records
 
