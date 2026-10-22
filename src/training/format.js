@@ -42,7 +42,7 @@ export function semanticLine(row) {
 export function fragmentLine(line, {maxBytes=512}={}) {
   if(Buffer.byteLength(line,'utf8')<=maxBytes)return [line];
   const {fields}=decodeRecord(line);
-  const id=fields.id;
+  const id=fields.id??('record:'+decodeRecord(line).kind);
   const output=[encodeRecord('value-open',{id,type:'semantic-record'})];
   let part='';
   for(const char of line){
