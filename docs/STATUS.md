@@ -4,7 +4,7 @@ This repository implements a **bounded, executable prototype** for the architect
 
 ## What runs
 
-- Explicit bytecode evaluator; its guest continuation, operand stack, environments, closure bindings, heap objects, promise states, suspension and job queue are serializable records. No `eval`, `vm`, `Function` constructor, or native `require` executes guest code.
+- Explicit bytecode evaluator; its guest continuation, operand stack, environments, closure bindings, heap objects, promise states, suspension and job queue are serializable records. No native `eval`, `vm`, `Function` constructor, or `require` executes guest code **inside the owned tracer**. The independent bounded training reference intentionally executes fixture code in Node `vm`, outside the traced authority.
 - A purposely restricted JavaScript grammar: script goal, numeric/string/boolean/null/undefined/BigInt literals, `let`/`const`/`var` (restricted semantics), blocks, `if`, `while`, function declarations, returns, ordinary calls, `async function`, `await`, primitive arithmetic/comparison/logical operators, direct property reads/writes, and basic dense array/object literals. No ASI. Parser/compiler refuse unsupported syntax.
 - A mock host bridge for `host.readAsync`, `host.readNumber` and `host.store`, with recorded dispatch intent before adapter invocation; independent nonblocking promise return and later completion; explicit host input **arrival** vs **delivery**; synchronous calls wait for their actual outcome even when its result is unused. Native transport promises are forbidden as guest continuations.
 - One ordered authoritative journal of instruction-level semantic events with source sites, producer links, read observations and typed entity-replacement patches with version preconditions; records can be reconstructed without invoking the evaluator.
@@ -12,6 +12,10 @@ This repository implements a **bounded, executable prototype** for the architect
 - Read-only structural validator, state reconstruction, and a **limited** causal interleaved projection that hides host arrival payloads and full archival state until delivery. The validator cross-checks start/end host tables, chunk indexes and pending summaries, plus the bounded host effect/input creation–dispatch–arrival–delivery lifecycle; the runtime rejects second arrivals for single-outcome effects. Private input perturbation and hostile-archive corruption regressions included.
 - Deterministic **bounded-interpreter** replay: recompile archived sources (never trust archived bytecode for execution), inject only recorded external inputs, and compare every regenerated semantic event, patch, checkpoint, chunk boundary and termination category. Replay installs no host adapters; corruption tests cover semantic results, provenance and source changes.
 - Separately pinned **engine262 reference oracle**, 14-file SHA-verified Test262 **syntax-only** slice, and 11-file SHA-verified selected Test262 sloppy-script **execution smoke** ledger (with explicit passes, known failures and skips), plus 12 pure scalar differential probes. Neither selected suite proves full Test262 conformance; the owned VM remains the trace authority. See [adoption audit](ENGINE262_ADOPTION.md).
+
+## Strict synchronous training foundation (additional bounded profile)
+
+The `training-js/1` profile now provides Acorn ES2022 strict parsing with a syntax/operation allowlist, exact function entry, stable argument graphs, reference identity/array semantics fixes, committed explicit guest throw, journal normalization, semantic-trace/1 serialization, deterministic serial model groups and a local differential Node-vm comparison. A deterministic fixture generator exports **locally verified** episodes with a private audit sidecar, not admitted megatoken training examples. See [TRAINING_IMPLEMENTATION.md](TRAINING_IMPLEMENTATION.md) for implemented interfaces and remaining correctness/visibility gates.
 
 ## Not implemented (must not be inferred)
 
@@ -26,7 +30,7 @@ The VM currently copies small machine-state tables on each transaction, and each
 
 ## Next implementation sequence
 
-The [semantic execution training-data plan](TRAINING_DATA_PLAN.md) sets the immediate priority: a verified bounded training generator with one compact semantic target and a causal megatoken exporter. This is planned work, not a change to the implemented coverage above.
+The [semantic execution training-data plan](TRAINING_DATA_PLAN.md) sets the immediate priority: a verified bounded training generator with one compact semantic target and a causal megatoken exporter. The first bounded synchronous foundation is partially implemented (see above); subsequent megatoken, continuation, async and engine-coverage milestones remain planned work.
 
 1. Establish an independently checked synchronous training profile, including correct parsing, admitted value/object semantics, owned completion records, direct function entry, and identity-preserving input/state comparison. Known accepted semantic divergences must be fixed or rejected before admission; replay alone is insufficient.
 2. Normalize the journal into explicit invocation, source-site, control, value, read/write, and completion records; implement the compact semantic trace and its preservation checks.
