@@ -692,7 +692,7 @@ export class Runtime {
                   guestFault('TypeError','Accessor must be a guest function or undefined');
               if((Object.hasOwn(obj.accessors??{},name)&&!obj.accessors[name].configurable)||
                  name==='__proto__'||(obj.kind==='array'&&name==='length'))
-                throw new TypeError('Redefinition of non-configurable or reserved property is outside the profile');
+                guestFault('TypeError','Cannot redefine a non-configurable or reserved property');
               obj.accessors??={};
               obj.accessors[name]={get:getter,set:setter,
                 enumerable:Object.hasOwn(d,'enumerable')?truthy(d.enumerable.value):false,
