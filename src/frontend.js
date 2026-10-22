@@ -68,7 +68,7 @@ export function parse(source) {
   const take = () => t[p++];
   const match = x => peek().value === x && (p++, true);
   const need = x => { if (!match(x)) throw new SyntaxError(`Expected ${x}, got ${peek().value} at ${peek().start}`); };
-  const name = () => { const x = take(); if (x.kind !== 'word' || ['const','let','var','return','await','function','if','else','while','throw','try','catch','finally','break','continue','typeof','async','true','false','null'].includes(x.value)) throw new SyntaxError(`Expected identifier at ${x.start}`); return x.value; };
+  const name = () => { const x = take(); if (x.kind !== 'word' || ['const','let','var','return','await','function','if','else','while','throw','try','catch','finally','break','continue','typeof','this','async','true','false','null'].includes(x.value)) throw new SyntaxError(`Expected identifier at ${x.start}`); return x.value; };
   const semi = () => { if (match(';') || peek().value === '}' || peek().kind === 'eof') return; throw new SyntaxError(`Expected ; at ${peek().start} (automatic semicolon insertion not implemented)`); };
   function primary() {
     const x = take();
