@@ -37,8 +37,11 @@ export function scheduleRecords(bundle,semantic,{maxBytes=512,maxGenerated=256}=
         journalEvent:event?.journalEvent??null});
     }
   }
+  const initial=bundle.initialState.frames[semantic.rootInvocation];
   append('generated','t0',encodeRecord('enter',
-    {invocation:semantic.rootInvocation,entry:bundle.entrySpec.functionName}),null);
+    {invocation:semantic.rootInvocation,entry:bundle.entrySpec.functionName,
+      code:initial.codeId,receiver:['undefined'],arguments:bundle.entrySpec.arguments,
+      captures:bundle.initialState.envs[initial.envId].parent}),null);
   for(const row of semantic.events){
     const owner=assignments.get(row.invocation);
     const track=owner?.track??'t0';
@@ -61,6 +64,11 @@ export function scheduleRecords(bundle,semantic,{maxBytes=512,maxGenerated=256}=
       const index=Number(lane.slice(1));
       generation[index]++;
       assignments.set(row.child,{track:lane,generation:generation[index]});
+      // A child is entered only after the parent call chunk has committed.
+      // These values come from the call event; no oracle outcome is consulted.
+      append('generated',lane,encodeRecord('enter',
+        {invocation:row.child,code:row.code,receiver:row.receiver,
+          arguments:row.arguments,captures:row.captures,dependsOn:[row.id]}),row);
     }
     if(row.op==='return' || row.op==='throw')assignments.delete(row.invocation);
   }
