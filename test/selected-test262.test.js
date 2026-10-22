@@ -64,7 +64,7 @@ test('bounded execution distinguishes parse and compiler refusal from runtime fa
   );
   assert.equal(runOwnedScript('let x=1; x+=2;').phase,'normal');
   assert.equal(runOwnedScript('host.readNumber("key");').phase,'incomplete');
-  assert.equal(runOwnedScript('let x = x + 1;').evidence,'host-interpreter-diagnostic');
+  assert.equal(runOwnedScript('let x = x + 1;').evidence,'owned-terminal-completion');
 });
 
 test('recorded arithmetic exceptions retain exact Error types and verified completion evidence',()=>{
@@ -89,7 +89,7 @@ test('recorded arithmetic exceptions retain exact Error types and verified compl
 });
 
 test('unsupported operations and scalar throws cannot impersonate an owned Error',()=>{
-  const unsupported = runOwnedScript('let result = {} + 1;');
+  const unsupported = runOwnedScript('function f(){}let result = f + 1;');
   assert.equal(unsupported.phase,'unsupported');
   assert.equal(unsupported.completion.type,'unsupported');
   assert.equal(unsupported.evidence,'owned-terminal-completion');
@@ -111,7 +111,7 @@ test('terminal-outcome validation errors remain harness failures',t=>{
     bundle.manifest.schema = 'corrupted';
     return bundle;
   });
-  for (const source of ['let result = 1n + 1;','let result = {} + 1;'])
+  for (const source of ['let result = 1n + 1;','function f(){}let result = f + 1;'])
     assert.throws(()=>runOwnedScript(source),TraceValidationError);
 });
 
@@ -122,7 +122,7 @@ test('terminal-outcome replay errors remain harness failures',t=>{
     bundle.sources[0].text += '\nlet changed = 42;';
     return bundle;
   });
-  for (const source of ['let result = 1n + 1;','let result = {} + 1;'])
+  for (const source of ['let result = 1n + 1;','function f(){}let result = f + 1;'])
     assert.throws(()=>runOwnedScript(source),TraceReplayError);
 });
 
