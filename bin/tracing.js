@@ -2,6 +2,7 @@
 import {readFileSync,writeFileSync} from 'node:fs';
 import {createRuntime} from '../src/runtime.js';
 import {validateBundle} from '../src/validation.js';
+import {replayExact} from '../src/replay.js';
 import {causalPrefix} from '../src/causal.js';
 const args=process.argv.slice(2);
 const command=args.shift();
@@ -31,7 +32,9 @@ try {
     present(runtime,runtime.drive());
   } else if(command==='validate') {
     const bundle=JSON.parse(readFileSync(args[0],'utf8'));console.log(JSON.stringify(validateBundle(bundle),null,2));
+  } else if(command==='replay') {
+    const bundle=JSON.parse(readFileSync(args[0],'utf8'));console.log(JSON.stringify(replayExact(bundle),null,2));
   } else if(command==='causal') {
     const bundle=JSON.parse(readFileSync(args[0],'utf8'));console.log(JSON.stringify(causalPrefix(bundle,{throughEventId:args[1]??null}),null,2));
-  } else throw new Error('Usage: tracing-js-self demo | run path.js [--output trace.json] | validate trace.json | causal trace.json [eventId]');
+  } else throw new Error('Usage: tracing-js-self demo | run path.js [--output trace.json] | validate trace.json | replay trace.json | causal trace.json [eventId]');
 } catch(error){console.error(error.stack);process.exitCode=1;}
