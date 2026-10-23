@@ -40,6 +40,15 @@ source revision and whole-file SHA256 permit reproducibility. Guest setup
 callbacks are explicitly marked and are not instrumented. Keep the full
 initial fixture available to any model that will later train on these examples.
 
+## Full-corpus execution and quality report
+
+The exhaustive 936-utility-invocation owned verification and all 912
+stateful V8 diagnostic scenarios are documented in
+[FULL_CORPUS_EVAL.md](FULL_CORPUS_EVAL.md). The six-way owned CI gate retains
+all **558** locally verified training candidates (not admitted) and every
+explicit refusal; the stateful audit retains all outcome/effect checks
+without promoting native observations to owned traces.
+
 ## Locally verified owned trace candidates
 
 The native observation JSONL is **not training data**. A separate, fail-closed
