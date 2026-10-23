@@ -40,14 +40,26 @@ export function lowerPureCommonJsModule(code){
   if(typeof code!=='string'||code.length>65536)
     throw new TypeError('CommonJS source must be bounded text');
   const ast=parseAcorn(code,{ecmaVersion:2022,sourceType:'script'});
-  const functions=new Map(),registrations=[],seen=new Set();
+  const functions=new Map(),registrations=[],seen=new Set(),declarations=[];
   for(const statement of ast.body){
     if(statement.type==='ExpressionStatement'&&statement.directive==='use strict')
       continue;
     if(moduleMarker(statement))continue;
     if(statement.type==='FunctionDeclaration'&&identifier(statement.id?.name)&&
        !statement.generator&&!functions.has(statement.id.name)){
-      functions.set(statement.id.name,code.slice(statement.start,statement.end));
+      const text=code.slice(statement.start,statement.end);
+      functions.set(statement.id.name,text);
+      declarations.push(text);
+      continue;
+    }
+    if(statement.type==='VariableDeclaration'&&
+       ['const','let'].includes(statement.kind)&&
+       statement.declarations.length>0&&statement.declarations.length<=32&&
+       statement.declarations.every(item=>item.id.type==='Identifier'&&
+         identifier(item.id.name)&&item.init)){
+      // These initializers must additionally pass the strict owned ESM
+      // linker. Arbitrary package/host calls will still fail preflight.
+      declarations.push(code.slice(statement.start,statement.end));
       continue;
     }
     const mapping=registration(statement);
@@ -60,7 +72,7 @@ export function lowerPureCommonJsModule(code){
      registrations.some(record=>!functions.has(record.local)))
     throw new TypeError('Only registered guest function exports are supported');
   return {
-    source:'"use strict";\n'+[...functions.values()].join('\n')+'\n'+
+    source:'"use strict";\n'+declarations.join('\n')+'\n'+
       registrations.map(({name,local})=>
         'export { '+local+' as '+name+' };').join('\n')+'\n',
     exportNames:registrations.map(record=>record.name)
