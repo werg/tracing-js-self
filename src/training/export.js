@@ -16,6 +16,11 @@ function requireCompletedEntry(bundle) {
      Object.values(state.frames).some(frame=>frame.status!=='completed') ||
      Object.values(state.operations??{}).some(operation=>operation.status!=='completed'))
     throw new TypeError('Only completed synchronous effect-free return entries may be exported');
+  // Caught throws cannot enter the public training corpus until their
+  // catch/finally continuation is modeled in the committed controller.
+  if(bundle.events.some(e=>e.operation==='completion.throw' ||
+      e.operation==='completion.catch.bind'||e.completion?.type==='throw'))
+    throw new TypeError('Caught guest throws require a modeled catch continuation before training export');
 }
 
 export function exportTraining(runtime,{maxBytes=512,maxGenerated=256}={}) {
