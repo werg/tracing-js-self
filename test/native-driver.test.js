@@ -68,3 +68,16 @@ test('aborting a native wait does not fabricate a guest input',async()=>{
   abort.abort(new Error('Abort requested'));
   await assert.rejects(run,/Abort requested/);
 });
+
+test('abort before a queued native service starts prevents the side effect',async()=>{
+  const controller=new AbortController();
+  let invoked=0;
+  // This abort microtask is queued before any service invocation microtask.
+  queueMicrotask(()=>controller.abort(new Error('cancelled before native call')));
+  await assert.rejects(executeWithNativeServices({
+    text:'host.readAsync("cancelled");',
+    services:{'demo.readAsync':()=>{invoked++;return 1;}},
+    signal:controller.signal
+  }),/cancelled before native call/);
+  assert.equal(invoked,0,'aborted queued effect must not start native work');
+});
