@@ -26,7 +26,8 @@ export function parseTraining(source) {
   // Top-level initialization is modeled only for literal scalars and
   // explicitly owned references to immutable Math methods. Arbitrary module
   // execution, getters, function calls and mutable initialization fail closed.
-  const staticGlobal=n=>n?.type==='Literal'&&(!n.regex ||
+  const staticGlobal=n=>(n?.type==='Identifier'&&n.name==='undefined') ||
+    n?.type==='Literal'&&(!n.regex ||
     supportsPinnedRegExp(n.regex.pattern,n.regex.flags)) ||
     n?.type==='MemberExpression'&&!n.computed&&
     n.object?.type==='Identifier'&&n.object.name==='Math'&&
@@ -174,6 +175,17 @@ export function parseTraining(source) {
         return {...loc,type:'Try',block:stmt(n.block),handler,
           finalizer:n.finalizer?stmt(n.finalizer):null};
       }
+      case 'SwitchStatement':{
+        if(!n.cases.length||n.cases.length>12||
+           n.cases.some((c,i)=>c.consequent.length!==1||
+             c.consequent[0].type!=='ReturnStatement'||
+             (c.test&&!(c.test.type==='Literal'&&typeof c.test.value==='string'))||
+             (!c.test&&i!==n.cases.length-1)))
+          reject(n,'switch fallthrough or complex case');
+        return {...loc,type:'Switch',discriminant:expr(n.discriminant),
+          cases:n.cases.map(c=>({test:c.test?expr(c.test):null,
+            body:stmt(c.consequent[0])}))};
+      }
       case 'IfStatement':return {...loc,type:'If',test:expr(n.test),
         consequent:stmt(n.consequent),alternate:n.alternate?stmt(n.alternate):null};
       case 'WhileStatement':return {...loc,type:'While',test:expr(n.test),body:stmt(n.body)};
@@ -270,6 +282,10 @@ export function parseTraining(source) {
         case 'VariableGroup':n.declarations.forEach(x=>statement(x,e));break;
         case 'Function':scope(n.body.body,e,n.params,n.async,true,n.defaults);break;
         case 'Block':scope(n.body,e,[],asyncFunction);break;
+        case 'Switch':
+          value(n.discriminant,e);
+          for(const c of n.cases){if(c.test)value(c.test,e);statement(c.body,e);}
+          break;
         case 'If':
           value(n.test,e);statement(n.consequent,e);
           if(n.alternate)statement(n.alternate,e);
@@ -320,6 +336,6 @@ export function parseTraining(source) {
     });
     statements.forEach(n=>statement(n,env));
   }
-  scope(body,{names:new Set(['undefined','Object','Array','Number','Math','Promise','Set','Error','TypeError','host','NaN','Infinity']),parent:null},[],false,true);
+  scope(body,{names:new Set(['undefined','Object','Array','Number','Math','Promise','Set','Error','TypeError','host','NaN','Infinity','parseInt','isNaN']),parent:null},[],false,true);
   return {type:'Program',body,start:0,end:source.length,profile:TRAINING_PROFILE};
 }
