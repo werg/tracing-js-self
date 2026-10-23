@@ -197,6 +197,23 @@ export function parseTraining(source) {
     switch(n.type) {
       case 'BlockStatement':return {...loc,type:'Block',body:n.body.map(stmt)};
       case 'VariableDeclaration':
+        if(['let','const'].includes(n.kind) && n.declarations.length===1 &&
+           n.declarations[0].id.type==='ObjectPattern'){
+          const d=n.declarations[0],properties=d.id.properties;
+          if(!d.init||!properties.length||properties.length>32)
+            reject(n,'bounded object binding requires an initializer and properties');
+          const bindings=properties.map(p=>{
+            if(p.type!=='Property'||p.kind!=='init'||p.method||p.computed||
+               p.value.type!=='Identifier')
+              reject(p,'object binding key/target');
+            const key=p.key.type==='Identifier'?p.key.name:
+              p.key.type==='Literal'?String(p.key.value):null;
+            if(key===null||key==='__proto__')reject(p,'object binding key');
+            return {...span(p),key,name:p.value.name};
+          });
+          return {...loc,type:'ObjectBinding',kind:n.kind,
+            init:expr(d.init),bindings};
+        }
         if(!['let','const','var'].includes(n.kind)||!n.declarations.length ||
            n.declarations.some(d=>d.id.type!=='Identifier'))
           reject(n,'declaration form');
@@ -282,6 +299,9 @@ export function parseTraining(source) {
       for(const name of collectVarBindings(statements))names.add(name);
     for(const n of statements){
       const entries=n.type==='VariableGroup'?n.declarations:
+        n.type==='ObjectBinding'?n.bindings.map(binding=>({
+          id:binding.name,kind:n.kind,start:binding.start,end:binding.end
+        })):
         ['Variable','Function'].includes(n.type)?[n]:[];
       for(const d of entries){
         if(d.kind==='var')continue;
@@ -338,6 +358,7 @@ export function parseTraining(source) {
     function statement(n,e){
       switch(n.type){
         case 'Variable':if(n.init)value(n.init,e);break;
+        case 'ObjectBinding':value(n.init,e);break;
         case 'VariableGroup':n.declarations.forEach(x=>statement(x,e));break;
         case 'Function':scope(n.body.body,e,n.params,n.async,true,n.defaults);break;
         case 'Block':scope(n.body,e,[],asyncFunction);break;

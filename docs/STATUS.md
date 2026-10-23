@@ -1,5 +1,15 @@
 # Implementation status (0.2.0)
 
+## Bounded owned TypeScript object bindings (October 23, 2026)
+
+- One-initializer `const`/`let` object-pattern declarations now lower through
+  explicit owned property reads and lexical initializations, retaining
+  source-order reads, alias identity, replay and independently checked V8
+  observable results. Only simple identifier targets with static keys
+  (at most 32) are accepted; destructuring defaults, nested/computed/rest
+  patterns and `var` object bindings fail closed. This does not establish
+  general TypeScript execution compatibility.
+
 ## Native-service deadline boundary (October 23, 2026)
 
 - The opt-in natlang `executeAsync` native-service route now accepts a

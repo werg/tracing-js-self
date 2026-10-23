@@ -171,6 +171,9 @@ export function compile(ast) {
       if(scoped) emit('ENTER_SCOPE',null,nodes[0]);
       for(const n of nodes){
         const declarations=n.type==='VariableGroup'?n.declarations:
+          n.type==='ObjectBinding'?n.bindings.map(b=>({
+            id:b.name,kind:n.kind,start:b.start,end:b.end
+          })):
           n.type==='Variable'?[n]:[];
         for(const d of declarations)if(d.kind!=='var')emit('DECLARE',{name:d.id,kind:d.kind},d);
       }
@@ -305,6 +308,19 @@ export function compile(ast) {
           break;
         }
         case 'VariableGroup':for(const declaration of n.declarations)stmt(declaration);break;
+        case 'ObjectBinding':{
+          // One initializer evaluation; each [[Get]] happens in source order,
+          // with its own source provenance, before initializing a lexical cell.
+          expr(n.init);
+          for(const binding of n.bindings){
+            emit('DUP',null,binding);
+            emit('CONST',{value:['str',binding.key]},binding);
+            emit('GET_PROP',null,binding);
+            emit('INIT',binding.name,binding);
+          }
+          emit('POP',null,n);
+          break;
+        }
         case 'Expression':expr(n.expr);emit('POP',null,n);break;
         case 'Return':if(n.argument)expr(n.argument);else emit('CONST',{value:['undefined']},n);emit('RETURN',null,n);break;
         case 'Throw':expr(n.argument);emit('THROW',null,n);break;
