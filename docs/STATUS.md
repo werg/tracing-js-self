@@ -36,6 +36,8 @@ phase paths. The training profile accepts only synchronous, effect-free,
 non-throwing entries; committed terminal guest throws in the common runtime do
 not enable an exception-training category.
 
+The strict frontend now parses explicit throw/try/catch/finally and runs them through existing owned completion-handler bytecode. A caught guest throw can be reconstructed/replayed in the opt-in natlang evaluator, but the model-serving controller still lacks resumable caught-throw semantics, so these episodes do not pass training-data admission. This is not full Error/exception conformance.
+
 The strict frontend additionally supports multi-declarator let/const, object-literal shorthand, sequence expressions and expanded scalar compound assignments, with retained owned evaluation order and independent source-expression V8 receipts. It does not implement destructuring, general spreads or native bindings.
 
 The opt-in synchronous training frontend additionally compiles simple arrow and anonymous function expressions to owned serializable closure objects and call frames, with independent V8 observable-graph checks. Lexical `this` values are retained on arrow closures; the training syntax still excludes `this` reads, rest/default/destructured parameters, and async arrows. These are incremental TS/natlang improvements, not drop-in coverage.

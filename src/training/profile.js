@@ -118,6 +118,18 @@ export function parseTraining(source) {
         return {...loc,type:'Function',id:n.id.name,params:n.params.map(x=>x.name),
           async:false,body:stmt(n.body)};
       case 'ReturnStatement':return {...loc,type:'Return',argument:n.argument?expr(n.argument):null};
+      case 'ThrowStatement':
+        return {...loc,type:'Throw',argument:expr(n.argument)};
+      case 'TryStatement':{
+        const handler=n.handler?{
+          param:n.handler.param?.type==='Identifier'?n.handler.param.name:null,
+          body:stmt(n.handler.body)
+        }:null;
+        if(n.handler?.param && n.handler.param.type!=='Identifier')
+          reject(n.handler,'destructured catch parameter');
+        return {...loc,type:'Try',block:stmt(n.block),handler,
+          finalizer:n.finalizer?stmt(n.finalizer):null};
+      }
       case 'IfStatement':return {...loc,type:'If',test:expr(n.test),
         consequent:stmt(n.consequent),alternate:n.alternate?stmt(n.alternate):null};
       case 'WhileStatement':return {...loc,type:'While',test:expr(n.test),body:stmt(n.body)};
@@ -212,6 +224,13 @@ export function parseTraining(source) {
           statement(n.body,loopEnv);
           break;
         }
+        case 'Try':
+          statement(n.block,e);
+          if(n.handler)
+            scope(n.handler.body.body,e,n.handler.param===null?[]:[n.handler.param]);
+          if(n.finalizer)statement(n.finalizer,e);
+          break;
+        case 'Throw':value(n.argument,e);break;
         case 'Return':if(n.argument)value(n.argument,e);break;
         case 'Expression':value(n.expr,e);break;
         case 'Break':case 'Continue':case 'Empty':break;

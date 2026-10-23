@@ -25,6 +25,18 @@ This records the first tracer-owned implementation of [the training plan](TRAINI
 - The cross-repository megatoken `semantic-execution/1` adapter now exists on `werg/megatoken/main`, with explicit causal episode validation, codec-bound import, fixed lanes, teacher-conditioned supervised recurrence, a local diagnostic converter, and a pinned CI contract test using actual tracer-generated episodes. Large source and request records preserve their logical identity and action/result linkage across physical fragments.
 - The `bounded-js-subset/2` mock host bridge now prepares versioned `canonical-json/1` request snapshots before dispatch, gives adapters only frozen JSON argument data, records exact payload bytes and graph-version provenance, and independently verifies the payload against the committed heap at the request boundary. The causal and semantic projections expose the complete materialized payload, not a symbolic external argument.
 
+## Owned completion syntax in the strict frontend
+
+The TypeScript/Acorn strict frontend now accepts `throw`, `try`, `catch`
+(with an ordinary optional identifier), and `finally` and lowers them into
+the existing owned completion-handler bytecode. The natlang facade can execute
+recovered exceptional paths and replay their journals without host guest-code
+fallback. **These paths are not yet training-data candidates:** the synchronous
+training exporter/controller does not model a caught `throw` as a resumable
+continuation. Such cases remain explicitly unadmitted even when the runtime
+finishes with a normal result. This syntax support is not evidence of full
+ECMAScript exception compatibility.
+
 ## Limits / incomplete plan milestones
 
 1. The locally verified profile is **synchronous, no effects, no async and no guest exceptions**, with one small source bundle and no detached work. The legacy bounded profile is separate. Unsupported runtime property/coercion families are not silently admitted.
