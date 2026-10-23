@@ -721,6 +721,13 @@ export class Runtime {
                throw new TypeError('Unmodeled Promise prototype property: '+property);
              v=['builtinfn','Promise.prototype.'+property];
            }
+           else if(base.value[0]==='num'){
+             if(['toString','toFixed'].includes(property))
+               v=['builtinfn','Number.prototype.'+property];
+             else if(['constructor','__proto__','valueOf'].includes(property))
+               throw new TypeError('Unmodeled Number prototype property');
+             else v=U;
+           }
            else if(base.value[0]==='str'){
              // String primitive reads never consult the host object graph.
              const text=base.value[1];
@@ -836,6 +843,21 @@ export class Runtime {
               target.arrow?target.lexicalThis:receiver);
             s.control.a0.activeFrameId=id;
             return {...operands(fn,...args),result:['ref',callable[1]],causes:[{kind:'invocation',frameId:id}]};
+          }
+          if(callable[0]==='builtinfn' && callable[1].startsWith('Number.prototype.')){
+            const method=callable[1].slice('Number.prototype.'.length);
+            if(receiver[0]!=='num'||!['toString','toFixed'].includes(method))
+              guestFault('TypeError','Number method requires a number receiver');
+            if(args.length>1 || args.some(x=>!['undefined','null','bool','str','num'].includes(x.value[0])))
+              throw new TypeError('Number formatting argument outside bounded scalar profile');
+            const format=args[0]?decode(args[0].value):undefined;
+            const number=decode(receiver);
+            // Primitive-only deterministic intrinsic leaf, independently V8-verified.
+            if(method==='toFixed'&&format!==undefined&&
+               (!Number.isFinite(Number(format))||Number(format)<0||Number(format)>100))
+              throw new TypeError('Number fixed-digit count outside supported range');
+            return {...operands(fn,...args),...result(encode(
+              Number.prototype[method].call(number,format)))};
           }
           if(callable[0]==='builtinfn' && callable[1].startsWith('String.prototype.')){
              const method=callable[1].slice('String.prototype.'.length);
