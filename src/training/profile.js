@@ -86,7 +86,7 @@ export function parseTraining(source) {
         return {...loc,type:'Literal',value:encode(n.bigint!==undefined?BigInt(n.bigint):n.value),raw:n.raw};
       case 'Identifier':return {...loc,type:'Identifier',name:n.name};
       case 'ArrowFunctionExpression':case 'FunctionExpression':{
-        if(n.async || n.generator ||
+        if(n.generator ||
            (n.type==='FunctionExpression' && n.id))
           reject(n,'function expression parameters or mode');
         const parsedParams=parameters(n);
@@ -94,7 +94,7 @@ export function parseTraining(source) {
           {...span(n.body),type:'Block',body:[
             {...span(n.body),type:'Return',argument:expr(n.body)}]};
         return {...loc,type:'FunctionExpr',
-          arrow:n.type==='ArrowFunctionExpression',
+          arrow:n.type==='ArrowFunctionExpression',async:n.async,
           params:parsedParams.map(p=>p.name),defaults:parsedParams.map(p=>p.default),
           restIndex:parsedParams.findIndex(p=>p.rest),body};
       }
@@ -363,7 +363,7 @@ export function parseTraining(source) {
           if(!has(n.name,e))reject(n,'unbound identifier '+n.name);
           break;
         case 'Template':n.expressions.forEach(x=>value(x,e));break;
-        case 'FunctionExpr':scope(n.body.body,e,n.params,false,true,n.defaults);break;
+        case 'FunctionExpr':scope(n.body.body,e,n.params,n.async,true,n.defaults);break;
         case 'Await':
           if(!asyncFunction)reject(n,'await outside async function');
           value(n.argument,e);break;
