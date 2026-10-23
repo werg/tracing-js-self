@@ -1,5 +1,11 @@
 # Implementation status (0.2.0)
 
+## TypeScript nullable-access and host abort hardening (October 23, 2026)
+
+- Host-side pinned TypeScript 5.9.3 lowering now conditionally expands optional property/computed access to ES2019 temporaries and branches before strict owned compilation. New V8 graph-differential and exact replay regressions cover present/absent receivers and short-circuited computed keys. Emitted constructs outside the strict profile, including many optional method calls, still fail closed: **not general TypeScript execution compatibility**.
+- The journaled native driver now refuses to start a queued service after its AbortSignal has fired and ignores cancelled arrivals; services already started still own their effects. This is **not full Node/browser host semantics**.
+- The production natlang callable-folder module realm and native module-helper/callback boundary remain unsupported. This update does **not** implement a durable live VM, full persistent Module Record, language conformance or production drop-in replacement. Release eligibility remains false.
+
 This repository implements a **bounded, executable prototype** for the architecture in the attached *Complete JavaScript Semantic Tracing Runtime, revision 2 (22 October 2026)*. It does **not** implement the complete plan or claim a complete ECMAScript/Node/browser profile. In particular, a passing prototype test is not a Test262, WPT, Node-API, or learning-evaluation result.
 
 ## Retained-session replay-authority and commit hardening (October 23, 2026)
