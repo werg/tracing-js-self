@@ -577,16 +577,24 @@ export class Runtime {
           const loop=f.loops.at(-1);
           if(!loop || loop.envId!==f.envId)
             throw new Error('Iteration clone outside its lexical loop');
-          const original=s.envs[f.envId],binding=original.bindings[arg];
-          if(!binding || binding.kind!=='let' || !binding.initialized)
-            throw new Error('Iteration needs an initialized let binding');
+          const original=s.envs[f.envId];
+          const names=Array.isArray(arg)?arg:[arg];
+          if(!names.length || new Set(names).size!==names.length)
+            throw new Error('Invalid iteration binding list');
+          const reads=[];
           const envId=this.newEnv(s,original.parent);
-          s.envs[envId].bindings[arg]=copy(binding);
+          for(const name of names){
+            const binding=original.bindings[name];
+            if(!binding || binding.kind!=='let' || !binding.initialized)
+              throw new Error('Iteration needs initialized let bindings');
+            s.envs[envId].bindings[name]=copy(binding);
+            reads.push({kind:'binding',envId:original.id,name,
+              version:binding.version??0,value:binding.token.value,
+              supplyingEvent:binding.token.origin??null});
+          }
           loop.envId=envId;
           f.envId=envId;
-          return {reads:[{kind:'binding',envId:original.id,name:arg,
-            version:binding.version??0,value:binding.token.value,
-            supplyingEvent:binding.token.origin??null}]};
+          return {reads};
         }
         case 'TRY_ENTER':
           f.handlers.push({...arg,envId:f.envId,stackDepth:st.length,
