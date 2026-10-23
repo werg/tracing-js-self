@@ -150,11 +150,8 @@ export function parseTraining(source) {
         if(current.type==='Identifier' && ['eval','Function','require'].includes(current.name) &&
            steps.some(step=>step.type==='call'))
           reject(n,'dynamic source or host call');
-        // GET_METHOD is a receiver-wrapped token. Do not nullish-test that
-        // wrapper as if it were the underlying function.
-        if(steps.some((step,i)=>step.type==='call'&&step.optional&&
-           steps[i-1]?.type==='member'))
-          reject(n,'optional method call requires receiver-aware guard');
+        // Optional method calls retain the receiver-carrying GET_METHOD
+        // token. The VM guards its callable payload before consuming args.
         return {...loc,type:'OptionalChain',base:expr(current),steps};
       }
       case 'MemberExpression':

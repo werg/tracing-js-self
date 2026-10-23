@@ -74,12 +74,18 @@ test('optional property access distinguishes nullish and falsy receivers',()=>{
     return [a??-1,b??-2,count];
   `,{absent:null,falsy:''}),[-1,0,1]);
 });
-test('optional method invocation and dynamic optional calls fail closed',()=>{
-  const env=createBoundedNatlangEnvironment({EvalFailure});
-  const req=code=>({code,body:true,path:'natlang://refusal.ts',scope:{}});
-  assert.throws(()=>env.execute(req(
-    'const obj={f:()=>1}; return obj.f?.();')),EvalFailure);
+test('receiver-aware optional method calls skip arguments when nullish',()=>{
+  assert.deepEqual(differential(`
+    let counter=0;
+    const obj={f:null};
+    const a=obj.f?.(counter++);
+    const b=obj?.f?.(counter++);
+    const arr=[9,10];
+    const c=arr.at?.(1);
+    return [a??-1,b??-2,c,counter];
+  `),[-1,-2,10,0]);
+});
+test('dynamic optional calls remain prohibited without native escape',()=>{
   assert.throws(()=>parseTraining('"use strict"; function f(){return require?.("x");}'),
     /dynamic source or host call/);
-  env.close();
 });

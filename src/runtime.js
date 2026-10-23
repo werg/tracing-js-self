@@ -901,7 +901,16 @@ export class Runtime {
         }
         case 'JUMP':f.pc=arg;return {};
         case 'JUMP_IF_FALSE':{const a=pop();if(!truthy(a.value))f.pc=arg;return {...operands(a),result:['bool',!truthy(a.value)]};}
-        case 'LOGICAL_JUMP':{const a=st.at(-1),v=a.value;const pass=arg.operator==='&&'?!truthy(v):arg.operator==='||'?truthy(v):v[0]!=='null'&&v[0]!=='undefined';if(pass)f.pc=arg.to;return {...operands(a),result:['bool',pass]};}
+        case 'LOGICAL_JUMP':{
+          const a=st.at(-1),v=a.value;
+          // Optional method calls guard the callable, not the receiver-
+          // carrying method token. Preserve that token for CALL on success.
+          const nullable=v[0]==='method'?v[1]:v;
+          const pass=arg.operator==='&&'?!truthy(v):arg.operator==='||'?truthy(v):
+            nullable[0]!=='null'&&nullable[0]!=='undefined';
+          if(pass)f.pc=arg.to;
+          return {...operands(a),result:['bool',pass]};
+        }
         case 'NEW_PINNED_REGEXP':{
           const supported=supportsPinnedRegExp(arg.pattern,arg.flags);
           if(!supported)throw new SyntaxError('Unpinned RegExp pattern or flags');

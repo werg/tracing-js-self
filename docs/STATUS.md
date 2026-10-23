@@ -18,8 +18,9 @@
   invocation after an optional receiver, and optional calls to direct guest
   function values. Guest execution skips unreachable property keys, arguments
   and entire suffixes, with independent Node V8 differential/replay tests.
-- Receiver-sensitive optional member invocation (`object.method?.()`) still
-  fails closed; this slice is **not** full JS/TS conformance, a persistent
+- Receiver-aware optional member invocation (`object.method?.()`) now tests
+  the callable payload of the owned method token and preserves its `this`
+  receiver. This slice is **not** full JS/TS conformance, a persistent
   natlang callable-folder module realm, general Node/browser host support,
   nor independently admitted megatoken training data.
 

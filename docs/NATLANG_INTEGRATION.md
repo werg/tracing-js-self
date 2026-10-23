@@ -102,8 +102,8 @@ Independent Node V8 regression tests now execute the actual pinned-TypeScript-em
 Supported ES2022 optional chains now execute through owned short-circuit
 bytecode, including skipped computed keys/arguments and method receivers.
 The TypeScript host-side emitter preserves these chains for tracing. Calls of
-the form `object.method?.()` remain refused because the owned method-token
-nullish check needs receiver-aware semantics; there is no V8 fallback.
+the form `object.method?.()` use receiver-aware owned method-token checks,
+without a V8 fallback.
 
 Opt-in natlang onTrace sidecar now also exposes SourceMap-derived generated-site origin anchors, with recorded unmapped sites. The mapper verifies its embedded source bytes and annotates sites; these are **not** proof of original TypeScript source-level semantic correspondence, transformed implicit operations, or general transpilation correctness. The public/authoritative journal remains generated-JS based.
 
