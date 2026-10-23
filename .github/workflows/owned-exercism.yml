@@ -1,0 +1,69 @@
+name: Pinned Exercism JS owned trace verification
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/corpus/owned-exercism.mjs'
+      - 'tools/verify-exercism-owned.mjs'
+      - 'corpus/extension/snapshots/exercism-js/**'
+      - 'corpus/extension/snapshots/exercism-js-inputs/**'
+      - 'test/owned-exercism.test.js'
+      - '.github/workflows/owned-exercism.yml'
+      - 'package.json'
+  pull_request:
+    paths:
+      - 'src/corpus/owned-exercism.mjs'
+      - 'tools/verify-exercism-owned.mjs'
+      - 'corpus/extension/snapshots/exercism-js/**'
+      - 'corpus/extension/snapshots/exercism-js-inputs/**'
+      - 'test/owned-exercism.test.js'
+      - '.github/workflows/owned-exercism.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Verify pinned source hashes, lowering contracts and independent evidence
+        run: node --test test/owned-exercism.test.js
+      - name: Attempt canonical inputs against original JS, lowered JS and owned runtime
+        run: |
+          mkdir -p corpus/out
+          node tools/verify-exercism-owned.mjs \
+            --per-family 12 --max-cases 240 --min-owned 1 \
+            --output corpus/out/exercism-owned-report.json \
+            --local-episodes corpus/out/exercism-owned-locally-verified.jsonl
+      - name: Check evidence denominators and local-only status
+        run: |
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const r=JSON.parse(readFileSync("corpus/out/exercism-owned-report.json"));
+            if(r.admitted!==false||r.totals.newAdmitted!==0||
+              r.totals.locallyVerified<1||r.totals.attempted<20||
+              r.totals.attempted!==r.totals.locallyVerified+r.totals.refused)
+              throw Error("Incorrect verifier evidence ledger "+JSON.stringify(r.totals));
+            const rows=readFileSync("corpus/out/exercism-owned-locally-verified.jsonl","utf8")
+              .trim().split("\n").map(JSON.parse);
+            if(rows.length!==r.totals.locallyVerified||
+              rows.some(x=>x.admitted!==false||x.exported?.public?.schema!=="semantic-execution/2"))
+              throw Error("Mismatch in rechecked owned episode manifest");
+            console.log("Locally verified owned traces",r.totals.locallyVerified,
+              "out of",r.totals.attempted,"explicitly audited candidates");
+          '
+      - name: Upload local-only owned traces and complete refusals
+        uses: actions/upload-artifact@v4
+        with:
+          name: exercism-js-owned-local-verification-not-admitted
+          path: |
+            corpus/out/exercism-owned-report.json
+            corpus/out/exercism-owned-locally-verified.jsonl
+          if-no-files-found: error

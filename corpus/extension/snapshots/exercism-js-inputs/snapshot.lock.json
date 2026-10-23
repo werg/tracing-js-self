@@ -1,0 +1,27 @@
+{
+  "repository": "exercism/problem-specifications",
+  "revision": "650bebeb39ad40439175288042aece982b0a90a9",
+  "license": "MIT",
+  "files": {
+    "exercises/anagram/canonical-data.json": "bdcf6fe32029f591a7501ab5d6a21f80317a4149",
+    "exercises/armstrong-numbers/canonical-data.json": "2ad37852b873aebfbfca4125c2cfbf46839b1f2a",
+    "exercises/binary-search/canonical-data.json": "92027d4181f405ea8d477694f4afb70725e75a44",
+    "exercises/collatz-conjecture/canonical-data.json": "cfcc7df77bec22e9a4a717df8713ac9ca6ee2a7e",
+    "exercises/darts/canonical-data.json": "556d7de65fbbdae7f5897517140bdb48fb908cba",
+    "exercises/grains/canonical-data.json": "ef318d09883666b2e707c66254a0691f0b07235a",
+    "exercises/hamming/canonical-data.json": "93b438b75f2953b154b407eb73d3f63dadbe9ef9",
+    "exercises/isogram/canonical-data.json": "60ed3d850606ace6a8feaccdd9880ce6dea04b8c",
+    "exercises/knapsack/canonical-data.json": "c3502e0069e5fd6b5be9467b6807621823a59c91",
+    "exercises/largest-series-product/canonical-data.json": "244bb6ebfef1b93f7ccd857ea50c001d81dd6685",
+    "exercises/leap/canonical-data.json": "2a1de9d8c857abd6692d8453fdf06265cbb696db",
+    "exercises/luhn/canonical-data.json": "78174b9128a1666ce43190eaafb6b00cd3c33479",
+    "exercises/matching-brackets/canonical-data.json": "6fb88f5e0036b76e2120cf9187d91b2a0fee5adf",
+    "exercises/raindrops/canonical-data.json": "6ea758de7014665714fde14e460027311ac483cb",
+    "exercises/roman-numerals/canonical-data.json": "1edb968d321bc4b9473e446a5d3f1daa173a4d56",
+    "exercises/run-length-encoding/canonical-data.json": "bb82ed9fe213f4154b83ba3efcee595164fa9115",
+    "exercises/sieve/canonical-data.json": "27cf604d398fae0e24eaff6be07dd1528d4e865b",
+    "exercises/space-age/canonical-data.json": "81f5be711f3663c427e1f097e3aa2531ad902163",
+    "exercises/sum-of-multiples/canonical-data.json": "f90b773e7abbb5420b5e5e75672aeceadcd9fdb2",
+    "exercises/two-fer/canonical-data.json": "ea6ee91d680a879150b1eba40dd97b95889e413b"
+  }
+}

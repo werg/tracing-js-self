@@ -1,0 +1,27 @@
+{
+  "repository": "exercism/javascript",
+  "revision": "ff04f35158cdf61eebfdf18a774010495a1fd6d9",
+  "license": "MIT",
+  "files": {
+    "exercises/practice/anagram/.meta/proof.ci.js": "ac53a2c23c2def31cf0458521a2ed320f8b7dbc9",
+    "exercises/practice/armstrong-numbers/.meta/proof.ci.js": "720db16d0da4a305d7684f80a08c6b38870fca59",
+    "exercises/practice/binary-search/.meta/proof.ci.js": "85612568428dbf7c7092fd04e70f4928ffd2dc3a",
+    "exercises/practice/collatz-conjecture/.meta/proof.ci.js": "6ebeeff93af005a343d5f4c6b0744a94699bd53f",
+    "exercises/practice/darts/.meta/proof.ci.js": "3847d4ff08c7de97064de75d4cc82aa2d51b3ee2",
+    "exercises/practice/grains/.meta/proof.ci.js": "59f5218a6375cf417aac7d47d34ee11705ea1d16",
+    "exercises/practice/hamming/.meta/proof.ci.js": "ea954dc004fb120753b919de57ca755a9d9f3e5e",
+    "exercises/practice/isogram/.meta/proof.ci.js": "2e17d9eca53966e6bba83adf0b24264a197a8faa",
+    "exercises/practice/knapsack/.meta/proof.ci.js": "c0dbf83a41fd839496101a04821c47156234622a",
+    "exercises/practice/largest-series-product/.meta/proof.ci.js": "4f34d946f8d71920da76cceaaf00ebc1d5b5341c",
+    "exercises/practice/leap/.meta/proof.ci.js": "233130362d42b13812e973383a82f984cb6c2cc3",
+    "exercises/practice/luhn/.meta/proof.ci.js": "eb128fb82407c5934d2238e496d7b77871afb8af",
+    "exercises/practice/matching-brackets/.meta/proof.ci.js": "9543ca1824397a67de4dfb75675a90deadd1675d",
+    "exercises/practice/raindrops/.meta/proof.ci.js": "8100b8e3c9c0b274ce3c5eb1ec131d74fee482e5",
+    "exercises/practice/roman-numerals/.meta/proof.ci.js": "858a226c926b2df16a331d8edfee9a309f00836e",
+    "exercises/practice/run-length-encoding/.meta/proof.ci.js": "0a090ebf673421123a2d976991579b1edb288c0a",
+    "exercises/practice/sieve/.meta/proof.ci.js": "9b8e45d35f578d780a5fd5e5d7b6fc3fa3214205",
+    "exercises/practice/space-age/.meta/proof.ci.js": "c3ca0240490fd16b5ba074a782782389fdcb40ab",
+    "exercises/practice/sum-of-multiples/.meta/proof.ci.js": "fc33a914a51b2c8ce095458f8fc32335d1c99e11",
+    "exercises/practice/two-fer/.meta/proof.ci.js": "ac908cf32ee26a93f92659f7ce06a551c563cc98"
+  }
+}

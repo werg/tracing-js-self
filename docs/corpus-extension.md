@@ -1091,3 +1091,43 @@ The pinned full-checkout acquisition job **completed successfully** in [Actions 
 These full inventories are hosted as the run's downloadable **`full-pinned-source-catalog-only`** artifact (compressed size approximately **8.9 MB**). The accompanying source repositories are reproducible from exact upstream SHA pins. A successful full acquisition does **not** imply runnable JS solutions for every Exercism case or valid implementation/harness execution for Test262/JSON Schema. Owned trace generation, independent execution verification, semantic readability metrics and training admission remain **open**.
 
 The existing 1,848-execution diagnostic baseline plus the 28 initial adversarial smoke executions must not be added to acquired candidate counts as though they were a single evidence type. The result exceeds the earlier target for **candidate acquisition**, not the target for *millions of verified execution traces*.
+
+
+### Wave 2 — Real-source canonical-input owned verification (2026-10-23)
+
+- [x] Pinned **20 original Exercism JavaScript reference implementations** from
+  `exercism/javascript@ff04f35158cdf61eebfdf18a774010495a1fd6d9`, with
+  separate SHA-locked **20 canonical-data sources** from
+  `exercism/problem-specifications@650bebeb39ad40439175288042aece982b0a90a9`.
+  Copyright licenses and individual original Git blob identities are retained.
+- [x] Added `src/corpus/owned-exercism.mjs`: explicit original export/API-to-canonical
+  property/argument mappings, family-level frozen splits, complete per-file
+  provenance, and a conservative parser-based conversion of function-only
+  ESM to the existing owned `training-js/1` direct-function-entry profile.
+  Modules with classes, imports, top-level effects, or potentially lexical
+  arrow receiver/arguments semantics are deliberately refused.
+- [x] Added `tools/verify-exercism-owned.mjs`: executes each original
+  SHA-locked proof and its conservative projection independently in controlled
+  V8 realms; checks canonical expected return *and initial input mutations*
+  for agreement; only then attempts owned training verification. Successful
+  trajectories undergo complete independent evidence recheck after
+  JSON serialization. All failures retain explicit categorization.
+- [x] Output includes source-pinned, family-separated, local-only
+  `semantic-execution/2` trace candidates with private audit sidecars,
+  readable preview lines, and non-admission quality metrics
+  (generated groups/bytes, journal event counts). These metrics do *not*
+  prove minimal causal traces.
+- [x] Dedicated CI pipeline `.github/workflows/owned-exercism.yml` tests
+  source pinning and checks a positive floor for genuinely owned and
+  independently rechecked cases.
+- [ ] Measured counts, verification refusals and trace-quality distributions
+  are to be populated from the actual CI run, not estimated.
+- [ ] **Full 117,773 acquired Test262/Exercism/JSON Schema records** are *not*
+  themselves semantically verified. This experiment attempts a curated,
+  pinned real-JS subset only. Full suite harness/validator execution, exotic
+  native effects, adversarial operation-level evidence and admission remain open.
+
+This source-projection phase should be distinguished from general ESM execution:
+original module source is never passed off as unchanged in the strict owned
+runtime, and independent original-versus-lowered V8 checks must succeed for
+each successful candidate.

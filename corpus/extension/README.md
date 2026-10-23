@@ -142,3 +142,40 @@ Measured snapshot CI acquisition: **82 Test262 variants + 464 Exercism cases + 9
 ### First complete pinned run (measured)
 
 [Actions run 39968633575](https://github.com/werg/tracing-js-self/actions/runs/39968633575) completed successfully: **103,582 Test262 variants from 53,910 files**, **2,330 Exercism cases from 143 files**, **11,861 JSON Schema cases from 434 files**; **117,773 non-admitted candidate fixtures total**. The downloadable `full-pinned-source-catalog-only` artifact contains the exact JSONL catalogs and reports. No full-source owned semantic verification or independent reference execution has yet taken place.
+
+
+## Locally verified owned Exercism JS reference-solution pilot
+
+The directory `snapshots/exercism-js/` contains **20 original pinned
+production-grade exercise reference solutions**; `snapshots/exercism-js-inputs/`
+contains their **20 independent canonical input/expected-output sources**.
+Each snapshot has a per-file original Git blob lock and upstream LICENSE.
+
+The curated adapter attempts original solution/module execution and an explicit,
+conservative function-only source lowering to strict owned function entry.
+An independently executed V8 comparison of **original ESM semantics**,
+transformed function semantics, canonical expected output and observed
+argument mutations gates each owned attempt. A successful owned run must
+also pass `verifyTrainingCase`, model-visible trajectory evaluation, and
+`recheckIndependentTrainingEvidence` on the serialized archive. This is a
+small real-code subset and is **not** full Test262 or ESM conformance.
+
+```sh
+npm ci
+npm run corpus:exercism:owned -- \
+  --per-family 12 --max-cases 240 --min-owned 1 \
+  --output corpus/out/exercism-owned-report.json \
+  --local-episodes corpus/out/exercism-owned-locally-verified.jsonl
+```
+
+The report contains complete per-case statuses and trace-size/causal-chunk
+proxies. **Only `locally_verified` records are written to the episode JSONL**.
+The `exported.sidecar` is *private evidence*, not predictor context. The
+`exported.public` is the source/initial-state and generated-trace projection.
+Both remain non-admitted until independent megatoken training gates pass.
+
+CI executes the bounded pilot and retains its report/episodic archive as an
+artifact; it never uploads newly admitted training data. The input cases with
+throws, classes, nonstatic top-level declarations, unsupported RegExp, too-long
+trace budgets, or original-versus-expected disagreements remain explicit
+refusals, not silently missing entries.
