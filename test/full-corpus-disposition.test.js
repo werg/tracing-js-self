@@ -42,3 +42,15 @@ test('claimed owned conversions require exact canonical SHA/revision and indepen
  assert.throws(()=>validateOwnedReport({schema:'owned-exercism-evidence/1',
   admitted:false,records:[good,good],totals:{attempted:2,locallyVerified:2,newAdmitted:0}}));
 });
+
+test('generated input oracle is valid but never asserted to be official canonical data',()=>{
+ const row={status:'locally_verified',caseId:'generated/leap/fake',
+   inputOrigin:'exercism-deterministic-boundaries/1',
+   evidence:{postSerialization:{valid:true},originalSites:{valid:true},
+     reference:{canonical:'not-applicable-generated'}}};
+ const report={schema:'owned-exercism-evidence/1',admitted:false,
+   records:[row],totals:{attempted:1,locallyVerified:1,newAdmitted:0}};
+ assert.equal(validateOwnedReport(report).size,1);
+ assert.throws(()=>validateOwnedReport({...report,records:[{
+   ...row,evidence:{...row.evidence,reference:{canonical:'agreed'}}}]}));
+});

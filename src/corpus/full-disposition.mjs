@@ -73,8 +73,10 @@ export function validateOwnedReport(report){
  const verified=report.records.filter(x=>x.status==='locally_verified');
  if(verified.length!==report.totals.locallyVerified||report.totals.newAdmitted!==0||
     verified.some(x=>x.evidence?.postSerialization?.valid!==true||
-      x.evidence?.reference?.canonical!=='agreed'||
-      x.evidence?.originalSites?.valid!==true))
+      x.evidence?.originalSites?.valid!==true||
+      (x.inputOrigin==='upstream-canonical'
+        ?x.evidence?.reference?.canonical!=='agreed'
+        :x.evidence?.reference?.canonical!=='not-applicable-generated')))
   throw new Error('Owned evidence count/rechecks inconsistent');
  return records;
 }
