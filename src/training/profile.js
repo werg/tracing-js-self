@@ -109,7 +109,7 @@ export function parseTraining(source) {
         if(n.callee.type!=='Identifier' ||
            !['Set','Error','TypeError'].includes(n.callee.name) ||
            n.arguments.some(a=>a.type==='SpreadElement') || n.arguments.length>1)
-          reject(n,'constructor outside bounded owned profile');
+          reject(n,'NewExpression');
         return {...loc,type:'Construct',callee:n.callee.name,args:n.arguments.map(expr)};
       case 'CallExpression':
         if(n.optional || n.arguments.filter(a=>a.type==='SpreadElement').length>4)
