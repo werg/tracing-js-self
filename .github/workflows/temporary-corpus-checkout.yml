@@ -1,0 +1,27 @@
+name: Temporary corpus development checkout
+on:
+  push:
+    branches: [fix/corpus-last-96-20261023]
+permissions:
+  contents: read
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Build reproducible local checkout archive
+        run: |
+          tar -czf /tmp/corpus-source.tgz --exclude='./.git' --exclude='./node_modules' .
+          tar -czf /tmp/corpus-deps.tgz node_modules
+      - uses: actions/upload-artifact@v4
+        with:
+          name: temporary-corpus-checkout
+          path: |
+            /tmp/corpus-source.tgz
+            /tmp/corpus-deps.tgz
+          retention-days: 1
