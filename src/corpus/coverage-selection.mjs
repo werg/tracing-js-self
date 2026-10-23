@@ -3,6 +3,8 @@
 import {createHash} from 'node:crypto';
 import {normalizeJournal} from '../semantic/normalize.js';
 import {recheckIndependentTrainingEvidence} from '../training/admit.js';
+import {fingerprintOwnedSource,clusterOwnedSources} from './source-clusters.mjs';
+import {measureOwnedTrace,summarizeOwnedTraceQuality} from './trace-quality.mjs';
 
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const safe=x=>typeof x==='string'&&x.length>0&&x.length<600;
@@ -20,6 +22,9 @@ export function profileOwnedEpisode(row){
  if(!Array.isArray(archive.events)||archive.events.length>50000)
   throw new Error('Oversized or malformed owned journal');
  const normalized=normalizeJournal(archive).events;
+ const ownedSource=archive.sources?.find(s=>s.sourceId===archive.entrySpec?.sourceId)?.text;
+ const sourceFingerprint=fingerprintOwnedSource(ownedSource);
+ const quality=measureOwnedTrace(row,normalized);
  const rawById=new Map(archive.events.map(x=>[x.eventId,x]));
  const operations=[],branches=[],mutationOperations=new Set();
  for(const e of normalized){
@@ -52,7 +57,7 @@ export function profileOwnedEpisode(row){
   family,split:row.split,origin:row.inputOrigin??'unknown',
   pathHash,branchCount:branches.length,
   operations:uniqueOps,transitions,mutations:[...mutationOperations].sort(),
-  eventCount:operations.length,
+  eventCount:operations.length,sourceFingerprint,quality,
   authority:'owned-locally-verified-non-admitted',admitted:false};
 }
 export function selectNovelEpisodes(profiles,{limit=128}={}){
@@ -75,9 +80,11 @@ export function selectNovelEpisodes(profiles,{limit=128}={}){
   unique.push(row);
  }
  unique.sort((a,b)=>a.id.localeCompare(b.id));
+ const cloneAudit=clusterOwnedSources(unique);
+ const traceQuality=summarizeOwnedTraceQuality(unique);
  const seen=new Set(),selected=[],picked=new Set();
  const markers=x=>[
-  ['family:'+x.family,24],
+  ['family:'+cloneAudit.keyByFamily[x.family],24],
   ['path:'+x.family+':'+x.pathHash,16],
   ...x.operations.map(op=>['operation:'+op,5]),
   ...x.transitions.map(op=>['transition:'+op,2]),
@@ -95,7 +102,8 @@ export function selectNovelEpisodes(profiles,{limit=128}={}){
    }
   }
   if(!best||score===0)break;
-  selected.push({...best,noveltyScore:score});
+  const {sourceFingerprint,...summary}=best;
+  selected.push({...summary,sourceCluster:cloneAudit.keyByFamily[best.family],noveltyScore:score});
   picked.add(best.id);
   for(const [key] of markers(best))seen.add(key);
  }
@@ -103,11 +111,15 @@ export function selectNovelEpisodes(profiles,{limit=128}={}){
   authority:'post-verification-selection-only',admitted:0,
   candidateCount:profiles.length,selectedCount:selected.length,
   distinctFamilies:new Set(unique.map(x=>x.family)).size,
+  distinctSourceClusters:cloneAudit.distinctSourceClusters,
+  sourceCloneClusters:cloneAudit.clusters,sourceNearPairs:cloneAudit.nearPairs,
+  traceQuality,
   distinctPaths:new Set(unique.map(x=>x.family+':'+x.pathHash)).size,
   selected,refusedAsRedundant:profiles.length-selected.length,
   warnings:[
    'Selection retains existing independent owned evidence; it cannot verify or admit new executions.',
    'Executed branch sites and decisions provide path signatures; operation transitions are novelty proxies, not full call-graph equivalence.',
-   'Source family is identified by exact repository, revision and path. External near-duplicate clustering across forks remains future work.'
+   'Source families retain exact pinned provenance; lexical alpha-renaming and token-shingle clones also share source novelty weights.',
+   ...cloneAudit.warnings
   ]};
 }

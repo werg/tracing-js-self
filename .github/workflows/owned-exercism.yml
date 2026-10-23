@@ -7,6 +7,10 @@ on:
       - 'tools/verify-exercism-owned.mjs'
       - 'tools/select-owned-episodes.mjs'
       - 'src/corpus/coverage-selection.mjs'
+      - 'src/corpus/source-clusters.mjs'
+      - 'src/corpus/trace-quality.mjs'
+      - 'test/source-clusters.test.js'
+      - 'test/trace-quality.test.js'
       - 'test/coverage-selection.test.js'
       - 'corpus/extension/snapshots/exercism-js/**'
       - 'corpus/extension/snapshots/exercism-js-inputs/**'
@@ -19,6 +23,10 @@ on:
       - 'tools/verify-exercism-owned.mjs'
       - 'tools/select-owned-episodes.mjs'
       - 'src/corpus/coverage-selection.mjs'
+      - 'src/corpus/source-clusters.mjs'
+      - 'src/corpus/trace-quality.mjs'
+      - 'test/source-clusters.test.js'
+      - 'test/trace-quality.test.js'
       - 'test/coverage-selection.test.js'
       - 'corpus/extension/snapshots/exercism-js/**'
       - 'corpus/extension/snapshots/exercism-js-inputs/**'
@@ -40,7 +48,7 @@ jobs:
           node-version: '22'
       - run: npm ci
       - name: Verify pinned source hashes, lowering contracts and independent evidence
-        run: node --test test/owned-exercism.test.js test/coverage-selection.test.js
+        run: node --test test/owned-exercism.test.js test/coverage-selection.test.js test/source-clusters.test.js test/trace-quality.test.js
       - name: Attempt canonical inputs against original JS, lowered JS and owned runtime
         run: |
           mkdir -p corpus/out
@@ -75,7 +83,9 @@ jobs:
             import {readFileSync} from "node:fs";
             const r=JSON.parse(readFileSync("corpus/out/exercism-owned-novelty.json"));
             if(r.admitted!==0||r.selectedCount<1||r.distinctFamilies<1||
-              r.inputRows<71||r.selectedCount>r.candidateCount)
+              r.inputRows<71||r.selectedCount>r.candidateCount||
+              r.distinctSourceClusters<1||r.traceQuality?.episodes<71||
+              r.traceQuality?.admitted!==0)
               throw Error("Invalid owned novelty report");
           '
       - name: Upload local-only owned traces and complete refusals

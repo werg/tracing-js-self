@@ -335,3 +335,31 @@ distinctions, runtime host APIs and full Test262 harness conformance
 remain unsupported. Node requires `--experimental-vm-modules`. Node VM
 is not a security boundary; do not execute arbitrary untrusted sources
 without OS-level isolation and credential/network restrictions.
+
+
+## Cross-fork owned-source clone guards and quantitative trace review
+
+The owned-episode novelty selector now independently rechecks each serialized
+owned execution and tokenizes the actual lowered, owned JavaScript source.
+Identical token sequences, consistent identifier-renamed copies, and high-overlap
+token-shingle matches are clustered across repository/path boundaries. A
+detected clone spanning train/validation/test **aborts** selection. Clones
+inside one split share source-novelty weight rather than inflating source
+diversity. These are bounded lexical heuristics, not semantic equivalence
+proofs: substantially rewritten or short clones can be missed.
+
+The same JSON report now contains distinctSourceClusters,
+sourceCloneClusters, sourceNearPairs and traceQuality. Quantiles summarize
+raw journal event counts, semantic event counts, model-visible generated group
+sizes and serialized record bytes. A bounded inspection queue prioritizes
+high events-per-group cases for *manual* review. The original-site source
+coverage statistic is reported from the existing original-site receipt audit
+and cannot be independently mapped without access to original pinned bytes.
+
+Run the existing command:
+
+    npm run corpus:owned:novelty -- --input corpus/out/exercism-owned-locally-verified.jsonl --output corpus/out/exercism-owned-novelty.json --limit 64
+
+No newly acquired records or V8 diagnostics become owned verification through
+these heuristics. All output remains explicitly non-admitted. These metrics
+do not certify human readability or intermediate-operation completeness.

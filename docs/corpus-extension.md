@@ -1563,3 +1563,21 @@ Example: npm run corpus:owned:novelty -- --input
 - [ ] Full test framework setup, dependency graphs, dynamic parameterization,
   real side-effect capture and independently checked owned execution remain
   prerequisites for promoting these sources.
+
+
+### Additional owned-source clone and quantitative quality guards (2026-10-23)
+
+- [x] Added bounded token fingerprints of independently rechecked owned JS
+  executions. Identical and consistently identifier-renamed source clones,
+  plus high-overlap shingle matches, group across repositories and paths.
+  Cross-split matches refuse selection; within-split clones share the same
+  source-family novelty weight. Token heuristics are not a semantic oracle.
+- [x] Added post-verification, non-admitted trace-quality diagnostics for
+  generated record bytes, group/event compression proxies, reported
+  original-site source receipts, quantiles and a manual inspection queue.
+- [x] Added regression tests and CI enforcement in the owned-Exercism workflow.
+- [ ] This does not complete Test262 conformance, arbitrary module/async/host
+  runtime support, JSON Schema owned validator execution, comprehensive source
+  equivalence detection, independent human readability assessments, or
+  downstream megatoken training admission. The previously measured owned and
+  admitted episode denominators are not increased by this analysis.
