@@ -162,6 +162,19 @@ export function compile(ast) {
         case 'Identifier':emit('GET',n.name,n);break;
         case 'This':emit('THIS',null,n);break;
         case 'Unary':expr(n.argument);emit('UNARY',n.operator,n);break;
+        case 'Update':
+          emit('UPDATE_BINDING',{name:n.name,operator:n.operator,prefix:n.prefix},n);
+          break;
+        case 'Conditional':{
+          expr(n.test);
+          const no=emit('JUMP_IF_FALSE',null,n.test);
+          expr(n.consequent);
+          const done=emit('JUMP',null,n);
+          instructions[no].arg=instructions.length;
+          expr(n.alternate);
+          instructions[done].arg=instructions.length;
+          break;
+        }
         case 'Await':expr(n.argument);emit('AWAIT',null,n);break;
         case 'Binary':
           if(['&&','||','??'].includes(n.operator)) {expr(n.left);const j=emit('LOGICAL_JUMP',{operator:n.operator,to:null},n);emit('POP',null,n);expr(n.right);instructions[j].arg.to=instructions.length;}
@@ -201,6 +214,42 @@ export function compile(ast) {
           const end=instructions.length;emit('LOOP_EXIT',null,n);
           instructions[entry].arg={breakPc:end,continuePc:top};
           instructions[no].arg=end;break;
+        }
+        case 'DoWhile':{
+          const entry=emit('LOOP_ENTER',null,n),top=instructions.length;
+          loopDepth++;stmt(n.body);loopDepth--;
+          const testPc=instructions.length;
+          expr(n.test);
+          const no=emit('JUMP_IF_FALSE',null,n.test);
+          emit('JUMP',top,n);
+          const end=instructions.length;
+          emit('LOOP_EXIT',null,n);
+          instructions[entry].arg={breakPc:end,continuePc:testPc};
+          instructions[no].arg=end;
+          break;
+        }
+        case 'For':{
+          const lexical=n.init?.type==='Variable';
+          if(lexical){
+            emit('ENTER_SCOPE',null,n);
+            emit('DECLARE',{name:n.init.id,kind:n.init.kind},n.init);
+          }
+          if(n.init){
+            if(lexical)stmt(n.init);
+            else{expr(n.init);emit('POP',null,n.init);}
+          }
+          const entry=emit('LOOP_ENTER',null,n),top=instructions.length;
+          const no=n.test?(expr(n.test),emit('JUMP_IF_FALSE',null,n.test)):null;
+          loopDepth++;stmt(n.body);loopDepth--;
+          const updatePc=instructions.length;
+          if(n.update){expr(n.update);emit('POP',null,n.update);}
+          emit('JUMP',top,n);
+          const end=instructions.length;
+          emit('LOOP_EXIT',null,n);
+          instructions[entry].arg={breakPc:end,continuePc:updatePc};
+          if(no!==null)instructions[no].arg=end;
+          if(lexical)emit('LEAVE_SCOPE',null,n);
+          break;
         }
         case 'Break':case 'Continue':
           if(!loopDepth)throw new SyntaxError(n.type.toLowerCase()+' outside loop');
