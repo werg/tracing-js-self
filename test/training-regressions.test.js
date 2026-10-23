@@ -67,7 +67,7 @@ test('unstarted registered sources are not published as predictor-visible code',
   assert.throws(()=>r.registerSource({text:'let later=2;'}),/frozen/);
 });
 
-test('expanding array length creates a rejected sparse operation, not an admitted graph',()=>{
+test('bounded array length expansion creates genuine absent slots and verifies against V8',()=>{
   const result=verifyTrainingCase({source:'"use strict"; function run(){const a=[1];a.length=4;return a;}',entry:'run'});
   assert.equal(result.status,'runtime_failure');
 });
