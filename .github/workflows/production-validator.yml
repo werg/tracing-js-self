@@ -1,0 +1,75 @@
+name: Pinned production validator native diagnostics
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/corpus/ajv-reference.mjs'
+      - 'tools/verify-ajv-snapshot.mjs'
+      - 'test/ajv-reference.test.js'
+      - '.github/workflows/production-validator.yml'
+      - 'corpus/extension/snapshots/json-schema/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  ajv-reference:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Check local validator contracts without native package execution
+        run: node --test test/ajv-reference.test.js
+      - name: Install exactly versioned Ajv with lifecycle scripts disabled
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/ajv"
+          npm install --prefix "$RUNNER_TEMP/ajv" \
+            --save-exact --ignore-scripts --no-audit --no-fund ajv@8.17.1
+          AJV_ROOT="$RUNNER_TEMP/ajv" node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const lock=JSON.parse(readFileSync(process.env.AJV_ROOT+"/package-lock.json"));
+            const p=lock.packages?.["node_modules/ajv"];
+            if(p?.version!=="8.17.1"||
+              p.integrity!=="sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g==")
+              throw Error("Unexpected Ajv package artifact digest");
+          '
+      - name: Execute real Ajv against every committed pinned schema fixture in a restricted container
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/ajv-out"
+          docker run --rm --user "$(id -u):$(id -g)" \
+            --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges --memory 1g --pids-limit 96 \
+            --tmpfs /tmp:rw,nosuid,size=32m \
+            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/project,readonly" \
+            --mount "type=bind,src=$RUNNER_TEMP/ajv,dst=/ajv,readonly" \
+            --mount "type=bind,src=$RUNNER_TEMP/ajv-out,dst=/out" \
+            --workdir /project \
+            node:22-bookworm \
+            node tools/verify-ajv-snapshot.mjs \
+              --trusted-execution --ajv-root /ajv \
+              --snapshot-root corpus/extension/snapshots/json-schema \
+              --output /out/ajv-diagnostics.jsonl \
+              --report /out/ajv-report.json
+          AJV_REPORT="$RUNNER_TEMP/ajv-out/ajv-report.json" node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const r=JSON.parse(readFileSync(process.env.AJV_REPORT));
+            const total=Object.values(r.counts).reduce((a,b)=>a+b,0);
+            if(r.attempted!==907||total!==907||r.sourceFilesChecked!==26||
+              r.verifiedOwned!==0||r.admitted!==0||!(r.counts["reference-agreed"]>0))
+              throw Error("Incorrect real Ajv reference evidence "+JSON.stringify(r));
+          '
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ajv-production-native-diagnostics-not-owned
+          path: |
+            ${{ runner.temp }}/ajv-out/ajv-report.json
+            ${{ runner.temp }}/ajv-out/ajv-diagnostics.jsonl
+          if-no-files-found: error

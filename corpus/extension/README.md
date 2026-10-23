@@ -431,3 +431,30 @@ more than 64 timer turns. It is deterministic **native diagnostic evidence**,
 not faithful real-time event-loop observation or full official Test262 host
 support. Run this option only in the external isolated pinned-source runner;
 a native VM context alone is not a security boundary.
+
+
+## Production helpers, Ajv and async modules
+
+`npm run corpus:production:owned` checks selected unchanged synchronous
+helper function bodies extracted by exact AST span from the pinned original
+Axios interceptor manager. Pinned source SHA-256, original function byte range,
+owned `training-js/1` execution, independent V8 scalar/operation/branch checks,
+model-visible projection and serialized recheck are required. Each result
+is either locally verified owned evidence or an explicit refusal; every
+episode is **not admitted**. This does not yet cover stateful classes, dynamic
+imports or the complete eight-library benchmark in the owned interpreter.
+
+`npm run corpus:ajv:reference` runs a separately installed exact Ajv
+8.17.1 production package against genuine pinned JSON Schema snapshot files.
+The opt-in CI job checks the Ajv tarball integrity, source Git blob hashes,
+execution results and the hash of Ajv's actual generated validation code.
+It runs native code in an externally restricted container, not inside an
+owned guest interpreter. It cannot certify intermediate validator operations;
+every record is diagnostic-only. All production packages and transitive
+dependencies still require appropriate sandboxing and provenance review.
+
+The native Test262 ESM reference adapter now also supports bounded
+`module + async` variants with guest `$DONE` and top-level-await deadlines.
+It refuses missing or repeated `$DONE` and mismatched runtime error
+constructors. It does not implement full async host jobs, external timers or
+a semantically owned native module graph.

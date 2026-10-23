@@ -1659,3 +1659,31 @@ appear exactly once, and no row claims owned verification or admission.
   semantics or a complete official Test262 harness. It does not
   independently certify intermediate owned scheduling events, and cannot
   turn native diagnostics into semantic-execution training records.
+
+
+### Production helper owned checks, real Ajv reference, bounded async modules (2026-10-23)
+
+- [x] Added a SHA-locked, unchanged-token extraction bridge for independently
+  verifying selected pure helper function bodies from the **real pinned Axios**
+  vendor source. Each execution is passed through the owned machine, native
+  V8 outcome/operation/branch oracle, model-visible rollout, post-serialization
+  recheck and a source-span receipt. Unrepresentable functions are explicit
+  refusals; all results remain non-admitted. This is a bounded projection of
+  individual production function bodies, **not full library initialization,
+  module graph or arbitrary event-emitter internals**.
+- [x] Added an optional real production **Ajv 8.17.1** reference adapter
+  for the locked JSON Schema Test Suite snapshots. It executes Ajv-compiled
+  validators inside a restricted CI container, retains input SHA/commit and
+  the package tarball integrity, records generated validation-code hashes,
+  and separates agreements/disagreements/unsupported schemas. These are
+  **native V8 diagnostics, not owned-traced validator internals**.
+- [x] Added bounded native ESM module `flags: [module, async]` reference
+  execution with guest-realm `$DONE`, duplicate/missing completion checks,
+  native error-constructor matching, and top-level-await deadlines.
+- [ ] **Still open:** owned execution of general Ajv code generation,
+  complex production-library initialization/closures, full Promise/host
+  task scheduling, complete module loader and CJS/ESM interop, Test262
+  `$262.agent`/real timers/environmental capabilities, and admission of
+  large-scale verified semantic traces. Native V8 output agreement or
+  generated-code hashes are never treated as a verified owned journal.
+  Full ECMAScript/host conformance is not established by these additions.

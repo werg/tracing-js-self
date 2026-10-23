@@ -1,0 +1,48 @@
+name: Pinned production-library owned helper verification
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/corpus/production-owned.mjs'
+      - 'tools/verify-production-owned.mjs'
+      - 'test/production-owned.test.js'
+      - 'corpus/stateful/upstream/axios/**'
+      - 'corpus/stateful/cases.mjs'
+      - '.github/workflows/production-owned.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Verify exact original source spans and non-admission
+        run: node --test test/production-owned.test.js
+      - name: Trace pinned production functions using owned runtime and independent V8 checks
+        run: |
+          node tools/verify-production-owned.mjs \
+            --report production-owned-report.json \
+            --local-episodes production-owned-local.jsonl
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const r=JSON.parse(readFileSync("production-owned-report.json"));
+            if(r.admitted!==0||r.locallyVerified<1||
+              r.attempted!==r.locallyVerified+r.refused||
+              r.rows.some(x=>x.admitted!==false))
+              throw Error("False production owned evidence claim");
+          '
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pinned-production-owned-local-not-admitted
+          path: |
+            production-owned-report.json
+            production-owned-local.jsonl
+          if-no-files-found: error

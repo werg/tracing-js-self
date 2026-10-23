@@ -1,6 +1,8 @@
 // Opt-in native-V8 module *diagnostics* for trusted, pinned Test262 sources.
 // Node's experimental VM modules require --experimental-vm-modules on Node 20-24.
 // Native V8 is not the owned interpreter; node:vm is NOT a security sandbox.
+// Bounded async modules complete through a guest $DONE or a real native
+// runtime negative, without timers/host agent support or owned event traces.
 import vm,{createContext,runInContext,Script} from 'node:vm';
 const {SourceTextModule}=vm;
 import {posix} from 'node:path';
@@ -49,7 +51,8 @@ export async function executeTest262ModuleReference({source,metadata,
   if(metadata.metadataStatus!=='parsed'||!Array.isArray(flags)||
      !Array.isArray(includes)||!Array.isArray(features))
     return response('unsupported','Unparsed or incomplete Test262 metadata');
-  if(!flags.includes('module')||flags.some(f=>f!=='module')||
+  const asyncMode=flags.includes('async');
+  if(!flags.includes('module')||flags.some(f=>!['module','async'].includes(f))||
      negative&&(!['parse','early','resolution','runtime'].includes(negative.phase)||
        !/^[A-Za-z_$][\w$]*$/.test(negative.type)))
     return response('unsupported','Module execution flags or negative metadata unsupported');
@@ -66,6 +69,17 @@ export async function executeTest262ModuleReference({source,metadata,
   const context=createContext(Object.create(null),{
     codeGeneration:{strings:false,wasm:false}
   });
+  let doneCalls=0,doneArgument;
+  if(asyncMode){
+    Object.defineProperty(context,'__recordDone',{
+      value:argument=>{doneCalls++;if(doneCalls===1)doneArgument=argument;},
+      configurable:false,writable:false
+    });
+    // A guest-realm function ensures promise reactions run with guest intrinsics.
+    runInContext('Object.defineProperty(globalThis, "$DONE", {'+
+      'value: function(error){__recordDone(error)}, writable: false, configurable: false})',
+      context,{timeout:timeoutMs});
+  }
   const constructorFor=type=>{
     const ctor=runInContext('globalThis['+JSON.stringify(type)+']',context,
       {timeout:timeoutMs});
@@ -138,10 +152,30 @@ export async function executeTest262ModuleReference({source,metadata,
     await withDeadline(root.evaluate({timeout:timeoutMs}),timeoutMs);
     if(dynamicImportObserved)
       return response('unsupported','Dynamic imports are not modeled',{phase:'runtime'});
+    if(asyncMode){
+      // Completion is bounded to native module jobs and immediately
+      // observable promise reactions. Delayed host timers/I/O are unsupported.
+      await withDeadline(new Promise(resolve=>setImmediate(resolve)),timeoutMs);
+      if(doneCalls>1)return response('failed','Async module $DONE invoked more than once',
+        {phase:'runtime',completionCalls:doneCalls,modules:modules.size});
+      if(doneCalls===0)return response('unsupported','Async module missing bounded $DONE completion',
+        {phase:'runtime',completionCalls:0,modules:modules.size});
+      if(doneArgument!==undefined){
+        if(negative?.phase==='runtime'&&matches(doneArgument))
+          return response('passed','Expected async module error constructor via $DONE',
+            {phase:'runtime',errorType:negative.type,completionCalls:1,
+             modules:modules.size});
+        return response('failed','Unexpected async module $DONE error '+errorName(doneArgument),
+          {phase:'runtime',errorType:errorName(doneArgument),completionCalls:1,
+           modules:modules.size});
+      }
+    }
     if(negative)return response('failed','Expected a module runtime error but execution completed',
       {phase:'runtime'});
-    return response('passed','Module evaluated without uncaught error',
-      {phase:'runtime',modules:modules.size,harness});
+    return response('passed',asyncMode?'Async module called $DONE once':
+      'Module evaluated without uncaught error',
+      {phase:'runtime',modules:modules.size,harness,
+       ...(asyncMode?{completionCalls:1}:{})});
   }catch(error){
     if(error instanceof UnsupportedModule)
       return response('unsupported',error.message,{phase:'runtime'});

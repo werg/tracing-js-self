@@ -51,3 +51,31 @@ test('top-level await completion and bounded unresolved promises',async()=>{
  assert.equal(result.status,'unsupported');
  assert.match(result.reason,/deadline/);
 });
+
+test('bounded asynchronous native ESM module completion remains non-owned',async()=>{
+ const completed=await run('await Promise.resolve(); Promise.resolve().then(()=>$DONE());',
+   meta(null,[],['module','async']));
+ assert.equal(completed.status,'passed',completed.reason);
+ assert.equal(completed.completionCalls,1);
+ assert.equal(completed.verifiedOwned,false);
+ assert.equal(completed.admitted,false);
+ const missing=await run('await Promise.resolve();',
+   meta(null,[],['module','async']));
+ assert.equal(missing.status,'unsupported');
+ const duplicated=await run('$DONE(); $DONE();',
+   meta(null,[],['module','async']));
+ assert.equal(duplicated.status,'failed');
+ const late=await run('Promise.resolve().then(()=>$DONE());',
+   meta(null,[],['module','async']));
+ assert.equal(late.status,'passed',late.reason);
+});
+test('async native ESM negative completion uses real guest constructors',async()=>{
+ const flags=['module','async'];
+ const negative=meta({phase:'runtime',type:'TypeError'},[],flags);
+ assert.equal((await run('Promise.resolve().then(()=>$DONE(new TypeError()))',negative)).status,'passed');
+ assert.equal((await run('Promise.resolve().then(()=>$DONE({name:"TypeError"}))',negative)).status,'failed');
+ assert.equal((await run('throw new TypeError("actual")',negative)).status,'passed');
+ assert.equal((await run('$DONE()',negative)).status,'failed');
+ assert.equal((await run('await new Promise(()=>{})',
+   meta(null,[],flags),{timeoutMs:15})).status,'unsupported');
+});

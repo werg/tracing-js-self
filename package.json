@@ -65,7 +65,9 @@
     "corpus:test262:reference": "node tools/verify-test262-reference.mjs",
     "corpus:test262:reference:modules": "node --experimental-vm-modules tools/verify-test262-reference.mjs",
     "corpus:structured:reference": "node tools/verify-structured-contracts.mjs",
-    "corpus:owned:novelty": "node tools/select-owned-episodes.mjs"
+    "corpus:owned:novelty": "node tools/select-owned-episodes.mjs",
+    "corpus:production:owned": "node tools/verify-production-owned.mjs",
+    "corpus:ajv:reference": "node tools/verify-ajv-snapshot.mjs"
   },
   "bin": {
     "tracing-js-self": "./bin/tracing.js"
