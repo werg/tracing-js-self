@@ -30,7 +30,7 @@ const tableNames = ['counters','envs','heap','promises','frames','effects','inpu
 const opNames = {
   CONST:'literal.materialize', GET:'binding.read', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
-  CALL:'call.enter', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
+  CALL:'call.enter', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
   GET_PROP:'property.read', GET_METHOD:'property.read', PUT_PROP:'property.write', ENTER_SCOPE:'environment.enter',
   LEAVE_SCOPE:'environment.leave', CLONE_LOOP_ENV:'environment.iteration', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
   TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
@@ -462,6 +462,26 @@ export class Runtime {
         case 'INIT':{const v=pop(),b=lookup(s,f.envId,arg);if(b.cell.initialized)throw new Error('Already initialized');b.cell.initialized=true;b.cell.token=v;b.cell.version++;return {...operands(v),result:v.value};}
         case 'GET':{const b=lookup(s,f.envId,arg);if(!b.cell.initialized)guestFault('ReferenceError',`Cannot access '${arg}' before initialization`);this.stackPush(f,b.cell.token.value,eventId);return {result:b.cell.token.value,reads:[{kind:'binding',envId:b.env.id,name:arg,version:b.cell.version??0,
             value:b.cell.token.value,supplyingEvent:b.cell.token.origin??null}],origins:[b.cell.token.origin]};}
+        case 'TYPEOF_BINDING':{
+          let current=f.envId,found=null;
+          while(current){
+            const env=s.envs[current];
+            if(Object.hasOwn(env.bindings,arg)){
+              found={env,cell:env.bindings[arg]};break;
+            }
+            current=env.parent;
+          }
+          if(!found)return result(['str','undefined']);
+          if(!found.cell.initialized)
+            guestFault('ReferenceError',`Cannot access '${arg}' before initialization`);
+          const value=found.cell.token;
+          const type=primitiveUnary('typeof',value.value,s.heap);
+          this.stackPush(f,type,eventId);
+          return {operands:[value.value],origins:[value.origin],result:type,
+            reads:[{kind:'binding',envId:found.env.id,name:arg,
+              version:found.cell.version??0,value:value.value,
+              supplyingEvent:value.origin??null}]};
+        }
         case 'SET':{const v=pop(),b=lookup(s,f.envId,arg);if(!b.cell.initialized)guestFault('ReferenceError',`${arg} is not initialized`);if(b.cell.kind==='const')guestFault('TypeError',`Assignment to constant ${arg}`);b.cell.token=v;b.cell.version=(b.cell.version??0)+1;this.stackPush(f,v.value,eventId);return {...operands(v),result:v.value};}
         case 'UPDATE_BINDING':{
           const b=lookup(s,f.envId,arg.name);
