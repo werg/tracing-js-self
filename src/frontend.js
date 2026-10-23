@@ -351,14 +351,11 @@ export function compile(ast) {
     // parameter bindings and body locals requiring an unmodeled TDZ.
     defaults.forEach((initializer,i)=>{
       if(!initializer)return;
-      emit('GET',params[i],initializer);
-      emit('CONST',{value:['undefined']},initializer);
-      emit('BINARY','===',initializer);
-      const skip=emit('JUMP_IF_FALSE',null,initializer);
+      const guard=emit('DEFAULT_GUARD',{name:params[i],skipPc:null},initializer);
       expr(initializer);
       emit('SET',params[i],initializer);
       emit('POP',null,initializer);
-      instructions[skip].arg=instructions.length;
+      instructions[guard].arg.skipPc=instructions.length;
     });
     statements(body);
     emit('CONST',{value:['undefined']},ast);emit('RETURN',null,ast);

@@ -5,7 +5,8 @@ import {isDeepStrictEqual} from 'node:util';
 import {validateBundle} from '../validation.js';
 
 const selection={
-  'binding.initialize':'value','binding.write':'value','binding.update':'write','binding.read':'read',
+  'binding.initialize':'value','binding.write':'value','binding.update':'write',
+  'binding.read':'read','binding.default.guard':'read',
   'primitive.binary':'value','primitive.unary':'value','template.substitute':'value',
   'function.define':'alloc','object.allocate':'alloc','array.allocate':'alloc',
   'property.read':'read','property.write':'write','property.update':'write',

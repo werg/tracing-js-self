@@ -28,7 +28,8 @@ function requireDataOnly(value,path='state',seen=new WeakSet()){
 }
 const tableNames = ['counters','envs','heap','promises','frames','effects','inputs','control','operations'];
 const opNames = {
-  CONST:'literal.materialize', GET:'binding.read', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
+  CONST:'literal.materialize', GET:'binding.read',
+  DEFAULT_GUARD:'binding.default.guard', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
   CALL:'call.enter', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
   GET_PROP:'property.read', GET_METHOD:'property.read', PUT_PROP:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
@@ -504,6 +505,17 @@ export class Runtime {
             reads:[{kind:'binding',envId:found.env.id,name:arg,
               version:found.cell.version??0,value:value.value,
               supplyingEvent:value.origin??null}]};
+        }
+        case 'DEFAULT_GUARD':{
+          const b=lookup(s,f.envId,arg.name);
+          if(!b.cell.initialized)
+            guestFault('ReferenceError','Default parameter is not initialized');
+          const needsDefault=b.cell.token.value[0]==='undefined';
+          if(!needsDefault)f.pc=arg.skipPc;
+          return {result:['bool',needsDefault],
+            reads:[{kind:'binding',envId:b.env.id,name:arg.name,
+              version:b.cell.version??0,value:b.cell.token.value,
+              supplyingEvent:b.cell.token.origin??null}]};
         }
         case 'SET':{const v=pop(),b=lookup(s,f.envId,arg);if(!b.cell.initialized)guestFault('ReferenceError',`${arg} is not initialized`);if(b.cell.kind==='const')guestFault('TypeError',`Assignment to constant ${arg}`);b.cell.token=v;b.cell.version=(b.cell.version??0)+1;this.stackPush(f,v.value,eventId);return {...operands(v),result:v.value};}
         case 'UPDATE_BINDING':{
