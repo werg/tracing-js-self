@@ -9,6 +9,8 @@ on:
       - 'src/corpus/coverage-selection.mjs'
       - 'src/corpus/source-clusters.mjs'
       - 'src/corpus/trace-quality.mjs'
+      - 'src/corpus/reference-shrinker.mjs'
+      - 'test/reference-shrinker.test.js'
       - 'test/source-clusters.test.js'
       - 'test/trace-quality.test.js'
       - 'test/coverage-selection.test.js'
@@ -25,6 +27,8 @@ on:
       - 'src/corpus/coverage-selection.mjs'
       - 'src/corpus/source-clusters.mjs'
       - 'src/corpus/trace-quality.mjs'
+      - 'src/corpus/reference-shrinker.mjs'
+      - 'test/reference-shrinker.test.js'
       - 'test/source-clusters.test.js'
       - 'test/trace-quality.test.js'
       - 'test/coverage-selection.test.js'
@@ -48,12 +52,12 @@ jobs:
           node-version: '22'
       - run: npm ci
       - name: Verify pinned source hashes, lowering contracts and independent evidence
-        run: node --test test/owned-exercism.test.js test/coverage-selection.test.js test/source-clusters.test.js test/trace-quality.test.js
+        run: node --test test/owned-exercism.test.js test/coverage-selection.test.js test/source-clusters.test.js test/trace-quality.test.js test/reference-shrinker.test.js
       - name: Attempt canonical inputs against original JS, lowered JS and owned runtime
         run: |
           mkdir -p corpus/out
           node tools/verify-exercism-owned.mjs \
-            --per-family 12 --mutations-per-family 8 --max-cases 420 --min-owned 71 \
+            --per-family 12 --mutations-per-family 8 --max-cases 420 --min-owned 71 --shrink-reference-mismatches \
             --output corpus/out/exercism-owned-report.json \
             --review corpus/out/exercism-owned-review.md \
             --local-episodes corpus/out/exercism-owned-locally-verified.jsonl

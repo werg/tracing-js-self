@@ -363,3 +363,16 @@ Run the existing command:
 No newly acquired records or V8 diagnostics become owned verification through
 these heuristics. All output remains explicitly non-admitted. These metrics
 do not certify human readability or intermediate-operation completeness.
+
+
+### Optional bounded native-reference failure minimization
+
+The pinned Exercism original-versus-lowered V8 comparison can now be run
+with --shrink-reference-mismatches. Only an actually reproduced native
+reference disagreement is eligible for deterministic counterexample
+simplification. The shrinker changes JSON-valued *arguments*, preserves
+the exact function entry and requires the original and projected programs to
+continue disagreeing at each accepted step. Its 24-attempt budget includes
+refusals and oracle errors. A minimized case is a diagnostic debugging
+artifact, not a new canonical test, owned verification or admitted training
+episode. A non-reproducible mismatch is explicitly labeled not-reproduced.

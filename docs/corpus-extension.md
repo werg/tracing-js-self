@@ -1581,3 +1581,17 @@ Example: npm run corpus:owned:novelty -- --input
   equivalence detection, independent human readability assessments, or
   downstream megatoken training admission. The previously measured owned and
   admitted episode denominators are not increased by this analysis.
+
+
+### Reproducible native mismatch shrinking (2026-10-23)
+
+- [x] Added opt-in, deterministic, bounded JSON argument shrinking for pinned
+  Exercism original-code versus strict-lowering native V8 disagreements.
+  Every accepted reduction is rechecked by running **both** sources;
+  throws, failed oracles and budget exhaustion never create owned traces.
+- [x] Regression tests cover scalar/string/array reductions, non-reproduction,
+  predicate exceptions and oracle-call limits, with CI opt-in coverage.
+- [ ] General native-to-owned semantic divergence shrinking, stateful command
+  minimization and independent interpreter-step adjudication remain open.
+  Native mismatch minimization does not change acquired, locally owned or
+  training-admitted corpus denominators.

@@ -16,6 +16,7 @@ import {verifyTrainingCase,recheckIndependentTrainingEvidence}
 import {loadPinnedPairs,lowerPinnedProof,extractCanonicalCases}
   from '../src/corpus/owned-exercism.mjs';
 import {generateInputVariations} from '../src/corpus/variation-exercism.mjs';
+import {shrinkReferenceMismatch} from '../src/corpus/reference-shrinker.mjs';
 import {buildOwnedSourceMap,auditSourceSites} from '../src/corpus/original-sites.mjs';
 
 const argv=process.argv.slice(2);
@@ -25,6 +26,7 @@ const maxCases=Number(option('max-cases','1000'));
 const mutationsPerFamily=Number(option('mutations-per-family','0'));
 const maxGenerated=Number(option('max-generated','256'));
 const minOwned=Number(option('min-owned','0'));
+const shrinkMismatches=argv.includes('--shrink-reference-mismatches');
 if(!Number.isSafeInteger(mutationsPerFamily)||mutationsPerFamily<0||mutationsPerFamily>512 ||
    !Number.isSafeInteger(perFamily)||perFamily<1||perFamily>100 ||
    !Number.isSafeInteger(maxCases)||maxCases<1||maxCases>10000 ||
@@ -41,7 +43,7 @@ const records=[],failureReasons={},byExercise={},features={};
 let attempted=0,claimed=0,committed=0;
 const report={schema:'owned-exercism-evidence/1',admitted:false,profile:'training-js/1',
   authority:'owned-runtime-plus-independent-V8-scalar-operation-branch-checks',
-  options:{perFamily,maxCases,maxGenerated,mutationsPerFamily},
+  options:{perFamily,maxCases,maxGenerated,mutationsPerFamily,shrinkMismatches},
   verification:'Full post-serialization independent recheck for each retained locally verified candidate',
   provenance:'Pinned original Exercism JS reference solutions and canonical problem specifications',
   limitations:[
@@ -137,6 +139,15 @@ try{
     }
     const projection=executePure(lowered.source,fixture.entry,fixture.args);
     if(!isDeepStrictEqual(referenceOriginal,projection)){
+      if(shrinkMismatches){
+       item.referenceShrink=shrinkReferenceMismatch(fixture.args,candidate=>{
+        try{
+         const before=executePure(original,fixture.entry,candidate);
+         const after=executePure(lowered.source,fixture.entry,candidate);
+         return !isDeepStrictEqual(before,after);
+        }catch{return false;}
+       },{maxEvaluations:24});
+      }
       fail(item,'lowering_mismatch','Function-only lowering changed original ESM behavior or arguments');
       group.referenceMismatch++;continue;
     }
