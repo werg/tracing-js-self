@@ -34,6 +34,17 @@ phase paths. The training profile accepts only synchronous, effect-free,
 non-throwing entries; committed terminal guest throws in the common runtime do
 not enable an exception-training category.
 
+The strict training frontend also supports common bounded control flow:
+ternary selection, `for` (one initialized `let` binding or expression init),
+`do…while`, loop `break`/`continue`, and prefix/postfix `++`/`--`
+on lexical identifiers. Updates execute a scalar ToNumeric conversion and
+record one versioned read/write step, including the expression's returned
+old/new numeric value. Node V8 independently observes the executed update
+expression at the source site; replay and serialization independently check
+the owned path. Captured per-iteration for-let closures, member updates and
+object-valued update coercions fail closed. This is a bounded profile
+extension, not whole-language conformance or training-data admission.
+
 A separate source-instrumented V8 run now compares **executed scalar unary/binary/compound-assignment values at each source occurrence**, including overwritten intermediates, with the owned journal's source sites. The uninstrumented and instrumented final observable graphs must agree. Other semantic families and spec phase internals are explicitly unverified; this is neither full intermediate-state proof nor model-data admission.
 
 The bounded mock host bridge now dispatches only **versioned, immutable `canonical-json/1` request payloads**, materialized from the committed graph before the adapter sees them. Its journal independently checks the exact JSON bytes, operation signature, and historical graph versions. Adapters receive frozen plain JSON data; original guest tags remain only in the private journal. Fulfilled/pending guest-promise adoption regressions also exist. The deterministic fixture generator emits candidate
