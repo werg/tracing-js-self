@@ -23,6 +23,10 @@
       "types": "./src/evaluated-modules.d.ts",
       "default": "./src/evaluated-modules.js"
     },
+    "./evaluated-module-session": {
+      "types": "./src/evaluated-module-session.d.ts",
+      "default": "./src/evaluated-module-session.js"
+    },
     "./native": {
       "types": "./src/host/native-driver.d.ts",
       "default": "./src/host/native-driver.js"
