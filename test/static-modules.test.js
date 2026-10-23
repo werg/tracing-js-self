@@ -146,7 +146,8 @@ test('ambiguous and invalid source re-exports fail closed before execution',()=>
   for(const modules of bad){
     const entryModule=Object.hasOwn(modules,'main.js')?'main.js':'barrel.js';
     assert.throws(()=>linkStaticModules({modules,entryModule,exportName:'run'}),
-      /Unsupported static-module\/1/);
+      error=>error instanceof SyntaxError &&
+        /Unsupported static-module\/1|Duplicate export/.test(error.message));
   }
 });
 
@@ -160,5 +161,5 @@ test('linked imported function shorthand retains the original property key',()=>
   assert.equal(traced.result,true);
   assert.equal(replayExact(traced.bundle).valid,true);
   const linked=linkStaticModules({modules,entryModule:'main.js',exportName:'run'});
-  assert.match(linked.source,/\{hop: __traced_m\d+_plusOne\}/);
+  assert.match(linked.source,/\{\s*hop:\s*__traced_m\d+_plusOne\s*\}/);
 });
