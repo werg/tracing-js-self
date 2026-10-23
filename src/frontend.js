@@ -163,7 +163,7 @@ export function parse(source) {
 let site=0;
 export function compile(ast) {
   site=0;const programs={};let next=0;
-  function bodyProgram(body,params=[],async=false,defaults=[]) {
+  function bodyProgram(body,params=[],async=false,defaults=[],restIndex=-1) {
     const id=`code${++next}`, instructions=[];let loopDepth=0,forOfIndex=0;
     const emit=(op,arg,node)=>{const inst={op,arg,siteId:`s${++site}`,start:node?.start??0,end:node?.end??0};instructions.push(inst);return instructions.length-1;};
     // Declarations are created before execution for a block's scope.
@@ -175,7 +175,7 @@ export function compile(ast) {
         for(const d of declarations)if(d.kind!=='var')emit('DECLARE',{name:d.id,kind:d.kind},d);
       }
       for(const n of nodes)if(n.type==='Function'){
-        const fid=bodyProgram(n.body.body,n.params,n.async,n.defaults);
+        const fid=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex);
         emit('DEF_FN',{name:n.id,codeId:fid,params:n.params,async:n.async},n);
       }
       for(const n of nodes)if(n.type!=='Function')stmt(n);
@@ -185,7 +185,7 @@ export function compile(ast) {
       switch(n.type){
         case 'Literal': emit('CONST',{value:n.value,raw:n.raw},n);break;
         case 'FunctionExpr':{
-          const codeId=bodyProgram(n.body.body,n.params,false,n.defaults);
+          const codeId=bodyProgram(n.body.body,n.params,false,n.defaults,n.restIndex);
           emit('MAKE_FUNCTION',{codeId,arrow:n.arrow},n);
           break;
         }
@@ -231,7 +231,10 @@ export function compile(ast) {
         case 'Member':expr(n.object);expr(n.property);emit('GET_PROP',null,n);break;
         case 'Call':
           if(n.callee.type==='Member'){expr(n.callee.object);expr(n.callee.property);emit('GET_METHOD',null,n.callee);}else expr(n.callee);
-          for(const a of n.args)expr(a);emit('CALL',n.args.length,n);break;
+          for(const a of n.args)expr(a.type==='Spread'?a.argument:a);
+          emit('CALL',n.args.some(a=>a.type==='Spread')?
+            {count:n.args.length,spread:n.args.flatMap((a,i)=>a.type==='Spread'?[i]:[])}:
+            n.args.length,n);break;
         case 'Proxy':expr(n.target);expr(n.handler);emit('NEW_PROXY',null,n);break;
         case 'Array':emit('NEW_ARRAY',null,n);for(let i=0;i<n.elements.length;i++){emit('DUP',null,n);emit('CONST',{value:['str',String(i)]},n);expr(n.elements[i]);emit('PUT_PROP',null,n);emit('POP',null,n);}break;
         case 'Object':emit('NEW_OBJECT',null,n);for(const item of n.properties){emit('DUP',null,n);emit('CONST',{value:['str',item.key]},n);expr(item.value);emit('PUT_PROP',null,n);emit('POP',null,n);}break;
@@ -418,7 +421,7 @@ export function compile(ast) {
     });
     statements(body);
     emit('CONST',{value:['undefined']},ast);emit('RETURN',null,ast);
-    programs[id]={id,params,async,varNames:collectVarBindings(body),instructions};return id;
+    programs[id]={id,params,restIndex,async,varNames:collectVarBindings(body),instructions};return id;
   }
   const entry=bodyProgram(ast.body);
   return {entry,programs,sites:Object.values(programs).flatMap(x=>x.instructions.map(({siteId,start,end,op})=>({siteId,start,end,op,codeId:x.id})))};
