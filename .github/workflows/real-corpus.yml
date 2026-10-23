@@ -9,6 +9,7 @@ on:
       - 'src/spec-operations.js'
       - 'src/frontend.js'
       - 'src/training/**'
+      - 'catalog/operations.json'
       - 'corpus/**'
       - 'tools/build-real-corpus.mjs'
       - 'tools/audit-owned-coverage.mjs'
