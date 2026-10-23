@@ -214,7 +214,7 @@ export class Runtime {
   }
   /** Explicit invocation entry for training-js/1. The top level contains only
    * an exact strict directive and named ordinary function declarations. */
-  startEntry({text,source=null,functionName,args=[]}={}) {
+  startEntry({text,source=null,functionName,args=[],allowAsync=false}={}) {
     if(this.started)throw new Error('Run already started');
     if(!source)source=this.registerSource({text,trainingProfile:true});
     if(source.parser!==TRAINING_PARSER)throw new SyntaxError('Entry requires the Acorn training profile');
@@ -222,7 +222,7 @@ export class Runtime {
     if(!ast.body.length || ast.body[0].type!=='Expression' ||
        ast.body[0].expr.type!=='Literal' ||
        ast.body[0].expr.value[0]!=='str' || ast.body[0].expr.value[1]!=='use strict' ||
-       ast.body.slice(1).some(n=>n.type!=='Function' || n.async))
+       ast.body.slice(1).some(n=>n.type!=='Function' || (n.async && !allowAsync)))
       throw new SyntaxError('training-js/1 requires a strict function bundle without top-level effects');
     const definitions=this.programs[source.entry].instructions.filter(x=>x.op==='DEF_FN');
     if(new Set(definitions.map(x=>x.arg.name)).size!==definitions.length)
@@ -231,7 +231,7 @@ export class Runtime {
     if(!selected)throw new ReferenceError('Unknown entry function');
     const state=this.state, global=this.newEnv(state);
     state.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
-    for(const name of ['Object','Array','Number','Math'])
+    for(const name of ['Object','Array','Number','Math','Promise'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     state.control.a0.globalEnvId=global;
@@ -242,7 +242,8 @@ export class Runtime {
       state.envs[global].bindings[def.arg.name]={kind:'function',initialized:true,token:token(['ref',id]),version:0};
     }
     const imported=importGraph(state,args,kind=>this.next(state,kind));
-    const root=this.newFrame(state,selected.arg.codeId,global,null,null,imported.map(v=>token(v)));
+    const rootPromise=selected.arg.async?this.newPromise(state):null;
+     const root=this.newFrame(state,selected.arg.codeId,global,null,rootPromise,imported.map(v=>token(v)));
     state.control.a0.activeFrameId=root;
     state.control.a0.status='running';
     this.entrySpec={kind:'function',sourceId:source.sourceId,functionName,arguments:imported};
