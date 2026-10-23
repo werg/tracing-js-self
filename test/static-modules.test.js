@@ -80,3 +80,85 @@ test('unreachable module source never enters the executable guest bundle',()=>{
   assert(!linked.source.includes('928374'));
   assert(!JSON.stringify(linked.metadata).includes('928374'));
 });
+
+test('function-only named re-exports link through multiple TS modules and match native ESM',async()=>{
+  const base='export function bump(x: number){return x+1;}';
+  const barrel="export {bump as step} from './base.ts';";
+  const main="import {step as next} from './barrel.ts'; export function run(x: number){return next(x)*3;}";
+  const modules={'base.ts':base,'barrel.ts':barrel,'main.ts':main};
+  const traced=executeStaticModule({modules,entryModule:'main.ts',exportName:'run',args:[4]});
+  assert.equal(traced.result,15);
+  assert.equal(validateBundle(traced.bundle).valid,true);
+  assert.equal(replayExact(traced.bundle).valid,true);
+  assert(traced.metadata.links.some(link=>link.kind==='reexport'&&link.exported==='step'));
+  const baseURL='data:text/javascript,'+encodeURIComponent('export function bump(x){return x+1;}');
+  const barrelURL='data:text/javascript,'+encodeURIComponent(
+    'export {bump as step} from '+JSON.stringify(baseURL)+';');
+  const mainURL='data:text/javascript,'+encodeURIComponent(
+    'import {step as next} from '+JSON.stringify(barrelURL)+
+    '; export function run(x){return next(x)*3;}');
+  assert.equal(traced.result,(await import(mainURL)).run(4));
+});
+
+test('star re-exports resolve same-origin diamonds and cycles but not default',()=>{
+  const modules={
+    'a.js':"export function inc(n){return n+1;}",
+    'left.js':"export * from './a.js';",
+    'right.js':"export {inc} from './a.js';",
+    'barrel.js':"export * from './left.js'; export * from './right.js';",
+    'loop.js':"export * from './barrel.js'; export * from './loop.js';",
+    'main.js':"import {inc} from './loop.js'; export function run(n){return inc(n)*2;}"
+  };
+  const run=executeStaticModule({modules,entryModule:'main.js',exportName:'run',args:[7]});
+  assert.equal(run.result,16);
+  assert.equal(replayExact(run.bundle).valid,true);
+  assert.equal(run.metadata.modules.length,6);
+  const defaults={
+    'base.js':'export default function hidden(){return 1;}',
+    'barrel.js':"export * from './base.js';"
+  };
+  assert.throws(()=>linkStaticModules({modules:defaults,entryModule:'barrel.js'}),
+    /unresolved export/);
+});
+
+test('ambiguous and invalid source re-exports fail closed before execution',()=>{
+  const bad=[
+    {
+      'a.js':'export function f(){return 1;}',
+      'b.js':'export function f(){return 2;}',
+      'barrel.js':"export * from './a.js'; export * from './b.js';",
+      'main.js':"import {f} from './barrel.js'; export function run(){return f();}"
+    },
+    {
+      'a.js':'export function other(){return 1;}',
+      'barrel.js':"export {missing} from './a.js';",
+      'main.js':"import {missing} from './barrel.js'; export function run(){return missing();}"
+    },
+    {
+      'a.js':'export function f(){return 1;}',
+      'barrel.js':"export * as ns from './a.js'; export function run(){return 1;}"
+    },
+    {
+      'a.js':'export function f(){return 1;}',
+      'barrel.js':"export {f as foo} from './a.js'; export {f as foo} from './a.js';"
+    }
+  ];
+  for(const modules of bad){
+    const entryModule=Object.hasOwn(modules,'main.js')?'main.js':'barrel.js';
+    assert.throws(()=>linkStaticModules({modules,entryModule,exportName:'run'}),
+      /Unsupported static-module\/1/);
+  }
+});
+
+test('linked imported function shorthand retains the original property key',()=>{
+  const modules={
+    'base.js':'export function plusOne(x){return x+1;}',
+    'main.js':"import {plusOne as hop} from './base.js'; "+
+      "export function run(){const cell={hop}; return cell.hop===hop;}"
+  };
+  const traced=executeStaticModule({modules,entryModule:'main.js',exportName:'run'});
+  assert.equal(traced.result,true);
+  assert.equal(replayExact(traced.bundle).valid,true);
+  const linked=linkStaticModules({modules,entryModule:'main.js',exportName:'run'});
+  assert.match(linked.source,/\{hop: __traced_m\d+_plusOne\}/);
+});
