@@ -1,0 +1,31 @@
+{
+  "repository": "exercism/problem-specifications",
+  "revision": "650bebeb39ad40439175288042aece982b0a90a9",
+  "license": "MIT",
+  "files": {
+    "exercises/all-your-base/canonical-data.json": "9a05309bded45602ab497220800c4b7ba7ad6bb2",
+    "exercises/alphametics/canonical-data.json": "49e661e0a9ce29e2625af9130e930ed0e2203d70",
+    "exercises/anagram/canonical-data.json": "bdcf6fe32029f591a7501ab5d6a21f80317a4149",
+    "exercises/binary-search/canonical-data.json": "92027d4181f405ea8d477694f4afb70725e75a44",
+    "exercises/book-store/canonical-data.json": "7006ff4be49d67a07fdcb41ae7136d306934668a",
+    "exercises/change/canonical-data.json": "b222e79175b873ae03c257acab92ca1f66376aea",
+    "exercises/clock/canonical-data.json": "76f5f86798b4cda73e9ff1f9008709a0822a24b2",
+    "exercises/complex-numbers/canonical-data.json": "8e91ef658dff31bb5f33d439382949e4817030c0",
+    "exercises/custom-set/canonical-data.json": "934e5bc2e1e81f54bbb5dd2d99e1eddf8f0b5892",
+    "exercises/dominoes/canonical-data.json": "a2925a3dc682eaf34c56a3934c746ae080b78e53",
+    "exercises/grade-school/canonical-data.json": "90727210391278e5cea7107068565e56c64909ff",
+    "exercises/high-scores/canonical-data.json": "375c8b50652ded22d1650289e4c4fdaae4a9577f",
+    "exercises/knapsack/canonical-data.json": "c3502e0069e5fd6b5be9467b6807621823a59c91",
+    "exercises/largest-series-product/canonical-data.json": "244bb6ebfef1b93f7ccd857ea50c001d81dd6685",
+    "exercises/luhn/canonical-data.json": "78174b9128a1666ce43190eaafb6b00cd3c33479",
+    "exercises/matching-brackets/canonical-data.json": "6fb88f5e0036b76e2120cf9187d91b2a0fee5adf",
+    "exercises/robot-simulator/canonical-data.json": "be375a92a6428871f1c1dd5d085e4c3fda28d126",
+    "exercises/roman-numerals/canonical-data.json": "1edb968d321bc4b9473e446a5d3f1daa173a4d56",
+    "exercises/run-length-encoding/canonical-data.json": "bb82ed9fe213f4154b83ba3efcee595164fa9115",
+    "exercises/say/canonical-data.json": "bdd63d150d6ea06db4092e993a6e44a692be5e52",
+    "exercises/sieve/canonical-data.json": "27cf604d398fae0e24eaff6be07dd1528d4e865b",
+    "exercises/spiral-matrix/canonical-data.json": "460a88f142bcaf3264fc570e1f7fad63bdb85f4f",
+    "exercises/sublist/canonical-data.json": "e6a1491731e25147c6b1ddd071f70c3023c6a6d3",
+    "exercises/word-count/canonical-data.json": "45907e035096ee617d874021f8c0788c0cf279ea"
+  }
+}

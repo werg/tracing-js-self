@@ -101,3 +101,22 @@ after a real library callback, middleware or queue operation. These record
 explicit console effects before failure, checked in the separate reference
 run. An exception is an expected benchmark path, not a successful return;
 the observed failure kind and message must still match the reference.
+
+## Optional adversarial extension (2026-10-23)
+
+The 14 scenario families in [extension-cases.mjs](extension-cases.mjs) reuse
+this suite's exact vendored upstream package bytes. They target accessor
+side effects, reentrant subscriptions, thenable assimilation, promise
+ordering, iterator/alias mutations, nested middleware exception unwinding
+and cross-library effects. They are user-authored drivers of real library
+implementations, **not** upstream test sources or owned semantic traces.
+
+```sh
+npm run corpus:stateful -- --suite adversarial --per-scenario 12 \
+  --output corpus/out/adversarial-traces.jsonl
+npm run corpus:stateful:audit -- --suite adversarial \
+  --input corpus/out/adversarial-traces.jsonl --require-complete
+```
+
+`--suite combined` also exists; omitting `--suite` still selects the original
+76-family baseline, preserving the previously measured 912-case denominator.

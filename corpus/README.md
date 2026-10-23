@@ -126,3 +126,10 @@ vendor source and licenses are under `stateful/upstream/`.
 
 The [dated 912-run findings and trace-quality assessment](stateful/findings/2026-10-23/README.md)
 record exact coverage and remaining evidence limitations.
+
+## External snapshot and adversarial extension
+
+See [extension/README.md](extension/README.md) for pinned upstream Test262,
+Exercism and JSON Schema input catalogs, streaming import commands, and the
+separate 14-family adversarial scenario suite. These acquired inputs are **not**
+owned semantic traces. The original baseline counts above remain unchanged.

@@ -51,7 +51,10 @@
     "corpus:owned-coverage": "node tools/audit-owned-coverage.mjs",
     "corpus:owned-merge": "node tools/merge-owned-coverage.mjs",
     "corpus:stateful:audit": "node tools/audit-stateful-corpus.mjs",
-    "corpus:stateful": "node tools/build-stateful-corpus.mjs"
+    "corpus:stateful": "node tools/build-stateful-corpus.mjs",
+    "corpus:external": "node tools/import-external-corpus.mjs",
+    "corpus:adversarial": "node tools/build-stateful-corpus.mjs --suite adversarial",
+    "corpus:adversarial:audit": "node tools/audit-stateful-corpus.mjs --suite adversarial"
   },
   "bin": {
     "tracing-js-self": "./bin/tracing.js"

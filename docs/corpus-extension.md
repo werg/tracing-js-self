@@ -958,3 +958,109 @@ Test262 alone can provide tens of thousands of cases, but won't adequately repre
 **The highest-leverage idea is to turn the enormous body of existing JS/TS unit tests into a machine-readable source of executable program/input pairs.**
 
 Combined with your existing observational and owned-verification infrastructure, that offers a credible route from roughly 1,800 current executions to millions of reproducible execution attempts, while preserving a strict distinction between acquired examples, diagnostic observations, and genuinely verified training trajectories.
+
+
+---
+
+## Implementation status — 2026-10-23
+
+This section is a **measured implementation ledger**. The sections above are
+the original proposal; aspirations about millions of episodes are **not**
+completion claims. The acquisition pathway now deliberately separates
+discovered fixtures from reference execution, V8 observation, owned trace
+verification and downstream training admission.
+
+### Implemented in this change
+
+- [x] Generic, offline, streaming `external-corpus-fixture/1` acquisition:
+  full source-relative paths, original-file SHA-256, pinned upstream commits,
+  exact expected data, deterministic project-level splits, explicit non-admission,
+  static hardness tags and JSONL/summary output.
+- [x] Test262 importer with original source, strict/sloppy/raw/module variants,
+  flags/features/includes and declared negative phases. **Harness execution is
+  not yet implemented**; Test262 expected outcomes are not execution evidence.
+- [x] Recursive Exercism canonical-data importer; exports structured input,
+  expected result, property and test IDs without claiming a runnable solution.
+- [x] JSON Schema Test Suite importer with schema/data/validity contracts,
+  dialect grouping and expected validity. No validator is implicitly supplied.
+- [x] CommonMark `spec.json` importer (requires a separately generated,
+  pinned spec export) and literal Jest/Vitest `test.each` and `it.each` parser.
+  No dynamic upstream test code is evaluated in acquisition.
+- [x] Exact SHA-1 Git blob locks for **92 original upstream snapshot files**:
+  **42 Test262 tests**, **26 JSON Schema suite files**, and **24 Exercism
+  canonical-data files**, plus their original upstream LICENSE files.
+- [x] **14 new adversarial scenario families** built on previously pinned,
+  unmodified production libraries. The existing stateful baseline remains
+  untouched; `--suite adversarial` and `--suite combined` are opt-in.
+- [x] Unit and snapshot-integrity regression tests; existing generator/auditor
+  defaults retained.
+
+### Verification status (keep denominators separate)
+
+| Item | Acquired / implemented | Independently executed | Owned verified | Admitted |
+| --- | ---: | ---: | ---: | ---: |
+| Pinned external source/data snapshot files | 92 | 0 by this importer | 0 | 0 |
+| New adversarial real-library scenario families | 14 | Run via opt-in diagnostic command | 0 claimed | 0 |
+| Existing utility corpus (unchanged) | 78 families / 936 invocations | 936 V8 checks in prior ledger | 684 in updated gap ledger | 0 |
+| Existing stateful baseline (unchanged) | 76 families / 912 invocations | 912 V8 checks in prior ledger | 0 | 0 |
+
+"42 Test262 tests" means 42 upstream **files**, potentially multiple strict
+variants, not 42 verified executions. Structured test-data files can contain
+multiple input cases. Do not add source-file counts to runnable episode counts.
+
+### Remaining work / NOT IMPLEMENTED
+
+- [ ] Automatically acquire full upstream suites in CI or a sandboxed worker.
+  The importer supports exact, clean, pinned local checkouts; repository
+  discovery, networking and large-dataset storage orchestration are not done.
+- [ ] Complete official Test262 harness, parse/early/runtime negative oracle,
+  async completion, module resolution and independent reference observations.
+- [ ] Bind Exercism canonical inputs to genuine pinned JS/TS reference solutions.
+- [ ] Pair JSON Schema / CommonMark inputs with separately pinned and verified
+  real JS implementation APIs; no schema/parser execution currently occurs.
+- [ ] A general dynamic Jest/Vitest/Node test invocation recorder with effects
+  and dependency closures; current `test.each` support is literal-data only.
+- [ ] Fuzz / mutate inputs subject to a real reference oracle, state-model
+  sequence generation, failure shrinking and path-based deduplication.
+- [ ] Admit any new external records as owned `semantic-execution/2`. The new
+  V8 adversarial drivers remain diagnostic; no unverified observations are
+  promoted to training data.
+- [ ] Independently certify intermediate operations, especially Proxy traps,
+  accessor side effects, async scheduling and Map/Set internal semantics.
+- [ ] Quantitatively measure trace *readability and succinctness*, not merely
+  terminal result agreement or event counts.
+
+### Further adversarial source priorities
+
+Prefer difficult **real execution** paths, not just tiny spec checks. Potential
+upstream test suites for subsequent pinned acquisition:
+
+| Source | Hard cases to target | Current status |
+| --- | --- | --- |
+| [Immer](https://github.com/immerjs/immer) | Nested Proxy drafts, patch generation, structural sharing, frozen originals | Candidate; not imported |
+| [MobX](https://github.com/mobxjs/mobx) | Reactions, transactions, dynamic dependency graphs, computed cycles | Candidate; not imported |
+| [RxJS](https://github.com/ReactiveX/rxjs) | Hot/cold streams, reentrant emissions, schedulers, cancellation, error teardown | Candidate; not imported |
+| [XState](https://github.com/statelyai/xstate) | Parallel/history states, entry/exit effects, delayed transitions, actors | Candidate; not imported |
+| [Yjs](https://github.com/yjs/yjs) | CRDT concurrency, shared references, transaction ordering, merges | Candidate; not imported |
+| [Automerge](https://github.com/automerge/automerge) | Merges, causal histories, immutable snapshots; WASM boundary | Candidate; not imported |
+| [ProseMirror](https://github.com/ProseMirror/prosemirror-state) | Transaction steps, mapped positions, plugin callbacks, editor invariants | Candidate; not imported |
+| [SolidJS](https://github.com/solidjs/solid) | Fine-grained reactive computations, scheduling and dependency tracking | Candidate; not imported |
+| [Effector](https://github.com/effector/effector) | Event graph composition and asynchronous effect ordering | Candidate; not imported |
+| [JSONata](https://github.com/jsonata-js/jsonata) | Recursive queries, higher-order functions, closures, regex and errors | Candidate; not imported |
+| [Ajv](https://github.com/ajv-validator/ajv) | Dynamic schemas/ref resolution, generated functions, mutation/coercion | Candidate; not imported |
+| [fast-check](https://github.com/dubzzz/fast-check) | Stateful command shrinking, generators, lazy streams, failing seeds | Candidate; not imported |
+| [Temporal polyfill](https://github.com/js-temporal/temporal-polyfill) | Calendars, time zones, exotic comparisons and exception paths | Candidate; not imported |
+| [Node streams](https://github.com/nodejs/node) | Backpressure, retries, abort signals, async iterators, deferred cleanup | Candidate; not imported |
+| [React reconciler](https://github.com/facebook/react) | Reentrant updates, scheduler priorities, effect lifecycle, tearing | Candidate; not imported |
+| [Svelte runtime](https://github.com/sveltejs/svelte) | Reactive scheduling, generated compiled JS, dynamic invalidation | Candidate; not imported |
+| [TypeScript language services](https://github.com/microsoft/TypeScript) | Incremental caches, symbol resolution, graph invalidation, huge bundles | Candidate; not imported |
+
+For future acceptance, evaluate **semantic compression quality** explicitly:
+dependency depth, irreversible side effects, alias graphs, nested callback
+ordering, branch/value provenance, intermediate-event oracle coverage, and how
+many causally necessary events remain after lossless normalization. A short
+trace that omits observable getters, proxy calls, or microtask ordering is not
+a successful succinct trace.
+
+Reproduction commands, lock format, scope and warnings are in
+[`corpus/extension/README.md`](../corpus/extension/README.md).

@@ -1,0 +1,33 @@
+{
+  "repository": "json-schema-org/JSON-Schema-Test-Suite",
+  "revision": "89e83a74014617ffbe79a56d83d14d054cd11417",
+  "license": "MIT",
+  "files": {
+    "tests/draft2020-12/allOf.json": "9e87903fe211027fbd9d81dbf455877e804f676c",
+    "tests/draft2020-12/anyOf.json": "89b192dbd0a6e75ed6376935233ec7a9f20c4f20",
+    "tests/draft2020-12/contains.json": "08a00a753f7826aebfbd229f9cd00c073aea6b60",
+    "tests/draft2020-12/dependentSchemas.json": "1c5f0574a0910b7274797963e13f02dc618494cb",
+    "tests/draft2020-12/dynamicRef.json": "eba4b441b4253b1a7df6cbbcc753d886ecadc2f8",
+    "tests/draft2020-12/if-then-else.json": "2588a9ca1feea5a7760a8ffdac417e58d4b3f014",
+    "tests/draft2020-12/infinite-loop-detection.json": "46f157a35a510057fd218763aaed8047731ea1c1",
+    "tests/draft2020-12/patternProperties.json": "5a0ce941bc9e56578d8c5b0955e212f57f9dc32e",
+    "tests/draft2020-12/prefixItems.json": "0adfc069e3f153ccf2b1062a4615a7d6095c2bb7",
+    "tests/draft2020-12/propertyNames.json": "84ca2b84e81381155f885eadcce79b17d901f029",
+    "tests/draft2020-12/ref.json": "9ca82eeb0198c8bd379662107cc870f7317d2b06",
+    "tests/draft2020-12/unevaluatedItems.json": "d8a7c1b5b4d603d74e072fbb71dc7a58703c4619",
+    "tests/draft2020-12/unevaluatedProperties.json": "1995d0ea9b92d6589ee4ce316aad3d4381e23fa0",
+    "tests/draft7/additionalItems.json": "6ef4212b1f37a705abe7c2525078e00cf3a52290",
+    "tests/draft7/allOf.json": "ec9319e1436fa303d8f385c9a9da759937e9238c",
+    "tests/draft7/anyOf.json": "ab5eb386b4385af2697c352ec2667c7f5c02135c",
+    "tests/draft7/contains.json": "2b1a51520e92b2ba0f450393aad92a885f7ab878",
+    "tests/draft7/dependencies.json": "c0bd809f6828e33d70995dc06335b24ee053d0d7",
+    "tests/draft7/if-then-else.json": "a7302f1ef5f0a82d08f54fa1ccf8956c487d2082",
+    "tests/draft7/infinite-loop-detection.json": "f98c74fc6409c7c3be3474e207a6bdc485f048e3",
+    "tests/draft7/oneOf.json": "c30a65c0d4f23fe8a73f00a45495c30b06ad594d",
+    "tests/draft7/patternProperties.json": "c276e6479828d44fa10f3edac537b9f1a93138a4",
+    "tests/draft7/properties.json": "5b971ca0ef7e7161c3a914e2a81565ff5a9032a6",
+    "tests/draft7/ref.json": "82e1e16725e2bd0bb0496b192b09a78875a8e085",
+    "tests/draft7/refRemote.json": "450787af6b6e83226d0b7e1a75f211934d40b4e0",
+    "tests/draft7/uniqueItems.json": "d2730c60c620d0fc149f23b05924d3b66f6ff301"
+  }
+}

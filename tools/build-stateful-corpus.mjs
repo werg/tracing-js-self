@@ -8,10 +8,15 @@ import {resolve,dirname} from 'node:path';
 import {createHash} from 'node:crypto';
 import ts from 'typescript';
 import {observeProgram} from '../src/observational.js';
-import {scenarios,upstream,pinnedSha256} from '../corpus/stateful/cases.mjs';
+import {scenarios as baselineScenarios,upstream,pinnedSha256} from '../corpus/stateful/cases.mjs';
+import {adversarialScenarios} from '../corpus/stateful/extension-cases.mjs';
 
 const argv=process.argv.slice(2);
 const arg=(name,fallback)=>argv.includes(name)?argv[argv.indexOf(name)+1]:fallback;
+const suite=arg('--suite','baseline');
+if(!['baseline','adversarial','combined'].includes(suite))throw new Error('Invalid --suite');
+const scenarios=suite==='baseline'?baselineScenarios:suite==='adversarial'?
+  adversarialScenarios:[...baselineScenarios,...adversarialScenarios];
 const output=resolve(arg('--output','corpus/out/stateful-traces.jsonl'));
 const reportFile=resolve(arg('--report','corpus/out/stateful-report.json'));
 const reviewFile=resolve(arg('--review','corpus/out/stateful-review.md'));
@@ -158,7 +163,7 @@ const report={schema:'stateful-real-source-report/1',admitted:false,
  authority:'native-V8-final-observable-outcome-only',
  fixtureEnvironment:{randomSeed:42,clock:'fixed-per-seed',externalAccess:'none',moduleLoader:'vendored-only',
   sideEffects:'captured in explicit scenario return graph; no real network/disk'},
- options:{perScenario,maxEvents,limit,timeoutMs},counts,
+ options:{suite,perScenario,maxEvents,limit,timeoutMs},counts,
  quantiles:{bytes:{p50:quantile(sortedBytes,.5),p90:quantile(sortedBytes,.9)},
   events:{p50:quantile(sortedEvents,.5),p90:quantile(sortedEvents,.9)}},
  byProject,byFamily,bySplit,perKind,failures:failed,

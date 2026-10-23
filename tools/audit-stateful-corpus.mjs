@@ -5,9 +5,14 @@ import {createHash} from 'node:crypto';
 import {createReadStream,readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {createInterface} from 'node:readline';
 import {resolve,dirname} from 'node:path';
-import {scenarios,upstream,pinnedSha256} from '../corpus/stateful/cases.mjs';
+import {scenarios as baselineScenarios,upstream,pinnedSha256} from '../corpus/stateful/cases.mjs';
+import {adversarialScenarios} from '../corpus/stateful/extension-cases.mjs';
 
 const argv=process.argv.slice(2),arg=(f,d)=>argv.includes(f)?argv[argv.indexOf(f)+1]:d;
+const suite=arg('--suite','baseline');
+if(!['baseline','adversarial','combined'].includes(suite))throw new Error('Invalid --suite');
+const scenarios=suite==='baseline'?baselineScenarios:suite==='adversarial'?
+  adversarialScenarios:[...baselineScenarios,...adversarialScenarios];
 const input=resolve(arg('--input','corpus/out/stateful-traces.jsonl'));
 const output=resolve(arg('--output','corpus/out/stateful-quality.json'));
 const review=resolve(arg('--review','corpus/out/stateful-quality.md'));
@@ -125,13 +130,14 @@ for await(const line of createInterface({input:createReadStream(input),crlfDelay
 if(complete){
   for(const scenario of scenarios)for(let i=0;i<12;i++)
     if(!seen.has(scenario.id+'#'+i))throw new Error('Missing stateful scenario '+scenario.id+'#'+i);
-  if(totals.invocations!==912)throw new Error('Incomplete pinned 912-case stateful corpus');
+  if(totals.invocations!==scenarios.length*12)
+    throw new Error('Incomplete '+suite+' stateful corpus');
 }
 if(totals.nativeVerified<minVerified)
   throw new Error('Insufficient independent stateful outcomes: '+totals.nativeVerified+' < '+minVerified);
 if(totals.recordedByteDisagreements||totals.sideEffectMismatches||totals.sourceSiteViolations)
   throw new Error('Stateful diagnostic integrity check failed: '+JSON.stringify(totals));
-const data={schema:'stateful-quality-audit/1',admitted:false,
+const data={schema:'stateful-quality-audit/1',suite,admitted:false,
   authority:'trusted-V8-final-observable-outcome-only',fullCorpus:complete,
   scenarioFamilies:scenarios.length,upstreamModules:pinned.size,
   totals,projectSplits,kinds,byProject,byFamily,byModuleSource,failures,
@@ -144,7 +150,7 @@ const data={schema:'stateful-quality-audit/1',admitted:false,
 mkdirSync(dirname(output),{recursive:true});mkdirSync(dirname(review),{recursive:true});
 writeFileSync(output,JSON.stringify(data,null,2)+'\n');
 const lines=['# Stateful full-corpus audit','','**Diagnostic V8 only; no admitted training episodes.**','',
-  '- Evaluated: '+totals.invocations+'/912 pinned real-library invocations',
+  '- Evaluated: '+totals.invocations+'/'+(scenarios.length*12)+' pinned real-library invocations',
   '- Independently matching final outcomes: '+totals.nativeVerified,
   '- Returns / abrupt completions: '+totals.returnCompletions+' / '+totals.throwCompletions,
   '- Events / heap changes: '+totals.events+' / '+totals.heapChanges,

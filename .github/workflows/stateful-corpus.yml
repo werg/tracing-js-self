@@ -65,6 +65,17 @@ jobs:
             --min-verified 912 \
             --output corpus/out/stateful-quality.json \
             --review corpus/out/stateful-quality.md
+      - name: Exercise additional adversarial source interactions (28 executions)
+        run: |
+          node tools/build-stateful-corpus.mjs --suite adversarial \
+            --per-scenario 2 --min-verified 0 \
+            --output corpus/out/adversarial-traces.jsonl \
+            --report corpus/out/adversarial-report.json \
+            --review corpus/out/adversarial-review.md
+          node tools/audit-stateful-corpus.mjs --suite adversarial \
+            --input corpus/out/adversarial-traces.jsonl \
+            --output corpus/out/adversarial-quality.json \
+            --review corpus/out/adversarial-quality.md
       - name: Upload diagnostics including all failures
         uses: actions/upload-artifact@v4
         with:
@@ -75,4 +86,9 @@ jobs:
             corpus/out/stateful-review.md
             corpus/out/stateful-quality.json
             corpus/out/stateful-quality.md
+            corpus/out/adversarial-traces.jsonl
+            corpus/out/adversarial-report.json
+            corpus/out/adversarial-review.md
+            corpus/out/adversarial-quality.json
+            corpus/out/adversarial-quality.md
           if-no-files-found: error

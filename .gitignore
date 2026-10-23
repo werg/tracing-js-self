@@ -9,3 +9,6 @@ test262-execution-report*.json
 # Local training exports (sidecars may contain full private machine state)
 training-local.jsonl
 training-manifest.json
+
+# Locally produced external manifests and large diagnostic traces
+corpus/out/
