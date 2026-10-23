@@ -46,7 +46,7 @@ function parseOne(file,text,sources){
   const lowering=compileBoundedTypeScript(text,{path:file});
   const ast=parseAcorn(lowering.javascript,{ecmaVersion:2022,sourceType:'module'});
   const declarations=new Map(),imports=new Map(),exports=new Map();
-  const reexports=new Map(),starExports=[];
+  const reexports=new Map(),starExports=[],dependencies=[];
   const addExport=(name,local)=>{
     if(!identifier.test(name)&&name!=='default')reject('invalid exported name');
     if(exports.has(name)||reexports.has(name))
@@ -72,7 +72,13 @@ function parseOne(file,text,sources){
   for(const node of ast.body){
     if(node.type==='ImportDeclaration'){
       const importedFrom=localImportPath(file,node.source.value,sources);
-      if(node.specifiers.length===0)reject('side-effect module imports');
+      if(node.specifiers.length===0){
+        // An import solely for evaluation is inert only when the imported
+        // graph contains function declarations and other inert imports.
+        // visit() still validates the whole reachable dependency recursively.
+        dependencies.push(importedFrom);
+        continue;
+      }
       for(const spec of node.specifiers){
         if(spec.type==='ImportNamespaceSpecifier')
           reject('namespace import requires a module namespace object');
@@ -89,8 +95,10 @@ function parseOne(file,text,sources){
     }else if(node.type==='ExportNamedDeclaration'){
       if(node.source!==null){
         const from=localImportPath(file,node.source.value,sources);
-        if(node.specifiers.length===0)
-          reject('empty source re-export executes a module for side effects');
+        if(node.specifiers.length===0){
+          dependencies.push(from);
+          continue;
+        }
         for(const spec of node.specifiers){
           if(spec.type!=='ExportSpecifier')reject('namespace re-export');
           const name=identifierName(spec.exported),imported=identifierName(spec.local);
@@ -121,7 +129,7 @@ function parseOne(file,text,sources){
       reject('export of missing binding '+local+' in '+file);
   for(const local of imports.keys())
     if(declarations.has(local))reject('import/declaration collision in '+file);
-  return {file,text,lowering,declarations,imports,exports,reexports,starExports};
+  return {file,text,lowering,declarations,imports,exports,reexports,starExports,dependencies};
 }
 // Conservative alpha renaming of imported and file-local function bindings.
 // Reject lexical shadowing of rewritten names rather than producing subtle,
@@ -212,6 +220,7 @@ export function linkStaticModules({modules,entryModule,exportName='default'}={})
     for(const imp of module.imports.values())visit(imp.module);
     for(const imp of module.reexports.values())visit(imp.module);
     for(const from of module.starExports)visit(from);
+    for(const from of module.dependencies)visit(from);
   }
   visit(entryModule);
   const ordered=[...reachable].sort();
@@ -273,6 +282,8 @@ export function linkStaticModules({modules,entryModule,exportName='default'}={})
         binding:requireResolved(file,exported)});
     for(const from of module.starExports)
       links.push({from:file,kind:'star-reexport',module:from});
+    for(const from of module.dependencies)
+      links.push({from:file,kind:'inert-dependency',module:from});
     for(const [local,ast] of module.declarations)
       items.push({file,local,name:names.get(local),
         code:rewriteDeclaration(module,ast,names),
