@@ -1,4 +1,4 @@
-/** The natlang-shaped, fail-closed subset; not a general EvalEnvironment replacement. */
+/** Replay-checked natlang subset with data-only live values and retained module bindings; no general native helper execution. */
 export interface NatlangEvalRequest {
   code: string;
   scope: Record<string,unknown>;
@@ -25,15 +25,17 @@ export interface BoundedNatlangOptions {
     lowering:{compiler:string;originalText:string;javascript:string;
       sourceMap:Record<string,unknown>})=>void)|null;
   maxSteps?: number;
-  mode?: 'fresh';
+  mode?: 'fresh'|'retained';
 }
 export declare class BoundedNatlangEnvironment {
   constructor(options:BoundedNatlangOptions);
   readonly authority: string;
-  readonly mode:'fresh';
+  readonly mode:'fresh'|'retained';
   readonly scopeCapabilities:{readonly allowModules:false;readonly allowNetwork:false};
   execute(request:NatlangEvalRequest):NatlangEvalResult;
+  /** Starts an owned async entry and awaits internally settled guest promises. */
   executeAsync(request:NatlangEvalRequest):Promise<NatlangEvalResult>;
+  /** Retained only: data-only CommonJS exports (require/native helpers fail closed). */
   evaluateModule(code:string,bindings:Record<string,unknown>):unknown;
   declarationOf(name:string):string|undefined;
   fork():BoundedNatlangEnvironment;
