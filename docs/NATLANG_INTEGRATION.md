@@ -38,7 +38,8 @@ they do not supply natlang's evaluator contract or megatoken admission.
 
 `tracing-js-self/natlang` now exports `createBoundedNatlangEnvironment`.
 It implements the **shape** of natlang's per-evaluation `EvalEnvironment` for
-self-contained, synchronous `training-js/1` programs. This is *not* a
+self-contained, bounded `training-js/1` programs, now including
+owned asynchronous guest entries and explicitly declared native services. This is *not* a
 drop-in runtime replacement for typical natlang-generated code.
 
 ```js
@@ -67,8 +68,9 @@ bytecode machine, validates the archive and exact replay, then returns a
 decoded value and natlang-shaped `typescript.eval` host event. The optional
 third `onTrace` argument contains `originalText`, `javascript`, `compiler`
 and a TypeScript V3 `sourceMap`; guest trace source positions still refer
-to the executed generated JS, not proven reanchored original TS locations. It accepts no live object/capture-cell bindings,
-ambient packages/network, native timeouts or retained mode. Invalid TypeScript,
+to the executed generated JS, not proven reanchored original TS locations. It accepts ordinary mutable **data-only** live bindings through `__live`;
+non-data captures, executable callbacks, ambient packages/network and native
+timeouts still fail closed. Invalid TypeScript,
 unsupported emitted JavaScript, unfinished runs and unsafe scope graphs throw
 natlang's real `EvalFailure`; the `onTrace` success hook is not called on failure.
 The TS frontend strips supported type syntax; it is not a type checker and
@@ -81,22 +83,81 @@ updates/compound assignments. This still does not imply support for arrows,
 destructuring, arbitrary object methods, live helper services or all constructs
 emitted by typical natlang scopes. No fallback executes unsupported constructs.
 
-`executeAsync` awaits a supported synchronous case but **does not implement
-async guest semantics**. `evaluateModule` rejects execution explicitly.
+`executeAsync` runs an owned async guest entry, including `await` on guest
+promises and optionally asynchronous versioned native service effects.
+`evaluateModule` is available in `retained` mode only for mutable, portable,
+data-only CommonJS-shaped `exports`/`module.exports` bindings; natlang's
+callable-folder loader still cannot be installed as a drop-in.
 `fork` and `close` are owned lifecycle methods. There is no untraced fallback.
 
 Independent Node V8 regression tests now execute the actual pinned-TypeScript-emitted JS from the opt-in natlang facade, reconstruct the identical owned initial argument graph in a separate VM realm, and compare the full reachable returned/input graph including mutations and alias identity. The bounded matrix covers scalar, TS lexical declarations, loop/closure, template, bitwise, and caught-exception samples; it also verifies replay and generated-source site anchors. This is independent generated-JS differential evidence, **not** proof of general natlang application compatibility or of original-TS semantic site correctness.
 
 Opt-in natlang onTrace sidecar now also exposes SourceMap-derived generated-site origin anchors, with recorded unmapped sites. The mapper verifies its embedded source bytes and annotates sites; these are **not** proof of original TypeScript source-level semantic correspondence, transformed implicit operations, or general transpilation correctness. The public/authoritative journal remains generated-JS based.
 
-Opt-in strict-profile TS lowering now includes try/catch/finally completion syntax (with a scalar/plain guest throw and identifier catch binding), plus simple synchronous arrow and anonymous function expressions. Their guest calls and captures run through owned frames, with no native fallback. It does not cover the broader scope compiler's rest/destructuring/spread, retained module realm, live captures, or async code.
+Opt-in strict-profile TS lowering now includes try/catch/finally completion syntax (with a scalar/plain guest throw and identifier catch binding), plus simple synchronous arrow and anonymous function expressions. Their guest calls and captures run through owned frames, with no native fallback. It does not cover the broader scope compiler's rest/destructuring/spread, callable-folder modules, non-data live captures, or arbitrary asynchronous host functions.
 
-Integration into natlang must still check actual generated scope compiler
-output, implement the separate `setModuleRealm` seam, pass live captures and
-helper service callbacks by owned reference, and preserve TS source maps.
+Production integration still must check actual scope-compiler output, wire
+and prove the separate `setModuleRealm` seam, implement non-data capture
+semantics and helper callback reentry, and prove TS source mapping.
 These are mandatory requirements before advertising application compatibility.
 `test/natlang-bridge.test.js` supplies contract-shape and replay smoke tests,
 not acceptance of the broad natlang runtime.
+
+### Bounded retained/live and native async extensions (23 October 2026)
+
+The adapter has a **narrow opt-in retained mode** and explicit native-service
+transport, both with owned guest execution (no Node `vm` fallback):
+
+```js
+const env = createBoundedNatlangEnvironment({
+  EvalFailure,
+  mode: 'retained',
+  services: {
+    'demo.readAsync': async ({args,signal}) => await readNumber(args[0], signal)
+  },
+  onTrace(bundle, request, lowering) {
+    // Structural validation and exact replay precede this callback.
+    saveCandidate(bundle, request.path, lowering.sourceMap);
+  }
+});
+const cell = {count: 1};
+const asyncResult = await env.executeAsync({
+  code: "const n = await host.readAsync('offset'); __live.cell.count += n; return __live.cell;",
+  body: true, scope: {}, live: {cell}, path: 'app://example.ts'
+});
+// With a service result of 3, asyncResult.result === cell and cell.count === 4.
+const exports = {count: 1};
+const module = {exports};
+env.evaluateModule('exports.count += 1;', {exports, module});
+env.close();
+```
+
+Retained module execution is a data graph transformed by a single guest
+evaluation; it is **not** a persistent heap of guest functions, not a standard
+ESM module loader, and does not implement `require`, package imports, module
+cache, getters, or callable-folder functions. Live `__live` data can be changed
+by owned execution and written back after a valid, exactly replayed archive;
+existing plain-object/array identities and aliases are preserved on the host.
+Non-data objects, proxies, functions and unmodeled descriptors fail closed.
+Host writes are committed after success, rather than on a partially executed
+guest trace. Data passed as frozen `self` does not thereby become a live
+capture.
+
+With `services`, `executeAsync` uses `tracing-js-self/native` to commit a
+native effect intent and later its separately journaled arrival and delivery.
+Only the registered `demo.readAsync`, `demo.readNumber` and `demo.store`
+operation contracts are supported; return values must be primitive. These
+externally executed services are **not** guest activations, cannot reenter with
+arbitrary callback objects and cannot be rolled back. Input delivery order is
+retained for replay, which never invokes the service a second time. Pending
+external services without completion may require caller-owned cancellation;
+a `timeoutMs` value still fails closed.
+
+These paths have dedicated tests:
+`test/natlang-retained-async.test.js`,
+`test/natlang-native-services.test.js` and
+`test/owned-enumeration-indexing.test.js`. They are bounded smoke/differential
+coverage, **not** a general natlang production compatibility claim.
 
 ## Bounded static ESM/TypeScript functions
 
