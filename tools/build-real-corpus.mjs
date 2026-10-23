@@ -8,7 +8,7 @@ import {createHash} from 'node:crypto';
 import ts from 'typescript';
 import {observeProgram} from '../src/observational.js';
 import {cases,sources} from '../corpus/cases.mjs';
-import {original} from '../corpus/pinned-source.mjs';
+import {original,corpusSplit} from '../corpus/pinned-source.mjs';
 
 const args=process.argv.slice(2);
 const option=(name,fallback)=>args.includes(name)?args[args.indexOf(name)+1]:fallback;
@@ -26,10 +26,7 @@ if(!Number.isInteger(perFunction)||perFunction<1||perFunction>128||
 
 const sha=text=>createHash('sha256').update(text).digest('hex');
 // The owned-coverage bridge uses the same pinned source construction.
-function split(key){
-  const n=parseInt(sha(key).slice(0,8),16)%10;
-  return n===0?'test':n<=2?'validation':'train';
-}
+const split=corpusSplit;
 const fmt=v=>{
   if(!Array.isArray(v))return JSON.stringify(v);
   if(v[0]==='ref')return '&'+v[1];
