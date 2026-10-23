@@ -315,6 +315,22 @@ export class Runtime {
       const caller=draft.frames[frame.callerFrameId];
       if(caller.pendingArrayMethod?.waitingFrameId===frame.id){
         const pending=caller.pendingArrayMethod;
+        if(pending.method==='sort'){
+          const cmp=['undefined','null'].includes(value[0])?0:Number(decode(value));
+          if(!['undefined','null','bool','str','num'].includes(value[0]) ||
+             (draft.heap[pending.arrayId].shapeVersion??0)!==pending.originalShapeVersion)
+            throw new TypeError('Sort callback changed array or returned unowned numeric value');
+          this.advanceSortState(pending,Number.isNaN(cmp)?0:cmp);
+          pending.waitingFrameId=null;
+          if(pending.phase!=='done'){
+            draft.control.a0.activeFrameId=caller.id;
+            return;
+          }
+          const sorted=draft.heap[pending.arrayId];
+          pending.buffer.forEach((item,i)=>putOwn(sorted,String(i),item,origin));
+          value=['ref',pending.arrayId];
+          delete caller.pendingArrayMethod;
+        }else{
         const out=draft.heap[pending.outputId];
         if(pending.method==='map')putOwn(out,String(pending.index),value,origin);
         else if(pending.method==='filter' && truthy(value))
@@ -329,6 +345,7 @@ export class Runtime {
         }
         value=pending.method==='reduce'?pending.accumulator:['ref',pending.outputId];
         delete caller.pendingArrayMethod;
+        }
       }
       const pending=caller.pendingProperty;
       if(pending?.waitingFrameId===frame.id){
@@ -341,6 +358,46 @@ export class Runtime {
     else {draft.control.a0.activeFrameId=null;draft.control.a0.completion={kind:'return',value};
       draft.control.a0.status='completed';if(!frame.asyncPromiseId)this.result=value;}
   }
+  // V8's small-array TimSort: discover a natural run, reverse only strictly
+  // descending runs, then stably binary-insert remaining entries. Every
+  // comparator executes in an owned guest frame, in the same dynamic order.
+  // Large arrays, exotic slots and array-mutating comparators fail closed.
+  advanceSortState(p,cmp){
+    const nextInsert=()=>{
+      if(p.insertIndex===undefined)p.insertIndex=p.scan;
+      if(p.insertIndex>=p.length){p.phase='done';p.pair=null;return;}
+      p.low=0;p.high=p.insertIndex;p.phase='binary';
+      p.middle=Math.floor((p.low+p.high)/2);
+      p.pair=[p.buffer[p.insertIndex],p.buffer[p.middle]];
+    };
+    const finishRun=()=>{
+      if(p.descending)p.buffer.splice(0,p.scan,...p.buffer.slice(0,p.scan).reverse());
+      nextInsert();
+    };
+    if(p.phase==='run-first'){
+      p.descending=cmp<0;
+      if(p.scan<p.length){p.phase='extend';
+        p.pair=[p.buffer[p.scan],p.buffer[p.scan-1]];}
+      else finishRun();
+    }else if(p.phase==='extend'){
+      if(p.descending?cmp<0:cmp>=0){
+        p.scan++;
+        if(p.scan<p.length)p.pair=[p.buffer[p.scan],p.buffer[p.scan-1]];
+        else finishRun();
+      }else finishRun();
+    }else if(p.phase==='binary'){
+      if(cmp<0)p.high=p.middle;else p.low=p.middle+1;
+      if(p.low<p.high){
+        p.middle=Math.floor((p.low+p.high)/2);
+        p.pair=[p.buffer[p.insertIndex],p.buffer[p.middle]];
+      }else{
+        const [item]=p.buffer.splice(p.insertIndex,1);
+        p.buffer.splice(p.low,0,item);
+        p.insertIndex++;
+        nextInsert();
+      }
+    }else throw new Error('Unexpected sort continuation phase');
+  }
   // Continue a guest Array callback in the owned VM, never by executing
   // guest functions in the host. Reads are from current heap state so callback
   // mutations cannot be silently replaced by a precomputed native array.
@@ -348,6 +405,17 @@ export class Runtime {
     const p=caller.pendingArrayMethod;
     if(!p)throw new Error('Missing array callback continuation');
     const array=draft.heap[p.arrayId];
+    if(p.method==='sort'){
+      if(!p.pair||p.waitingFrameId!==null)throw new Error('Missing sort comparison');
+      if((array.shapeVersion??0)!==p.originalShapeVersion)
+        throw new TypeError('Sort comparator mutated target array');
+      const fn=draft.heap[p.callbackId];
+      const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,caller.id,null,
+        p.pair.map(v=>token(v)),fn.arrow?fn.lexicalThis:U);
+      p.waitingFrameId=child;
+      draft.control.a0.activeFrameId=child;
+      return true;
+    }
     for(;p.index<p.length;p.index++){
       const index=String(p.index),slot=array.properties[index];
       if(!slot||Object.hasOwn(array.accessors??{},index))
@@ -961,7 +1029,7 @@ export class Runtime {
             return {...operands(fn,...args),result:['ref',callable[1]],causes:[{kind:'invocation',frameId:id}]};
           }
           if(callable[0]==='builtinfn' &&
-             ['filter','map','reduce'].some(m=>callable[1]==='Array.prototype.'+m)){
+             ['filter','map','reduce','sort'].some(m=>callable[1]==='Array.prototype.'+m)){
             const array=receiver[0]==='ref'?s.heap[receiver[1]]:null;
             if(!array||array.kind!=='array'||Object.keys(array.accessors??{}).length)
               throw new TypeError('Array callback needs owned array data');
@@ -974,9 +1042,11 @@ export class Runtime {
             const method=callable[1].slice('Array.prototype.'.length);
             if(method!=='reduce'&&args.length>1)
               throw new TypeError('Unsupported callback thisArg');
+            if(method==='sort'&&length>64)
+              throw new RangeError('Sort comparator budget exceeded');
             if(method==='reduce' && args.length>2)
               throw new TypeError('Unsupported reduce options');
-            const outputId=method==='reduce'?null:this.next(s,'obj');
+            const outputId=['reduce','sort'].includes(method)?null:this.next(s,'obj');
             if(outputId){s.heap[outputId]={id:outputId,kind:'array',properties:{
               length:token(['num',method==='map'?length:0],eventId)},
               propertyVersions:{length:0},shapeVersion:0,version:0};}
@@ -993,6 +1063,19 @@ export class Runtime {
             f.pendingArrayMethod={method,arrayId:array.id,callbackId:callback[1],
               outputId,length,index:start,accumulator,waitingFrameId:null,
               siteId:inst.siteId,currentValue:U};
+            if(method==='sort'){
+              const slots=[];
+              for(let i=0;i<length;i++){
+                const slot=array.properties[String(i)];
+                if(!slot)throw new TypeError('Sparse sort outside bounded profile');
+                slots.push(slot.value);
+              }
+              Object.assign(f.pendingArrayMethod,{buffer:slots,phase:'run-first',
+                scan:2,descending:null,originalShapeVersion:array.shapeVersion??0,
+                pair:length>=2?[slots[1],slots[0]]:null});
+              if(length<2){delete f.pendingArrayMethod;
+                return {...operands(fn,...args),...result(receiver)};}
+            }
             if(this.advanceArrayCallback(s,f,eventId))
               return {...operands(fn,...args),causes:[{kind:'invocation',frameId:f.pendingArrayMethod.waitingFrameId}]};
             delete f.pendingArrayMethod;
