@@ -163,10 +163,31 @@ export class SemanticController {
       this.activations.set(invocation,{code:fields.code,track,status:'running',
         params:Object.fromEntries(params.map((key,i)=>[key,copy(fields.arguments[i]??['undefined'])]))});
     } else if(kind==='alloc'){
+      // Allocation commits initialized heap properties, not just an identity.
+      // Array length (even when zero) and built-in-created array elements must
+      // exist before the model can predict any later reads.
       for(const item of fields.allocations??[]) {
         if(this.heap.has(item.identity))fail('identity','Allocation identity already exists');
-        this.heap.set(item.identity,{kind:item.kind,shapeVersion:0,properties:new Map(),versions:new Map()});
+        if(!['object','array','function'].includes(item.kind)||
+           !Number.isSafeInteger(item.shapeVersion??0) ||
+           (item.shapeVersion??0)<0 ||
+           !Array.isArray(item.properties??[]))
+          fail('identity','Invalid owned allocation shape');
+        const props=new Map(),versions=new Map();
+        for(const entry of item.properties??[]){
+          if(typeof entry.key!=='string'||props.has(entry.key)||
+             !Number.isSafeInteger(entry.version)||entry.version<0)
+            fail('identity','Malformed initial allocation property');
+          props.set(entry.key,{value:copy(entry.value),version:entry.version});
+          versions.set(entry.key,entry.version);
+        }
+        this.heap.set(item.identity,{
+          kind:item.kind,shapeVersion:item.shapeVersion??0,
+          properties:props,versions
+        });
       }
+      for(const item of fields.allocations??[])
+        for(const entry of item.properties??[])this.checkValue(entry.value);
     } else if(kind==='read') {
       for(const read of fields.reads??[]){
         if(read.kind==='property'){
@@ -204,25 +225,39 @@ export class SemanticController {
         const reads=fields.reads??[],writes=fields.writes??[];
         if(kind!=='write'||!['++','--'].includes(fields.update.operator)||
            typeof fields.update.prefix!=='boolean'||
-           reads.length!==1||reads[0].kind!=='binding'||
-           writes.length!==1||writes[0].kind!=='cell')
-          fail('read','Malformed lexical update observation');
-        const read=reads[0],write=writes[0],key=read.envId+':'+read.name;
-        const prior=cellDraft.get(key);
-        const active=this.activations.get(fields.invocation);
-        const seeded=active?.params[read.name] ??
-          (this.staticFunctions.has(read.name) ?
-            ['ref',this.staticFunctions.get(read.name)] : undefined);
-        if(prior && (prior.version!==read.version || !same(prior.value,read.value)))
-          fail('read','Updated binding read differs from committed state');
-        if(!prior && seeded && !same(seeded,read.value))
-          fail('read','Updated parameter read differs from observed context');
-        if(!prior && !seeded && read.version!==0)
-          fail('read','Unknown updated binding has a noninitial read version');
-        if(write.env!==read.envId||write.key!==read.name||
-           write.previous!==read.version)
-          fail('read','Updated binding write does not match read location and version');
-        if(!prior)cellDraft.set(key,{version:0,value:copy(read.value)});
+           reads.length!==1||writes.length!==1)
+          fail('read','Malformed owned update observation');
+        const read=reads[0],write=writes[0];
+        if(read.kind==='binding'&&write.kind==='cell'){
+          const key=read.envId+':'+read.name,prior=cellDraft.get(key);
+          const active=this.activations.get(fields.invocation);
+          const seeded=active?.params[read.name] ??
+            (this.staticFunctions.has(read.name) ?
+              ['ref',this.staticFunctions.get(read.name)] : undefined);
+          if(prior && (prior.version!==read.version || !same(prior.value,read.value)))
+            fail('read','Updated binding read differs from committed state');
+          if(!prior && seeded && !same(seeded,read.value))
+            fail('read','Updated parameter read differs from observed context');
+          if(!prior && !seeded && read.version!==0)
+            fail('read','Unknown updated binding has a noninitial read version');
+          if(write.env!==read.envId||write.key!==read.name||
+             write.previous!==read.version)
+            fail('read','Updated binding write does not match read location and version');
+          if(!prior)cellDraft.set(key,{version:0,value:copy(read.value)});
+        }else if(read.kind==='property'&&write.kind==='property'){
+          const obj=heapDraft.get(read.objectId);
+          const prior=obj?.properties.get(read.key);
+          // Inherited/accessor reads require full [[Get]]/[[Set]] replay and
+          // cannot be verified by a source-only own-property observation.
+          if(!obj||!read.present||!prior||
+             (obj.versions.get(read.key)??0)!==read.version||
+             obj.shapeVersion!==read.shapeVersion||
+             !same(prior.value,read.value)||
+             write.object!==read.objectId||write.key!==read.key||
+             write.oldVersion!==read.version||
+             write.shapeBefore!==read.shapeVersion)
+            fail('read','Updated property read is not the committed own value');
+        }else fail('read','Mismatched update location kind');
       }
       for(const write of fields.writes??[]){
         if(write.kind==='cell'){

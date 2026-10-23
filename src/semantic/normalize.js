@@ -13,6 +13,15 @@ const selection={
   'control.branch':'branch','async.await':'await',
   'external.input.deliver':'observe','job.enter':'resume'
 };
+function allocation(p) {
+  const obj=p.after;
+  return {identity:p.id,kind:obj.kind,
+    codeId:obj.codeId??null,capture:obj.closureEnvId??null,
+    shapeVersion:obj.shapeVersion??0,
+    properties:Object.entries(obj.properties??{}).map(([key,record])=>({
+      key,version:obj.propertyVersions?.[key]??0,value:record.value
+    }))};
+}
 function changes(before,after) {
   if (!after?.properties)return [];
   const keys=new Set([...Object.keys(before?.properties??{}),...Object.keys(after.properties)]);
@@ -111,11 +120,10 @@ export function normalizeJournal(bundle) {
         const allocated=heapPatches.filter(p=>p.before===null);
         if(allocated.length){
           r.op='alloc';
-          r.allocations=allocated.map(p=>({identity:p.id,kind:p.after.kind,
-            codeId:p.after.codeId??null,capture:p.after.closureEnvId??null}));
+          r.allocations=allocated.map(allocation);
         }else if(heapPatches.length)r.op='write';
         else r.op='value';
-        for(const p of heapPatches)
+        for(const p of heapPatches.filter(p=>p.before!==null))
           for(const entry of changes(p.before,p.after))
             r.writes.push({kind:'property',object:p.id,...entry,
               shapeBefore:p.before?.shapeVersion??0,shapeAfter:p.after?.shapeVersion??0});
@@ -127,8 +135,7 @@ export function normalizeJournal(bundle) {
     }
     if(op==='alloc') {
       const heap=e.stateChanges.filter(p=>p.table==='heap' && p.before===null);
-      r.allocations=heap.map(p=>({identity:p.id,kind:p.after.kind,
-        codeId:p.after.codeId??null,capture:p.after.closureEnvId??null}));
+      r.allocations=heap.map(allocation);
     }
     if(['binding.write','binding.initialize','binding.update'].includes(e.operation)) {
       for(const p of e.stateChanges.filter(p=>p.table==='envs')) {

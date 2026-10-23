@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {verifyTrainingCase,validateTrainingExport} from 'tracing-js-self/training';
 import {validateBundle,replayExact} from 'tracing-js-self';
+import {evaluateSelectedTrajectory} from '../src/training/rollout.js';
 
 function verified(body) {
   const result=verifyTrainingCase({source:'"use strict";\n'+body,
@@ -47,6 +48,17 @@ test('Object keys and own-key presence allocate explicitly traced dense results'
   }`);
   assert(exported.sidecar.semantic.events.some(e=>e.op==='alloc' &&
     e.allocations?.some(a=>a.kind==='array')));
+  const rollout=evaluateSelectedTrajectory({
+    groups:exported.public.groups,referenceGroups:exported.public.groups,
+    maxGenerated:1024
+  });
+  assert.equal(rollout.valid,true,JSON.stringify(rollout.invalid));
+});
+test('freshly allocated empty arrays expose their length to serving validation',()=>{
+  const exported=verified('function f(){const a=[];return a.length;}');
+  const rollout=evaluateSelectedTrajectory({groups:exported.public.groups,
+    referenceGroups:exported.public.groups,maxGenerated:1024});
+  assert.equal(rollout.valid,true,JSON.stringify(rollout.invalid));
 });
 
 test('unmodeled or host-dependent builtins remain unadmitted',()=>{

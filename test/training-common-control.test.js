@@ -146,6 +146,11 @@ test('member updates preserve reference identity, versioned reads and V8 sites',
   assert.deepEqual(member[0].writes[0].value,['num',3]);
   assert.equal(member[0].reads.length,1);
   assert.equal(exported.sidecar.operationAudit.covered.updates,3);
+  const rollout=evaluateSelectedTrajectory({
+    groups:exported.public.groups,referenceGroups:exported.public.groups,
+    maxGenerated:1024
+  });
+  assert.equal(rollout.valid,true,JSON.stringify(rollout.invalid));
   verified('function f(){const o={x:1n};return [++o.x,o.x--,o.x];}');
   verified('function f(){const a=[2,4];return [a[0]++,--a[1],a[0],a[1]];}');
   assert.notEqual(verifyTrainingCase({source:strict(
