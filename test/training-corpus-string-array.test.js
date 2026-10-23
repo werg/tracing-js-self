@@ -20,6 +20,11 @@ test('owned UTF-16 string property reads and scalar leaves match V8',()=>{
     s.toLowerCase(),s.trim(),s.slice(-2),s.charAt(0).toUpperCase()];}`,[' abB ']);
   check('function f(s){return [s.length,s[1],s[2],s.at(-2)];}', ['A😀B']);
 });
+test('owned bounded string substr preserves V8 index and length semantics',()=>{
+  check(`function f(s){return [s.substr(0,2),s.substr(-2),s.substr(1,3),
+    s.substr(100,2),s.substr(3,-1)];}`, ['a😀bc']);
+  check('function f(s){return s.substr(0,s.indexOf("\\n"));}', ['one\\ntwo']);
+});
 test('owned dense array search, copy and mutation match V8',()=>{
   check(`function f(a){const copy=a.slice(1),joined=a.join('-'),concat=a.concat([9]);
     const before=a.indexOf(2),last=a.lastIndexOf(2);
