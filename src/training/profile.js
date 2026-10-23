@@ -36,7 +36,9 @@ export function parseTraining(source) {
 
   const span=n=>({start:n.start,end:n.end});
   function parameters(n){
-    return n.params.map(p=>{
+    return n.params.map((p,i)=>{
+      if(p.type==='RestElement' && p.argument?.type==='Identifier' && i===n.params.length-1)
+        return {name:p.argument.name,default:null,rest:true};
       if(p.type==='Identifier')return {name:p.name,default:null};
       if(p.type==='AssignmentPattern'&&p.left.type==='Identifier')
         return {name:p.left.name,default:expr(p.right)};
@@ -61,7 +63,8 @@ export function parseTraining(source) {
             {...span(n.body),type:'Return',argument:expr(n.body)}]};
         return {...loc,type:'FunctionExpr',
           arrow:n.type==='ArrowFunctionExpression',
-          params:parsedParams.map(p=>p.name),defaults:parsedParams.map(p=>p.default),body};
+          params:parsedParams.map(p=>p.name),defaults:parsedParams.map(p=>p.default),
+          restIndex:parsedParams.findIndex(p=>p.rest),body};
       }
       case 'TemplateLiteral':
         if(n.quasis.length!==n.expressions.length+1||
@@ -94,10 +97,13 @@ export function parseTraining(source) {
         return {...loc,type:'Member',object:expr(n.object),property:n.computed?expr(n.property):
           {...span(n.property),type:'Literal',value:encode(n.property.name)}};
       case 'CallExpression':
-        if(n.optional || n.arguments.some(a=>a.type==='SpreadElement'))reject(n,'spread/optional call');
+        if(n.optional || n.arguments.filter(a=>a.type==='SpreadElement').length>4)
+          reject(n,'spread/optional call');
         if(n.callee.type==='Identifier' && ['eval','Function','require'].includes(n.callee.name))
           reject(n,'dynamic source or host call');
-        return {...loc,type:'Call',callee:expr(n.callee),args:n.arguments.map(expr)};
+        return {...loc,type:'Call',callee:expr(n.callee),
+          args:n.arguments.map(a=>a.type==='SpreadElement'?
+            {...span(a),type:'Spread',argument:expr(a.argument)}:expr(a))};
       case 'ArrayExpression':
         if(n.elements.some(e=>!e || e.type==='SpreadElement'))reject(n,'sparse/spread array');
         return {...loc,type:'Array',elements:n.elements.map(expr)};
@@ -137,7 +143,7 @@ export function parseTraining(source) {
         const parsedParams=parameters(n);
         return {...loc,type:'Function',id:n.id.name,
           params:parsedParams.map(x=>x.name),defaults:parsedParams.map(x=>x.default),
-          async:n.async,body:stmt(n.body)};
+          restIndex:parsedParams.findIndex(p=>p.rest),async:n.async,body:stmt(n.body)};
       }
       case 'ReturnStatement':return {...loc,type:'Return',argument:n.argument?expr(n.argument):null};
       case 'ThrowStatement':
@@ -231,7 +237,7 @@ export function parseTraining(source) {
           else if(!has(n.name,e))reject(n,'unbound update target '+n.name);
           break;
         case 'Member':value(n.object,e);value(n.property,e);break;
-        case 'Call':value(n.callee,e);n.args.forEach(x=>value(x,e));break;
+        case 'Call':value(n.callee,e);n.args.forEach(x=>value(x.type==='Spread'?x.argument:x,e));break;
         case 'Array':n.elements.forEach(x=>value(x,e));break;
         case 'Object':n.properties.forEach(p=>value(p.value,e));break;
         case 'Assign':value(n.left,e);value(n.right,e);break;
