@@ -1,0 +1,76 @@
+{
+  "schema": "stateful-adversarial-findings/1",
+  "asOf": "2026-10-23",
+  "status": "native-V8-diagnostic-only",
+  "admitted": false,
+  "sourceCommit": "ff17b8dae116686c6e0ef6839e4dacab0b20a9e2",
+  "actionRun": "https://github.com/werg/tracing-js-self/actions/runs/39938544682",
+  "sourceProjects": 7,
+  "scenarioFamilies": 67,
+  "crossLibraryScenarios": 6,
+  "invocations": 804,
+  "agreedIndependentV8Outcomes": 804,
+  "comparisonMismatches": 0,
+  "observationErrors": 0,
+  "finalReturns": 720,
+  "terminalThrows": 84,
+  "traceEvents": 171737,
+  "propertyStateChanges": 64414,
+  "modelFacingTraceBytesNotEstablished": true,
+  "nativeSerializedTraceEventBytes": 24925739,
+  "traceLengthEvents": {
+    "p50": 173,
+    "p90": 450
+  },
+  "nativeSerializedTraceBytes": {
+    "p50": 24150,
+    "p90": 58713
+  },
+  "traceEventKinds": {
+    "await": 2043,
+    "branch": 20452,
+    "call": 31133,
+    "control": 48,
+    "effect": 96,
+    "end": 720,
+    "enter": 20290,
+    "loop": 1035,
+    "read": 30912,
+    "resume": 1875,
+    "return": 10641,
+    "throw": 180,
+    "value": 15970,
+    "write": 36342
+  },
+  "splitInvocations": {
+    "train": 312,
+    "validation": 204,
+    "test": 288
+  },
+  "projectInvocations": {
+    "mitt": 108,
+    "zustand": 108,
+    "eventemitter3": 96,
+    "yocto-queue": 96,
+    "quick-lru": 108,
+    "koa-compose": 108,
+    "p-limit": 108,
+    "application": 72
+  },
+  "generatedProgramFamilies": [
+    "mutable event emitter dispatch and reentry",
+    "subscription-based state updates",
+    "cache eviction and TTL",
+    "linked-list queue mutation and iteration",
+    "middleware request handling and error recovery",
+    "bounded async promise scheduling",
+    "cross-library application state and side effects",
+    "uncaught error completions"
+  ],
+  "evidenceLimitations": [
+    "Independent uninstrumented V8 outcomes validate final observable graph and logged effects, not every intermediate trace event.",
+    "Drivers are synthetic; the underlying seven library implementations are pinned authentic source.",
+    "No true filesystem/network/native Node services or workers were exercised.",
+    "This corpus cannot be admitted as semantic-execution/2 owned-interpreter training data."
+  ]
+}
