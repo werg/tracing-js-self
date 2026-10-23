@@ -1,7 +1,7 @@
 # Stateful and adversarial real-source benchmark
 
-This corpus extends the pinned Lodash/VS Code functions with **67 stateful
-scenario families** using **seven real production libraries**. Each vendor
+This corpus extends the pinned Lodash/VS Code functions with **76 stateful
+scenario families** using **eight real production libraries**. Each vendor
 file under `upstream/` is copied from a specified Git revision without
 editing its source. Corresponding MIT license notices are retained.
 
@@ -13,9 +13,9 @@ editing its source. Corresponding MIT license notices are retained.
 | [yocto-queue](https://github.com/sindresorhus/yocto-queue) | Enqueue/dequeue, clear/reuse, mutation while iterating, partial drain, object reference aliases |
 | [quick-lru](https://github.com/sindresorhus/quick-lru) | Eviction callbacks, expiry, promotion, resize, expiration, clear, iteration |
 | [koa-compose](https://github.com/koajs/compose) | Request-response middleware, onion ordering, early exits, double-next, missing-await, error unwinding |
-| [p-limit](https://github.com/sindresorhus/p-limit) | Queued async work, concurrent updates, rejection, cancellation, concurrency resize and nested work |
+| [p-limit](https://github.com/sindresorhus/p-limit) | Queued async work, concurrent updates, rejection, cancellation, concurrency resize and nested work |\n| [Axios interceptors](https://github.com/axios/axios) | Stable handler identity, ejection/clear during traversal, async transforms and error cleanup |
 
-Six **application** scenarios combine those real implementations into
+The [Axios](https://github.com/axios/axios) interceptor manager now adds nine\nscenarios covering stable ejection IDs, handler-list mutation during iteration,\nasync request-chain transforms, null-list recovery and exception cleanup.\nThe original Axios implementation and its utility/binding dependencies are\nall vendored with the complete MIT license and pinned hashes.\n\nSix **application** scenarios combine those real implementations into
 request handlers, cache-backed routes, notification-driven mutable state,
 event queues, concurrent transactions and eviction notifications. Scenarios
 are synthetic *drivers* for real library code, **not** additional claims
@@ -33,7 +33,7 @@ npm run corpus:stateful -- --per-scenario 12 \
   --review corpus/out/stateful-review.md
 ```
 
-This requests **804 executions** across 67 scenario families (12 varied
+This requests **912 executions** across 76 scenario families (12 varied
 seeds each); use `--per-scenario 2 --limit 10` for a smoke run. The report
 includes every failure, the source family and split, program/module revision
 hashes, mutation counts, outcomes, and readability examples. The
