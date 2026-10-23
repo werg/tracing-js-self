@@ -7,7 +7,7 @@ import {replayExact} from 'tracing-js-self';
 test('conservative CommonJS-to-owned-ESM lowering retains exported pure functions',()=>{
   const compiled='"use strict";Object.defineProperty(exports,"__esModule",{value:true});'+
     'exports.add=add;exports.read=read;'+
-    'let forbidden=0;';
+    'require("fs");';
   assert.throws(()=>lowerPureCommonJsModule(compiled),/Unowned/);
   const source=lowerPureCommonJsModule('"use strict";'+
     'Object.defineProperty(exports,"__esModule",{value:true});'+
