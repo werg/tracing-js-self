@@ -74,6 +74,15 @@ test('object defaults and nested patterns execute through owned lexical cells',(
     {a:null,b:undefined}),[null,8]);
 });
 
+test('var object destructuring uses hoisted function cells with owned V8 replay',()=>{
+  assert.deepEqual(differential(
+    'const before=typeof value;{var {a:value=4}=self;}return [before,value];',
+    {a:3}),['undefined',3]);
+  assert.deepEqual(differential(
+    'var {a:x}=self;var {b:x}=self;return x;',
+    {a:2,b:7}),7);
+});
+
 test('unowned object-pattern variants reject before trace publication',()=>{
   const bundles=[];
   const env=createBoundedNatlangEnvironment({EvalFailure,
@@ -82,7 +91,6 @@ test('unowned object-pattern variants reject before trace publication',()=>{
     for(const code of [
       'const {[self.k]:a}=self; return a;',
       'const {a,...rest}=self; return rest;',
-      'var {a}=self; return a;',
       'const {a:x,b:x}=self; return x;',
       'const {a}=self, b=2; return a+b;'
     ]){

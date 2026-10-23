@@ -76,11 +76,13 @@ natlang's real `EvalFailure`; the `onTrace` success hook is not called on failur
 The TS frontend strips supported type syntax; it is not a type checker and
 does not authorize any unsupported runtime semantics or emit native code.
 
-The strict TypeScript profile also accepts one simple object destructuring
-declaration (`let` or `const`) with literal/static keys and identifier
-targets; property reads execute in order inside the owned VM. Nested,
-computed, rest and default patterns, and `var` object destructuring, remain
-unsupported. The finite tests do not imply general TypeScript conformance.
+The strict TypeScript profile accepts bounded single-initializer
+`let`, `const` and `var` object/array destructuring, including nested
+static-key patterns, hoisted `var` cells and lazy undefined-only defaults.
+Property reads, branches and guest default expressions execute inside owned
+bytecode. Rest and computed-key binding patterns, arbitrary iterator protocols,
+module helper callbacks and many ordinary TypeScript emissions remain
+unsupported. The finite V8 and replay tests do not prove general conformance.
 
 The strict profile now accepts source-level conditional expressions, numeric
 local-identifier updates and ordinary bounded for/do-while loops. This does

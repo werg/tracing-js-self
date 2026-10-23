@@ -105,6 +105,15 @@ test('nested binding failures never publish successful traces',()=>{
   }finally{env.close();}
 });
 
+test('var array destructuring hoists and reuses function-scoped names',()=>{
+  assert.deepEqual(differential(
+    'let before=typeof x;{var [x,y]=self.items;}return [before,x,y];',
+    {items:[4,5]}),['undefined',4,5]);
+  assert.deepEqual(differential(
+    'var [a]=self.items;var [a]=self.more;return a;',
+    {items:[1],more:[8]}),8);
+});
+
 test('unsupported array patterns and non-array iterators fail before trace publication',()=>{
   const traces=[];
   const env=createBoundedNatlangEnvironment({EvalFailure,
@@ -113,7 +122,6 @@ test('unsupported array patterns and non-array iterators fail before trace publi
     for(const [code,scope] of [
       ['const [a,...b]=self.items;return b;',{items:[2,3]}],
       ['const [,b]=self.items;return b;',{items:[2,3]}],
-      ['var [a]=self.items;return a;',{items:[2]}],
       ['const [a]=self.items,b=1;return a+b;',{items:[2]}],
       ['const [a,a]=self.items;return a;',{items:[2,3]}],
       ['const [a]=self.items;return a;',{items:'a'}],

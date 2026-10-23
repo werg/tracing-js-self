@@ -197,7 +197,7 @@ export function parseTraining(source) {
     switch(n.type) {
       case 'BlockStatement':return {...loc,type:'Block',body:n.body.map(stmt)};
       case 'VariableDeclaration':
-        if(['let','const'].includes(n.kind) && n.declarations.length===1 &&
+        if(['let','const','var'].includes(n.kind) && n.declarations.length===1 &&
            ['ArrayPattern','ObjectPattern'].includes(n.declarations[0].id.type)){
           const d=n.declarations[0];
           if(!d.init)reject(n,'destructuring requires an initializer');

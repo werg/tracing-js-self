@@ -1,5 +1,10 @@
 # Implementation status (0.2.0)
 
+## Bounded hoisted `var` destructuring (October 23, 2026)
+
+- Bounded owned object/array destructuring also supports single-initializer `var` declarations; identifier cells are function-hoisted and redeclarations use owned `SET` rather than lexical `INIT`. Nested scope and duplicate-var regressions are compared to V8 and replay-verified. This does not extend arbitrary iterators, complex for-header patterns or general TS conformance.
+
+
 ## Bounded for-of array defaults (October 23, 2026)
 
 - The owned dense-array `for...of` slice now handles undefined-only `= default` initialization of direct array-binding identifiers in left-to-right, per-iteration lexical scopes. Node V8 differential and exact replay tests cover missing, null, and captured values; arbitrary iterators, rest patterns, and complete TypeScript execution remain unsupported.

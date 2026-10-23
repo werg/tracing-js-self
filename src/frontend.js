@@ -8,6 +8,9 @@ export function collectVarBindings(statements) {
     switch(n.type){
       case 'Variable':if(n.kind==='var')names.add(n.id);break;
       case 'VariableGroup':n.declarations.forEach(visit);break;
+      case 'PatternBinding':
+        if(n.kind==='var')for(const binding of n.bindings)names.add(binding.name);
+        break;
       case 'Block':n.body.forEach(visit);break;
       case 'If':visit(n.consequent);visit(n.alternate);break;
       case 'For':visit(n.init);visit(n.body);break;
@@ -321,7 +324,8 @@ export function compile(ast) {
           function bindPattern(pattern,variable){
             if(pattern.type==='PatternName'){
               emit('GET',variable,pattern);
-              emit('INIT',pattern.name,pattern);
+              emit(n.kind==='var'?'SET':'INIT',pattern.name,pattern);
+              if(n.kind==='var')emit('POP',null,pattern);
               return;
             }
             if(pattern.type==='PatternDefault'){
