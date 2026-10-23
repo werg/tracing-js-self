@@ -81,3 +81,47 @@ test('abort before a queued native service starts prevents the side effect',asyn
   }),/cancelled before native call/);
   assert.equal(invoked,0,'aborted queued effect must not start native work');
 });
+
+
+test('native service registry rejects getters and proxies before running guest code',async()=>{
+  let getterCalls=0;
+  const services={};
+  Object.defineProperty(services,'demo.readNumber',{
+    enumerable:true,get(){getterCalls++;return ()=>42;}
+  });
+  await assert.rejects(executeWithNativeServices({
+    text:'host.readNumber("value");',services
+  }),/enumerable own data properties/);
+  assert.equal(getterCalls,0,'no unowned getter may run during registry validation');
+  let proxyCalls=0;
+  const proxy=new Proxy({'demo.readNumber':()=>42},{
+    get(){proxyCalls++;throw new Error('proxy trap invoked');},
+    ownKeys(){proxyCalls++;throw new Error('proxy trap invoked');},
+    getPrototypeOf(){proxyCalls++;throw new Error('proxy trap invoked');}
+  });
+  await assert.rejects(executeWithNativeServices({
+    text:'host.readNumber("value");',services:proxy
+  }),/plain operation-to-function record/);
+  assert.equal(proxyCalls,0);
+});
+
+test('native driver records every completed detached effect or refuses an incomplete run',async()=>{
+  let calls=0;
+  const work=executeWithNativeServices({
+    text:'async function run(){host.readAsync("detached");return 7;}run();',
+    services:{'demo.readAsync':()=>{calls++;return 9;}}
+  });
+  try{
+    const {bundle}=await work;
+    const effect=Object.values(bundle.effects).find(e=>e.operation==='demo.readAsync');
+    assert(effect,'a dispatched native effect must be recorded');
+    const arrivals=bundle.events.filter(e=>e.operation==='external.input.arrive');
+    assert(arrivals.some(e=>e.causes.some(c=>c.kind==='effect'&&c.effectId===effect.id)),
+      'a successful archive must account for the native effect result');
+    assert.equal(replayExact(bundle).valid,true);
+  }catch(error){
+    assert.match(String(error),/unresolved native effects/);
+  }
+  await Promise.resolve();
+  assert(calls<=1,'a service may never be started twice');
+});

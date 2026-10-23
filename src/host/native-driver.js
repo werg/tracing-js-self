@@ -1,5 +1,6 @@
 // Opt-in Node transport for the bounded owned runtime. Native promises are
 // never guest activations or continuations; only journaled delivery resumes JS.
+import {types} from 'node:util';
 import {createRuntime} from '../runtime.js';
 import {hostOperation} from './operations.js';
 import {validateBundle} from '../validation.js';
@@ -20,24 +21,32 @@ export async function executeWithNativeServices({text,entry=null,services={},max
       throw new TypeError('Native strict entry needs source text, name and optional argument array');
   }else if(typeof text!=='string')
     throw new TypeError('Native driver needs JS source text');
-  if(services===null||typeof services!=='object'||Array.isArray(services))
-    throw new TypeError('Native services must be an operation-to-function record');
+  if(services===null||typeof services!=='object'||Array.isArray(services)||
+     types.isProxy(services)||
+     ![Object.prototype,null].includes(Object.getPrototypeOf(services)))
+    throw new TypeError('Native services must be a plain operation-to-function record');
   if(signal!==undefined && (typeof signal!=='object'||
      typeof signal.addEventListener!=='function'||
      typeof signal.removeEventListener!=='function'))
     throw new TypeError('signal must be an AbortSignal');
   if(signal?.aborted)throw signal.reason??new Error('Native driver aborted');
   const pending=new Set(),arrivals=[];
-  let wake=null;
+  let wake=null,active=true;
   const settled=(effectId,value,abrupt)=>{
     // A cancelled run must never synthesize a guest-visible host arrival.
-    if(signal?.aborted||!pending.has(effectId))return;
+    if(!active||signal?.aborted||!pending.has(effectId))return;
     arrivals.push({effectId,value,abrupt});
     if(wake){const notify=wake;wake=null;notify();}
   };
   const adapters=Object.create(null);
-  for(const [operation,service] of Object.entries(services)){
+  for(const operation of Reflect.ownKeys(services)){
+    // Do not execute accessors or proxy traps merely by registering services.
+    const descriptor=Object.getOwnPropertyDescriptor(services,operation);
+    if(typeof operation!=='string'||!descriptor||
+       !Object.hasOwn(descriptor,'value')||!descriptor.enumerable)
+      throw new TypeError('Native services must be enumerable own data properties');
     hostOperation(operation); // Only explicitly versioned operation contracts.
+    const service=descriptor.value;
     if(typeof service!=='function')throw new TypeError('Host service must be a function: '+operation);
     adapters[operation]=context=>{
       if(pending.has(context.effectId))throw new Error('Duplicate native dispatch');
@@ -47,7 +56,7 @@ export async function executeWithNativeServices({text,entry=null,services={},max
       Promise.resolve().then(()=>{
         // Dispatch was journaled before this microtask. Abort before starting
         // native work means the side effect must not be invoked at all.
-        if(signal?.aborted)return;
+        if(!active||signal?.aborted)return;
         return service(input);
       }).then(value=>{
         if(!primitive(value))
@@ -80,6 +89,11 @@ export async function executeWithNativeServices({text,entry=null,services={},max
       }
       const progress=runtime.drive();
       if(progress.kind!=='waiting'){
+        // Never seal an archive that omits a still-outstanding native effect.
+        // A detached effect may already have started, so this is fail-closed,
+        // not rollback or guest-visible host cancellation.
+        if(pending.size)throw new Error(
+          'Owned run ended with unresolved native effects; refusing incomplete archive');
         const bundle=JSON.parse(JSON.stringify(runtime.exportRun()));
         validateBundle(bundle);
         replayExact(bundle); // Recorded outcomes, never native service execution.
@@ -91,6 +105,7 @@ export async function executeWithNativeServices({text,entry=null,services={},max
       await new Promise(resolve=>{wake=resolve;});
     }
   }finally{
+    active=false;
     signal?.removeEventListener('abort',abort);
     // Native deliveries belong to this run. Late external settlement cannot
     // append an arrival to an exported archive or wake another invocation.

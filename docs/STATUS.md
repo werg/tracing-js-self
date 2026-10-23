@@ -1,5 +1,9 @@
 # Implementation status (0.2.0)
 
+## Native effect archive-completeness and service-registration guard (October 23, 2026)
+
+- The bounded opt-in native driver rejects proxy/getter-based service registries before guest execution and prevents queued native dispatch from starting after the driver has exited. A completed driver result may not publish an archive with outstanding native effects; successful results must account for effect arrivals and pass existing exact replay checks. This guards a narrow asynchronous host boundary, **not** Node/browser API completeness, cancellation of already-started effects, or guest timer semantics.
+
 ## Bounded owned TypeScript object bindings (October 23, 2026)
 
 - One-initializer `const`/`let` object-pattern declarations now lower through
