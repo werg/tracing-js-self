@@ -41,11 +41,6 @@ jobs:
         with:
           node-version: '22'
       - run: npm ci
-      - name: Preserve reviewable execution environment for corpus investigation
-        run: |
-          mkdir -p corpus/out
-          tar -czf corpus/out/source-checkout.tar.gz --exclude='./node_modules' --exclude='./corpus/out' --exclude='./.git' .
-          tar -czf corpus/out/node-modules.tar.gz node_modules
       - name: Generate real-source V8 observation corpus and readable review
         run: |
           npm run corpus:generate -- \
@@ -58,7 +53,7 @@ jobs:
           npm run corpus:audit --             --input corpus/out/traces.jsonl             --output corpus/out/quality.json             --review corpus/out/quality.md             --examples 30
       - name: Compare with independently verified owned interpreter
         run: |
-          npm run corpus:owned-coverage --             --input corpus/out/traces.jsonl             --output corpus/out/owned-coverage.json             --per-function 2             --local-episodes corpus/out/owned-locally-verified.jsonl             --min-owned-verified 24
+          npm run corpus:owned-coverage --             --input corpus/out/traces.jsonl             --output corpus/out/owned-coverage.json             --per-function 2             --local-episodes corpus/out/owned-locally-verified.jsonl             --min-owned-verified 87
       - name: Validate provenance and explicit diagnostic status
         run: |
           node --input-type=module -e '
