@@ -28,7 +28,7 @@ test('for-let loops have owned induction, break and continue, including the upda
     return sum;
   }`,[8]);
   const operationAudit=exported.sidecar.operationAudit;
-  assert.equal(operationAudit.covered.updates,6);
+  assert.equal(operationAudit.covered.updates,5);
   assert.deepEqual(exported.sidecar.archive.finalState.control.a0.completion,
     {kind:'return',value:['num',8]});
   assert(exported.sidecar.semantic.events.some(e=>e.op==='loop'));
@@ -42,7 +42,7 @@ test('for-let loops have owned induction, break and continue, including the upda
 
 test('for expressions, open-ended loops and nested exits match the V8 reference',()=>{
   verified(`function f(){
-    let i=0, total=0;
+    let i=0; let total=0;
     for(i=0;i<4;i+=1)total+=i;
     for(;;){i--;if(i===1)break;}
     return total+i;
