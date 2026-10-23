@@ -366,7 +366,8 @@ export function compile(ast) {
               for(const entry of pattern.entries){
                 const child=temporary(entry);
                 emit('GET',variable,entry);
-                emit('CONST',{value:['str',entry.key]},entry);
+                if(entry.computedKey)expr(entry.computedKey);
+                else emit('CONST',{value:['str',entry.key]},entry);
                 emit('GET_PROP',null,entry);
                 emit('INIT',child,entry);
                 bindPattern(entry.target,child);
