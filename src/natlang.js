@@ -36,6 +36,7 @@ export class BoundedNatlangEnvironment {
     // Do not advertise that integration until those calls are owned.
     this.scopeCapabilities=Object.freeze({allowModules:false,allowNetwork:false});
     this.closed=false;
+    this.abortController=new AbortController();
     this.moduleSequence=0;
   }
   fork(){
@@ -45,7 +46,11 @@ export class BoundedNatlangEnvironment {
       services:this.services,mode:'fresh'
     });
   }
-  close(){this.closed=true;}
+  close(){
+    if(this.closed)return;
+    this.closed=true;
+    this.abortController.abort(new Error('Owned natlang evaluator closed'));
+  }
   ensureOpen(){if(this.closed)throw new Error('Owned natlang evaluator is closed');}
   declarationOf(){return undefined;}
   failed(request,error,reason='failed'){
@@ -105,7 +110,7 @@ export class BoundedNatlangEnvironment {
       const executed=await executeWithNativeServices({
         entry:{text:lowering.javascript,url:request.path,
           functionName:'__natlang_trace_entry',args:[request.scope,request.live??{}]},
-        services:this.services,maxSteps:this.maxSteps
+        services:this.services,maxSteps:this.maxSteps,signal:this.abortController.signal
       });
       progress=executed.progress;
       const {runtime,bundle}=executed;
