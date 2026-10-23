@@ -95,3 +95,16 @@ test('retained module boundary refuses host callables and preserves state',()=>{
   env.close();
   assert.throws(()=>env.evaluateModule('exports.answer=2;', {module,exports}),EvalFailure);
 });
+
+test('null-prototype data objects retain their prototype at guest and host boundaries',()=>{
+  const {env,traces}=create();
+  const obj=Object.create(null);
+  obj.count=2;
+  const result=env.execute(request(
+    'if(Object.getPrototypeOf(__live.obj)!==null) throw 1;'+
+    '__live.obj.count+=3;return __live.obj;', {live:{obj}}));
+  assert.equal(result.result,obj);
+  assert.equal(Object.getPrototypeOf(result.result),null);
+  assert.equal(obj.count,5);
+  assert.equal(replayExact(traces[0]).valid,true);
+});
