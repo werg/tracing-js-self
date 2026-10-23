@@ -16,7 +16,8 @@ export function validatePreparedRequest(heap,effect) {
     request.signature===spec.signature && request.codec===spec.codec &&
     effect.kind===spec.kind,'undeclared request schema or effect kind');
   checked(Array.isArray(effect.args) && effect.args.length===spec.arity &&
-    effect.args[spec.key]?.[0]==='str' && typeof effect.args[spec.key]?.[1]==='string',
+    (spec.key===null||effect.args[spec.key]?.[0]==='str' &&
+      typeof effect.args[spec.key]?.[1]==='string'),
     'operation argument signature');
   checked(typeof request.payload==='string' &&
     Buffer.byteLength(request.payload,'utf8')===request.byteLength,'invalid immutable payload size');
