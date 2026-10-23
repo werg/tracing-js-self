@@ -30,6 +30,7 @@ test('unsupported async/named expressions fail closed; rest arrows have owned ev
     'function f(){const a=async x=>x;return a(3);}',
     'function f(){const a=function self(x){return x;};return a(2);}'
   ])assert.equal(verifyTrainingCase({source:strict(body),entry:'f'}).status,'unsupported');
+  verified('function f(){const a=(...x)=>x[0];return a(3);}');
 });
 test('natlang TS annotations on synchronous arrows lower to guest frames',()=>{
   class EvalFailure extends Error{constructor(message,events){super(message);this.events=events;}}
