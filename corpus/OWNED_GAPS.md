@@ -6,6 +6,11 @@ not a measurement of all JavaScript behavior and not training admission.
 The independent native V8 diagnostic corpus has 936 matching outcomes, but
 native agreement does not prove owned trace semantics.
 
+The historical two-input baseline below remains a useful smoke benchmark.
+The new **all-936-invocation** owned verification and **912-case** stateful
+diagnostic report supersede it for coverage accounting; see
+[FULL_CORPUS_EVAL.md](FULL_CORPUS_EVAL.md).
+
 ## Rechecked owned execution
 
 | Result | Invocations |
