@@ -24,36 +24,47 @@ function checkArgs(args){
     throw new TypeError('Unexpected retained argument array property');
   return snapshot;
 }
-function snapshotResults(heap,results,existing){
+function snapshotResults(heap,results,existing,initialHeap){
   if(results?.[0]!=='ref')throw new TypeError('Retained result must be an owned array');
   const outer=heap[results[1]];
   if(outer?.kind!=='array')throw new TypeError('Malformed retained result array');
   const length=decode(outer.properties.length.value);
   if(!Number.isSafeInteger(length)||length<1||length>32)
     throw new RangeError('Invalid retained result history');
+  // The entry input data graph grows with each call, so the raw oN IDs
+  // of module-created objects shift. Normalize to the allocation ordinal
+  // *after* entry initialization; deterministic bytecode execution gives
+  // the same module object the same ordinal on every prefix replay.
+  const initialObjects=Object.keys(initialHeap).length;
+  const keyFor=id=>{
+    if(!/^o[1-9][0-9]*$/.test(id))throw new TypeError('Invalid owned object identity');
+    const ordinal=Number(id.slice(1))-initialObjects;
+    if(ordinal<=0)throw new TypeError('Retained result references entry call arguments');
+    return 'module-object:'+ordinal;
+  };
   const objects=new Map(existing),pending=new Map();
   function visit(value){
     if(value[0]!=='ref')return decode(value);
-    const id=value[1],entity=heap[id];
+    const id=value[1],identity=keyFor(id),entity=heap[id];
     if(!entity||!['array','object'].includes(entity.kind)||
        Object.keys(entity.accessors??{}).length||
        entity.prototype!==undefined&&entity.prototype!==null&&
          !['Object.prototype','Array.prototype'].includes(entity.prototype))
       throw new TypeError('Retained result includes an unowned exotic identity');
     const array=entity.kind==='array';
-    let target=objects.get(id);
+    let target=objects.get(identity);
     if(target!==undefined && Array.isArray(target)!==array)
       throw new TypeError('Retained identity changed kind');
     if(target===undefined){
       target=array?[]:entity.prototype===null?Object.create(null):{};
-      objects.set(id,target);
+      objects.set(identity,target);
     }
-    if(!pending.has(id)){
+    if(!pending.has(identity)){
       const values=new Map();
       const length=array?decode(entity.properties.length?.value):null;
       if(array&&(!Number.isSafeInteger(length)||length<0||length>4096))
         throw new RangeError('Retained result array limit');
-      pending.set(id,{target,array,length,values});
+      pending.set(identity,{target,array,length,values});
       for(const [name,record] of Object.entries(entity.properties)){
         if(array&&name==='length')continue;
         if(name==='__proto__'||!record||!Array.isArray(record.value))
@@ -128,7 +139,7 @@ export class BoundedRetainedModuleSession {
       const initial=run.bundle.initialState.control.a0.activeFrameId;
       const promiseId=run.bundle.initialState.frames[initial].asyncPromiseId;
       const result=run.bundle.finalState.promises[promiseId].value.value;
-      const staged=snapshotResults(run.bundle.finalState.heap,result,this.objects);
+      const staged=snapshotResults(run.bundle.finalState.heap,result,this.objects,run.bundle.initialState.heap);
       for(let i=0;i<this.outputs.length;i++){
         const former=this.outputs[i],next=staged.values[i];
         if((former===null||typeof former!=='object')?
