@@ -65,7 +65,7 @@ export class SemanticController {
         fail('identity','Reference was never allocated in the committed graph');
     }else if(value[0]==='intrinsic'){
       if(value.length!==2||!['Object','Array','Number','Math',
-        'Object.prototype','Array.prototype'].includes(value[1]))
+        'Object.prototype','Array.prototype','Promise'].includes(value[1]))
         fail('value','Unknown owned intrinsic tag');
     }else if(value[0]==='builtinfn'){
       const names=new Set([
@@ -73,13 +73,15 @@ export class SemanticController {
           .map(x=>'Math.'+x),
         ...['isFinite','isNaN','isInteger','isSafeInteger'].map(x=>'Number.'+x),
         ...['push','pop','includes','indexOf','lastIndexOf','slice','concat',
-          'join','splice','unshift','shift'].map(x=>'Array.prototype.'+x),
+          'join','splice','unshift','shift','at'].map(x=>'Array.prototype.'+x),
         ...['charAt','charCodeAt','at','substring','slice','indexOf','lastIndexOf',
           'includes','startsWith','endsWith','toLowerCase','toUpperCase','trim',
           'trimStart','trimEnd'].map(x=>'String.prototype.'+x),
         'Array.isArray','Array.toString',
-        'Object.hasOwn','Object.keys','Object.is','Object.create','Object.setPrototypeOf',
-        'Object.getPrototypeOf','Object.defineProperty','Object.valueOf','Object.toString'
+        'Object.hasOwn','Object.keys','Object.values','Object.entries','Object.is','Object.create','Object.setPrototypeOf',
+        'Object.getPrototypeOf','Object.defineProperty','Object.valueOf','Object.toString',
+        'Promise.resolve','Promise.reject','Promise.prototype.then',
+        'Promise.prototype.catch','Promise.prototype.finally'
       ]);
       if(value.length!==2||!names.has(value[1]))
         fail('value','Unknown owned builtin tag');
