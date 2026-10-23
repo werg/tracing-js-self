@@ -11,7 +11,7 @@ This repository implements a **bounded, executable prototype** for the architect
   bounded `randomSeed`, `staticRegExps`, `rest`, multi-binding `copies`,
   call `allocations`, and return `writes` fields, with malformed-extension
   rejection and byte-preservation tests. The tracer's consumer workflow pins
-  the corresponding megatoken revision `61b4b739a156676d243a2f7d4df86164d1107a56`.
+  the corresponding megatoken revision `986b9fce23f3343a8808c82b8ed330f644e07469`.
 - This is **schema compatibility for locally verified diagnostic Episodes**,
   not independent corpus admission, native runtime replacement or model
   training proof. The producer's generated corpus still reports `admitted=0`.
