@@ -47,6 +47,17 @@ files, generated spans, import links and TypeScript V3 source-map metadata; the
 authoritative trace uses **executed generated JS** sites, not proven original
 TS semantic sites.
 
+## Namespace-style static reads (not exotic namespace objects)
+
+A bounded `import * as ns from './module.js'` is supported only when every
+runtime use of `ns` is a **statically named property read** (`ns.value` or
+`ns['value']`). The frontend resolves that reference to the original exported
+binding, so mutation through another imported function remains visible.
+Assignments to `ns.value`, dynamic keys (`ns[key]`), escaping `ns` as a
+value, arbitrary reflection, `Object.keys(ns)`, and namespace re-exports are
+not implemented. They fail at linking instead of substituting an ordinary
+mutable JavaScript object for the ECMAScript module namespace exotic.
+
 ## Initialization, mutable bindings and asynchronous results
 
 Module instantiation rewrites each local function declaration to a unique
@@ -135,7 +146,7 @@ roll back an already executed external effect.
 
 ## Known limits and evidence
 
-- **Not general ESM:** module namespace exotic objects, dynamic `import()`,
+- **Not general ESM:** first-class module namespace exotic objects, dynamic `import()`,
   generators, classes, decorators, `import.meta`, CommonJS and package imports
   fail closed. Namespace and cyclic Module Record semantics, ordered accessors,
   complete descriptors and all built-ins remain open.
@@ -152,6 +163,11 @@ roll back an already executed external effect.
   out-of-order external completions plus unsupported-path rejection. These
   finite regressions do not substitute for Test262 module variants, native
   browser/Node coverage or an admitted megatoken training dataset.
+
+The experimental `werg/natlang` Node platform exposes an explicit
+`installOwnedTracingEnvironment(factory)` integration point for the two
+evaluator seams. This does **not** make callable-folder modules, native helper
+callbacks, complete source mapping, or arbitrary modules compatible.
 
 This endpoint is appropriate for explicit experiments and candidate
 traces only. Keep `coverage/required.json` and `docs/STATUS.md`
