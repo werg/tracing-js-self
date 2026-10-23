@@ -217,7 +217,7 @@ class Capture {
     });
   }
 }
-function instrument(source,filename,language){
+function instrument(source,filename,language,siteOffset=0){
   const sf=ts.createSourceFile(filename,source,ts.ScriptTarget.ES2022,true,
     language==='ts'?ts.ScriptKind.TS:language==='tsx'?ts.ScriptKind.TSX:ts.ScriptKind.JS);
   if(sf.parseDiagnostics.length)throw new SyntaxError(
@@ -226,7 +226,8 @@ function instrument(source,filename,language){
     const f=ctx.factory;
     const call=(name,node,args)=>f.createCallExpression(f.createPropertyAccessExpression(
       f.createIdentifier('__trace'),name),undefined,[
-      f.createNumericLiteral(node.getStart(sf)),f.createNumericLiteral(node.getEnd()),...args
+      f.createNumericLiteral(node.getStart(sf)+siteOffset),
+      f.createNumericLiteral(node.getEnd()+siteOffset),...args
     ]);
     const assign=kind=>kind>=ts.SyntaxKind.FirstAssignment&&kind<=ts.SyntaxKind.LastAssignment;
     const updating=n=>(ts.isPrefixUnaryExpression(n)||ts.isPostfixUnaryExpression(n))&&
@@ -370,7 +371,8 @@ function transpile(code,filename){
   if(errors.length)throw new SyntaxError(ts.flattenDiagnosticMessageText(errors[0].messageText,'\n'));
   return result.outputText;
 }
-async function execute(code,{filename,entry,args,setupSource,timeoutMs,capture,randomSeed}){
+async function execute(code,{filename,entry,args,setupSource,timeoutMs,
+  capture,randomSeed,sourceLength}){
   const events=capture?new Capture(capture):null;
   const trace=events?events.hooks():null;
   const output={};
@@ -384,7 +386,8 @@ async function execute(code,{filename,entry,args,setupSource,timeoutMs,capture,r
   if(setupSource){
     // Instrument guest-defined callbacks as well as the entry function.
     // Initialization itself is fixture setup, not an execution target.
-    const setupCode=events?instrument(setupSource,filename+'.setup.js','js'):
+    const setupCode=events?instrument(setupSource,filename+'.setup.js','js',
+      sourceLength+1):
       transpile(setupSource,filename+'.setup.js');
     vm.runInContext(setupCode,ctx,{filename:filename+'.setup.js',timeout:timeoutMs});
     inputs=vm.runInContext('globalThis.__testArgs',ctx,{timeout:timeoutMs});
@@ -429,14 +432,20 @@ export async function observeProgram({source,entry,args=[],language='js',
      timeoutMs<1||timeoutMs>30000)
     throw new TypeError('Invalid trusted V8 observation request');
   const observed=await execute(instrument(source,filename,language),
-    {filename,entry,args,setupSource,timeoutMs,randomSeed,capture:{maxEvents,maxNodes}});
+    {filename,entry,args,setupSource,sourceLength:source.length,timeoutMs,randomSeed,
+      capture:{maxEvents,maxNodes}});
   const reference=await execute(transpile(source,filename),
-    {filename,entry,args,setupSource,timeoutMs,randomSeed,capture:null});
+    {filename,entry,args,setupSource,sourceLength:source.length,
+      timeoutMs,randomSeed,capture:null});
   const sameResult=observed.completion.kind===reference.completion.kind&&
     (observed.completion.kind==='return'||equal(observed.completion,reference.completion))&&
     equal(observed.graph,reference.graph);
   return {schema:'effective-observation/1',profile:'trusted-v8-observation',
-    source:{filename,language,text:source},entry,input:observed.input,
+    // Fixture callbacks are a visible part of the executed program. Their
+    // spans map after the exact production source instead of overlapping it.
+    source:{filename,language,
+      text:setupSource?source+'\n'+setupSource:source,
+      originalText:source,fixtureText:setupSource??null},entry,input:observed.input,
     events:observed.events,
     completion:observed.completion,observableGraph:observed.graph,
     evidence:{independentUninstrumentedV8:sameResult,
