@@ -450,7 +450,9 @@ export class SemanticController {
         maxPacketBytes:this.maxPacketBytes}};
     if(Buffer.byteLength(JSON.stringify(packet),'utf8')>this.maxPacketBytes)
       fail('profile_limit','Exact live state exceeds the continuation transport capacity');
-    return packet;
+    // Freeze the handoff at the committed boundary. Returning live Map entry
+    // objects would let later rejected model output rewrite older packets.
+    return copy(packet);
   }
   static fromSegmentPacket(packet) {
     if(packet?.schema!=='semantic-continuation/2' ||
