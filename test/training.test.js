@@ -48,7 +48,7 @@ test('cycles in input graph and returned aliases are preserved',()=>{
 });
 test('strict profile rejects unsupported syntax and ambient globals',()=>{
   for(const code of [
-    'function f(){return unknown+2;}', 'var x=1;function f(){return x;}',
+    'function f(){return unknown+2;}', 'var x=Date.now();function f(){return x;}',
     'function f(){return eval("1");}', 'function f(){return new Date();}',
     'async function f(){return 1;}', 'function f(){return a?.b;}',
     'function f(){return [,,2];}', 'function f(){return this;}'
