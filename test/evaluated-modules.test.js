@@ -327,7 +327,9 @@ test('module batch keeps exported object aliases and awaited call order',async()
     {exportName:'read',args:[shared]},
     {exportName:'update',args:[shared]}
   ]});
-  assert.deepEqual(run.result,[{n:5},5,{n:5}]);
+  // Object aliases refer to final guest heap state; the scalar read returns
+  // its intermediate value before the second mutation.
+  assert.deepEqual(run.result,[{n:5},3,{n:5}]);
   assert.equal(run.result[0],run.result[2]);
   assert.equal(shared.n,1,'entry object is an imported owned snapshot');
 });
