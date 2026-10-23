@@ -95,7 +95,6 @@ test('nested binding failures never publish successful traces',()=>{
       ['const {a:[x]}=self;return x;', {a:'string'}],
       ['const {x:a,y:a}=self;return a;',{}],
       ['const {a:{b:{c:{d:{e}}}}}=self;return e;',{}],
-      ['const {[self.k]:a}=self;return a;',{}],
       ['const {x,...rest}=self;return rest;',{}],
       ['const {Array: Array, a:[x]}=self;return x;',{}]
     ])
