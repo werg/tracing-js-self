@@ -111,9 +111,23 @@ function snapshotResults(heap,results,existing,initialHeap){
 
 export class BoundedRetainedModuleSession {
   constructor({modules,entryModule,maxSteps=100000}={}){
-    if(!modules||typeof modules!=='object'||typeof entryModule!=='string')
-      throw new TypeError('Retained module source graph and entryModule required');
-    this.modules=modules;
+    if(!modules||typeof modules!=='object'||Array.isArray(modules)||
+       types.isProxy(modules)||typeof entryModule!=='string'||
+       ![Object.prototype,null].includes(Object.getPrototypeOf(modules)))
+      throw new TypeError('Retained module source graph must be a plain data object');
+    // Freeze source content by *own descriptors*, not via a getter or a
+    // reference to mutable host data that can change between replay runs.
+    const sources=Object.create(null);
+    for(const name of Reflect.ownKeys(modules)){
+      const descriptor=Object.getOwnPropertyDescriptor(modules,name);
+      if(typeof name!=='string'||!descriptor||
+         !Object.hasOwn(descriptor,'value')||
+         typeof descriptor.value!=='string')
+        throw new TypeError('Retained module source must be own string data');
+      Object.defineProperty(sources,name,{value:descriptor.value,
+        enumerable:true,writable:false,configurable:false});
+    }
+    this.modules=Object.freeze(sources);
     this.entryModule=entryModule;
     this.maxSteps=maxSteps;
     this.history=[];
