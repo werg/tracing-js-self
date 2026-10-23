@@ -19,6 +19,10 @@
       "types": "./src/modules.d.ts",
       "default": "./src/modules.js"
     },
+    "./evaluated-modules": {
+      "types": "./src/evaluated-modules.d.ts",
+      "default": "./src/evaluated-modules.js"
+    },
     "./native": {
       "types": "./src/host/native-driver.d.ts",
       "default": "./src/host/native-driver.js"
