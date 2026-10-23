@@ -39,7 +39,7 @@ replayExact(run.bundle);
   star export; distinct origins are ambiguous, and stars never forward default.
   The runtime still rejects async/generator functions, classes, general
   top-level statements, mutable exports, namespace imports/re-exports,
-  side-effect imports, dynamic imports and top-level initialization.
+  general executable module side effects, dynamic imports and top-level initialization. Inert side-effect-only imports and empty-source re-exports are now permitted only when their entire reachable dependency graph is function-only; declared runtime dependencies erased by TypeScript import elision are still visited and validated.
 - Linking uses conservative identifier substitution, preserving object-literal
   shorthand property names, and rejects shadowing or assignment of linked
   imported function names rather than silently changing ES module semantics. Ordinary calls, arithmetic, loops, captured closures
