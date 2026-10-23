@@ -29,6 +29,10 @@ test('60 adversarial production scenarios have unique names, pinned module sourc
  for(const row of scenarios)(counts[row.project]??=[]).push(row);
  assert.equal(Object.keys(counts).length,8);
  assert.equal(counts.application.length,6);
+ for(const row of counts.application){
+  assert(row.modules.length<=3);
+  assert(row.modules.every(mod=>row.run.includes("__require('"+mod+"')")));
+ }
 });
 
 test('real event listeners generate explicitly unadmitted, independently matching stateful observations',()=>{
