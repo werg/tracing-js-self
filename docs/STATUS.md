@@ -1,5 +1,10 @@
 # Implementation status (0.2.0)
 
+## Owned logical assignment (October 23, 2026)
+
+- Strict JS/TypeScript execution accepts `&&=`, `||=` and `??=` for lexical/var bindings and ordinary member references. Short-circuit branches preserve the previous value without writing or evaluating the right-hand side. Computed member keys and receivers are evaluated once through private owned temporaries. Independent V8 observable-graph differential tests, exact replay and refusal regressions cover the bounded slice; this is not a complete ECMAScript assignment-reference or host semantics implementation.
+
+
 ## Bounded computed TypeScript object patterns (October 23, 2026)
 
 - Computed destructuring property-key expressions now evaluate once in owned source order, followed by traceable owned property reads and lazy default branches. The bounded profile still rejects rest patterns and unmodeled property-key coercion; this is not general TS execution, Test262 conformance or a production natlang realm. Local V8 differential and exact replay regressions cover the accepted cases.

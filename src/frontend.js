@@ -281,6 +281,40 @@ export function compile(ast) {
         case 'Array':emit('NEW_ARRAY',null,n);for(let i=0;i<n.elements.length;i++){emit('DUP',null,n);emit('CONST',{value:['str',String(i)]},n);expr(n.elements[i]);emit('PUT_PROP',null,n);emit('POP',null,n);}break;
         case 'Object':emit('NEW_OBJECT',null,n);for(const item of n.properties){emit('DUP',null,n);emit('CONST',{value:['str',item.key]},n);expr(item.value);emit('PUT_PROP',null,n);emit('POP',null,n);}break;
         case 'Assign':
+          if(['&&=','||=','??='].includes(n.operator)){
+            const operator=n.operator.slice(0,-1);
+            if(n.left.type==='Identifier'){
+              emit('GET',n.left.name,n.left);
+              const guard=emit('LOGICAL_JUMP',{operator,to:null},n);
+              emit('POP',null,n);
+              expr(n.right);
+              emit('SET',n.left.name,n);
+              instructions[guard].arg.to=instructions.length;
+            }else{
+              // Preserve the receiver and key in inaccessible lexical cells.
+              // Both are evaluated exactly once, even when RHS is skipped.
+              const salt=++forOfIndex;
+              const receiver='[[logical receiver '+salt+']]';
+              const property='[[logical key '+salt+']]';
+              emit('ENTER_SCOPE',null,n);
+              emit('DECLARE',{name:receiver,kind:'const'},n.left);
+              emit('DECLARE',{name:property,kind:'const'},n.left);
+              expr(n.left.object);emit('INIT',receiver,n.left.object);
+              expr(n.left.property);emit('INIT',property,n.left.property);
+              emit('GET',receiver,n.left);
+              emit('GET',property,n.left);
+              emit('GET_PROP',null,n.left);
+              const guard=emit('LOGICAL_JUMP',{operator,to:null},n);
+              emit('POP',null,n);
+              emit('GET',receiver,n.left);
+              emit('GET',property,n.left);
+              expr(n.right);
+              emit('PUT_PROP',null,n);
+              instructions[guard].arg.to=instructions.length;
+              emit('LEAVE_SCOPE',null,n);
+            }
+            break;
+          }
           if(n.left.type==='Identifier') {
             if(n.operator!=='=')emit('GET',n.left.name,n.left);
             expr(n.right);if(n.operator!== '=')emit('BINARY',n.operator.slice(0,-1),n);

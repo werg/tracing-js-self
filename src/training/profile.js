@@ -10,7 +10,7 @@ export const TRAINING_PARSER='acorn/8.15.0:training-js/1';
 const binaries=new Set(['+','-','*','/','%','**','<','<=','>','>=','===','!==','==','!=',
   '&','|','^','<<','>>','>>>']);
 const logical=new Set(['&&','||','??']);
-const assignments=new Set(['=','+=','-=','*=','/=','%=','**=',
+const assignments=new Set(['=','&&=','||=','??=','+=','-=','*=','/=','%=','**=',
   '&=','|=','^=','<<=','>>=','>>>=']);
 const unary=new Set(['!','-','+','typeof','void','~']);
 const reject=(node,why) => {throw new SyntaxError(
