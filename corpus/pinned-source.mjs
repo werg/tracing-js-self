@@ -1,6 +1,7 @@
 // Shared pinned-source extraction for native observation and owned verification.
 // Original vendored code and explicitly listed declarations are never rewritten.
 import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import ts from 'typescript';
 import {sources} from './cases.mjs';
@@ -55,4 +56,9 @@ export function original(spec){
     path,sourceFile:text,
     sourceURL:'https://github.com/microsoft/vscode/blob/'+source.revision+
       '/'+source.sourcePrefix+spec.file};
+}
+
+export function corpusSplit(key){
+  const n=parseInt(createHash('sha256').update(key).digest('hex').slice(0,8),16)%10;
+  return n===0?'test':n<=2?'validation':'train';
 }
