@@ -229,12 +229,50 @@ export class SemanticController {
       // Defining a function publishes its lexical name and closure reference
       // as part of the same effective allocation. No hidden binding creation.
       for(const write of fields.writes??[]){
-        if(write.kind!=='cell'||write.previous!==0||write.version!==0)
+        if(write.kind!=='cell')continue;
+        if(write.previous!==0||write.version!==0)
           fail('write','Malformed function-definition binding');
         const key=write.env+':'+write.key;
         if(this.cells.has(key))fail('write','Repeated function-definition binding');
         this.checkValue(write.value);
         this.cells.set(key,{version:0,value:copy(write.value)});
+      }
+      // An array builtin may allocate its return value and write the receiver
+      // in one atomic event. Validate the patches against pre-event versions.
+      const writes=(fields.writes??[]).filter(w=>w.kind==='property');
+      if((fields.writes??[]).length!==writes.length+
+          (fields.writes??[]).filter(w=>w.kind==='cell').length)
+        fail('write','Unknown allocation-associated mutation kind');
+      if(writes.length){
+        const seen=new Set(),counts=new Map();
+        for(const write of writes){
+          const key=write.object+':'+write.key;
+          if(seen.has(key))fail('write','Duplicate predicted property location');
+          seen.add(key);
+          counts.set(write.object,(counts.get(write.object)??0)+1);
+        }
+        const draft=new Map([...this.heap].map(([id,obj])=>[id,{
+          ...obj,properties:new Map(obj.properties),versions:new Map(obj.versions)}]));
+        for(const write of writes){
+          const obj=draft.get(write.object),before=this.heap.get(write.object);
+          const count=counts.get(write.object);
+          if(!obj||!before||typeof write.key!=='string'||
+             (before.versions.get(write.key)??0)!==write.oldVersion||
+             !Number.isSafeInteger(write.version)||
+             write.version<=write.oldVersion||
+             write.version-write.oldVersion>count||
+             before.shapeVersion!==write.shapeBefore||
+             !Number.isSafeInteger(write.shapeAfter)||
+             write.shapeAfter<write.shapeBefore||
+             write.shapeAfter-write.shapeBefore>count)
+            fail('write','Stale or implausible atomic allocation-associated patch');
+          if(write.present)obj.properties.set(write.key,{
+            version:write.version,value:copy(write.value)});
+          else obj.properties.delete(write.key);
+          obj.versions.set(write.key,write.version);
+          obj.shapeVersion=write.shapeAfter;
+        }
+        this.heap=draft;
       }
     } else if(kind==='carry') {
       // Iteration cells matter when closures capture distinct values. Copy
