@@ -1,5 +1,10 @@
 # Implementation status (0.2.0)
 
+## Stateful TypeScript-emitted CommonJS compatibility (October 23, 2026)
+
+- The strict natlang retained CJS bridge now admits own `let`/`const` module-private data initializers alongside exported function declarations. The pinned TypeScript 5.9.3 CommonJS emitter supplies independent source fixtures; successive host-callable exports observe the same replay-backed mutable guest lexical cells, and rejected trace callbacks cannot commit state. Arbitrary require/imports, native resources and normal natlang-transformed helper calls remain unsupported: **this is not a production-compatible general callable-folder realm.**
+
+
 ## Owned async arrows and function expressions (October 23, 2026)
 
 - The strict TypeScript/ES2022 interpreter now accepts anonymous `async (...args) => ...` arrows and `async function (...args) {...}` expressions. Their closure allocations carry async status, use owned invocation frames, and resolve/reject owned promises through guest `await`. Independent Node V8 return-value comparisons and exact replay cover bounded completed cases; these are not general JS/TS or Node/browser event-loop conformance.

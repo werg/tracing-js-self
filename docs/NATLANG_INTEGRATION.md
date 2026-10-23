@@ -120,8 +120,9 @@ Opt-in strict-profile TS lowering now includes try/catch/finally completion synt
 A strict pure-CommonJS function registration slice is additionally accepted by
 the retained module seam when natlang supplies a native `require` binding:
 the helper is intentionally **never invoked**. Simple compiler-emitted
-`exports.fn = fn; function fn(...) {...}` registrations are converted into
-owned ESM exports and exposed as host-callable wrappers. Invocations are
+`exports.fn = fn; function fn(...) {...}` registrations, plus owned module-private
+`let`/`const` lexical initializers, are converted into an owned ESM graph and
+exposed as host-callable wrappers. Invocations are
 synchronous, replay-backed, recorded through the same `onTrace` hook and
 limited to primitive arguments and the module-session history budget. Any
 other module bootstrap statement, package use or native helper reference

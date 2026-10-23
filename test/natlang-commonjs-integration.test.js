@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import ts from 'typescript';
 import {createBoundedNatlangEnvironment} from '../src/natlang.js';
 import {validateBundle,replayExact} from 'tracing-js-self';
 
@@ -68,5 +69,56 @@ test('rejected trace sink rolls back callable module invocation history',()=>{
     env.evaluateModule(compiled,{exports,module,require:()=>{}});
     assert.throws(()=>exports.add(2),EvalFailure);
     assert.equal(count,1);
+  }finally{env.close();}
+});
+
+test('pinned TypeScript-emitted CommonJS module retains real lexical cells',()=>{
+  const code=ts.transpileModule(
+    'let total=1; export function add(v:number){total+=v;return total;}'+
+    'export function read(){return total;}',
+    {fileName:'pure-module.ts',compilerOptions:{
+      target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS
+    }}
+  ).outputText;
+  const traces=[];
+  const env=createBoundedNatlangEnvironment({EvalFailure,mode:'retained',
+    onTrace:bundle=>traces.push(bundle)});
+  const exports={},module={exports};let requireCalls=0;
+  try{
+    assert.equal(env.evaluateModule(code,{
+      module,exports,require:()=>{requireCalls++;throw Error('unowned require');},
+      __natlang:()=>{},nl:()=>{},iterateOn:()=>{},__natlang_context:{}
+    }),exports);
+    assert.equal(exports.add(3),4);
+    assert.equal(exports.read(),4);
+    assert.equal(exports.add(5),9);
+    assert.equal(exports.read(),9);
+    assert.equal(requireCalls,0);
+    assert.equal(traces.length,4);
+    for(const archive of traces){
+      assert.equal(validateBundle(archive).valid,true);
+      assert.equal(replayExact(archive).valid,true);
+    }
+  }finally{env.close();}
+});
+test('failed trace hook leaves retained TypeScript CommonJS lexical state unchanged',()=>{
+  const code=ts.transpileModule(
+    'let n=1;export function inc(){n++;return n;}export function read(){return n;}',
+    {fileName:'pure-module.ts',compilerOptions:{
+      target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS
+    }}
+  ).outputText;
+  let attempts=0;
+  const env=createBoundedNatlangEnvironment({EvalFailure,mode:'retained',
+    onTrace:()=>{
+      if(attempts++===0)throw new Error('archive refused');
+    }});
+  const exports={},module={exports};
+  try{
+    env.evaluateModule(code,{exports,module,require:()=>{}});
+    assert.throws(()=>exports.inc(),EvalFailure);
+    assert.equal(exports.read(),1,'replay-backed guest module state must roll back');
+    assert.equal(exports.inc(),2);
+    assert.equal(exports.read(),2);
   }finally{env.close();}
 });
