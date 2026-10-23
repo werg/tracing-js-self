@@ -1367,3 +1367,46 @@ functionalization changes any observed scalar behavior are refused.
   promoted by actual CI execution and update the measured full ledger.
 - [ ] Official harness, asynchronous/host semantics, arbitrary program
   initialization and full conformance remain open.
+
+
+### Final measured bounded Test262 promotion and exhaustive accounting (2026-10-23)
+
+[Full pipeline run 39996374782](https://github.com/werg/tracing-js-self/actions/runs/39996374782)
+successfully rechecked **6 Test262 scalar function-entry semantic-execution/2
+episodes** out of **7 Test262 owned-script/native-V8 diagnostic agreements**
+(217 source files attempted, 210 unsupported). The seventh case refused
+training conversion. Test262 successes underwent original-source scalar
+assertions, independently checked function-wrapper outcomes,
+`training-js/1` source-operation/branch audits, controller rollout, exact
+owned-journal replay, serialization recheck, and original Test262-body
+source-site receipts. No official comprehensive Test262 harness support is
+implied.
+
+The resulting **complete 117,773-row acquisition disposition** now reports:
+
+| Source | Input fixtures | Locally verified owned `semantic-execution/2` | Explicitly refused |
+| --- | ---: | ---: | ---: |
+| Test262 | 103,582 | **6** | 103,576 |
+| Exercism canonical | 2,330 | **34** | 2,296 |
+| JSON Schema | 11,861 | **0** | 11,861 |
+| **Total acquired catalog** | **117,773** | **40** | **117,733** |
+
+Separately, **37** generated Exercism variants passed owned checks but are
+*outside* this canonical catalog, giving **77 locally verified episode
+candidates across the work**, all explicitly **non-admitted**. Generated
+variations and duplicate Test262 strict/sloppy variants are not counted as
+new upstream functions. Exhaustive accounting is complete; **full
+conversion is not**.
+
+- [x] Promoted six Test262 original-source scalar scripts to real,
+  independently checked, source-mapped local owned training candidates.
+- [x] Distinguished true local owned episodes from script-only diagnostics,
+  canonical declarations, and unsupported guest/host execution.
+- [x] CI now enforces a 40-case total owned result in the full conversion
+  ledger and six Test262 locally verified bounded scalar cases.
+- [ ] Implement full harness, complete ECMAScript owned semantics, compatible
+  real JSON Schema validator internal execution, rich host/async effects,
+  general module graph and independently checked exotic/proxy operations
+  before remaining 117,733 cases can be considered for promotion.
+- [ ] Independent downstream megatoken data admission is **still zero** and
+  remains gated by actual consumer/model evaluation.

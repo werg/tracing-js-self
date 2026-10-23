@@ -161,7 +161,8 @@ jobs:
             import {readFileSync} from "node:fs";
             const r=JSON.parse(readFileSync("corpus/out/full/disposition-report.json"));
             if(r.status!=="complete-accounting"||r.readCount!==117773||
-              r.locallyVerified<34||r.readCount!==r.locallyVerified+r.refused||
+              r.locallyVerified<40||
+              r.sourceInventories?.test262?.locallyVerified<6||r.readCount!==r.locallyVerified+r.refused||
               r.admitted!==0||r.allConverted===true)throw Error("False full conversion evidence "+JSON.stringify(r));
             console.log("Acquired records dispositioned",r.readCount,
               "owned locally verified",r.locallyVerified,

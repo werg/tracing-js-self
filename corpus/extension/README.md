@@ -260,3 +260,15 @@ wrapper, original-vs-wrapped native V8 check and independent
 explicit source-body byte receipts, can join their exact Test262 *sloppy*
 acquisition records. This is a small, explicitly incomplete profile;
 strict/module/async/negative/full-harness candidates remain refused.
+
+
+### Updated complete-pipeline result
+
+[Run 39996374782](https://github.com/werg/tracing-js-self/actions/runs/39996374782)
+independently rechecked **six** Test262 scalar script bodies as true
+`semantic-execution/2` local owned candidates, in addition to **34**
+canonical Exercism candidates. Thus the acquired 117,773-case inventory
+contains **40 owned locally verified** and **117,733 explicit refusals**.
+The separate **37** verified generated variations yield **77 local owned
+episodes overall**, none training-admitted. The complete source-disposition
+and refusal ledger remains available in the same full-acquisition artifact.
