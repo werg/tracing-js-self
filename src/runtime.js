@@ -227,8 +227,9 @@ export class Runtime {
     if(!ast.body.length || ast.body[0].type!=='Expression' ||
        ast.body[0].expr.type!=='Literal' ||
        ast.body[0].expr.value[0]!=='str' || ast.body[0].expr.value[1]!=='use strict' ||
-       ast.body.slice(1).some(n=>n.type!=='Function' || (n.async && !allowAsync)))
-      throw new SyntaxError('training-js/1 requires a strict function bundle without top-level effects');
+       ast.body.slice(1).some(n=>!['Function','Variable','VariableGroup'].includes(n.type) ||
+         (n.type==='Function' && n.async && !allowAsync)))
+      throw new SyntaxError('training-js/1 requires a strict owned static/function bundle');
     const definitions=this.programs[source.entry].instructions.filter(x=>x.op==='DEF_FN');
     if(new Set(definitions.map(x=>x.arg.name)).size!==definitions.length)
       throw new SyntaxError('Duplicate function declaration');
@@ -244,6 +245,21 @@ export class Runtime {
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     state.control.a0.globalEnvId=global;
+    const initializers=ast.body.slice(1).flatMap(n=>
+      n.type==='VariableGroup'?n.declarations:n.type==='Variable'?[n]:[]);
+    for(const init of initializers){
+      if(Object.hasOwn(state.envs[global].bindings,init.id))
+        throw new SyntaxError('Duplicate or reserved global initializer '+init.id);
+      const val=init.init;
+      const initial=val?.type==='Literal'?val.value:
+        val?.type==='Member' && val.object?.type==='Identifier' &&
+        val.object.name==='Math' && val.property?.type==='Literal' &&
+        ['ceil','floor','min','max'].includes(val.property.value?.[1])
+          ?['builtinfn','Math.'+val.property.value[1]]:null;
+      if(!initial)throw new SyntaxError('Unsupported static global initializer');
+      state.envs[global].bindings[init.id]={kind:init.kind,initialized:true,
+        token:token(initial),version:0};
+    }
     for(const def of definitions){
       const id=this.next(state,'obj');
       state.heap[id]={id,kind:'function',codeId:def.arg.codeId,
@@ -282,7 +298,25 @@ export class Runtime {
     if(frame.reactionPromiseId)this.resolvePromise(draft,frame.reactionPromiseId,value,origin);
     if(frame.reactionJob){draft.control.a0.activeFrameId=null;return;}
     if(frame.callerFrameId){
-      const caller=draft.frames[frame.callerFrameId],pending=caller.pendingProperty;
+      const caller=draft.frames[frame.callerFrameId];
+      if(caller.pendingArrayMethod?.waitingFrameId===frame.id){
+        const pending=caller.pendingArrayMethod;
+        const out=draft.heap[pending.outputId];
+        if(pending.method==='map')putOwn(out,String(pending.index),value,origin);
+        else if(pending.method==='filter' && truthy(value))
+          putOwn(out,String(decode(out.properties.length.value)),
+            pending.currentValue,origin);
+        else if(pending.method==='reduce')pending.accumulator=value;
+        pending.index++;
+        pending.waitingFrameId=null;
+        if(pending.index<pending.length){
+          draft.control.a0.activeFrameId=caller.id;
+          return;
+        }
+        value=pending.method==='reduce'?pending.accumulator:['ref',pending.outputId];
+        delete caller.pendingArrayMethod;
+      }
+      const pending=caller.pendingProperty;
       if(pending?.waitingFrameId===frame.id){
         caller.pendingProperty=null;
         if(pending.kind==='get'&&pending.method)value=['method',value,pending.receiver];
@@ -292,6 +326,31 @@ export class Runtime {
     }
     else {draft.control.a0.activeFrameId=null;draft.control.a0.completion={kind:'return',value};
       draft.control.a0.status='completed';if(!frame.asyncPromiseId)this.result=value;}
+  }
+  // Continue a guest Array callback in the owned VM, never by executing
+  // guest functions in the host. Reads are from current heap state so callback
+  // mutations cannot be silently replaced by a precomputed native array.
+  advanceArrayCallback(draft,caller,origin){
+    const p=caller.pendingArrayMethod;
+    if(!p)throw new Error('Missing array callback continuation');
+    const array=draft.heap[p.arrayId];
+    for(;p.index<p.length;p.index++){
+      const index=String(p.index),slot=array.properties[index];
+      if(!slot||Object.hasOwn(array.accessors??{},index))
+        throw new TypeError('Array callback needs owned data slots');
+      const value=slot.value;
+      const fn=draft.heap[p.callbackId];
+      const params=p.method==='reduce'?
+        [token(p.accumulator),token(value),token(['num',p.index]),token(['ref',p.arrayId])]:
+        [token(value),token(['num',p.index]),token(['ref',p.arrayId])];
+      const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,caller.id,null,params,
+        fn.arrow?fn.lexicalThis:U);
+      p.currentValue=value;
+      p.waitingFrameId=child;
+      draft.control.a0.activeFrameId=child;
+      return true;
+    }
+    return false;
   }
   // Await and reaction jobs share ordered owned subscriptions.
   observePromise(draft,id,observer) {
@@ -468,6 +527,15 @@ export class Runtime {
     const c=this.state.control.a0,frame=c.activeFrameId&&this.state.frames[c.activeFrameId];
     if(!frame||frame.status!=='running')return null;
     if(frame.operationId)return this.stepArithmetic(frame);
+    if(frame.pendingArrayMethod && frame.pendingArrayMethod.waitingFrameId===null){
+      const siteId=frame.pendingArrayMethod.siteId;
+      return this.commit('call.enter',(s,eventId)=>{
+        const parent=s.frames[frame.id];
+        if(!this.advanceArrayCallback(s,parent,eventId))
+          throw new Error('Missing next owned array callback');
+        return {causes:[{kind:'invocation',frameId:parent.pendingArrayMethod.waitingFrameId}]};
+      },{siteId,sourceId:frame.codeId.split(':')[0],codeId:frame.codeId,invocationId:frame.id});
+    }
     const inst=this.programs[frame.codeId].instructions[frame.pc];
     if(!inst)throw new Error('Program counter out of range');
     const {op,arg}=inst;
@@ -822,10 +890,14 @@ export class Runtime {
           }
           if(this.entrySpec && obj.kind==='array') {
             const oldLength=decode(obj.properties.length.value);
-            if(arrayIndex(property) && Number(property)>oldLength)
-              throw new TypeError('Sparse array writes are outside training-js/1');
-            if(property==='length' && v.value[0]==='num' && decode(v.value)>oldLength)
-              throw new TypeError('Array length expansion is outside training-js/1');
+            // Array length growth and out-of-range writes create actual
+            // absent slots, never invented `undefined` properties. Enforce a
+            // bounded heap budget while retaining ECMAScript hole semantics.
+            if(arrayIndex(property) && Number(property)>10000)
+              throw new RangeError('Owned sparse array index budget exceeded');
+            if(property==='length' && v.value[0]==='num' &&
+               decode(v.value)>10000)
+              throw new RangeError('Owned array length budget exceeded');
           }
           obj.propertyVersions ??= {};
           obj.shapeVersion ??= 0;
@@ -837,12 +909,67 @@ export class Runtime {
           const fn=pop();let callable=fn.value;
           const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
+          if(callable[0]==='intrinsic' && callable[1]==='Array'){
+            // Array(length) creates holes, not present undefined slots. The
+            // identity is owned, the length is journaled, and indexed writes
+            // subsequently fill those holes in the normal mutation path.
+            if(args.length>10000)throw new RangeError('Array argument budget');
+            const singleLength=args.length===1 && args[0].value[0]==='num';
+            const n=singleLength?decode(args[0].value):args.length;
+            if(!Number.isInteger(n)||n<0||n>10000)
+              throw new RangeError('Array length outside bounded profile');
+            const id=this.next(s,'obj');
+            const array=s.heap[id]={id,kind:'array',properties:{
+              length:token(['num',n],eventId)},propertyVersions:{length:0},
+              shapeVersion:0,version:0};
+            if(!singleLength)args.forEach((entry,i)=>
+              putOwn(array,String(i),entry.value,eventId));
+            return {...operands(fn,...args),...result(['ref',id])};
+          }
           if(callable[0]==='ref' && s.heap[callable[1]]?.kind==='function'){
             const target=s.heap[callable[1]],promiseId=target.async?this.newPromise(s):null;
             const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,args,
               target.arrow?target.lexicalThis:receiver);
             s.control.a0.activeFrameId=id;
             return {...operands(fn,...args),result:['ref',callable[1]],causes:[{kind:'invocation',frameId:id}]};
+          }
+          if(callable[0]==='builtinfn' &&
+             ['filter','map','reduce'].some(m=>callable[1]==='Array.prototype.'+m)){
+            const array=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+            if(!array||array.kind!=='array'||Object.keys(array.accessors??{}).length)
+              throw new TypeError('Array callback needs owned array data');
+            const length=decode(array.properties.length.value);
+            if(!Number.isSafeInteger(length)||length<0||length>10000)
+              throw new RangeError('Array callback iteration limit');
+            const callback=args[0]?.value??U;
+            if(!this.callableGuest(s,callback)||s.heap[callback[1]].async)
+              guestFault('TypeError','Array callback must be a synchronous guest function');
+            const method=callable[1].slice('Array.prototype.'.length);
+            if(method!=='reduce'&&args.length>1)
+              throw new TypeError('Unsupported callback thisArg');
+            if(method==='reduce' && args.length>2)
+              throw new TypeError('Unsupported reduce options');
+            const outputId=method==='reduce'?null:this.next(s,'obj');
+            if(outputId){s.heap[outputId]={id:outputId,kind:'array',properties:{
+              length:token(['num',method==='map'?length:0],eventId)},
+              propertyVersions:{length:0},shapeVersion:0,version:0};}
+            let start=0,accumulator=U;
+            if(method==='reduce'){
+              if(args.length>1)accumulator=args[1].value;
+              else {
+                if(length===0)guestFault('TypeError','Reduce of empty array with no initial value');
+                const first=array.properties['0'];
+                if(!first)throw new TypeError('Sparse reduction first slot unmodeled');
+                accumulator=first.value;start=1;
+              }
+            }
+            f.pendingArrayMethod={method,arrayId:array.id,callbackId:callback[1],
+              outputId,length,index:start,accumulator,waitingFrameId:null,
+              siteId:inst.siteId,currentValue:U};
+            if(this.advanceArrayCallback(s,f,eventId))
+              return {...operands(fn,...args),causes:[{kind:'invocation',frameId:f.pendingArrayMethod.waitingFrameId}]};
+            delete f.pendingArrayMethod;
+            return {...operands(fn,...args),...result(method==='reduce'?accumulator:['ref',outputId])};
           }
           if(callable[0]==='builtinfn' && callable[1].startsWith('Number.prototype.')){
             const method=callable[1].slice('Number.prototype.'.length);
@@ -852,7 +979,9 @@ export class Runtime {
               throw new TypeError('Number formatting argument outside bounded scalar profile');
             const format=args[0]?decode(args[0].value):undefined;
             const number=decode(receiver);
-            // Primitive-only deterministic intrinsic leaf, independently V8-verified.
+            // Primitive-only deterministic native intrinsic leaf. The result is
+            // journaled and independently re-executed in the V8 oracle.
+            // No guest object, callback, prototype access or host fallback.
             if(method==='toFixed'&&format!==undefined&&
                (!Number.isFinite(Number(format))||Number(format)<0||Number(format)>100))
               throw new TypeError('Number fixed-digit count outside supported range');
