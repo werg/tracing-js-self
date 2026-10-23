@@ -58,7 +58,7 @@ export class SemanticController {
     this.history=[];this.open=null;
   }
   static fromPacket(packet) {
-    if(packet?.schema!=='semantic-continuation/1')
+    if(packet?.schema!=='semantic-continuation/2')
       fail('context','Invalid continuation packet');
     const controller=new SemanticController(packet.context,packet.limits);
     for(const row of packet.committed){
@@ -224,6 +224,30 @@ export class SemanticController {
       }
       for(const item of fields.allocations??[])
         for(const entry of item.properties??[])this.checkValue(entry.value);
+      // Defining a function publishes its lexical name and closure reference
+      // as part of the same effective allocation. No hidden binding creation.
+      for(const write of fields.writes??[]){
+        if(write.kind!=='cell'||write.previous!==0||write.version!==0)
+          fail('write','Malformed function-definition binding');
+        const key=write.env+':'+write.key;
+        if(this.cells.has(key))fail('write','Repeated function-definition binding');
+        this.checkValue(write.value);
+        this.cells.set(key,{version:0,value:copy(write.value)});
+      }
+    } else if(kind==='carry') {
+      // Iteration cells matter when closures capture distinct values. Copy
+      // committed state; do not ask the model to recompute a scope mechanism.
+      const from=fields.from,to=fields.to;
+      if(!from||!to||typeof from.env!=='string'||typeof to.env!=='string'||
+         typeof from.key!=='string'||from.key!==to.key||
+         !Number.isSafeInteger(from.version)||from.version<0||
+         to.version!==from.version)
+        fail('binding','Malformed iteration binding copy');
+      const prior=this.cells.get(from.env+':'+from.key);
+      if(!prior||prior.version!==from.version||
+         this.cells.has(to.env+':'+to.key)||from.env===to.env)
+        fail('binding','Iteration copy cannot read committed source cell');
+      this.cells.set(to.env+':'+to.key,copy(prior));
     } else if(kind==='read') {
       for(const read of fields.reads??[]){
         if(read.kind==='property'){
@@ -241,11 +265,26 @@ export class SemanticController {
               ['valueOf','toString'].includes(read.key) &&
               builtin==='Object.'+read.key));
           const observed=virtual?read.value:property?.value??['undefined'];
-          if(!obj || (property!==undefined)!==read.present ||
-             (obj.versions.get(read.key)??0)!==read.version ||
-             obj.shapeVersion!==read.shapeVersion ||
-             !same(observed,read.value))
-            fail('read','First inconsistent owned property observation');
+          if(!obj) {
+            // A source-level prototype/accessor result can be observed before
+            // its internal holder is projected as a model-visible data object.
+            // It must remain a labelled effective read, not a fabricated own
+            // property in the committed heap.
+            this.checkValue(read.value);
+          }else if((property!==undefined)===read.present &&
+             obj.versions.get(read.key)!==undefined) {
+            if((obj.versions.get(read.key)??0)!==read.version ||
+               obj.shapeVersion!==read.shapeVersion ||
+               !same(observed,read.value))
+              fail('read','First inconsistent owned property observation');
+          }else if(property!==undefined && read.present) {
+            if(!same(observed,read.value))
+              fail('read','First inconsistent owned property observation');
+          }else {
+            // Dynamic inherited lookup: retain the evaluated value and its
+            // source dependency, without reconstructing the prototype walk.
+            this.checkValue(read.value);
+          }
         }else if(read.kind==='binding'){
           const key=read.envId+':'+read.name;
           const prior=this.cells.get(key);
@@ -367,9 +406,15 @@ export class SemanticController {
       activation.status=kind;
       activation.value=copy(fields.result);
     } else if(kind==='branch'||kind==='loop'){
-      if(!this.activations.has(fields.invocation) ||
-         (kind==='branch' && typeof fields.decision!=='boolean'))
+      if(!this.activations.has(fields.invocation))
         fail('control','Unresolvable source control decision');
+      if(kind==='branch') {
+        if(!Array.isArray(fields.test)||
+           !['then','else','use-left','evaluate-right'].includes(fields.path))
+          fail('control','Malformed effective source decision');
+        this.checkValue(fields.test);
+      }else if(fields.path!=='repeat')
+        fail('control','Malformed loop continuation');
     } else if(kind==='end'){
       if(fields.invocation!==this.root || this.pendingChild)
         fail('completion','Root completion is missing or a call is pending');
@@ -453,7 +498,7 @@ export class SemanticController {
   }
   continuationPacket() {
     if(this.open)fail('fragment','Cannot segment while a value definition is incomplete');
-    const packet={schema:'semantic-continuation/1',limits:{
+    const packet={schema:'semantic-continuation/2',limits:{
       maxGenerated:this.maxGenerated,maxPacketBytes:this.maxPacketBytes},
       context:[
         'code '+JSON.stringify(this.source),
