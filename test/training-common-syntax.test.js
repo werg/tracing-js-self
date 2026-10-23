@@ -34,9 +34,9 @@ test('typescript natlang body supports shorthand, declarations and compound oper
   assert.equal(result.result,10);
   assert.equal(trace.length,1);
 });
-test('unsupported destructuring and spread are rejected without fallback',()=>{
+test('unsupported nested destructuring and spread are rejected without fallback',()=>{
   for(const body of [
-    'function f(o){let {x}=o;return x;}',
+    'function f(o){let {x:{n}}=o;return n;}',
     'function f(o){return {...o};}',
     'function f(a){return [...a];}'
   ])assert.equal(verifyTrainingCase({source:strict(body),entry:'f',args:[{x:2}]}).status,'unsupported');

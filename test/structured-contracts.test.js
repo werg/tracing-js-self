@@ -130,6 +130,11 @@ test('dynamic async or hostile workers are refused by a process deadline',()=>{
   assert.notEqual(unsafe.status,0);
   assert.match(unsafe.stderr,/trusted-execution/);
   assert.equal(missingOptIn.status,0,missingOptIn.stderr);
-  assert.equal(JSON.parse(readFileSync(join(dir,'report.json'))).counts.failed,1);
+  const report=JSON.parse(readFileSync(join(dir,'report.json')));
+  // A killed or prematurely exited worker is unsupported, never a
+  // reference-conformance failure or an admitted success.
+  assert.equal(report.counts.unsupported,1);
+  assert.equal(report.admitted,0);
+  assert.equal(report.verifiedOwned,0);
  }finally{rmSync(dir,{recursive:true,force:true});}
 });
