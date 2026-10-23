@@ -85,7 +85,7 @@ test('nested binding failures never publish successful traces',()=>{
     for(const [code,scope] of [
       ['const {a:{b}}=self;return b;', {a:null}],
       ['const {a:[x]}=self;return x;', {a:'string'}],
-      ['const {x=1,x:y=2}=self;return x;',{}],
+      ['const {x:a,y:a}=self;return a;',{}],
       ['const {a:{b:{c:{d:{e}}}}}=self;return e;',{}],
       ['const {[self.k]:a}=self;return a;',{}],
       ['const {x,...rest}=self;return rest;',{}],
