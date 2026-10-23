@@ -83,6 +83,7 @@ async function* acquiredRows(){
  });
 }
 for await(const untrustedRow of acquiredRows()){
+ if(!input&&!rowsOutput&&shardCount===1&&expectEnumerated===null&&seen.size>=max)break;
  const row=validateAcquiredTest262(untrustedRow,revision);
  const ordinal=enumerated++;
  addNativeCatalogIdentity(catalogDigest,row,ordinal);
@@ -131,8 +132,6 @@ for await(const untrustedRow of acquiredRows()){
         harnessSources:sources,filename:row.provenance.path,timeoutMs})
       :executeTest262Reference({source,metadata,mode:row.program.mode,
         harnessSources:sources,filename:row.provenance.path,timeoutMs});
-  if(seen.has(row.id))throw new Error('Duplicate source/mode identity');
-  seen.add(row.id);
   const diagnostic={ordinal,id:row.id,path:row.provenance.path,
     mode:row.program.mode,sourceSha256:row.provenance.sha256,
     expected:row.expected,...result};
@@ -158,9 +157,10 @@ const report={schema:'test262-native-reference-report/1',revision,
   node:process.version,moduleVmEnabled:typeof vm.SourceTextModule==='function',
   ...(stream?{}:{rows}),warnings:[
    'Native V8 execution is not an owned semantic trace, an independent engine conformance proof, or training admission.',
+   'The default --max sample stops at the requested prefix; only an explicit expected inventory with streamed shard reports proves whole-catalog diagnostic accounting.',
    'Scripts support parse/runtime negatives; native modules additionally support bounded parse/resolution/runtime diagnostics only when Node experimental VM modules are enabled.',
    'Bounded async scripts can observe $DONE via VM promise microtasks only, with duplicate/error/rejection checks. This is not complete Test262 async support.',
-   'Negative early-phase tests, async modules, event-loop/timer/host-dependent async tests, raw tests, dynamic imports and special host flags remain unsupported.',
+   'Raw scripts run without implicit harness files; negative early-phase tests, async modules, event-loop/timer/host-dependent async tests, dynamic imports and special host flags remain unsupported.',
    'node:vm is not a security boundary: use only trusted exact upstream checkouts, never arbitrary repository code.',
    'A passing script without assertions may contain no meaningful behavioral checks.'
   ]};

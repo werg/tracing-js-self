@@ -1626,3 +1626,17 @@ To run manually select *Full pinned Test262 native-reference sweep (diagnostic
 only)* in Actions. The workflow has no automatic bulk execution trigger. Its
 aggregate status is accepted only when all 103,582 pinned input variants
 appear exactly once, and no row claims owned verification or admission.
+
+
+### Native-reference raw scripts and sample accounting correction (2026-10-23)
+
+- [x] The native Test262 script diagnostic now supports `flags: [raw]`
+  without implicitly loading harness files or adding a strict directive.
+  Declared parse/runtime errors still require genuine V8 error constructors.
+  Raw fixtures declaring harness includes or unsupported mixed flags refuse.
+- [x] Corrected sample/shard accounting so **each execution ordinal** is
+  counted once; source identity duplicates remain separately rejected.
+  Prefix `--max` execution retains its previous bounded sampling behavior,
+  while explicit full-inventory sharding still inventories every record.
+- [ ] Raw native success cannot independently certify unasserted execution,
+  official harness conformance or owned training semantics.

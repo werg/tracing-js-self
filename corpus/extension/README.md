@@ -414,3 +414,9 @@ node --experimental-vm-modules tools/verify-test262-reference.mjs \
 
 Run only trusted pinned sources in a restricted external sandbox, never
 unknown upstream JavaScript on an unrestricted developer machine.
+
+
+Native Test262 script references additionally support exact raw-mode scripts
+with **no implicit assert/sta harness**, including true parse/runtime negative
+checks; unusual mixed flags and declared raw harness includes are refused.
+Default prefix sampling does not claim an exhaustive source inventory.

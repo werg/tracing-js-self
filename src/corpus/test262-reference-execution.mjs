@@ -24,10 +24,11 @@ export function executeTest262Reference({source,metadata,mode='sloppy',
   if(metadata.metadataStatus!=='parsed'||!Array.isArray(flags)||
      !Array.isArray(includes)||!Array.isArray(metadata.features))
     return response('unsupported','Unparsed or incomplete Test262 metadata');
-  if(!['sloppy','strict'].includes(mode)||flags.includes('module')||
-     flags.includes('raw')||flags.includes('async')||flags.includes('CanBlockIsFalse')||
+  const raw=mode==='raw'&&flags.length===1&&flags[0]==='raw';
+  if(!['sloppy','strict'].includes(mode)&&!raw||flags.includes('module')||
+     flags.includes('raw')&&!raw||flags.includes('async')||flags.includes('CanBlockIsFalse')||
      flags.includes('CanBlockIsTrue')||flags.includes('non-deterministic')||
-     flags.some(f=>!['onlyStrict','noStrict'].includes(f))||
+     flags.some(f=>!['onlyStrict','noStrict',...(raw?['raw']:[])].includes(f))||
      flags.includes('onlyStrict')&&mode!=='strict'||
      flags.includes('noStrict')&&mode!=='sloppy')
     return response('unsupported','Mode, completion or Test262 flags require another reference adapter');
@@ -50,7 +51,9 @@ export function executeTest262Reference({source,metadata,mode='sloppy',
   }
   if(negative?.phase==='parse')return response('failed','Expected a parse-time error but parsing succeeded',
     {mode,phase:'parse'});
-  const names=[...new Set(['sta.js','assert.js',...includes])];
+  if(raw&&includes.length)
+    return response('unsupported','Raw Test262 execution cannot load implicit harness includes');
+  const names=raw?[]:[...new Set(['sta.js','assert.js',...includes])];
   if(names.some(name=>!safeInclude(name)||typeof harnessSources[name]!=='string'))
     return response('unsupported','Missing or unsafe pinned harness include');
   const context=createContext(Object.create(null),{
@@ -76,7 +79,9 @@ export function executeTest262Reference({source,metadata,mode='sloppy',
     script.runInContext(context,{timeout:timeoutMs,displayErrors:false});
     if(negative)return response('failed','Expected a runtime error but execution completed',
       {mode,phase:'runtime'});
-    return response('passed','Completed without an uncaught exception',
+    return response('passed',raw?
+      'Raw script completed without an uncaught exception':
+      'Completed without an uncaught exception',
       {mode,phase:'runtime',harness:names});
   }catch(error){
     const type=errorName(error);

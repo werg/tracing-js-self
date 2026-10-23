@@ -45,3 +45,25 @@ test('strict-only parsing, harness errors and safety refusals fail closed',()=>{
   assert.equal(run('while(true){}',meta(),{timeoutMs:15}).status,'failed');
   assert.throws(()=>run('1',meta(),{timeoutMs:0}),/Invalid/);
 });
+
+
+test('raw Test262 script variants run verbatim without implicit harness',()=>{
+  const plain=run('if (typeof assert!=="undefined") throw Error("implicit harness")',
+    meta(['raw']),{mode:'raw',harnessSources:{}});
+  assert.equal(plain.status,'passed',plain.reason);
+  assert.deepEqual(plain.harness,[]);
+  assert.equal(plain.verifiedOwned,false);
+  assert.equal(plain.admitted,false);
+  assert.equal(run('throw new TypeError()',meta(['raw'],
+    {phase:'runtime',type:'TypeError'}),{
+    mode:'raw',harnessSources:{}}).status,'passed');
+  assert.equal(run('var = ;',meta(['raw'],
+    {phase:'parse',type:'SyntaxError'}),{
+    mode:'raw',harnessSources:{}}).status,'passed');
+  assert.equal(run('assert(true)',meta(['raw']),{
+    mode:'raw',harnessSources:{}}).status,'failed');
+  assert.equal(run('1',meta(['raw'])).status,'unsupported');
+  assert.equal(run('1',meta(['raw','async']),{mode:'raw'}).status,'unsupported');
+  assert.equal(run('1',meta(['raw'],null,['helper.js']),{
+    mode:'raw'}).status,'unsupported');
+});
