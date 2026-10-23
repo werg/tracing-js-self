@@ -16,6 +16,14 @@ on:
       - 'tools/audit-real-corpus.mjs'
       - '.github/workflows/real-corpus.yml'
       - 'package.json'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'corpus/**'
+      - 'tools/build-real-corpus.mjs'
+      - 'tools/audit-owned-coverage.mjs'
+      - 'test/corpus-owned-episodes.test.js'
+      - '.github/workflows/real-corpus.yml'
   workflow_dispatch:
 
 permissions:
@@ -24,7 +32,7 @@ permissions:
 jobs:
   observe-real-code:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -45,7 +53,7 @@ jobs:
           npm run corpus:audit --             --input corpus/out/traces.jsonl             --output corpus/out/quality.json             --review corpus/out/quality.md             --examples 30
       - name: Compare with independently verified owned interpreter
         run: |
-          npm run corpus:owned-coverage --             --input corpus/out/traces.jsonl             --output corpus/out/owned-coverage.json             --per-function 2
+          npm run corpus:owned-coverage --             --input corpus/out/traces.jsonl             --output corpus/out/owned-coverage.json             --per-function 2             --local-episodes corpus/out/owned-locally-verified.jsonl             --min-owned-verified 24
       - name: Validate provenance and explicit diagnostic status
         run: |
           node --input-type=module -e '
