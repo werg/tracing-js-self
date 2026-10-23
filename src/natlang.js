@@ -130,6 +130,10 @@ export class BoundedNatlangEnvironment {
       }
       const value=settled.value.value;
       let result=realizeGraph(runtime.state.heap,[value])[0];
+      const staged=request.live===undefined?null:synchronizeLiveGraph(
+        bundle.initialState.heap,runtime.state.heap,
+        bundle.entrySpec.arguments[1],request.live,value,{stage:true});
+      if(staged)result=staged.result;
       const resultEvent=event(this.mode,request.body,'completed',{
         traceSchema:bundle.manifest.schema,profile:bundle.manifest.profile,
         chunks:bundle.chunks.length,source:request.path,
@@ -145,9 +149,7 @@ export class BoundedNatlangEnvironment {
         if(callback&&typeof callback.then==='function')
           throw new TypeError('onTrace must be synchronous; async callbacks are unowned');
       }
-      if(request.live!==undefined)
-        result=synchronizeLiveGraph(bundle.initialState.heap,runtime.state.heap,
-          bundle.entrySpec.arguments[1],request.live,value);
+      staged?.commit();
       return {result:result===undefined?null:result,events:[resultEvent],logs:[]};
     }catch(error){
       if(error instanceof this.EvalFailure)throw error;
@@ -206,6 +208,13 @@ export class BoundedNatlangEnvironment {
         value=settled.value.value;
       }
       let result=realizeGraph(runtime.state.heap,[value])[0];
+      const staged=syncScope!==null?synchronizeLiveGraph(
+        bundle.initialState.heap,runtime.state.heap,bundle.entrySpec.arguments[0],
+        syncScope,value,{stage:true}):
+        request.live!==undefined?synchronizeLiveGraph(
+          bundle.initialState.heap,runtime.state.heap,bundle.entrySpec.arguments[1],
+          request.live,value,{stage:true}):null;
+      if(staged)result=staged.result;
       const resultEvent=event(this.mode,request.body,'completed',{
         traceSchema:bundle.manifest.schema,profile:bundle.manifest.profile,
         chunks:bundle.chunks.length,source:request.path,
@@ -220,14 +229,8 @@ export class BoundedNatlangEnvironment {
         if(callback && typeof callback.then==='function')
           throw new TypeError('onTrace must be synchronous; async callbacks are unowned');
       }
-      // Commit verified mutations only after success. Existing live host graph
-      // nodes retain their identity, including aliases and cyclic data.
-      if(syncScope!==null)
-        result=synchronizeLiveGraph(bundle.initialState.heap,runtime.state.heap,
-          bundle.entrySpec.arguments[0],syncScope,value);
-      else if(request.live!==undefined)
-        result=synchronizeLiveGraph(bundle.initialState.heap,runtime.state.heap,
-          bundle.entrySpec.arguments[1],request.live,value);
+      // Do not expose live host writes if the trace callback refuses the run.
+      staged?.commit();
       return {result:result===undefined?null:result,events:[resultEvent],logs:[]};
     }catch(error){
       if(error instanceof this.EvalFailure)throw error;
