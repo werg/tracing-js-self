@@ -5,7 +5,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {normalizeJournal} from '../semantic/normalize.js';
 import {referenceOutcome} from './reference.js';
 
-export function instrumentBranchSource(source) {
+function sourceBranchNodes(source) {
   const ast=parseAcorn(source,{ecmaVersion:2022,sourceType:'script'});
   const nodes=[];
   function visit(node) {
@@ -22,6 +22,10 @@ export function instrumentBranchSource(source) {
       if(!['start','end','loc'].includes(key))visit(child);
   }
   visit(ast);
+  return nodes;
+}
+export function instrumentBranchSource(source) {
+  const nodes=sourceBranchNodes(source);
   const starts=new Map(),ends=new Map();
   for(const n of nodes){
     if(!starts.has(n.start))starts.set(n.start,[]);
@@ -57,8 +61,14 @@ export function auditReferenceBranches({source,entry,args,initialHeap,bundle,ref
   const normalized=normalizeJournal(bundle);
   const journalById=new Map(bundle.events.map(e=>[e.eventId,e]));
   const expected=[];
+  // Guest parameter defaults generate conditional jumps without corresponding
+  // source-level branch expressions. Keep those branch events in the archive,
+  // but do not compare them to V8 source-level control receipts.
+  const sourceSites=new Set(sourceBranchNodes(source).map(node=>node.site));
   for(const row of normalized.events){
     if(journalById.get(row.journalEvent)?.operation!=='control.branch')continue;
+    if(row.source&&!sourceSites.has(String(row.source.start)+':'+row.source.end))
+      continue;
     if(!row.source||row.source.start>=row.source.end||
        row.result?.[0]!=='bool'||typeof row.result[1]!=='boolean')
       return {schema,status:'unverified',reason:'Unverifiable owned branch event',
