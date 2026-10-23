@@ -72,8 +72,8 @@ export class SemanticController {
         ...['abs','ceil','floor','trunc','round','max','min','pow','sign','sqrt','hypot']
           .map(x=>'Math.'+x),
         ...['isFinite','isNaN','isInteger','isSafeInteger'].map(x=>'Number.'+x),
-        'Array.isArray','Array.prototype.push','Array.prototype.pop','Array.toString',
-        'Object.hasOwn','Object.keys','Object.create','Object.setPrototypeOf',
+        'Array.isArray','Array.prototype.push','Array.prototype.pop','Array.prototype.includes','Array.toString',
+        'Object.hasOwn','Object.keys','Object.is','Object.create','Object.setPrototypeOf',
         'Object.getPrototypeOf','Object.defineProperty','Object.valueOf','Object.toString'
       ]);
       if(value.length!==2||!names.has(value[1]))
