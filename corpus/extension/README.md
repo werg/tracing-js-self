@@ -138,3 +138,7 @@ The [External JS/TS corpus acquisition workflow](../../.github/workflows/externa
 Initial opt-in adversarial CI smoke has measured **28/28 independently matching native-V8 final outcomes** across all 14 new families (10,776 observation events; 4,526 recorded heap changes). The workflow checks for all 28 matches, not merely 28 attempts. These remain diagnostic only.
 
 Measured snapshot CI acquisition: **82 Test262 variants + 464 Exercism cases + 907 JSON Schema cases = 1,453 acquisition fixtures**, zero new verified or admitted semantic traces.
+
+### First complete pinned run (measured)
+
+[Actions run 39968633575](https://github.com/werg/tracing-js-self/actions/runs/39968633575) completed successfully: **103,582 Test262 variants from 53,910 files**, **2,330 Exercism cases from 143 files**, **11,861 JSON Schema cases from 434 files**; **117,773 non-admitted candidate fixtures total**. The downloadable `full-pinned-source-catalog-only` artifact contains the exact JSONL catalogs and reports. No full-source owned semantic verification or independent reference execution has yet taken place.

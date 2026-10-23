@@ -1076,3 +1076,18 @@ Reproduction commands, lock format, scope and warnings are in
 
 - [x] The new snapshot acquisition workflow **passed** and generated **1,453 distinct source/input fixture rows** from **92 pinned upstream files**: 82 Test262 source/mode variants, 464 Exercism canonical input cases, and 907 JSON Schema validity cases. These have **zero** independent runtime verifications, **zero** owned traces and **zero** admitted training examples. This is concrete acquisition scale, not evidence of execution semantics.
 - [x] Full pinned-source acquisition is configured to run on pushes affecting acquisition code, snapshots or its workflow, and can also be manually dispatched. It produces source/input catalogs as CI artifacts, not checked-in trace JSONL. **Full-catalog results are pending an actual successful run**; do not infer their counts from suite publicity.
+
+### Full upstream acquisition — successful CI measurement (2026-10-23)
+
+The pinned full-checkout acquisition job **completed successfully** in [Actions run 39968633575](https://github.com/werg/tracing-js-self/actions/runs/39968633575). It acquired these source/input records (not semantic traces):
+
+| Full pinned source | Source files | Candidate fixture records | Independent reference executions | Owned verified | Training admitted |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Test262 (`tc39/test262`) | **53,910** | **103,582** (strict/sloppy/module variants) | 0 | 0 | 0 |
+| Exercism problem specifications | **143** | **2,330** | 0 | 0 | 0 |
+| JSON Schema Test Suite | **434** | **11,861** | 0 | 0 | 0 |
+| **Total** | **54,487** | **117,773** | **0** | **0** | **0** |
+
+These full inventories are hosted as the run's downloadable **`full-pinned-source-catalog-only`** artifact (compressed size approximately **8.9 MB**). The accompanying source repositories are reproducible from exact upstream SHA pins. A successful full acquisition does **not** imply runnable JS solutions for every Exercism case or valid implementation/harness execution for Test262/JSON Schema. Owned trace generation, independent execution verification, semantic readability metrics and training admission remain **open**.
+
+The existing 1,848-execution diagnostic baseline plus the 28 initial adversarial smoke executions must not be added to acquired candidate counts as though they were a single evidence type. The result exceeds the earlier target for **candidate acquisition**, not the target for *millions of verified execution traces*.
