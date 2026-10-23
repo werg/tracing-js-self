@@ -693,6 +693,18 @@ export class Runtime {
                throw new TypeError('Unmodeled Promise prototype property: '+property);
              v=['builtinfn','Promise.prototype.'+property];
            }
+           else if(base.value[0]==='str'){
+             // String primitive reads never consult the host object graph.
+             const text=base.value[1];
+             if(property==='length')v=['num',text.length];
+             else if(arrayIndex(property)&&Number(property)<text.length)
+               v=['str',text[Number(property)]];
+             else if(['charAt','charCodeAt','at','substring','slice','indexOf','lastIndexOf','includes','startsWith','endsWith','toLowerCase','toUpperCase','trim','trimStart','trimEnd'].includes(property))
+               v=['builtinfn','String.prototype.'+property];
+             else if(['constructor','__proto__','valueOf','toString'].includes(property))
+               throw new TypeError('Unmodeled String prototype property');
+             else v=U;
+           }
            else if(base.value[0]==='ref'){
              const obj=s.heap[base.value[1]];
              if(!obj)throw new ReferenceError('Unknown guest identity');
@@ -797,7 +809,25 @@ export class Runtime {
             s.control.a0.activeFrameId=id;
             return {...operands(fn,...args),result:['ref',callable[1]],causes:[{kind:'invocation',frameId:id}]};
           }
-          if(callable[0]==='builtinfn' && callable[1].startsWith('Math.')){
+          if(callable[0]==='builtinfn' && callable[1].startsWith('String.prototype.')){
+             const method=callable[1].slice('String.prototype.'.length);
+             if(receiver[0]!=='str'||!['charAt','charCodeAt','at','substring','slice','indexOf','lastIndexOf','includes','startsWith','endsWith','toLowerCase','toUpperCase','trim','trimStart','trimEnd'].includes(method))
+               guestFault('TypeError','String method requires a string receiver');
+             if(receiver[1].length>10000||args.length>3)
+               throw new RangeError('String operation outside the bounded profile');
+             const values=args.map(arg=>{
+               if(!['undefined','null','bool','str','num','bigint'].includes(arg.value[0]))
+                 throw new TypeError('Unmodeled ToPrimitive in String method');
+               return decode(arg.value);
+             });
+             // Explicit primitive-only intrinsic leaf, with journaled inputs
+             // and result. No callback, accessor or arbitrary host fallback.
+             const value=String.prototype[method].apply(receiver[1],values);
+             if(typeof value==='string'&&value.length>100000)
+               throw new RangeError('String result outside the bounded profile');
+             return {...operands(fn,...args),...result(encode(value))};
+           }
+           if(callable[0]==='builtinfn' && callable[1].startsWith('Math.')){
             const method=callable[1].slice('Math.'.length);
             const numbers=args.map(a=>{
               if(!['undefined','null','bool','str','num'].includes(a.value[0]))
@@ -854,7 +884,114 @@ export class Runtime {
             keys.forEach((key,i)=>putOwn(array,String(i),['str',key],eventId));
             return {...operands(fn,...args),...result(['ref',id])};
           }
-          if(callable[0]==='builtinfn' && callable[1]==='Array.prototype.includes'){
+          if(callable[0]==='builtinfn' &&
+              ['indexOf','lastIndexOf','slice','concat','join','splice','unshift','shift']
+                .some(name=>callable[1]==='Array.prototype.'+name)){
+             const obj=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+             if(!obj||obj.kind!=='array')
+               guestFault('TypeError','Array method requires an array');
+             const length=decode(obj.properties.length.value);
+             if(!Number.isSafeInteger(length)||length<0||length>10000||
+                Object.keys(obj.accessors??{}).length)
+               throw new TypeError('Array method needs bounded dense own slots');
+             const slots=[];
+             for(let i=0;i<length;i++){
+               const slot=obj.properties[String(i)];
+               if(!slot||!Array.isArray(slot.value))
+                 throw new TypeError('Sparse array operation not modeled');
+               slots.push(slot.value);
+             }
+             const method=callable[1].slice('Array.prototype.'.length);
+             const numberAt=(i,missing)=>{
+               if(i>=args.length)return missing;
+               const tag=args[i].value;
+               if(!['undefined','null','bool','str','num'].includes(tag[0]))
+                 throw new TypeError('Array index requires owned scalar coercion');
+               const value=Number(decode(tag));
+               return Number.isNaN(value)?0:Math.trunc(value);
+             };
+             const clamp=value=>value<0?Math.max(length+value,0):Math.min(value,length);
+             const makeArray=values=>{
+               if(values.length>10000)throw new RangeError('Array result limit');
+               const id=this.next(s,'obj');
+               const target=s.heap[id]={id,kind:'array',properties:{
+                 length:token(['num',0],eventId)},propertyVersions:{length:0},
+                 shapeVersion:0,version:0};
+               values.forEach((value,i)=>putOwn(target,String(i),value,eventId));
+               return ['ref',id];
+             };
+             const rewrite=values=>{
+               if(values.length>10000)throw new RangeError('Array mutation limit');
+               values.forEach((value,i)=>putOwn(obj,String(i),value,eventId));
+               putOwn(obj,'length',['num',values.length],eventId);
+             };
+             let out;
+             if(method==='indexOf'||method==='lastIndexOf'){
+               const back=method==='lastIndexOf';
+               const from=numberAt(1,back?length-1:0);
+               let i=back?(from<0?length+from:Math.min(from,length-1)):
+                 (from<0?Math.max(length+from,0):from);
+               const sought=args[0]?.value??U;
+               let found=-1;
+               for(;back?i>=0:i<length;back?i--:i++){
+                 const candidate=slots[i];
+                 const same=candidate[0]==='num'&&sought[0]==='num'?
+                   decode(candidate)===decode(sought):ownedSameValue(candidate,sought);
+                 if(same){found=i;break;}
+               }
+               out=['num',found];
+             }else if(method==='slice'){
+               const start=clamp(numberAt(0,0)),end=clamp(numberAt(1,length));
+               out=makeArray(slots.slice(start,Math.max(start,end)));
+             }else if(method==='concat'){
+               const all=slots.slice();
+               for(const arg of args){
+                 const tag=arg.value,member=tag[0]==='ref'?s.heap[tag[1]]:null;
+                 if(member?.kind==='proxy')
+                   throw new TypeError('Proxy concat needs an owned internal method');
+                 if(member?.kind==='array'){
+                   const n=decode(member.properties.length.value);
+                   if(!Number.isSafeInteger(n)||n>10000||
+                      Object.keys(member.accessors??{}).length)
+                     throw new TypeError('Unmodeled array concat source');
+                   for(let i=0;i<n;i++){
+                     const slot=member.properties[String(i)];
+                     if(!slot)throw new TypeError('Sparse concat outside profile');
+                     all.push(slot.value);
+                   }
+                 }else all.push(tag);
+                 if(all.length>10000)throw new RangeError('Array concat limit');
+               }
+               out=makeArray(all);
+             }else if(method==='join'){
+               const sep=args.length===0||args[0].value[0]==='undefined'?',':(
+                 ['null','bool','str','num','bigint'].includes(args[0].value[0])
+                 ?String(decode(args[0].value)):(()=>{throw new TypeError('Unmodeled join separator');})());
+               const text=slots.map(value=>{
+                 if(['null','undefined'].includes(value[0]))return '';
+                 if(!['str','bool','num','bigint'].includes(value[0]))
+                   throw new TypeError('Unmodeled join element coercion');
+                 return String(decode(value));
+               }).join(sep);
+               if(text.length>100000)throw new RangeError('Array join limit');
+               out=['str',text];
+             }else if(method==='splice'){
+               const start=clamp(numberAt(0,0));
+               const count=args.length===0?0:args.length===1?length-start:
+                 Math.max(0,Math.min(numberAt(1,0),length-start));
+               out=makeArray(slots.slice(start,start+count));
+               rewrite([...slots.slice(0,start),...args.slice(2).map(a=>a.value),
+                 ...slots.slice(start+count)]);
+             }else if(method==='unshift'){
+               rewrite([...args.map(a=>a.value),...slots]);
+               out=['num',length+args.length];
+             }else if(method==='shift'){
+               out=slots[0]??U;
+               rewrite(slots.slice(1));
+             }
+             return {...operands(fn,...args),...result(out)};
+           }
+           if(callable[0]==='builtinfn' && callable[1]==='Array.prototype.includes'){
             const obj=receiver[0]==='ref'?s.heap[receiver[1]]:null;
             if(!obj||obj.kind!=='array')
               guestFault('TypeError','Array.includes requires an array receiver');
