@@ -1,5 +1,10 @@
 # Implementation status (0.2.0)
 
+## Synchronous replay-backed module invocations (October 23, 2026)
+
+- The bounded evaluated ESM linker/session now supports `executeEvaluatedModulesSync` and `session.invokeSync` for effect-free modules whose owned guest jobs fully settle during a deterministic synchronous drive. Sync/async calls share replay-backed committed history and stable ordinary output aliases; queued asynchronous calls block synchronous reentry, failed calls do not commit. This is a host-side synchronous module API and does **not** implement the native-callable `werg/natlang` folder realm, callback reentry, npm imports or production persistent Module Records.
+
+
 ## Journaled Node/browser clock read (October 23, 2026)
 
 - Opt-in native-service execution now implements `Date.now()` as a versioned, zero-argument `platform.dateNow/1` synchronous effect. The adapter owns the clock; guest execution records the request and replays the recorded response with no second host read. Ungranted `Date` remains unavailable. This is one cross-host clock API, not Date constructors, timers, scheduling, Node/browser web APIs or full host conformance.

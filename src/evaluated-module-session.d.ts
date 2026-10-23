@@ -27,6 +27,9 @@ export declare class BoundedRetainedModuleSession {
   readonly closed:boolean;
   invoke(exportName:string,args?:Array<string|number|boolean|bigint|null|undefined>):
     Promise<BoundedRetainedModuleCallResult>;
+  /** Synchronous host invocation of a replay-backed, effect-free owned realm. */
+  invokeSync(exportName:string,args?:Array<string|number|boolean|bigint|null|undefined>):
+    BoundedRetainedModuleCallResult;
   /** JSON-portable committed-call history; not a suspended guest continuation. */
   snapshot():BoundedRetainedModuleSnapshot;
   close():void;

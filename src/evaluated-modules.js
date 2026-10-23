@@ -609,3 +609,42 @@ export async function executeEvaluatedModules({modules,entryModule,
   const value=realizeGraph(runtime.state.heap,[settled.value.value])[0];
   return {result:value,bundle,metadata:linked.metadata};
 }
+
+/**
+ * Synchronous, effect-free native-embeddable module invocation. The owned
+ * async root may use already-settling guest Promise jobs, but any outstanding
+ * host effect or unresolved guest work fails closed. No native JS executes
+ * the linked guest module, and archives are validated + exactly replayed.
+ */
+export function executeEvaluatedModulesSync({modules,entryModule,
+  exportName='default',args=[],calls=null,maxSteps=100000,
+  services=null,signal}={}){
+  if(services!==null||signal!==undefined)
+    throw new TypeError('Synchronous owned modules cannot use native services/signals');
+  const linked=linkEvaluatedModules({modules,entryModule,exportName,args,calls});
+  if(!Number.isSafeInteger(maxSteps)||maxSteps<1||maxSteps>1000000)
+    throw new RangeError('Module evaluation step budget out of range');
+  const runtime=createRuntime({maxSteps});
+  const source=runtime.registerSource({text:linked.source,
+    url:'evaluated-module://'+entryModule,trainingProfile:true});
+  runtime.startEntry({source,functionName:linked.entryFunction,
+    args:[linked.entryInput],allowAsync:true});
+  const progress=runtime.drive();
+  const bundle=JSON.parse(JSON.stringify(runtime.exportRun()));
+  validateBundle(bundle);
+  replayExact(bundle);
+  if(progress.kind!=='terminated')
+    throw new TypeError('Synchronous module invocation did not settle: '+progress.kind);
+  const root=runtime.initialState.control.a0.activeFrameId;
+  const promiseId=runtime.initialState.frames[root]?.asyncPromiseId;
+  const settled=promiseId&&runtime.state.promises[promiseId];
+  if(!settled||settled.status==='pending')
+    throw new TypeError('Synchronous module root promise did not settle');
+  if(settled.status==='rejected'){
+    const value=realizeGraph(runtime.state.heap,[settled.value.value])[0];
+    throw new Error('Owned module evaluation rejected: '+String(
+      value&&typeof value==='object'?value.message??value.name??'guest object':value));
+  }
+  return {result:realizeGraph(runtime.state.heap,[settled.value.value])[0],
+    bundle,metadata:linked.metadata};
+}

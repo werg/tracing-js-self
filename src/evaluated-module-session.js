@@ -5,7 +5,7 @@
 // This is observational retention, not a durable suspended VM continuation.
 import {types} from 'node:util';
 import {encode,decode} from './values.js';
-import {executeEvaluatedModules} from './evaluated-modules.js';
+import {executeEvaluatedModules,executeEvaluatedModulesSync} from './evaluated-modules.js';
 
 const scalar=value=>value===null||
   ['undefined','string','boolean','number','bigint'].includes(typeof value);
@@ -117,6 +117,7 @@ export class BoundedRetainedModuleSession {
   #outputs=[];
   #objects=new Map();
   #queue=Promise.resolve();
+  #pending=0;
   #closed=false;
   // Accessors return detached data; a consumer cannot rewrite replay inputs.
   get history(){return this.#history.map(({exportName,args})=>({
@@ -163,27 +164,50 @@ export class BoundedRetainedModuleSession {
         modules:this.modules,entryModule:this.entryModule,
         calls,maxSteps:this.maxSteps
       });
-      const initial=run.bundle.initialState.control.a0.activeFrameId;
-      const promiseId=run.bundle.initialState.frames[initial].asyncPromiseId;
-      const result=run.bundle.finalState.promises[promiseId].value.value;
-      const staged=snapshotResults(run.bundle.finalState.heap,result,this.#objects,run.bundle.initialState.heap);
-      for(let i=0;i<this.#outputs.length;i++){
-        const former=this.#outputs[i],next=staged.values[i];
-        if((former===null||typeof former!=='object')?
-           !Object.is(former,next):former!==next)
-          throw new Error('Retained historical result changed identity or primitive value');
-      }
-      if(this.#closed)throw new Error('Retained module session closed');
-      staged.commit();
-      this.#objects=staged.objects;
-      this.#outputs=staged.values;
-      this.#history=calls;
-      this.lastArchive=run.bundle;
-      return {result:staged.values.at(-1),bundle:run.bundle,metadata:run.metadata};
+      return this.#commit(calls,run);
     };
+    this.#pending++;
     const result=this.#queue.then(task);
     this.#queue=result.then(()=>undefined,()=>undefined);
-    return result;
+    return result.finally(()=>{this.#pending--;});
+  }
+  /**
+   * Invoke synchronously only when no asynchronous call is queued/running.
+   * Even guest async functions must settle entirely within owned jobs.
+   */
+  invokeSync(exportName,args=[]){
+    if(this.#closed)throw new Error('Retained module session closed');
+    if(this.#pending)throw new Error('Cannot synchronously invoke while async calls are pending');
+    const checked=checkArgs(args);
+    if(typeof exportName!=='string'||!/^[$A-Za-z_][$\\w]*$/.test(exportName))
+      throw new TypeError('Invalid retained module export name');
+    if(this.#history.length>=32)throw new RangeError('Retained session call limit');
+    const calls=[...this.#history,{exportName,args:checked}];
+    const run=executeEvaluatedModulesSync({
+      modules:this.modules,entryModule:this.entryModule,
+      calls,maxSteps:this.maxSteps
+    });
+    return this.#commit(calls,run);
+  }
+  #commit(calls,run){
+    const initial=run.bundle.initialState.control.a0.activeFrameId;
+    const promiseId=run.bundle.initialState.frames[initial].asyncPromiseId;
+    const result=run.bundle.finalState.promises[promiseId].value.value;
+    const staged=snapshotResults(run.bundle.finalState.heap,result,
+      this.#objects,run.bundle.initialState.heap);
+    for(let i=0;i<this.#outputs.length;i++){
+      const former=this.#outputs[i],next=staged.values[i];
+      if((former===null||typeof former!=='object')?
+         !Object.is(former,next):former!==next)
+        throw new Error('Retained historical result changed identity or primitive value');
+    }
+    if(this.#closed)throw new Error('Retained module session closed');
+    staged.commit();
+    this.#objects=staged.objects;
+    this.#outputs=staged.values;
+    this.#history=calls;
+    this.lastArchive=run.bundle;
+    return {result:staged.values.at(-1),bundle:run.bundle,metadata:run.metadata};
   }
   /**
    * JSON-portable committed-history snapshot, not a VM checkpoint. A pending

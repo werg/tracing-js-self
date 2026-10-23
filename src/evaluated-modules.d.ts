@@ -61,3 +61,7 @@ export function linkEvaluatedModules(options:EvaluatedModulesOptions):{
 };
 export function executeEvaluatedModules(options:EvaluatedModulesRunOptions):
   Promise<{result:unknown;bundle:unknown;metadata:EvaluatedModulesMetadata}>;
+
+/** Sync effect-free bounded ESM, returning only after full owned replay checks. */
+export function executeEvaluatedModulesSync(options:EvaluatedModulesRunOptions):
+  {result:unknown;bundle:unknown;metadata:EvaluatedModulesMetadata};
