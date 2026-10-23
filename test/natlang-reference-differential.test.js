@@ -44,7 +44,7 @@ for(const [name,code,body,scope] of cases){
     const {bundle,lowering}=captured[0];
     assert.equal(validateBundle(bundle).valid,true);
     assert.equal(replayExact(bundle).valid,true);
-    assert.deepEqual(reconstruct(bundle).state,bundle.finalState);
+    assert.deepEqual(reconstruct(bundle),bundle.finalState);
     assert.equal(bundle.sources[0].text,lowering.javascript);
     assert.equal(bundle.sites.length,lowering.generatedSiteOrigins.length);
     assert(!Object.hasOwn(bundle,'generatedSiteOrigins'));
