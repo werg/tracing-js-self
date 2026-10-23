@@ -1,0 +1,38 @@
+name: Pinned real-source trace coverage and quality
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-source-quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Generate V8 diagnostic observations from pinned real sources
+        run: |
+          npm run corpus:generate -- --per-function 12 --max-events 2400 \
+            --output "$RUNNER_TEMP/real-corpus.jsonl" \
+            --report "$RUNNER_TEMP/real-report.json" \
+            --review "$RUNNER_TEMP/real-review.md"
+      - name: Audit causal readability and potential trace omissions
+        run: |
+          npm run corpus:audit -- --input "$RUNNER_TEMP/real-corpus.jsonl" \
+            --output "$RUNNER_TEMP/quality.json" \
+            --review "$RUNNER_TEMP/quality.md" --examples 24
+      - name: Upload diagnostic evidence, not admitted training data
+        uses: actions/upload-artifact@v4
+        with:
+          name: pinned-real-source-diagnostic-quality
+          path: |
+            ${{ runner.temp }}/real-report.json
+            ${{ runner.temp }}/real-review.md
+            ${{ runner.temp }}/quality.json
+            ${{ runner.temp }}/quality.md
+          if-no-files-found: error
