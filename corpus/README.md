@@ -64,7 +64,7 @@ The pinned 936-invocation V8 observation analysis and 156-invocation owned-inter
 The separate [stateful benchmark](stateful/README.md) adds **76 real-library
 scenario families** exercised across eight pinned MIT-licensed production
 libraries (mitt, Zustand, eventemitter3, yocto-queue, quick-lru, koa-compose,
-and p-limit). It includes mutable subscriptions, reentrant callbacks,
+p-limit and Axios interceptors). It includes mutable subscriptions, reentrant callbacks,
 middleware request paths, cache eviction, queued work, asynchronous failures
 and six cross-library application integrations.
 
@@ -83,5 +83,5 @@ original utility benchmark, they remain **native V8 diagnostics**, not
 admitted owned `semantic-execution/2` training data. The original
 vendor source and licenses are under `stateful/upstream/`.
 
-The [dated 804-run findings and trace-quality assessment](stateful/findings/2026-10-23/README.md)
+The [dated 912-run findings and trace-quality assessment](stateful/findings/2026-10-23/README.md)
 record exact coverage and remaining evidence limitations.
