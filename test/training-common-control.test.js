@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRuntime,replayExact,validateBundle} from 'tracing-js-self';
 import {verifyTrainingCase,validateTrainingExport} from 'tracing-js-self/training';
-import {decodeRecord,restoreLines} from '../src/training/format.js';
+import {decodeRecord,restoreLines,encodeRecord} from '../src/training/format.js';
+import {evaluateSelectedTrajectory} from '../src/training/rollout.js';
 
 const strict=body=>'"use strict";\n'+body;
 function verified(body,args=[]) {
@@ -111,4 +112,29 @@ test('unowned semantic cases fail closed instead of making plausible training ex
   const runtime=createRuntime().startEntry({text:strict(
     'function f(x){x++;return 0;}'),functionName:'f',args:[{x:1}]});
   assert.throws(()=>runtime.drive(),/Update coercion outside the bounded scalar profile/);
+});
+
+test('serving controller rejects a forged update read before committing the write',()=>{
+  const exported=verified('function f(){let x=1;let before=x++;return before+x;}');
+  const accurate=evaluateSelectedTrajectory({
+    groups:exported.public.groups,referenceGroups:exported.public.groups,
+    referenceOutcome:exported.sidecar.reference.outcome
+  });
+  assert.equal(accurate.valid,true);
+  assert.equal(accurate.correctness,'correct');
+  const forged=structuredClone(exported.public.groups);
+  const index=forged.findIndex(group=>group.mode==='generated' &&
+    group.events[0].record.startsWith('write ') &&
+    decodeRecord(group.events[0].record).fields.update?.operator==='++');
+  assert(index>0,'missing explicit update write');
+  const event=decodeRecord(forged[index].events[0].record);
+  assert.equal(event.fields.reads.length,1);
+  event.fields.reads[0].value=['num',999];
+  forged[index].events[0].record=encodeRecord('write',event.fields);
+  const invalid=evaluateSelectedTrajectory({
+    groups:forged,referenceGroups:exported.public.groups
+  });
+  assert.equal(invalid.valid,false);
+  assert.equal(invalid.invalid.category,'read');
+  assert.equal(invalid.invalid.index,index);
 });
