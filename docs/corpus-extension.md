@@ -1530,10 +1530,13 @@ Example: npm run corpus:owned:novelty -- --input
   experimental static VM modules and routes async scripts to the limited
   $DONE adapter. The report enforces 800 actual attempted execution variants
   and explicit passed/failed/unsupported counts and zero owned/admitted.
-- [ ] This measures a reproducible bounded sample, **not** the full native
-  Test262 suite or full official harness. Reference pass counts do not promote
-  Test262 programs to owned training episodes. No CI yield is claimed until
-  the workflow completes and its JSON report has been inspected.
+- [x] [Successful full upstream CI run 40010391704](https://github.com/werg/tracing-js-self/actions/runs/40010391704)
+  measured **800** bounded original Test262 variant attempts: **406 passed**,
+  **87 failed**, **307 explicitly unsupported**, **0 newly owned verified**,
+  **0 admitted**. This is a native-V8 diagnostic sample, **not** full Test262
+  conformance or a new owned semantic training yield. The same run kept the
+  original complete 117,773-row acquisition ledger at **40 canonical owned
+  locally verified / 117,733 explicitly refused / zero admitted**.
 
 ### Pinned additional project test mining (2026-10-23)
 
@@ -1548,8 +1551,15 @@ Example: npm run corpus:owned:novelty -- --input
   ramda/ramda@f4b2e35ff433e18c751326b82acc3c6ab3585e18.
   It emits independent JSONL catalogs and disposition/status summaries,
   checking counts and rejecting any falsely verified/admitted fixtures.
-- [ ] Counts from this job are not claimed until actual successful CI run;
-  these are only source/test declarations, **not runnable recorded upstream
-  invocations**, independent reference passes or locally owned traces.
-  Full test framework setup, dependency graphs and side-effect capture
-  remain explicit prerequisites.
+- [x] [Successful cross-project mining CI run 40011171530](https://github.com/werg/tracing-js-self/actions/runs/40011171530)
+  measured **7,913** additional static test declarations across **762**
+  original source files: Lodash **1,892 / 3 files** (1,402 requires-runner,
+  490 dynamic), Deno Standard Library **4,774 / 484 files** (4,757
+  requires-runner, 16 dynamic, one upstream-disabled), Ramda **1,247 / 275
+  files** (1,237 requires-runner, ten dynamic). All entries remain
+  **acquired-only, zero executed/owned/admitted by this job**. These 7,913
+  declarations are outside, and must not be added as verified episodes to,
+  the previous 117,773-row catalog.
+- [ ] Full test framework setup, dependency graphs, dynamic parameterization,
+  real side-effect capture and independently checked owned execution remain
+  prerequisites for promoting these sources.
