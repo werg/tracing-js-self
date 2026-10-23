@@ -28,7 +28,7 @@ function requireDataOnly(value,path='state',seen=new WeakSet()){
 }
 const tableNames = ['counters','envs','heap','promises','frames','effects','inputs','control','operations'];
 const opNames = {
-  CONST:'literal.materialize', GET:'binding.read', SET:'binding.write', INIT:'binding.initialize', DECLARE:'binding.declare',
+  CONST:'literal.materialize', GET:'binding.read', SET:'binding.write', UPDATE_BINDING:'binding.update', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate',
   CALL:'call.enter', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
   GET_PROP:'property.read', GET_METHOD:'property.read', PUT_PROP:'property.write', ENTER_SCOPE:'environment.enter',
@@ -450,6 +450,33 @@ export class Runtime {
         case 'GET':{const b=lookup(s,f.envId,arg);if(!b.cell.initialized)guestFault('ReferenceError',`Cannot access '${arg}' before initialization`);this.stackPush(f,b.cell.token.value,eventId);return {result:b.cell.token.value,reads:[{kind:'binding',envId:b.env.id,name:arg,version:b.cell.version??0,
             value:b.cell.token.value,supplyingEvent:b.cell.token.origin??null}],origins:[b.cell.token.origin]};}
         case 'SET':{const v=pop(),b=lookup(s,f.envId,arg);if(!b.cell.initialized)guestFault('ReferenceError',`${arg} is not initialized`);if(b.cell.kind==='const')guestFault('TypeError',`Assignment to constant ${arg}`);b.cell.token=v;b.cell.version=(b.cell.version??0)+1;this.stackPush(f,v.value,eventId);return {...operands(v),result:v.value};}
+        case 'UPDATE_BINDING':{
+          const b=lookup(s,f.envId,arg.name);
+          if(!b.cell.initialized)
+            guestFault('ReferenceError',`Cannot access '${arg.name}' before initialization`);
+          const before=b.cell.token,oldVersion=b.cell.version??0;
+          // UpdateExpression runs ToNumeric, NOT + with a string (which
+          // concatenates). Primitive numeric conversion is an explicit
+          // bounded scalar leaf. Object conversion requires an owned
+          // continuation and must not run host coercion.
+          if(!['undefined','null','bool','str','num','bigint'].includes(before.value[0]))
+            throw new TypeError('Update coercion outside the bounded scalar profile');
+          const numeric=before.value[0]==='bigint'
+            ?decode(before.value):Number(decode(before.value));
+          const offset=arg.operator==='++'?1:-1;
+          const next=encode(typeof numeric==='bigint'
+            ?numeric+BigInt(offset):numeric+offset);
+          const returned=arg.prefix?next:encode(numeric);
+          if(b.cell.kind==='const')
+            guestFault('TypeError',`Assignment to constant ${arg.name}`);
+          b.cell.token=token(next,eventId);
+          b.cell.version=oldVersion+1;
+          this.stackPush(f,returned,eventId);
+          return {...operands(before),result:returned,
+            reads:[{kind:'binding',envId:b.env.id,name:arg.name,
+              version:oldVersion,value:before.value,
+              supplyingEvent:before.origin??null}]};
+        }
         case 'DEF_FN':{const e=s.envs[f.envId],id=this.next(s,'obj');s.heap[id]={id,kind:'function',codeId:arg.codeId,closureEnvId:f.envId,async:arg.async,version:0};e.bindings[arg.name]={kind:'function',initialized:true,token:token(['ref',id],eventId),version:0};return {result:['ref',id]};}
         case 'ENTER_SCOPE':f.envId=this.newEnv(s,f.envId);return {};
         case 'LEAVE_SCOPE':f.envId=s.envs[f.envId].parent;return {};

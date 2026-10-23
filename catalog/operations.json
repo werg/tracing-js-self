@@ -30,6 +30,11 @@
       "kind": "algorithm"
     },
     {
+      "operationId": "binding.update",
+      "version": 1,
+      "kind": "algorithm"
+    },
+    {
       "operationId": "function.define",
       "version": 1,
       "kind": "algorithm"
