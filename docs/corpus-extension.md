@@ -1431,3 +1431,22 @@ conversion is not**.
   No newly verified owned traces or training-admitted episodes are claimed.
   The existing 117,773 acquired / 40 canonically owned / 37 generated owned /
   zero admitted ledger remains unchanged.
+
+
+### Bounded native Test262 module diagnostics (2026-10-23)
+
+- [x] Added an opt-in experimental Node VM **static ESM native reference**
+  adapter. It loads pinned relative test-tree fixtures and real harness files,
+  distinguishes parse/resolution/runtime negative errors by genuine guest
+  constructors, and places deadlines on module linking/evaluation.
+- [x] Explicit refusals cover unsafe or absent import paths, imported fixture
+  parse failures, dynamic imports, unsupported flags, unresolvable top-level
+  await, and missing experimental module support. Dedicated subprocess tests
+  exercise phase mismatches, forged errors, and module scoping.
+- [ ] These are **native-V8 diagnostic observations only**: not owned JS
+  execution, independently checked intermediate events, or training records.
+  Previous acquired/owned/admitted measurements remain unchanged, and no
+  full-upstream module reference yield has yet been measured.
+- [ ] Full official Test262 module/async host semantics, early-phase
+  distinction, cross-engine checks, isolated bulk execution, owned module
+  tracing, JSON Schema validators and megatoken admission remain open.

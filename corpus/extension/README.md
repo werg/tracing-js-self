@@ -308,3 +308,30 @@ Reported `passed` cases are V8 **diagnostic** observations, not owned
 independent cross-engine conformance proof. It does not implement complete
 Test262 harness semantics, feature-gating or async/module resolution. No
 full-suite result counts are claimed until a trusted pinned run is measured.
+
+## Opt-in Test262 native static-module reference diagnostics
+
+The normal native reference command continues to handle scripts without
+experimental flags. To enable bounded native static ESM from a **trusted,
+clean, exact pinned Test262 checkout**, run:
+
+```sh
+npm run corpus:test262:reference:modules -- \
+  --root /path/to/pinned-test262 \
+  --revision <exact-upstream-40-character-commit> \
+  --max 1000 --output corpus/out/test262-native-reference.json
+```
+
+The runner checks the pinned checkout HEAD, clean tracked tree and each
+program SHA-256 before executing it. Only relative local module imports
+within `test/` are allowed; escaping symlinks and missing fixture files
+are refused. The real upstream harness is loaded. Native parse, resolution
+and runtime errors are checked against actual guest error constructors.
+Unresolved top-level-await has a deadline rather than a success response.
+
+This is **native-V8 diagnostic execution**, not owned tracing or training
+admission. Module-async `$DONE`, dynamic imports, early-error phase
+distinctions, runtime host APIs and full Test262 harness conformance
+remain unsupported. Node requires `--experimental-vm-modules`. Node VM
+is not a security boundary; do not execute arbitrary untrusted sources
+without OS-level isolation and credential/network restrictions.

@@ -5,6 +5,8 @@ import {readFileSync,writeFileSync,mkdirSync,realpathSync} from 'node:fs';
 import {resolve,join,dirname,relative,sep} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
+import {SourceTextModule} from 'node:vm';
+import {executeTest262ModuleReference} from '../src/corpus/test262-module-reference.mjs';
 import {importers} from '../src/corpus/import-external.mjs';
 import {executeTest262Reference} from '../src/corpus/test262-reference-execution.mjs';
 
@@ -34,6 +36,17 @@ const safeFile=(name)=>{
     throw new Error('Harness symlink escaped pinned checkout');
   return readFileSync(p,'utf8');
 };
+// Resolve exact test fixtures only inside the pinned checkout's test/ tree.
+const safeModuleSource=name=>{
+  if(typeof name!=='string'||!name.startsWith('test/')||
+     !/^[A-Za-z0-9_./-]+\.js$/.test(name)||name.split('/').includes('..'))
+    throw new Error('Unsafe module path');
+  const file=realpathSync(join(root,name));
+  const rel=relative(join(root,'test'),file);
+  if(rel==='..'||rel.startsWith('..'+sep)||rel.startsWith(sep))
+    throw new Error('Module fixture escaped pinned Test262 test directory');
+  return readFileSync(file,'utf8');
+};
 const harness={};
 const sha256=text=>createHash('sha256').update(text).digest('hex');
 const rows=[],counts={},seen=new Set();
@@ -59,8 +72,19 @@ for await(const row of importers.test262(root,{
     includes:row.program.harness.filter(n=>!['sta.js','assert.js'].includes(n)),
     negative:row.expected.kind==='expected-error'?{
       phase:row.expected.phase,type:row.expected.type}:null};
-  const result=executeTest262Reference({source,metadata,mode:row.program.mode,
-    harnessSources:sources,filename:row.provenance.path,timeoutMs});
+  const result=row.program.mode==='module'
+    ?await executeTest262ModuleReference({
+      source,metadata,harnessSources:sources,filename:row.provenance.path,timeoutMs,
+      loadModuleSource:async filename=>{
+        try{return safeModuleSource(filename);}
+        catch(error){
+          if(error?.code==='ENOENT')return null;
+          throw error;
+        }
+      }
+    })
+    :executeTest262Reference({source,metadata,mode:row.program.mode,
+      harnessSources:sources,filename:row.provenance.path,timeoutMs});
   if(seen.has(row.id))throw new Error('Duplicate source/mode identity');
   seen.add(row.id);
   rows.push({id:row.id,path:row.provenance.path,mode:row.program.mode,
@@ -70,9 +94,10 @@ for await(const row of importers.test262(root,{
 const report={schema:'test262-native-reference-report/1',revision,
   authority:'native-v8-diagnostic-only',verifiedOwned:0,admitted:0,
   attempted:rows.length,counts,limits:{max,timeoutMs},
-  node:process.version,rows,warnings:[
+  node:process.version,moduleVmEnabled:typeof SourceTextModule==='function',rows,warnings:[
    'Native V8 execution is not an owned semantic trace, an independent engine conformance proof, or training admission.',
-   'Negative early/resolution tests, async tests, modules, raw tests and special host flags are explicitly unsupported.',
+   'Scripts support parse/runtime negatives; native modules additionally support bounded parse/resolution/runtime diagnostics only when Node experimental VM modules are enabled.',
+   'Negative early-phase tests, async $DONE tests, raw tests, dynamic imports and special host flags are explicitly unsupported.',
    'node:vm is not a security boundary: use only trusted exact upstream checkouts, never arbitrary repository code.',
    'A passing script without assertions may contain no meaningful behavioral checks.'
   ]};
