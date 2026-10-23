@@ -138,3 +138,75 @@ test('module namespace objects and exotic syntax do not silently delegate to Nod
   for(const request of invalid)
     assert.throws(()=>linkEvaluatedModules(request),/Unsupported evaluated-module/);
 });
+
+test('diamond dependencies initialize once, with two distinct module side effects',async()=>{
+  const modules={
+    'state.js':'export let n=0;export function next(){n+=1;}',
+    'left.js':"import {next} from './state.js';next();",
+    'right.js':"import {next} from './state.js';next();",
+    'main.js':"import './left.js';import './right.js';import {n} from './state.js';"+
+      'export function run(){return n;}'
+  };
+  const run=await verified({modules,entryModule:'main.js',exportName:'run'});
+  assert.equal(run.result,2);
+  assert.deepEqual(run.metadata.evaluationOrder,
+    ['state.js','left.js','right.js','main.js']);
+  const initialized=run.metadata.instantiationAndEvaluation.filter(x=>x.file==='state.js'&&x.kind==='evaluate');
+  assert.equal(initialized.length,1);
+});
+
+test('native input arrival can be out of await order during ESM evaluation',async()=>{
+  let invocations=0;
+  const modules={
+    'data.js':"const a=host.readAsync('slow');const b=host.readAsync('fast');"+
+      'export const n=await a+await b;',
+    'main.js':"import {n} from './data.js';export function run(){return n;}"
+  };
+  const run=await verified({modules,entryModule:'main.js',exportName:'run',
+    services:{'demo.readAsync':({args})=>{
+      invocations++;
+      return args[0]==='slow'?
+        new Promise(resolve=>setTimeout(()=>resolve(10),15)):
+        Promise.resolve(20);
+    }}});
+  assert.equal(run.result,30);
+  assert.equal(invocations,2);
+  const effects=Object.values(run.bundle.effects).filter(f=>f.operation==='demo.readAsync');
+  const arrivals=run.bundle.events.filter(e=>e.operation==='external.input.arrive');
+  assert.equal(arrivals.length,2);
+  assert.equal(arrivals[0].causes.find(c=>c.kind==='effect').effectId,effects[1].id);
+  replayExact(run.bundle);
+  assert.equal(invocations,2);
+});
+
+test('linker preflights unsupported guest syntax even when its function is never invoked',()=>{
+  assert.throws(()=>linkEvaluatedModules({
+    modules:{'main.js':'export function run(){return 4;}'+
+      'export function unused(){return new Date(0);}'},
+    entryModule:'main.js',exportName:'run'
+  }),/Unsupported evaluated-module.*unowned generated guest syntax/);
+});
+
+test('unreferenced invalid forwarding exports still fail module instantiation',()=>{
+  assert.throws(()=>linkEvaluatedModules({
+    modules:{
+      'src.js':'export const existing=2;',
+      'barrel.js':"export {missing} from './src.js';",
+      'main.js':"import './barrel.js';export function run(){return 3;}"
+    },
+    entryModule:'main.js',exportName:'run'
+  }),/Unsupported evaluated-module.*unresolved export/);
+});
+
+test('module graph excludes unreachable private code and requires all runtime imports',()=>{
+  const linked=linkEvaluatedModules({modules:{
+    'main.js':'export const result=1;',
+    'unreachable.js':'export const secret=928374;'
+  },entryModule:'main.js',exportName:'result'});
+  assert(!linked.source.includes('928374'));
+  assert(!JSON.stringify(linked.metadata).includes('928374'));
+  assert.throws(()=>linkEvaluatedModules({modules:{
+    'main.js':"import {missing} from './base.js';export function run(){return 2;}",
+    'base.js':'export const available=1;'
+  },entryModule:'main.js',exportName:'run'}),/Unsupported evaluated-module.*unresolved export/);
+});
