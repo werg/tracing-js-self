@@ -51,6 +51,8 @@ export function parseTraining(source) {
           reject(n,'unhandled template literal escape');
         return {...loc,type:'Template',quasis:n.quasis.map(q=>q.value.cooked),
           expressions:n.expressions.map(expr)};
+      case 'AwaitExpression':
+        return {...loc,type:'Await',argument:expr(n.argument)};
       case 'UnaryExpression':
         if(!unary.has(n.operator))reject(n,'unary operator');
         return {...loc,type:'Unary',operator:n.operator,argument:expr(n.argument)};
@@ -113,10 +115,10 @@ export function parseTraining(source) {
         return declarations.length===1?declarations[0]:
           {...loc,type:'VariableGroup',declarations};
       case 'FunctionDeclaration':
-        if(!n.id || n.async || n.generator || n.params.some(x=>x.type!=='Identifier'))
+        if(!n.id || n.generator || n.params.some(x=>x.type!=='Identifier'))
           reject(n,'function form');
         return {...loc,type:'Function',id:n.id.name,params:n.params.map(x=>x.name),
-          async:false,body:stmt(n.body)};
+          async:n.async,body:stmt(n.body)};
       case 'ReturnStatement':return {...loc,type:'Return',argument:n.argument?expr(n.argument):null};
       case 'ThrowStatement':
         return {...loc,type:'Throw',argument:expr(n.argument)};
@@ -158,7 +160,7 @@ export function parseTraining(source) {
   const body=parsed.body.map(stmt);
   // Resolve references against lexical scopes, including the per-loop let header.
   // Never silently turn an unknown identifier into an ambient Node global.
-  function scope(statements,parent,params=[]) {
+  function scope(statements,parent,params=[],asyncFunction=false) {
     const names=new Set(params);
     for(const n of statements){
       const entries=n.type==='VariableGroup'?n.declarations:
@@ -176,7 +178,10 @@ export function parseTraining(source) {
           if(!has(n.name,e))reject(n,'unbound identifier '+n.name);
           break;
         case 'Template':n.expressions.forEach(x=>value(x,e));break;
-        case 'FunctionExpr':scope(n.body.body,e,n.params);break;
+        case 'FunctionExpr':scope(n.body.body,e,n.params,false);break;
+        case 'Await':
+          if(!asyncFunction)reject(n,'await outside async function');
+          value(n.argument,e);break;
         case 'Unary':
           // ECMAScript typeof on an unresolvable name is defined as 'undefined';
           // a declared but uninitialized lexical binding still throws (TDZ).
@@ -204,7 +209,7 @@ export function parseTraining(source) {
       switch(n.type){
         case 'Variable':if(n.init)value(n.init,e);break;
         case 'VariableGroup':n.declarations.forEach(x=>statement(x,e));break;
-        case 'Function':scope(n.body.body,e,n.params);break;
+        case 'Function':scope(n.body.body,e,n.params,n.async);break;
         case 'Block':scope(n.body,e);break;
         case 'If':
           value(n.test,e);statement(n.consequent,e);
@@ -239,6 +244,6 @@ export function parseTraining(source) {
     }
     statements.forEach(n=>statement(n,env));
   }
-  scope(body,{names:new Set(['undefined','Object','Array','Number','Math']),parent:null});
+  scope(body,{names:new Set(['undefined','Object','Array','Number','Math','Promise']),parent:null});
   return {type:'Program',body,start:0,end:source.length,profile:TRAINING_PROFILE};
 }
