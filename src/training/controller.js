@@ -278,7 +278,21 @@ export class SemanticController {
             fail('read','Updated property read is not the committed own value');
         }else fail('read','Mismatched update location kind');
       }
-      for(const write of fields.writes??[]){
+      const writes=fields.writes??[];
+      const perObject=new Map();
+      for(const write of writes)if(write.kind==='property'){
+        const key=write.object+':'+write.key;
+        if(perObject.has(key))fail('write','Duplicate predicted property location');
+        perObject.set(key,write);
+      }
+      // Validate all property patches against the *same* pre-call snapshot.
+      // A dense push can update several indices and length in one committed
+      // builtin step; the later patch must not see an invented intermediate
+      // shape version or reject a legitimate multi-increment length version.
+      const counts=new Map();
+      for(const write of perObject.values())
+        counts.set(write.object,(counts.get(write.object)??0)+1);
+      for(const write of writes){
         if(write.kind==='cell'){
           const key=write.env+':'+write.key,old=cellDraft.get(key);
           if((old?.version??0)!==write.previous ||
@@ -288,10 +302,17 @@ export class SemanticController {
         }else if(write.kind==='property'){
           const obj=heapDraft.get(write.object);
           const before=this.heap.get(write.object);
-          if(!obj || !before || (before.versions.get(write.key)??0)!==write.oldVersion ||
-             write.version!==write.oldVersion+1 ||
-             before.shapeVersion!==write.shapeBefore)
-            fail('write','Stale object property or shape version');
+          const count=counts.get(write.object);
+          if(!obj||!before||typeof write.key!=='string'||
+             (before.versions.get(write.key)??0)!==write.oldVersion||
+             !Number.isSafeInteger(write.version)||
+             write.version<=write.oldVersion ||
+             write.version-write.oldVersion>count||
+             before.shapeVersion!==write.shapeBefore||
+             !Number.isSafeInteger(write.shapeAfter)||
+             write.shapeAfter<write.shapeBefore||
+             write.shapeAfter-write.shapeBefore>count)
+            fail('write','Stale or implausible atomic property patch');
           if(write.present)obj.properties.set(write.key,{version:write.version,value:copy(write.value)});
           else obj.properties.delete(write.key);
           obj.versions.set(write.key,write.version);
