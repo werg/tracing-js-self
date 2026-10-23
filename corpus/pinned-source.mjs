@@ -62,3 +62,59 @@ export function corpusSplit(key){
   const n=parseInt(createHash('sha256').update(key).digest('hex').slice(0,8),16)%10;
   return n===0?'test':n<=2?'validation':'train';
 }
+
+// Compile-time lowering of the pinned VS Code `const enum` used by four
+// whitespace helpers. TypeScript erases const enums in a full compile; the
+// single-file transpileModule bridge instead produces a 25KB runtime enum.
+// This transformer replaces *only verified enum member references* with their
+// original numeric compile-time values, leaving the production functions and
+// their actual runtime control flow intact. No runtime JS or host fallback.
+export function lowerPinnedCharCode(spec,source){
+  const families=new Set(['firstNonWhitespaceIndex','getLeadingWhitespace',
+    'lastNonWhitespaceIndex','getIndentationLength']);
+  if(spec.project!=='vscode'||spec.file!=='strings.ts'||!families.has(spec.entry))
+    return {text:source,lowering:null};
+  const sf=ts.createSourceFile(spec.file,source,ts.ScriptTarget.ES2022,true,ts.ScriptKind.TS);
+  const en=sf.statements.filter(ts.isEnumDeclaration);
+  if(en.length!==1||en[0].name.text!=='CharCode'||
+     !en[0].modifiers?.some(m=>m.kind===ts.SyntaxKind.ConstKeyword))
+    throw new SyntaxError('Pinned const enum dependency mismatch');
+  const values=new Map();
+  for(const member of en[0].members){
+    const name=member.name.text;
+    if(!ts.isNumericLiteral(member.initializer))continue;
+    values.set(name,Number(member.initializer.text));
+  }
+  if(values.get('Space')!==32||values.get('Tab')!==9)
+    throw new SyntaxError('Pinned whitespace enum constants mismatch');
+  const originals=sf.statements.filter(ts.isFunctionDeclaration);
+  if(!originals.length)throw new SyntaxError('Missing compiled function for enum lowering');
+  const used=new Set();
+  const transformer=context=>{
+    const visit=node=>{
+      if(ts.isPropertyAccessExpression(node)&&ts.isIdentifier(node.expression)&&
+         node.expression.text==='CharCode'){
+        const name=node.name.text;
+        if(!values.has(name))throw new SyntaxError('Unmodeled CharCode member '+name);
+        used.add(name);
+        return ts.factory.createNumericLiteral(values.get(name));
+      }
+      if(ts.isIdentifier(node)&&node.text==='CharCode' &&
+         !ts.isPropertyAccessExpression(node.parent))
+        throw new SyntaxError('Nonmember use of a compile-time enum');
+      return ts.visitEachChild(node,visit,context);
+    };
+    return node=>ts.visitNode(node,visit);
+  };
+  const input=ts.factory.updateSourceFile(sf,originals);
+  const result=ts.transform(input,[transformer]);
+  const text=ts.createPrinter().printFile(result.transformed[0]);
+  result.dispose();
+  if(!used.has('Space')||!used.has('Tab'))
+    throw new SyntaxError('Required whitespace source constants are unused');
+  return {text,lowering:{kind:'pinned-typescript-const-enum-inlining/1',
+    sourceMember:'CharCode',
+    pinnedDependencySha256:createHash('sha256').update(
+      readFileSync(resolve('corpus/upstream/vscode/charCode.ts'),'utf8')).digest('hex'),
+    constants:Object.fromEntries([...used].sort().map(x=>[x,values.get(x)]))}};
+}
