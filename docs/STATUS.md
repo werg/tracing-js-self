@@ -1,5 +1,10 @@
 # Implementation status (0.2.0)
 
+## Bounded journaled console text (October 23, 2026)
+
+- Explicit native-service execution now accepts `console.log/info/warn/error(message)` with exactly one string argument. Each service dispatch, arrival and delivery is journaled and exact replay never reissues the native writer. The opt-in natlang native-service route returns the logged strings in `logs`. No standard output is available by default; multiple arguments, formatting, native handles, arbitrary browser globals and full host event-loop semantics remain unsupported.
+
+
 ## Stateful TypeScript-emitted CommonJS compatibility (October 23, 2026)
 
 - The strict natlang retained CJS bridge now admits own `let`/`const` module-private data initializers alongside exported function declarations. The pinned TypeScript 5.9.3 CommonJS emitter supplies independent source fixtures; successive host-callable exports observe the same replay-backed mutable guest lexical cells, and rejected trace callbacks cannot commit state. Arbitrary require/imports, native resources and normal natlang-transformed helper calls remain unsupported: **this is not a production-compatible general callable-folder realm.**
