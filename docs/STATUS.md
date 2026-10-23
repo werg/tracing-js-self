@@ -2,6 +2,20 @@
 
 This repository implements a **bounded, executable prototype** for the architecture in the attached *Complete JavaScript Semantic Tracing Runtime, revision 2 (22 October 2026)*. It does **not** implement the complete plan or claim a complete ECMAScript/Node/browser profile. In particular, a passing prototype test is not a Test262, WPT, Node-API, or learning-evaluation result.
 
+## Retained-session replay-authority and commit hardening (October 23, 2026)
+
+- The bounded replay-backed evaluated-module session now keeps its committed
+  invocation history, host output identities and serialization queue private.
+  The public history is a detached data view; module source configuration and
+  step budget cannot be replaced after construction. An out-of-range step
+  budget fails before any guest evaluation.
+- Output reconciliation rejects a non-writable host array length during the
+  preflight stage, before committing changes to other returned host data
+  objects. Dedicated regressions cover attempted history rewriting, replay
+  configuration mutation, a multi-object partial-commit hazard and closing.
+  This strengthens **observational** replay integrity, not durable VM
+  continuations, general modules, arbitrary JS/TS execution or native hosts.
+
 ## Bounded sealed-archive persistence (October 23, 2026)
 
 - The opt-in Node/POSIX package entry [durable storage](DURABLE_STORAGE.md)

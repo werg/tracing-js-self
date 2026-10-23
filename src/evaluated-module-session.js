@@ -90,7 +90,10 @@ function snapshotResults(heap,results,existing,initialHeap){
     for(const key of Reflect.ownKeys(target)){
       const desc=Object.getOwnPropertyDescriptor(target,key);
       if(typeof key!=='string'||!desc||!Object.hasOwn(desc,'value')||
-         key!=='length'&&(!desc.configurable||!desc.writable))
+         (key==='length'? !array||!desc.writable :
+           !desc.configurable||!desc.writable))
+        // In particular, non-writable array length would throw during the
+        // later commit, after earlier retained outputs had been mutated.
         throw new TypeError('Retained host output has unowned descriptors');
     }
   }
@@ -110,6 +113,16 @@ function snapshotResults(heap,results,existing,initialHeap){
 }
 
 export class BoundedRetainedModuleSession {
+  #history=[];
+  #outputs=[];
+  #objects=new Map();
+  #queue=Promise.resolve();
+  #closed=false;
+  // Accessors return detached data; a consumer cannot rewrite replay inputs.
+  get history(){return this.#history.map(({exportName,args})=>({
+    exportName,args:[...args]
+  }));}
+  get closed(){return this.#closed;}
   constructor({modules,entryModule,maxSteps=100000}={}){
     if(!modules||typeof modules!=='object'||Array.isArray(modules)||
        types.isProxy(modules)||typeof entryModule!=='string'||
@@ -127,25 +140,25 @@ export class BoundedRetainedModuleSession {
       Object.defineProperty(sources,name,{value:descriptor.value,
         enumerable:true,writable:false,configurable:false});
     }
-    this.modules=Object.freeze(sources);
-    this.entryModule=entryModule;
-    this.maxSteps=maxSteps;
-    this.history=[];
-    this.outputs=[];
-    this.objects=new Map();
-    this.closed=false;
+    if(!Number.isSafeInteger(maxSteps)||maxSteps<1||maxSteps>100000)
+      throw new RangeError('Retained module maxSteps must be 1-100000');
+    // The replay authority cannot be swapped by an external caller.
+    Object.defineProperties(this,{
+      modules:{value:Object.freeze(sources),enumerable:true},
+      entryModule:{value:entryModule,enumerable:true},
+      maxSteps:{value:maxSteps,enumerable:true}
+    });
     this.lastArchive=null;
-    this.queue=Promise.resolve();
   }
   async invoke(exportName,args=[]){
-    if(this.closed)throw new Error('Retained module session closed');
+    if(this.#closed)throw new Error('Retained module session closed');
     const checked=checkArgs(args);
     if(typeof exportName!=='string'||!/^[$A-Za-z_][$\w]*$/.test(exportName))
       throw new TypeError('Invalid retained module export name');
     const task=async()=>{
-      if(this.closed)throw new Error('Retained module session closed');
-      if(this.history.length>=32)throw new RangeError('Retained session call limit');
-      const calls=[...this.history,{exportName,args:checked}];
+      if(this.#closed)throw new Error('Retained module session closed');
+      if(this.#history.length>=32)throw new RangeError('Retained session call limit');
+      const calls=[...this.#history,{exportName,args:checked}];
       const run=await executeEvaluatedModules({
         modules:this.modules,entryModule:this.entryModule,
         calls,maxSteps:this.maxSteps
@@ -153,23 +166,23 @@ export class BoundedRetainedModuleSession {
       const initial=run.bundle.initialState.control.a0.activeFrameId;
       const promiseId=run.bundle.initialState.frames[initial].asyncPromiseId;
       const result=run.bundle.finalState.promises[promiseId].value.value;
-      const staged=snapshotResults(run.bundle.finalState.heap,result,this.objects,run.bundle.initialState.heap);
-      for(let i=0;i<this.outputs.length;i++){
-        const former=this.outputs[i],next=staged.values[i];
+      const staged=snapshotResults(run.bundle.finalState.heap,result,this.#objects,run.bundle.initialState.heap);
+      for(let i=0;i<this.#outputs.length;i++){
+        const former=this.#outputs[i],next=staged.values[i];
         if((former===null||typeof former!=='object')?
            !Object.is(former,next):former!==next)
           throw new Error('Retained historical result changed identity or primitive value');
       }
-      if(this.closed)throw new Error('Retained module session closed');
+      if(this.#closed)throw new Error('Retained module session closed');
       staged.commit();
-      this.objects=staged.objects;
-      this.outputs=staged.values;
-      this.history=calls;
+      this.#objects=staged.objects;
+      this.#outputs=staged.values;
+      this.#history=calls;
       this.lastArchive=run.bundle;
       return {result:staged.values.at(-1),bundle:run.bundle,metadata:run.metadata};
     };
-    const result=this.queue.then(task);
-    this.queue=result.then(()=>undefined,()=>undefined);
+    const result=this.#queue.then(task);
+    this.#queue=result.then(()=>undefined,()=>undefined);
     return result;
   }
   /**
@@ -177,8 +190,8 @@ export class BoundedRetainedModuleSession {
    * invocation is NOT included until it has validated and committed.
    */
   snapshot(){
-    if(this.closed)throw new Error('Retained module session closed');
-    const calls=this.history.map(call=>{
+    if(this.#closed)throw new Error('Retained module session closed');
+    const calls=this.#history.map(call=>{
       if(typeof call?.exportName!=='string'||
          !/^[$A-Za-z_][$\w]*$/.test(call.exportName))
         throw new TypeError('Invalid retained call history');
@@ -190,7 +203,7 @@ export class BoundedRetainedModuleSession {
       entryModule:this.entryModule,maxSteps:this.maxSteps,calls
     };
   }
-  close(){this.closed=true;this.objects.clear();}
+  close(){this.#closed=true;this.#objects.clear();}
 }
 
 /** Reject getters, proxies, inherited metadata and extra keys before replay. */
