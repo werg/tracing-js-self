@@ -4,6 +4,10 @@ import {materializeJson, JSON_CODEC} from './materialize.js';
 
 export const HOST_OPERATIONS=Object.freeze({
   'platform.dateNow':Object.freeze({kind:'synchronous',signature:'platform.dateNow/1',arity:0,key:null,codec:JSON_CODEC}),
+  'platform.console.log':Object.freeze({kind:'synchronous',signature:'platform.console.log/1',arity:1,key:0,codec:JSON_CODEC}),
+  'platform.console.info':Object.freeze({kind:'synchronous',signature:'platform.console.info/1',arity:1,key:0,codec:JSON_CODEC}),
+  'platform.console.warn':Object.freeze({kind:'synchronous',signature:'platform.console.warn/1',arity:1,key:0,codec:JSON_CODEC}),
+  'platform.console.error':Object.freeze({kind:'synchronous',signature:'platform.console.error/1',arity:1,key:0,codec:JSON_CODEC}),
   'demo.readAsync':Object.freeze({kind:'promise',signature:'demo.readAsync/1',arity:1,key:0,codec:JSON_CODEC}),
   'demo.readNumber':Object.freeze({kind:'synchronous',signature:'demo.readNumber/1',arity:1,key:0,codec:JSON_CODEC}),
   'demo.store':Object.freeze({kind:'synchronous',signature:'demo.store/1',arity:2,key:0,codec:JSON_CODEC})
