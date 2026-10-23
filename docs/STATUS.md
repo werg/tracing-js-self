@@ -22,10 +22,17 @@ This repository implements a **bounded, executable prototype** for the architect
   now join the existing ordinary-data built-ins, with local Node V8
   differential assertions and archive replay. Exotic cases continue to
   fail closed; these methods are not evidence of complete ECMA-262 built-ins.
-- The static ESM linker is still **function-only**: top-level module
-  evaluation/initialization, mutable ESM live exports and namespace exotic
-  objects require a separate module implementation. The data-only retained
-  adapter above is not a replacement for the ESM linker.
+- The original `tracing-js-self/modules` linker remains function-only,
+  but the separate [bounded evaluated ESM graph](EVALUATED_MODULES.md)
+  (`tracing-js-self/evaluated-modules`, `evaluated-module/1`) now instantiates
+  an explicit acyclic in-memory graph and executes supported top-level
+  initializers once per episode. Named imports and re-exports alias the
+  originating mutable owned lexical cell, including `let` writes observed
+  after imported guest calls. Owned top-level `await` and optionally journaled
+  native-service completions participate in exact replay. Cyclic evaluation,
+  module namespace exotic objects, arbitrary package imports and persistent
+  module realms remain unimplemented. The data-only natlang retained adapter
+  is a different, limited interface.
 - Verification is finite, not a language-completeness, Test262, WPT, native
   host capability or megatoken model-training result. Check the most recent
   `main` GitHub Actions run before treating the extension as a green release.
@@ -113,7 +120,7 @@ implemented interfaces and admission gates.
 - Independent/specification-level semantic replay, native side-effect/resource replay, *general* guest-visible exception delivery, closed canonical reference fixtures, full transitive model-visibility proofs, release locks, accepted budgets, or learning improvements. The structural validator proves **state reconstruction and structural invariants**. Optional bounded replay proves that this same interpreter can reproduce the journal under recorded inputs; neither check proves ECMAScript correctness.
 - Journal durability/crash recovery, streaming storage/backpressure, globally consistent checkpoints, and broad native integrations beyond the declared bounded Node service transport.
 - No general engine262 replacement: engine262 remains an untraced, opt-in external oracle; the bounded arithmetic and ordinary coercion phases are an in-repository owned implementation following its pinned algorithm structure. The complete normative clause/intrinsic inventory and official Test262 runtime harness remain open.
-- An opt-in strict-profile `EvalEnvironment` facade with pinned TypeScript transpilation/source-map **metadata** exists, but there is no general natlang evaluator/module-realm replacement, live binding support or proven original-TS semantic site mapping. The candidate training exporter now has a separately tested megatoken-native Episode adapter and explicit teacher-conditioned training path, but there is still no independently admitted corpus or measured trained-model correctness. Package-root imports do not imply application compatibility.
+- An opt-in strict-profile `EvalEnvironment` facade with pinned TypeScript transpilation/source-map **metadata** exists, but there is no general natlang evaluator/module-realm replacement, persistent callable-folder module realm, native callback ownership or proven original-TS semantic site mapping. Data-only live natlang bindings and bounded mutable ESM aliases do not satisfy those broader contracts. The candidate training exporter now has a separately tested megatoken-native Episode adapter and explicit teacher-conditioned training path, but there is still no independently admitted corpus or measured trained-model correctness. Package-root imports do not imply application compatibility.
 
 The VM still copies machine-state tables on each transaction. The operation continuation table (including coercion method continuations) uses typed commands; existing tables still use **entity replacement**. This is neither a production storage scheme nor the finished fine-grained mutation algebra. String-to-number conversion, Number formatting and typed scalar arithmetic remain declared host primitive leaves.
 
