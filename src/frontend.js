@@ -162,7 +162,7 @@ export function parse(source) {
 let site=0;
 export function compile(ast) {
   site=0;const programs={};let next=0;
-  function bodyProgram(body,params=[],async=false) {
+  function bodyProgram(body,params=[],async=false,defaults=[]) {
     const id=`code${++next}`, instructions=[];let loopDepth=0;
     const emit=(op,arg,node)=>{const inst={op,arg,siteId:`s${++site}`,start:node?.start??0,end:node?.end??0};instructions.push(inst);return instructions.length-1;};
     // Declarations are created before execution for a block's scope.
@@ -174,7 +174,7 @@ export function compile(ast) {
         for(const d of declarations)if(d.kind!=='var')emit('DECLARE',{name:d.id,kind:d.kind},d);
       }
       for(const n of nodes)if(n.type==='Function'){
-        const fid=bodyProgram(n.body.body,n.params,n.async);
+        const fid=bodyProgram(n.body.body,n.params,n.async,n.defaults);
         emit('DEF_FN',{name:n.id,codeId:fid,params:n.params,async:n.async},n);
       }
       for(const n of nodes)if(n.type!=='Function')stmt(n);
@@ -184,7 +184,7 @@ export function compile(ast) {
       switch(n.type){
         case 'Literal': emit('CONST',{value:n.value,raw:n.raw},n);break;
         case 'FunctionExpr':{
-          const codeId=bodyProgram(n.body.body,n.params,false);
+          const codeId=bodyProgram(n.body.body,n.params,false,n.defaults);
           emit('MAKE_FUNCTION',{codeId,arrow:n.arrow},n);
           break;
         }
@@ -346,6 +346,20 @@ export function compile(ast) {
         default:throw new SyntaxError(`Unsupported statement: ${n.type}`);
       }
     }
+    // Default parameters evaluate in left-to-right order, only when the
+    // argument value is undefined. The profile rejects references to later
+    // parameter bindings and body locals requiring an unmodeled TDZ.
+    defaults.forEach((initializer,i)=>{
+      if(!initializer)return;
+      emit('GET',params[i],initializer);
+      emit('CONST',{value:['undefined']},initializer);
+      emit('BINARY','===',initializer);
+      const skip=emit('JUMP_IF_FALSE',null,initializer);
+      expr(initializer);
+      emit('SET',params[i],initializer);
+      emit('POP',null,initializer);
+      instructions[skip].arg=instructions.length;
+    });
     statements(body);
     emit('CONST',{value:['undefined']},ast);emit('RETURN',null,ast);
     programs[id]={id,params,async,varNames:collectVarBindings(body),instructions};return id;

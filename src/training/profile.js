@@ -26,6 +26,14 @@ export function parseTraining(source) {
     reject(parsed,'top-level code must only declare functions');
 
   const span=n=>({start:n.start,end:n.end});
+  function parameters(n){
+    return n.params.map(p=>{
+      if(p.type==='Identifier')return {name:p.name,default:null};
+      if(p.type==='AssignmentPattern'&&p.left.type==='Identifier')
+        return {name:p.left.name,default:expr(p.right)};
+      reject(p,'parameter pattern (identifier or scalar default required)');
+    });
+  }
   function expr(n) {
     if(!n)reject(parsed,'missing expression');
     const loc=span(n);
@@ -36,15 +44,15 @@ export function parseTraining(source) {
       case 'Identifier':return {...loc,type:'Identifier',name:n.name};
       case 'ArrowFunctionExpression':case 'FunctionExpression':{
         if(n.async || n.generator ||
-           (n.type==='FunctionExpression' && n.id) ||
-           n.params.some(p=>p.type!=='Identifier'))
+           (n.type==='FunctionExpression' && n.id))
           reject(n,'function expression parameters or mode');
+        const parsedParams=parameters(n);
         const body=n.body.type==='BlockStatement'?stmt(n.body):
           {...span(n.body),type:'Block',body:[
             {...span(n.body),type:'Return',argument:expr(n.body)}]};
         return {...loc,type:'FunctionExpr',
           arrow:n.type==='ArrowFunctionExpression',
-          params:n.params.map(p=>p.name),body};
+          params:parsedParams.map(p=>p.name),defaults:parsedParams.map(p=>p.default),body};
       }
       case 'TemplateLiteral':
         if(n.quasis.length!==n.expressions.length+1||
@@ -115,11 +123,13 @@ export function parseTraining(source) {
         }));
         return declarations.length===1?declarations[0]:
           {...loc,type:'VariableGroup',declarations};
-      case 'FunctionDeclaration':
-        if(!n.id || n.generator || n.params.some(x=>x.type!=='Identifier'))
-          reject(n,'function form');
-        return {...loc,type:'Function',id:n.id.name,params:n.params.map(x=>x.name),
+      case 'FunctionDeclaration':{
+        if(!n.id || n.generator)reject(n,'function form');
+        const parsedParams=parameters(n);
+        return {...loc,type:'Function',id:n.id.name,
+          params:parsedParams.map(x=>x.name),defaults:parsedParams.map(x=>x.default),
           async:n.async,body:stmt(n.body)};
+      }
       case 'ReturnStatement':return {...loc,type:'Return',argument:n.argument?expr(n.argument):null};
       case 'ThrowStatement':
         return {...loc,type:'Throw',argument:expr(n.argument)};
@@ -162,7 +172,7 @@ export function parseTraining(source) {
   const body=parsed.body.map(stmt);
   // Resolve references against lexical scopes, including the per-loop let header.
   // Never silently turn an unknown identifier into an ambient Node global.
-  function scope(statements,parent,params=[],asyncFunction=false,functionScope=false) {
+  function scope(statements,parent,params=[],asyncFunction=false,functionScope=false,defaults=[]) {
     const names=new Set(params);
     if(functionScope)
       for(const name of collectVarBindings(statements))names.add(name);
@@ -183,7 +193,7 @@ export function parseTraining(source) {
           if(!has(n.name,e))reject(n,'unbound identifier '+n.name);
           break;
         case 'Template':n.expressions.forEach(x=>value(x,e));break;
-        case 'FunctionExpr':scope(n.body.body,e,n.params,false,true);break;
+        case 'FunctionExpr':scope(n.body.body,e,n.params,false,true,n.defaults);break;
         case 'Await':
           if(!asyncFunction)reject(n,'await outside async function');
           value(n.argument,e);break;
@@ -214,7 +224,7 @@ export function parseTraining(source) {
       switch(n.type){
         case 'Variable':if(n.init)value(n.init,e);break;
         case 'VariableGroup':n.declarations.forEach(x=>statement(x,e));break;
-        case 'Function':scope(n.body.body,e,n.params,n.async,true);break;
+        case 'Function':scope(n.body.body,e,n.params,n.async,true,n.defaults);break;
         case 'Block':scope(n.body,e,[],asyncFunction);break;
         case 'If':
           value(n.test,e);statement(n.consequent,e);
@@ -247,6 +257,14 @@ export function parseTraining(source) {
         default:reject(n,'unhandled statement');
       }
     }
+    // Parameter initializers run before body var/lexical bindings exist and
+    // cannot read the current or later parameter while it is uninitialized.
+    // Validate in the narrower left-to-right parameter environment.
+    defaults.forEach((initializer,i)=>{
+      if(initializer)value(initializer,{
+        names:new Set(params.slice(0,i)),parent
+      });
+    });
     statements.forEach(n=>statement(n,env));
   }
   scope(body,{names:new Set(['undefined','Object','Array','Number','Math','Promise','host','NaN','Infinity']),parent:null});
