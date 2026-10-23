@@ -318,6 +318,14 @@ export function parseTraining(source) {
           if(n.argument)value(n.argument,e);
           else if(!has(n.name,e))reject(n,'unbound update target '+n.name);
           break;
+        case 'OptionalChain':
+          value(n.base,e);
+          for(const step of n.steps){
+            if(step.type==='member')value(step.property,e);
+            else for(const arg of step.args)
+              value(arg.type==='Spread'?arg.argument:arg,e);
+          }
+          break;
         case 'Member':value(n.object,e);value(n.property,e);break;
         case 'Call':value(n.callee,e);n.args.forEach(x=>value(x.type==='Spread'?x.argument:x,e));break;
         case 'Construct':if(!has(n.callee,e))reject(n,'unbound constructor');

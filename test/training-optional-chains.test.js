@@ -47,8 +47,8 @@ test('owned optional chains skip the entire later suffix and computed keys',()=>
 test('optional receiver method calls keep this and skip absent arguments',()=>{
   assert.deepEqual(differential(`
     let count=0;
-    const key=()=>{count++;return "inc";};
-    const obj={base:9,inc:function(x){return this.base+x;}};
+    const key=()=>{count++;return "at";};
+    const obj=[9,10];
     const absent=undefined;
     const a=absent?.[key()](count++);
     const b=obj?.[key()](count++);
@@ -68,11 +68,11 @@ test('optional function calls skip arguments while preserving guest calls',()=>{
 test('optional property access distinguishes nullish and falsy receivers',()=>{
   assert.deepEqual(differential(`
     let count=0;
-    const key=()=>{count++;return "p";};
+    const key=()=>{count++;return "length";};
     const a=self.absent?.[key()];
     const b=self.falsy?.[key()];
     return [a??-1,b??-2,count];
-  `,{absent:null,falsy:false}),[-1,-2,1]);
+  `,{absent:null,falsy:''}),[-1,0,1]);
 });
 test('optional method invocation and dynamic optional calls fail closed',()=>{
   const env=createBoundedNatlangEnvironment({EvalFailure});
