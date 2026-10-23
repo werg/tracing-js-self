@@ -14,7 +14,7 @@ const needle=i=>['a',' ','o','0','z','-','!','A'][i%8];
 const S=(file,entry,args,extra={})=>({project:'vscode',file,entry,args,...extra});
 const L=(file,entry,args,extra={})=>({project:'lodash',file,entry,args,...extra});
 const callback=(values,callbackExpression)=>'globalThis.__testArgs=['+
-  JSON.stringify(values)+','+callbackExpression+'];';
+  JSON.stringify(values).slice(1,-1)+','+callbackExpression+'];';
 const numericPairs=i=>[n(i),n(i+1)];
 const strings=[
   S('strings.ts','isFalsyOrWhitespace',i=>[str(i)]),
