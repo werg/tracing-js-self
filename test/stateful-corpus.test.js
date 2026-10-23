@@ -8,9 +8,9 @@ import {spawnSync} from 'node:child_process';
 import {scenarios,upstream,pinnedSha256} from '../corpus/stateful/cases.mjs';
 
 test('60 adversarial production scenarios have unique names, pinned module sources and full licenses',()=>{
- assert.equal(scenarios.length,67);
- assert.equal(Object.keys(upstream).length,7);
- assert.equal(new Set(scenarios.map(x=>x.id)).size,67);
+ assert.equal(scenarios.length,76);
+ assert.equal(Object.keys(upstream).length,10);
+ assert.equal(new Set(scenarios.map(x=>x.id)).size,76);
  for(const row of scenarios){
   assert.match(row.id,/^[a-z\d-]+\/[a-z\d-]+$/);
   assert(row.modules.length>0);
@@ -21,14 +21,15 @@ test('60 adversarial production scenarios have unique names, pinned module sourc
  for(const [name,meta] of Object.entries(upstream)){
   assert.match(meta.revision,/^[0-9a-f]{40}$/);
   assert(existsSync('corpus/stateful/upstream/'+meta.path),name);
-  assert(existsSync('corpus/stateful/upstream/'+name+'/LICENSE'),name);
+  assert(existsSync('corpus/stateful/upstream/'+(meta.licenseFile??name+'/LICENSE')),name);
   assert(readFileSync('corpus/stateful/upstream/'+meta.path,'utf8').length>100);
   assert.equal(createHash('sha256').update(readFileSync('corpus/stateful/upstream/'+meta.path)).digest('hex'),pinnedSha256[name]);
  }
  const counts={};
  for(const row of scenarios)(counts[row.project]??=[]).push(row);
- assert.equal(Object.keys(counts).length,8);
+ assert.equal(Object.keys(counts).length,9);
  assert.equal(counts.application.length,6);
+ assert.equal(counts.axios.length,9);
  for(const row of counts.application){
   assert(row.modules.length<=3);
   assert(row.modules.every(mod=>row.run.includes("__require('"+mod+"')")));
