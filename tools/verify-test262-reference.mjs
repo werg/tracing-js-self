@@ -9,6 +9,7 @@ import vm from 'node:vm';
 import {executeTest262ModuleReference} from '../src/corpus/test262-module-reference.mjs';
 import {importers} from '../src/corpus/import-external.mjs';
 import {executeTest262Reference} from '../src/corpus/test262-reference-execution.mjs';
+import {executeTest262AsyncReference} from '../src/corpus/test262-async-reference.mjs';
 
 const argv=process.argv.slice(2);
 const value=(name,fallback)=>{const i=argv.indexOf('--'+name);
@@ -83,8 +84,11 @@ for await(const row of importers.test262(root,{
         }
       }
     })
-    :executeTest262Reference({source,metadata,mode:row.program.mode,
-      harnessSources:sources,filename:row.provenance.path,timeoutMs});
+    :metadata.flags.includes('async')
+      ?await executeTest262AsyncReference({source,metadata,mode:row.program.mode,
+        harnessSources:sources,filename:row.provenance.path,timeoutMs})
+      :executeTest262Reference({source,metadata,mode:row.program.mode,
+        harnessSources:sources,filename:row.provenance.path,timeoutMs});
   if(seen.has(row.id))throw new Error('Duplicate source/mode identity');
   seen.add(row.id);
   rows.push({id:row.id,path:row.provenance.path,mode:row.program.mode,
@@ -97,7 +101,8 @@ const report={schema:'test262-native-reference-report/1',revision,
   node:process.version,moduleVmEnabled:typeof vm.SourceTextModule==='function',rows,warnings:[
    'Native V8 execution is not an owned semantic trace, an independent engine conformance proof, or training admission.',
    'Scripts support parse/runtime negatives; native modules additionally support bounded parse/resolution/runtime diagnostics only when Node experimental VM modules are enabled.',
-   'Negative early-phase tests, async $DONE tests, raw tests, dynamic imports and special host flags are explicitly unsupported.',
+   'Bounded async scripts can observe $DONE via VM promise microtasks only, with duplicate/error/rejection checks. This is not complete Test262 async support.',
+   'Negative early-phase tests, async modules, event-loop/timer/host-dependent async tests, raw tests, dynamic imports and special host flags remain unsupported.',
    'node:vm is not a security boundary: use only trusted exact upstream checkouts, never arbitrary repository code.',
    'A passing script without assertions may contain no meaningful behavioral checks.'
   ]};

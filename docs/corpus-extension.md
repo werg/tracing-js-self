@@ -1450,3 +1450,9 @@ conversion is not**.
 - [ ] Full official Test262 module/async host semantics, early-phase
   distinction, cross-engine checks, isolated bulk execution, owned module
   tracing, JSON Schema validators and megatoken admission remain open.
+
+### Bounded native Test262 asynchronous script diagnostics (2026-10-23)
+
+- [x] The opt-in pinned-checkout reference runner now routes `flags: [async]` *scripts* through a bounded `$DONE` diagnostic adapter for sloppy/strict modes. VM-local promise microtasks are drained; positive and parse/runtime-negative outcomes are separated, duplicate/missing completions and unhandled rejections are checked, and forged `{name: ...}` errors never match genuine error constructors.
+- [x] Focused offline regression tests cover completion, strictness, incomplete/malicious metadata, missing/unsafe harness includes, native timeouts and rejection-after-completion. This is **native V8 diagnostic evidence only** (`verifiedOwned: false`, `admitted: false`).
+- [ ] Full official Test262 async completion across timers/host callbacks/event-loop turns, async modules, and comprehensive upstream suite yield remain **unmeasured/unimplemented**. In-process `node:vm` remains unsafe for untrusted sources; isolated workers are still required. Previously measured 117,773 acquired / 40 canonical owned / 37 generated owned / zero admitted remain unchanged.
