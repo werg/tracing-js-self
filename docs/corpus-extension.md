@@ -1169,3 +1169,48 @@ again agree with the conservatively lowered V8 program and owned reference
 checks before retention. The next CI run gates the original 34 verified
 candidates and evaluates bounded new variants. Novelty metrics remain
 imperfect; new seeds are not claimed to be new source functions.
+
+
+### Verified real-source input-variation results (2026-10-23)
+
+[CI run 39991150068](https://github.com/werg/tracing-js-self/actions/runs/39991150068)
+**passed** with complete independent post-serialization checks:
+
+| Evidence measurement | Actual count |
+| --- | ---: |
+| Original canonical input attempts | 207 |
+| Deterministic original-input-derived variants attempted | 160 |
+| **Total attempted** | **367** |
+| **Locally owned verified semantic-execution/2** | **71** |
+| Canonical verified / generated verified | **34 / 37** |
+| Explicitly refused | 296 |
+| Distinct upstream JS source functions/families yielding owned evidence | 7 |
+| Raw owned journal events in verified episodes | 5,809 |
+| Model-generated semantic trace groups in verified episodes | 1,930 |
+| Generated semantic record bytes in verified episodes | 301,108 |
+| Training episodes admitted | **0** |
+
+The verifier retains all unsupported cases and original-code or expected-result
+disagreements. Retained generated variants are identified as **oracle-labeled,
+non-canonical**. Important refusal categories include missing/unsupported
+intrinsics, spread syntax, exotic property access, RegExp use, classes, arrays
+with unsupported operations, expected throws, and chunk-budget overflow.
+
+The verified traces average **27.18 generated groups** and **81.82 journal
+events** per execution. These raw size metrics are **not** a demonstration
+that the semantic target omits no causally necessary events; the optional
+generated Markdown review shows real source-anchored public semantic lines
+and ranks substantial cases for inspection. This verification subset is
+real execution evidence, but does not automatically convert the
+**117,773 candidate fixtures** into owned traces. The remaining acquired
+sources require additional host/module/async capabilities, implementation
+bindings and operation-level evidence.
+
+- [x] Retain full source, input ancestry and independent original/lowered V8
+  receipts for every candidate; no generated input is labeled canonical.
+- [x] Gate the current independently rechecked owned floor at **71** examples.
+- [x] Produce a human-reviewable semantic trace sample report and categorized
+  refusal ledger as CI artifacts.
+- [ ] Add broad source types, genuine module effect profiles, JSON Schema and
+  Test262 reference/owned adapters; resolve existing declared interpreter
+  refusals without substituting native-V8 diagnostics for owned traces.

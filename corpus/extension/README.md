@@ -196,3 +196,19 @@ their own IDs, original-input ancestry and independent original-solution
 V8-derived expected outputs. They are never mislabeled as official
 canonical tests. Each must pass the same owned evidence recheck before
 it is written to the episode artifact.
+
+
+### Deterministic-input pilot results (verified)
+
+[Run 39991150068](https://github.com/werg/tracing-js-self/actions/runs/39991150068):
+**367 attempts = 207 pinned canonical + 160 synthetic input variants**;
+**71 independently rechecked owned trace candidates**, **296 refusals**,
+**zero admitted**. Across the retained episodes: **5,809 raw owned journal
+events**, **1,930 generated semantic groups**, and **301,108 generated
+semantic record bytes**. This is seven distinct source families—not
+71 independent upstream implementations.
+
+Pass `--review corpus/out/exercism-owned-review.md` to produce a
+source-linked, bounded Markdown semantic-trace sample for manual readability
+inspection, alongside all top-level refusal reasons. Neither this preview
+nor group/event ratios prove lossless semantic compression.
