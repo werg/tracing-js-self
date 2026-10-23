@@ -123,6 +123,47 @@ The ordered export calls execute in one replayable trace, **not** as separate
 native evaluator invocations. A second API call **reinstantiates** every
 module; this feature is not a persistent cross-call module realm.
 
+### Bounded replay-backed cross-invocation session
+
+`tracing-js-self/evaluated-module-session` provides
+`createBoundedRetainedModuleSession({modules,entryModule})`. Its calls are
+serialized and **observationally retain** module `let` mutations and reachable
+ordinary data-object identities across independent JavaScript API invocations:
+
+```js
+import {createBoundedRetainedModuleSession}
+  from 'tracing-js-self/evaluated-module-session';
+
+const session=createBoundedRetainedModuleSession({
+  modules:{'main.js':`export const state={n:0};
+    export function read(){return state;}
+    export function bump(){state.n+=1;return state.n;}`},
+  entryModule:'main.js'
+});
+const state=(await session.invoke('read')).result;
+await session.invoke('bump'); // returns 1
+console.log(state.n); // 1: same returned data-object identity
+session.close();
+```
+
+This session intentionally runs a **fresh deterministic owned replay of the
+entire committed call history** for each new invocation, rather than
+suspending/restoring a VM checkpoint between calls. It normalizes heap
+allocation identities independently of the growing argument graph and
+reconciles previously returned ordinary data objects in place. It snapshots
+its module sources, does not expose native guest handles, supports primitive
+positional arguments only, and commits a history entry only after successful
+validation and exact replay. This is capped at **32 calls**, is not durable
+storage, and is unsuitable for unbounded or performance-critical workloads.
+
+Native services are **forbidden** in this replay-backed mode: replaying earlier
+calls must never reissue irreversible host effects. General callable closures
+crossing the host boundary, mutable input object references, module namespace
+exotics, arbitrary asynchronous native callbacks and physical continuation
+restoration are not supported. This is a limited *observational* persistence
+facility, **not** the complete ECMA-262 retained Module Record realm required
+for production natlang compatibility.
+
 ### Explicit native effects
 
 To opt in to versioned **native services** (not arbitrary Node APIs),
