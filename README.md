@@ -166,8 +166,10 @@ The opt-in `tracing-js-self/natlang` adapter now lowers TypeScript syntax
 to ES2022 with pinned TypeScript 5.9.3, then executes only JavaScript supported
 by the owned strict training profile. Validated archives include generated
 source sites; the `onTrace` callback also receives the original TS and V3
-source-map metadata. There is no host runtime fallback, no live natlang helper
-or retained module realm, and no complete TS/JS conformance claim.
+source-map metadata. A bounded data-only `__live` synchronization path
+and data-only retained `module.exports` adapter now exist; callable helpers,
+full natlang module caching/closures and general native integrations still fail
+closed. There is no host runtime fallback or complete TS/JS conformance claim.
 
 `tracing-js-self/modules` additionally links a supplied graph of
 function-only TypeScript/ESM modules into an owned replayable entry. It supports
@@ -175,6 +177,15 @@ named and default function exports, import aliases and cycles, while rejecting
 top-level effects, mutable exports, native packages and dynamic imports.
 See [integration boundaries](docs/NATLANG_INTEGRATION.md) and
 [static module profile](docs/STATIC_MODULES.md).
+
+For mutable ESM exports, import-cell aliasing, dependency initialization and
+bounded top-level `await`, the separate opt-in
+`tracing-js-self/evaluated-modules` entry point executes an explicit **acyclic**
+in-memory source graph through the owned interpreter. Optional versioned native
+services record guest input arrival and delivery; replay invokes no native
+service. This is neither a persistent ESM realm nor a general module loader.
+See [evaluated module profile](docs/EVALUATED_MODULES.md).
+
 
 ## Main modules
 
