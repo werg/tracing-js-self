@@ -75,6 +75,12 @@ export function evaluateSelectedTrajectory({groups,referenceGroups=null,referenc
       }
     }
   }
+  // A syntactically acceptable prefix is not a completed execution. Missing
+  // end records (including cuts inside a fragmented record) are invalid.
+  if(!invalid && !controller.completion)
+    invalid={index:groups.length,category:'incomplete',
+      message:controller.open?'Model stopped inside a fragmented record':
+        'Model stopped without a committed terminal end record'};
   let correctness='incomplete',actualGraph=null;
   if(!invalid && controller.completion){
     try {

@@ -100,6 +100,23 @@ export class SemanticController {
   commitGenerated(line,{track='t0'}={}){return this.#commit('generated',line,track);}
   commitObserved(line,{track='t0'}={}){return this.#commit('observed',line,track);}
   #commit(mode,line,track) {
+    // A rejected model prediction must not change live state, producer identities,
+    // fragment buffers, history, or the segment budget. The controller is bounded;
+    // clone the owned graph before validation just as the archival VM snapshots
+    // its state for an authoritative transaction.
+    const snapshot=structuredClone({
+      heap:this.heap,cells:this.cells,activations:this.activations,
+      producers:this.producers,pendingChild:this.pendingChild,
+      root:this.root,completion:this.completion,open:this.open,
+      generated:this.generated,observed:this.observed,history:this.history
+    });
+    try {return this.#commitUnchecked(mode,line,track);}
+    catch(error) {
+      Object.assign(this,snapshot);
+      throw error;
+    }
+  }
+  #commitUnchecked(mode,line,track) {
     if(!/^t[0-7]$/.test(track))fail('lane','Invalid model lane');
     if(this.completion)fail('completion','No events may follow committed end');
     const {kind,fields}=decodeRecord(line);
