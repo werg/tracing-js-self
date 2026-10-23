@@ -36,7 +36,7 @@ test('CJS bridge rejects source-time arbitrary host calls and suspicious exports
   const source=lowerPureCommonJsModule(
     'exports.fn=fn;function fn(){return require("fs");}');
   assert.throws(()=>createBoundedModuleFacade({modules:{'main.js':source.source},
-    entryModule:'main.js',exportNames:source.exportNames}).exports.fn(),
+    entryModule:'main.js',exportNames:source.exportNames}),
     /unowned|Unbound|Unsupported|unbound/i);
 });
 
