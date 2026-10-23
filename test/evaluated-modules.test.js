@@ -292,3 +292,54 @@ test('TypeScript mutable imports update through owned lexical cells',async()=>{
   assert.equal(run.result,5);
   assert.equal(run.metadata.modules[0].sourceMap.version,3);
 });
+
+test('one evaluated module episode retains mutable binding state across exported calls',async()=>{
+  const modules={
+    'state.js':`export let n=0;
+      export function next(){n+=1;return n;}
+      export function snapshot(){return n;}`
+  };
+  const calls=[
+    {exportName:'next',args:[]},
+    {exportName:'next',args:[]},
+    {exportName:'snapshot',args:[]}
+  ];
+  const linked=linkEvaluatedModules({
+    modules,entryModule:'state.js',calls
+  });
+  assert.equal(linked.metadata.calls.length,3);
+  assert.deepEqual(linked.metadata.calls.map(x=>x.exportName),
+    ['next','next','snapshot']);
+  const run=await verified({modules,entryModule:'state.js',calls});
+  assert.deepEqual(run.result,[1,2,2]);
+  assert.equal(run.bundle.sources.length,1);
+  assert.deepEqual(run.metadata.evaluationOrder,['state.js']);
+});
+
+test('module batch keeps exported object aliases and awaited call order',async()=>{
+  const shared={n:1};
+  const modules={
+    'main.js':`export function update(o){o.n+=2;return o;}
+      export async function read(o){await Promise.resolve(0);return o.n;}`
+  };
+  const run=await verified({modules,entryModule:'main.js',calls:[
+    {exportName:'update',args:[shared]},
+    {exportName:'read',args:[shared]},
+    {exportName:'update',args:[shared]}
+  ]});
+  assert.deepEqual(run.result,[{n:5},5,{n:5}]);
+  assert.equal(run.result[0],run.result[2]);
+  assert.equal(shared.n,1,'entry object is an imported owned snapshot');
+});
+
+test('invalid module batch entries fail closed at link time',()=>{
+  const modules={'main.js':'export const x=1;export function run(){return x;}'};
+  for(const calls of [
+    [],[{exportName:'missing',args:[]}],
+    [{exportName:'x',args:[1]}],
+    [{exportName:'run',args:null}],
+    [{exportName:'run'}]
+  ])assert.throws(()=>linkEvaluatedModules({
+    modules,entryModule:'main.js',calls
+  }),/Unsupported evaluated-module|TypeError|Calls must be/);
+});
