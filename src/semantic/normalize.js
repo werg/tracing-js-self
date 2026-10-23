@@ -144,7 +144,9 @@ export function normalizeJournal(bundle) {
         r.captures=createdEnv?.after?.parent??null;
         r.receiver=created?.after?.thisValue??['undefined'];
         const params=bundle.programs[r.code]?.params??[];
-        r.arguments=params.map(name=>createdEnv?.after?.bindings?.[name]?.token?.value??['undefined']);
+        r.arguments=(bundle.programs[r.code]?.restIndex??-1)>=0 ?
+          (e.operands??[]).slice(1) :
+          params.map(name=>createdEnv?.after?.bindings?.[name]?.token?.value??['undefined']);
       } else if(effect) {
         op=r.op='request';
         const created=e.stateChanges.find(p=>p.table==='effects' && p.id===effect.effectId);

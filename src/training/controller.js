@@ -245,10 +245,33 @@ export class SemanticController {
         this.pendingChild=null;
         this.enteredFrom=pending.caller;
       }
-      const params=this.codes.get(fields.code).params;
+      if(fields.rest?.allocation){
+        if(this.root!==invocation || this.heap.has(fields.rest.value?.[1]))
+          fail('entry','Unjustified or duplicate rest allocation');
+        this.applyCallbackEffects({allocations:[fields.rest.allocation]});
+      }
+      const code=this.codes.get(fields.code);
+      const params=code.params;
+      const restIndex=code.restIndex??-1;
+      if((restIndex<0)!==!fields.rest)
+        fail('entry','Rest parameter visibility disagrees with source');
+      if(restIndex>=0){
+        const rest=fields.rest;
+        if(rest.name!==params[restIndex]||rest.value?.[0]!=='ref')
+          fail('entry','Rest binding name or identity disagrees with source');
+        const array=this.heap.get(rest.value[1]);
+        const expanded=fields.arguments.slice(restIndex);
+        if(!array||array.kind!=='array'||
+           !same(array.properties.get('length')?.value,['num',expanded.length]))
+          fail('entry','Rest parameter array not committed');
+        for(let i=0;i<expanded.length;i++)
+          if(!same(array.properties.get(String(i))?.value,expanded[i]))
+            fail('entry','Rest parameter expansion is not source-ordered');
+      }
       this.activations.set(invocation,{code:fields.code,track,status:'running',
         caller:this.enteredFrom??null,
-        params:Object.fromEntries(params.map((key,i)=>[key,copy(fields.arguments[i]??['undefined'])]))});
+        params:Object.fromEntries(params.map((key,i)=>[key,copy(i===restIndex?
+          fields.rest.value:(fields.arguments[i]??['undefined']))]))});
       this.enteredFrom=null;
     } else if(kind==='alloc'){
       // Allocation commits initialized heap properties, not just an identity.

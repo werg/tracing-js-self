@@ -38,10 +38,30 @@ export function scheduleRecords(bundle,semantic,{maxBytes=512,maxGenerated=256}=
     }
   }
   const initial=bundle.initialState.frames[semantic.rootInvocation];
+  const restOf=(frame,heap,invocation)=>{
+    const prog=bundle.programs[frame.codeId],idx=prog.restIndex??-1;
+    if(idx<0)return null;
+    const name=prog.params[idx];
+    const value=bundle.initialState.envs[frame.envId]?.bindings[name]?.token?.value ??
+      frame.restValue;
+    if(!value||value[0]!=='ref'||!heap[value[1]])
+      throw new Error('Missing owned rest parameter array for '+invocation);
+    const obj=heap[value[1]];
+    if(obj.kind!=='array')throw new Error('Non-array rest parameter');
+    return {name,value};
+  };
+  const rootRest=restOf(initial,bundle.initialState.heap,semantic.rootInvocation);
+  const rootRestVisible=rootRest?{...rootRest,allocation:(()=>{
+    const obj=bundle.initialState.heap[rootRest.value[1]];
+    return {identity:obj.id,kind:'array',shapeVersion:obj.shapeVersion??0,
+      properties:Object.entries(obj.properties).map(([key,v])=>({
+        key,version:obj.propertyVersions[key]??0,value:v.value}))};
+  })()}:null;
   append('generated','t0',encodeRecord('enter',
     {invocation:semantic.rootInvocation,entry:bundle.entrySpec.functionName,
       code:initial.codeId,receiver:['undefined'],arguments:bundle.entrySpec.arguments,
-      captures:bundle.initialState.envs[initial.envId].parent}),null);
+      captures:bundle.initialState.envs[initial.envId].parent,
+      ...(rootRestVisible?{rest:rootRestVisible}:{})}),null);
   for(const row of semantic.events){
     const owner=assignments.get(row.invocation);
     const track=owner?.track??'t0';
@@ -66,9 +86,19 @@ export function scheduleRecords(bundle,semantic,{maxBytes=512,maxGenerated=256}=
       assignments.set(row.child,{track:lane,generation:generation[index]});
       // A child is entered only after the parent call chunk has committed.
       // These values come from the call event; no oracle outcome is consulted.
+      const childProgram=bundle.programs[row.code];
+      const restIndex=childProgram.restIndex??-1;
+      const rest=restIndex<0?null:{name:childProgram.params[restIndex],
+        value:bundle.events.find(e=>e.eventId===row.journalEvent)
+          ?.stateChanges?.find(p=>p.table==='envs' && p.before===null &&
+            p.after?.bindings?.[childProgram.params[restIndex]])
+          ?.after?.bindings?.[childProgram.params[restIndex]]?.token?.value};
+      if(rest && (!rest.value||rest.value[0]!=='ref'))
+        throw new Error('Child rest parameter lacks published allocation');
       append('generated',lane,encodeRecord('enter',
         {invocation:row.child,code:row.code,receiver:row.receiver,
-          arguments:row.arguments,captures:row.captures,dependsOn:[row.id]}),row);
+          arguments:row.arguments,captures:row.captures,dependsOn:[row.id],
+          ...(rest?{rest}:{})}),row);
     }
     if(row.op==='return' || row.op==='throw')assignments.delete(row.invocation);
   }

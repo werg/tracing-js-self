@@ -15,7 +15,8 @@ export function trainingPrefix(bundle,{maxSourceBytes=2048}={}) {
   const roots=bundle.entrySpec.arguments;
   const graph=describeOwnedGraph(bundle.initialState.heap,roots);
   const sites=bundle.sites.map(s=>({id:s.siteId,code:s.codeId,start:s.start,end:s.end}));
-  const codes=Object.values(bundle.programs).map(p=>({id:p.id,params:p.params,async:p.async}));
+  const codes=Object.values(bundle.programs).map(p=>({id:p.id,params:p.params,async:p.async,
+    restIndex:p.restIndex??-1}));
   const global=bundle.initialState.envs[bundle.initialState.control.a0.globalEnvId];
   const staticFunctions=Object.entries(global.bindings).flatMap(([name,binding])=>{
     const value=binding.token?.value;
