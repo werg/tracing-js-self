@@ -40,6 +40,8 @@ The strict frontend now parses explicit throw/try/catch/finally and runs them th
 
 The strict frontend additionally supports multi-declarator let/const, object-literal shorthand, sequence expressions and expanded scalar compound assignments, with retained owned evaluation order and independent source-expression V8 receipts. It does not implement destructuring, general spreads or native bindings.
 
+Opt-in natlang `onTrace` metadata now includes mapped original-TS source anchors for generated owned code sites and explicitly unanchored sites. This separately checks TypeScript's V3 source-map source bytes and does not upgrade generated-JS provenance to proved original-TS semantic mapping.
+
 The opt-in synchronous training frontend additionally compiles simple arrow and anonymous function expressions to owned serializable closure objects and call frames, with independent V8 observable-graph checks. Lexical `this` values are retained on arrow closures; the training syntax still excludes `this` reads, rest/default/destructured parameters, and async arrows. These are incremental TS/natlang improvements, not drop-in coverage.
 
 The strict frontend also supports owned primitive-substitution JavaScript template literals (with V8 checked interpolation order and final intermediate result), including TS-lowered template syntax in the opt-in natlang adapter. Object-valued template coercion and tagged templates still fail closed.

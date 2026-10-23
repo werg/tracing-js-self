@@ -2,6 +2,7 @@
 // The resulting ES2022 source is parsed and executed solely by the owned
 // training-js/1 interpreter. The original TS text is never evaluated by Node.
 import ts from 'typescript';
+import {SourceMap} from 'node:module';
 
 const COMPILER='typescript/'+ts.version;
 export function compileBoundedTypeScript(text,{path='trace.ts'}={}) {
@@ -28,4 +29,42 @@ export function compileBoundedTypeScript(text,{path='trace.ts'}={}) {
   // parseTraining and never fall back to a native execution engine.
   return {javascript:result.outputText,
     sourceMap:JSON.parse(result.sourceMapText),compiler:COMPILER};
+}
+
+// Supplemental, non-authoritative generated -> TS mapping evidence. The
+// source map is produced by a pinned TS compiler, not independent proof that
+// transformed source sites preserve all original TypeScript semantics.
+export function mapBoundedTypeScriptSites(lowering,sites,originalText) {
+  if(lowering?.sourceMap?.version!==3 ||
+     !Array.isArray(lowering.sourceMap.sourcesContent) ||
+     !lowering.sourceMap.sourcesContent.includes(originalText))
+    throw new TypeError('TypeScript map does not bind the original source bytes');
+  if(!Array.isArray(sites)||typeof lowering.javascript!=='string')
+    throw new TypeError('TypeScript site map requires generated source sites');
+  const map=new SourceMap(lowering.sourceMap);
+  function position(text,offset) {
+    if(!Number.isSafeInteger(offset)||offset<0||offset>=text.length)return null;
+    const before=text.slice(0,offset);
+    const last=before.lastIndexOf('\n');
+    return {line:before.split('\n').length-1,column:offset-last-1};
+  }
+  function resolve(offset) {
+    const place=position(lowering.javascript,offset);
+    if(!place)return null;
+    const entry=map.findEntry(place.line,place.column);
+    if(entry?.originalSource==null||entry.originalLine==null||
+       entry.originalColumn==null)return null;
+    const lines=originalText.split('\n');
+    if(!Number.isInteger(entry.originalLine)||entry.originalLine<0||
+       entry.originalLine>=lines.length||entry.originalColumn<0||
+       entry.originalColumn>lines[entry.originalLine].length)return null;
+    return {line:entry.originalLine,column:entry.originalColumn,
+      source:entry.originalSource};
+  }
+  return sites.map(site=>{
+    const start=resolve(site.start),end=resolve(site.end-1);
+    return {siteId:site.siteId,generated:{start:site.start,end:site.end},
+      status:start&&end&&start.source===end.source?'anchors':'generated-only',
+      originalStart:start,originalEnd:end};
+  });
 }
