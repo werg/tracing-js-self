@@ -3,6 +3,7 @@
 import {parse as acornParse} from 'acorn';
 import {encode} from '../values.js';
 import {collectVarBindings} from '../frontend.js';
+import {supportsPinnedRegExp} from '../owned-pinned-regexp.js';
 
 export const TRAINING_PROFILE='training-js/1';
 export const TRAINING_PARSER='acorn/8.15.0:training-js/1';
@@ -25,7 +26,8 @@ export function parseTraining(source) {
   // Top-level initialization is modeled only for literal scalars and
   // explicitly owned references to immutable Math methods. Arbitrary module
   // execution, getters, function calls and mutable initialization fail closed.
-  const staticGlobal=n=>n?.type==='Literal'&&!n.regex ||
+  const staticGlobal=n=>n?.type==='Literal'&&(!n.regex ||
+    supportsPinnedRegExp(n.regex.pattern,n.regex.flags)) ||
     n?.type==='MemberExpression'&&!n.computed&&
     n.object?.type==='Identifier'&&n.object.name==='Math'&&
     ['ceil','floor','min','max'].includes(n.property?.name);
@@ -55,8 +57,7 @@ export function parseTraining(source) {
         if(n.regex){
           // Only the exact pinned CR/LF delimiters have a bounded owned scanner.
           // Everything else is compiled as unreachable-or-refused syntax.
-          if((!n.regex.flags && ['\\r\\n|\\r|\\n','(\\r\\n|\\r|\\n)'].includes(n.regex.pattern)) ||
-             (n.regex.flags==='g' && n.regex.pattern===String.raw`[\\\{\}\*\+\?\|\^\$\.\[\]\(\)]`))
+          if(supportsPinnedRegExp(n.regex.pattern,n.regex.flags))
             return {...loc,type:'OwnedPinnedRegExp',pattern:n.regex.pattern,flags:n.regex.flags};
           return {...loc,type:'DeferredRegExp',pattern:n.regex.pattern,flags:n.regex.flags};
         }
