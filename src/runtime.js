@@ -727,7 +727,7 @@ export class Runtime {
              if(property==='length')v=['num',text.length];
              else if(arrayIndex(property)&&Number(property)<text.length)
                v=['str',text[Number(property)]];
-             else if(['charAt','charCodeAt','at','substring','slice','indexOf','lastIndexOf','includes','startsWith','endsWith','toLowerCase','toUpperCase','trim','trimStart','trimEnd'].includes(property))
+             else if(['charAt','charCodeAt','at','substring','substr','slice','indexOf','lastIndexOf','includes','startsWith','endsWith','toLowerCase','toUpperCase','trim','trimStart','trimEnd'].includes(property))
                v=['builtinfn','String.prototype.'+property];
              else if(['constructor','__proto__','valueOf','toString'].includes(property))
                throw new TypeError('Unmodeled String prototype property');
@@ -839,7 +839,7 @@ export class Runtime {
           }
           if(callable[0]==='builtinfn' && callable[1].startsWith('String.prototype.')){
              const method=callable[1].slice('String.prototype.'.length);
-             if(receiver[0]!=='str'||!['charAt','charCodeAt','at','substring','slice','indexOf','lastIndexOf','includes','startsWith','endsWith','toLowerCase','toUpperCase','trim','trimStart','trimEnd'].includes(method))
+             if(receiver[0]!=='str'||!['charAt','charCodeAt','at','substring','substr','slice','indexOf','lastIndexOf','includes','startsWith','endsWith','toLowerCase','toUpperCase','trim','trimStart','trimEnd'].includes(method))
                guestFault('TypeError','String method requires a string receiver');
              if(receiver[1].length>10000||args.length>3)
                throw new RangeError('String operation outside the bounded profile');
