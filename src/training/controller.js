@@ -211,9 +211,23 @@ export class SemanticController {
       for(const read of fields.reads??[]){
         if(read.kind==='property'){
           const obj=this.heap.get(read.objectId),property=obj?.properties.get(read.key);
+          // The named ordinary builtins are inherited virtual values with no
+          // own property. Validate only their exact well-known receiver/key
+          // pairs; unknown prototype reads are not silently hallucinated.
+          const builtin=read.value?.[0]==='builtinfn'?read.value[1]:null;
+          const virtual=property===undefined && (
+            (obj?.kind==='array' && (
+              (['push','pop'].includes(read.key) &&
+                builtin==='Array.prototype.'+read.key) ||
+              (read.key==='toString'&&builtin==='Array.toString'))) ||
+            (['object','array'].includes(obj?.kind) &&
+              ['valueOf','toString'].includes(read.key) &&
+              builtin==='Object.'+read.key));
+          const observed=virtual?read.value:property?.value??['undefined'];
           if(!obj || (property!==undefined)!==read.present ||
              (obj.versions.get(read.key)??0)!==read.version ||
-             !same(property?.value??['undefined'],read.value))
+             obj.shapeVersion!==read.shapeVersion ||
+             !same(observed,read.value))
             fail('read','First inconsistent owned property observation');
         }else if(read.kind==='binding'){
           const key=read.envId+':'+read.name;
