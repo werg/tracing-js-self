@@ -1,5 +1,19 @@
 # Implementation status (0.2.0)
 
+## Bounded owned optional chains (October 23, 2026)
+
+- Pinned TypeScript lowering preserves ES2022 optional chains for strict
+  owned execution. The Acorn-to-bytecode frontend now supports nullish
+  short-circuit across ordinary/computed property accesses, ordinary method
+  invocation after an optional receiver, and optional calls to direct guest
+  function values. Guest execution skips unreachable property keys, arguments
+  and entire suffixes, with independent Node V8 differential/replay tests.
+- Receiver-sensitive optional member invocation (`object.method?.()`) still
+  fails closed; this slice is **not** full JS/TS conformance, a persistent
+  natlang callable-folder module realm, general Node/browser host support,
+  nor independently admitted megatoken training data.
+
+
 ## TypeScript nullable-access and host abort hardening (October 23, 2026)
 
 - Host-side pinned TypeScript 5.9.3 lowering now conditionally expands optional property/computed access to ES2019 temporaries and branches before strict owned compilation. New V8 graph-differential and exact replay regressions cover present/absent receivers and short-circuited computed keys. Emitted constructs outside the strict profile, including many optional method calls, still fail closed: **not general TypeScript execution compatibility**.

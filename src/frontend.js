@@ -236,6 +236,34 @@ export function compile(ast) {
         case 'Binary':
           if(['&&','||','??'].includes(n.operator)) {expr(n.left);const j=emit('LOGICAL_JUMP',{operator:n.operator,to:null},n);emit('POP',null,n);expr(n.right);instructions[j].arg.to=instructions.length;}
           else {expr(n.left);expr(n.right);emit('BINARY',n.operator,n);}break;
+        case 'OptionalChain':{
+          expr(n.base);
+          const exits=[];
+          for(let i=0;i<n.steps.length;i++){
+            const step=n.steps[i];
+            if(step.optional){
+              // LOGICAL_JUMP ?? branches only for non-nullish owned tokens.
+              // Nullish paths skip all remaining calls and computed keys.
+              const guard=emit('LOGICAL_JUMP',{operator:'??',to:null},step);
+              emit('POP',null,step);
+              emit('CONST',{value:['undefined']},step);
+              exits.push(emit('JUMP',null,step));
+              instructions[guard].arg.to=instructions.length;
+            }
+            if(step.type==='member'){
+              expr(step.property);
+              emit(n.steps[i+1]?.type==='call'?'GET_METHOD':'GET_PROP',null,step);
+            }else{
+              for(const a of step.args)expr(a.type==='Spread'?a.argument:a);
+              emit('CALL',step.args.some(a=>a.type==='Spread')?
+                {count:step.args.length,
+                  spread:step.args.flatMap((a,j)=>a.type==='Spread'?[j]:[])}:
+                step.args.length,step);
+            }
+          }
+          for(const jump of exits)instructions[jump].arg=instructions.length;
+          break;
+        }
         case 'Member':expr(n.object);expr(n.property);emit('GET_PROP',null,n);break;
         case 'Call':
           if(n.callee.type==='Member'){expr(n.callee.object);expr(n.callee.property);emit('GET_METHOD',null,n.callee);}else expr(n.callee);

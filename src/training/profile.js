@@ -124,6 +124,39 @@ export function parseTraining(source) {
         return {...loc,type:'Update',operator:n.operator,prefix:n.prefix,
           ...(n.argument.type==='Identifier'
             ?{name:n.argument.name}:{argument:expr(n.argument)})};
+      case 'ChainExpression':{
+        // A single short-circuit region, retaining receiver and evaluation
+        // order rather than copying a computed key or invoking native eval.
+        const steps=[];
+        let current=n.expression;
+        while(current.type==='MemberExpression'||current.type==='CallExpression'){
+          if(current.type==='MemberExpression'){
+            if(current.object.type==='Super'||current.property.type==='PrivateIdentifier')
+              reject(current,'optional super/private member');
+            steps.unshift({...span(current),type:'member',optional:!!current.optional,
+              property:current.computed?expr(current.property):
+                {...span(current.property),type:'Literal',value:encode(current.property.name)}});
+            current=current.object;
+          }else{
+            if(current.arguments.filter(a=>a.type==='SpreadElement').length>4)
+              reject(current,'optional chain spread budget');
+            steps.unshift({...span(current),type:'call',optional:!!current.optional,
+              args:current.arguments.map(a=>a.type==='SpreadElement'?
+                {...span(a),type:'Spread',argument:expr(a.argument)}:expr(a))});
+            current=current.callee;
+          }
+        }
+        if(!steps.some(step=>step.optional))reject(n,'chain without optional step');
+        if(current.type==='Identifier' && ['eval','Function','require'].includes(current.name) &&
+           steps.some(step=>step.type==='call'))
+          reject(n,'dynamic source or host call');
+        // GET_METHOD is a receiver-wrapped token. Do not nullish-test that
+        // wrapper as if it were the underlying function.
+        if(steps.some((step,i)=>step.type==='call'&&step.optional&&
+           steps[i-1]?.type==='member'))
+          reject(n,'optional method call requires receiver-aware guard');
+        return {...loc,type:'OptionalChain',base:expr(current),steps};
+      }
       case 'MemberExpression':
         if(n.optional || n.object.type==='Super')reject(n,'member receiver');
         return {...loc,type:'Member',object:expr(n.object),property:n.computed?expr(n.property):
