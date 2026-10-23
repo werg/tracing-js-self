@@ -110,5 +110,5 @@ test('unowned semantic cases fail closed instead of making plausible training ex
     assert.equal(verifyTrainingCase({source:strict(code),entry:'f'}).status,'unsupported',code);
   const runtime=createRuntime().startEntry({text:strict(
     'function f(x){x++;return 0;}'),functionName:'f',args:[{x:1}]});
-  assert.equal(runtime.drive().kind,'unsupported');
+  assert.throws(()=>runtime.drive(),/Update coercion outside the bounded scalar profile/);
 });
