@@ -105,7 +105,21 @@ export function normalizeJournal(bundle) {
         r.codec=created?.after?.request?.codec??null;
         r.payload=created?.after?.request?.payload??null;
         r.signature=created?.after?.request?.signature??null;
-      } else r.op='value'; // builtin result
+      } else {
+        // Do not collapse a heap-mutating builtin into an opaque scalar leaf.
+        const heapPatches=e.stateChanges.filter(p=>p.table==='heap');
+        const allocated=heapPatches.filter(p=>p.before===null);
+        if(allocated.length){
+          r.op='alloc';
+          r.allocations=allocated.map(p=>({identity:p.id,kind:p.after.kind,
+            codeId:p.after.codeId??null,capture:p.after.closureEnvId??null}));
+        }else if(heapPatches.length)r.op='write';
+        else r.op='value';
+        for(const p of heapPatches)
+          for(const entry of changes(p.before,p.after))
+            r.writes.push({kind:'property',object:p.id,...entry,
+              shapeBefore:p.before?.shapeVersion??0,shapeAfter:p.after?.shapeVersion??0});
+      }
     }
     if(op==='return'||op==='throw') {
       const frame=e.stateChanges.find(p=>p.table==='frames' && p.id===e.invocationId);

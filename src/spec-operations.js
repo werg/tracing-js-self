@@ -90,6 +90,10 @@ export function ordinaryGet(heap, receiver, name) {
       return {method,observation:observation(method)};
     }
     if(proto==='Array.prototype'){
+      if(['push','pop'].includes(name)){
+        const method=token(['builtinfn','Array.prototype.'+name]);
+        return {method,observation:observation(method)};
+      }
       if(name==='toString'){
         const method=token(['builtinfn','Array.toString']);
         return {method,observation:observation(method)};

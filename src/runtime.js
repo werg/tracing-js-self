@@ -188,7 +188,9 @@ export class Runtime {
     const s=this.state,global=this.newEnv(s);
     s.envs[global].bindings.host={kind:'const',initialized:true,token:token(['host','demo'])};
     s.envs[global].bindings.Promise={kind:'const',initialized:true,token:token(['intrinsic','Promise'])};
-    s.envs[global].bindings.Object={kind:'const',initialized:true,token:token(['intrinsic','Object'])};
+    for(const name of ['Object','Array','Number','Math'])
+      s.envs[global].bindings[name]={kind:'const',initialized:true,
+        token:token(['intrinsic',name]),version:0};
     s.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
     s.control.a0.globalEnvId=global;
     s.control.a0.activeFrameId=this.newFrame(s,source.entry,global);
@@ -215,6 +217,9 @@ export class Runtime {
     if(!selected)throw new ReferenceError('Unknown entry function');
     const state=this.state, global=this.newEnv(state);
     state.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
+    for(const name of ['Object','Array','Number','Math'])
+      state.envs[global].bindings[name]={kind:'const',initialized:true,
+        token:token(['intrinsic',name]),version:0};
     state.control.a0.globalEnvId=global;
     for(const def of definitions){
       const id=this.next(state,'obj');
@@ -606,8 +611,15 @@ export class Runtime {
           const key=pop(),base=pop(),property=valueKey(key.value);let v,read=null;
           if(base.value[0]==='host')v=['hostfn',`${base.value[1]}.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Promise' && ['resolve','reject'].includes(property))v=['builtinfn',`Promise.${property}`];
+          else if(base.value[0]==='intrinsic' &&
+             ((base.value[1]==='Math' &&
+               ['abs','ceil','floor','trunc','round','max','min','pow','sign','sqrt','hypot'].includes(property)) ||
+              (base.value[1]==='Number' &&
+               ['isFinite','isNaN','isInteger','isSafeInteger'].includes(property)) ||
+              (base.value[1]==='Array' && property==='isArray')))
+            v=['builtinfn',base.value[1]+'.'+property];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' &&
-             ['create','setPrototypeOf','getPrototypeOf','defineProperty'].includes(property))
+             ['create','setPrototypeOf','getPrototypeOf','defineProperty','hasOwn','keys'].includes(property))
             v=['builtinfn',`Object.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' && property==='prototype')
             v=['intrinsic','Object.prototype'];
@@ -719,6 +731,70 @@ export class Runtime {
             const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,args,receiver);
             s.control.a0.activeFrameId=id;
             return {...operands(fn,...args),result:['ref',callable[1]],causes:[{kind:'invocation',frameId:id}]};
+          }
+          if(callable[0]==='builtinfn' && callable[1].startsWith('Math.')){
+            const method=callable[1].slice('Math.'.length);
+            const numbers=args.map(a=>{
+              if(!['undefined','null','bool','str','num'].includes(a.value[0]))
+                guestFault('TypeError','Math numeric argument is outside the scalar leaf');
+              return Number(decode(a.value));
+            });
+            return {...operands(fn,...args),...result(encode(Math[method](...numbers)))};
+          }
+          if(callable[0]==='builtinfn' && callable[1].startsWith('Number.is')){
+            const n=args[0]?.value??U;
+            const x=n[0]==='num'?decode(n):null;
+            const method=callable[1].slice('Number.'.length);
+            return {...operands(fn,...args),...result(['bool',
+              n[0]==='num' && Number[method](x)])};
+          }
+          if(callable[0]==='builtinfn' && callable[1]==='Array.isArray'){
+            const value=args[0]?.value??U;
+            return {...operands(fn,...args),...result(['bool',
+              value[0]==='ref' && s.heap[value[1]]?.kind==='array'])};
+          }
+          if(callable[0]==='builtinfn' && ['Object.hasOwn','Object.keys'].includes(callable[1])){
+            const base=args[0]?.value??U,obj=base[0]==='ref'?s.heap[base[1]]:null;
+            if(!obj||!['object','array'].includes(obj.kind))
+              throw new TypeError('Object builtin requires an owned ordinary reference');
+            if(callable[1]==='Object.hasOwn'){
+              const property=valueKey(args[1]?.value??U);
+              return {...operands(fn,...args),...result(['bool',
+                Object.hasOwn(obj.properties,property) ||
+                Object.hasOwn(obj.accessors??{},property)])};
+            }
+            if(Object.keys(obj.accessors??{}).length)
+              throw new TypeError('Ordered accessor enumeration is outside the bounded profile');
+            const keys=Object.keys(obj.properties).filter(k=>obj.kind!=='array'||k!=='length');
+            const id=this.next(s,'obj');
+            const array=s.heap[id]={id,kind:'array',properties:{length:token(['num',0],eventId)},
+              propertyVersions:{length:0},shapeVersion:0,version:0};
+            keys.forEach((key,i)=>putOwn(array,String(i),['str',key],eventId));
+            return {...operands(fn,...args),...result(['ref',id])};
+          }
+          if(callable[0]==='builtinfn' &&
+             ['Array.prototype.push','Array.prototype.pop'].includes(callable[1])){
+            const obj=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+            if(!obj||obj.kind!=='array')guestFault('TypeError','Array method requires an array receiver');
+            const length=decode(obj.properties.length.value);
+            if(!Number.isSafeInteger(length)||length>10000 ||
+              length+args.length>10000)
+              throw new RangeError('Array operation exceeds bounded dense limit');
+            let out;
+            if(callable[1]==='Array.prototype.push'){
+              args.forEach((a,i)=>putOwn(obj,String(length+i),a.value,eventId));
+              out=['num',length+args.length];
+            }else{
+              if(length===0)out=U;
+              else{
+                const last=String(length-1);
+                if(!Object.hasOwn(obj.properties,last))
+                  throw new TypeError('Sparse array pop is outside the bounded profile');
+                out=obj.properties[last].value;
+                putOwn(obj,'length',['num',length-1],eventId);
+              }
+            }
+            return {...operands(fn,...args),...result(out)};
           }
           if(callable[0]==='builtinfn' && callable[1].startsWith('Promise.prototype.')){
              if(receiver[0]!=='promise'||!s.promises[receiver[1]])
