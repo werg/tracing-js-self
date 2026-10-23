@@ -266,6 +266,8 @@ export class Runtime {
       // Clock reads are external journaled effects, never VM wall-clock reads.
       state.envs[global].bindings.Date={kind:'const',initialized:true,
         token:token(['intrinsic','Date']),version:0};
+      state.envs[global].bindings.console={kind:'const',initialized:true,
+        token:token(['host','platform.console']),version:0};
     }
     for(const name of ['parseInt','isNaN'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
