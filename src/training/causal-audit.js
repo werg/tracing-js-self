@@ -5,6 +5,14 @@ import {decodeRecord,restoreLines} from './format.js';
 import {verifyVisibleExport} from './visibility.js';
 const generatedKinds=new Set(['enter','value','branch','loop','alloc','read','write',
   'delete','call','return','throw','end']);
+const allowedSemanticFields=new Set(['id','invocation','site','dependsOn','control',
+  'operands','result','arithmetic','update','completion','reads','writes',
+  'decision','successor','child','code','receiver','arguments','captures',
+  'allocations','destination','effect','operation','promise','codec',
+  'signature','payload','entry','kind']);
+const exactKeys=(value,names)=>value!==null&&typeof value==='object'&&
+  !Array.isArray(value)&&Object.keys(value).length===names.length&&
+  names.every(name=>Object.hasOwn(value,name));
 export function auditPublicCausality(episode,{maxBytes=512}={}) {
   verifyVisibleExport({public:episode});
   if(!Number.isSafeInteger(maxBytes)||maxBytes<64||maxBytes>1024)
@@ -15,32 +23,55 @@ export function auditPublicCausality(episode,{maxBytes=512}={}) {
     logical++;
     if(stage===0) {
       if(mode!=='observed'||track!=='t0'||kind!=='code'||
-         typeof fields.text!=='string'||!Array.isArray(fields.codes)||
-         !Array.isArray(fields.sites))
+         !exactKeys(fields,['sourceId','text','codes','sites','staticFunctions'])||
+         typeof fields.sourceId!=='string'||typeof fields.text!=='string'||
+         !Array.isArray(fields.codes)||!Array.isArray(fields.sites)||
+         !Array.isArray(fields.staticFunctions))
         throw new Error('First visible record must be an observed source bundle');
       source=fields;
       for(const code of fields.codes) {
-        if(typeof code.id!=='string'||codes.has(code.id))
+        if(!exactKeys(code,['id','params','async'])||
+           !Array.isArray(code.params)||typeof code.async!=='boolean'||
+           typeof code.id!=='string'||codes.has(code.id))
           throw new Error('Duplicate or malformed visible code identity');
         codes.add(code.id);
       }
       for(const site of fields.sites) {
-        if(typeof site.id!=='string'||sites.has(site.id)||!codes.has(site.code))
+        if(!exactKeys(site,['id','code','start','end'])||
+           typeof site.id!=='string'||sites.has(site.id)||!codes.has(site.code))
           throw new Error('Unpublished or duplicate visible source site');
         sites.add(site.id);
       }
+      for(const fn of fields.staticFunctions)
+        if(!['name','identity','code','captures'].includes(Object.keys(fn)[0]) ||
+           Object.keys(fn).some(key=>!['name','identity','code','captures'].includes(key)) ||
+           typeof fn.name!=='string'||typeof fn.identity!=='string'||!codes.has(fn.code))
+          throw new Error('Unexpected static function context payload');
       stage=1;return;
     }
     if(stage===1){
       if(mode!=='observed'||track!=='t0'||kind!=='value'||
-         typeof fields.entry!=='string'||!Array.isArray(fields.graph?.roots))
+         !exactKeys(fields,['entry','invocation','graph'])||
+         !exactKeys(fields.graph,['roots','objects'])||
+         typeof fields.entry!=='string'||!Array.isArray(fields.graph.roots)||
+         !Array.isArray(fields.graph.objects))
         throw new Error('Second visible record must be an observed input graph');
+      for(const obj of fields.graph.objects) {
+        if(!exactKeys(obj,['id','kind','shapeVersion','properties'])||
+           !['object','array'].includes(obj.kind)||!Array.isArray(obj.properties))
+          throw new Error('Unexpected input graph object payload');
+        for(const property of obj.properties)
+          if(!exactKeys(property,['key','value','version']))
+            throw new Error('Unexpected input graph property payload');
+      }
       input=fields;stage=2;return;
     }
     if(ended)throw new Error('Records after terminal end');
     if(mode!=='generated'||!generatedKinds.has(kind))
       throw new Error('Unjustified observed or unsupported event');
     generated++;
+    if(Object.keys(fields).some(key=>!allowedSemanticFields.has(key)))
+      throw new Error('Unrecognized generated semantic payload field');
     if(root===null){
       if(kind!=='enter'||track!=='t0'||fields.entry!==input.entry||
          !isDeepStrictEqual(fields.arguments,input.graph.roots))
@@ -79,7 +110,9 @@ export function auditPublicCausality(episode,{maxBytes=512}={}) {
   for(const [i,group] of episode.groups.entries()){
     if(group.id!=='m'+(i+1)||!['observed','generated'].includes(group.mode)||
        group.loss!==(group.mode==='generated'?'semantic':'none')||
-       !Array.isArray(group.events)||group.events.length!==1)
+       !Array.isArray(group.events)||group.events.length!==1||
+       !exactKeys(group,['id','mode','loss','events'])||
+       !exactKeys(group.events[0],['track','record']))
       throw new Error('Invalid public group mode, identity, loss or cardinality');
     const {track,record}=group.events[0];
     if(!/^t[0-7]$/.test(track)||typeof record!=='string'||
