@@ -1,0 +1,77 @@
+// Opt-in Node transport for the bounded owned runtime. Native promises are
+// never guest activations or continuations; only journaled delivery resumes JS.
+import {createRuntime} from '../runtime.js';
+import {hostOperation} from './operations.js';
+import {validateBundle} from '../validation.js';
+import {replayExact} from '../replay.js';
+
+const primitive=value=>value===null||
+  ['undefined','boolean','number','string','bigint'].includes(typeof value);
+const errorMessage=error=>error instanceof Error?error.message:String(error);
+
+/** Execute bounded script code with real asynchronous, separately owned host I/O.
+ * All service invocations are one-shot and replay never reinvokes a service. */
+export async function executeWithNativeServices({text,services={},maxSteps=100000,signal}={}) {
+  if(typeof text!=='string')throw new TypeError('Native driver needs JS source text');
+  if(services===null||typeof services!=='object'||Array.isArray(services))
+    throw new TypeError('Native services must be an operation-to-function record');
+  if(signal!==undefined && (typeof signal!=='object'||
+     typeof signal.addEventListener!=='function'||
+     typeof signal.removeEventListener!=='function'))
+    throw new TypeError('signal must be an AbortSignal');
+  if(signal?.aborted)throw signal.reason??new Error('Native driver aborted');
+  const pending=new Set(),arrivals=[];
+  let wake=null;
+  const settled=(effectId,value,abrupt)=>{
+    if(!pending.has(effectId))return;
+    arrivals.push({effectId,value,abrupt});
+    if(wake){const notify=wake;wake=null;notify();}
+  };
+  const adapters=Object.create(null);
+  for(const [operation,service] of Object.entries(services)){
+    hostOperation(operation); // Only explicitly versioned operation contracts.
+    if(typeof service!=='function')throw new TypeError('Host service must be a function: '+operation);
+    adapters[operation]=context=>{
+      if(pending.has(context.effectId))throw new Error('Duplicate native dispatch');
+      pending.add(context.effectId);
+      const input=Object.freeze({...context,signal});
+      // Native promises settle strictly outside the owned interpreter.
+      Promise.resolve().then(()=>service(input)).then(value=>{
+        if(!primitive(value))
+          settled(context.effectId,'Native service returned a non-primitive result',true);
+        else settled(context.effectId,value,false);
+      },error=>settled(context.effectId,errorMessage(error),true));
+      return {kind:'pending'};
+    };
+  }
+  const runtime=createRuntime({adapters,maxSteps}).start(text);
+  const abort=()=>{if(wake){const notify=wake;wake=null;notify();}};
+  signal?.addEventListener('abort',abort,{once:true});
+  try{
+    for(;;){
+      if(signal?.aborted)throw signal.reason??new Error('Native driver aborted');
+      // Arrival is committed independently before any guest-visible delivery.
+      for(const {effectId,value,abrupt} of arrivals.splice(0)){
+        if(!pending.delete(effectId))throw new Error('Unexpected duplicate service completion');
+        const effect=runtime.state.effects[effectId];
+        if(!effect)throw new Error('Unknown native completion effect');
+        const received=runtime.recordInputArrival({effectId,
+          kind:effect.kind==='promise'?'completion':'immediate',value,abrupt});
+        runtime.deliverInput(received.inputId);
+      }
+      const progress=runtime.drive();
+      if(progress.kind!=='waiting'){
+        const bundle=JSON.parse(JSON.stringify(runtime.exportRun()));
+        validateBundle(bundle);
+        replayExact(bundle); // Recorded outcomes, never native service execution.
+        return {progress,bundle,runtime};
+      }
+      if(arrivals.length)continue;
+      if(!pending.size)
+        throw new Error('Guest is waiting for an external effect without a registered native service');
+      await new Promise(resolve=>{wake=resolve;});
+    }
+  }finally{
+    signal?.removeEventListener('abort',abort);
+  }
+}
