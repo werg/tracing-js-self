@@ -210,7 +210,7 @@ export function parseTraining(source) {
         case 'Variable':if(n.init)value(n.init,e);break;
         case 'VariableGroup':n.declarations.forEach(x=>statement(x,e));break;
         case 'Function':scope(n.body.body,e,n.params,n.async);break;
-        case 'Block':scope(n.body,e);break;
+        case 'Block':scope(n.body,e,[],asyncFunction);break;
         case 'If':
           value(n.test,e);statement(n.consequent,e);
           if(n.alternate)statement(n.alternate,e);
@@ -232,7 +232,7 @@ export function parseTraining(source) {
         case 'Try':
           statement(n.block,e);
           if(n.handler)
-            scope(n.handler.body.body,e,n.handler.param===null?[]:[n.handler.param]);
+            scope(n.handler.body.body,e,n.handler.param===null?[]:[n.handler.param],asyncFunction);
           if(n.finalizer)statement(n.finalizer,e);
           break;
         case 'Throw':value(n.argument,e);break;
