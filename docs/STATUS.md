@@ -2,6 +2,34 @@
 
 This repository implements a **bounded, executable prototype** for the architecture in the attached *Complete JavaScript Semantic Tracing Runtime, revision 2 (22 October 2026)*. It does **not** implement the complete plan or claim a complete ECMAScript/Node/browser profile. In particular, a passing prototype test is not a Test262, WPT, Node-API, or learning-evaluation result.
 
+## Bounded October 23 additions (not a universal runtime)
+
+- Strict Acorn guest entries can execute owned async function declarations and
+  `await` on owned promise jobs, while record/replay rebuilds the root promise
+  state rather than adopting a native host Promise. Optional explicitly
+  registered `demo.*` services are dispatched through the separate native
+  driver, with effect intent, arrival, delivery and no replay re-invocation.
+  The strict host binding is absent without this explicit grant.
+- Natlang's adapter now supports **data-only** mutable `__live` scopes and an
+  explicitly bounded `retained` module data shape (`module.exports` /
+  `exports`). After a validated and exactly replayed guest evaluation, the
+  adapter reconciles ordinary mutable host data graphs with their owned
+  counterparts, retaining existing object aliases. Native host objects,
+  functions, package imports, callable-folder module caching/closures and
+  callback reentry remain unowned and rejected. The regular natlang
+  `setModuleRealm` production seam is **not yet integrated**.
+- Bounded `Object.values`, `Object.entries` and `Array.prototype.at`
+  now join the existing ordinary-data built-ins, with local Node V8
+  differential assertions and archive replay. Exotic cases continue to
+  fail closed; these methods are not evidence of complete ECMA-262 built-ins.
+- The static ESM linker is still **function-only**: top-level module
+  evaluation/initialization, mutable ESM live exports and namespace exotic
+  objects require a separate module implementation. The data-only retained
+  adapter above is not a replacement for the ESM linker.
+- Verification is finite, not a language-completeness, Test262, WPT, native
+  host capability or megatoken model-training result. Check the most recent
+  `main` GitHub Actions run before treating the extension as a green release.
+
 ## What runs
 
 - Explicit bytecode evaluator; its guest continuation, operand stack, environments, closure bindings, heap objects, promise states, suspension and job queue are serializable records. No native `eval`, `vm`, `Function` constructor, or `require` executes guest code **inside the owned tracer**. The independent bounded training reference intentionally executes fixture code in Node `vm`, outside the traced authority.
