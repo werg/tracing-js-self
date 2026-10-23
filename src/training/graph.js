@@ -18,7 +18,8 @@ export function importGraph(state, roots, allocate, {maxNodes=256,maxProperties=
     if (++nodes > maxNodes) throw new RangeError('Entry graph node limit');
     const id=allocate('obj');
     seen.set(value,id);
-    const entity={id,kind:array?'array':'object',properties:{},
+    const entity={id,kind:array?'array':'object',
+      ...(!array&&prototype===null?{prototype:null}:{}),properties:{},
       propertyVersions:{},shapeVersion:0,version:0};
     state.heap[id]=entity;
     const keys=Reflect.ownKeys(value);
@@ -56,7 +57,8 @@ export function realizeGraph(heap, roots) {
     const entity=heap[id];
     if (!entity || !['object','array'].includes(entity.kind))
       throw new TypeError('Entry graph contains an unsupported identity');
-    const result=entity.kind==='array'?new Array(decode(entity.properties.length.value)):{};
+    const result=entity.kind==='array'?new Array(decode(entity.properties.length.value)):
+      entity.prototype===null?Object.create(null):{};
     seen.set(id,result);
     for(const [key,record] of Object.entries(entity.properties)){
       if (entity.kind==='array' && key==='length') continue;
