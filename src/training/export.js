@@ -8,6 +8,13 @@ import {validateBundle} from '../validation.js';
 import {replayExact} from '../replay.js';
 
 function requireCompletedEntry(bundle) {
+  // The public model controller currently treats `throw` as a terminal frame
+  // completion. A recovered throw cannot enter the local training corpus until
+  // it has a resumable catch/finally model-side transition, even when the owned
+  // evaluator ultimately returns normally.
+  if(bundle.events.some(e=>e.operation==='completion.throw' ||
+      e.operation==='completion.catch.bind'||e.completion?.type==='throw'))
+    throw new TypeError('Caught guest throws require a modeled catch continuation before training export');
   const state=bundle.finalState,control=state.control.a0;
   if(bundle.entrySpec?.kind!=='function' || control.status!=='completed' ||
      control.activeFrameId!==null || control.failure || control.queue.length ||

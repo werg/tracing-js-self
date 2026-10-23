@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRuntime,validateBundle,replayExact} from 'tracing-js-self';
-import {verifyTrainingCase} from 'tracing-js-self/training';
+import {verifyTrainingCase,exportTraining} from 'tracing-js-self/training';
 import {createBoundedNatlangEnvironment} from '../src/natlang.js';
 const strict=body=>'"use strict";\n'+body;
 function completed(body,args=[]){
@@ -27,6 +27,9 @@ test('finally executes after return and supports normal fallthrough',()=>{
 test('caught throw is never silently promoted to locally verified training',()=>{
   const result=verifyTrainingCase({source:strict('function f(){try{throw 1;}catch(e){return e+2;}}'),entry:'f'});
   assert.notEqual(result.status,'locally_verified');
+  const runtime=createRuntime().startEntry({text:strict('function f(){try{throw 1;}catch(e){return e+2;}}'),functionName:'f'});
+  assert.equal(runtime.drive().kind,'terminated');
+  assert.throws(()=>exportTraining(runtime),/Caught guest throws require a modeled catch continuation/);
 });
 test('natlang TS catch/finally guest values execute and exactly replay',()=>{
   class EvalFailure extends Error{constructor(message,events){super(message);this.events=events;}}
