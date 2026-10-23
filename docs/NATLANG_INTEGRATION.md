@@ -67,6 +67,12 @@ ambient packages/network, native timeouts or retained mode. Invalid TypeScript,
 unsupported expressions, unfinished runs and unsafe scope graphs throw natlang's
 real `EvalFailure`; the `onTrace` success hook is not called on failure.
 
+The strict profile now accepts source-level conditional expressions, numeric
+local-identifier updates and ordinary bounded for/do-while loops. This does
+not imply support for the closures, destructuring, member updates, helper
+calls or other constructs emitted by typical natlang scopes. No fallback
+executes those unsupported constructs.
+
 `executeAsync` awaits a supported synchronous case but **does not implement
 async guest semantics**. `evaluateModule` rejects execution explicitly.
 `fork` and `close` are owned lifecycle methods. There is no untraced fallback.
