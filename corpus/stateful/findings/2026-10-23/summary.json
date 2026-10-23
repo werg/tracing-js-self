@@ -3,47 +3,47 @@
   "asOf": "2026-10-23",
   "status": "native-V8-diagnostic-only",
   "admitted": false,
-  "sourceCommit": "ff17b8dae116686c6e0ef6839e4dacab0b20a9e2",
-  "actionRun": "https://github.com/werg/tracing-js-self/actions/runs/39938544682",
-  "sourceProjects": 7,
-  "scenarioFamilies": 67,
+  "sourceCommit": "cacabd374d5a73646cffacd28b45033f775fdc67",
+  "actionRun": "https://github.com/werg/tracing-js-self/actions/runs/39940081334",
+  "sourceProjects": 8,
+  "pinnedSourceModules": 10,
+  "scenarioFamilies": 76,
   "crossLibraryScenarios": 6,
-  "invocations": 804,
-  "agreedIndependentV8Outcomes": 804,
+  "invocations": 912,
+  "agreedIndependentV8Outcomes": 912,
   "comparisonMismatches": 0,
   "observationErrors": 0,
-  "finalReturns": 720,
+  "finalReturns": 828,
   "terminalThrows": 84,
-  "traceEvents": 171737,
-  "propertyStateChanges": 64414,
-  "modelFacingTraceBytesNotEstablished": true,
-  "nativeSerializedTraceEventBytes": 24925739,
+  "traceEvents": 236741,
+  "propertyStateChanges": 130294,
+  "serializedTraceEventBytes": 39941782,
   "traceLengthEvents": {
-    "p50": 173,
-    "p90": 450
+    "p50": 181,
+    "p90": 593
   },
-  "nativeSerializedTraceBytes": {
-    "p50": 24150,
-    "p90": 58713
+  "serializedTraceBytes": {
+    "p50": 26106,
+    "p90": 130237
   },
   "traceEventKinds": {
-    "await": 2043,
-    "branch": 20452,
-    "call": 31133,
+    "await": 2067,
+    "branch": 28192,
+    "call": 42569,
     "control": 48,
     "effect": 96,
-    "end": 720,
-    "enter": 20290,
-    "loop": 1035,
-    "read": 30912,
-    "resume": 1875,
-    "return": 10641,
-    "throw": 180,
-    "value": 15970,
-    "write": 36342
+    "end": 828,
+    "enter": 27598,
+    "loop": 1059,
+    "read": 42468,
+    "resume": 1899,
+    "return": 15717,
+    "throw": 192,
+    "value": 20974,
+    "write": 53034
   },
   "splitInvocations": {
-    "train": 312,
+    "train": 420,
     "validation": 204,
     "test": 288
   },
@@ -55,22 +55,35 @@
     "quick-lru": 108,
     "koa-compose": 108,
     "p-limit": 108,
-    "application": 72
+    "application": 72,
+    "axios": 108
   },
-  "generatedProgramFamilies": [
-    "mutable event emitter dispatch and reentry",
-    "subscription-based state updates",
-    "cache eviction and TTL",
-    "linked-list queue mutation and iteration",
-    "middleware request handling and error recovery",
-    "bounded async promise scheduling",
-    "cross-library application state and side effects",
-    "uncaught error completions"
-  ],
+  "highCostScenarios": {
+    "axios/nested-enumeration": {
+      "averageTraceBytes": 169104,
+      "averageEvents": 881
+    },
+    "axios/eject-during-iteration": {
+      "averageTraceBytes": 141445,
+      "averageEvents": 609
+    },
+    "application/cache-backed-request": {
+      "averageTraceBytes": 87344,
+      "averageEvents": 709
+    }
+  },
+  "smoke": {
+    "project": "axios",
+    "scenarioFamilies": 9,
+    "invocations": 9,
+    "agreed": 9
+  },
+  "upstreamLicenses": "MIT",
   "evidenceLimitations": [
-    "Independent uninstrumented V8 outcomes validate final observable graph and logged effects, not every intermediate trace event.",
-    "Drivers are synthetic; the underlying seven library implementations are pinned authentic source.",
-    "No true filesystem/network/native Node services or workers were exercised.",
-    "This corpus cannot be admitted as semantic-execution/2 owned-interpreter training data."
+    "V8 independently verifies returned/throw outcome and explicit logged effects, not every intermediate event.",
+    "Instrumenter traces numerous dependency/module initialization operations which may be unhelpful model targets.",
+    "Real libraries are surrounded by synthetic scenario drivers and in-memory fixture effects; no genuine filesystem/network/native workers.",
+    "Native diagnostic records are not owned semantic-execution/2 model-serving or admitted megatoken training episodes.",
+    "Project-level splits avoid same-function input leakage but some mixed application test cases use train/validation dependencies."
   ]
 }
