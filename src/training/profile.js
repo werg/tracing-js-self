@@ -244,6 +244,6 @@ export function parseTraining(source) {
     }
     statements.forEach(n=>statement(n,env));
   }
-  scope(body,{names:new Set(['undefined','Object','Array','Number','Math','Promise']),parent:null});
+  scope(body,{names:new Set(['undefined','Object','Array','Number','Math','Promise','host']),parent:null});
   return {type:'Program',body,start:0,end:source.length,profile:TRAINING_PROFILE};
 }
