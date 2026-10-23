@@ -130,3 +130,9 @@ Preserve third-party license notices and review distribution/training rights.
 Use project-level splits and avoid cross-project dependency leakage.
 Acquisition records must never flow into the megatoken training importer
 without independently checked owned traces and the downstream admission gates.
+
+## CI acquisition at full upstream scale
+
+The [External JS/TS corpus acquisition workflow](../../.github/workflows/external-corpus.yml) automatically audits the pinned snapshots and publishes their acquisition-only JSONL manifests. In **Actions → External JS/TS corpus acquisition (non-admitted) → Run workflow**, set `full_sources=true` to fetch the three full pinned upstream repositories (Test262, Exercism specifications and JSON Schema Test Suite) and upload full candidate catalogs. This opt-in task performs no guest JS execution and makes no owned-trace claims. It was not run as part of the initial change; do not equate estimated upstream suite size with measured acquired case counts.
+
+Initial opt-in adversarial CI smoke has measured **28/28 independently matching native-V8 final outcomes** across all 14 new families (10,776 observation events; 4,526 recorded heap changes). The workflow checks for all 28 matches, not merely 28 attempts. These remain diagnostic only.

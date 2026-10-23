@@ -1064,3 +1064,10 @@ a successful succinct trace.
 
 Reproduction commands, lock format, scope and warnings are in
 [`corpus/extension/README.md`](../corpus/extension/README.md).
+
+### Validation and scale-out update (2026-10-23)
+
+- [x] Initial 14-family adversarial CI smoke: **28/28 independently matched V8 final observables**, 10,776 diagnostic events and 4,526 recorded heap changes, no observer errors. These are **not owned traces**. CI now enforces a 28-case floor, and the existing 912-case stateful baseline remains separately enforced.
+- [x] Prototype test suite passes on Node.js 20, 22 and 24 after fixing Test262 negative-phase metadata parsing (the initial CI failure was addressed in a follow-up commit).
+- [x] A separate [external corpus acquisition workflow](../.github/workflows/external-corpus.yml) validates all pinned snapshots and uploads acquisition artifacts. Its **manually dispatched full-source mode** clones all three exact upstream commits and streams their complete recognized source/input inventories into non-admitted JSONL artifacts. Full-source mode is implemented but **has not been executed or measured in this change**.
+- [ ] Still required: create independently verified JS/TS solution/validator execution adapters, operation-level evidence, and actual large owned semantic-trace exports; acquisition count must never be presented as semantic-trace count.

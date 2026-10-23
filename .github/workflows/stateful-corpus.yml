@@ -68,12 +68,12 @@ jobs:
       - name: Exercise additional adversarial source interactions (28 executions)
         run: |
           node tools/build-stateful-corpus.mjs --suite adversarial \
-            --per-scenario 2 --min-verified 0 \
+            --per-scenario 2 --min-verified 28 \
             --output corpus/out/adversarial-traces.jsonl \
             --report corpus/out/adversarial-report.json \
             --review corpus/out/adversarial-review.md
           node tools/audit-stateful-corpus.mjs --suite adversarial \
-            --input corpus/out/adversarial-traces.jsonl \
+            --input corpus/out/adversarial-traces.jsonl --min-verified 28 \
             --output corpus/out/adversarial-quality.json \
             --review corpus/out/adversarial-quality.md
       - name: Upload diagnostics including all failures
