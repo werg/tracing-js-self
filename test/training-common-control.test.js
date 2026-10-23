@@ -124,9 +124,10 @@ test('per-iteration let environments preserve closure snapshots and continue edg
   }`);
   const iterations=exported.sidecar.archive.events.filter(
     e=>e.operation==='environment.iteration');
-  assert.equal(iterations.length,6);
+  // One initial clone plus one after each of the three executed bodies.
+  assert.equal(iterations.length,4);
   assert.equal(new Set(iterations.map(e=>e.stateChanges.find(
-    p=>p.table==='envs'&&p.before===null)?.id)).size,6);
+    p=>p.table==='envs'&&p.before===null)?.id)).size,4);
 });
 
 test('member updates preserve reference identity, versioned reads and V8 sites',()=>{
