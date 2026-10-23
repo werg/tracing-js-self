@@ -8,15 +8,28 @@ const COMPILER='typescript/'+ts.version;
 export function compileBoundedTypeScript(text,{path='trace.ts'}={}) {
   if(typeof text!=='string'||text.length>131072)
     throw new TypeError('TypeScript source must be bounded text');
-  // No downlevel JS helpers, eval, injected module loader or host runtime.
+  // Optional chaining remains syntax in ES2022 but is not yet an owned
+  // bytecode expression. Lower only chain-bearing files using the pinned TS
+  // emitter, preserving evaluation order and avoiding native execution.
+  const sourceFile=path.endsWith('.tsx')?'natlang-trace.tsx':'natlang-trace.ts';
+  const parsed=ts.createSourceFile(sourceFile,text,ts.ScriptTarget.Latest,true,
+    path.endsWith('.tsx')?ts.ScriptKind.TSX:ts.ScriptKind.TS);
+  let hasOptionalChain=false;
+  function scan(node){
+    if(ts.isOptionalChain(node)){hasOptionalChain=true;return;}
+    ts.forEachChild(node,scan);
+  }
+  scan(parsed);
+  // All generated JS is still accepted or refused by the owned strict
+  // parser; emitting a method .call or unsupported helper cannot bypass it.
   const options={
-    target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022,
+    target:hasOptionalChain?ts.ScriptTarget.ES2019:ts.ScriptTarget.ES2022,
+    module:ts.ModuleKind.ES2022,
     sourceMap:true,inlineSources:true,
     newLine:ts.NewLineKind.LineFeed,
     removeComments:false,isolatedModules:true,
     noEmitHelpers:true
   };
-  const sourceFile=path.endsWith('.tsx')?'natlang-trace.tsx':'natlang-trace.ts';
   const result=ts.transpileModule(text,{fileName:sourceFile,
     compilerOptions:options,reportDiagnostics:true});
   const errors=(result.diagnostics??[]).filter(d=>
