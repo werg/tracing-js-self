@@ -214,7 +214,7 @@ function parseModule(file,text,sources){
       // Separators are inert.
     }else if(['ExpressionStatement','IfStatement','WhileStatement',
              'DoWhileStatement','ForStatement','BlockStatement',
-             'TryStatement'].includes(node.type)){
+             'TryStatement','ThrowStatement'].includes(node.type)){
       initializers.push({kind:'node',node});
     }else reject('unowned module statement '+node.type+' in '+file);
   }
