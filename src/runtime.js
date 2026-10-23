@@ -577,16 +577,24 @@ export class Runtime {
           const loop=f.loops.at(-1);
           if(!loop || loop.envId!==f.envId)
             throw new Error('Iteration clone outside its lexical loop');
-          const original=s.envs[f.envId],binding=original.bindings[arg];
-          if(!binding || binding.kind!=='let' || !binding.initialized)
-            throw new Error('Iteration needs an initialized let binding');
+          const original=s.envs[f.envId];
+          const names=Array.isArray(arg)?arg:[arg];
+          if(!names.length || new Set(names).size!==names.length)
+            throw new Error('Invalid iteration binding list');
+          const reads=[];
           const envId=this.newEnv(s,original.parent);
-          s.envs[envId].bindings[arg]=copy(binding);
+          for(const name of names){
+            const binding=original.bindings[name];
+            if(!binding || binding.kind!=='let' || !binding.initialized)
+              throw new Error('Iteration needs initialized let bindings');
+            s.envs[envId].bindings[name]=copy(binding);
+            reads.push({kind:'binding',envId:original.id,name,
+              version:binding.version??0,value:binding.token.value,
+              supplyingEvent:binding.token.origin??null});
+          }
           loop.envId=envId;
           f.envId=envId;
-          return {reads:[{kind:'binding',envId:original.id,name:arg,
-            version:binding.version??0,value:binding.token.value,
-            supplyingEvent:binding.token.origin??null}]};
+          return {reads};
         }
         case 'TRY_ENTER':
           f.handlers.push({...arg,envId:f.envId,stackDepth:st.length,
@@ -713,13 +721,20 @@ export class Runtime {
                throw new TypeError('Unmodeled Promise prototype property: '+property);
              v=['builtinfn','Promise.prototype.'+property];
            }
+           else if(base.value[0]==='num'){
+             if(['toString','toFixed'].includes(property))
+               v=['builtinfn','Number.prototype.'+property];
+             else if(['constructor','__proto__','valueOf'].includes(property))
+               throw new TypeError('Unmodeled Number prototype property');
+             else v=U;
+           }
            else if(base.value[0]==='str'){
              // String primitive reads never consult the host object graph.
              const text=base.value[1];
              if(property==='length')v=['num',text.length];
              else if(arrayIndex(property)&&Number(property)<text.length)
                v=['str',text[Number(property)]];
-             else if(['charAt','charCodeAt','at','substring','slice','indexOf','lastIndexOf','includes','startsWith','endsWith','toLowerCase','toUpperCase','trim','trimStart','trimEnd'].includes(property))
+             else if(['charAt','charCodeAt','at','substring','substr','slice','indexOf','lastIndexOf','includes','startsWith','endsWith','toLowerCase','toUpperCase','trim','trimStart','trimEnd'].includes(property))
                v=['builtinfn','String.prototype.'+property];
              else if(['constructor','__proto__','valueOf','toString'].includes(property))
                throw new TypeError('Unmodeled String prototype property');
@@ -829,9 +844,24 @@ export class Runtime {
             s.control.a0.activeFrameId=id;
             return {...operands(fn,...args),result:['ref',callable[1]],causes:[{kind:'invocation',frameId:id}]};
           }
+          if(callable[0]==='builtinfn' && callable[1].startsWith('Number.prototype.')){
+            const method=callable[1].slice('Number.prototype.'.length);
+            if(receiver[0]!=='num'||!['toString','toFixed'].includes(method))
+              guestFault('TypeError','Number method requires a number receiver');
+            if(args.length>1 || args.some(x=>!['undefined','null','bool','str','num'].includes(x.value[0])))
+              throw new TypeError('Number formatting argument outside bounded scalar profile');
+            const format=args[0]?decode(args[0].value):undefined;
+            const number=decode(receiver);
+            // Primitive-only deterministic intrinsic leaf, independently V8-verified.
+            if(method==='toFixed'&&format!==undefined&&
+               (!Number.isFinite(Number(format))||Number(format)<0||Number(format)>100))
+              throw new TypeError('Number fixed-digit count outside supported range');
+            return {...operands(fn,...args),...result(encode(
+              Number.prototype[method].call(number,format)))};
+          }
           if(callable[0]==='builtinfn' && callable[1].startsWith('String.prototype.')){
              const method=callable[1].slice('String.prototype.'.length);
-             if(receiver[0]!=='str'||!['charAt','charCodeAt','at','substring','slice','indexOf','lastIndexOf','includes','startsWith','endsWith','toLowerCase','toUpperCase','trim','trimStart','trimEnd'].includes(method))
+             if(receiver[0]!=='str'||!['charAt','charCodeAt','at','substring','substr','slice','indexOf','lastIndexOf','includes','startsWith','endsWith','toLowerCase','toUpperCase','trim','trimStart','trimEnd'].includes(method))
                guestFault('TypeError','String method requires a string receiver');
              if(receiver[1].length>10000||args.length>3)
                throw new RangeError('String operation outside the bounded profile');

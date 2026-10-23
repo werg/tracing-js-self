@@ -30,6 +30,15 @@ about unchanged upstream applications. Some cases model in-memory external
 effects through explicit return logs. They do not perform real filesystem or
 network I/O.
 
+## Exhaustive evaluation
+
+The complete 912-execution independent native V8 run is now additionally
+audited for exact source-module hashes, scenario seeds, source spans and
+effect-accounting integrity. See [../FULL_CORPUS_EVAL.md](../FULL_CORPUS_EVAL.md).
+These diagnostics remain explicitly **non-admitted**, and most observations
+inside pinned vendor source modules represent actual dynamic library
+executions rather than automatically dispensable initialization.
+
 ## Run
 
 ```sh

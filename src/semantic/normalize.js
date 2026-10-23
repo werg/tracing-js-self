@@ -109,13 +109,20 @@ export function normalizeJournal(bundle) {
       lastControl.set(e.invocationId,r.id);
     }
     if(op==='carry') {
-      const read=e.readObservations?.find(x=>x.kind==='binding');
+      const reads=e.readObservations?.filter(x=>x.kind==='binding')??[];
       const created=e.stateChanges.find(p=>p.table==='envs'&&p.before===null);
-      const copied=read&&created?.after?.bindings?.[read.name];
-      if(!copied || !read || !created)
-        throw new Error('Iteration cell copy has no committed source and destination');
-      r.from={env:read.envId,key:read.name,version:read.version};
-      r.to={env:created.id,key:read.name,version:copied.version??0};
+      if(!reads.length||!created)
+        throw new Error('Iteration copy has no committed source and destination');
+      const copies=reads.map(read=>{
+        const copied=created.after?.bindings?.[read.name];
+        if(!copied || copied.version!==read.version ||
+           !isDeepStrictEqual(copied.token?.value,read.value))
+          throw new Error('Iteration copy lost a captured value or version');
+        return {from:{env:read.envId,key:read.name,version:read.version},
+          to:{env:created.id,key:read.name,version:copied.version??0}};
+      });
+      if(copies.length===1){r.from=copies[0].from;r.to=copies[0].to;}
+      else r.copies=copies;
     }
     if(op==='call') {
       const child=e.causes?.find(c=>c.kind==='invocation');

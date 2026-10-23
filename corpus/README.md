@@ -40,6 +40,47 @@ source revision and whole-file SHA256 permit reproducibility. Guest setup
 callbacks are explicitly marked and are not instrumented. Keep the full
 initial fixture available to any model that will later train on these examples.
 
+## Full-corpus execution and quality report
+
+The exhaustive 936-utility-invocation owned verification and all 912
+stateful V8 diagnostic scenarios are documented in
+[FULL_CORPUS_EVAL.md](FULL_CORPUS_EVAL.md). The six-way owned CI gate retains
+all **558** locally verified training candidates (not admitted) and every
+explicit refusal; the stateful audit retains all outcome/effect checks
+without promoting native observations to owned traces.
+
+## Locally verified owned trace candidates
+
+The native observation JSONL is **not training data**. A separate, fail-closed
+bridge can attempt real-source functions through the owned interpreter, with
+independent V8 outcome, operation and branch checks, exact archive replay,
+public-controller evaluation and rechecking after serialization:
+
+```sh
+npm run corpus:owned-coverage -- \
+  --input corpus/out/traces.jsonl \
+  --output corpus/out/owned-coverage.json \
+  --per-function 2 --min-owned-verified 93 \
+  --local-episodes corpus/out/owned-locally-verified.jsonl
+```
+
+This optional JSONL contains **only** cases marked `locally_verified` after
+evidence recheck. Its `public` member is the canonical model-visible
+`semantic-execution/2` trajectory; its `sidecar` is strictly private
+supervision/audit evidence, **not** predictor context. A lineage and provenance
+receipt records source family, upstream revision and whole-file SHA256, license,
+fixture index, and the frozen function-level split. Native and owned producers
+share the exact upstream-source extraction. The bridge rejects mismatched
+pinned source bytes, revision, license, URL and split rather than treating
+diagnostic V8 success as sufficient.
+
+These are **locally verified candidates only**. They remain non-admitted until
+the independent megatoken schema, teacher-conditioning, model-serving and
+execution-validation gates pass. The optional floor guards against regressions
+relative to the original dated 24/156 owned baseline (the current verified floor is 93/156); it is not a completeness claim.
+Unsupported syntax, unsafe guest callbacks, oversized source, effectful
+programs and reference disagreement remain explicit coverage failures.
+
 ## Missing paths before near-general trace generation
 
 1. Native/third-party imports, ESM initialization, and TS source-site mapping

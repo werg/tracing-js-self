@@ -8,6 +8,7 @@ import {createHash} from 'node:crypto';
 import ts from 'typescript';
 import {observeProgram} from '../src/observational.js';
 import {cases,sources} from '../corpus/cases.mjs';
+import {original,corpusSplit} from '../corpus/pinned-source.mjs';
 
 const args=process.argv.slice(2);
 const option=(name,fallback)=>args.includes(name)?args[args.indexOf(name)+1]:fallback;
@@ -24,61 +25,8 @@ if(!Number.isInteger(perFunction)||perFunction<1||perFunction>128||
   throw new TypeError('Invalid corpus generator limits');
 
 const sha=text=>createHash('sha256').update(text).digest('hex');
-const cache=new Map();
-// Pull the literal upstream declarations for dependencies, without rewriting
-// or mocking production code. The named dependencies are inspectable and pinned.
-const helperNames={
-  'arrays.ts/binarySearch':['binarySearch2'],
-  'arrays.ts/insertInto':['getActualStartIndex'],
-  'arrays.ts/splice':['getActualStartIndex','insertInto'],
-  'strings.ts/format':['_formatRegexp'],
-  'strings.ts/format2':['_format2Regexp'],
-  'strings.ts/trim':['ltrim','rtrim'],
-  'strings.ts/firstNonWhitespaceIndex':['CharCode'],
-  'strings.ts/getLeadingWhitespace':['CharCode'],
-  'strings.ts/lastNonWhitespaceIndex':['CharCode'],
-  'strings.ts/getIndentationLength':['firstNonWhitespaceIndex','CharCode'],
-  'strings.ts/isBasicASCII':['IS_BASIC_ASCII'],
-  'strings.ts/containsRTL':['CONTAINS_RTL','makeContainsRtl']
-};
-function original(spec){
-  const path=resolve('corpus/upstream',spec.project,spec.file);
-  if(!cache.has(path))cache.set(path,readFileSync(path,'utf8'));
-  const text=cache.get(path);
-  const source=sources[spec.project];
-  if(!source)throw new TypeError('Unknown source project');
-  if(spec.project==='lodash')return {text,path,sourceFile:text,
-    sourceURL:'https://github.com/lodash/lodash/blob/'+source.revision+'/'+spec.file};
-  const file=ts.createSourceFile(spec.file,text,ts.ScriptTarget.ES2022,true,ts.ScriptKind.TS);
-  const originalFunction=file.statements.find(node=>ts.isFunctionDeclaration(node)&&
-    node.name?.text===spec.entry&&node.body);
-  if(!originalFunction)throw new Error('Missing original TypeScript implementation '+spec.entry);
-  const extras=[];
-  const depends=helperNames[spec.file+'/'+spec.entry]??[];
-  for(const name of depends){
-    let owner=file,document=text;
-    if(name==='CharCode'){
-      const filename='corpus/upstream/vscode/charCode.ts';
-      document=readFileSync(filename,'utf8');
-      owner=ts.createSourceFile(filename,document,ts.ScriptTarget.ES2022,true,ts.ScriptKind.TS);
-    }
-    const declaration=owner.statements.find(node=>
-      ts.isFunctionDeclaration(node)&&node.body&&node.name?.text===name||
-      ts.isEnumDeclaration(node)&&node.name.text===name||
-      ts.isVariableStatement(node)&&node.declarationList.declarations.some(
-        d=>ts.isIdentifier(d.name)&&d.name.text===name));
-    if(!declaration)throw new Error('Unpinned source dependency '+name+' for '+spec.entry);
-    extras.push(declaration.getText(owner));
-  }
-  return {text:[...extras,originalFunction.getText(file)].join('\n\n'),
-    path,sourceFile:text,
-    sourceURL:'https://github.com/microsoft/vscode/blob/'+source.revision+
-      '/'+source.sourcePrefix+spec.file};
-}
-function split(key){
-  const n=parseInt(sha(key).slice(0,8),16)%10;
-  return n===0?'test':n<=2?'validation':'train';
-}
+// The owned-coverage bridge uses the same pinned source construction.
+const split=corpusSplit;
 const fmt=v=>{
   if(!Array.isArray(v))return JSON.stringify(v);
   if(v[0]==='ref')return '&'+v[1];

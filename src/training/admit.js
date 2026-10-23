@@ -22,6 +22,15 @@ export function verifyTrainingCase({source,entry,args=[],seed=null,lineage=null,
     return {status:error instanceof RangeError?'profile_limit':'runtime_failure',
       reason:String(error.message)};
   }
+  if(progress.kind==='runtime.failure'){
+    const failure=progress.failure??runtime.state.control.a0.failure;
+    const completion=failure?.completion;
+    // Distinguish a missing callable implementation from intentional guest throws.
+    const missingCallable=completion?.message==='Not a callable guest function';
+    return {status:missingCallable?'runtime_failure':'unsupported',reason:completion?.message?
+      'Owned guest '+(completion.errorType??'Error')+': '+completion.message:
+      'Owned runtime terminated with '+(failure?.kind??'unknown failure')};
+  }
   if(progress.kind!=='terminated' || runtime.state.control.a0.completion?.kind!=='return' ||
      Object.keys(runtime.state.effects).length || Object.keys(runtime.state.promises).length ||
      Object.values(runtime.state.frames).some(f=>f.status!=='completed'))

@@ -9,7 +9,7 @@ const fieldsFor={
   value:['entry','invocation','graph','id','site','dependsOn','control','result','reads','writes'],
   branch:['id','invocation','site','dependsOn','control','test','path','reads'],
   loop:['id','invocation','site','dependsOn','control','path','reads'],
-  carry:['id','invocation','site','dependsOn','control','from','to','reads'],
+  carry:['id','invocation','site','dependsOn','control','from','to','copies','reads'],
   alloc:['id','invocation','site','dependsOn','control','allocations','writes','result','reads'],
   read:['id','invocation','site','dependsOn','control','reads','result'],
   write:['id','invocation','site','dependsOn','control','reads','writes','result','update'],
@@ -67,7 +67,8 @@ export function semanticLine(row) {
     fields.path=row.path;
   }else if(row.op==='loop')fields.path='repeat';
   else if(row.op==='carry'){
-    fields.from=row.from;fields.to=row.to;
+    if(row.copies)fields.copies=row.copies;
+    else {fields.from=row.from;fields.to=row.to;}
   }else if(row.result!==null)fields.result=row.result;
   if(row.update)fields.update=row.update;
   if(row.op==='throw'&&row.completion) {
@@ -161,7 +162,8 @@ export function renderRecord(line,source=null) {
     source.text.slice(site.start,site.end):f.site??kind;
   if(kind==='branch')return 'if '+expr+' ('+showValue(f.test)+') -> '+f.path;
   if(kind==='loop')return 'loop '+expr+' -> '+f.path;
-  if(kind==='carry')return 'iteration '+f.from.key+': '+f.from.env+' -> '+f.to.env;
+  if(kind==='carry')return 'iteration '+(f.copies??[{from:f.from,to:f.to}]).map(x=>
+    x.from.key+': '+x.from.env+' -> '+x.to.env).join(', ');
   if(kind==='enter')return 'enter '+(f.entry??f.code)+'('+f.arguments.map(showValue).join(', ')+')';
   if(kind==='return'||kind==='throw')return kind+' '+showValue(f.result);
   if(kind==='read')return 'read '+expr+' -> '+showValue(f.result);

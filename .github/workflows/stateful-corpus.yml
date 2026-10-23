@@ -9,6 +9,15 @@ on:
       - 'test/stateful-corpus.test.js'
       - '.github/workflows/stateful-corpus.yml'
       - 'package.json'
+  pull_request:
+    paths:
+      - 'corpus/stateful/**'
+      - 'src/observational.js'
+      - 'tools/build-stateful-corpus.mjs'
+      - 'tools/audit-stateful-corpus.mjs'
+      - 'test/stateful-corpus.test.js'
+      - 'test/corpus-exhaustive-audits.test.js'
+      - '.github/workflows/stateful-corpus.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -49,6 +58,13 @@ jobs:
             console.log("Adversarial coverage",JSON.stringify(c));
             console.log("Failure reasons",JSON.stringify(r.failures.slice(0,12)));
           '
+      - name: Audit every scenario, pinned module and source-site region
+        run: |
+          npm run corpus:stateful:audit -- \
+            --input corpus/out/stateful-traces.jsonl --require-complete \
+            --min-verified 912 \
+            --output corpus/out/stateful-quality.json \
+            --review corpus/out/stateful-quality.md
       - name: Upload diagnostics including all failures
         uses: actions/upload-artifact@v4
         with:
@@ -57,4 +73,6 @@ jobs:
             corpus/out/stateful-traces.jsonl
             corpus/out/stateful-report.json
             corpus/out/stateful-review.md
+            corpus/out/stateful-quality.json
+            corpus/out/stateful-quality.md
           if-no-files-found: error
