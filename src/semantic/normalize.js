@@ -5,7 +5,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {validateBundle} from '../validation.js';
 
 const selection={
-  'binding.initialize':'value','binding.write':'value','binding.read':'read',
+  'binding.initialize':'value','binding.write':'value','binding.update':'write','binding.read':'read',
   'primitive.binary':'value','primitive.unary':'value',
   'function.define':'alloc','object.allocate':'alloc','array.allocate':'alloc',
   'property.read':'read','property.write':'write',
@@ -116,15 +116,21 @@ export function normalizeJournal(bundle) {
       r.allocations=heap.map(p=>({identity:p.id,kind:p.after.kind,
         codeId:p.after.codeId??null,capture:p.after.closureEnvId??null}));
     }
-    if(e.operation==='binding.write' || e.operation==='binding.initialize') {
+    if(['binding.write','binding.initialize','binding.update'].includes(e.operation)) {
       for(const p of e.stateChanges.filter(p=>p.table==='envs')) {
         const instruction=bundle.programs[e.codeId]?.instructions.find(x=>x.siteId===e.siteId);
-        const key=instruction?.arg;
+        const key=typeof instruction?.arg==='string'?instruction.arg:instruction?.arg?.name;
         const b=key&&p.before?.bindings?.[key],a=key&&p.after?.bindings?.[key];
         if(a && !isDeepStrictEqual(a,b))
           r.writes.push({kind:'cell',env:p.id,key,previous:b?.version??0,
             version:a.version??0,value:a.token?.value??null});
       }
+    }
+    if(e.operation==='binding.update') {
+      const update=bundle.programs[e.codeId]?.instructions.find(x=>x.siteId===e.siteId)?.arg;
+      if(!update || !['++','--'].includes(update.operator))
+        throw new Error('Malformed owned binding update');
+      r.update={operator:update.operator,prefix:update.prefix};
     }
     if(e.operation==='property.write') {
       for(const p of e.stateChanges.filter(p=>p.table==='heap')) {
