@@ -1,5 +1,25 @@
 // Deliberately bounded grammar; unsupported syntax fails closed, never through native eval.
 import { encode } from './values.js';
+/** Var declarations belong to a function, including nested block and loop bodies. */
+export function collectVarBindings(statements) {
+  const names=new Set();
+  function visit(n){
+    if(!n)return;
+    switch(n.type){
+      case 'Variable':if(n.kind==='var')names.add(n.id);break;
+      case 'VariableGroup':n.declarations.forEach(visit);break;
+      case 'Block':n.body.forEach(visit);break;
+      case 'If':visit(n.consequent);visit(n.alternate);break;
+      case 'For':visit(n.init);visit(n.body);break;
+      case 'While':case 'DoWhile':visit(n.body);break;
+      case 'Try':visit(n.block);visit(n.handler?.body);visit(n.finalizer);break;
+      // Descendant functions own their separate environment.
+      case 'Function':case 'FunctionExpr':break;
+    }
+  }
+  statements.forEach(visit);
+  return [...names];
+}
 const ops = ['===','!==','=>','**','++','--','==','!=','<=','>=','+=','-=','&&','||','??'];
 const singles = '{}()[];,.:+-*/%<>=!?';
 function lex(source) {
@@ -151,7 +171,7 @@ export function compile(ast) {
       for(const n of nodes){
         const declarations=n.type==='VariableGroup'?n.declarations:
           n.type==='Variable'?[n]:[];
-        for(const d of declarations)emit('DECLARE',{name:d.id,kind:d.kind},d);
+        for(const d of declarations)if(d.kind!=='var')emit('DECLARE',{name:d.id,kind:d.kind},d);
       }
       for(const n of nodes)if(n.type==='Function'){
         const fid=bodyProgram(n.body.body,n.params,n.async);
@@ -235,7 +255,15 @@ export function compile(ast) {
     }
     function stmt(n){
       switch(n.type){
-        case 'Variable':if(n.init)expr(n.init);else emit('CONST',{value:['undefined']},n);emit('INIT',n.id,n);break;
+        case 'Variable':{
+          if(n.kind==='var'){
+            if(n.init){expr(n.init);emit('SET',n.id,n);emit('POP',null,n);}
+          }else{
+            if(n.init)expr(n.init);else emit('CONST',{value:['undefined']},n);
+            emit('INIT',n.id,n);
+          }
+          break;
+        }
         case 'VariableGroup':for(const declaration of n.declarations)stmt(declaration);break;
         case 'Expression':expr(n.expr);emit('POP',null,n);break;
         case 'Return':if(n.argument)expr(n.argument);else emit('CONST',{value:['undefined']},n);emit('RETURN',null,n);break;
@@ -265,13 +293,13 @@ export function compile(ast) {
           break;
         }
         case 'For':{
-          const lexical=n.init?.type==='Variable';
+          const lexical=n.init?.type==='Variable'&&n.init.kind==='let';
           if(lexical){
             emit('ENTER_SCOPE',null,n);
             emit('DECLARE',{name:n.init.id,kind:n.init.kind},n.init);
           }
           if(n.init){
-            if(lexical)stmt(n.init);
+            if(n.init.type==='Variable')stmt(n.init);
             else{expr(n.init);emit('POP',null,n.init);}
           }
           const entry=emit('LOOP_ENTER',null,n);
@@ -320,7 +348,7 @@ export function compile(ast) {
     }
     statements(body);
     emit('CONST',{value:['undefined']},ast);emit('RETURN',null,ast);
-    programs[id]={id,params,async,instructions};return id;
+    programs[id]={id,params,async,varNames:collectVarBindings(body),instructions};return id;
   }
   const entry=bodyProgram(ast.body);
   return {entry,programs,sites:Object.values(programs).flatMap(x=>x.instructions.map(({siteId,start,end,op})=>({siteId,start,end,op,codeId:x.id})))};

@@ -2,6 +2,7 @@
 // Parsing is not execution: the compiler/runtime own semantics.
 import {parse as acornParse} from 'acorn';
 import {encode} from '../values.js';
+import {collectVarBindings} from '../frontend.js';
 
 export const TRAINING_PROFILE='training-js/1';
 export const TRAINING_PARSER='acorn/8.15.0:training-js/1';
@@ -105,7 +106,7 @@ export function parseTraining(source) {
     switch(n.type) {
       case 'BlockStatement':return {...loc,type:'Block',body:n.body.map(stmt)};
       case 'VariableDeclaration':
-        if(!['let','const'].includes(n.kind)||!n.declarations.length ||
+        if(!['let','const','var'].includes(n.kind)||!n.declarations.length ||
            n.declarations.some(d=>d.id.type!=='Identifier'))
           reject(n,'declaration form');
         const declarations=n.declarations.map(d=>({
@@ -139,9 +140,10 @@ export function parseTraining(source) {
       case 'ForStatement':{
         let init=null;
         if(n.init?.type==='VariableDeclaration'){
-          if(n.init.kind!=='let'||n.init.declarations.length!==1||
-             n.init.declarations[0].id.type!=='Identifier'||!n.init.declarations[0].init)
-            reject(n.init,'for initializer (one initialized let binding required)');
+          if(!['let','var'].includes(n.init.kind)||n.init.declarations.length!==1||
+             n.init.declarations[0].id.type!=='Identifier'||
+             (n.init.kind==='let'&&!n.init.declarations[0].init))
+            reject(n.init,'for initializer (one let or var binding required)');
           init=stmt(n.init);
         }else if(n.init)init=expr(n.init);
         const body=stmt(n.body);
@@ -160,12 +162,15 @@ export function parseTraining(source) {
   const body=parsed.body.map(stmt);
   // Resolve references against lexical scopes, including the per-loop let header.
   // Never silently turn an unknown identifier into an ambient Node global.
-  function scope(statements,parent,params=[],asyncFunction=false) {
+  function scope(statements,parent,params=[],asyncFunction=false,functionScope=false) {
     const names=new Set(params);
+    if(functionScope)
+      for(const name of collectVarBindings(statements))names.add(name);
     for(const n of statements){
       const entries=n.type==='VariableGroup'?n.declarations:
         ['Variable','Function'].includes(n.type)?[n]:[];
       for(const d of entries){
+        if(d.kind==='var')continue;
         if(names.has(d.id))reject(d,'duplicate lexical binding');
         names.add(d.id);
       }
@@ -178,7 +183,7 @@ export function parseTraining(source) {
           if(!has(n.name,e))reject(n,'unbound identifier '+n.name);
           break;
         case 'Template':n.expressions.forEach(x=>value(x,e));break;
-        case 'FunctionExpr':scope(n.body.body,e,n.params,false);break;
+        case 'FunctionExpr':scope(n.body.body,e,n.params,false,true);break;
         case 'Await':
           if(!asyncFunction)reject(n,'await outside async function');
           value(n.argument,e);break;
@@ -209,7 +214,7 @@ export function parseTraining(source) {
       switch(n.type){
         case 'Variable':if(n.init)value(n.init,e);break;
         case 'VariableGroup':n.declarations.forEach(x=>statement(x,e));break;
-        case 'Function':scope(n.body.body,e,n.params,n.async);break;
+        case 'Function':scope(n.body.body,e,n.params,n.async,true);break;
         case 'Block':scope(n.body,e,[],asyncFunction);break;
         case 'If':
           value(n.test,e);statement(n.consequent,e);
@@ -218,7 +223,7 @@ export function parseTraining(source) {
         case 'While':case 'DoWhile':
           value(n.test,e);statement(n.body,e);break;
         case 'For':{
-          const loopEnv=n.init?.type==='Variable'
+          const loopEnv=n.init?.type==='Variable'&&n.init.kind==='let'
             ?{names:new Set([n.init.id]),parent:e}:e;
           if(n.init){
             if(n.init.type==='Variable')statement(n.init,loopEnv);

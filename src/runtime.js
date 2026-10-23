@@ -192,6 +192,10 @@ export class Runtime {
     const id=this.next(draft,'frame'),envId=this.newEnv(draft,parentEnv);
     const params=this.programs[codeId].params;
     params.forEach((name,i)=>draft.envs[envId].bindings[name]={kind:'parameter',initialized:true,token:args[i]??token(U),version:0});
+    for(const name of this.programs[codeId].varNames??[])
+      if(!Object.hasOwn(draft.envs[envId].bindings,name))
+        draft.envs[envId].bindings[name]={kind:'var',initialized:true,
+          token:token(U),version:0};
     draft.frames[id]={id,codeId,pc:0,stack:[],envId,callerFrameId,asyncPromiseId,status:'running',blockedOn:null,awaiting:null,operationId:null,pendingCoercionThrow:null,handlers:[],loops:[],thisValue,version:0};
     return id;
   }
