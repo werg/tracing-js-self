@@ -116,6 +116,21 @@ test('unhandled throws and unsupported coercions keep distinct terminal outcomes
   assert.equal(Object.keys(unsupported.state.effects).length,0);
 });
 
+test('failed binding and property updates remain reconstructible and replayable',()=>{
+  for(const [body,operation] of [
+    ['const n=1; n++;','binding.update'],
+    ['let value=null; value.x++;','property.update']
+  ]) {
+    const runtime=createRuntime().startEntry({
+      text:'"use strict";\nfunction f(){'+body+'}',
+      functionName:'f'
+    });
+    const bundle=check(runtime,'runtime.failure');
+    assert(bundle.events.some(e=>e.operation===operation&&e.completion?.type==='throw'),
+      operation+' must retain its abrupt completion in the journal');
+  }
+});
+
 test('structural checks and same-interpreter replay reject forged caught completions',()=>{
   const r=run('let v=0;try{throw 11;}catch(e){v=e;}');
   const b=wire(r.exportRun());

@@ -36,7 +36,8 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     }
     const patched=new Set();
     if(e.completion && !['spec.operation.complete','completion.throw','external.input.deliver',
-      'job.enter','binding.read','binding.write','primitive.unary','property.read','property.write','call.enter','proxy.allocate'].includes(e.operation))
+      'job.enter','binding.read','binding.write','binding.update','primitive.unary',
+      'property.read','property.write','property.update','call.enter','proxy.allocate'].includes(e.operation))
       fail('Completion metadata without an owned completion operation',e.eventId);
     validateSpecEvent(state,e,fail);
     for(const p of e.stateChanges) {
