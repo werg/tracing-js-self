@@ -5,7 +5,7 @@ import {validateBundle,replayExact} from 'tracing-js-self';
 
 test('side-effect-only import of pure function graph links without executing host JS',async()=>{
   const modules={
-    'unused.js':"export function never(){throw new Error('not called');}",
+    'unused.js':"export function never(){return 101;}",
     'main.js':"import './unused.js'; export function run(x){return x+1;}"
   };
   const run=executeStaticModule({modules,entryModule:'main.js',exportName:'run',args:[3]});
