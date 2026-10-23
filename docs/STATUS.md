@@ -29,7 +29,10 @@ This repository implements a **bounded, executable prototype** for the architect
   initializers once per episode. Named imports and re-exports alias the
   originating mutable owned lexical cell, including `let` writes observed
   after imported guest calls. Owned top-level `await` and optionally journaled
-  native-service completions participate in exact replay. Cyclic evaluation,
+  native-service completions participate in exact replay. An optional
+  ordered `calls` array now invokes multiple exports in one owned episode,
+  preserving mutable module cells and guest heap aliases until it completes.
+  State is **not retained across separate API calls**. Cyclic evaluation,
   module namespace exotic objects, arbitrary package imports and persistent
   module realms remain unimplemented. The data-only natlang retained adapter
   is a different, limited interface.
