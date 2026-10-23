@@ -42,6 +42,20 @@ npm run training:generate -- --seed 42 --count 16 \
 
 Each JSONL line has a public payload and a **private sidecar** with archived state, reference outcome and provenance. Future targets inside public.groups are training labels, never predictor inputs; only the observed prefix and earlier committed generated groups may be used for conditioning. The sidecar must never enter model attention.
 
+## Post-serialization independent evidence recheck
+
+After producing trusted local JSONL fixtures, run
+`node tools/recheck-training-evidence.mjs training-local.jsonl`. The
+`recheckIndependentTrainingEvidence` API validates compact serialization
+and replay, then **recomputes** the independently executed V8 outcome, scalar
+operation receipts, and control-decision receipts from the archived source and
+initial graph. It compares them against both owned outcome and private receipts,
+rejecting altered or absent evidence. The CI workflow exercises this against
+serialized generated fixtures. This is a local evidence integrity gate only,
+not the megatoken adapter or actual-model rollout admission gate:
+`admitted` remains **0**. Execute only on trusted sources in an appropriate
+isolated environment because Node `vm` is not a secure untrusted-code sandbox.
+
 ## Model-selected evaluation
 
 After generating a local verified JSONL reference corpus, supply a separate JSONL of **actual model-selected** episode `groups` to `npm run training:evaluate -- --selected selected.jsonl --reference training-local.jsonl --output report.json`. The evaluator commits each selected group before consulting the reference and reports exact state/return correctness and the first inconsistent category. Re-using reference groups as selected input checks only the deterministic verifier, **not a model's ability to execute**.

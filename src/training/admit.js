@@ -2,8 +2,9 @@
 // the independent megatoken adapter/schema gate lives in another repository.
 import {isDeepStrictEqual} from 'node:util';
 import {createRuntime} from '../runtime.js';
+import {realizeGraph,describeGraph} from './graph.js';
 import {referenceOutcome,ownedOutcome} from './reference.js';
-import {exportTraining} from './export.js';
+import {exportTraining,validateTrainingExport} from './export.js';
 import {auditReferenceOperations} from './operation-reference.js';
 import {auditReferenceBranches} from './branch-reference.js';
 
@@ -71,4 +72,47 @@ export function verifyTrainingCase({source,entry,args=[],seed=null,lineage=null,
   exported.sidecar.generationSeed=seed;
   exported.sidecar.reference={engine:'Node.js V8 vm (independent reference only)',outcome:reference};
   return {status:'locally_verified',exported};
+}
+
+// Explicit post-serialization *local* evidence check. This recomputes the
+// independent V8 outcome and executed operation/control receipts; it never
+// upgrades an episode to admitted training data. Run only on trusted sources:
+// Node vm is a reference realm, NOT an isolation boundary for hostile code.
+export function recheckIndependentTrainingEvidence(exported) {
+  try {
+    validateTrainingExport(exported);
+    const {archive,referenceStatus,reference:stored,operationAudit,branchAudit}
+      =exported.sidecar;
+    if(referenceStatus!=='agreed' || !stored?.outcome ||
+       operationAudit?.status!=='agreed'||branchAudit?.status!=='agreed')
+      throw new Error('Missing independent reference evidence');
+    if(archive.manifest.profile!=='training-js/1')
+      throw new Error('Outside the independently checked training profile');
+    const {sourceId,functionName,arguments:args}=archive.entrySpec;
+    const source=archive.sources.find(s=>s.sourceId===sourceId)?.text;
+    if(typeof source!=='string')
+      throw new Error('Missing original training source');
+    const reference=referenceOutcome({source,entry:functionName,args,
+      initialHeap:archive.initialState.heap});
+    const completion=archive.finalState.control.a0.completion;
+    const owned={kind:'return',graph:describeGraph(realizeGraph(archive.finalState.heap,
+      [...args,completion.value]))};
+    if(!isDeepStrictEqual(owned,reference) ||
+       !isDeepStrictEqual(stored.outcome,reference))
+      throw new Error('Independent reference outcome disagrees');
+    const options={source,entry:functionName,args,
+      initialHeap:archive.initialState.heap,bundle:archive,reference};
+    const operations=auditReferenceOperations(options);
+    if(operations.status!=='agreed'||
+       !isDeepStrictEqual(operations,operationAudit))
+      throw new Error('Independent operation evidence disagrees');
+    const branches=auditReferenceBranches(options);
+    if(branches.status!=='agreed'||!isDeepStrictEqual(branches,branchAudit))
+      throw new Error('Independent control evidence disagrees');
+    return {valid:true,scope:'locally_verified_only',admitted:false,
+      operations:operations.checked,branches:branches.checked};
+  } catch(error) {
+    return {valid:false,scope:'locally_verified_only',admitted:false,
+      reason:String(error.message)};
+  }
 }
