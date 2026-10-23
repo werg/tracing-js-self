@@ -34,7 +34,9 @@ export function trainingPrefix(bundle,{maxSourceBytes=2048}={}) {
   return {
     schema:'semantic-context/2',
     source:encodeRecord('code',{sourceId:source.sourceId,text:source.text,codes,sites,staticFunctions,
-      ...(staticRegExps.length?{staticRegExps}:{})}),
+      ...(staticRegExps.length?{staticRegExps}:{}),
+      ...(bundle.initialState.control.a0.randomSeed!==undefined ?
+        {randomSeed:bundle.initialState.control.a0.randomSeed}: {})}),
     input:encodeRecord('value',{entry:bundle.entrySpec.functionName,
       invocation:bundle.initialState.control.a0.activeFrameId,graph})
   };
