@@ -5,6 +5,7 @@
 import {parse as parseAcorn} from 'acorn';
 import ts from 'typescript';
 import path from 'node:path';
+import {types} from 'node:util';
 import {compileBoundedTypeScript} from './typescript.js';
 import {createRuntime} from './runtime.js';
 import {parseTraining} from './training/profile.js';
@@ -20,19 +21,29 @@ function validName(name){
   return typeof name==='string'&&namePattern.test(name);
 }
 function sourcesOf(modules){
-  if(!modules||typeof modules!=='object'||Array.isArray(modules))
-    throw new TypeError('Evaluated module graph must be an object of path-to-source strings');
+  if(!modules||typeof modules!=='object'||Array.isArray(modules)||
+     types.isProxy(modules)||![Object.prototype,null].includes(Object.getPrototypeOf(modules)))
+    throw new TypeError('Evaluated module graph must be a plain data object');
+  const files=Reflect.ownKeys(modules);
+  if(!files.length||files.length>64)
+    throw new RangeError('Evaluated module graph must contain 1-64 files');
   const sources=new Map();
-  for(const [file,text] of Object.entries(modules)){
-    if(typeof file!=='string'||!file||file.startsWith('/')||
+  for(const file of files){
+    // Do not execute a host getter or Proxy trap while collecting the guest
+    // source graph. The supplied program is host-controlled *text*, never
+    // executable host objects.
+    const descriptor=Object.getOwnPropertyDescriptor(modules,file);
+    if(typeof file!=='string'||!descriptor||!Object.hasOwn(descriptor,'value'))
+      throw new TypeError('Module source entries must be string-keyed own data');
+    const text=descriptor.value;
+    if(!file||file==='.'||file==='..'||file.startsWith('/')||
        file.includes('\\')||file.startsWith('../')||
+       /[\\u0000-\\u001f]/.test(file)||
        path.posix.normalize(file)!==file||typeof text!=='string'||
        text.length>65536)
       throw new TypeError('Invalid owned module path or source length');
     sources.set(file,text);
   }
-  if(!sources.size||sources.size>64)
-    throw new RangeError('Evaluated module graph must contain 1-64 files');
   return sources;
 }
 function requestPath(file,specifier,sources){
