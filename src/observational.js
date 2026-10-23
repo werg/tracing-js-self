@@ -192,6 +192,18 @@ function instrument(source,filename,language){
       [ts.SyntaxKind.PlusPlusToken,ts.SyntaxKind.MinusMinusToken].includes(n.operator);
     function visit(node,parent=null){
       const v=ts.visitEachChild(node,child=>visit(child,node),ctx);
+      if(ts.isArrowFunction(v)){
+        const name='[callback]';
+        const body=ts.isBlock(v.body)?
+          f.updateBlock(v.body,[f.createExpressionStatement(call('enter',node,
+            [f.createStringLiteral(name)])),...v.body.statements]):
+          f.createBlock([
+            f.createExpressionStatement(call('enter',node,[f.createStringLiteral(name)])),
+            f.createReturnStatement(call('ret',node,[v.body]))
+          ],true);
+        return f.updateArrowFunction(v,v.modifiers,v.typeParameters,v.parameters,
+          v.type,v.equalsGreaterThanToken,body);
+      }
       if(ts.isFunctionDeclaration(v)&&v.body){
         const body=f.updateBlock(v.body,[f.createExpressionStatement(call('enter',node,
           [f.createStringLiteral(v.name?.text??'[anonymous]')])),...v.body.statements]);
@@ -269,13 +281,18 @@ async function execute(code,{filename,entry,args,setupSource,timeoutMs,capture})
   const ctx=vm.createContext(sandbox,{codeGeneration:{strings:false,wasm:false}});
   let inputs;
   if(setupSource){
-    vm.runInContext(setupSource,ctx,{filename:filename+'.setup.js',timeout:timeoutMs});
+    // Instrument guest-defined callbacks as well as the entry function.
+    // Initialization itself is fixture setup, not an execution target.
+    const setupCode=events?instrument(setupSource,filename+'.setup.js','js'):
+      transpile(setupSource,filename+'.setup.js');
+    vm.runInContext(setupCode,ctx,{filename:filename+'.setup.js',timeout:timeoutMs});
     inputs=vm.runInContext('globalThis.__testArgs',ctx,{timeout:timeoutMs});
     if(!Array.isArray(inputs))throw new TypeError('setupSource must assign globalThis.__testArgs');
   }else{
     ctx.__graph=portableArguments(args);
     inputs=vm.runInContext('('+hydrate.toString()+')(__graph)',ctx,{timeout:timeoutMs});
   }
+  if(events)events.events.length=0;
   events?.initialize(inputs);
   let value=null,completion;
   try{
