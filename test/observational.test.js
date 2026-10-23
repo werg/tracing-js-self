@@ -8,7 +8,8 @@ test('native observation captures executed expressions, branch and return',async
   assert.equal(r.evidence.independentUninstrumentedV8,true,JSON.stringify(r));
   assert.deepEqual(r.observableGraph.roots.at(-1),['num',7]);
   assert(r.events.some(e=>e.kind==='branch'&&e.path==='then'));
-  assert(r.events.some(e=>e.kind==='call'&&e.source.includes('Math.max')));
+  assert(r.events.some(e=>e.kind==='call'&&
+    source.slice(e.site.start,e.site.end).includes('Math.max')));
   assert.equal(r.profile,'trusted-v8-observation');
 });
 
