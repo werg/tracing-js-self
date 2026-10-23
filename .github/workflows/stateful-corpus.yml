@@ -24,6 +24,13 @@ jobs:
         with:
           node-version: '22'
       - run: npm ci
+      - name: Validate all nine Axios adversarial families first
+        run: |
+          node tools/build-stateful-corpus.mjs --project axios \
+            --per-scenario 1 --limit 9 --min-verified 9 \
+            --output "$RUNNER_TEMP/axios-smoke.jsonl" \
+            --report "$RUNNER_TEMP/axios-smoke-report.json" \
+            --review "$RUNNER_TEMP/axios-smoke-review.md"
       - name: Run all 912 real-world stateful and interceptor scenarios
         run: |
           node tools/build-stateful-corpus.mjs --per-scenario 12 \
