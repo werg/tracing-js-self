@@ -148,6 +148,9 @@ test('member updates preserve reference identity, versioned reads and V8 sites',
   assert.equal(exported.sidecar.operationAudit.covered.updates,3);
   verified('function f(){const o={x:1n};return [++o.x,o.x--,o.x];}');
   verified('function f(){const a=[2,4];return [a[0]++,--a[1],a[0],a[1]];}');
+  assert.notEqual(verifyTrainingCase({source:strict(
+    'function f(){const a=[1];return a.length++;}'),entry:'f'}).status,
+    'locally_verified');
 });
 
 test('serving controller rejects a forged update read before committing the write',()=>{

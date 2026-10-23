@@ -62,7 +62,10 @@ test('dynamic imports, side effects and unknown packages fail before guest execu
     {'main.js':`import {x} from 'missing'; export function f(){return x();}`},
     {'main.js':`export function f(){return import('./other.js');}`},
     {'main.js':`export default ()=>3;`},
-    {'main.js':`export * from './other.js';`}
+    {'main.js':`export * from './other.js';`},
+    {'main.js':`import {x} from './helper.js';
+      export function f(){x=3;return x;}`,
+      'helper.js':'export function x(){return 1;}'}
   ];
   for(const modules of invalid)assert.throws(()=>
     executeStaticModule({modules,entryModule:'main.js',exportName:'f'}),

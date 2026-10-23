@@ -496,9 +496,14 @@ export class Runtime {
           const old=found.method;
           const {next,oldNumeric}=scalarUpdate(old.value,arg.operator);
           const returned=arg.prefix?next:oldNumeric;
-          if(this.entrySpec && obj.kind==='array' && arrayIndex(property) &&
-             Number(property)>decode(obj.properties.length.value))
-            throw new TypeError('Sparse array updates are outside training-js/1');
+          if(this.entrySpec && obj.kind==='array'){
+            if(arrayIndex(property) &&
+               Number(property)>decode(obj.properties.length.value))
+              throw new TypeError('Sparse array updates are outside training-js/1');
+            if(property==='length' && next[0]==='num' &&
+               decode(next)>decode(obj.properties.length.value))
+              throw new TypeError('Array length expansion is outside training-js/1');
+          }
           putOwn(obj,property,next,eventId);
           this.stackPush(f,returned,eventId);
           return {...operands(base,key,old),result:returned,reads:[found.observation]};

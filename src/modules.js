@@ -122,6 +122,15 @@ function rewriteDeclaration(module,root,names){
     if(Array.isArray(node)){node.forEach(n=>walk(n,parent,key));return;}
     if(typeof node.type!=='string')return;
     if(node.type==='VariableDeclarator')checkPattern(node.id);
+    // ESM imported names are read-only live bindings. This static profile
+    // supports only function exports, so any assignment is an error rather
+    // than silently mutating the flattened global function cell.
+    if((node.type==='AssignmentExpression'||node.type==='UpdateExpression')&&
+       node.left?.type==='Identifier'&&module.imports.has(node.left.name))
+      reject('assignment to imported binding '+node.left.name);
+    if(node.type==='UpdateExpression'&&
+       node.argument?.type==='Identifier'&&module.imports.has(node.argument.name))
+      reject('update of imported binding '+node.argument.name);
     if(node.type==='FunctionDeclaration'||node.type==='FunctionExpression'||
        node.type==='ArrowFunctionExpression'){
       if(node!==root)checkPattern(node.id);
