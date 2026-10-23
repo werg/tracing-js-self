@@ -225,13 +225,15 @@ export function parseTraining(source) {
               if(!node.properties.length)
                 reject(node,'object binding needs properties');
               return {...at,type:'PatternObject',entries:node.properties.map(item=>{
-                if(item.type!=='Property'||item.kind!=='init'||item.method||item.computed)
-                  reject(item,'object binding needs a static data property');
-                const key=item.key.type==='Identifier'?item.key.name:
+                if(item.type!=='Property'||item.kind!=='init'||item.method)
+                  reject(item,'object binding property form');
+                const key=item.computed?null:item.key.type==='Identifier'?item.key.name:
                   item.key.type==='Literal'?String(item.key.value):null;
-                if(key===null||key==='__proto__')
+                if(!item.computed&&(key===null||key==='__proto__'))
                   reject(item,'unsafe object binding key');
-                return {...span(item),key,target:pattern(item.value,depth+1)};
+                return {...span(item),key,
+                  computedKey:item.computed?expr(item.key):null,
+                  target:pattern(item.value,depth+1)};
               })};
             }
             reject(node,'destructuring target');
@@ -420,7 +422,10 @@ export function parseTraining(source) {
             if(node.type==='PatternDefault'){
               value(node.fallback,e);defaults(node.target);
             }else if(node.type==='PatternObject')
-              node.entries.forEach(item=>defaults(item.target));
+              node.entries.forEach(item=>{
+                if(item.computedKey)value(item.computedKey,e);
+                defaults(item.target);
+              });
             else if(node.type==='PatternArray')
               node.elements.forEach(item=>defaults(item.target));
           }
