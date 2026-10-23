@@ -8,7 +8,7 @@ import {resolve,dirname} from 'node:path';
 import {createHash} from 'node:crypto';
 import ts from 'typescript';
 import {observeProgram} from '../src/observational.js';
-import {scenarios,upstream} from '../corpus/stateful/cases.mjs';
+import {scenarios,upstream,pinnedSha256} from '../corpus/stateful/cases.mjs';
 
 const argv=process.argv.slice(2);
 const arg=(name,fallback)=>argv.includes(name)?argv[argv.indexOf(name)+1]:fallback;
@@ -32,6 +32,7 @@ for(const [name,ref] of Object.entries(upstream)) {
   const path=resolve('corpus/stateful/upstream',ref.path);
   const source=readFileSync(path,'utf8');
   if(!source.trim())throw new Error('Empty upstream source '+name);
+  if(sha(source)!==pinnedSha256[name])throw new Error('Vendored source hash differs from pinned upstream: '+name);
   sources.set(name,{...ref,sha256:sha(source),source});
 }
 function encodeModule(name) {

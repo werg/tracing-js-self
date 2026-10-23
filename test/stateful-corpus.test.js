@@ -1,10 +1,11 @@
+import {createHash} from 'node:crypto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {existsSync,readFileSync,mkdtempSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
-import {scenarios,upstream} from '../corpus/stateful/cases.mjs';
+import {scenarios,upstream,pinnedSha256} from '../corpus/stateful/cases.mjs';
 
 test('60 adversarial production scenarios have unique names, pinned module sources and full licenses',()=>{
  assert.equal(scenarios.length,67);
@@ -22,6 +23,7 @@ test('60 adversarial production scenarios have unique names, pinned module sourc
   assert(existsSync('corpus/stateful/upstream/'+meta.path),name);
   assert(existsSync('corpus/stateful/upstream/'+name+'/LICENSE'),name);
   assert(readFileSync('corpus/stateful/upstream/'+meta.path,'utf8').length>100);
+  assert.equal(createHash('sha256').update(readFileSync('corpus/stateful/upstream/'+meta.path)).digest('hex'),pinnedSha256[name]);
  }
  const counts={};
  for(const row of scenarios)(counts[row.project]??=[]).push(row);

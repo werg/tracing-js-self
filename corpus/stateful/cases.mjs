@@ -10,6 +10,15 @@ export const upstream = Object.freeze({
   'p-limit': {repository:'sindresorhus/p-limit',revision:'a8a6fbec4e0e866d6d779b10889bb4f5567e70eb',license:'MIT',path:'p-limit/index.js'},
   eventemitter3: {repository:'primus/eventemitter3',revision:'b0144e940ace8add8f335a8adfbed9284eb419f3',license:'MIT',path:'eventemitter3/index.js'}
 });
+export const pinnedSha256 = Object.freeze({
+  "mitt": "1536a2dd71d64785d811076beee6d970583ca555dd34ce839face641a200054b",
+  "zustand": "396aea7a580862e283f533afc74b26e0f2a9899a1e666c8b1d494aeebe20e7bc",
+  "quick-lru": "500faa18fec161f8a4bbf89db83f4f6cc045b8e91ecb17a5214df7100522d7dd",
+  "koa-compose": "2a748db2930d21d5c10c86bb09afa9a34e55a7cc6dd01b4e803b88eb3fbc6caf",
+  "yocto-queue": "2eabf3096793c43934ef127fb50238dcba93074fb54f943fc62aeab616769dfc",
+  "p-limit": "edde12a4a4dbdbe8d27161cdd0853db0bab435d5dc6c15f9f4dedc27ee9bca60",
+  "eventemitter3": "1560f251de5d28d2c15ff070215d2c5c0fa06f1a92e8d6522bbee37e06d2a6b5"
+});
 const group=(project,modules,variants)=>variants.map(([name,adversarial,run])=>({
   id:project+'/'+name,project,modules,adversarial,run
 }));
