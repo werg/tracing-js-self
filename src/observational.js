@@ -340,6 +340,7 @@ function instrument(source,filename,language,siteOffset=0){
             v,f.createIdentifier(v.operand.text)]);
         return call(updating(v)?'write':'value',node,[v]);
       }
+      if(ts.isDeleteExpression(v))return call('write',node,[v]);
       if(ts.isAwaitExpression(v))
         return call('resume',node,[f.updateAwaitExpression(v,
           call('await',node,[v.expression]))]);
@@ -348,7 +349,7 @@ function instrument(source,filename,language,siteOffset=0){
         const lhs=parent&&(ts.isBinaryExpression(parent)&&parent.left===node&&
             assign(parent.operatorToken.kind)||
           updating(parent)&&parent.operand===node||
-          ts.isPrefixUnaryExpression(parent)&&parent.operator===ts.SyntaxKind.DeleteKeyword);
+          ts.isDeleteExpression(parent)&&parent.expression===node);
         const callee=parent&&((ts.isCallExpression(parent)||ts.isNewExpression(parent))&&
           parent.expression===node||ts.isTaggedTemplateExpression(parent)&&parent.tag===node);
         return lhs||callee?v:call('read',node,[v]);
