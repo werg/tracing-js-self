@@ -22,6 +22,13 @@ This repository implements a **bounded, executable prototype** for the architect
   now join the existing ordinary-data built-ins, with local Node V8
   differential assertions and archive replay. Exotic cases continue to
   fail closed; these methods are not evidence of complete ECMA-262 built-ins.
+- Bounded [ordinary-data built-ins](BOUNDED_BUILTINS.md) now include
+  `Object.assign` on owned ordinary targets/sources and the dense-array
+  `reverse`, `fill`, `copyWithin`, `toReversed` and `with` methods.
+  Existing array/string, callback and object-internal-method slices remain
+  explicitly bounded. Completed runs are covered by V8 differential probes
+  and exact archive replay; unsupported coercions/exotics fail closed. These
+  extensions do not satisfy the complete ECMAScript intrinsic inventory.
 - The original `tracing-js-self/modules` linker remains function-only,
   but the separate [bounded evaluated ESM graph](EVALUATED_MODULES.md)
   (`tracing-js-self/evaluated-modules`, `evaluated-module/1`) now instantiates
