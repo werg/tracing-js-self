@@ -92,6 +92,7 @@ function parseModule(file,text,sources){
     addDependency(from);
   };
   const addNamespace=(local,from)=>{
+    if(namespaceImports.get(local)===from)return;
     if(!validName(local)||symbols.has(local)||imports.has(local)||
        namespaceImports.has(local)||local.startsWith('__traced_eval_'))
       reject('duplicate or reserved namespace import '+local+' in '+file);
@@ -281,12 +282,12 @@ function rewrite(module,root,names,initialIdentifiers,namespaceBindings=new Map(
         reject('shadowed module function '+node.id.name+' in '+module.file);
       for(const parameter of node.params??[])
         for(const name of bindingNames(parameter))
-          if(names.has(name))
+          if(names.has(name)||namespaceBindings.has(name))
             reject('shadowed imported/module name '+name+' in '+module.file);
     }
     if(node.type==='CatchClause')
       for(const name of bindingNames(node.param))
-        if(names.has(name))reject('shadowed catch binding '+name);
+        if(names.has(name)||namespaceBindings.has(name))reject('shadowed catch binding '+name);
     if(node.type==='VariableDeclarator'&&
        !initialIdentifiers.has(node.id?.start))
       for(const name of bindingNames(node.id))
@@ -294,6 +295,10 @@ function rewrite(module,root,names,initialIdentifiers,namespaceBindings=new Map(
           reject('shadowed lexical binding '+name+' in '+module.file);
     if(node.type==='MemberExpression'&&
        node.object?.type==='Identifier'&&namespaceBindings.has(node.object.name)){
+      if((parent?.type==='AssignmentExpression'&&key==='left')||
+         (parent?.type==='UpdateExpression'&&key==='argument')||
+         (parent?.type==='UnaryExpression'&&parent.operator==='delete'))
+        reject('namespace exports are read-only live bindings');
       const key=node.computed?
         (node.property?.type==='Literal'&&typeof node.property.value==='string'?
           node.property.value:null):
