@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - 'src/observational.js'
+      - 'src/runtime.js'
+      - 'src/spec-operations.js'
+      - 'src/frontend.js'
+      - 'src/training/**'
       - 'corpus/**'
       - 'tools/build-real-corpus.mjs'
       - 'tools/audit-owned-coverage.mjs'
