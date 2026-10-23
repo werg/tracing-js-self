@@ -1214,3 +1214,32 @@ bindings and operation-level evidence.
 - [ ] Add broad source types, genuine module effect profiles, JSON Schema and
   Test262 reference/owned adapters; resolve existing declared interpreter
   refusals without substituting native-V8 diagnostics for owned traces.
+
+
+### Source-site fidelity limitation and final validation (2026-10-23)
+
+The 71 owned trajectories above are independently rechecked relative to a
+**conservative, generated strict function-entry projection** of the original
+upstream proof. The original proof is also executed in V8 with only its ESM
+`export` keywords removed and its result/input graph compared against the
+lowered V8 execution. This establishes independently checked agreement in
+the accepted function-only profile, **not complete ESM module initialization,
+load-time effects or arbitrary JavaScript equivalence**. The public semantic
+trace sites currently refer to the **lowered source**, with exact SHA-pinned
+original proof provenance attached; reverse source-site mapping to original
+file positions is an outstanding requirement for original-file-anchored
+training/evaluation. Intermediate V8 source-operation/branch checks are
+performed on the lowered source, not the unmodified ESM module.
+This limitation is material for trace readability and causal source fidelity.
+
+- [x] [Latest comprehensive CI run](https://github.com/werg/tracing-js-self/actions/runs/39991640430):
+  independent owned-candidate pipeline **passed**, writing 71 locally
+  verified, non-admitted trajectories plus a categorized refusal report
+  and Markdown readability preview.
+- [x] The other six workflows on commit
+  `bd696d0fe5aecce554932cf3b83e7ae0cb6fd696` also passed.
+- [ ] Implement certified source-site correspondence from strict owned
+  lowering to original JS/TS sources, ESM initialization traces,
+  tests for original module environment semantics, and more complete
+  independent intermediate-effect evidence before higher assurance
+  or wider upstream automatic execution.

@@ -151,9 +151,9 @@ production-grade exercise reference solutions**; `snapshots/exercism-js-inputs/`
 contains their **20 independent canonical input/expected-output sources**.
 Each snapshot has a per-file original Git blob lock and upstream LICENSE.
 
-The curated adapter attempts original solution/module execution and an explicit,
+The curated adapter evaluates the pinned original proof **with only its ESM export keywords removed** under strict V8 script semantics, alongside an explicit,
 conservative function-only source lowering to strict owned function entry.
-An independently executed V8 comparison of **original ESM semantics**,
+An independently executed V8 comparison of the original proof's function-body behavior,
 transformed function semantics, canonical expected output and observed
 argument mutations gates each owned attempt. A successful owned run must
 also pass `verifyTrainingCase`, model-visible trajectory evaluation, and
@@ -212,3 +212,5 @@ Pass `--review corpus/out/exercism-owned-review.md` to produce a
 source-linked, bounded Markdown semantic-trace sample for manual readability
 inspection, alongside all top-level refusal reasons. Neither this preview
 nor group/event ratios prove lossless semantic compression.
+
+**Source-site limitation:** The `semantic-execution/2` records reference the strict function-entry *lowered* source, not yet certified offsets in the original ESM proof file. The original proof path/revision/SHA is retained for provenance, and the original-without-export-keywords behavior is independently compared in V8, but neither general ESM execution nor original-position mappings are proven. This remains an explicit extension-plan task.
