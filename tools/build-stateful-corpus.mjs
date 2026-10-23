@@ -69,8 +69,13 @@ function __require(id) {
   const names=new Set([...scenario.modules]);
   // If a module uses a true imported dependency, preserve that dependency.
   if(names.has('p-limit'))names.add('yocto-queue');
+  if(names.has('axios-interceptors')){names.add('axios-utils');names.add('axios-bind');}
   const modules=[...names].map(encodeModule).join('\n');
-  const text=header+modules+'\n// BEGIN BENCHMARK DRIVER: '+scenario.id+'\n'+
+  // Only these declared Axios dependency names are mapped. No ambient require.
+  const linkedAliases=names.has('axios-interceptors')?
+    '__factories["../utils.js"]=__factories["axios-utils"];\n'+
+    '__factories["./helpers/bind.js"]=__factories["axios-bind"];\n':'';
+  const text=header+modules+linkedAliases+'\n// BEGIN BENCHMARK DRIVER: '+scenario.id+'\n'+
     scenario.run+'\n// END BENCHMARK DRIVER\n';
   if(!/\b(?:async\s+)?function\s+run\s*\(/.test(scenario.run))
     throw new Error('Scenario missing explicit run(seed) function: '+scenario.id);
@@ -135,7 +140,7 @@ for(const scenario of first) {
   }
  }
 }
-const counts={scenarioFamilies:first.length,productionLibraries:7,
+const counts={scenarioFamilies:first.length,productionLibraries:8,
  crossLibraryScenarios:first.filter(s=>s.project==='application').length,
  requested:first.length*perScenario,examples:records.length,
  agreed:records.filter(x=>x.verified).length,disagreed:failed.filter(x=>x.status==='reference_mismatch').length,
