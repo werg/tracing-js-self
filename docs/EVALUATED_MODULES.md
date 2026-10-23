@@ -71,11 +71,13 @@ resolution is checked at link time, including unused imports and re-exports.
 
 Dependencies are evaluated once per graph in depth-first dependency order,
 and their bounded module-side effects occur before dependent module bodies.
-The linker currently **rejects all cyclic evaluation graphs** rather than
-emulating full cyclic ECMAScript module instantiation. Each call to
-`executeEvaluatedModules` starts a **fresh** owned realm; state does *not*
-persist across calls to this API. Function-only cycles are handled by the
-separate, older `static-module/1` linker.
+Synchronous cyclic imports follow DFS dependency initialization, with
+function declarations instantiated before module bodies and mutable lexical
+reads referencing the original owned binding. A cyclic read before
+initialization produces a guest abrupt completion. Cycles with top-level
+`await` fail closed: the current machine has no complete ESM async-dependency
+or deadlock scheduler. Each call to `executeEvaluatedModules` starts a
+**fresh** owned realm; state does not persist across separate calls.
 
 A module may `await` an internally owned Promise during initialization;
 the entry also awaits an exported function result. Errors and rejections
