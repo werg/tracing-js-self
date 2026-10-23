@@ -210,8 +210,6 @@ export class Runtime {
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     s.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
-    s.envs[global].bindings.NaN={kind:'const',initialized:true,token:token(['num','NaN']),version:0};
-    s.envs[global].bindings.Infinity={kind:'const',initialized:true,token:token(['num','+Infinity']),version:0};
     s.control.a0.globalEnvId=global;
     s.control.a0.activeFrameId=this.newFrame(s,source.entry,global);
     s.control.a0.status='running';this.started=true;
