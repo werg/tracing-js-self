@@ -83,13 +83,25 @@ test('var object destructuring uses hoisted function cells with owned V8 replay'
     {a:2,b:7}),7);
 });
 
+test('computed destructuring keys run once in owned source order',()=>{
+  assert.deepEqual(differential(
+    'let calls=0;function key(){calls++;return calls===1?"a":"b";}' +
+    'const {[key()]:first,[key()]:second}=self;' +
+    'return [first,second,calls];',{a:3,b:8}),[3,8,2]);
+  assert.deepEqual(differential(
+    'const {[self.key]:value}=self;return value;',
+    {key:'x',x:17}),17);
+  assert.equal(differential(
+    'const {[2]:third}=self;return third;',
+    {'2':31}),31);
+});
+
 test('unowned object-pattern variants reject before trace publication',()=>{
   const bundles=[];
   const env=createBoundedNatlangEnvironment({EvalFailure,
     onTrace:bundle=>bundles.push(bundle)});
   try{
     for(const code of [
-      'const {[self.k]:a}=self; return a;',
       'const {a,...rest}=self; return rest;',
       'const {a:x,b:x}=self; return x;',
       'const {a}=self, b=2; return a+b;'
