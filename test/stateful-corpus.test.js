@@ -23,7 +23,8 @@ test('60 adversarial production scenarios have unique names, pinned module sourc
   assert(existsSync('corpus/stateful/upstream/'+name+'/LICENSE'),name);
   assert(readFileSync('corpus/stateful/upstream/'+meta.path,'utf8').length>100);
  }
- const counts=Object.groupBy(scenarios,row=>row.project);
+ const counts={};
+ for(const row of scenarios)(counts[row.project]??=[]).push(row);
  assert.equal(Object.keys(counts).length,8);
  assert.equal(counts.application.length,6);
 });
