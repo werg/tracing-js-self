@@ -7,9 +7,9 @@ import {spawnSync} from 'node:child_process';
 import {scenarios,upstream} from '../corpus/stateful/cases.mjs';
 
 test('60 adversarial production scenarios have unique names, pinned module sources and full licenses',()=>{
- assert.equal(scenarios.length,60);
+ assert.equal(scenarios.length,67);
  assert.equal(Object.keys(upstream).length,7);
- assert.equal(new Set(scenarios.map(x=>x.id)).size,60);
+ assert.equal(new Set(scenarios.map(x=>x.id)).size,67);
  for(const row of scenarios){
   assert.match(row.id,/^[a-z\d-]+\/[a-z\d-]+$/);
   assert(row.modules.length>0);

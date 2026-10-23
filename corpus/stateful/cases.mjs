@@ -66,6 +66,12 @@ function run(seed){
  bus.emit('__proto__',seed);bus.emit('constructor',seed+1);
  bus.emit('toString',seed+2);return {log,keys:[...bus.all.keys()]};
 }`],
+ ['uncaught-listener-error','uncaught callback error after observable console effect',`
+function run(seed){
+ const bus=__require('mitt').default();
+ bus.on('boom',v=>{console.log('mitt-before-error',v);throw new Error('mitt-uncaught:'+v)});
+ bus.emit('boom',seed);return 'unreachable';
+}`],
  ['listener-error','throw aborts remaining handlers and wildcard delivery',`
 function run(seed){
  const bus=__require('mitt').default(),log=[];
@@ -128,6 +134,12 @@ function run(seed){
  store.setState({list:store.getState().list});
  return {log,initial:store.getInitialState(),state:store.getState()};
 }`],
+ ['uncaught-subscriber-error','state change triggers an uncaught listener error after logging',`
+function run(seed){
+ const store=__require('zustand').createStore(()=>({n:0}));
+ store.subscribe((v,p)=>{console.log('zustand-change',p.n,v.n);throw new Error('zustand-uncaught:'+seed)});
+ store.setState({n:seed+1});return 'unreachable';
+}`],
  ['async-update','microtasks modify state between subscriptions',`
 async function run(seed){
  const store=__require('zustand').createStore(()=>({n:0})),log=[];
@@ -183,6 +195,12 @@ function run(seed){
  let error;try{em.emit('go',seed)}catch(e){error=e.message}
  return {log,error,count:em.listenerCount('go')};
 }`],
+ ['uncaught-event-error','EventEmitter callback records an effect then throws',`
+function run(seed){
+ const E=__require('eventemitter3'),em=new E();
+ em.on('event',v=>{console.log('eventemitter-before-error',v);throw Error('event-uncaught:'+v)});
+ em.emit('event',seed);return 'unreachable';
+}`],
  ['remove-all-then-readd','listener identity and namespace reset',`
 function run(seed){
  const E=__require('eventemitter3'),em=new E(),log=[];
@@ -236,6 +254,13 @@ function run(seed){
  const iterator=q.drain(),first=iterator.next().value;q.enqueue(seed+4);
  const second=iterator.next().value;
  return {first,second,left:[...q],size:q.size};
+}`],
+ ['iterator-abrupt-exit','queue iterator interrupted by error after first delivery',`
+function run(seed){
+ const Queue=__require('yocto-queue').default,q=new Queue();
+ q.enqueue(seed);q.enqueue(seed+1);
+ for(const value of q){console.info('queue-visited',value);throw new Error('queue-interrupt:'+seed)}
+ return 'unreachable';
 }`],
  ['reference-aliases','same object references across queue positions',`
 function run(seed){
@@ -293,6 +318,13 @@ function run(seed){
  const cache=new LRU({maxSize:2,onEviction:(k,v)=>{seen.n++;log.push([k,v,seen.n])}});
  cache.set('a',seed);cache.set('b',seed+1);cache.set('c',seed+2);cache.set('d',seed+3);
  return {log,seen,entries:[...cache]};
+}`],
+ ['eviction-abrupt-completion','cache eviction callback throws after durable observation',`
+function run(seed){
+ const LRU=__require('quick-lru').default;
+ const c=new LRU({maxSize:2,onEviction:(k,v)=>{console.warn('evicting',k,v);throw Error('eviction-uncaught:'+seed)}});
+ for(let i=0;i<5;i++)c.set('k'+i,seed+i);
+ return 'unreachable';
 }`],
  ['clear-and-restore','clear resets entries and generations',`
 function run(seed){
@@ -354,6 +386,15 @@ async function run(seed){
   async(c,next)=>{c.count*=2;await next()}]);
  const top=compose([async(c,next)=>{c.trace.push('top');await next();c.trace.push('top-end')},nested]);
  await top(ctx,()=>{ctx.trace.push('root')});return ctx;
+}`],
+ ['uncaught-downstream-error','asynchronous middleware rejects after side effect',`
+async function run(seed){
+ const compose=__require('koa-compose'),ctx={count:0};
+ const pipeline=compose([
+  async(c,next)=>{c.count++;console.log('middleware-start',c.count);await next()},
+  async(c,next)=>{c.count++;console.error('middleware-failure',seed);throw new Error('middleware-uncaught:'+seed)}
+ ]);
+ await pipeline(ctx);return 'unreachable';
 }`],
  ['bad-middleware','invalid argument throws before request begins',`
 function run(seed){
@@ -418,6 +459,11 @@ async function run(seed){
   log.push('outer');const v=await limit(async()=>{log.push('inner');return seed+1});
   log.push('joined');return v+1});
  return {log,result};
+}`],
+ ['uncaught-worker-rejection','bounded worker rejects after logged start',`
+async function run(seed){
+ const limit=__require('p-limit').default(1);
+ return await limit(async()=>{console.log('worker-start',seed);await Promise.resolve();throw new Error('worker-uncaught:'+seed)});
 }`],
  ['sync-throw','synchronous work failure becomes rejected promise',`
 async function run(seed){

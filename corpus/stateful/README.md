@@ -1,6 +1,6 @@
 # Stateful and adversarial real-source benchmark
 
-This corpus extends the pinned Lodash/VS Code functions with **60 stateful
+This corpus extends the pinned Lodash/VS Code functions with **67 stateful
 scenario families** using **seven real production libraries**. Each vendor
 file under `upstream/` is copied from a specified Git revision without
 editing its source. Corresponding MIT license notices are retained.
@@ -33,7 +33,7 @@ npm run corpus:stateful -- --per-scenario 12 \
   --review corpus/out/stateful-review.md
 ```
 
-This requests **720 executions** across 60 scenario families (12 varied
+This requests **804 executions** across 67 scenario families (12 varied
 seeds each); use `--per-scenario 2 --limit 10` for a smoke run. The report
 includes every failure, the source family and split, program/module revision
 hashes, mutation counts, outcomes, and readability examples. The
@@ -77,3 +77,11 @@ control events merely to reduce size.
 Security: only trusted pinned sources can be executed; Node `vm` is not an
 isolation boundary for malicious third-party programs. The corpus is not a
 general-purpose arbitrary-code execution service.
+
+## Abrupt-completion adversarial cases
+
+Seven additional cases finish in a **guest throw or rejected root promise**
+after a real library callback, middleware or queue operation. These record
+explicit console effects before failure, checked in the separate reference
+run. An exception is an expected benchmark path, not a successful return;
+the observed failure kind and message must still match the reference.
