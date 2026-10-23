@@ -6,7 +6,7 @@ function inlineEligible(bundle,codeId,ancestry) {
   const program=bundle.programs[codeId];
   if(!program || program.async || ancestry.includes(codeId))return false;
   const meaningful=program.instructions.filter(i=>[
-    'BINARY','UNARY','GET_PROP','PUT_PROP','CALL','JUMP_IF_FALSE',
+    'BINARY','UNARY','UPDATE_BINDING','GET_PROP','PUT_PROP','CALL','JUMP_IF_FALSE',
     'LOGICAL_JUMP','RETURN','NEW_OBJECT','NEW_ARRAY','INIT'
   ].includes(i.op));
   if(meaningful.length>24 || program.instructions.some(i=>i.op==='AWAIT'))return false;
