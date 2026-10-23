@@ -84,7 +84,8 @@ export function synchronizeLiveGraph(initialHeap,finalHeap,root,original,result,
       const length=entity.kind==='array'?decode(entity.properties.length?.value):0;
       if(entity.kind==='array'&&(!Number.isSafeInteger(length)||length<0||length>4096))
         throw new RangeError('Live array exceeds the data-only boundary');
-      objects.set(id,entity.kind==='array'?new Array(length):{});
+      objects.set(id,entity.kind==='array'?new Array(length):
+        entity.prototype===null?Object.create(null):{});
     }
     plan(id);
     return objects.get(id);
