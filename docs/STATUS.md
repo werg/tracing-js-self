@@ -38,8 +38,13 @@ This repository implements a **bounded, executable prototype** for the architect
   unsupported. Namespace-style statically named import reads are rewritten to
   live export cells, but actual module namespace exotic objects, namespace
   method receivers and reflection remain unimplemented. Arbitrary package
-  imports and persistent module realms remain unimplemented. The data-only
-  natlang retained adapter is a different, limited interface.
+  imports and physical suspended/serialized module realms remain unimplemented.
+  The separate replay-backed `evaluated-module-session` API now maintains
+  **observational** per-session module state and stable returned ordinary
+  data-object identities across up to 32 deterministic primitive-argument
+  invocations by replaying the complete history without native effects. It is
+  neither a durable VM continuation nor a general persistent ESM Module Record.
+  The data-only natlang retained adapter is a different, limited interface.
 - The `werg/natlang` Node runtime now has an explicit opt-in
   `installOwnedTracingEnvironment(factory)` installer, wiring **both** its
   per-task and retained module-evaluator factories with a fail-closed
