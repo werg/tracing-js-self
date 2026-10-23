@@ -68,7 +68,7 @@ diagnostic V8 success as sufficient.
 These are **locally verified candidates only**. They remain non-admitted until
 the independent megatoken schema, teacher-conditioning, model-serving and
 execution-validation gates pass. The optional floor guards against regressions
-relative to the dated 24/156 owned baseline; it is not a completeness claim.
+relative to the original dated 24/156 owned baseline (the current verified floor is 89/156); it is not a completeness claim.
 Unsupported syntax, unsafe guest callbacks, oversized source, effectful
 programs and reference disagreement remain explicit coverage failures.
 
