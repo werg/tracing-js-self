@@ -47,11 +47,18 @@ test('for-of owns destructured pairs and captured per-iteration cells',()=>{
     for(const [a,b] of rows){fs.push(()=>a*10+b);}
     return [fs[0](),fs[1]()];}`,[[[1,2],[3,4]]]);
 });
+test('array pair default expressions execute only for undefined per iteration',()=>{
+  verified(`function f(rows){const out=[];
+    for(const [a=7,b=a+1] of rows)out.push([a,b]);
+    return out;}`,[[[undefined,undefined],[2,undefined],[0,null]]]);
+  verified(`function f(rows){let n=0;const fs=[];
+    for(const [a=++n,b=a+n] of rows)fs.push(()=>[a,b,n]);
+    return [fs[0](),fs[1](),n];}`,[[[undefined,undefined],[undefined,undefined]]]);
+});
 test('for-of refuses non-array iterables, nested patterns and for-await',()=>{
   for(const [code,args] of [
     ['function f(s){let z="";for(const x of s)z+=x;return z;}', ['abc']],
     ['function f(xs){for(const [[x],y] of xs){}return 1;}',[[[1,2]]]],
-    ['function f(xs){for(const [x=2,y] of xs){}return 1;}',[[[1,2]]]],
     ['function f(xs){for(var [x,y] of xs){}return 1;}',[[[1,2]]]],
     ['function f(xs){for(const [x,y] of xs){}return 1;}',[[1,2]]],
     ['async function f(xs){for await(const x of xs){}return 1;}',[[1,2]]]

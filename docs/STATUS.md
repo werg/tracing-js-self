@@ -1,5 +1,10 @@
 # Implementation status (0.2.0)
 
+## Bounded for-of array defaults (October 23, 2026)
+
+- The owned dense-array `for...of` slice now handles undefined-only `= default` initialization of direct array-binding identifiers in left-to-right, per-iteration lexical scopes. Node V8 differential and exact replay tests cover missing, null, and captured values; arbitrary iterators, rest patterns, and complete TypeScript execution remain unsupported.
+
+
 ## Nested, defaulted TypeScript bindings (October 23, 2026)
 
 - Strict owned single-initializer `let`/`const` binding declarations now recursively support bounded object/array patterns (maximum 32 nodes, depth 4) and lazy `= default` initializers. Nested reads, undefined-only default branching, guest calls and lexical initialization execute in the owned trace rather than host TypeScript or V8; differential regression tests verify representative V8 return and mutation graphs and exact archive replay. Static object keys and owned standard arrays remain required. Rest patterns, custom iterators and unmodeled host abstractions still fail closed; this is **not** general TypeScript/ECMAScript compatibility.

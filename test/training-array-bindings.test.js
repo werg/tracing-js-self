@@ -78,6 +78,14 @@ test('nested TypeScript object and array patterns have owned lazy defaults',()=>
     {items:[{a:3},{b:[]}] }),[3,8]);
 });
 
+test('TypeScript for-of defaults preserve order and distinguish null from undefined',()=>{
+  assert.deepEqual(differential(
+    'let checks=0;const calls=[];' +
+    'for(const [x=++checks,y=x+5] of self.rows)calls.push([x,y]);' +
+    'return [calls,checks];',
+    {rows:[[undefined,undefined],[7,undefined],[null,10]]}),
+    [[[1,6],[7,12],[null,10]],1]);
+});
 test('nested binding failures never publish successful traces',()=>{
   const traces=[];
   const env=createBoundedNatlangEnvironment({EvalFailure,onTrace:b=>traces.push(b)});

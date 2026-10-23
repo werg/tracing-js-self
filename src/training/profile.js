@@ -297,10 +297,13 @@ export function parseTraining(source) {
         let bindings=null;
         if(array){
           if(!target.elements.length||target.elements.length>32||
-             target.elements.some(x=>x?.type!=='Identifier'))
+             target.elements.some(x=>x?.type!=='Identifier'&&
+               !(x?.type==='AssignmentPattern'&&x.left.type==='Identifier')))
             reject(target,'for-of array binding requires 1..32 identifiers');
           bindings=target.elements.map((element,index)=>({
-            ...span(element),index,name:element.name
+            ...span(element),index,
+            name:element.type==='Identifier'?element.name:element.left.name,
+            fallback:element.type==='AssignmentPattern'?expr(element.right):null
           }));
           if(new Set(bindings.map(x=>x.name)).size!==bindings.length)
             reject(target,'duplicate for-of array binding');
@@ -445,6 +448,8 @@ export function parseTraining(source) {
             for(let cursor=loopEnv;cursor?.parent;cursor=cursor.parent)
               if(cursor.names.has('Array'))
                 reject(n,'for-of array binding requires unshadowed owned Array');
+          for(const binding of n.bindings??[])
+            if(binding.fallback)value(binding.fallback,loopEnv);
           statement(n.body,loopEnv);
           break;
         }

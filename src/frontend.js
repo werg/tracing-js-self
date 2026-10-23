@@ -485,6 +485,15 @@ export function compile(ast) {
               emit('GET',item,binding);
               emit('CONST',{value:['num',binding.index]},binding);
               emit('GET_PROP',null,binding);
+              if(binding.fallback){
+                emit('DUP',null,binding);
+                emit('CONST',{value:['undefined']},binding);
+                emit('BINARY','===',binding);
+                const skip=emit('JUMP_IF_FALSE',null,binding);
+                emit('POP',null,binding);
+                expr(binding.fallback);
+                instructions[skip].arg=instructions.length;
+              }
               emit('INIT',binding.name,binding);
             }
           }
