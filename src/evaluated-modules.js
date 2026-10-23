@@ -299,6 +299,11 @@ function rewrite(module,root,names,initialIdentifiers,namespaceBindings=new Map(
          (parent?.type==='UpdateExpression'&&key==='argument')||
          (parent?.type==='UnaryExpression'&&parent.operator==='delete'))
         reject('namespace exports are read-only live bindings');
+      // ns.fn() receives a namespace exotic as its strict this receiver.
+      // Bare lexical fn() does not. Without a namespace identity in the
+      // owned heap that call transformation would silently change semantics.
+      if(parent?.type==='CallExpression'&&key==='callee')
+        reject('namespace method call needs an owned namespace receiver');
       const exportedName=node.computed?
         (node.property?.type==='Literal'&&typeof node.property.value==='string'?
           node.property.value:null):
