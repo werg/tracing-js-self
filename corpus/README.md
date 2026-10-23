@@ -61,7 +61,7 @@ The pinned 936-invocation V8 observation analysis and 156-invocation owned-inter
 
 ## Stateful adversarial programs
 
-The separate [stateful benchmark](stateful/README.md) adds **60 real-library
+The separate [stateful benchmark](stateful/README.md) adds **67 real-library
 scenario families** exercised across seven pinned MIT-licensed production
 libraries (mitt, Zustand, eventemitter3, yocto-queue, quick-lru, koa-compose,
 and p-limit). It includes mutable subscriptions, reentrant callbacks,
@@ -75,10 +75,13 @@ npm run corpus:stateful -- --per-scenario 12 \
   --review corpus/out/stateful-review.md
 ```
 
-The expected full run attempts **720 stateful invocations** in addition to
+The expected full run attempts **804 stateful invocations** in addition to
 the initial 936 utility invocations. Family splits are package-oriented.
 These runs are independently compared at **final observable state and explicit
 side effects**, not independently audited operation-by-operation. Like the
 original utility benchmark, they remain **native V8 diagnostics**, not
 admitted owned `semantic-execution/2` training data. The original
 vendor source and licenses are under `stateful/upstream/`.
+
+The [dated 804-run findings and trace-quality assessment](stateful/findings/2026-10-23/README.md)
+record exact coverage and remaining evidence limitations.
