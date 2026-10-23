@@ -50,13 +50,8 @@ test('Object.assign admits simple scalar-free candidate traces through independe
   assert.equal(validateBundle(check.exported.sidecar.archive).valid,true);
 });
 test('Object.assign rejects unsafe exotic sources without returning successful guest values',()=>{
-  const runtime=createRuntime().startEntry({
+  assert.throws(()=>createRuntime().startEntry({
     text:'"use strict";function f(){return Object.assign({},new Proxy({x:2},{}));}',
     functionName:'f',args:[]
-  });
-  const outcome=runtime.drive();
-  assert.notEqual(outcome.kind,'terminated');
-  const bundle=JSON.parse(JSON.stringify(runtime.exportRun()));
-  assert.equal(validateBundle(bundle).valid,true);
-  assert.equal(replayExact(bundle).valid,true);
+  }),/Unsupported training-js\/1 NewExpression/);
 });
