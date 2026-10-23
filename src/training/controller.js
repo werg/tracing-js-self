@@ -72,6 +72,7 @@ export class SemanticController {
         ...['abs','ceil','floor','trunc','round','max','min','pow','sign','sqrt','hypot']
           .map(x=>'Math.'+x),
         ...['isFinite','isNaN','isInteger','isSafeInteger'].map(x=>'Number.'+x),
+        ...['toString','toFixed'].map(x=>'Number.prototype.'+x),
         ...['push','pop','includes','indexOf','lastIndexOf','slice','concat',
           'join','splice','unshift','shift','at'].map(x=>'Array.prototype.'+x),
         ...['charAt','charCodeAt','at','substring','substr','slice','indexOf','lastIndexOf',
