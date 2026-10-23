@@ -10,7 +10,7 @@ const selection={
   'function.define':'alloc','object.allocate':'alloc','array.allocate':'alloc',
   'property.read':'read','property.write':'write','property.update':'write',
   'call.enter':'call','call.return':'return','completion.throw':'throw',
-  'control.branch':'branch','async.await':'await',
+  'control.branch':'branch','environment.iteration':'carry','async.await':'await',
   'external.input.deliver':'observe','job.enter':'resume'
 };
 function allocation(p) {
@@ -71,6 +71,10 @@ export function normalizeJournal(bundle) {
       const change=e.stateChanges.find(p=>p.table==='frames' && p.id===e.invocationId);
       if(change && change.after.pc<=change.before.pc)op='loop';
     }
+    // Getter/setter/proxy-trap dispatch is an effective user-function call.
+    // It is not modeled as a mysterious internal [[Get]] or [[Set]] step.
+    const invoked=e.causes?.find(c=>c.kind==='invocation');
+    if(invoked && e.operation!=='call.enter')op='call';
     if(!op)continue;
     const args=inputs.operands??[];
     const source=sites.get(e.siteId);
@@ -90,9 +94,27 @@ export function normalizeJournal(bundle) {
     }
     if(op==='branch'||op==='loop') {
       const frame=e.stateChanges.find(p=>p.table==='frames' && p.id===e.invocationId);
-      r.decision=op==='branch'?e.result?.[1]: 'backedge';
-      r.successor=frame?.after?.pc??null;
+      r.decision=op==='branch'?e.result?.[1]:'backedge';
+      r.successor=frame?.after?.pc??null; // private audit mapping only
+      if(op==='branch') {
+        const inst=bundle.programs[e.codeId]?.instructions.find(i=>i.siteId===e.siteId);
+        if(!inst || !['JUMP_IF_FALSE','LOGICAL_JUMP'].includes(inst.op) ||
+           e.result?.[0]!=='bool'||typeof e.result[1]!=='boolean'||!args.length)
+          throw new Error('Missing source-level branch evidence');
+        r.test=args[0];
+        r.path=inst.op==='JUMP_IF_FALSE'?(e.result[1]?'else':'then'):
+          (e.result[1]?'use-left':'evaluate-right');
+      }
       lastControl.set(e.invocationId,r.id);
+    }
+    if(op==='carry') {
+      const read=e.readObservations?.find(x=>x.kind==='binding');
+      const created=e.stateChanges.find(p=>p.table==='envs'&&p.before===null);
+      const copied=read&&created?.after?.bindings?.[read.name];
+      if(!copied || !read || !created)
+        throw new Error('Iteration cell copy has no committed source and destination');
+      r.from={env:read.envId,key:read.name,version:read.version};
+      r.to={env:created.id,key:read.name,version:copied.version??0};
     }
     if(op==='call') {
       const child=e.causes?.find(c=>c.kind==='invocation');
@@ -104,8 +126,9 @@ export function normalizeJournal(bundle) {
         const activationEnv=created?.after?.envId??null;
         const createdEnv=e.stateChanges.find(p=>p.table==='envs'&&p.id===activationEnv);
         r.captures=createdEnv?.after?.parent??null;
-        r.receiver=args[0]?.[0]==='method'?args[0][2]:['undefined'];
-        r.arguments=args.slice(1);
+        r.receiver=created?.after?.thisValue??['undefined'];
+        const params=bundle.programs[r.code]?.params??[];
+        r.arguments=params.map(name=>createdEnv?.after?.bindings?.[name]?.token?.value??['undefined']);
       } else if(effect) {
         op=r.op='request';
         const created=e.stateChanges.find(p=>p.table==='effects' && p.id===effect.effectId);
@@ -137,7 +160,7 @@ export function normalizeJournal(bundle) {
       const heap=e.stateChanges.filter(p=>p.table==='heap' && p.before===null);
       r.allocations=heap.map(allocation);
     }
-    if(['binding.write','binding.initialize','binding.update'].includes(e.operation)) {
+    if(['binding.write','binding.initialize','binding.update','function.define'].includes(e.operation)) {
       for(const p of e.stateChanges.filter(p=>p.table==='envs')) {
         const instruction=bundle.programs[e.codeId]?.instructions.find(x=>x.siteId===e.siteId);
         const key=typeof instruction?.arg==='string'?instruction.arg:instruction?.arg?.name;
