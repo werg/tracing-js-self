@@ -13,7 +13,7 @@ export function verifyTrainingCase({source,entry,args=[],seed=null,lineage=null,
     maxSteps=10000,maxGenerated=256}={}) {
   let runtime, progress;
   try {
-    runtime=createRuntime({maxSteps}).startEntry({text:source,functionName:entry,args});
+    runtime=createRuntime({maxSteps,randomSeed:seed}).startEntry({text:source,functionName:entry,args});
   } catch(error) {
     return {status:'unsupported',reason:String(error.message)};
   }
@@ -37,7 +37,8 @@ export function verifyTrainingCase({source,entry,args=[],seed=null,lineage=null,
     return {status:'unsupported',reason:'Only completed synchronous effect-free entries qualify'};
   let reference;
   try {reference=referenceOutcome({source,entry,
-    args:runtime.entrySpec.arguments,initialHeap:runtime.initialState.heap});}
+    args:runtime.entrySpec.arguments,initialHeap:runtime.initialState.heap,
+      randomSeed:runtime.initialState.control.a0.randomSeed??null});}
   catch(error) {return {status:'reference_mismatch',
     reason:'Independent reference failed: '+String(error.message)};}
   let owned;
@@ -108,7 +109,8 @@ export function recheckIndependentTrainingEvidence(exported) {
     if(typeof source!=='string')
       throw new Error('Missing original training source');
     const reference=referenceOutcome({source,entry:functionName,args,
-      initialHeap:archive.initialState.heap});
+      initialHeap:archive.initialState.heap,
+      randomSeed:archive.initialState.control.a0.randomSeed??null});
     const completion=archive.finalState.control.a0.completion;
     const owned={kind:'return',graph:describeGraph(realizeGraph(archive.finalState.heap,
       [...args,completion.value]))};
