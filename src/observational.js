@@ -66,7 +66,7 @@ function hydrate(g){
   for(const row of g.objects){
     const target=objects.get(row.id);
     for(const [key,tag] of row.properties)Object.defineProperty(target,key,{
-      value:value(tag),writable:true,enumerable:true,configurable:key!=='length'});
+      value:value(tag),writable:true,enumerable:key!=='length',configurable:key!=='length'});
   }
   return g.roots.map(value);
 }
