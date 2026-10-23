@@ -293,24 +293,27 @@ export function compile(ast) {
           break;
         }
         case 'For':{
-          const lexical=n.init?.type==='Variable'&&n.init.kind==='let';
+          const declarations=n.init?.type==='VariableGroup'?n.init.declarations:
+            n.init?.type==='Variable'?[n.init]:[];
+          const lexical=declarations[0]?.kind==='let';
+          const loopNames=declarations.map(d=>d.id);
           if(lexical){
             emit('ENTER_SCOPE',null,n);
-            emit('DECLARE',{name:n.init.id,kind:n.init.kind},n.init);
+            for(const d of declarations)emit('DECLARE',{name:d.id,kind:d.kind},d);
           }
           if(n.init){
-            if(n.init.type==='Variable')stmt(n.init);
+            if(['Variable','VariableGroup'].includes(n.init.type))stmt(n.init);
             else{expr(n.init);emit('POP',null,n.init);}
           }
           const entry=emit('LOOP_ENTER',null,n);
           // ECMA-262 CreatePerIterationEnvironment: a new captured binding
           // before the first test and again between each body and update.
-          if(lexical)emit('CLONE_LOOP_ENV',n.init.id,n);
+          if(lexical)emit('CLONE_LOOP_ENV',loopNames,n);
           const top=instructions.length;
           const no=n.test?(expr(n.test),emit('JUMP_IF_FALSE',null,n.test)):null;
           loopDepth++;stmt(n.body);loopDepth--;
           const updatePc=instructions.length;
-          if(lexical)emit('CLONE_LOOP_ENV',n.init.id,n);
+          if(lexical)emit('CLONE_LOOP_ENV',loopNames,n);
           if(n.update){expr(n.update);emit('POP',null,n.update);}
           emit('JUMP',top,n);
           const end=instructions.length;
