@@ -2,6 +2,7 @@ name: Temporary corpus development checkout
 on:
   push:
     branches: [fix/corpus-last-96-20261023]
+  pull_request:
 permissions:
   contents: read
 jobs:
