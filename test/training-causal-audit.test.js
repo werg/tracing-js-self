@@ -8,7 +8,7 @@ const generated=record=>({mode:'generated',loss:'semantic',events:[{track:'t0',r
 function episode({length=20,maxBytes=512}={}){
  const code=encodeRecord('code',{sourceId:'s1',text:'x'.repeat(length),
    codes:[{id:'c1',params:[],async:false}],sites:[],staticFunctions:[]});
- const input=encodeRecord('value',{entry:'f',graph:{roots:[],objects:[]}});
+ const input=encodeRecord('value',{entry:'f',invocation:'i1',graph:{roots:[],objects:[]}});
  const groups=[...fragmentLine(code,{maxBytes}).map(observed),
    ...fragmentLine(input,{maxBytes}).map(observed),
    generated(encodeRecord('enter',{invocation:'i1',entry:'f',code:'c1',arguments:[]})),
