@@ -4,9 +4,11 @@
 // executes it, and a locally-verified owned trace is NOT corpus admission.
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
+import {createHash} from 'node:crypto';
 import ts from 'typescript';
-import {verifyTrainingCase} from '../src/training/admit.js';
-import {cases} from '../corpus/cases.mjs';
+import {verifyTrainingCase,recheckIndependentTrainingEvidence} from '../src/training/admit.js';
+import {cases,sources} from '../corpus/cases.mjs';
+import {original,corpusSplit} from '../corpus/pinned-source.mjs';
 import {buildOwnedFixtureEntry} from '../corpus/owned-fixture-adapter.mjs';
 
 const argv=process.argv.slice(2);
@@ -14,11 +16,19 @@ const arg=(name,fallback)=>argv.includes(name)?argv[argv.indexOf(name)+1]:fallba
 const input=resolve(arg('--input','corpus/out/traces.jsonl'));
 const out=resolve(arg('--output','corpus/out/owned-coverage.json'));
 const perFunction=Number(arg('--per-function','2'));
+const localEpisodesFlag=arg('--local-episodes',null);
+const localEpisodesPath=localEpisodesFlag===null?null:resolve(localEpisodesFlag);
+const minOwnedVerified=Number(arg('--min-owned-verified','0'));
 if(!Number.isInteger(perFunction)||perFunction<1||perFunction>12)
   throw new TypeError('per-function must be 1..12');
+if(!Number.isSafeInteger(minOwnedVerified)||minOwnedVerified<0 ||
+   (argv.includes('--local-episodes') && (!localEpisodesFlag||localEpisodesFlag.startsWith('--'))))
+  throw new TypeError('Invalid local-episodes path or minimum owned verified count');
 const records=readFileSync(input,'utf8').split('\n').filter(Boolean).map(JSON.parse);
 const casesByName=new Map(cases.map(c=>[c.project+'/'+c.file+'/'+c.entry,c]));
 const observations=[],counts={},families=new Map(),blockers=new Map();
+const localEpisodes=[];
+const hash=text=>createHash('sha256').update(text).digest('hex');
 const add=(obj,key)=>obj[key]=(obj[key]??0)+1;
 for(const row of records){
   if(row.schema!=='real-source-corpus/1')
@@ -26,11 +36,22 @@ for(const row of records){
   if(row.index>=perFunction)continue;
   const spec=casesByName.get(row.family);
   if(!spec)throw new TypeError('Unknown real source family '+row.family);
-  let status,reason=null;
+  // The native report is a diagnostic input, never an authority to choose
+  // different source bytes, an invented split or a renamed upstream revision.
+  const pinned=original(spec);
+  const expected=sources[spec.project];
+  if(row.project!==spec.project||row.pinnedRevision!==expected.revision||
+     row.license!==expected.license||row.sourceURL!==pinned.sourceURL||
+     row.sourceFileSha256!==hash(pinned.sourceFile)||
+     row.observation?.source?.originalText!==pinned.text||
+     row.split!==corpusSplit(row.family)||
+     !Number.isInteger(row.index)||row.index<0)
+    throw new TypeError('Pinned corpus provenance mismatch: '+row.family+' #'+row.index);
+  let status,reason=null,checked;
   if(!row.verified||!row.returned){
     status='native_not_verified';
   }else{
-    let source=row.observation.source.originalText;
+    let source=pinned.text;
     // Removing TS export modifiers and Lodash CommonJS assignment is the
     // packaging adapter; the original function bodies are never rewritten.
     source=source.replace(/\bexport\s+(?=(?:async\s+)?function\b)/g,'')
@@ -60,10 +81,29 @@ for(const row of records){
       status='source_bundle_limit';
       reason='Original entry plus genuine helpers exceeds current model source bundle';
     }else{
-      const checked=verifyTrainingCase({source,entry,args,
+      checked=verifyTrainingCase({source,entry,args,
         maxSteps:10000,maxGenerated:1024});
       status=checked.status;
       reason=checked.reason??null;
+    }
+  }
+  if(status==='locally_verified'){
+    // Re-run independent outcome and source-operation/control audits from the
+    // serialized archive before emitting any local training candidate.
+    const evidence=recheckIndependentTrainingEvidence(checked.exported);
+    if(!evidence.valid){
+      status='evidence_recheck_failure';
+      reason=evidence.reason;
+    }else if(localEpisodesPath){
+      checked.exported.sidecar.split=row.split;
+      checked.exported.sidecar.provenance={
+        corpus:'pinned-real-source',family:row.family,index:row.index,
+        project:row.project,revision:row.pinnedRevision,license:row.license,
+        sourceURL:row.sourceURL,sourceFileSha256:row.sourceFileSha256,
+        independentNativeFinalOutcome:true,independentOwnedReplay:true,
+        admission:'pending external megatoken gate'
+      };
+      localEpisodes.push(JSON.stringify(checked.exported));
     }
   }
   const item={family:row.family,index:row.index,sourceURL:row.sourceURL,
@@ -85,8 +125,19 @@ const output={schema:'real-source-owned-coverage/1',admitted:false,
   ownedVerified:counts.locally_verified??0,counts,
   blockers:Object.fromEntries([...blockers].sort((a,b)=>b[1]-a[1])),
   byFamily:Object.fromEntries([...families].sort((a,b)=>a[0].localeCompare(b[0]))),
+  locallyVerifiedEpisodes:localEpisodesPath?localEpisodes.length:null,
+  localEpisodesFile:localEpisodesPath,
+  evidence:'owned execution, replay, V8 outcome and intermediate operation/control rechecked',
   examples:observations};
 mkdirSync(dirname(out),{recursive:true});
 writeFileSync(out,JSON.stringify(output,null,2)+'\n');
+if(localEpisodesPath){
+  mkdirSync(dirname(localEpisodesPath),{recursive:true});
+  writeFileSync(localEpisodesPath,localEpisodes.join('\n')+(localEpisodes.length?'\n':''));
+}
 console.log(JSON.stringify({families:output.totalFamilies,invocations:output.invocations,
-  ownedVerified:output.ownedVerified,blockers:output.blockers}));
+  ownedVerified:output.ownedVerified,blockers:output.blockers,
+  localEpisodes:localEpisodes.length}));
+if(output.ownedVerified<minOwnedVerified)
+  throw new Error('Owned locally verified coverage regression: '+
+    output.ownedVerified+' < '+minOwnedVerified);
