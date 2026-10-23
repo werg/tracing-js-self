@@ -51,7 +51,7 @@ public-controller evaluation and rechecking after serialization:
 npm run corpus:owned-coverage -- \
   --input corpus/out/traces.jsonl \
   --output corpus/out/owned-coverage.json \
-  --per-function 2 --min-owned-verified 24 \
+  --per-function 2 --min-owned-verified 89 \
   --local-episodes corpus/out/owned-locally-verified.jsonl
 ```
 
