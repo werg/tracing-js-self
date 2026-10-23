@@ -5,7 +5,7 @@
 import vm from 'node:vm';
 import {realizeGraph,describeGraph} from './graph.js';
 
-export function referenceOutcome({source,entry,args,initialHeap,timeout=1000,observeOperations=false,observeBranches=false}) {
+export function referenceOutcome({source,entry,args,initialHeap,timeout=1000,observeOperations=false,observeBranches=false,randomSeed=null}) {
   if(!/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(entry))
     throw new TypeError('Invalid entry identifier');
 
@@ -52,6 +52,14 @@ export function referenceOutcome({source,entry,args,initialHeap,timeout=1000,obs
   })`,context,{timeout});
   context.__trainingArgs=buildArgs(JSON.stringify({heap:initialHeap,roots:args}));
   context.__trainingResult=undefined;
+  if(randomSeed!==null){
+    if(!Number.isInteger(randomSeed)||randomSeed<0||randomSeed>0xffffffff)
+      throw new TypeError('Untrusted reference random fixture seed');
+    context.__trainingRandomSeed=randomSeed;
+    vm.runInContext(`(function(){let x=__trainingRandomSeed>>>0;
+      Math.random=function(){x=(Math.imul(x,1664525)+1013904223)>>>0;return x/4294967296;};
+    })()`,context,{timeout});
+  }
   if(observeOperations||observeBranches)vm.runInContext(`globalThis.__tracingOperations=[];
     globalThis.__tracingDecisions=[];
     globalThis.__tracingBranch=(site,value)=>{
