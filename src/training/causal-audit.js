@@ -7,7 +7,7 @@ import {validatePublishedGraph} from './public-graph.js';
 const generatedKinds=new Set(['enter','value','branch','loop','carry','alloc','read','write',
   'delete','call','return','throw','end']);
 const allowedSemanticFields=new Set(['id','invocation','site','dependsOn','control',
-  'result','update','reads','writes','test','path','from','to','reason',
+  'result','update','reads','writes','test','path','from','to','copies','reason',
   'child','code','receiver','arguments','captures',
   'allocations','destination','effect','operation','promise','codec',
   'signature','payload','entry','kind']);
