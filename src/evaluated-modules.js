@@ -59,6 +59,22 @@ function nodeName(node){
   if(node?.type!=='Identifier')reject('module bindings must use identifiers');
   return node.name;
 }
+function ownDataArray(value,label,max){
+  if(!Array.isArray(value)||types.isProxy(value)||
+     Object.getPrototypeOf(value)!==Array.prototype||
+     value.length>max)
+    throw new TypeError(label+' must be a bounded ordinary data array');
+  const result=[];
+  for(let i=0;i<value.length;i++){
+    const entry=Object.getOwnPropertyDescriptor(value,String(i));
+    if(!entry||!Object.hasOwn(entry,'value'))
+      throw new TypeError(label+' must have dense own data elements');
+    result.push(entry.value);
+  }
+  if(Reflect.ownKeys(value).length!==result.length+1)
+    throw new TypeError(label+' must not contain extra host array properties');
+  return result;
+}
 function parseModule(file,text,sources){
   const lowering=compileBoundedTypeScript(text,{path:file});
   const ast=parseAcorn(lowering.javascript,{ecmaVersion:2022,sourceType:'module'});
@@ -309,16 +325,15 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     reject('entry module is not part of the supplied graph');
   if(!validName(exportName)&&exportName!=='default')
     reject('invalid entry export');
-  if(!Array.isArray(args)||args.length>64)
-    throw new TypeError('Entry invocation takes at most 64 arguments');
+  const checkedArgs=ownDataArray(args,'Entry args',64);
   // A batch is one owned episode, not a cache that replays module effects
   // across multiple host calls. Safely read descriptors before guest import.
   let sequence=null;
   if(calls!==null){
-    if(!Array.isArray(calls)||types.isProxy(calls)||
-       calls.length===0||calls.length>32||args.length)
+    const checkedCalls=ownDataArray(calls,'Calls',32);
+    if(!checkedCalls.length||checkedArgs.length)
       throw new TypeError('Calls must be 1-32 entries and replace single-call args');
-    sequence=calls.map(call=>{
+    sequence=checkedCalls.map(call=>{
       if(!call||typeof call!=='object'||Array.isArray(call)||
          types.isProxy(call)||
          ![Object.prototype,null].includes(Object.getPrototypeOf(call)))
@@ -326,10 +341,13 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
       const e=Object.getOwnPropertyDescriptor(call,'exportName');
       const a=Object.getOwnPropertyDescriptor(call,'args');
       if(!e||!Object.hasOwn(e,'value')||!validName(e.value)||
-         !a||!Object.hasOwn(a,'value')||!Array.isArray(a.value)||
-         a.value.length>64)
-        throw new TypeError('Each module call needs exportName and up to 64 args');
-      return {exportName:e.value,args:a.value};
+         !a||!Object.hasOwn(a,'value'))
+        throw new TypeError('Each module call needs exportName and args');
+      if(Reflect.ownKeys(call).some(key=>
+           key!=='exportName'&&key!=='args'))
+        throw new TypeError('Unexpected host property in module call record');
+      return {exportName:e.value,
+        args:ownDataArray(a.value,'Module call args',64)};
     });
   }
   const modulesByFile=new Map(),visiting=new Set(),visited=new Set(),order=[];
@@ -397,7 +415,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
   }
   const selected=sequence?required(entryModule,sequence[0].exportName):
     required(entryModule,exportName);
-  if(!sequence&&selected.kind!=='function'&&args.length)
+  if(!sequence&&selected.kind!=='function'&&checkedArgs.length)
     reject('cannot call a non-function exported module binding');
   const requested=sequence?sequence.map(call=>{
     const binding=required(entryModule,call.exportName);
@@ -465,7 +483,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     source+='  return ['+requested.map((_,i)=>
       '__traced_eval_result_'+i).join(',')+'];\n';
   }else if(selected.kind==='function'){
-    const argumentsText=args.map((_,i)=>'self.args['+i+']').join(',');
+    const argumentsText=checkedArgs.map((_,i)=>'self.args['+i+']').join(',');
     source+='  return await '+selected.linked+'('+argumentsText+');\n';
   }else source+='  return await '+selected.linked+';\n';
   source+='}\n';
@@ -489,7 +507,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
   };
   return {profile:'evaluated-module/1',source,
     entryFunction:'__traced_evaluated_entry',metadata,
-    entryInput:sequence?{calls:sequence.map(({args})=>({args}))}:{args}};
+    entryInput:sequence?{calls:sequence.map(({args})=>({args}))}:{args:checkedArgs}};
 }
 export async function executeEvaluatedModules({modules,entryModule,
   exportName='default',args=[],calls=null,services=null,maxSteps=100000,signal}={}){
