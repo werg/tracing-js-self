@@ -37,6 +37,27 @@ export function parseTraining(source) {
       d.id.type==='Identifier'&&staticGlobal(d.init)))))
     reject(parsed,'top-level declaration must be a function or static owned data');
 
+  // A reproducible Math.random() fixture is observable only at a direct,
+  // source-identifiable call site. Aliasing/computed getters would hide the
+  // PRNG step from the serving controller and therefore fail closed.
+  function requireDirectRandom(node,parent=null){
+    if(!node||typeof node!=='object')return;
+    if(Array.isArray(node)){
+      for(const member of node)requireDirectRandom(member,parent);
+      return;
+    }
+    if(node.type==='MemberExpression'&&node.object?.type==='Identifier'&&
+       node.object.name==='Math' &&
+       (node.computed?node.property?.value==='random':node.property?.name==='random')){
+      if(node.computed||parent?.type!=='CallExpression'||parent.callee!==node||
+         parent.arguments.length!==0||parent.optional)
+        reject(node,'Math.random must be a direct zero-argument call');
+    }
+    for(const [key,child] of Object.entries(node))
+      if(!['start','end','loc'].includes(key))requireDirectRandom(child,node);
+  }
+  requireDirectRandom(parsed);
+
   const span=n=>({start:n.start,end:n.end});
   function parameters(n){
     return n.params.map((p,i)=>{
