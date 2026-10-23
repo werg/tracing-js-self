@@ -18,6 +18,10 @@
     "./modules": {
       "types": "./src/modules.d.ts",
       "default": "./src/modules.js"
+    },
+    "./native": {
+      "types": "./src/host/native-driver.d.ts",
+      "default": "./src/host/native-driver.js"
     }
   },
   "description": "Experimental owned-machine JavaScript semantic tracing runtime",
