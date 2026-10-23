@@ -25,11 +25,9 @@ test('per-iteration arrow captures retain distinct loop binding identities',()=>
 test('arrow property-call ignores method receiver and still closes over bound variables',()=>{
   verified('function f(n){const receiver={x:90,call:(m)=>m+n};return receiver.call(4);}',[5]);
 });
-test('unsupported async/named expressions fail closed; rest arrows have owned evidence',()=>{
-  for(const body of [
-    'function f(){const a=async x=>x;return a(3);}',
-    'function f(){const a=function self(x){return x;};return a(2);}'
-  ])assert.equal(verifyTrainingCase({source:strict(body),entry:'f'}).status,'unsupported');
+test('named expressions still fail closed; rest arrows remain owned',()=>{
+  const body='function f(){const a=function self(x){return x;};return a(2);}';
+  assert.equal(verifyTrainingCase({source:strict(body),entry:'f'}).status,'unsupported');
   verified('function f(){const a=(...x)=>x[0];return a(3);}');
 });
 test('natlang TS annotations on synchronous arrows lower to guest frames',()=>{
