@@ -24,10 +24,10 @@ jobs:
         with:
           node-version: '22'
       - run: npm ci
-      - name: Run all 804 stateful adversarial programs against independent V8
+      - name: Run all 912 real-world stateful and interceptor scenarios
         run: |
           node tools/build-stateful-corpus.mjs --per-scenario 12 \
-            --min-verified 804 \
+            --min-verified 912 \
             --output corpus/out/stateful-traces.jsonl \
             --report corpus/out/stateful-report.json \
             --review corpus/out/stateful-review.md
@@ -37,7 +37,7 @@ jobs:
             import fs from "node:fs";
             const r=JSON.parse(fs.readFileSync("corpus/out/stateful-report.json"));
             const c=r.counts;
-            if(c.scenarioFamilies!==67||c.requested!==804||c.agreed!==804||c.disagreed||c.observerErrors)
+            if(c.scenarioFamilies!==76||c.requested!==912||c.agreed!==912||c.disagreed||c.observerErrors)
               throw Error("No useful adversarial evidence: "+JSON.stringify(c));
             console.log("Adversarial coverage",JSON.stringify(c));
             console.log("Failure reasons",JSON.stringify(r.failures.slice(0,12)));
