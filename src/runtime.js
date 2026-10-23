@@ -6,7 +6,7 @@ import { createArithmetic, advanceArithmetic, isOwnedArithmetic, ordinaryGet, or
 import { operationMutation } from './spec-mutations.js';
 import {hostOperation,prepareHostRequest} from './host/operations.js';
 import { specStep, ENGINE_REVISION } from './spec-schema.js';
-import {supportsPinnedRegExp,testPinnedRegExp} from './owned-pinned-regexp.js';
+import {supportsPinnedRegExp,testPinnedRegExp,scanPinnedReplacement} from './owned-pinned-regexp.js';
 
 class GuestFault extends Error {constructor(name,message){super(message);this.name=name;}}
 const guestFault=(name,message)=>{throw new GuestFault(name,message);};
@@ -256,6 +256,9 @@ export class Runtime {
     state.envs[global].bindings.Infinity={kind:'const',initialized:true,token:token(['num','+Infinity']),version:0};
     if(allowHost)state.envs[global].bindings.host={kind:'const',initialized:true,
       token:token(['host','demo']),version:0};
+    for(const name of ['parseInt','isNaN'])
+      state.envs[global].bindings[name]={kind:'const',initialized:true,
+        token:token(['builtinfn',name]),version:0};
     for(const name of ['Object','Array','Number','Math','Promise','Set','Error','TypeError'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
@@ -279,7 +282,8 @@ export class Runtime {
         shapeVersion:3,version:0};
         initial=['ref',id];
       }
-      initial ??=val?.type==='Literal'?val.value:
+      initial ??=val?.type==='Identifier'&&val.name==='undefined'?U:
+        val?.type==='Literal'?val.value:
         val?.type==='Member' && val.object?.type==='Identifier' &&
         val.object.name==='Math' && val.property?.type==='Literal' &&
         ['ceil','floor','min','max'].includes(val.property.value?.[1])
@@ -361,6 +365,23 @@ export class Runtime {
         delete caller.pendingArrayMethod;
         }
       }
+      const replacing=caller.pendingStringReplace;
+      if(replacing?.waitingFrameId===frame.id){
+        if(!['undefined','null','bool','num','str','bigint'].includes(value[0]))
+          throw new TypeError('Owned replacement callback must return scalar data');
+        const match=replacing.matches[replacing.index];
+        replacing.output+=replacing.text.slice(replacing.lastEnd,match.start)+
+          String(decode(value));
+        replacing.lastEnd=match.end;
+        replacing.index++;
+        replacing.waitingFrameId=null;
+        if(replacing.index<replacing.matches.length){
+          draft.control.a0.activeFrameId=caller.id;
+          return;
+        }
+        value=['str',replacing.output+replacing.text.slice(replacing.lastEnd)];
+        delete caller.pendingStringReplace;
+      }
       const pending=caller.pendingProperty;
       if(pending?.waitingFrameId===frame.id){
         caller.pendingProperty=null;
@@ -411,6 +432,21 @@ export class Runtime {
         nextInsert();
       }
     }else throw new Error('Unexpected sort continuation phase');
+  }
+  advanceStringReplaceCallback(draft,caller){
+    const p=caller.pendingStringReplace;
+    const match=p?.matches[p.index];
+    if(!match || p.waitingFrameId!==null)
+      throw new Error('Missing guest replacement callback');
+    const fn=draft.heap[p.callbackId];
+    const params=[token(['str',match.match])];
+    if(match.group!==null)params.push(token(['str',match.group]));
+    params.push(token(['num',match.start]),token(['str',p.text]));
+    const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,caller.id,null,
+      params,fn.arrow?fn.lexicalThis:U);
+    p.waitingFrameId=child;
+    draft.control.a0.activeFrameId=child;
+    return child;
   }
   // Continue a guest Array callback in the owned VM, never by executing
   // guest functions in the host. Reads are from current heap state so callback
@@ -623,6 +659,14 @@ export class Runtime {
     const c=this.state.control.a0,frame=c.activeFrameId&&this.state.frames[c.activeFrameId];
     if(!frame||frame.status!=='running')return null;
     if(frame.operationId)return this.stepArithmetic(frame);
+    if(frame.pendingStringReplace?.waitingFrameId===null){
+      const siteId=frame.pendingStringReplace.siteId;
+      return this.commit('call.enter',(s)=>{
+        const child=this.advanceStringReplaceCallback(s,s.frames[frame.id]);
+        return {causes:[{kind:'invocation',frameId:child}]};
+      },{siteId,sourceId:frame.codeId.split(':')[0],
+        codeId:frame.codeId,invocationId:frame.id});
+    }
     if(frame.pendingArrayMethod && frame.pendingArrayMethod.waitingFrameId===null){
       const siteId=frame.pendingArrayMethod.siteId;
       return this.commit('call.enter',(s,eventId)=>{
