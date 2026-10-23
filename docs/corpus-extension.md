@@ -1522,3 +1522,15 @@ These are compatibility-shim contracts, not assumptions about package APIs.
 Example: npm run corpus:owned:novelty -- --input
   corpus/out/exercism-owned-locally-verified.jsonl
   --output corpus/out/exercism-owned-novelty.json --limit 64
+
+### Full-checkout Test262 reference yield collection (2026-10-23)
+
+- [x] Full-source acquisition CI now executes a bounded, opt-in **native V8**
+  Test262 diagnostic sample from the exact pinned source revision. It enables
+  experimental static VM modules and routes async scripts to the limited
+  $DONE adapter. The report enforces 800 actual attempted execution variants
+  and explicit passed/failed/unsupported counts and zero owned/admitted.
+- [ ] This measures a reproducible bounded sample, **not** the full native
+  Test262 suite or full official harness. Reference pass counts do not promote
+  Test262 programs to owned training episodes. No CI yield is claimed until
+  the workflow completes and its JSON report has been inspected.

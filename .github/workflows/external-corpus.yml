@@ -8,6 +8,13 @@ on:
       - 'src/corpus/original-sites.mjs'
       - 'tools/convert-full-corpus.mjs'
       - 'tools/verify-test262-scalar.mjs'
+      - 'tools/verify-test262-reference.mjs'
+      - 'src/corpus/test262-reference-execution.mjs'
+      - 'src/corpus/test262-async-reference.mjs'
+      - 'src/corpus/test262-module-reference.mjs'
+      - 'test/test262-reference-execution.test.js'
+      - 'test/test262-async-reference.test.js'
+      - 'test/test262-module-reference.test.js'
       - 'src/corpus/test262-scalar-reference.mjs'
       - 'src/corpus/test262-training.mjs'
       - 'tools/verify-exercism-owned.mjs'
@@ -22,6 +29,13 @@ on:
       - 'src/corpus/original-sites.mjs'
       - 'tools/convert-full-corpus.mjs'
       - 'tools/verify-test262-scalar.mjs'
+      - 'tools/verify-test262-reference.mjs'
+      - 'src/corpus/test262-reference-execution.mjs'
+      - 'src/corpus/test262-async-reference.mjs'
+      - 'src/corpus/test262-module-reference.mjs'
+      - 'test/test262-reference-execution.test.js'
+      - 'test/test262-async-reference.test.js'
+      - 'test/test262-module-reference.test.js'
       - 'src/corpus/test262-scalar-reference.mjs'
       - 'src/corpus/test262-training.mjs'
       - 'tools/verify-exercism-owned.mjs'
@@ -131,6 +145,26 @@ jobs:
             --revision 89e83a74014617ffbe79a56d83d14d054cd11417 \
             --output corpus/out/full/json-schema.jsonl --report corpus/out/full/json-schema.json
           node -e 'const fs=require("fs");for(const n of ["test262","exercism","json-schema"]){const x=JSON.parse(fs.readFileSync("corpus/out/full/"+n+".json"));if(!x.records||x.admitted!==0||x.verified!==0||x.truncated)process.exitCode=1;console.log(n,x.records,"acquired candidate fixtures",x.sourceFiles,"original source files");}'
+      - name: Measure bounded native Test262 diagnostics for pinned full upstream source
+        run: |
+          node --no-warnings --experimental-vm-modules tools/verify-test262-reference.mjs \
+            --root "$RUNNER_TEMP/upstream/test262" \
+            --revision d53ebc8b1931d9f1541e43d59650776e4b766248 \
+            --max 800 --timeout-ms 150 \
+            --output corpus/out/full/test262-native-reference.json
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const r=JSON.parse(readFileSync("corpus/out/full/test262-native-reference.json"));
+            const total=Object.values(r.counts).reduce((a,b)=>a+b,0);
+            if(r.schema!=="test262-native-reference-report/1"||r.attempted!==800||
+              total!==r.attempted||r.verifiedOwned!==0||r.admitted!==0||
+              r.revision!=="d53ebc8b1931d9f1541e43d59650776e4b766248")
+              throw Error("Invalid bounded Test262 diagnostic evidence");
+            console.log("Test262 exact native reference attempted",r.attempted,
+              "passed",r.counts.passed??0,"failed",r.counts.failed??0,
+              "unsupported",r.counts.unsupported??0,
+              "owned",r.verifiedOwned,"admitted",r.admitted);
+          '
       - name: Independently check curated original-JS proof execution and original-site receipts
         run: |
           node tools/verify-exercism-owned.mjs \
