@@ -110,9 +110,14 @@ export class BoundedNatlangEnvironment {
         throw new TypeError('Owned natlang evaluation was not completed: '+progress.kind);
       let value=runtime.state.control.a0.completion?.value??runtime.result;
       if(allowAsync){
-        if(value?.[0]!=='promise')
-          throw new TypeError('Owned async entry has no completion promise');
-        const settled=runtime.state.promises[value[1]];
+        // Abrupt async roots reject their own promise without writing a
+        // top-level return completion, so locate the owned root promise in
+        // the replayed initial frame rather than only in control.completion.
+        const rootId=runtime.initialState.control.a0.activeFrameId;
+        const promiseId=runtime.initialState.frames[rootId]?.asyncPromiseId;
+        if(!promiseId)
+          throw new TypeError('Owned async entry has no root promise');
+        const settled=runtime.state.promises[promiseId];
         if(!settled||settled.status==='pending')
           throw new TypeError('Owned async entry has not settled');
         if(settled.status==='rejected'){
