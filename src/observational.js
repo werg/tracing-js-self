@@ -199,6 +199,8 @@ class Capture {
       value:(a,b,v)=>this.record('value',a,b,v),
       read:(a,b,v)=>this.record('read',a,b,v),
       write:(a,b,v)=>this.record('write',a,b,v),
+      update:(a,b,n,v,next)=>this.record('write',a,b,v,{
+        binding:n,updated:this.encode(next)}),
       binding:(a,b,n,v)=>this.record('write',a,b,v,{binding:n}),
       call:(a,b,v)=>this.record('call',a,b,v),
       ret:(a,b,v)=>this.record('return',a,b,v),
@@ -207,7 +209,11 @@ class Capture {
       logical:(a,b,op,v)=>this.record('branch',a,b,v,{
         context:op,path:(op==='&&'?!v:op==='||'?!!v:v!==null&&v!==undefined)?
           'use-left':'evaluate-right'
-      })
+      }),
+      iteration:(a,b,v)=>this.record('loop',a,b,v,{path:'next'}),
+      resume:(a,b,v)=>this.record('resume',a,b,v),
+      await:(a,b,v)=>this.record('await',a,b,v),
+      control:(a,b,action)=>this.record('control',a,b,undefined,{action})
     });
   }
 }
@@ -225,6 +231,15 @@ function instrument(source,filename,language){
     const assign=kind=>kind>=ts.SyntaxKind.FirstAssignment&&kind<=ts.SyntaxKind.LastAssignment;
     const updating=n=>(ts.isPrefixUnaryExpression(n)||ts.isPostfixUnaryExpression(n))&&
       [ts.SyntaxKind.PlusPlusToken,ts.SyntaxKind.MinusMinusToken].includes(n.operator);
+    const consumed=(node,parent)=>parent&&(
+      (ts.isIfStatement(parent)||ts.isWhileStatement(parent)||
+        ts.isDoStatement(parent))&&parent.expression===node||
+      ts.isForStatement(parent)&&parent.condition===node||
+      ts.isConditionalExpression(parent)&&parent.condition===node
+    );
+    const bodyEntry=(body,node,name)=>f.updateBlock(body,[
+      f.createExpressionStatement(call('enter',node,[f.createStringLiteral(name)])),
+      ...body.statements]);
     function visit(node,parent=null){
       const v=ts.visitEachChild(node,child=>visit(child,node),ctx);
       if(ts.isArrowFunction(v)){
@@ -245,6 +260,23 @@ function instrument(source,filename,language){
         return f.updateFunctionDeclaration(v,v.modifiers,v.asteriskToken,v.name,
           v.typeParameters,v.parameters,v.type,body);
       }
+      if(ts.isFunctionExpression(v)&&v.body)
+        return f.updateFunctionExpression(v,v.modifiers,v.asteriskToken,v.name,
+          v.typeParameters,v.parameters,v.type,bodyEntry(v.body,node,
+            v.name?.text??'[function]'));
+      if(ts.isMethodDeclaration(v)&&v.body)
+        return f.updateMethodDeclaration(v,v.modifiers,v.asteriskToken,v.name,
+          v.questionToken,v.typeParameters,v.parameters,v.type,
+          bodyEntry(v.body,node,v.name.getText(sf)));
+      if(ts.isGetAccessorDeclaration(v)&&v.body)
+        return f.updateGetAccessorDeclaration(v,v.modifiers,v.name,v.parameters,v.type,
+          bodyEntry(v.body,node,'get '+v.name.getText(sf)));
+      if(ts.isSetAccessorDeclaration(v)&&v.body)
+        return f.updateSetAccessorDeclaration(v,v.modifiers,v.name,v.parameters,
+          bodyEntry(v.body,node,'set '+v.name.getText(sf)));
+      if(ts.isConstructorDeclaration(v)&&v.body)
+        return f.updateConstructorDeclaration(v,v.modifiers,v.parameters,
+          bodyEntry(v.body,node,'constructor'));
       if(ts.isIfStatement(v))return f.updateIfStatement(v,call('test',node.expression,
         [v.expression,f.createStringLiteral('if')]),v.thenStatement,v.elseStatement);
       if(ts.isWhileStatement(v))return f.updateWhileStatement(v,call('test',node.expression,
@@ -254,6 +286,24 @@ function instrument(source,filename,language){
       if(ts.isForStatement(v))return f.updateForStatement(v,v.initializer,
         v.condition?call('test',node.condition,[v.condition,f.createStringLiteral('for')]):undefined,
         v.incrementor,v.statement);
+      if(ts.isForOfStatement(v)||ts.isForInStatement(v)){
+        const body=ts.isBlock(v.statement)?v.statement:f.createBlock([v.statement],true);
+        const declarations=ts.isVariableDeclarationList(v.initializer)?
+          v.initializer.declarations:[];
+        const name=declarations.length===1&&ts.isIdentifier(declarations[0].name)?
+          declarations[0].name.text:null;
+        const statement=f.updateBlock(body,[
+          f.createExpressionStatement(call('iteration',node,[
+            name?f.createIdentifier(name):f.createVoidZero()])),...body.statements]);
+        return ts.isForOfStatement(v)?
+          f.updateForOfStatement(v,v.awaitModifier,v.initializer,v.expression,statement):
+          f.updateForInStatement(v,v.initializer,v.expression,statement);
+      }
+      if(ts.isBreakStatement(v)||ts.isContinueStatement(v)){
+        const label=v.label?.text??'';
+        return f.createBlock([f.createExpressionStatement(call('control',node,[
+          f.createStringLiteral(ts.isBreakStatement(v)?'break '+label:'continue '+label)])),v],true);
+      }
       if(ts.isReturnStatement(v))return f.updateReturnStatement(v,
         call('ret',node,[v.expression??f.createVoidZero()]));
       if(ts.isThrowStatement(v))return f.updateThrowStatement(v,
@@ -263,6 +313,7 @@ function instrument(source,filename,language){
           f.createStringLiteral(ts.isIdentifier(node.name)?node.name.text:'[pattern]'),
           v.initializer]));
       if(ts.isBinaryExpression(v)){
+        if(consumed(node,parent))return v;
         if([ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken,
           ts.SyntaxKind.QuestionQuestionToken].includes(v.operatorToken.kind)){
           const op=ts.tokenToString(v.operatorToken.kind);
@@ -277,10 +328,21 @@ function instrument(source,filename,language){
           v.whenTrue,v.colonToken,v.whenFalse)]);
       if(ts.isCallExpression(v)||ts.isNewExpression(v))
         return call(ts.isCallExpression(v)?'call':'value',node,[v]);
-      if(ts.isPrefixUnaryExpression(v)||ts.isPostfixUnaryExpression(v))
+      if(ts.isPrefixUnaryExpression(v)||ts.isPostfixUnaryExpression(v)){
+        if(consumed(node,parent)||
+          parent&&ts.isPrefixUnaryExpression(parent)&&
+          parent.operator===ts.SyntaxKind.ExclamationToken&&
+          v.operator===ts.SyntaxKind.ExclamationToken)
+          return v;
+        if(updating(v)&&ts.isIdentifier(v.operand))
+          return call('update',node,[f.createStringLiteral(v.operand.text),
+            v,f.createIdentifier(v.operand.text)]);
         return call(updating(v)?'write':'value',node,[v]);
-      if(ts.isTemplateExpression(v)||ts.isAwaitExpression(v))
-        return call('value',node,[v]);
+      }
+      if(ts.isAwaitExpression(v))
+        return call('resume',node,[f.updateAwaitExpression(v,
+          call('await',node,[v.expression]))]);
+      if(ts.isTemplateExpression(v))return call('value',node,[v]);
       if(ts.isPropertyAccessExpression(v)||ts.isElementAccessExpression(v)){
         const lhs=parent&&(ts.isBinaryExpression(parent)&&parent.left===node&&
             assign(parent.operatorToken.kind)||
