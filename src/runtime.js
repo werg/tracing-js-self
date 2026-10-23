@@ -6,6 +6,7 @@ import { createArithmetic, advanceArithmetic, isOwnedArithmetic, ordinaryGet, or
 import { operationMutation } from './spec-mutations.js';
 import {hostOperation,prepareHostRequest} from './host/operations.js';
 import { specStep, ENGINE_REVISION } from './spec-schema.js';
+import {supportsPinnedRegExp,testPinnedRegExp} from './owned-pinned-regexp.js';
 
 class GuestFault extends Error {constructor(name,message){super(message);this.name=name;}}
 const guestFault=(name,message)=>{throw new GuestFault(name,message);};
@@ -265,7 +266,20 @@ export class Runtime {
       if(Object.hasOwn(state.envs[global].bindings,init.id))
         throw new SyntaxError('Duplicate or reserved global initializer '+init.id);
       const val=init.init;
-      const initial=val?.type==='Literal'?val.value:
+      let initial=null;
+      if(val?.type==='OwnedPinnedRegExp'){
+        if(!supportsPinnedRegExp(val.pattern,val.flags))
+          throw new SyntaxError('Unsupported static RegExp initializer');
+        const id=this.next(state,'obj');
+        state.heap[id]={id,kind:'regexp',properties:{
+          '[[Source]]':token(['str',val.pattern]),
+          '[[Flags]]':token(['str',val.flags]),
+          lastIndex:token(['num',0])
+        },propertyVersions:{'[[Source]]':0,'[[Flags]]':0,lastIndex:0},
+        shapeVersion:3,version:0};
+        initial=['ref',id];
+      }
+      initial ??=val?.type==='Literal'?val.value:
         val?.type==='Member' && val.object?.type==='Identifier' &&
         val.object.name==='Math' && val.property?.type==='Literal' &&
         ['ceil','floor','min','max'].includes(val.property.value?.[1])
@@ -839,8 +853,7 @@ export class Runtime {
         case 'JUMP_IF_FALSE':{const a=pop();if(!truthy(a.value))f.pc=arg;return {...operands(a),result:['bool',!truthy(a.value)]};}
         case 'LOGICAL_JUMP':{const a=st.at(-1),v=a.value;const pass=arg.operator==='&&'?!truthy(v):arg.operator==='||'?truthy(v):v[0]!=='null'&&v[0]!=='undefined';if(pass)f.pc=arg.to;return {...operands(a),result:['bool',pass]};}
         case 'NEW_PINNED_REGEXP':{
-          const supported=(!arg.flags&&['\\r\\n|\\r|\\n','(\\r\\n|\\r|\\n)'].includes(arg.pattern)) ||
-            (arg.flags==='g'&&arg.pattern===String.raw`[\\\{\}\*\+\?\|\^\$\.\[\]\(\)]`);
+          const supported=supportsPinnedRegExp(arg.pattern,arg.flags);
           if(!supported)throw new SyntaxError('Unpinned RegExp pattern or flags');
           const id=this.next(s,'obj');
           s.heap[id]={id,kind:'regexp',properties:{
@@ -949,7 +962,21 @@ export class Runtime {
            else if(base.value[0]==='ref'){
              const obj=s.heap[base.value[1]];
              if(!obj)throw new ReferenceError('Unknown guest identity');
-             if(obj.kind==='regexp')throw new TypeError('Unmodeled RegExp property '+property);
+             if(obj.kind==='regexp'){
+               if(property==='test'){
+                 const method=['builtinfn','RegExp.prototype.test'];
+                 return {...operands(base,key),...result(op==='GET_METHOD'?['method',method,base.value]:method)};
+               }
+               if(property==='lastIndex'){
+                 const read=obj.properties.lastIndex;
+                 return {...operands(base,key),...result(read.value),reads:[{
+                   kind:'property',objectId:obj.id,key:property,present:true,
+                   shapeVersion:obj.shapeVersion??0,
+                   version:obj.propertyVersions.lastIndex??0,value:read.value,
+                   supplyingEvent:read.origin??null}]};
+               }
+               throw new TypeError('Unmodeled RegExp property '+property);
+             }
              if(obj.kind==='set'){
                if(['has','add'].includes(property)){
                  const v=['builtinfn','Set.prototype.'+property];
@@ -1006,7 +1033,15 @@ export class Runtime {
              guestFault('TypeError',`Cannot set properties of ${base.value[0]}`);
            if(base.value[0]!=='ref'||!s.heap[base.value[1]]||s.heap[base.value[1]].kind==='function')throw new TypeError('Not a writable guest object');
           const object=s.heap[base.value[1]];
-          if(['set','regexp'].includes(object.kind))
+          if(object.kind==='regexp'){
+            if(property!=='lastIndex'||v.value[0]!=='num' ||
+               !Number.isSafeInteger(decode(v.value)) ||
+               decode(v.value)<0 || decode(v.value)>10001)
+              throw new TypeError('Only bounded RegExp.lastIndex writes are owned');
+            putOwn(object,'lastIndex',v.value,eventId);
+            return {...operands(base,key,v),...result(v.value)};
+          }
+          if(object.kind==='set')
             throw new TypeError('Owned intrinsic internal slots are not guest-writable properties');
           const route=object.kind==='proxy'?proxyRoute(s.heap,base.value,'set'):
             {kind:'ordinary',target:base.value,receiver:base.value};
@@ -1196,6 +1231,17 @@ export class Runtime {
               throw new TypeError('Number fixed-digit count outside supported range');
             return {...operands(fn,...args),...result(encode(
               Number.prototype[method].call(number,format)))};
+          }
+          if(callable[0]==='builtinfn' && callable[1]==='RegExp.prototype.test'){
+            const regex=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+            if(regex?.kind!=='regexp'||args.length!==1||args[0].value[0]!=='str')
+              throw new TypeError('Owned RegExp test requires a pinned string operation');
+            const pattern=decode(regex.properties['[[Source]]'].value);
+            const flags=decode(regex.properties['[[Flags]]'].value);
+            const lastIndex=decode(regex.properties.lastIndex.value);
+            const outcome=testPinnedRegExp(pattern,flags,decode(args[0].value),lastIndex);
+            if(flags==='g')putOwn(regex,'lastIndex',['num',outcome.nextIndex],eventId);
+            return {...operands(fn,...args),...result(['bool',outcome.matched])};
           }
           if(callable[0]==='builtinfn' && callable[1]==='String.prototype.replace') {
             if(receiver[0]!=='str'||args.length!==2||receiver[1].length>10000 ||
