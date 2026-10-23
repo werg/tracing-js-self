@@ -279,17 +279,26 @@ export class SemanticController {
     } else if(kind==='carry') {
       // Iteration cells matter when closures capture distinct values. Copy
       // committed state; do not ask the model to recompute a scope mechanism.
-      const from=fields.from,to=fields.to;
-      if(!from||!to||typeof from.env!=='string'||typeof to.env!=='string'||
-         typeof from.key!=='string'||from.key!==to.key||
-         !Number.isSafeInteger(from.version)||from.version<0||
-         to.version!==from.version)
-        fail('binding','Malformed iteration binding copy');
-      const prior=this.cells.get(from.env+':'+from.key);
-      if(!prior||prior.version!==from.version||
-         this.cells.has(to.env+':'+to.key)||from.env===to.env)
-        fail('binding','Iteration copy cannot read committed source cell');
-      this.cells.set(to.env+':'+to.key,copy(prior));
+      if(fields.copies && (fields.from||fields.to))
+        fail('binding','Ambiguous iteration binding copy');
+      const copies=fields.copies??[{from:fields.from,to:fields.to}];
+      if(!Array.isArray(copies)||!copies.length||copies.length>8)
+        fail('binding','Invalid iteration binding group');
+      const patches=new Map();
+      for(const item of copies){
+        const from=item?.from,to=item?.to;
+        if(!from||!to||typeof from.env!=='string'||typeof to.env!=='string'||
+           typeof from.key!=='string'||from.key!==to.key||
+           !Number.isSafeInteger(from.version)||from.version<0||
+           to.version!==from.version)
+          fail('binding','Malformed iteration binding copy');
+        const key=to.env+':'+to.key,prior=this.cells.get(from.env+':'+from.key);
+        if(!prior||prior.version!==from.version||
+           this.cells.has(key)||patches.has(key)||from.env===to.env)
+          fail('binding','Iteration copy cannot read committed source cell');
+        patches.set(key,copy(prior));
+      }
+      for(const [key,value] of patches)this.cells.set(key,value);
     } else if(kind==='read') {
       for(const read of fields.reads??[]){
         if(read.kind==='property'){
