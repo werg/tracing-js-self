@@ -74,8 +74,8 @@ const enrich = (source, filename, program, fixture, expected, extra={}) => {
     provenance:{repository:extra.repository,revision:extra.revision,license:extra.license,
       path:filename,sha256:digest,inputOrigin:extra.origin},
     program,fixture,expected,
-    hardness:['test262-program','parameterized-test'].includes(program?.kind)?
-      hardness(source,filename):{features:[],nodeCount:0,maxDepth:0,score:0},...extra.details
+    hardness:extra.details?.hardness??(['test262-program','parameterized-test','upstream-test-declaration'].includes(program?.kind)?
+      hardness(source,filename):{features:[],nodeCount:0,maxDepth:0,score:0}),...extra.details
   };
 };
 // Static triage hints: these are NOT dynamic coverage or a complete parser.
@@ -266,6 +266,123 @@ export async function* parameterizedTests(root,options) {
         details:{status:'requires-test-runner'}});
   }
 }
+
+// Offline test inventory only: source ranges are UTF-16 offsets in original code.
+// No upstream test body, expression or dependency is evaluated by this importer.
+function catalogApi(expr,bases){
+ const modifiers=[];
+ while(ts.isPropertyAccessExpression(expr)){
+  modifiers.unshift(expr.name.text);expr=expr.expression;
+ }
+ const allowed=['skip','only','todo','concurrent','failing','each','serial','test'];
+ if(modifiers.some(x=>!allowed.includes(x)))return null;
+ if(ts.isIdentifier(expr)&&bases.includes(expr.text))return {api:expr.text,modifiers};
+ if(ts.isIdentifier(expr)&&expr.text==='Deno'&&modifiers.join('.')==='test'&&
+    bases.includes('test'))return {api:'Deno.test',modifiers:[]};
+ return null;
+}
+function catalogTitle(arg){
+ if(!arg)return null;
+ if(ts.isStringLiteral(arg)||ts.isNoSubstitutionTemplateLiteral(arg))
+  return arg.text;
+ if(ts.isObjectLiteralExpression(arg)){
+  const p=arg.properties.find(x=>ts.isPropertyAssignment(x)&&
+    (ts.isIdentifier(x.name)||ts.isStringLiteral(x.name))&&x.name.text==='name');
+  if(p)return catalogTitle(p.initializer);
+ }
+ return null;
+}
+function catalogPortable(value){
+ if(typeof value==='number')return Number.isFinite(value)&&!Object.is(value,-0);
+ if(value===null||typeof value==='string'||typeof value==='boolean')return true;
+ if(Array.isArray(value))return value.every(catalogPortable);
+ if(value&&typeof value==='object')return Object.values(value).every(catalogPortable);
+ return false;
+}
+function catalogTest(expr){
+ if(ts.isCallExpression(expr)){
+  const api=catalogApi(expr.expression,['test','it','specify']);
+  if(api&&api.modifiers.at(-1)==='each')
+   return {api,kind:'table',table:expr.arguments[0]};
+ }
+ if(ts.isTaggedTemplateExpression(expr)){
+  const api=catalogApi(expr.tag,['test','it','specify']);
+  if(api&&api.modifiers.at(-1)==='each')return {api,kind:'dynamic-table'};
+ }
+ const api=catalogApi(expr,['test','it','specify']);
+ if(api&&!api.modifiers.includes('each'))return {api,kind:'single'};
+ return null;
+}
+export async function* testCatalog(root,options){
+ const base=resolve(root);
+ for await(const file of walk(base)){
+  const filename=pathIn(base,file);
+  if(!/(?:^|\/)(?:__tests__\/[^/]+|[^/]+\.(?:test|spec))\.[cm]?[jt]sx?$/i.test(filename))
+   continue;
+  const source=await readFile(file,'utf8');
+  const sf=ts.createSourceFile(filename,source,ts.ScriptTarget.Latest,true,
+    ts.getScriptKindFromFileName(filename));
+  const found=[];
+  const visit=(node,ctx)=>{
+   if(ts.isCallExpression(node)){
+    const direct=catalogApi(node.expression,['describe','suite']);
+    const inner=ts.isCallExpression(node.expression)?
+      catalogApi(node.expression.expression,['describe','suite']):null;
+    const tableSuite=Boolean(inner?.modifiers.includes('each'));
+    if(direct||tableSuite){
+     const title=catalogTitle(node.arguments[0]);
+     const callback=node.arguments.find(x=>ts.isArrowFunction(x)||ts.isFunctionExpression(x));
+     if(callback){
+      visit(callback.body,{names:[...ctx.names,title??'[dynamic suite]'],
+       dynamic:ctx.dynamic||tableSuite||title===null,
+       disabled:ctx.disabled||Boolean(direct?.modifiers.includes('skip'))});
+      return;
+     }
+    }
+    const info=catalogTest(node.expression);
+    if(info){
+     const title=catalogTitle(node.arguments[0]);
+     const start=node.getStart(sf),end=node.getEnd();
+     const disabled=ctx.disabled||info.api.modifiers.includes('skip')||
+       info.api.modifiers.includes('todo');
+     const push=(fixture,status)=>found.push({
+      title:title??'[dynamic title]',suite:ctx.names,start,end,
+      api:info.api.api,modifiers:info.api.modifiers,fixture,
+      status:disabled?'disabled-upstream':
+       ctx.dynamic||title===null?'requires-dynamic-recording':status
+     });
+     if(info.kind==='single'){
+      push({kind:'embedded-test-body',args:[]},'requires-test-runner');
+     }else if(info.kind==='table'&&info.table){
+      let rows=null;
+      try{
+       rows=literal(info.table);
+       if(!Array.isArray(rows)||!catalogPortable(rows))rows=null;
+      }catch{/* Nonliteral inputs stay as dynamic declarations. */}
+      if(rows===null)push({kind:'dynamic-test-table'},'requires-dynamic-recording');
+      else if(rows.length===0)push({kind:'empty-test-table'},'no-instantiated-rows');
+      else rows.forEach((args,index)=>push({kind:'literal-test-each-row',index,args},
+        'requires-test-runner'));
+     }else push({kind:'dynamic-test-table'},'requires-dynamic-recording');
+     return; // Do not count the inner .each declaration as another test.
+    }
+   }
+   ts.forEachChild(node,child=>visit(child,ctx));
+  };
+  visit(sf,{names:[],dynamic:false,disabled:false});
+  const sourceHardness=hardness(source,filename);
+  for(const item of found)yield enrich(source,filename,{
+   kind:'upstream-test-declaration',framework:'unresolved-js-ts-test-api',
+   sourceFile:filename,title:item.title,suite:item.suite,
+   api:item.api,modifiers:item.modifiers,
+   sourceSpan:{start:item.start,end:item.end,unit:'utf16'}
+  },item.fixture,{kind:'upstream-test-assertions'},
+  {...options,origin:'static-test-catalog',
+   details:{status:item.status,hardness:sourceHardness}});
+ }
+}
+
 export const importers=Object.freeze({
-  test262,exercism,'json-schema':jsonSchema,commonmark,'jest-each':parameterizedTests
+  test262,exercism,'json-schema':jsonSchema,commonmark,'jest-each':parameterizedTests,
+  'test-catalog':testCatalog
 });

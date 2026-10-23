@@ -1410,3 +1410,10 @@ conversion is not**.
   before remaining 117,733 cases can be considered for promotion.
 - [ ] Independent downstream megatoken data admission is **still zero** and
   remains gated by actual consumer/model evaluation.
+
+
+### Additional offline test-mining groundwork (2026-10-23)
+
+- [x] Added an opt-in static `test-catalog` importer for normal tests, literal table rows, disabled declarations, `Deno.test`, suite ancestry and original source offsets, without evaluating any upstream code.
+- [x] Dynamic/nonportable tables, nonstatic suites and empty tables receive explicit non-execution statuses. Regression tests exercise malicious expressions, provenance, disabled cases and duplicate identities.
+- [ ] This is **not** the full executable Jest/Vitest/Node/Deno adapter or dynamic recorder. Isolated runner-specific setup, side-effect capture, independent replay, owned verification and training admission are still required. The prior 117,773 acquired / 40 canonically owned / 37 generated owned / zero admitted measurements are unchanged.

@@ -134,3 +134,48 @@ test('Adversarial suite uses pinned vendor module IDs and distinct identities',(
     'eventemitter3','yocto-queue','p-limit','axios'].includes(row.project));
  }
 });
+
+
+test('Offline test catalog inventories JS/TS declarations but never executes them',async()=>{
+ const dir=root();
+ try{
+  put(dir,'src/sample.test.ts',[
+   "test('simple',()=>{throw Error('must not execute');});",
+   "test.each([[1,2],['a',null]])('literal rows',()=>{});",
+   "test.each(makeInputs())('dynamic',()=>{});",
+   "it.skip('not run',()=>{});",
+   "describe('nested',()=>{it('inside',()=>{});});",
+   "describe.each([[1]])('parameterized suite',(v)=>{test('bound',()=>{});});",
+   "test.each([[NaN],[-0]])('not portable',()=>{});"
+  ].join('\n'));
+  put(dir,'__tests__/deno.ts',"Deno.test({name:'deno case',fn:()=>{}});");
+  const rows=await all(importers['test-catalog'](dir,source));
+  assert.equal(rows.length,9);
+  assert.equal(rows.filter(x=>x.fixture.kind==='literal-test-each-row').length,2);
+  assert.deepEqual(rows.find(x=>x.fixture.index===0).fixture.args,[1,2]);
+  assert.equal(rows.find(x=>x.program.title==='not run').status,'disabled-upstream');
+  assert.equal(rows.find(x=>x.program.title==='bound').status,'requires-dynamic-recording');
+  assert.deepEqual(rows.find(x=>x.program.title==='inside').program.suite,['nested']);
+  assert.equal(rows.find(x=>x.program.title==='deno case').program.api,'Deno.test');
+  assert.equal(rows.filter(x=>x.fixture.kind==='dynamic-test-table').length,2);
+  assert.equal(new Set(rows.map(x=>x.id)).size,rows.length);
+  assert.ok(rows.every(x=>x.authority==='acquired-fixture-only'&&!x.verified&&!x.admitted));
+  assert.ok(rows.every(x=>x.program.sourceSpan.end>x.program.sourceSpan.start));
+ }finally{rmSync(dir,{recursive:true,force:true});}
+});
+test('Dynamic test tables and empty tables are recorded without fabricating rows',async()=>{
+ const dir=root();
+ try{
+  put(dir,'src/unsafe.spec.js',[
+   "globalThis.__SHOULD_NOT_RUN__=true;",
+   "test.each((()=>{throw Error('executed');})())('unsafe',()=>{});",
+   "test('basic',()=>{throw Error('executed');});",
+   "test.each([])('empty',()=>{});"
+  ].join('\n'));
+  const rows=await all(importers['test-catalog'](dir,source));
+  assert.equal(rows.length,3);
+  assert.equal(rows.find(x=>x.program.title==='unsafe').status,'requires-dynamic-recording');
+  assert.equal(rows.find(x=>x.program.title==='empty').status,'no-instantiated-rows');
+  assert.equal(globalThis.__SHOULD_NOT_RUN__,undefined);
+ }finally{rmSync(dir,{recursive:true,force:true});}
+});

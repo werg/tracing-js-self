@@ -272,3 +272,11 @@ contains **40 owned locally verified** and **117,733 explicit refusals**.
 The separate **37** verified generated variations yield **77 local owned
 episodes overall**, none training-admitted. The complete source-disposition
 and refusal ledger remains available in the same full-acquisition artifact.
+
+## Offline JS/TS test declaration catalog (opt-in)
+
+The `test-catalog` format scans an exact clean, pinned source checkout for test/spec files and `__tests__` files, **without running guest code**. It inventories ordinary `test`/`it`/`specify`, `Deno.test`, literal Jest/Vitest `.each` rows, disabled declarations and suite ancestry. Source spans are original UTF-16 offsets, with upstream SHA-256 provenance and frozen project splits. Nonliteral tables, tagged tables and parameterized suites remain explicit `requires-dynamic-recording` candidates; skipped/todo declarations are `disabled-upstream`, and empty tables have `no-instantiated-rows`.
+
+Example: `node tools/import-external-corpus.mjs --format test-catalog --root /path/to/pinned-checkout --repository owner/repo --revision FULL_40_CHARACTER_SHA --license MIT --output corpus/out/tests.jsonl --report corpus/out/tests.json`
+
+The inventory does **not** resolve which runner is used, prove a callable production boundary, capture effects or create valid independent execution evidence. Every record has `authority: acquired-fixture-only`, `verified: false`, and `admitted: false`. Execute unknown upstream tests only in isolated sandboxes, then independently recheck replay and owned semantics before any training use.
