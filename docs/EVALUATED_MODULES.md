@@ -60,8 +60,8 @@ resolution is checked at link time, including unused imports and re-exports.
 
 Dependencies are evaluated once per graph in depth-first dependency order,
 and their bounded module-side effects occur before dependent module bodies.
-The linker currently **rejects cycles with effects rather than emulating
-full cyclic ECMAScript module instantiation**. Each call to
+The linker currently **rejects all cyclic evaluation graphs** rather than
+emulating full cyclic ECMAScript module instantiation. Each call to
 `executeEvaluatedModules` starts a **fresh** owned realm; state does *not*
 persist across calls to this API. Function-only cycles are handled by the
 separate, older `static-module/1` linker.
