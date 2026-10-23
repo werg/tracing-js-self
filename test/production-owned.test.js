@@ -24,7 +24,7 @@ test('actual pinned production functions produce independently checked owned can
  assert.equal(report.attempted,23);
  assert.equal(report.admitted,0);
  assert.equal(report.locallyVerified+report.refused,report.attempted);
- assert(report.locallyVerified>=1,JSON.stringify(report.rows));
+ assert.equal(report.locallyVerified,19,JSON.stringify(report.rows));
  assert.equal(verified.length,report.locallyVerified);
  assert(report.rows.every(x=>x.admitted===false));
  for(const row of report.rows){

@@ -1687,3 +1687,32 @@ appear exactly once, and no row claims owned verification or admission.
   large-scale verified semantic traces. Native V8 output agreement or
   generated-code hashes are never treated as a verified owned journal.
   Full ECMAScript/host conformance is not established by these additions.
+
+
+### Measured real production code and validator outcomes (2026-10-23)
+
+The production-helper pipeline has now completed its expanded CI check:
+[run 40019121072](https://github.com/werg/tracing-js-self/actions/runs/40019121072)
+verified **19/23** independently rechecked, SHA-pinned original Axios
+interceptor and utility function-entry executions using the owned runtime.
+Four executions explicitly refused; **zero** were admitted.
+
+[Ajv run 40018572124](https://github.com/werg/tracing-js-self/actions/runs/40018572124)
+measured **822 / 907** real Ajv 8.17.1 native-reference agreements across
+26 pinned JSON Schema Test Suite source files, plus 29 disagreements and
+56 unsupported cases. These **907 remain native diagnostics** with **zero
+owned validator-internal traces** and **zero training admission**. Original
+schema input hashes and generated Ajv code hashes are included in the
+diagnostic records.
+
+The Test262 experimental native ESM async adapter now also detects late,
+unhandled promise rejections after successful `$DONE`. Dedicated
+module regressions are run in a VM-modules-enabled child process with
+an exact expected test count. This supports a bounded native reference
+subset, not general owned async ESM or complete host scheduling.
+
+**Unfinished:** arbitrary production-library class/closure/module
+initialization in the owned interpreter, tracing Ajv-generated validation
+operations with independent owned verification, full ECMAScript
+module/Promise/event-loop conformance, native service and agent semantics,
+and downstream corpus admission.

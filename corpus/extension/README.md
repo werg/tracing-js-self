@@ -458,3 +458,15 @@ The native Test262 ESM reference adapter now also supports bounded
 It refuses missing or repeated `$DONE` and mismatched runtime error
 constructors. It does not implement full async host jobs, external timers or
 a semantically owned native module graph.
+
+
+### Verified production evidence measurements
+
+The expanded pinned Axios helper proof run independently rechecked
+**19 of 23** real original helper invocations; four refused. These
+function-entry projections are locally owned only and do not qualify
+the larger eight-library driver corpus as owned. A separately sandboxed
+native Ajv 8.17.1 run attempted all 907 pinned JSON Schema snapshot
+records: 822 agreements, 29 disagreements, 56 unsupported. The Ajv
+generated-code SHA receipts are **not owned intermediate execution events**.
+All admission counts remain zero.
