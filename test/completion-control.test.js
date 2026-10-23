@@ -117,11 +117,14 @@ test('unhandled throws and unsupported coercions keep distinct terminal outcomes
 });
 
 test('failed binding and property updates remain reconstructible and replayable',()=>{
-  for(const [source,operation] of [
+  for(const [body,operation] of [
     ['const n=1; n++;','binding.update'],
     ['let value=null; value.x++;','property.update']
   ]) {
-    const runtime=createRuntime().start(source);
+    const runtime=createRuntime().startEntry({
+      text:'"use strict";\nfunction f(){'+body+'}',
+      functionName:'f'
+    });
     const bundle=check(runtime,'runtime.failure');
     assert(bundle.events.some(e=>e.operation===operation&&e.completion?.type==='throw'),
       operation+' must retain its abrupt completion in the journal');
