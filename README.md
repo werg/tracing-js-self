@@ -12,16 +12,19 @@ foundation and its source-anchored trace format. See
 
 ## Training-data direction
 
+The sole public training representation is [effective-computation semantic-trace/2](docs/EFFECTIVE_TRACE.md): source-level values, choices, calls and effects rather than reversible internal-engine steps. The format has no version-one compatibility path.
+
+
 The [semantic execution training-data plan](docs/TRAINING_DATA_PLAN.md) sets the
 immediate direction: verified executions compiled into compact, source-anchored
 traces for [megatoken](https://github.com/werg/megatoken). The separately versioned
 `training-js/1` profile already provides strict ES2022 parsing, direct function
 entry, identity-preserving data graphs, independent synchronous outcome checks,
-semantic journal normalization and a bounded `semantic-trace/1` exporter.
+semantic journal normalization and a bounded `semantic-trace/2` exporter.
 
 Run `npm ci && npm test`, then
 `npm run training:generate -- --seed 42 --count 16` for reproducible **locally
-verified** fixture episodes. These are candidate `semantic-execution/1` payloads,
+verified** fixture episodes. These are candidate `semantic-execution/2` payloads,
 not admitted megatoken examples: the generator keeps `admitted=0` until the
 cross-repository schema, visibility and rollout gates pass. The output includes
 a public trace and a private verification sidecar. Only observed context and
