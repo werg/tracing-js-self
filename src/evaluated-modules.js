@@ -299,12 +299,12 @@ function rewrite(module,root,names,initialIdentifiers,namespaceBindings=new Map(
          (parent?.type==='UpdateExpression'&&key==='argument')||
          (parent?.type==='UnaryExpression'&&parent.operator==='delete'))
         reject('namespace exports are read-only live bindings');
-      const key=node.computed?
+      const exportedName=node.computed?
         (node.property?.type==='Literal'&&typeof node.property.value==='string'?
           node.property.value:null):
         node.property?.type==='Identifier'?node.property.name:null;
-      if(key===null)reject('dynamic namespace property access requires module namespace exotic semantics');
-      const target=namespaceBindings.get(node.object.name)(key);
+      if(exportedName===null)reject('dynamic namespace property access requires module namespace exotic semantics');
+      const target=namespaceBindings.get(node.object.name)(exportedName);
       edits.set(node.start,{end:node.end,value:target.linked});
       return;
     }
