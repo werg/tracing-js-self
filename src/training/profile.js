@@ -50,7 +50,16 @@ export function parseTraining(source) {
     const loc=span(n);
     switch(n.type) {
       case 'Literal':
-        if(n.regex)reject(n,'regular expression');
+        // Retain nonexecuted RegExp syntax without pretending the owned VM
+        // implements RegExp. Execution of this node is a terminal refusal.
+        if(n.regex){
+          // Only the exact pinned CR/LF delimiters have a bounded owned scanner.
+          // Everything else is compiled as unreachable-or-refused syntax.
+          if((!n.regex.flags && ['\\r\\n|\\r|\\n','(\\r\\n|\\r|\\n)'].includes(n.regex.pattern)) ||
+             (n.regex.flags==='g' && n.regex.pattern===String.raw`[\\\{\}\*\+\?\|\^\$\.\[\]\(\)]`))
+            return {...loc,type:'OwnedPinnedRegExp',pattern:n.regex.pattern,flags:n.regex.flags};
+          return {...loc,type:'DeferredRegExp',pattern:n.regex.pattern,flags:n.regex.flags};
+        }
         return {...loc,type:'Literal',value:encode(n.bigint!==undefined?BigInt(n.bigint):n.value),raw:n.raw};
       case 'Identifier':return {...loc,type:'Identifier',name:n.name};
       case 'ArrowFunctionExpression':case 'FunctionExpression':{
@@ -96,6 +105,12 @@ export function parseTraining(source) {
         if(n.optional || n.object.type==='Super')reject(n,'member receiver');
         return {...loc,type:'Member',object:expr(n.object),property:n.computed?expr(n.property):
           {...span(n.property),type:'Literal',value:encode(n.property.name)}};
+      case 'NewExpression':
+        if(n.callee.type!=='Identifier' ||
+           !['Set','Error','TypeError'].includes(n.callee.name) ||
+           n.arguments.some(a=>a.type==='SpreadElement') || n.arguments.length>1)
+          reject(n,'NewExpression');
+        return {...loc,type:'Construct',callee:n.callee.name,args:n.arguments.map(expr)};
       case 'CallExpression':
         if(n.optional || n.arguments.filter(a=>a.type==='SpreadElement').length>4)
           reject(n,'spread/optional call');
@@ -238,6 +253,9 @@ export function parseTraining(source) {
           break;
         case 'Member':value(n.object,e);value(n.property,e);break;
         case 'Call':value(n.callee,e);n.args.forEach(x=>value(x.type==='Spread'?x.argument:x,e));break;
+        case 'Construct':if(!has(n.callee,e))reject(n,'unbound constructor');
+          n.args.forEach(x=>value(x,e));break;
+        case 'DeferredRegExp':case 'OwnedPinnedRegExp':break;
         case 'Array':n.elements.forEach(x=>value(x,e));break;
         case 'Object':n.properties.forEach(p=>value(p.value,e));break;
         case 'Assign':value(n.left,e);value(n.right,e);break;
@@ -301,6 +319,6 @@ export function parseTraining(source) {
     });
     statements.forEach(n=>statement(n,env));
   }
-  scope(body,{names:new Set(['undefined','Object','Array','Number','Math','Promise','host','NaN','Infinity']),parent:null},[],false,true);
+  scope(body,{names:new Set(['undefined','Object','Array','Number','Math','Promise','Set','Error','TypeError','host','NaN','Infinity']),parent:null},[],false,true);
   return {type:'Program',body,start:0,end:source.length,profile:TRAINING_PROFILE};
 }

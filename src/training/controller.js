@@ -63,7 +63,7 @@ export class SemanticController {
     const draft=new Map([...this.heap].map(([id,o])=>[id,{
       ...o,properties:new Map(o.properties),versions:new Map(o.versions)}]));
     for(const alloc of fields.allocations??[]){
-      if(!['array','object','function'].includes(alloc.kind)||
+      if(!['array','object','function','set','regexp'].includes(alloc.kind)||
          draft.has(alloc.identity)||!Array.isArray(alloc.properties)||
          !Number.isSafeInteger(alloc.shapeVersion)||alloc.shapeVersion<0)
         fail('identity','Invalid callback-associated allocation');
@@ -112,7 +112,7 @@ export class SemanticController {
         fail('identity','Reference was never allocated in the committed graph');
     }else if(value[0]==='intrinsic'){
       if(value.length!==2||!['Object','Array','Number','Math',
-        'Object.prototype','Array.prototype','Promise'].includes(value[1]))
+        'Object.prototype','Array.prototype','Promise','Set','Error','TypeError'].includes(value[1]))
         fail('value','Unknown owned intrinsic tag');
     }else if(value[0]==='builtinfn'){
       const names=new Set([
@@ -125,8 +125,9 @@ export class SemanticController {
           'toReversed','with'].map(x=>'Array.prototype.'+x),
         ...['charAt','charCodeAt','at','substring','substr','slice','indexOf','lastIndexOf',
           'includes','startsWith','endsWith','toLowerCase','toUpperCase','trim',
-          'trimStart','trimEnd'].map(x=>'String.prototype.'+x),
-        'Array.isArray','Array.toString',
+          'trimStart','trimEnd','split','replace'].map(x=>'String.prototype.'+x),
+        'Array.isArray','Array.from','Array.toString',
+        'Set.prototype.has','Set.prototype.add',
         'Object.hasOwn','Object.keys','Object.values','Object.entries','Object.assign','Object.is','Object.create','Object.setPrototypeOf',
         'Object.getPrototypeOf','Object.defineProperty','Object.valueOf','Object.toString',
         'Promise.resolve','Promise.reject','Promise.prototype.then',
@@ -280,7 +281,7 @@ export class SemanticController {
       // exist before the model can predict any later reads.
       for(const item of fields.allocations??[]) {
         if(this.heap.has(item.identity))fail('identity','Allocation identity already exists');
-        if(!['object','array','function'].includes(item.kind)||
+        if(!['object','array','function','set','regexp'].includes(item.kind)||
            !Number.isSafeInteger(item.shapeVersion??0) ||
            (item.shapeVersion??0)<0 ||
            !Array.isArray(item.properties??[]))

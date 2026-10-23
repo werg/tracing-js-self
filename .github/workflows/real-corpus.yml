@@ -56,7 +56,7 @@ jobs:
           npm run corpus:audit --             --input corpus/out/traces.jsonl             --output corpus/out/quality.json             --review corpus/out/quality.md             --examples 30
       - name: Compare with independently verified owned interpreter
         run: |
-          npm run corpus:owned-coverage --             --input corpus/out/traces.jsonl             --output corpus/out/owned-coverage.json             --per-function 2             --local-episodes corpus/out/owned-locally-verified.jsonl             --min-owned-verified 114
+          npm run corpus:owned-coverage --             --input corpus/out/traces.jsonl             --output corpus/out/owned-coverage.json             --per-function 2             --local-episodes corpus/out/owned-locally-verified.jsonl             --min-owned-verified 140
       - name: Validate provenance and explicit diagnostic status
         run: |
           node --input-type=module -e '
@@ -136,7 +136,7 @@ jobs:
       - name: Require 936 complete owned checks and classify all refusals
         run: |
           npm run corpus:owned-merge -- \
-            --require-complete --min-owned-verified 684 \
+            --require-complete --min-owned-verified 840 \
             --output corpus/full/owned-all-summary.json \
             --review corpus/full/owned-all-review.md \
             corpus/full/owned-{0,2,4,6,8,10}.json

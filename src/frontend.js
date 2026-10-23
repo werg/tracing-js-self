@@ -184,6 +184,14 @@ export function compile(ast) {
     function expr(n) {
       switch(n.type){
         case 'Literal': emit('CONST',{value:n.value,raw:n.raw},n);break;
+        case 'OwnedPinnedRegExp':
+          emit('NEW_PINNED_REGEXP',{pattern:n.pattern,flags:n.flags},n);break;
+        case 'DeferredRegExp':
+          emit('UNSUPPORTED_EXPRESSION','RegExp execution requires owned matching semantics',n);break;
+        case 'Construct':
+          emit('GET',n.callee,n);
+          for(const a of n.args)expr(a);
+          emit('CONSTRUCT',n.args.length,n);break;
         case 'FunctionExpr':{
           const codeId=bodyProgram(n.body.body,n.params,false,n.defaults,n.restIndex);
           emit('MAKE_FUNCTION',{codeId,arrow:n.arrow},n);
