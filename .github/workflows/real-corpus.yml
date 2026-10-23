@@ -1,0 +1,55 @@
+name: Pinned real-world JS and TS trace corpus
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/observational.js'
+      - 'corpus/**'
+      - 'tools/build-real-corpus.mjs'
+      - '.github/workflows/real-corpus.yml'
+      - 'package.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  observe-real-code:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Generate real-source V8 observation corpus and readable review
+        run: |
+          npm run corpus:generate -- \
+            --per-function 12 --max-events 2400 \
+            --output corpus/out/traces.jsonl \
+            --report corpus/out/report.json \
+            --review corpus/out/review.md
+      - name: Validate provenance and explicit diagnostic status
+        run: |
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const report=JSON.parse(readFileSync("corpus/out/report.json"));
+            if(report.schema!=="real-source-corpus-report/1" ||
+                report.mode!=="diagnostic-only" ||
+                report.totals.functions<70 ||
+                report.totals.requested<800 ||
+                !report.sources.vscode.revision ||
+                !report.sources.lodash.revision)
+              process.exit(1);
+            console.log("Verified observations:",report.acceptedExamples,
+              "distinct original functions:",report.acceptedFunctions);
+          '
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pinned-real-world-js-ts-observations
+          path: corpus/out/
+          retention-days: 14
