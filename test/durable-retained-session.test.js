@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,rm,writeFile,mkdir,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
+import {execFileSync} from 'node:child_process';
 import {join,dirname} from 'node:path';
 import {createBoundedRetainedModuleSession} from 'tracing-js-self/evaluated-module-session';
 import {replayExact} from 'tracing-js-self';
@@ -41,6 +42,33 @@ test('durable retained checkpoint replays module cells in a fresh session',async
       assert.notEqual((await reopened.put(session)).id,receipt.id,
         'committing another call must change the content-addressed checkpoint');
     }finally{session.close();restored?.close();}
+  });
+});
+
+test('checkpoint replays committed module history in a separate Node process',async()=>{
+  await inDirectory(async store=>{
+    const session=createBoundedRetainedModuleSession({modules,entryModule:'main.ts'});
+    try{
+      assert.equal((await session.invoke('add',[2])).result,3);
+      assert.equal((await session.invoke('add',[5])).result,8);
+      const receipt=await store.put(session);
+      const script=`
+        import {createDurableRetainedModuleStore} from './src/storage/node.js';
+        const store=createDurableRetainedModuleStore({directory:process.argv[1]});
+        const session=await store.get(process.argv[2]);
+        try{
+          const before=(await session.invoke('read')).result;
+          const after=(await session.invoke('add',[4])).result;
+          console.log(JSON.stringify({before,after,calls:session.history.length}));
+        }finally{session.close();}
+      `;
+      const stdout=execFileSync(process.execPath,
+        ['--input-type=module','--eval',script,store.directory,receipt.id],
+        {cwd:process.cwd(),encoding:'utf8',timeout:30000});
+      assert.deepEqual(JSON.parse(stdout),{before:8,after:12,calls:4});
+      assert.equal(session.history.length,2,
+        'restoring in another process may not mutate the original realm');
+    }finally{session.close();}
   });
 });
 
