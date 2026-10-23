@@ -8,7 +8,7 @@ import {createHash} from 'node:crypto';
 import ts from 'typescript';
 import {verifyTrainingCase,recheckIndependentTrainingEvidence} from '../src/training/admit.js';
 import {cases,sources} from '../corpus/cases.mjs';
-import {original,corpusSplit} from '../corpus/pinned-source.mjs';
+import {original,corpusSplit,lowerPinnedCharCode} from '../corpus/pinned-source.mjs';
 import {buildOwnedFixtureEntry} from '../corpus/owned-fixture-adapter.mjs';
 
 const argv=process.argv.slice(2);
@@ -33,7 +33,7 @@ const records=readFileSync(input,'utf8').split('\n').filter(Boolean).map(JSON.pa
 const casesByName=new Map(cases.map(c=>[c.project+'/'+c.file+'/'+c.entry,c]));
 const observations=[],counts={},families=new Map(),blockers=new Map();
 const localEpisodes=[];
-const seen=new Set(),pinnedCache=new Map(),sourceCache=new Map();
+const seen=new Set(),pinnedCache=new Map(),sourceCache=new Map(),loweringCache=new Map();
 const byProject={};
 const hash=text=>createHash('sha256').update(text).digest('hex');
 const add=(obj,key)=>obj[key]=(obj[key]??0)+1;
@@ -70,7 +70,9 @@ for(const row of records){
   }else{
     let source=sourceCache.get(row.family);
     if(source===undefined){
-      source=pinned.text;
+      const lowered=lowerPinnedCharCode(spec,pinned.text);
+      source=lowered.text;
+      loweringCache.set(row.family,lowered.lowering);
     // Removing TS export modifiers and Lodash CommonJS assignment is the
     // packaging adapter; the original function bodies are never rewritten.
     source=source.replace(/\bexport\s+(?=(?:async\s+)?function\b)/g,'')
@@ -122,12 +124,14 @@ for(const row of records){
         project:row.project,revision:row.pinnedRevision,license:row.license,
         sourceURL:row.sourceURL,sourceFileSha256:row.sourceFileSha256,
         independentNativeFinalOutcome:true,independentOwnedReplay:true,
+        sourceLowering:loweringCache.get(row.family)??null,
         admission:'pending external megatoken gate'
       };
       localEpisodes.push(JSON.stringify(checked.exported));
     }
   }
   const item={family:row.family,index:row.index,sourceURL:row.sourceURL,
+    sourceLowering:loweringCache.get(row.family)??null,
     nativeVerified:row.verified&&row.returned,ownedStatus:status,
     reason:reason?String(reason).slice(0,400):null};
   observations.push(item);add(counts,status);
