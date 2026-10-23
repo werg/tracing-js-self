@@ -17,6 +17,7 @@ const reportFile=resolve(arg('--report','corpus/out/stateful-report.json'));
 const reviewFile=resolve(arg('--review','corpus/out/stateful-review.md'));
 const perScenario=Number(arg('--per-scenario','12'));
 const limit=Number(arg('--limit',String(scenarios.length)));
+const projectFilter=arg('--project',null);
 const maxEvents=Number(arg('--max-events','2400'));
 const timeoutMs=Number(arg('--timeout-ms','2500'));
 const minVerified=Number(arg('--min-verified','0'));
@@ -91,7 +92,9 @@ function split(scenario){
 const categoryCount={},statuses={},byProject={},byFamily={},bySplit={};
 const records=[],failed=[],review=[],perKind={};
 let effects=0,events=0,traceBytes=0,sourceBytes=0,traceCalls=0,traceReturns=0;
-const first=scenarios.slice(0,limit);
+if(projectFilter&&!scenarios.some(s=>s.project===projectFilter))
+  throw new Error('Unknown pinned benchmark project '+projectFilter);
+const first=(projectFilter?scenarios.filter(s=>s.project===projectFilter):scenarios).slice(0,limit);
 for(const scenario of first) {
  const built=bundle(scenario),family=scenario.id,trainSplit=split(scenario);
  for(let i=0;i<perScenario;i++){
