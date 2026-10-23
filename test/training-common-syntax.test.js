@@ -21,7 +21,7 @@ test('sequence expressions execute each side effect exactly once',()=>{
   verified('function f(o){let q=(o.n++,o.n+2,o.n*3);return [q,o.n];}',[{n:1}]);
 });
 test('arithmetic and bitwise compound assignments preserve source results',()=>{
-  verified('function f(o){let a=2n,b=4;a**=b;const x={n:9};x.n*=3;x.n>>=2;let v=3;v|=8;v^=2;v<<=1;return [a,x.n,v];}');
+  verified('function f(o){let a=2n,b=4n;a**=b;const x={n:9};x.n*=3;x.n>>=2;let v=3;v|=8;v^=2;v<<=1;return [a,x.n,v];}');
   verified('function f(x){x/=2;x%=3;x**=2;return x;}',[15]);
   verified('function f(o){let n=3;n>>>=1;o.x &= n;return [o.x,n];}',[{x:9}]);
 });
