@@ -5,7 +5,7 @@
 import vm from 'node:vm';
 import {realizeGraph,describeGraph} from './graph.js';
 
-export function referenceOutcome({source,entry,args,initialHeap,timeout=1000,observeOperations=false}) {
+export function referenceOutcome({source,entry,args,initialHeap,timeout=1000,observeOperations=false,observeBranches=false}) {
   if(!/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(entry))
     throw new TypeError('Invalid entry identifier');
 
@@ -52,7 +52,18 @@ export function referenceOutcome({source,entry,args,initialHeap,timeout=1000,obs
   })`,context,{timeout});
   context.__trainingArgs=buildArgs(JSON.stringify({heap:initialHeap,roots:args}));
   context.__trainingResult=undefined;
-  if(observeOperations)vm.runInContext(`globalThis.__tracingOperations=[];
+  if(observeOperations||observeBranches)vm.runInContext(`globalThis.__tracingOperations=[];
+    globalThis.__tracingDecisions=[];
+    globalThis.__tracingBranch=(site,value)=>{
+      globalThis.__tracingDecisions.push({site,decision:['bool',!Boolean(value)]});
+      return value;
+    };
+    globalThis.__tracingLogical=(site,operator,value)=>{
+      const skip=operator==='&&'?!Boolean(value):
+        operator==='||'?Boolean(value):value!==null&&value!==undefined;
+      globalThis.__tracingDecisions.push({site,decision:['bool',skip]});
+      return value;
+    };
     globalThis.__tracingCapture=(site,value)=>{
       let tagged;
       if(value===null)tagged=['null'];
@@ -80,9 +91,12 @@ export function referenceOutcome({source,entry,args,initialHeap,timeout=1000,obs
   }
   try {
     const graph=describeGraph([...context.__trainingArgs,context.__trainingResult]);
-    if(!observeOperations)return {kind:'return',graph};
-    const json=vm.runInContext('JSON.stringify(globalThis.__tracingOperations)',context,{timeout});
-    return {kind:'return',graph,operations:JSON.parse(json)};
+    if(!observeOperations&&!observeBranches)return {kind:'return',graph};
+    const json=vm.runInContext('JSON.stringify({operations:globalThis.__tracingOperations,decisions:globalThis.__tracingDecisions})',context,{timeout});
+    const observations=JSON.parse(json);
+    return {kind:'return',graph,
+      ...(observeOperations?{operations:observations.operations}:{}),
+      ...(observeBranches?{decisions:observations.decisions}:{})};
   } catch(error) {
     return {kind:'reference.unsupported',message:String(error.message)};
   }

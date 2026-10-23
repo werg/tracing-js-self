@@ -55,6 +55,8 @@ not whole-language conformance or training-data admission.
 
 A separate source-instrumented V8 run now compares **executed scalar unary/binary/compound-assignment values at each source occurrence**, including overwritten intermediates, with the owned journal's source sites. The uninstrumented and instrumented final observable graphs must agree. Other semantic families and spec phase internals are explicitly unverified; this is neither full intermediate-state proof nor model-data admission.
 
+An independent V8 **control-decision audit** checks executed if, loop, ternary and &&/||/?? short-circuit branch decisions in source order. Mismatched, missing or excess decisions fail closed before candidate training verification; this does not establish whole-language semantics or training admission.
+
 The bounded mock host bridge now dispatches only **versioned, immutable `canonical-json/1` request payloads**, materialized from the committed graph before the adapter sees them. Its journal independently checks the exact JSON bytes, operation signature, and historical graph versions. Adapters receive frozen plain JSON data; original guest tags remain only in the private journal. Fulfilled/pending guest-promise adoption regressions also exist. The deterministic fixture generator emits candidate
 `semantic-execution/1` episodes with a private audit sidecar and reports
 **locally verified**, with **admitted=0**. These are not accepted megatoken training

@@ -5,6 +5,7 @@ import {createRuntime} from '../runtime.js';
 import {referenceOutcome,ownedOutcome} from './reference.js';
 import {exportTraining} from './export.js';
 import {auditReferenceOperations} from './operation-reference.js';
+import {auditReferenceBranches} from './branch-reference.js';
 
 export function verifyTrainingCase({source,entry,args=[],seed=null,lineage=null,
     maxSteps=10000,maxGenerated=256}={}) {
@@ -23,8 +24,11 @@ export function verifyTrainingCase({source,entry,args=[],seed=null,lineage=null,
      Object.keys(runtime.state.effects).length || Object.keys(runtime.state.promises).length ||
      Object.values(runtime.state.frames).some(f=>f.status!=='completed'))
     return {status:'unsupported',reason:'Only completed synchronous effect-free entries qualify'};
-  const reference=referenceOutcome({source,entry,
-    args:runtime.entrySpec.arguments,initialHeap:runtime.initialState.heap});
+  let reference;
+  try {reference=referenceOutcome({source,entry,
+    args:runtime.entrySpec.arguments,initialHeap:runtime.initialState.heap});}
+  catch(error) {return {status:'reference_mismatch',
+    reason:'Independent reference failed: '+String(error.message)};}
   let owned;
   try {owned=ownedOutcome(runtime);}
   catch(error) {return {status:'unsupported',reason:String(error.message)};}
@@ -42,6 +46,18 @@ export function verifyTrainingCase({source,entry,args=[],seed=null,lineage=null,
   if(operationAudit.status!=='agreed')
     return {status:'reference_mismatch',reason:'Source-boundary operation observation disagrees',
       operationAudit,owned,reference};
+  let branchAudit;
+  try {
+    branchAudit=auditReferenceBranches({source,entry,
+      args:runtime.entrySpec.arguments,initialHeap:runtime.initialState.heap,
+      bundle:runtime.exportRun(),reference});
+  } catch(error) {
+    return {status:'reference_mismatch',
+      reason:'V8 control observation failed: '+String(error.message),owned,reference};
+  }
+  if(branchAudit.status!=='agreed')
+    return {status:'reference_mismatch',reason:'Executed V8 control decisions disagree',
+      branchAudit,owned,reference};
   let exported;
   try {exported=exportTraining(runtime,{maxGenerated});}
   catch(error) {
@@ -50,6 +66,7 @@ export function verifyTrainingCase({source,entry,args=[],seed=null,lineage=null,
   }
   exported.sidecar.referenceStatus='agreed';
   exported.sidecar.operationAudit=operationAudit;
+  exported.sidecar.branchAudit=branchAudit;
   exported.sidecar.sourceLineage=lineage;
   exported.sidecar.generationSeed=seed;
   exported.sidecar.reference={engine:'Node.js V8 vm (independent reference only)',outcome:reference};
