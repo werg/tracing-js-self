@@ -196,6 +196,34 @@ export class SemanticController {
       const cellDraft=new Map(this.cells);
       const heapDraft=new Map([...this.heap].map(([id,obj])=>[id,{
         ...obj,properties:new Map(obj.properties),versions:new Map(obj.versions)}]));
+      if(fields.update){
+        // A lexical update contains a read AND a write in one source-level
+        // step. Verify the observed old location before accepting the new
+        // version. Otherwise a model could fabricate the read and still pass
+        // structural serving validation (the independent V8 gate is separate).
+        const reads=fields.reads??[],writes=fields.writes??[];
+        if(kind!=='write'||!['++','--'].includes(fields.update.operator)||
+           typeof fields.update.prefix!=='boolean'||
+           reads.length!==1||reads[0].kind!=='binding'||
+           writes.length!==1||writes[0].kind!=='cell')
+          fail('read','Malformed lexical update observation');
+        const read=reads[0],write=writes[0],key=read.envId+':'+read.name;
+        const prior=cellDraft.get(key);
+        const active=this.activations.get(fields.invocation);
+        const seeded=active?.params[read.name] ??
+          (this.staticFunctions.has(read.name) ?
+            ['ref',this.staticFunctions.get(read.name)] : undefined);
+        if(prior && (prior.version!==read.version || !same(prior.value,read.value)))
+          fail('read','Updated binding read differs from committed state');
+        if(!prior && seeded && !same(seeded,read.value))
+          fail('read','Updated parameter read differs from observed context');
+        if(!prior && !seeded && read.version!==0)
+          fail('read','Unknown updated binding has a noninitial read version');
+        if(write.env!==read.envId||write.key!==read.name||
+           write.previous!==read.version)
+          fail('read','Updated binding write does not match read location and version');
+        if(!prior)cellDraft.set(key,{version:0,value:copy(read.value)});
+      }
       for(const write of fields.writes??[]){
         if(write.kind==='cell'){
           const key=write.env+':'+write.key,old=cellDraft.get(key);
