@@ -105,7 +105,8 @@ export function replayExact(bundle) {
   if(bundle.manifest?.schema!=='semantic-tracing-run/2')
     fail('Exact replay requires semantic-tracing-run/2; legacy runs can be structurally reconstructed');
   validateBundle(bundle);
-  const runtime = createRuntime(); // Deliberately no adapters: no external calls.
+  const randomSeed=bundle.initialState?.control?.a0?.randomSeed??null;
+  const runtime = createRuntime({randomSeed}); // Deterministic fixture only; never an external adapter.
   let entryCode = null;
   const initial = bundle.initialState;
   const activeId = initial?.control?.a0?.activeFrameId;
