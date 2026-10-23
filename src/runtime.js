@@ -166,7 +166,7 @@ export class Runtime {
     const compiled=compile(trainingProfile?parseTraining(text):parse(text));
     const rename={};
     for(const id of Object.keys(compiled.programs))rename[id]=`${sourceId}:${id}`;
-    for(const [id,program] of Object.entries(compiled.programs))this.programs[rename[id]]={...program,id:rename[id],instructions:program.instructions.map(inst=>inst.op==='DEF_FN'?{...inst,arg:{...inst.arg,codeId:rename[inst.arg.codeId]},siteId:`${sourceId}:${inst.siteId}`}:{...inst,siteId:`${sourceId}:${inst.siteId}`})};
+    for(const [id,program] of Object.entries(compiled.programs))this.programs[rename[id]]={...program,id:rename[id],instructions:program.instructions.map(inst=>['DEF_FN','MAKE_FUNCTION'].includes(inst.op)?{...inst,arg:{...inst.arg,codeId:rename[inst.arg.codeId]},siteId:`${sourceId}:${inst.siteId}`}:{...inst,siteId:`${sourceId}:${inst.siteId}`})};
     this.sites.push(...compiled.sites.map(site=>({...site,siteId:`${sourceId}:${site.siteId}`,codeId:rename[site.codeId],sourceId})));
     const record={sourceId,text,url,goal,entry:rename[compiled.entry],parser:trainingProfile?TRAINING_PARSER:'bounded-pratt/2'};
     this.sources.push(record);return record;
