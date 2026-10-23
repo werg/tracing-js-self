@@ -280,3 +280,31 @@ The `test-catalog` format scans an exact clean, pinned source checkout for test/
 Example: `node tools/import-external-corpus.mjs --format test-catalog --root /path/to/pinned-checkout --repository owner/repo --revision FULL_40_CHARACTER_SHA --license MIT --output corpus/out/tests.jsonl --report corpus/out/tests.json`
 
 The inventory does **not** resolve which runner is used, prove a callable production boundary, capture effects or create valid independent execution evidence. Every record has `authority: acquired-fixture-only`, `verified: false`, and `admitted: false`. Execute unknown upstream tests only in isolated sandboxes, then independently recheck replay and owned semantics before any training use.
+
+
+## Opt-in native-V8 Test262 reference diagnostics (not owned traces)
+
+A bounded **real harness-based script reference adapter** is available in
+`src/corpus/test262-reference-execution.mjs`. It uses the pinned Test262
+`sta.js` and `assert.js` files plus explicit extra includes, tests both
+sloppy/strict script modes, separates parse errors from runtime throws, checks
+the actual thrown constructor instead of its spoofable error name, and refuses
+unsupported module, raw, async, early/resolution and host-flag variants.
+An opt-in CLI requires an **exact, clean, locally pinned** Test262 checkout:
+
+```sh
+npm run corpus:test262:reference -- \
+  --root /path/to/trusted/test262 \
+  --revision d53ebc8b1931d9f1541e43d59650776e4b766248 \
+  --max 500 --timeout-ms 250 \
+  --output corpus/out/test262-reference-diagnostics.json
+```
+
+This runs guest JS locally and must not be used on untrusted source;
+`node:vm` is **not** a security isolation boundary. It performs no downloads
+or network calls and is **not** enabled on the acquisition-only workflow.
+Reported `passed` cases are V8 **diagnostic** observations, not owned
+`semantic-execution/2` trajectories, training-admitted examples, or
+independent cross-engine conformance proof. It does not implement complete
+Test262 harness semantics, feature-gating or async/module resolution. No
+full-suite result counts are claimed until a trusted pinned run is measured.

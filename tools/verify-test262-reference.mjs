@@ -1,0 +1,82 @@
+#!/usr/bin/env node
+// Explicitly opt-in, OFFLINE diagnostic execution of a trusted pinned Test262
+// checkout. Do not use this in-process VM runner for untrusted repositories.
+import {readFileSync,writeFileSync,mkdirSync,realpathSync} from 'node:fs';
+import {resolve,join,dirname,relative,sep} from 'node:path';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {importers} from '../src/corpus/import-external.mjs';
+import {executeTest262Reference} from '../src/corpus/test262-reference-execution.mjs';
+
+const argv=process.argv.slice(2);
+const value=(name,fallback)=>{const i=argv.indexOf('--'+name);
+  if(i<0)return fallback;
+  if(!argv[i+1]||argv[i+1].startsWith('--'))throw new Error('Missing --'+name);
+  return argv[i+1];};
+const root=realpathSync(resolve(value('root','')));
+const revision=value('revision',null);
+const max=Number(value('max','500'));
+const timeoutMs=Number(value('timeout-ms','250'));
+const output=resolve(value('output','corpus/out/test262-reference-diagnostics.json'));
+if(!revision||!/^[a-f0-9]{40}$/.test(revision))throw new Error('Require full pinned --revision');
+if(!Number.isSafeInteger(max)||max<1||max>10000||
+   !Number.isSafeInteger(timeoutMs)||timeoutMs<10||timeoutMs>1000)
+  throw new Error('Invalid execution bounds');
+const git=(...args)=>execFileSync('git',['-C',root,...args],{encoding:'utf8'}).trim();
+if(git('rev-parse','HEAD')!==revision)throw new Error('Pinned revision mismatch');
+if(git('status','--porcelain','--untracked-files=no'))throw new Error('Dirty tracked upstream checkout');
+const safeFile=(name)=>{
+  if(!/^[A-Za-z0-9_-][A-Za-z0-9_.-]*\.js$/.test(name)||name.includes('..'))
+    return null;
+  const p=realpathSync(join(root,'harness',name));
+  const rel=relative(join(root,'harness'),p);
+  if(rel.startsWith('..'+sep)||rel==='..'||rel.startsWith(sep))
+    throw new Error('Harness symlink escaped pinned checkout');
+  return readFileSync(p,'utf8');
+};
+const harness={};
+const sha256=text=>createHash('sha256').update(text).digest('hex');
+const rows=[],counts={},seen=new Set();
+for await(const row of importers.test262(root,{
+  project:'tc39/test262',repository:'tc39/test262',revision,license:'BSD-3-Clause'
+})){
+  if(rows.length>=max)break;
+  const source=readFileSync(join(root,row.provenance.path),'utf8');
+  if(sha256(source)!==row.provenance.sha256)throw new Error('Source changed during acquisition');
+  const names=['sta.js','assert.js',...row.program.harness];
+  const sources={};
+  for(const name of new Set(names)){
+    if(!(name in harness)){
+      try{harness[name]=safeFile(name);}catch(error){
+        if(error?.code==='ENOENT')harness[name]=null;
+        else throw error;
+      }
+    }
+    if(harness[name]!==null)sources[name]=harness[name];
+  }
+  const metadata={metadataStatus:row.status==='metadata-review'?'unparsed':'parsed',
+    flags:row.program.flags,features:row.program.features,
+    includes:row.program.harness.filter(n=>!['sta.js','assert.js'].includes(n)),
+    negative:row.expected.kind==='expected-error'?{
+      phase:row.expected.phase,type:row.expected.type}:null};
+  const result=executeTest262Reference({source,metadata,mode:row.program.mode,
+    harnessSources:sources,filename:row.provenance.path,timeoutMs});
+  if(seen.has(row.id))throw new Error('Duplicate source/mode identity');
+  seen.add(row.id);
+  rows.push({id:row.id,path:row.provenance.path,mode:row.program.mode,
+    sourceSha256:row.provenance.sha256,expected:row.expected,...result});
+  counts[result.status]=(counts[result.status]??0)+1;
+}
+const report={schema:'test262-native-reference-report/1',revision,
+  authority:'native-v8-diagnostic-only',verifiedOwned:0,admitted:0,
+  attempted:rows.length,counts,limits:{max,timeoutMs},
+  node:process.version,rows,warnings:[
+   'Native V8 execution is not an owned semantic trace, an independent engine conformance proof, or training admission.',
+   'Negative early/resolution tests, async tests, modules, raw tests and special host flags are explicitly unsupported.',
+   'node:vm is not a security boundary: use only trusted exact upstream checkouts, never arbitrary repository code.',
+   'A passing script without assertions may contain no meaningful behavioral checks.'
+  ]};
+if(!rows.length)throw new Error('No Test262 source variants found');
+mkdirSync(dirname(output),{recursive:true});
+writeFileSync(output,JSON.stringify(report,null,2)+'\n');
+console.log(JSON.stringify({attempted:rows.length,counts,verifiedOwned:0,admitted:0,output}));

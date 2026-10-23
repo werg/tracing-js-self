@@ -1417,3 +1417,17 @@ conversion is not**.
 - [x] Added an opt-in static `test-catalog` importer for normal tests, literal table rows, disabled declarations, `Deno.test`, suite ancestry and original source offsets, without evaluating any upstream code.
 - [x] Dynamic/nonportable tables, nonstatic suites and empty tables receive explicit non-execution statuses. Regression tests exercise malicious expressions, provenance, disabled cases and duplicate identities.
 - [ ] This is **not** the full executable Jest/Vitest/Node/Deno adapter or dynamic recorder. Isolated runner-specific setup, side-effect capture, independent replay, owned verification and training admission are still required. The prior 117,773 acquired / 40 canonically owned / 37 generated owned / zero admitted measurements are unchanged.
+
+
+### Additional native Test262 reference diagnostic adapter (2026-10-23)
+
+- [x] Added an explicit opt-in, pinned-checkout native-V8 harness-backed Test262
+  script adapter with sloppy/strict execution, expected parse/runtime error
+  checks, genuine error-constructor matching and categorized refusals.
+- [x] Added focused regression tests for mode differences, spoofed error names,
+  phase mismatches, timeouts, missing harness includes and non-admission.
+- [ ] Not a complete official Test262 runner: module, async, early/resolution
+  phases, host-dependent tests and cross-engine semantics remain unsupported.
+  No newly verified owned traces or training-admitted episodes are claimed.
+  The existing 117,773 acquired / 40 canonically owned / 37 generated owned /
+  zero admitted ledger remains unchanged.
