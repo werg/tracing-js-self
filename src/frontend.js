@@ -161,7 +161,13 @@ export function compile(ast) {
         case 'Literal': emit('CONST',{value:n.value,raw:n.raw},n);break;
         case 'Identifier':emit('GET',n.name,n);break;
         case 'This':emit('THIS',null,n);break;
-        case 'Unary':expr(n.argument);emit('UNARY',n.operator,n);break;
+        case 'Unary':
+          // typeof of an identifier must inspect the binding without first
+          // throwing on an unresolvable name. Owned TDZ remains observable.
+          if(n.operator==='typeof' && n.argument.type==='Identifier')
+            emit('TYPEOF_BINDING',n.argument.name,n);
+          else {expr(n.argument);emit('UNARY',n.operator,n);}
+          break;
         case 'Update':
           if(n.argument){
             expr(n.argument.object);expr(n.argument.property);

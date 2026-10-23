@@ -55,6 +55,12 @@ export function primitiveBinary(op, left, right) {
     case '/': return encode(a / b);
     case '%': return encode(a % b);
     case '**': return encode(a ** b);
+    case '&': return encode(a & b);
+    case '|': return encode(a | b);
+    case '^': return encode(a ^ b);
+    case '<<': return encode(a << b);
+    case '>>': return encode(a >> b);
+    case '>>>': return encode(a >>> b);
     case '<': return encode(a < b);
     case '<=': return encode(a <= b);
     case '>': return encode(a > b);
@@ -67,6 +73,7 @@ export function primitiveBinary(op, left, right) {
   }
 }
 export function primitiveUnary(op, arg, heap = null) {
+  if(op === 'void')return U;
   if (isReference(arg)) {
     if (op === 'typeof') {
       const isFunction = arg[0] === 'hostfn' || arg[0] === 'builtinfn' ||
@@ -81,6 +88,7 @@ export function primitiveUnary(op, arg, heap = null) {
     case '!': return encode(!a);
     case '-': return encode(-a);
     case '+': return encode(+a);
+    case '~': return encode(~a);
     case 'typeof': return encode(typeof a);
     default: throw new SyntaxError(`Unsupported unary operator ${op}`);
   }

@@ -36,6 +36,8 @@ phase paths. The training profile accepts only synchronous, effect-free,
 non-throwing entries; committed terminal guest throws in the common runtime do
 not enable an exception-training category.
 
+The strict training frontend also accepts scalar bitwise/shift operators, unary `~` and `void`, and `typeof unresolvableName` as `undefined` while preserving TDZ faults for existing uninitialized bindings. Differential V8 scalar-expression receipts and exact replay cover this bounded slice; broad object coercion and unrestricted JS/TS remain unsupported.
+
 The strict training frontend also supports common bounded control flow:
 ternary selection, `for` (one initialized `let` binding or expression init),
 `do…while`, loop `break`/`continue`, and prefix/postfix `++`/`--`

@@ -5,9 +5,10 @@ import {encode} from '../values.js';
 
 export const TRAINING_PROFILE='training-js/1';
 export const TRAINING_PARSER='acorn/8.15.0:training-js/1';
-const binaries=new Set(['+','-','*','/','%','**','<','<=','>','>=','===','!==','==','!=']);
+const binaries=new Set(['+','-','*','/','%','**','<','<=','>','>=','===','!==','==','!=',
+  '&','|','^','<<','>>','>>>']);
 const logical=new Set(['&&','||','??']);
-const unary=new Set(['!','-','+','typeof']);
+const unary=new Set(['!','-','+','typeof','void','~']);
 const reject=(node,why) => {throw new SyntaxError(
   'Unsupported training-js/1 '+why+' at '+(node.start ?? '?')+':'+(node.end ?? '?'));};
 
@@ -130,7 +131,12 @@ export function parseTraining(source) {
         case 'Identifier':
           if(!has(n.name,e))reject(n,'unbound identifier '+n.name);
           break;
-        case 'Unary':value(n.argument,e);break;
+        case 'Unary':
+          // ECMAScript typeof on an unresolvable name is defined as 'undefined';
+          // a declared but uninitialized lexical binding still throws (TDZ).
+          if(n.operator==='typeof' && n.argument.type==='Identifier' &&
+             !has(n.argument.name,e))break;
+          value(n.argument,e);break;
         case 'Binary':value(n.left,e);value(n.right,e);break;
         case 'Conditional':
           value(n.test,e);value(n.consequent,e);value(n.alternate,e);break;
