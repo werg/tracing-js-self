@@ -15,7 +15,7 @@ const lines=readFileSync(input,'utf8').split(/\r?\n/).filter(Boolean);
 if(!lines.length)throw new Error('Empty observation corpus');
 const totals={observations:0,verified:0,functions:0,events:0,reads:0,calls:0,
   branches:0,mutations:0,bytes:0,sourceBytes:0,opaqueResults:0,
-  repeatedReadCandidates:0,sameValueWriteCandidates:0,
+  repeatedReadCandidates:0,sameValueWriteCandidates:0,lexicalWrites:0,
   returnedCallCandidates:0,unmappedSiteCandidates:0,limitations:0};
 const byFunction={},kinds={},examples=[];
 for(const [lineNumber,line] of lines.entries()){
@@ -30,7 +30,10 @@ for(const [lineNumber,line] of lines.entries()){
   const bytes=Buffer.byteLength(JSON.stringify(events),'utf8');
   totals.bytes+=bytes;family.bytes+=bytes;
   totals.sourceBytes+=x.sourceBytes??Buffer.byteLength(text,'utf8');
-  if(x.observation.limitations?.length)totals.limitations++;
+  const gaps=(x.observation.limitations??[]).filter(x=>
+    !x.startsWith('Native V8 observation is not owned replay')&&
+    !x.startsWith('Native modules and unobserved host effects'));
+  if(gaps.length)totals.limitations++;
   const flags={},flag=name=>{add(flags,name);add(totals,name);add(family.flags,name);};
   let prevRead=null,prevKind=null;
   for(const event of events){
@@ -40,7 +43,10 @@ for(const [lineNumber,line] of lines.entries()){
     if(event.kind==='branch')totals.branches++;
     const changes=event.effects??[];
     totals.mutations+=changes.length;
-    if(event.kind==='write'&&!changes.length)flag('sameValueWriteCandidates');
+    if(event.kind==='write'&&event.binding!==undefined)
+      totals.lexicalWrites++;
+    if(event.kind==='write'&&event.binding===undefined&&!changes.length)
+      flag('sameValueWriteCandidates');
     if(event.kind==='call'&&prevKind==='return')flag('returnedCallCandidates');
     if(event.result?.[0]==='unknown'||event.result?.[0]==='symbol')flag('opaqueResults');
     const site=event.site;
