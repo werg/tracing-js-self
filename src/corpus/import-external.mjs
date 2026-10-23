@@ -49,15 +49,15 @@ export function test262Metadata(source) {
       fields[key].push(...array(item[1]));
     }
   }
-  const neg=/^negative:\s*\r?\n(?:\s+.*\r?\n)*/m.exec(body)?.[0]??'';
-  const phase=/^\s+phase:\s*(\S+)/m.exec(neg)?.[1]??null;
-  const type=/^\s+type:\s*(\S+)/m.exec(neg)?.[1]??null;
+  const neg=/^negative:[ \t]*\r?\n((?:[ \t]+[^\r\n]*(?:\r?\n|$))*)/m.exec(body)?.[1]??null;
+  const phase=/^[ \t]+phase:[ \t]*(\S+)/m.exec(neg??'')?.[1]??null;
+  const type=/^[ \t]+type:[ \t]*(\S+)/m.exec(neg??'')?.[1]??null;
   return {
     flags:Array.isArray(fields.flags)?fields.flags:array(fields.flags??''),
     includes:Array.isArray(fields.includes)?fields.includes:array(fields.includes??''),
     features:Array.isArray(fields.features)?fields.features:array(fields.features??''),
     negative:phase&&type?{phase,type}:null,
-    metadataStatus:fields.negative&&!phase?'unparsed-negative':'parsed'
+    metadataStatus:neg!==null&&(!phase||!type)?'unparsed-negative':'parsed'
   };
 }
 const enrich = (source, filename, program, fixture, expected, extra={}) => {
