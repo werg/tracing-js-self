@@ -5,3 +5,4 @@ export { encode, decode } from './values.js';
 export { validateBundle, reconstruct, TraceValidationError } from './validation.js';
 export { replayExact, TraceReplayError } from './replay.js';
 export { causalPrefix } from './causal.js';
+export {executeWithNativeServices} from './host/native-driver.js';
