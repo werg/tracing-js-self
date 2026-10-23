@@ -150,10 +150,10 @@ export function parseTraining(source) {
       case 'ForStatement':{
         let init=null;
         if(n.init?.type==='VariableDeclaration'){
-          if(!['let','var'].includes(n.init.kind)||n.init.declarations.length!==1||
-             n.init.declarations[0].id.type!=='Identifier'||
-             (n.init.kind==='let'&&!n.init.declarations[0].init))
-            reject(n.init,'for initializer (one let or var binding required)');
+          if(!['let','var'].includes(n.init.kind)||!n.init.declarations.length ||
+             n.init.declarations.length>8 || n.init.declarations.some(d=>
+               d.id.type!=='Identifier'||(n.init.kind==='let'&&!d.init)))
+            reject(n.init,'for initializer (1..8 initialized let or var bindings required)');
           init=stmt(n.init);
         }else if(n.init)init=expr(n.init);
         const body=stmt(n.body);
@@ -233,10 +233,13 @@ export function parseTraining(source) {
         case 'While':case 'DoWhile':
           value(n.test,e);statement(n.body,e);break;
         case 'For':{
-          const loopEnv=n.init?.type==='Variable'&&n.init.kind==='let'
-            ?{names:new Set([n.init.id]),parent:e}:e;
+          const declarations=n.init?.type==='VariableGroup'?n.init.declarations:
+            n.init?.type==='Variable'?[n.init]:[];
+          const loopEnv=declarations[0]?.kind==='let'
+            ?{names:new Set(declarations.map(d=>d.id)),parent:e}:e;
           if(n.init){
-            if(n.init.type==='Variable')statement(n.init,loopEnv);
+            if(['Variable','VariableGroup'].includes(n.init.type))
+              statement(n.init,loopEnv);
             else value(n.init,loopEnv);
           }
           if(n.test)value(n.test,loopEnv);
