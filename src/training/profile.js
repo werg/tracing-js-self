@@ -370,7 +370,15 @@ export function parseTraining(source) {
     function statement(n,e){
       switch(n.type){
         case 'Variable':if(n.init)value(n.init,e);break;
-        case 'ObjectBinding':case 'ArrayBinding':value(n.init,e);break;
+        case 'ObjectBinding':value(n.init,e);break;
+        case 'ArrayBinding':{
+          // The emitted array guard resolves Array.isArray by name. Reject
+          // lexical shadowing rather than accidentally running a guest helper.
+          for(let cursor=e;cursor?.parent;cursor=cursor.parent)
+            if(cursor.names.has('Array'))
+              reject(n,'array binding requires unshadowed owned Array intrinsic');
+          value(n.init,e);break;
+        }
         case 'VariableGroup':n.declarations.forEach(x=>statement(x,e));break;
         case 'Function':scope(n.body.body,e,n.params,n.async,true,n.defaults);break;
         case 'Block':scope(n.body,e,[],asyncFunction);break;

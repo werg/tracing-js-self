@@ -67,6 +67,8 @@ test('unsupported array patterns and non-array iterators fail before trace publi
       ['const [a]=self.items,b=1;return a+b;',{items:[2]}],
       ['const [a,a]=self.items;return a;',{items:[2,3]}],
       ['const [a]=self.items;return a;',{items:'a'}],
+      ['const Array={isArray:()=>true};const [a]=self.items;return a;',{items:[1]}],
+      ['function f(Array){const [a]=self.items;return a;}return f({isArray:()=>true});',{items:[1]}],
       ['const [a]=self.items;return a;',{items:{0:2,length:1}}]
     ]){
       assert.throws(()=>env.execute({code,scope,body:true,path:'natlang://unsupported-array.ts'}),
