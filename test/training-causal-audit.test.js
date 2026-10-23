@@ -17,8 +17,8 @@ function episode({length=20,maxBytes=512}={}){
      dependsOn:['e1'],result:['num',7]})),
    generated(encodeRecord('end',{invocation:'i1',kind:'return'}))]
    .map((g,i)=>({...g,id:'m'+(i+1)}));
- return {schema:'semantic-execution/1',profile:'training-js/1',
-   traceFormat:'semantic-trace/1',contextFormat:'semantic-context/1',
+ return {schema:'semantic-execution/2',profile:'training-js/1',
+   traceFormat:'semantic-trace/2',contextFormat:'semantic-context/2',
    completionPolicy:'immediate-return',groups};
 }
 test('public-only causal audit accepts ordered explicit producer links',()=>{
@@ -65,7 +65,8 @@ test('public-only audit rejects metadata smuggling in visible records and meridi
  const prefix=structuredClone(x);
  const code=decodeRecord(prefix.groups[0].events[0].record);
  code.fields.referenceOutcome={result:99};
- prefix.groups[0].events[0].record=encodeRecord(code.kind,code.fields);
+ assert.throws(()=>encodeRecord(code.kind,code.fields),/Unexpected/);
+ prefix.groups[0].events[0].record=code.kind+' '+JSON.stringify(code.fields);
  assert.throws(()=>auditPublicCausality(prefix),/observed source bundle/);
  const input=structuredClone(x);
  const arg=decodeRecord(input.groups[1].events[0].record);
@@ -75,8 +76,9 @@ test('public-only audit rejects metadata smuggling in visible records and meridi
  const generated=structuredClone(x);
  const original=decodeRecord(generated.groups[3].events[0].record);
  original.fields.oracle={result:99};
- generated.groups[3].events[0].record=encodeRecord(original.kind,original.fields);
- assert.throws(()=>auditPublicCausality(generated),/Unrecognized generated/);
+ assert.throws(()=>encodeRecord(original.kind,original.fields),/Unexpected/);
+ generated.groups[3].events[0].record=original.kind+' '+JSON.stringify(original.fields);
+ assert.throws(()=>auditPublicCausality(generated),/Unexpected/);
 });
 
 function nestedEpisode() {

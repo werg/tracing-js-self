@@ -67,11 +67,11 @@ test('continuation packet round trips the committed selected prefix, never futur
   const controller=new SemanticController(source);
   const partial=groups.slice(first,first+3);
   for(const group of partial)controller.commitGenerated(group.events[0].record);
-  const packet=controller.continuationPacket();
-  assert.equal(packet.schema,'semantic-continuation/1');
+  const packet=controller.segmentPacket();
+  assert.equal(packet.schema,'semantic-continuation/2');
   assert.equal(JSON.stringify(packet).includes('referenceOutcome'),false);
-  assert.equal(packet.committed.length,partial.length);
-  const resumed=SemanticController.fromPacket(packet);
+  assert.equal(packet.source,'committed-model-state');
+  const resumed=SemanticController.fromSegmentPacket(packet);
   for(const group of groups.slice(first+3))resumed.commitGenerated(group.events[0].record);
   assert.deepEqual(resumed.completion,{kind:'return',value:['num',10]});
 });
@@ -80,5 +80,5 @@ test('continuation serializer refuses an incomplete generated value',()=>{
   const {source}=rollout('function f(x){return x;}',[2]);
   const controller=new SemanticController(source);
   controller.commitGenerated(encodeRecord('value-open',{id:'e1',type:'semantic-record'}));
-  assert.throws(()=>controller.continuationPacket(),e=>e.category==='fragment');
+  assert.throws(()=>controller.segmentPacket(),e=>e.category==='fragment');
 });

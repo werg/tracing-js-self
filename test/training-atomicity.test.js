@@ -28,7 +28,7 @@ test('failed allocations are atomic and a corrected record may be committed',()=
       properties:[{key:'x',version:0,value}]
     }]
   });
-  const before=controller.continuationPacket();
+  const before=controller.segmentPacket();
   assert.throws(()=>controller.commitGenerated(makeAlloc(['ref','not-yet-allocated'])),
     error=>error.category==='identity');
   assert.deepEqual(controller.continuationPacket(),before);
