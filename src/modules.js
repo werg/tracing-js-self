@@ -154,7 +154,13 @@ function parseOne(file,text,sources){
       reject('export of missing binding '+local+' in '+file);
   for(const local of imports.keys())
     if(declarations.has(local))reject('import/declaration collision in '+file);
-  return {file,text,lowering,declarations,imports,exports,reexports,starExports,dependencies:[...dependencies]};
+  // Pure dependencies that already have a live import/re-export link need
+  // no duplicate inert edge; retain only edges erased by transpilation or
+  // written solely for module evaluation.
+  const linked=new Set([...imports.values(),...reexports.values()]
+    .map(binding=>binding.module).concat(starExports));
+  return {file,text,lowering,declarations,imports,exports,reexports,starExports,
+    dependencies:[...dependencies].filter(from=>!linked.has(from))};
 }
 // Conservative alpha renaming of imported and file-local function bindings.
 // Reject lexical shadowing of rewritten names rather than producing subtle,
