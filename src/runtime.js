@@ -1169,6 +1169,8 @@ export class Runtime {
               if(!item||!['object','array'].includes(item.kind)||
                  Object.keys(item.accessors??{}).length)
                 throw new TypeError('Object.assign source requires an owned data object');
+              if(item===target)
+                throw new TypeError('Object.assign self-source requires ordered reentrant property semantics');
               for(const [key,record] of Object.entries(item.properties)){
                 if(item.kind==='array'&&key==='length')continue;
                 if(key==='__proto__')
