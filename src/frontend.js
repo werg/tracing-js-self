@@ -171,7 +171,7 @@ export function compile(ast) {
       if(scoped) emit('ENTER_SCOPE',null,nodes[0]);
       for(const n of nodes){
         const declarations=n.type==='VariableGroup'?n.declarations:
-          n.type==='ObjectBinding'?n.bindings.map(b=>({
+          ['ObjectBinding','ArrayBinding'].includes(n.type)?n.bindings.map(b=>({
             id:b.name,kind:n.kind,start:b.start,end:b.end
           })):
           n.type==='Variable'?[n]:[];
@@ -308,6 +308,33 @@ export function compile(ast) {
           break;
         }
         case 'VariableGroup':for(const declaration of n.declarations)stmt(declaration);break;
+        case 'ArrayBinding':{
+          // One initializer, with explicit failure for non-array iterables.
+          // This does not model arbitrary Symbol.iterator implementations.
+          const retained='[[array binding '+(++forOfIndex)+']]';
+          emit('ENTER_SCOPE',null,n);
+          emit('DECLARE',{name:retained,kind:'const'},n);
+          expr(n.init);emit('INIT',retained,n);
+          emit('GET','Array',n);
+          emit('CONST',{value:['str','isArray']},n);
+          emit('GET_METHOD',null,n);
+          emit('GET',retained,n);
+          emit('CALL',1,n);
+          const invalid=emit('JUMP_IF_FALSE',null,n);
+          const accepted=emit('JUMP',null,n);
+          instructions[invalid].arg=instructions.length;
+          emit('UNSUPPORTED_EXPRESSION',
+            'Array binding requires a standard owned array',n);
+          instructions[accepted].arg=instructions.length;
+          for(const binding of n.bindings){
+            emit('GET',retained,binding);
+            emit('CONST',{value:['num',binding.index]},binding);
+            emit('GET_PROP',null,binding);
+            emit('INIT',binding.name,binding);
+          }
+          emit('LEAVE_SCOPE',null,n);
+          break;
+        }
         case 'ObjectBinding':{
           // One initializer evaluation; each [[Get]] happens in source order,
           // with its own source provenance, before initializing a lexical cell.

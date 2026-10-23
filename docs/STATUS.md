@@ -1,5 +1,9 @@
 # Implementation status (0.2.0)
 
+## Bounded owned TypeScript array bindings (October 23, 2026)
+
+- Strict-profile `let`/`const` array destructuring of 1–32 simple identifier slots now accepts standard owned arrays. The initializer executes once; owned indexed reads and lexical initializations are individually traced. Nested/default/rest/elision targets, `var` patterns, string iteration and other non-array iterables remain unsupported. It does **not** implement the complete ES iterator protocol or general TypeScript execution compatibility.
+
 ## Native effect archive-completeness and service-registration guard (October 23, 2026)
 
 - The bounded opt-in native driver rejects proxy/getter-based service registries before guest execution and prevents queued native dispatch from starting after the driver has exited. A completed driver result may not publish an archive with outstanding native effects; successful results must account for effect arrivals and pass existing exact replay checks. This guards a narrow asynchronous host boundary, **not** Node/browser API completeness, cancellation of already-started effects, or guest timer semantics.

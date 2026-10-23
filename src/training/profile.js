@@ -198,6 +198,18 @@ export function parseTraining(source) {
       case 'BlockStatement':return {...loc,type:'Block',body:n.body.map(stmt)};
       case 'VariableDeclaration':
         if(['let','const'].includes(n.kind) && n.declarations.length===1 &&
+           n.declarations[0].id.type==='ArrayPattern'){
+          const d=n.declarations[0],elements=d.id.elements;
+          // A bounded positional slice of standard array iteration only.
+          if(!d.init||!elements.length||elements.length>32||
+             elements.some(element=>element?.type!=='Identifier'))
+            reject(n,'bounded array binding requires 1..32 identifier targets');
+          return {...loc,type:'ArrayBinding',kind:n.kind,init:expr(d.init),
+            bindings:elements.map((element,index)=>({
+              ...span(element),index,name:element.name
+            }))};
+        }
+        if(['let','const'].includes(n.kind) && n.declarations.length===1 &&
            n.declarations[0].id.type==='ObjectPattern'){
           const d=n.declarations[0],properties=d.id.properties;
           if(!d.init||!properties.length||properties.length>32)
@@ -299,7 +311,7 @@ export function parseTraining(source) {
       for(const name of collectVarBindings(statements))names.add(name);
     for(const n of statements){
       const entries=n.type==='VariableGroup'?n.declarations:
-        n.type==='ObjectBinding'?n.bindings.map(binding=>({
+        ['ObjectBinding','ArrayBinding'].includes(n.type)?n.bindings.map(binding=>({
           id:binding.name,kind:n.kind,start:binding.start,end:binding.end
         })):
         ['Variable','Function'].includes(n.type)?[n]:[];
@@ -358,7 +370,7 @@ export function parseTraining(source) {
     function statement(n,e){
       switch(n.type){
         case 'Variable':if(n.init)value(n.init,e);break;
-        case 'ObjectBinding':value(n.init,e);break;
+        case 'ObjectBinding':case 'ArrayBinding':value(n.init,e);break;
         case 'VariableGroup':n.declarations.forEach(x=>statement(x,e));break;
         case 'Function':scope(n.body.body,e,n.params,n.async,true,n.defaults);break;
         case 'Block':scope(n.body,e,[],asyncFunction);break;
