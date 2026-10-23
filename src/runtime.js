@@ -902,6 +902,11 @@ export class Runtime {
         case 'NEW_OBJECT':case 'NEW_ARRAY':{const id=this.next(s,'obj');s.heap[id]={id,kind:op==='NEW_ARRAY'?'array':'object',properties:{},propertyVersions:{},shapeVersion:0,version:0};if(op==='NEW_ARRAY'){s.heap[id].properties.length=token(['num',0],eventId);s.heap[id].propertyVersions.length=0;}return result(['ref',id]);}
         case 'GET_PROP':case 'GET_METHOD':{
           const key=pop(),base=pop(),property=valueKey(key.value);let v,read=null;
+          if(base.value[0]==='intrinsic'&&base.value[1]==='Math'&&property==='random'){
+            const completion={type:'unsupported',feature:'Math.random requires an owned nondeterminism receipt'};
+            this.failFrame(s,f,completion);
+            return {...operands(base,key),completion};
+          }
           if(base.value[0]==='host')v=['hostfn',`${base.value[1]}.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Promise' && ['resolve','reject'].includes(property))v=['builtinfn',`Promise.${property}`];
           else if(base.value[0]==='intrinsic' &&
