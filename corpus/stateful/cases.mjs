@@ -19,8 +19,8 @@ export const pinnedSha256 = Object.freeze({
   "p-limit": "edde12a4a4dbdbe8d27161cdd0853db0bab435d5dc6c15f9f4dedc27ee9bca60",
   "eventemitter3": "1560f251de5d28d2c15ff070215d2c5c0fa06f1a92e8d6522bbee37e06d2a6b5"
 });
-const group=(project,modules,variants)=>variants.map(([name,adversarial,run])=>({
-  id:project+'/'+name,project,modules,adversarial,run
+const group=(project,modules,variants)=>variants.map(([name,adversarial,run,requires])=>({
+  id:project+'/'+name,project,modules:requires??modules,adversarial,run
 }));
 export const scenarios=[
  ...group('mitt',['mitt'],[
@@ -492,7 +492,7 @@ function run(seed){
  bus.on('*',(type,v)=>log.push(['event',type,v]));
  for(let i=0;i<4;i++)bus.emit('record',seed+i);
  return {log,state:store.getState(),registered:bus.all.size};
-}`],
+}`,["mitt","zustand"]],
  ['cache-backed-request','middleware and LRU cache service effects',`
 async function run(seed){
  const compose=__require('koa-compose'),LRU=__require('quick-lru').default,cache=new LRU({maxSize:2}),writes=[];
@@ -501,7 +501,7 @@ async function run(seed){
     c.response=seed+c.key.length;cache.set(c.key,c.response);writes.push(['store',c.key,c.response]);await next()}]);
  const responses=[];for(const key of ['a','b','a','c','a']){const c={key};await processRequest(c);responses.push(c.response)}
  return {responses,writes,entries:[...cache]};
-}`],
+}`,["koa-compose","quick-lru"]],
  ['queued-events','queue delivers event emitter notifications to stateful sink',`
 function run(seed){
  const E=__require('eventemitter3'),Queue=__require('yocto-queue').default,em=new E(),q=new Queue(),db={total:0,log:[]};
@@ -509,7 +509,7 @@ function run(seed){
  for(let i=0;i<5;i++)q.enqueue(seed+i);
  while(q.size)em.emit('item',q.dequeue());
  return {db,remaining:q.size,events:em.eventNames()};
-}`],
+}`,["eventemitter3","yocto-queue"]],
  ['limited-state-transactions','concurrent tasks update shared store through limiter',`
 async function run(seed){
  const limit=__require('p-limit').default(2),store=__require('zustand').createStore(()=>({n:0})),log=[];
@@ -517,7 +517,7 @@ async function run(seed){
  const all=[0,1,2,3].map(i=>limit(async()=>{await Promise.resolve();
   store.setState(s=>({n:s.n+seed+i}));return store.getState().n}));
  return {results:await Promise.all(all),log,state:store.getState()};
-}`],
+}`,["p-limit","zustand"]],
  ['route-with-side-effects','middleware updates store and emits audit events',`
 async function run(seed){
  const compose=__require('koa-compose'),bus=__require('mitt').default(),store=__require('zustand').createStore(()=>({hits:0})),audit=[];
@@ -526,7 +526,7 @@ async function run(seed){
   async(ctx,next)=>{store.setState(s=>({hits:s.hits+1}));ctx.status=ctx.id%2?200:403;if(ctx.status===200)await next()}]);
  const results=[];for(let i=0;i<3;i++){const ctx={id:seed+i};await middleware(ctx);results.push(ctx.status)}
  return {audit,results,state:store.getState()};
-}`],
+}`,["koa-compose","mitt","zustand"]],
  ['eviction-notification-pipeline','cache eviction signals event emitter and mutable store',`
 function run(seed){
  const E=__require('eventemitter3'),em=new E(),store=__require('zustand').createStore(()=>({evictions:0})),log=[];
@@ -534,7 +534,7 @@ function run(seed){
  const LRU=__require('quick-lru').default,cache=new LRU({maxSize:2,onEviction:(k,v)=>em.emit('evicted',k,v)});
  for(let i=0;i<6;i++)cache.set('k'+i,seed+i);
  return {log,state:store.getState(),entries:[...cache]};
-}`]
+}`,["quick-lru","eventemitter3","zustand"]]
  ])
 ];
 if(new Set(scenarios.map(s=>s.id)).size!==scenarios.length)throw new Error('Duplicate adversarial scenario name');
