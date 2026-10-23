@@ -36,3 +36,27 @@ model-visible context.
 `containsRTL` (large Unicode character-range matcher and mutable
 module initialization). These must retain explicit refusal unless their
 effective computations can be independently verified and replayed.
+
+## Further pinned owned replacement and Unicode coverage
+
+The next change set independently checked all **48/48** invocations of
+`format`, `format2`, `escape`, and `containsRTL`, in addition to the
+36 RegExp cases above. Exact pinned literal patterns are scanned with bounded
+owned source-ordered logic; replacement functions execute as ordinary guest
+frames, with real captures, returns and traceable control flow. The pinned
+Unicode matcher is parsed from source-code escape ranges, including surrogate
+alternatives, rather than delegated to host RegExp.
+
+The combined measured full-corpus target is **924/936 locally verified**
+(154/156 initial two-index smoke). CI enforces these as minimum verified
+thresholds; count failures and unsupported semantics rather than concealing
+them. **The remaining 12 invocations are all VS Code `quickSelect`**,
+which requires explicit independently reproducible `Math.random` input
+and trace evidence. No generic native-V8 fallback should be introduced.
+
+These are **locally verified owned candidate traces**, *not* admitted
+megatoken episodes. The external native Episode consumer's schema has not
+yet been extended for the optional `staticRegExps` observed-source metadata.
+That field is omitted on ordinary episodes to preserve the existing importer
+contract; the new RegExp-using episodes require an explicit versioned schema
+change and end-to-end consumer tests before admission.
