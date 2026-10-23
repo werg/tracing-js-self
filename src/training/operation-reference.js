@@ -11,7 +11,7 @@ const observedOperations=new Set([
   'primitive.binary','primitive.unary','template.substitute','spec.operation.complete','binding.update','property.update'
 ]);
 
-export function instrumentOperationSource(source) {
+function sourceOperationNodes(source) {
   const ast=parseAcorn(source,{ecmaVersion:2022,sourceType:'script'});
   const nodes=[];
   function visit(value){
@@ -25,6 +25,10 @@ export function instrumentOperationSource(source) {
       if(name!=='start'&&name!=='end'&&name!=='loc')visit(child);
   }
   visit(ast);
+  return nodes;
+}
+export function instrumentOperationSource(source) {
+  const nodes=sourceOperationNodes(source);
   const opens=new Map(),closes=new Map();
   for(const n of nodes){
     if(!opens.has(n.start))opens.set(n.start,[]);
@@ -61,11 +65,21 @@ export function auditReferenceOperations({source,entry,args,initialHeap,bundle,r
   const normalized=normalizeJournal(bundle);
   const eventsById=new Map(bundle.events.map(event=>[event.eventId,event]));
   const expected=[],covered={binary:0,unary:0,ownedArithmetic:0,updates:0,templates:0};
+  // Default parameter initialization inserts owned guards and assignments.
+  // These are legitimate internal guest instructions but *not* source
+  // operations; an independent V8 source instrumenter has no matching AST
+  // operator at those locations. Keep them in the journal, and separate
+  // their coverage status from auditable source expressions.
+  const sourceSites=new Set(sourceOperationNodes(source).map(node=>node.site));
   const unverified=new Set();
   for(const row of normalized.events){
     const operation=eventsById.get(row.journalEvent)?.operation;
     if(!observedOperations.has(operation)){
       if(operation)unverified.add(operation);
+      continue;
+    }
+    if(row.source && !sourceSites.has(String(row.source.start)+':'+row.source.end)){
+      unverified.add('synthetic.'+operation);
       continue;
     }
     if(!row.source||!['value','write'].includes(row.op)||!Array.isArray(row.result))
