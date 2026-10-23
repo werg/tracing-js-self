@@ -34,10 +34,12 @@ test('durable retained checkpoint replays module cells in a fresh session',async
       assert.equal((await restored.invoke('read')).result,8);
       assert.equal((await restored.invoke('add',[4])).result,12);
       assert.equal(replayExact(restored.lastArchive).valid,true);
-      assert.equal((await session.invoke('read')).result,8,
-        'restored session must have independent module state');
       assert.deepEqual(await reopened.put(session),receipt,
         'identical committed histories must have identical bytes and IDs');
+      assert.equal((await session.invoke('read')).result,8,
+        'restored session must have independent module state');
+      assert.notEqual((await reopened.put(session)).id,receipt.id,
+        'committing another call must change the content-addressed checkpoint');
     }finally{session.close();restored?.close();}
   });
 });
