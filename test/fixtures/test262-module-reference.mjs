@@ -1,5 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
 import {executeTest262ModuleReference as execute} from '../../src/corpus/test262-module-reference.mjs';
 const harness={'sta.js':'function Test262Error(m){this.message=m}',
  'assert.js':'function assert(x){if(!x)throw new Test262Error("failed")}; assert.sameValue=(a,b)=>{if(!Object.is(a,b))throw new Test262Error("different")}',
@@ -81,9 +82,22 @@ test('async native ESM negative completion uses real guest constructors',async()
 });
 
 
-test('unhandled async module rejection after completion cannot pass',async()=>{
- const result=await run('$DONE(); Promise.resolve().then(()=>{throw new Error("late rejection")});',
-   meta(null,[],['module','async']));
+test('unhandled async module rejection after completion cannot pass (isolated child)',()=>{
+ const runnerUrl=new URL('../../src/corpus/test262-module-reference.mjs',import.meta.url).href;
+ const payload={
+  source:'$DONE(); Promise.resolve().then(()=>{throw new Error("late rejection")});',
+  metadata:meta(null,[],['module','async']),
+  filename:'test/language/module-code/main.js',harnessSources:harness
+ };
+ const code='import {executeTest262ModuleReference as execute} from '+
+  JSON.stringify(runnerUrl)+';'+
+  'const result=await execute('+JSON.stringify(payload)+');'+
+  'console.log(JSON.stringify(result));';
+ const child=spawnSync(process.execPath,
+  ['--no-warnings','--experimental-vm-modules','--input-type=module','-e',code],
+  {encoding:'utf8',timeout:5000});
+ assert.equal(child.status,0,child.stderr);
+ const result=JSON.parse(child.stdout.trim());
  assert.equal(result.status,'failed',result.reason);
  assert.match(result.reason,/Unhandled native module promise rejection/);
  assert.equal(result.verifiedOwned,false);
