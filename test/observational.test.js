@@ -86,3 +86,26 @@ test('await and resume follow the actual async computation',async()=>{
   assert(r.events.some(e=>e.kind==='await'));
   assert(r.events.some(e=>e.kind==='resume'));
 });
+
+
+test('guest callbacks have exact visible source spans and stable object identity',async()=>{
+  const source='function f(fn,x){return fn(x);}';
+  const setupSource='globalThis.__testArgs=[(v)=>v*3,4];';
+  const r=await observeProgram({source,entry:'f',setupSource});
+  assert.equal(r.evidence.independentUninstrumentedV8,true,JSON.stringify(r));
+  const value=r.events.find(e=>e.kind==='value'&&e.result?.[1]===12);
+  assert(value,'Expected callback multiplication');
+  assert(value.site.start>source.length);
+  assert.equal(r.source.text.slice(value.site.start,value.site.end),'v*3');
+  assert(r.input.roots.some(tag=>tag[0]==='ref'));
+});
+
+test('native console output is an independently compared side-effect record',async()=>{
+  const source='function f(n){console.log("entered",n);return n+2;}';
+  const r=await observeProgram({source,entry:'f',args:[5]});
+  assert.equal(r.evidence.independentUninstrumentedV8,true,JSON.stringify(r));
+  assert.equal(r.sideEffects.length,1);
+  assert.equal(r.sideEffects[0].kind,'console.log');
+  assert(r.events.some(e=>e.kind==='effect'&&e.effect==='console.log'));
+  assert.deepEqual(r.observableGraph.roots.at(-1),['num',7]);
+});
