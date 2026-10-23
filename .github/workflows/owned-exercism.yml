@@ -5,6 +5,9 @@ on:
     paths:
       - 'src/corpus/owned-exercism.mjs'
       - 'tools/verify-exercism-owned.mjs'
+      - 'tools/select-owned-episodes.mjs'
+      - 'src/corpus/coverage-selection.mjs'
+      - 'test/coverage-selection.test.js'
       - 'corpus/extension/snapshots/exercism-js/**'
       - 'corpus/extension/snapshots/exercism-js-inputs/**'
       - 'test/owned-exercism.test.js'
@@ -14,6 +17,9 @@ on:
     paths:
       - 'src/corpus/owned-exercism.mjs'
       - 'tools/verify-exercism-owned.mjs'
+      - 'tools/select-owned-episodes.mjs'
+      - 'src/corpus/coverage-selection.mjs'
+      - 'test/coverage-selection.test.js'
       - 'corpus/extension/snapshots/exercism-js/**'
       - 'corpus/extension/snapshots/exercism-js-inputs/**'
       - 'test/owned-exercism.test.js'
@@ -34,7 +40,7 @@ jobs:
           node-version: '22'
       - run: npm ci
       - name: Verify pinned source hashes, lowering contracts and independent evidence
-        run: node --test test/owned-exercism.test.js
+        run: node --test test/owned-exercism.test.js test/coverage-selection.test.js
       - name: Attempt canonical inputs against original JS, lowered JS and owned runtime
         run: |
           mkdir -p corpus/out
@@ -60,6 +66,18 @@ jobs:
             console.log("Locally verified owned traces",r.totals.locallyVerified,
               "out of",r.totals.attempted,"explicitly audited candidates");
           '
+      - name: Recheck and select coverage-novelty evidence (not admitted)
+        run: |
+          node tools/select-owned-episodes.mjs \
+            --input corpus/out/exercism-owned-locally-verified.jsonl \
+            --output corpus/out/exercism-owned-novelty.json --limit 64
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const r=JSON.parse(readFileSync("corpus/out/exercism-owned-novelty.json"));
+            if(r.admitted!==0||r.selectedCount<1||r.distinctFamilies<1||
+              r.inputRows<71||r.selectedCount>r.candidateCount)
+              throw Error("Invalid owned novelty report");
+          '
       - name: Upload local-only owned traces and complete refusals
         uses: actions/upload-artifact@v4
         with:
@@ -68,4 +86,5 @@ jobs:
             corpus/out/exercism-owned-report.json
             corpus/out/exercism-owned-review.md
             corpus/out/exercism-owned-locally-verified.jsonl
+            corpus/out/exercism-owned-novelty.json
           if-no-files-found: error

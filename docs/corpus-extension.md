@@ -1499,3 +1499,26 @@ sha256 and entry. JSON Schema requires an explicit dialects array and its
 export must implement validate(schema, data) -> boolean. CommonMark uses
 kind commonmark-contract and render(markdown) -> string without dialects.
 These are compatibility-shim contracts, not assumptions about package APIs.
+
+### Rechecked owned-episode path novelty and diversity (2026-10-23)
+
+- [x] Added opt-in post-verification selection of owned Exercism episodes.
+  Each candidate is independently rechecked from its serialized sidecar,
+  then read for **executed** source-site branch decisions and original journal
+  operation transitions. Greedy coverage selection favors genuinely new
+  pinned source families, branch paths, operations and mutation operation
+  types. Different random seeds alone do not create unique source families.
+- [x] Mixed train/validation/test split assignments within an exact source
+  family, duplicate case identifiers, malformed journals and forged evidence
+  are explicitly refused. The selection output is a small metadata report,
+  not an automatically approved training collection.
+- [x] The owned Exercism workflow now runs this selector on **its own** locally
+  verified, non-admitted episode JSONL artifact, and uploads the report.
+- [ ] Cross-fork and near-duplicate source-family clustering, actual caller
+  graph equivalence, independent shrinking, real state-machine generation and
+  richer scheduling/heap effects remain future work. This selector does not
+  increase the acquired/owned/admitted episode denominators.
+
+Example: npm run corpus:owned:novelty -- --input
+  corpus/out/exercism-owned-locally-verified.jsonl
+  --output corpus/out/exercism-owned-novelty.json --limit 64

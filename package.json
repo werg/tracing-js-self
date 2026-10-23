@@ -64,7 +64,8 @@
     "corpus:test262:scalar": "node tools/verify-test262-scalar.mjs",
     "corpus:test262:reference": "node tools/verify-test262-reference.mjs",
     "corpus:test262:reference:modules": "node --experimental-vm-modules tools/verify-test262-reference.mjs",
-    "corpus:structured:reference": "node tools/verify-structured-contracts.mjs"
+    "corpus:structured:reference": "node tools/verify-structured-contracts.mjs",
+    "corpus:owned:novelty": "node tools/select-owned-episodes.mjs"
   },
   "bin": {
     "tracing-js-self": "./bin/tracing.js"
