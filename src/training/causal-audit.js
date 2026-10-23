@@ -36,9 +36,11 @@ export function auditPublicCausality(episode,{maxBytes=512}={}) {
         throw new Error('First visible record must be an observed source bundle');
       source=fields;
       for(const code of fields.codes) {
-        if(!exactKeys(code,['id','params','async','restIndex'])||
-           !Number.isInteger(code.restIndex)||code.restIndex<-1||
-           code.restIndex>=code.params.length||
+        if(!(exactKeys(code,['id','params','async'])||
+             exactKeys(code,['id','params','async','restIndex'])) ||
+           (code.restIndex!==undefined &&
+             (!Number.isInteger(code.restIndex)||code.restIndex<-1||
+              code.restIndex>=code.params.length))||
            !Array.isArray(code.params)||typeof code.async!=='boolean'||
            typeof code.id!=='string'||codes.has(code.id))
           throw new Error('Duplicate or malformed visible code identity');
