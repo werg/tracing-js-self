@@ -101,7 +101,6 @@ test('owned update uses ToNumeric instead of string concatenation, and returns t
 
 test('unowned semantic cases fail closed instead of making plausible training examples',()=>{
   const rejected=[
-    'function f(){const a={n:1};a.n++;return a.n;}',
     'function f(){let n=0;for(const i=0;i<3;i++)n+=i;return n;}',
     'function f(){return missing++ ;}',
     'function f(){label:while(true){break label;}return 1;}'
@@ -128,6 +127,26 @@ test('per-iteration let environments preserve closure snapshots and continue edg
   assert.equal(iterations.length,6);
   assert.equal(new Set(iterations.map(e=>e.stateChanges.find(
     p=>p.table==='envs'&&p.before===null)?.id)).size,6);
+});
+
+test('member updates preserve reference identity, versioned reads and V8 sites',()=>{
+  const exported=verified(`function f(){
+    let calls=0;
+    function key(){calls++;return 'x';}
+    const obj={x:'2'};
+    const before=obj[key()]++;
+    const assigned=obj[key()]+=5;
+    return [before,assigned,obj.x,calls];
+  }`);
+  const member=exported.sidecar.semantic.events.filter(x=>
+    x.update&&x.writes.some(w=>w.kind==='property'));
+  assert.equal(member.length,1);
+  assert.deepEqual(member[0].result,['num',2]);
+  assert.deepEqual(member[0].writes[0].value,['num',3]);
+  assert.equal(member[0].reads.length,1);
+  assert.equal(exported.sidecar.operationAudit.covered.updates,3);
+  verified('function f(){const o={x:1n};return [++o.x,o.x--,o.x];}');
+  verified('function f(){const a=[2,4];return [a[0]++,--a[1],a[0],a[1]];}');
 });
 
 test('serving controller rejects a forged update read before committing the write',()=>{

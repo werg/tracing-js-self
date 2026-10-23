@@ -163,7 +163,10 @@ export function compile(ast) {
         case 'This':emit('THIS',null,n);break;
         case 'Unary':expr(n.argument);emit('UNARY',n.operator,n);break;
         case 'Update':
-          emit('UPDATE_BINDING',{name:n.name,operator:n.operator,prefix:n.prefix},n);
+          if(n.argument){
+            expr(n.argument.object);expr(n.argument.property);
+            emit('UPDATE_PROP',{operator:n.operator,prefix:n.prefix},n);
+          }else emit('UPDATE_BINDING',{name:n.name,operator:n.operator,prefix:n.prefix},n);
           break;
         case 'Conditional':{
           expr(n.test);
@@ -192,8 +195,15 @@ export function compile(ast) {
             expr(n.right);if(n.operator!== '=')emit('BINARY',n.operator[0],n);
             emit('SET',n.left.name,n);
           }else{
-            if(n.operator!=='=')throw new SyntaxError('Compound member assignment not supported');
-            expr(n.left.object);expr(n.left.property);expr(n.right);emit('PUT_PROP',null,n);
+            expr(n.left.object);expr(n.left.property);
+            if(n.operator!=='='){
+              // Preserve the reference; computed keys and getters run once.
+              emit('DUP2',null,n.left);
+              emit('GET_PROP',null,n.left);
+            }
+            expr(n.right);
+            if(n.operator!=='=')emit('BINARY',n.operator[0],n);
+            emit('PUT_PROP',null,n);
           }break;
         default:throw new SyntaxError(`Unsupported expression: ${n.type}`);
       }

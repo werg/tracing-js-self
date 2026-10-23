@@ -40,9 +40,11 @@ export function parseTraining(source) {
         return {...loc,type:'Conditional',test:expr(n.test),
           consequent:expr(n.consequent),alternate:expr(n.alternate)};
       case 'UpdateExpression':
-        if(n.argument.type!=='Identifier')reject(n,'update target (local identifier required)');
+        if(!['Identifier','MemberExpression'].includes(n.argument.type))
+          reject(n,'update target');
         return {...loc,type:'Update',operator:n.operator,prefix:n.prefix,
-          name:n.argument.name};
+          ...(n.argument.type==='Identifier'
+            ?{name:n.argument.name}:{argument:expr(n.argument)})};
       case 'MemberExpression':
         if(n.optional || n.object.type==='Super')reject(n,'member receiver');
         return {...loc,type:'Member',object:expr(n.object),property:n.computed?expr(n.property):
@@ -66,8 +68,7 @@ export function parseTraining(source) {
         })};
       case 'AssignmentExpression':
         if(!['=','+=','-='].includes(n.operator) ||
-           !['Identifier','MemberExpression'].includes(n.left.type) ||
-           (n.left.type==='MemberExpression' && n.operator!=='='))
+           !['Identifier','MemberExpression'].includes(n.left.type))
           reject(n,'assignment form');
         return {...loc,type:'Assign',operator:n.operator,left:expr(n.left),right:expr(n.right)};
       default:reject(n,n.type);
@@ -134,7 +135,8 @@ export function parseTraining(source) {
         case 'Conditional':
           value(n.test,e);value(n.consequent,e);value(n.alternate,e);break;
         case 'Update':
-          if(!has(n.name,e))reject(n,'unbound update target '+n.name);
+          if(n.argument)value(n.argument,e);
+          else if(!has(n.name,e))reject(n,'unbound update target '+n.name);
           break;
         case 'Member':value(n.object,e);value(n.property,e);break;
         case 'Call':value(n.callee,e);n.args.forEach(x=>value(x,e));break;

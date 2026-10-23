@@ -8,7 +8,7 @@ import {normalizeJournal} from '../semantic/normalize.js';
 import {referenceOutcome} from './reference.js';
 
 const observedOperations=new Set([
-  'primitive.binary','primitive.unary','spec.operation.complete','binding.update'
+  'primitive.binary','primitive.unary','spec.operation.complete','binding.update','property.update'
 ]);
 
 export function instrumentOperationSource(source) {
@@ -74,7 +74,7 @@ export function auditReferenceOperations({source,entry,args,initialHeap,bundle,r
     expected.push({site:String(row.source.start)+':'+row.source.end,value:row.result});
     if(operation==='primitive.binary')covered.binary++;
     else if(operation==='primitive.unary')covered.unary++;
-    else if(operation==='binding.update')covered.updates++;
+    else if(operation==='binding.update'||operation==='property.update')covered.updates++;
     else covered.ownedArithmetic++;
   }
   const observed=referenceOutcome({source:instrumentOperationSource(source),

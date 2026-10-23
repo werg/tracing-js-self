@@ -28,8 +28,8 @@ function requireDataOnly(value,path='state',seen=new WeakSet()){
 }
 const tableNames = ['counters','envs','heap','promises','frames','effects','inputs','control','operations'];
 const opNames = {
-  CONST:'literal.materialize', GET:'binding.read', SET:'binding.write', UPDATE_BINDING:'binding.update', INIT:'binding.initialize', DECLARE:'binding.declare',
-  DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate',
+  CONST:'literal.materialize', GET:'binding.read', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
+  DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
   CALL:'call.enter', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
   GET_PROP:'property.read', GET_METHOD:'property.read', PUT_PROP:'property.write', ENTER_SCOPE:'environment.enter',
   LEAVE_SCOPE:'environment.leave', CLONE_LOOP_ENV:'environment.iteration', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
@@ -62,6 +62,14 @@ function valueKey(tagged) {
 }
 function arrayIndex(key) {
   return /^(0|[1-9]\d*)$/.test(key) && Number(key) < 4294967295;
+}
+function scalarUpdate(previous,operator) {
+  if(!['undefined','null','bool','str','num','bigint'].includes(previous[0]))
+    throw new TypeError('Update coercion outside the bounded scalar profile');
+  const old=previous[0]==='bigint'?decode(previous):Number(decode(previous));
+  const delta=operator==='++'?1:-1;
+  const next=encode(typeof old==='bigint'?old+BigInt(delta):old+delta);
+  return {next,oldNumeric:encode(old)};
 }
 // Find a getter/setter in an owned prototype chain, without running native JS.
 function propertyAccessor(heap, receiver, key) {
@@ -455,18 +463,9 @@ export class Runtime {
           if(!b.cell.initialized)
             guestFault('ReferenceError',`Cannot access '${arg.name}' before initialization`);
           const before=b.cell.token,oldVersion=b.cell.version??0;
-          // UpdateExpression runs ToNumeric, NOT + with a string (which
-          // concatenates). Primitive numeric conversion is an explicit
-          // bounded scalar leaf. Object conversion requires an owned
-          // continuation and must not run host coercion.
-          if(!['undefined','null','bool','str','num','bigint'].includes(before.value[0]))
-            throw new TypeError('Update coercion outside the bounded scalar profile');
-          const numeric=before.value[0]==='bigint'
-            ?decode(before.value):Number(decode(before.value));
-          const offset=arg.operator==='++'?1:-1;
-          const next=encode(typeof numeric==='bigint'
-            ?numeric+BigInt(offset):numeric+offset);
-          const returned=arg.prefix?next:encode(numeric);
+          // ToNumeric is distinct from Addition's string concatenation.
+          const {next,oldNumeric}=scalarUpdate(before.value,arg.operator);
+          const returned=arg.prefix?next:oldNumeric;
           if(b.cell.kind==='const')
             guestFault('TypeError',`Assignment to constant ${arg.name}`);
           b.cell.token=token(next,eventId);
@@ -476,6 +475,28 @@ export class Runtime {
             reads:[{kind:'binding',envId:b.env.id,name:arg.name,
               version:oldVersion,value:before.value,
               supplyingEvent:before.origin??null}]};
+        }
+        case 'UPDATE_PROP':{
+          const key=pop(),base=pop(),property=valueKey(key.value);
+          if(['undefined','null'].includes(base.value[0]))
+            guestFault('TypeError','Cannot update properties of '+base.value[0]);
+          if(base.value[0]!=='ref')throw new TypeError('Unowned update receiver');
+          const obj=s.heap[base.value[1]];
+          if(!obj||!['object','array'].includes(obj.kind))
+            throw new TypeError('Proxy, function and exotic updates require owned internal methods');
+          if(propertyAccessor(s.heap,base.value,property))
+            throw new TypeError('Accessor updates need an owned getter/setter continuation');
+          const found=ordinaryGet(s.heap,base.value,property);
+          if(!found)throw new TypeError('Unowned update property read');
+          const old=found.method;
+          const {next,oldNumeric}=scalarUpdate(old.value,arg.operator);
+          const returned=arg.prefix?next:oldNumeric;
+          if(this.entrySpec && obj.kind==='array' && arrayIndex(property) &&
+             Number(property)>decode(obj.properties.length.value))
+            throw new TypeError('Sparse array updates are outside training-js/1');
+          putOwn(obj,property,next,eventId);
+          this.stackPush(f,returned,eventId);
+          return {...operands(base,key,old),result:returned,reads:[found.observation]};
         }
         case 'DEF_FN':{const e=s.envs[f.envId],id=this.next(s,'obj');s.heap[id]={id,kind:'function',codeId:arg.codeId,closureEnvId:f.envId,async:arg.async,version:0};e.bindings[arg.name]={kind:'function',initialized:true,token:token(['ref',id],eventId),version:0};return {result:['ref',id]};}
         case 'ENTER_SCOPE':f.envId=this.newEnv(s,f.envId);return {};
@@ -561,6 +582,12 @@ export class Runtime {
         }
         case 'POP':{const a=pop();return operands(a);}
         case 'DUP':{const a=pop();st.push(a);st.push(copy(a));return operands(a);}
+        case 'DUP2':{
+          if(st.length<2)throw new Error('Stack underflow: DUP2');
+          const pair=st.slice(-2);
+          st.push(copy(pair[0]),copy(pair[1]));
+          return operands(...pair);
+        }
         case 'JUMP':f.pc=arg;return {};
         case 'JUMP_IF_FALSE':{const a=pop();if(!truthy(a.value))f.pc=arg;return {...operands(a),result:['bool',!truthy(a.value)]};}
         case 'LOGICAL_JUMP':{const a=st.at(-1),v=a.value;const pass=arg.operator==='&&'?!truthy(v):arg.operator==='||'?truthy(v):v[0]!=='null'&&v[0]!=='undefined';if(pass)f.pc=arg.to;return {...operands(a),result:['bool',pass]};}

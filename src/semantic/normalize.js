@@ -8,7 +8,7 @@ const selection={
   'binding.initialize':'value','binding.write':'value','binding.update':'write','binding.read':'read',
   'primitive.binary':'value','primitive.unary':'value',
   'function.define':'alloc','object.allocate':'alloc','array.allocate':'alloc',
-  'property.read':'read','property.write':'write',
+  'property.read':'read','property.write':'write','property.update':'write',
   'call.enter':'call','call.return':'return','completion.throw':'throw',
   'control.branch':'branch','async.await':'await',
   'external.input.deliver':'observe','job.enter':'resume'
@@ -126,13 +126,13 @@ export function normalizeJournal(bundle) {
             version:a.version??0,value:a.token?.value??null});
       }
     }
-    if(e.operation==='binding.update') {
+    if(['binding.update','property.update'].includes(e.operation)) {
       const update=bundle.programs[e.codeId]?.instructions.find(x=>x.siteId===e.siteId)?.arg;
       if(!update || !['++','--'].includes(update.operator))
-        throw new Error('Malformed owned binding update');
+        throw new Error('Malformed owned update');
       r.update={operator:update.operator,prefix:update.prefix};
     }
-    if(e.operation==='property.write') {
+    if(['property.write','property.update'].includes(e.operation)) {
       for(const p of e.stateChanges.filter(p=>p.table==='heap')) {
         const all=changes(p.before,p.after);
         for(const entry of all)r.writes.push({kind:'property',object:p.id,...entry,
