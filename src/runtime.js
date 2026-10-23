@@ -260,8 +260,13 @@ export class Runtime {
     state.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
     state.envs[global].bindings.NaN={kind:'const',initialized:true,token:token(['num','NaN']),version:0};
     state.envs[global].bindings.Infinity={kind:'const',initialized:true,token:token(['num','+Infinity']),version:0};
-    if(allowHost)state.envs[global].bindings.host={kind:'const',initialized:true,
-      token:token(['host','demo']),version:0};
+    if(allowHost){
+      state.envs[global].bindings.host={kind:'const',initialized:true,
+        token:token(['host','demo']),version:0};
+      // Clock reads are external journaled effects, never VM wall-clock reads.
+      state.envs[global].bindings.Date={kind:'const',initialized:true,
+        token:token(['intrinsic','Date']),version:0};
+    }
     for(const name of ['parseInt','isNaN'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
@@ -981,6 +986,8 @@ export class Runtime {
             return {...operands(base,key),completion};
           }
           if(base.value[0]==='host')v=['hostfn',`${base.value[1]}.${property}`];
+          else if(base.value[0]==='intrinsic' && base.value[1]==='Date' &&
+                  property==='now')v=['hostfn','platform.dateNow'];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Promise' && ['resolve','reject'].includes(property))v=['builtinfn',`Promise.${property}`];
           else if(base.value[0]==='intrinsic' &&
              ((base.value[1]==='Math' &&
