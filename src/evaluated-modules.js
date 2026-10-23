@@ -7,6 +7,7 @@ import ts from 'typescript';
 import path from 'node:path';
 import {compileBoundedTypeScript} from './typescript.js';
 import {createRuntime} from './runtime.js';
+import {parseTraining} from './training/profile.js';
 import {executeWithNativeServices} from './host/native-driver.js';
 import {validateBundle} from './validation.js';
 import {replayExact} from './replay.js';
@@ -352,6 +353,16 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     if(!found)reject('unresolved export '+exported+' in '+file);
     return found;
   }
+  // Every explicit indirect export participates in ESM linking even when
+  // the entry never reads it. Otherwise a missing export could be hidden by
+  // an unrelated successful entry evaluation.
+  for(const file of order){
+    for(const exported of get(file).forwards.keys())
+      required(file,exported);
+    for(const [exported,local] of get(file).exports)
+      if(get(file).imports.has(local))
+        required(file,exported);
+  }
   const selected=required(entryModule,exportName);
   if(selected.kind!=='function'&&args.length)
     reject('cannot call a non-function exported module binding');
@@ -409,6 +420,11 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
   source+='}\n';
   if(source.length>262144)
     throw new RangeError('Linked module entry exceeds bounded source limit');
+  // Linking must never hand off unowned guest syntax to an assumed Node or
+  // browser module loader. Validate the actual concatenated guest program,
+  // including its identifier resolution, before an entry can be executed.
+  try {parseTraining(source);}
+  catch(error){reject('unowned generated guest syntax: '+error.message);}
   const metadata={
     profile:'evaluated-module/1',entryModule,exportName,
     evaluationOrder:order.slice(),linkedBinding:selected.linked,
