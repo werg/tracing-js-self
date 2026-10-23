@@ -36,8 +36,10 @@ export class DurableRetainedModuleStore {
       throw new TypeError('Retained checkpoints need a private directory');
     if(!Number.isSafeInteger(maxBytes)||maxBytes<1)
       throw new RangeError('maxBytes must be a positive safe integer');
-    this.directory=resolve(directory);
-    this.maxBytes=maxBytes;
+    Object.defineProperties(this,{
+      directory:{value:resolve(directory),enumerable:true},
+      maxBytes:{value:maxBytes,enumerable:true}
+    });
   }
   objectPath(id){
     checkId(id);
@@ -75,6 +77,10 @@ export class DurableRetainedModuleStore {
     if(!(session instanceof BoundedRetainedModuleSession))
       throw new TypeError('Expected an owned retained module session');
     const snapshot=session.snapshot();
+    // An unexecuted graph cannot pass independent replay verification.
+    if(snapshot.calls.length===0)
+      throw new DurableRetainedModuleStorageError(
+        'A retained checkpoint requires a committed module invocation');
     const bytes=Buffer.from(JSON.stringify(snapshot)+'\n','utf8');
     if(bytes.length>this.maxBytes)
       throw new DurableRetainedModuleStorageError('Retained checkpoint exceeds byte limit');
@@ -110,6 +116,9 @@ export class DurableRetainedModuleStore {
     catch(cause){
       throw new DurableRetainedModuleStorageError('Invalid retained checkpoint JSON',{cause});
     }
+    if(!Array.isArray(snapshot?.calls)||snapshot.calls.length===0)
+      throw new DurableRetainedModuleStorageError(
+        'A retained checkpoint requires a committed module invocation');
     return restoreBoundedRetainedModuleSession(snapshot);
   }
   async list(){
