@@ -11,7 +11,10 @@ export type NativeHostService=(context:NativeHostContext)=>
   string|number|bigint|boolean|null|undefined|
   Promise<string|number|bigint|boolean|null|undefined>;
 export declare function executeWithNativeServices(options:{
-  text:string;
+  /** Legacy bounded script, mutually exclusive with entry. */
+  text?:string;
+  /** Acorn strict profile function entry with a recorded, owned host binding. */
+  entry?:{text:string;url?:string;functionName:string;args?:unknown[]};
   services?:Record<string,NativeHostService>;
   maxSteps?:number;
   signal?:AbortSignal;
