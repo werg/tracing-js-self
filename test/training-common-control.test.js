@@ -158,6 +158,26 @@ test('member updates preserve reference identity, versioned reads and V8 sites',
     'locally_verified');
 });
 
+test('serving controller refuses forged member update read provenance',()=>{
+  const exported=verified('function f(){const obj={n:1};return obj.n++;}');
+  const selected=structuredClone(exported.public.groups);
+  const target=selected.find(g=>g.mode==='generated'&&g.events.some(item=>{
+    try {
+      const row=decodeRecord(item.record);
+      return row.kind==='write'&&
+        row.fields.update&&row.fields.writes?.some(w=>w.kind==='property');
+    }catch{return false;}
+  }));
+  assert(target,'missing owned property update record');
+  const record=decodeRecord(target.events[0].record);
+  record.fields.reads[0].value=['num',999];
+  target.events[0].record=encodeRecord(record.kind,record.fields);
+  const rollout=evaluateSelectedTrajectory({groups:selected,
+    referenceGroups:exported.public.groups,maxGenerated:1024});
+  assert.equal(rollout.valid,false);
+  assert.equal(rollout.invalid.category,'read');
+});
+
 test('serving controller rejects a forged update read before committing the write',()=>{
   const exported=verified('function f(){let x=1;let before=x++;return before+x;}');
   const accurate=evaluateSelectedTrajectory({

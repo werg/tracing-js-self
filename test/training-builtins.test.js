@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {verifyTrainingCase,validateTrainingExport} from 'tracing-js-self/training';
 import {validateBundle,replayExact} from 'tracing-js-self';
 import {evaluateSelectedTrajectory} from '../src/training/rollout.js';
+import {decodeRecord,encodeRecord} from '../src/training/format.js';
 
 function verified(body) {
   const result=verifyTrainingCase({source:'"use strict";\n'+body,
@@ -55,6 +56,27 @@ test('multi-item array push/pop commits as atomic versioned model-serving writes
     e.writes.some(w=>w.kind==='property'));
   assert(writes.some(e=>e.writes.length>2),
     'multi-property push must remain one atomic builtin semantic event');
+});
+
+test('serving controller refuses a forged bulk array length-version jump',()=>{
+  const exported=verified('function f(){const a=[1];a.push(2,3);return a.length;}');
+  const selected=structuredClone(exported.public.groups);
+  const target=selected.find(g=>g.mode==='generated'&&g.events.some(item=>{
+    try {
+      const row=decodeRecord(item.record);
+      return row.kind==='write'&&
+        row.fields.writes?.some(w=>w.kind==='property'&&w.key==='length');
+    }catch{return false;}
+  }));
+  assert(target,'missing versioned array builtin write');
+  const item=target.events[0],entry=decodeRecord(item.record);
+  const length=entry.fields.writes.find(w=>w.kind==='property'&&w.key==='length');
+  length.version+=100;
+  item.record=encodeRecord(entry.kind,entry.fields);
+  const rollout=evaluateSelectedTrajectory({groups:selected,
+    referenceGroups:exported.public.groups,maxGenerated:1024});
+  assert.equal(rollout.valid,false);
+  assert.equal(rollout.invalid.category,'write');
 });
 
 test('Object keys and own-key presence allocate explicitly traced dense results',()=>{
