@@ -72,7 +72,12 @@ export class SemanticController {
         ...['abs','ceil','floor','trunc','round','max','min','pow','sign','sqrt','hypot']
           .map(x=>'Math.'+x),
         ...['isFinite','isNaN','isInteger','isSafeInteger'].map(x=>'Number.'+x),
-        'Array.isArray','Array.prototype.push','Array.prototype.pop','Array.prototype.includes','Array.toString',
+        ...['push','pop','includes','indexOf','lastIndexOf','slice','concat',
+          'join','splice','unshift','shift'].map(x=>'Array.prototype.'+x),
+        ...['charAt','charCodeAt','at','substring','slice','indexOf','lastIndexOf',
+          'includes','startsWith','endsWith','toLowerCase','toUpperCase','trim',
+          'trimStart','trimEnd'].map(x=>'String.prototype.'+x),
+        'Array.isArray','Array.toString',
         'Object.hasOwn','Object.keys','Object.is','Object.create','Object.setPrototypeOf',
         'Object.getPrototypeOf','Object.defineProperty','Object.valueOf','Object.toString'
       ]);
@@ -255,7 +260,8 @@ export class SemanticController {
           const builtin=read.value?.[0]==='builtinfn'?read.value[1]:null;
           const virtual=property===undefined && (
             (obj?.kind==='array' && (
-              (['push','pop'].includes(read.key) &&
+              (['push','pop','includes','indexOf','lastIndexOf','slice','concat',
+                 'join','splice','unshift','shift'].includes(read.key) &&
                 builtin==='Array.prototype.'+read.key) ||
               (read.key==='toString'&&builtin==='Array.toString'))) ||
             (['object','array'].includes(obj?.kind) &&
