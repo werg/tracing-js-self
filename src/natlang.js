@@ -1,7 +1,10 @@
 // Owned, replay-verified subset of natlang's evaluator contract.
 // Retained modules and live captures admit ordinary data graphs only: native
 // functions, package loaders, resources and unowned callbacks are rejected.
+import {types} from 'node:util';
 import { createRuntime } from './runtime.js';
+import {createBoundedModuleFacade} from './evaluated-module-facade.js';
+import {lowerPureCommonJsModule} from './natlang-commonjs.js';
 import { executeWithNativeServices } from './host/native-driver.js';
 import { validateBundle } from './validation.js';
 import { replayExact } from './replay.js';
@@ -15,6 +18,8 @@ const event=(mode,body,status,extra={})=>({
 });
 
 export class BoundedNatlangEnvironment {
+  #pureModuleFacades=new Set();
+  #pureModuleCache=new WeakMap();
   constructor({EvalFailure,onTrace=null,maxSteps=10000,mode='fresh',services=null}={}){
     if(typeof EvalFailure!=='function')
       throw new TypeError('Pass the actual natlang EvalFailure constructor for instanceof compatibility');
@@ -50,6 +55,8 @@ export class BoundedNatlangEnvironment {
     if(this.closed)return;
     this.closed=true;
     this.abortController.abort(new Error('Owned natlang evaluator closed'));
+    for(const facade of this.#pureModuleFacades)facade.close();
+    this.#pureModuleFacades.clear();
   }
   ensureOpen(){if(this.closed)throw new Error('Owned natlang evaluator is closed');}
   declarationOf(){return undefined;}
@@ -72,6 +79,15 @@ export class BoundedNatlangEnvironment {
          typeof bindings.module!=='object'||!Object.hasOwn(bindings,'exports')||
          bindings.module.exports!==bindings.exports)
         throw new TypeError('Module evaluation needs aliased module.exports and exports data bindings');
+      // Pure compiler-emitted CommonJS function registrations are lowered
+      // into a bounded owned ESM session. Native helpers remain inaccessible.
+      const requireRecord=Object.getOwnPropertyDescriptor(bindings,'require');
+      if(requireRecord){
+        if(!Object.hasOwn(requireRecord,'value')||
+           typeof requireRecord.value!=='function')
+          throw new TypeError('CommonJS require must be an uninvoked host function binding');
+        return this.evaluatePureCommonJsModule(code,bindings);
+      }
       // Owned source is compiled and executed just as an eval body. Imported
       // host callbacks/functions cannot be serialized into this guest realm.
       // A return value from this bounded seam is the final module.exports.
@@ -83,6 +99,64 @@ export class BoundedNatlangEnvironment {
       if(error instanceof this.EvalFailure)throw error;
       throw this.failed({body:true},error,'unsupported');
     }
+  }
+  evaluatePureCommonJsModule(code,bindings){
+    const {module,exports}=bindings;
+    if(types.isProxy(module)||types.isProxy(exports)||
+       Object.getPrototypeOf(module)!==Object.prototype||
+       Object.getPrototypeOf(exports)!==Object.prototype||
+       !Object.isExtensible(exports))
+      throw new TypeError('Pure CommonJS exports need ordinary extensible host objects');
+    const cached=this.#pureModuleCache.get(module);
+    if(cached){
+      if(cached.code!==code||cached.exports!==exports)
+        throw new TypeError('Retained module identity cannot change source or exports');
+      return exports;
+    }
+    if(Reflect.ownKeys(exports).length!==0)
+      throw new TypeError('Owned CommonJS function exports require an empty export record');
+    const linked=lowerPureCommonJsModule(code);
+    const path='natlang://retained-cjs/'+(++this.moduleSequence);
+    const facade=createBoundedModuleFacade({
+      modules:{'module.js':linked.source},entryModule:'module.js',
+      exportNames:linked.exportNames,maxSteps:this.maxSteps,
+      onTrace:(bundle,call,metadata)=>{
+        if(!this.onTrace)return;
+        this.ensureOpen();
+        const callback=this.onTrace(bundle,{
+          code,scope:{},body:true,path,
+          exportedFunction:call.exportName,invocation:call.callCount
+        },{
+          compiler:'natlang-commonjs/1',originalText:code,
+          javascript:linked.source,sourceMap:null,
+          moduleMetadata:metadata
+        });
+        if(callback&&typeof callback.then==='function')
+          throw new TypeError('onTrace must be synchronous; async callbacks are unowned');
+      }
+    });
+    try{
+      for(const name of linked.exportNames){
+        if(Object.hasOwn(exports,name))
+          throw new TypeError('CommonJS export name unexpectedly occupied');
+      }
+      for(const name of linked.exportNames)
+        Object.defineProperty(exports,name,{
+          value:(...args)=>{
+            try{
+              this.ensureOpen();
+              return facade.exports[name](...args);
+            }catch(error){
+              if(error instanceof this.EvalFailure)throw error;
+              throw this.failed({body:true},error,'unsupported');
+            }
+          },
+          writable:true,enumerable:true,configurable:true
+        });
+      this.#pureModuleCache.set(module,{code,exports});
+      this.#pureModuleFacades.add(facade);
+      return exports;
+    }catch(error){facade.close();throw error;}
   }
   execute(request){return this.run(request,false);}
   async executeAsync(request){

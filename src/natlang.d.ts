@@ -40,7 +40,8 @@ export declare class BoundedNatlangEnvironment {
   execute(request:NatlangEvalRequest):NatlangEvalResult;
   /** Starts an owned async entry; explicit native services are journaled before delivery. */
   executeAsync(request:NatlangEvalRequest):Promise<NatlangEvalResult>;
-  /** Retained only: data-only CommonJS exports (require/native helpers fail closed). */
+  /** Retained only: data-only CommonJS exports and strict pure-function
+   * CommonJS registrations; arbitrary require/native helper use fails closed. */
   evaluateModule(code:string,bindings:Record<string,unknown>):unknown;
   declarationOf(name:string):string|undefined;
   fork():BoundedNatlangEnvironment;

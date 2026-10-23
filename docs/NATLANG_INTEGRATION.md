@@ -117,6 +117,17 @@ Opt-in natlang onTrace sidecar now also exposes SourceMap-derived generated-site
 
 Opt-in strict-profile TS lowering now includes try/catch/finally completion syntax (with a scalar/plain guest throw and identifier catch binding), plus simple synchronous arrow and anonymous function expressions. Their guest calls and captures run through owned frames, with no native fallback. It does not cover the broader scope compiler's rest/destructuring/spread, callable-folder modules, non-data live captures, or arbitrary asynchronous host functions.
 
+A strict pure-CommonJS function registration slice is additionally accepted by
+the retained module seam when natlang supplies a native `require` binding:
+the helper is intentionally **never invoked**. Simple compiler-emitted
+`exports.fn = fn; function fn(...) {...}` registrations are converted into
+owned ESM exports and exposed as host-callable wrappers. Invocations are
+synchronous, replay-backed, recorded through the same `onTrace` hook and
+limited to primitive arguments and the module-session history budget. Any
+other module bootstrap statement, package use or native helper reference
+is rejected during preflight. This does not support arbitrary callable-folder
+modules or general guest-to-host callback reentry.
+
 Production integration still must check actual scope-compiler output, wire
 and prove the separate `setModuleRealm` seam, implement non-data capture
 semantics and helper callback reentry, and prove TS source mapping.

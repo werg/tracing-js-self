@@ -1,5 +1,10 @@
 # Implementation status (0.2.0)
 
+## Natlang retained pure-CommonJS callable module bridge (October 23, 2026)
+
+- Retained `createBoundedNatlangEnvironment.evaluateModule` now accepts a deliberately strict compiler-emitted CommonJS shape: `"use strict"`, the standard `__esModule` marker, guest function declarations and static `exports.name = functionName` registrations only. These link into the owned replay-backed ESM realm, install host-callable wrappers on the real `module.exports` alias, maintain state for subsequent calls, and emit validated exact-replayed archives through `onTrace` before committing state. Module recompilation or host execution is not a fallback; `require`, `__natlang`, `nl`, `iterateOn`, package imports and unsupported module bodies fail closed. This is a **bounded integration with natlang's retained entry**, not production compatibility for typical callable-folder output or arbitrary native callbacks.
+
+
 ## Host-callable bounded ESM facade (October 23, 2026)
 
 - The opt-in `evaluated-module-facade` entry exposes explicitly named owned ESM exports as synchronous host JavaScript callables. Each invocation uses `invokeSync`, replay-verifies complete deterministic module history and retains observable host ordinary-data aliases; invalid call arguments and failed guest calls do not commit. Function wrappers remain host-only and cannot cross back into the owned guest. See [bounded facade](BOUNDED_MODULE_FACADE.md). **This is not a drop-in natlang callable-folder realm, full persistent Module Record, or arbitrary native callbacks/host APIs.**
