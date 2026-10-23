@@ -24,19 +24,20 @@ jobs:
         with:
           node-version: '22'
       - run: npm ci
-      - name: Run pinned stateful application programs against independent V8
+      - name: Run all 720 stateful adversarial programs against independent V8
         run: |
-          node tools/build-stateful-corpus.mjs --per-scenario 4 \
+          node tools/build-stateful-corpus.mjs --per-scenario 12 \
+            --min-verified 720 \
             --output corpus/out/stateful-traces.jsonl \
             --report corpus/out/stateful-report.json \
             --review corpus/out/stateful-review.md
-      - name: Summarize adversarial coverage and reject empty result
+      - name: Summarize adversarial coverage and require 100% independent observable agreement
         run: |
           node --input-type=module -e '
             import fs from "node:fs";
             const r=JSON.parse(fs.readFileSync("corpus/out/stateful-report.json"));
             const c=r.counts;
-            if(c.scenarioFamilies!==60||c.requested!==240||c.agreed<1)
+            if(c.scenarioFamilies!==60||c.requested!==720||c.agreed!==720||c.disagreed||c.observerErrors)
               throw Error("No useful adversarial evidence: "+JSON.stringify(c));
             console.log("Adversarial coverage",JSON.stringify(c));
             console.log("Failure reasons",JSON.stringify(r.failures.slice(0,12)));
