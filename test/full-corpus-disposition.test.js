@@ -25,7 +25,7 @@ test('full-corpus classifier refuses unsupported language and metadata rather th
 });
 test('claimed owned conversions require exact canonical SHA/revision and independent evidence',()=>{
  const row=fixture('exercise-contract');
- const good={status:'locally_verified',caseId:'leap/case1',
+ const good={status:'locally_verified',caseId:'leap/case1',inputOrigin:'upstream-canonical',
   provenance:{canonical:{repository:row.provenance.repository,
     sha256:row.provenance.sha256,revision:row.provenance.revision},
     solution:{revision:'f'.repeat(40)}},
