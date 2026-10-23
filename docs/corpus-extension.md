@@ -1131,3 +1131,41 @@ This source-projection phase should be distinguished from general ESM execution:
 original module source is never passed off as unchanged in the strict owned
 runtime, and independent original-versus-lowered V8 checks must succeed for
 each successful candidate.
+
+
+### First verified Exercism JS corpus measurement (2026-10-23)
+
+The initial exact-canonical run [CI job 120540220232](https://github.com/werg/tracing-js-self/actions/runs/39990355300) **passed**:
+
+| Measure | Actual result |
+| --- | ---: |
+| Pinned original JS proof files / matching canonical-data files | 20 / 20 |
+| Canonical executions independently attempted | 207 |
+| Locally owned verified, independently rechecked `semantic-execution/2` | **34** |
+| Explicitly refused | 173 |
+| Distinct proof families yielding owned traces | **7** |
+| Owned original journal events across successes | 2,961 |
+| Generated semantic-trace groups across successes | 989 |
+| Generated semantic-trace record bytes across successes | 155,985 |
+| Actually admitted to training | **0** |
+
+Successful families: **leap 9**, **raindrops 12**, **binary-search 6**,
+**collatz-conjecture 3**, **two-fer 2**, **sum-of-multiples 1**, and
+**largest-series-product 1**. The exact failure ledger includes
+unsupported spread, RegExp, classes, getters, runtime property lookup,
+expected exceptional completions, source/projected reference mismatches,
+generated-chunk limits, and unrepresentable scalar or graph outcomes.
+The 34 successes passed independent original JS/V8 comparisons, canonical
+expected result, owned reference outcome, source-executed primitive
+operation and branch receipts, controller evaluation, archive replay, and
+post-serialization evidence recheck. Neither the 34 successes nor the
+approximately 1,000 generated groups have been admitted to megatoken.
+
+This release adds opt-in **deterministic canonical-seeded input variants**,
+with explicit `generated/` identifiers and oracle-derived expected results
+from the original pinned JS proof implementation. They are **not**
+represented as additional official Exercism canonical tests. Each must
+again agree with the conservatively lowered V8 program and owned reference
+checks before retention. The next CI run gates the original 34 verified
+candidates and evaluates bounded new variants. Novelty metrics remain
+imperfect; new seeds are not claimed to be new source functions.

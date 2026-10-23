@@ -15,14 +15,17 @@ import {verifyTrainingCase,recheckIndependentTrainingEvidence}
   from '../src/training/admit.js';
 import {loadPinnedPairs,lowerPinnedProof,extractCanonicalCases}
   from '../src/corpus/owned-exercism.mjs';
+import {generateInputVariations} from '../src/corpus/variation-exercism.mjs';
 
 const argv=process.argv.slice(2);
 const option=(name,fallback)=>argv.includes('--'+name)?argv[argv.indexOf('--'+name)+1]:fallback;
 const perFamily=Number(option('per-family','12'));
 const maxCases=Number(option('max-cases','1000'));
+const mutationsPerFamily=Number(option('mutations-per-family','0'));
 const maxGenerated=Number(option('max-generated','256'));
 const minOwned=Number(option('min-owned','0'));
-if(!Number.isSafeInteger(perFamily)||perFamily<1||perFamily>100 ||
+if(!Number.isSafeInteger(mutationsPerFamily)||mutationsPerFamily<0||mutationsPerFamily>512 ||
+   !Number.isSafeInteger(perFamily)||perFamily<1||perFamily>100 ||
    !Number.isSafeInteger(maxCases)||maxCases<1||maxCases>10000 ||
    !Number.isSafeInteger(maxGenerated)||maxGenerated<1||maxGenerated>2048 ||
    !Number.isSafeInteger(minOwned)||minOwned<0)
@@ -35,7 +38,7 @@ const records=[],failureReasons={},byExercise={},features={};
 let attempted=0,claimed=0,committed=0;
 const report={schema:'owned-exercism-evidence/1',admitted:false,profile:'training-js/1',
   authority:'owned-runtime-plus-independent-V8-scalar-operation-branch-checks',
-  options:{perFamily,maxCases,maxGenerated},
+  options:{perFamily,maxCases,maxGenerated,mutationsPerFamily},
   verification:'Full post-serialization independent recheck for each retained locally verified candidate',
   provenance:'Pinned original Exercism JS reference solutions and canonical problem specifications',
   limitations:[
@@ -98,12 +101,15 @@ try{
    original=originalScript(pair.source);
    group.status='attempted';
   }catch(error){group.status='source_unsupported';group.sourceReason=String(error.message);}
-  for(const fixture of canonical.slice(0,perFamily)){
+  const variants=generateInputVariations(pair.slug,canonical,{limit:mutationsPerFamily});
+  for(const fixture of [...canonical.slice(0,perFamily),...variants]){
    if(attempted>=maxCases)break;
    attempted++;group.candidates++;
    const item={id:sha(JSON.stringify([pair.provenance,fixture.caseId])),
      schema:'owned-exercism-row/1',admitted:false,slug:pair.slug,
      split:pair.split,caseId:fixture.caseId,property:fixture.property,
+     inputOrigin:fixture.generator??'upstream-canonical',
+     derivedFrom:fixture.derivedFrom??null,
      provenance:pair.provenance,lowering:lowered?.lowering??null};
    records.push(item);
    if(fixture.status!=='candidate'){fail(item,'fixture_unsupported',fixture.status);continue;}
@@ -119,8 +125,8 @@ try{
     fail(item,'input_budget','Large canonical input graph');continue;
    }
    try {
-    const expected=cleanJSON(fixture.expected);
     const referenceOriginal=executePure(original,fixture.entry,fixture.args);
+    const expected=fixture.generator?referenceOriginal.result:cleanJSON(fixture.expected);
     if(!isDeepStrictEqual(referenceOriginal.result,expected)){
       fail(item,'canonical_mismatch','Original pinned JS solution disagrees with declared exercise expected result');
       group.referenceMismatch++;continue;
@@ -130,7 +136,7 @@ try{
       fail(item,'lowering_mismatch','Function-only lowering changed original ESM behavior or arguments');
       group.referenceMismatch++;continue;
     }
-    item.reference={canonical:'agreed',originalSource:'agreed',
+    item.reference={canonical:fixture.generator?'not-applicable-generated':'agreed',originalSource:'agreed',
       transformedV8:'agreed',returnHash:sha(JSON.stringify(referenceOriginal))};
    }catch(error){
     fail(item,'reference_failure',error.message);group.referenceMismatch++;continue;
@@ -139,6 +145,7 @@ try{
      source:'exercism/javascript-canonical/1',slug:pair.slug,
      caseId:fixture.caseId,split:pair.split,
      solution:pair.provenance.solution,canonical:pair.provenance.canonical,
+     generator:fixture.generator??null,derivedFrom:fixture.derivedFrom??null,
      lowering:lowered.lowering,loweredSha256:sha(lowered.source)};
    let checked;
    try {
@@ -181,7 +188,8 @@ try{
      const payload={schema:'owned-exercism-local-episode/1',admitted:false,
        id:item.id,slug:pair.slug,caseId:fixture.caseId,split:pair.split,
        originalSource:pair.provenance.solution,canonicalInput:fixture.args,
-       canonicalExpected:fixture.expected,reference:item.reference,
+       inputOrigin:item.inputOrigin,derivedFrom:item.derivedFrom,
+       canonicalExpected:fixture.generator?null:fixture.expected,reference:item.reference,
        quality,exported:serialized};
      if(!stream.write(JSON.stringify(payload)+'\n'))await once(stream,'drain');
    }

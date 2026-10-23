@@ -2,6 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {loadPinnedPairs,lowerPinnedProof,extractCanonicalCases,stableSplit,bindings}
   from '../src/corpus/owned-exercism.mjs';
+import {generateInputVariations} from '../src/corpus/variation-exercism.mjs';
 import {verifyTrainingCase,recheckIndependentTrainingEvidence}
   from '../src/training/admit.js';
 
@@ -52,4 +53,23 @@ test('canonical identity and split are stable by exercise, not input',()=>{
   assert.equal(ids.size,samples.length,pair.slug);
   assert.equal(pair.split,stableSplit(pair.slug));
  }
+});
+
+test('deterministic generated variants stay distinct from canonical provenance',()=>{
+ const pairs=loadPinnedPairs();
+ const leap=pairs.find(p=>p.slug==='leap');
+ const tests=extractCanonicalCases(leap);
+ const first=generateInputVariations('leap',tests,{limit:12});
+ const second=generateInputVariations('leap',tests,{limit:12});
+ assert.deepEqual(first,second);
+ assert.equal(first.length,12);
+ const canon=new Set(tests.filter(t=>t.status==='candidate').map(t=>JSON.stringify(t.args)));
+ for(const t of first){
+  assert.match(t.caseId,/^generated\/leap\//);
+  assert.equal(t.expectedAuthority,'original-v8-oracle');
+  assert.ok(!canon.has(JSON.stringify(t.args)));
+  assert.ok(t.derivedFrom.startsWith('leap/'));
+ }
+ assert.deepEqual(generateInputVariations('leap',tests,{limit:0}),[]);
+ assert.throws(()=>generateInputVariations('leap',tests,{limit:513}));
 });

@@ -179,3 +179,20 @@ artifact; it never uploads newly admitted training data. The input cases with
 throws, classes, nonstatic top-level declarations, unsupported RegExp, too-long
 trace budgets, or original-versus-expected disagreements remain explicit
 refusals, not silently missing entries.
+
+
+### First measured owned verification
+
+[The CI run](https://github.com/werg/tracing-js-self/actions/runs/39990355300)
+confirmed **34/207** SHA-locked canonical JS/TS evaluation attempts as
+locally verified **owned** `semantic-execution/2` trajectories. The
+other **173** have explicit categorized refusals. **Zero** are admitted
+training examples. This is separate from the 117,773 acquisition-only
+catalog entries.
+
+The `--mutations-per-family N` option additionally generates bounded,
+reproducible variants of canonical input shapes. Those generated probes have
+their own IDs, original-input ancestry and independent original-solution
+V8-derived expected outputs. They are never mislabeled as official
+canonical tests. Each must pass the same owned evidence recheck before
+it is written to the episode artifact.

@@ -39,7 +39,7 @@ jobs:
         run: |
           mkdir -p corpus/out
           node tools/verify-exercism-owned.mjs \
-            --per-family 12 --max-cases 240 --min-owned 1 \
+            --per-family 12 --mutations-per-family 8 --max-cases 420 --min-owned 34 \
             --output corpus/out/exercism-owned-report.json \
             --local-episodes corpus/out/exercism-owned-locally-verified.jsonl
       - name: Check evidence denominators and local-only status
