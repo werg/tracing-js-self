@@ -36,6 +36,13 @@ export function parseTraining(source) {
       case 'BinaryExpression':case 'LogicalExpression':
         if(!(n.type==='BinaryExpression'?binaries:logical).has(n.operator))reject(n,'binary operator');
         return {...loc,type:'Binary',operator:n.operator,left:expr(n.left),right:expr(n.right)};
+      case 'ConditionalExpression':
+        return {...loc,type:'Conditional',test:expr(n.test),
+          consequent:expr(n.consequent),alternate:expr(n.alternate)};
+      case 'UpdateExpression':
+        if(n.argument.type!=='Identifier')reject(n,'update target (local identifier required)');
+        return {...loc,type:'Update',operator:n.operator,prefix:n.prefix,
+          name:n.argument.name};
       case 'MemberExpression':
         if(n.optional || n.object.type==='Super')reject(n,'member receiver');
         return {...loc,type:'Member',object:expr(n.object),property:n.computed?expr(n.property):
@@ -84,13 +91,42 @@ export function parseTraining(source) {
       case 'IfStatement':return {...loc,type:'If',test:expr(n.test),
         consequent:stmt(n.consequent),alternate:n.alternate?stmt(n.alternate):null};
       case 'WhileStatement':return {...loc,type:'While',test:expr(n.test),body:stmt(n.body)};
+      case 'DoWhileStatement':return {...loc,type:'DoWhile',test:expr(n.test),body:stmt(n.body)};
+      case 'ForStatement':{
+        let init=null;
+        if(n.init?.type==='VariableDeclaration'){
+          if(n.init.kind!=='let'||n.init.declarations.length!==1||
+             n.init.declarations[0].id.type!=='Identifier'||!n.init.declarations[0].init)
+            reject(n.init,'for initializer (one initialized let binding required)');
+          init=stmt(n.init);
+        }else if(n.init)init=expr(n.init);
+        const body=stmt(n.body);
+        // This bounded profile does not clone for-let bindings per iteration.
+        // Without captured closures, the shared binding is observationally equivalent.
+        function declaresFunction(x){
+          if(x.type==='Function')return true;
+          if(x.type==='Block')return x.body.some(declaresFunction);
+          if(x.type==='If')return declaresFunction(x.consequent)||
+            (x.alternate!==null&&declaresFunction(x.alternate));
+          if(['For','While','DoWhile'].includes(x.type))return declaresFunction(x.body);
+          return false;
+        }
+        if(init?.type==='Variable'&&declaresFunction(body))
+          reject(n,'for-let body with nested function needs per-iteration environments');
+        return {...loc,type:'For',init,test:n.test?expr(n.test):null,
+          update:n.update?expr(n.update):null,body};
+      }
+      case 'BreakStatement':case 'ContinueStatement':
+        if(n.label)reject(n,'labelled loop exit');
+        return {...loc,type:n.type==='BreakStatement'?'Break':'Continue'};
       case 'ExpressionStatement':return {...loc,type:'Expression',expr:expr(n.expression)};
       case 'EmptyStatement':return {...loc,type:'Empty'};
       default:reject(n,n.type);
     }
   }
   const body=parsed.body.map(stmt);
-  // Check references against declared lexical bindings, never Node globals.
+  // Resolve references against lexical scopes, including the per-loop let header.
+  // Never silently turn an unknown identifier into an ambient Node global.
   function scope(statements,parent,params=[]) {
     const names=new Set(params);
     for(const n of statements)if(['Variable','Function'].includes(n.type)){
@@ -98,36 +134,58 @@ export function parseTraining(source) {
       names.add(n.id);
     }
     const env={names,parent};
-    const has=(name,e=env)=>!!e&&(e.names.has(name)||has(name,e.parent));
-    function value(n){
+    const has=(name,e)=>!!e&&(e.names.has(name)||has(name,e.parent));
+    function value(n,e){
       switch(n.type){
-        case 'Identifier':if(!has(n.name))reject(n,'unbound identifier '+n.name);break;
-        case 'Unary':value(n.argument);break;
-        case 'Binary':value(n.left);value(n.right);break;
-        case 'Member':value(n.object);value(n.property);break;
-        case 'Call':value(n.callee);n.args.forEach(value);break;
-        case 'Array':n.elements.forEach(value);break;
-        case 'Object':n.properties.forEach(p=>value(p.value));break;
-        case 'Assign':value(n.left);value(n.right);break;
+        case 'Identifier':
+          if(!has(n.name,e))reject(n,'unbound identifier '+n.name);
+          break;
+        case 'Unary':value(n.argument,e);break;
+        case 'Binary':value(n.left,e);value(n.right,e);break;
+        case 'Conditional':
+          value(n.test,e);value(n.consequent,e);value(n.alternate,e);break;
+        case 'Update':
+          if(!has(n.name,e))reject(n,'unbound update target '+n.name);
+          break;
+        case 'Member':value(n.object,e);value(n.property,e);break;
+        case 'Call':value(n.callee,e);n.args.forEach(x=>value(x,e));break;
+        case 'Array':n.elements.forEach(x=>value(x,e));break;
+        case 'Object':n.properties.forEach(p=>value(p.value,e));break;
+        case 'Assign':value(n.left,e);value(n.right,e);break;
         case 'Literal':break;
         default:reject(n,'unhandled expression');
       }
     }
-    function statement(n) {
+    function statement(n,e){
       switch(n.type){
-        case 'Variable':if(n.init)value(n.init);break;
-        case 'Function':scope(n.body.body,env,n.params);break;
-        case 'Block':scope(n.body,env);break;
-        case 'If':value(n.test);statement(n.consequent);
-          if(n.alternate)statement(n.alternate);break;
-        case 'While':value(n.test);statement(n.body);break;
-        case 'Return':if(n.argument)value(n.argument);break;
-        case 'Expression':value(n.expr);break;
-        case 'Empty':break;
+        case 'Variable':if(n.init)value(n.init,e);break;
+        case 'Function':scope(n.body.body,e,n.params);break;
+        case 'Block':scope(n.body,e);break;
+        case 'If':
+          value(n.test,e);statement(n.consequent,e);
+          if(n.alternate)statement(n.alternate,e);
+          break;
+        case 'While':case 'DoWhile':
+          value(n.test,e);statement(n.body,e);break;
+        case 'For':{
+          const loopEnv=n.init?.type==='Variable'
+            ?{names:new Set([n.init.id]),parent:e}:e;
+          if(n.init){
+            if(n.init.type==='Variable')statement(n.init,loopEnv);
+            else value(n.init,loopEnv);
+          }
+          if(n.test)value(n.test,loopEnv);
+          if(n.update)value(n.update,loopEnv);
+          statement(n.body,loopEnv);
+          break;
+        }
+        case 'Return':if(n.argument)value(n.argument,e);break;
+        case 'Expression':value(n.expr,e);break;
+        case 'Break':case 'Continue':case 'Empty':break;
         default:reject(n,'unhandled statement');
       }
     }
-    statements.forEach(statement);
+    statements.forEach(n=>statement(n,env));
   }
   scope(body,{names:new Set(['undefined']),parent:null});
   return {type:'Program',body,start:0,end:source.length,profile:TRAINING_PROFILE};
