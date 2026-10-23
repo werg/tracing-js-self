@@ -77,11 +77,28 @@ function observableGraph(roots){
     if(!reference(v))return ['unknown',typeof v];
     if(ids.has(v))return ['ref',ids.get(v)];
     const id='g'+objects.length;ids.set(v,id);
-    const row={id,kind:typeof v==='function'?'function':
-      types.isProxy(v)?'proxy':Array.isArray(v)?'array':'object',properties:[]};
+    const kind=typeof v==='function'?'function':types.isProxy(v)?'proxy':
+      Array.isArray(v)?'array':types.isMap(v)?'map':types.isSet(v)?'set':
+      types.isDate(v)?'date':types.isRegExp(v)?'regexp':
+      types.isTypedArray(v)?'typedarray':types.isArrayBuffer(v)?'arraybuffer':'object';
+    const row={id,kind,properties:[]};
     objects.push(row);
     if(row.kind==='proxy')return ['ref',id];
     if(row.kind==='function'){row.properties.push(['name',['str',v.name]]);return ['ref',id];}
+    if(row.kind==='map')row.properties.push(['[[Entries]]',['entries',
+      [...Map.prototype.entries.call(v)].map(([k,x])=>[visit(k),visit(x)])]]);
+    if(row.kind==='set')row.properties.push(['[[Values]]',['values',
+      [...Set.prototype.values.call(v)].map(visit)]]);
+    if(row.kind==='date')row.properties.push(['[[Time]]',primitive(Date.prototype.getTime.call(v))]);
+    if(row.kind==='regexp'){
+      const source=Object.getOwnPropertyDescriptor(RegExp.prototype,'source').get.call(v);
+      const names=['hasIndices','global','ignoreCase','multiline','dotAll',
+        'unicode','unicodeSets','sticky'];
+      const flags=names.filter(n=>Object.getOwnPropertyDescriptor(RegExp.prototype,n)?.get?.call(v));
+      row.properties.push(['[[Pattern]]',['str',source]],['[[Flags]]',['str',flags.join(',')]]);
+    }
+    if(row.kind==='arraybuffer')row.properties.push(['[[Bytes]]',['bytes',
+      [...new Uint8Array(v)]]]);
     for(const key of Reflect.ownKeys(v)){
       const d=Object.getOwnPropertyDescriptor(v,key);
       row.properties.push([keyName(key),d&&Object.hasOwn(d,'value')?
@@ -123,12 +140,30 @@ class Capture {
       try{desc=Object.getOwnPropertyDescriptors(v);}
       catch{this.limitations.add('Some native object properties cannot be inspected');
         result.set(id,{kind:'opaque',props});continue;}
+      if(types.isMap(v))props.push(['[[Entries]]',['entries',
+        [...Map.prototype.entries.call(v)].map(([k,x])=>[this.encode(k),this.encode(x)])]]);
+      if(types.isSet(v))props.push(['[[Values]]',['values',
+        [...Set.prototype.values.call(v)].map(x=>this.encode(x))]]);
+      if(types.isDate(v))props.push(['[[Time]]',primitive(Date.prototype.getTime.call(v))]);
+      if(types.isRegExp(v)){
+        const source=Object.getOwnPropertyDescriptor(RegExp.prototype,'source').get.call(v);
+        props.push(['[[Pattern]]',['str',source]]);
+        const names=['hasIndices','global','ignoreCase','multiline',
+          'dotAll','unicode','unicodeSets','sticky'];
+        props.push(['[[Flags]]',['str',names.filter(n=>
+          Object.getOwnPropertyDescriptor(RegExp.prototype,n)?.get?.call(v)).join(',')]]);
+      }
+      if(types.isArrayBuffer(v))props.push(['[[Bytes]]',['bytes',[...new Uint8Array(v)]]]);
       for(const key of Reflect.ownKeys(desc)){
         if(++count>12000)throw new RangeError('Trace property budget exhausted');
         const d=desc[key];
         props.push([keyName(key),Object.hasOwn(d,'value')?this.encode(d.value):['accessor']]);
       }
-      result.set(id,{kind:Array.isArray(v)?'array':'object',props});
+      result.set(id,{kind:Array.isArray(v)?'array':
+        types.isMap(v)?'map':types.isSet(v)?'set':
+        types.isDate(v)?'date':types.isRegExp(v)?'regexp':
+        types.isTypedArray(v)?'typedarray':
+        types.isArrayBuffer(v)?'arraybuffer':'object',props});
     }
     return result;
   }
@@ -210,14 +245,14 @@ function instrument(source,filename,language){
         return f.updateFunctionDeclaration(v,v.modifiers,v.asteriskToken,v.name,
           v.typeParameters,v.parameters,v.type,body);
       }
-      if(ts.isIfStatement(v))return f.updateIfStatement(v,call('test',node,
+      if(ts.isIfStatement(v))return f.updateIfStatement(v,call('test',node.expression,
         [v.expression,f.createStringLiteral('if')]),v.thenStatement,v.elseStatement);
-      if(ts.isWhileStatement(v))return f.updateWhileStatement(v,call('test',node,
+      if(ts.isWhileStatement(v))return f.updateWhileStatement(v,call('test',node.expression,
         [v.expression,f.createStringLiteral('while')]),v.statement);
-      if(ts.isDoStatement(v))return f.updateDoStatement(v,v.statement,call('test',node,
+      if(ts.isDoStatement(v))return f.updateDoStatement(v,v.statement,call('test',node.expression,
         [v.expression,f.createStringLiteral('do-while')]));
       if(ts.isForStatement(v))return f.updateForStatement(v,v.initializer,
-        v.condition?call('test',node,[v.condition,f.createStringLiteral('for')]):undefined,
+        v.condition?call('test',node.condition,[v.condition,f.createStringLiteral('for')]):undefined,
         v.incrementor,v.statement);
       if(ts.isReturnStatement(v))return f.updateReturnStatement(v,
         call('ret',node,[v.expression??f.createVoidZero()]));
@@ -237,7 +272,7 @@ function instrument(source,filename,language){
         return call(assign(v.operatorToken.kind)?'write':'value',node,[v]);
       }
       if(ts.isConditionalExpression(v))return call('value',node,[
-        f.updateConditionalExpression(v,call('test',node,[
+        f.updateConditionalExpression(v,call('test',node.condition,[
           v.condition,f.createStringLiteral('ternary')]),v.questionToken,
           v.whenTrue,v.colonToken,v.whenFalse)]);
       if(ts.isCallExpression(v)||ts.isNewExpression(v))
@@ -273,12 +308,16 @@ function transpile(code,filename){
   if(errors.length)throw new SyntaxError(ts.flattenDiagnosticMessageText(errors[0].messageText,'\n'));
   return result.outputText;
 }
-async function execute(code,{filename,entry,args,setupSource,timeoutMs,capture}){
+async function execute(code,{filename,entry,args,setupSource,timeoutMs,capture,randomSeed}){
   const events=capture?new Capture(capture):null;
   const trace=events?events.hooks():null;
   const output={};
   const sandbox={module:{exports:output},exports:output,__trace:trace};
   const ctx=vm.createContext(sandbox,{codeGeneration:{strings:false,wasm:false}});
+  // Repeatable JS built-in randomness, identical in observation and reference.
+  // This is a declared benchmark fixture, not untraced ambient entropy.
+  ctx.__randomSeed=randomSeed;
+  vm.runInContext('(function(){let x=__randomSeed>>>0;Math.random=function(){x=(Math.imul(x,1664525)+1013904223)>>>0;return x/4294967296;};})()',ctx);
   let inputs;
   if(setupSource){
     // Instrument guest-defined callbacks as well as the entry function.
@@ -321,26 +360,25 @@ async function execute(code,{filename,entry,args,setupSource,timeoutMs,capture})
  * a second uninstrumented V8 run. Not a serving-controller trajectory. */
 export async function observeProgram({source,entry,args=[],language='js',
   filename=language==='ts'?'observed.ts':'observed.js',setupSource=null,
-  timeoutMs=2000,maxEvents=6000,maxNodes=512}={}){
+  timeoutMs=2000,maxEvents=6000,maxNodes=512,randomSeed=42}={}){
   if(typeof source!=='string'||!source.trim()||typeof entry!=='string'||
      !/^[$A-Za-z_][$\w]*$/.test(entry)||!Array.isArray(args)||
      !['js','ts','tsx'].includes(language)||!Number.isInteger(timeoutMs)||
      timeoutMs<1||timeoutMs>30000)
     throw new TypeError('Invalid trusted V8 observation request');
   const observed=await execute(instrument(source,filename,language),
-    {filename,entry,args,setupSource,timeoutMs,capture:{maxEvents,maxNodes}});
+    {filename,entry,args,setupSource,timeoutMs,randomSeed,capture:{maxEvents,maxNodes}});
   const reference=await execute(transpile(source,filename),
-    {filename,entry,args,setupSource,timeoutMs,capture:null});
+    {filename,entry,args,setupSource,timeoutMs,randomSeed,capture:null});
   const sameResult=observed.completion.kind===reference.completion.kind&&
     (observed.completion.kind==='return'||equal(observed.completion,reference.completion))&&
     equal(observed.graph,reference.graph);
   return {schema:'effective-observation/1',profile:'trusted-v8-observation',
     source:{filename,language,text:source},entry,input:observed.input,
-    events:observed.events.map(row=>({...row,
-      source:source.slice(row.site.start,row.site.end)})),
+    events:observed.events,
     completion:observed.completion,observableGraph:observed.graph,
     evidence:{independentUninstrumentedV8:sameResult,
-      referenceCompletion:reference.completion},
+      referenceCompletion:reference.completion,randomSeed},
     limitations:[...new Set([...observed.limitations,
       'Native V8 observation is not owned replay or admitted semantic-execution/2 training data',
       'Native modules and unobserved host effects require explicit provenance and boundary tracing'])]};
