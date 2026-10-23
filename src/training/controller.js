@@ -73,7 +73,26 @@ export class SemanticController {
     if(value[0]==='ref') {
       if(value.length!==2 || typeof value[1]!=='string' || !this.heap.has(value[1]))
         fail('identity','Reference was never allocated in the committed graph');
-    } else {
+    }else if(value[0]==='intrinsic'){
+      if(value.length!==2||!['Object','Array','Number','Math',
+        'Object.prototype','Array.prototype'].includes(value[1]))
+        fail('value','Unknown owned intrinsic tag');
+    }else if(value[0]==='builtinfn'){
+      const names=new Set([
+        ...['abs','ceil','floor','trunc','round','max','min','pow','sign','sqrt','hypot']
+          .map(x=>'Math.'+x),
+        ...['isFinite','isNaN','isInteger','isSafeInteger'].map(x=>'Number.'+x),
+        'Array.isArray','Array.prototype.push','Array.prototype.pop','Array.toString',
+        'Object.hasOwn','Object.keys','Object.create','Object.setPrototypeOf',
+        'Object.getPrototypeOf','Object.defineProperty','Object.valueOf','Object.toString'
+      ]);
+      if(value.length!==2||!names.has(value[1]))
+        fail('value','Unknown owned builtin tag');
+    }else if(value[0]==='method'){
+      if(value.length!==3)fail('value','Malformed method reference');
+      this.checkValue(value[1]);
+      this.checkValue(value[2]);
+    }else {
       try { decode(value); }
       catch { fail('value','Unknown or invalid scalar tag in selected trace'); }
     }
