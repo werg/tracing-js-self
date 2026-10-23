@@ -8,13 +8,6 @@ import {validateBundle} from '../validation.js';
 import {replayExact} from '../replay.js';
 
 function requireCompletedEntry(bundle) {
-  // The public model controller currently treats `throw` as a terminal frame
-  // completion. A recovered throw cannot enter the local training corpus until
-  // it has a resumable catch/finally model-side transition, even when the owned
-  // evaluator ultimately returns normally.
-  if(bundle.events.some(e=>e.operation==='completion.throw' ||
-      e.operation==='completion.catch.bind'||e.completion?.type==='throw'))
-    throw new TypeError('Caught guest throws require a modeled catch continuation before training export');
   const state=bundle.finalState,control=state.control.a0;
   if(bundle.entrySpec?.kind!=='function' || control.status!=='completed' ||
      control.activeFrameId!==null || control.failure || control.queue.length ||
@@ -23,6 +16,12 @@ function requireCompletedEntry(bundle) {
      Object.values(state.frames).some(frame=>frame.status!=='completed') ||
      Object.values(state.operations??{}).some(operation=>operation.status!=='completed'))
     throw new TypeError('Only completed synchronous effect-free return entries may be exported');
+  // The public controller treats throw as a terminal frame completion, so a
+  // recovered throw must stay out of the training corpus until catch/finally
+  // is modeled as a resumable serving-side continuation.
+  if(bundle.events.some(e=>e.operation==='completion.throw' ||
+      e.operation==='completion.catch.bind'||e.completion?.type==='throw'))
+    throw new TypeError('Caught guest throws require a modeled catch continuation before training export');
 }
 
 export function exportTraining(runtime,{maxBytes=512,maxGenerated=256}={}) {
