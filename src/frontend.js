@@ -159,6 +159,10 @@ export function compile(ast) {
     function expr(n) {
       switch(n.type){
         case 'Literal': emit('CONST',{value:n.value,raw:n.raw},n);break;
+        case 'Template':
+          for(const expression of n.expressions)expr(expression);
+          emit('TEMPLATE',{quasis:n.quasis,count:n.expressions.length},n);
+          break;
         case 'Identifier':emit('GET',n.name,n);break;
         case 'This':emit('THIS',null,n);break;
         case 'Unary':

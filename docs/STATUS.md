@@ -36,6 +36,8 @@ phase paths. The training profile accepts only synchronous, effect-free,
 non-throwing entries; committed terminal guest throws in the common runtime do
 not enable an exception-training category.
 
+The strict frontend also supports owned primitive-substitution JavaScript template literals (with V8 checked interpolation order and final intermediate result), including TS-lowered template syntax in the opt-in natlang adapter. Object-valued template coercion and tagged templates still fail closed.
+
 The strict training frontend also accepts scalar bitwise/shift operators, unary `~` and `void`, and `typeof unresolvableName` as `undefined` while preserving TDZ faults for existing uninitialized bindings. Differential V8 scalar-expression receipts and exact replay cover this bounded slice; broad object coercion and unrestricted JS/TS remain unsupported.
 
 The strict training frontend also supports common bounded control flow:

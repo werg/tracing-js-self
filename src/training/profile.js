@@ -31,6 +31,12 @@ export function parseTraining(source) {
         if(n.regex)reject(n,'regular expression');
         return {...loc,type:'Literal',value:encode(n.bigint!==undefined?BigInt(n.bigint):n.value),raw:n.raw};
       case 'Identifier':return {...loc,type:'Identifier',name:n.name};
+      case 'TemplateLiteral':
+        if(n.quasis.length!==n.expressions.length+1||
+           n.quasis.some(q=>typeof q.value.cooked!=='string'))
+          reject(n,'unhandled template literal escape');
+        return {...loc,type:'Template',quasis:n.quasis.map(q=>q.value.cooked),
+          expressions:n.expressions.map(expr)};
       case 'UnaryExpression':
         if(!unary.has(n.operator))reject(n,'unary operator');
         return {...loc,type:'Unary',operator:n.operator,argument:expr(n.argument)};
@@ -131,6 +137,7 @@ export function parseTraining(source) {
         case 'Identifier':
           if(!has(n.name,e))reject(n,'unbound identifier '+n.name);
           break;
+        case 'Template':n.expressions.forEach(x=>value(x,e));break;
         case 'Unary':
           // ECMAScript typeof on an unresolvable name is defined as 'undefined';
           // a declared but uninitialized lexical binding still throws (TDZ).

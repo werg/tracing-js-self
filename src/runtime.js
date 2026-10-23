@@ -31,7 +31,7 @@ const opNames = {
   CONST:'literal.materialize', GET:'binding.read', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
   CALL:'call.enter', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
-  GET_PROP:'property.read', GET_METHOD:'property.read', PUT_PROP:'property.write', ENTER_SCOPE:'environment.enter',
+  GET_PROP:'property.read', GET_METHOD:'property.read', PUT_PROP:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
   LEAVE_SCOPE:'environment.leave', CLONE_LOOP_ENV:'environment.iteration', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
   TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
   BIND_CATCH:'completion.catch.bind', END_FINALLY:'completion.finally.end',
@@ -594,6 +594,23 @@ export class Runtime {
             envId:loop.envId,stackDepth:loop.stackDepth,
             handlerDepth:loop.handlerDepth,loopDepth:f.loops.length},eventId);
           return {};
+        }
+        case 'TEMPLATE':{
+          // Template substitutions perform ToString, not '+' concatenation.
+          // Each substitution is observed in order. Guest coercion callbacks
+          // are refused until an owned continuation models them.
+          if(!Number.isInteger(arg.count)||arg.count<0||
+             !Array.isArray(arg.quasis)||arg.quasis.length!==arg.count+1 ||
+             arg.quasis.some(q=>typeof q!=='string'))
+            throw new TypeError('Malformed owned template instruction');
+          const values=Array.from({length:arg.count},()=>pop()).reverse();
+          let output=arg.quasis[0];
+          values.forEach((value,i)=>{
+            if(!['undefined','null','bool','str','num','bigint'].includes(value.value[0]))
+              throw new TypeError('Template object ToString needs an owned coercion continuation');
+            output+=String(decode(value.value))+arg.quasis[i+1];
+          });
+          return {...operands(...values),...result(['str',output])};
         }
         case 'BINARY':{
           const b=pop(),a=pop();
