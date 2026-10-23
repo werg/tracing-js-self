@@ -77,7 +77,7 @@ function originalScript(source){
 }
 function executePure(source,entry,args){
  const cloned=structuredClone(args);
- const result=runInNewContext(source+'\n__result='+entry+'(...__args);__result;',
+ const result=runInNewContext(source+'\n('+entry+')(...__args);',
    {__args:cloned}, {timeout:800,contextCodeGeneration:{strings:false,wasm:false}});
  if(result&&typeof result.then==='function')
    throw new TypeError('Async result is outside strict owned profile');
