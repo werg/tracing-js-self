@@ -40,7 +40,13 @@ const add=(obj,key)=>obj[key]=(obj[key]??0)+1;
 for(const row of records){
   if(row.schema!=='real-source-corpus/1')
     throw new TypeError('Not the pinned real-source corpus');
+  if(requireComplete && (!Number.isInteger(row.index)||row.index<0||
+     row.index>=perFunction||!casesByName.has(row.family)))
+    throw new TypeError('Out-of-inventory native corpus invocation: '+row.family+' #'+row.index);
   if(row.index>=perFunction||row.index<indexStart||row.index>=indexEnd)continue;
+  if(requireComplete && (row.verified!==row.observation?.evidence?.independentUninstrumentedV8||
+     row.returned!==(row.observation?.completion?.kind==='return')))
+    throw new TypeError('Native corpus observation evidence mismatch: '+row.family+' #'+row.index);
   const identity=row.family+'#'+row.index;
   if(seen.has(identity))throw new TypeError('Duplicate corpus invocation '+identity);
   seen.add(identity);
