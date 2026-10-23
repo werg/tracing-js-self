@@ -263,6 +263,21 @@
       "operationId": "property.update",
       "version": 1,
       "kind": "algorithm"
+    },
+    {
+      "operationId": "object.construct",
+      "version": 1,
+      "kind": "algorithm"
+    },
+    {
+      "operationId": "execution.unsupported",
+      "version": 1,
+      "kind": "algorithm"
+    },
+    {
+      "operationId": "regexp.allocate",
+      "version": 1,
+      "kind": "algorithm"
     }
   ]
 }

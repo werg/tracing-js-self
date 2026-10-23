@@ -31,7 +31,7 @@ const opNames = {
   CONST:'literal.materialize', GET:'binding.read',
   DEFAULT_GUARD:'binding.default.guard', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
-  CALL:'call.enter', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
+  CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
   GET_PROP:'property.read', GET_METHOD:'property.read', PUT_PROP:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
   LEAVE_SCOPE:'environment.leave', CLONE_LOOP_ENV:'environment.iteration', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
   TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
@@ -255,7 +255,7 @@ export class Runtime {
     state.envs[global].bindings.Infinity={kind:'const',initialized:true,token:token(['num','+Infinity']),version:0};
     if(allowHost)state.envs[global].bindings.host={kind:'const',initialized:true,
       token:token(['host','demo']),version:0};
-    for(const name of ['Object','Array','Number','Math','Promise'])
+    for(const name of ['Object','Array','Number','Math','Promise','Set','Error','TypeError'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     state.control.a0.globalEnvId=global;
@@ -838,6 +838,57 @@ export class Runtime {
         case 'JUMP':f.pc=arg;return {};
         case 'JUMP_IF_FALSE':{const a=pop();if(!truthy(a.value))f.pc=arg;return {...operands(a),result:['bool',!truthy(a.value)]};}
         case 'LOGICAL_JUMP':{const a=st.at(-1),v=a.value;const pass=arg.operator==='&&'?!truthy(v):arg.operator==='||'?truthy(v):v[0]!=='null'&&v[0]!=='undefined';if(pass)f.pc=arg.to;return {...operands(a),result:['bool',pass]};}
+        case 'NEW_PINNED_REGEXP':{
+          const supported=(!arg.flags&&['\\r\\n|\\r|\\n','(\\r\\n|\\r|\\n)'].includes(arg.pattern)) ||
+            (arg.flags==='g'&&arg.pattern===String.raw`[\\\{\}\*\+\?\|\^\$\.\[\]\(\)]`);
+          if(!supported)throw new SyntaxError('Unpinned RegExp pattern or flags');
+          const id=this.next(s,'obj');
+          s.heap[id]={id,kind:'regexp',properties:{
+            '[[Source]]':token(['str',arg.pattern],eventId),
+            '[[Flags]]':token(['str',arg.flags],eventId),
+            lastIndex:token(['num',0],eventId)
+          },propertyVersions:{'[[Source]]':0,'[[Flags]]':0,lastIndex:0},shapeVersion:3,version:0};
+          return result(['ref',id]);
+        }
+        case 'UNSUPPORTED_EXPRESSION':{
+          const completion={type:'unsupported',feature:arg};
+          this.failFrame(s,f,completion);
+          return {completion};
+        }
+        case 'CONSTRUCT':{
+          const args=[];for(let i=0;i<arg;i++)args.unshift(pop());
+          const fn=pop();
+          if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
+            const completion={type:'unsupported',feature:'Constructor requires owned semantics: '+String(fn.value[1])};
+            this.failFrame(s,f,completion);return {...operands(fn,...args),completion};
+          }
+          const input=args[0]?.value??U;
+          const iterable=input[0]==='ref'?s.heap[input[1]]:null;
+          if(input[0]!=='undefined'&&input[0]!=='null' &&
+             (iterable?.kind!=='array'||Object.keys(iterable.accessors??{}).length))
+            throw new TypeError('Set constructor requires an owned ordinary array iterable');
+          const elements=[];
+          if(iterable){
+            const length=decode(iterable.properties.length.value);
+            if(!Number.isSafeInteger(length)||length<0||length>10000)
+              throw new RangeError('Set constructor iterable exceeds bounded profile');
+            for(let i=0;i<length;i++){
+              const entry=iterable.properties[String(i)];
+              if(!entry)throw new TypeError('Sparse Set constructor iterable is unsupported');
+              if(!elements.some(v=>ownedSameValue(v,entry.value,true)))
+                elements.push(entry.value[0]==='num'&&decode(entry.value)===0?['num',0]:entry.value);
+            }
+          }
+          const id=this.next(s,'obj');
+          const properties={'[[Size]]':token(['num',elements.length],eventId)};
+          const propertyVersions={'[[Size]]':0};
+          elements.forEach((value,i)=>{properties[String(i)]=token(value,eventId);propertyVersions[String(i)]=0;});
+          // These are serializable, model-visible INTERNAL slots; Set property
+          // access never exposes their string names to guest code.
+          s.heap[id]={id,kind:'set',properties,propertyVersions,
+            shapeVersion:elements.length+1,version:0};
+          return {...operands(fn,...args),...result(['ref',id])};
+        }
         case 'NEW_PROXY':{
           const handler=pop(),target=pop();
           if(target.value[0]!=='ref'||!['object','array','proxy'].includes(s.heap[target.value[1]]?.kind)||
@@ -858,7 +909,7 @@ export class Runtime {
                ['abs','ceil','floor','trunc','round','max','min','pow','sign','sqrt','hypot'].includes(property)) ||
               (base.value[1]==='Number' &&
                ['isFinite','isNaN','isInteger','isSafeInteger'].includes(property)) ||
-              (base.value[1]==='Array' && property==='isArray')))
+              (base.value[1]==='Array' && ['isArray','from'].includes(property))))
             v=['builtinfn',base.value[1]+'.'+property];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' &&
              ['create','setPrototypeOf','getPrototypeOf','defineProperty','hasOwn','keys','values','entries','assign','is'].includes(property))
@@ -884,7 +935,7 @@ export class Runtime {
              if(property==='length')v=['num',text.length];
              else if(arrayIndex(property)&&Number(property)<text.length)
                v=['str',text[Number(property)]];
-             else if(['charAt','charCodeAt','at','substring','substr','slice','indexOf','lastIndexOf','includes','startsWith','endsWith','toLowerCase','toUpperCase','trim','trimStart','trimEnd'].includes(property))
+             else if(['charAt','charCodeAt','at','substring','substr','slice','indexOf','lastIndexOf','includes','startsWith','endsWith','toLowerCase','toUpperCase','trim','trimStart','trimEnd','split','replace'].includes(property))
                v=['builtinfn','String.prototype.'+property];
              else if(['constructor','__proto__','valueOf','toString'].includes(property))
                throw new TypeError('Unmodeled String prototype property');
@@ -893,6 +944,15 @@ export class Runtime {
            else if(base.value[0]==='ref'){
              const obj=s.heap[base.value[1]];
              if(!obj)throw new ReferenceError('Unknown guest identity');
+             if(obj.kind==='regexp')throw new TypeError('Unmodeled RegExp property '+property);
+             if(obj.kind==='set'){
+               if(['has','add'].includes(property)){
+                 const v=['builtinfn','Set.prototype.'+property];
+                 const output=op==='GET_METHOD'?['method',v,base.value]:v;
+                 return {...operands(base,key),...result(output)};
+               }
+               throw new TypeError('Unmodeled Set property '+property);
+             }
              const route=obj.kind==='proxy'?proxyRoute(s.heap,base.value,'get'):
                {kind:'ordinary',target:base.value,receiver:base.value};
              if(route.kind==='trap'){
@@ -941,6 +1001,8 @@ export class Runtime {
              guestFault('TypeError',`Cannot set properties of ${base.value[0]}`);
            if(base.value[0]!=='ref'||!s.heap[base.value[1]]||s.heap[base.value[1]].kind==='function')throw new TypeError('Not a writable guest object');
           const object=s.heap[base.value[1]];
+          if(['set','regexp'].includes(object.kind))
+            throw new TypeError('Owned intrinsic internal slots are not guest-writable properties');
           const route=object.kind==='proxy'?proxyRoute(s.heap,base.value,'set'):
             {kind:'ordinary',target:base.value,receiver:base.value};
           if(route.kind==='trap'){
@@ -1004,6 +1066,38 @@ export class Runtime {
           const fn=pop();let callable=fn.value;
           const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
+          if(callable[0]==='builtinfn' && callable[1]==='Array.from'){
+            const value=args[0]?.value??U;
+            const set=value[0]==='ref'?s.heap[value[1]]:null;
+            if(set?.kind!=='set'||args.length!==1)
+              throw new TypeError('Array.from requires exactly one owned Set argument');
+            const length=decode(set.properties['[[Size]]'].value);
+            const id=this.next(s,'obj');
+            const array=s.heap[id]={id,kind:'array',properties:{
+              length:token(['num',length],eventId)},propertyVersions:{length:0},
+              shapeVersion:0,version:0};
+            for(let i=0;i<length;i++)
+              putOwn(array,String(i),set.properties[String(i)].value,eventId);
+            return {...operands(fn,...args),...result(['ref',id])};
+          }
+          if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
+            const set=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+            if(set?.kind!=='set')guestFault('TypeError','Set method on incompatible receiver');
+            const value=args[0]?.value??U;
+            const size=decode(set.properties['[[Size]]'].value);
+            const present=Array.from({length:size},(_,i)=>set.properties[String(i)].value)
+              .some(v=>ownedSameValue(v,value,true));
+            if(callable[1]==='Set.prototype.has')
+              return {...operands(fn,...args),...result(['bool',present])};
+            if(callable[1]!=='Set.prototype.add')throw new TypeError('Unsupported Set method');
+            if(!present){
+              if(size>=10000)throw new RangeError('Set size limit');
+              const normalized=value[0]==='num'&&decode(value)===0?['num',0]:value;
+              putOwn(set,String(size),normalized,eventId);
+              putOwn(set,'[[Size]]',['num',size+1],eventId);
+            }
+            return {...operands(fn,...args),...result(receiver)};
+          }
           if(callable[0]==='intrinsic' && callable[1]==='Array'){
             // Array(length) creates holes, not present undefined slots. The
             // identity is owned, the length is journaled, and indexed writes
@@ -1097,6 +1191,47 @@ export class Runtime {
               throw new TypeError('Number fixed-digit count outside supported range');
             return {...operands(fn,...args),...result(encode(
               Number.prototype[method].call(number,format)))};
+          }
+          if(callable[0]==='builtinfn' && callable[1]==='String.prototype.replace') {
+            if(receiver[0]!=='str'||args.length!==2||receiver[1].length>10000 ||
+               args[1].value[0]!=='str'||args[1].value[1]!=='\\$&')
+              throw new TypeError('Owned RegExp replacement supports only pinned escape literal');
+            const regex=args[0].value[0]==='ref'?s.heap[args[0].value[1]]:null;
+            if(regex?.kind!=='regexp'||
+               decode(regex.properties['[[Source]]'].value)!==String.raw`[\\\{\}\*\+\?\|\^\$\.\[\]\(\)]` ||
+               decode(regex.properties['[[Flags]]'].value)!=='g')
+              throw new TypeError('Unsupported RegExp replacement pattern');
+            const specials=new Set('\\{}*+?|^$.[]()');
+            let output='';
+            for(const ch of receiver[1]) output+=(specials.has(ch)?'\\':'')+ch;
+            return {...operands(fn,...args),...result(['str',output])};
+          }
+          if(callable[0]==='builtinfn' && callable[1]==='String.prototype.split') {
+            if(receiver[0]!=='str'||args.length!==1||receiver[1].length>10000)
+              throw new TypeError('Owned line split requires one bounded string/regex');
+            const regex=args[0].value[0]==='ref'?s.heap[args[0].value[1]]:null;
+            if(regex?.kind!=='regexp')throw new TypeError('Only owned line RegExp splitting is supported');
+            const pattern=decode(regex.properties['[[Source]]'].value);
+            if(decode(regex.properties['[[Flags]]'].value)!=='' ||
+               !['\\r\\n|\\r|\\n','(\\r\\n|\\r|\\n)'].includes(pattern))
+              throw new TypeError('Unmodeled RegExp split pattern');
+            const capturing=pattern.startsWith('(');
+            const fragments=[],text=receiver[1];let last=0;
+            for(let i=0;i<text.length;i++){
+              if(text[i]!=='\r'&&text[i]!=='\n')continue;
+              const separator=text[i]==='\r'&&text[i+1]==='\n'?'\r\n':text[i];
+              fragments.push(text.slice(last,i));
+              if(capturing)fragments.push(separator);
+              i+=separator.length-1;last=i+1;
+              if(fragments.length>10000)throw new RangeError('Owned split result limit');
+            }
+            fragments.push(text.slice(last));
+            const id=this.next(s,'obj');
+            const resultArray=s.heap[id]={id,kind:'array',properties:{
+              length:token(['num',fragments.length],eventId)},propertyVersions:{length:0},
+              shapeVersion:0,version:0};
+            fragments.forEach((part,i)=>putOwn(resultArray,String(i),['str',part],eventId));
+            return {...operands(fn,...args),...result(['ref',id])};
           }
           if(callable[0]==='builtinfn' && callable[1].startsWith('String.prototype.')){
              const method=callable[1].slice('String.prototype.'.length);

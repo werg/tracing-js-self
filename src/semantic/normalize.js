@@ -9,6 +9,7 @@ const selection={
   'binding.read':'read','binding.default.guard':'read',
   'primitive.binary':'value','primitive.unary':'value','template.substitute':'value',
   'function.define':'alloc','object.allocate':'alloc','array.allocate':'alloc',
+  'object.construct':'alloc','regexp.allocate':'alloc',
   'property.read':'read','property.write':'write','property.update':'write',
   'call.enter':'call','call.return':'return','completion.throw':'throw',
   'control.branch':'branch','environment.iteration':'carry','async.await':'await',
