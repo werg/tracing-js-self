@@ -398,6 +398,8 @@ async function execute(code,{filename,entry,args,setupSource,timeoutMs,
   }
   if(events)events.events.length=0;
   events?.initialize(inputs);
+  const initialGraph=events?observableGraph(inputs,v=>events.encode(v)[1]):
+    observableGraph(inputs);
   let value=null,completion;
   try{
     new vm.Script(code,{filename}).runInContext(ctx,{timeout:timeoutMs});
@@ -422,7 +424,8 @@ async function execute(code,{filename,entry,args,setupSource,timeoutMs,
   const graph=events?observableGraph(roots,v=>events.encode(v)[1]):compareGraph;
   return {completion,graph,compareGraph,
     events:events?.events??[],limitations:[...(events?.limitations??[])],
-    input:setupSource?null:portableArguments(args)};
+    input:initialGraph,
+    inputTransport:setupSource?null:portableArguments(args)};
 }
 /** Native V8 observation on trusted pinned code, independently checked against
  * a second uninstrumented V8 run. Not a serving-controller trajectory. */
