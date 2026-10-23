@@ -58,3 +58,27 @@ It adds a broad diagnostic lens to prioritize and eventually close those gaps.
 ## Committed findings
 
 The pinned 936-invocation V8 observation analysis and 156-invocation owned-interpreter coverage assessment, with representative traces and full per-function reasons, are in [findings/2026-10-23](findings/2026-10-23/README.md). These are diagnostic reports, not admitted training data.
+
+## Stateful adversarial programs
+
+The separate [stateful benchmark](stateful/README.md) adds **60 real-library
+scenario families** exercised across seven pinned MIT-licensed production
+libraries (mitt, Zustand, eventemitter3, yocto-queue, quick-lru, koa-compose,
+and p-limit). It includes mutable subscriptions, reentrant callbacks,
+middleware request paths, cache eviction, queued work, asynchronous failures
+and six cross-library application integrations.
+
+```sh
+npm run corpus:stateful -- --per-scenario 12 \
+  --output corpus/out/stateful-traces.jsonl \
+  --report corpus/out/stateful-report.json \
+  --review corpus/out/stateful-review.md
+```
+
+The expected full run attempts **720 stateful invocations** in addition to
+the initial 936 utility invocations. Family splits are package-oriented.
+These runs are independently compared at **final observable state and explicit
+side effects**, not independently audited operation-by-operation. Like the
+original utility benchmark, they remain **native V8 diagnostics**, not
+admitted owned `semantic-execution/2` training data. The original
+vendor source and licenses are under `stateful/upstream/`.
