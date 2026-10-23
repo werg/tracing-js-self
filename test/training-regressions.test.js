@@ -69,5 +69,5 @@ test('unstarted registered sources are not published as predictor-visible code',
 
 test('bounded array length expansion creates genuine absent slots and verifies against V8',()=>{
   const result=verifyTrainingCase({source:'"use strict"; function run(){const a=[1];a.length=4;return a;}',entry:'run'});
-  assert.equal(result.status,'runtime_failure');
+  assert.equal(result.status,'locally_verified',JSON.stringify(result));
 });
