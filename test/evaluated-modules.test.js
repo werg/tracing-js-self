@@ -435,7 +435,8 @@ test('statically named namespace property reads use the original live export cel
     'counter.js':`export let count=2;
       export function step(){count+=4;}`,
     'main.js':`import * as shared from './counter.js';
-      export function run(){const before=shared.count;shared.step();
+      import {step} from './counter.js';
+      export function run(){const before=shared.count;step();
         return [before,shared['count']];}`
   };
   const run=await verified({modules,entryModule:'main.js',exportName:'run'});
@@ -448,13 +449,14 @@ test('namespace reads agree with independent Node ESM loader for mutable exports
   const leaf='export let x=1;export function bump(){x+=2;}';
   const leafUrl='data:text/javascript,'+encodeURIComponent(leaf);
   const parent=`import * as ns from `+JSON.stringify(leafUrl)+
-    ';export function main(){ns.bump();return ns.x;}';
+    ';import {bump} from '+JSON.stringify(leafUrl)+
+    ';export function main(){bump();return ns.x;}';
   const oracle=(await import('data:text/javascript,'+encodeURIComponent(parent))).main();
   const run=await verified({
     modules:{
       'leaf.js':leaf,
-      'parent.js':"import * as ns from './leaf.js';"+
-        'export function main(){ns.bump();return ns.x;}'
+      'parent.js':"import * as ns from './leaf.js';import {bump} from './leaf.js';"+
+        'export function main(){bump();return ns.x;}'
     },
     entryModule:'parent.js',exportName:'main'
   });
@@ -467,7 +469,8 @@ test('namespace mutation and unsupported first-class/dynamic namespace exotics f
     "import * as ns from './leaf.js';export function main(){ns.x=3;}",
     "import * as ns from './leaf.js';export function main(){return ns;}",
     "import * as ns from './leaf.js';export function main(k){return ns[k];}",
-    "import * as ns from './leaf.js';export function main(){return Object.keys(ns);}"
+    "import * as ns from './leaf.js';export function main(){return Object.keys(ns);}",
+    "import * as ns from './leaf.js';export function main(){return ns.x();}"
   ])assert.throws(()=>linkEvaluatedModules({
     modules:{'leaf.js':leaf,'main.js':code},
     entryModule:'main.js',exportName:'main'
