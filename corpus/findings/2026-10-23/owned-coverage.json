@@ -1,0 +1,2053 @@
+{
+  "schema": "real-source-owned-coverage/1",
+  "admitted": false,
+  "basis": "original real source functions; packaging-only adapter; two independent V8 checks for local verification",
+  "totalFamilies": 78,
+  "invocations": 156,
+  "ownedVerified": 24,
+  "counts": {
+    "locally_verified": 24,
+    "unsupported": 52,
+    "runtime_failure": 36,
+    "guest_fixture_not_portable": 36,
+    "source_bundle_limit": 8
+  },
+  "blockers": {
+    "unsupported": 52,
+    "runtime_failure": 36,
+    "guest_fixture_not_portable": 36,
+    "source_bundle_limit": 8
+  },
+  "byFamily": {
+    "lodash/_arrayEach.js/arrayEach": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "guest_fixture_not_portable",
+        "guest_fixture_not_portable"
+      ]
+    },
+    "lodash/_arrayEachRight.js/arrayEachRight": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "guest_fixture_not_portable",
+        "guest_fixture_not_portable"
+      ]
+    },
+    "lodash/_arrayEvery.js/arrayEvery": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "guest_fixture_not_portable",
+        "guest_fixture_not_portable"
+      ]
+    },
+    "lodash/_arrayFilter.js/arrayFilter": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "guest_fixture_not_portable",
+        "guest_fixture_not_portable"
+      ]
+    },
+    "lodash/_arrayIncludesWith.js/arrayIncludesWith": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "guest_fixture_not_portable",
+        "guest_fixture_not_portable"
+      ]
+    },
+    "lodash/_arrayMap.js/arrayMap": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "guest_fixture_not_portable",
+        "guest_fixture_not_portable"
+      ]
+    },
+    "lodash/_arrayPush.js/arrayPush": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "lodash/_arrayReduce.js/arrayReduce": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "guest_fixture_not_portable",
+        "guest_fixture_not_portable"
+      ]
+    },
+    "lodash/_arrayReduceRight.js/arrayReduceRight": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "guest_fixture_not_portable",
+        "guest_fixture_not_portable"
+      ]
+    },
+    "lodash/_arraySome.js/arraySome": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "guest_fixture_not_portable",
+        "guest_fixture_not_portable"
+      ]
+    },
+    "lodash/_baseClamp.js/baseClamp": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 2,
+      "attempted": 2,
+      "statuses": [
+        "locally_verified",
+        "locally_verified"
+      ]
+    },
+    "lodash/_baseFindIndex.js/baseFindIndex": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "guest_fixture_not_portable",
+        "guest_fixture_not_portable"
+      ]
+    },
+    "lodash/_baseGt.js/baseGt": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 2,
+      "attempted": 2,
+      "statuses": [
+        "locally_verified",
+        "locally_verified"
+      ]
+    },
+    "lodash/_baseLt.js/baseLt": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 2,
+      "attempted": 2,
+      "statuses": [
+        "locally_verified",
+        "locally_verified"
+      ]
+    },
+    "lodash/_baseRange.js/baseRange": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "lodash/_baseRepeat.js/baseRepeat": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "lodash/_baseSum.js/baseSum": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "guest_fixture_not_portable",
+        "guest_fixture_not_portable"
+      ]
+    },
+    "lodash/_baseTimes.js/baseTimes": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "guest_fixture_not_portable",
+        "guest_fixture_not_portable"
+      ]
+    },
+    "lodash/_strictIndexOf.js/strictIndexOf": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "lodash/_strictLastIndexOf.js/strictLastIndexOf": {
+      "project": "lodash",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/arrays.ts/arrayInsert": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "runtime_failure",
+        "runtime_failure"
+      ]
+    },
+    "vscode/arrays.ts/asArray": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 2,
+      "attempted": 2,
+      "statuses": [
+        "locally_verified",
+        "locally_verified"
+      ]
+    },
+    "vscode/arrays.ts/binarySearch": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "guest_fixture_not_portable",
+        "guest_fixture_not_portable"
+      ]
+    },
+    "vscode/arrays.ts/coalesce": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "runtime_failure",
+        "runtime_failure"
+      ]
+    },
+    "vscode/arrays.ts/coalesceInPlace": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 2,
+      "attempted": 2,
+      "statuses": [
+        "locally_verified",
+        "locally_verified"
+      ]
+    },
+    "vscode/arrays.ts/commonPrefixLength": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/arrays.ts/concatArrays": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/arrays.ts/distinct": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/arrays.ts/equals": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/arrays.ts/groupBy": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "guest_fixture_not_portable",
+        "guest_fixture_not_portable"
+      ]
+    },
+    "vscode/arrays.ts/insertInto": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "runtime_failure",
+        "runtime_failure"
+      ]
+    },
+    "vscode/arrays.ts/isFalsyOrEmpty": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 2,
+      "attempted": 2,
+      "statuses": [
+        "locally_verified",
+        "locally_verified"
+      ]
+    },
+    "vscode/arrays.ts/mapArrayOrNot": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "guest_fixture_not_portable",
+        "guest_fixture_not_portable"
+      ]
+    },
+    "vscode/arrays.ts/mapFilter": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "guest_fixture_not_portable",
+        "guest_fixture_not_portable"
+      ]
+    },
+    "vscode/arrays.ts/move": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "runtime_failure",
+        "runtime_failure"
+      ]
+    },
+    "vscode/arrays.ts/pushMany": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/arrays.ts/pushToEnd": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "runtime_failure",
+        "runtime_failure"
+      ]
+    },
+    "vscode/arrays.ts/pushToStart": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "runtime_failure",
+        "runtime_failure"
+      ]
+    },
+    "vscode/arrays.ts/quickSelect": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "guest_fixture_not_portable",
+        "guest_fixture_not_portable"
+      ]
+    },
+    "vscode/arrays.ts/range": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 2,
+      "attempted": 2,
+      "statuses": [
+        "locally_verified",
+        "locally_verified"
+      ]
+    },
+    "vscode/arrays.ts/remove": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "runtime_failure",
+        "runtime_failure"
+      ]
+    },
+    "vscode/arrays.ts/removeFastWithoutKeepingOrder": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 2,
+      "attempted": 2,
+      "statuses": [
+        "locally_verified",
+        "locally_verified"
+      ]
+    },
+    "vscode/arrays.ts/splice": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "runtime_failure",
+        "runtime_failure"
+      ]
+    },
+    "vscode/arrays.ts/sum": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "runtime_failure",
+        "runtime_failure"
+      ]
+    },
+    "vscode/arrays.ts/sumBy": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "guest_fixture_not_portable",
+        "guest_fixture_not_portable"
+      ]
+    },
+    "vscode/arrays.ts/tail": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/arrays.ts/withoutDuplicates": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/numbers.ts/clamp": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 2,
+      "attempted": 2,
+      "statuses": [
+        "locally_verified",
+        "locally_verified"
+      ]
+    },
+    "vscode/numbers.ts/formatTokenCount": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 2,
+      "attempted": 2,
+      "statuses": [
+        "locally_verified",
+        "locally_verified"
+      ]
+    },
+    "vscode/numbers.ts/rot": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 2,
+      "attempted": 2,
+      "statuses": [
+        "locally_verified",
+        "locally_verified"
+      ]
+    },
+    "vscode/strings.ts/commonPrefixLength": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "runtime_failure",
+        "runtime_failure"
+      ]
+    },
+    "vscode/strings.ts/commonSuffixLength": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "runtime_failure",
+        "runtime_failure"
+      ]
+    },
+    "vscode/strings.ts/compare": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 2,
+      "attempted": 2,
+      "statuses": [
+        "locally_verified",
+        "locally_verified"
+      ]
+    },
+    "vscode/strings.ts/compareSubstring": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/strings.ts/containsRTL": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/strings.ts/containsUppercaseCharacter": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/strings.ts/count": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "runtime_failure",
+        "runtime_failure"
+      ]
+    },
+    "vscode/strings.ts/escape": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/strings.ts/escapeRegExpCharacters": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/strings.ts/firstNonWhitespaceIndex": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "source_bundle_limit",
+        "source_bundle_limit"
+      ]
+    },
+    "vscode/strings.ts/format": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/strings.ts/format2": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/strings.ts/fuzzyContains": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "runtime_failure",
+        "runtime_failure"
+      ]
+    },
+    "vscode/strings.ts/getIndentationLength": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "source_bundle_limit",
+        "source_bundle_limit"
+      ]
+    },
+    "vscode/strings.ts/getLeadingWhitespace": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "source_bundle_limit",
+        "source_bundle_limit"
+      ]
+    },
+    "vscode/strings.ts/getNLines": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/strings.ts/isBasicASCII": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/strings.ts/isFalsyOrWhitespace": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "runtime_failure",
+        "runtime_failure"
+      ]
+    },
+    "vscode/strings.ts/joinStrings": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "runtime_failure",
+        "runtime_failure"
+      ]
+    },
+    "vscode/strings.ts/lastNonWhitespaceIndex": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "source_bundle_limit",
+        "source_bundle_limit"
+      ]
+    },
+    "vscode/strings.ts/lcut": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/strings.ts/ltrim": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "runtime_failure",
+        "runtime_failure"
+      ]
+    },
+    "vscode/strings.ts/rcut": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/strings.ts/rtrim": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "runtime_failure",
+        "runtime_failure"
+      ]
+    },
+    "vscode/strings.ts/splitLines": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/strings.ts/splitLinesIncludeSeparators": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/strings.ts/trim": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "unsupported",
+        "unsupported"
+      ]
+    },
+    "vscode/strings.ts/uppercaseFirstLetter": {
+      "project": "vscode",
+      "verifiedNative": 2,
+      "verifiedOwned": 0,
+      "attempted": 2,
+      "statuses": [
+        "runtime_failure",
+        "runtime_failure"
+      ]
+    }
+  },
+  "examples": [
+    {
+      "family": "vscode/numbers.ts/clamp",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/numbers.ts",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "vscode/numbers.ts/clamp",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/numbers.ts",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "vscode/numbers.ts/rot",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/numbers.ts",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "vscode/numbers.ts/rot",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/numbers.ts",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "vscode/numbers.ts/formatTokenCount",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/numbers.ts",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "vscode/numbers.ts/formatTokenCount",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/numbers.ts",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "vscode/arrays.ts/tail",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 NewExpression at 77:107"
+    },
+    {
+      "family": "vscode/arrays.ts/tail",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 NewExpression at 77:107"
+    },
+    {
+      "family": "vscode/arrays.ts/equals",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 14:408"
+    },
+    {
+      "family": "vscode/arrays.ts/equals",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 14:408"
+    },
+    {
+      "family": "vscode/arrays.ts/removeFastWithoutKeepingOrder",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "vscode/arrays.ts/removeFastWithoutKeepingOrder",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "vscode/arrays.ts/concatArrays",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 14:83"
+    },
+    {
+      "family": "vscode/arrays.ts/concatArrays",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 14:83"
+    },
+    {
+      "family": "vscode/arrays.ts/coalesce",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unmodeled ordinary [[Get]] or exotic property"
+    },
+    {
+      "family": "vscode/arrays.ts/coalesce",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unmodeled ordinary [[Get]] or exotic property"
+    },
+    {
+      "family": "vscode/arrays.ts/coalesceInPlace",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "vscode/arrays.ts/coalesceInPlace",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "vscode/arrays.ts/move",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unmodeled ordinary [[Get]] or exotic property"
+    },
+    {
+      "family": "vscode/arrays.ts/move",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unmodeled ordinary [[Get]] or exotic property"
+    },
+    {
+      "family": "vscode/arrays.ts/isFalsyOrEmpty",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "vscode/arrays.ts/isFalsyOrEmpty",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "vscode/arrays.ts/distinct",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 14:284"
+    },
+    {
+      "family": "vscode/arrays.ts/distinct",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 14:284"
+    },
+    {
+      "family": "vscode/arrays.ts/commonPrefixLength",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 14:254"
+    },
+    {
+      "family": "vscode/arrays.ts/commonPrefixLength",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 14:254"
+    },
+    {
+      "family": "vscode/arrays.ts/range",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "vscode/arrays.ts/range",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "vscode/arrays.ts/remove",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unmodeled ordinary [[Get]] or exotic property"
+    },
+    {
+      "family": "vscode/arrays.ts/remove",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unmodeled ordinary [[Get]] or exotic property"
+    },
+    {
+      "family": "vscode/arrays.ts/arrayInsert",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unmodeled ordinary [[Get]] or exotic property"
+    },
+    {
+      "family": "vscode/arrays.ts/arrayInsert",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unmodeled ordinary [[Get]] or exotic property"
+    },
+    {
+      "family": "vscode/arrays.ts/pushToStart",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unmodeled ordinary [[Get]] or exotic property"
+    },
+    {
+      "family": "vscode/arrays.ts/pushToStart",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unmodeled ordinary [[Get]] or exotic property"
+    },
+    {
+      "family": "vscode/arrays.ts/pushToEnd",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unmodeled ordinary [[Get]] or exotic property"
+    },
+    {
+      "family": "vscode/arrays.ts/pushToEnd",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unmodeled ordinary [[Get]] or exotic property"
+    },
+    {
+      "family": "vscode/arrays.ts/pushMany",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 ForOfStatement at 50:107"
+    },
+    {
+      "family": "vscode/arrays.ts/pushMany",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 ForOfStatement at 50:107"
+    },
+    {
+      "family": "vscode/arrays.ts/withoutDuplicates",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 NewExpression at 64:78"
+    },
+    {
+      "family": "vscode/arrays.ts/withoutDuplicates",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 NewExpression at 64:78"
+    },
+    {
+      "family": "vscode/arrays.ts/asArray",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "vscode/arrays.ts/asArray",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "vscode/arrays.ts/insertInto",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Array length expansion is outside training-js/1"
+    },
+    {
+      "family": "vscode/arrays.ts/insertInto",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Array length expansion is outside training-js/1"
+    },
+    {
+      "family": "vscode/arrays.ts/splice",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unmodeled ordinary [[Get]] or exotic property"
+    },
+    {
+      "family": "vscode/arrays.ts/splice",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unmodeled ordinary [[Get]] or exotic property"
+    },
+    {
+      "family": "vscode/arrays.ts/sum",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unmodeled ordinary [[Get]] or exotic property"
+    },
+    {
+      "family": "vscode/arrays.ts/sum",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unmodeled ordinary [[Get]] or exotic property"
+    },
+    {
+      "family": "vscode/arrays.ts/sumBy",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "vscode/arrays.ts/sumBy",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "vscode/arrays.ts/mapFilter",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "vscode/arrays.ts/mapFilter",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "vscode/arrays.ts/groupBy",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "vscode/arrays.ts/groupBy",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "vscode/arrays.ts/binarySearch",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "vscode/arrays.ts/binarySearch",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "vscode/arrays.ts/mapArrayOrNot",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "vscode/arrays.ts/mapArrayOrNot",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "vscode/arrays.ts/quickSelect",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "vscode/arrays.ts/quickSelect",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/arrays.ts",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "vscode/strings.ts/isFalsyOrWhitespace",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unsupported property receiver (no host fallback)"
+    },
+    {
+      "family": "vscode/strings.ts/isFalsyOrWhitespace",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unsupported property receiver (no host fallback)"
+    },
+    {
+      "family": "vscode/strings.ts/format",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 top-level code must only declare functions at 0:360"
+    },
+    {
+      "family": "vscode/strings.ts/format",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 top-level code must only declare functions at 0:360"
+    },
+    {
+      "family": "vscode/strings.ts/format2",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 top-level code must only declare functions at 0:254"
+    },
+    {
+      "family": "vscode/strings.ts/format2",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 top-level code must only declare functions at 0:254"
+    },
+    {
+      "family": "vscode/strings.ts/escape",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 regular expression at 62:70"
+    },
+    {
+      "family": "vscode/strings.ts/escape",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 regular expression at 62:70"
+    },
+    {
+      "family": "vscode/strings.ts/escapeRegExpCharacters",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 regular expression at 80:113"
+    },
+    {
+      "family": "vscode/strings.ts/escapeRegExpCharacters",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 regular expression at 80:113"
+    },
+    {
+      "family": "vscode/strings.ts/count",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unsupported property receiver (no host fallback)"
+    },
+    {
+      "family": "vscode/strings.ts/count",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unsupported property receiver (no host fallback)"
+    },
+    {
+      "family": "vscode/strings.ts/trim",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 1090:1211"
+    },
+    {
+      "family": "vscode/strings.ts/trim",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 1090:1211"
+    },
+    {
+      "family": "vscode/strings.ts/ltrim",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unsupported property receiver (no host fallback)"
+    },
+    {
+      "family": "vscode/strings.ts/ltrim",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unsupported property receiver (no host fallback)"
+    },
+    {
+      "family": "vscode/strings.ts/rtrim",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unsupported property receiver (no host fallback)"
+    },
+    {
+      "family": "vscode/strings.ts/rtrim",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unsupported property receiver (no host fallback)"
+    },
+    {
+      "family": "vscode/strings.ts/joinStrings",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unmodeled ordinary [[Get]] or exotic property"
+    },
+    {
+      "family": "vscode/strings.ts/joinStrings",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unmodeled ordinary [[Get]] or exotic property"
+    },
+    {
+      "family": "vscode/strings.ts/splitLines",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 regular expression at 62:74"
+    },
+    {
+      "family": "vscode/strings.ts/splitLines",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 regular expression at 62:74"
+    },
+    {
+      "family": "vscode/strings.ts/splitLinesIncludeSeparators",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 regular expression at 140:154"
+    },
+    {
+      "family": "vscode/strings.ts/splitLinesIncludeSeparators",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 regular expression at 140:154"
+    },
+    {
+      "family": "vscode/strings.ts/firstNonWhitespaceIndex",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "source_bundle_limit",
+      "reason": "Original entry plus genuine helpers exceeds current model source bundle"
+    },
+    {
+      "family": "vscode/strings.ts/firstNonWhitespaceIndex",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "source_bundle_limit",
+      "reason": "Original entry plus genuine helpers exceeds current model source bundle"
+    },
+    {
+      "family": "vscode/strings.ts/getLeadingWhitespace",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "source_bundle_limit",
+      "reason": "Original entry plus genuine helpers exceeds current model source bundle"
+    },
+    {
+      "family": "vscode/strings.ts/getLeadingWhitespace",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "source_bundle_limit",
+      "reason": "Original entry plus genuine helpers exceeds current model source bundle"
+    },
+    {
+      "family": "vscode/strings.ts/lastNonWhitespaceIndex",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "source_bundle_limit",
+      "reason": "Original entry plus genuine helpers exceeds current model source bundle"
+    },
+    {
+      "family": "vscode/strings.ts/lastNonWhitespaceIndex",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "source_bundle_limit",
+      "reason": "Original entry plus genuine helpers exceeds current model source bundle"
+    },
+    {
+      "family": "vscode/strings.ts/getIndentationLength",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "source_bundle_limit",
+      "reason": "Original entry plus genuine helpers exceeds current model source bundle"
+    },
+    {
+      "family": "vscode/strings.ts/getIndentationLength",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "source_bundle_limit",
+      "reason": "Original entry plus genuine helpers exceeds current model source bundle"
+    },
+    {
+      "family": "vscode/strings.ts/compare",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "vscode/strings.ts/compare",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "vscode/strings.ts/compareSubstring",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 14:572"
+    },
+    {
+      "family": "vscode/strings.ts/compareSubstring",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 14:572"
+    },
+    {
+      "family": "vscode/strings.ts/commonPrefixLength",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unsupported property receiver (no host fallback)"
+    },
+    {
+      "family": "vscode/strings.ts/commonPrefixLength",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unsupported property receiver (no host fallback)"
+    },
+    {
+      "family": "vscode/strings.ts/commonSuffixLength",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unsupported property receiver (no host fallback)"
+    },
+    {
+      "family": "vscode/strings.ts/commonSuffixLength",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unsupported property receiver (no host fallback)"
+    },
+    {
+      "family": "vscode/strings.ts/isBasicASCII",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 top-level code must only declare functions at 0:129"
+    },
+    {
+      "family": "vscode/strings.ts/isBasicASCII",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 top-level code must only declare functions at 0:129"
+    },
+    {
+      "family": "vscode/strings.ts/containsRTL",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 top-level code must only declare functions at 0:887"
+    },
+    {
+      "family": "vscode/strings.ts/containsRTL",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 top-level code must only declare functions at 0:887"
+    },
+    {
+      "family": "vscode/strings.ts/lcut",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 14:459"
+    },
+    {
+      "family": "vscode/strings.ts/lcut",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 14:459"
+    },
+    {
+      "family": "vscode/strings.ts/rcut",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 14:1114"
+    },
+    {
+      "family": "vscode/strings.ts/rcut",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 14:1114"
+    },
+    {
+      "family": "vscode/strings.ts/fuzzyContains",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unsupported property receiver (no host fallback)"
+    },
+    {
+      "family": "vscode/strings.ts/fuzzyContains",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unsupported property receiver (no host fallback)"
+    },
+    {
+      "family": "vscode/strings.ts/containsUppercaseCharacter",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 14:261"
+    },
+    {
+      "family": "vscode/strings.ts/containsUppercaseCharacter",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 14:261"
+    },
+    {
+      "family": "vscode/strings.ts/uppercaseFirstLetter",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unsupported property receiver (no host fallback)"
+    },
+    {
+      "family": "vscode/strings.ts/uppercaseFirstLetter",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "runtime_failure",
+      "reason": "Unsupported property receiver (no host fallback)"
+    },
+    {
+      "family": "vscode/strings.ts/getNLines",
+      "index": 0,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 14:340"
+    },
+    {
+      "family": "vscode/strings.ts/getNLines",
+      "index": 1,
+      "sourceURL": "https://github.com/microsoft/vscode/blob/2bc7d5ab6919c62e60379e5e1f840bd80846dbdb/src/vs/base/common/strings.ts",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 function form at 14:340"
+    },
+    {
+      "family": "lodash/_arrayEach.js/arrayEach",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arrayEach.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_arrayEach.js/arrayEach",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arrayEach.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_arrayEachRight.js/arrayEachRight",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arrayEachRight.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_arrayEachRight.js/arrayEachRight",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arrayEachRight.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_arrayEvery.js/arrayEvery",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arrayEvery.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_arrayEvery.js/arrayEvery",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arrayEvery.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_arrayFilter.js/arrayFilter",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arrayFilter.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_arrayFilter.js/arrayFilter",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arrayFilter.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_arrayIncludesWith.js/arrayIncludesWith",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arrayIncludesWith.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_arrayIncludesWith.js/arrayIncludesWith",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arrayIncludesWith.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_arrayMap.js/arrayMap",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arrayMap.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_arrayMap.js/arrayMap",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arrayMap.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_arrayPush.js/arrayPush",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arrayPush.js",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 declaration form at 252:326"
+    },
+    {
+      "family": "lodash/_arrayPush.js/arrayPush",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arrayPush.js",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 declaration form at 252:326"
+    },
+    {
+      "family": "lodash/_arrayReduce.js/arrayReduce",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arrayReduce.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_arrayReduce.js/arrayReduce",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arrayReduce.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_arrayReduceRight.js/arrayReduceRight",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arrayReduceRight.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_arrayReduceRight.js/arrayReduceRight",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arrayReduceRight.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_arraySome.js/arraySome",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arraySome.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_arraySome.js/arraySome",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_arraySome.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_baseClamp.js/baseClamp",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_baseClamp.js",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "lodash/_baseClamp.js/baseClamp",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_baseClamp.js",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "lodash/_baseRange.js/baseRange",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_baseRange.js",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 top-level code must only declare functions at 0:835"
+    },
+    {
+      "family": "lodash/_baseRange.js/baseRange",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_baseRange.js",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 top-level code must only declare functions at 0:835"
+    },
+    {
+      "family": "lodash/_baseRepeat.js/baseRepeat",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_baseRepeat.js",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 top-level code must only declare functions at 0:936"
+    },
+    {
+      "family": "lodash/_baseRepeat.js/baseRepeat",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_baseRepeat.js",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 top-level code must only declare functions at 0:936"
+    },
+    {
+      "family": "lodash/_baseTimes.js/baseTimes",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_baseTimes.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_baseTimes.js/baseTimes",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_baseTimes.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_baseSum.js/baseSum",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_baseSum.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_baseSum.js/baseSum",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_baseSum.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_baseGt.js/baseGt",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_baseGt.js",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "lodash/_baseGt.js/baseGt",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_baseGt.js",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "lodash/_baseLt.js/baseLt",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_baseLt.js",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "lodash/_baseLt.js/baseLt",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_baseLt.js",
+      "nativeVerified": true,
+      "ownedStatus": "locally_verified",
+      "reason": null
+    },
+    {
+      "family": "lodash/_strictIndexOf.js/strictIndexOf",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_strictIndexOf.js",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 declaration form at 416:471"
+    },
+    {
+      "family": "lodash/_strictIndexOf.js/strictIndexOf",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_strictIndexOf.js",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 declaration form at 416:471"
+    },
+    {
+      "family": "lodash/_strictLastIndexOf.js/strictLastIndexOf",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_strictLastIndexOf.js",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 declaration form at 424:450"
+    },
+    {
+      "family": "lodash/_strictLastIndexOf.js/strictLastIndexOf",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_strictLastIndexOf.js",
+      "nativeVerified": true,
+      "ownedStatus": "unsupported",
+      "reason": "Unsupported training-js/1 declaration form at 424:450"
+    },
+    {
+      "family": "lodash/_baseFindIndex.js/baseFindIndex",
+      "index": 0,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_baseFindIndex.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    },
+    {
+      "family": "lodash/_baseFindIndex.js/baseFindIndex",
+      "index": 1,
+      "sourceURL": "https://github.com/lodash/lodash/blob/c6e281b878b315c7a10d90f9c2af4cdb112d9625/_baseFindIndex.js",
+      "nativeVerified": true,
+      "ownedStatus": "guest_fixture_not_portable",
+      "reason": "Guest-defined callbacks/prototypes are not portable data arguments in training-js/1"
+    }
+  ]
+}

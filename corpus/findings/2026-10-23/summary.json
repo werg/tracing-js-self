@@ -1,0 +1,78 @@
+{
+  "schema": "real-source-findings/1",
+  "asOf": "2026-10-23",
+  "admitted": false,
+  "producer": {
+    "repository": "werg/tracing-js-self",
+    "ciRun": "https://github.com/werg/tracing-js-self/actions/runs/39934287261",
+    "commit": "d02d27472736d3629ac06cc0087a05b509e1c3d7"
+  },
+  "upstream": {
+    "vscode": {
+      "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+      "license": "MIT"
+    },
+    "lodash": {
+      "revision": "c6e281b878b315c7a10d90f9c2af4cdb112d9625",
+      "license": "MIT"
+    }
+  },
+  "nativeObservations": {
+    "status": "diagnostic-only",
+    "functions": 78,
+    "invocations": 936,
+    "matchedFinalOutcomes": 936,
+    "finalOutcomeMismatches": 0,
+    "totalEvents": 27039,
+    "visibleHeapChanges": 3656,
+    "eventsByKind": {
+      "enter": 2679,
+      "call": 3278,
+      "return": 2583,
+      "end": 936,
+      "value": 4527,
+      "branch": 4795,
+      "read": 2896,
+      "write": 5060,
+      "loop": 263,
+      "control": 22
+    },
+    "traceBytesTotal": 2860237,
+    "traceBytesP50": 2479,
+    "traceBytesP90": 5728,
+    "eventsPerTraceP50": 22,
+    "eventsPerTraceP90": 58,
+    "splits": {
+      "train": 672,
+      "validation": 228,
+      "test": 36
+    }
+  },
+  "ownedExecution": {
+    "families": 78,
+    "attempted": 156,
+    "locallyVerified": 24,
+    "admitted": 0,
+    "statuses": {
+      "locally_verified": 24,
+      "unsupported": 52,
+      "runtime_failure": 36,
+      "guest_fixture_not_portable": 36,
+      "source_bundle_limit": 8
+    }
+  },
+  "qualityCandidates": {
+    "returnThenCallAdjacent": 1284,
+    "writesWithoutVisibleHeapDelta": 4039,
+    "oldQualityReportFieldName": "sameValueWriteCandidates",
+    "repeatedConsecutiveIdenticalReads": 0,
+    "sourceSiteRangeViolations": 0,
+    "note": "Review heuristics, not evidence of dispensable reads, no-op writes, or semantic correctness."
+  },
+  "caveats": [
+    "Independent final graph agreement does not establish correctness of intermediate trace events.",
+    "Native-V8 diagnostic observations cannot be directly used as owned semantic-execution/2 training traces.",
+    "Callback/nonportable guest setup, unsupported profile, common property/string operations and source length block most owned execution.",
+    "The test set contains only 3 function families and does not hold out entire projects."
+  ]
+}

@@ -54,3 +54,7 @@ initial fixture available to any model that will later train on these examples.
 
 The current code is NOT capable of faithfully tracing pretty much any program.
 It adds a broad diagnostic lens to prioritize and eventually close those gaps.
+
+## Committed findings
+
+The pinned 936-invocation V8 observation analysis and 156-invocation owned-interpreter coverage assessment, with representative traces and full per-function reasons, are in [findings/2026-10-23](findings/2026-10-23/README.md). These are diagnostic reports, not admitted training data.
