@@ -87,8 +87,9 @@ const fmt=v=>{
   if(v[0]==='bigint')return v[1]+'n';
   return String(v[1]);
 };
-function render(e){
-  const expression=e.source?.replace(/\s+/g,' ').slice(0,86)??'';
+function render(e,source){
+  const expression=(e.kind==='enter'||e.kind==='end'?'':source.slice(
+    e.site.start,e.site.end)).replace(/\s+/g,' ').slice(0,86);
   let line=e.kind+(expression?' '+expression:'');
   if(e.kind==='branch')line+=' → '+e.path;
   else if(e.kind==='enter')line+=' → '+e.name;
@@ -223,7 +224,7 @@ for(const wanted of pickedNames){
   review.push('### '+wanted,'','Source: '+row.sourceURL,'',
     'Invoked with fixture '+row.index+'; '+row.events+' events, '+row.effectCount+
     ' state changes, '+row.traceBytes+' serialized event bytes.','','~~~text',
-    ...row.observation.events.slice(0,36).map(render));
+    ...row.observation.events.slice(0,36).map(e=>render(e,row.observation.source.text)));
   if(row.observation.events.length>36)review.push('… ('+
     (row.observation.events.length-36)+' further events)');
   review.push('~~~','','Result graph: '+JSON.stringify(row.observation.observableGraph).slice(0,700),'');
