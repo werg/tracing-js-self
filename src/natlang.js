@@ -5,6 +5,7 @@ import { createRuntime } from './runtime.js';
 import { validateBundle } from './validation.js';
 import { replayExact } from './replay.js';
 import { realizeGraph } from './training/graph.js';
+import { compileBoundedTypeScript } from './typescript.js';
 
 const event=(mode,body,status,extra={})=>({
   operation:'typescript.eval',authority:'owned-training-js/1',mode,body,
@@ -70,12 +71,15 @@ export class BoundedNatlangEnvironment {
         throw new TypeError('Native timeouts are not available; use an owned maxSteps budget');
       if(request.code.length>65536)
         throw new RangeError('Natlang source exceeds the bounded adapter limit');
-      // Parse only as Acorn training-js/1; do not execute unsupported TypeScript
-      // or expand dynamic sources using the host evaluator.
+      // TypeScript is a *source* frontend, never the guest execution engine.
+      // All generated JS must pass the strict owned training allowlist.
       const body=request.body?request.code:`return (${request.code});`;
-      const text=`"use strict";\nfunction __natlang_trace_entry(self) {\n${body}\n}\n`;
+      const originalText=`"use strict";\nfunction __natlang_trace_entry(self) {\n${body}\n}\n`;
+      const lowering=compileBoundedTypeScript(originalText,{path:request.path});
       runtime=createRuntime({maxSteps:this.maxSteps});
-      const source=runtime.registerSource({text,url:request.path,trainingProfile:true});
+      const source=runtime.registerSource({
+        text:lowering.javascript,url:request.path,trainingProfile:true
+      });
       runtime.startEntry({source,functionName:'__natlang_trace_entry',args:[request.scope]});
       progress=runtime.drive();
       bundle=JSON.parse(JSON.stringify(runtime.exportRun()));
@@ -86,10 +90,16 @@ export class BoundedNatlangEnvironment {
       const result=realizeGraph(runtime.state.heap,[runtime.result])[0];
       const resultEvent=event(this.mode,request.body,'completed',{
         traceSchema:bundle.manifest.schema,profile:bundle.manifest.profile,
-        chunks:bundle.chunks.length,source:request.path
+        chunks:bundle.chunks.length,source:request.path,
+        transpiler:lowering.compiler
       });
       if(this.onTrace){
-        const callback=this.onTrace(bundle,request);
+        // The archive commits executed JS sites; accompanying source-map data
+        // stays separately available without weakening replay integrity.
+        const callback=this.onTrace(bundle,request,{
+          compiler:lowering.compiler,originalText,
+          javascript:lowering.javascript,sourceMap:lowering.sourceMap
+        });
         if(callback && typeof callback.then==='function')
           throw new TypeError('onTrace must be synchronous; async callbacks are unowned');
       }

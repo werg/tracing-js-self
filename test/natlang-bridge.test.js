@@ -53,11 +53,28 @@ test('natlang executeAsync fulfills for supported synchronous guest code',async(
   assert.equal(result.result,5);
   assert.equal(traces.length,1);
 });
-test('natlang EvalFailure class identity is retained for unsupported TypeScript',()=>{
+test('TypeScript annotations and assertions lower to replayed owned JS with a source map',()=>{
+  const origins=[];
+  const {env,traces}=setup({onTrace:(bundle,request,lowering)=>{
+    traces.push({bundle,request});origins.push(lowering);
+  }});
+  const response=env.execute(req(
+    'const y: number = self.x as number; return y * 2;', {body:true}));
+  assert.equal(response.result,8);
+  assert.equal(response.events[0].transpiler,'typescript/5.9.3');
+  assert.equal(traces.length,1);
+  assert.equal(validateBundle(traces[0].bundle).valid,true);
+  assert.equal(replayExact(traces[0].bundle).valid,true);
+  assert.equal(origins[0].sourceMap.version,3);
+  assert(origins[0].originalText.includes('y: number'));
+  assert(!origins[0].javascript.includes('y: number'));
+});
+test('natlang EvalFailure identity is retained for unsupported TS-emitted JavaScript',()=>{
   const {env,traces}=setup();
-  assert.throws(()=>env.execute(req('const y: number = self.x; return y;',{
-    body:true
-  })),e=>e instanceof EvalFailure&&e.events[0].status==='failed');
+  assert.throws(()=>env.execute(req(
+    'class C { x: number = 4; } return new C().x;',
+    {body:true})),e=>e instanceof EvalFailure && e.events[0].status==='failed');
+  assert.throws(()=>env.execute(req('const y: number = ;',{body:true})),EvalFailure);
   assert.equal(traces.length,0);
 });
 test('live functions/capture cells cannot silently execute or serialize',()=>{

@@ -20,8 +20,10 @@ export interface NatlangEvalFailureConstructor {
 export interface BoundedNatlangOptions {
   /** Pass natlang's actual EvalFailure constructor for instanceof compatibility. */
   EvalFailure: NatlangEvalFailureConstructor;
-  /** Receives a validated/replay-checked trace only after successful evaluation. */
-  onTrace?: ((bundle:Record<string,unknown>,request:NatlangEvalRequest)=>void)|null;
+  /** Receives the validated/replay-checked generated-JS archive and source-map metadata. */
+  onTrace?: ((bundle:Record<string,unknown>,request:NatlangEvalRequest,
+    lowering:{compiler:string;originalText:string;javascript:string;
+      sourceMap:Record<string,unknown>})=>void)|null;
   maxSteps?: number;
   mode?: 'fresh';
 }

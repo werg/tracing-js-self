@@ -35,6 +35,7 @@
     "tracing-js-self": "./bin/tracing.js"
   },
   "dependencies": {
-    "acorn": "8.15.0"
+    "acorn": "8.15.0",
+    "typescript": "5.9.3"
   }
 }
