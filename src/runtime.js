@@ -1276,6 +1276,19 @@ export class Runtime {
             return {...operands(fn,...args),...result(encode(
               Number.prototype[method].call(number,format)))};
           }
+          if(callable[0]==='builtinfn' && ['parseInt','isNaN'].includes(callable[1])){
+            if(callable[1]==='parseInt'){
+              if(args.length!==2||args[0].value[0]!=='str'||
+                 args[1].value[0]!=='num'||decode(args[1].value)!==10 ||
+                 args[0].value[1].length>30||
+                 ![...args[0].value[1]].every(c=>c>='0'&&c<='9'))
+                throw new TypeError('Owned parseInt needs bounded decimal digits and radix 10');
+              return {...operands(fn,...args),...result(encode(parseInt(args[0].value[1],10)))};
+            }
+            if(args.length!==1||args[0].value[0]!=='num')
+              throw new TypeError('Owned isNaN accepts only a scalar number');
+            return {...operands(fn,...args),...result(['bool',Number.isNaN(decode(args[0].value))])};
+          }
           if(callable[0]==='builtinfn' && callable[1]==='RegExp.prototype.test'){
             const regex=receiver[0]==='ref'?s.heap[receiver[1]]:null;
             if(regex?.kind!=='regexp'||args.length!==1||args[0].value[0]!=='str')
@@ -1286,6 +1299,24 @@ export class Runtime {
             const outcome=testPinnedRegExp(pattern,flags,decode(args[0].value),lastIndex);
             if(flags==='g')putOwn(regex,'lastIndex',['num',outcome.nextIndex],eventId);
             return {...operands(fn,...args),...result(['bool',outcome.matched])};
+          }
+          if(callable[0]==='builtinfn' && callable[1]==='String.prototype.replace' &&
+             args[1]?.value[0]==='ref'){
+            const regex=args[0]?.value[0]==='ref'?s.heap[args[0].value[1]]:null;
+            const callback=s.heap[args[1].value[1]];
+            if(receiver[0]!=='str'||args.length!==2||regex?.kind!=='regexp'||
+               callback?.kind!=='function'||callback.async)
+              throw new TypeError('Unsupported RegExp guest callback replacement');
+            const pattern=decode(regex.properties['[[Source]]'].value);
+            const flags=decode(regex.properties['[[Flags]]'].value);
+            if(decode(regex.properties.lastIndex.value)!==0)
+              throw new TypeError('Owned replacement requires initial RegExp.lastIndex = 0');
+            const matches=scanPinnedReplacement(pattern,flags,receiver[1]);
+            if(!matches.length)return {...operands(fn,...args),...result(receiver)};
+            f.pendingStringReplace={text:receiver[1],matches,index:0,lastEnd:0,
+              output:'',callbackId:callback.id,waitingFrameId:null,siteId:inst.siteId};
+            const child=this.advanceStringReplaceCallback(s,f);
+            return {...operands(fn,...args),causes:[{kind:'invocation',frameId:child}]};
           }
           if(callable[0]==='builtinfn' && callable[1]==='String.prototype.replace') {
             if(receiver[0]!=='str'||args.length!==2||receiver[1].length>10000 ||
