@@ -1,5 +1,5 @@
 /** Node/POSIX content-addressed committed-history checkpoints, not VM snapshots. */
-import type {BoundedRetainedModuleSession} from './evaluated-module-session.js';
+import type {BoundedRetainedModuleSession} from '../evaluated-module-session.js';
 export declare class DurableRetainedModuleStorageError extends Error {}
 export declare class DurableRetainedModuleStore {
   constructor(options:{directory:string;maxBytes?:number});
