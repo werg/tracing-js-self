@@ -104,7 +104,11 @@ for(const row of records){
       status='source_bundle_limit';
       reason='Original entry plus genuine helpers exceeds current model source bundle';
     }else{
-      checked=verifyTrainingCase({source,entry,args,
+      const randomSeed=row.family==='vscode/arrays.ts/quickSelect'?
+        row.observation.evidence?.randomSeed:null;
+      if(randomSeed!==null && randomSeed!==42)
+        throw new TypeError('Missing pinned random fixture seed');
+      checked=verifyTrainingCase({source,entry,args,seed:randomSeed,
         maxSteps:10000,maxGenerated:1024});
       status=checked.status;
       reason=checked.reason??null;
