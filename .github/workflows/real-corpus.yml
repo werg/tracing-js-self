@@ -7,6 +7,8 @@ on:
       - 'src/observational.js'
       - 'corpus/**'
       - 'tools/build-real-corpus.mjs'
+      - 'tools/audit-owned-coverage.mjs'
+      - 'tools/audit-real-corpus.mjs'
       - '.github/workflows/real-corpus.yml'
       - 'package.json'
   workflow_dispatch:
@@ -33,6 +35,12 @@ jobs:
             --output corpus/out/traces.jsonl \
             --report corpus/out/report.json \
             --review corpus/out/review.md
+      - name: Audit understanding, noise, effects and source coverage
+        run: |
+          npm run corpus:audit --             --input corpus/out/traces.jsonl             --output corpus/out/quality.json             --review corpus/out/quality.md             --examples 30
+      - name: Compare with independently verified owned interpreter
+        run: |
+          npm run corpus:owned-coverage --             --input corpus/out/traces.jsonl             --output corpus/out/owned-coverage.json             --per-function 2
       - name: Validate provenance and explicit diagnostic status
         run: |
           node --input-type=module -e '
