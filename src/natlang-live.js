@@ -4,7 +4,7 @@
 import {types} from 'node:util';
 import {decode} from './values.js';
 
-export function synchronizeLiveGraph(initialHeap,finalHeap,root,original,result){
+export function synchronizeLiveGraph(initialHeap,finalHeap,root,original,result,{stage=false}={}){
   const originals=new Map();
   const validateHost=(object,array)=>{
     if(!object || typeof object!=='object' || types.isProxy(object) ||
@@ -42,6 +42,36 @@ export function synchronizeLiveGraph(initialHeap,finalHeap,root,original,result)
     }
   }
   bind(root,original);
+  const verifyInitial=()=>{
+    const seen=new Set();
+    function visit(value,host){
+      if(!Array.isArray(value))throw new TypeError('Invalid initial live graph token');
+      if(value[0]!=='ref'){
+        if(!Object.is(decode(value),host))
+          throw new TypeError('Live input data changed outside the owned guest');
+        return;
+      }
+      const id=value[1],entity=initialHeap[id];
+      if(originals.get(id)!==host||!entity)
+        throw new TypeError('Live input identity changed outside the owned guest');
+      if(seen.has(id))return;
+      seen.add(id);
+      const array=entity.kind==='array';
+      validateHost(host,array);
+      const expected=new Set(Object.keys(entity.properties));
+      const keys=Reflect.ownKeys(host);
+      if(expected.size!==keys.length||keys.some(key=>!expected.has(key)))
+        throw new TypeError('Live input property shape changed outside the owned guest');
+      for(const [key,slot] of Object.entries(entity.properties)){
+        const desc=Object.getOwnPropertyDescriptor(host,key);
+        if(!desc||!Object.hasOwn(desc,'value'))
+          throw new TypeError('Live input descriptor changed outside the owned guest');
+        visit(slot.value,desc.value);
+      }
+    }
+    visit(root,original);
+  };
+  verifyInitial();
 
   const objects=new Map(originals),actions=new Map(),visited=new Set();
   function materialize(value){
@@ -78,17 +108,22 @@ export function synchronizeLiveGraph(initialHeap,finalHeap,root,original,result)
   }
   for(const id of originals.keys())materialize(['ref',id]);
   const output=materialize(result);
-  // Validate every target before touching any host reference. The graph is
-  // computed from the final owned heap, not from an unverified guest result.
-  for(const {object,array} of actions.values())validateHost(object,array);
-  for(const {object,array,length,entries} of actions.values()){
-    for(const key of Reflect.ownKeys(object)){
-      if(array&&key==='length')continue;
-      if(!entries.has(key))Reflect.deleteProperty(object,key);
+  // Stage first. The onTrace success hook may itself throw, so it must run
+  // before any live host mutation; the guard is rechecked at commit time.
+  const commit=()=>{
+    verifyInitial();
+    for(const {object,array} of actions.values())validateHost(object,array);
+    for(const {object,array,length,entries} of actions.values()){
+      for(const key of Reflect.ownKeys(object)){
+        if(array&&key==='length')continue;
+        if(!entries.has(key))Reflect.deleteProperty(object,key);
+      }
+      if(array)object.length=length;
+      for(const [key,value] of entries)
+        Object.defineProperty(object,key,{value,writable:true,enumerable:true,configurable:true});
     }
-    if(array)object.length=length;
-    for(const [key,value] of entries)
-      Object.defineProperty(object,key,{value,writable:true,enumerable:true,configurable:true});
-  }
+  };
+  if(stage)return {result:output,commit};
+  commit();
   return output;
 }
