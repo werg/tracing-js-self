@@ -10,4 +10,7 @@ export function createBoundedModuleFacade(options:{
   entryModule:string;
   exportNames:string[];
   maxSteps?:number;
+  onTrace?:(bundle:Record<string,unknown>,
+    call:{exportName:string;args:unknown[];callCount:number},
+    metadata:Record<string,unknown>)=>void;
 }):BoundedModuleFacade;

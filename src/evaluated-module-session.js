@@ -118,13 +118,17 @@ export class BoundedRetainedModuleSession {
   #objects=new Map();
   #queue=Promise.resolve();
   #pending=0;
+  #onTrace=null;
   #closed=false;
   // Accessors return detached data; a consumer cannot rewrite replay inputs.
   get history(){return this.#history.map(({exportName,args})=>({
     exportName,args:[...args]
   }));}
   get closed(){return this.#closed;}
-  constructor({modules,entryModule,maxSteps=100000}={}){
+  constructor({modules,entryModule,maxSteps=100000,onTrace=null}={}){
+    if(onTrace!==null&&typeof onTrace!=='function')
+      throw new TypeError('Retained module trace hook must be synchronous');
+    this.#onTrace=onTrace;
     if(!modules||typeof modules!=='object'||Array.isArray(modules)||
        types.isProxy(modules)||typeof entryModule!=='string'||
        ![Object.prototype,null].includes(Object.getPrototypeOf(modules)))
@@ -202,6 +206,14 @@ export class BoundedRetainedModuleSession {
         throw new Error('Retained historical result changed identity or primitive value');
     }
     if(this.#closed)throw new Error('Retained module session closed');
+    if(this.#onTrace){
+      const call=calls.at(-1);
+      const callback=this.#onTrace(run.bundle,{
+        exportName:call.exportName,args:[...call.args],callCount:calls.length
+      },run.metadata);
+      if(callback&&typeof callback.then==='function')
+        throw new TypeError('Retained module trace hook must not return a Promise');
+    }
     staged.commit();
     this.#objects=staged.objects;
     this.#outputs=staged.values;

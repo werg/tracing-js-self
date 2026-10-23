@@ -30,10 +30,12 @@ function checkedExportNames(values){
  * wrappers must never be fed back into the owned guest heap.
  */
 export function createBoundedModuleFacade({
-  modules,entryModule,exportNames,maxSteps=100000
+  modules,entryModule,exportNames,maxSteps=100000,onTrace=null
 }={}){
   const names=checkedExportNames(exportNames);
-  const session=createBoundedRetainedModuleSession({modules,entryModule,maxSteps});
+  const session=createBoundedRetainedModuleSession({
+    modules,entryModule,maxSteps,onTrace
+  });
   const exports=Object.create(null);
   for(const name of names)
     Object.defineProperty(exports,name,{

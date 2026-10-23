@@ -6,6 +6,10 @@ export interface BoundedRetainedModuleSessionOptions {
   modules:Record<string,string>;
   entryModule:string;
   maxSteps?:number;
+  /** Invoked on a validated archive before committing an invocation. */
+  onTrace?:(bundle:Record<string,unknown>,
+    call:{exportName:string;args:unknown[];callCount:number},
+    metadata:Record<string,unknown>)=>void;
 }
 export interface BoundedRetainedModuleCallResult {
   result:unknown;
