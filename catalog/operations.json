@@ -50,6 +50,11 @@
       "kind": "primitive"
     },
     {
+      "operationId": "template.substitute",
+      "version": 1,
+      "kind": "primitive"
+    },
+    {
       "operationId": "spec.to-primitive",
       "version": 1,
       "kind": "owned-spec-phase"
