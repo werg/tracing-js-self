@@ -81,6 +81,11 @@ This repository implements a **bounded, executable prototype** for the architect
   invocations by replaying the complete history without native effects. It is
   neither a durable VM continuation nor a general persistent ESM Module Record.
   The data-only natlang retained adapter is a different, limited interface.
+  A JSON-portable snapshot/restore API now reconstructs committed bounded
+  module invocation histories in a new process with tagged primitive arguments
+  and replay verification. It recreates observational state and fresh host
+  identities; it does not persist or restore a suspended owned VM, general
+  native host handles or natlang's real retained Module Record seam.
 - The `werg/natlang` Node runtime now has an explicit opt-in
   `installOwnedTracingEnvironment(factory)` installer, wiring **both** its
   per-task and retained module-evaluator factories with a fail-closed

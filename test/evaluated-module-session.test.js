@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createBoundedRetainedModuleSession} from 'tracing-js-self/evaluated-module-session';
+import {createBoundedRetainedModuleSession,restoreBoundedRetainedModuleSession} from 'tracing-js-self/evaluated-module-session';
 import {validateBundle,replayExact} from 'tracing-js-self';
 
 test('replay-backed retained module session carries mutable exports across JS invocations',async()=>{
@@ -94,4 +94,61 @@ test('closed retained realm rejects future calls and does not publish partial hi
   session.close();
   await assert.rejects(session.invoke('value'),/closed/);
   assert.equal(session.history.length,1);
+});
+
+
+test('retained module history can cross JSON/process boundaries by replaying committed invocations',async()=>{
+  const session=createBoundedRetainedModuleSession({modules:{
+    'main.js':`export let n=1;
+      export function add(v){n+=v;return n;}
+      export function read(){return n;}`
+  },entryModule:'main.js'});
+  let restored;
+  try{
+    assert.equal((await session.invoke('add',[2])).result,3);
+    assert.equal((await session.invoke('add',[5])).result,8);
+    const checkpoint=JSON.parse(JSON.stringify(session.snapshot()));
+    assert.equal(checkpoint.schema,'bounded-retained-module-session/1');
+    assert.equal(checkpoint.calls.length,2);
+    restored=await restoreBoundedRetainedModuleSession(checkpoint);
+    assert.equal((await restored.invoke('read')).result,8);
+    assert.equal((await restored.invoke('add',[4])).result,12);
+    assert.equal((await session.invoke('read')).result,8,
+      'new session must not share its original host identities');
+  }finally{session.close();restored?.close();}
+});
+
+test('session snapshots preserve the complete primitive scalar wire format',async()=>{
+  const session=createBoundedRetainedModuleSession({modules:{
+    'main.js':'export function identity(value){return value;}'
+  },entryModule:'main.js'});
+  let restored;
+  try{
+    for(const scalar of [-0,undefined,NaN,2n]){
+      const got=(await session.invoke('identity',[scalar])).result;
+      assert(Object.is(got,scalar));
+    }
+    const checkpoint=JSON.parse(JSON.stringify(session.snapshot()));
+    assert.deepEqual(checkpoint.calls.map(call=>call.args[0][0]),
+      ['num','undefined','num','bigint']);
+    restored=await restoreBoundedRetainedModuleSession(checkpoint);
+    assert.equal(restored.history.length,4);
+    assert(Object.is((await restored.invoke('identity',[-0])).result,-0));
+  }finally{session.close();restored?.close();}
+});
+
+test('retained snapshot restore rejects accessor metadata and noncanonical tokens',async()=>{
+  const session=createBoundedRetainedModuleSession({modules:{
+    'main.js':'export function identity(value){return value;}'
+  },entryModule:'main.js'});
+  try{
+    await session.invoke('identity',[3]);
+    const checkpoint=session.snapshot();
+    checkpoint.calls[0].args[0]=['num','3'];
+    await assert.rejects(restoreBoundedRetainedModuleSession(checkpoint),/token/);
+    const accessor=session.snapshot();
+    Object.defineProperty(accessor,'calls',{get(){throw new Error('unowned getter');}});
+    await assert.rejects(restoreBoundedRetainedModuleSession(accessor),/snapshot field/);
+    assert.equal(session.history.length,1);
+  }finally{session.close();}
 });

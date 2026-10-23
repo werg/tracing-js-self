@@ -156,6 +156,43 @@ positional arguments only, and commits a history entry only after successful
 validation and exact replay. This is capped at **32 calls**, is not durable
 storage, and is unsuitable for unbounded or performance-critical workloads.
 
+### JSON-portable retained-history restoration
+
+A bounded replay-backed session can now export a JSON snapshot of its
+**committed** module source graph and primitive invocation history. This allows
+a later process to reconstruct observational module state by executing the
+same owned calls again. Special scalar values such as -0, NaN, undefined
+and BigInt use tagged JSON-safe values.
+
+~~~js
+import {
+  createBoundedRetainedModuleSession,
+  restoreBoundedRetainedModuleSession
+} from 'tracing-js-self/evaluated-module-session';
+
+const session=createBoundedRetainedModuleSession({
+  modules:{'main.js':'export let n=0;export function add(x){n+=x;return n;}'},
+  entryModule:'main.js'
+});
+await session.invoke('add',[3]);
+const saved=JSON.stringify(session.snapshot()); // persist using trusted storage
+session.close();
+
+const recovered=await restoreBoundedRetainedModuleSession(JSON.parse(saved));
+console.log((await recovered.invoke('add',[4])).result); // 7
+recovered.close();
+~~~
+
+The restore API verifies own-data snapshot records and canonical scalar
+tokens, then runs the same ordinary owned evaluation, validation and exact
+replay checks for every committed call. It never restores original host
+object identities or an actual paused ECMA-262 Module Record; identities
+within the *new* session are stable only from that point forward. The
+snapshot itself is not authenticated or encrypted: if untrusted storage
+is used, the caller must supply an external trusted digest/signature and
+confidentiality controls. It is not an accepted model-training Episode or
+natlang's production setModuleRealm replacement.
+
 Native services are **forbidden** in this replay-backed mode: replaying earlier
 calls must never reissue irreversible host effects. General callable closures
 crossing the host boundary, mutable input object references, module namespace

@@ -12,6 +12,13 @@ export interface BoundedRetainedModuleCallResult {
   bundle:Record<string,unknown>;
   metadata:Record<string,unknown>;
 }
+export interface BoundedRetainedModuleSnapshot {
+  schema:'bounded-retained-module-session/1';
+  modules:Record<string,string>;
+  entryModule:string;
+  maxSteps:number;
+  calls:Array<{exportName:string;args:Array<Array<string|number|boolean>>}>;
+}
 export declare class BoundedRetainedModuleSession {
   constructor(options:BoundedRetainedModuleSessionOptions);
   readonly entryModule:string;
@@ -20,8 +27,15 @@ export declare class BoundedRetainedModuleSession {
   readonly closed:boolean;
   invoke(exportName:string,args?:Array<string|number|boolean|bigint|null|undefined>):
     Promise<BoundedRetainedModuleCallResult>;
+  /** JSON-portable committed-call history; not a suspended guest continuation. */
+  snapshot():BoundedRetainedModuleSnapshot;
   close():void;
 }
 export declare function createBoundedRetainedModuleSession(
   options:BoundedRetainedModuleSessionOptions
 ):BoundedRetainedModuleSession;
+
+/** Rebuild a bounded observational session by replaying its JSON history. */
+export declare function restoreBoundedRetainedModuleSession(
+  snapshot:BoundedRetainedModuleSnapshot
+):Promise<BoundedRetainedModuleSession>;

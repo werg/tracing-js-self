@@ -4,7 +4,7 @@
 // The public object graph retains stable owned identities across invocations.
 // This is observational retention, not a durable suspended VM continuation.
 import {types} from 'node:util';
-import {decode} from './values.js';
+import {encode,decode} from './values.js';
 import {executeEvaluatedModules} from './evaluated-modules.js';
 
 const scalar=value=>value===null||
@@ -172,7 +172,97 @@ export class BoundedRetainedModuleSession {
     this.queue=result.then(()=>undefined,()=>undefined);
     return result;
   }
+  /**
+   * JSON-portable committed-history snapshot, not a VM checkpoint. A pending
+   * invocation is NOT included until it has validated and committed.
+   */
+  snapshot(){
+    if(this.closed)throw new Error('Retained module session closed');
+    const calls=this.history.map(call=>{
+      if(typeof call?.exportName!=='string'||
+         !/^[$A-Za-z_][$\w]*$/.test(call.exportName))
+        throw new TypeError('Invalid retained call history');
+      return {exportName:call.exportName,args:checkArgs(call.args).map(encode)};
+    });
+    return {
+      schema:'bounded-retained-module-session/1',
+      modules:Object.fromEntries(Object.entries(this.modules)),
+      entryModule:this.entryModule,maxSteps:this.maxSteps,calls
+    };
+  }
   close(){this.closed=true;this.objects.clear();}
+}
+
+/** Reject getters, proxies, inherited metadata and extra keys before replay. */
+function snapshotRecord(value,fields){
+  if(!value||typeof value!=='object'||Array.isArray(value)||
+     types.isProxy(value)||Object.getPrototypeOf(value)!==Object.prototype||
+     Reflect.ownKeys(value).length!==fields.length)
+    throw new TypeError('Invalid retained session snapshot record');
+  for(const field of fields){
+    const descriptor=Object.getOwnPropertyDescriptor(value,field);
+    if(!descriptor||!Object.hasOwn(descriptor,'value'))
+      throw new TypeError('Invalid retained session snapshot field: '+field);
+  }
+}
+function snapshotArray(value,max){
+  if(!Array.isArray(value)||types.isProxy(value)||
+     Object.getPrototypeOf(value)!==Array.prototype||value.length>max||
+     Reflect.ownKeys(value).length!==value.length+1)
+    throw new TypeError('Invalid retained session snapshot array');
+  return Array.from({length:value.length},(_,index)=>{
+    const descriptor=Object.getOwnPropertyDescriptor(value,String(index));
+    if(!descriptor||!Object.hasOwn(descriptor,'value'))
+      throw new TypeError('Sparse/accessor retained session snapshot array');
+    return descriptor.value;
+  });
+}
+function snapshotScalar(value){
+  const token=snapshotArray(value,2);
+  if(!token.length||typeof token[0]!=='string'||
+     token.some(v=>typeof v==='string'&&v.length>4096))
+    throw new TypeError('Invalid retained session scalar token');
+  try{
+    const scalarValue=decode(token);
+    if(JSON.stringify(encode(scalarValue))!==JSON.stringify(token))
+      throw new TypeError('Noncanonical retained session scalar token');
+    return scalarValue;
+  }catch(error){
+    throw new TypeError('Invalid retained session scalar token',{cause:error});
+  }
+}
+
+/**
+ * Rebuild the bounded observational realm by replaying all committed calls.
+ * No native service is installed; host object identities cannot cross
+ * processes, and this is not restoration of an ECMAScript Module Record.
+ */
+export async function restoreBoundedRetainedModuleSession(snapshot){
+  snapshotRecord(snapshot,['schema','modules','entryModule','maxSteps','calls']);
+  if(snapshot.schema!=='bounded-retained-module-session/1'||
+     typeof snapshot.entryModule!=='string'||
+     !Number.isSafeInteger(snapshot.maxSteps)||
+     snapshot.maxSteps<1||snapshot.maxSteps>100000)
+    throw new TypeError('Invalid retained module snapshot header');
+  const calls=snapshotArray(snapshot.calls,32).map(call=>{
+    snapshotRecord(call,['exportName','args']);
+    if(typeof call.exportName!=='string'||
+       !/^[$A-Za-z_][$\w]*$/.test(call.exportName))
+      throw new TypeError('Invalid retained module snapshot export');
+    const args=snapshotArray(call.args,64).map(snapshotScalar);
+    return {exportName:call.exportName,args};
+  });
+  const session=createBoundedRetainedModuleSession({
+    modules:snapshot.modules,entryModule:snapshot.entryModule,
+    maxSteps:snapshot.maxSteps
+  });
+  try{
+    for(const call of calls)await session.invoke(call.exportName,call.args);
+    return session;
+  }catch(error){
+    session.close();
+    throw error;
+  }
 }
 export function createBoundedRetainedModuleSession(options){
   return new BoundedRetainedModuleSession(options);
