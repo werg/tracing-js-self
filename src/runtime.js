@@ -192,7 +192,21 @@ export class Runtime {
   newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[],thisValue=U) {
     const id=this.next(draft,'frame'),envId=this.newEnv(draft,parentEnv);
     const params=this.programs[codeId].params;
-    params.forEach((name,i)=>draft.envs[envId].bindings[name]={kind:'parameter',initialized:true,token:args[i]??token(U),version:0});
+    const restIndex=this.programs[codeId].restIndex??-1;
+    params.forEach((name,i)=>{
+      let binding=args[i]??token(U);
+      if(restIndex===i){
+        const extras=args.slice(i);
+        if(extras.length>10000)throw new RangeError('Rest argument budget exceeded');
+        const id=this.next(draft,'obj');
+        const array=draft.heap[id]={id,kind:'array',properties:{
+          length:token(['num',extras.length])},propertyVersions:{length:0},
+          shapeVersion:0,version:0};
+        for(let k=0;k<extras.length;k++)putOwn(array,String(k),extras[k].value,null);
+        binding=token(['ref',id]);
+      }
+      draft.envs[envId].bindings[name]={kind:'parameter',initialized:true,token:binding,version:0};
+    });
     for(const name of this.programs[codeId].varNames??[])
       if(!Object.hasOwn(draft.envs[envId].bindings,name))
         draft.envs[envId].bindings[name]={kind:'var',initialized:true,
@@ -905,7 +919,20 @@ export class Runtime {
           return {...operands(base,key,v),...result(v.value)};
         }
         case 'CALL':{
-          const args=[];for(let i=0;i<arg;i++)args.unshift(pop());
+          const count=typeof arg==='number'?arg:arg.count;
+          const raw=[];for(let i=0;i<count;i++)raw.unshift(pop());
+          const args=[];
+          for(let i=0;i<raw.length;i++){
+            if(!arg?.spread?.includes(i)){args.push(raw[i]);continue;}
+            const value=raw[i].value,obj=value[0]==='ref'?s.heap[value[1]]:null;
+            if(obj?.kind!=='array'||Object.keys(obj.accessors??{}).length)
+              throw new TypeError('Only ordinary array spread is owned');
+            const len=decode(obj.properties.length.value);
+            if(!Number.isSafeInteger(len)||len<0||len>10000)
+              throw new RangeError('Owned spread length budget exceeded');
+            for(let j=0;j<len;j++)args.push(obj.properties[String(j)]??token(U));
+          }
+          if(args.length>10000)throw new RangeError('Owned call argument budget exceeded');
           const fn=pop();let callable=fn.value;
           const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
