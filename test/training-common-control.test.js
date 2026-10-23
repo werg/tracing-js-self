@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRuntime,replayExact,validateBundle} from 'tracing-js-self';
 import {verifyTrainingCase,validateTrainingExport} from 'tracing-js-self/training';
-import {decodeRecord,restoreLines,encodeRecord} from '../src/training/format.js';
+import {decodeRecord,restoreLines,encodeRecord,fragmentLine,semanticLine} from '../src/training/format.js';
 import {evaluateSelectedTrajectory} from '../src/training/rollout.js';
 
 const strict=body=>'"use strict";\n'+body;
@@ -161,17 +161,26 @@ test('member updates preserve reference identity, versioned reads and V8 sites',
 test('serving controller refuses forged member update read provenance',()=>{
   const exported=verified('function f(){const obj={n:1};return obj.n++;}');
   const selected=structuredClone(exported.public.groups);
-  const target=selected.find(g=>g.mode==='generated'&&g.events.some(item=>{
-    try {
-      const row=decodeRecord(item.record);
-      return row.kind==='write'&&
-        row.fields.update&&row.fields.writes?.some(w=>w.kind==='property');
-    }catch{return false;}
-  }));
-  assert(target,'missing owned property update record');
-  const record=decodeRecord(target.events[0].record);
+  // The canonical write may span several physical value-* fragments.
+  // Select its logical record, then replace the full contiguous fragment range.
+  const semantic=exported.sidecar.semantic.events.find(row=>
+    row.update && row.writes.some(w=>w.kind==='property'));
+  assert(semantic,'missing owned property update record');
+  const maxBytes=exported.sidecar.limits.maxBytes;
+  const original=fragmentLine(semanticLine(semantic),{maxBytes});
+  const start=selected.findIndex(g=>g.mode==='generated' &&
+    g.events[0].record===original[0]);
+  assert(start>=0,'missing source-aligned update fragments');
+  assert.deepEqual(selected.slice(start,start+original.length)
+    .map(g=>g.events[0].record),original);
+  const record=decodeRecord(semanticLine(semantic));
   record.fields.reads[0].value=['num',999];
-  target.events[0].record=encodeRecord(record.kind,record.fields);
+  const forged=fragmentLine(encodeRecord(record.kind,record.fields),{maxBytes});
+  const track=selected[start].events[0].track;
+  selected.splice(start,original.length,...forged.map(part=>({
+    mode:'generated',loss:'semantic',events:[{track,record:part}]
+  })));
+  for(const [i,group] of selected.entries())group.id='m'+(i+1);
   const rollout=evaluateSelectedTrajectory({groups:selected,
     referenceGroups:exported.public.groups,maxGenerated:1024});
   assert.equal(rollout.valid,false);
