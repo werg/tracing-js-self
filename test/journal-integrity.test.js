@@ -55,6 +55,26 @@ test('runtime rejects multiple input arrivals for one single-outcome effect with
   assert.equal(validateBundle(archived(runtime.exportRun())).valid, true);
 });
 
+test('runtime rejects non-boolean abrupt flags before recording host input', () => {
+  const runtime = createRuntime().start('host.readAsync("A");');
+  assert.equal(runtime.drive().kind, 'waiting');
+  const effectId = Object.values(runtime.state.effects)[0].id;
+  const count = runtime.events.length;
+  for (const abrupt of [0, 1, null, 'false', [], {}]) {
+    assert.throws(() => runtime.recordInputArrival({
+      effectId, kind: 'completion', value: 7, abrupt
+    }), /Input abrupt must be boolean/);
+    assert.equal(runtime.events.length, count);
+    assert.equal(Object.keys(runtime.state.inputs).length, 0);
+  }
+  const arrival = runtime.recordInputArrival({effectId, kind:'completion', value:7, abrupt:false});
+  runtime.deliverInput(arrival.inputId);
+  assert.equal(runtime.drive().kind, 'terminated');
+  const bundle = archived(runtime.exportRun());
+  assert.equal(validateBundle(bundle).valid, true);
+  assert.equal(replayExact(bundle).valid, true);
+});
+
 test('host inputs are canonical scalar tuples, including NaN across JSON replay', () => {
   const runtime = createRuntime().start('host.readAsync("A");');
   assert.equal(runtime.drive().kind, 'waiting');

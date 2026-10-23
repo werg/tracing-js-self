@@ -6,8 +6,11 @@ This records the first tracer-owned implementation of [the training plan](TRAINI
 
 - Versioned training-js/1: Acorn 8.15.0, locked integrity, ES2022 strict scripts, exact positions, positive allowlist, no ambient globals, top-level strict directive and named synchronous function declarations.
 - The shared owned arithmetic path records primitive conversion, type checks, scalar arithmetic leaves and completions as serializable spec phases. Training entries keep the `training-js/1` language profile while their journal and exact replay use `/2`; see [owned arithmetic and its domain limits](OWNED_ARITHMETIC.md).
+- Owned synchronous arrow and anonymous function expressions with serializable closure captures, expression/block arrow bodies, and lexical receiver capture. General function constructor/prototype behavior, default/rest/destructured parameters, async arrows and lexical `arguments` remain outside this slice.
 - Direct function entry with identity-preserving plain object/array argument graphs, aliases, cycles, property order, input limits and explicit root completion. Exotic inputs, proxies, getters, holes and unimplemented operations fail closed.
+- Owned scalar template literals (cooked text plus left-to-right primitive substitutions) retain input provenance, evaluate interpolations exactly once, and are independently instrumented as source expressions by V8; object-valued ToString continuations fail closed. TypeScript lowering into templates runs through the same owned bytecode.
 - Fixed escaped hex/unicode strings and undefined shadowing; reference truthiness/equality/typeof, including the spec-mandated `typeof` of unresolvable names without suppressing lexical TDZ faults; scalar `void`, `~`, Number/BigInt bitwise and shift operations; canonical array index and length/truncation behavior; explicit guest throw completion; read and mutation versions. Scalar leaves are differential-tested against V8 and remain a bounded rather than universal coercion profile.
+- Strict frontend extensions: ordered multi-declarator lexical statements, object property shorthand, scalar sequence expressions, and compound assignment for the existing arithmetic and bitwise scalar operators. They retain owned read/write provenance and V8 executed source-operation receipts; full destructuring, var hoisting and spread remain unsupported.
 - Common strict control flow: conditional expressions, for-let or expression-header loops, do-while, break/continue and prefix/postfix local-identifier updates. Updates have an owned primitive ToNumeric calculation, typed numeric step and versioned binding mutation, with independent V8 source-expression receipts for pre/post numeric results. Object-valued update coercion, member updates, labelled control flow and captured per-iteration for-let bindings are rejected, not approximated.
 - Canonical source-anchored semantic records from the full journal, with actual read-from links, versioned writes, control decisions, invocation IDs, and validation against that journal.
 - Deterministic semantic-trace/2 line grammar, typed scalar/identity values, lossless JSON escaping, bounded fragments and parser/serialization checks.
@@ -21,6 +24,18 @@ This records the first tracer-owned implementation of [the training plan](TRAINI
 - `src/training/rollout.js` and `tools/evaluate-training.mjs` verify actual selected output after commit, report the first divergence and observable returned/input graph correctness, and reject invalid model events without substituting the reference trajectory. Model-selected commits now roll back the entire bounded controller state on rejection, including partial allocation/completion/fragment mutations; an episode missing its terminal `end` is an invalid incomplete rollout, not a valid trajectory.
 - The cross-repository megatoken `semantic-execution/2` adapter now exists on `werg/megatoken/main`, with explicit causal episode validation, codec-bound import, fixed lanes, teacher-conditioned supervised recurrence, a local diagnostic converter, and a pinned CI contract test using actual tracer-generated episodes. Large source and request records preserve their logical identity and action/result linkage across physical fragments.
 - The `bounded-js-subset/2` mock host bridge now prepares versioned `canonical-json/1` request snapshots before dispatch, gives adapters only frozen JSON argument data, records exact payload bytes and graph-version provenance, and independently verifies the payload against the committed heap at the request boundary. The causal and semantic projections expose the complete materialized payload, not a symbolic external argument.
+
+## Owned completion syntax in the strict frontend
+
+The TypeScript/Acorn strict frontend now accepts `throw`, `try`, `catch`
+(with an ordinary optional identifier), and `finally` and lowers them into
+the existing owned completion-handler bytecode. The natlang facade can execute
+recovered exceptional paths and replay their journals without host guest-code
+fallback. **These paths are not yet training-data candidates:** the synchronous
+training exporter/controller does not model a caught `throw` as a resumable
+continuation. Such cases remain explicitly unadmitted even when the runtime
+finishes with a normal result. This syntax support is not evidence of full
+ECMAScript exception compatibility.
 
 ## Limits / incomplete plan milestones
 

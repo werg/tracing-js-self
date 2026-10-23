@@ -8,7 +8,7 @@ import {normalizeJournal} from '../semantic/normalize.js';
 import {referenceOutcome} from './reference.js';
 
 const observedOperations=new Set([
-  'primitive.binary','primitive.unary','spec.operation.complete','binding.update','property.update'
+  'primitive.binary','primitive.unary','template.substitute','spec.operation.complete','binding.update','property.update'
 ]);
 
 export function instrumentOperationSource(source) {
@@ -18,8 +18,8 @@ export function instrumentOperationSource(source) {
     if(Array.isArray(value)){for(const child of value)visit(child);return;}
     if(!value||typeof value!=='object')return;
     if(value.type==='BinaryExpression'||value.type==='UnaryExpression'||
-       (value.type==='AssignmentExpression'&&['+=','-='].includes(value.operator))||
-       value.type==='UpdateExpression')
+       (value.type==='AssignmentExpression'&&value.operator!=='=')||
+       value.type==='UpdateExpression'||value.type==='TemplateLiteral')
       nodes.push({start:value.start,end:value.end,site:String(value.start)+':'+value.end});
     for(const [name,child] of Object.entries(value))
       if(name!=='start'&&name!=='end'&&name!=='loc')visit(child);
@@ -60,7 +60,7 @@ export function auditReferenceOperations({source,entry,args,initialHeap,bundle,r
   const schema='reference-operations/1';
   const normalized=normalizeJournal(bundle);
   const eventsById=new Map(bundle.events.map(event=>[event.eventId,event]));
-  const expected=[],covered={binary:0,unary:0,ownedArithmetic:0,updates:0};
+  const expected=[],covered={binary:0,unary:0,ownedArithmetic:0,updates:0,templates:0};
   const unverified=new Set();
   for(const row of normalized.events){
     const operation=eventsById.get(row.journalEvent)?.operation;
@@ -75,6 +75,7 @@ export function auditReferenceOperations({source,entry,args,initialHeap,bundle,r
     if(operation==='primitive.binary')covered.binary++;
     else if(operation==='primitive.unary')covered.unary++;
     else if(operation==='binding.update'||operation==='property.update')covered.updates++;
+    else if(operation==='template.substitute')covered.templates++;
     else covered.ownedArithmetic++;
   }
   const observed=referenceOutcome({source:instrumentOperationSource(source),

@@ -30,8 +30,8 @@ const tableNames = ['counters','envs','heap','promises','frames','effects','inpu
 const opNames = {
   CONST:'literal.materialize', GET:'binding.read', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
-  CALL:'call.enter', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
-  GET_PROP:'property.read', GET_METHOD:'property.read', PUT_PROP:'property.write', ENTER_SCOPE:'environment.enter',
+  CALL:'call.enter', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
+  GET_PROP:'property.read', GET_METHOD:'property.read', PUT_PROP:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
   LEAVE_SCOPE:'environment.leave', CLONE_LOOP_ENV:'environment.iteration', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
   TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
   BIND_CATCH:'completion.catch.bind', END_FINALLY:'completion.finally.end',
@@ -166,7 +166,7 @@ export class Runtime {
     const compiled=compile(trainingProfile?parseTraining(text):parse(text));
     const rename={};
     for(const id of Object.keys(compiled.programs))rename[id]=`${sourceId}:${id}`;
-    for(const [id,program] of Object.entries(compiled.programs))this.programs[rename[id]]={...program,id:rename[id],instructions:program.instructions.map(inst=>inst.op==='DEF_FN'?{...inst,arg:{...inst.arg,codeId:rename[inst.arg.codeId]},siteId:`${sourceId}:${inst.siteId}`}:{...inst,siteId:`${sourceId}:${inst.siteId}`})};
+    for(const [id,program] of Object.entries(compiled.programs))this.programs[rename[id]]={...program,id:rename[id],instructions:program.instructions.map(inst=>['DEF_FN','MAKE_FUNCTION'].includes(inst.op)?{...inst,arg:{...inst.arg,codeId:rename[inst.arg.codeId]},siteId:`${sourceId}:${inst.siteId}`}:{...inst,siteId:`${sourceId}:${inst.siteId}`})};
     this.sites.push(...compiled.sites.map(site=>({...site,siteId:`${sourceId}:${site.siteId}`,codeId:rename[site.codeId],sourceId})));
     const record={sourceId,text,url,goal,entry:rename[compiled.entry],parser:trainingProfile?TRAINING_PARSER:'bounded-pratt/2'};
     this.sources.push(record);return record;
@@ -528,6 +528,13 @@ export class Runtime {
           this.stackPush(f,returned,eventId);
           return {...operands(base,key,old),result:returned,reads:[found.observation]};
         }
+        case 'MAKE_FUNCTION':{
+          const id=this.next(s,'obj');
+          s.heap[id]={id,kind:'function',codeId:arg.codeId,
+            closureEnvId:f.envId,async:false,arrow:arg.arrow===true,
+            lexicalThis:arg.arrow?f.thisValue:null,version:0};
+          return result(['ref',id]);
+        }
         case 'DEF_FN':{const e=s.envs[f.envId],id=this.next(s,'obj');s.heap[id]={id,kind:'function',codeId:arg.codeId,closureEnvId:f.envId,async:arg.async,version:0};e.bindings[arg.name]={kind:'function',initialized:true,token:token(['ref',id],eventId),version:0};return {result:['ref',id]};}
         case 'ENTER_SCOPE':f.envId=this.newEnv(s,f.envId);return {};
         case 'LEAVE_SCOPE':f.envId=s.envs[f.envId].parent;return {};
@@ -594,6 +601,23 @@ export class Runtime {
             envId:loop.envId,stackDepth:loop.stackDepth,
             handlerDepth:loop.handlerDepth,loopDepth:f.loops.length},eventId);
           return {};
+        }
+        case 'TEMPLATE':{
+          // Template substitutions perform ToString, not '+' concatenation.
+          // Each substitution is observed in order. Guest coercion callbacks
+          // are refused until an owned continuation models them.
+          if(!Number.isInteger(arg.count)||arg.count<0||
+             !Array.isArray(arg.quasis)||arg.quasis.length!==arg.count+1 ||
+             arg.quasis.some(q=>typeof q!=='string'))
+            throw new TypeError('Malformed owned template instruction');
+          const values=Array.from({length:arg.count},()=>pop()).reverse();
+          let output=arg.quasis[0];
+          values.forEach((value,i)=>{
+            if(!['undefined','null','bool','str','num','bigint'].includes(value.value[0]))
+              throw new TypeError('Template object ToString needs an owned coercion continuation');
+            output+=String(decode(value.value))+arg.quasis[i+1];
+          });
+          return {...operands(...values),...result(['str',output])};
         }
         case 'BINARY':{
           const b=pop(),a=pop();
@@ -753,7 +777,8 @@ export class Runtime {
           if(callable[0]==='method')callable=callable[1];
           if(callable[0]==='ref' && s.heap[callable[1]]?.kind==='function'){
             const target=s.heap[callable[1]],promiseId=target.async?this.newPromise(s):null;
-            const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,args,receiver);
+            const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,args,
+              target.arrow?target.lexicalThis:receiver);
             s.control.a0.activeFrameId=id;
             return {...operands(fn,...args),result:['ref',callable[1]],causes:[{kind:'invocation',frameId:id}]};
           }
@@ -973,6 +998,7 @@ export class Runtime {
     if(kind!==(e.kind==='promise'?'completion':'immediate'))throw new Error('Wrong input kind for host call');
     if(e.external!=='pending')throw new Error('Effect already completed');
     if(e.inputIds.length)throw new Error('Effect already has an input arrival');
+    if(typeof abrupt!=='boolean')throw new TypeError('Input abrupt must be boolean');
     if(inputId!==null && (typeof inputId!=='string'||!inputId||['__proto__','constructor','prototype'].includes(inputId)))
       throw new TypeError('Transport input ID must be a nonempty, non-reserved string');
     if(Array.isArray(value) && !guestValue(value))throw new TypeError('Unsupported canonical external payload');

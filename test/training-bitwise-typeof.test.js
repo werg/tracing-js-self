@@ -55,7 +55,7 @@ test('typeof uninitialized lexical binding is a guest throw, not undefined',()=>
   const bundle=runtime.exportRun();
   assert.equal(validateBundle(bundle).valid,true);
   assert.equal(replayExact(bundle).valid,true);
-  assert.equal(bundle.finalState.control.a0.completion.kind,'throw');
+  assert.equal(bundle.finalState.control.a0.failure.completion.type,'throw');
   assert.notEqual(verifyTrainingCase({source,entry:'f'}).status,'locally_verified');
 });
 test('unresolved assignment and value reads remain unbound, no ambient fallback',()=>{
