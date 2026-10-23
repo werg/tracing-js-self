@@ -78,7 +78,7 @@ function ownDataArray(value,label,max){
 function parseModule(file,text,sources){
   const lowering=compileBoundedTypeScript(text,{path:file});
   const ast=parseAcorn(lowering.javascript,{ecmaVersion:2022,sourceType:'module'});
-  const symbols=new Map(),imports=new Map(),exports=new Map(),forwards=new Map();
+  const symbols=new Map(),imports=new Map(),namespaceImports=new Map(),exports=new Map(),forwards=new Map();
   const stars=[],deps=new Set(),functions=[],initializers=[];
   const addDependency=from=>deps.add(from);
   const addImport=(local,from,imported)=>{
@@ -90,6 +90,12 @@ function parseModule(file,text,sources){
     if(symbols.has(local))reject('import shadows local '+local+' in '+file);
     imports.set(local,{module:from,name:imported});
     addDependency(from);
+  };
+  const addNamespace=(local,from)=>{
+    if(!validName(local)||symbols.has(local)||imports.has(local)||
+       namespaceImports.has(local)||local.startsWith('__traced_eval_'))
+      reject('duplicate or reserved namespace import '+local+' in '+file);
+    namespaceImports.set(local,from);addDependency(from);
   };
   const addExport=(exported,local)=>{
     if(!validName(exported)&&exported!=='default'||!validName(local))
@@ -111,7 +117,7 @@ function parseModule(file,text,sources){
   };
   const addSymbol=(name,kind,node)=>{
     if(!validName(name)||name.startsWith('__traced_eval_')||
-       symbols.has(name)||imports.has(name))
+       symbols.has(name)||imports.has(name)||namespaceImports.has(name))
       reject('duplicate, reserved or invalid module binding '+name+' in '+file);
     symbols.set(name,{kind,node});
   };
@@ -150,7 +156,7 @@ function parseModule(file,text,sources){
       const clause=node.importClause;
       const named=clause?.namedBindings;
       if(named&&ts.isNamespaceImport(named))
-        reject('namespace import requires module namespace exotic object');
+        addNamespace(named.name.text,from);
       const eligible=!!clause?.name||
         (named&&ts.isNamedImports(named)&&named.elements.some(e=>!e.isTypeOnly))||
         !clause;
@@ -187,8 +193,10 @@ function parseModule(file,text,sources){
       const from=requestPath(file,node.source.value,sources);
       addDependency(from);
       for(const spec of node.specifiers){
-        if(spec.type==='ImportNamespaceSpecifier')
-          reject('namespace import requires a module namespace exotic object');
+        if(spec.type==='ImportNamespaceSpecifier'){
+          addNamespace(nodeName(spec.local),from);
+          continue;
+        }
         addImport(nodeName(spec.local),from,
           spec.type==='ImportDefaultSpecifier'?'default':nodeName(spec.imported));
       }
@@ -239,7 +247,7 @@ function parseModule(file,text,sources){
       reject('export '+exported+' references missing local '+local+' in '+file);
   // JS modules can contain a source-level import binding not referenced in
   // the emitted code; preflight all such imports without executing anything.
-  return {file,text,lowering,symbols,imports,exports,forwards,
+  return {file,text,lowering,symbols,imports,namespaceImports,exports,forwards,
     stars:[...new Set(stars)],deps:[...deps],functions,initializers};
 }
 function bindingNames(pattern,out=[]){
@@ -252,7 +260,7 @@ function bindingNames(pattern,out=[]){
     pattern.properties.forEach(x=>bindingNames(x.value??x.argument,out));
   return out;
 }
-function rewrite(module,root,names,initialIdentifiers){
+function rewrite(module,root,names,initialIdentifiers,namespaceBindings=new Map()){
   const edits=new Map();
   function walk(node,parent=null,key=null){
     if(!node||typeof node!=='object')return;
@@ -284,7 +292,20 @@ function rewrite(module,root,names,initialIdentifiers){
       for(const name of bindingNames(node.id))
         if(names.has(name))
           reject('shadowed lexical binding '+name+' in '+module.file);
+    if(node.type==='MemberExpression'&&
+       node.object?.type==='Identifier'&&namespaceBindings.has(node.object.name)){
+      const key=node.computed?
+        (node.property?.type==='Literal'&&typeof node.property.value==='string'?
+          node.property.value:null):
+        node.property?.type==='Identifier'?node.property.name:null;
+      if(key===null)reject('dynamic namespace property access requires module namespace exotic semantics');
+      const target=namespaceBindings.get(node.object.name)(key);
+      edits.set(node.start,{end:node.end,value:target.linked});
+      return;
+    }
     if(node.type==='Identifier'){
+      if(namespaceBindings.has(node.name))
+        reject('namespace identity escapes a static property read in '+module.file);
       const replacement=names.get(node.name);
       if(!replacement)return;
       if(parent?.type==='MemberExpression'&&key==='property'&&!parent.computed)return;
@@ -447,8 +468,13 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     return {...call,binding};
   }):null;
   const bound=new Map(),links=[];
+  const namespaces=new Map();
   for(const file of order){
     const module=get(file),names=new Map(renamed.get(file));
+    const reads=new Map();
+    for(const [local,from] of module.namespaceImports)
+      reads.set(local,exported=>required(from,exported));
+    namespaces.set(file,reads);
     for(const [local,imp] of module.imports){
       const resolved=required(imp.module,imp.name);
       names.set(local,resolved.linked);
@@ -474,7 +500,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
   for(const file of order){
     const module=get(file),names=bound.get(file);
     for(const fn of module.functions)
-      append(file,'instantiate',rewrite(module,fn,names,new Set()));
+      append(file,'instantiate',rewrite(module,fn,names,new Set(),namespaces.get(file)));
   }
   // Evaluation: side effects and mutable lexicals execute in module request
   // dependency order, once, in the *same* owned guest invocation/heap.
@@ -483,13 +509,13 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     for(const item of module.initializers){
       if(item.kind==='default'){
         append(file,'evaluate','const '+names.get(item.local)+' = ('+
-          rewrite(module,item.node,names,new Set())+');');
+          rewrite(module,item.node,names,new Set(),namespaces.get(file))+');');
       }else{
         const initialIdentifiers=new Set();
         if(item.node.type==='VariableDeclaration')
           for(const declarator of item.node.declarations)
             initialIdentifiers.add(declarator.id.start);
-        append(file,'evaluate',rewrite(module,item.node,names,initialIdentifiers));
+        append(file,'evaluate',rewrite(module,item.node,names,initialIdentifiers,namespaces.get(file)));
       }
     }
   }
