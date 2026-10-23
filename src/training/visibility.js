@@ -24,9 +24,17 @@ export function trainingPrefix(bundle,{maxSourceBytes=2048}={}) {
     return fn?.kind==='function' ? [{name,identity:value[1],code:fn.codeId,
       captures:fn.closureEnvId}] : [];
   });
+  const staticRegExps=Object.entries(global.bindings).flatMap(([name,binding])=>{
+    const value=binding.token?.value;
+    const regex=value?.[0]==='ref' && bundle.initialState.heap[value[1]];
+    return regex?.kind==='regexp' ? [{name,identity:value[1],
+      pattern:regex.properties['[[Source]]'].value[1],
+      flags:regex.properties['[[Flags]]'].value[1]}] : [];
+  });
   return {
     schema:'semantic-context/2',
-    source:encodeRecord('code',{sourceId:source.sourceId,text:source.text,codes,sites,staticFunctions}),
+    source:encodeRecord('code',{sourceId:source.sourceId,text:source.text,codes,sites,staticFunctions,
+      ...(staticRegExps.length?{staticRegExps}:{})}),
     input:encodeRecord('value',{entry:bundle.entrySpec.functionName,
       invocation:bundle.initialState.control.a0.activeFrameId,graph})
   };

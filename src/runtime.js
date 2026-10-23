@@ -6,6 +6,7 @@ import { createArithmetic, advanceArithmetic, isOwnedArithmetic, ordinaryGet, or
 import { operationMutation } from './spec-mutations.js';
 import {hostOperation,prepareHostRequest} from './host/operations.js';
 import { specStep, ENGINE_REVISION } from './spec-schema.js';
+import {supportsPinnedRegExp,testPinnedRegExp,scanPinnedReplacement} from './owned-pinned-regexp.js';
 
 class GuestFault extends Error {constructor(name,message){super(message);this.name=name;}}
 const guestFault=(name,message)=>{throw new GuestFault(name,message);};
@@ -255,6 +256,9 @@ export class Runtime {
     state.envs[global].bindings.Infinity={kind:'const',initialized:true,token:token(['num','+Infinity']),version:0};
     if(allowHost)state.envs[global].bindings.host={kind:'const',initialized:true,
       token:token(['host','demo']),version:0};
+    for(const name of ['parseInt','isNaN'])
+      state.envs[global].bindings[name]={kind:'const',initialized:true,
+        token:token(['builtinfn',name]),version:0};
     for(const name of ['Object','Array','Number','Math','Promise','Set','Error','TypeError'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
@@ -265,7 +269,21 @@ export class Runtime {
       if(Object.hasOwn(state.envs[global].bindings,init.id))
         throw new SyntaxError('Duplicate or reserved global initializer '+init.id);
       const val=init.init;
-      const initial=val?.type==='Literal'?val.value:
+      let initial=null;
+      if(val?.type==='OwnedPinnedRegExp'){
+        if(!supportsPinnedRegExp(val.pattern,val.flags))
+          throw new SyntaxError('Unsupported static RegExp initializer');
+        const id=this.next(state,'obj');
+        state.heap[id]={id,kind:'regexp',properties:{
+          '[[Source]]':token(['str',val.pattern]),
+          '[[Flags]]':token(['str',val.flags]),
+          lastIndex:token(['num',0])
+        },propertyVersions:{'[[Source]]':0,'[[Flags]]':0,lastIndex:0},
+        shapeVersion:3,version:0};
+        initial=['ref',id];
+      }
+      initial ??=val?.type==='Identifier'&&val.name==='undefined'?U:
+        val?.type==='Literal'?val.value:
         val?.type==='Member' && val.object?.type==='Identifier' &&
         val.object.name==='Math' && val.property?.type==='Literal' &&
         ['ceil','floor','min','max'].includes(val.property.value?.[1])
@@ -347,6 +365,23 @@ export class Runtime {
         delete caller.pendingArrayMethod;
         }
       }
+      const replacing=caller.pendingStringReplace;
+      if(replacing?.waitingFrameId===frame.id){
+        if(!['undefined','null','bool','num','str','bigint'].includes(value[0]))
+          throw new TypeError('Owned replacement callback must return scalar data');
+        const match=replacing.matches[replacing.index];
+        replacing.output+=replacing.text.slice(replacing.lastEnd,match.start)+
+          String(decode(value));
+        replacing.lastEnd=match.end;
+        replacing.index++;
+        replacing.waitingFrameId=null;
+        if(replacing.index<replacing.matches.length){
+          draft.control.a0.activeFrameId=caller.id;
+          return;
+        }
+        value=['str',replacing.output+replacing.text.slice(replacing.lastEnd)];
+        delete caller.pendingStringReplace;
+      }
       const pending=caller.pendingProperty;
       if(pending?.waitingFrameId===frame.id){
         caller.pendingProperty=null;
@@ -397,6 +432,21 @@ export class Runtime {
         nextInsert();
       }
     }else throw new Error('Unexpected sort continuation phase');
+  }
+  advanceStringReplaceCallback(draft,caller){
+    const p=caller.pendingStringReplace;
+    const match=p?.matches[p.index];
+    if(!match || p.waitingFrameId!==null)
+      throw new Error('Missing guest replacement callback');
+    const fn=draft.heap[p.callbackId];
+    const params=[token(['str',match.match])];
+    if(match.group!==null)params.push(token(['str',match.group]));
+    params.push(token(['num',match.start]),token(['str',p.text]));
+    const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,caller.id,null,
+      params,fn.arrow?fn.lexicalThis:U);
+    p.waitingFrameId=child;
+    draft.control.a0.activeFrameId=child;
+    return child;
   }
   // Continue a guest Array callback in the owned VM, never by executing
   // guest functions in the host. Reads are from current heap state so callback
@@ -609,6 +659,14 @@ export class Runtime {
     const c=this.state.control.a0,frame=c.activeFrameId&&this.state.frames[c.activeFrameId];
     if(!frame||frame.status!=='running')return null;
     if(frame.operationId)return this.stepArithmetic(frame);
+    if(frame.pendingStringReplace?.waitingFrameId===null){
+      const siteId=frame.pendingStringReplace.siteId;
+      return this.commit('call.enter',(s)=>{
+        const child=this.advanceStringReplaceCallback(s,s.frames[frame.id]);
+        return {causes:[{kind:'invocation',frameId:child}]};
+      },{siteId,sourceId:frame.codeId.split(':')[0],
+        codeId:frame.codeId,invocationId:frame.id});
+    }
     if(frame.pendingArrayMethod && frame.pendingArrayMethod.waitingFrameId===null){
       const siteId=frame.pendingArrayMethod.siteId;
       return this.commit('call.enter',(s,eventId)=>{
@@ -839,8 +897,7 @@ export class Runtime {
         case 'JUMP_IF_FALSE':{const a=pop();if(!truthy(a.value))f.pc=arg;return {...operands(a),result:['bool',!truthy(a.value)]};}
         case 'LOGICAL_JUMP':{const a=st.at(-1),v=a.value;const pass=arg.operator==='&&'?!truthy(v):arg.operator==='||'?truthy(v):v[0]!=='null'&&v[0]!=='undefined';if(pass)f.pc=arg.to;return {...operands(a),result:['bool',pass]};}
         case 'NEW_PINNED_REGEXP':{
-          const supported=(!arg.flags&&['\\r\\n|\\r|\\n','(\\r\\n|\\r|\\n)'].includes(arg.pattern)) ||
-            (arg.flags==='g'&&arg.pattern===String.raw`[\\\{\}\*\+\?\|\^\$\.\[\]\(\)]`);
+          const supported=supportsPinnedRegExp(arg.pattern,arg.flags);
           if(!supported)throw new SyntaxError('Unpinned RegExp pattern or flags');
           const id=this.next(s,'obj');
           s.heap[id]={id,kind:'regexp',properties:{
@@ -949,7 +1006,21 @@ export class Runtime {
            else if(base.value[0]==='ref'){
              const obj=s.heap[base.value[1]];
              if(!obj)throw new ReferenceError('Unknown guest identity');
-             if(obj.kind==='regexp')throw new TypeError('Unmodeled RegExp property '+property);
+             if(obj.kind==='regexp'){
+               if(property==='test'){
+                 const method=['builtinfn','RegExp.prototype.test'];
+                 return {...operands(base,key),...result(op==='GET_METHOD'?['method',method,base.value]:method)};
+               }
+               if(property==='lastIndex'){
+                 const read=obj.properties.lastIndex;
+                 return {...operands(base,key),...result(read.value),reads:[{
+                   kind:'property',objectId:obj.id,key:property,present:true,
+                   shapeVersion:obj.shapeVersion??0,
+                   version:obj.propertyVersions.lastIndex??0,value:read.value,
+                   supplyingEvent:read.origin??null}]};
+               }
+               throw new TypeError('Unmodeled RegExp property '+property);
+             }
              if(obj.kind==='set'){
                if(['has','add'].includes(property)){
                  const v=['builtinfn','Set.prototype.'+property];
@@ -1006,7 +1077,15 @@ export class Runtime {
              guestFault('TypeError',`Cannot set properties of ${base.value[0]}`);
            if(base.value[0]!=='ref'||!s.heap[base.value[1]]||s.heap[base.value[1]].kind==='function')throw new TypeError('Not a writable guest object');
           const object=s.heap[base.value[1]];
-          if(['set','regexp'].includes(object.kind))
+          if(object.kind==='regexp'){
+            if(property!=='lastIndex'||v.value[0]!=='num' ||
+               !Number.isSafeInteger(decode(v.value)) ||
+               decode(v.value)<0 || decode(v.value)>10001)
+              throw new TypeError('Only bounded RegExp.lastIndex writes are owned');
+            putOwn(object,'lastIndex',v.value,eventId);
+            return {...operands(base,key,v),...result(v.value)};
+          }
+          if(object.kind==='set')
             throw new TypeError('Owned intrinsic internal slots are not guest-writable properties');
           const route=object.kind==='proxy'?proxyRoute(s.heap,base.value,'set'):
             {kind:'ordinary',target:base.value,receiver:base.value};
@@ -1196,6 +1275,48 @@ export class Runtime {
               throw new TypeError('Number fixed-digit count outside supported range');
             return {...operands(fn,...args),...result(encode(
               Number.prototype[method].call(number,format)))};
+          }
+          if(callable[0]==='builtinfn' && ['parseInt','isNaN'].includes(callable[1])){
+            if(callable[1]==='parseInt'){
+              if(args.length!==2||args[0].value[0]!=='str'||
+                 args[1].value[0]!=='num'||decode(args[1].value)!==10 ||
+                 args[0].value[1].length>30||
+                 ![...args[0].value[1]].every(c=>c>='0'&&c<='9'))
+                throw new TypeError('Owned parseInt needs bounded decimal digits and radix 10');
+              return {...operands(fn,...args),...result(encode(parseInt(args[0].value[1],10)))};
+            }
+            if(args.length!==1||args[0].value[0]!=='num')
+              throw new TypeError('Owned isNaN accepts only a scalar number');
+            return {...operands(fn,...args),...result(['bool',Number.isNaN(decode(args[0].value))])};
+          }
+          if(callable[0]==='builtinfn' && callable[1]==='RegExp.prototype.test'){
+            const regex=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+            if(regex?.kind!=='regexp'||args.length!==1||args[0].value[0]!=='str')
+              throw new TypeError('Owned RegExp test requires a pinned string operation');
+            const pattern=decode(regex.properties['[[Source]]'].value);
+            const flags=decode(regex.properties['[[Flags]]'].value);
+            const lastIndex=decode(regex.properties.lastIndex.value);
+            const outcome=testPinnedRegExp(pattern,flags,decode(args[0].value),lastIndex);
+            if(flags==='g')putOwn(regex,'lastIndex',['num',outcome.nextIndex],eventId);
+            return {...operands(fn,...args),...result(['bool',outcome.matched])};
+          }
+          if(callable[0]==='builtinfn' && callable[1]==='String.prototype.replace' &&
+             args[1]?.value[0]==='ref'){
+            const regex=args[0]?.value[0]==='ref'?s.heap[args[0].value[1]]:null;
+            const callback=s.heap[args[1].value[1]];
+            if(receiver[0]!=='str'||args.length!==2||regex?.kind!=='regexp'||
+               callback?.kind!=='function'||callback.async)
+              throw new TypeError('Unsupported RegExp guest callback replacement');
+            const pattern=decode(regex.properties['[[Source]]'].value);
+            const flags=decode(regex.properties['[[Flags]]'].value);
+            if(decode(regex.properties.lastIndex.value)!==0)
+              throw new TypeError('Owned replacement requires initial RegExp.lastIndex = 0');
+            const matches=scanPinnedReplacement(pattern,flags,receiver[1]);
+            if(!matches.length)return {...operands(fn,...args),...result(receiver)};
+            f.pendingStringReplace={text:receiver[1],matches,index:0,lastEnd:0,
+              output:'',callbackId:callback.id,waitingFrameId:null,siteId:inst.siteId};
+            const child=this.advanceStringReplaceCallback(s,f);
+            return {...operands(fn,...args),causes:[{kind:'invocation',frameId:child}]};
           }
           if(callable[0]==='builtinfn' && callable[1]==='String.prototype.replace') {
             if(receiver[0]!=='str'||args.length!==2||receiver[1].length>10000 ||

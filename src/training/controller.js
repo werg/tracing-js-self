@@ -4,6 +4,7 @@
 import {isDeepStrictEqual} from 'node:util';
 import {decodeRecord,restoreLines} from './format.js';
 import {decode} from '../values.js';
+import {supportsPinnedRegExp} from '../owned-pinned-regexp.js';
 
 const same=(a,b)=>isDeepStrictEqual(a,b);
 const copy=value=>structuredClone(value);
@@ -36,6 +37,22 @@ export class SemanticController {
       this.heap.set(fn.identity,{kind:'function',code:fn.code,captures:fn.captures,
         shapeVersion:0,properties:new Map(),versions:new Map()});
       this.staticFunctions.set(fn.name,fn.identity);
+    }
+    this.staticRegExps=new Map();
+    for(const regex of source.staticRegExps??[]){
+      if(!regex || typeof regex.name!=='string'||
+         typeof regex.identity!=='string'||
+         !supportsPinnedRegExp(regex.pattern,regex.flags)||
+         this.heap.has(regex.identity)||this.staticRegExps.has(regex.name))
+        fail('context','Invalid pinned static RegExp allocation');
+      const properties=new Map([
+        ['[[Source]]',{value:['str',regex.pattern],version:0}],
+        ['[[Flags]]',{value:['str',regex.flags],version:0}],
+        ['lastIndex',{value:['num',0],version:0}]
+      ]);
+      this.heap.set(regex.identity,{kind:'regexp',shapeVersion:3,properties,
+        versions:new Map([['[[Source]]',0],['[[Flags]]',0],['lastIndex',0]])});
+      this.staticRegExps.set(regex.name,regex.identity);
     }
     const graph=input.graph;
     for(const obj of graph.objects??[]){
@@ -127,7 +144,7 @@ export class SemanticController {
           'includes','startsWith','endsWith','toLowerCase','toUpperCase','trim',
           'trimStart','trimEnd','split','replace'].map(x=>'String.prototype.'+x),
         'Array.isArray','Array.from','Array.toString',
-        'Set.prototype.has','Set.prototype.add',
+        'Set.prototype.has','Set.prototype.add','RegExp.prototype.test','parseInt','isNaN',
         'Object.hasOwn','Object.keys','Object.values','Object.entries','Object.assign','Object.is','Object.create','Object.setPrototypeOf',
         'Object.getPrototypeOf','Object.defineProperty','Object.valueOf','Object.toString',
         'Promise.resolve','Promise.reject','Promise.prototype.then',
@@ -416,7 +433,9 @@ export class SemanticController {
           const active=this.activations.get(fields.invocation);
           const seeded=active?.params[read.name] ??
             (this.staticFunctions.has(read.name) ?
-              ['ref',this.staticFunctions.get(read.name)] : undefined);
+              ['ref',this.staticFunctions.get(read.name)] :
+              this.staticRegExps.has(read.name) ? ['ref',this.staticRegExps.get(read.name)] :
+              undefined);
           if(prior && (prior.version!==read.version || !same(prior.value,read.value)))
             fail('read','Captured binding version/value disagrees with committed state');
           if(!prior && seeded && !same(seeded,read.value))
@@ -447,7 +466,9 @@ export class SemanticController {
           const active=this.activations.get(fields.invocation);
           const seeded=active?.params[read.name] ??
             (this.staticFunctions.has(read.name) ?
-              ['ref',this.staticFunctions.get(read.name)] : undefined);
+              ['ref',this.staticFunctions.get(read.name)] :
+              this.staticRegExps.has(read.name) ? ['ref',this.staticRegExps.get(read.name)] :
+              undefined);
           if(prior && (prior.version!==read.version || !same(prior.value,read.value)))
             fail('read','Updated binding read differs from committed state');
           if(!prior && seeded && !same(seeded,read.value))

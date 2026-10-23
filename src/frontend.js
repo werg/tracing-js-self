@@ -281,6 +281,24 @@ export function compile(ast) {
         case 'Return':if(n.argument)expr(n.argument);else emit('CONST',{value:['undefined']},n);emit('RETURN',null,n);break;
         case 'Throw':expr(n.argument);emit('THROW',null,n);break;
         case 'Block':statements(n.body,true);break;
+        case 'Switch':{
+          // Each declared arm returns: discriminant once and no fallthrough.
+          expr(n.discriminant);
+          const fallback=n.cases.find(c=>!c.test);
+          for(const c of n.cases){
+            if(!c.test)continue;
+            emit('DUP',null,c.test);
+            expr(c.test);
+            emit('BINARY','===',n);
+            const next=emit('JUMP_IF_FALSE',null,n);
+            emit('POP',null,c.test);
+            stmt(c.body);
+            instructions[next].arg=instructions.length;
+          }
+          emit('POP',null,n);
+          if(fallback)stmt(fallback.body);
+          break;
+        }
         case 'If':{expr(n.test);const no=emit('JUMP_IF_FALSE',null,n.test);stmt(n.consequent);if(n.alternate){const end=emit('JUMP',null,n);instructions[no].arg=instructions.length;stmt(n.alternate);instructions[end].arg=instructions.length;}else instructions[no].arg=instructions.length;break;}
         case 'While':{
           const entry=emit('LOOP_ENTER',null,n),top=instructions.length;
