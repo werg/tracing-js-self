@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {auditPublicCausality} from '../src/training/causal-audit.js';
-import {encodeRecord,fragmentLine} from '../src/training/format.js';
+import {encodeRecord,decodeRecord,fragmentLine} from '../src/training/format.js';
 import {verifyTrainingCase} from '../src/training/admit.js';
 const observed=record=>({mode:'observed',loss:'none',events:[{track:'t0',record}]});
 const generated=record=>({mode:'generated',loss:'semantic',events:[{track:'t0',record}]});
@@ -55,4 +55,26 @@ test('actual exported candidate episode satisfies public-only causal audit',()=>
    {maxBytes:verified.exported.sidecar.limits.maxBytes});
  assert.equal(result.valid,true);
  assert(result.semanticEvents>0);
+});
+
+test('public-only audit rejects metadata smuggling in visible records and meridians',()=>{
+ const x=episode();
+ const hidden=structuredClone(x);
+ hidden.groups[0].futureAnswer={result:99};
+ assert.throws(()=>auditPublicCausality(hidden),/Invalid public group/);
+ const prefix=structuredClone(x);
+ const code=decodeRecord(prefix.groups[0].events[0].record);
+ code.fields.referenceOutcome={result:99};
+ prefix.groups[0].events[0].record=encodeRecord(code.kind,code.fields);
+ assert.throws(()=>auditPublicCausality(prefix),/observed source bundle/);
+ const input=structuredClone(x);
+ const arg=decodeRecord(input.groups[1].events[0].record);
+ arg.fields.graph.outcome={result:99};
+ input.groups[1].events[0].record=encodeRecord(arg.kind,arg.fields);
+ assert.throws(()=>auditPublicCausality(input),/observed input graph/);
+ const generated=structuredClone(x);
+ const original=decodeRecord(generated.groups[3].events[0].record);
+ original.fields.oracle={result:99};
+ generated.groups[3].events[0].record=encodeRecord(original.kind,original.fields);
+ assert.throws(()=>auditPublicCausality(generated),/Unrecognized generated/);
 });
