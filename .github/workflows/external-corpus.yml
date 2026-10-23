@@ -7,6 +7,8 @@ on:
       - 'src/corpus/full-disposition.mjs'
       - 'src/corpus/original-sites.mjs'
       - 'tools/convert-full-corpus.mjs'
+      - 'tools/verify-test262-scalar.mjs'
+      - 'src/corpus/test262-scalar-reference.mjs'
       - 'tools/verify-exercism-owned.mjs'
       - 'tools/import-external-corpus.mjs'
       - 'corpus/extension/**'
@@ -18,6 +20,8 @@ on:
       - 'src/corpus/full-disposition.mjs'
       - 'src/corpus/original-sites.mjs'
       - 'tools/convert-full-corpus.mjs'
+      - 'tools/verify-test262-scalar.mjs'
+      - 'src/corpus/test262-scalar-reference.mjs'
       - 'tools/verify-exercism-owned.mjs'
       - 'tools/import-external-corpus.mjs'
       - 'corpus/extension/**'
@@ -133,6 +137,12 @@ jobs:
             --output corpus/out/full/exercism-owned-report.json \
             --review corpus/out/full/exercism-owned-review.md \
             --local-episodes corpus/out/full/exercism-owned-local.jsonl
+      - name: Bounded Test262 owned-script vs independent V8 scalar checks
+        run: |
+          node tools/verify-test262-scalar.mjs \
+            --root "$RUNNER_TEMP/upstream/test262" \
+            --max-candidates 250 --min-agreed 6 \
+            --output corpus/out/full/test262-scalar-diagnostics.json
       - name: One-for-one full inventory conversion disposition (no fabricated traces)
         run: |
           node tools/convert-full-corpus.mjs \

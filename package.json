@@ -56,7 +56,8 @@
     "corpus:adversarial": "node tools/build-stateful-corpus.mjs --suite adversarial",
     "corpus:adversarial:audit": "node tools/audit-stateful-corpus.mjs --suite adversarial",
     "corpus:exercism:owned": "node tools/verify-exercism-owned.mjs",
-    "corpus:full:disposition": "node tools/convert-full-corpus.mjs"
+    "corpus:full:disposition": "node tools/convert-full-corpus.mjs",
+    "corpus:test262:scalar": "node tools/verify-test262-scalar.mjs"
   },
   "bin": {
     "tracing-js-self": "./bin/tracing.js"

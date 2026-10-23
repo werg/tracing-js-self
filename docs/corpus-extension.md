@@ -1290,3 +1290,47 @@ JSONL row is not semantic execution. An unsupported script, an invalid
 source-module projection, a native V8 diagnostic, or a self-replayed but
 independently unchecked owned trace may **never** count as a verified
 `semantic-execution/2` training candidate.
+
+
+### Exhaustive conversion disposition: verified CI evidence (2026-10-23)
+
+The full checked-out-source run in
+[GitHub Actions 39994536985](https://github.com/werg/tracing-js-self/actions/runs/39994536985)
+successfully classified **117,773/117,773** individually acquired fixtures
+with no missing or duplicate candidate identity:
+
+| Origin | Acquired | Locally verified owned `semantic-execution/2` | Explicit refusals |
+| --- | ---: | ---: | ---: |
+| Test262 | 103,582 | 0 | 103,582 |
+| Exercism canonical | 2,330 | **34** | 2,296 |
+| JSON Schema | 11,861 | 0 | 11,861 |
+| **All** | **117,773** | **34** | **117,739** |
+
+The original Exercism pilot also yielded **37 additional verified synthetic
+input variants**, for **71 independent owned episodes in total**, 34 of which
+join uniquely and exactly to the full acquired catalog. The remaining 37 are
+outside the canonical record denominator. Every positive match requires
+full upstream file SHA provenance, canonical expectation agreement, a
+post-serialization independent owned check, and an original-token mapping
+audit. **All training-admitted counts remain zero**.
+
+Breakdown of major Test262 refusals: 58,123 missing full owned harness,
+24,694 unmodeled extra harness includes, 10,815 async cases, 8,487
+phase-sensitive negative cases, 873 module/raw variants and 590 metadata
+review cases. The **entire 11,861-case JSON Schema inventory** still
+requires real version-matched JS implementations that can be executed
+and traced by the owned machine; the expectation-only schema datasets
+contain no such implementation.
+
+- [x] Full 1:1 conversion/refusal ledger complete with deterministic identities,
+  auditable source IDs and no false admissions.
+- [x] Original JS byte-preserving source spans audited for the verified
+  function-entry corpus; synthesized tokens explicitly unmapped.
+- [ ] **Full conversion NOT achieved**. Only 34 of 117,773 acquired fixtures
+  currently have a locally verified owned semantic-execution training candidate.
+- [ ] Extend the full Test262 official harness and source-level native
+  reference to a complete owned implementation; the added bounded scalar
+  reference runner is a **diagnostic** not a training example producer.
+- [ ] Introduce independently checked owned validators/parsers and full
+  module/async/proxy/host-runtime semantics before attempting to certify
+  the remaining inventory.

@@ -235,3 +235,19 @@ This provides exhaustive **accounting** at 117,773 known acquired candidates,
 but not complete owned **execution**. All unresolved cases stay in the
 documented refusal ledger. Artifacts from the full-source workflow distinguish
 the rechecked owned subset from the total acquisition inventory.
+
+
+### Exhaustive disposition (CI measurement)
+
+[Actions run 39994536985](https://github.com/werg/tracing-js-self/actions/runs/39994536985)
+audited **all 117,773** acquired input records. Exactly **34 canonical
+Exercism records** join to real locally verified owned traces; the other
+**117,739** remain explicit, categorized refusals. There are also
+**37 independent verified input variants** outside the original acquisition
+denominator. All admitted training counts remain zero.
+
+A separate `tools/verify-test262-scalar.mjs` checks a small, bounded
+Test262 scalar slice in the owned script interpreter and an independent
+Node V8 scalar reference. Passing this is **not** equivalent to an official
+Test262 harness or an owned `semantic-execution/2` episode. It makes
+no claim about modules, host effects, async or syntactic negative tests.
