@@ -63,7 +63,8 @@
     "corpus:full:disposition": "node tools/convert-full-corpus.mjs",
     "corpus:test262:scalar": "node tools/verify-test262-scalar.mjs",
     "corpus:test262:reference": "node tools/verify-test262-reference.mjs",
-    "corpus:test262:reference:modules": "node --experimental-vm-modules tools/verify-test262-reference.mjs"
+    "corpus:test262:reference:modules": "node --experimental-vm-modules tools/verify-test262-reference.mjs",
+    "corpus:structured:reference": "node tools/verify-structured-contracts.mjs"
   },
   "bin": {
     "tracing-js-self": "./bin/tracing.js"

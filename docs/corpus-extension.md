@@ -1456,3 +1456,46 @@ conversion is not**.
 - [x] The opt-in pinned-checkout reference runner now routes `flags: [async]` *scripts* through a bounded `$DONE` diagnostic adapter for sloppy/strict modes. VM-local promise microtasks are drained; positive and parse/runtime-negative outcomes are separated, duplicate/missing completions and unhandled rejections are checked, and forged `{name: ...}` errors never match genuine error constructors.
 - [x] Focused offline regression tests cover completion, strictness, incomplete/malicious metadata, missing/unsafe harness includes, native timeouts and rejection-after-completion. This is **native V8 diagnostic evidence only** (`verifiedOwned: false`, `admitted: false`).
 - [ ] Full official Test262 async completion across timers/host callbacks/event-loop turns, async modules, and comprehensive upstream suite yield remain **unmeasured/unimplemented**. In-process `node:vm` remains unsafe for untrusted sources; isolated workers are still required. Previously measured 117,773 acquired / 40 canonical owned / 37 generated owned / zero admitted remain unchanged.
+
+### Opt-in pinned structured-suite execution bridge (2026-10-23)
+
+- [x] Implemented a generic **native-JS diagnostic** bridge for JSON Schema
+  and CommonMark acquisition rows. Each binding declares the original input
+  repository SHA, JS implementation repository SHA, license, module SHA-256,
+  named API export, and exact supported JSON Schema dialects.
+- [x] Individual acquired input sources are SHA-256 rechecked against a clean
+  pinned checkout before execution. A bounded single-use Node worker checks
+  actual native JS validity/HTML outputs against upstream contract labels.
+  Disagreements, incompatible dialects, stale code, duplicates, exceptions
+  and timeouts cannot produce reference agreement. Regression tests use
+  synthetic pinned implementations; **no production Ajv/CommonMark yield**
+  has been measured by this new runner.
+- [x] All results are **native-v8-diagnostic-only**, verifiedOwned: false,
+  admitted: false. The explicit --trusted-execution requirement is not a
+  security boundary: Node child processes with memory/deadline limits are
+  not isolated from host files, network or credentials. Untrusted upstream
+  packages require externally provisioned restricted sandboxes.
+- [ ] Pair and measure real pinned implementation packages, verify their
+  version-specific compatibility and independently own-trace their internal
+  computations. Previous 117,773 acquired / 40 canonical locally owned /
+  37 generated locally owned / zero admitted figures remain unchanged.
+
+Example for **trusted local** clean pinned checkouts:
+
+~~~sh
+node tools/verify-structured-contracts.mjs \
+  --trusted-execution --binding /path/to/pinned-binding.json \
+  --input corpus/out/full/json-schema.jsonl \
+  --inputs-root /path/to/pinned/input-suite \
+  --implementation-root /path/to/pinned/js-implementation \
+  --max 100 --timeout-ms 500 \
+  --output corpus/out/structured-reference.jsonl \
+  --report corpus/out/structured-reference-report.json
+~~~
+
+Binding format: structured-corpus-binding/1 with kind, inputRepository,
+inputRevision, and implementation fields repository, revision, license, file,
+sha256 and entry. JSON Schema requires an explicit dialects array and its
+export must implement validate(schema, data) -> boolean. CommonMark uses
+kind commonmark-contract and render(markdown) -> string without dialects.
+These are compatibility-shim contracts, not assumptions about package APIs.
