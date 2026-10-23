@@ -2,6 +2,22 @@
 
 This repository implements a **bounded, executable prototype** for the architecture in the attached *Complete JavaScript Semantic Tracing Runtime, revision 2 (22 October 2026)*. It does **not** implement the complete plan or claim a complete ECMAScript/Node/browser profile. In particular, a passing prototype test is not a Test262, WPT, Node-API, or learning-evaluation result.
 
+## Cross-repository semantic Episode contract repair (October 23, 2026)
+
+- The diagnostic `semantic-execution/2` consumer in `werg/megatoken` had
+  an out-of-date effective-record field allowlist, causing the current tracer
+  emitter to fail the pinned native-import GitHub Actions step despite passing
+  local replay and reference audits. The consumer now recognizes the emitted
+  bounded `randomSeed`, `staticRegExps`, `rest`, multi-binding `copies`,
+  call `allocations`, and return `writes` fields, with malformed-extension
+  rejection and byte-preservation tests. The tracer's consumer workflow pins
+  the corresponding megatoken revision `61b4b739a156676d243a2f7d4df86164d1107a56`.
+- This is **schema compatibility for locally verified diagnostic Episodes**,
+  not independent corpus admission, native runtime replacement or model
+  training proof. The producer's generated corpus still reports `admitted=0`.
+  The cross-repository workflow must succeed on the new pin before relying on
+  this integration as passing evidence.
+
 ## Bounded October 23 additions (not a universal runtime)
 
 - Strict Acorn guest entries can execute owned async function declarations and
