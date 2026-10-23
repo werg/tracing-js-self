@@ -861,7 +861,7 @@ export class Runtime {
               (base.value[1]==='Array' && property==='isArray')))
             v=['builtinfn',base.value[1]+'.'+property];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' &&
-             ['create','setPrototypeOf','getPrototypeOf','defineProperty','hasOwn','keys','values','entries','is'].includes(property))
+             ['create','setPrototypeOf','getPrototypeOf','defineProperty','hasOwn','keys','values','entries','assign','is'].includes(property))
             v=['builtinfn',`Object.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' && property==='prototype')
             v=['intrinsic','Object.prototype'];
@@ -1153,6 +1153,31 @@ export class Runtime {
           if(callable[0]==='builtinfn' && callable[1]==='Object.is'){
             return {...operands(fn,...args),...result(['bool',
               ownedSameValue(args[0]?.value??U,args[1]?.value??U)])};
+          }
+          if(callable[0]==='builtinfn' && callable[1]==='Object.assign'){
+            const ref=args[0]?.value??U;
+            const target=ref[0]==='ref'?s.heap[ref[1]]:null;
+            if(!target||target.kind!=='object'||
+               !['Object.prototype',null].includes(objectPrototype(target))||
+               Object.keys(target.accessors??{}).length)
+              throw new TypeError('Object.assign needs a bounded ordinary data target');
+            const copies=[];
+            for(let i=1;i<args.length;i++){
+              const value=args[i].value;
+              if(value[0]==='null'||value[0]==='undefined')continue;
+              const item=value[0]==='ref'?s.heap[value[1]]:null;
+              if(!item||!['object','array'].includes(item.kind)||
+                 Object.keys(item.accessors??{}).length)
+                throw new TypeError('Object.assign source requires an owned data object');
+              for(const [key,record] of Object.entries(item.properties)){
+                if(item.kind==='array'&&key==='length')continue;
+                if(key==='__proto__')
+                  throw new TypeError('Object.assign prototype setter not modeled');
+                copies.push([key,record.value]);
+              }
+            }
+            for(const [key,value] of copies)putOwn(target,key,value,eventId);
+            return {...operands(fn,...args),...result(ref)};
           }
           if(callable[0]==='builtinfn' && ['Object.hasOwn','Object.keys','Object.values','Object.entries'].includes(callable[1])){
             const base=args[0]?.value??U,obj=base[0]==='ref'?s.heap[base[1]]:null;
