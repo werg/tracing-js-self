@@ -31,6 +31,12 @@ const cases=[
     true,{n:5}],
   ['unbound typeof and lexical unary',
     'return [typeof undeclared,typeof self,void self.n,~self.n];',true,{n:2}],
+  ['TS optional property chains and nullish fallback',
+    'const x: number = self.user?.address?.zip ?? 7; const y = self.empty?.zip ?? x+1; return [x,y];',
+    true,{user:{address:{zip:9}},empty:null}],
+  ['TS optional computed property skips unneeded key evaluation',
+    'let n=0; const key=()=>{n+=1;return "value";}; const a=self.present?.[key()]; const b=self.absent?.[key()]; return [a,b,n];',
+    true,{present:{value:5},absent:null}],
 ];
 
 for(const [name,code,body,scope] of cases){
