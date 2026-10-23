@@ -127,7 +127,8 @@ export function replayExact(bundle) {
     if(bundle.entrySpec?.kind==='function') {
       const {functionName,arguments:roots,sourceId}=bundle.entrySpec;
       if(sourceId!==entry.sourceId)fail('Entry source mismatch');
-      runtime.startEntry({source:entry,functionName,args:realizeGraph(initial.heap,roots)});
+      runtime.startEntry({source:entry,functionName,args:realizeGraph(initial.heap,roots),
+        allowAsync:initial.frames?.[activeId]?.asyncPromiseId != null});
     } else runtime.start(entry);
     expectSame(runtime.exportRun().manifest,bundle.manifest,'runtime profile manifest');
     expectSame(runtime.initialState, bundle.initialState, 'initial machine state');
