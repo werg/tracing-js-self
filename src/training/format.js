@@ -4,7 +4,7 @@
 export const TRACE_VERSION='semantic-trace/2';
 
 const fieldsFor={
-  code:['sourceId','text','codes','sites','staticFunctions','staticRegExps'],
+  code:['sourceId','text','codes','sites','staticFunctions','staticRegExps','randomSeed'],
   enter:['invocation','entry','code','receiver','arguments','captures','dependsOn','rest'],
   value:['entry','invocation','graph','id','site','dependsOn','control','result','reads','writes'],
   branch:['id','invocation','site','dependsOn','control','test','path','reads'],
