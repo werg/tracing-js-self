@@ -372,7 +372,7 @@ function transpile(code,filename){
   return result.outputText;
 }
 async function execute(code,{filename,entry,args,setupSource,timeoutMs,
-  capture,randomSeed,sourceLength}){
+  capture,randomSeed,sourceLength,clockNow}){
   const events=capture?new Capture(capture):null;
   const trace=events?events.hooks():null;
   const output={},sideEffects=[];
@@ -387,6 +387,12 @@ async function execute(code,{filename,entry,args,setupSource,timeoutMs,
   const sandbox={module:{exports:output},exports:output,
     __trace:trace,console:guestConsole};
   const ctx=vm.createContext(sandbox,{codeGeneration:{strings:false,wasm:false}});
+  // Opt-in fixed guest clock for reproducible cache expiry or TTL scenarios.
+  // The same explicitly recorded fixture clock is set in both independent V8 runs.
+  if(clockNow!==null) {
+    ctx.__observationNow=clockNow;
+    vm.runInContext('Date.now = () => __observationNow',ctx);
+  }
   // Repeatable JS built-in randomness, identical in observation and reference.
   // This is a declared benchmark fixture, not untraced ambient entropy.
   ctx.__randomSeed=randomSeed;
@@ -440,18 +446,20 @@ async function execute(code,{filename,entry,args,setupSource,timeoutMs,
  * a second uninstrumented V8 run. Not a serving-controller trajectory. */
 export async function observeProgram({source,entry,args=[],language='js',
   filename=language==='ts'?'observed.ts':'observed.js',setupSource=null,
-  timeoutMs=2000,maxEvents=6000,maxNodes=512,randomSeed=42}={}){
+  timeoutMs=2000,maxEvents=6000,maxNodes=512,randomSeed=42,clockNow=null}={}){
+  if(clockNow!==null&&(!Number.isFinite(clockNow)||!Number.isSafeInteger(clockNow)))
+    throw new TypeError('Invalid deterministic fixture clock');
   if(typeof source!=='string'||!source.trim()||typeof entry!=='string'||
      !/^[$A-Za-z_][$\w]*$/.test(entry)||!Array.isArray(args)||
      !['js','ts','tsx'].includes(language)||!Number.isInteger(timeoutMs)||
      timeoutMs<1||timeoutMs>30000)
     throw new TypeError('Invalid trusted V8 observation request');
   const observed=await execute(instrument(source,filename,language),
-    {filename,entry,args,setupSource,sourceLength:source.length,timeoutMs,randomSeed,
+    {filename,entry,args,setupSource,sourceLength:source.length,timeoutMs,randomSeed,clockNow,
       capture:{maxEvents,maxNodes}});
   const reference=await execute(transpile(source,filename),
     {filename,entry,args,setupSource,sourceLength:source.length,
-      timeoutMs,randomSeed,capture:null});
+      timeoutMs,randomSeed,clockNow,capture:null});
   const sameResult=observed.completion.kind===reference.completion.kind&&
     (observed.completion.kind==='return'||equal(observed.completion,reference.completion))&&
     equal(observed.compareGraph,reference.compareGraph)&&
