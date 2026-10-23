@@ -1,5 +1,10 @@
 # Implementation status (0.2.0)
 
+## Bounded computed TypeScript object patterns (October 23, 2026)
+
+- Computed destructuring property-key expressions now evaluate once in owned source order, followed by traceable owned property reads and lazy default branches. The bounded profile still rejects rest patterns and unmodeled property-key coercion; this is not general TS execution, Test262 conformance or a production natlang realm. Local V8 differential and exact replay regressions cover the accepted cases.
+
+
 ## Bounded hoisted `var` destructuring (October 23, 2026)
 
 - Bounded owned object/array destructuring also supports single-initializer `var` declarations; identifier cells are function-hoisted and redeclarations use owned `SET` rather than lexical `INIT`. Nested scope and duplicate-var regressions are compared to V8 and replay-verified. This does not extend arbitrary iterators, complex for-header patterns or general TS conformance.
