@@ -176,3 +176,40 @@ test('public-only audit rejects phantom references, malformed scalars and sparse
   for(const graph of [dangling,missing,duplicate,malformed,sparse,overflow,extraProperty])
     assert.throws(()=>auditPublicCausality(withPublishedGraph(graph)),/input graph|Unpublished reference/);
 });
+
+
+test('public causal source publication validates exact static descriptors and positions',()=>{
+  const mutate=change=>{
+    const x=episode();
+    const original=decodeRecord(x.groups[0].events[0].record);
+    change(original.fields);
+    x.groups[0].events[0].record=encodeRecord('code',original.fields);
+    return x;
+  };
+  for(const change of [
+    f=>{f.codes[0].params=[{oracle:'secret'}];},
+    f=>{f.codes[0].params=[''];},
+    f=>{f.sites=[{id:'site1',code:'c1',start:1,end:f.text.length+1}];},
+    f=>{f.sites=[{id:'site1',code:'c1',start:-1,end:0}];},
+    f=>{f.staticFunctions=[{name:'f',identity:'fn1',code:'c1',captures:{oracle:1}}];},
+    f=>{f.staticFunctions=[{name:'f',identity:'fn1',code:'c1'}];},
+    f=>{f.staticRegExps=[{name:'r',identity:'rx1',pattern:'.',flags:'g',private:1}];},
+    f=>{f.randomSeed=4294967296;},
+  ]) assert.throws(()=>auditPublicCausality(mutate(change)),
+    /visible code|source site|static function|RegExp|seed/);
+  const valid=mutate(f=>{
+    f.sites=[{id:'site1',code:'c1',start:0,end:f.text.length}];
+    f.staticFunctions=[{name:'f',identity:'fn1',code:'c1',captures:null}];
+    f.staticRegExps=[{name:'r',identity:'rx1',pattern:'x',flags:'g'}];
+    f.randomSeed=4294967295;
+  });
+  assert.equal(auditPublicCausality(valid).valid,true);
+});
+
+test('public causal source cannot bypass the 2048-byte profile cap by fragmenting',()=>{
+  const oversized=episode({length:2050,maxBytes:96});
+  assert.throws(()=>auditPublicCausality(oversized,{maxBytes:96}),
+    /observed source bundle/);
+  assert.equal(auditPublicCausality(episode({length:2048,maxBytes:96}),
+    {maxBytes:96}).valid,true);
+});

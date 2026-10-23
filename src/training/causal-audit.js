@@ -31,9 +31,14 @@ export function auditPublicCausality(episode,{maxBytes=512}={}) {
       if(mode!=='observed'||track!=='t0'||kind!=='code'||
          ![[],['staticRegExps'],['randomSeed'],['staticRegExps','randomSeed']]
            .some(extra=>exactKeys(fields,['sourceId','text','codes','sites','staticFunctions',...extra]))||
-         typeof fields.sourceId!=='string'||typeof fields.text!=='string'||
-         !Array.isArray(fields.codes)||!Array.isArray(fields.sites)||
-         !Array.isArray(fields.staticFunctions))
+         typeof fields.sourceId!=='string'||!fields.sourceId||
+         typeof fields.text!=='string'||!fields.text||
+         Buffer.byteLength(fields.text,'utf8')>2048||
+         !Array.isArray(fields.codes)||fields.codes.length>256||
+         !Array.isArray(fields.sites)||fields.sites.length>4096||
+         !Array.isArray(fields.staticFunctions)||fields.staticFunctions.length>256||
+         (fields.staticRegExps!==undefined&&
+           (!Array.isArray(fields.staticRegExps)||fields.staticRegExps.length>256)))
         throw new Error('First visible record must be an observed source bundle');
       if(fields.randomSeed!==undefined && (!Number.isInteger(fields.randomSeed)||
           fields.randomSeed<0||fields.randomSeed>0xffffffff))
@@ -45,25 +50,33 @@ export function auditPublicCausality(episode,{maxBytes=512}={}) {
            (code.restIndex!==undefined &&
              (!Number.isInteger(code.restIndex)||code.restIndex<-1||
               code.restIndex>=code.params.length))||
-           !Array.isArray(code.params)||typeof code.async!=='boolean'||
-           typeof code.id!=='string'||codes.has(code.id))
+           !Array.isArray(code.params)||code.params.length>256||
+           !code.params.every(param=>typeof param==='string'&&param.length>0)||
+           typeof code.async!=='boolean'||typeof code.id!=='string'||!code.id||
+           codes.has(code.id))
           throw new Error('Duplicate or malformed visible code identity');
         codes.add(code.id);
       }
       for(const site of fields.sites) {
         if(!exactKeys(site,['id','code','start','end'])||
-           typeof site.id!=='string'||sites.has(site.id)||!codes.has(site.code))
+           typeof site.id!=='string'||!site.id||sites.has(site.id)||
+           !codes.has(site.code)||
+           !Number.isSafeInteger(site.start)||!Number.isSafeInteger(site.end)||
+           site.start<0||site.end<site.start||site.end>source.text.length)
           throw new Error('Unpublished or duplicate visible source site');
         sites.add(site.id);
       }
       for(const fn of fields.staticFunctions)
-        if(!['name','identity','code','captures'].includes(Object.keys(fn)[0]) ||
-           Object.keys(fn).some(key=>!['name','identity','code','captures'].includes(key)) ||
-           typeof fn.name!=='string'||typeof fn.identity!=='string'||!codes.has(fn.code))
+        if(!exactKeys(fn,['name','identity','code','captures'])||
+           typeof fn.name!=='string'||!fn.name||
+           typeof fn.identity!=='string'||!fn.identity||
+           !codes.has(fn.code)||
+           !(fn.captures===null||typeof fn.captures==='string'))
           throw new Error('Unexpected static function context payload');
       for(const regex of fields.staticRegExps??[])
         if(!exactKeys(regex,['name','identity','pattern','flags'])||
-           typeof regex.name!=='string'||typeof regex.identity!=='string'||
+           typeof regex.name!=='string'||!regex.name||
+           typeof regex.identity!=='string'||!regex.identity||
            typeof regex.pattern!=='string'||typeof regex.flags!=='string')
           throw new Error('Unexpected pinned RegExp context payload');
       stage=1;return;
