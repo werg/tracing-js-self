@@ -29,12 +29,15 @@ export function auditPublicCausality(episode,{maxBytes=512}={}) {
     logical++;
     if(stage===0) {
       if(mode!=='observed'||track!=='t0'||kind!=='code'||
-         !(exactKeys(fields,['sourceId','text','codes','sites','staticFunctions'])||
-           exactKeys(fields,['sourceId','text','codes','sites','staticFunctions','staticRegExps']))||
+         ![[],['staticRegExps'],['randomSeed'],['staticRegExps','randomSeed']]
+           .some(extra=>exactKeys(fields,['sourceId','text','codes','sites','staticFunctions',...extra]))||
          typeof fields.sourceId!=='string'||typeof fields.text!=='string'||
          !Array.isArray(fields.codes)||!Array.isArray(fields.sites)||
          !Array.isArray(fields.staticFunctions))
         throw new Error('First visible record must be an observed source bundle');
+      if(fields.randomSeed!==undefined && (!Number.isInteger(fields.randomSeed)||
+          fields.randomSeed<0||fields.randomSeed>0xffffffff))
+        throw new Error('Invalid observed random fixture seed');
       source=fields;
       for(const code of fields.codes) {
         if(!(exactKeys(code,['id','params','async'])||
