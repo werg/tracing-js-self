@@ -79,8 +79,8 @@ does not authorize any unsupported runtime semantics or emit native code.
 The strict TypeScript profile accepts bounded single-initializer
 `let`, `const` and `var` object/array destructuring, including nested
 static-key patterns, hoisted `var` cells and lazy undefined-only defaults.
-Property reads, branches and guest default expressions execute inside owned
-bytecode. Rest and computed-key binding patterns, arbitrary iterator protocols,
+Property reads, computed key expressions, branches and guest defaults execute inside owned
+bytecode. Rest binding patterns, unmodeled key coercions, arbitrary iterator protocols,
 module helper callbacks and many ordinary TypeScript emissions remain
 unsupported. The finite V8 and replay tests do not prove general conformance.
 
