@@ -1,8 +1,8 @@
 # JavaScript embedding and natlang integration
 
 The package entry point exposes the existing tracing runtime to Node.js ES
-modules. It is **not yet a drop-in natlang evaluator**, a TypeScript compiler,
-or a complete JavaScript/Node/browser runtime. Supported execution remains the
+modules. It is **not yet a drop-in natlang evaluator**, a complete TypeScript
+language runtime, or a complete JavaScript/Node/browser runtime. Supported execution remains the
 profile in [STATUS.md](STATUS.md). No untraced fallback is installed.
 
 ```js
@@ -46,9 +46,10 @@ import {createBoundedNatlangEnvironment} from 'tracing-js-self/natlang';
 // Obtain EvalFailure from the SAME natlang installation used by the caller.
 const env=createBoundedNatlangEnvironment({
   EvalFailure, // natlang's actual class; required for instanceof compatibility
-  onTrace(bundle,request) {
-    // Persist only validated local candidate traces with their source labels.
-    recordCandidate(bundle,request.path);
+  onTrace(bundle,request,lowering) {
+    // The archive is executed ES2022, not an opaque TS or V8 result.
+    // Persist the original text + TypeScript source map alongside the archive.
+    recordCandidate(bundle,request.path,lowering);
   }
 });
 const result=env.execute({
@@ -58,20 +59,27 @@ const result=env.execute({
 env.close();
 ```
 
-The bridge wraps the supplied guest expression/body as one explicitly strict
-entry function, imports plain portable `self` data through the bounded graph
-codec, runs the Acorn-owned training frontend/bytecode machine, validates the
-archive and exact replay, then returns a decoded value and natlang-shaped
-`typescript.eval` host event. It accepts no live object/capture-cell bindings,
+The bridge wraps the supplied TypeScript expression/body as one explicitly
+strict entry function, lowers it using pinned TypeScript 5.9.3 into ES2022,
+passes the emitted JavaScript through the strict Acorn allowlist, imports plain
+portable `self` data through the bounded graph codec, runs the owned
+bytecode machine, validates the archive and exact replay, then returns a
+decoded value and natlang-shaped `typescript.eval` host event. The optional
+third `onTrace` argument contains `originalText`, `javascript`, `compiler`
+and a TypeScript V3 `sourceMap`; guest trace source positions still refer
+to the executed generated JS, not proven reanchored original TS locations. It accepts no live object/capture-cell bindings,
 ambient packages/network, native timeouts or retained mode. Invalid TypeScript,
-unsupported expressions, unfinished runs and unsafe scope graphs throw natlang's
-real `EvalFailure`; the `onTrace` success hook is not called on failure.
+unsupported emitted JavaScript, unfinished runs and unsafe scope graphs throw
+natlang's real `EvalFailure`; the `onTrace` success hook is not called on failure.
+The TS frontend strips supported type syntax; it is not a type checker and
+does not authorize any unsupported runtime semantics or emit native code.
 
 The strict profile now accepts source-level conditional expressions, numeric
 local-identifier updates and ordinary bounded for/do-while loops. This does
-not imply support for the closures, destructuring, member updates, helper
-calls or other constructs emitted by typical natlang scopes. No fallback
-executes those unsupported constructs.
+now includes captured `for (let...)` closures and bounded scalar member
+updates/compound assignments. This still does not imply support for arrows,
+destructuring, arbitrary object methods, live helper services or all constructs
+emitted by typical natlang scopes. No fallback executes unsupported constructs.
 
 `executeAsync` awaits a supported synchronous case but **does not implement
 async guest semantics**. `evaluateModule` rejects execution explicitly.
@@ -83,6 +91,32 @@ helper service callbacks by owned reference, and preserve TS source maps.
 These are mandatory requirements before advertising application compatibility.
 `test/natlang-bridge.test.js` supplies contract-shape and replay smoke tests,
 not acceptance of the broad natlang runtime.
+
+## Bounded static ESM/TypeScript functions
+
+Separately, `tracing-js-self/modules` exposes `linkStaticModules` and
+`executeStaticModule` for a completely supplied graph of TS/JS module source
+files. The first profile handles named/default function declarations and
+import aliases (including pure function-only cycles), with deterministic
+renaming into the same strict owned `training-js/1` trace engine:
+
+```js
+import {executeStaticModule} from 'tracing-js-self/modules';
+const run=executeStaticModule({
+  modules:{
+    'math.ts':'export function add(a: number, b: number) { return a+b; }',
+    'main.ts':`import {add} from './math.ts';
+      export function main(x: number) { return add(x,3); }`
+  },
+  entryModule:'main.ts',exportName:'main',args:[4]
+});
+// run.result === 7; validateBundle(run.bundle); replayExact(run.bundle)
+```
+
+It is not natlang's `evaluateModule` contract or a general module loader:
+no retained module objects, mutable live exports, native imports, top-level
+side effects or callable-folder `.nl` dependencies. See
+[static module contract](STATIC_MODULES.md) for the precise limited profile.
 
 ## Pinned natlang contract
 
@@ -141,7 +175,8 @@ through both seams and establish all of the following:
   caching and exports. Imported native packages have explicit tracing boundaries.
 - Throw/rejection paths preserve earlier effects and compatible failure evidence;
   fork/close behavior and outstanding work ownership match the interface.
-- TypeScript lowering retains original source identities and source mappings;
+- TypeScript lowering retains original source identities and **proved**
+  source mappings (not just a V3 source-map sidecar);
   spec/reference tests establish the required JavaScript behavior independently
   of this interpreter's replay.
 

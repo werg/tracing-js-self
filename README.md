@@ -157,6 +157,22 @@ gaps and acceptance gates are documented in [engine262 adoption](docs/ENGINE262_
 CI verifies the source inventory against exact upstream Git objects and publishes
 the arithmetic, parser and execution reports.
 
+## Bounded TypeScript and static ESM entry points
+
+The opt-in `tracing-js-self/natlang` adapter now lowers TypeScript syntax
+to ES2022 with pinned TypeScript 5.9.3, then executes only JavaScript supported
+by the owned strict training profile. Validated archives include generated
+source sites; the `onTrace` callback also receives the original TS and V3
+source-map metadata. There is no host runtime fallback, no live natlang helper
+or retained module realm, and no complete TS/JS conformance claim.
+
+`tracing-js-self/modules` additionally links a supplied graph of
+function-only TypeScript/ESM modules into an owned replayable entry. It supports
+named and default function exports, import aliases and cycles, while rejecting
+top-level effects, mutable exports, native packages and dynamic imports.
+See [integration boundaries](docs/NATLANG_INTEGRATION.md) and
+[static module profile](docs/STATIC_MODULES.md).
+
 ## Main modules
 
 `src/frontend.js` implements the bounded lexer/parser and source-mapped bytecode
