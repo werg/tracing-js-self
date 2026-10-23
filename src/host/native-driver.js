@@ -30,7 +30,8 @@ export async function executeWithNativeServices({text,entry=null,services={},max
   const pending=new Set(),arrivals=[];
   let wake=null;
   const settled=(effectId,value,abrupt)=>{
-    if(!pending.has(effectId))return;
+    // A cancelled run must never synthesize a guest-visible host arrival.
+    if(signal?.aborted||!pending.has(effectId))return;
     arrivals.push({effectId,value,abrupt});
     if(wake){const notify=wake;wake=null;notify();}
   };
@@ -43,7 +44,12 @@ export async function executeWithNativeServices({text,entry=null,services={},max
       pending.add(context.effectId);
       const input=Object.freeze({...context,signal});
       // Native promises settle strictly outside the owned interpreter.
-      Promise.resolve().then(()=>service(input)).then(value=>{
+      Promise.resolve().then(()=>{
+        // Dispatch was journaled before this microtask. Abort before starting
+        // native work means the side effect must not be invoked at all.
+        if(signal?.aborted)return;
+        return service(input);
+      }).then(value=>{
         if(!primitive(value))
           settled(context.effectId,'Native service returned a non-primitive result',true);
         else settled(context.effectId,value,false);
