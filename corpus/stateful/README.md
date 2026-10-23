@@ -13,9 +13,16 @@ editing its source. Corresponding MIT license notices are retained.
 | [yocto-queue](https://github.com/sindresorhus/yocto-queue) | Enqueue/dequeue, clear/reuse, mutation while iterating, partial drain, object reference aliases |
 | [quick-lru](https://github.com/sindresorhus/quick-lru) | Eviction callbacks, expiry, promotion, resize, expiration, clear, iteration |
 | [koa-compose](https://github.com/koajs/compose) | Request-response middleware, onion ordering, early exits, double-next, missing-await, error unwinding |
-| [p-limit](https://github.com/sindresorhus/p-limit) | Queued async work, concurrent updates, rejection, cancellation, concurrency resize and nested work |\n| [Axios interceptors](https://github.com/axios/axios) | Stable handler identity, ejection/clear during traversal, async transforms and error cleanup |
+| [p-limit](https://github.com/sindresorhus/p-limit) | Queued async work, concurrent updates, rejection, cancellation, concurrency resize and nested work |
+| [Axios interceptors](https://github.com/axios/axios) | Stable handler identity, ejection/clear during traversal, async transforms and error cleanup |
 
-The [Axios](https://github.com/axios/axios) interceptor manager now adds nine\nscenarios covering stable ejection IDs, handler-list mutation during iteration,\nasync request-chain transforms, null-list recovery and exception cleanup.\nThe original Axios implementation and its utility/binding dependencies are\nall vendored with the complete MIT license and pinned hashes.\n\nSix **application** scenarios combine those real implementations into
+The [Axios](https://github.com/axios/axios) interceptor manager now adds nine
+scenarios covering stable ejection IDs, handler-list mutation during iteration,
+async request-chain transforms, null-list recovery and exception cleanup.
+The original Axios implementation and its utility/binding dependencies are
+all vendored with the complete MIT license and pinned hashes.
+
+Six **application** scenarios combine those real implementations into
 request handlers, cache-backed routes, notification-driven mutable state,
 event queues, concurrent transactions and eviction notifications. Scenarios
 are synthetic *drivers* for real library code, **not** additional claims
