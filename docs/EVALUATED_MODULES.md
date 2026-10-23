@@ -52,7 +52,10 @@ TS semantic sites.
 A bounded `import * as ns from './module.js'` is supported only when every
 runtime use of `ns` is a **statically named property read** (`ns.value` or
 `ns['value']`). The frontend resolves that reference to the original exported
-binding, so mutation through another imported function remains visible.
+binding, so mutation through a **separately named-imported** function remains
+visible. Direct `ns.fn()` is rejected because its `this` receiver is a module
+namespace exotic, whereas a bare rewritten `fn()` would have `undefined`
+as its strict receiver.
 Assignments to `ns.value`, dynamic keys (`ns[key]`), escaping `ns` as a
 value, arbitrary reflection, `Object.keys(ns)`, and namespace re-exports are
 not implemented. They fail at linking instead of substituting an ordinary
