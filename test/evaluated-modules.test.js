@@ -103,8 +103,6 @@ test('expression default exports and value exports evaluate once',async()=>{
 
 test('module linker rejects cycles, unknown dependencies, and native packages',()=>{
   const requests=[
-    {modules:{'a.js':"import {x} from './b.js';export const y=x;",
-      'b.js':"import {y} from './a.js';export const x=y;"},entryModule:'a.js',exportName:'y'},
     {modules:{'a.js':"import {x} from './missing.js';export const y=x;"},entryModule:'a.js',exportName:'y'},
     {modules:{'a.js':"import fs from 'node:fs';export default fs;"},entryModule:'a.js'},
     {modules:{'a.js':"export * as ns from './b.js';",
@@ -370,4 +368,67 @@ test('module batch arguments never execute host getters or Proxy traps',()=>{
     modules,entryModule:'main.js',calls:proxiedCalls
   }),/bounded ordinary data array/);
   assert.equal(touches,0);
+});
+
+test('synchronous cyclic functions and mutable live bindings follow ESM dependency order',async()=>{
+  const modules={
+    'a.js':`import {other,amount} from './b.js';
+      export let total=2;
+      export function step(){total+=amount;return other();}`,
+    'b.js':`import {total} from './a.js';
+      export let amount=3;
+      export function other(){return total+amount;}`,
+    'main.js':`import {step,total} from './a.js';
+      export function run(){return [step(),total];}`
+  };
+  const run=await verified({modules,entryModule:'main.js',exportName:'run'});
+  assert.deepEqual(run.result,[8,5]);
+  assert.deepEqual(run.metadata.evaluationOrder,['b.js','a.js','main.js']);
+  assert.equal(run.metadata.cycles.length,1);
+  assert.equal(run.metadata.cycles[0].members.length,2);
+});
+
+test('cycles that observe an uninitialized lexical binding throw like native ESM',async()=>{
+  const modules={
+    'a.js':`import {fromB} from './b.js';
+      export const fromA=1;export function main(){return fromB;}`,
+    'b.js':`import {fromA} from './a.js';
+      export const fromB=fromA+2;`
+  };
+  await assert.rejects(executeEvaluatedModules({
+    modules,entryModule:'a.js',exportName:'main'
+  }),/Owned module evaluation rejected:|not defined|before initialization/);
+});
+
+test('cycles with top-level await fail link before native effects dispatch',()=>{
+  const modules={
+    'a.js':"import {value} from './b.js';export const x=await Promise.resolve(3);",
+    'b.js':"import {x} from './a.js';export const value=4;"
+  };
+  assert.throws(()=>linkEvaluatedModules({
+    modules,entryModule:'a.js',exportName:'x'
+  }),/cyclic module initialization with await/);
+});
+
+test('same-origin cyclic ESM function behavior agrees with independent native Node ESM',async()=>{
+  const {mkdtemp,writeFile,rm}=await import('node:fs/promises');
+  const {tmpdir}=await import('node:os');
+  const {join}=await import('node:path');
+  const {pathToFileURL}=await import('node:url');
+  const directory=await mkdtemp(join(tmpdir(),'tracing-esm-cycle-'));
+  const sources={
+    'left.mjs':`import {other} from './right.mjs';
+      export function left(n){return n===0?true:other(n-1);}`,
+    'right.mjs':`import {left} from './left.mjs';
+      export function other(n){return n===0?false:left(n-1);}`
+  };
+  try{
+    for(const [file,source] of Object.entries(sources))
+      await writeFile(join(directory,file),source);
+    const oracle=await import(pathToFileURL(join(directory,'left.mjs')).href);
+    const run=await verified({modules:sources,entryModule:'left.mjs',
+      exportName:'left',args:[8]});
+    assert.equal(run.result,oracle.left(8));
+    assert.equal(run.metadata.cycles.length,1);
+  }finally{await rm(directory,{recursive:true,force:true});}
 });
