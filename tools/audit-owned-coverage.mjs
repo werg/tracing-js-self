@@ -7,6 +7,7 @@ import {resolve,dirname} from 'node:path';
 import ts from 'typescript';
 import {verifyTrainingCase} from '../src/training/admit.js';
 import {cases} from '../corpus/cases.mjs';
+import {buildOwnedFixtureEntry} from '../corpus/owned-fixture-adapter.mjs';
 
 const argv=process.argv.slice(2);
 const arg=(name,fallback)=>argv.includes(name)?argv[argv.indexOf(name)+1]:fallback;
@@ -28,9 +29,6 @@ for(const row of records){
   let status,reason=null;
   if(!row.verified||!row.returned){
     status='native_not_verified';
-  }else if(spec.setup){
-    status='guest_fixture_not_portable';
-    reason='Guest-defined callbacks/prototypes are not portable data arguments in training-js/1';
   }else{
     let source=row.observation.source.originalText;
     // Removing TS export modifiers and Lodash CommonJS assignment is the
@@ -43,12 +41,26 @@ for(const row of records){
         target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.None
       }}).outputText.replace(/^["']use strict["'];\s*/,'');
     }
+    let entry=spec.entry,args=spec.args(row.index);
+    if(spec.setup){
+      try {
+        const fixture=buildOwnedFixtureEntry(spec.setup(row.index),entry);
+        source+='\n'+fixture.source;
+        entry=fixture.entry;
+        args=[];
+      }catch(error){
+        status='guest_fixture_not_portable';
+        reason='Fixture cannot be represented as owned guest code: '+String(error.message);
+      }
+    }
     source='"use strict";\n'+source;
-    if(Buffer.byteLength(source,'utf8')>2048){
+    if(status){
+      // Unportable fixture shapes still fail closed.
+    }else if(Buffer.byteLength(source,'utf8')>2048){
       status='source_bundle_limit';
       reason='Original entry plus genuine helpers exceeds current model source bundle';
     }else{
-      const checked=verifyTrainingCase({source,entry:spec.entry,args:spec.args(row.index),
+      const checked=verifyTrainingCase({source,entry,args,
         maxSteps:10000,maxGenerated:1024});
       status=checked.status;
       reason=checked.reason??null;
@@ -68,7 +80,7 @@ for(const row of records){
   if(status!=='locally_verified')blockers.set(status,(blockers.get(status)??0)+1);
 }
 const output={schema:'real-source-owned-coverage/1',admitted:false,
-  basis:'original real source functions; packaging-only adapter; two independent V8 checks for local verification',
+  basis:'unchanged upstream functions and optional owned callback wrapper; independent V8 outcome/operation verification; diagnostic only',
   totalFamilies:families.size,invocations:observations.length,
   ownedVerified:counts.locally_verified??0,counts,
   blockers:Object.fromEntries([...blockers].sort((a,b)=>b[1]-a[1])),
