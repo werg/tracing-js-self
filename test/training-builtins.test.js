@@ -39,6 +39,24 @@ test('owned dense push/pop preserve array identity and observable versioned writ
   verified('function f(){const a=[];return [a.pop(),a.push(),a.length,Array.isArray({})];}');
 });
 
+test('multi-item array push/pop commits as atomic versioned model-serving writes',()=>{
+  const exported=verified(`function f(){
+    const a=[1];
+    const newLength=a.push(2,3,4);
+    const last=a.pop();
+    return [newLength,last,a.length,a[1],a[2]];
+  }`);
+  const rollout=evaluateSelectedTrajectory({
+    groups:exported.public.groups,referenceGroups:exported.public.groups,
+    maxGenerated:1024
+  });
+  assert.equal(rollout.valid,true,JSON.stringify(rollout.invalid));
+  const writes=exported.sidecar.semantic.events.filter(e=>e.op==='write' &&
+    e.writes.some(w=>w.kind==='property'));
+  assert(writes.some(e=>e.writes.length>2),
+    'multi-property push must remain one atomic builtin semantic event');
+});
+
 test('Object keys and own-key presence allocate explicitly traced dense results',()=>{
   const exported=verified(`function f(){
     const obj={a:1,b:2};
