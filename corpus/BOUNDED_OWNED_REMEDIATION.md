@@ -23,9 +23,9 @@ training episodes.
 | `strings.ts/splitLinesIncludeSeparators` | 12/12 | Exact owned CR/LF split regex, with captured delimiters |
 | `strings.ts/escapeRegExpCharacters` | 12/12 | Exact global metacharacter escape regex with the literal `\\$&` replacement |
 
-This recovers 84 previously unsupported invocations. Provided the other
-previously verified families retain their status, the full expected result is
-**840/936 locally verified, 96 unsupported**. The full GitHub Actions
+This recovers 84 previously unsupported invocations. The completed six-part
+GitHub Actions audit at commit `a64957b` independently checked all 936 cases:
+**840 locally verified, 84 unsupported, and 12 runtime failures**. The
 `audit-entire-owned-corpus` job is the authoritative all-family regression
 check; the 84-case focused audit alone is not a 936-case completion claim.
 
@@ -51,10 +51,11 @@ check; the 84-case focused audit alone is not a 936-case completion claim.
 
 ## Explicit remaining gaps
 
-The next 96 cases belong to these eight functions (12 inputs each):
+The remaining 96 nonverified cases belong to eight functions (12 inputs each):
 
-- `arrays.ts/quickSelect`: random pivot source and constructor/throw behavior;
-  matching a random pivot without owned nondeterminism would be unsound.
+- `arrays.ts/quickSelect`: **12 runtime failures** on an unsupported property receiver
+  in its random-pivot/constructor path; matching a random pivot without
+  owned nondeterminism would be unsound.
 - `strings.ts/containsRTL`, `isBasicASCII`, `format`, and `format2`:
   top-level RegExp/static initialization and, for formatting, callback-based
   replacements are not fully modeled.
@@ -63,7 +64,8 @@ The next 96 cases belong to these eight functions (12 inputs each):
 - `strings.ts/lcut` and `rcut`: stateful global word-boundary matching,
   `lastIndex`, and repeated `exec`/`test` semantics remain unimplemented.
 
-These are **unsupported**, not failed comparisons or negative training labels.
+These are **not locally verified**: 84 are explicit `unsupported` cases and
+12 are `runtime_failure` cases. Neither status represents a negative training label.
 Do not promote them using a native `eval`, host-RegExp fallback, substituted
 terminal answer, weakened replay check, or a forged operation receipt.
 
