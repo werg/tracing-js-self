@@ -77,7 +77,8 @@ export function auditReferenceBranches({source,entry,args,initialHeap,bundle,ref
       decision:row.result});
   }
   const observed=referenceOutcome({source:instrumentBranchSource(source),
-    entry,args,initialHeap,observeBranches:true});
+    entry,args,initialHeap,observeBranches:true,
+    randomSeed:bundle.initialState.control.a0.randomSeed??null});
   if(observed.kind!=='return')
     return {schema,status:'unverified',
       reason:'Instrumented V8 branch run did not complete',
