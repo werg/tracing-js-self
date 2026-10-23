@@ -26,6 +26,12 @@ validateBundle(run.bundle);
 replayExact(run.bundle);
 ```
 
+For a separate **acyclic, bounded** source graph that executes module
+initializers, supports mutable live import bindings and awaits owned guest
+promises, see [evaluated modules](EVALUATED_MODULES.md) and
+`tracing-js-self/evaluated-modules`. This function-only linker is unchanged,
+and neither API is a universal ESM loader.
+
 ## Owned profile boundary
 
 - Explicit relative imports must resolve to supplied in-memory module source
