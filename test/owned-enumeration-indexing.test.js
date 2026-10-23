@@ -26,8 +26,8 @@ test('Object.keys, values and entries agree with V8 for owned ordinary data',()=
 });
 test('Array.at relative indexing agrees with V8, including NaN and bounds',()=>{
   const array=[NaN,-0,4,NaN];
-  const result=execute('return [self.at(-1),self.at(-9),self.at(1),self.at(3),'+
-    'self.indexOf(NaN),self.indexOf(0)];',array);
+  const result=execute('return [self.values.at(-1),self.values.at(-9),self.values.at(1),self.values.at(3),'+
+    'self.values.indexOf(NaN),self.values.indexOf(0)];',{values:array});
   assert.deepEqual(result,[array.at(-1),array.at(-9),array.at(1),array.at(3),
     array.indexOf(NaN),array.indexOf(0)]);
 });
