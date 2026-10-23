@@ -32,8 +32,8 @@ export function exportTraining(runtime,{maxBytes=512,maxGenerated=256}={}) {
     .map(record=>({mode:'observed',events:[{track:'t0',record}]}));
   const groups=[...observed,...scheduled.groups].map((g,i)=>({...g,id:'m'+(i+1),loss:g.mode==='generated'?'semantic':'none'}));
   const exported={
-    public:{schema:'semantic-execution/1',profile:bundle.manifest.profile,
-      traceFormat:'semantic-trace/1',contextFormat:prefix.schema,
+    public:{schema:'semantic-execution/2',profile:bundle.manifest.profile,
+      traceFormat:'semantic-trace/2',contextFormat:prefix.schema,
       completionPolicy:'immediate-return',groups},
     sidecar:{schema:'semantic-supervision/1',sourceLineage:null,
       semantic,archive:bundle,assignments:scheduled.assignments,

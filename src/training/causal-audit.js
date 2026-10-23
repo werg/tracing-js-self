@@ -4,11 +4,11 @@ import {isDeepStrictEqual} from 'node:util';
 import {decodeRecord,restoreLines} from './format.js';
 import {verifyVisibleExport} from './visibility.js';
 import {validatePublishedGraph} from './public-graph.js';
-const generatedKinds=new Set(['enter','value','branch','loop','alloc','read','write',
+const generatedKinds=new Set(['enter','value','branch','loop','carry','alloc','read','write',
   'delete','call','return','throw','end']);
 const allowedSemanticFields=new Set(['id','invocation','site','dependsOn','control',
-  'operands','result','arithmetic','update','completion','reads','writes',
-  'decision','successor','child','code','receiver','arguments','captures',
+  'result','update','reads','writes','test','path','from','to','reason',
+  'child','code','receiver','arguments','captures',
   'allocations','destination','effect','operation','promise','codec',
   'signature','payload','entry','kind']);
 const exactKeys=(value,names)=>value!==null&&typeof value==='object'&&

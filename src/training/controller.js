@@ -51,21 +51,11 @@ export class SemanticController {
     }
     this.cells=new Map();
     this.activations=new Map();
-    this.pendingChild=null;
+    this.pendingChild=null;this.enteredFrom=null;
     this.root=null;this.completion=null;
     this.generated=0;this.observed=0;
     this.producers=new Set();
     this.history=[];this.open=null;
-  }
-  static fromPacket(packet) {
-    if(packet?.schema!=='semantic-continuation/2')
-      fail('context','Invalid continuation packet');
-    const controller=new SemanticController(packet.context,packet.limits);
-    for(const row of packet.committed){
-      if(row.mode==='generated')controller.commitGenerated(row.record,{track:row.track});
-      else controller.commitObserved(row.record,{track:row.track});
-    }
-    return controller;
   }
   checkValue(value) {
     if(!Array.isArray(value) || !value.length)
@@ -169,7 +159,8 @@ export class SemanticController {
     }
     if(['observe','code','request','await','resume','settle'].includes(kind))
       fail('profile_limit',kind+' is not enabled in the synchronous serving profile');
-    for(const dep of [...(fields.dependsOn??[]),fields.control].filter(Boolean))
+    for(const dep of [...(fields.dependsOn??[]),fields.control,
+      ...(fields.reads??[]).map(read=>read.supplyingSemantic)].filter(Boolean))
       if(!this.producers.has(dep))fail('dependency','Producer has not committed');
     if(fields.id!==undefined){
       if(!/^e[1-9]\d*$/.test(fields.id)||this.producers.has(fields.id))
@@ -189,15 +180,21 @@ export class SemanticController {
           fail('entry','Root entry differs from observed invocation');
         this.root=invocation;
       }else{
-        if(!this.pendingChild||!same(this.pendingChild,{
+        const pending=this.pendingChild;
+        if(!pending||!same({
+          invocation:pending.invocation,code:pending.code,arguments:pending.arguments,
+          receiver:pending.receiver,captures:pending.captures},{
           invocation,code:fields.code,arguments:fields.arguments,
           receiver:fields.receiver,captures:fields.captures}))
           fail('invocation','Child entry differs from committed call');
         this.pendingChild=null;
+        this.enteredFrom=pending.caller;
       }
       const params=this.codes.get(fields.code).params;
       this.activations.set(invocation,{code:fields.code,track,status:'running',
+        caller:this.enteredFrom??null,
         params:Object.fromEntries(params.map((key,i)=>[key,copy(fields.arguments[i]??['undefined'])]))});
+      this.enteredFrom=null;
     } else if(kind==='alloc'){
       // Allocation commits initialized heap properties, not just an identity.
       // Array length (even when zero) and built-in-created array elements must
@@ -394,7 +391,8 @@ export class SemanticController {
       if(this.pendingChild)fail('invocation','Unentered child call');
       if(fields.child){
         this.pendingChild={invocation:fields.child,code:fields.code,
-          arguments:fields.arguments,receiver:fields.receiver,captures:fields.captures};
+          arguments:fields.arguments,receiver:fields.receiver,captures:fields.captures,
+          caller:fields.invocation};
         const caller=this.activations.get(fields.invocation);
         if(!caller||caller.status!=='running')
           fail('invocation','Call has no active owning frame');
@@ -403,6 +401,8 @@ export class SemanticController {
       const activation=this.activations.get(fields.invocation);
       if(!activation||activation.status!=='running')
         fail('completion','A missing or completed frame cannot return/throw twice');
+      if((fields.destination??null)!==(activation.caller??null))
+        fail('completion','Return destination is not the committed caller');
       activation.status=kind;
       activation.value=copy(fields.result);
     } else if(kind==='branch'||kind==='loop'){
@@ -495,17 +495,5 @@ export class SemanticController {
     // not the previous session's attention tokens or generated chunk counter.
     controller.generated=0;controller.history=[];controller.observed=0;
     return controller;
-  }
-  continuationPacket() {
-    if(this.open)fail('fragment','Cannot segment while a value definition is incomplete');
-    const packet={schema:'semantic-continuation/2',limits:{
-      maxGenerated:this.maxGenerated,maxPacketBytes:this.maxPacketBytes},
-      context:[
-        'code '+JSON.stringify(this.source),
-        'value '+JSON.stringify(this.input)
-      ],committed:copy(this.history)};
-    if(Buffer.byteLength(JSON.stringify(packet),'utf8')>this.maxPacketBytes)
-      fail('profile_limit','Cannot fit exact committed continuation in packet budget');
-    return packet;
   }
 }

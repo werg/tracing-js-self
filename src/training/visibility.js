@@ -24,7 +24,7 @@ export function trainingPrefix(bundle,{maxSourceBytes=2048}={}) {
       captures:fn.closureEnvId}] : [];
   });
   return {
-    schema:'semantic-context/1',
+    schema:'semantic-context/2',
     source:encodeRecord('code',{sourceId:source.sourceId,text:source.text,codes,sites,staticFunctions}),
     input:encodeRecord('value',{entry:bundle.entrySpec.functionName,
       invocation:bundle.initialState.control.a0.activeFrameId,graph})
@@ -37,11 +37,11 @@ export function verifyVisibleExport(exported) {
   if(keys.length!==allowed.length || !keys.every(key=>allowed.includes(key)))
     throw new Error('Unexpected public export field');
   const descriptor=exported.public;
-  if(descriptor.profile!=='training-js/1' || descriptor.traceFormat!=='semantic-trace/1' ||
-     descriptor.contextFormat!=='semantic-context/1' ||
+  if(descriptor.profile!=='training-js/1' || descriptor.traceFormat!=='semantic-trace/2' ||
+     descriptor.contextFormat!=='semantic-context/2' ||
      descriptor.completionPolicy!=='immediate-return')
     throw new Error('Invalid public export descriptor');
-  if(exported.public.schema!=='semantic-execution/1')throw new Error('Unknown training export');
+  if(exported.public.schema!=='semantic-execution/2')throw new Error('Unknown training export');
   if(!Array.isArray(exported.public.groups)||!exported.public.groups.length)
     throw new Error('Missing meridians');
   if(exported.public.groups[0].mode!=='observed')
