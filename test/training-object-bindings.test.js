@@ -66,14 +66,20 @@ test('object binding lexical slots honor block scope',()=>{
   `,{n:9}),19);
 });
 
+test('object defaults and nested patterns execute through owned lexical cells',()=>{
+  assert.deepEqual(differential(
+    'const {a=9,b:{c=4}}=self;return [a,c];',{b:{c:2}}),[9,2]);
+  assert.deepEqual(differential(
+    'const {a: first=7,b: second=8}=self;return [first,second];',
+    {a:null,b:undefined}),[null,8]);
+});
+
 test('unowned object-pattern variants reject before trace publication',()=>{
   const bundles=[];
   const env=createBoundedNatlangEnvironment({EvalFailure,
     onTrace:bundle=>bundles.push(bundle)});
   try{
     for(const code of [
-      'const {a = 2}=self; return a;',
-      'const {a:{b}}=self; return b;',
       'const {[self.k]:a}=self; return a;',
       'const {a,...rest}=self; return rest;',
       'var {a}=self; return a;',
