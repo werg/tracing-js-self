@@ -34,7 +34,7 @@ test('facade refuses unowned argument callbacks and hostile export-name metadata
   const facade=createBoundedModuleFacade({modules,entryModule:'main.ts',
     exportNames:['add']});
   try{
-    assert.throws(()=>facade.exports.add(()=>1),/primitive arguments/);
+    assert.throws(()=>facade.exports.add(()=>1),/primitive data/);
     assert.equal(facade.session.history.length,0);
   }finally{facade.close();}
   for(const exportNames of [
