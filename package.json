@@ -30,6 +30,10 @@
     "./native": {
       "types": "./src/host/native-driver.d.ts",
       "default": "./src/host/native-driver.js"
+    },
+    "./storage/node": {
+      "types": "./src/storage/node.d.ts",
+      "default": "./src/storage/node.js"
     }
   },
   "description": "Experimental owned-machine JavaScript semantic tracing runtime",

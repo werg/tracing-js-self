@@ -2,6 +2,19 @@
 
 This repository implements a **bounded, executable prototype** for the architecture in the attached *Complete JavaScript Semantic Tracing Runtime, revision 2 (22 October 2026)*. It does **not** implement the complete plan or claim a complete ECMAScript/Node/browser profile. In particular, a passing prototype test is not a Test262, WPT, Node-API, or learning-evaluation result.
 
+## Bounded sealed-archive persistence (October 23, 2026)
+
+- The opt-in Node/POSIX package entry [durable storage](DURABLE_STORAGE.md)
+  persists **sealed** JSON semantic-tracing-run/2 bundles by their SHA-256
+  content ID. Publication uses a file fsync, atomic no-replace hard link and
+  directory fsync. Independent structural validation and same-interpreter
+  exact replay are mandatory both before publication and on reads.
+  Concurrent identical writers converge on one object; corruption, symlinks
+  at the final path and unverified bundles fail closed. This facility does
+  **not** durably checkpoint a running interpreter, recover a live module
+  realm, stream journal entries, own browser/Node APIs or prove language
+  conformance. It leaves model-data admission unchanged.
+
 ## Cross-repository semantic Episode contract repair (October 23, 2026)
 
 - The diagnostic `semantic-execution/2` consumer in `werg/megatoken` had
@@ -161,7 +174,7 @@ implemented interfaces and admission gates.
 - All of ECMA-402, full TypeScript semantic/type-checker/source-map correctness or general TS emitted-JS execution beyond the pinned syntax-lowering slice, Node built-ins, browser/Web IDL/native hooks, typed native handoffs, true native activation ownership, buffer/agent/GC semantics, native resource restoration or real host scheduling.
 - Full Section 29 normative catalog schemas: `catalog/operations.json` is a narrow indexed vocabulary only, not conformance evidence.
 - Independent/specification-level semantic replay, native side-effect/resource replay, *general* guest-visible exception delivery, closed canonical reference fixtures, full transitive model-visibility proofs, release locks, accepted budgets, or learning improvements. The structural validator proves **state reconstruction and structural invariants**. Optional bounded replay proves that this same interpreter can reproduce the journal under recorded inputs; neither check proves ECMAScript correctness.
-- Journal durability/crash recovery, streaming storage/backpressure, globally consistent checkpoints, and broad native integrations beyond the declared bounded Node service transport.
+- Incremental execution-journal durability/live-VM crash recovery, streaming storage/backpressure, globally consistent runtime checkpoints, and broad native integrations beyond the declared bounded Node service transport. Sealed-bundle archive persistence is separately implemented but does not address these gaps.
 - No general engine262 replacement: engine262 remains an untraced, opt-in external oracle; the bounded arithmetic and ordinary coercion phases are an in-repository owned implementation following its pinned algorithm structure. The complete normative clause/intrinsic inventory and official Test262 runtime harness remain open.
 - An opt-in strict-profile `EvalEnvironment` facade with pinned TypeScript transpilation/source-map **metadata** exists, but there is no general natlang evaluator/module-realm replacement, persistent callable-folder module realm, native callback ownership or proven original-TS semantic site mapping. Data-only live natlang bindings and bounded mutable ESM aliases do not satisfy those broader contracts. The candidate training exporter now has a separately tested megatoken-native Episode adapter and explicit teacher-conditioned training path, but there is still no independently admitted corpus or measured trained-model correctness. Package-root imports do not imply application compatibility.
 
