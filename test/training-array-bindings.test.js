@@ -53,6 +53,12 @@ test('array binding initializer runs once and lexical slots follow binding order
     {items:[10]}),[10,undefined,undefined]);
 });
 
+test('TS for-of destructured pairs and lexical closure captures match native V8',()=>{
+  assert.deepEqual(differential(
+    'const callbacks=[]; for(const [a,b] of self.rows){callbacks.push(()=>a*10+b);}' +
+    'return [callbacks[0](),callbacks[1]()];',
+    {rows:[[1,2],[3,4]]}),[12,34]);
+});
 test('unsupported array patterns and non-array iterators fail before trace publication',()=>{
   const traces=[];
   const env=createBoundedNatlangEnvironment({EvalFailure,

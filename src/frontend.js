@@ -398,6 +398,7 @@ export function compile(ast) {
           // The hidden state names cannot be spelled by guest JavaScript and
           // retain one evaluated iterable across every iteration.
           const salt=++forOfIndex;
+          const item=n.bindings?'[[for-of item '+salt+']]':n.id;
           const iterable='[[for-of iterable '+salt+']]';
           const index='[[for-of index '+salt+']]';
           emit('ENTER_SCOPE',null,n);
@@ -428,13 +429,36 @@ export function compile(ast) {
           const no=emit('JUMP_IF_FALSE',null,n);
           if(n.kind!=='var'){
             emit('ENTER_SCOPE',null,n);
-            emit('DECLARE',{name:n.id,kind:n.kind},n);
+            emit('DECLARE',{name:item,kind:n.kind},n);
+            for(const binding of n.bindings??[])
+              emit('DECLARE',{name:binding.name,kind:n.kind},binding);
           }
           emit('GET',iterable,n);
           emit('GET',index,n);
           emit('GET_PROP',null,n);
-          emit(n.kind==='var'?'SET':'INIT',n.id,n);
+          emit(n.kind==='var'?'SET':'INIT',item,n);
           if(n.kind==='var')emit('POP',null,n);
+          if(n.bindings){
+            // For each iteration the fresh lexical scope owns both the
+            // iterator value and each destructured lexical capture.
+            emit('GET','Array',n);
+            emit('CONST',{value:['str','isArray']},n);
+            emit('GET_METHOD',null,n);
+            emit('GET',item,n);
+            emit('CALL',1,n);
+            const invalidItem=emit('JUMP_IF_FALSE',null,n);
+            const acceptedItem=emit('JUMP',null,n);
+            instructions[invalidItem].arg=instructions.length;
+            emit('UNSUPPORTED_EXPRESSION',
+              'for-of array binding requires an owned array item',n);
+            instructions[acceptedItem].arg=instructions.length;
+            for(const binding of n.bindings){
+              emit('GET',item,binding);
+              emit('CONST',{value:['num',binding.index]},binding);
+              emit('GET_PROP',null,binding);
+              emit('INIT',binding.name,binding);
+            }
+          }
           loopDepth++;stmt(n.body);loopDepth--;
           if(n.kind!=='var')emit('LEAVE_SCOPE',null,n);
           const updatePc=instructions.length;

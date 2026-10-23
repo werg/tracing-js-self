@@ -39,10 +39,21 @@ test('for-of reads live array length during mutation as a V8 array iterator does
   }return [result,xs];}`,[[1,2]]);
 });
 
-test('for-of refuses non-array iterable, destructuring and for-await',()=>{
+test('for-of owns destructured pairs and captured per-iteration cells',()=>{
+  verified(`function f(rows){const result=[];
+    for(const [a,b] of rows){result.push(a*10+b);}
+    return result;}`,[[[1,2],[3,4]]]);
+  verified(`function f(rows){const fs=[];
+    for(const [a,b] of rows){fs.push(()=>a*10+b);}
+    return [fs[0](),fs[1]()];}`,[[[1,2],[3,4]]]);
+});
+test('for-of refuses non-array iterables, nested patterns and for-await',()=>{
   for(const [code,args] of [
     ['function f(s){let z="";for(const x of s)z+=x;return z;}', ['abc']],
-    ['function f(xs){for(const [x,y] of xs){}return 1;}',[[[1,2]]]],
+    ['function f(xs){for(const [[x],y] of xs){}return 1;}',[[[1,2]]]],
+    ['function f(xs){for(const [x=2,y] of xs){}return 1;}',[[[1,2]]]],
+    ['function f(xs){for(var [x,y] of xs){}return 1;}',[[[1,2]]]],
+    ['function f(xs){for(const [x,y] of xs){}return 1;}',[[1,2]]],
     ['async function f(xs){for await(const x of xs){}return 1;}',[[1,2]]]
   ]){
     const result=verifyTrainingCase({source:'"use strict";\n'+code,entry:'f',args});

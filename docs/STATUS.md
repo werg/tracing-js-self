@@ -1,5 +1,9 @@
 # Implementation status (0.2.0)
 
+## Bounded array-pair `for...of` bindings (October 23, 2026)
+
+- Strict owned execution now accepts `for (const/let [a,b] of rows)` for bounded arrays of ordinary array items, with separately initialized per-iteration lexical cells and captured closure identities. It retains the prior dense-array-only for-of profile; nested/default/rest/elision patterns, `var` array bindings, shadowed Array and arbitrary iterables remain unsupported. Native V8 differential tests and exact archive replay cover the accepted slice, not general iterator/destructuring semantics.
+
 ## Durable replay-backed module session checkpoints (October 23, 2026)
 
 - The opt-in Node/POSIX storage package now writes content-addressed immutable checkpoints of **committed** bounded evaluated-module-session histories, with structural snapshot validation, full interpreter re-execution before publication and on restore, SHA-256 integrity checking, fsync and atomic no-replace hard-link publication. Restores build new module cells and host output identities. It does **not** checkpoint a suspended VM, native callbacks, open handles or natlang's production callable-folder Module Record; it cannot establish a production-compatible persistent realm by itself.

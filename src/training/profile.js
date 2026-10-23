@@ -273,12 +273,26 @@ export function parseTraining(source) {
       case 'ForOfStatement':{
         if(n.await || n.left?.type!=='VariableDeclaration' ||
            !['const','let','var'].includes(n.left.kind) ||
-           n.left.declarations.length!==1 ||
-           n.left.declarations[0].id.type!=='Identifier' ||
-           n.left.declarations[0].init)
+           n.left.declarations.length!==1 ||n.left.declarations[0].init)
           reject(n,'for-of requires one simple declared binding');
+        const target=n.left.declarations[0].id;
+        const array=target.type==='ArrayPattern'&&n.left.kind!=='var';
+        if(target.type!=='Identifier'&&!array)
+          reject(target,'for-of binding form');
+        let bindings=null;
+        if(array){
+          if(!target.elements.length||target.elements.length>32||
+             target.elements.some(x=>x?.type!=='Identifier'))
+            reject(target,'for-of array binding requires 1..32 identifiers');
+          bindings=target.elements.map((element,index)=>({
+            ...span(element),index,name:element.name
+          }));
+          if(new Set(bindings.map(x=>x.name)).size!==bindings.length)
+            reject(target,'duplicate for-of array binding');
+        }
         return {...loc,type:'ForOf',kind:n.left.kind,
-          id:n.left.declarations[0].id.name,iterable:expr(n.right),body:stmt(n.body)};
+          id:bindings?null:target.name,bindings,
+          iterable:expr(n.right),body:stmt(n.body)};
       }
       case 'ForStatement':{
         let init=null;
@@ -394,7 +408,13 @@ export function parseTraining(source) {
           value(n.test,e);statement(n.body,e);break;
         case 'ForOf':{
           value(n.iterable,e);
-          const loopEnv=n.kind==='var'?e:{names:new Set([n.id]),parent:e};
+          const loopEnv=n.kind==='var'?e:{
+            names:new Set(n.bindings?n.bindings.map(x=>x.name):[n.id]),parent:e
+          };
+          if(n.bindings)
+            for(let cursor=loopEnv;cursor?.parent;cursor=cursor.parent)
+              if(cursor.names.has('Array'))
+                reject(n,'for-of array binding requires unshadowed owned Array');
           statement(n.body,loopEnv);
           break;
         }
