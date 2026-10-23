@@ -70,13 +70,13 @@ function hydrate(g){
   }
   return g.roots.map(value);
 }
-function observableGraph(roots){
+function observableGraph(roots,identity=null){
   const ids=new WeakMap(),objects=[];
   function visit(v){
     const scalar=primitive(v);if(scalar)return scalar;
     if(!reference(v))return ['unknown',typeof v];
     if(ids.has(v))return ['ref',ids.get(v)];
-    const id='g'+objects.length;ids.set(v,id);
+    const id=identity?identity(v):'g'+objects.length;ids.set(v,id);
     const kind=typeof v==='function'?'function':types.isProxy(v)?'proxy':
       Array.isArray(v)?'array':types.isMap(v)?'map':types.isSet(v)?'set':
       types.isDate(v)?'date':types.isRegExp(v)?'regexp':
@@ -411,13 +411,16 @@ async function execute(code,{filename,entry,args,setupSource,timeoutMs,
     if(value&&typeof value.then==='function')
       value=await Promise.race([value,new Promise((_,reject)=>setTimeout(
         ()=>reject(new RangeError('Async observation timeout')),timeoutMs))]);
-    completion={kind:'return',value:primitive(value)??['ref']};
+    completion={kind:'return',value:primitive(value)??
+      (events?events.encode(value):['ref'])};
     events?.record('end',0,0,value);
   }catch(error){
     completion={kind:'throw',name:error?.name??'Error',message:String(error?.message??error)};
   }
-  return {completion,graph:observableGraph([
-    ...inputs,...(completion.kind==='return'?[value]:[])]),
+  const roots=[...inputs,...(completion.kind==='return'?[value]:[])];
+  const compareGraph=observableGraph(roots);
+  const graph=events?observableGraph(roots,v=>events.encode(v)[1]):compareGraph;
+  return {completion,graph,compareGraph,
     events:events?.events??[],limitations:[...(events?.limitations??[])],
     input:setupSource?null:portableArguments(args)};
 }
@@ -439,7 +442,7 @@ export async function observeProgram({source,entry,args=[],language='js',
       timeoutMs,randomSeed,capture:null});
   const sameResult=observed.completion.kind===reference.completion.kind&&
     (observed.completion.kind==='return'||equal(observed.completion,reference.completion))&&
-    equal(observed.graph,reference.graph);
+    equal(observed.compareGraph,reference.compareGraph);
   return {schema:'effective-observation/1',profile:'trusted-v8-observation',
     // Fixture callbacks are a visible part of the executed program. Their
     // spans map after the exact production source instead of overlapping it.
