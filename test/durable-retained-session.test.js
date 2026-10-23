@@ -66,6 +66,10 @@ test('checkpoint admission is replay-checked and limited to owned sessions',asyn
     await assert.rejects(store.put({snapshot(){return {};}}),/owned retained/);
     const session=createBoundedRetainedModuleSession({modules,entryModule:'main.ts'});
     try{
+      await assert.rejects(store.put(session),/committed module invocation/);
+      assert.deepEqual(await store.list(),[]);
+      assert.throws(()=>{store.directory=directory+'/other';},TypeError);
+      assert.throws(()=>{store.maxBytes=1;},TypeError);
       await session.invoke('add',[2]);
       const narrow=createDurableRetainedModuleStore({directory,maxBytes:4});
       await assert.rejects(narrow.put(session),/byte limit/);
