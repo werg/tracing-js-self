@@ -144,7 +144,7 @@ export class SemanticController {
           'includes','startsWith','endsWith','toLowerCase','toUpperCase','trim',
           'trimStart','trimEnd','split','replace'].map(x=>'String.prototype.'+x),
         'Array.isArray','Array.from','Array.toString',
-        'Set.prototype.has','Set.prototype.add','RegExp.prototype.test',
+        'Set.prototype.has','Set.prototype.add','RegExp.prototype.test','parseInt','isNaN',
         'Object.hasOwn','Object.keys','Object.values','Object.entries','Object.assign','Object.is','Object.create','Object.setPrototypeOf',
         'Object.getPrototypeOf','Object.defineProperty','Object.valueOf','Object.toString',
         'Promise.resolve','Promise.reject','Promise.prototype.then',
