@@ -1186,7 +1186,7 @@ export class Runtime {
             return {...operands(fn,...args),...result(['ref',id])};
           }
           if(callable[0]==='builtinfn' &&
-              ['indexOf','lastIndexOf','slice','concat','join','splice','unshift','shift','at']
+              ['indexOf','lastIndexOf','slice','concat','join','splice','unshift','shift','at','reverse','fill','copyWithin','toReversed','with']
                 .some(name=>callable[1]==='Array.prototype.'+name)){
              const obj=receiver[0]==='ref'?s.heap[receiver[1]]:null;
              if(!obj||obj.kind!=='array')
@@ -1280,6 +1280,36 @@ export class Runtime {
                }).join(sep);
                if(text.length>100000)throw new RangeError('Array join limit');
                out=['str',text];
+             }else if(method==='reverse'||method==='toReversed'){
+               const reversed=slots.slice().reverse();
+               if(method==='toReversed')out=makeArray(reversed);
+               else{
+                 for(let i=0;i<length;i++)
+                   putOwn(obj,String(i),reversed[i],eventId);
+                 out=receiver;
+               }
+             }else if(method==='fill'){
+               const value=args[0]?.value??U,
+                 start=clamp(numberAt(1,0)),end=clamp(numberAt(2,length));
+               for(let i=start;i<end;i++)putOwn(obj,String(i),value,eventId);
+               out=receiver;
+             }else if(method==='copyWithin'){
+               const target=clamp(numberAt(0,0)),start=clamp(numberAt(1,0)),
+                 end=clamp(numberAt(2,length));
+               const count=Math.min(Math.max(end-start,0),length-target);
+               const copied=slots.slice();
+               for(let i=0;i<count;i++)copied[target+i]=slots[start+i];
+               for(let i=0;i<count;i++)
+                 putOwn(obj,String(target+i),copied[target+i],eventId);
+               out=receiver;
+             }else if(method==='with'){
+               const position=numberAt(0,0);
+               const at=position<0?length+position:position;
+               if(at<0||at>=length)
+                 guestFault('RangeError','Array.with index out of bounds');
+               const copy=slots.slice();
+               copy[at]=args[1]?.value??U;
+               out=makeArray(copy);
              }else if(method==='splice'){
                const start=clamp(numberAt(0,0));
                const count=args.length===0?0:args.length===1?length-start:
