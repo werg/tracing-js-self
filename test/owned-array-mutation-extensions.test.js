@@ -83,10 +83,9 @@ test('Array.copyWithin and fill reject unsupported index coercion without native
       text:'"use strict";function run(a){'+body+'}',
       functionName:'run',args:[[1,2]]
     });
-    const result=runtime.drive();
-    assert.notEqual(result.kind,'terminated');
-    const bundle=JSON.parse(JSON.stringify(runtime.exportRun()));
-    assert.equal(validateBundle(bundle).valid,true);
-    assert.equal(replayExact(bundle).valid,true);
+    assert.throws(()=>runtime.drive(),
+      /Array index requires owned scalar coercion/);
+    assert.equal(Object.keys(runtime.state.effects).length,0);
+    assert.equal(runtime.state.control.a0.status,'running');
   }
 });
