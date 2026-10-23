@@ -27,7 +27,7 @@ test('dense Array.includes uses SameValueZero, fromIndex and owned identity',()=
 });
 
 test('Array.isArray sees nested Proxy array targets without invoking get traps',()=>{
-  const script=`let called=0; function read(t,k,r){called++;return 99;}
+  const script=`let called=0; function read(t,k,r){called=called+1;return 99;}
     let a=[1,2]; let h={get:read};
     let proxy=new Proxy(a,h);let nested=new Proxy(proxy,{});
     let ordinary=new Proxy({x:1},{});
