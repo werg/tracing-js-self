@@ -148,7 +148,11 @@ export function compile(ast) {
     // Declarations are created before execution for a block's scope.
     function statements(nodes,scoped=false) {
       if(scoped) emit('ENTER_SCOPE',null,nodes[0]);
-      for(const n of nodes)if(n.type==='Variable')emit('DECLARE',{name:n.id,kind:n.kind},n);
+      for(const n of nodes){
+        const declarations=n.type==='VariableGroup'?n.declarations:
+          n.type==='Variable'?[n]:[];
+        for(const d of declarations)emit('DECLARE',{name:d.id,kind:d.kind},d);
+      }
       for(const n of nodes)if(n.type==='Function'){
         const fid=bodyProgram(n.body.body,n.params,n.async);
         emit('DEF_FN',{name:n.id,codeId:fid,params:n.params,async:n.async},n);
@@ -183,6 +187,12 @@ export function compile(ast) {
             emit('UPDATE_PROP',{operator:n.operator,prefix:n.prefix},n);
           }else emit('UPDATE_BINDING',{name:n.name,operator:n.operator,prefix:n.prefix},n);
           break;
+        case 'Sequence':
+          for(const [i,element] of n.expressions.entries()){
+            expr(element);
+            if(i<n.expressions.length-1)emit('POP',null,element);
+          }
+          break;
         case 'Conditional':{
           expr(n.test);
           const no=emit('JUMP_IF_FALSE',null,n.test);
@@ -207,7 +217,7 @@ export function compile(ast) {
         case 'Assign':
           if(n.left.type==='Identifier') {
             if(n.operator!=='=')emit('GET',n.left.name,n.left);
-            expr(n.right);if(n.operator!== '=')emit('BINARY',n.operator[0],n);
+            expr(n.right);if(n.operator!== '=')emit('BINARY',n.operator.slice(0,-1),n);
             emit('SET',n.left.name,n);
           }else{
             expr(n.left.object);expr(n.left.property);
@@ -217,7 +227,7 @@ export function compile(ast) {
               emit('GET_PROP',null,n.left);
             }
             expr(n.right);
-            if(n.operator!=='=')emit('BINARY',n.operator[0],n);
+            if(n.operator!=='=')emit('BINARY',n.operator.slice(0,-1),n);
             emit('PUT_PROP',null,n);
           }break;
         default:throw new SyntaxError(`Unsupported expression: ${n.type}`);
@@ -226,6 +236,7 @@ export function compile(ast) {
     function stmt(n){
       switch(n.type){
         case 'Variable':if(n.init)expr(n.init);else emit('CONST',{value:['undefined']},n);emit('INIT',n.id,n);break;
+        case 'VariableGroup':for(const declaration of n.declarations)stmt(declaration);break;
         case 'Expression':expr(n.expr);emit('POP',null,n);break;
         case 'Return':if(n.argument)expr(n.argument);else emit('CONST',{value:['undefined']},n);emit('RETURN',null,n);break;
         case 'Throw':expr(n.argument);emit('THROW',null,n);break;

@@ -8,6 +8,8 @@ export const TRAINING_PARSER='acorn/8.15.0:training-js/1';
 const binaries=new Set(['+','-','*','/','%','**','<','<=','>','>=','===','!==','==','!=',
   '&','|','^','<<','>>','>>>']);
 const logical=new Set(['&&','||','??']);
+const assignments=new Set(['=','+=','-=','*=','/=','%=','**=',
+  '&=','|=','^=','<<=','>>=','>>>=']);
 const unary=new Set(['!','-','+','typeof','void','~']);
 const reject=(node,why) => {throw new SyntaxError(
   'Unsupported training-js/1 '+why+' at '+(node.start ?? '?')+':'+(node.end ?? '?'));};
@@ -55,6 +57,9 @@ export function parseTraining(source) {
       case 'BinaryExpression':case 'LogicalExpression':
         if(!(n.type==='BinaryExpression'?binaries:logical).has(n.operator))reject(n,'binary operator');
         return {...loc,type:'Binary',operator:n.operator,left:expr(n.left),right:expr(n.right)};
+      case 'SequenceExpression':
+        if(n.expressions.length<2)reject(n,'empty sequence');
+        return {...loc,type:'Sequence',expressions:n.expressions.map(expr)};
       case 'ConditionalExpression':
         return {...loc,type:'Conditional',test:expr(n.test),
           consequent:expr(n.consequent),alternate:expr(n.alternate)};
@@ -78,7 +83,7 @@ export function parseTraining(source) {
         return {...loc,type:'Array',elements:n.elements.map(expr)};
       case 'ObjectExpression':
         return {...loc,type:'Object',properties:n.properties.map(p=>{
-          if(p.type!=='Property' || p.kind!=='init' || p.method || p.computed || p.shorthand)
+          if(p.type!=='Property' || p.kind!=='init' || p.method || p.computed)
             reject(p,'object property form');
           const key=p.key.type==='Identifier'?p.key.name:
             p.key.type==='Literal'?String(p.key.value):null;
@@ -86,7 +91,7 @@ export function parseTraining(source) {
           return {key,value:expr(p.value)};
         })};
       case 'AssignmentExpression':
-        if(!['=','+=','-='].includes(n.operator) ||
+        if(!assignments.has(n.operator) ||
            !['Identifier','MemberExpression'].includes(n.left.type))
           reject(n,'assignment form');
         return {...loc,type:'Assign',operator:n.operator,left:expr(n.left),right:expr(n.right)};
@@ -98,10 +103,15 @@ export function parseTraining(source) {
     switch(n.type) {
       case 'BlockStatement':return {...loc,type:'Block',body:n.body.map(stmt)};
       case 'VariableDeclaration':
-        if(!['let','const'].includes(n.kind)||n.declarations.length!==1 ||
-           n.declarations[0].id.type!=='Identifier')reject(n,'declaration form');
-        return {...loc,type:'Variable',kind:n.kind,id:n.declarations[0].id.name,
-          init:n.declarations[0].init?expr(n.declarations[0].init):null};
+        if(!['let','const'].includes(n.kind)||!n.declarations.length ||
+           n.declarations.some(d=>d.id.type!=='Identifier'))
+          reject(n,'declaration form');
+        const declarations=n.declarations.map(d=>({
+          ...span(d),type:'Variable',kind:n.kind,id:d.id.name,
+          init:d.init?expr(d.init):null
+        }));
+        return declarations.length===1?declarations[0]:
+          {...loc,type:'VariableGroup',declarations};
       case 'FunctionDeclaration':
         if(!n.id || n.async || n.generator || n.params.some(x=>x.type!=='Identifier'))
           reject(n,'function form');
@@ -138,9 +148,13 @@ export function parseTraining(source) {
   // Never silently turn an unknown identifier into an ambient Node global.
   function scope(statements,parent,params=[]) {
     const names=new Set(params);
-    for(const n of statements)if(['Variable','Function'].includes(n.type)){
-      if(names.has(n.id))reject(n,'duplicate lexical binding');
-      names.add(n.id);
+    for(const n of statements){
+      const entries=n.type==='VariableGroup'?n.declarations:
+        ['Variable','Function'].includes(n.type)?[n]:[];
+      for(const d of entries){
+        if(names.has(d.id))reject(d,'duplicate lexical binding');
+        names.add(d.id);
+      }
     }
     const env={names,parent};
     const has=(name,e)=>!!e&&(e.names.has(name)||has(name,e.parent));
@@ -158,6 +172,7 @@ export function parseTraining(source) {
              !has(n.argument.name,e))break;
           value(n.argument,e);break;
         case 'Binary':value(n.left,e);value(n.right,e);break;
+        case 'Sequence':n.expressions.forEach(x=>value(x,e));break;
         case 'Conditional':
           value(n.test,e);value(n.consequent,e);value(n.alternate,e);break;
         case 'Update':
@@ -176,6 +191,7 @@ export function parseTraining(source) {
     function statement(n,e){
       switch(n.type){
         case 'Variable':if(n.init)value(n.init,e);break;
+        case 'VariableGroup':n.declarations.forEach(x=>statement(x,e));break;
         case 'Function':scope(n.body.body,e,n.params);break;
         case 'Block':scope(n.body,e);break;
         case 'If':

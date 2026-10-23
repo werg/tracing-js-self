@@ -18,7 +18,7 @@ export function instrumentOperationSource(source) {
     if(Array.isArray(value)){for(const child of value)visit(child);return;}
     if(!value||typeof value!=='object')return;
     if(value.type==='BinaryExpression'||value.type==='UnaryExpression'||
-       (value.type==='AssignmentExpression'&&['+=','-='].includes(value.operator))||
+       (value.type==='AssignmentExpression'&&value.operator!=='=')||
        value.type==='UpdateExpression'||value.type==='TemplateLiteral')
       nodes.push({start:value.start,end:value.end,site:String(value.start)+':'+value.end});
     for(const [name,child] of Object.entries(value))
