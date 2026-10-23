@@ -1,5 +1,10 @@
 # Implementation status (0.2.0)
 
+## Journaled Node/browser clock read (October 23, 2026)
+
+- Opt-in native-service execution now implements `Date.now()` as a versioned, zero-argument `platform.dateNow/1` synchronous effect. The adapter owns the clock; guest execution records the request and replays the recorded response with no second host read. Ungranted `Date` remains unavailable. This is one cross-host clock API, not Date constructors, timers, scheduling, Node/browser web APIs or full host conformance.
+
+
 ## Owned logical assignment (October 23, 2026)
 
 - Strict JS/TypeScript execution accepts `&&=`, `||=` and `??=` for lexical/var bindings and ordinary member references. Short-circuit branches preserve the previous value without writing or evaluating the right-hand side. Computed member keys and receivers are evaluated once through private owned temporaries. Independent V8 observable-graph differential tests, exact replay and refusal regressions cover the bounded slice; this is not a complete ECMAScript assignment-reference or host semantics implementation.
