@@ -88,4 +88,4 @@ to train a production model or evidence of free-running model correctness.
 After generating a local verified JSONL reference corpus, supply a separate JSONL of **actual model-selected** episode `groups` to `npm run training:evaluate -- --selected selected.jsonl --reference training-local.jsonl --output report.json`. The evaluator commits each selected group before consulting the reference and reports exact state/return correctness and the first inconsistent category. Re-using reference groups as selected input checks only the deterministic verifier, **not a model's ability to execute**.
 
 
-The model-facing trace is [effective-computation semantic-trace/2](EFFECTIVE_TRACE.md); it does not require bijective reconstruction of prototype/accessor internals and has no previous-version compatibility reader.
+The model-facing format is [effective semantic-trace/2](EFFECTIVE_TRACE.md); it captures actual computation without reconstructing hidden prototype/accessor internals. No legacy format adapter is supported.

@@ -85,6 +85,8 @@ emitted by typical natlang scopes. No fallback executes unsupported constructs.
 async guest semantics**. `evaluateModule` rejects execution explicitly.
 `fork` and `close` are owned lifecycle methods. There is no untraced fallback.
 
+Independent Node V8 regression tests now execute the actual pinned-TypeScript-emitted JS from the opt-in natlang facade, reconstruct the identical owned initial argument graph in a separate VM realm, and compare the full reachable returned/input graph including mutations and alias identity. The bounded matrix covers scalar, TS lexical declarations, loop/closure, template, bitwise, and caught-exception samples; it also verifies replay and generated-source site anchors. This is independent generated-JS differential evidence, **not** proof of general natlang application compatibility or of original-TS semantic site correctness.
+
 Opt-in natlang onTrace sidecar now also exposes SourceMap-derived generated-site origin anchors, with recorded unmapped sites. The mapper verifies its embedded source bytes and annotates sites; these are **not** proof of original TypeScript source-level semantic correspondence, transformed implicit operations, or general transpilation correctness. The public/authoritative journal remains generated-JS based.
 
 Opt-in strict-profile TS lowering now includes try/catch/finally completion syntax (with a scalar/plain guest throw and identifier catch binding), plus simple synchronous arrow and anonymous function expressions. Their guest calls and captures run through owned frames, with no native fallback. It does not cover the broader scope compiler's rest/destructuring/spread, retained module realm, live captures, or async code.
