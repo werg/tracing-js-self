@@ -128,7 +128,8 @@ export function replayExact(bundle) {
       const {functionName,arguments:roots,sourceId}=bundle.entrySpec;
       if(sourceId!==entry.sourceId)fail('Entry source mismatch');
       runtime.startEntry({source:entry,functionName,args:realizeGraph(initial.heap,roots),
-        allowAsync:initial.frames?.[activeId]?.asyncPromiseId != null});
+        allowAsync:initial.frames?.[activeId]?.asyncPromiseId != null,
+        allowHost:initial.envs?.[initial.control.a0.globalEnvId]?.bindings?.host?.token?.value?.[0]==='host'});
     } else runtime.start(entry);
     expectSame(runtime.exportRun().manifest,bundle.manifest,'runtime profile manifest');
     expectSame(runtime.initialState, bundle.initialState, 'initial machine state');
