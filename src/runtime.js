@@ -214,7 +214,7 @@ export class Runtime {
   }
   /** Explicit invocation entry for training-js/1. The top level contains only
    * an exact strict directive and named ordinary function declarations. */
-  startEntry({text,source=null,functionName,args=[],allowAsync=false}={}) {
+  startEntry({text,source=null,functionName,args=[],allowAsync=false,allowHost=false}={}) {
     if(this.started)throw new Error('Run already started');
     if(!source)source=this.registerSource({text,trainingProfile:true});
     if(source.parser!==TRAINING_PARSER)throw new SyntaxError('Entry requires the Acorn training profile');
@@ -231,6 +231,8 @@ export class Runtime {
     if(!selected)throw new ReferenceError('Unknown entry function');
     const state=this.state, global=this.newEnv(state);
     state.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
+    if(allowHost)state.envs[global].bindings.host={kind:'const',initialized:true,
+      token:token(['host','demo']),version:0};
     for(const name of ['Object','Array','Number','Math','Promise'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
