@@ -26,6 +26,13 @@ export class SemanticController {
   constructor(lines,{maxGenerated=256,maxPacketBytes=65536}={}) {
     const {source,input}=parseContext(lines);
     this.source=copy(source);this.input=copy(input);
+    if(source.randomSeed!==undefined &&
+       (!Number.isInteger(source.randomSeed)||source.randomSeed<0||source.randomSeed>0xffffffff))
+      fail('context','Invalid seeded random fixture');
+    this.randomState=source.randomSeed??null;
+    this.randomSites=new Set(source.sites.filter(site=>
+      /^Math\.random\(\)$/.test(source.text.slice(site.start,site.end).trim()))
+      .map(site=>site.id));
     this.maxGenerated=maxGenerated;this.maxPacketBytes=maxPacketBytes;
     this.codes=new Map(source.codes.map(code=>[code.id,code]));
     this.sites=new Set(source.sites.map(site=>site.id));
@@ -133,7 +140,7 @@ export class SemanticController {
         fail('value','Unknown owned intrinsic tag');
     }else if(value[0]==='builtinfn'){
       const names=new Set([
-        ...['abs','ceil','floor','trunc','round','max','min','pow','sign','sqrt','hypot']
+        ...['abs','ceil','floor','trunc','round','max','min','pow','sign','sqrt','hypot','random']
           .map(x=>'Math.'+x),
         ...['isFinite','isNaN','isInteger','isSafeInteger'].map(x=>'Number.'+x),
         ...['toString','toFixed'].map(x=>'Number.prototype.'+x),
@@ -172,7 +179,7 @@ export class SemanticController {
       heap:this.heap,cells:this.cells,activations:this.activations,
       producers:this.producers,pendingChild:this.pendingChild,
       root:this.root,completion:this.completion,open:this.open,
-      generated:this.generated,observed:this.observed,history:this.history
+      generated:this.generated,observed:this.observed,history:this.history,randomState:this.randomState
     });
     try {return this.#commitUnchecked(mode,line,track);}
     catch(error) {
@@ -446,6 +453,14 @@ export class SemanticController {
         }else fail('read','Unsupported location observation');
       }
     } else if(kind==='value'||kind==='write'){
+      if(this.randomSites.has(fields.site)) {
+        if(kind!=='value'||this.randomState===null)
+          fail('entropy','Random call lacks a declared deterministic fixture seed');
+        const next=(Math.imul(this.randomState,1664525)+1013904223)>>>0;
+        if(!same(fields.result,['num',next/4294967296]))
+          fail('entropy','Model-produced random value disagrees with declared fixture');
+        this.randomState=next;
+      }
       // Apply model-produced patches atomically. Never calculate a missing RHS.
       const cellDraft=new Map(this.cells);
       const heapDraft=new Map([...this.heap].map(([id,obj])=>[id,{
