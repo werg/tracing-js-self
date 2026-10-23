@@ -11,8 +11,15 @@ const errorMessage=error=>error instanceof Error?error.message:String(error);
 
 /** Execute bounded script code with real asynchronous, separately owned host I/O.
  * All service invocations are one-shot and replay never reinvokes a service. */
-export async function executeWithNativeServices({text,services={},maxSteps=100000,signal}={}) {
-  if(typeof text!=='string')throw new TypeError('Native driver needs JS source text');
+export async function executeWithNativeServices({text,entry=null,services={},maxSteps=100000,signal}={}) {
+  if(entry!==null) {
+    if(text!==undefined||!entry||typeof entry!=='object'||
+       typeof entry.text!=='string'||typeof entry.functionName!=='string'||
+       (entry.args!==undefined&&!Array.isArray(entry.args)) ||
+       (entry.url!==undefined&&typeof entry.url!=='string'))
+      throw new TypeError('Native strict entry needs source text, name and optional argument array');
+  }else if(typeof text!=='string')
+    throw new TypeError('Native driver needs JS source text');
   if(services===null||typeof services!=='object'||Array.isArray(services))
     throw new TypeError('Native services must be an operation-to-function record');
   if(signal!==undefined && (typeof signal!=='object'||
@@ -44,7 +51,13 @@ export async function executeWithNativeServices({text,services={},maxSteps=10000
       return {kind:'pending'};
     };
   }
-  const runtime=createRuntime({adapters,maxSteps}).start(text);
+  const runtime=createRuntime({adapters,maxSteps});
+  if(entry){
+    const source=runtime.registerSource({text:entry.text,
+      url:entry.url??'<native-entry>',trainingProfile:true});
+    runtime.startEntry({source,functionName:entry.functionName,
+      args:entry.args??[],allowAsync:true,allowHost:true});
+  }else runtime.start(text);
   const abort=()=>{if(wake){const notify=wake;wake=null;notify();}};
   signal?.addEventListener('abort',abort,{once:true});
   try{
@@ -73,5 +86,10 @@ export async function executeWithNativeServices({text,services={},maxSteps=10000
     }
   }finally{
     signal?.removeEventListener('abort',abort);
+    // Native deliveries belong to this run. Late external settlement cannot
+    // append an arrival to an exported archive or wake another invocation.
+    pending.clear();
+    arrivals.length=0;
+    wake=null;
   }
 }
