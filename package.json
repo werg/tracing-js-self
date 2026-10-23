@@ -27,6 +27,10 @@
       "types": "./src/evaluated-module-session.d.ts",
       "default": "./src/evaluated-module-session.js"
     },
+    "./evaluated-module-facade": {
+      "types": "./src/evaluated-module-facade.d.ts",
+      "default": "./src/evaluated-module-facade.js"
+    },
     "./native": {
       "types": "./src/host/native-driver.d.ts",
       "default": "./src/host/native-driver.js"

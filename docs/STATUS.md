@@ -1,5 +1,10 @@
 # Implementation status (0.2.0)
 
+## Host-callable bounded ESM facade (October 23, 2026)
+
+- The opt-in `evaluated-module-facade` entry exposes explicitly named owned ESM exports as synchronous host JavaScript callables. Each invocation uses `invokeSync`, replay-verifies complete deterministic module history and retains observable host ordinary-data aliases; invalid call arguments and failed guest calls do not commit. Function wrappers remain host-only and cannot cross back into the owned guest. See [bounded facade](BOUNDED_MODULE_FACADE.md). **This is not a drop-in natlang callable-folder realm, full persistent Module Record, or arbitrary native callbacks/host APIs.**
+
+
 ## Synchronous replay-backed module invocations (October 23, 2026)
 
 - The bounded evaluated ESM linker/session now supports `executeEvaluatedModulesSync` and `session.invokeSync` for effect-free modules whose owned guest jobs fully settle during a deterministic synchronous drive. Sync/async calls share replay-backed committed history and stable ordinary output aliases; queued asynchronous calls block synchronous reentry, failed calls do not commit. This is a host-side synchronous module API and does **not** implement the native-callable `werg/natlang` folder realm, callback reentry, npm imports or production persistent Module Records.
