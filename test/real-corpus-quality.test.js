@@ -26,7 +26,7 @@ test('diagnostic quality report retains nonadmission and highlights suspect reco
    assert.equal(result.totals.functions,1);
    assert.equal(result.totals.verified,1);
    assert.equal(result.totals.repeatedReadCandidates,1);
-   assert.equal(result.totals.sameValueWriteCandidates,1);
+   assert.equal(result.totals.noVisibleHeapEffectWriteCandidates,1);
    assert.match(readFileSync(md,'utf8'),/project\/fixture\/function/);
  }finally{rmSync(dir,{recursive:true,force:true});}
 });

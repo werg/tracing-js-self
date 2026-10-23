@@ -40,3 +40,27 @@ function through the owned interpreter, record exact failure categories and
 observed traces side by side, prioritize the feature gaps with the greatest
 number of otherwise verified examples, then compare actual model outcomes
 before/after any trace compaction.
+
+## Measured initial coverage (pinned run, 2026-10-23)
+
+Across 78 original upstream functions and 936 deterministic invocations, the
+native diagnostic pass checked 936/936 final observable outcomes against a
+separate V8 execution. It emitted 27,039 events: 4,795 branches, 3,278 call
+records, 2,896 read records and 3,656 property-state changes. The median
+trace is 22 events and 2,479 serialized event bytes. This is final-outcome
+agreement, **not independent proof of every intermediate operation**.
+
+The owned coverage bridge sampled two invocations per function (156 total):
+24 locally verified across 12 families; 52 unsupported profile/syntax,
+36 runtime failures, 36 nonportable callback fixtures and eight source-bundle
+limits. These are **not** 156 admitted examples. See the generated GitHub
+Actions artifacts for exact per-function reasons.
+
+A substantial number of observed \`write\` records have **no changed heap
+properties**. This category includes ordinary lexical assignments, so it is
+not evidence that thousands of writes are redundant. Additionally, a callee's
+return can precede the record for the *calling expression*, because the
+current instrumenter records the call result after execution. This order
+is faithful to hook execution but harder for a reader/model to interpret as
+call/return structure. A future representation should distinguish call entry
+from call completion without perturbing argument or receiver evaluation.

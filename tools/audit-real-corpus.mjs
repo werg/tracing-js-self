@@ -15,7 +15,7 @@ const lines=readFileSync(input,'utf8').split(/\r?\n/).filter(Boolean);
 if(!lines.length)throw new Error('Empty observation corpus');
 const totals={observations:0,verified:0,functions:0,events:0,reads:0,calls:0,
   branches:0,mutations:0,bytes:0,sourceBytes:0,opaqueResults:0,
-  repeatedReadCandidates:0,sameValueWriteCandidates:0,lexicalWrites:0,
+  repeatedReadCandidates:0,noVisibleHeapEffectWriteCandidates:0,lexicalWrites:0,
   returnedCallCandidates:0,unmappedSiteCandidates:0,limitations:0};
 const byFunction={},kinds={},examples=[];
 for(const [lineNumber,line] of lines.entries()){
@@ -46,7 +46,7 @@ for(const [lineNumber,line] of lines.entries()){
     if(event.kind==='write'&&event.binding!==undefined)
       totals.lexicalWrites++;
     if(event.kind==='write'&&event.binding===undefined&&!changes.length)
-      flag('sameValueWriteCandidates');
+      flag('noVisibleHeapEffectWriteCandidates');
     if(event.kind==='call'&&prevKind==='return')flag('returnedCallCandidates');
     if(event.result?.[0]==='unknown'||event.result?.[0]==='symbol')flag('opaqueResults');
     const site=event.site;
@@ -71,7 +71,7 @@ for(const [lineNumber,line] of lines.entries()){
 totals.functions=Object.keys(byFunction).length;
 const scored=examples.map(e=>({...e,score:3*(e.flags.opaqueResults??0)+
   2*(e.flags.unmappedSiteCandidates??0)+(e.flags.returnedCallCandidates??0)+
-  (e.flags.repeatedReadCandidates??0)+(e.flags.sameValueWriteCandidates??0)}))
+  (e.flags.repeatedReadCandidates??0)+(e.flags.noVisibleHeapEffectWriteCandidates??0)}))
   .sort((a,b)=>b.score-a.score||b.bytes-a.bytes||a.family.localeCompare(b.family));
 const output={schema:'real-source-quality/1',admitted:false,
   authority:'native-V8-diagnostic-only',
@@ -86,7 +86,7 @@ const md=['# Real-source trace quality audit','','**Native V8 diagnostic only â€
   '## Coverage',...Object.entries(totals).map(([k,v])=>'- '+k+': '+v),'',
   '## Event types',...Object.entries(kinds).map(([k,v])=>'- '+k+': '+v),'',
   '## Inspection candidates','',
-  'Flags identify noisy or underspecified observations. A same-value write may still be semantically important; do not delete events on these metrics alone.',''];
+  'Flags identify noisy or underspecified observations. A write without a visible heap mutation may still be semantically important; do not delete events on these metrics alone.',''];
 for(const e of output.examples){
  md.push('### '+e.family+' #'+e.index,'',
    'Source: '+e.sourceURL,'',
