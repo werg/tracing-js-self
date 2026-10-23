@@ -1,9 +1,18 @@
 /** Acyclic, bounded ES-module source-graph evaluator; not a native ESM loader. */
+export interface EvaluatedModuleCall {
+  /** Named/default export to invoke after the graph is evaluated. */
+  exportName:string;
+  args:unknown[];
+}
 export interface EvaluatedModulesOptions {
   modules:Record<string,string>;
   entryModule:string;
   exportName?:string;
   args?:unknown[];
+  /** Calls execute in order within one owned realm episode, preserving mutable
+   * module lexical bindings, guest object identities and async job ordering.
+   * Replaces single-entry args; not persistent across distinct API invocations. */
+  calls?:EvaluatedModuleCall[];
 }
 export interface EvaluatedModulesRunOptions extends EvaluatedModulesOptions {
   maxSteps?:number;
@@ -20,6 +29,7 @@ export interface EvaluatedModulesMetadata {
   exportName:string;
   evaluationOrder:string[];
   linkedBinding:string;
+  calls?:Array<{exportName:string;binding:string}>;
   instantiationAndEvaluation:Array<{
     file:string;
     kind:'instantiate'|'evaluate';
@@ -47,6 +57,7 @@ export function linkEvaluatedModules(options:EvaluatedModulesOptions):{
   source:string;
   entryFunction:string;
   metadata:EvaluatedModulesMetadata;
+  entryInput:{args:unknown[]}|{calls:Array<{args:unknown[]}>};
 };
 export function executeEvaluatedModules(options:EvaluatedModulesRunOptions):
   Promise<{result:unknown;bundle:unknown;metadata:EvaluatedModulesMetadata}>;
