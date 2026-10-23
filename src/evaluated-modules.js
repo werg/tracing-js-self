@@ -351,17 +351,40 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     });
   }
   const modulesByFile=new Map(),visiting=new Set(),visited=new Set(),order=[];
+  const cycles=[];
   function get(file){
     if(!modulesByFile.has(file))
       modulesByFile.set(file,parseModule(file,sources.get(file),sources));
     return modulesByFile.get(file);
   }
+  const stack=[];
   function visit(file){
-    if(visiting.has(file))reject('cyclic initialization graph is not owned: '+file);
+    const active=stack.indexOf(file);
+    if(active>=0){
+      const members=stack.slice(active);
+      // Cyclic module async execution has separate ESM dependency promises
+      // and possible deadlocks. Never replace that scheduler with a flat
+      // approximation: admit only syntactically synchronous cycles.
+      const containsAwait=(value)=>{
+        if(!value||typeof value!=='object')return false;
+        if(Array.isArray(value))return value.some(containsAwait);
+        if(value.type==='AwaitExpression'||value.type==='ForOfStatement'&&value.await)
+          return true;
+        return Object.entries(value).some(([key,child])=>
+          key!=='start'&&key!=='end'&&key!=='loc'&&
+          typeof child==='object'&&containsAwait(child));
+      };
+      if(members.some(name=>get(name).initializers.some(part=>containsAwait(part.node))))
+        reject('cyclic module initialization with await requires owned async ESM dependency scheduling');
+      const marker=members.join(' -> ')+' -> '+file;
+      if(!cycles.some(c=>c.path===marker))
+        cycles.push({path:marker,members:[...members]});
+      return;
+    }
     if(visited.has(file))return;
-    visiting.add(file);
+    stack.push(file);
     for(const from of get(file).deps)visit(from);
-    visiting.delete(file);
+    stack.pop();
     visited.add(file);order.push(file);
   }
   visit(entryModule);
@@ -496,7 +519,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
   catch(error){reject('unowned generated guest syntax: '+error.message);}
   const metadata={
     profile:'evaluated-module/1',entryModule,exportName,
-    evaluationOrder:order.slice(),linkedBinding:selected.linked,
+    evaluationOrder:order.slice(),cycles,linkedBinding:selected.linked,
     ...(requested?{calls:requested.map(({exportName,binding})=>({
       exportName,binding:binding.linked}))}:{}),
     instantiationAndEvaluation:spans,links,
