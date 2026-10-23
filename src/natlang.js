@@ -2,6 +2,7 @@
 // Retained modules and live captures admit ordinary data graphs only: native
 // functions, package loaders, resources and unowned callbacks are rejected.
 import { createRuntime } from './runtime.js';
+import { executeWithNativeServices } from './host/native-driver.js';
 import { validateBundle } from './validation.js';
 import { replayExact } from './replay.js';
 import { realizeGraph } from './training/graph.js';
@@ -14,7 +15,7 @@ const event=(mode,body,status,extra={})=>({
 });
 
 export class BoundedNatlangEnvironment {
-  constructor({EvalFailure,onTrace=null,maxSteps=10000,mode='fresh'}={}){
+  constructor({EvalFailure,onTrace=null,maxSteps=10000,mode='fresh',services=null}={}){
     if(typeof EvalFailure!=='function')
       throw new TypeError('Pass the actual natlang EvalFailure constructor for instanceof compatibility');
     if(typeof onTrace!=='function'&&onTrace!==null)
@@ -23,6 +24,9 @@ export class BoundedNatlangEnvironment {
       throw new TypeError('Invalid natlang environment mode');
     if(!Number.isSafeInteger(maxSteps)||maxSteps<1||maxSteps>100000)
       throw new RangeError('maxSteps must be between 1 and 100000');
+    if(services!==null && (!services||typeof services!=='object'||Array.isArray(services)))
+      throw new TypeError('services must be an explicit native operation record');
+    this.services=services;
     this.EvalFailure=EvalFailure;
     this.onTrace=onTrace;
     this.maxSteps=maxSteps;
@@ -37,7 +41,8 @@ export class BoundedNatlangEnvironment {
   fork(){
     this.ensureOpen();
     return new BoundedNatlangEnvironment({
-      EvalFailure:this.EvalFailure,onTrace:this.onTrace,maxSteps:this.maxSteps,mode:'fresh'
+      EvalFailure:this.EvalFailure,onTrace:this.onTrace,maxSteps:this.maxSteps,
+      services:this.services,mode:'fresh'
     });
   }
   close(){this.closed=true;}
@@ -75,7 +80,75 @@ export class BoundedNatlangEnvironment {
     }
   }
   execute(request){return this.run(request,false);}
-  async executeAsync(request){return this.run(request,true);}
+  async executeAsync(request){
+    return this.services===null?this.run(request,true):this.runNativeAsync(request);
+  }
+  async runNativeAsync(request){
+    let progress=null;
+    try{
+      this.ensureOpen();
+      if(!request||typeof request.code!=='string'||!request.scope||
+         typeof request.scope!=='object'||Array.isArray(request.scope)||
+         typeof request.body!=='boolean'||typeof request.path!=='string')
+        throw new TypeError('Invalid natlang EvalRequest');
+      if(request.live!==undefined&&(!request.live||typeof request.live!=='object'||
+         Array.isArray(request.live)))
+        throw new TypeError('Native guest live bindings must be an ordinary data record');
+      if(request.timeoutMs!==undefined)
+        throw new TypeError('Native timeouts are not owned; use a step budget and an AbortSignal');
+      if(request.code.length>65536)
+        throw new RangeError('Natlang source exceeds the bounded adapter limit');
+      const body=request.body?request.code:'return ('+request.code+');';
+      const originalText='"use strict";\nasync function __natlang_trace_entry(self, __live) {\n'+
+        body+'\n}\n';
+      const lowering=compileBoundedTypeScript(originalText,{path:request.path});
+      const executed=await executeWithNativeServices({
+        entry:{text:lowering.javascript,url:request.path,
+          functionName:'__natlang_trace_entry',args:[request.scope,request.live??{}]},
+        services:this.services,maxSteps:this.maxSteps
+      });
+      progress=executed.progress;
+      const {runtime,bundle}=executed;
+      if(progress.kind!=='terminated')
+        throw new TypeError('Owned natlang native-service run did not complete: '+progress.kind);
+      // A settled async root is represented by its internal guest promise,
+      // not by a host Promise or an opaque callback continuation.
+      const root=runtime.initialState.control.a0.activeFrameId;
+      const promiseId=runtime.initialState.frames[root]?.asyncPromiseId;
+      const settled=promiseId && runtime.state.promises[promiseId];
+      if(!settled||settled.status==='pending')
+        throw new TypeError('Owned async guest root has not settled');
+      if(settled.status==='rejected'){
+        const reason=realizeGraph(runtime.state.heap,[settled.value.value])[0];
+        throw new Error('Owned guest promise rejected: '+String(
+          reason&&typeof reason==='object'?reason.message??reason.name??'guest object':reason));
+      }
+      const value=settled.value.value;
+      let result=realizeGraph(runtime.state.heap,[value])[0];
+      const resultEvent=event(this.mode,request.body,'completed',{
+        traceSchema:bundle.manifest.schema,profile:bundle.manifest.profile,
+        chunks:bundle.chunks.length,source:request.path,
+        transpiler:lowering.compiler,asyncGuest:true,nativeServices:true,
+        externalEffects:Object.keys(bundle.effects).length
+      });
+      if(this.onTrace){
+        const callback=this.onTrace(bundle,request,{
+          compiler:lowering.compiler,originalText,
+          javascript:lowering.javascript,sourceMap:lowering.sourceMap,
+          generatedSiteOrigins:mapBoundedTypeScriptSites(lowering,bundle.sites,originalText)
+        });
+        if(callback&&typeof callback.then==='function')
+          throw new TypeError('onTrace must be synchronous; async callbacks are unowned');
+      }
+      if(request.live!==undefined)
+        result=synchronizeLiveGraph(bundle.initialState.heap,runtime.state.heap,
+          bundle.entrySpec.arguments[1],request.live,value);
+      return {result:result===undefined?null:result,events:[resultEvent],logs:[]};
+    }catch(error){
+      if(error instanceof this.EvalFailure)throw error;
+      throw this.failed(request,error,progress?.kind==='unsupported'?'unsupported':'failed');
+    }
+  }
   run(request,allowAsync,{syncScope=null}={}){
     let progress=null;
     try{
