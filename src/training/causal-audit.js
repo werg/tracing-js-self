@@ -18,6 +18,11 @@ export function auditPublicCausality(episode,{maxBytes=512}={}) {
   if(!Number.isSafeInteger(maxBytes)||maxBytes<64||maxBytes>1024)
     throw new RangeError('Invalid causal audit limit');
   const producers=new Set(),codes=new Set(),sites=new Set();
+  // The bounded synchronous profile runs one invocation stack. An announced
+  // child must enter before further execution; no unentered frame may emit
+  // events, and the terminal marker must follow the root's actual return.
+  const entered=new Set(),frames=[];
+  let pendingEnter=null,rootReturned=false;
   let stage=0,source=null,input=null,root=null,ended=false,open=null,logical=0,generated=0;
   function accept(kind,fields,mode,track) {
     logical++;
@@ -74,9 +79,25 @@ export function auditPublicCausality(episode,{maxBytes=512}={}) {
       throw new Error('Unrecognized generated semantic payload field');
     if(root===null){
       if(kind!=='enter'||track!=='t0'||fields.entry!==input.entry||
+         typeof fields.invocation!=='string'||fields.invocation!==input.invocation||
          !isDeepStrictEqual(fields.arguments,input.graph.roots))
         throw new Error('Root entered without published source/input');
       root=fields.invocation;
+      entered.add(root);frames.push(root);
+    }else if(kind==='enter'){
+      if(!pendingEnter||fields.invocation!==pendingEnter.child||
+         fields.code!==pendingEnter.code||entered.has(fields.invocation)||
+         !isDeepStrictEqual(fields.receiver,pendingEnter.receiver)||
+         !isDeepStrictEqual(fields.arguments,pendingEnter.arguments)||
+         !isDeepStrictEqual(fields.captures,pendingEnter.captures)||
+         !isDeepStrictEqual(fields.dependsOn,[pendingEnter.id]))
+        throw new Error('Unjustified child invocation entry');
+      entered.add(fields.invocation);frames.push(fields.invocation);
+      pendingEnter=null;
+    }else{
+      if(pendingEnter)throw new Error('Call child not entered before later events');
+      if(kind!=='end'&&fields.invocation!==frames.at(-1))
+        throw new Error('Event outside active invocation');
     }
     if(fields.site!==undefined&&fields.site!==null&&!sites.has(fields.site))
       throw new Error('Unpublished source site');
@@ -100,9 +121,24 @@ export function auditPublicCausality(episode,{maxBytes=512}={}) {
         throw new Error('Nonchronological or duplicate semantic identity');
       producers.add(fields.id);
     }
+    if(kind==='call'&&fields.child){
+      if(typeof fields.child!=='string'||entered.has(fields.child)||
+         !fields.id||!Array.isArray(fields.arguments))
+        throw new Error('Invalid declared child invocation');
+      pendingEnter={id:fields.id,child:fields.child,code:fields.code,
+        arguments:fields.arguments,receiver:fields.receiver,captures:fields.captures};
+    }
+    if(kind==='return'){
+      const caller=frames.at(-2)??null;
+      if((fields.destination??null)!==caller)
+        throw new Error('Return destination disagrees with invocation stack');
+      if(fields.invocation===root)rootReturned=true;
+      frames.pop();
+    }
     if(kind==='end'){
-      if(fields.invocation!==root||fields.kind!=='return')
-        throw new Error('Terminal record contradicts root return');
+      if(fields.invocation!==root||fields.kind!=='return'||
+         !rootReturned||frames.length!==0||pendingEnter)
+        throw new Error('Terminal record lacks completed root return');
       ended=true;
     }
   }

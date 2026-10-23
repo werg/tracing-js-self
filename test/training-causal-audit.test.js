@@ -78,3 +78,58 @@ test('public-only audit rejects metadata smuggling in visible records and meridi
  generated.groups[3].events[0].record=encodeRecord(original.kind,original.fields);
  assert.throws(()=>auditPublicCausality(generated),/Unrecognized generated/);
 });
+
+function nestedEpisode() {
+  const x=episode();
+  x.groups=[
+    ...x.groups.slice(0,2),
+    generated(encodeRecord('enter',{invocation:'i1',entry:'f',code:'c1',arguments:[]})),
+    generated(encodeRecord('call',{id:'e1',invocation:'i1',child:'i2',code:'c1',
+      receiver:['undefined'],arguments:[],captures:null})),
+    generated(encodeRecord('enter',{invocation:'i2',code:'c1',
+      receiver:['undefined'],arguments:[],captures:null,dependsOn:['e1']})),
+    generated(encodeRecord('return',{id:'e2',invocation:'i2',destination:'i1',
+      result:['num',2]})),
+    generated(encodeRecord('return',{id:'e3',invocation:'i1',result:['num',2]})),
+    generated(encodeRecord('end',{invocation:'i1',kind:'return'}))
+  ].map((group,i)=>({...group,id:'m'+(i+1)}));
+  return x;
+}
+test('public causal audit binds the root entry and requires an actual root return',()=>{
+  const mismatched=episode();
+  const root=decodeRecord(mismatched.groups[2].events[0].record);
+  root.fields.invocation='forged';
+  mismatched.groups[2].events[0].record=encodeRecord(root.kind,root.fields);
+  assert.throws(()=>auditPublicCausality(mismatched),/Root entered/);
+  const noReturn=episode();
+  noReturn.groups.splice(4,1);
+  noReturn.groups.forEach((group,i)=>{group.id='m'+(i+1);});
+  assert.throws(()=>auditPublicCausality(noReturn),/completed root return/);
+  const wrongFrame=episode();
+  const ret=decodeRecord(wrongFrame.groups[4].events[0].record);
+  ret.fields.invocation='i999';
+  wrongFrame.groups[4].events[0].record=encodeRecord(ret.kind,ret.fields);
+  assert.throws(()=>auditPublicCausality(wrongFrame),/active invocation/);
+});
+test('public causal audit enforces declared child entry and stack returns',()=>{
+  assert.equal(auditPublicCausality(nestedEpisode()).valid,true);
+  const missing=nestedEpisode();
+  missing.groups.splice(4,1);
+  missing.groups.forEach((group,i)=>{group.id='m'+(i+1);});
+  assert.throws(()=>auditPublicCausality(missing),/Call child not entered/);
+  const misbound=nestedEpisode();
+  const entered=decodeRecord(misbound.groups[4].events[0].record);
+  entered.fields.arguments=[['num',99]];
+  misbound.groups[4].events[0].record=encodeRecord(entered.kind,entered.fields);
+  assert.throws(()=>auditPublicCausality(misbound),/Unjustified child/);
+  const parentBeforeChild=nestedEpisode();
+  [parentBeforeChild.groups[5],parentBeforeChild.groups[6]]=
+    [parentBeforeChild.groups[6],parentBeforeChild.groups[5]];
+  parentBeforeChild.groups.forEach((group,i)=>{group.id='m'+(i+1);});
+  assert.throws(()=>auditPublicCausality(parentBeforeChild),/active invocation/);
+  const wrongDestination=nestedEpisode();
+  const ret=decodeRecord(wrongDestination.groups[5].events[0].record);
+  ret.fields.destination='i999';
+  wrongDestination.groups[5].events[0].record=encodeRecord(ret.kind,ret.fields);
+  assert.throws(()=>auditPublicCausality(wrongDestination),/Return destination/);
+});
