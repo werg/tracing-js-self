@@ -32,7 +32,7 @@ const opNames = {
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate',
   CALL:'call.enter', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
   GET_PROP:'property.read', GET_METHOD:'property.read', PUT_PROP:'property.write', ENTER_SCOPE:'environment.enter',
-  LEAVE_SCOPE:'environment.leave', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
+  LEAVE_SCOPE:'environment.leave', CLONE_LOOP_ENV:'environment.iteration', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
   TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
   BIND_CATCH:'completion.catch.bind', END_FINALLY:'completion.finally.end',
   LOOP_ENTER:'control.loop.enter', LOOP_EXIT:'control.loop.exit', LOOP_JUMP:'completion.loop.jump', THIS:'reference.this'
@@ -480,6 +480,21 @@ export class Runtime {
         case 'DEF_FN':{const e=s.envs[f.envId],id=this.next(s,'obj');s.heap[id]={id,kind:'function',codeId:arg.codeId,closureEnvId:f.envId,async:arg.async,version:0};e.bindings[arg.name]={kind:'function',initialized:true,token:token(['ref',id],eventId),version:0};return {result:['ref',id]};}
         case 'ENTER_SCOPE':f.envId=this.newEnv(s,f.envId);return {};
         case 'LEAVE_SCOPE':f.envId=s.envs[f.envId].parent;return {};
+        case 'CLONE_LOOP_ENV':{
+          const loop=f.loops.at(-1);
+          if(!loop || loop.envId!==f.envId)
+            throw new Error('Iteration clone outside its lexical loop');
+          const original=s.envs[f.envId],binding=original.bindings[arg];
+          if(!binding || binding.kind!=='let' || !binding.initialized)
+            throw new Error('Iteration needs an initialized let binding');
+          const envId=this.newEnv(s,original.parent);
+          s.envs[envId].bindings[arg]=copy(binding);
+          loop.envId=envId;
+          f.envId=envId;
+          return {reads:[{kind:'binding',envId:original.id,name:arg,
+            version:binding.version??0,value:binding.token.value,
+            supplyingEvent:binding.token.origin??null}]};
+        }
         case 'TRY_ENTER':
           f.handlers.push({...arg,envId:f.envId,stackDepth:st.length,
             loopDepth:f.loops.length,phase:'try',caught:null,pending:null});

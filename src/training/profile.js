@@ -101,18 +101,7 @@ export function parseTraining(source) {
           init=stmt(n.init);
         }else if(n.init)init=expr(n.init);
         const body=stmt(n.body);
-        // This bounded profile does not clone for-let bindings per iteration.
-        // Without captured closures, the shared binding is observationally equivalent.
-        function declaresFunction(x){
-          if(x.type==='Function')return true;
-          if(x.type==='Block')return x.body.some(declaresFunction);
-          if(x.type==='If')return declaresFunction(x.consequent)||
-            (x.alternate!==null&&declaresFunction(x.alternate));
-          if(['For','While','DoWhile'].includes(x.type))return declaresFunction(x.body);
-          return false;
-        }
-        if(init?.type==='Variable'&&declaresFunction(body))
-          reject(n,'for-let body with nested function needs per-iteration environments');
+        // A distinct environment is captured by functions defined in each iteration.
         return {...loc,type:'For',init,test:n.test?expr(n.test):null,
           update:n.update?expr(n.update):null,body};
       }

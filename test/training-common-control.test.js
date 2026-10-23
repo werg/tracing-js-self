@@ -103,7 +103,6 @@ test('unowned semantic cases fail closed instead of making plausible training ex
   const rejected=[
     'function f(){const a={n:1};a.n++;return a.n;}',
     'function f(){let n=0;for(const i=0;i<3;i++)n+=i;return n;}',
-    'function f(){let x=0;for(let i=0;i<2;i++){function g(){return i;}x+=g();}return x;}',
     'function f(){return missing++ ;}',
     'function f(){label:while(true){break label;}return 1;}'
   ];
@@ -112,6 +111,23 @@ test('unowned semantic cases fail closed instead of making plausible training ex
   const runtime=createRuntime().startEntry({text:strict(
     'function f(x){x++;return 0;}'),functionName:'f',args:[{x:1}]});
   assert.throws(()=>runtime.drive(),/Update coercion outside the bounded scalar profile/);
+});
+
+test('per-iteration let environments preserve closure snapshots and continue edges',()=>{
+  const exported=verified(`function f(){
+    let captured=[];
+    for(let i=0;i<3;i++){
+      function capture(){return i;}
+      captured[i]=capture;
+      if(i===1)continue;
+    }
+    return [captured[0](),captured[1](),captured[2]()];
+  }`);
+  const iterations=exported.sidecar.archive.events.filter(
+    e=>e.operation==='environment.iteration');
+  assert.equal(iterations.length,6);
+  assert.equal(new Set(iterations.map(e=>e.stateChanges.find(
+    p=>p.table==='envs'&&p.before===null)?.id)).size,6);
 });
 
 test('serving controller rejects a forged update read before committing the write',()=>{

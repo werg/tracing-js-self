@@ -238,10 +238,15 @@ export function compile(ast) {
             if(lexical)stmt(n.init);
             else{expr(n.init);emit('POP',null,n.init);}
           }
-          const entry=emit('LOOP_ENTER',null,n),top=instructions.length;
+          const entry=emit('LOOP_ENTER',null,n);
+          // ECMA-262 CreatePerIterationEnvironment: a new captured binding
+          // before the first test and again between each body and update.
+          if(lexical)emit('CLONE_LOOP_ENV',n.init.id,n);
+          const top=instructions.length;
           const no=n.test?(expr(n.test),emit('JUMP_IF_FALSE',null,n.test)):null;
           loopDepth++;stmt(n.body);loopDepth--;
           const updatePc=instructions.length;
+          if(lexical)emit('CLONE_LOOP_ENV',n.init.id,n);
           if(n.update){expr(n.update);emit('POP',null,n.update);}
           emit('JUMP',top,n);
           const end=instructions.length;
