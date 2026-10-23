@@ -59,14 +59,50 @@ test('TS for-of destructured pairs and lexical closure captures match native V8'
     'return [callbacks[0](),callbacks[1]()];',
     {rows:[[1,2],[3,4]]}),[12,34]);
 });
+test('nested TypeScript object and array patterns have owned lazy defaults',()=>{
+  assert.deepEqual(differential(
+    'let calls=0;function generate(){calls++;return self.record;}' +
+    'const {a:{x=7,y:renamed=8}, b:[first=9,second]}=generate();' +
+    'return [x,renamed,first,second,calls];',
+    {record:{a:{x:undefined,y:3},b:[undefined,12]}}),[7,3,9,12,1]);
+  assert.deepEqual(differential(
+    'let events=[];const {x=events.push(1),y=events.push(2)}=self;' +
+    'return [x,y,events];',
+    {x:0,y:null}),[0,null,[]]);
+  assert.deepEqual(differential(
+    'let events=[];const {a=events.push(1),b=events.push(2)}=self;' +
+    'return [a,b,events];',
+    {}),[1,2,[1,2]]);
+  assert.deepEqual(differential(
+    'const [{a=4}, {b:[x=8]}]=self.items;return [a,x];',
+    {items:[{a:3},{b:[]}] }),[3,8]);
+});
+
+test('nested binding failures never publish successful traces',()=>{
+  const traces=[];
+  const env=createBoundedNatlangEnvironment({EvalFailure,onTrace:b=>traces.push(b)});
+  try{
+    for(const [code,scope] of [
+      ['const {a:{b}}=self;return b;', {a:null}],
+      ['const {a:[x]}=self;return x;', {a:'string'}],
+      ['const {x=1,x:y=2}=self;return x;',{}],
+      ['const {a:{b:{c:{d:{e}}}}}=self;return e;',{}],
+      ['const {[self.k]:a}=self;return a;',{}],
+      ['const {x,...rest}=self;return rest;',{}],
+      ['const {Array: Array, a:[x]}=self;return x;',{}]
+    ])
+      assert.throws(()=>env.execute({code,scope,body:true,
+        path:'natlang://pattern-negative.ts'}),EvalFailure,code);
+    assert.equal(traces.length,0);
+  }finally{env.close();}
+});
+
 test('unsupported array patterns and non-array iterators fail before trace publication',()=>{
   const traces=[];
   const env=createBoundedNatlangEnvironment({EvalFailure,
     onTrace:bundle=>traces.push(bundle)});
   try{
     for(const [code,scope] of [
-      ['const [a = 1]=self.items;return a;',{items:[2]}],
-      ['const [[a]]=self.items;return a;',{items:[[2]]}],
       ['const [a,...b]=self.items;return b;',{items:[2,3]}],
       ['const [,b]=self.items;return b;',{items:[2,3]}],
       ['var [a]=self.items;return a;',{items:[2]}],

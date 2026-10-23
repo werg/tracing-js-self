@@ -198,33 +198,48 @@ export function parseTraining(source) {
       case 'BlockStatement':return {...loc,type:'Block',body:n.body.map(stmt)};
       case 'VariableDeclaration':
         if(['let','const'].includes(n.kind) && n.declarations.length===1 &&
-           n.declarations[0].id.type==='ArrayPattern'){
-          const d=n.declarations[0],elements=d.id.elements;
-          // A bounded positional slice of standard array iteration only.
-          if(!d.init||!elements.length||elements.length>32||
-             elements.some(element=>element?.type!=='Identifier'))
-            reject(n,'bounded array binding requires 1..32 identifier targets');
-          return {...loc,type:'ArrayBinding',kind:n.kind,init:expr(d.init),
-            bindings:elements.map((element,index)=>({
-              ...span(element),index,name:element.name
-            }))};
-        }
-        if(['let','const'].includes(n.kind) && n.declarations.length===1 &&
-           n.declarations[0].id.type==='ObjectPattern'){
-          const d=n.declarations[0],properties=d.id.properties;
-          if(!d.init||!properties.length||properties.length>32)
-            reject(n,'bounded object binding requires an initializer and properties');
-          const bindings=properties.map(p=>{
-            if(p.type!=='Property'||p.kind!=='init'||p.method||p.computed||
-               p.value.type!=='Identifier')
-              reject(p,'object binding key/target');
-            const key=p.key.type==='Identifier'?p.key.name:
-              p.key.type==='Literal'?String(p.key.value):null;
-            if(key===null||key==='__proto__')reject(p,'object binding key');
-            return {...span(p),key,name:p.value.name};
-          });
-          return {...loc,type:'ObjectBinding',kind:n.kind,
-            init:expr(d.init),bindings};
+           ['ArrayPattern','ObjectPattern'].includes(n.declarations[0].id.type)){
+          const d=n.declarations[0];
+          if(!d.init)reject(n,'destructuring requires an initializer');
+          const names=[],budget={count:0};
+          function pattern(node,depth=0){
+            if(++budget.count>32||depth>4)
+              reject(node,'destructuring shape exceeds bounded depth/nodes');
+            const at=span(node);
+            if(node.type==='Identifier'){
+              names.push({...at,name:node.name});
+              return {...at,type:'PatternName',name:node.name};
+            }
+            if(node.type==='AssignmentPattern')
+              return {...at,type:'PatternDefault',
+                target:pattern(node.left,depth+1),fallback:expr(node.right)};
+            if(node.type==='ArrayPattern'){
+              if(!node.elements.length||node.elements.some(item=>item===null))
+                reject(node,'array binding needs dense nonempty elements');
+              return {...at,type:'PatternArray',elements:
+                node.elements.map((item,index)=>({
+                  ...span(item),index,target:pattern(item,depth+1)
+                }))};
+            }
+            if(node.type==='ObjectPattern'){
+              if(!node.properties.length)
+                reject(node,'object binding needs properties');
+              return {...at,type:'PatternObject',entries:node.properties.map(item=>{
+                if(item.type!=='Property'||item.kind!=='init'||item.method||item.computed)
+                  reject(item,'object binding needs a static data property');
+                const key=item.key.type==='Identifier'?item.key.name:
+                  item.key.type==='Literal'?String(item.key.value):null;
+                if(key===null||key==='__proto__')
+                  reject(item,'unsafe object binding key');
+                return {...span(item),key,target:pattern(item.value,depth+1)};
+              })};
+            }
+            reject(node,'destructuring target');
+          }
+          const tree=pattern(d.id);
+          if(!names.length)reject(d.id,'destructuring requires a bound identifier');
+          return {...loc,type:'PatternBinding',kind:n.kind,init:expr(d.init),
+            pattern:tree,bindings:names};
         }
         if(!['let','const','var'].includes(n.kind)||!n.declarations.length ||
            n.declarations.some(d=>d.id.type!=='Identifier'))
@@ -325,7 +340,7 @@ export function parseTraining(source) {
       for(const name of collectVarBindings(statements))names.add(name);
     for(const n of statements){
       const entries=n.type==='VariableGroup'?n.declarations:
-        ['ObjectBinding','ArrayBinding'].includes(n.type)?n.bindings.map(binding=>({
+        n.type==='PatternBinding'?n.bindings.map(binding=>({
           id:binding.name,kind:n.kind,start:binding.start,end:binding.end
         })):
         ['Variable','Function'].includes(n.type)?[n]:[];
@@ -384,14 +399,29 @@ export function parseTraining(source) {
     function statement(n,e){
       switch(n.type){
         case 'Variable':if(n.init)value(n.init,e);break;
-        case 'ObjectBinding':value(n.init,e);break;
-        case 'ArrayBinding':{
-          // The emitted array guard resolves Array.isArray by name. Reject
-          // lexical shadowing rather than accidentally running a guest helper.
-          for(let cursor=e;cursor?.parent;cursor=cursor.parent)
-            if(cursor.names.has('Array'))
-              reject(n,'array binding requires unshadowed owned Array intrinsic');
-          value(n.init,e);break;
+        case 'PatternBinding':{
+          // Guard the modeled Array.isArray intrinsic against lexical
+          // shadowing even when the array occurs under an object pattern.
+          function hasArray(node){
+            if(node.type==='PatternArray')return true;
+            if(node.type==='PatternDefault')return hasArray(node.target);
+            if(node.type==='PatternObject')
+              return node.entries.some(item=>hasArray(item.target));
+            return false;
+          }
+          if(hasArray(n.pattern))
+            for(let cursor=e;cursor?.parent;cursor=cursor.parent)
+              if(cursor.names.has('Array'))
+                reject(n,'array pattern requires unshadowed owned Array intrinsic');
+          function defaults(node){
+            if(node.type==='PatternDefault'){
+              value(node.fallback,e);defaults(node.target);
+            }else if(node.type==='PatternObject')
+              node.entries.forEach(item=>defaults(item.target));
+            else if(node.type==='PatternArray')
+              node.elements.forEach(item=>defaults(item.target));
+          }
+          value(n.init,e);defaults(n.pattern);break;
         }
         case 'VariableGroup':n.declarations.forEach(x=>statement(x,e));break;
         case 'Function':scope(n.body.body,e,n.params,n.async,true,n.defaults);break;

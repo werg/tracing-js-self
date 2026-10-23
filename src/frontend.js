@@ -171,7 +171,7 @@ export function compile(ast) {
       if(scoped) emit('ENTER_SCOPE',null,nodes[0]);
       for(const n of nodes){
         const declarations=n.type==='VariableGroup'?n.declarations:
-          ['ObjectBinding','ArrayBinding'].includes(n.type)?n.bindings.map(b=>({
+          n.type==='PatternBinding'?n.bindings.map(b=>({
             id:b.name,kind:n.kind,start:b.start,end:b.end
           })):
           n.type==='Variable'?[n]:[];
@@ -308,44 +308,73 @@ export function compile(ast) {
           break;
         }
         case 'VariableGroup':for(const declaration of n.declarations)stmt(declaration);break;
-        case 'ArrayBinding':{
-          // One initializer, with explicit failure for non-array iterables.
-          // This does not model arbitrary Symbol.iterator implementations.
-          const retained='[[array binding '+(++forOfIndex)+']]';
+        case 'PatternBinding':{
+          // Every nested initializer/get/default remains an owned bytecode
+          // effect. Hidden generated names are inaccessible to guest syntax.
+          // The temporary scope is distinct from the lexical declarations.
           emit('ENTER_SCOPE',null,n);
-          emit('DECLARE',{name:retained,kind:'const'},n);
-          expr(n.init);emit('INIT',retained,n);
-          emit('GET','Array',n);
-          emit('CONST',{value:['str','isArray']},n);
-          emit('GET_METHOD',null,n);
-          emit('GET',retained,n);
-          emit('CALL',1,n);
-          const invalid=emit('JUMP_IF_FALSE',null,n);
-          const accepted=emit('JUMP',null,n);
-          instructions[invalid].arg=instructions.length;
-          emit('UNSUPPORTED_EXPRESSION',
-            'Array binding requires a standard owned array',n);
-          instructions[accepted].arg=instructions.length;
-          for(const binding of n.bindings){
-            emit('GET',retained,binding);
-            emit('CONST',{value:['num',binding.index]},binding);
-            emit('GET_PROP',null,binding);
-            emit('INIT',binding.name,binding);
+          const temporary=node=>{
+            const name='[[pattern '+(++forOfIndex)+']]';
+            emit('DECLARE',{name,kind:'let'},node);
+            return name;
+          };
+          function bindPattern(pattern,variable){
+            if(pattern.type==='PatternName'){
+              emit('GET',variable,pattern);
+              emit('INIT',pattern.name,pattern);
+              return;
+            }
+            if(pattern.type==='PatternDefault'){
+              emit('GET',variable,pattern);
+              emit('CONST',{value:['undefined']},pattern);
+              emit('BINARY','===',pattern);
+              const skip=emit('JUMP_IF_FALSE',null,pattern);
+              expr(pattern.fallback);
+              emit('SET',variable,pattern);
+              emit('POP',null,pattern);
+              instructions[skip].arg=instructions.length;
+              bindPattern(pattern.target,variable);
+              return;
+            }
+            if(pattern.type==='PatternArray'){
+              emit('GET','Array',pattern);
+              emit('CONST',{value:['str','isArray']},pattern);
+              emit('GET_METHOD',null,pattern);
+              emit('GET',variable,pattern);
+              emit('CALL',1,pattern);
+              const invalid=emit('JUMP_IF_FALSE',null,pattern);
+              const accepted=emit('JUMP',null,pattern);
+              instructions[invalid].arg=instructions.length;
+              emit('UNSUPPORTED_EXPRESSION',
+                'Array binding requires an owned standard array',pattern);
+              instructions[accepted].arg=instructions.length;
+              for(const entry of pattern.elements){
+                const child=temporary(entry);
+                emit('GET',variable,entry);
+                emit('CONST',{value:['num',entry.index]},entry);
+                emit('GET_PROP',null,entry);
+                emit('INIT',child,entry);
+                bindPattern(entry.target,child);
+              }
+              return;
+            }
+            if(pattern.type==='PatternObject'){
+              for(const entry of pattern.entries){
+                const child=temporary(entry);
+                emit('GET',variable,entry);
+                emit('CONST',{value:['str',entry.key]},entry);
+                emit('GET_PROP',null,entry);
+                emit('INIT',child,entry);
+                bindPattern(entry.target,child);
+              }
+              return;
+            }
+            throw new SyntaxError('Unsupported pattern shape: '+pattern.type);
           }
+          const root=temporary(n);
+          expr(n.init);emit('INIT',root,n);
+          bindPattern(n.pattern,root);
           emit('LEAVE_SCOPE',null,n);
-          break;
-        }
-        case 'ObjectBinding':{
-          // One initializer evaluation; each [[Get]] happens in source order,
-          // with its own source provenance, before initializing a lexical cell.
-          expr(n.init);
-          for(const binding of n.bindings){
-            emit('DUP',null,binding);
-            emit('CONST',{value:['str',binding.key]},binding);
-            emit('GET_PROP',null,binding);
-            emit('INIT',binding.name,binding);
-          }
-          emit('POP',null,n);
           break;
         }
         case 'Expression':expr(n.expr);emit('POP',null,n);break;
