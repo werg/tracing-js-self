@@ -21,7 +21,7 @@ async function agree(code,scope={}){
     const native=vm.runInNewContext(
       lowering.javascript+'\n__natlang_trace_entry(self,{});',
       {self:structuredClone(scope)},{timeout:1000});
-    assert.deepEqual(own.result,await native);
+    assert.deepEqual(own.result,structuredClone(await native));
     return own.result;
   }finally{env.close();}
 }
