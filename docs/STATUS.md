@@ -30,7 +30,7 @@ This repository implements a **bounded, executable prototype** for the architect
 The `training-js/1` profile provides integrity-locked Acorn 8.15.0 ES2022 strict
 parsing with a syntax/operation allowlist, exact function entry, stable argument
 graphs, reference identity/array semantics, journal normalization,
-`semantic-trace/1` serialization, deterministic serial model groups and a local
+`semantic-trace/2` serialization, deterministic serial model groups and a local
 differential Node V8 `vm` comparison. Its runtime shares the bounded owned arithmetic and ordinary-data coercion
 phase paths. The training profile accepts only synchronous, effect-free,
 non-throwing entries; committed terminal guest throws in the common runtime do
@@ -72,7 +72,7 @@ A separate source-instrumented V8 run now compares **executed scalar unary/binar
 An independent V8 **control-decision audit** checks executed if, loop, ternary and &&/||/?? short-circuit branch decisions in source order. Mismatched, missing or excess decisions fail closed before candidate training verification; this does not establish whole-language semantics or training admission.
 
 The bounded mock host bridge now dispatches only **versioned, immutable `canonical-json/1` request payloads**, materialized from the committed graph before the adapter sees them. Its journal independently checks the exact JSON bytes, operation signature, and historical graph versions. Adapters receive frozen plain JSON data; original guest tags remain only in the private journal. Fulfilled/pending guest-promise adoption regressions also exist. The deterministic fixture generator emits candidate
-`semantic-execution/1` episodes with a private audit sidecar and reports
+`semantic-execution/2` episodes with a private audit sidecar and reports
 **locally verified**, with **admitted=0**. A separate post-serialization V8 evidence recheck now recomputes the reference graph, scalar operation receipts and executed control decisions from the archived source/initial graph; it does not confer production admission. These are not accepted megatoken training
 examples. Causal source bundling, liveness-based compaction, automatic corpus segmentation, and actual trained-model rollout evaluation remain open. A bounded selected-trace controller and a cross-repository megatoken adapter are implemented, with diagnostic rather than production admission. Serving-side selected-event commits now roll back on rejection, and an unterminated model-selected rollout is marked invalid. A public-only causal-order audit now checks observed source/input publication and graph-reference closure, explicit event dependencies, chronological producer identities, synchronous call/entry/return ownership and root completion, same-lane and same-mode fragments, and terminal ordering independently of private journal/replay. This audit is not a full transitive information-flow or ECMAScript correctness proof. See [TRAINING_IMPLEMENTATION.md](TRAINING_IMPLEMENTATION.md) for the
 implemented interfaces and admission gates.
@@ -107,3 +107,6 @@ The [semantic execution training-data plan](TRAINING_DATA_PLAN.md) sets the imme
 6. Scale journal/export storage and broaden spec-backed owned execution to bindings, complete property descriptors, accessor/proxy conversion continuations, internal-method invariants and observable coercion beyond the newly owned ordinary-data path. Extend typed commands beyond the operation table, preserve versioned replay/causal contracts, and upgrade the textual inventory to full normative clause/intrinsic coverage. Native activation ownership, durable recovery, real Node/browser services, independent specification-level replay and the full strict/module/async/negative Test262 harness remain broader-target requirements in [engine262 adoption](ENGINE262_ADOPTION.md).
 
 The unresolved required families remain explicit in `coverage/required.json`;  the demonstrator's profile is intentionally different from the plan's completed target.
+
+
+The model-facing format is [effective semantic-trace/2](EFFECTIVE_TRACE.md); it captures actual computation without reconstructing hidden prototype/accessor internals. No legacy format adapter is supported.

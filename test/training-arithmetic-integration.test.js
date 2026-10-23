@@ -6,7 +6,7 @@ import {normalizeJournal} from '../src/semantic/normalize.js';
 import {decodeRecord,restoreLines} from '../src/training/format.js';
 
 const strict=code=>'"use strict";\n'+code;
-const completedEntry=/Only completed synchronous effect-free return entries/;
+const completedEntry=/Only completed synchronous effect-free return entries|Caught guest throws require a modeled catch continuation/;
 function run(code,args=[]) {
   const runtime=createRuntime().startEntry({text:strict(code),functionName:'f',args});
   return {runtime,progress:runtime.drive()};
@@ -61,8 +61,10 @@ test('arithmetic is projected at completion with input, consumer and control dep
     assert.equal(semantic.journalMapping[phase.eventId],undefined);
   const records=restoreLines(exported.public.groups.slice(exported.sidecar.contextGroups)
     .flatMap(group=>group.events.map(event=>event.record))).map(decodeRecord);
-  assert.deepEqual(records.filter(record=>record.fields.arithmetic)
+  assert.deepEqual(records.filter(record=>rows.some(row=>row.id===record.fields.id))
     .map(record=>record.fields.result),[['num',8],['num',11]]);
+  assert(records.every(record=>!Object.hasOwn(record.fields,'arithmetic') &&
+    !Object.hasOwn(record.fields,'operands')));
 });
 
 test('computed phase registers remain absent until the arithmetic operation completes',()=>{

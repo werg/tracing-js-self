@@ -7,6 +7,7 @@ import {referenceOutcome,ownedOutcome} from './reference.js';
 import {exportTraining,validateTrainingExport} from './export.js';
 import {auditReferenceOperations} from './operation-reference.js';
 import {auditReferenceBranches} from './branch-reference.js';
+import {evaluateSelectedTrajectory} from './rollout.js';
 
 export function verifyTrainingCase({source,entry,args=[],seed=null,lineage=null,
     maxSteps=10000,maxGenerated=256}={}) {
@@ -65,6 +66,11 @@ export function verifyTrainingCase({source,entry,args=[],seed=null,lineage=null,
     return {status:error instanceof RangeError?'profile_limit':'projection_failure',
       reason:String(error.message)};
   }
+  const selected=evaluateSelectedTrajectory({groups:exported.public.groups,
+    referenceOutcome:reference,maxGenerated});
+  if(!selected.valid || selected.correctness!=='correct')
+    return {status:'projection_failure',reason:'Public controller trajectory disagrees with reference',
+      invalid:selected.invalid,correctness:selected.correctness};
   exported.sidecar.referenceStatus='agreed';
   exported.sidecar.operationAudit=operationAudit;
   exported.sidecar.branchAudit=branchAudit;

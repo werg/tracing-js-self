@@ -84,7 +84,9 @@ test('the exporter rejects forged semantic records and future group dependencies
   const changed=structuredClone(res.exported);
   const target=changed.public.groups.find(g=>g.events.some(e=>e.record.startsWith('branch ')));
   assert(target);
-  target.events[0].record=target.events[0].record.replace('"decision":false','"decision":true');
+  const branch=decodeRecord(target.events[0].record);
+  branch.fields.path=branch.fields.path==='then'?'else':'then';
+  target.events[0].record=encodeRecord(branch.kind,branch.fields);
   assert.throws(()=>validateTrainingExport(changed));
   const forged=structuredClone(res.exported);
   const value=forged.public.groups.find(g=>g.mode==='generated' && g.events.some(e=>e.record.startsWith('value ') && e.record.includes('"result"')));

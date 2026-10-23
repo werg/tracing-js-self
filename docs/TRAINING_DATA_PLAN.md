@@ -134,7 +134,7 @@ All event payloads are immutable. A historical reference identifies an object; a
 
 Retain a total authoritative order for one JavaScript agent and explicit dependency edges for value flow, control, calls, state visibility, promise settlement, jobs, and external observations. This dependency graph permits conservative grouping; it does not replace JavaScript's scheduler with arbitrary parallel execution.
 
-## 6. Chosen training representation: semantic-trace/1
+## 6. Chosen training representation: semantic-trace/2
 
 Use a deterministic, source-anchored, line-oriented language. Keep the fixed vocabulary readable and small. The model payload carries semantic updates; full provenance, redundant operands, source offsets, and reconstructive state patches stay in the sidecar.
 
@@ -413,7 +413,7 @@ Acceptance: admitted synchronous examples agree with the reference on completion
 Owner: new `src/semantic/normalize.js`, `src/semantic/graph.js`, `src/semantic/validate.js`, `src/training/format.js`, and schema files.
 
 - Make invocation, source-site, read-from, and versioned-location information explicit.
-- Implement the single semantic-trace/1 grammar, static maps, graph values, liveness rules, and immutable records.
+- Implement the single semantic-trace/2 grammar, static maps, graph values, liveness rules, and immutable records.
 - Retain journal mappings and verify every compact record against its source semantic events.
 
 Acceptance: pure control flow, calls, closures, and enabled mutation produce the documented compact records with no lost identity or decision. The parser/serializer round-trip is exact.

@@ -28,10 +28,10 @@ test('failed allocations are atomic and a corrected record may be committed',()=
       properties:[{key:'x',version:0,value}]
     }]
   });
-  const before=controller.continuationPacket();
+  const before=controller.segmentPacket();
   assert.throws(()=>controller.commitGenerated(makeAlloc(['ref','not-yet-allocated'])),
     error=>error.category==='identity');
-  assert.deepEqual(controller.continuationPacket(),before);
+  assert.deepEqual(controller.segmentPacket(),before);
   assert.equal(controller.heap.has('h1'),false);
   assert.equal(controller.producers.has('e1'),false);
   controller.commitGenerated(makeAlloc(['num',3]));
@@ -40,11 +40,11 @@ test('failed allocations are atomic and a corrected record may be committed',()=
 
 test('failed completion does not retire an activation or change committed history',()=>{
   const controller=bareController();
-  const before=controller.continuationPacket();
+  const before=controller.segmentPacket();
   assert.throws(()=>controller.commitGenerated(encodeRecord('return',{
     id:'e1',invocation:'f0',result:['ref','never-allocated']
   })),error=>error.category==='identity');
-  assert.deepEqual(controller.continuationPacket(),before);
+  assert.deepEqual(controller.segmentPacket(),before);
   assert.equal(controller.activations.get('f0').status,'running');
   controller.commitGenerated(encodeRecord('return',{
     id:'e1',invocation:'f0',result:['num',7]

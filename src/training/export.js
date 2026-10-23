@@ -16,9 +16,8 @@ function requireCompletedEntry(bundle) {
      Object.values(state.frames).some(frame=>frame.status!=='completed') ||
      Object.values(state.operations??{}).some(operation=>operation.status!=='completed'))
     throw new TypeError('Only completed synchronous effect-free return entries may be exported');
-  // The public controller treats throw as a terminal frame completion, so a
-  // recovered throw must stay out of the training corpus until catch/finally
-  // is modeled as a resumable serving-side continuation.
+  // Caught throws cannot enter the public training corpus until their
+  // catch/finally continuation is modeled in the committed controller.
   if(bundle.events.some(e=>e.operation==='completion.throw' ||
       e.operation==='completion.catch.bind'||e.completion?.type==='throw'))
     throw new TypeError('Caught guest throws require a modeled catch continuation before training export');
@@ -38,8 +37,8 @@ export function exportTraining(runtime,{maxBytes=512,maxGenerated=256}={}) {
     .map(record=>({mode:'observed',events:[{track:'t0',record}]}));
   const groups=[...observed,...scheduled.groups].map((g,i)=>({...g,id:'m'+(i+1),loss:g.mode==='generated'?'semantic':'none'}));
   const exported={
-    public:{schema:'semantic-execution/1',profile:bundle.manifest.profile,
-      traceFormat:'semantic-trace/1',contextFormat:prefix.schema,
+    public:{schema:'semantic-execution/2',profile:bundle.manifest.profile,
+      traceFormat:'semantic-trace/2',contextFormat:prefix.schema,
       completionPolicy:'immediate-return',groups},
     sidecar:{schema:'semantic-supervision/1',sourceLineage:null,
       semantic,archive:bundle,assignments:scheduled.assignments,
