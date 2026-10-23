@@ -199,8 +199,8 @@ export function compile(ast) {
           for(const a of n.args)expr(a);
           emit('CONSTRUCT',n.args.length,n);break;
         case 'FunctionExpr':{
-          const codeId=bodyProgram(n.body.body,n.params,false,n.defaults,n.restIndex);
-          emit('MAKE_FUNCTION',{codeId,arrow:n.arrow},n);
+          const codeId=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex);
+          emit('MAKE_FUNCTION',{codeId,arrow:n.arrow,async:n.async},n);
           break;
         }
         case 'Template':
