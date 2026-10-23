@@ -57,6 +57,53 @@ export class SemanticController {
     this.producers=new Set();
     this.history=[];this.open=null;
   }
+  // Commit effects accompanying an owned callback invocation/return.
+  // The controller never computes a missing mutation or invokes guest code.
+  applyCallbackEffects(fields){
+    const draft=new Map([...this.heap].map(([id,o])=>[id,{
+      ...o,properties:new Map(o.properties),versions:new Map(o.versions)}]));
+    for(const alloc of fields.allocations??[]){
+      if(!['array','object','function'].includes(alloc.kind)||
+         draft.has(alloc.identity)||!Array.isArray(alloc.properties)||
+         !Number.isSafeInteger(alloc.shapeVersion)||alloc.shapeVersion<0)
+        fail('identity','Invalid callback-associated allocation');
+      const props=new Map(),versions=new Map();
+      for(const item of alloc.properties){
+        if(props.has(item.key)||!Number.isSafeInteger(item.version)||item.version<0)
+          fail('identity','Invalid allocation property');
+        props.set(item.key,{value:copy(item.value),version:item.version});
+        versions.set(item.key,item.version);
+      }
+      draft.set(alloc.identity,{kind:alloc.kind,shapeVersion:alloc.shapeVersion,
+        properties:props,versions});
+    }
+    const writes=(fields.writes??[]);
+    const keys=new Set(),counts=new Map();
+    for(const w of writes){
+      if(w.kind!=='property'||typeof w.key!=='string'||
+         keys.has(w.object+':'+w.key))fail('write','Invalid callback write');
+      keys.add(w.object+':'+w.key);
+      counts.set(w.object,(counts.get(w.object)??0)+1);
+    }
+    for(const w of writes){
+      const old=this.heap.get(w.object),obj=draft.get(w.object);
+      const count=counts.get(w.object);
+      if(!old||!obj||(old.versions.get(w.key)??0)!==w.oldVersion||
+         !Number.isSafeInteger(w.version)||w.version<=w.oldVersion||
+         w.version-w.oldVersion>count||old.shapeVersion!==w.shapeBefore||
+         !Number.isSafeInteger(w.shapeAfter)||w.shapeAfter<w.shapeBefore||
+         w.shapeAfter-w.shapeBefore>count)
+        fail('write','Stale callback-associated property mutation');
+      if(w.present)obj.properties.set(w.key,{version:w.version,value:copy(w.value)});
+      else obj.properties.delete(w.key);
+      obj.versions.set(w.key,w.version);
+      obj.shapeVersion=w.shapeAfter;
+    }
+    this.heap=draft;
+    for(const alloc of fields.allocations??[])
+      for(const x of alloc.properties)this.checkValue(x.value);
+    for(const w of writes)if(w.present)this.checkValue(w.value);
+  }
   checkValue(value) {
     if(!Array.isArray(value) || !value.length)
       fail('value','Expected a tagged guest value');
@@ -74,7 +121,7 @@ export class SemanticController {
         ...['isFinite','isNaN','isInteger','isSafeInteger'].map(x=>'Number.'+x),
         ...['toString','toFixed'].map(x=>'Number.prototype.'+x),
         ...['push','pop','includes','indexOf','lastIndexOf','slice','concat',
-          'join','splice','unshift','shift','at'].map(x=>'Array.prototype.'+x),
+          'join','splice','unshift','shift','at','filter','map','reduce'].map(x=>'Array.prototype.'+x),
         ...['charAt','charCodeAt','at','substring','substr','slice','indexOf','lastIndexOf',
           'includes','startsWith','endsWith','toLowerCase','toUpperCase','trim',
           'trimStart','trimEnd'].map(x=>'String.prototype.'+x),
@@ -311,7 +358,7 @@ export class SemanticController {
           const virtual=property===undefined && (
             (obj?.kind==='array' && (
               (['push','pop','includes','indexOf','lastIndexOf','slice','concat',
-                 'join','splice','unshift','shift'].includes(read.key) &&
+                 'join','splice','unshift','shift','at','filter','map','reduce'].includes(read.key) &&
                 builtin==='Array.prototype.'+read.key) ||
               (read.key==='toString'&&builtin==='Array.toString'))) ||
             (['object','array'].includes(obj?.kind) &&
@@ -444,6 +491,7 @@ export class SemanticController {
       }
       this.cells=cellDraft;this.heap=heapDraft;
     } else if(kind==='call'){
+      this.applyCallbackEffects(fields);
       if(this.pendingChild)fail('invocation','Unentered child call');
       if(fields.child){
         this.pendingChild={invocation:fields.child,code:fields.code,
@@ -454,6 +502,7 @@ export class SemanticController {
           fail('invocation','Call has no active owning frame');
       }
     } else if(kind==='return'||kind==='throw'){
+      this.applyCallbackEffects(fields);
       const activation=this.activations.get(fields.invocation);
       if(!activation||activation.status!=='running')
         fail('completion','A missing or completed frame cannot return/throw twice');

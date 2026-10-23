@@ -128,6 +128,14 @@ export function normalizeJournal(bundle) {
       const child=e.causes?.find(c=>c.kind==='invocation');
       const effect=e.causes?.find(c=>c.kind==='effect');
       if(child){
+        // A builtin call can allocate a collection *before* invoking its
+        // first guest callback. Publish that allocation on the call record.
+        const additions=e.stateChanges.filter(p=>p.table==='heap'&&p.before===null);
+        if(additions.length)r.allocations=additions.map(allocation);
+        for(const p of e.stateChanges.filter(p=>p.table==='heap'&&p.before!==null))
+          for(const change of changes(p.before,p.after))
+            r.writes.push({kind:'property',object:p.id,...change,
+              shapeBefore:p.before?.shapeVersion??0,shapeAfter:p.after?.shapeVersion??0});
         r.child=child.frameId;
         const created=e.stateChanges.find(p=>p.table==='frames' && p.id===child.frameId);
         r.code=created?.after?.codeId??null;
@@ -161,6 +169,12 @@ export function normalizeJournal(bundle) {
       }
     }
     if(op==='return'||op==='throw') {
+      // Callback completion can update a surrounding collection as one
+      // committed continuation. Publish the exact mutation, not a final diff.
+      for(const p of e.stateChanges.filter(p=>p.table==='heap'&&p.before!==null))
+        for(const change of changes(p.before,p.after))
+          r.writes.push({kind:'property',object:p.id,...change,
+            shapeBefore:p.before?.shapeVersion??0,shapeAfter:p.after?.shapeVersion??0});
       const frame=e.stateChanges.find(p=>p.table==='frames' && p.id===e.invocationId);
       r.destination=frame?.after?.callerFrameId??null;
     }

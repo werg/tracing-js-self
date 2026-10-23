@@ -22,8 +22,17 @@ export function parseTraining(source) {
   if(parsed.body[0]?.type!=='ExpressionStatement' ||
      parsed.body[0].directive!=='use strict')
     reject(parsed,'explicit "use strict" directive is required');
-  if(parsed.body.slice(1).some(n=>n.type!=='FunctionDeclaration'))
-    reject(parsed,'top-level code must only declare functions');
+  // Top-level initialization is modeled only for literal scalars and
+  // explicitly owned references to immutable Math methods. Arbitrary module
+  // execution, getters, function calls and mutable initialization fail closed.
+  const staticGlobal=n=>n?.type==='Literal'&&!n.regex ||
+    n?.type==='MemberExpression'&&!n.computed&&
+    n.object?.type==='Identifier'&&n.object.name==='Math'&&
+    ['ceil','floor','min','max'].includes(n.property?.name);
+  if(parsed.body.slice(1).some(n=>n.type!=='FunctionDeclaration' &&
+    !(n.type==='VariableDeclaration'&&n.declarations.every(d=>
+      d.id.type==='Identifier'&&staticGlobal(d.init)))))
+    reject(parsed,'top-level declaration must be a function or static owned data');
 
   const span=n=>({start:n.start,end:n.end});
   function parameters(n){
@@ -286,6 +295,6 @@ export function parseTraining(source) {
     });
     statements.forEach(n=>statement(n,env));
   }
-  scope(body,{names:new Set(['undefined','Object','Array','Number','Math','Promise','host','NaN','Infinity']),parent:null});
+  scope(body,{names:new Set(['undefined','Object','Array','Number','Math','Promise','host','NaN','Infinity']),parent:null},[],false,true);
   return {type:'Program',body,start:0,end:source.length,profile:TRAINING_PROFILE};
 }

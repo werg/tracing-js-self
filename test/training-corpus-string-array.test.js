@@ -37,8 +37,7 @@ test('unmodeled callbacks and coercions never silently pass',()=>{
   for(const [body,args] of [
     ['function f(o){return "a".includes(o);}',[{}]],
     ['function f(o){return [1,2].join(o);}',[{}]],
-    ['function f(o){return [o].join(",");}',[{}]],
-    ['function f(){return [1].map(x=>x+1);}',[]]
+    ['function f(o){return [o].join(",");}',[{}]]
   ]){
     const result=verifyTrainingCase({source:'"use strict"; '+body,entry:'f',args});
     assert.notEqual(result.status,'locally_verified',body);
