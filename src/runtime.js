@@ -953,6 +953,7 @@ export class Runtime {
     if(kind!==(e.kind==='promise'?'completion':'immediate'))throw new Error('Wrong input kind for host call');
     if(e.external!=='pending')throw new Error('Effect already completed');
     if(e.inputIds.length)throw new Error('Effect already has an input arrival');
+    if(typeof abrupt!=='boolean')throw new TypeError('Input abrupt must be boolean');
     if(inputId!==null && (typeof inputId!=='string'||!inputId||['__proto__','constructor','prototype'].includes(inputId)))
       throw new TypeError('Transport input ID must be a nonempty, non-reserved string');
     if(Array.isArray(value) && !guestValue(value))throw new TypeError('Unsupported canonical external payload');
