@@ -20,3 +20,6 @@ export declare class DurableTraceStore {
   list(): Promise<string[]>;
 }
 export declare function createDurableTraceStore(options: DurableTraceStoreOptions): DurableTraceStore;
+
+export {DurableRetainedModuleStore,DurableRetainedModuleStorageError,
+  createDurableRetainedModuleStore} from './retained-session.js';

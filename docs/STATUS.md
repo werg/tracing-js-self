@@ -1,5 +1,9 @@
 # Implementation status (0.2.0)
 
+## Durable replay-backed module session checkpoints (October 23, 2026)
+
+- The opt-in Node/POSIX storage package now writes content-addressed immutable checkpoints of **committed** bounded evaluated-module-session histories, with structural snapshot validation, full interpreter re-execution before publication and on restore, SHA-256 integrity checking, fsync and atomic no-replace hard-link publication. Restores build new module cells and host output identities. It does **not** checkpoint a suspended VM, native callbacks, open handles or natlang's production callable-folder Module Record; it cannot establish a production-compatible persistent realm by itself.
+
 ## Bounded owned TypeScript array bindings (October 23, 2026)
 
 - Strict-profile `let`/`const` array destructuring of 1–32 simple identifier slots now accepts standard owned arrays. The initializer executes once; owned indexed reads and lexical initializations are individually traced. Nested/default/rest/elision targets, `var` patterns, string iteration and other non-array iterables remain unsupported. It does **not** implement the complete ES iterator protocol or general TypeScript execution compatibility.

@@ -181,3 +181,6 @@ export class DurableTraceStore {
 export function createDurableTraceStore(options) {
   return new DurableTraceStore(options);
 }
+
+export {DurableRetainedModuleStore,DurableRetainedModuleStorageError,
+  createDurableRetainedModuleStore} from './retained-session.js';

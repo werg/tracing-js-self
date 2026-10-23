@@ -42,3 +42,21 @@ Store **private** owned-machine archives, not the public semantic-execution/2 tr
 The stored artifact is replayable by the **current bounded interpreter**, not independently proved ECMAScript-correct. get verifies again under the installed runtime version; older bundles may need a pinned compatible package. It does not reissue native effects or restore sockets, timers, guest heaps in a live runtime, agent scheduling, callbacks, or ECMAScript Module Records. It does not change admitted=0 or the Test262 / WPT / Node / browser conformance boundaries.
 
 Use an external retention index or database if you need production catalog queries, streaming append, replication, lifecycle/GC, content encryption, or high-throughput backpressure. This facility closes only the **sealed-bundle persistence** slice of the broader durability roadmap.
+
+## Bounded evaluated-module-session checkpoints
+
+`tracing-js-self/storage/node` also exports `createDurableRetainedModuleStore({directory})`. This stores committed histories from `createBoundedRetainedModuleSession`, not live JS VMs:
+
+~~~js
+import {createBoundedRetainedModuleSession} from 'tracing-js-self/evaluated-module-session';
+import {createDurableRetainedModuleStore} from 'tracing-js-self/storage/node';
+const session=createBoundedRetainedModuleSession({modules:{'main.js':'export let n=1; export function add(x){n+=x;return n;}'},entryModule:'main.js'});
+await session.invoke('add',[2]);
+const store=createDurableRetainedModuleStore({directory:'/private/traces'});
+const {id}=await store.put(session);
+const restored=await store.get(id);
+// (await restored.invoke('add',[4])).result === 7
+session.close();restored.close();
+~~~
+
+Only up to 32 bounded primitive-argument invocation records, previously committed and replay-verified, are included. Pending invocations, host object identities, native side effects and live guest continuations are deliberately excluded. Every `put` first restores/replays a detached copy of the history; every `get` checks its exact digest and replays again with no native service installed. Reads create new host object identities. Writes use the same POSIX hard-link/fsync pattern as sealed trace bundles, but distinct `module-sessions` namespaces and an 8 MiB default size cap. Store source code and histories only in a private trusted directory. This facility is **not** a natlang callable-folder `setModuleRealm` implementation or a general persistent ESM Module Record.
