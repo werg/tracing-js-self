@@ -6,6 +6,7 @@
 // their original function binding, including cyclic and diamond star graphs.
 // Initialization, mutable exports, dynamic imports and exotics fail closed.
 import {parse as parseAcorn} from 'acorn';
+import ts from 'typescript';
 import path from 'node:path';
 import {compileBoundedTypeScript} from './typescript.js';
 import {createRuntime} from './runtime.js';
@@ -42,11 +43,35 @@ function localImportPath(from,specifier,sources){
   if(!sources.has(target))reject('module not supplied: '+target);
   return target;
 }
+// TypeScript can erase unused *value* imports and even an empty source
+// re-export. They still instantiate their module in ECMAScript, so use the
+// original TS syntax tree to retain dependency validation independently of
+// the generated JS's remaining import bindings.
+function declaredRuntimeDependencies(file,text,sources){
+  const original=ts.createSourceFile(file,text,ts.ScriptTarget.ES2022,true,
+    /\\.jsx?$|\\.mjs$|\\.cjs$/.test(file)?ts.ScriptKind.JS:ts.ScriptKind.TS);
+  const dependencies=new Set();
+  for(const node of original.statements){
+    const importing=ts.isImportDeclaration(node);
+    const exporting=ts.isExportDeclaration(node);
+    if(!importing&&!exporting)continue;
+    if(importing && node.importClause?.isTypeOnly)continue;
+    if(exporting && node.isTypeOnly)continue;
+    const clause=importing?node.importClause?.namedBindings:node.exportClause;
+    if(clause && (ts.isNamedImports(clause)||ts.isNamedExports(clause)) &&
+       clause.elements.length>0 && clause.elements.every(e=>e.isTypeOnly) &&
+       !(importing && node.importClause?.name))continue;
+    if(node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier))
+      dependencies.add(localImportPath(file,node.moduleSpecifier.text,sources));
+  }
+  return dependencies;
+}
 function parseOne(file,text,sources){
+  const declaredDependencies=declaredRuntimeDependencies(file,text,sources);
   const lowering=compileBoundedTypeScript(text,{path:file});
   const ast=parseAcorn(lowering.javascript,{ecmaVersion:2022,sourceType:'module'});
   const declarations=new Map(),imports=new Map(),exports=new Map();
-  const reexports=new Map(),starExports=[],dependencies=[];
+  const reexports=new Map(),starExports=[],dependencies=new Set(declaredDependencies);
   const addExport=(name,local)=>{
     if(!identifier.test(name)&&name!=='default')reject('invalid exported name');
     if(exports.has(name)||reexports.has(name))
@@ -76,7 +101,7 @@ function parseOne(file,text,sources){
         // An import solely for evaluation is inert only when the imported
         // graph contains function declarations and other inert imports.
         // visit() still validates the whole reachable dependency recursively.
-        dependencies.push(importedFrom);
+        dependencies.add(importedFrom);
         continue;
       }
       for(const spec of node.specifiers){
@@ -96,7 +121,7 @@ function parseOne(file,text,sources){
       if(node.source!==null){
         const from=localImportPath(file,node.source.value,sources);
         if(node.specifiers.length===0){
-          dependencies.push(from);
+          dependencies.add(from);
           continue;
         }
         for(const spec of node.specifiers){
@@ -129,7 +154,7 @@ function parseOne(file,text,sources){
       reject('export of missing binding '+local+' in '+file);
   for(const local of imports.keys())
     if(declarations.has(local))reject('import/declaration collision in '+file);
-  return {file,text,lowering,declarations,imports,exports,reexports,starExports,dependencies};
+  return {file,text,lowering,declarations,imports,exports,reexports,starExports,dependencies:[...dependencies]};
 }
 // Conservative alpha renaming of imported and file-local function bindings.
 // Reject lexical shadowing of rewritten names rather than producing subtle,
