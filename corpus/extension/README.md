@@ -376,3 +376,41 @@ continue disagreeing at each accepted step. Its 24-attempt budget includes
 refusals and oracle errors. A minimized case is a diagnostic debugging
 artifact, not a new canonical test, owned verification or admitted training
 episode. A non-reproducible mismatch is explicitly labeled not-reproduced.
+
+
+## Full Test262 native reference sweep (opt-in, diagnostic only)
+
+`tools/verify-test262-reference.mjs` also accepts a previously acquired
+full pinned Test262 JSONL manifest (`--input`), exact ordinal sharding
+(`--shard-index`/`--shard-count`), bounded streaming output
+(`--rows-output`) and an exact `--expect-enumerated` assertion.
+The importer/runner reject foreign sources, dirty revisions, escaped source
+paths and mismatched file SHA-256s. Each shard hashes the *same* entire
+catalog identity, but executes only its selected ordinal residue class.
+All rows contain source IDs, ordinals, statuses and non-admission flags.
+
+The manual workflow `.github/workflows/test262-native-full.yml`
+acquires and executes the pinned 103,582 variants in 16 separate no-network,
+read-only, unprivileged Docker workers with resource caps. The strict
+`tools/aggregate-test262-native.mjs` merge requires all shards and all
+ordinals, checks per-shard content hashes/status counts, and refuses any
+verified-owned or admitted assertions. A green full sweep is **native
+diagnostic inventory accounting**, *not* official conformance, complete
+harness semantics, owned intermediate traces, or training admission.
+Neither native VM nor Docker should be treated as a perfect security barrier.
+
+For an already acquired and trusted pinned checkout, a manual shard looks
+like:
+
+```sh
+node --experimental-vm-modules tools/verify-test262-reference.mjs \
+  --root /path/to/pinned/test262 \
+  --revision d53ebc8b1931d9f1541e43d59650776e4b766248 \
+  --input /path/to/test262.jsonl \
+  --shard-index 0 --shard-count 16 \
+  --max 10000 --expect-enumerated 103582 \
+  --rows-output /path/to/rows.jsonl --output /path/to/report.json
+```
+
+Run only trusted pinned sources in a restricted external sandbox, never
+unknown upstream JavaScript on an unrestricted developer machine.

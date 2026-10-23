@@ -1,0 +1,141 @@
+name: Full pinned Test262 native-reference sweep (diagnostic only)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  acquire:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Pin clean Test262 and acquire exact fixture inventory without execution
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/source"
+          git init -q "$RUNNER_TEMP/source/test262"
+          git -C "$RUNNER_TEMP/source/test262" remote add origin https://github.com/tc39/test262.git
+          git -C "$RUNNER_TEMP/source/test262" fetch -q --depth=1 origin d53ebc8b1931d9f1541e43d59650776e4b766248
+          git -C "$RUNNER_TEMP/source/test262" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$RUNNER_TEMP/source/test262" rev-parse HEAD)" = d53ebc8b1931d9f1541e43d59650776e4b766248
+          test -z "$(git -C "$RUNNER_TEMP/source/test262" status --porcelain --untracked-files=no)"
+          mkdir -p corpus/out/native-test262
+          node tools/import-external-corpus.mjs \
+            --format test262 --root "$RUNNER_TEMP/source/test262" \
+            --repository tc39/test262 --license BSD-3-Clause \
+            --revision d53ebc8b1931d9f1541e43d59650776e4b766248 \
+            --output corpus/out/native-test262/test262.jsonl \
+            --report corpus/out/native-test262/acquisition.json
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const r=JSON.parse(readFileSync("corpus/out/native-test262/acquisition.json"));
+            if(r.records!==103582||r.verified!==0||r.admitted!==0||r.truncated)
+              throw Error("Unexpected Test262 pinned acquisition");
+          '
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-test262-full-acquired-catalog-only
+          path: corpus/out/native-test262/test262.jsonl
+          if-no-files-found: error
+
+  native-shards:
+    needs: acquire
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-test262-full-acquired-catalog-only
+          path: corpus/out/native-test262-catalog
+      - name: Fetch exact pinned Test262 source without upstream dependencies
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/source"
+          git init -q "$RUNNER_TEMP/source/test262"
+          git -C "$RUNNER_TEMP/source/test262" remote add origin https://github.com/tc39/test262.git
+          git -C "$RUNNER_TEMP/source/test262" fetch -q --depth=1 origin d53ebc8b1931d9f1541e43d59650776e4b766248
+          git -C "$RUNNER_TEMP/source/test262" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$RUNNER_TEMP/source/test262" rev-parse HEAD)" = d53ebc8b1931d9f1541e43d59650776e4b766248
+          test -z "$(git -C "$RUNNER_TEMP/source/test262" status --porcelain --untracked-files=no)"
+      - name: Run native diagnostic shard in locked-down container
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/native-out"
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            --network none --read-only \
+            --cap-drop ALL --security-opt no-new-privileges \
+            --memory 2g --pids-limit 128 \
+            --tmpfs /tmp:rw,nosuid,size=64m \
+            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/workspace,readonly" \
+            --mount "type=bind,src=$RUNNER_TEMP/source/test262,dst=/source,readonly" \
+            --mount "type=bind,src=$RUNNER_TEMP/native-out,dst=/out" \
+            --workdir /workspace \
+            node:22-bookworm \
+            node --no-warnings --experimental-vm-modules tools/verify-test262-reference.mjs \
+              --root /source --revision d53ebc8b1931d9f1541e43d59650776e4b766248 \
+              --input /workspace/corpus/out/native-test262-catalog/test262.jsonl \
+              --shard-index ${{ matrix.shard }} --shard-count 16 \
+              --max 10000 --expect-enumerated 103582 --timeout-ms 150 \
+              --rows-output /out/rows.jsonl --output /out/report.json
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const r=JSON.parse(readFileSync(process.env.RUNNER_TEMP+"/native-out/report.json"));
+            if(r.verifiedOwned!==0||r.admitted!==0||r.shard?.truncated||
+              r.attempted!==r.shard.eligible||r.enumerated!==103582)
+              throw Error("Invalid diagnostic shard accounting");
+          '
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-test262-part-${{ matrix.shard }}
+          path: |
+            ${{ runner.temp }}/native-out/report.json
+            ${{ runner.temp }}/native-out/rows.jsonl
+          if-no-files-found: error
+
+  aggregate:
+    needs: native-shards
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: native-test262-part-*
+          path: native-parts
+          merge-multiple: false
+      - name: Prove exactly one native attempt per pinned acquired fixture
+        run: |
+          node tools/aggregate-test262-native.mjs \
+            --directory native-parts --expect-enumerated 103582 \
+            --output native-full-summary.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: full-native-test262-diagnostic-summary-only
+          path: native-full-summary.json
+          if-no-files-found: error

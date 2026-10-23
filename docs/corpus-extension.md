@@ -1595,3 +1595,34 @@ Example: npm run corpus:owned:novelty -- --input
   minimization and independent interpreter-step adjudication remain open.
   Native mismatch minimization does not change acquired, locally owned or
   training-admitted corpus denominators.
+
+
+### Opt-in complete pinned Test262 native diagnostic sweep (2026-10-23)
+
+- [x] Added source-locked full-catalog native Test262 execution **infrastructure**:
+  16 deterministic shards over the same pinned 103,582-variant acquisition
+  JSONL, a SHA-256 identity digest of every acquired row, streamed native
+  reference JSONL with per-row source/mode/ordinal receipts, strict counts
+  and a fail-closed aggregate that rejects missing, repeated, truncated,
+  cross-revision or modified shards.
+- [x] Added a manual full-sweep GitHub Actions workflow using isolated,
+  read-only, no-network, unprivileged Docker workers with memory and process
+  caps. All upstream sources are fetched at the exact pinned revision and
+  individually SHA checked before native execution. No upstream npm install
+  occurs in the execution sandbox.
+- [x] Added synthetic-pinned end-to-end two-shard execution/aggregation tests
+  and adversarial ledger integrity tests.
+- [ ] **Full-suite run has not been measured by this commit**. This makes a
+  source-complete diagnostic accounting run possible, not a complete Test262
+  harness or a semantically verified training corpus. Unsupported async
+  modules, timers, exotic host services, early-error distinctions, engine
+  comparisons and intermediate owned semantics still require implementation.
+  Real full-sweep pass/fail/refusal totals must come from a successful workflow
+  artifact, never from a forecast. The pre-existing 117,773 acquired / 40
+  locally verified canonical owned / 37 additional owned / zero admitted
+  figures remain the last measured full-catalog evidence.
+
+To run manually select *Full pinned Test262 native-reference sweep (diagnostic
+only)* in Actions. The workflow has no automatic bulk execution trigger. Its
+aggregate status is accepted only when all 103,582 pinned input variants
+appear exactly once, and no row claims owned verification or admission.

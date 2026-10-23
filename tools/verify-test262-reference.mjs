@@ -1,10 +1,15 @@
 #!/usr/bin/env node
 // Explicitly opt-in, OFFLINE diagnostic execution of a trusted pinned Test262
 // checkout. Do not use this in-process VM runner for untrusted repositories.
-import {readFileSync,writeFileSync,mkdirSync,realpathSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync,realpathSync,createReadStream,createWriteStream} from 'node:fs';
 import {resolve,join,dirname,relative,sep} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
+import {createInterface} from 'node:readline';
+import {once} from 'node:events';
+import {finished} from 'node:stream/promises';
+import {addNativeCatalogIdentity,nativeReferenceDigest,validateAcquiredTest262,shardForOrdinal}
+  from '../src/corpus/native-reference-shards.mjs';
 import vm from 'node:vm';
 import {executeTest262ModuleReference} from '../src/corpus/test262-module-reference.mjs';
 import {importers} from '../src/corpus/import-external.mjs';
@@ -21,6 +26,17 @@ const revision=value('revision',null);
 const max=Number(value('max','500'));
 const timeoutMs=Number(value('timeout-ms','250'));
 const output=resolve(value('output','corpus/out/test262-reference-diagnostics.json'));
+const input=value('input',null),rowsOutput=value('rows-output',null);
+const shardCount=Number(value('shard-count','1'));
+const shardIndex=Number(value('shard-index','0'));
+const expectEnumerated=value('expect-enumerated',null);
+if(!Number.isSafeInteger(shardCount)||shardCount<1||shardCount>64||
+  !Number.isSafeInteger(shardIndex)||shardIndex<0||shardIndex>=shardCount||
+  shardCount>1&&!rowsOutput)
+ throw new Error('Sharding requires valid index/count and streaming --rows-output');
+if(expectEnumerated!==null&&(!/^\d+$/.test(expectEnumerated)||
+  Number(expectEnumerated)<1||!Number.isSafeInteger(Number(expectEnumerated))))
+ throw new Error('Invalid expected acquired inventory count');
 if(!revision||!/^[a-f0-9]{40}$/.test(revision))throw new Error('Require full pinned --revision');
 if(!Number.isSafeInteger(max)||max<1||max>10000||
    !Number.isSafeInteger(timeoutMs)||timeoutMs<10||timeoutMs>1000)
@@ -50,12 +66,38 @@ const safeModuleSource=name=>{
 };
 const harness={};
 const sha256=text=>createHash('sha256').update(text).digest('hex');
-const rows=[],counts={},seen=new Set();
-for await(const row of importers.test262(root,{
-  project:'tc39/test262',repository:'tc39/test262',revision,license:'BSD-3-Clause'
-})){
-  if(rows.length>=max)break;
-  const source=readFileSync(join(root,row.provenance.path),'utf8');
+const rows=[],counts={},seen=new Set(),allIds=new Set();
+const catalogDigest=nativeReferenceDigest(),rowsDigest=createHash('sha256');
+let enumerated=0,eligible=0,rowsBytes=0;
+mkdirSync(dirname(output),{recursive:true});
+if(rowsOutput)mkdirSync(dirname(resolve(rowsOutput)),{recursive:true});
+const stream=rowsOutput?createWriteStream(resolve(rowsOutput),{encoding:'utf8'}):null;
+async function* acquiredRows(){
+ if(input){
+  for await(const line of createInterface({input:createReadStream(resolve(input)),
+    crlfDelay:Infinity})){
+   if(line.trim())yield JSON.parse(line);
+  }
+ }else yield* importers.test262(root,{
+   project:'tc39/test262',repository:'tc39/test262',revision,license:'BSD-3-Clause'
+ });
+}
+for await(const untrustedRow of acquiredRows()){
+ const row=validateAcquiredTest262(untrustedRow,revision);
+ const ordinal=enumerated++;
+ addNativeCatalogIdentity(catalogDigest,row,ordinal);
+ if(allIds.has(row.id))throw new Error('Duplicate acquired Test262 source/variant identity');
+ allIds.add(row.id);
+ if(shardForOrdinal(ordinal,shardCount)!==shardIndex)continue;
+ eligible++;
+ if(eligible>max)continue;
+ const sourceFile=realpathSync(join(root,row.provenance.path));
+ const safeRoot=realpathSync(join(root,'test'));
+ const relativeSource=relative(safeRoot,sourceFile);
+ if(relativeSource==='..'||relativeSource.startsWith('..'+sep)||
+   relativeSource.startsWith(sep))
+  throw new Error('Source escaped pinned Test262 test directory');
+ const source=readFileSync(sourceFile,'utf8');
   if(sha256(source)!==row.provenance.sha256)throw new Error('Source changed during acquisition');
   const names=['sta.js','assert.js',...row.program.harness];
   const sources={};
@@ -91,14 +133,30 @@ for await(const row of importers.test262(root,{
         harnessSources:sources,filename:row.provenance.path,timeoutMs});
   if(seen.has(row.id))throw new Error('Duplicate source/mode identity');
   seen.add(row.id);
-  rows.push({id:row.id,path:row.provenance.path,mode:row.program.mode,
-    sourceSha256:row.provenance.sha256,expected:row.expected,...result});
+  const diagnostic={ordinal,id:row.id,path:row.provenance.path,
+    mode:row.program.mode,sourceSha256:row.provenance.sha256,
+    expected:row.expected,...result};
+  if(seen.has(diagnostic.ordinal))throw new Error('Duplicate native source ordinal');
+  seen.add(diagnostic.ordinal);
+  if(stream){
+   const line=JSON.stringify(diagnostic)+'\n';
+   rowsDigest.update(line);rowsBytes+=Buffer.byteLength(line);
+   if(!stream.write(line))await once(stream,'drain');
+  }else rows.push(diagnostic);
   counts[result.status]=(counts[result.status]??0)+1;
 }
+if(stream){stream.end();await finished(stream);}
+if(expectEnumerated!==null&&enumerated!==Number(expectEnumerated))
+ throw new Error('Pinned acquired inventory count mismatch');
 const report={schema:'test262-native-reference-report/1',revision,
   authority:'native-v8-diagnostic-only',verifiedOwned:0,admitted:0,
-  attempted:rows.length,counts,limits:{max,timeoutMs},
-  node:process.version,moduleVmEnabled:typeof vm.SourceTextModule==='function',rows,warnings:[
+  attempted:seen.size,counts,limits:{max,timeoutMs},
+  enumerated,catalogFingerprint:catalogDigest.digest('hex'),
+  shard:{index:shardIndex,count:shardCount,eligible,truncated:eligible>seen.size},
+  ...(stream?{rowsSha256:rowsDigest.digest('hex'),rowsBytes,
+    rowsFile:resolve(rowsOutput)}:{}),
+  node:process.version,moduleVmEnabled:typeof vm.SourceTextModule==='function',
+  ...(stream?{}:{rows}),warnings:[
    'Native V8 execution is not an owned semantic trace, an independent engine conformance proof, or training admission.',
    'Scripts support parse/runtime negatives; native modules additionally support bounded parse/resolution/runtime diagnostics only when Node experimental VM modules are enabled.',
    'Bounded async scripts can observe $DONE via VM promise microtasks only, with duplicate/error/rejection checks. This is not complete Test262 async support.',
@@ -106,7 +164,8 @@ const report={schema:'test262-native-reference-report/1',revision,
    'node:vm is not a security boundary: use only trusted exact upstream checkouts, never arbitrary repository code.',
    'A passing script without assertions may contain no meaningful behavioral checks.'
   ]};
-if(!rows.length)throw new Error('No Test262 source variants found');
-mkdirSync(dirname(output),{recursive:true});
+if(!seen.size)throw new Error('No Test262 source variants found');
 writeFileSync(output,JSON.stringify(report,null,2)+'\n');
-console.log(JSON.stringify({attempted:rows.length,counts,verifiedOwned:0,admitted:0,output}));
+console.log(JSON.stringify({attempted:seen.size,eligible,enumerated,
+ shardIndex,shardCount,truncated:eligible>seen.size,
+ counts,verifiedOwned:0,admitted:0,output}));
