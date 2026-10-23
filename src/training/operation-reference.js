@@ -93,7 +93,8 @@ export function auditReferenceOperations({source,entry,args,initialHeap,bundle,r
     else covered.ownedArithmetic++;
   }
   const observed=referenceOutcome({source:instrumentOperationSource(source),
-    entry,args,initialHeap,observeOperations:true});
+    entry,args,initialHeap,observeOperations:true,
+    randomSeed:bundle.initialState.control.a0.randomSeed??null});
   if(observed.kind!=='return')
     return {schema,status:'unverified',reason:'Instrumented reference did not complete',
       referenceKind:observed.kind,message:observed.message??null};
