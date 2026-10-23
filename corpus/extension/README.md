@@ -420,3 +420,14 @@ Native Test262 script references additionally support exact raw-mode scripts
 with **no implicit assert/sta harness**, including true parse/runtime negative
 checks; unusual mixed flags and declared raw harness includes are refused.
 Default prefix sampling does not claim an exhaustive source inventory.
+
+
+### Bounded asynchronous host diagnostics
+
+The native Test262 reference runner accepts opt-in `--host-timers` for
+async *scripts*: it installs limited virtual timeout/interval cancellation
+and microtask scheduling, runs guest callbacks as bounded VM turns and refuses
+more than 64 timer turns. It is deterministic **native diagnostic evidence**,
+not faithful real-time event-loop observation or full official Test262 host
+support. Run this option only in the external isolated pinned-source runner;
+a native VM context alone is not a security boundary.

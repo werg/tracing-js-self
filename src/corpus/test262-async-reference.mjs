@@ -1,6 +1,7 @@
 // Opt-in, bounded native-V8 Test262 async-script diagnostics for pinned sources.
-// Only VM-owned promise microtasks are supported; no timers, host APIs, module
-// jobs or event-loop scheduling. node:vm is NOT a security boundary, and
+// VM-owned promise microtasks and an opt-in bounded virtual timer model are
+// supported. No real host I/O, worker agent, module job or wall-clock scheduling.
+// node:vm is NOT a security boundary, and
 // diagnostic success never constitutes owned or admitted training evidence.
 import {Script,createContext,runInContext} from 'node:vm';
 
@@ -12,17 +13,66 @@ const response=(status,reason,extra={})=>({schema:'test262-native-async-referenc
   status,reason,...extra});
 const validErrorType=type=>typeof type==='string'&&/^[A-Za-z_$][\w$]*$/.test(type);
 
+// These timers deliberately model a narrow, deterministic host service.
+// They MUST be installed only for trusted pinned sources in an external
+// sandbox. Guest functions execute inside the VM turn, not in host callbacks.
+// The virtual clock is NOT a wall-clock reference oracle.
+function installVirtualTimers(context,timeoutMs){
+ const pending=new Map();
+ let nextId=1,virtualTime=0;
+ Object.defineProperty(context,'__scheduleTestTimer',{value:(callback,delay,repeat,args)=>{
+  if(typeof callback!=='function')throw new TypeError('Timer callback must be callable');
+  if(nextId>10000)throw new Error('Virtual timer allocation limit exceeded');
+  const n=Number(delay);
+  const ms=Number.isFinite(n)?Math.min(10000,Math.max(0,Math.trunc(n))):0;
+  const id=nextId++;
+  pending.set(id,{id,callback,args,delay:ms,at:virtualTime+ms,repeat});
+  return id;
+ },configurable:false,writable:false});
+ Object.defineProperty(context,'__cancelTestTimer',{value:id=>{
+  pending.delete(id);
+ },configurable:false,writable:false});
+ Object.defineProperty(context,'__fireTestTimer',{value:id=>{
+  const timer=pending.get(id);
+  if(!timer)return;
+  pending.delete(id);
+  if(timer.repeat){
+   timer.at=virtualTime+Math.max(1,timer.delay);
+   pending.set(id,timer);
+  }
+  return timer.callback(...timer.args);
+ },configurable:false,writable:false});
+ runInContext('Object.defineProperties(globalThis, {'+
+  'setTimeout:{value:function(cb,ms,...args){return __scheduleTestTimer(cb,ms,false,args)}},'+
+  'clearTimeout:{value:function(id){__cancelTestTimer(id)}},'+
+  'setInterval:{value:function(cb,ms,...args){return __scheduleTestTimer(cb,ms,true,args)}},'+
+  'clearInterval:{value:function(id){__cancelTestTimer(id)}},'+
+  'queueMicrotask:{value:function(cb){if(typeof cb!=="function")throw new TypeError("callback");Promise.resolve().then(cb)}}'+
+ '})',context,{timeout:timeoutMs});
+ const fireNext=()=>{
+  const timers=[...pending.values()].sort((a,b)=>a.at-b.at||a.id-b.id);
+  const timer=timers[0];
+  if(!timer)return false;
+  virtualTime=timer.at;
+  runInContext('__fireTestTimer('+timer.id+')',context,{
+   timeout:timeoutMs,displayErrors:false});
+  return true;
+ };
+ return {fireNext,remaining:()=>pending.size};
+}
+
 /**
  * Execute a Test262 async SCRIPT through the pinned harness and $DONE protocol.
  * A completed run must invoke $DONE exactly once within the VM's synchronous
- * evaluation and immediately drained promise microtasks. This intentionally
- * refuses async tests requiring timers, I/O or later event-loop turns. The
+ * evaluation and immediately drained promise microtasks. Opt-in virtual timers
+ * permit only deterministic bounded host-event turns, never real I/O. The
  * caller, not this function, validates the provenance of all supplied bytes.
  */
 function executeTurn({source,metadata,mode='sloppy',
-  harnessSources={},filename='test262.js',timeoutMs=300}={}){
+  harnessSources={},filename='test262.js',timeoutMs=300,hostTimers=false}={}){
   if(typeof source!=='string'||!metadata||
-      !Number.isSafeInteger(timeoutMs)||timeoutMs<10||timeoutMs>1000)
+      !Number.isSafeInteger(timeoutMs)||timeoutMs<10||timeoutMs>1000||
+      typeof hostTimers!=='boolean')
     throw new TypeError('Invalid Test262 async reference arguments');
   const {flags,includes,features,negative}=metadata;
   if(metadata.metadataStatus!=='parsed'||!Array.isArray(flags)||
@@ -61,6 +111,7 @@ function executeTurn({source,metadata,mode='sloppy',
   const context=createContext(Object.create(null),{
     codeGeneration:{strings:false,wasm:false},microtaskMode:'afterEvaluate'
   });
+  const virtualTimers=hostTimers?installVirtualTimers(context,timeoutMs):null;
   let doneCalls=0,doneArgument;
   Object.defineProperty(context,'__recordDone',{value:error=>{
     doneCalls++;
@@ -99,6 +150,22 @@ function executeTurn({source,metadata,mode='sloppy',
         {mode,phase:'runtime',errorType:negative.type,harness:names});
     return response('failed','Unexpected runtime '+errorName(error),
       {mode,phase:'runtime',errorType:errorName(error),harness:names});
+  }
+  if(virtualTimers){
+    let turns=0;
+    while(virtualTimers.remaining()){
+      if(++turns>64)
+        return response('unsupported','Virtual timer turn budget exceeded',
+          {mode,phase:'runtime',completionCalls:doneCalls,timerTurns:turns-1});
+      try{virtualTimers.fireNext();}
+      catch(error){
+        if(negative?.phase==='runtime'&&matches(error))
+          return response('passed','Expected runtime error in virtual timer callback',
+            {mode,phase:'runtime',errorType:negative.type,timerTurns:turns});
+        return response('failed','Unhandled virtual timer callback '+errorName(error),
+          {mode,phase:'runtime',errorType:errorName(error),timerTurns:turns});
+      }
+    }
   }
   if(doneCalls>1)
     return response('failed','Async $DONE invoked more than once',

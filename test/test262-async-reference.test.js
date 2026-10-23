@@ -66,3 +66,42 @@ test('unhandled rejection after $DONE is a failed diagnostic (isolated child)',(
   assert.equal(result.status,0,result.stderr);
   assert.equal(result.stdout.trim(),'failed');
 });
+
+test('opt-in virtual host turns support bounded async timer completion',async()=>{
+ const delayed=await run('setTimeout(()=>Promise.resolve(3).then(x=>{assert.sameValue(x,3);$DONE();}),0)',
+  meta(),{hostTimers:true});
+ assert.equal(delayed.status,'passed',delayed.reason);
+ assert.equal(delayed.completionCalls,1);
+ assert.equal(delayed.verifiedOwned,false);
+ assert.equal(delayed.admitted,false);
+ const cancelled=await run('const id=setTimeout(()=>{throw Error("should not fire")},0);clearTimeout(id);$DONE();',
+  meta(),{hostTimers:true});
+ assert.equal(cancelled.status,'passed',cancelled.reason);
+ const queued=await run('queueMicrotask(()=>$DONE())',
+  meta(),{hostTimers:true});
+ assert.equal(queued.status,'passed',queued.reason);
+});
+test('virtual host timers refuse endless intervals and detect late errors',async()=>{
+ const interval=await run('setInterval(()=>{},0)',meta(),{hostTimers:true});
+ assert.equal(interval.status,'unsupported');
+ assert.match(interval.reason,/budget/);
+ assert.equal(interval.verifiedOwned,false);
+ const duplicate=await run('$DONE();setTimeout(()=>$DONE(),0)',
+  meta(),{hostTimers:true});
+ assert.equal(duplicate.status,'failed');
+ const callbackThrow=await run('setTimeout(()=>{throw Error("late")},0);$DONE();',
+  meta(),{hostTimers:true});
+ assert.equal(callbackThrow.status,'failed');
+ const absent=await run('setTimeout(()=>{},0)',meta(),{hostTimers:true});
+ assert.equal(absent.status,'unsupported');
+ assert.equal((await run('setTimeout(()=>$DONE(),0)',meta())).status,'failed');
+});
+test('virtual timers cannot spoof a declared native negative constructor',async()=>{
+ const native=await run('setTimeout(()=>$DONE(new TypeError()),0)',
+  meta({phase:'runtime',type:'TypeError'}),{hostTimers:true});
+ assert.equal(native.status,'passed');
+ const spoof=await run('setTimeout(()=>$DONE({name:"TypeError"}),0)',
+  meta({phase:'runtime',type:'TypeError'}),{hostTimers:true});
+ assert.equal(spoof.status,'failed');
+ await assert.rejects(run('$DONE()',meta(),{hostTimers:'yes'}),/Invalid/);
+});

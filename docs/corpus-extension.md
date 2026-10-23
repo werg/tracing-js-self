@@ -1640,3 +1640,22 @@ appear exactly once, and no row claims owned verification or admission.
   while explicit full-inventory sharding still inventories every record.
 - [ ] Raw native success cannot independently certify unasserted execution,
   official harness conformance or owned training semantics.
+
+
+### Bounded opt-in Test262 asynchronous virtual host turns (2026-10-23)
+
+- [x] Added a deterministic native-V8 async-script *diagnostic* host model
+  for `setTimeout`, `clearTimeout`, `setInterval`, `clearInterval`
+  and `queueMicrotask`. Guest timer callbacks run inside the VM timeout
+  boundary; only 64 virtual timer turns are permitted per test. Duplicate
+  `$DONE` calls, callback exceptions, incomplete completions and
+  unhandled rejections remain explicit failure/refusal evidence.
+- [x] The separately opt-in full-source native Test262 sweep now uses
+  `--host-timers`; the normal bounded sample stays unchanged.
+  Focused tests cover completion, cancellation, late failure, interval
+  exhaustion and forged negative-error objects.
+- [ ] This virtual clock is not real wall-clock scheduling, host event-loop
+  conformance, async ESM completion, `$262.agent`, network/filesystem
+  semantics or a complete official Test262 harness. It does not
+  independently certify intermediate owned scheduling events, and cannot
+  turn native diagnostics into semantic-execution training records.

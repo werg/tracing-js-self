@@ -95,7 +95,7 @@ jobs:
               --root /source --revision d53ebc8b1931d9f1541e43d59650776e4b766248 \
               --input /workspace/corpus/out/native-test262-catalog/test262.jsonl \
               --shard-index ${{ matrix.shard }} --shard-count 16 \
-              --max 10000 --expect-enumerated 103582 --timeout-ms 150 \
+              --max 10000 --expect-enumerated 103582 --timeout-ms 150 --host-timers \
               --rows-output /out/rows.jsonl --output /out/report.json
           node --input-type=module -e '
             import {readFileSync} from "node:fs";

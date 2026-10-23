@@ -25,6 +25,7 @@ const root=realpathSync(resolve(value('root','')));
 const revision=value('revision',null);
 const max=Number(value('max','500'));
 const timeoutMs=Number(value('timeout-ms','250'));
+const hostTimers=argv.includes('--host-timers');
 const output=resolve(value('output','corpus/out/test262-reference-diagnostics.json'));
 const input=value('input',null),rowsOutput=value('rows-output',null);
 const shardCount=Number(value('shard-count','1'));
@@ -129,7 +130,7 @@ for await(const untrustedRow of acquiredRows()){
     })
     :metadata.flags.includes('async')
       ?await executeTest262AsyncReference({source,metadata,mode:row.program.mode,
-        harnessSources:sources,filename:row.provenance.path,timeoutMs})
+        harnessSources:sources,filename:row.provenance.path,timeoutMs,hostTimers})
       :executeTest262Reference({source,metadata,mode:row.program.mode,
         harnessSources:sources,filename:row.provenance.path,timeoutMs});
   const diagnostic={ordinal,id:row.id,path:row.provenance.path,
@@ -149,7 +150,7 @@ if(expectEnumerated!==null&&enumerated!==Number(expectEnumerated))
  throw new Error('Pinned acquired inventory count mismatch');
 const report={schema:'test262-native-reference-report/1',revision,
   authority:'native-v8-diagnostic-only',verifiedOwned:0,admitted:0,
-  attempted:seen.size,counts,limits:{max,timeoutMs},
+  attempted:seen.size,counts,limits:{max,timeoutMs,hostTimers},
   enumerated,catalogFingerprint:catalogDigest.digest('hex'),
   shard:{index:shardIndex,count:shardCount,eligible,truncated:eligible>seen.size},
   ...(stream?{rowsSha256:rowsDigest.digest('hex'),rowsBytes,
@@ -159,7 +160,7 @@ const report={schema:'test262-native-reference-report/1',revision,
    'Native V8 execution is not an owned semantic trace, an independent engine conformance proof, or training admission.',
    'The default --max sample stops at the requested prefix; only an explicit expected inventory with streamed shard reports proves whole-catalog diagnostic accounting.',
    'Scripts support parse/runtime negatives; native modules additionally support bounded parse/resolution/runtime diagnostics only when Node experimental VM modules are enabled.',
-   'Bounded async scripts can observe $DONE via VM promise microtasks only, with duplicate/error/rejection checks. This is not complete Test262 async support.',
+   'Bounded async scripts observe $DONE via VM microtasks. Optional --host-timers uses a deterministic virtual timer/queueMicrotask model, not real wall-clock or full Test262 host behavior.',
    'Raw scripts run without implicit harness files; negative early-phase tests, async modules, event-loop/timer/host-dependent async tests, dynamic imports and special host flags remain unsupported.',
    'node:vm is not a security boundary: use only trusted exact upstream checkouts, never arbitrary repository code.',
    'A passing script without assertions may contain no meaningful behavioral checks.'
