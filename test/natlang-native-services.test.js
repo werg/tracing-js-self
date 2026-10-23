@@ -73,3 +73,30 @@ test('unregistered native helper calls fail closed and do not emit success',asyn
   }),EvalFailure);
   assert.equal(traces.length,0);
 });
+
+test('closing the evaluator aborts outstanding native waits without a success archive',async()=>{
+  const traces=[];
+  const env=createBoundedNatlangEnvironment({EvalFailure,
+    services:{'demo.readAsync':()=>new Promise(()=>{})},
+    onTrace:bundle=>traces.push(bundle)});
+  const run=env.executeAsync({
+    code:"return await host.readAsync('never');",
+    body:true,scope:{},path:'natlang://cancelled.ts'
+  });
+  env.close();
+  await assert.rejects(run,error=>error instanceof EvalFailure &&
+    /closed/.test(error.message));
+  assert.equal(traces.length,0);
+});
+
+test('nested owned async lexical block keeps its await capability and replay',async()=>{
+  const traces=[];
+  const env=createBoundedNatlangEnvironment({EvalFailure,
+    onTrace:bundle=>traces.push(bundle)});
+  const result=await env.executeAsync({
+    code:"if(self.active){const n=await Promise.resolve(3);return n+5;}return 0;",
+    body:true,scope:{active:true},path:'natlang://nested-await.ts'
+  });
+  assert.equal(result.result,8);
+  assert.equal(replayExact(traces[0]).valid,true);
+});
