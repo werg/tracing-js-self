@@ -8,7 +8,7 @@ import {normalizeJournal} from '../semantic/normalize.js';
 import {referenceOutcome} from './reference.js';
 
 const observedOperations=new Set([
-  'primitive.binary','primitive.unary','spec.operation.complete'
+  'primitive.binary','primitive.unary','spec.operation.complete','binding.update'
 ]);
 
 export function instrumentOperationSource(source) {
@@ -18,7 +18,8 @@ export function instrumentOperationSource(source) {
     if(Array.isArray(value)){for(const child of value)visit(child);return;}
     if(!value||typeof value!=='object')return;
     if(value.type==='BinaryExpression'||value.type==='UnaryExpression'||
-       (value.type==='AssignmentExpression'&&['+=','-='].includes(value.operator)))
+       (value.type==='AssignmentExpression'&&['+=','-='].includes(value.operator))||
+       value.type==='UpdateExpression')
       nodes.push({start:value.start,end:value.end,site:String(value.start)+':'+value.end});
     for(const [name,child] of Object.entries(value))
       if(name!=='start'&&name!=='end'&&name!=='loc')visit(child);
@@ -59,7 +60,7 @@ export function auditReferenceOperations({source,entry,args,initialHeap,bundle,r
   const schema='reference-operations/1';
   const normalized=normalizeJournal(bundle);
   const eventsById=new Map(bundle.events.map(event=>[event.eventId,event]));
-  const expected=[],covered={binary:0,unary:0,ownedArithmetic:0};
+  const expected=[],covered={binary:0,unary:0,ownedArithmetic:0,updates:0};
   const unverified=new Set();
   for(const row of normalized.events){
     const operation=eventsById.get(row.journalEvent)?.operation;
@@ -67,12 +68,13 @@ export function auditReferenceOperations({source,entry,args,initialHeap,bundle,r
       if(operation)unverified.add(operation);
       continue;
     }
-    if(!row.source||row.op!=='value'||!Array.isArray(row.result))
+    if(!row.source||!['value','write'].includes(row.op)||!Array.isArray(row.result))
       return {schema,status:'unverified',reason:'Uncovered primitive operation completion',
         eventId:row.journalEvent};
     expected.push({site:String(row.source.start)+':'+row.source.end,value:row.result});
     if(operation==='primitive.binary')covered.binary++;
     else if(operation==='primitive.unary')covered.unary++;
+    else if(operation==='binding.update')covered.updates++;
     else covered.ownedArithmetic++;
   }
   const observed=referenceOutcome({source:instrumentOperationSource(source),
