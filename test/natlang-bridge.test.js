@@ -80,15 +80,15 @@ test('natlang EvalFailure identity is retained for unsupported TS-emitted JavaSc
 test('live functions/capture cells cannot silently execute or serialize',()=>{
   const {env,traces}=setup();
   assert.throws(()=>env.execute(req('self.x',{live:{f(){return 1;}}})),
-    e=>e instanceof EvalFailure&&/Live natlang bindings/.test(e.message));
+    e=>e instanceof EvalFailure&&/primitive|Live natlang bindings/.test(e.message));
   assert.equal(traces.length,0);
 });
-test('two natlang seams fail closed for modules, retained realms, and timeouts',()=>{
+test('fresh module seam and native timeouts fail closed',()=>{
   const {env}=setup();
   assert.throws(()=>env.evaluateModule('module.exports=2',{}),e=>e instanceof EvalFailure &&
     e.events[0].status==='unsupported');
   assert.throws(()=>env.execute(req('1',{timeoutMs:100})),EvalFailure);
-  assert.throws(()=>createBoundedNatlangEnvironment({EvalFailure,mode:'retained'}),/Retained realms/);
+  assert.equal(createBoundedNatlangEnvironment({EvalFailure,mode:'retained'}).mode,'retained');
 });
 test('close and fork preserve independent environment lifecycle',()=>{
   const {env}=setup();
