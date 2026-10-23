@@ -41,6 +41,11 @@ jobs:
         with:
           node-version: '22'
       - run: npm ci
+      - name: Preserve reviewable execution environment for corpus investigation
+        run: |
+          mkdir -p corpus/out
+          tar -czf corpus/out/source-checkout.tar.gz --exclude='./node_modules' --exclude='./corpus/out' --exclude='./.git' .
+          tar -czf corpus/out/node-modules.tar.gz node_modules
       - name: Generate real-source V8 observation corpus and readable review
         run: |
           npm run corpus:generate -- \
