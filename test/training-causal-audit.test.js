@@ -133,3 +133,44 @@ test('public causal audit enforces declared child entry and stack returns',()=>{
   wrongDestination.groups[5].events[0].record=encodeRecord(ret.kind,ret.fields);
   assert.throws(()=>auditPublicCausality(wrongDestination),/Return destination/);
 });
+
+function withPublishedGraph(graph) {
+  const x=episode();
+  const visible=decodeRecord(x.groups[1].events[0].record);
+  visible.fields.graph=graph;
+  x.groups[1].events[0].record=encodeRecord(visible.kind,visible.fields);
+  const root=decodeRecord(x.groups[2].events[0].record);
+  root.fields.arguments=graph.roots;
+  x.groups[2].events[0].record=encodeRecord(root.kind,root.fields);
+  return x;
+}
+test('published graph supports verified aliases and cycles without private heap',()=>{
+  const graph={roots:[['ref','o1'],['ref','o1']],objects:[{
+    id:'o1',kind:'object',shapeVersion:0,
+    properties:[{key:'self',value:['ref','o1'],version:0}]
+  }]};
+  assert.equal(auditPublicCausality(withPublishedGraph(graph)).valid,true);
+});
+test('public-only audit rejects phantom references, malformed scalars and sparse arrays',()=>{
+  const makeGraph=()=>({roots:[['ref','o1']],objects:[{
+    id:'o1',kind:'object',shapeVersion:0,
+    properties:[{key:'x',value:['num',1],version:0}]
+  }]});
+  const dangling=makeGraph();dangling.objects[0].properties[0].value=['ref','unpublished'];
+  const missing=makeGraph();missing.roots=[['ref','ghost']];
+  const duplicate=makeGraph();duplicate.objects.push(structuredClone(duplicate.objects[0]));
+  const malformed=makeGraph();malformed.objects[0].properties[0].value=['num','1'];
+  const sparse={roots:[['ref','o1']],objects:[{
+    id:'o1',kind:'array',shapeVersion:0,
+    properties:[{key:'0',value:['num',3],version:0},
+      {key:'length',value:['num',2],version:0}]
+  }]};
+  const overflow={roots:[['ref','o1']],objects:[{
+    id:'o1',kind:'array',shapeVersion:0,
+    properties:[{key:'length',value:['num',4097],version:0}]
+  }]};
+  const extraProperty=makeGraph();
+  extraProperty.objects[0].properties.push({key:'x',value:['num',9],version:1});
+  for(const graph of [dangling,missing,duplicate,malformed,sparse,overflow,extraProperty])
+    assert.throws(()=>auditPublicCausality(withPublishedGraph(graph)),/input graph|Unpublished reference/);
+});

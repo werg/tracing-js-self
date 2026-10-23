@@ -3,6 +3,7 @@
 import {isDeepStrictEqual} from 'node:util';
 import {decodeRecord,restoreLines} from './format.js';
 import {verifyVisibleExport} from './visibility.js';
+import {validatePublishedGraph} from './public-graph.js';
 const generatedKinds=new Set(['enter','value','branch','loop','alloc','read','write',
   'delete','call','return','throw','end']);
 const allowedSemanticFields=new Set(['id','invocation','site','dependsOn','control',
@@ -69,6 +70,7 @@ export function auditPublicCausality(episode,{maxBytes=512}={}) {
           if(!exactKeys(property,['key','value','version']))
             throw new Error('Unexpected input graph property payload');
       }
+      validatePublishedGraph(fields.graph);
       input=fields;stage=2;return;
     }
     if(ended)throw new Error('Records after terminal end');
