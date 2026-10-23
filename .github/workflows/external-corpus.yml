@@ -4,6 +4,10 @@ on:
     branches: [main]
     paths:
       - 'src/corpus/import-external.mjs'
+      - 'src/corpus/full-disposition.mjs'
+      - 'src/corpus/original-sites.mjs'
+      - 'tools/convert-full-corpus.mjs'
+      - 'tools/verify-exercism-owned.mjs'
       - 'tools/import-external-corpus.mjs'
       - 'corpus/extension/**'
       - 'test/external-*.test.js'
@@ -11,6 +15,10 @@ on:
   pull_request:
     paths:
       - 'src/corpus/import-external.mjs'
+      - 'src/corpus/full-disposition.mjs'
+      - 'src/corpus/original-sites.mjs'
+      - 'tools/convert-full-corpus.mjs'
+      - 'tools/verify-exercism-owned.mjs'
       - 'tools/import-external-corpus.mjs'
       - 'corpus/extension/**'
       - 'test/external-*.test.js'
@@ -117,6 +125,34 @@ jobs:
             --revision 89e83a74014617ffbe79a56d83d14d054cd11417 \
             --output corpus/out/full/json-schema.jsonl --report corpus/out/full/json-schema.json
           node -e 'const fs=require("fs");for(const n of ["test262","exercism","json-schema"]){const x=JSON.parse(fs.readFileSync("corpus/out/full/"+n+".json"));if(!x.records||x.admitted!==0||x.verified!==0||x.truncated)process.exitCode=1;console.log(n,x.records,"acquired candidate fixtures",x.sourceFiles,"original source files");}'
+      - name: Independently check curated original-JS proof execution and original-site receipts
+        run: |
+          node tools/verify-exercism-owned.mjs \
+            --per-family 12 --mutations-per-family 8 --max-cases 420 \
+            --min-owned 71 \
+            --output corpus/out/full/exercism-owned-report.json \
+            --review corpus/out/full/exercism-owned-review.md \
+            --local-episodes corpus/out/full/exercism-owned-local.jsonl
+      - name: One-for-one full inventory conversion disposition (no fabricated traces)
+        run: |
+          node tools/convert-full-corpus.mjs \
+            --test262 corpus/out/full/test262.jsonl \
+            --exercism corpus/out/full/exercism.jsonl \
+            --json-schema corpus/out/full/json-schema.jsonl \
+            --owned-report corpus/out/full/exercism-owned-report.json \
+            --min-inventory 117773 \
+            --output corpus/out/full/disposition.jsonl \
+            --report corpus/out/full/disposition-report.json
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const r=JSON.parse(readFileSync("corpus/out/full/disposition-report.json"));
+            if(r.status!=="complete-accounting"||r.readCount!==117773||
+              r.locallyVerified<34||r.readCount!==r.locallyVerified+r.refused||
+              r.admitted!==0||r.allConverted===true)throw Error("False full conversion evidence "+JSON.stringify(r));
+            console.log("Acquired records dispositioned",r.readCount,
+              "owned locally verified",r.locallyVerified,
+              "explicit refusal",r.refused,"admitted",r.admitted);
+          '
       - name: Upload full acquired catalogs (not verified semantic traces)
         uses: actions/upload-artifact@v4
         with:
@@ -124,4 +160,5 @@ jobs:
           path: |
             corpus/out/full/*.jsonl
             corpus/out/full/*.json
+            corpus/out/full/*.md
           if-no-files-found: error

@@ -16,6 +16,7 @@ import {verifyTrainingCase,recheckIndependentTrainingEvidence}
 import {loadPinnedPairs,lowerPinnedProof,extractCanonicalCases}
   from '../src/corpus/owned-exercism.mjs';
 import {generateInputVariations} from '../src/corpus/variation-exercism.mjs';
+import {buildOwnedSourceMap,auditSourceSites} from '../src/corpus/original-sites.mjs';
 
 const argv=process.argv.slice(2);
 const option=(name,fallback)=>argv.includes('--'+name)?argv[argv.indexOf('--'+name)+1]:fallback;
@@ -97,10 +98,11 @@ try{
     locallyVerified:0,unsupported:0,referenceMismatch:0,projectionFailure:0,
     status:'not-evaluated'};
   const canonical=extractCanonicalCases(pair);
-  let lowered=null,original=null;
+  let lowered=null,original=null,originalSiteMap=null;
   try{
    lowered=lowerPinnedProof(pair.source);
    original=originalScript(pair.source);
+   originalSiteMap=buildOwnedSourceMap(pair.source,lowered.source);
    group.status='attempted';
   }catch(error){group.status='source_unsupported';group.sourceReason=String(error.message);}
   const variants=generateInputVariations(pair.slug,canonical,{limit:mutationsPerFamily});
@@ -169,6 +171,14 @@ try{
    if(!renewed.valid){
      fail(item,'independent_recheck_failure',renewed.reason);continue;
    }
+   let sourceSites;
+   try{
+     sourceSites=auditSourceSites(originalSiteMap,serialized.sidecar.semantic,
+       pair.source,lowered.source);
+   }catch(error){
+     fail(item,'source_site_audit_failure',error.message);
+     continue;
+   }
    const publicGroups=serialized.public.groups;
    const generated=publicGroups.filter(g=>g.mode==='generated');
    const quality={totalGroups:publicGroups.length,generatedGroups:generated.length,
@@ -180,7 +190,8 @@ try{
      shortPreview:generated.slice(0,12).flatMap(g=>g.events.map(e=>e.record.slice(0,140)))};
    item.status='locally_verified';
    item.quality=quality;
-   item.evidence={postSerialization:renewed,reference:item.reference};
+   item.evidence={postSerialization:renewed,reference:item.reference,
+     originalSites:{valid:sourceSites.valid,totals:sourceSites.totals}};
    group.locallyVerified++;committed++;
    report.quality.groups+=quality.totalGroups;
    report.quality.generatedGroups+=quality.generatedGroups;
@@ -192,7 +203,7 @@ try{
        originalSource:pair.provenance.solution,canonicalInput:fixture.args,
        inputOrigin:item.inputOrigin,derivedFrom:item.derivedFrom,
        canonicalExpected:fixture.generator?null:fixture.expected,reference:item.reference,
-       quality,exported:serialized};
+       quality,sourceSites,exported:serialized};
      if(!stream.write(JSON.stringify(payload)+'\n'))await once(stream,'drain');
    }
   }

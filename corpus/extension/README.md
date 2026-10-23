@@ -214,3 +214,24 @@ inspection, alongside all top-level refusal reasons. Neither this preview
 nor group/event ratios prove lossless semantic compression.
 
 **Source-site limitation:** The `semantic-execution/2` records reference the strict function-entry *lowered* source, not yet certified offsets in the original ESM proof file. The original proof path/revision/SHA is retained for provenance, and the original-without-export-keywords behavior is independently compared in V8, but neither general ESM execution nor original-position mappings are proven. This remains an explicit extension-plan task.
+
+
+## Full-catalog disposition (every acquired fixture)
+
+The full pinned acquisition pipeline now also runs
+`tools/convert-full-corpus.mjs`, which emits a deterministic one-record-per-
+original-fixture **conversion/refusal** JSONL, plus an aggregate quality report.
+It verifies exact candidate identity, requires joined pinned original-source
+plus independently rechecked owned results, and never pretends that Test262
+programs or JSON Schema data are already owned-traceable JS functions.
+
+The `owned-original-sites/1` map and `owned-source-site-audit/1` per-event
+receipts now link exact preserved source tokens to original JS byte positions
+for verified Exercism examples. Synthetic compiler tokens or source spans
+crossing a transformation boundary remain explicitly unmapped. These receipts
+are private audit data; the public trace still uses the lowered source context.
+
+This provides exhaustive **accounting** at 117,773 known acquired candidates,
+but not complete owned **execution**. All unresolved cases stay in the
+documented refusal ledger. Artifacts from the full-source workflow distinguish
+the rechecked owned subset from the total acquisition inventory.

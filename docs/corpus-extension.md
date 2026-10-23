@@ -1243,3 +1243,50 @@ This limitation is material for trace readability and causal source fidelity.
   tests for original module environment semantics, and more complete
   independent intermediate-effect evidence before higher assurance
   or wider upstream automatic execution.
+
+
+---
+
+## 2026-10-23 — Exhaustive source-catalog disposition and original-site provenance
+
+### Implemented
+
+- [x] Added `src/corpus/original-sites.mjs`: an independently auditable,
+  exact-token source-site mapping from strict function-entry projection back
+  to SHA-locked upstream JavaScript. The map exposes original positions ONLY
+  for byte-identical spans (original function bodies and parameters).
+  Synthetic `function`, `return`, strict-mode and wrapper tokens are
+  explicitly unmappable; **original-position equivalence is never invented**.
+- [x] Each new locally verified Exercism episode gets a private
+  `owned-source-site-audit/1` record with per-semantic-event original span
+  receipts, verified source hashes, and explicitly unanchored event counts.
+  Existing public `semantic-execution/2` uses the actual lowered source, so
+  a further schema/source-context upgrade is required to expose these original
+  spans as model-visible source coordinates.
+- [x] Added fail-closed full-corpus conversion disposition
+  (`tools/convert-full-corpus.mjs`). It streams every acquired Test262,
+  Exercism and JSON Schema record, assigning **exactly one** verifiable result
+  or specific refusal, with stable source identity, project split, per-input
+  provenance and deterministic ledger hash. It can join only the independently
+  rechecked, original-source-matched Exercism proofs; anything else stays
+  explicitly unconverted.
+- [x] CI `full-acquisition` runs the pinned 20-proof owned verification
+  **before** the exhaustive disposition, retaining a compact report, audited
+  original-site traces and an exhaustive refusal JSONL.
+- [x] Added negative/forgery tests: no unsupported Test262 harness or JSON
+  Schema contract may masquerade as an owned semantic-execution trace.
+- [ ] **Not yet solved:** arbitrary Test262 harness execution, phase-accurate
+  early/runtime/async/module completions, real pinned JSON Schema validators
+  traced by the owned interpreter, general ESM module semantics, host services,
+  Proxy/accessor/iterator interleavings, unbounded execution chunking, and
+  full-scope independent operation-level oracles. Conversion of all acquired
+  fixtures cannot honestly be claimed until these are implemented.
+- [ ] Await actual CI-run totals for original-site receipts and complete
+  disposition. Maintain the distinction between exhaustive accounting and
+  complete executable verification.
+
+Converting a JSON Schema *document* or an Exercism *expected result* to a
+JSONL row is not semantic execution. An unsupported script, an invalid
+source-module projection, a native V8 diagnostic, or a self-replayed but
+independently unchecked owned trace may **never** count as a verified
+`semantic-execution/2` training candidate.

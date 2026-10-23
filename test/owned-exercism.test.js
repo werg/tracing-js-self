@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {loadPinnedPairs,lowerPinnedProof,extractCanonicalCases,stableSplit,bindings}
   from '../src/corpus/owned-exercism.mjs';
 import {generateInputVariations} from '../src/corpus/variation-exercism.mjs';
+import {buildOwnedSourceMap,mapSourceSite,auditSourceSites} from '../src/corpus/original-sites.mjs';
 import {verifyTrainingCase,recheckIndependentTrainingEvidence}
   from '../src/training/admit.js';
 
@@ -72,4 +73,31 @@ test('deterministic generated variants stay distinct from canonical provenance',
  }
  assert.deepEqual(generateInputVariations('leap',tests,{limit:0}),[]);
  assert.throws(()=>generateInputVariations('leap',tests,{limit:513}));
+});
+
+
+test('source-site audit maps original function bodies without guessing synthetic keywords',()=>{
+ const pair=loadPinnedPairs().find(x=>x.slug==='leap');
+ const lowered=lowerPinnedProof(pair.source);
+ const map=buildOwnedSourceMap(pair.source,lowered.source);
+ assert.equal(map.schema,'owned-original-sites/1');
+ const fragment=map.segments.find(x=>x.owner==='isLeap');
+ assert.ok(fragment);
+ assert.equal(lowered.source.slice(fragment.generatedStart,fragment.generatedEnd),
+   pair.source.slice(fragment.originalStart,fragment.originalEnd));
+ assert.equal(mapSourceSite(map,0,8),null,'injected strict directive has no upstream site');
+ const mapped=mapSourceSite(map,fragment.generatedStart,fragment.generatedStart+1);
+ assert.equal(mapped.start,fragment.originalStart);
+ const fixture=extractCanonicalCases(pair).find(x=>x.status==='candidate'&&x.args[0]===1996);
+ const verified=verifyTrainingCase({source:lowered.source,entry:fixture.entry,args:fixture.args});
+ assert.equal(verified.status,'locally_verified',verified.reason??'');
+ const siteAudit=auditSourceSites(map,verified.exported.sidecar.semantic,
+    pair.source,lowered.source);
+ assert.equal(siteAudit.valid,true);
+ assert.ok(siteAudit.totals.mapped>0);
+ for(const receipt of siteAudit.receipts)assert.equal(
+   lowered.source.slice(receipt.generated.start,receipt.generated.end),
+   pair.source.slice(receipt.original.start,receipt.original.end));
+ assert.throws(()=>auditSourceSites(map,verified.exported.sidecar.semantic,
+   pair.source+' ',lowered.source),/changed/);
 });
