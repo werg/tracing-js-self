@@ -785,7 +785,7 @@ export class Runtime {
         case 'MAKE_FUNCTION':{
           const id=this.next(s,'obj');
           s.heap[id]={id,kind:'function',codeId:arg.codeId,
-            closureEnvId:f.envId,async:false,arrow:arg.arrow===true,
+            closureEnvId:f.envId,async:arg.async===true,arrow:arg.arrow===true,
             lexicalThis:arg.arrow?f.thisValue:null,version:0};
           return result(['ref',id]);
         }
