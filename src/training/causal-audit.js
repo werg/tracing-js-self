@@ -10,7 +10,7 @@ const allowedSemanticFields=new Set(['id','invocation','site','dependsOn','contr
   'result','update','reads','writes','test','path','from','to','copies','reason',
   'child','code','receiver','arguments','captures',
   'allocations','destination','effect','operation','promise','codec',
-  'signature','payload','entry','kind']);
+  'signature','payload','entry','kind','rest']);
 const exactKeys=(value,names)=>value!==null&&typeof value==='object'&&
   !Array.isArray(value)&&Object.keys(value).length===names.length&&
   names.every(name=>Object.hasOwn(value,name));
@@ -36,7 +36,9 @@ export function auditPublicCausality(episode,{maxBytes=512}={}) {
         throw new Error('First visible record must be an observed source bundle');
       source=fields;
       for(const code of fields.codes) {
-        if(!exactKeys(code,['id','params','async'])||
+        if(!exactKeys(code,['id','params','async','restIndex'])||
+           !Number.isInteger(code.restIndex)||code.restIndex<-1||
+           code.restIndex>=code.params.length||
            !Array.isArray(code.params)||typeof code.async!=='boolean'||
            typeof code.id!=='string'||codes.has(code.id))
           throw new Error('Duplicate or malformed visible code identity');
