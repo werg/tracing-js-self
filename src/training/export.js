@@ -3,6 +3,7 @@ import {normalizeJournal,validateSemantic} from '../semantic/normalize.js';
 import {semanticLine,encodeRecord,decodeRecord,restoreLines,fragmentLine} from './format.js';
 import {scheduleRecords} from './schedule.js';
 import {trainingPrefix,verifyVisibleExport} from './visibility.js';
+import {auditPublicCausality} from './causal-audit.js';
 import {validateBundle} from '../validation.js';
 import {replayExact} from '../replay.js';
 
@@ -53,6 +54,7 @@ export function validateTrainingExport(exported) {
   if(!Number.isInteger(maxBytes) || maxBytes<64 || maxBytes>1024 ||
      !Number.isInteger(maxGenerated) || maxGenerated<1)
     throw new Error('Invalid local serialization limits');
+  auditPublicCausality(exported.public,{maxBytes});
   const seenGroups=new Map(),trace=[],context=[];
   const prefixCount=exported.sidecar.contextGroups;
   let open=null;

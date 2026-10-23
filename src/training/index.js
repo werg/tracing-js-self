@@ -5,3 +5,5 @@ export {auditReferenceOperations} from './operation-reference.js';
 export {exportTraining,validateTrainingExport} from './export.js';
 export {SemanticController} from './controller.js';
 export {evaluateSelectedTrajectory} from './rollout.js';
+
+export {auditPublicCausality} from './causal-audit.js';
