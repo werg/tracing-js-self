@@ -121,7 +121,7 @@ export class SemanticController {
         ...['isFinite','isNaN','isInteger','isSafeInteger'].map(x=>'Number.'+x),
         ...['toString','toFixed'].map(x=>'Number.prototype.'+x),
         ...['push','pop','includes','indexOf','lastIndexOf','slice','concat',
-          'join','splice','unshift','shift','at','filter','map','reduce'].map(x=>'Array.prototype.'+x),
+          'join','splice','unshift','shift','at','filter','map','reduce','sort'].map(x=>'Array.prototype.'+x),
         ...['charAt','charCodeAt','at','substring','substr','slice','indexOf','lastIndexOf',
           'includes','startsWith','endsWith','toLowerCase','toUpperCase','trim',
           'trimStart','trimEnd'].map(x=>'String.prototype.'+x),
@@ -381,7 +381,7 @@ export class SemanticController {
           const virtual=property===undefined && (
             (obj?.kind==='array' && (
               (['push','pop','includes','indexOf','lastIndexOf','slice','concat',
-                 'join','splice','unshift','shift','at','filter','map','reduce'].includes(read.key) &&
+                 'join','splice','unshift','shift','at','filter','map','reduce','sort'].includes(read.key) &&
                 builtin==='Array.prototype.'+read.key) ||
               (read.key==='toString'&&builtin==='Array.toString'))) ||
             (['object','array'].includes(obj?.kind) &&
