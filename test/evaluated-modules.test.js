@@ -255,3 +255,40 @@ test('ambiguous distinct star binding origins fail without executing module effe
     modules,entryModule:'main.js',exportName:'run'
   }),/ambiguous export/);
 });
+
+test('top-level module throw rejects the owned entry and prevents dependent initialization',async()=>{
+  const modules={
+    'bad.js':"throw 'dependency-failed';",
+    'main.js':"import './bad.js';export function run(){return 5;}"
+  };
+  assert.deepEqual(linkEvaluatedModules({modules,entryModule:'main.js',exportName:'run'})
+    .metadata.evaluationOrder,['bad.js','main.js']);
+  await assert.rejects(executeEvaluatedModules({
+    modules,entryModule:'main.js',exportName:'run'
+  }),/Owned module evaluation rejected: dependency-failed/);
+});
+
+test('top-level block await and synchronous native service preserve module completion',async()=>{
+  const first=await verified({modules:{
+    'base.js':'export let n=2;if(true){n+=await Promise.resolve(3);}',
+    'main.js':"import {n} from './base.js';export function run(){return n;}"
+  },entryModule:'main.js',exportName:'run'});
+  assert.equal(first.result,5);
+  const second=await verified({modules:{
+    'base.js':"export const n=host.readNumber('k');",
+    'main.js':"import {n} from './base.js';export function run(){return n*2;}"
+  },entryModule:'main.js',exportName:'run',
+  services:{'demo.readNumber':()=>8}});
+  assert.equal(second.result,16);
+  assert.equal(second.bundle.events.filter(e=>e.operation==='external.input.deliver').length,1);
+});
+
+test('TypeScript mutable imports update through owned lexical cells',async()=>{
+  const run=await verified({modules:{
+    'counter.ts':'export let n: number=2;export function update():void{n+=3;}',
+    'main.ts':"import {n,update} from './counter.ts';"+
+      'export function run():number{update();return n;}'
+  },entryModule:'main.ts',exportName:'run'});
+  assert.equal(run.result,5);
+  assert.equal(run.metadata.modules[0].sourceMap.version,3);
+});
