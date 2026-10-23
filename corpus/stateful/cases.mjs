@@ -8,7 +8,10 @@ export const upstream = Object.freeze({
   'koa-compose': {repository:'koajs/compose',revision:'9a2a426b32c614835b812ecb8de5af06c6c87f6f',license:'MIT',path:'koa-compose/index.js'},
   'yocto-queue': {repository:'sindresorhus/yocto-queue',revision:'72a8fa96a9d389765cdf2bb9c6daba8302fc375d',license:'MIT',path:'yocto-queue/index.js'},
   'p-limit': {repository:'sindresorhus/p-limit',revision:'a8a6fbec4e0e866d6d779b10889bb4f5567e70eb',license:'MIT',path:'p-limit/index.js'},
-  eventemitter3: {repository:'primus/eventemitter3',revision:'b0144e940ace8add8f335a8adfbed9284eb419f3',license:'MIT',path:'eventemitter3/index.js'}
+  eventemitter3: {repository:'primus/eventemitter3',revision:'b0144e940ace8add8f335a8adfbed9284eb419f3',license:'MIT',path:'eventemitter3/index.js'},
+  'axios-interceptors':{repository:'axios/axios',revision:'aa54a5e1e0e50cd1a2561b854ae5490ff589d065',license:'MIT',licenseFile:'axios/LICENSE',path:'axios/lib/core/InterceptorManager.js'},
+  'axios-utils':{repository:'axios/axios',revision:'aa54a5e1e0e50cd1a2561b854ae5490ff589d065',license:'MIT',licenseFile:'axios/LICENSE',path:'axios/lib/utils.js'},
+  'axios-bind':{repository:'axios/axios',revision:'aa54a5e1e0e50cd1a2561b854ae5490ff589d065',license:'MIT',licenseFile:'axios/LICENSE',path:'axios/lib/helpers/bind.js'}
 });
 export const pinnedSha256 = Object.freeze({
   "mitt": "1536a2dd71d64785d811076beee6d970583ca555dd34ce839face641a200054b",
@@ -17,7 +20,10 @@ export const pinnedSha256 = Object.freeze({
   "koa-compose": "2a748db2930d21d5c10c86bb09afa9a34e55a7cc6dd01b4e803b88eb3fbc6caf",
   "yocto-queue": "2eabf3096793c43934ef127fb50238dcba93074fb54f943fc62aeab616769dfc",
   "p-limit": "edde12a4a4dbdbe8d27161cdd0853db0bab435d5dc6c15f9f4dedc27ee9bca60",
-  "eventemitter3": "1560f251de5d28d2c15ff070215d2c5c0fa06f1a92e8d6522bbee37e06d2a6b5"
+  "eventemitter3": "1560f251de5d28d2c15ff070215d2c5c0fa06f1a92e8d6522bbee37e06d2a6b5",
+  "axios-interceptors": "9ca5252ef1c4e979c037c46330cdee428a93846696ef72ab2e5f714d91dd321f",
+  "axios-utils": "0f87e8f47823414ce6cb1412c409981305950e87a154701017e244e59568346d",
+  "axios-bind": "9a04b935a12b31ca104ada3b68d484c5371c751bb85dcf18215309f5de9188d2"
 });
 const group=(project,modules,variants)=>variants.map(([name,adversarial,run,requires])=>({
   id:project+'/'+name,project,modules:requires??modules,adversarial,run
@@ -535,6 +541,82 @@ function run(seed){
  for(let i=0;i<6;i++)cache.set('k'+i,seed+i);
  return {log,state:store.getState(),entries:[...cache]};
 }`,["quick-lru","eventemitter3","zustand"]]
+ ])
+,
+ ...group('axios',['axios-interceptors'],[
+ ['eject-stable-ids','eject stable handler identifiers and preserve order',`
+function run(seed){
+ const Manager=__require('axios-interceptors').default,m=new Manager(),log=[];
+ const first=m.use(v=>v+1),middle=m.use(v=>v+seed),last=m.use(v=>v*2);
+ m.eject(middle);
+ m.forEach(h=>log.push(h.fulfilled(seed)));
+ return {first,middle,last,log,size:m.handlers.length};
+}`],
+ ['eject-during-iteration','interceptor removal while traversing stack',`
+function run(seed){
+ const Manager=__require('axios-interceptors').default,m=new Manager(),log=[];
+ m.use(x=>x+1);const id=m.use(x=>x+2);m.use(x=>x+3);
+ m.forEach(h=>{log.push(h.fulfilled(seed));m.eject(id)});
+ return {log,count:m.handlers.filter(Boolean).length,ids:[id]};
+}`],
+ ['add-during-iteration','new interceptors during manager forEach',`
+function run(seed){
+ const Manager=__require('axios-interceptors').default,m=new Manager(),log=[];let installed=false;
+ m.use(x=>{if(!installed){installed=true;m.use(y=>y+100)}return x+1});
+ m.forEach(h=>log.push(h.fulfilled(seed)));
+ m.forEach(h=>log.push(h.fulfilled(seed+1)));
+ return {log,handlers:m.handlers.length};
+}`],
+ ['clear-and-rebuild','clear removes old handlers without reusing identities',`
+function run(seed){
+ const Manager=__require('axios-interceptors').default,m=new Manager(),log=[];
+ const a=m.use(x=>x+1),b=m.use(x=>x+2);
+ m.clear();const c=m.use(x=>x+seed);
+ m.eject(a);m.eject(b);
+ m.forEach(h=>log.push(h.fulfilled(1)));
+ return {a,b,c,log,length:m.handlers.length};
+}`],
+ ['intercept-promise-chain','async request configuration transformations',`
+async function run(seed){
+ const Manager=__require('axios-interceptors').default,m=new Manager(),audit=[];
+ m.use(async config=>{audit.push('auth');return {...config,token:seed}});
+ m.use(async config=>{audit.push('retry');return {...config,retry:config.retry+1}});
+ let current={url:'/api/items',retry:0};
+ const handlers=[];m.forEach(h=>handlers.push(h));
+ for(const h of handlers)current=await h.fulfilled(current);
+ return {audit,current,handlers:handlers.length};
+}`],
+ ['nested-enumeration','nested iteration, eject and stable handler state',`
+function run(seed){
+ const Manager=__require('axios-interceptors').default,m=new Manager(),log=[];
+ const a=m.use(x=>x+1),b=m.use(x=>x+2),c=m.use(x=>x+3);
+ m.forEach((h)=>{log.push(h.fulfilled(seed));m.forEach((inner)=>log.push(inner.fulfilled(seed+10)));m.eject(a)});
+ return {a,b,c,log,remaining:m.handlers.filter(Boolean).length};
+}`],
+ ['string-id-normalization','canonical numeric strings and invalid ID coercion',`
+function run(seed){
+ const Manager=__require('axios-interceptors').default,m=new Manager();
+ const id=m.use(x=>x+seed),other=m.use(x=>x+2);
+ m.eject('00');m.eject(String(id));
+ const log=[];m.forEach(h=>log.push(h.fulfilled(1)));
+ return {id,other,log,active:m.handlers.filter(Boolean).length};
+}`],
+ ['null-handler-list','nullish public handlers and graceful clear',`
+function run(seed){
+ const Manager=__require('axios-interceptors').default,m=new Manager(),log=[];
+ m.use(x=>x+1);m.handlers=null;m.clear();
+ const id=m.use(x=>x+seed);
+ m.forEach(h=>log.push(h.fulfilled(3)));
+ return {id,log,active:m.handlers.filter(Boolean).length};
+}`],
+ ['finally-after-interceptor-error','iterator cleanup after callback error and later ejection',`
+function run(seed){
+ const Manager=__require('axios-interceptors').default,m=new Manager(),log=[];
+ const id=m.use(x=>x+1);m.use(x=>x+2);
+ let error;try{m.forEach(()=>{log.push('before');throw Error('interrupt:'+seed)})}catch(e){error=e.message}
+ m.eject(id);m.forEach(h=>log.push(h.fulfilled(seed)));
+ return {log,error,active:m.handlers.filter(Boolean).length};
+}`]
  ])
 ];
 if(new Set(scenarios.map(s=>s.id)).size!==scenarios.length)throw new Error('Duplicate adversarial scenario name');
