@@ -40,8 +40,8 @@ The entry arguments must be portable owned data graphs, subject to the same
 bounded graph codec and strict TypeScript/ES2022 grammar. Native resource
 handles, arbitrary `require` and unjournaled host callbacks are not exported.
 
-The only allowed operation names remain `demo.readAsync`, `demo.readNumber`
-and `demo.store`, with the existing versioned `host-request/1` and canonical
+The declared operation registry includes `demo.readAsync`, `demo.readNumber`,
+`demo.store`, `platform.dateNow`, and the four `platform.console.*` text effects, with the existing versioned `host-request/1` and canonical
 JSON argument codec. Native handlers receive frozen, materialized JSON argument
 trees and a frozen request, not guest object handles. Their primitive return
 values are converted to owned input tokens. Native rejections and nonprimitive
@@ -60,3 +60,17 @@ native callback reentry, arbitrary host objects,
 streaming, crash recovery or physical native activation ownership. The opt-in natlang adapter can synchronize data-only `__live` graphs after
 replay; the native driver remains independent of arbitrary live host objects.
 Native promises **never** become guest frames, promises or continuations.
+
+
+## Explicit cross-host clock and console capabilities
+
+When explicitly provided in `services`, a strict owned function entry can invoke `Date.now()` (a zero-argument synchronous `platform.dateNow/1` effect) and one-string `console.log/info/warn/error(message)` methods. These capabilities are absent from ungranted entries. For a Node embedding, example services are:
+
+~~~js
+{
+  'platform.dateNow': () => Date.now(),
+  'platform.console.log': ({args}) => console.log(args[0])
+}
+~~~
+
+The host samples time or performs output only after effect intent is journaled. Exact replay injects the committed arrival values without resampling or logging again. The opt-in natlang native-service adapter exposes completed single-string console messages through its `logs` field. The API does not claim `new Date()`, general timer scheduling, console format-string semantics, multiple-argument logging, arbitrary native host callbacks, browser APIs or Node handles. Started native effects cannot be rolled back.
