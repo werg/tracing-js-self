@@ -5,7 +5,7 @@ import {readFileSync,writeFileSync,mkdirSync,realpathSync} from 'node:fs';
 import {resolve,join,dirname,relative,sep} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {SourceTextModule} from 'node:vm';
+import vm from 'node:vm';
 import {executeTest262ModuleReference} from '../src/corpus/test262-module-reference.mjs';
 import {importers} from '../src/corpus/import-external.mjs';
 import {executeTest262Reference} from '../src/corpus/test262-reference-execution.mjs';
@@ -94,7 +94,7 @@ for await(const row of importers.test262(root,{
 const report={schema:'test262-native-reference-report/1',revision,
   authority:'native-v8-diagnostic-only',verifiedOwned:0,admitted:0,
   attempted:rows.length,counts,limits:{max,timeoutMs},
-  node:process.version,moduleVmEnabled:typeof SourceTextModule==='function',rows,warnings:[
+  node:process.version,moduleVmEnabled:typeof vm.SourceTextModule==='function',rows,warnings:[
    'Native V8 execution is not an owned semantic trace, an independent engine conformance proof, or training admission.',
    'Scripts support parse/runtime negatives; native modules additionally support bounded parse/resolution/runtime diagnostics only when Node experimental VM modules are enabled.',
    'Negative early-phase tests, async $DONE tests, raw tests, dynamic imports and special host flags are explicitly unsupported.',

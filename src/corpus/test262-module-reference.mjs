@@ -1,7 +1,8 @@
 // Opt-in native-V8 module *diagnostics* for trusted, pinned Test262 sources.
 // Node's experimental VM modules require --experimental-vm-modules on Node 20-24.
 // Native V8 is not the owned interpreter; node:vm is NOT a security sandbox.
-import {createContext,runInContext,Script,SourceTextModule} from 'node:vm';
+import vm,{createContext,runInContext,Script} from 'node:vm';
+const {SourceTextModule}=vm;
 import {posix} from 'node:path';
 
 const response=(status,reason,extra={})=>({schema:'test262-native-module-reference/1',
