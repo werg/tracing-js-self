@@ -683,7 +683,7 @@ export class Runtime {
               (base.value[1]==='Array' && property==='isArray')))
             v=['builtinfn',base.value[1]+'.'+property];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' &&
-             ['create','setPrototypeOf','getPrototypeOf','defineProperty','hasOwn','keys','is'].includes(property))
+             ['create','setPrototypeOf','getPrototypeOf','defineProperty','hasOwn','keys','values','entries','is'].includes(property))
             v=['builtinfn',`Object.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' && property==='prototype')
             v=['intrinsic','Object.prototype'];
@@ -865,7 +865,7 @@ export class Runtime {
             return {...operands(fn,...args),...result(['bool',
               ownedSameValue(args[0]?.value??U,args[1]?.value??U)])};
           }
-          if(callable[0]==='builtinfn' && ['Object.hasOwn','Object.keys'].includes(callable[1])){
+          if(callable[0]==='builtinfn' && ['Object.hasOwn','Object.keys','Object.values','Object.entries'].includes(callable[1])){
             const base=args[0]?.value??U,obj=base[0]==='ref'?s.heap[base[1]]:null;
             if(!obj||!['object','array'].includes(obj.kind))
               throw new TypeError('Object builtin requires an owned ordinary reference');
@@ -881,11 +881,23 @@ export class Runtime {
             const id=this.next(s,'obj');
             const array=s.heap[id]={id,kind:'array',properties:{length:token(['num',0],eventId)},
               propertyVersions:{length:0},shapeVersion:0,version:0};
-            keys.forEach((key,i)=>putOwn(array,String(i),['str',key],eventId));
+            keys.forEach((key,i)=>{
+              let member=callable[1]==='Object.keys'?['str',key]:obj.properties[key].value;
+              if(callable[1]==='Object.entries'){
+                const pairId=this.next(s,'obj');
+                const pair=s.heap[pairId]={id:pairId,kind:'array',
+                  properties:{length:token(['num',0],eventId)},
+                  propertyVersions:{length:0},shapeVersion:0,version:0};
+                putOwn(pair,'0',['str',key],eventId);
+                putOwn(pair,'1',member,eventId);
+                member=['ref',pairId];
+              }
+              putOwn(array,String(i),member,eventId);
+            });
             return {...operands(fn,...args),...result(['ref',id])};
           }
           if(callable[0]==='builtinfn' &&
-              ['indexOf','lastIndexOf','slice','concat','join','splice','unshift','shift']
+              ['indexOf','lastIndexOf','slice','concat','join','splice','unshift','shift','at']
                 .some(name=>callable[1]==='Array.prototype.'+name)){
              const obj=receiver[0]==='ref'?s.heap[receiver[1]]:null;
              if(!obj||obj.kind!=='array')
@@ -926,7 +938,11 @@ export class Runtime {
                putOwn(obj,'length',['num',values.length],eventId);
              };
              let out;
-             if(method==='indexOf'||method==='lastIndexOf'){
+             if(method==='at'){
+                const requested=numberAt(0,0);
+                const index=requested<0?length+requested:requested;
+                out=index<0||index>=length?U:slots[index];
+              }else if(method==='indexOf'||method==='lastIndexOf'){
                const back=method==='lastIndexOf';
                const from=numberAt(1,back?length-1:0);
                let i=back?(from<0?length+from:Math.min(from,length-1)):
