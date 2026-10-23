@@ -303,7 +303,7 @@ function rewrite(module,root,names,initialIdentifiers){
   return source;
 }
 export function linkEvaluatedModules({modules,entryModule,exportName='default',
-  args=[]}={}){
+  args=[],calls=null}={}){
   const sources=sourcesOf(modules);
   if(typeof entryModule!=='string'||!sources.has(entryModule))
     reject('entry module is not part of the supplied graph');
@@ -311,6 +311,27 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     reject('invalid entry export');
   if(!Array.isArray(args)||args.length>64)
     throw new TypeError('Entry invocation takes at most 64 arguments');
+  // A batch is one owned episode, not a cache that replays module effects
+  // across multiple host calls. Safely read descriptors before guest import.
+  let sequence=null;
+  if(calls!==null){
+    if(!Array.isArray(calls)||types.isProxy(calls)||
+       calls.length===0||calls.length>32||args.length)
+      throw new TypeError('Calls must be 1-32 entries and replace single-call args');
+    sequence=calls.map(call=>{
+      if(!call||typeof call!=='object'||Array.isArray(call)||
+         types.isProxy(call)||
+         ![Object.prototype,null].includes(Object.getPrototypeOf(call)))
+        throw new TypeError('Each owned module call must be a data record');
+      const e=Object.getOwnPropertyDescriptor(call,'exportName');
+      const a=Object.getOwnPropertyDescriptor(call,'args');
+      if(!e||!Object.hasOwn(e,'value')||!validName(e.value)||
+         !a||!Object.hasOwn(a,'value')||!Array.isArray(a.value)||
+         a.value.length>64)
+        throw new TypeError('Each module call needs exportName and up to 64 args');
+      return {exportName:e.value,args:a.value};
+    });
+  }
   const modulesByFile=new Map(),visiting=new Set(),visited=new Set(),order=[];
   function get(file){
     if(!modulesByFile.has(file))
@@ -374,9 +395,16 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
       if(get(file).imports.has(local))
         required(file,exported);
   }
-  const selected=required(entryModule,exportName);
-  if(selected.kind!=='function'&&args.length)
+  const selected=sequence?required(entryModule,sequence[0].exportName):
+    required(entryModule,exportName);
+  if(!sequence&&selected.kind!=='function'&&args.length)
     reject('cannot call a non-function exported module binding');
+  const requested=sequence?sequence.map(call=>{
+    const binding=required(entryModule,call.exportName);
+    if(binding.kind!=='function'&&call.args.length)
+      reject('cannot invoke a non-function module export '+call.exportName);
+    return {...call,binding};
+  }):null;
   const bound=new Map(),links=[];
   for(const file of order){
     const module=get(file),names=new Map(renamed.get(file));
@@ -424,7 +452,19 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
       }
     }
   }
-  if(selected.kind==='function'){
+  if(requested){
+    // All calls execute after initialization in a single owned activation;
+    // lexical exports and heap aliases survive each intermediate await.
+    requested.forEach(({binding,args:callArgs},i)=>{
+      const parameters=callArgs.map((_,j)=>
+        'self.calls['+i+'].args['+j+']').join(',');
+      const expression=binding.kind==='function'?
+        binding.linked+'('+parameters+')':binding.linked;
+      source+='  const __traced_eval_result_'+i+'=await '+expression+';\n';
+    });
+    source+='  return ['+requested.map((_,i)=>
+      '__traced_eval_result_'+i).join(',')+'];\n';
+  }else if(selected.kind==='function'){
     const argumentsText=args.map((_,i)=>'self.args['+i+']').join(',');
     source+='  return await '+selected.linked+'('+argumentsText+');\n';
   }else source+='  return await '+selected.linked+';\n';
@@ -439,6 +479,8 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
   const metadata={
     profile:'evaluated-module/1',entryModule,exportName,
     evaluationOrder:order.slice(),linkedBinding:selected.linked,
+    ...(requested?{calls:requested.map(({exportName,binding})=>({
+      exportName,binding:binding.linked}))}:{}),
     instantiationAndEvaluation:spans,links,
     modules:order.map(file=>({
       file,source:sources.get(file),transpiler:get(file).lowering.compiler,
@@ -449,14 +491,15 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     entryFunction:'__traced_evaluated_entry',metadata};
 }
 export async function executeEvaluatedModules({modules,entryModule,
-  exportName='default',args=[],services=null,maxSteps=100000,signal}={}){
-  const linked=linkEvaluatedModules({modules,entryModule,exportName,args});
+  exportName='default',args=[],calls=null,services=null,maxSteps=100000,signal}={}){
+  const linked=linkEvaluatedModules({modules,entryModule,exportName,args,calls});
   if(!Number.isSafeInteger(maxSteps)||maxSteps<1||maxSteps>1000000)
     throw new RangeError('Module evaluation step budget out of range');
   let bundle,runtime,progress;
   const entry={text:linked.source,
     url:'evaluated-module://'+entryModule,
-    functionName:linked.entryFunction,args:[{args}]};
+    functionName:linked.entryFunction,
+    args:[calls===null?{args}:{calls:calls.map(call=>({args:call.args}))}]};
   if(services!==null){
     const executed=await executeWithNativeServices({
       entry,services,maxSteps,signal
