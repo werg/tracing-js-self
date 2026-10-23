@@ -1,0 +1,75 @@
+name: Megatoken native Episode consumer contract
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: megatoken-consumer-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  independent-native-import:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: werg/megatoken
+          ref: e1a4902c1f188de9ccccf47dfd12e0ec91c36b91
+          path: megatoken
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned runtime and native consumer
+        run: |
+          npm ci
+          python -m pip install -e ./megatoken
+      - name: Generate and independently verify locally trusted candidates
+        run: |
+          npm run training:generate -- --seed 42 --count 8 \
+            --output "$RUNNER_TEMP/trace.jsonl" \
+            --manifest "$RUNNER_TEMP/manifest.json"
+          node tools/recheck-training-evidence.mjs "$RUNNER_TEMP/trace.jsonl"
+      - name: Import through megatoken native Episode-v3 adapter
+        run: |
+          python megatoken/scripts/import_semantic_execution.py \
+            --input "$RUNNER_TEMP/trace.jsonl" \
+            --output "$RUNNER_TEMP/native.jsonl" \
+            --diagnostic-byte --allow-local
+      - name: Verify native causal records and absent private oracle
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          from megatoken.data.schema import Episode
+          root = Path(os.environ['RUNNER_TEMP'])
+          local = [json.loads(line) for line in (root / 'trace.jsonl').read_text().splitlines()]
+          native = [Episode.from_dict(json.loads(line)) for line in
+                    (root / 'native.jsonl').read_text().splitlines()]
+          manifest = json.loads((root / 'manifest.json').read_text())
+          assert len(local) == len(native) == manifest['counts']['locally_verified'] == 8
+          assert manifest['counts']['admitted'] == 0
+          for exported, episode in zip(local, native, strict=True):
+              expected = [group['events'][0]['record'].encode('utf-8')
+                          for group in exported['public']['groups']]
+              assert [row.payload for row in episode.records] == expected
+              assert len(episode.meridians) == len(expected)
+              assert episode.supervision.outcome == 'unknown'
+              assert all(b'sidecar' not in value and b'referenceStatus' not in value
+                         for value in expected)
+          print('Pinned megatoken Episode-v3 native importer: 8 byte-exact local cases, admitted=0')
+          PY

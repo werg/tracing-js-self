@@ -5,7 +5,7 @@ import { createRuntime } from './runtime.js';
 import { validateBundle } from './validation.js';
 import { replayExact } from './replay.js';
 import { realizeGraph } from './training/graph.js';
-import { compileBoundedTypeScript } from './typescript.js';
+import { compileBoundedTypeScript,mapBoundedTypeScriptSites } from './typescript.js';
 
 const event=(mode,body,status,extra={})=>({
   operation:'typescript.eval',authority:'owned-training-js/1',mode,body,
@@ -98,7 +98,9 @@ export class BoundedNatlangEnvironment {
         // stays separately available without weakening replay integrity.
         const callback=this.onTrace(bundle,request,{
           compiler:lowering.compiler,originalText,
-          javascript:lowering.javascript,sourceMap:lowering.sourceMap
+          javascript:lowering.javascript,sourceMap:lowering.sourceMap,
+          // Anchors only: emitted sites may span rewritten or erased TS nodes.
+          generatedSiteOrigins:mapBoundedTypeScriptSites(lowering,bundle.sites,originalText)
         });
         if(callback && typeof callback.then==='function')
           throw new TypeError('onTrace must be synchronous; async callbacks are unowned');

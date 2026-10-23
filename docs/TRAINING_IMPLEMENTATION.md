@@ -71,6 +71,21 @@ not the megatoken adapter or actual-model rollout admission gate:
 `admitted` remains **0**. Execute only on trusted sources in an appropriate
 isolated environment because Node `vm` is not a secure untrusted-code sandbox.
 
+## Cross-repository native Episode contract
+
+`.github/workflows/megatoken-consumer.yml` tests each tracer main commit
+against pinned `werg/megatoken@246c64776ab46a8ea97755e34267f422edd5d59f`. It generates deterministic
+owned traces, reruns independent local V8 evidence checks, imports candidates
+through megatoken's **real** schema-v3 Episode adapter with explicit
+`--allow-local`, checks each model-visible byte string, meridian count and
+supervision, and proves that the diagnostic manifest stays at admitted=0.
+The byte-fallback diagnostic codec used in this CI is not a production
+tokenizer. These passing checks are interoperability evidence, not approval
+to train a production model or evidence of free-running model correctness.
+
 ## Model-selected evaluation
 
 After generating a local verified JSONL reference corpus, supply a separate JSONL of **actual model-selected** episode `groups` to `npm run training:evaluate -- --selected selected.jsonl --reference training-local.jsonl --output report.json`. The evaluator commits each selected group before consulting the reference and reports exact state/return correctness and the first inconsistent category. Re-using reference groups as selected input checks only the deterministic verifier, **not a model's ability to execute**.
+
+
+The model-facing trace is [effective-computation semantic-trace/2](EFFECTIVE_TRACE.md); it does not require bijective reconstruction of prototype/accessor internals and has no previous-version compatibility reader.
