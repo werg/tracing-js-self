@@ -70,7 +70,7 @@ jobs:
           if-no-files-found: error
 
   full-acquisition:
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.full_sources }}
+    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.full_sources) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:

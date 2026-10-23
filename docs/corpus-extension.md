@@ -1071,3 +1071,8 @@ Reproduction commands, lock format, scope and warnings are in
 - [x] Prototype test suite passes on Node.js 20, 22 and 24 after fixing Test262 negative-phase metadata parsing (the initial CI failure was addressed in a follow-up commit).
 - [x] A separate [external corpus acquisition workflow](../.github/workflows/external-corpus.yml) validates all pinned snapshots and uploads acquisition artifacts. Its **manually dispatched full-source mode** clones all three exact upstream commits and streams their complete recognized source/input inventories into non-admitted JSONL artifacts. Full-source mode is implemented but **has not been executed or measured in this change**.
 - [ ] Still required: create independently verified JS/TS solution/validator execution adapters, operation-level evidence, and actual large owned semantic-trace exports; acquisition count must never be presented as semantic-trace count.
+
+### Measured acquisition result and automation (2026-10-23)
+
+- [x] The new snapshot acquisition workflow **passed** and generated **1,453 distinct source/input fixture rows** from **92 pinned upstream files**: 82 Test262 source/mode variants, 464 Exercism canonical input cases, and 907 JSON Schema validity cases. These have **zero** independent runtime verifications, **zero** owned traces and **zero** admitted training examples. This is concrete acquisition scale, not evidence of execution semantics.
+- [x] Full pinned-source acquisition is configured to run on pushes affecting acquisition code, snapshots or its workflow, and can also be manually dispatched. It produces source/input catalogs as CI artifacts, not checked-in trace JSONL. **Full-catalog results are pending an actual successful run**; do not infer their counts from suite publicity.
