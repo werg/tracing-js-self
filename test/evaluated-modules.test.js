@@ -210,3 +210,48 @@ test('module graph excludes unreachable private code and requires all runtime im
     'base.js':'export const available=1;'
   },entryModule:'main.js',exportName:'run'}),/Unsupported evaluated-module.*unresolved export/);
 });
+
+test('module source collection never invokes host getters or proxy traps',()=>{
+  let reads=0;
+  const withGetter={};
+  Object.defineProperty(withGetter,'main.js',{enumerable:true,get(){
+    reads++;
+    throw new Error('must never call a module getter');
+  }});
+  assert.throws(()=>linkEvaluatedModules({
+    modules:withGetter,entryModule:'main.js',exportName:'run'
+  }),/Module source entries must be string-keyed own data/);
+  assert.equal(reads,0);
+  const proxied=new Proxy({'main.js':'export const value=3;'},{
+    ownKeys(){reads++;throw new Error('must never enumerate proxy');}
+  });
+  assert.throws(()=>linkEvaluatedModules({
+    modules:proxied,entryModule:'main.js',exportName:'value'
+  }),/plain data object/);
+  assert.equal(reads,0);
+});
+
+test('star re-exports resolve live bindings through same-origin diamonds',async()=>{
+  const modules={
+    'leaf.js':'export let v=2;export function tick(){v+=1;}',
+    'left.js':"export * from './leaf.js';",
+    'right.js':"export {v,tick} from './leaf.js';",
+    'barrel.js':"export * from './left.js';export * from './right.js';",
+    'main.js':"import {v,tick} from './barrel.js';"+
+      'export function run(){tick();return v;}'
+  };
+  const run=await verified({modules,entryModule:'main.js',exportName:'run'});
+  assert.equal(run.result,3);
+});
+
+test('ambiguous distinct star binding origins fail without executing module effects',()=>{
+  const modules={
+    'a.js':'export const value=1;',
+    'b.js':'export const value=2;',
+    'barrel.js':"export * from './a.js';export * from './b.js';",
+    'main.js':"import {value} from './barrel.js';export function run(){return value;}"
+  };
+  assert.throws(()=>linkEvaluatedModules({
+    modules,entryModule:'main.js',exportName:'run'
+  }),/ambiguous export/);
+});
