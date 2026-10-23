@@ -488,7 +488,8 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     }))
   };
   return {profile:'evaluated-module/1',source,
-    entryFunction:'__traced_evaluated_entry',metadata};
+    entryFunction:'__traced_evaluated_entry',metadata,
+    entryInput:sequence?{calls:sequence.map(({args})=>({args}))}:{args}};
 }
 export async function executeEvaluatedModules({modules,entryModule,
   exportName='default',args=[],calls=null,services=null,maxSteps=100000,signal}={}){
@@ -499,7 +500,7 @@ export async function executeEvaluatedModules({modules,entryModule,
   const entry={text:linked.source,
     url:'evaluated-module://'+entryModule,
     functionName:linked.entryFunction,
-    args:[calls===null?{args}:{calls:calls.map(call=>({args:call.args}))}]};
+    args:[linked.entryInput]};
   if(services!==null){
     const executed=await executeWithNativeServices({
       entry,services,maxSteps,signal
