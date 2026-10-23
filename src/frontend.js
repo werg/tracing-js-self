@@ -159,6 +159,11 @@ export function compile(ast) {
     function expr(n) {
       switch(n.type){
         case 'Literal': emit('CONST',{value:n.value,raw:n.raw},n);break;
+        case 'FunctionExpr':{
+          const codeId=bodyProgram(n.body.body,n.params,false);
+          emit('MAKE_FUNCTION',{codeId,arrow:n.arrow},n);
+          break;
+        }
         case 'Template':
           for(const expression of n.expressions)expr(expression);
           emit('TEMPLATE',{quasis:n.quasis,count:n.expressions.length},n);

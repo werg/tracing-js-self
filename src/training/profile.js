@@ -31,6 +31,18 @@ export function parseTraining(source) {
         if(n.regex)reject(n,'regular expression');
         return {...loc,type:'Literal',value:encode(n.bigint!==undefined?BigInt(n.bigint):n.value),raw:n.raw};
       case 'Identifier':return {...loc,type:'Identifier',name:n.name};
+      case 'ArrowFunctionExpression':case 'FunctionExpression':{
+        if(n.async || n.generator ||
+           (n.type==='FunctionExpression' && n.id) ||
+           n.params.some(p=>p.type!=='Identifier'))
+          reject(n,'function expression parameters or mode');
+        const body=n.body.type==='BlockStatement'?stmt(n.body):
+          {...span(n.body),type:'Block',body:[
+            {...span(n.body),type:'Return',argument:expr(n.body)}]};
+        return {...loc,type:'FunctionExpr',
+          arrow:n.type==='ArrowFunctionExpression',
+          params:n.params.map(p=>p.name),body};
+      }
       case 'TemplateLiteral':
         if(n.quasis.length!==n.expressions.length+1||
            n.quasis.some(q=>typeof q.value.cooked!=='string'))
@@ -138,6 +150,7 @@ export function parseTraining(source) {
           if(!has(n.name,e))reject(n,'unbound identifier '+n.name);
           break;
         case 'Template':n.expressions.forEach(x=>value(x,e));break;
+        case 'FunctionExpr':scope(n.body.body,e,n.params);break;
         case 'Unary':
           // ECMAScript typeof on an unresolvable name is defined as 'undefined';
           // a declared but uninitialized lexical binding still throws (TDZ).

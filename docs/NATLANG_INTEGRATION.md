@@ -85,6 +85,8 @@ emitted by typical natlang scopes. No fallback executes unsupported constructs.
 async guest semantics**. `evaluateModule` rejects execution explicitly.
 `fork` and `close` are owned lifecycle methods. There is no untraced fallback.
 
+Opt-in strict-profile TS lowering now includes simple synchronous arrow and anonymous function expressions. Their guest calls and captures run through owned frames, with no native fallback. It does not cover the broader scope compiler's rest/destructuring/spread, retained module realm, live captures, or async code.
+
 Integration into natlang must still check actual generated scope compiler
 output, implement the separate `setModuleRealm` seam, pass live captures and
 helper service callbacks by owned reference, and preserve TS source maps.

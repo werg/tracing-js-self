@@ -104,7 +104,9 @@ export function normalizeJournal(bundle) {
         const activationEnv=created?.after?.envId??null;
         const createdEnv=e.stateChanges.find(p=>p.table==='envs'&&p.id===activationEnv);
         r.captures=createdEnv?.after?.parent??null;
-        r.receiver=args[0]?.[0]==='method'?args[0][2]:['undefined'];
+        // The authoritative child activation owns the actual receiver. Arrow
+        // functions ignore a method call's syntactic receiver.
+        r.receiver=created?.after?.thisValue??(args[0]?.[0]==='method'?args[0][2]:['undefined']);
         r.arguments=args.slice(1);
       } else if(effect) {
         op=r.op='request';
