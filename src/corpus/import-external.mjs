@@ -277,8 +277,8 @@ function catalogApi(expr,bases){
  const allowed=['skip','only','todo','concurrent','failing','each','serial','test'];
  if(modifiers.some(x=>!allowed.includes(x)))return null;
  if(ts.isIdentifier(expr)&&bases.includes(expr.text))return {api:expr.text,modifiers};
- if(ts.isIdentifier(expr)&&expr.text==='Deno'&&modifiers.join('.')==='test'&&
-    bases.includes('test'))return {api:'Deno.test',modifiers:[]};
+ if(ts.isIdentifier(expr)&&['Deno','QUnit'].includes(expr.text)&&modifiers.join('.')==='test'&&
+    bases.includes('test'))return {api:expr.text+'.test',modifiers:[]};
  return null;
 }
 function catalogTitle(arg){
@@ -317,8 +317,11 @@ export async function* testCatalog(root,options){
  const base=resolve(root);
  for await(const file of walk(base)){
   const filename=pathIn(base,file);
-  if(!/(?:^|\/)(?:__tests__\/[^/]+|[^/]+\.(?:test|spec))\.[cm]?[jt]sx?$/i.test(filename))
-   continue;
+   // Accept Deno *_test.ts and conventional Mocha/QUnit test/*.js suites.
+   // This inventories declarations only; it never runs test source.
+   const named=/(?:^|\/)(?:__tests__\/[^/]+|[^/]+\.(?:test|spec)|[^/]+_test)\.[cm]?[jt]sx?$/i.test(filename);
+   const tree=/(?:^|\/)test\/(?:[^/]+\/)*[^/]+\.[cm]?[jt]sx?$/i.test(filename);
+   if(!named&&!tree)continue;
   const source=await readFile(file,'utf8');
   const sf=ts.createSourceFile(filename,source,ts.ScriptTarget.Latest,true,
     ts.getScriptKindFromFileName(filename));

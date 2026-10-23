@@ -211,3 +211,67 @@ jobs:
             corpus/out/full/*.json
             corpus/out/full/*.md
           if-no-files-found: error
+
+  cross-project-static-mining:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Independently test offline Deno, Mocha and QUnit static test mining
+        run: node --test test/external-corpus.test.js
+      - name: Fetch three additional exact pinned real JS/TS test repositories
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/mine"
+          pin() {
+            local repo="$1" sha="$2" name="$3"
+            git init -q "$RUNNER_TEMP/mine/$name"
+            git -C "$RUNNER_TEMP/mine/$name" remote add origin "https://github.com/$repo.git"
+            git -C "$RUNNER_TEMP/mine/$name" fetch -q --depth=1 origin "$sha"
+            git -C "$RUNNER_TEMP/mine/$name" checkout -q --detach FETCH_HEAD
+            test "$(git -C "$RUNNER_TEMP/mine/$name" rev-parse HEAD)" = "$sha"
+            test -z "$(git -C "$RUNNER_TEMP/mine/$name" status --porcelain --untracked-files=no)"
+          }
+          pin lodash/lodash 2b5e6f7399a7b48005140b5d5c6bc6c0e62919a8 lodash
+          pin denoland/std f834d0223364361169314833e3c7a8f62ce11d58 deno-std
+          pin ramda/ramda f4b2e35ff433e18c751326b82acc3c6ab3585e18 ramda
+      - name: Mine Test262-compatible acquisition fixtures without upstream code execution
+        run: |
+          set -euo pipefail
+          mkdir -p corpus/out/mining
+          mine() {
+            local name="$1" repo="$2" sha="$3"
+            node tools/import-external-corpus.mjs \
+              --format test-catalog --root "$RUNNER_TEMP/mine/$name" \
+              --repository "$repo" --license MIT --revision "$sha" \
+              --output "corpus/out/mining/$name.jsonl" \
+              --report "corpus/out/mining/$name.json"
+          }
+          mine lodash lodash/lodash 2b5e6f7399a7b48005140b5d5c6bc6c0e62919a8
+          mine deno-std denoland/std f834d0223364361169314833e3c7a8f62ce11d58
+          mine ramda ramda/ramda f4b2e35ff433e18c751326b82acc3c6ab3585e18
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            for(const name of ["lodash","deno-std","ramda"]){
+              const r=JSON.parse(readFileSync("corpus/out/mining/"+name+".json"));
+              if(r.schema!=="external-corpus-acquisition-report/1"||
+                r.records<1||r.programs<1||r.verified!==0||r.admitted!==0||
+                r.truncated===true)throw Error("Invalid static inventory "+name);
+              console.log(name,"static declarations",r.records,
+                "source files",r.sourceFiles,"statuses",JSON.stringify(r.byStatus));
+            }
+          '
+      - name: Upload non-executable cross-project test declarations
+        uses: actions/upload-artifact@v4
+        with:
+          name: additional-pinned-lodash-deno-ramda-static-only
+          path: |
+            corpus/out/mining/*.json
+            corpus/out/mining/*.jsonl
+          if-no-files-found: error

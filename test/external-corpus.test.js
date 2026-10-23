@@ -179,3 +179,27 @@ test('Dynamic test tables and empty tables are recorded without fabricating rows
   assert.equal(globalThis.__SHOULD_NOT_RUN__,undefined);
  }finally{rmSync(dir,{recursive:true,force:true});}
 });
+test('Deno, Mocha and QUnit test naming conventions are mined without executing source',async()=>{
+ const dir=root();
+ try{
+  put(dir,'collections/zip_test.ts',
+   'Deno.test("zip works",()=>{ if (false) throw Error("not called"); });');
+  put(dir,'test/add.js',
+   'describe("add",()=>{ it("sum",()=>{ throw Error("must not run"); }); });');
+  put(dir,'test/test.js',
+   'QUnit.test("QUnit literal",function(assert){ throw Error("not run"); });\n'+
+   'QUnit.test("QUnit " + suffix,function(assert){ throw Error("not run"); });');
+  const rows=await all(importers['test-catalog'](dir,source));
+  assert.equal(rows.length,4);
+  const deno=rows.find(x=>x.provenance.path==='collections/zip_test.ts');
+  assert.equal(deno.program.api,'Deno.test');
+  const mocha=rows.find(x=>x.provenance.path==='test/add.js');
+  assert.equal(mocha.program.title,'sum');
+  assert.deepEqual(mocha.program.suite,['add']);
+  const qunit=rows.filter(x=>x.program.api==='QUnit.test');
+  assert.equal(qunit.length,2);
+  assert.equal(qunit[0].status,'requires-test-runner');
+  assert.equal(qunit[1].status,'requires-dynamic-recording');
+  assert(rows.every(x=>x.admitted===false&&x.verified===false));
+ }finally{rmSync(dir,{recursive:true,force:true});}
+});

@@ -1534,3 +1534,22 @@ Example: npm run corpus:owned:novelty -- --input
   Test262 suite or full official harness. Reference pass counts do not promote
   Test262 programs to owned training episodes. No CI yield is claimed until
   the workflow completes and its JSON report has been inspected.
+
+### Pinned additional project test mining (2026-10-23)
+
+- [x] Extended the offline test catalog to capture Deno `*_test.ts`,
+  conventional Mocha `test/*.js` files, and QUnit.test declarations,
+  retaining original source spans, source SHA-256, pinned project revisions,
+  nonportable titles and explicit non-execution statuses. The importer never
+  runs test expressions or framework hooks.
+- [x] Added a separate source-locked GitHub Actions acquisition job for
+  lodash/lodash@2b5e6f7399a7b48005140b5d5c6bc6c0e62919a8,
+  denoland/std@f834d0223364361169314833e3c7a8f62ce11d58 and
+  ramda/ramda@f4b2e35ff433e18c751326b82acc3c6ab3585e18.
+  It emits independent JSONL catalogs and disposition/status summaries,
+  checking counts and rejecting any falsely verified/admitted fixtures.
+- [ ] Counts from this job are not claimed until actual successful CI run;
+  these are only source/test declarations, **not runnable recorded upstream
+  invocations**, independent reference passes or locally owned traces.
+  Full test framework setup, dependency graphs and side-effect capture
+  remain explicit prerequisites.
