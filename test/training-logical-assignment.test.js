@@ -1,19 +1,26 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence,
-  validateTrainingExport} from '../src/training/index.js';
-import {validateBundle,replayExact} from '../src/index.js';
+import {verifyTrainingCase} from '../src/training/index.js';
+import {createRuntime,validateBundle,replayExact} from '../src/index.js';
+import {referenceOutcome} from '../src/training/reference.js';
+import {describeGraph,realizeGraph} from '../src/training/graph.js';
 import {createBoundedNatlangEnvironment} from '../src/natlang.js';
 
 function verify(code,args=[]){
-  const evidence=verifyTrainingCase({source:'"use strict";\n'+code,
-    entry:'f',args,maxGenerated:1024,maxSteps:20000});
-  assert.equal(evidence.status,'locally_verified',JSON.stringify(evidence).slice(0,500));
-  assert.equal(validateTrainingExport(evidence.exported).valid,true);
-  assert.equal(recheckIndependentTrainingEvidence(evidence.exported).valid,true);
-  assert.equal(validateBundle(evidence.exported.sidecar.archive).valid,true);
-  assert.equal(replayExact(evidence.exported.sidecar.archive).valid,true);
-  return evidence.exported;
+  const source='"use strict";\n'+code;
+  const runtime=createRuntime({maxSteps:20000});
+  runtime.startEntry({text:source,functionName:'f',args});
+  assert.equal(runtime.drive().kind,'terminated');
+  const bundle=JSON.parse(JSON.stringify(runtime.exportRun()));
+  assert.equal(validateBundle(bundle).valid,true);
+  assert.equal(replayExact(bundle).valid,true);
+  const reference=referenceOutcome({source,entry:'f',
+    args:bundle.entrySpec.arguments,initialHeap:bundle.initialState.heap});
+  assert.equal(reference.kind,'return',JSON.stringify(reference));
+  assert.deepEqual(describeGraph(realizeGraph(bundle.finalState.heap,
+    [...bundle.entrySpec.arguments,bundle.finalState.control.a0.completion.value])),
+    reference.graph,'independent V8 final graph must match the owned machine');
+  return bundle;
 }
 
 test('logical identifier writes short-circuit with V8-equivalent return and update',()=>{
@@ -63,4 +70,11 @@ test('typed natlang logical assignment executes entirely in owned interpreter',(
       scope:{},code:'return missing ||= 1;'}),EvalFailure);
     assert.equal(traces.length,1);
   }finally{env.close();}
+});
+
+
+test('logical assignments cannot be admitted before independent operation/branch audit support',()=>{
+  const report=verifyTrainingCase({source:'"use strict";\nfunction f(x){x ||= 7; return x;}',entry:'f',args:[0]});
+  assert.notEqual(report.status,'locally_verified',
+    'whole-graph V8 equivalence cannot substitute for source-operation receipts');
 });
