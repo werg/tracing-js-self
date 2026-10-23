@@ -35,7 +35,8 @@
     "training:generate": "node tools/generate-training.mjs",
     "training:evaluate": "node tools/evaluate-training.mjs",
     "corpus:generate": "node tools/build-real-corpus.mjs",
-    "corpus:audit": "node tools/audit-real-corpus.mjs"
+    "corpus:audit": "node tools/audit-real-corpus.mjs",
+    "corpus:owned-coverage": "node tools/audit-owned-coverage.mjs"
   },
   "bin": {
     "tracing-js-self": "./bin/tracing.js"
