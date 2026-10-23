@@ -12,6 +12,6 @@ test('pinned Test262 native module reference regressions',()=>{
    {encoding:'utf8',timeout:15000,env:Object.fromEntries(
      Object.entries(process.env).filter(([key])=>!key.startsWith('NODE_TEST')))});
  assert.equal(result.status,0,String(result.error??'')+'\n'+result.stdout+'\n'+result.stderr);
- assert.match(result.stdout,/pass 4/);
+ assert.match(result.stdout,/pass 6/);
  assert.match(result.stdout,/fail 0/);
 });
