@@ -25,6 +25,11 @@
       "kind": "algorithm"
     },
     {
+      "operationId": "binding.default.guard",
+      "version": 1,
+      "kind": "algorithm"
+    },
+    {
       "operationId": "binding.write",
       "version": 1,
       "kind": "algorithm"
