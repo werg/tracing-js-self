@@ -243,6 +243,16 @@
       "operationId": "proxy.allocate",
       "version": 1,
       "kind": "algorithm"
+    },
+    {
+      "operationId": "environment.iteration",
+      "version": 1,
+      "kind": "algorithm"
+    },
+    {
+      "operationId": "property.update",
+      "version": 1,
+      "kind": "algorithm"
     }
   ]
 }
