@@ -3,6 +3,7 @@
 // are NOT guest-callable native callbacks or natlang's callable-folder realm.
 import {types} from 'node:util';
 import {createBoundedRetainedModuleSession} from './evaluated-module-session.js';
+import {linkEvaluatedModules} from './evaluated-modules.js';
 
 function checkedExportNames(values){
   if(!Array.isArray(values)||types.isProxy(values)||
@@ -36,6 +37,13 @@ export function createBoundedModuleFacade({
   const session=createBoundedRetainedModuleSession({
     modules,entryModule,maxSteps,onTrace
   });
+  // Link and compile *every* advertised entry before exposing any function.
+  // This prevents an unsupported package/native helper from escaping merely
+  // because its host wrapper has not been invoked yet.
+  try{
+    for(const exportName of names)
+      linkEvaluatedModules({modules:session.modules,entryModule,exportName,args:[]});
+  }catch(error){session.close();throw error;}
   const exports=Object.create(null);
   for(const name of names)
     Object.defineProperty(exports,name,{
