@@ -38,7 +38,7 @@ function sourcesOf(modules){
     const text=descriptor.value;
     if(!file||file==='.'||file==='..'||file.startsWith('/')||
        file.includes('\\')||file.startsWith('../')||
-       /[\\u0000-\\u001f]/.test(file)||
+       /[\u0000-\u001f]/.test(file)||
        path.posix.normalize(file)!==file||typeof text!=='string'||
        text.length>65536)
       throw new TypeError('Invalid owned module path or source length');
