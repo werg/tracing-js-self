@@ -73,6 +73,40 @@ the evaluation refuses to publish a completed result. The trace records
 all executed operations, owned promise jobs, chunk exits and source sites;
 the structural validator and exact replay compare the complete archive.
 
+### Ordered calls in a single owned module episode
+
+An optional `calls` array invokes multiple named/default exports **after
+one module initialization**, in the same owned guest activation. Intermediate
+calls may update exported `let` cells, guest heap objects and owned promises.
+Later calls observe those mutations; the output is an array of their results.
+
+```js
+const run=await executeEvaluatedModules({
+  modules:{
+    'counter.js':`export let count=0;
+      export function increment(){count+=1;return count;}
+      export function read(){return count;}`
+  },
+  entryModule:'counter.js',
+  calls:[
+    {exportName:'increment',args:[]},
+    {exportName:'increment',args:[]},
+    {exportName:'read',args:[]}
+  ]
+});
+console.log(run.result); // [1,2,2]
+```
+
+`calls` is a bounded dense array of 1–32 plain data records with a
+`exportName` and up to 64 positional `args` per call. The ordinary
+single-invocation `args` array is mutually exclusive with `calls`.
+The adapter reads **own data descriptors**, refusing host getters, Proxy
+traps and sparse arrays. The owned entry imports those arguments as data
+graphs before any guest operation; it does not keep live host object handles.
+The ordered export calls execute in one replayable trace, **not** as separate
+native evaluator invocations. A second API call **reinstantiates** every
+module; this feature is not a persistent cross-call module realm.
+
 ### Explicit native effects
 
 To opt in to versioned **native services** (not arbitrary Node APIs),
