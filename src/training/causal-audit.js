@@ -29,7 +29,8 @@ export function auditPublicCausality(episode,{maxBytes=512}={}) {
     logical++;
     if(stage===0) {
       if(mode!=='observed'||track!=='t0'||kind!=='code'||
-         !exactKeys(fields,['sourceId','text','codes','sites','staticFunctions'])||
+         !(exactKeys(fields,['sourceId','text','codes','sites','staticFunctions'])||
+           exactKeys(fields,['sourceId','text','codes','sites','staticFunctions','staticRegExps']))||
          typeof fields.sourceId!=='string'||typeof fields.text!=='string'||
          !Array.isArray(fields.codes)||!Array.isArray(fields.sites)||
          !Array.isArray(fields.staticFunctions))
@@ -57,6 +58,11 @@ export function auditPublicCausality(episode,{maxBytes=512}={}) {
            Object.keys(fn).some(key=>!['name','identity','code','captures'].includes(key)) ||
            typeof fn.name!=='string'||typeof fn.identity!=='string'||!codes.has(fn.code))
           throw new Error('Unexpected static function context payload');
+      for(const regex of fields.staticRegExps??[])
+        if(!exactKeys(regex,['name','identity','pattern','flags'])||
+           typeof regex.name!=='string'||typeof regex.identity!=='string'||
+           typeof regex.pattern!=='string'||typeof regex.flags!=='string')
+          throw new Error('Unexpected pinned RegExp context payload');
       stage=1;return;
     }
     if(stage===1){
