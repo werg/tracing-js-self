@@ -63,6 +63,20 @@ function valueKey(tagged) {
 function arrayIndex(key) {
   return /^(0|[1-9]\d*)$/.test(key) && Number(key) < 4294967295;
 }
+// ES SameValue/SameValueZero over the owned value codec. Never use JS object
+// equality for guest reference identities; they live in the serializable heap.
+const comparableTags=new Set(['undefined','null','bool','str','num','bigint',
+  'ref','promise','intrinsic','builtinfn','hostfn']);
+function ownedSameValue(a,b,zeroEqual=false) {
+  if(!comparableTags.has(a?.[0])||!comparableTags.has(b?.[0]))
+    throw new TypeError('Unmodeled guest equality value');
+  if(a[0]!==b[0])return false;
+  if(a[0]==='num') {
+    const x=decode(a),y=decode(b);
+    return Object.is(x,y)||(zeroEqual&&x===0&&y===0);
+  }
+  return a[0]==='undefined'||a[0]==='null'||a[1]===b[1];
+}
 function scalarUpdate(previous,operator) {
   if(!['undefined','null','bool','str','num','bigint'].includes(previous[0]))
     throw new TypeError('Update coercion outside the bounded scalar profile');
@@ -647,7 +661,7 @@ export class Runtime {
         case 'LOGICAL_JUMP':{const a=st.at(-1),v=a.value;const pass=arg.operator==='&&'?!truthy(v):arg.operator==='||'?truthy(v):v[0]!=='null'&&v[0]!=='undefined';if(pass)f.pc=arg.to;return {...operands(a),result:['bool',pass]};}
         case 'NEW_PROXY':{
           const handler=pop(),target=pop();
-          if(target.value[0]!=='ref'||!['object','array'].includes(s.heap[target.value[1]]?.kind)||
+          if(target.value[0]!=='ref'||!['object','array','proxy'].includes(s.heap[target.value[1]]?.kind)||
              handler.value[0]!=='ref'||!['object','array'].includes(s.heap[handler.value[1]]?.kind))
             guestFault('TypeError','Proxy requires an ordinary owned target and handler');
           const id=this.next(s,'obj');
@@ -668,7 +682,7 @@ export class Runtime {
               (base.value[1]==='Array' && property==='isArray')))
             v=['builtinfn',base.value[1]+'.'+property];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' &&
-             ['create','setPrototypeOf','getPrototypeOf','defineProperty','hasOwn','keys'].includes(property))
+             ['create','setPrototypeOf','getPrototypeOf','defineProperty','hasOwn','keys','is'].includes(property))
             v=['builtinfn',`Object.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' && property==='prototype')
             v=['intrinsic','Object.prototype'];
@@ -800,8 +814,25 @@ export class Runtime {
           }
           if(callable[0]==='builtinfn' && callable[1]==='Array.isArray'){
             const value=args[0]?.value??U;
+            let isArray=false;
+            if(value[0]==='ref'){
+              const seen=new Set();
+              let id=value[1];
+              while(true){
+                if(seen.has(id))throw new TypeError('Cyclic owned Proxy target chain');
+                seen.add(id);
+                const target=s.heap[id];
+                if(!target)throw new ReferenceError('Unknown guest identity');
+                if(target.kind==='proxy'){id=target.targetId;continue;}
+                isArray=target.kind==='array';
+                break;
+              }
+            }
+            return {...operands(fn,...args),...result(['bool',isArray])};
+          }
+          if(callable[0]==='builtinfn' && callable[1]==='Object.is'){
             return {...operands(fn,...args),...result(['bool',
-              value[0]==='ref' && s.heap[value[1]]?.kind==='array'])};
+              ownedSameValue(args[0]?.value??U,args[1]?.value??U)])};
           }
           if(callable[0]==='builtinfn' && ['Object.hasOwn','Object.keys'].includes(callable[1])){
             const base=args[0]?.value??U,obj=base[0]==='ref'?s.heap[base[1]]:null;
@@ -821,6 +852,34 @@ export class Runtime {
               propertyVersions:{length:0},shapeVersion:0,version:0};
             keys.forEach((key,i)=>putOwn(array,String(i),['str',key],eventId));
             return {...operands(fn,...args),...result(['ref',id])};
+          }
+          if(callable[0]==='builtinfn' && callable[1]==='Array.prototype.includes'){
+            const obj=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+            if(!obj||obj.kind!=='array')
+              guestFault('TypeError','Array.includes requires an array receiver');
+            const length=decode(obj.properties.length.value);
+            if(!Number.isSafeInteger(length)||length<0||length>10000)
+              throw new RangeError('Array.includes exceeds bounded dense limit');
+            const from=args[1]?.value??['num',0];
+            if(!['undefined','null','bool','str','num'].includes(from[0]))
+              throw new TypeError('Array.includes fromIndex requires owned scalar coercion');
+            const raw=Number(decode(from));
+            const integer=Number.isNaN(raw)?0:Math.trunc(raw);
+            const begin=integer>=0?Math.min(integer,length):
+              Math.max(length+integer,0);
+            // No accessors, inherited slots or Proxy get continuations are
+            // silently bypassed by a supposed pure array method.
+            for(let i=0;i<length;i++){
+              if(!Object.hasOwn(obj.properties,String(i)) ||
+                 Object.hasOwn(obj.accessors??{},String(i)))
+                throw new TypeError('Array.includes requires dense own data slots');
+            }
+            let matched=false;
+            for(let i=begin;i<length;i++){
+              if(ownedSameValue(obj.properties[String(i)].value,
+                  args[0]?.value??U,true)){matched=true;break;}
+            }
+            return {...operands(fn,...args),...result(['bool',matched])};
           }
           if(callable[0]==='builtinfn' &&
              ['Array.prototype.push','Array.prototype.pop'].includes(callable[1])){
