@@ -25,6 +25,11 @@ export interface BoundedNatlangOptions {
     lowering:{compiler:string;originalText:string;javascript:string;
       sourceMap:Record<string,unknown>})=>void)|null;
   maxSteps?: number;
+  /** Explicit versioned native operation adapters for replayable async guest calls.
+   * No arbitrary host functions or imported packages are allowed. */
+  services?:Record<string,(context:import('./host/native-driver.js').NativeHostContext)=>
+    string|number|bigint|boolean|null|undefined|
+    Promise<string|number|bigint|boolean|null|undefined>>|null;
   mode?: 'fresh'|'retained';
 }
 export declare class BoundedNatlangEnvironment {
@@ -33,7 +38,7 @@ export declare class BoundedNatlangEnvironment {
   readonly mode:'fresh'|'retained';
   readonly scopeCapabilities:{readonly allowModules:false;readonly allowNetwork:false};
   execute(request:NatlangEvalRequest):NatlangEvalResult;
-  /** Starts an owned async entry and awaits internally settled guest promises. */
+  /** Starts an owned async entry; explicit native services are journaled before delivery. */
   executeAsync(request:NatlangEvalRequest):Promise<NatlangEvalResult>;
   /** Retained only: data-only CommonJS exports (require/native helpers fail closed). */
   evaluateModule(code:string,bindings:Record<string,unknown>):unknown;
