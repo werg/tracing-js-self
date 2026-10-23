@@ -242,7 +242,10 @@ export class BoundedNatlangEnvironment {
           throw new TypeError('onTrace must be synchronous; async callbacks are unowned');
       }
       staged?.commit();
-      return {result:result===undefined?null:result,events:[resultEvent],logs:[]};
+      const logs=Object.values(bundle.effects)
+        .filter(effect=>/^platform\.console\.(log|info|warn|error)$/.test(effect.operation))
+        .map(effect=>effect.args[0][1]);
+      return {result:result===undefined?null:result,events:[resultEvent],logs};
     }catch(error){
       if(error instanceof this.EvalFailure)throw error;
       throw this.failed(request,error,progress?.kind==='unsupported'?'unsupported':'failed');
