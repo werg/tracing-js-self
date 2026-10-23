@@ -40,7 +40,7 @@ const withDeadline=async(promise,timeoutMs)=>{
  * Module and harness sources must come from a trusted, clean checkout.
  * No module graph, source operation or result is ever training-admitted here.
  */
-export async function executeTest262ModuleReference({source,metadata,
+async function executeTest262ModuleTurn({source,metadata,
   harnessSources={},filename='test/module.js',loadModuleSource=async()=>null,
   timeoutMs=300}={}){
   if(typeof source!=='string'||!metadata||!validPath(filename)||
@@ -185,4 +185,29 @@ export async function executeTest262ModuleReference({source,metadata,
     return response('failed','Unexpected module runtime '+errorName(error),
       {phase:'runtime',errorType:errorName(error)});
   }
+}
+
+
+// Node emits unhandled promise rejection notifications after the module
+// evaluation promise has settled. A bounded extra event-loop turn captures
+// those late failures; serializing this adapter prevents one module's
+// unhandled rejection from being mistaken for the next module's result.
+// This remains a native diagnostic, not an owned scheduling oracle.
+let nativeModuleObservationQueue=Promise.resolve();
+export function executeTest262ModuleReference(options){
+ const task=nativeModuleObservationQueue.then(async()=>{
+  const rejections=[];
+  const onRejection=reason=>rejections.push(errorName(reason));
+  process.on('unhandledRejection',onRejection);
+  try{
+   const result=await executeTest262ModuleTurn(options);
+   await new Promise(resolve=>setImmediate(resolve));
+   if(rejections.length)
+    return response('failed','Unhandled native module promise rejection',
+     {phase:'runtime',errorType:rejections[0],priorStatus:result.status});
+   return result;
+  }finally{process.removeListener('unhandledRejection',onRejection);}
+ });
+ nativeModuleObservationQueue=task.then(()=>undefined,()=>undefined);
+ return task;
 }

@@ -79,3 +79,13 @@ test('async native ESM negative completion uses real guest constructors',async()
  assert.equal((await run('await new Promise(()=>{})',
    meta(null,[],flags),{timeoutMs:15})).status,'unsupported');
 });
+
+
+test('unhandled async module rejection after completion cannot pass',async()=>{
+ const result=await run('$DONE(); Promise.resolve().then(()=>{throw new Error("late rejection")});',
+   meta(null,[],['module','async']));
+ assert.equal(result.status,'failed',result.reason);
+ assert.match(result.reason,/Unhandled native module promise rejection/);
+ assert.equal(result.verifiedOwned,false);
+ assert.equal(result.admitted,false);
+});
