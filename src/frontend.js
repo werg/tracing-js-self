@@ -11,6 +11,7 @@ export function collectVarBindings(statements) {
       case 'Block':n.body.forEach(visit);break;
       case 'If':visit(n.consequent);visit(n.alternate);break;
       case 'For':visit(n.init);visit(n.body);break;
+      case 'ForOf':if(n.kind==='var')names.add(n.id);visit(n.body);break;
       case 'While':case 'DoWhile':visit(n.body);break;
       case 'Try':visit(n.block);visit(n.handler?.body);visit(n.finalizer);break;
       // Descendant functions own their separate environment.
@@ -163,7 +164,7 @@ let site=0;
 export function compile(ast) {
   site=0;const programs={};let next=0;
   function bodyProgram(body,params=[],async=false,defaults=[]) {
-    const id=`code${++next}`, instructions=[];let loopDepth=0;
+    const id=`code${++next}`, instructions=[];let loopDepth=0,forOfIndex=0;
     const emit=(op,arg,node)=>{const inst={op,arg,siteId:`s${++site}`,start:node?.start??0,end:node?.end??0};instructions.push(inst);return instructions.length-1;};
     // Declarations are created before execution for a block's scope.
     function statements(nodes,scoped=false) {
@@ -290,6 +291,61 @@ export function compile(ast) {
           emit('LOOP_EXIT',null,n);
           instructions[entry].arg={breakPc:end,continuePc:testPc};
           instructions[no].arg=end;
+          break;
+        }
+        case 'ForOf':{
+          // A fail-closed owned iterator slice: ordinary dense arrays only.
+          // The hidden state names cannot be spelled by guest JavaScript and
+          // retain one evaluated iterable across every iteration.
+          const salt=++forOfIndex;
+          const iterable='[[for-of iterable '+salt+']]';
+          const index='[[for-of index '+salt+']]';
+          emit('ENTER_SCOPE',null,n);
+          emit('DECLARE',{name:iterable,kind:'let'},n);
+          emit('DECLARE',{name:index,kind:'let'},n);
+          expr(n.iterable);emit('INIT',iterable,n);
+          emit('CONST',{value:['num',0]},n);emit('INIT',index,n);
+          // An array iterator has observable built-in semantics distinct from
+          // property enumeration. Never pretend arbitrary iterables are arrays.
+          emit('GET','Array',n);
+          emit('CONST',{value:['str','isArray']},n);
+          emit('GET_METHOD',null,n);
+          emit('GET',iterable,n);
+          emit('CALL',1,n);
+          const invalid=emit('JUMP_IF_FALSE',null,n);
+          const accepted=emit('JUMP',null,n);
+          instructions[invalid].arg=instructions.length;
+          emit('CONST',{value:['str','Unsupported for-of iterable: owned array required']},n);
+          emit('THROW',null,n);
+          instructions[accepted].arg=instructions.length;
+          const entry=emit('LOOP_ENTER',null,n);
+          const top=instructions.length;
+          emit('GET',iterable,n);
+          emit('CONST',{value:['str','length']},n);
+          emit('GET_PROP',null,n);
+          emit('GET',index,n);
+          emit('BINARY','>',n); // array.length > index
+          const no=emit('JUMP_IF_FALSE',null,n);
+          if(n.kind!=='var'){
+            emit('ENTER_SCOPE',null,n);
+            emit('DECLARE',{name:n.id,kind:n.kind},n);
+          }
+          emit('GET',iterable,n);
+          emit('GET',index,n);
+          emit('GET_PROP',null,n);
+          emit(n.kind==='var'?'SET':'INIT',n.id,n);
+          if(n.kind==='var')emit('POP',null,n);
+          loopDepth++;stmt(n.body);loopDepth--;
+          if(n.kind!=='var')emit('LEAVE_SCOPE',null,n);
+          const updatePc=instructions.length;
+          emit('UPDATE_BINDING',{name:index,operator:'++',prefix:true},n);
+          emit('POP',null,n);
+          emit('JUMP',top,n);
+          const end=instructions.length;
+          emit('LOOP_EXIT',null,n);
+          instructions[entry].arg={breakPc:end,continuePc:updatePc};
+          instructions[no].arg=end;
+          emit('LEAVE_SCOPE',null,n);
           break;
         }
         case 'For':{
