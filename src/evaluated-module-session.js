@@ -179,7 +179,7 @@ export class BoundedRetainedModuleSession {
     if(this.#closed)throw new Error('Retained module session closed');
     if(this.#pending)throw new Error('Cannot synchronously invoke while async calls are pending');
     const checked=checkArgs(args);
-    if(typeof exportName!=='string'||!/^[$A-Za-z_][$\\w]*$/.test(exportName))
+    if(typeof exportName!=='string'||!/^[$A-Za-z_][$\w]*$/.test(exportName))
       throw new TypeError('Invalid retained module export name');
     if(this.#history.length>=32)throw new RangeError('Retained session call limit');
     const calls=[...this.#history,{exportName,args:checked}];
