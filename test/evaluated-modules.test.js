@@ -343,3 +343,29 @@ test('invalid module batch entries fail closed at link time',()=>{
     modules,entryModule:'main.js',calls
   }),/Unsupported evaluated-module|TypeError|Calls must be/);
 });
+
+test('module batch arguments never execute host getters or Proxy traps',()=>{
+  let touches=0;
+  const modules={'main.js':'export function run(x){return x;}'};
+  const args=[1];
+  Object.defineProperty(args,'0',{configurable:true,enumerable:true,get(){
+    touches++;throw new Error('argument getter ran');
+  }});
+  assert.throws(()=>linkEvaluatedModules({
+    modules,entryModule:'main.js',exportName:'run',args
+  }),/dense own data elements/);
+  const calls=[{exportName:'run',args:[2]}];
+  Object.defineProperty(calls,'0',{configurable:true,enumerable:true,get(){
+    touches++;throw new Error('batch getter ran');
+  }});
+  assert.throws(()=>linkEvaluatedModules({
+    modules,entryModule:'main.js',calls
+  }),/dense own data elements/);
+  const proxiedCalls=new Proxy([{exportName:'run',args:[]}],{
+    get(){touches++;throw new Error('proxy get trap');}
+  });
+  assert.throws(()=>linkEvaluatedModules({
+    modules,entryModule:'main.js',calls:proxiedCalls
+  }),/bounded ordinary data array/);
+  assert.equal(touches,0);
+});
