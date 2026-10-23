@@ -375,8 +375,17 @@ async function execute(code,{filename,entry,args,setupSource,timeoutMs,
   capture,randomSeed,sourceLength}){
   const events=capture?new Capture(capture):null;
   const trace=events?events.hooks():null;
-  const output={};
-  const sandbox={module:{exports:output},exports:output,__trace:trace};
+  const output={},sideEffects=[];
+  const guestConsole=Object.freeze(Object.fromEntries(
+    ['log','info','warn','error','debug'].map(level=>[level,(...values)=>{
+      const args=observableGraph(values);
+      sideEffects.push({kind:'console.'+level,args});
+      if(events)events.record('effect',0,0,undefined,{
+        effect:'console.'+level,arguments:values.map(v=>events.encode(v))});
+    }])
+  ));
+  const sandbox={module:{exports:output},exports:output,
+    __trace:trace,console:guestConsole};
   const ctx=vm.createContext(sandbox,{codeGeneration:{strings:false,wasm:false}});
   // Repeatable JS built-in randomness, identical in observation and reference.
   // This is a declared benchmark fixture, not untraced ambient entropy.
@@ -422,7 +431,7 @@ async function execute(code,{filename,entry,args,setupSource,timeoutMs,
   const roots=[...inputs,...(completion.kind==='return'?[value]:[])];
   const compareGraph=observableGraph(roots);
   const graph=events?observableGraph(roots,v=>events.encode(v)[1]):compareGraph;
-  return {completion,graph,compareGraph,
+  return {completion,graph,compareGraph,sideEffects,
     events:events?.events??[],limitations:[...(events?.limitations??[])],
     input:initialGraph,
     inputTransport:setupSource?null:portableArguments(args)};
@@ -445,7 +454,8 @@ export async function observeProgram({source,entry,args=[],language='js',
       timeoutMs,randomSeed,capture:null});
   const sameResult=observed.completion.kind===reference.completion.kind&&
     (observed.completion.kind==='return'||equal(observed.completion,reference.completion))&&
-    equal(observed.compareGraph,reference.compareGraph);
+    equal(observed.compareGraph,reference.compareGraph)&&
+    equal(observed.sideEffects,reference.sideEffects);
   return {schema:'effective-observation/1',profile:'trusted-v8-observation',
     // Fixture callbacks are a visible part of the executed program. Their
     // spans map after the exact production source instead of overlapping it.
@@ -454,8 +464,10 @@ export async function observeProgram({source,entry,args=[],language='js',
       originalText:source,fixtureText:setupSource??null},entry,input:observed.input,
     events:observed.events,
     completion:observed.completion,observableGraph:observed.graph,
+    sideEffects:observed.sideEffects,
     evidence:{independentUninstrumentedV8:sameResult,
-      referenceCompletion:reference.completion,randomSeed},
+      referenceCompletion:reference.completion,randomSeed,
+      referenceSideEffects:reference.sideEffects},
     limitations:[...new Set([...observed.limitations,
       'Native V8 observation is not owned replay or admitted semantic-execution/2 training data',
       'Native modules and unobserved host effects require explicit provenance and boundary tracing'])]};
