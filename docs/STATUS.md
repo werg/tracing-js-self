@@ -1,5 +1,10 @@
 # Implementation status (0.2.0)
 
+## Owned async arrows and function expressions (October 23, 2026)
+
+- The strict TypeScript/ES2022 interpreter now accepts anonymous `async (...args) => ...` arrows and `async function (...args) {...}` expressions. Their closure allocations carry async status, use owned invocation frames, and resolve/reject owned promises through guest `await`. Independent Node V8 return-value comparisons and exact replay cover bounded completed cases; these are not general JS/TS or Node/browser event-loop conformance.
+
+
 ## Natlang retained pure-CommonJS callable module bridge (October 23, 2026)
 
 - Retained `createBoundedNatlangEnvironment.evaluateModule` now accepts a deliberately strict compiler-emitted CommonJS shape: `"use strict"`, the standard `__esModule` marker, guest function declarations and static `exports.name = functionName` registrations only. These link into the owned replay-backed ESM realm, install host-callable wrappers on the real `module.exports` alias, maintain state for subsequent calls, and emit validated exact-replayed archives through `onTrace` before committing state. Module recompilation or host execution is not a fallback; `require`, `__natlang`, `nl`, `iterateOn`, package imports and unsupported module bodies fail closed. This is a **bounded integration with natlang's retained entry**, not production compatibility for typical callable-folder output or arbitrary native callbacks.
