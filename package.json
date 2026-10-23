@@ -33,7 +33,8 @@
     "trace": "node bin/tracing.js run",
     "test:selected-test262": "node tools/test262-baseline.mjs",
     "training:generate": "node tools/generate-training.mjs",
-    "training:evaluate": "node tools/evaluate-training.mjs"
+    "training:evaluate": "node tools/evaluate-training.mjs",
+    "corpus:generate": "node tools/build-real-corpus.mjs"
   },
   "bin": {
     "tracing-js-self": "./bin/tracing.js"
