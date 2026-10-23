@@ -127,9 +127,6 @@ test('imports are read-only and unknown named exports fail at link time',()=>{
 
 test('module namespace objects and exotic syntax do not silently delegate to Node',()=>{
   const invalid=[
-    {modules:{'a.js':'export const x=3;',
-      'b.js':"import * as ns from './a.js';export function run(){return ns.x;}"},
-      entryModule:'b.js',exportName:'run'},
     {modules:{'a.js':"export class C {}"},entryModule:'a.js',exportName:'C'},
     {modules:{'a.js':"export function * f(){yield 1;}"},entryModule:'a.js',exportName:'f'}
   ];
@@ -431,4 +428,48 @@ test('same-origin cyclic ESM function behavior agrees with independent native No
     assert.equal(run.result,oracle.left(8));
     assert.equal(run.metadata.cycles.length,1);
   }finally{await rm(directory,{recursive:true,force:true});}
+});
+
+test('statically named namespace property reads use the original live export cell',async()=>{
+  const modules={
+    'counter.js':`export let count=2;
+      export function step(){count+=4;}`,
+    'main.js':`import * as shared from './counter.js';
+      export function run(){const before=shared.count;shared.step();
+        return [before,shared['count']];}`
+  };
+  const run=await verified({modules,entryModule:'main.js',exportName:'run'});
+  assert.deepEqual(run.result,[2,6]);
+  assert(!run.bundle.sources[0].text.includes('shared.count'));
+  assert.equal(run.metadata.evaluationOrder.length,2);
+});
+
+test('namespace reads agree with independent Node ESM loader for mutable exports',async()=>{
+  const leaf='export let x=1;export function bump(){x+=2;}';
+  const leafUrl='data:text/javascript,'+encodeURIComponent(leaf);
+  const parent=`import * as ns from `+JSON.stringify(leafUrl)+
+    ';export function main(){ns.bump();return ns.x;}';
+  const oracle=(await import('data:text/javascript,'+encodeURIComponent(parent))).main();
+  const run=await verified({
+    modules:{
+      'leaf.js':leaf,
+      'parent.js':"import * as ns from './leaf.js';"+
+        'export function main(){ns.bump();return ns.x;}'
+    },
+    entryModule:'parent.js',exportName:'main'
+  });
+  assert.equal(run.result,oracle);
+});
+
+test('namespace mutation and unsupported first-class/dynamic namespace exotics fail closed',()=>{
+  const leaf='export let x=1;';
+  for(const code of [
+    "import * as ns from './leaf.js';export function main(){ns.x=3;}",
+    "import * as ns from './leaf.js';export function main(){return ns;}",
+    "import * as ns from './leaf.js';export function main(k){return ns[k];}",
+    "import * as ns from './leaf.js';export function main(){return Object.keys(ns);}"
+  ])assert.throws(()=>linkEvaluatedModules({
+    modules:{'leaf.js':leaf,'main.js':code},
+    entryModule:'main.js',exportName:'main'
+  }),/Unsupported evaluated-module/);
 });
