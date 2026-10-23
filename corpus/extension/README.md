@@ -251,3 +251,12 @@ Test262 scalar slice in the owned script interpreter and an independent
 Node V8 scalar reference. Passing this is **not** equivalent to an official
 Test262 harness or an owned `semantic-execution/2` episode. It makes
 no claim about modules, host effects, async or syntactic negative tests.
+
+
+The bounded Test262 scalar smoke additionally attempts **actual locally
+verified strict function-entry trajectories** using an exact original-body
+wrapper, original-vs-wrapped native V8 check and independent
+`semantic-execution/2` gate. Only successfully rechecked cases, with
+explicit source-body byte receipts, can join their exact Test262 *sloppy*
+acquisition records. This is a small, explicitly incomplete profile;
+strict/module/async/negative/full-harness candidates remain refused.

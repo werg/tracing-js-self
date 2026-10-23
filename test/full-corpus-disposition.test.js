@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {classifyCorpusCandidate,validateOwnedReport}
+import {classifyCorpusCandidate,validateOwnedReport,validateTest262Report}
  from '../src/corpus/full-disposition.mjs';
 const fixture=(kind,extra={})=>({
  schema:'external-corpus-fixture/1',admitted:false,verified:false,
@@ -53,4 +53,26 @@ test('generated input oracle is valid but never asserted to be official canonica
  assert.equal(validateOwnedReport(report).size,1);
  assert.throws(()=>validateOwnedReport({...report,records:[{
    ...row,evidence:{...row.evidence,reference:{canonical:'agreed'}}}]}));
+});
+
+test('Test262 training joins only exact source-hash matched and rechecked modes',()=>{
+ const row=fixture('test262-program',{program:{kind:'test262-program',mode:'sloppy',
+   flags:[],harness:['assert.js','sta.js']},
+  provenance:{repository:'tc39/test262',
+   path:'test/language/expressions/addition/x.js',sha256:'c'.repeat(64),
+   revision:'d'.repeat(40)}});
+ const proven={path:row.provenance.path,sourceSha256:row.provenance.sha256,
+   suiteCommit:row.provenance.revision,status:'owned_reference_replay_agreed',
+   trainingStatus:'locally_verified',
+   trainingEvidence:{postSerializationRechecked:true,originalSitesMapped:3,
+     originalV8Assertions:1,functionV8Assertions:1}};
+ const report={schema:'owned-test262-scalar-diagnostics/1',admitted:false,
+   attempted:1,locallyVerifiedTraining:1,rows:[proven]};
+ const m=validateTest262Report(report);
+ assert.equal(classifyCorpusCandidate(row,new Map(),m).status,'owned_locally_verified');
+ assert.equal(classifyCorpusCandidate({...row,program:{...row.program,mode:'strict'}},
+   new Map(),m).status,'refused_test262_owned_harness');
+ assert.throws(()=>classifyCorpusCandidate({...row,
+   provenance:{...row.provenance,sha256:'b'.repeat(64)}},new Map(),m),/Forged/);
+ assert.throws(()=>validateTest262Report({...report,locallyVerifiedTraining:0}));
 });

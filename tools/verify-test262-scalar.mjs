@@ -10,12 +10,18 @@ import {createHash} from 'node:crypto';
 import {walk} from '../src/corpus/import-external.mjs';
 import {scalarTest262Reference} from '../src/corpus/test262-scalar-reference.mjs';
 import {executeRuntimeTest262} from '../src/test262-runtime.js';
+import {wrapOwnedScalarTest262,runWrappedScalarReference,mapTest262ScalarSites}
+  from '../src/corpus/test262-training.mjs';
+import {verifyTrainingCase,recheckIndependentTrainingEvidence}
+  from '../src/training/admit.js';
 const argv=process.argv.slice(2);
 const arg=(k,v)=>{const i=argv.indexOf('--'+k);return i===-1?v:argv[i+1]};
 const root=resolve(arg('root','corpus/extension/snapshots/test262'));
 const output=resolve(arg('output','corpus/out/test262-owned-scalar-diagnostics.json'));
 const max=Number(arg('max-candidates','200'));
 const min=Number(arg('min-agreed','0'));
+const episodesPath=arg('local-episodes',null);
+const episodes=[];
 if(!Number.isSafeInteger(max)||max<1||max>2000||
    !Number.isSafeInteger(min)||min<0||min>max)throw new TypeError('Invalid bounds');
 const lock=JSON.parse(readFileSync(resolve('coverage/test262-runtime.lock.json'),'utf8'));
@@ -59,6 +65,37 @@ function runCase(path,seed=false){
      item.status='owned_reference_replay_agreed';
      item.assertions=owned.assertionCount;
      item.trace={...owned.trace};
+     try{
+       const wrapped=wrapOwnedScalarTest262(source);
+       const wrapReference=runWrappedScalarReference(wrapped);
+       if(wrapReference.status!=='passed'||
+          wrapReference.assertionCount!==reference.assertionCount)
+         throw new Error('Function-entry execution does not preserve independent original script assertions');
+       const checked=verifyTrainingCase({source:wrapped.source,entry:wrapped.entry,
+         args:[],maxSteps:14000,maxGenerated:512,
+         lineage:{kind:'test262-scalar-wrapper/1',path,
+           originalSha256:item.sourceSha256,suiteCommit,
+           originalBodyMapping:wrapped.mapping}});
+       if(checked.status!=='locally_verified')
+         throw new Error('Owned training-js profile refused: '+
+           checked.status+' '+String(checked.reason??'').slice(0,180));
+       const exported=JSON.parse(JSON.stringify(checked.exported));
+       const rechecked=recheckIndependentTrainingEvidence(exported);
+       if(!rechecked.valid)throw new Error('Independent training evidence recheck failed: '+rechecked.reason);
+       const sites=mapTest262ScalarSites(wrapped,source,exported.sidecar.semantic);
+       if(sites.stats.mapped===0)throw new Error('No original source-body site receipts');
+       item.trainingStatus='locally_verified';
+       item.trainingEvidence={postSerializationRechecked:rechecked.valid,
+         originalSitesMapped:sites.stats.mapped,originalV8Assertions:reference.assertionCount,
+         functionV8Assertions:wrapReference.assertionCount};
+       item.originalSiteStats=sites.stats;
+       episodes.push({schema:'test262-owned-local-episode/1',admitted:false,
+         path,suiteCommit,sourceSha256:item.sourceSha256,split:'test262-heldout',
+         originalSiteAudit:sites,exported});
+     }catch(error){
+       item.trainingStatus='refused';
+       item.trainingReason=String(error.message).slice(0,300);
+     }
    }
   }
  }
@@ -75,6 +112,7 @@ for await(const full of walk(join(root,'test'))){
 const agreed=counts.owned_reference_replay_agreed??0;
 const report={schema:'owned-test262-scalar-diagnostics/1',admitted:false,
   suiteCommit,attempted:rows.length,agreed,counts,rows,
+  locallyVerifiedTraining:episodes.length,
   warnings:[
     'These are owned script-level replay and V8 scalar-assertion diagnostics, not training semantic-execution/2.',
     'The independently executed scalar assertion harness is not the complete official Test262 harness.',
@@ -83,5 +121,10 @@ const report={schema:'owned-test262-scalar-diagnostics/1',admitted:false,
   ]};
 mkdirSync(dirname(output),{recursive:true});
 writeFileSync(output,JSON.stringify(report,null,2)+'\n');
-console.log(JSON.stringify({attempted:rows.length,agreed,counts,output}));
+if(episodesPath){
+ const ep=resolve(episodesPath);mkdirSync(dirname(ep),{recursive:true});
+ writeFileSync(ep,episodes.map(x=>JSON.stringify(x)).join('\n')+(episodes.length?'\n':''));
+}
+console.log(JSON.stringify({attempted:rows.length,agreed,
+  locallyVerifiedTraining:episodes.length,counts,output,episodesPath}));
 if(agreed<min)throw new Error('Insufficient independently checked Test262 scalar passes '+agreed+' < '+min);

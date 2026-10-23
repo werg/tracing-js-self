@@ -9,6 +9,7 @@ on:
       - 'tools/convert-full-corpus.mjs'
       - 'tools/verify-test262-scalar.mjs'
       - 'src/corpus/test262-scalar-reference.mjs'
+      - 'src/corpus/test262-training.mjs'
       - 'tools/verify-exercism-owned.mjs'
       - 'tools/import-external-corpus.mjs'
       - 'corpus/extension/**'
@@ -22,6 +23,7 @@ on:
       - 'tools/convert-full-corpus.mjs'
       - 'tools/verify-test262-scalar.mjs'
       - 'src/corpus/test262-scalar-reference.mjs'
+      - 'src/corpus/test262-training.mjs'
       - 'tools/verify-exercism-owned.mjs'
       - 'tools/import-external-corpus.mjs'
       - 'corpus/extension/**'
@@ -142,7 +144,8 @@ jobs:
           node tools/verify-test262-scalar.mjs \
             --root "$RUNNER_TEMP/upstream/test262" \
             --max-candidates 250 --min-agreed 6 \
-            --output corpus/out/full/test262-scalar-diagnostics.json
+            --output corpus/out/full/test262-scalar-diagnostics.json \
+            --local-episodes corpus/out/full/test262-owned-local.jsonl
       - name: One-for-one full inventory conversion disposition (no fabricated traces)
         run: |
           node tools/convert-full-corpus.mjs \
@@ -150,6 +153,7 @@ jobs:
             --exercism corpus/out/full/exercism.jsonl \
             --json-schema corpus/out/full/json-schema.jsonl \
             --owned-report corpus/out/full/exercism-owned-report.json \
+            --test262-report corpus/out/full/test262-scalar-diagnostics.json \
             --min-inventory 117773 \
             --output corpus/out/full/disposition.jsonl \
             --report corpus/out/full/disposition-report.json

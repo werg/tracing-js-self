@@ -2,13 +2,27 @@
 // This classifier NEVER turns a declaration of expected output into evidence of
 // owned execution. In particular, Test262 and JSON Schema catalog entries are
 // not executable function+input pairs without their real harness/implementation.
-export function classifyCorpusCandidate(candidate,verifiedCanonical=new Map()){
+export function classifyCorpusCandidate(candidate,verifiedCanonical=new Map(),verifiedTest262=new Map()){
  if(candidate?.schema!=='external-corpus-fixture/1'||candidate.admitted!==false||
     candidate.verified!==false||typeof candidate.id!=='string'||
     !/^[a-f0-9]{64}$/.test(candidate.id))
    throw new Error('Unrecognized or prematurely admitted external candidate');
  const program=candidate.program??{},fixture=candidate.fixture??{};
  if(program.kind==='test262-program'){
+   const checked=verifiedTest262.get(candidate.provenance?.path);
+   if(checked?.trainingStatus==='locally_verified'&&program.mode==='sloppy'){
+     if(checked.suiteCommit!==candidate.provenance.revision||
+        checked.sourceSha256!==candidate.provenance.sha256||
+        checked.trainingEvidence?.postSerializationRechecked!==true||
+        !(checked.trainingEvidence?.originalSitesMapped>0)||
+        checked.trainingEvidence?.originalV8Assertions!==
+          checked.trainingEvidence?.functionV8Assertions)
+       throw new Error('Forged or stale independent Test262 training evidence');
+     return {status:'owned_locally_verified',
+       reason:'Narrow scalar Test262 subset passed original script reference, owned script replay, strict wrapper V8 check, independent training-js/1 operations/branches/controller and original-site evidence',
+       evidence:{originalSource:checked.path,sourceSiteProfile:'test262-literal-body-sites/1',
+         sourceSha256:checked.sourceSha256}};
+   }
    if(candidate.status==='metadata-review')
      return {status:'refused_unparsed_metadata',reason:'Test262 metadata not safely interpreted'};
    if(program.mode==='module'||program.mode==='raw')
@@ -79,4 +93,23 @@ export function validateOwnedReport(report){
         :x.evidence?.reference?.canonical!=='not-applicable-generated')))
   throw new Error('Owned evidence count/rechecks inconsistent');
  return records;
+}
+
+export function validateTest262Report(report){
+ if(report?.schema!=='owned-test262-scalar-diagnostics/1'||report.admitted!==false||
+    !Array.isArray(report.rows)||report.attempted!==report.rows.length)
+  throw new Error('Invalid Test262 proof ledger');
+ const matches=new Map(),training=report.rows.filter(x=>x.trainingStatus==='locally_verified');
+ if(training.length!==report.locallyVerifiedTraining)
+   throw new Error('Test262 owned-training count inconsistent');
+ for(const row of report.rows){
+   if(!row.path||matches.has(row.path))throw new Error('Duplicate Test262 source identity');
+   if(row.trainingStatus==='locally_verified' &&
+      (row.status!=='owned_reference_replay_agreed'||
+       row.trainingEvidence?.postSerializationRechecked!==true||
+       !(row.trainingEvidence?.originalSitesMapped>0)))
+     throw new Error('Unverified Test262 semantic trace entry');
+   matches.set(row.path,row);
+ }
+ return matches;
 }

@@ -1334,3 +1334,36 @@ contain no such implementation.
 - [ ] Introduce independently checked owned validators/parsers and full
   module/async/proxy/host-runtime semantics before attempting to certify
   the remaining inventory.
+
+
+### Test262 real execution and function-entry bridge (2026-10-23)
+
+The selected owned-script and independent native-V8 scalar smoke in
+[Actions 39995361249](https://github.com/werg/tracing-js-self/actions/runs/39995361249)
+measured **7 owned/V8 assertion+replay agreements out of 217 attempted
+Test262 programs**, with **210 explicit unsupported**. This is **not**
+general Test262 conformance or training readiness.
+
+To attempt true `semantic-execution/2` training candidates for this
+bounded subset, `src/corpus/test262-training.mjs` wraps the original
+Test262 body *verbatim* in an owned strict function-entry harness that
+counts SameValue/notSameValue assertions. Promotion requires (i) original
+native Test262 scalar assertion success, (ii) function-wrapped native
+V8 behavior matching the original, (iii) complete `training-js/1`
+interpreter verification, executed branch/operation receipts, model-visible
+controller rollout and after-serialization independent recheck, and
+(iv) original Test262 test-body source-site receipts. The wrapper is
+**not** an implementation of the official full harness, strict/module
+variants, `$DONE` async or negative-phase semantics. Cases whose
+functionalization changes any observed scalar behavior are refused.
+
+- [x] Independently checked bounded original Test262 scalar diagnostics,
+  retaining detailed refused status and source hashes.
+- [x] Implemented fail-closed Test262 strict function-entry training bridge,
+  with original-body-only byte-preserving source-site mapping.
+- [x] Full-inventory disposition can join only actual rechecked, original
+  SHA-matched Test262 wrapper traces for their *specific sloppy variant*.
+- [ ] Measure number of Test262 `semantic-execution/2` training candidates
+  promoted by actual CI execution and update the measured full ledger.
+- [ ] Official harness, asynchronous/host semantics, arbitrary program
+  initialization and full conformance remain open.
