@@ -6,7 +6,7 @@ import {validateBundle} from '../validation.js';
 
 const selection={
   'binding.initialize':'value','binding.write':'value','binding.update':'write','binding.read':'read',
-  'primitive.binary':'value','primitive.unary':'value',
+  'primitive.binary':'value','primitive.unary':'value','template.substitute':'value',
   'function.define':'alloc','object.allocate':'alloc','array.allocate':'alloc',
   'property.read':'read','property.write':'write','property.update':'write',
   'call.enter':'call','call.return':'return','completion.throw':'throw',

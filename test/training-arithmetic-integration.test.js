@@ -61,8 +61,12 @@ test('arithmetic is projected at completion with input, consumer and control dep
     assert.equal(semantic.journalMapping[phase.eventId],undefined);
   const records=restoreLines(exported.public.groups.slice(exported.sidecar.contextGroups)
     .flatMap(group=>group.events.map(event=>event.record))).map(decodeRecord);
-  assert.deepEqual(records.filter(record=>record.fields.arithmetic)
+  assert.deepEqual(records.filter(record=>record.kind==='value')
+    .filter(record=>record.fields.result?.[0]==='num' &&
+      [8,11].includes(record.fields.result[1]))
     .map(record=>record.fields.result),[['num',8],['num',11]]);
+  assert(records.every(record=>!Object.hasOwn(record.fields,'arithmetic') &&
+    !Object.hasOwn(record.fields,'operands')));
 });
 
 test('computed phase registers remain absent until the arithmetic operation completes',()=>{

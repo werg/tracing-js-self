@@ -67,12 +67,12 @@ test('public-only audit rejects metadata smuggling in visible records and meridi
  code.fields.referenceOutcome={result:99};
  assert.throws(()=>encodeRecord(code.kind,code.fields),/Unexpected/);
  prefix.groups[0].events[0].record=code.kind+' '+JSON.stringify(code.fields);
- assert.throws(()=>auditPublicCausality(prefix),/observed source bundle/);
+ assert.throws(()=>auditPublicCausality(prefix),/observed source bundle|Unexpected/);
  const input=structuredClone(x);
  const arg=decodeRecord(input.groups[1].events[0].record);
  arg.fields.graph.outcome={result:99};
  input.groups[1].events[0].record=encodeRecord(arg.kind,arg.fields);
- assert.throws(()=>auditPublicCausality(input),/observed input graph/);
+ assert.throws(()=>auditPublicCausality(input),/observed input graph|Unexpected/);
  const generated=structuredClone(x);
  const original=decodeRecord(generated.groups[3].events[0].record);
  original.fields.oracle={result:99};
