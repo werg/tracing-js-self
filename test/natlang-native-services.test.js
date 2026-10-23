@@ -100,3 +100,50 @@ test('nested owned async lexical block keeps its await capability and replay',as
   assert.equal(result.result,8);
   assert.equal(replayExact(traces[0]).valid,true);
 });
+
+test('owned native async deadline aborts the native signal and does not publish a trace',async()=>{
+  let observedAbort=false,called=0;
+  const traces=[];
+  const env=createBoundedNatlangEnvironment({EvalFailure,
+    onTrace:bundle=>traces.push(bundle),
+    services:{'demo.readAsync':({signal})=>{
+      called++;
+      return new Promise(resolve=>{
+        if(signal.aborted){observedAbort=true;resolve(1);return;}
+        signal.addEventListener('abort',()=>{
+          observedAbort=true;resolve(1);
+        },{once:true});
+      });
+    }}
+  });
+  try{
+    await assert.rejects(env.executeAsync({
+      code:"return await host.readAsync('slow');",
+      body:true,scope:{},path:'natlang://native-timeout.ts',timeoutMs:30
+    }),error=>error instanceof EvalFailure&&/deadline exceeded/.test(error.message));
+    assert.equal(called,1);
+    assert.equal(observedAbort,true);
+    assert.equal(traces.length,0);
+  }finally{env.close();}
+});
+
+test('bounded native deadline allows success and refuses malformed deadlines',async()=>{
+  const traces=[];
+  const env=createBoundedNatlangEnvironment({EvalFailure,
+    onTrace:bundle=>traces.push(bundle),
+    services:{'demo.readAsync':async()=>12}});
+  try{
+    const result=await env.executeAsync({
+      code:"return await host.readAsync('ok')+3;",
+      body:true,scope:{},path:'natlang://native-within-deadline.ts',timeoutMs:2000
+    });
+    assert.equal(result.result,15);
+    assert.equal(replayExact(traces[0]).valid,true);
+    for(const timeoutMs of [0,-1,1.1,300001,NaN,'25'])
+      await assert.rejects(env.executeAsync({
+        code:'return 1;',body:true,scope:{},path:'natlang://invalid-deadline.ts',
+        timeoutMs
+      }),EvalFailure);
+    assert.equal(traces.length,1);
+  }finally{env.close();}
+});

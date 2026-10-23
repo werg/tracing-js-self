@@ -89,7 +89,7 @@ export class BoundedNatlangEnvironment {
     return this.services===null?this.run(request,true):this.runNativeAsync(request);
   }
   async runNativeAsync(request){
-    let progress=null;
+    let progress=null,deadlineTimer=null,detachAbort=null;
     try{
       this.ensureOpen();
       if(!request||typeof request.code!=='string'||!request.scope||
@@ -99,18 +99,36 @@ export class BoundedNatlangEnvironment {
       if(request.live!==undefined&&(!request.live||typeof request.live!=='object'||
          Array.isArray(request.live)))
         throw new TypeError('Native guest live bindings must be an ordinary data record');
-      if(request.timeoutMs!==undefined)
-        throw new TypeError('Native timeouts are not owned; use a step budget and an AbortSignal');
+      // The host owns this deadline. It never appears as a guest timer or
+      // guest event; a timed-out run publishes no successful archive.
+      if(request.timeoutMs!==undefined &&
+         (!Number.isSafeInteger(request.timeoutMs)||request.timeoutMs<1||
+          request.timeoutMs>300000))
+        throw new RangeError('Native timeoutMs must be an integer from 1 to 300000');
       if(request.code.length>65536)
         throw new RangeError('Natlang source exceeds the bounded adapter limit');
       const body=request.body?request.code:'return ('+request.code+');';
       const originalText='"use strict";\nasync function __natlang_trace_entry(self, __live) {\n'+
         body+'\n}\n';
       const lowering=compileBoundedTypeScript(originalText,{path:request.path});
+      let signal=this.abortController.signal;
+      if(request.timeoutMs!==undefined){
+        const controller=new AbortController();
+        const upstream=this.abortController.signal;
+        const forward=()=>controller.abort(upstream.reason??
+          new Error('Owned natlang environment closed'));
+        if(upstream.aborted)forward();
+        else upstream.addEventListener('abort',forward,{once:true});
+        detachAbort=()=>upstream.removeEventListener('abort',forward);
+        deadlineTimer=setTimeout(()=>controller.abort(
+          new Error('Owned native service deadline exceeded after '+request.timeoutMs+' ms')),
+          request.timeoutMs);
+        signal=controller.signal;
+      }
       const executed=await executeWithNativeServices({
         entry:{text:lowering.javascript,url:request.path,
           functionName:'__natlang_trace_entry',args:[request.scope,request.live??{}]},
-        services:this.services,maxSteps:this.maxSteps,signal:this.abortController.signal
+        services:this.services,maxSteps:this.maxSteps,signal
       });
       progress=executed.progress;
       const {runtime,bundle}=executed;
@@ -154,6 +172,9 @@ export class BoundedNatlangEnvironment {
     }catch(error){
       if(error instanceof this.EvalFailure)throw error;
       throw this.failed(request,error,progress?.kind==='unsupported'?'unsupported':'failed');
+    }finally{
+      if(deadlineTimer!==null)clearTimeout(deadlineTimer);
+      detachAbort?.();
     }
   }
   run(request,allowAsync,{syncScope=null}={}){

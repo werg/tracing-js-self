@@ -83,6 +83,13 @@ updates/compound assignments. This still does not imply support for arrows,
 destructuring, arbitrary object methods, live helper services or all constructs
 emitted by typical natlang scopes. No fallback executes unsupported constructs.
 
+Only the explicitly registered native-service `executeAsync` path accepts
+a bounded host-owned `timeoutMs` (1–300000 ms). The deadline aborts the
+native adapter's signal and refuses successful trace publication; it is not a
+guest timer, not deterministic journaled wall-clock time, and cannot undo a
+started native side effect. Ordinary synchronous `execute` and no-service
+`executeAsync` still refuse native deadlines.
+
 `executeAsync` runs an owned async guest entry, including `await` on guest
 promises and optionally asynchronous versioned native service effects.
 `evaluateModule` is available in `retained` mode only for mutable, portable,

@@ -1,5 +1,15 @@
 # Implementation status (0.2.0)
 
+## Native-service deadline boundary (October 23, 2026)
+
+- The opt-in natlang `executeAsync` native-service route now accepts a
+  bounded host-owned `timeoutMs` deadline (1–300000 ms). Its composed
+  AbortSignal reaches registered native services, releases deadline timers
+  and abort forwarding on every exit, and emits no successful trace after a
+  deadline abort. This does not preempt synchronous guest CPU, roll back
+  an already-started native side effect, reproduce wall-clock time in guest
+  code, or implement general Node/browser timers and scheduling.
+
 ## Bounded owned optional chains (October 23, 2026)
 
 - Pinned TypeScript lowering preserves ES2022 optional chains for strict
