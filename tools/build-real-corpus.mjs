@@ -30,7 +30,7 @@ const cache=new Map();
 const helperNames={
   'arrays.ts/binarySearch':['binarySearch2'],
   'arrays.ts/insertInto':['getActualStartIndex'],
-  'arrays.ts/splice':['getActualStartIndex'],
+  'arrays.ts/splice':['getActualStartIndex','insertInto'],
   'strings.ts/format':['_formatRegexp'],
   'strings.ts/format2':['_format2Regexp'],
   'strings.ts/trim':['ltrim','rtrim'],
@@ -82,7 +82,7 @@ function split(key){
 const fmt=v=>{
   if(!Array.isArray(v))return JSON.stringify(v);
   if(v[0]==='ref')return '&'+v[1];
-  if(v[0]==='undefined'||v[0]==='null')return v[0];
+  if(v[0]==='undefined'||v[0]==='null'||v[0]==='absent')return v[0];
   if(v[0]==='str')return JSON.stringify(v[1]);
   if(v[0]==='bigint')return v[1]+'n';
   return String(v[1]);
