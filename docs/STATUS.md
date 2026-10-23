@@ -32,10 +32,22 @@ This repository implements a **bounded, executable prototype** for the architect
   native-service completions participate in exact replay. An optional
   ordered `calls` array now invokes multiple exports in one owned episode,
   preserving mutable module cells and guest heap aliases until it completes.
-  State is **not retained across separate API calls**. Cyclic evaluation,
-  module namespace exotic objects, arbitrary package imports and persistent
-  module realms remain unimplemented. The data-only natlang retained adapter
-  is a different, limited interface.
+  State is **not retained across separate API calls**. Synchronous cyclic
+  evaluation now follows dependency DFS ordering and has independent native
+  ESM differential/replay probes; cycles containing top-level await remain
+  unsupported. Namespace-style statically named import reads are rewritten to
+  live export cells, but actual module namespace exotic objects, namespace
+  method receivers and reflection remain unimplemented. Arbitrary package
+  imports and persistent module realms remain unimplemented. The data-only
+  natlang retained adapter is a different, limited interface.
+- The `werg/natlang` Node runtime now has an explicit opt-in
+  `installOwnedTracingEnvironment(factory)` installer, wiring **both** its
+  per-task and retained module-evaluator factories with a fail-closed
+  `owned-*` authority check. This is actual host-side wiring, **not**
+  application compatibility: callable-folder compiled modules still pass
+  native `require`, package helpers, `nl`, callbacks and service objects not
+  executable by the bounded tracer. Production drop-in compatibility remains
+  unproven and is not enabled as the default.
 - Verification is finite, not a language-completeness, Test262, WPT, native
   host capability or megatoken model-training result. Check the most recent
   `main` GitHub Actions run before treating the extension as a green release.
