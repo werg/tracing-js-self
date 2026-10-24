@@ -80,7 +80,9 @@
     "corpus:structured:reference": "node tools/verify-structured-contracts.mjs",
     "corpus:owned:novelty": "node tools/select-owned-episodes.mjs",
     "corpus:production:owned": "node tools/verify-production-owned.mjs",
-    "corpus:ajv:reference": "node tools/verify-ajv-snapshot.mjs"
+    "corpus:ajv:reference": "node tools/verify-ajv-snapshot.mjs",
+    "training:inspect": "node tools/inspect-training.mjs",
+    "training:recheck": "node tools/recheck-training-evidence.mjs"
   },
   "bin": {
     "tracing-js-self": "./bin/tracing.js"
