@@ -169,3 +169,36 @@ test('CommonJS empty markers and unowned exports fail closed',()=>{
     }
   }finally{env.close();}
 });
+
+test('module admission rejects host accessors and proxies without invoking them',()=>{
+  const env=createBoundedNatlangEnvironment({EvalFailure,mode:'retained'});
+  const code='exports.read=read;function read(){return 1;}';
+  let getterCalls=0,proxyCalls=0;
+  const exports={};
+  const getterModule={};
+  Object.defineProperty(getterModule,'exports',{get(){getterCalls++;return exports;}});
+  const proxyModule=new Proxy({exports},{
+    get(){proxyCalls++;throw new Error('unowned trap');},
+    getOwnPropertyDescriptor(){proxyCalls++;throw new Error('unowned trap');}
+  });
+  const getterBindings={module:{exports},require:()=>{}};
+  Object.defineProperty(getterBindings,'exports',{get(){getterCalls++;return exports;}});
+  try{
+    for(const bindings of [
+      {module:getterModule,exports,require:()=>{}},
+      getterBindings,
+      {module:proxyModule,exports,require:()=>{}},
+      new Proxy({module:{exports},exports,require:()=>{}},{
+        get(){proxyCalls++;throw new Error('unowned trap');},
+        getOwnPropertyDescriptor(){proxyCalls++;throw new Error('unowned trap');}
+      })
+    ])
+      assert.throws(()=>env.evaluateModule(code,bindings),EvalFailure);
+    assert.equal(getterCalls,0);
+    assert.equal(proxyCalls,0);
+    assert.deepEqual(exports,{});
+    const normal={module:{exports},exports,require:()=>{}};
+    assert.equal(env.evaluateModule(code,normal),exports);
+    assert.equal(exports.read(),1);
+  }finally{env.close();}
+});
