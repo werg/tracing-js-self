@@ -1760,3 +1760,22 @@ The separate Ajv owned-attempt path is opt-in using --owned-max (CI uses 12)
 and retains both refusals and independently checked local candidates. It
 executes only in the trusted, source-locked restricted CI environment, and
 does not treat native V8 as an owned interpreter.
+
+
+### Owned single-agent microtask queue and Promise FIFO integration (2026-10-24)
+
+- [x] Implemented a bounded guest-owned queueMicrotask(callback) operation.
+  It queues original guest function identities alongside owned Promise
+  reactions in the same serialized FIFO job queue. Each microtask callback
+  runs as an owned invocation after the current activation unwinds, and may
+  queue another microtask.
+- [x] The independent trace validator now checks FIFO consumption, queued
+  callback identity and invocation evidence, rather than trusting the
+  interpreter or accepting forged job ordering. New focused tests exercise
+  Promise interleaving, nested callbacks, invalid callbacks, and tampered
+  archives with exact replay.
+- [ ] This models **only single-agent owned microtasks**. It does not implement
+  native timeouts, interval cancellation, process.nextTick, platform event
+  loop checkpoints, unhandled-rejection hooks, worker agents, Atomics,
+  SharedArrayBuffer, or the official Test262 agent service. Full host
+  scheduling and multi-agent conformance remain future work.
