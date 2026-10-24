@@ -1,5 +1,10 @@
 # Implementation status (0.2.0)
 
+## Bounded TypeScript CommonJS const-callables and retained session integrity (October 24, 2026)
+
+- The opt-in natlang retained CommonJS bridge accepts TypeScript 5.9-style chained `exports.name = void 0` markers only when each is paired with a static callable registration. Exported `const` arrows and function expressions use owned replay-backed lexical state; mutable `let` callables, missing markers, arbitrary bootstrap effects and native `require` still fail closed. This is not a production callable-folder replacement.
+- Retained evaluated-module sessions prevent synchronous `onTrace` reentrancy and refuse a state commit when the callback closes the session. Both callback-delivered and public bundle/lastArchive values are detached from the validated internal evidence. Exact replay and mutation/rollback regressions were added; independent ECMAScript conformance, native host coverage and model-data admission remain unfinished.
+
 ## Bounded journaled console text (October 23, 2026)
 
 - Explicit native-service execution now accepts `console.log/info/warn/error(message)` with exactly one string argument. Each service dispatch, arrival and delivery is journaled and exact replay never reissues the native writer. The opt-in natlang native-service route returns the logged strings in `logs`. No standard output is available by default; multiple arguments, formatting, native handles, arbitrary browser globals and full host event-loop semantics remain unsupported.
