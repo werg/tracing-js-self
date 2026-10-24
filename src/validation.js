@@ -28,7 +28,13 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     const job=e.operation==='job.enter'?state.control.a0.queue[0]:null;
     const queuedBefore=job?state.control.a0.queue.slice(1):null;
     if(e.operation==='job.enter'){
-      if(!job || !state.promises[job.promiseId] ||
+      if(job?.kind==='microtask'){
+        if(typeof job.functionId!=='string'||
+           state.heap[job.functionId]?.kind!=='function'||
+           e.causes.filter(c=>c.kind==='invocation').length!==1||
+           e.causes.some(c=>c.kind==='promise'))
+          fail('Microtask entry lacks an owned queued callback',e.eventId);
+      }else if(!job || !state.promises[job.promiseId] ||
          state.promises[job.promiseId].status==='pending' ||
          e.causes.filter(c=>c.kind==='promise').length!==1 ||
          e.causes.find(c=>c.kind==='promise').promiseId!==job.promiseId)
@@ -65,7 +71,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
       if(p.after===null)delete state[p.table][p.id];else state[p.table][p.id]=clone(p.after);
     }
     if(job && !eq(state.control.a0.queue.slice(0,queuedBefore.length),queuedBefore))
-      fail('Promise job FIFO order changed during entry',e.eventId);
+      fail('Guest job FIFO order changed during entry',e.eventId);
     if(bundle.manifest.schema==='semantic-tracing-run/2') {
       const delivered=e.operation==='external.input.deliver'
         ? state.inputs[e.causes.find(c=>c.kind==='input')?.inputId] : null;
