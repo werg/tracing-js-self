@@ -27,9 +27,10 @@ function projectOmittedAjvContext(generated,fn){
     second.right.type!=='ObjectExpression'||second.right.properties.length!==0)
   return null;
  const props=second.left.properties;
- if(props.length!==4||props.some(x=>x.type!=='Property'||x.computed||
+ if(![4,5].includes(props.length)||props.some(x=>x.type!=='Property'||x.computed||
       x.method||x.kind!=='init'))return null;
- const keys=['instancePath','parentData','parentDataProperty','rootData'];
+ const keys=['instancePath','parentData','parentDataProperty','rootData',
+  'dynamicAnchors'].slice(0,props.length);
  for(let i=0;i<keys.length;i++){
   const prop=props[i];
   if(prop.key.type!=='Identifier'||prop.key.name!==keys[i])return null;
@@ -41,12 +42,18 @@ function projectOmittedAjvContext(generated,fn){
    if(prop.value.type!=='AssignmentPattern'||
       prop.value.left.type!=='Identifier'||prop.value.left.name!=='rootData'||
       prop.value.right.type!=='Identifier'||prop.value.right.name!=='data')return null;
+  }else if(i===4){
+   if(prop.value.type!=='AssignmentPattern'||
+      prop.value.left.type!=='Identifier'||prop.value.left.name!=='dynamicAnchors'||
+      prop.value.right.type!=='ObjectExpression'||
+      prop.value.right.properties.length!==0)return null;
   }else if(prop.value.type!=='Identifier'||prop.value.name!==keys[i])return null;
  }
  if(!/^\s*,\s*$/.test(generated.slice(fn.params[0].end,second.start)))
   return null;
  const declaration='\nlet instancePath="";\nlet parentData=undefined;\n'+
-  'let parentDataProperty=undefined;\nlet rootData=data;\n';
+  'let parentDataProperty=undefined;\nlet rootData=data;\n'+
+  (props.length===5?'let dynamicAnchors={};\n':'');
  const projected=generated.slice(0,fn.params[0].end)+
   generated.slice(second.end,fn.body.start+1)+declaration+
   generated.slice(fn.body.start+1);
@@ -121,7 +128,8 @@ export function attemptOwnedAjvGeneratedValidator({
  }
  const projected=projectOmittedAjvContext(generated,ast.body[0]);
  if(!projected)
-  return {row:refusal('unsupported','Unsupported generated Ajv context parameter layout',details),
+  return {row:refusal('unsupported','Unsupported generated Ajv context parameter layout',
+   {...details,signature:generated.slice(ast.body[0].start,ast.body[0].body.start).slice(0,280)}),
    exported:null};
  details.projection=projected.projection;
  if(projected.originalBodySha256)details.originalBodySha256=projected.originalBodySha256;
