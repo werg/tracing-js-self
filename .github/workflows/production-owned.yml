@@ -36,7 +36,11 @@ jobs:
             const r=JSON.parse(readFileSync("production-owned-report.json"));
             if(r.admitted!==0||r.locallyVerified!==19||
               r.attempted!==r.locallyVerified+r.refused||
-              r.rows.some(x=>x.admitted!==false))
+              r.rows.some(x=>x.admitted!==false)||
+              r.closures?.attempted!==11||
+              r.closures.locallyVerified!==11||r.closures.refused!==0||
+              r.closures.admitted!==0||
+              r.closures.rows.some(x=>x.admitted!==false||x.verifiedOwned!==true))
               throw Error("False production owned evidence claim");
           '
       - uses: actions/upload-artifact@v4
