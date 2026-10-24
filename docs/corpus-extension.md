@@ -1961,3 +1961,16 @@ previous owned/admitted corpus totals is changed by diagnostic worker results.
 - [ ] This is intrinsic-Promise-only; species/subclasses, exotic `then`
   and complete host scheduling semantics remain open. No new training
   admission is claimed.
+
+
+### Real parallel waitAsync and growable native shared memory (2026-10-24)
+
+- [x] Extended the *trusted-only native worker diagnostic* to accept bounded
+  growable SAB maximum lengths. Genuine independent workers now exercise
+  `Atomics.waitAsync` plus cross-agent `notify`, and grow shared bytes
+  concurrently with atomic publication; regression tests inspect native
+  outputs and the final shared byte snapshot. Native feature availability
+  is checked explicitly for compatibility with supported Node releases.
+- [ ] Real worker diagnostics are still native V8 executions, not owned
+  multi-agent bytecode events or a proof of cross-engine memory-model
+  conformance. Do not automatically run acquired untrusted source here.

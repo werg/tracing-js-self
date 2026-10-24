@@ -23,14 +23,22 @@ parentPort.postMessage({type:'ready'});
  * All agents receive the *same* SharedArrayBuffer objects via structured clone.
  * No events here are owned traces; do not use this on untrusted corpus inputs.
  */
-export async function runNativeWorkerAgents({workers,byteLengths=[4],timeoutMs=5000}={}){
+export async function runNativeWorkerAgents({workers,byteLengths=[4],maxByteLengths=null,timeoutMs=5000}={}){
   if(!Array.isArray(workers)||workers.length<1||workers.length>8||
      workers.some(w=>typeof w!=='string'||w.length>32768)||
      !Array.isArray(byteLengths)||byteLengths.length<1||byteLengths.length>8||
      byteLengths.some(n=>!Number.isSafeInteger(n)||n<0||n>65536)||
+     (maxByteLengths!==null&&(!Array.isArray(maxByteLengths)||
+       maxByteLengths.length!==byteLengths.length||
+       maxByteLengths.some((n,i)=>!Number.isSafeInteger(n)||
+         n<byteLengths[i]||n>65536)))||
      !Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>60000)
     throw new TypeError('Invalid bounded native worker configuration');
-  const buffers=byteLengths.map(n=>new SharedArrayBuffer(n));
+  if(maxByteLengths!==null&&typeof SharedArrayBuffer.prototype.grow!=='function')
+    throw new TypeError('Native growable SharedArrayBuffer unavailable');
+  const buffers=byteLengths.map((n,i)=>maxByteLengths===null
+    ?new SharedArrayBuffer(n)
+    :new SharedArrayBuffer(n,{maxByteLength:maxByteLengths[i]}));
   const threads=[],values=Array(workers.length);
   let ready=0,finished=0,closed=false;
   return await new Promise((resolve,reject)=>{
@@ -59,6 +67,7 @@ export async function runNativeWorkerAgents({workers,byteLengths=[4],timeoutMs=5
             if(++finished===workers.length)end(null,{
               schema:'native-worker-agents/1',results:values,
               byteLengths:[...byteLengths],
+              maxByteLengths:maxByteLengths===null?null:[...maxByteLengths],
               bufferBytes:buffers.map(b=>Array.from(new Uint8Array(b))),
               evidence:'native-V8-workers-not-owned-traces'
             });
