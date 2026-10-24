@@ -1,5 +1,10 @@
 # Implementation status (0.2.0)
 
+## Native retained callable invocation observations (October 24, 2026)
+
+- The opt-in native observation adapter in `werg/natlang` now decorates writable/configurable own callable exports after retained module bootstrap. Direct invocations and constructions emit paired `exportCall` start and synchronous return/throw records with matching invocation IDs. Host `this` and constructor forwarding are preserved through proxies; exported function identities change.
+- These remain **boundary observations**, not instruction-level execution traces. Calls inside the exported function, async promise settlement, later reassignment of exports and native side effects are not captured; no new megatoken corpus is independently admitted. Tests are committed, but there is no verified CI pass yet.
+
 ## Native execution observations for unsupported natlang JS/TS (October 24, 2026)
 
 - `werg/natlang` adds an opt-in `installObservedNativeTracingEnvironment` that emits `natlang-native-observation/1` start/completion/failure records for normal and asynchronous evaluations and retained module bootstrap. It executes unsupported language constructs in the original Node evaluator, so these are **boundary-only observations**; nested operations, retained-export calls, callbacks and host effects are not captured. See [native observation tracing](https://github.com/werg/natlang/blob/main/ts-host/NATIVE_OBSERVATION_TRACING.md).
