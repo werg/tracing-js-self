@@ -153,7 +153,12 @@ export class WitnessController {
         if(this.stack.length>1){
           this.stack.pop();
           this.lastReturn={kind,value:structuredClone(f.value)};
-        }else this.pending={kind,value:structuredClone(f.value)};
+        }else {
+          this.pending={kind,value:structuredClone(f.value)};
+          // Root has actually returned. Only now may queued microtasks
+          // legally dispatch; terminal end waits for their disposition.
+          this.stack.pop();
+        }
       }else if(kind==='transfer'){
         if(!['return','throw','cleanup'].includes(f.kind))
           fail('completion','Unsupported completion transfer');
@@ -181,6 +186,8 @@ export class WitnessController {
           this.jobs.set(f.job,{status:'queued',owner:f.owner});
           this.ready.push(f.job);
         }else if(f.action==='dispatch'){
+          if(this.stack.length)
+            fail('job','Owned jobs cannot dispatch before current stack unwinds');
           if(this.ready[0]!==f.job||this.jobs.get(f.job)?.status!=='queued')
             fail('job','Dispatch violates owned FIFO queue');
           this.ready.shift();this.jobs.get(f.job).status='running';
