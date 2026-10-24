@@ -58,6 +58,8 @@ export function validateExpression(expr,{maxOperators=8}={}){
     if(node.op==='literal'&&Object.keys(node).length===2){
       assertValue(node.value);operands++;return;
     }
+    if(node.op==='input'&&Object.keys(node).length===2&&
+       Number.isSafeInteger(node.index)&&node.index>=0&&node.index<256){operands++;return;}
     if(node.op==='local'&&Object.keys(node).length===2&&
        typeof node.name==='string'&&identity.test(node.name)){operands++;return;}
     if(node.op==='read'&&Object.keys(node).length===3 &&
