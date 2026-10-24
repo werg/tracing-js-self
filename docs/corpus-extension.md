@@ -1949,3 +1949,15 @@ previous owned/admitted corpus totals is changed by diagnostic worker results.
   complete multi-agent shared-memory order or executable-worker model.
   Native worker diagnostics remain separate, and corpus admission
   numbers are unchanged.
+
+
+### Owned Promise.withResolvers and deferred capability scheduling (2026-10-24)
+
+- [x] Added bounded `Promise.withResolvers()` returning an owned promise and
+  callable resolve/reject functions. The same first-settlement-wins behavior,
+  queued thenable assimilation, virtual-timer delivery, journal validation and
+  exact replay apply as for constructor-created capabilities. Focused tests
+  exercise observable ordering and later settlement.
+- [ ] This is intrinsic-Promise-only; species/subclasses, exotic `then`
+  and complete host scheduling semantics remain open. No new training
+  admission is claimed.

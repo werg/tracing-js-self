@@ -1121,7 +1121,7 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
           else if(base.value[0]==='intrinsic' && base.value[1]==='Atomics' &&
              ['load','store','add','sub','and','or','xor','exchange','compareExchange','wait','notify'].includes(property))
             v=['builtinfn','Atomics.'+property];
-          else if(base.value[0]==='intrinsic' && base.value[1]==='Promise' && ['resolve','reject','all','race','allSettled','any'].includes(property))v=['builtinfn',`Promise.${property}`];
+          else if(base.value[0]==='intrinsic' && base.value[1]==='Promise' && ['resolve','reject','all','race','allSettled','any','withResolvers'].includes(property))v=['builtinfn',`Promise.${property}`];
           else if(base.value[0]==='intrinsic' &&
              ((base.value[1]==='Math' &&
                ['abs','ceil','floor','trunc','round','max','min','pow','sign','sqrt','hypot','random'].includes(property)) ||
@@ -2085,7 +2085,17 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             if(v===null)throw new TypeError('Unowned builtin receiver or array coercion');
             return {...operands(fn,...args),...result(v)};
           }
-          if(callable[0]==='builtinfn' && ['Promise.resolve','Promise.reject'].includes(callable[1])){
+          if(callable[0]==='builtinfn' && callable[1]==='Promise.withResolvers'){
+             const promiseId=this.newPromise(s),id=this.next(s,'obj');
+             const values={promise:['promise',promiseId],
+               resolve:['builtinfn','Promise.executor.resolve:'+promiseId],
+               reject:['builtinfn','Promise.executor.reject:'+promiseId]};
+             s.heap[id]={id,kind:'object',properties:Object.fromEntries(
+               Object.entries(values).map(([k,v])=>[k,token(v,eventId)])),
+               propertyVersions:{promise:1,resolve:1,reject:1},shapeVersion:3,version:0};
+             return {...operands(fn,...args),...result(['ref',id])};
+           }
+           if(callable[0]==='builtinfn' && ['Promise.resolve','Promise.reject'].includes(callable[1])){
             const v=args[0]?.value??U,origin=args[0]?.origin??null;
             if(callable[1]==='Promise.resolve' && v[0]==='promise')
               return {...operands(fn,...args),...result(v)};
