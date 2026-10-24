@@ -71,3 +71,29 @@ test('malformed or multi-definition generated code is rejected before execution'
   assert.equal(exported,null);
  }
 });
+
+
+test('Ajv omitted optional context is lowered only with audited pure defaults',()=>{
+ const standard='function validate(data, {instancePath="", parentData, parentDataProperty, rootData=data}={}) {return typeof data === "string";}';
+ const compiled=Object.assign(function validate(data){return typeof data==='string';},{
+  source:{validateCode:standard,scopeValues:{}}});
+ const {row,exported}=attemptOwnedAjvGeneratedValidator({
+  validator:compiled,data:'abc',observedResult:true});
+ assert.equal(row.projection,'ajv-omitted-context-pure-defaults/1');
+ assert.match(row.originalBodySha256,/^[a-f0-9]{64}$/);
+ assert.equal(row.admitted,false);
+ if(row.verifiedOwned){
+  assert.equal(row.status,'locally_verified');
+  assert.equal(recheckIndependentTrainingEvidence(exported).valid,true);
+ }else{
+  assert.equal(exported,null);
+  assert(row.reason);
+ }
+ const dangerous=standard.replace('rootData=data','rootData=host.call()');
+ const unsafe=Object.assign(function validate(){return true;},{
+  source:{validateCode:dangerous}});
+ const denied=attemptOwnedAjvGeneratedValidator({
+  validator:unsafe,data:'abc',observedResult:true});
+ assert.equal(denied.row.status,'unsupported');
+ assert.equal(denied.exported,null);
+});
