@@ -1,5 +1,5 @@
 import { encode, decode, U, token, truthy, primitiveBinary, primitiveUnary } from './values.js';
-import {SHARED_TYPES,SHARED_TYPE_NAMES,newSharedBuffer,newSharedView,readSharedElement,writeSharedElement,atomicSharedElement} from './owned-shared-memory.js';
+import {SHARED_TYPES,SHARED_TYPE_NAMES,newSharedBuffer,newSharedView,growSharedBuffer,effectiveSharedLength,readSharedElement,writeSharedElement,atomicSharedElement} from './owned-shared-memory.js';
 import { parse, compile } from './frontend.js';
 import { importGraph } from './training/graph.js';
 import { parseTraining, TRAINING_PARSER } from './training/profile.js';
@@ -1014,7 +1014,22 @@ export class Runtime {
   const length=args.length===0?0:args[0]?.value[0]==='num'?decode(args[0].value):NaN;
   if(!Number.isSafeInteger(length)||length<0||length>1024)
     guestFault('RangeError','SharedArrayBuffer byteLength out of bounds');
-  const id=this.next(s,'obj');s.heap[id]=newSharedBuffer(id,length);
+  if(args.length>2)guestFault('TypeError','SAB takes at most two arguments');
+  let max;
+  if(args.length===2){
+    const opts=args[1]?.value[0]==='ref'?s.heap[args[1].value[1]]:null;
+    if(opts?.kind!=='object'||Object.keys(opts.accessors??{}).length)
+      guestFault('TypeError','SAB options require owned data object');
+    const supplied=opts.properties.maxByteLength?.value;
+    if(supplied&&supplied[0]!=='undefined'){
+      if(supplied[0]!=='num'||!Number.isSafeInteger(decode(supplied)))
+        guestFault('RangeError','SAB maxByteLength requires bounded integer');
+      max=decode(supplied);
+    }
+  }
+  if(max!==undefined&&(max<length||max>1024))
+    guestFault('RangeError','Invalid maxByteLength');
+  const id=this.next(s,'obj');s.heap[id]=newSharedBuffer(id,length,max);
   return {...operands(fn,...args),...result(['ref',id])};
 }
 if(fn.value[0]==='intrinsic'&&Object.hasOwn(SHARED_TYPES,fn.value[1])){
@@ -1141,6 +1156,12 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
              }
              if(obj.kind==='shared-int32-buffer'){
   if(property==='byteLength')return {...operands(base,key),...result(['num',obj.byteLength])};
+  if(property==='maxByteLength')return {...operands(base,key),...result(['num',obj.maxByteLength??obj.byteLength])};
+  if(property==='growable')return {...operands(base,key),...result(['bool',obj.growable===true])};
+  if(property==='grow'){
+    const method=['builtinfn','SharedArrayBuffer.prototype.grow'];
+    return {...operands(base,key),...result(op==='GET_METHOD'?['method',method,base.value]:method)};
+  }
   if(property==='slice'){
     const method=['builtinfn','SharedArrayBuffer.prototype.slice'];
     return {...operands(base,key),...result(op==='GET_METHOD'?['method',method,base.value]:method)};
@@ -1149,7 +1170,8 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
 }
 if(obj.kind==='shared-int32-view'){
   const bytes=SHARED_TYPES[obj.elementType].bytes;
-  for(const [prop,v] of Object.entries({length:obj.length,byteLength:obj.length*bytes,
+  const length=effectiveSharedLength(s.heap[obj.bufferId],obj);
+  for(const [prop,v] of Object.entries({length,byteLength:length*bytes,
     byteOffset:obj.byteOffset,BYTES_PER_ELEMENT:bytes}))
     if(property===prop)return {...operands(base,key),...result(['num',v])};
   if(property==='buffer')return {...operands(base,key),...result(['ref',obj.bufferId])};
@@ -1157,7 +1179,7 @@ if(obj.kind==='shared-int32-view'){
     const method=['builtinfn','TypedArray.prototype.subarray'];
     return {...operands(base,key),...result(op==='GET_METHOD'?['method',method,base.value]:method)};
   }
-  if(!arrayIndex(property)||Number(property)>=obj.length)
+  if(!arrayIndex(property)||Number(property)>=length)
     guestFault('TypeError','Unmodeled shared view property');
   return {...operands(base,key),...result(readSharedElement(s.heap[obj.bufferId],obj,Number(property)))};
 }
@@ -1218,7 +1240,7 @@ if(obj.kind==='set'){
            if(base.value[0]!=='ref'||!s.heap[base.value[1]]||s.heap[base.value[1]].kind==='function')throw new TypeError('Not a writable guest object');
           const object=s.heap[base.value[1]];
           if(object.kind==='shared-int32-view'){
-  if(!arrayIndex(property)||Number(property)>=object.length)
+  if(!arrayIndex(property)||Number(property)>=effectiveSharedLength(s.heap[object.bufferId],object))
     guestFault('TypeError','Unmodeled typed-array property assignment');
   writeSharedElement(s.heap[object.bufferId],object,Number(property),v.value);
   return {...operands(base,key,v),...result(v.value)};
@@ -1375,14 +1397,27 @@ if(callable[0]==='builtinfn' && callable[1]==='queueMicrotask'){
           if(callable[0]==='builtinfn'&&callable[1]==='TypedArray.prototype.subarray'){
   const view=receiver[0]==='ref'?s.heap[receiver[1]]:null;
   if(view?.kind!=='shared-int32-view'||args.length>2)guestFault('TypeError','Invalid subarray call');
+  const full=effectiveSharedLength(s.heap[view.bufferId],view);
   const clip=(n,otherwise)=>n===undefined?otherwise:
-    n<0?Math.max(0,view.length+Math.trunc(n)):Math.min(view.length,Math.trunc(n));
+    n<0?Math.max(0,full+Math.trunc(n)):Math.min(full,Math.trunc(n));
   const a=clip(args[0]?.value[0]==='num'?decode(args[0].value):undefined,0);
-  const b=clip(args[1]?.value[0]==='num'?decode(args[1].value):undefined,view.length);
+  const b=clip(args[1]?.value[0]==='num'?decode(args[1].value):undefined,full);
   const id=this.next(s,'obj');
   s.heap[id]=newSharedView(id,s.heap[view.bufferId],view.elementType,
-    view.byteOffset+a*SHARED_TYPES[view.elementType].bytes,Math.max(0,b-a));
+    view.byteOffset+a*SHARED_TYPES[view.elementType].bytes,
+    args.length<2&&view.lengthTracking?undefined:Math.max(0,b-a));
   return {...operands(fn,...args),...result(['ref',id])};
+}
+if(callable[0]==='builtinfn'&&callable[1]==='SharedArrayBuffer.prototype.grow'){
+  const b=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+  if(args.length!==1||b?.kind!=='shared-int32-buffer')
+    guestFault('TypeError','Invalid SAB grow receiver/arity');
+  if(!b.growable)guestFault('TypeError','SAB is not growable');
+  const length=args[0]?.value[0]==='num'?decode(args[0].value):NaN;
+  if(!Number.isSafeInteger(length)||length<b.byteLength||
+     length>b.maxByteLength)guestFault('RangeError','Invalid SAB growth');
+  growSharedBuffer(b,length);
+  return {...operands(fn,...args),...result(U)};
 }
 if(callable[0]==='builtinfn'&&callable[1]==='SharedArrayBuffer.prototype.slice'){
   const b=receiver[0]==='ref'?s.heap[receiver[1]]:null;
@@ -2004,7 +2039,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
   if(view?.kind!=='shared-int32-view')
     guestFault('TypeError','Atomics requires owned integer shared view');
   const index=args[1]?.value[0]==='num'?decode(args[1].value):NaN;
-  if(!Number.isInteger(index)||index<0||index>=view.length)
+  if(!Number.isInteger(index)||index<0||index>=effectiveSharedLength(s.heap[view.bufferId],view))
     guestFault('RangeError','Invalid atomic index');
   const count=method==='compareExchange'?4:method==='wait'?(args.length===3?3:4):
     method==='notify'?(args.length===2?2:3):method==='load'?2:3;
