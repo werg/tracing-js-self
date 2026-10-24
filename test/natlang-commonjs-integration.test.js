@@ -122,3 +122,50 @@ test('failed trace hook leaves retained TypeScript CommonJS lexical state unchan
     assert.equal(exports.read(),2);
   }finally{env.close();}
 });
+ 
+test('pinned TypeScript const-function exports with chained initialization markers',()=>{
+  const code=ts.transpileModule(
+    'let total=1;'+
+    'export const add=(v:number)=>{total+=v;return total;};'+
+    'export const read=()=>total;'+
+    'export const double=function(v:number){return v*2;};',
+    {fileName:'const-functions.ts',compilerOptions:{
+      target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS
+    }}
+  ).outputText;
+  assert.match(code,/exports\.double = exports\.read = exports\.add = void 0/);
+  const traces=[];
+  const env=createBoundedNatlangEnvironment({EvalFailure,mode:'retained',
+    onTrace:bundle=>traces.push(bundle)});
+  const exports={},module={exports};
+  try{
+    assert.equal(env.evaluateModule(code,{exports,module,require:()=>{throw Error('unowned');}}),exports);
+    assert.equal(exports.add(3),4);
+    assert.equal(exports.read(),4);
+    assert.equal(exports.double(6),12);
+    assert.equal(exports.add(5),9);
+    assert.equal(exports.read(),9);
+    assert.equal(traces.length,5);
+    for(const archive of traces){
+      assert.equal(validateBundle(archive).valid,true);
+      assert.equal(replayExact(archive).valid,true);
+    }
+  }finally{env.close();}
+});
+
+test('CommonJS empty markers and unowned exports fail closed',()=>{
+  const env=createBoundedNatlangEnvironment({EvalFailure,mode:'retained'});
+  try{
+    for(const code of [
+      'exports.unused=void 0;exports.f=f;function f(){return 1;}',
+      'exports.f=void sideEffect();exports.f=f;function f(){return 1;}',
+      'exports.f=void 0;const f=()=>1;',
+      'exports.f=f;let f=()=>1;',
+      'exports.f=()=>1;'
+    ]){
+      const exports={},module={exports};
+      assert.throws(()=>env.evaluateModule(code,{exports,module,require:()=>{}}),EvalFailure);
+      assert.deepEqual(exports,{});
+    }
+  }finally{env.close();}
+});
