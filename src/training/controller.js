@@ -110,6 +110,9 @@ export class SemanticController {
               reason:'Choice contradicts its own declared decision'});
         }
       }else if(kind==='bind'){
+        if(f.from!==undefined&&
+           (!this.locals.has(f.from)||!eq(this.locals.get(f.from),f.value)))
+          fail('binding','Iteration cell copy contradicts the committed source cell');
         this.locals.set(f.name,structuredClone(f.value));
       }else if(kind==='allocate'){
         if(this.heap.has(f.name))fail('identity','Duplicate allocation');
@@ -124,8 +127,12 @@ export class SemanticController {
             fail('array','Invalid allocated array length');
           props.set('length',['num',f.length]);
         }
+        const captures=structuredClone(f.captures??[]);
+        if(f.kind==='closure')for(const {cell} of captures)
+          if(!this.locals.has(cell))
+            fail('capture','Closure references a cell not yet committed');
         this.heap.set(f.name,{kind:f.kind,code:f.code??null,
-          prototype:'ordinary',properties:props});
+          captures,prototype:'ordinary',properties:props});
       }else if(kind==='read'){
         const obj=this.heap.get(f.object);
         if(!obj)fail('identity','Unallocated read');
