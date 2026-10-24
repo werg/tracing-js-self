@@ -12,6 +12,7 @@ import {normalizeCompletionFacts} from './completion-facts.js';
 export const COMPACTION_RULES=Object.freeze({
   'input/1':{boundary:'observed',effect:'publish supplied graph'},
   'primitive/1':{boundary:'primitive',effect:'preserve operator order and operand values'},
+  'seeded-random/1':{boundary:'primitive',effect:'advance predeclared deterministic entropy'},
   'bind/1':{boundary:'local',effect:'commit supplied value'},
   'choice/1':{boundary:'control',effect:'retain chosen path'},
   'allocate/1':{boundary:'identity',effect:'initialize committed data properties'},
@@ -140,7 +141,14 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
       refuse('terminal guest throw requires bounded error-value contract');
   }
   for(const row of effectiveRows){
-    if(row.op==='value'&&row.arithmetic){
+    if(row.op==='value'&&row.source&&
+       source.text.slice(row.source.start,row.source.end).trim()==='Math.random()'){
+      if(prefix.schema!=='semantic-context/3'||
+         bundle.initialState.control.a0.randomSeed===undefined)
+        refuse('random computation lacks a published deterministic seed');
+      emit('compute',{expr:{op:'random'},result:tag(row.result)},'seeded-random/1',row);
+      writesOf(row);
+    }else if(row.op==='value'&&row.arithmetic){
       const op=row.arithmetic.operator;
       const operands=(row.operands??[]).map(v=>tag(primitiveTag(
         Array.isArray(v)?v:v?.value)));
