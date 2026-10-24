@@ -83,7 +83,8 @@
     "corpus:production:owned": "node tools/verify-production-owned.mjs",
     "corpus:ajv:reference": "node tools/verify-ajv-snapshot.mjs",
     "training:inspect": "node tools/inspect-training.mjs",
-    "training:recheck": "node tools/recheck-training-evidence.mjs"
+    "training:recheck": "node tools/recheck-training-evidence.mjs",
+    "training:experiment": "node tools/evaluate-training-experiments.mjs"
   },
   "bin": {
     "tracing-js-self": "./bin/tracing.js"
