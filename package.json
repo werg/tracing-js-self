@@ -38,7 +38,8 @@
     "./storage/node": {
       "types": "./src/storage/node.d.ts",
       "default": "./src/storage/node.js"
-    }
+    },
+    "./agent-model": "./src/agent-model.js"
   },
   "description": "Experimental owned-machine JavaScript semantic tracing runtime",
   "engines": {
