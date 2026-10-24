@@ -17,11 +17,11 @@ The new `./src/training/index.js` exports:
 - `encodeWitness`, `decodeWitness`, `validateExpression` — canonical
   operation-name-plus-JSON framing, strict scalar tags, bounded primitive
   expressions (at most 8 operators, at most 32 nodes), and data graph checks.
-- `checkWitnessClaim`, `WitnessController` — independent primitive
+- `checkWitnessClaim`, `SemanticController` — independent primitive
   consistency checks, selected-state commits, no oracle repair, explicit
   deterministic effect fixtures and owned FIFO job transitions.
-- `exportWitnessTraining`, `validateWitnessTrainingExport`,
-  `evaluateWitnessTrajectory` — explicit version-three transport and
+- `exportTraining`, `validateTrainingExport`,
+  `evaluateSelectedTrajectory` — explicit version-three transport and
   artifact/source-outcome checks.
 - `renderWitness` / `inspectWitnessPrefix` — public-only rendering
   for allocation, mutation, invocation, completion and control facts.
@@ -33,9 +33,10 @@ The private owned archive retains `semantic-tracing-run/2`.
 The language profile remains `training-js/1`: a trace grammar revision
 does not change source-language coverage.
 
-The old `exportTraining` API and version-two generator remain for regression
-comparison. **The version-three path is not yet the single active production
-writer or serving path.** Do not represent version-two bytes as version three.
+**Version three has replaced the former public exporter, formatter, controller,
+validator and consumer importer.** No version-two parser, writer or serving
+controller is available. Historical trace archives remain readable only at
+their pinned Git revisions for baseline comparison.
 
 ## Observable graph boundary
 
@@ -72,10 +73,10 @@ From the tracer checkout after `npm ci`:
 
 ```sh
 node --test test/training-witness-v3.test.js test/training-data-boundary-v3.test.js
-node tools/generate-witness-v3.mjs --seed 42 --count 16 \
+node tools/generate-training.mjs --seed 42 --count 16 \
   --output /tmp/witness-v3.jsonl --manifest /tmp/witness-v3.json
-node tools/recheck-witness-v3.mjs /tmp/witness-v3.jsonl
-node tools/inspect-witness-v3.mjs /tmp/witness-v3.jsonl /tmp/witness-v3-inspection.json
+node tools/recheck-training-evidence.mjs /tmp/witness-v3.jsonl
+node tools/inspect-training.mjs /tmp/witness-v3.jsonl /tmp/witness-v3-inspection.json
 npm test
 ```
 
