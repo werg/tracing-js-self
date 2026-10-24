@@ -122,3 +122,12 @@ test('side-effecting conditions are not speculatively flattened',()=>{
   assert(records.some(r=>r.kind==='choose'&&r.fields.expr.op==='literal'));
   assert.deepEqual(checked.exported.sidecar.reference.graph.roots.at(-1),value(3));
 });
+
+test('seeded random draws stay explicit across later arithmetic and draws',()=>{
+  const source='"use strict";function run(){return Math.random()*3+Math.random()*5;}';
+  const checked=verifyTrainingCase({source,entry:'run',args:[],seed:42});
+  assert.equal(checked.status,'locally_verified',checked.reason);
+  const records=checked.exported.sidecar.compiled.generated.map(decodeWitness);
+  assert.equal(records.filter(r=>r.kind==='compute'&&r.fields.expr.op==='random').length,2);
+  assert.equal(checked.exported.sidecar.compiled.policy.maxOperators,4);
+});
