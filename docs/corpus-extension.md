@@ -1913,3 +1913,14 @@ previous owned/admitted corpus totals is changed by diagnostic worker results.
   machine; native worker threads provide actual parallel shared-memory
   diagnostics. Full agent memory-order interleavings, native host effects,
   cross-engine evidence and general ECMAScript conformance remain open.
+
+
+### Owned async Promise executor continuations (2026-10-24)
+
+- [x] Asynchronous Promise constructor executors may now run guest `await`,
+  resume on owned jobs and settle the separately constructed Promise by their
+  captured resolver. The constructor disregards the async executor's returned
+  Promise; its later throw/rejection must not replace a settled constructor.
+  Tests cover replay and unresolved constructor promises.
+- [ ] Unhandled-rejection reporting and complete async-host conformance remain
+  unsupported; pending promises are not silently treated as fulfilled.
