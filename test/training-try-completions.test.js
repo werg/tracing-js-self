@@ -24,12 +24,17 @@ test('finally executes after return and supports normal fallthrough',()=>{
   assert.deepEqual(b.finalState.control.a0.completion.value,['num',2]);
   assert.equal(b.finalState.heap[Object.keys(b.finalState.heap).find(k=>b.finalState.heap[k].kind==='object')].properties.n.value[1],5);
 });
-test('caught throw is never silently promoted to locally verified training',()=>{
-  const result=verifyTrainingCase({source:strict('function f(){try{throw 1;}catch(e){return e+2;}}'),entry:'f'});
-  assert.notEqual(result.status,'locally_verified');
-  const runtime=createRuntime().startEntry({text:strict('function f(){try{throw 1;}catch(e){return e+2;}}'),functionName:'f'});
+test('caught throw has one actual v3 exit after handler binding',()=>{
+  const source=strict('function f(){try{throw 1;}catch(e){return e+2;}}');
+  const result=verifyTrainingCase({source,entry:'f'});
+  assert.equal(result.status,'locally_verified',JSON.stringify(result));
+  const runtime=createRuntime().startEntry({text:source,functionName:'f'});
   assert.equal(runtime.drive().kind,'terminated');
-  assert.throws(()=>exportTraining(runtime),/Caught guest throws require a modeled catch continuation/);
+  const episode=exportTraining(runtime);
+  const records=episode.sidecar.compiled.generated;
+  assert.equal(records.filter(r=>r.startsWith('return ')).length,1);
+  assert(records.some(r=>r.startsWith('transfer ')));
+  assert(records.some(r=>r.startsWith('bind ')));
 });
 test('natlang TS catch/finally guest values execute and exactly replay',()=>{
   class EvalFailure extends Error{constructor(message,events){super(message);this.events=events;}}

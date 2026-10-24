@@ -204,3 +204,26 @@ bounded training projection, formatting, scheduling, visibility and local
 verification path. `src/index.js` is the public package facade.
 
 **Evidence boundary:** exact replay is an interpreter self-consistency check against its recorded journal, **not** an independent semantic oracle, real native-effect replay, proof of standards compliance, or safe execution of arbitrary full JavaScript. It requires a complete sealed run and uses the recorded external values only at their arrival events. The prototype's tests establish only the behaviors they exercise. They do not pass the completion criteria from the full plan. In particular, `completeSemanticTrace: false` applies to the declared complete JavaScript target; the supported subset is instrumented at the interpreter's declared bytecode vocabulary.
+
+
+## Semantic trace version-three draft
+
+The paired implementation work is tracked in [the v3 implementation
+ledger](docs/SEMANTIC_TRACE_V3_IMPLEMENTATION.md) and governed by the
+[complete redesign plan](docs/SEMANTIC_TRACE_REDESIGN_PLAN.md).
+The separate `exportTraining`, `SemanticController`,
+`validateTrainingExport`, and `evaluateSelectedTrajectory` APIs
+introduce a typed public reasoning language, private rule certificates,
+a no-repair selected witness checker, and bounded observable graph semantics.
+A paired native importer lives in `werg/megatoken`.
+
+For reproducible **local candidates**, run
+`node tools/generate-training.mjs --count 16 --seed 42`, followed by
+`node tools/recheck-training-evidence.mjs witness-v3-local.jsonl`.
+To inspect the actual public lines and private certificates separately run
+`node tools/inspect-training.mjs witness-v3-local.jsonl`.
+
+Version two remains the current default writer while the full migration,
+bounded async/effect normalizer, model-selected recurrence and required model
+training comparisons are incomplete. Local verification and native consumer
+parsing are not dataset admission and are not evidence of learned-model gains.

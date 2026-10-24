@@ -1,6 +1,6 @@
 // Identity-preserving boundary for the deliberately bounded training profile.
 // No user getter, toJSON, coercion hook, or guest code is invoked.
-import {isProxy} from '#owned-proxy-check';
+import {inspectDataObject,inspectOwnedDataEntity} from './data-graph-contract.js';
 import {encode, decode, token} from '../values.js';
 
 export function importGraph(state, roots, allocate, {maxNodes=256,maxProperties=4096}={}) {
@@ -9,27 +9,19 @@ export function importGraph(state, roots, allocate, {maxNodes=256,maxProperties=
   let properties = 0, nodes = 0;
   function visit(value) {
     if (value === null || typeof value !== 'object') return encode(value);
-    if (isProxy(value)) throw new TypeError('Proxy input is unsupported');
     if (seen.has(value)) return ['ref',seen.get(value)];
-    const array = Array.isArray(value);
-    const prototype = Object.getPrototypeOf(value);
-    if (prototype !== (array ? Array.prototype : Object.prototype) && !(prototype === null && !array))
-      throw new TypeError('Only plain data objects and ordinary arrays are supported');
+    const {kind,prototype,descriptors}=inspectDataObject(value);
+    const array=kind==='array';
     if (++nodes > maxNodes) throw new RangeError('Entry graph node limit');
     const id=allocate('obj');
     seen.set(value,id);
-    const entity={id,kind:array?'array':'object',
-      ...(!array&&prototype===null?{prototype:null}:{}),properties:{},
+    const entity={id,kind,
+      ...(prototype===null?{prototype:null}:{}),properties:{},
       propertyVersions:{},shapeVersion:0,version:0};
     state.heap[id]=entity;
-    const keys=Reflect.ownKeys(value);
-    if (array && (!Number.isSafeInteger(value.length) || value.length > maxProperties))
+    if (array && descriptors.get('length').value > maxProperties)
       throw new RangeError('Entry array limit');
-    for (const key of keys) {
-      if (typeof key !== 'string' || key === '__proto__') throw new TypeError('Unsupported input property key');
-      const descriptor=Object.getOwnPropertyDescriptor(value,key);
-      if (!descriptor || !Object.hasOwn(descriptor,'value'))
-        throw new TypeError('Accessors are not valid entry graph data');
+    for (const [key,descriptor] of descriptors) {
       if (++properties > maxProperties) throw new RangeError('Entry property limit');
       if (array && key === 'length') {
         entity.properties.length=token(encode(value.length));
@@ -38,11 +30,8 @@ export function importGraph(state, roots, allocate, {maxNodes=256,maxProperties=
       }
       entity.propertyVersions[key]=0;
     }
-    if (array) {
-      for(let i=0;i<value.length;i++)
-        if(!Object.hasOwn(entity.properties,String(i)))
-          throw new TypeError('Sparse entry arrays are not in training-js/1');
-    }
+    // Absent array indices are holes. Present undefined entries remain own
+    // properties, including across cyclic and aliased imported graphs.
     return ['ref',id];
   }
   return roots.map(visit);
@@ -55,8 +44,7 @@ export function realizeGraph(heap, roots) {
     const id=value[1];
     if(seen.has(id))return seen.get(id);
     const entity=heap[id];
-    if (!entity || !['object','array'].includes(entity.kind))
-      throw new TypeError('Entry graph contains an unsupported identity');
+    inspectOwnedDataEntity(entity);
     const result=entity.kind==='array'?new Array(decode(entity.properties.length.value)):
       entity.prototype===null?Object.create(null):{};
     seen.set(id,result);
@@ -79,15 +67,11 @@ export function describeGraph(roots) {
     if(seen.has(v))return ['ref',seen.get(v)];
     const id='o'+objects.length;
     seen.set(v,id);
-    const kind=Array.isArray(v)?'array':'object';
-    const record={id,kind,properties:[]};
+    const {kind,prototype,descriptors}=inspectDataObject(v);
+    const record={id,kind,...(prototype===null?{prototype:null}:{}),properties:[]};
     objects.push(record);
-    for(const key of Reflect.ownKeys(v)) {
-      if(typeof key!=='string')throw new TypeError('Unsupported graph key');
-      const desc=Object.getOwnPropertyDescriptor(v,key);
-      if (!Object.hasOwn(desc,'value'))throw new TypeError('Accessor in observable graph');
+    for(const [key,desc] of descriptors)
       record.properties.push([key,visit(desc.value)]);
-    }
     return ['ref',id];
   }
   return {roots:roots.map(visit),objects};
@@ -104,11 +88,11 @@ export function describeOwnedGraph(heap,roots,{maxNodes=256}={}) {
     const id=value[1];
     if(seen.has(id))return ['ref',id];
     const entity=heap[id];
-    if(!entity || !['array','object'].includes(entity.kind))
-      throw new TypeError('Training graph refers to a missing or non-data identity');
+    const prototype=inspectOwnedDataEntity(entity);
     if(seen.size>=maxNodes)throw new RangeError('Training graph node limit');
     seen.add(id);
-    const record={id,kind:entity.kind,shapeVersion:entity.shapeVersion??0,properties:[]};
+    const record={id,kind:entity.kind,...(prototype===null?{prototype:null}:{}),
+      shapeVersion:entity.shapeVersion??0,properties:[]};
     objects.push(record);
     for(const [key,entry] of Object.entries(entity.properties)){
       record.properties.push({key,value:visit(entry.value),

@@ -113,7 +113,7 @@ test('training subpath exposes the selected-state controller and supervised eval
   assert.equal(typeof SemanticController,'function');
   const report=evaluateSelectedTrajectory({
     groups:checked.exported.public.groups,
-    referenceOutcome:checked.exported.sidecar.reference.outcome
+    referenceOutcome:checked.exported.sidecar.reference
   });
   assert.equal(report.valid,true);
   assert.equal(report.correctness,'correct');

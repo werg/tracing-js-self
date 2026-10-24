@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 import {recheckIndependentTrainingEvidence} from '../src/training/admit.js';
 const filename=process.argv[2];
 if(!filename||process.argv.length!==3)
-  throw new TypeError('Usage: node tools/recheck-training-evidence.mjs <trusted-local-corpus.jsonl>');
+  throw new TypeError('Usage: node tools/recheck-training-evidence.mjs <version-three-corpus.jsonl>');
 const rows=readFileSync(filename,'utf8').trim().split('\n').filter(Boolean);
 if(!rows.length)throw new TypeError('No local candidates provided');
 const failures=[];
@@ -15,7 +15,7 @@ for(const [index,line] of rows.entries()){
     if(!evidence.valid)failures.push({index,reason:evidence.reason});
   }catch(error){failures.push({index,reason:String(error.message)});}
 }
-const report={schema:'training-local-evidence-recheck/1',
+const report={schema:'semantic-recheck/3',
   checked:rows.length,locallyVerified:rows.length-failures.length,
   failed:failures.length,admitted:0,failures};
 process.stdout.write(JSON.stringify(report)+'\n');

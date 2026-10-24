@@ -10,7 +10,7 @@ import {auditReferenceBranches} from './branch-reference.js';
 import {evaluateSelectedTrajectory} from './rollout.js';
 
 export function verifyTrainingCase({source,entry,args=[],seed=null,lineage=null,
-    maxSteps=10000,maxGenerated=256}={}) {
+    maxSteps=10000,maxGenerated=4096}={}) {
   let runtime, progress;
   try {
     runtime=createRuntime({maxSteps,randomSeed:seed}).startEntry({text:source,functionName:entry,args});
@@ -78,7 +78,7 @@ export function verifyTrainingCase({source,entry,args=[],seed=null,lineage=null,
   }
   const selected=evaluateSelectedTrajectory({groups:exported.public.groups,
     referenceOutcome:reference,maxGenerated});
-  if(!selected.valid || selected.correctness!=='correct')
+  if(!selected.valid || selected.correctness!=='correct'||selected.firstWitnessViolation)
     return {status:'projection_failure',reason:'Public controller trajectory disagrees with reference',
       invalid:selected.invalid,correctness:selected.correctness};
   exported.sidecar.referenceStatus='agreed';
@@ -86,7 +86,7 @@ export function verifyTrainingCase({source,entry,args=[],seed=null,lineage=null,
   exported.sidecar.branchAudit=branchAudit;
   exported.sidecar.sourceLineage=lineage;
   exported.sidecar.generationSeed=seed;
-  exported.sidecar.reference={engine:'Node.js V8 vm (independent reference only)',outcome:reference};
+  exported.sidecar.referenceEngine='Node.js V8 vm (independent reference only)';
   return {status:'locally_verified',exported};
 }
 
@@ -99,7 +99,7 @@ export function recheckIndependentTrainingEvidence(exported) {
     validateTrainingExport(exported);
     const {archive,referenceStatus,reference:stored,operationAudit,branchAudit}
       =exported.sidecar;
-    if(referenceStatus!=='agreed' || !stored?.outcome ||
+    if(referenceStatus!=='agreed' || stored?.kind!=='return' ||
        operationAudit?.status!=='agreed'||branchAudit?.status!=='agreed')
       throw new Error('Missing independent reference evidence');
     if(archive.manifest.profile!=='training-js/1')
@@ -115,7 +115,7 @@ export function recheckIndependentTrainingEvidence(exported) {
     const owned={kind:'return',graph:describeGraph(realizeGraph(archive.finalState.heap,
       [...args,completion.value]))};
     if(!isDeepStrictEqual(owned,reference) ||
-       !isDeepStrictEqual(stored.outcome,reference))
+       !isDeepStrictEqual(stored,reference))
       throw new Error('Independent reference outcome disagrees');
     const options={source,entry:functionName,args,
       initialHeap:archive.initialState.heap,bundle:archive,reference};
@@ -127,7 +127,7 @@ export function recheckIndependentTrainingEvidence(exported) {
     if(branches.status!=='agreed'||!isDeepStrictEqual(branches,branchAudit))
       throw new Error('Independent control evidence disagrees');
     return {valid:true,scope:'locally_verified_only',admitted:false,
-      operations:operations.checked,branches:branches.checked};
+      traceFormat:'semantic-trace/3',operations:operations.checked,branches:branches.checked};
   } catch(error) {
     return {valid:false,scope:'locally_verified_only',admitted:false,
       reason:String(error.message)};

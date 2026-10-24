@@ -1,61 +1,48 @@
-// Public projection. Never serialize a checkpoint, future result, validation
-// answer, arrival payload, event patch, archive hash or undispatched input.
+// Immutable initial context: static source and supplied entry graph only.
+// No executed-site filtering or future result/dispatch metadata.
 import {describeOwnedGraph} from './graph.js';
-import {encodeRecord} from './format.js';
+import {analyzeSemanticProgram} from './semantic-program.js';
+import {encodeWitness,EXECUTION_VERSION,CONTEXT_VERSION,WITNESS_VERSION} from './format.js';
 
-export function trainingPrefix(bundle,{maxSourceBytes=2048}={}) {
-  if(bundle.manifest?.profile!=='training-js/1' || bundle.entrySpec?.kind!=='function')
-    throw new TypeError('Not a training-js/1 function invocation');
-  if(bundle.sources.length!==1)throw new RangeError('Only single-source bundles are admitted in training-js/1');
-  const source=bundle.sources[0];
-  if(source.parser!=='acorn/8.15.0:training-js/1')
-    throw new TypeError('Unverified training parser');
+export function trainingPrefix(bundle,{maxSourceBytes=65536}={}){
+  if(bundle.manifest?.profile!=='training-js/1'||bundle.entrySpec?.kind!=='function')
+    throw new TypeError('Missing owned training entry');
+  const source=bundle.sources.find(s=>s.sourceId===bundle.entrySpec.sourceId);
+  if(!source)throw new TypeError('Entry source is unavailable');
   if(Buffer.byteLength(source.text,'utf8')>maxSourceBytes)
-    throw new RangeError('Source exceeds initial bundle limit; code-on-call is not enabled');
-  const roots=bundle.entrySpec.arguments;
-  const graph=describeOwnedGraph(bundle.initialState.heap,roots);
-  const sites=bundle.sites.map(s=>({id:s.siteId,code:s.codeId,start:s.start,end:s.end}));
-  const codes=Object.values(bundle.programs).map(p=>({id:p.id,params:p.params,async:p.async,
-    restIndex:p.restIndex??-1}));
-  const global=bundle.initialState.envs[bundle.initialState.control.a0.globalEnvId];
-  const staticFunctions=Object.entries(global.bindings).flatMap(([name,binding])=>{
-    const value=binding.token?.value;
-    const fn=value?.[0]==='ref' && bundle.initialState.heap[value[1]];
-    return fn?.kind==='function' ? [{name,identity:value[1],code:fn.codeId,
-      captures:fn.closureEnvId}] : [];
-  });
-  const staticRegExps=Object.entries(global.bindings).flatMap(([name,binding])=>{
-    const value=binding.token?.value;
-    const regex=value?.[0]==='ref' && bundle.initialState.heap[value[1]];
-    return regex?.kind==='regexp' ? [{name,identity:value[1],
-      pattern:regex.properties['[[Source]]'].value[1],
-      flags:regex.properties['[[Flags]]'].value[1]}] : [];
-  });
-  return {
-    schema:'semantic-context/2',
-    source:encodeRecord('code',{sourceId:source.sourceId,text:source.text,codes,sites,staticFunctions,
-      ...(staticRegExps.length?{staticRegExps}:{}),
-      ...(bundle.initialState.control.a0.randomSeed!==undefined ?
-        {randomSeed:bundle.initialState.control.a0.randomSeed}: {})}),
-    input:encodeRecord('value',{entry:bundle.entrySpec.functionName,
-      invocation:bundle.initialState.control.a0.activeFrameId,graph})
-  };
+    throw new RangeError('Static source exceeds declared publication bound');
+  const program=analyzeSemanticProgram(source.text);
+  const initial=describeOwnedGraph(bundle.initialState.heap,bundle.entrySpec.arguments);
+  const named=new Map(),objects=[];
+  for(const obj of initial.objects)named.set(obj.id,'o'+(named.size+1));
+  function translate(v) {
+    return v[0]==='ref'?['ref',named.get(v[1])]:structuredClone(v);
+  }
+  const graph={roots:initial.roots.map(translate),
+    objects:initial.objects.map(x=>({id:named.get(x.id),kind:x.kind,
+      ...(x.prototype===null?{prototype:null}:{}),
+      properties:x.properties.map(p=>({key:p.key,value:translate(p.value)}))}))};
+  return {schema:CONTEXT_VERSION,program,
+    source:encodeWitness('code',{entry:bundle.entrySpec.functionName,
+      source:source.text,sites:program.sites,
+      ...(bundle.initialState.control.a0.randomSeed!==undefined?
+        {randomSeed:bundle.initialState.control.a0.randomSeed}:{})}),
+    input:encodeWitness('input',{graph})};
 }
 
 export function verifyVisibleExport(exported) {
-  const allowed=['schema','profile','traceFormat','contextFormat','completionPolicy','groups'];
-  const keys=Object.keys(exported.public??{});
-  if(keys.length!==allowed.length || !keys.every(key=>allowed.includes(key)))
-    throw new Error('Unexpected public export field');
-  const descriptor=exported.public;
-  if(descriptor.profile!=='training-js/1' || descriptor.traceFormat!=='semantic-trace/2' ||
-     descriptor.contextFormat!=='semantic-context/2' ||
-     descriptor.completionPolicy!=='immediate-return')
-    throw new Error('Invalid public export descriptor');
-  if(exported.public.schema!=='semantic-execution/2')throw new Error('Unknown training export');
-  if(!Array.isArray(exported.public.groups)||!exported.public.groups.length)
-    throw new Error('Missing meridians');
-  if(exported.public.groups[0].mode!=='observed')
-    throw new Error('Episode requires an observed source prefix');
+  const pub=exported?.public;
+  if(!pub||pub.schema!==EXECUTION_VERSION||pub.traceFormat!==WITNESS_VERSION||
+     pub.contextFormat!==CONTEXT_VERSION||
+     pub.completionPolicy!=='immediate-root'||
+     !Array.isArray(pub.groups)||pub.groups.length<4)
+    throw new TypeError('Only complete version-three public demonstrations are permitted');
+  if(Object.keys(pub).some(key=>!
+    ['schema','profile','traceFormat','contextFormat','completionPolicy','groups'].includes(key)))
+    throw new TypeError('Unexpected predictor-visible envelope');
+  for(const group of pub.groups)
+    if(!['observed','generated'].includes(group.mode)||
+       group.loss!==(group.mode==='observed'?'none':'semantic'))
+      throw new TypeError('Invalid observed/generated supervision ownership');
   return true;
 }
