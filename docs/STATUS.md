@@ -1,5 +1,10 @@
 # Implementation status (0.2.0)
 
+## Native callable Promise settlement observation (October 24, 2026)
+
+- `werg/natlang` native observation now captures retained top-level callable-export invocations plus returned native Promise fulfillment/rejection using matching invocation IDs, without replacing the caller's Promise. This extends boundary-level evidence for async exports, not internal bytecode, nested callbacks, host effects or exact replay. It is **not** eligible for owned semantic training admission; see [native observation](https://github.com/werg/natlang/blob/main/ts-host/NATIVE_OBSERVATION_TRACING.md).
+- New regression coverage is committed but no passing CI/build result has been verified.
+
 ## Native retained callable invocation observations (October 24, 2026)
 
 - The opt-in native observation adapter in `werg/natlang` now decorates writable/configurable own callable exports after retained module bootstrap. Direct invocations and constructions emit paired `exportCall` start and synchronous return/throw records with matching invocation IDs. Host `this` and constructor forwarding are preserved through proxies; exported function identities change.
