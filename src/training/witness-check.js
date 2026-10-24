@@ -26,9 +26,16 @@ function tagged(value){
     value===-Infinity?'-Infinity':value];
   throw new TypeError('Unsupported witness result type');
 }
-export function evaluateWitnessExpression(expr,{locals=new Map(),readProperty=()=>{throw Error('Unbound public read');}}={}){
+export function evaluateWitnessExpression(expr,{locals=new Map(),
+    randomState=null,readProperty=()=>{throw Error('Unbound public read');}}={}){
   const counts=validateExpression(expr);
   function visit(node) {
+    if(node.op==='random'){
+      if(!Number.isInteger(randomState)||randomState<0||randomState>0xffffffff)
+        throw new TypeError('No committed deterministic RNG fixture seed');
+      const next=(Math.imul(randomState,1664525)+1013904223)>>>0;
+      return ['num',next/4294967296];
+    }
     if(node.op==='literal')return node.value;
     if(node.op==='local'){
       if(!locals.has(node.name))throw new TypeError('Unknown witness local '+node.name);
