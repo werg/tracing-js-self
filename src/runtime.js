@@ -173,7 +173,7 @@ export class Runtime {
     this.maxSteps=maxSteps;
     this.sources=[];this.sites=[];this.programs={};this.events=[];this.chunks=[];
     this.checkpoints={};this.started=false;
-    this.state={counters:{ids:{version:0,env:0,obj:0,promise:0,frame:0,effect:0,input:0,operation:0}},envs:{},heap:{},promises:{},frames:{},effects:{},inputs:{},operations:{},control:{a0:{version:0,activeFrameId:null,queue:[],status:'new'}}};
+    this.state={counters:{ids:{version:0,env:0,obj:0,promise:0,frame:0,effect:0,input:0,operation:0}},envs:{},heap:{},promises:{},frames:{},effects:{},inputs:{},operations:{},control:{a0:{version:0,activeFrameId:null,queue:[],timers:[],now:0,nextTimerId:0,timerTurns:0,status:'new'}}};
     if(randomSeed!==null){
       this.state.control.a0.randomSeed=randomSeed;
       this.state.control.a0.randomState=randomSeed;
@@ -228,8 +228,9 @@ export class Runtime {
     const s=this.state,global=this.newEnv(s);
     s.envs[global].bindings.host={kind:'const',initialized:true,token:token(['host','demo'])};
     s.envs[global].bindings.Promise={kind:'const',initialized:true,token:token(['intrinsic','Promise'])};
-    s.envs[global].bindings.queueMicrotask={kind:'const',initialized:true,
-      token:token(['builtinfn','queueMicrotask']),version:0};
+    for(const name of ['queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
+      s.envs[global].bindings[name]={kind:'const',initialized:true,
+        token:token(['builtinfn',name]),version:0};
     for(const name of ['Object','Array','Number','Math'])
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
@@ -271,7 +272,7 @@ export class Runtime {
       state.envs[global].bindings.console={kind:'const',initialized:true,
         token:token(['host','platform.console']),version:0};
     }
-    for(const name of ['parseInt','isNaN','queueMicrotask'])
+    for(const name of ['parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
     for(const name of ['Object','Array','Number','Math','Promise','Set','Error','TypeError'])
@@ -992,7 +993,7 @@ export class Runtime {
           if(base.value[0]==='host')v=['hostfn',`${base.value[1]}.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Date' &&
                   property==='now')v=['hostfn','platform.dateNow'];
-          else if(base.value[0]==='intrinsic' && base.value[1]==='Promise' && ['resolve','reject'].includes(property))v=['builtinfn',`Promise.${property}`];
+          else if(base.value[0]==='intrinsic' && base.value[1]==='Promise' && ['resolve','reject','all','race'].includes(property))v=['builtinfn',`Promise.${property}`];
           else if(base.value[0]==='intrinsic' &&
              ((base.value[1]==='Math' &&
                ['abs','ceil','floor','trunc','round','max','min','pow','sign','sqrt','hypot','random'].includes(property)) ||
@@ -1184,6 +1185,28 @@ export class Runtime {
               throw new RangeError('Owned microtask queue budget exceeded');
             s.control.a0.queue.push({kind:'microtask',functionId:args[0].value[1]});
             return {...operands(fn,...args),...result(U)};
+          }
+          if(callable[0]==='builtinfn' && ['setTimeout','clearTimeout','setInterval','clearInterval'].includes(callable[1])){
+            const name=callable[1],c=s.control.a0;
+            if(name==='clearTimeout'||name==='clearInterval'){
+              if(args.length!==1 || args[0].value[0]!=='num')
+                guestFault('TypeError','Timer cancellation requires an owned numeric id');
+              c.timers=c.timers.filter(t=>t.id!==decode(args[0].value));
+              return {...operands(fn,...args),...result(U)};
+            }
+            if(args.length<1||args.length>2||!this.callableGuest(s,args[0]?.value))
+              guestFault('TypeError','Virtual timer requires an owned callback');
+            const delay=args[1]?.value??['num',0];
+            if(delay[0]!=='num'||!Number.isFinite(decode(delay))||
+               decode(delay)<0||decode(delay)>10000)
+              guestFault('TypeError','Virtual timer delay must be a bounded nonnegative number');
+            if(c.timers.length>=128||c.nextTimerId>=1024)
+              throw new RangeError('Virtual timer allocation budget exceeded');
+            const id=++c.nextTimerId,ms=Math.floor(decode(delay));
+            c.timers.push({id,order:id,kind:name==='setInterval'?'interval':'timeout',
+              functionId:args[0].value[1],at:c.now+Math.max(ms,name==='setInterval'?1:0),
+              delay:Math.max(ms,1)});
+            return {...operands(fn,...args),...result(['num',id])};
           }
           if(callable[0]==='builtinfn' && callable[1]==='Array.from'){
             const value=args[0]?.value??U;
@@ -1801,6 +1824,35 @@ export class Runtime {
             const p=this.newPromise(s,callable[1]==='Promise.resolve'?'fulfilled':'rejected',token(v,origin));
             return {...operands(fn,...args),...result(['promise',p])};
           }
+          if(callable[0]==='builtinfn' && ['Promise.all','Promise.race'].includes(callable[1])){
+            const input=args[0]?.value,arr=input?.[0]==='ref'?s.heap[input[1]]:null;
+            if(args.length!==1||arr?.kind!=='array'||Object.keys(arr.accessors??{}).length)
+              guestFault('TypeError','Promise combinator requires an owned dense array');
+            const length=decode(arr.properties.length.value);
+            if(!Number.isInteger(length)||length<0||length>64)
+              throw new RangeError('Promise combinator iterable limit exceeded');
+            const values=[];
+            for(let i=0;i<length;i++){
+              const entry=arr.properties[String(i)];
+              if(!entry)guestFault('TypeError','Sparse Promise combinator iterable unsupported');
+              values.push(entry);
+            }
+            const kind=callable[1]==='Promise.all'?'all':'race';
+            const resultId=this.newPromise(s);
+            if(kind==='all')s.promises[resultId].combinator={kind,remaining:length,values:Array(length).fill(null)};
+            if(kind==='all'&&length===0){
+              const id=this.next(s,'obj');
+              s.heap[id]={id,kind:'array',properties:{length:token(['num',0],eventId)},
+                propertyVersions:{length:0},shapeVersion:0,version:0};
+              this.resolvePromise(s,resultId,['ref',id],eventId);
+            }
+            for(let i=0;i<length;i++){
+              const v=values[i],inputId=v.value[0]==='promise'?v.value[1]:
+                this.newPromise(s,'fulfilled',v);
+              this.observePromise(s,inputId,{kind:'combinator',resultId,index:i,mode:kind});
+            }
+            return {...operands(fn,...args),...result(['promise',resultId])};
+          }
           if(callable[0]==='hostfn'){
             const operation=callable[1];
             const kind=hostOperation(operation).kind;
@@ -1915,6 +1967,32 @@ export class Runtime {
         return {causes:[{kind:'invocation',frameId:id}],result:U};
       }
       const p=s.promises[job.promiseId];
+      if(job.kind==='combinator'){
+        if(!p||!['fulfilled','rejected'].includes(p.status))
+          throw new Error('Combinator job on unsettled promise');
+        const target=s.promises[job.resultId];
+        if(!target)throw new Error('Unknown combinator target');
+        if(target.status!=='pending')
+          return {causes:[{kind:'promise',promiseId:job.promiseId}],result:p.value.value};
+        if(p.status==='rejected')this.rejectPromise(s,job.resultId,p.value.value,p.value.origin);
+        else if(job.mode==='race')this.resolvePromise(s,job.resultId,p.value.value,p.value.origin);
+        else {
+          const comb=target.combinator;
+          if(comb?.kind!=='all'||comb.values[job.index]!==null)
+            throw new Error('Invalid Promise.all observation');
+          comb.values[job.index]=copy(p.value);
+          comb.remaining--;
+          if(comb.remaining===0){
+            const values=comb.values,id=this.next(s,'obj');
+            const array=s.heap[id]={id,kind:'array',properties:{
+              length:token(['num',values.length],eventId)},
+              propertyVersions:{length:0},shapeVersion:0,version:0};
+            for(let i=0;i<values.length;i++)putOwn(array,String(i),values[i].value,eventId);
+            this.resolvePromise(s,job.resultId,['ref',id],eventId);
+          }
+        }
+        return {causes:[{kind:'promise',promiseId:job.promiseId}],result:p.value.value};
+      }
       if(job.kind==='reaction'||job.kind==='finally-pass') {
         if(!p||!['fulfilled','rejected'].includes(p.status))
           throw new Error('Reaction job on unsettled promise');
@@ -1967,6 +2045,32 @@ export class Runtime {
       s.control.a0.activeFrameId=f.id;return {result:p.value.value,causes:[{kind:'promise',promiseId:job.promiseId}]};
     });
   }
+  enterTimerTask() {
+    const c=this.state.control.a0;
+    if(c.activeFrameId || c.queue.length || !c.timers.length)
+      throw new Error('Virtual timer turn cannot preempt an active guest job');
+    if(c.timerTurns>=128)throw new RangeError('Virtual timer turn budget exceeded');
+    this.commit('host.task.enter',(s,eventId)=>{
+      const clock=s.control.a0;
+      clock.timers.sort((a,b)=>a.at-b.at||a.order-b.order);
+      const task=clock.timers.shift();
+      clock.now=Math.max(clock.now,task.at);
+      clock.timerTurns++;
+      if(task.kind==='interval'){
+        task.at=clock.now+task.delay;
+        task.order=clock.nextTimerId+clock.timerTurns*1024;
+        clock.timers.push(task);
+      }
+      const fn=s.heap[task.functionId];
+      if(fn?.kind!=='function')throw new Error('Virtual timer callback identity missing');
+      const inner=fn.async?this.newPromise(s):null;
+      const id=this.newFrame(s,fn.codeId,fn.closureEnvId,null,inner,[],
+        fn.arrow?fn.lexicalThis:U);
+      s.frames[id].reactionJob=true;
+      clock.activeFrameId=id;
+      return {causes:[{kind:'invocation',frameId:id}],result:['num',clock.now]};
+    });
+  }
   seal(kind) {
     if(this.events.length===this.chunkStart && this.chunks.length && kind==='waiting')return;
     const last=this.events.length, before=this.chunkBefore, after=`q${last}`;
@@ -1996,6 +2100,7 @@ export class Runtime {
       if(active?.status==='running') {this.step();continue;}
       if(active?.status==='blocked'){this.seal('waiting');return {kind:'waiting',waitingOn:active.blockedOn,pendingEffects:this.chunks.at(-1).exit.pendingEffects};}
       if(c.queue.length){this.enterQueuedJob();continue;}
+      if(c.timers.length){this.enterTimerTask();continue;}
       const pendingPromises=Object.values(this.state.promises).some(p=>p.status==='pending');
       const pendingEffects=Object.values(this.state.effects).some(e=>e.external==='pending');
       const kind=pendingPromises||pendingEffects?'waiting':'terminated';

@@ -40,6 +40,22 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
          e.causes.find(c=>c.kind==='promise').promiseId!==job.promiseId)
         fail('Job entry does not consume the next settled promise observer',e.eventId);
     }
+    if(e.operation==='host.task.enter'){
+      const control=state.control.a0;
+      if(control.activeFrameId||control.queue.length||!control.timers?.length)
+        fail('Virtual host task preempted guest microtasks or active work',e.eventId);
+      const selected=[...control.timers].sort((a,b)=>a.at-b.at||a.order-b.order)[0];
+      const clock=e.stateChanges.find(p=>p.table==='control'&&p.id==='a0')?.after;
+      const invocation=e.causes.find(c=>c.kind==='invocation')?.frameId;
+      const nextFrame=e.stateChanges.find(p=>p.table==='frames'&&p.id===invocation)?.after;
+      if(!clock||!nextFrame||nextFrame.codeId!==state.heap[selected.functionId]?.codeId||
+         clock.activeFrameId!==invocation||!nextFrame.reactionJob||
+         clock.now!==Math.max(control.now,selected.at)||
+         clock.timerTurns!==control.timerTurns+1||clock.timerTurns>128||
+         e.causes.length!==1||!eq(e.result,['num',clock.now])||
+         clock.timers.some(t=>t.id===selected.id&&selected.kind==='timeout'))
+        fail('Virtual host task turn is not independently accounted',e.eventId);
+    }
     const patched=new Set();
     if(e.completion && !['spec.operation.complete','completion.throw','external.input.deliver',
       'job.enter','binding.read','binding.write','binding.update','primitive.unary',

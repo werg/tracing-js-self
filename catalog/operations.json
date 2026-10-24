@@ -278,6 +278,11 @@
       "operationId": "regexp.allocate",
       "version": 1,
       "kind": "algorithm"
+    },
+    {
+      "operationId": "host.task.enter",
+      "version": 1,
+      "kind": "algorithm"
     }
   ]
 }

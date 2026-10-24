@@ -65,13 +65,14 @@ function nextInternalAction(runtime) {
   if (active?.status === 'running') return 'step';
   if (active?.status === 'blocked') return 'seal';
   if (control.queue.length) return 'job.enter';
+  if (control.timers?.length) return 'host.task.enter';
   return 'seal';
 }
 function assertSchedulerAction(runtime, event) {
   if (event.operation === 'external.input.arrive' ||
       event.operation === 'external.input.deliver') return;
   const expected = nextInternalAction(runtime);
-  const action = event.operation === 'effect.dispatch' || event.operation === 'job.enter'
+  const action = ['effect.dispatch','job.enter','host.task.enter'].includes(event.operation)
     ? event.operation : 'step';
   if (action !== expected)
     fail(`Invalid internal scheduler order: ${action} while ${expected} is required`, event.eventId);
@@ -86,7 +87,7 @@ function exitKind(runtime) {
   const active = c.activeFrameId && runtime.state.frames[c.activeFrameId];
   if (active?.status === 'running') return null;
   if (active?.status === 'blocked') return 'waiting';
-  if (c.queue.length) return null;
+  if (c.queue.length || c.timers?.length) return null;
   const pending = Object.values(runtime.state.promises).some(p => p.status === 'pending') ||
     Object.values(runtime.state.effects).some(e => e.external === 'pending');
   return pending ? 'waiting' : 'terminated';
@@ -175,6 +176,9 @@ export function replayExact(bundle) {
           break;
         case 'job.enter':
           runtime.enterQueuedJob();
+          break;
+        case 'host.task.enter':
+          runtime.enterTimerTask();
           break;
         default:
           runtime.step();

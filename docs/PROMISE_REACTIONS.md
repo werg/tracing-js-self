@@ -48,3 +48,28 @@ queues with exact replay.
 timers, Node nextTick priority, browser render checkpoints, rejection events,
 cross-realm host callbacks, task queues, SharedArrayBuffer or worker agents are
 modeled by this addition.
+
+## Owned bounded Promise array combinators and virtual task turns (2026-10-24)
+
+`Promise.all` and `Promise.race` now accept dense owned arrays of up to 64
+entries. Values and owned Promises subscribe to explicit queued settlement jobs;
+`all` preserves input order, waits for all fulfillment, and rejects on first
+rejection; `race` settles on the first processed reaction. Empty `all`
+fulfills with an owned array while empty `race` remains pending. There is
+still no arbitrary iterator protocol, thenable assimilation, Promise executor,
+species/subclassing, or `any` / `allSettled`.
+
+`setTimeout`, `clearTimeout`, `setInterval`, and `clearInterval` accept
+owned callbacks and explicit bounded virtual millisecond delays. They use an
+ordered, serialized **virtual** task queue: all currently queued microtasks
+drain before the next timer turn and after every timer callback. Timers do
+not sample real wall time or access host resources. Each task turn and
+its guest invocation are journaled, independently checked for clock/order
+invariants, and exactly replayed. Limits: 128 task turns, 128 pending timers,
+1024 lifetime timer IDs, at most 10,000 ms requested delay. Intervals are
+clamped to one virtual millisecond. Hitting the turn limit refuses execution
+rather than claiming completion.
+
+This is **not** an implementation of Node/browser event loops, nested timer
+throttling, host I/O, workers, actual concurrent agents, complete ECMAScript
+Promises, or official Test262 host semantics.
