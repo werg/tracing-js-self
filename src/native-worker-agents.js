@@ -6,6 +6,10 @@ const BOOT = `
 const {parentPort,workerData} = require('node:worker_threads');
 parentPort.once('message',async message=>{
   if(message!=='start')return;
+  // Awaiting Atomics.waitAsync does not itself keep a Node worker alive.
+  // Keep the native worker active while the asynchronous result is pending.
+  // The parent retains its timeout and termination safeguards.
+  const keepAlive=setInterval(()=>{},1000);
   try{
     const fn=new Function('buffers','"use strict"; return (async()=>{\\n'+workerData.source+'\\n})()');
     const value=await fn(workerData.buffers);
@@ -13,7 +17,7 @@ parentPort.once('message',async message=>{
   }catch(error){
     parentPort.postMessage({type:'error',name:String(error?.name??'Error'),
       message:String(error?.message??error)});
-  }finally{parentPort.close();}
+  }finally{clearInterval(keepAlive);parentPort.close();}
 });
 parentPort.postMessage({type:'ready'});
 `;
