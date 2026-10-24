@@ -146,7 +146,7 @@ export function validateWitness(kind,fields){
   if(['bind','read','write'].includes(kind))assertValue(fields.value);
   if(['return','throw','transfer'].includes(kind))assertValue(fields.value);
   if(kind==='allocate' && (!identity.test(fields.name) ||
-      !['array','object','closure'].includes(fields.kind)||!Array.isArray(fields.properties)))
+      !['array','object','closure','set','regexp'].includes(fields.kind)||!Array.isArray(fields.properties)))
     fail('allocation identity');
   if(kind==='allocate'&&fields.kind==='closure'){
     if(!Array.isArray(fields.captures??[]))fail('closure capture contract');
