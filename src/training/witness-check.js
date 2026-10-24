@@ -26,7 +26,7 @@ function tagged(value){
     value===-Infinity?'-Infinity':value];
   throw new TypeError('Unsupported witness result type');
 }
-export function evaluateWitnessExpression(expr,{locals=new Map(),
+export function evaluateWitnessExpression(expr,{inputs=[],locals=new Map(),
     randomState=null,readProperty=()=>{throw Error('Unbound public read');}}={}){
   const counts=validateExpression(expr);
   function visit(node) {
@@ -37,6 +37,10 @@ export function evaluateWitnessExpression(expr,{locals=new Map(),
       return ['num',next/4294967296];
     }
     if(node.op==='literal')return node.value;
+    if(node.op==='input'){
+      if(node.index>=inputs.length)throw new TypeError('Missing supplied input '+node.index);
+      return inputs[node.index];
+    }
     if(node.op==='local'){
       if(!locals.has(node.name))throw new TypeError('Unknown witness local '+node.name);
       return locals.get(node.name);
