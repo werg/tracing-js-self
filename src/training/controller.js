@@ -102,8 +102,10 @@ export class SemanticController {
         if(kind==='compute'&&f.bind)this.locals.set(f.bind,structuredClone(f.result));
         if(kind==='choose'){
           const selected=['then','evaluate-right'].includes(f.path);
-          if(typeof primitive(f.decision)!=='boolean'||
-             selected!==Boolean(primitive(f.decision)))
+          const evaluated=f.decision[0]==='ref'?true:Boolean(primitive(f.decision));
+          // JavaScript ToBoolean accepts every object reference; no host-side
+          // conversion hook is invoked for a truthiness decision.
+          if(['then','else'].includes(f.path)&&selected!==evaluated)
             this.claims.push({index:this.history.length,kind,consistent:false,
               reason:'Choice contradicts its own declared decision'});
         }
