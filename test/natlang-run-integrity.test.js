@@ -106,3 +106,31 @@ test('failing synchronous trace callback rolls back a live mutation',()=>{
     assert.equal(live.counter.n,2);
   }finally{env.close();}
 });
+
+test('direct CommonJS installation is retained-only and cannot reenter a trace callback',()=>{
+  const code='exports.read=read;function read(){return 4;}';
+  const fresh=createBoundedNatlangEnvironment({EvalFailure});
+  const first={},firstModule={exports:first};
+  assert.throws(()=>fresh.evaluatePureCommonJsModule(code,{module:firstModule,exports:first}),
+    /retained mode/);
+  fresh.close();
+
+  let env,exports;
+  env=createBoundedNatlangEnvironment({EvalFailure,mode:'retained',
+    onTrace:()=>{
+      const nestedExports={},nestedModule={exports:nestedExports};
+      assert.throws(()=>env.evaluatePureCommonJsModule(code,{
+        module:nestedModule,exports:nestedExports
+      }),/[Rr]eentrant/);
+      assert.throws(()=>env.evaluateModule(code,{
+        module:nestedModule,exports:nestedExports,require:()=>{}
+      }),error=>error instanceof EvalFailure && /[Rr]eentrant/.test(error.message));
+      assert.deepEqual(nestedExports,{});
+    }});
+  exports={};
+  const module={exports};
+  try{
+    env.evaluateModule(code,{module,exports,require:()=>{}});
+    assert.equal(exports.read(),4);
+  }finally{env.close();}
+});

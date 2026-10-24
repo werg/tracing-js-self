@@ -80,6 +80,8 @@ export class BoundedNatlangEnvironment {
   evaluateModule(code,bindings){
     try{
       this.ensureOpen();
+      if(this.#runBusy)
+        throw new TypeError('Overlapping or reentrant owned natlang module installation');
       if(this.mode!=='retained')
         throw new TypeError('Module evaluation needs a retained owned environment');
       if(typeof code!=='string'||!bindings||typeof bindings!=='object'||
@@ -109,6 +111,12 @@ export class BoundedNatlangEnvironment {
     }
   }
   evaluatePureCommonJsModule(code,bindings){
+    // Direct JS callers cannot bypass the retained-only module boundary.
+    this.ensureOpen();
+    if(this.#runBusy)
+      throw new TypeError('Overlapping or reentrant owned natlang module installation');
+    if(this.mode!=='retained')
+      throw new TypeError('Pure CommonJS module installation requires retained mode');
     const {module,exports}=bindings;
     if(types.isProxy(module)||types.isProxy(exports)||
        Object.getPrototypeOf(module)!==Object.prototype||
