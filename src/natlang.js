@@ -84,10 +84,22 @@ export class BoundedNatlangEnvironment {
         throw new TypeError('Overlapping or reentrant owned natlang module installation');
       if(this.mode!=='retained')
         throw new TypeError('Module evaluation needs a retained owned environment');
+      // Inspect the host boundary through own data descriptors only. Reading
+      // bindings.module.exports directly can execute an unowned getter before
+      // the guest has been admitted (or enter a Proxy trap).
       if(typeof code!=='string'||!bindings||typeof bindings!=='object'||
-         Array.isArray(bindings)||!bindings.module||
-         typeof bindings.module!=='object'||!Object.hasOwn(bindings,'exports')||
-         bindings.module.exports!==bindings.exports)
+         Array.isArray(bindings)||types.isProxy(bindings))
+        throw new TypeError('Module evaluation needs plain data bindings');
+      const moduleBinding=Object.getOwnPropertyDescriptor(bindings,'module');
+      const exportsBinding=Object.getOwnPropertyDescriptor(bindings,'exports');
+      if(!moduleBinding||!Object.hasOwn(moduleBinding,'value')||
+         !exportsBinding||!Object.hasOwn(exportsBinding,'value')||
+         !moduleBinding.value||typeof moduleBinding.value!=='object'||
+         types.isProxy(moduleBinding.value))
+        throw new TypeError('Module evaluation needs own module and exports data bindings');
+      const moduleExports=Object.getOwnPropertyDescriptor(moduleBinding.value,'exports');
+      if(!moduleExports||!Object.hasOwn(moduleExports,'value')||
+         moduleExports.value!==exportsBinding.value)
         throw new TypeError('Module evaluation needs aliased module.exports and exports data bindings');
       // Pure compiler-emitted CommonJS function registrations are lowered
       // into a bounded owned ESM session. Native helpers remain inaccessible.
