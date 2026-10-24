@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import {createRuntime} from '../src/runtime.js';
 import {encodeWitness,decodeWitness,validateExpression} from '../src/training/format.js';
 import {SemanticController} from '../src/training/controller.js';
-import {exportTraining,validateTrainingExport,
-  evaluateSelectedTrajectory,fragmentWitness,restoreWitness} from '../src/training/export.js';
+import {exportTraining,validateTrainingExport} from '../src/training/export.js';
+import {evaluateSelectedTrajectory} from '../src/training/rollout.js';
+import {fragmentWitness,restoreWitness} from '../src/training/format.js';
 
 function sourceCase(body,args){
   const runtime=createRuntime({maxSteps:30000}).startEntry({
