@@ -35,3 +35,39 @@ test('native worker API refuses malformed agent inputs',async()=>{
  await assert.rejects(runNativeWorkerAgents({workers:[]}),TypeError);
  await assert.rejects(runNativeWorkerAgents({workers:['return 1'],byteLengths:[-3]}),TypeError);
 });
+
+test('real independent workers can rendezvous without serial scheduling',async()=>{
+ const r=await runNativeWorkerAgents({workers:[
+   `const f=new Int32Array(buffers[0]);
+     Atomics.store(f,0,1);Atomics.notify(f,0);
+     while(Atomics.load(f,1)===0){
+       if(Atomics.wait(f,1,0,5000)==='timed-out')
+         throw new Error('second agent did not execute concurrently');
+     }
+     return Atomics.load(f,1);`,
+   `const f=new Int32Array(buffers[0]);
+     Atomics.store(f,1,1);Atomics.notify(f,1);
+     while(Atomics.load(f,0)===0){
+       if(Atomics.wait(f,0,0,5000)==='timed-out')
+         throw new Error('first agent did not execute concurrently');
+     }
+     return Atomics.load(f,0);`
+ ],byteLengths:[8],timeoutMs:10000});
+ assert.deepEqual(r.results,[1,1]);
+});
+test('atomic publication exposes ordinary byte writes to a second worker',async()=>{
+ const r=await runNativeWorkerAgents({workers:[
+   `const bytes=new Uint8Array(buffers[0]),flag=new Int32Array(buffers[1]);
+     bytes[0]=0x44;bytes[1]=0x33;bytes[2]=0x22;bytes[3]=0x11;
+     Atomics.store(flag,0,1);Atomics.notify(flag,0);
+     return bytes.length;`,
+   `const view=new DataView(buffers[0]),flag=new Int32Array(buffers[1]);
+     while(Atomics.load(flag,0)===0){
+       if(Atomics.wait(flag,0,0,5000)==='timed-out')
+         throw new Error('atomic publication timed out');
+     }
+     return view.getUint32(0,true);`
+ ],byteLengths:[8,4],timeoutMs:10000});
+ assert.deepEqual(r.results,[8,0x11223344]);
+ assert.deepEqual(r.bufferBytes[0].slice(0,4),[0x44,0x33,0x22,0x11]);
+});

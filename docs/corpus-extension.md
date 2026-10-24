@@ -1924,3 +1924,14 @@ previous owned/admitted corpus totals is changed by diagnostic worker results.
   Tests cover replay and unresolved constructor promises.
 - [ ] Unhandled-rejection reporting and complete async-host conformance remain
   unsupported; pending promises are not silently treated as fulfilled.
+
+
+### Concurrent native worker memory-order evidence (2026-10-24)
+
+- [x] Strengthened genuine native Worker tests with a two-agent rendezvous
+  that cannot finish under a serial-only worker scheduler, plus ordinary
+  byte writes published across agents via atomic synchronization and read
+  through an independently typed native DataView.
+- [ ] These native V8 executions remain trusted-source diagnostics; they do
+  **not** constitute owned multi-agent semantic journals, independent
+  cross-engine atomics proofs, or complete Test262 agent conformance.
