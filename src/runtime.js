@@ -195,7 +195,7 @@ export class Runtime {
   }
   next(draft,kind) {const ids=draft.counters.ids;return `${kind==='operation'?'op':kind[0]}${++ids[kind]}`;}
   newEnv(draft,parent=null) {const id=this.next(draft,'env');draft.envs[id]={id,parent,bindings:{},version:0};return id;}
-  newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,observers:[],adopters:[],adopting:null,version:0};return id;}
+  newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,observers:[],adopters:[],adopting:null,resolverCalled:false,version:0};return id;}
   newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[],thisValue=U) {
     const id=this.next(draft,'frame'),envId=this.newEnv(draft,parentEnv);
     const params=this.programs[codeId].params;
@@ -344,6 +344,14 @@ export class Runtime {
     frame.status='completed';
     if(frame.asyncPromiseId){this.resolvePromise(draft,frame.asyncPromiseId,value,origin);value=['promise',frame.asyncPromiseId];}
     if(frame.reactionPromiseId)this.resolvePromise(draft,frame.reactionPromiseId,value,origin);
+    if(frame.callerFrameId){
+      const caller=draft.frames[frame.callerFrameId];
+      if(caller.pendingPromiseExecutor?.waitingFrameId===frame.id){
+        const pending=caller.pendingPromiseExecutor;delete caller.pendingPromiseExecutor;
+        this.stackPush(caller,['promise',pending.promiseId],origin);
+        draft.control.a0.activeFrameId=caller.id;return;
+      }
+    }
     if(frame.reactionJob){draft.control.a0.activeFrameId=null;return;}
     if(frame.callerFrameId){
       const caller=draft.frames[frame.callerFrameId];
@@ -629,7 +637,17 @@ export class Runtime {
         draft.control.a0.activeFrameId=null;
       }else if(frame.callerFrameId){
         const caller=draft.frames[frame.callerFrameId];
-        if(caller.pendingProperty?.waitingFrameId===frame.id)caller.pendingProperty=null;
+        if(caller.pendingPromiseExecutor?.waitingFrameId===frame.id){
+           const pending=caller.pendingPromiseExecutor;delete caller.pendingPromiseExecutor;
+           const p=draft.promises[pending.promiseId];
+           if(p.status==='pending'&&!p.resolverCalled){
+             const reason=this.caughtError(draft,completion,eventId);
+             this.rejectPromise(draft,p.id,reason.value,reason.origin);
+           }
+           this.stackPush(caller,['promise',p.id],eventId);
+           draft.control.a0.activeFrameId=caller.id;return;
+         }
+         if(caller.pendingProperty?.waitingFrameId===frame.id)caller.pendingProperty=null;
         draft.control.a0.activeFrameId=caller.id;
         const waiting=caller.operationId&&draft.operations[caller.operationId]?.coercion?.waitingFrameId;
         if(waiting===frame.id)caller.pendingCoercionThrow=copy(completion);
@@ -940,7 +958,23 @@ export class Runtime {
         case 'CONSTRUCT':{
           const args=[];for(let i=0;i<arg;i++)args.unshift(pop());
           const fn=pop();
-          if(fn.value[0]==='intrinsic'&&fn.value[1]==='SharedArrayBuffer'){
+          if(fn.value[0]==='intrinsic'&&fn.value[1]==='Promise'){
+             if(args.length!==1||!this.callableGuest(s,args[0]?.value))
+               guestFault('TypeError','Promise executor must be callable');
+             const executor=s.heap[args[0].value[1]];
+             if(executor.async)throw new TypeError('Async Promise executor outside bounded profile');
+             const p=this.newPromise(s),resolve=['builtinfn','Promise.executor.resolve:'+p],
+               reject=['builtinfn','Promise.executor.reject:'+p];
+             const id=this.newFrame(s,executor.codeId,executor.closureEnvId,f.id,null,
+               [token(resolve,eventId),token(reject,eventId)],
+               executor.arrow?executor.lexicalThis:U);
+             s.frames[id].promiseExecutorTarget=p;
+             f.pendingPromiseExecutor={waitingFrameId:id,promiseId:p};
+             s.control.a0.activeFrameId=id;
+             return {...operands(fn,...args),causes:[{kind:'invocation',frameId:id}],
+               result:['promise',p]};
+           }
+           if(fn.value[0]==='intrinsic'&&fn.value[1]==='SharedArrayBuffer'){
             const length=args[0]?.value[0]==='num'?decode(args[0].value):NaN;
             if(args.length!==1||!Number.isSafeInteger(length)||length<0||length>256)
               guestFault('RangeError','Bounded shared buffer length expected');
@@ -1212,7 +1246,24 @@ export class Runtime {
           const fn=pop();let callable=fn.value;
           const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
-          if(callable[0]==='builtinfn' && callable[1]==='queueMicrotask'){
+          if(callable[0]==='intrinsic'&&callable[1]==='Promise')
+             guestFault('TypeError','Promise must be constructed with new');
+           if(callable[0]==='builtinfn' &&
+              /^Promise[.]executor[.](resolve|reject):p[0-9]+$/.test(callable[1])){
+             const [,mode,pid]=callable[1].match(/^Promise[.]executor[.](resolve|reject):(p[0-9]+)$/);
+             const promise=s.promises[pid];
+             if(!promise)throw new Error('Unknown Promise capability');
+             if(!promise.resolverCalled){
+               promise.resolverCalled=true;
+               if(promise.status==='pending'){
+                 const value=args[0]?.value??U,origin=args[0]?.origin??eventId;
+                 if(mode==='resolve')this.resolvePromise(s,pid,value,origin);
+                 else this.rejectPromise(s,pid,value,origin);
+               }
+             }
+             return {...operands(fn,...args),...result(U)};
+           }
+           if(callable[0]==='builtinfn' && callable[1]==='queueMicrotask'){
             if(args.length!==1||!this.callableGuest(s,args[0]?.value))
               guestFault('TypeError','queueMicrotask requires one owned callable');
             if(s.control.a0.queue.filter(x=>x.kind==='microtask').length>=256)

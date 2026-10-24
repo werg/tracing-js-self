@@ -1831,3 +1831,13 @@ does not treat native V8 as an owned interpreter.
   Owned worker scheduling, arbitrary guest shared-memory typed arrays, full
   Test262 agents, and cross-engine memory-order validation remain unfinished.
   No owned/admitted corpus yield is claimed.
+
+
+### Bounded owned Promise constructors (2026-10-24)
+
+- [x] `new Promise(executor)` invokes synchronous guest executor frames with
+  first-call-wins resolve/reject functions. Executor throws reject the
+  constructed Promise unless resolution has already occurred. Regression
+  tests check journal reconstruction and exact replay.
+- [ ] Async executors, general thenable assimilation, species/subclassing
+  and full combinators are not modeled. This does not change corpus counts.

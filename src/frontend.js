@@ -102,7 +102,7 @@ export function parse(source) {
     if (x.value === 'await') return {type:'Await',argument:expression(8),start:x.start,end:t[p-1].end};
     if (x.value === 'new') {
       const callee=take();
-      if(!['Proxy','Set','SharedArrayBuffer','Int32Array'].includes(callee.value))
+      if(!['Proxy','Set','Promise','SharedArrayBuffer','Int32Array'].includes(callee.value))
         throw new SyntaxError('Unsupported bounded constructor');
       need('(');
       const args=[];if(!match(')')){do{args.push(expression(0,false));}while(match(','));need(')');}

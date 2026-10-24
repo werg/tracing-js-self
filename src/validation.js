@@ -127,7 +127,11 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
               state.frames[methodId]?.status==='thrown' &&
               eq(state.frames[methodId].completion,c);
           });
-          if(!rejection&&!reactionRejection&&!pendingCoercion&&(['failed','unsupported'].includes(state.control.a0.status)||active?.status!=='running'||
+          const executorCompletion=Object.values(state.frames).some(f=>f.status==='thrown'&&
+             f.promiseExecutorTarget&&eq(f.completion,c)&&
+             (state.promises[f.promiseExecutorTarget]?.status==='rejected'||
+              state.promises[f.promiseExecutorTarget]?.resolverCalled));
+           if(!rejection&&!reactionRejection&&!pendingCoercion&&!executorCompletion&&(['failed','unsupported'].includes(state.control.a0.status)||active?.status!=='running'||
              !active.handlers?.some(h=>h.phase==='catch'||h.phase==='finally')))
             fail('Guest throw was not routed to a handler or async rejection',e.eventId);
         }
