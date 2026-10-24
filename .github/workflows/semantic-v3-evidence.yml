@@ -6,7 +6,7 @@ on:
   pull_request:
     paths:
       - 'src/training/**'
-      - 'tools/*witness-v3.mjs'
+      - 'tools/*training.mjs'
       - 'test/training*witness-v3.test.js'
       - 'test/training-data-boundary-v3.test.js'
       - '.github/workflows/semantic-v3-evidence.yml'
@@ -26,7 +26,7 @@ jobs:
         run: node --test test/training-witness-v3.test.js test/training-data-boundary-v3.test.js
       - name: Generate all deterministic v3 candidate families without hiding refusals
         run: |
-          node tools/generate-witness-v3.mjs --count 16 --seed 42 \
+          node tools/generate-training.mjs --count 16 --seed 42 \
             --output "$RUNNER_TEMP/witness-v3.jsonl" \
             --manifest "$RUNNER_TEMP/witness-v3-manifest.json"
           node - "$RUNNER_TEMP/witness-v3-manifest.json" <<'NODE'
@@ -41,8 +41,8 @@ jobs:
           NODE
       - name: Revalidate complete serialized witnesses against V8 and private evidence
         run: |
-          node tools/recheck-witness-v3.mjs "$RUNNER_TEMP/witness-v3.jsonl"
-          node tools/inspect-witness-v3.mjs "$RUNNER_TEMP/witness-v3.jsonl" \
+          node tools/recheck-training-evidence.mjs "$RUNNER_TEMP/witness-v3.jsonl"
+          node tools/inspect-training.mjs "$RUNNER_TEMP/witness-v3.jsonl" \
             "$RUNNER_TEMP/witness-v3-inspection.json"
       - name: Recreate owned semantic completion and callback boundary audits
         run: |
