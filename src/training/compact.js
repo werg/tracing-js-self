@@ -5,7 +5,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {normalizeJournal,validateSemantic} from '../semantic/normalize.js';
 import {replayExact} from '../replay.js';
 import {describeOwnedGraph} from './graph.js';
-import {analyzeSemanticProgram} from './semantic-program.js';
+import {trainingPrefix} from './visibility.js';
 import {encodeWitness} from './format.js';
 import {normalizeCompletionFacts} from './completion-facts.js';
 
@@ -46,7 +46,8 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
     refuse('unsupported dynamic dispatch or pending completion');
   const source=bundle.sources.find(s=>s.sourceId===entry.sourceId);
   if(!source)refuse('source unavailable');
-  const analyzed=analyzeSemanticProgram(source.text);
+  const prefix=trainingPrefix(bundle);
+  const analyzed=prefix.program;
   const mapping=new Map();let allocationCount=0;
   function id(key){
     if(!mapping.has(key))mapping.set(key,'o'+(++allocationCount));
@@ -59,18 +60,7 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
   const original=describeOwnedGraph(bundle.initialState.heap,entry.arguments);
   // Register identities before visiting values to preserve cycles.
   for(const node of original.objects)id(node.id);
-  const graph={
-    roots:original.roots.map(tag),
-    objects:original.objects.map(node=>({
-      id:id(node.id),kind:node.kind,
-      ...(node.prototype===null?{prototype:null}:{}),
-      properties:node.properties.map(p=>({key:p.key,value:tag(p.value)}))
-    }))
-  };
-  const context=[
-    encodeWitness('code',{entry:entry.functionName,source:source.text,sites:analyzed.sites}),
-    encodeWitness('input',{graph})
-  ];
+  const context=[prefix.source,prefix.input];
   const generated=[],certificates=[],elided=[];
   function emit(kind,fields,rule,row){
     const publicFields=row?.invocation?{...fields,invocation:invocation(row.invocation)}:fields;
