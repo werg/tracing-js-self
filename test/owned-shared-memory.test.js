@@ -43,3 +43,20 @@ test('typed-array semantics reject noninteger atomics and invalid element widths
  assert.throws(()=>writeSharedElement(b,newSharedView('g',b,'BigInt64Array'),0,encode(2)),TypeError);
  assert.equal(Object.keys(SHARED_TYPES).length,10);
 });
+
+test('Atomics.store returns untruncated integer, unlike the stored lane',()=>{
+ for(const [name,value] of [['Int8Array',257],['Uint8Array',257],
+   ['Int16Array',65537],['Uint16Array',65537],
+   ['Int32Array',4294967297],['Uint32Array',4294967297]]){
+   const b=newSharedBuffer('b',16),v=newSharedView('v',b,name);
+   const n=new globalThis[name](new SharedArrayBuffer(16));
+   assert.deepEqual(atomicSharedElement(b,v,'store',0,[encode(value)]),
+     encode(Atomics.store(n,0,value)));
+   assert.deepEqual(readSharedElement(b,v,0),encode(Atomics.load(n,0)));
+ }
+ const b=newSharedBuffer('b',16),v=newSharedView('v',b,'BigInt64Array');
+ const n=new BigInt64Array(new SharedArrayBuffer(16)),value=(1n<<64n)-1n;
+ assert.deepEqual(atomicSharedElement(b,v,'store',0,[encode(value)]),
+   encode(Atomics.store(n,0,value)));
+ assert.deepEqual(readSharedElement(b,v,0),encode(Atomics.load(n,0)));
+});

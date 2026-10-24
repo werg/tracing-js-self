@@ -89,7 +89,7 @@ export function atomicSharedElement(buffer,view,method,index,values=[]){
  const oldValue=decode(old),v=take(values[0]);
  if(method==='store'){
    writeSharedElement(buffer,view,index,encode(v));
-   return readSharedElement(buffer,view,index);
+   return encode(v);
  }
  let next;
  switch(method){

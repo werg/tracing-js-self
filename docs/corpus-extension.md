@@ -1891,3 +1891,11 @@ the complete ECMAScript SharedArrayBuffer memory model, growable buffers,
 Test262 `$262.agent`, cross-engine interleaving adjudication, arbitrary
 production application initialization, and training admission. None of the
 previous owned/admitted corpus totals is changed by diagnostic worker results.
+
+
+### Typed-array atomic store return semantics (2026-10-24)
+
+- [x] `Atomics.store` returns the converted input integer/BigInt, without
+  narrowing that return value to the typed lane's width. The shared bytes
+  still truncate/wrap as specified. Differential cases cover seven native
+  integer typed-array classes.
