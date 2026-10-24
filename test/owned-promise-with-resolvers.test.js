@@ -35,6 +35,6 @@ test('Promise.withResolvers resolution can be deferred to virtual timer',()=>{
 });
 test('Promise.withResolvers returns own callable resolve and reject properties',()=>{
  const {r}=check(`let c=Promise.withResolvers();
- let out=typeof c.resolve+'-'+typeof c.reject+'-'+typeof c.promise;`);
+ let out=typeof c.resolve+'-'+typeof c.reject+'-'+typeof c.promise;c.resolve(0);`);
  assert.deepEqual(read(r,'out'),['str','function-function-object']);
 });
