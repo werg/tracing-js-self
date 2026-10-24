@@ -10,10 +10,10 @@ const output=option('--output','training-local.jsonl');
 const manifestPath=option('--manifest','training-manifest.json');
 const count=Number(option('--count','16'));
 const seed=Number(option('--seed','42'));
-const maxOperators=1;
+const maxOperators=4;
 if(!Number.isSafeInteger(count)||count<1||count>4096||
    !Number.isSafeInteger(seed)||seed<0||seed>0xffffffff||
-   maxOperators!==1)
+   ![1,2,4,8].includes(maxOperators))
   throw new TypeError('Invalid deterministic corpus count or seed');
 let state=seed;
 function number(){state=(Math.imul(state,1664525)+1013904223)>>>0;return state%23-11;}
