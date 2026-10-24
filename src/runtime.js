@@ -228,6 +228,8 @@ export class Runtime {
     const s=this.state,global=this.newEnv(s);
     s.envs[global].bindings.host={kind:'const',initialized:true,token:token(['host','demo'])};
     s.envs[global].bindings.Promise={kind:'const',initialized:true,token:token(['intrinsic','Promise'])};
+    s.envs[global].bindings.queueMicrotask={kind:'const',initialized:true,
+      token:token(['builtinfn','queueMicrotask']),version:0};
     for(const name of ['Object','Array','Number','Math'])
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
@@ -269,7 +271,7 @@ export class Runtime {
       state.envs[global].bindings.console={kind:'const',initialized:true,
         token:token(['host','platform.console']),version:0};
     }
-    for(const name of ['parseInt','isNaN'])
+    for(const name of ['parseInt','isNaN','queueMicrotask'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
     for(const name of ['Object','Array','Number','Math','Promise','Set','Error','TypeError'])
@@ -1175,6 +1177,14 @@ export class Runtime {
           const fn=pop();let callable=fn.value;
           const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
+          if(callable[0]==='builtinfn' && callable[1]==='queueMicrotask'){
+            if(args.length!==1||!this.callableGuest(s,args[0]?.value))
+              guestFault('TypeError','queueMicrotask requires one owned callable');
+            if(s.control.a0.queue.filter(x=>x.kind==='microtask').length>=256)
+              throw new RangeError('Owned microtask queue budget exceeded');
+            s.control.a0.queue.push({kind:'microtask',functionId:args[0].value[1]});
+            return {...operands(fn,...args),...result(U)};
+          }
           if(callable[0]==='builtinfn' && callable[1]==='Array.from'){
             const value=args[0]?.value??U;
             const set=value[0]==='ref'?s.heap[value[1]]:null;
@@ -1892,7 +1902,19 @@ export class Runtime {
     const item=this.state.control.a0.queue[0];
     if(!item)return;
     this.commit('job.enter',(s,eventId)=>{
-      const job=s.control.a0.queue.shift(),p=s.promises[job.promiseId];
+      const job=s.control.a0.queue.shift();
+      if(job.kind==='microtask'){
+        const callback=s.heap[job.functionId];
+        if(callback?.kind!=='function')
+          throw new Error('Queued microtask lacks owned function identity');
+        const inner=callback.async?this.newPromise(s):null;
+        const id=this.newFrame(s,callback.codeId,callback.closureEnvId,null,inner,[],
+          callback.arrow?callback.lexicalThis:U);
+        s.frames[id].reactionJob=true;
+        s.control.a0.activeFrameId=id;
+        return {causes:[{kind:'invocation',frameId:id}],result:U};
+      }
+      const p=s.promises[job.promiseId];
       if(job.kind==='reaction'||job.kind==='finally-pass') {
         if(!p||!['fulfilled','rejected'].includes(p.status))
           throw new Error('Reaction job on unsettled promise');
