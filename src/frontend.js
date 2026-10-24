@@ -102,11 +102,16 @@ export function parse(source) {
     if (x.value === 'await') return {type:'Await',argument:expression(8),start:x.start,end:t[p-1].end};
     if (x.value === 'new') {
       const callee=take();
-      if(callee.value!=='Proxy')throw new SyntaxError('Only new Proxy(target, handler) is implemented');
+      if(!['Proxy','Set','SharedArrayBuffer','Int32Array'].includes(callee.value))
+        throw new SyntaxError('Unsupported bounded constructor');
       need('(');
       const args=[];if(!match(')')){do{args.push(expression(0,false));}while(match(','));need(')');}
-      if(args.length!==2)throw new SyntaxError('new Proxy needs target and handler');
-      return {type:'Proxy',target:args[0],handler:args[1],start:x.start,end:t[p-1].end};
+      if(callee.value==='Proxy'){
+        if(args.length!==2)throw new SyntaxError('new Proxy needs target and handler');
+        return {type:'Proxy',target:args[0],handler:args[1],start:x.start,end:t[p-1].end};
+      }
+      if(args.length>1)throw new SyntaxError('Bounded constructor takes at most one argument');
+      return {type:'Construct',callee:callee.value,args,start:x.start,end:t[p-1].end};
     }
     if (['!','-','+','typeof'].includes(x.value)) return {type:'Unary',operator:x.value,argument:expression(8),start:x.start,end:t[p-1].end};
     if (x.value === '(') { const e = expression(); need(')'); return {...e,parenthesized:true}; }

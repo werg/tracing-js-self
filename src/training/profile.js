@@ -160,7 +160,7 @@ export function parseTraining(source) {
           {...span(n.property),type:'Literal',value:encode(n.property.name)}};
       case 'NewExpression':
         if(n.callee.type!=='Identifier' ||
-           !['Set','Error','TypeError'].includes(n.callee.name) ||
+           !['Set','Error','TypeError','SharedArrayBuffer','Int32Array'].includes(n.callee.name) ||
            n.arguments.some(a=>a.type==='SpreadElement') || n.arguments.length>1)
           reject(n,'NewExpression');
         return {...loc,type:'Construct',callee:n.callee.name,args:n.arguments.map(expr)};
