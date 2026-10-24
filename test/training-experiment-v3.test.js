@@ -44,7 +44,7 @@ function fixture(){
         historicalCommit:'c'.repeat(40),evaluationReceiptSha256:'f'.repeat(64)},
       externalAdjudication:{correctness:'correct'},measurements:measured}:
       {caseId,provenance:{source:'free-running-model',
-        checkpointSha256:'a'.repeat(64)},groups:ref.public.groups,
+        checkpointSha256:'a'.repeat(64)},groups:structuredClone(ref.public.groups),
       measurements:measured}]
   })));
   return {manifest,references:[ref],runs};
