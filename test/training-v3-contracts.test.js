@@ -228,3 +228,16 @@ test('no model prediction may query future reference or overwrite an earlier acc
   assert.equal(c.firstWitnessViolation.expected[1],6);
   assert.deepEqual(c.completion.value,tag(6));
 });
+
+test('JavaScript source names and witness identities use different strict grammars',()=>{
+  for(const entry of ['isBoolean','_scanData','$helper','Δsum','résumé','a\u200cb']){
+    const record=rec('code',{entry,source:'function '+entry+'(){}',sites:[]});
+    assert.equal(decodeWitness(record).fields.entry,entry);
+  }
+  for(const entry of ['bad-name','5bad','name space','']){
+    assert.throws(()=>rec('code',{entry,source:'function run(){}',sites:[]}),
+      /source context/);
+  }
+  assert.throws(()=>rec('allocate',{name:'Δsum',kind:'object',properties:[]}),
+    /identity/);
+});

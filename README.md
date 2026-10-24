@@ -12,34 +12,40 @@ foundation and its source-anchored trace format. See
 
 ## Training-data direction
 
-The sole public training representation is [effective-computation semantic-trace/2](docs/EFFECTIVE_TRACE.md): source-level values, choices, calls and effects rather than reversible internal-engine steps. The format has no version-one compatibility path.
+The **only active public training format is
+[semantic-execution/3 and semantic-trace/3](docs/EFFECTIVE_TRACE.md)**, with
+`semantic-context/3` and private `semantic-supervision/2`. The language
+profile is separately named `training-js/1`; the independently replayed raw
+journal retains its own version. There is **no legacy exporter, formatter,
+controller, native importer, or public format selector**.
 
+Verified executions are compiled to small checkable source-level computations.
+The public prefix contains source/static sites and initial graph; generated
+records describe calculations, choices, live cells, allocations, mutations,
+calls, transfers and completion. The independent serving controller checks the
+*selected* records without substituting the expected trajectory. Private
+journal evidence, reference outcomes and transformation certificates are never
+predictor context.
 
-The [semantic execution training-data plan](docs/TRAINING_DATA_PLAN.md) sets the
-immediate direction: verified executions compiled into compact, source-anchored
-traces for [megatoken](https://github.com/werg/megatoken). The separately versioned
-`training-js/1` profile already provides strict ES2022 parsing, direct function
-entry, identity-preserving data graphs, independent synchronous outcome checks,
-semantic journal normalization and a bounded `semantic-trace/2` exporter.
+From an installed checkout, generate and independently recheck local cases:
 
-Run `npm ci && npm test`, then
-`npm run training:generate -- --seed 42 --count 16` for reproducible **locally
-verified** fixture episodes. These are candidate `semantic-execution/2` payloads,
-not admitted megatoken examples: the generator keeps `admitted=0` until the
-cross-repository schema, visibility and rollout gates pass. The output includes
-a public trace and a private verification sidecar. Only observed context and
-earlier committed generated groups may condition the model; the sidecar and
-future target groups must remain outside its input. See
-[implemented components and unfinished gates](docs/TRAINING_IMPLEMENTATION.md).
+```sh
+npm ci
+npm test
+npm run training:generate -- --seed 42 --count 16 \
+  --output training-local.jsonl --manifest training-manifest.json
+npm run training:recheck -- training-local.jsonl
+npm run training:inspect -- training-local.jsonl training-inspection.json
+```
 
-The megatoken adapter, teacher-conditioned trace training, bounded committed-state
-controller, and pinned cross-repository conversion test are implemented. The legacy
-bounded mock host profile now materializes immutable, versioned JSON requests
-before dispatch and independently verifies their journal provenance. The strict
-training profile remains effect-free; full source bundling, trace compaction,
-automatic corpus segmentation, broader async/host semantics, and independently
-admitted datasets are still open. Full Node/browser coverage is not a prerequisite
-for admitting a correctly verified bounded synchronous profile.
+The paired [megatoken](https://github.com/werg/megatoken) importer consumes
+only the version-three schema, preserving physical bytes, native recurrence,
+observed/generated boundaries and loss masks. `locally_verified` does **not**
+mean `admitted`; a byte-fallback diagnostic codec is not the pinned production
+tokenizer. External effects, complete async scheduling, automatic live
+continuations, and actual model training comparisons still have independent
+acceptance work. See the [implementation ledger](docs/TRAINING_IMPLEMENTATION.md)
+and [complete redesign plan](docs/SEMANTIC_TRACE_REDESIGN_PLAN.md).
 
 ## Quick start
 
@@ -206,24 +212,3 @@ verification path. `src/index.js` is the public package facade.
 **Evidence boundary:** exact replay is an interpreter self-consistency check against its recorded journal, **not** an independent semantic oracle, real native-effect replay, proof of standards compliance, or safe execution of arbitrary full JavaScript. It requires a complete sealed run and uses the recorded external values only at their arrival events. The prototype's tests establish only the behaviors they exercise. They do not pass the completion criteria from the full plan. In particular, `completeSemanticTrace: false` applies to the declared complete JavaScript target; the supported subset is instrumented at the interpreter's declared bytecode vocabulary.
 
 
-## Semantic trace version-three draft
-
-The paired implementation work is tracked in [the v3 implementation
-ledger](docs/SEMANTIC_TRACE_V3_IMPLEMENTATION.md) and governed by the
-[complete redesign plan](docs/SEMANTIC_TRACE_REDESIGN_PLAN.md).
-The separate `exportTraining`, `SemanticController`,
-`validateTrainingExport`, and `evaluateSelectedTrajectory` APIs
-introduce a typed public reasoning language, private rule certificates,
-a no-repair selected witness checker, and bounded observable graph semantics.
-A paired native importer lives in `werg/megatoken`.
-
-For reproducible **local candidates**, run
-`node tools/generate-training.mjs --count 16 --seed 42`, followed by
-`node tools/recheck-training-evidence.mjs witness-v3-local.jsonl`.
-To inspect the actual public lines and private certificates separately run
-`node tools/inspect-training.mjs witness-v3-local.jsonl`.
-
-Version two remains the current default writer while the full migration,
-bounded async/effect normalizer, model-selected recurrence and required model
-training comparisons are incomplete. Local verification and native consumer
-parsing are not dataset admission and are not evidence of learned-model gains.

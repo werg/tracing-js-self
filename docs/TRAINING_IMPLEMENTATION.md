@@ -1,91 +1,98 @@
-# Training implementation ledger
+# Semantic execution training: active v3 implementation ledger
 
-This records the first tracer-owned implementation of [the training plan](TRAINING_DATA_PLAN.md). It separates working components from future work. It does not claim full ECMAScript, host integration, megatoken integration, or model rollout correctness.
+The one active public representation is
+[semantic-execution/3 and semantic-trace/3](EFFECTIVE_TRACE.md).
+The raw owned journal is separately versioned. This ledger describes **actual
+working and missing paths**, not a claim that the complete redesign is done.
 
-## Implemented in tracing-js-self
+## Implemented
 
-- Versioned training-js/1: Acorn 8.15.0, locked integrity, ES2022 strict scripts, exact positions, positive allowlist, no ambient globals, top-level strict directive and named synchronous function declarations.
-- The shared owned arithmetic path records primitive conversion, type checks, scalar arithmetic leaves and completions as serializable spec phases. Training entries keep the `training-js/1` language profile while their journal and exact replay use `/2`; see [owned arithmetic and its domain limits](OWNED_ARITHMETIC.md).
-- Owned synchronous arrow and anonymous function expressions with serializable closure captures, expression/block arrow bodies, and lexical receiver capture. General function constructor/prototype behavior, default/rest/destructured parameters, async arrows and lexical `arguments` remain outside this slice.
-- Direct function entry with identity-preserving plain object/array argument graphs, aliases, cycles, property order, input limits and explicit root completion. Exotic inputs, proxies, getters, holes and unimplemented operations fail closed.
-- Owned scalar template literals (cooked text plus left-to-right primitive substitutions) retain input provenance, evaluate interpolations exactly once, and are independently instrumented as source expressions by V8; object-valued ToString continuations fail closed. TypeScript lowering into templates runs through the same owned bytecode.
-- Fixed escaped hex/unicode strings and undefined shadowing; reference truthiness/equality/typeof, including the spec-mandated `typeof` of unresolvable names without suppressing lexical TDZ faults; scalar `void`, `~`, Number/BigInt bitwise and shift operations; canonical array index and length/truncation behavior; explicit guest throw completion; read and mutation versions. Scalar leaves are differential-tested against V8 and remain a bounded rather than universal coercion profile.
-- Strict frontend extensions: ordered multi-declarator lexical statements, object property shorthand, scalar sequence expressions, and compound assignment for the existing arithmetic and bitwise scalar operators. They retain owned read/write provenance and V8 executed source-operation receipts; full destructuring, var hoisting and spread remain unsupported.
-- Common strict control flow: conditional expressions, for-let or expression-header loops, do-while, break/continue and prefix/postfix local-identifier updates. Updates have an owned primitive ToNumeric calculation, typed numeric step and versioned binding mutation, with independent V8 source-expression receipts for pre/post numeric results. Object-valued update coercion, member updates, labelled control flow and captured per-iteration for-let bindings are rejected, not approximated.
-- Canonical source-anchored semantic records from the full journal, with actual read-from links, versioned writes, control decisions, invocation IDs, and validation against that journal.
-- Deterministic semantic-trace/2 line grammar, typed scalar/identity values, lossless JSON escaping, bounded fragments and parser/serialization checks.
-- Fixed t0 through t7 lanes, one conservative serial generated record per model group, observed input/source separated from generated groups; deterministic assignments do not consult future reference results.
-- Predictor-safe source/input context and supervised trace export with private reference/journal sidecar. Explicit group, dependency, loss and fragment validation. The standalone public-only causal audit checks prefix, explicit producer links, physical fragments, source/input graph publication with reference closure, bounded synchronous invocation stack/child-entry/return ownership and terminal records without consulting the private archive; it does not prove complete transitive visibility.
-- Independent Node V8 vm reference comparisons on completion and reachable observable graph, plus structural reconstruction and adapter-free exact interpreter replay.
-- Independent source-instrumented V8 **executed branch receipts** for if/while/do-while/tested-for/ternary and logical &&/||/??. The separate source run captures each test once and checks the ordered jump decisions against the owned journal; mismatches fail the locally verified gate. The reference-branches/1 receipt remains private; it does not imply full language conformance or training-data admission.
-- Executed scalar-producing unary, binary and supported compound-assignment source expressions are also observed, in source order, by a separately run, source-instrumented V8 reference. Typed intermediate results and source spans are compared with normalized committed journal events, including repeated loops and overwritten temporaries. The reference run must preserve the uninstrumented observable graph. `reference-operations/1` counters and remaining unverified semantic families stay in the private sidecar; this is not a full intermediate-state oracle or corpus admission.
-- Deterministic source-family local-fixture generator with lineage splits, seeds, provenance, rejected-run counts, and full diagnostics.
-- Model-visible input graph handles now retain owned journal identities, with static function/code identity published before generation. A bounded serving-side `SemanticController` validates model-selected semantic values, reads, writes, branches, calls, and completions against committed state without running JavaScript or repairing model output. Its exact committed-prefix packet and a versioned live-state `semantic-continuation/2` packet support bounded handoff between fresh model sessions from model-committed heap/cells/activations, without golden replay or new semantic identities. These controller packets are diagnostics; the dataset exporter does not yet automatically segment into new megatoken Episodes.
-- `src/training/rollout.js` and `tools/evaluate-training.mjs` verify actual selected output after commit, report the first divergence and observable returned/input graph correctness, and reject invalid model events without substituting the reference trajectory. Model-selected commits now roll back the entire bounded controller state on rejection, including partial allocation/completion/fragment mutations; an episode missing its terminal `end` is an invalid incomplete rollout, not a valid trajectory.
-- The cross-repository megatoken `semantic-execution/2` adapter now exists on `werg/megatoken/main`, with explicit causal episode validation, codec-bound import, fixed lanes, teacher-conditioned supervised recurrence, a local diagnostic converter, and a pinned CI contract test using actual tracer-generated episodes. Large source and request records preserve their logical identity and action/result linkage across physical fragments.
-- The `bounded-js-subset/2` mock host bridge now prepares versioned `canonical-json/1` request snapshots before dispatch, gives adapters only frozen JSON argument data, records exact payload bytes and graph-version provenance, and independently verifies the payload against the committed heap at the request boundary. The causal and semantic projections expose the complete materialized payload, not a symbolic external argument.
+- The bounded `training-js/1` language profile uses a pinned Acorn parser,
+  direct function entry and owned state; exact journal reconstruction/replay
+  is an independent invariant from observable JavaScript agreement.
+- Descriptor-only data graph import/reference observation preserves aliases,
+  cycles, sparse holes, present undefined, array length, and null prototypes.
+  Unsupported custom descriptors and exotic boundary values refuse explicitly.
+- Static source inventory is published before execution. The compiler removes
+  selected private bookkeeping, emits typed bounded primitive computations and
+  choices, carries captured iteration-cell identities, represents ordinary
+  mutations/allocations/guest calls and source-verified completion transfers.
+  Private certificates identify actual contributing journal events; compiler
+  output is independently checked after serialization.
+- The sole v3 codec/scheduler/visibility/controller/exporter are
+  `src/training/{format,schedule,visibility,controller,export}.js`. The
+  controller processes selected public records transactionally, including
+  no-repair arithmetic/witness violations, data mutations, checked shared-cell
+  copies, owned job FIFO rules, deterministic seeded RNG, and immutable
+  fixture-matched external requests. A bounded committed-state packet is
+  `semantic-continuation/3`. Unrepresentable state refuses rather than
+  truncating.
+- `src/training/rollout.js` evaluates selected observable outcomes separately
+  from witness consistency and reference-trace text differences.
+  `causal-audit.js` validates public visibility without oracle sidecar, while
+  `render.js` displays effective committed work.
+- `src/training/admit.js` retains independent V8 outcome, executed primitive
+  and branch checks. `npm run training:generate` generates candidate JSONL,
+  `npm run training:recheck` recomputes private evidence and
+  `npm run training:inspect` separates raw public, pretty output and private
+  audit facts. Every refusal is counted, and `admitted=0` remains explicit.
+- The paired `werg/megatoken` Python parser, native Episode import, physical
+  UTF-8 checks, meridian/loss ownership, and committed logical-record
+  dependencies use *only v3*. The workflow pins a specific paired revision;
+  the native diagnostic byte codec is not a production-tokenizer measurement.
+- Permanent owned boundary/ten-source readability fixtures include arithmetic,
+  captured loops, aliases, callbacks, returned cleanup, caught exceptions,
+  sparse data and source-context integrity. V3 generated cases are regression
+  checked against independent observable reference outcomes.
 
-## Owned completion syntax in the strict frontend
+## Still not complete
 
-The TypeScript/Acorn strict frontend now accepts `throw`, `try`, `catch`
-(with an ordinary optional identifier), and `finally` and lowers them into
-the existing owned completion-handler bytecode. The natlang facade can execute
-recovered exceptional paths and replay their journals without host guest-code
-fallback. **These paths are not yet training-data candidates:** the synchronous
-training exporter/controller does not model a caught `throw` as a resumable
-continuation. Such cases remain explicitly unadmitted even when the runtime
-finishes with a normal result. This syntax support is not evidence of full
-ECMAScript exception compatibility.
+These are explicit delivery requirements, **not optional legacy execution
+routes**:
 
-## Limits / incomplete plan milestones
+- Full source-normalized coercion, accessor/proxy dispatch and every supported
+  callback pattern, including evaluated values and all effective effects.
+- Complete external-effects observation and independent trusted source
+  schedules for ordered calls, out-of-order replies, rejection and cleanup.
+  A standalone controller's typed operations do not imply admitted examples.
+- Owned async Promise adoption/reaction/await/suspended continuation and
+  quiescence policy integration through exporter, controller and native model
+  recurrence, including legal microtask scheduling and required pending work.
+- Automatic causal continuation when model history is full, with true
+  production tokenizer budgets, exact real model prediction groups and
+  selected-state-only semantic liveness.
+- Independently admitted production/closure corpus candidates across all
+  claimed supported families and complete refusal/accounting dashboards.
+- Actual selected-model training and test runs across seeds 17, 29 and 43,
+  the pinned historical baseline, v3 granularity policies and output-only
+  controls. No learning quality or compute improvement is established yet.
 
-1. The locally verified profile is **synchronous, no effects, no async and no guest exceptions**, with one small source bundle and no detached work. The legacy bounded profile is separate. Unsupported runtime property/coercion families are not silently admitted.
-2. Static def-use/liveness pruning and fully compact semantic-target optimization are incomplete. Control and state transitions are preserved conservatively.
-3. Lazy code-on-call, reference-codec token counting on the tracer side, parallel-ready independent groups, multi-segment history eviction, full serving integration with real selected latent model representations, and unrestricted call parking are not implemented. The bounded controller can reconstruct a committed prefix and detect divergence but does not solve all serving semantics. Oversized input/trace produces a limit diagnostic, not a fabricated completion.
-4. The demo host operations now use guarded, schema-checked JSON materialization **before dispatch**, with independent journal validation and tests for aliases, cycles, unsupported scalars, tampering, and replay without repeat effects. This is currently the separate `bounded-js-subset/2` mock host path; strict `training-js/1` remains synchronous and effect-free. Real host services, broader registered codecs, promise rejection/reaction scheduling, catch/finally, async admission, and general native transport remain profile-extension work.
-5. The megatoken Python adapter, strict episode-schema validation, an explicit teacher-conditioned recurrence path, and a JSONL converter are now implemented on **werg/megatoken/main**. End-to-end actual *model* rollouts and scored serving compute remain open; the tracer's selected-trajectory validator is a deterministic diagnostic, not evidence of learned execution quality.
-6. **Locally verified is not admitted.** The generator reports admitted=0 until all plan admission gates, including independent operation-level reference coverage and end-to-end *model-selected* rollout validity, are satisfied. Exact self-replay does not establish JavaScript correctness.
+The absence of these features remains a fail-closed projection or corpus
+refusal; it is **not** a reason to reintroduce a v2 producer, serving controller,
+schema compatibility fallback or a default-format option.
 
-## Reproducible local fixtures
+## Commands and evidence
 
-Run npm ci and npm test, then:
-
-~~~sh
+```sh
+npm ci
+npm test
 npm run training:generate -- --seed 42 --count 16 \
   --output training-local.jsonl --manifest training-manifest.json
-~~~
+npm run training:recheck -- training-local.jsonl
+npm run training:inspect -- training-local.jsonl training-inspection.json
+npm run training:evaluate -- \
+  --selected actual-selected.jsonl \
+  --reference training-local.jsonl \
+  --output model-evaluation.json
+```
 
-Each JSONL line has a public payload and a **private sidecar** with archived state, reference outcome and provenance. Future targets inside public.groups are training labels, never predictor inputs; only the observed prefix and earlier committed generated groups may be used for conditioning. The sidecar must never enter model attention.
+**Caution:** the last command measures a *model* only when selected JSONL
+really comes from a free-running model using prior committed context. Feeding
+teacher records to the evaluator tests the deterministic evaluator, not
+learned execution. Large open-ended programs are not safely sandboxed by Node
+`vm` alone. Actual model training, tokenizer and accelerator resource receipts
+must be supplied externally rather than invented.
 
-## Post-serialization independent evidence recheck
-
-After producing trusted local JSONL fixtures, run
-`node tools/recheck-training-evidence.mjs training-local.jsonl`. The
-`recheckIndependentTrainingEvidence` API validates compact serialization
-and replay, then **recomputes** the independently executed V8 outcome, scalar
-operation receipts, and control-decision receipts from the archived source and
-initial graph. It compares them against both owned outcome and private receipts,
-rejecting altered or absent evidence. The CI workflow exercises this against
-serialized generated fixtures. This is a local evidence integrity gate only,
-not the megatoken adapter or actual-model rollout admission gate:
-`admitted` remains **0**. Execute only on trusted sources in an appropriate
-isolated environment because Node `vm` is not a secure untrusted-code sandbox.
-
-## Cross-repository native Episode contract
-
-`.github/workflows/megatoken-consumer.yml` tests each tracer main commit
-against pinned `werg/megatoken@246c64776ab46a8ea97755e34267f422edd5d59f`. It generates deterministic
-owned traces, reruns independent local V8 evidence checks, imports candidates
-through megatoken's **real** schema-v3 Episode adapter with explicit
-`--allow-local`, checks each model-visible byte string, meridian count and
-supervision, and proves that the diagnostic manifest stays at admitted=0.
-The byte-fallback diagnostic codec used in this CI is not a production
-tokenizer. These passing checks are interoperability evidence, not approval
-to train a production model or evidence of free-running model correctness.
-
-## Model-selected evaluation
-
-After generating a local verified JSONL reference corpus, supply a separate JSONL of **actual model-selected** episode `groups` to `npm run training:evaluate -- --selected selected.jsonl --reference training-local.jsonl --output report.json`. The evaluator commits each selected group before consulting the reference and reports exact state/return correctness and the first inconsistent category. Re-using reference groups as selected input checks only the deterministic verifier, **not a model's ability to execute**.
-
-
-The model-facing format is [effective semantic-trace/2](EFFECTIVE_TRACE.md); it captures actual computation without reconstructing hidden prototype/accessor internals. No legacy format adapter is supported.
+The [governing plan](SEMANTIC_TRACE_REDESIGN_PLAN.md) contains the complete
+acceptance checklist; see also the
+[v3 implementation record](SEMANTIC_TRACE_V3_IMPLEMENTATION.md).

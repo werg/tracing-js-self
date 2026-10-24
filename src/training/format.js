@@ -33,7 +33,7 @@ const scalarSpecial=new Set(['NaN','-0','+Infinity','-Infinity']);
 const decimal=/^(?:0|-?[1-9][0-9]*)$/;
 const identity=/^[a-z][a-z0-9]*$/;
 // Guest source identifiers use ECMAScript spelling; witness identities do not.
-const sourceIdentifier=/^[$_\\p{ID_Start}][$_\\u200C\\u200D\\p{ID_Continue}]*$/u;
+const sourceIdentifier=/^[$_\p{ID_Start}][$_\u200C\u200D\p{ID_Continue}]*$/u;
 function fail(message){throw new TypeError('Invalid semantic-trace/3: '+message);}
 export function assertValue(v){
   if(!Array.isArray(v))fail('untagged value');
