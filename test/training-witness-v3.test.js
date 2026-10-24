@@ -1,24 +1,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRuntime} from '../src/runtime.js';
-import {encodeWitness,decodeWitness,validateExpression} from '../src/training/witness-ir.js';
-import {WitnessController} from '../src/training/witness-controller.js';
-import {exportWitnessTraining,validateWitnessTrainingExport,
-  evaluateWitnessTrajectory,fragmentWitness,restoreWitness} from '../src/training/export-v3.js';
+import {encodeWitness,decodeWitness,validateExpression} from '../src/training/format.js';
+import {SemanticController} from '../src/training/controller.js';
+import {exportTraining,validateTrainingExport,
+  evaluateSelectedTrajectory,fragmentWitness,restoreWitness} from '../src/training/export.js';
 
 function sourceCase(body,args){
   const runtime=createRuntime({maxSteps:30000}).startEntry({
     text:'"use strict"; '+body,functionName:'run',args});
   assert.equal(runtime.drive().kind,'terminated');
-  return exportWitnessTraining(runtime,{maxBytes:512,maxOperators:1});
+  return exportTraining(runtime,{maxBytes:512,maxOperators:1});
 }
 test('typed public v3 arithmetic computes and serializes separately from private journal',()=>{
   const episode=sourceCase('function run(x){return x*2+1;}',[7]);
   assert.equal(episode.public.schema,'semantic-execution/3');
   assert.equal(episode.public.traceFormat,'semantic-trace/3');
   assert.equal(episode.sidecar.schema,'semantic-supervision/2');
-  assert.equal(validateWitnessTrainingExport(episode).valid,true);
-  const result=evaluateWitnessTrajectory({groups:episode.public.groups,
+  assert.equal(validateTrainingExport(episode).valid,true);
+  const result=evaluateSelectedTrajectory({groups:episode.public.groups,
     referenceOutcome:episode.sidecar.reference});
   assert.equal(result.valid,true,JSON.stringify(result.invalid));
   assert.equal(result.correctness,'correct');
@@ -31,7 +31,7 @@ test('selected wrong computation is not repaired even if terminal outcome matche
   const code=encodeWitness('code',{entry:'run',source:'function run(x){return x+1;}',
     sites:[]});
   const input=encodeWitness('input',{graph:{roots:[['num',4]],objects:[]}});
-  const selected=new WitnessController([code,input]);
+  const selected=new SemanticController([code,input]);
   selected.commit(encodeWitness('bind',{name:'y',value:['num',99]}));
   selected.commit(encodeWitness('compute',{bind:'z',expr:{op:'binary',operator:'*',
     left:{op:'local',name:'y'},right:{op:'literal',value:['num',2]}},result:['num',10]}));
@@ -63,7 +63,7 @@ test('expression budgets, spoofed references and unknown fields are rejected',()
 test('controller mutations and FIFO jobs are independent of source interpreter',()=>{
   const code=encodeWitness('code',{entry:'run',source:'function run(){}',sites:[]});
   const input=encodeWitness('input',{graph:{roots:[],objects:[]}});
-  const selected=new WitnessController([code,input],{completionPolicy:'owned-quiescence'});
+  const selected=new SemanticController([code,input],{completionPolicy:'owned-quiescence'});
   selected.commit(encodeWitness('allocate',{name:'o1',kind:'array',length:3,
     properties:[{key:'1',value:['undefined']}]}));
   assert.equal(selected.heap.get('o1').properties.has('0'),false);
@@ -90,14 +90,14 @@ test('nested pure guest helper keeps one dynamic call and real child completion'
   const trace=episode.sidecar.compiled.generated.map(decodeWitness);
   assert(trace.some(record=>record.kind==='call'));
   assert.equal(trace.filter(record=>record.kind==='return').length,2);
-  assert.equal(evaluateWitnessTrajectory({
+  assert.equal(evaluateSelectedTrajectory({
     groups:episode.public.groups,referenceOutcome:episode.sidecar.reference
   }).correctness,'correct');
 });
 test('selected fresh object names are independent of reference spelling',()=>{
   const code=encodeWitness('code',{entry:'run',source:'function run(){return {n:2};}',sites:[]});
   const input=encodeWitness('input',{graph:{roots:[],objects:[]}});
-  const controller=new WitnessController([code,input]);
+  const controller=new SemanticController([code,input]);
   controller.commit(encodeWitness('allocate',{name:'o77',kind:'object',
     properties:[{key:'n',value:['num',2]}]}));
   controller.commit(encodeWitness('return',{value:['ref','o77']}));
@@ -108,7 +108,7 @@ test('selected fresh object names are independent of reference spelling',()=>{
 test('pending return through finally closes only after observable cleanup mutation',()=>{
   const episode=sourceCase(
     'function run(o){try{return o.n;}finally{o.n+=3;}}',[{n:2}]);
-  assert.equal(validateWitnessTrainingExport(episode).valid,true);
+  assert.equal(validateTrainingExport(episode).valid,true);
   const trace=episode.sidecar.compiled.generated.map(decodeWitness);
   assert.equal(trace.filter(e=>e.kind==='return').length,1);
   const transfer=trace.findIndex(e=>e.kind==='transfer');
@@ -116,7 +116,7 @@ test('pending return through finally closes only after observable cleanup mutati
   const actual=trace.findIndex(e=>e.kind==='return');
   assert(transfer>=0&&update>transfer&&actual>update);
   assert.deepEqual(trace[actual].fields.value,['num',2]);
-  assert.equal(evaluateWitnessTrajectory({
+  assert.equal(evaluateSelectedTrajectory({
     groups:episode.public.groups,referenceOutcome:episode.sidecar.reference
   }).correctness,'correct');
 });
@@ -127,7 +127,7 @@ test('finally replacement return supersedes saved primitive but keeps mutation',
   assert.equal(trace.filter(e=>e.kind==='return').length,1);
   assert(trace.findIndex(e=>e.kind==='transfer')>=0);
   assert.deepEqual(trace.find(e=>e.kind==='return').fields.value,['num',5]);
-  assert.equal(validateWitnessTrainingExport(episode).valid,true);
+  assert.equal(validateTrainingExport(episode).valid,true);
 });
 
 test('a caught throw is a nonterminal transfer and introduces the real catch value',()=>{
@@ -143,7 +143,7 @@ test('a caught throw is a nonterminal transfer and introduces the real catch val
   assert.deepEqual(trace[bound].fields.value,['num',7]);
   assert.deepEqual(trace[finished].fields.value,['num',10]);
   assert.equal(trace.filter(r=>r.kind==='throw').length,0);
-  assert.equal(validateWitnessTrainingExport(episode).valid,true);
-  assert.equal(evaluateWitnessTrajectory({groups:episode.public.groups,
+  assert.equal(validateTrainingExport(episode).valid,true);
+  assert.equal(evaluateSelectedTrajectory({groups:episode.public.groups,
     referenceOutcome:episode.sidecar.reference}).correctness,'correct');
 });
