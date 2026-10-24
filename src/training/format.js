@@ -10,10 +10,10 @@ const schema=Object.freeze({
   input:['graph'],
   compute:['expr','result','bind','invocation','site'],
   choose:['expr','decision','path','invocation','site'],
-  allocate:['name','kind','length','properties','code','invocation'],
+  allocate:['name','kind','length','properties','code','captures','invocation'],
   read:['object','key','value','present','invocation'],
   write:['object','key','value','present','invocation'],
-  bind:['name','value','invocation'],
+  bind:['name','value','from','invocation'],
   call:['child','callee','receiver','arguments','invocation'],
   transfer:['kind','value','handler','invocation'],
   return:['value','invocation'],
@@ -140,6 +140,20 @@ export function validateWitness(kind,fields){
   if(kind==='allocate' && (!identity.test(fields.name) ||
       !['array','object','closure'].includes(fields.kind)||!Array.isArray(fields.properties)))
     fail('allocation identity');
+  if(kind==='allocate'&&fields.kind==='closure'){
+    if(!Array.isArray(fields.captures??[]))fail('closure capture contract');
+    const bindings=new Set();
+    for(const relation of fields.captures??[]){
+      if(!object(relation)||Object.keys(relation).sort().join(',')!=='binding,cell'||
+         typeof relation.binding!=='string'||typeof relation.cell!=='string'||
+         !identity.test(relation.cell)||bindings.has(relation.binding))
+        fail('malformed captured cell relation');
+      bindings.add(relation.binding);
+    }
+  }
+  if(kind==='bind'&&fields.from!==undefined&&
+     (typeof fields.from!=='string'||!identity.test(fields.from)||
+      fields.from===fields.name))fail('invalid source cell relation');
   if(kind==='call' && (typeof fields.callee!=='string' ||
       !Array.isArray(fields.arguments)))fail('call arguments or source code');
   if(kind==='call'){
