@@ -6,7 +6,7 @@ export interface BoundedRetainedModuleSessionOptions {
   modules:Record<string,string>;
   entryModule:string;
   maxSteps?:number;
-  /** Invoked on a validated archive before committing an invocation. */
+  /** Invoked with a detached copy of a validated archive before committing. */
   onTrace?:(bundle:Record<string,unknown>,
     call:{exportName:string;args:unknown[];callCount:number},
     metadata:Record<string,unknown>)=>void;
@@ -27,6 +27,7 @@ export declare class BoundedRetainedModuleSession {
   constructor(options:BoundedRetainedModuleSessionOptions);
   readonly entryModule:string;
   readonly history:Array<{exportName:string;args:unknown[]}>;
+  /** Reads return detached archive copies. */
   readonly lastArchive:Record<string,unknown>|null;
   readonly closed:boolean;
   invoke(exportName:string,args?:Array<string|number|boolean|bigint|null|undefined>):
