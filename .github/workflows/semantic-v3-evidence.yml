@@ -1,0 +1,55 @@
+name: Semantic trace v3 local evidence
+on:
+  push:
+    branches:
+      - feat/semantic-trace-boundary-foundations-20261024
+  pull_request:
+    paths:
+      - 'src/training/**'
+      - 'tools/*witness-v3.mjs'
+      - 'test/training*witness-v3.test.js'
+      - 'test/training-data-boundary-v3.test.js'
+      - '.github/workflows/semantic-v3-evidence.yml'
+  workflow_dispatch:
+
+jobs:
+  v3:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Independently check selected witness and observable graph regressions
+        run: node --test test/training-witness-v3.test.js test/training-data-boundary-v3.test.js
+      - name: Generate all deterministic v3 candidate families without hiding refusals
+        run: |
+          node tools/generate-witness-v3.mjs --count 16 --seed 42 \
+            --output "$RUNNER_TEMP/witness-v3.jsonl" \
+            --manifest "$RUNNER_TEMP/witness-v3-manifest.json"
+          node - "$RUNNER_TEMP/witness-v3-manifest.json" <<'NODE'
+          const fs=require('node:fs');
+          const m=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+          if(m.requested!==16||m.counts.locally_verified<1||
+             m.counts.admitted!==0||
+             m.counts.locally_verified+m.refusals.length!==16)
+            throw Error('Version-three candidate coverage/accounting mismatch');
+          console.log(JSON.stringify({requested:m.requested,counts:m.counts,
+            metrics:m.metrics,refusals:m.refusals},null,2));
+          NODE
+      - name: Revalidate complete serialized witnesses against V8 and private evidence
+        run: |
+          node tools/recheck-witness-v3.mjs "$RUNNER_TEMP/witness-v3.jsonl"
+          node tools/inspect-witness-v3.mjs "$RUNNER_TEMP/witness-v3.jsonl" \
+            "$RUNNER_TEMP/witness-v3-inspection.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: semantic-v3-local-evidence
+          path: |
+            ${{ runner.temp }}/witness-v3.jsonl
+            ${{ runner.temp }}/witness-v3-manifest.json
+            ${{ runner.temp }}/witness-v3-inspection.json
+          retention-days: 14
