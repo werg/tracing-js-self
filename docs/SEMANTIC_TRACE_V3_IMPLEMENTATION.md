@@ -9,11 +9,15 @@ finished, and a local demonstration is **not** an admitted corpus example.
 
 The new `./src/training/index.js` exports:
 
-- `analyzeSemanticProgram(source)` — static Acorn sites; source is published
-  before execution and never filtered by which source branches executed.
+- `analyzeSemanticProgram(source)` — static Acorn sites held privately for
+  compilation and certificates; original source is published before execution
+  without an extra model-visible site table or executed-branch pruning.
 - `compileWitness(bundle,semantic,{maxOperators:1|2|4|8})` — separate
   conservative compiler to typed `semantic-trace/3` lines, with private
-  certificates and explicit unsupported projections.
+  certificates and explicit unsupported projections. The current default is
+  **4 operators** with a source-guided postpass for safely fusing nested pure
+  calculations, attached bindings and independently checked scalar choices.
+  See [SEMANTIC_WITNESS_READABILITY.md](SEMANTIC_WITNESS_READABILITY.md).
 - `encodeWitness`, `decodeWitness`, `validateExpression` — canonical
   operation-name-plus-JSON framing, strict scalar tags, bounded primitive
   expressions (at most 8 operators, at most 32 nodes), and data graph checks.
