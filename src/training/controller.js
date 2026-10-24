@@ -99,7 +99,7 @@ export class SemanticController {
       if(kind==='compute'||kind==='choose'){
         const claimed=kind==='compute'?f.result:f.decision;
         const claim=checkWitnessClaim(f.expr,claimed,{
-          locals:this.locals,randomState:this.randomState,
+          inputs:this.input.graph.roots,locals:this.locals,randomState:this.randomState,
           readProperty:(id,key)=>this.readProperty(id,key)});
         if(f.expr.op==='random'){
           if(this.randomState===null)
