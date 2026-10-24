@@ -1,4 +1,7 @@
-// Physical meridian/fragment placement is transport, not guest execution.\nimport {fragmentWitness} from './format.js';\n\nexport function scheduleRecords(compiled,maxBytes){
+// Physical meridian/fragment placement is transport, not guest execution.
+import {fragmentWitness} from './format.js';
+
+export function scheduleRecords(compiled,maxBytes){
   const groups=[];
   const append=(mode,logical)=>{
     for(const record of fragmentWitness(logical,{maxBytes}))
