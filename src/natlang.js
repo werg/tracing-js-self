@@ -20,6 +20,7 @@ const event=(mode,body,status,extra={})=>({
 export class BoundedNatlangEnvironment {
   #pureModuleFacades=new Set();
   #pureModuleCache=new WeakMap();
+  #runBusy=false;
   constructor({EvalFailure,onTrace=null,maxSteps=10000,mode='fresh',services=null}={}){
     if(typeof EvalFailure!=='function')
       throw new TypeError('Pass the actual natlang EvalFailure constructor for instanceof compatibility');
@@ -59,6 +60,13 @@ export class BoundedNatlangEnvironment {
     this.#pureModuleFacades.clear();
   }
   ensureOpen(){if(this.closed)throw new Error('Owned natlang evaluator is closed');}
+  #enterRun(){
+    this.ensureOpen();
+    if(this.#runBusy)
+      throw new Error('Overlapping or reentrant owned natlang execution is not supported');
+    this.#runBusy=true;
+  }
+  #leaveRun(){this.#runBusy=false;}
   declarationOf(){return undefined;}
   failed(request,error,reason='failed'){
     const body=request?.body===true;
@@ -143,12 +151,18 @@ export class BoundedNatlangEnvironment {
       for(const name of linked.exportNames)
         Object.defineProperty(exports,name,{
           value:(...args)=>{
+            let entered=false;
             try{
+              this.#enterRun();
+              entered=true;
+              const result=facade.exports[name](...args);
               this.ensureOpen();
-              return facade.exports[name](...args);
+              return result;
             }catch(error){
               if(error instanceof this.EvalFailure)throw error;
               throw this.failed({body:true},error,'unsupported');
+            }finally{
+              if(entered)this.#leaveRun();
             }
           },
           writable:true,enumerable:true,configurable:true
@@ -163,9 +177,10 @@ export class BoundedNatlangEnvironment {
     return this.services===null?this.run(request,true):this.runNativeAsync(request);
   }
   async runNativeAsync(request){
-    let progress=null,deadlineTimer=null,detachAbort=null;
+    let progress=null,deadlineTimer=null,detachAbort=null,entered=false;
     try{
-      this.ensureOpen();
+      this.#enterRun();
+      entered=true;
       if(!request||typeof request.code!=='string'||!request.scope||
          typeof request.scope!=='object'||Array.isArray(request.scope)||
          typeof request.body!=='boolean'||typeof request.path!=='string')
@@ -233,7 +248,7 @@ export class BoundedNatlangEnvironment {
         externalEffects:Object.keys(bundle.effects).length
       });
       if(this.onTrace){
-        const callback=this.onTrace(bundle,request,{
+        const callback=this.onTrace(structuredClone(bundle),request,{
           compiler:lowering.compiler,originalText,
           javascript:lowering.javascript,sourceMap:lowering.sourceMap,
           generatedSiteOrigins:mapBoundedTypeScriptSites(lowering,bundle.sites,originalText)
@@ -241,6 +256,8 @@ export class BoundedNatlangEnvironment {
         if(callback&&typeof callback.then==='function')
           throw new TypeError('onTrace must be synchronous; async callbacks are unowned');
       }
+      // Closing the realm from onTrace must never publish live host mutations.
+      this.ensureOpen();
       staged?.commit();
       const logs=Object.values(bundle.effects)
         .filter(effect=>/^platform\.console\.(log|info|warn|error)$/.test(effect.operation))
@@ -252,12 +269,14 @@ export class BoundedNatlangEnvironment {
     }finally{
       if(deadlineTimer!==null)clearTimeout(deadlineTimer);
       detachAbort?.();
+      if(entered)this.#leaveRun();
     }
   }
   run(request,allowAsync,{syncScope=null}={}){
-    let progress=null;
+    let progress=null,entered=false;
     try{
-      this.ensureOpen();
+      this.#enterRun();
+      entered=true;
       if(!request||typeof request.code!=='string'||
          !request.scope||typeof request.scope!=='object'||
          Array.isArray(request.scope)||typeof request.body!=='boolean'||
@@ -319,7 +338,7 @@ export class BoundedNatlangEnvironment {
         transpiler:lowering.compiler,asyncGuest:allowAsync
       });
       if(this.onTrace){
-        const callback=this.onTrace(bundle,request,{
+        const callback=this.onTrace(structuredClone(bundle),request,{
           compiler:lowering.compiler,originalText,
           javascript:lowering.javascript,sourceMap:lowering.sourceMap,
           generatedSiteOrigins:mapBoundedTypeScriptSites(lowering,bundle.sites,originalText)
@@ -327,12 +346,15 @@ export class BoundedNatlangEnvironment {
         if(callback && typeof callback.then==='function')
           throw new TypeError('onTrace must be synchronous; async callbacks are unowned');
       }
-      // Do not expose live host writes if the trace callback refuses the run.
+      // Do not expose live host writes if the trace callback refuses or closes the run.
+      this.ensureOpen();
       staged?.commit();
       return {result:result===undefined?null:result,events:[resultEvent],logs:[]};
     }catch(error){
       if(error instanceof this.EvalFailure)throw error;
       throw this.failed(request,error,progress?.kind==='unsupported'?'unsupported':'failed');
+    }finally{
+      if(entered)this.#leaveRun();
     }
   }
 }

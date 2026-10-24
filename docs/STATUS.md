@@ -1,5 +1,10 @@
 # Implementation status (0.2.0)
 
+## Natlang execution admission and callback lifecycle hardening (October 24, 2026)
+
+- The bounded natlang bridge now admits only one active execution per environment. Concurrent native-service waits, synchronous trace callback reentry and retained CommonJS callable reentry fail closed without hijacking the active run's lifecycle. A closing `onTrace` callback prevents data-only host mutations from committing in both synchronous and journaled native execution. Callback archives are detached from the authoritative replay-verified bundle.
+- Regression tests exercise callback close, async overlap, native dispatch completion, CommonJS reentry and rollback. This change **does not implement Node/browser API completeness or a production natlang callable-folder replacement**. The production-completeness and independent conformance gates remain unfulfilled.
+
 ## Bounded TypeScript CommonJS const-callables and retained session integrity (October 24, 2026)
 
 - The opt-in natlang retained CommonJS bridge accepts TypeScript 5.9-style chained `exports.name = void 0` markers only when each is paired with a static callable registration. Exported `const` arrows and function expressions use owned replay-backed lexical state; mutable `let` callables, missing markers, arbitrary bootstrap effects and native `require` still fail closed. This is not a production callable-folder replacement.
