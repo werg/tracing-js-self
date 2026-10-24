@@ -120,3 +120,27 @@ npm run corpus:stateful:audit -- --suite adversarial \
 
 `--suite combined` also exists; omitting `--suite` still selects the original
 76-family baseline, preserving the previously measured 912-case denominator.
+
+## Reproducible command-history differential fuzzing (2026-10-24)
+
+Run `npm run corpus:stateful:differential -- --seed 42 --count 256 --max-commands 64`
+to exercise **genuine unchanged, SHA-256 pinned yocto-queue source** against an
+independent array-backed queue state model. Each generated sequence covers
+`enqueue`, `dequeue`, `peek`, `clear`, `drain` and iteration snapshots;
+each step compares its returned value, size and ordered contents. Sequences are
+bounded, deterministic, deduplicated, and enumerated in a JSON diagnostic
+report. CI requires zero independently observable disagreements.
+
+`shrinkStatefulMismatch` in `src/corpus/stateful-differential.mjs` accepts
+a separately supplied trusted (possibly asynchronous) discrepancy oracle,
+requires two stable confirmations, and performs budgeted contiguous subsequence
+removal followed by nested JSON payload minimization. Its records include
+original sequence hashes, oracle signatures, evaluation counts and explicit
+non-reproduction/budget statuses. A changed symptom signature cannot be
+promoted to a reproduced counterexample.
+
+This is a **specific real-source stateful diagnostic**, not a general Jest
+recorder, proof of all queue/iterator behaviors, or an owned multi-agent
+bytecode trace. It does not imply new `semantic-execution/2` or admitted
+training records. Run only with trusted pinned implementations and externally
+isolated oracles; the native JS process is not a security sandbox.

@@ -1974,3 +1974,20 @@ previous owned/admitted corpus totals is changed by diagnostic worker results.
 - [ ] Real worker diagnostics are still native V8 executions, not owned
   multi-agent bytecode events or a proof of cross-engine memory-model
   conformance. Do not automatically run acquired untrusted source here.
+
+### Pinned stateful command oracle and counterexample reduction (2026-10-24)
+
+- [x] Added a bounded deterministic stateful command-sequence generator,
+  actual pinned `yocto-queue` V8 execution, and an independently implemented
+  array-backed oracle comparing return values, size and ordered state after
+  each operation. New `corpus:stateful:differential` CLI reports observed
+  agreements/disagreements with source SHA-256 receipts, CI gating and no
+  automatic training admission.
+- [x] Added fail-closed stateful sequence delta-debugging with independent
+  oracle rechecks, failure-signature consistency, hard execution budgets,
+  and payload reduction. Regression tests cover successful minimization,
+  malformed commands, oracle exceptions, flakiness and evidence segregation.
+- [ ] This does not complete the full roadmap: general cross-project dynamic
+  capture, Test262 conformance, original-source owned coverage for broad
+  production modules, multi-agent guest semantics and certified training
+  admission still require separate implementations and measurements.

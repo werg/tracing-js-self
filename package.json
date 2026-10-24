@@ -70,6 +70,7 @@
     "corpus:stateful:audit": "node tools/audit-stateful-corpus.mjs",
     "corpus:stateful": "node tools/build-stateful-corpus.mjs",
     "corpus:external": "node tools/import-external-corpus.mjs",
+    "corpus:stateful:differential": "node tools/verify-stateful-differential.mjs",
     "corpus:adversarial": "node tools/build-stateful-corpus.mjs --suite adversarial",
     "corpus:adversarial:audit": "node tools/audit-stateful-corpus.mjs --suite adversarial",
     "corpus:exercism:owned": "node tools/verify-exercism-owned.mjs",

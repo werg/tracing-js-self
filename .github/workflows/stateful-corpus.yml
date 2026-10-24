@@ -7,6 +7,9 @@ on:
       - 'src/observational.js'
       - 'tools/build-stateful-corpus.mjs'
       - 'test/stateful-corpus.test.js'
+      - 'test/stateful-differential.test.js'
+      - 'src/corpus/stateful-differential.mjs'
+      - 'tools/verify-stateful-differential.mjs'
       - '.github/workflows/stateful-corpus.yml'
       - 'package.json'
   pull_request:
@@ -16,6 +19,9 @@ on:
       - 'tools/build-stateful-corpus.mjs'
       - 'tools/audit-stateful-corpus.mjs'
       - 'test/stateful-corpus.test.js'
+      - 'test/stateful-differential.test.js'
+      - 'src/corpus/stateful-differential.mjs'
+      - 'tools/verify-stateful-differential.mjs'
       - 'test/corpus-exhaustive-audits.test.js'
       - '.github/workflows/stateful-corpus.yml'
   workflow_dispatch:
@@ -33,6 +39,19 @@ jobs:
         with:
           node-version: '22'
       - run: npm ci
+      - name: Verify pinned stateful command model and deterministic mismatch reducer
+        run: |
+          node --test test/stateful-differential.test.js
+          node tools/verify-stateful-differential.mjs --count 256 --max-commands 64 --output corpus/out/queue-differential.json
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const r=JSON.parse(readFileSync("corpus/out/queue-differential.json"));
+            if(r.admitted!==false||r.verifiedOwned!==false||
+               r.uniqueSequences<100||r.attemptedCommands<100||
+               r.agreed!==r.uniqueSequences||r.disagreed!==0)
+              throw Error("Stateful differential oracle disagreed or was mislabeled");
+            console.log("Queue command histories",r.uniqueSequences,"commands",r.attemptedCommands);
+          '
       - name: Validate all nine Axios adversarial families first
         run: |
           node tools/build-stateful-corpus.mjs --project axios \
@@ -81,6 +100,7 @@ jobs:
         with:
           name: pinned-stateful-adversarial-v8-diagnostics
           path: |
+            corpus/out/queue-differential.json
             corpus/out/stateful-traces.jsonl
             corpus/out/stateful-report.json
             corpus/out/stateful-review.md
