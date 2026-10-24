@@ -85,3 +85,12 @@ test('selected model reports cannot omit real tokens, compute or signed source l
   task.runs[1].cases[0].measurements.computeFlops=null;
   assert.throws(()=>evaluateActualModelExperiment(task),/measured computeFlops/);
 });
+
+test('model selected trace cannot replace trusted observed code or input',()=>{
+  const task=fixture();
+  const selected=task.runs.find(run=>run.condition==='v3-fine'&&run.seed===17);
+  selected.cases[0].groups[0].events[0].record=record('code',{
+    entry:'run',source:'function run(){return 99;}',sites:[]});
+  assert.throws(()=>evaluateActualModelExperiment(task),
+    /changed its frozen observed source\/input context/);
+});
