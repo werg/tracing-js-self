@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {importGraph,realizeGraph,describeGraph,describeOwnedGraph} from '../src/training/graph.js';
-import {validatePublishedGraph} from '../src/training/public-graph.js';
+import {encodeWitness} from '../src/training/format.js';
 
 function importRoots(roots) {
   const state={heap:{}};
@@ -19,7 +19,11 @@ test('holes, present undefined, aliases, cycles and null prototypes round-trip',
   record.self=record;
   const {state,encoded}=importRoots([record,record,sparse]);
   const published=describeOwnedGraph(state.heap,encoded);
-  assert.equal(validatePublishedGraph(published),true);
+  const publicGraph={roots:published.roots,objects:published.objects.map(node=>({
+    id:node.id,kind:node.kind,...(node.prototype===null?{prototype:null}:{}),
+    properties:node.properties.map(p=>({key:p.key,value:p.value}))
+  }))};
+  assert.doesNotThrow(()=>encodeWitness('input',{graph:publicGraph}));
   assert.equal(published.objects[0].prototype,null);
   const reconstructed=realizeGraph(state.heap,encoded);
   assert.equal(Object.getPrototypeOf(reconstructed[0]),null);
