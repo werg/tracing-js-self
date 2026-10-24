@@ -41,6 +41,7 @@ export function rewriteSemanticWitness({generated,certificates,source,entry,
   const binaries=sourceExpressions(source);
   const params=program.functions.find(f=>f.name===entry)?.params??[];
   const locals=new Map();
+  const inputAliases=new Set();
   const emitted=[];
   const arguments_=inputGraph.roots;
   function substitution(leaf,node,invocation) {
@@ -53,8 +54,10 @@ export function rewriteSemanticWitness({generated,certificates,source,entry,
     }
     if(invocation==='i1'){
       const index=params.indexOf(node.name);
-      if(index>=0&&index<arguments_.length&&same(arguments_[index],leaf.value))
-        return {op:'input',index};
+      if(index>=0&&index<arguments_.length&&same(arguments_[index],leaf.value)){
+        inputAliases.add(index);
+        return {op:'local',name:'arg'+index};
+      }
     }
     return leaf;
   }
@@ -120,6 +123,13 @@ export function rewriteSemanticWitness({generated,certificates,source,entry,
         sourceName:localNames.get(name),invocation});
     }
   }
-  return {generated:emitted.map(item=>encodeWitness(item.kind,item.fields)),
-    certificates:emitted.map((item,record)=>({...item.cert,record}))};
+  // Explicit initial argument aliases use existing v3 local semantics, so the
+  // pinned native consumer does not need a new primitive expression variant.
+  const aliases=[...inputAliases].sort((a,b)=>a-b).map(index=>({
+    kind:'bind',fields:{name:'arg'+index,value:arguments_[index]},
+    cert:{rule:'input-alias/1',semanticEvents:[],journalEvents:[]}
+  }));
+  const result=[...aliases,...emitted];
+  return {generated:result.map(item=>encodeWitness(item.kind,item.fields)),
+    certificates:result.map((item,record)=>({...item.cert,record}))};
 }
