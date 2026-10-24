@@ -19,7 +19,6 @@ function show(tag){
 }
 function expr(node){
   if(node.op==='literal')return show(node.value);
-  if(node.op==='input')return 'arg'+node.index;
   if(node.op==='local')return node.name;
   if(node.op==='read')return '&'+node.object+'['+JSON.stringify(node.key)+']';
   if(node.op==='unary')return node.operator+'('+expr(node.arg)+')';
