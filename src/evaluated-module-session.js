@@ -120,7 +120,11 @@ export class BoundedRetainedModuleSession {
   #pending=0;
   #onTrace=null;
   #closed=false;
+  #activeSync=false;
+  #lastArchive=null;
   // Accessors return detached data; a consumer cannot rewrite replay inputs.
+  get lastArchive(){return this.#lastArchive===null?null:
+    structuredClone(this.#lastArchive);}
   get history(){return this.#history.map(({exportName,args})=>({
     exportName,args:[...args]
   }));}
@@ -153,7 +157,6 @@ export class BoundedRetainedModuleSession {
       entryModule:{value:entryModule,enumerable:true},
       maxSteps:{value:maxSteps,enumerable:true}
     });
-    this.lastArchive=null;
   }
   async invoke(exportName,args=[]){
     if(this.#closed)throw new Error('Retained module session closed');
@@ -181,17 +184,24 @@ export class BoundedRetainedModuleSession {
    */
   invokeSync(exportName,args=[]){
     if(this.#closed)throw new Error('Retained module session closed');
+    if(this.#activeSync)
+      throw new Error('Reentrant synchronous retained module call');
     if(this.#pending)throw new Error('Cannot synchronously invoke while async calls are pending');
     const checked=checkArgs(args);
     if(typeof exportName!=='string'||!/^[$A-Za-z_][$\w]*$/.test(exportName))
       throw new TypeError('Invalid retained module export name');
     if(this.#history.length>=32)throw new RangeError('Retained session call limit');
     const calls=[...this.#history,{exportName,args:checked}];
-    const run=executeEvaluatedModulesSync({
-      modules:this.modules,entryModule:this.entryModule,
-      calls,maxSteps:this.maxSteps
-    });
-    return this.#commit(calls,run);
+    this.#activeSync=true;
+    try{
+      const run=executeEvaluatedModulesSync({
+        modules:this.modules,entryModule:this.entryModule,
+        calls,maxSteps:this.maxSteps
+      });
+      return this.#commit(calls,run);
+    }finally{
+      this.#activeSync=false;
+    }
   }
   #commit(calls,run){
     const initial=run.bundle.initialState.control.a0.activeFrameId;
@@ -208,18 +218,22 @@ export class BoundedRetainedModuleSession {
     if(this.#closed)throw new Error('Retained module session closed');
     if(this.#onTrace){
       const call=calls.at(-1);
-      const callback=this.#onTrace(run.bundle,{
+      // A trace sink cannot rewrite the verified archive retained as evidence.
+      const callback=this.#onTrace(structuredClone(run.bundle),{
         exportName:call.exportName,args:[...call.args],callCount:calls.length
       },run.metadata);
       if(callback&&typeof callback.then==='function')
         throw new TypeError('Retained module trace hook must not return a Promise');
     }
+    // A callback may close this session; closing aborts the pending commit.
+    if(this.#closed)throw new Error('Retained module session closed during trace hook');
+    const published=structuredClone(run.bundle);
     staged.commit();
     this.#objects=staged.objects;
     this.#outputs=staged.values;
     this.#history=calls;
-    this.lastArchive=run.bundle;
-    return {result:staged.values.at(-1),bundle:run.bundle,metadata:run.metadata};
+    this.#lastArchive=run.bundle;
+    return {result:staged.values.at(-1),bundle:published,metadata:run.metadata};
   }
   /**
    * JSON-portable committed-history snapshot, not a VM checkpoint. A pending
