@@ -6,7 +6,7 @@ import {normalizeJournal,validateSemantic} from '../semantic/normalize.js';
 import {replayExact} from '../replay.js';
 import {describeOwnedGraph} from './graph.js';
 import {analyzeSemanticProgram} from './semantic-program.js';
-import {encodeWitness} from './witness-ir.js';
+import {encodeWitness} from './format.js';
 import {normalizeCompletionFacts} from './completion-facts.js';
 
 export const COMPACTION_RULES=Object.freeze({
