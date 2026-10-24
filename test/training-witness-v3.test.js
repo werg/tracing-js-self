@@ -129,3 +129,21 @@ test('finally replacement return supersedes saved primitive but keeps mutation',
   assert.deepEqual(trace.find(e=>e.kind==='return').fields.value,['num',5]);
   assert.equal(validateWitnessTrainingExport(episode).valid,true);
 });
+
+test('a caught throw is a nonterminal transfer and introduces the real catch value',()=>{
+  const episode=sourceCase(
+    'function run(o){try{throw 7;}catch(e){o.n+=e;}finally{o.n+=1;}return o.n;}',
+    [{n:2}]);
+  const trace=episode.sidecar.compiled.generated.map(decodeWitness);
+  const raised=trace.findIndex(r=>r.kind==='transfer'&&r.fields.kind==='throw');
+  const bound=trace.findIndex((r,i)=>i>raised&&r.kind==='bind'&&
+    r.fields.name.startsWith('caught'));
+  const finished=trace.findIndex(r=>r.kind==='return');
+  assert(raised>=0&&bound>raised&&finished>bound);
+  assert.deepEqual(trace[bound].fields.value,['num',7]);
+  assert.deepEqual(trace[finished].fields.value,['num',10]);
+  assert.equal(trace.filter(r=>r.kind==='throw').length,0);
+  assert.equal(validateWitnessTrainingExport(episode).valid,true);
+  assert.equal(evaluateWitnessTrajectory({groups:episode.public.groups,
+    referenceOutcome:episode.sidecar.reference}).correctness,'correct');
+});
