@@ -15,6 +15,7 @@ export const COMPACTION_RULES=Object.freeze({
   'primitive/1':{boundary:'primitive',effect:'preserve operator order and operand values'},
   'fuse-expression/1':{boundary:'pure expression',effect:'combine verified nested primitive expressions'},
   'fuse-bind/1':{boundary:'local',effect:'attach verified value to its binding'},
+  'input-alias/1':{boundary:'observed input',effect:'name a supplied immutable argument value'},
   'seeded-random/1':{boundary:'primitive',effect:'advance predeclared deterministic entropy'},
   'bind/1':{boundary:'local',effect:'commit supplied value'},
   'choice/1':{boundary:'control',effect:'retain chosen path'},
