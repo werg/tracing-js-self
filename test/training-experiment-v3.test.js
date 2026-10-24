@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {encodeWitness} from '../src/training/format.js';
 import {evaluateActualModelExperiment,experimentCaseId,
-  validateExperimentManifest,EXPERIMENT_CONDITIONS,EXPERIMENT_SEEDS}
+  validateExperimentManifest,freezeExperimentCohort,EXPERIMENT_CONDITIONS,EXPERIMENT_SEEDS}
   from '../src/training/experiment.js';
 
 const record=(kind,fields)=>encodeWitness(kind,fields);
@@ -93,4 +93,16 @@ test('model selected trace cannot replace trusted observed code or input',()=>{
     entry:'run',source:'function run(){return 99;}',sites:[]});
   assert.throws(()=>evaluateActualModelExperiment(task),
     /changed its frozen observed source\/input context/);
+});
+
+test('frozen common-support test cohort is stable across row permutations and refuses duplicate observed input',()=>{
+  const ref=fixture().references[0];
+  const receipt=freezeExperimentCohort([ref]);
+  assert.equal(receipt.schema,'semantic-frozen-cohort/1');
+  assert.equal(receipt.cohortSha256,fixture().manifest.pinned.frozenCohortSha256);
+  assert.deepEqual(receipt.families,['test-family']);
+  assert.throws(()=>freezeExperimentCohort([ref,ref]),/duplicate frozen test/);
+  const poisoned=structuredClone(ref);
+  poisoned.sidecar.split='train';
+  assert.throws(()=>freezeExperimentCohort([poisoned]),/verified test/);
 });
