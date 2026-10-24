@@ -37,7 +37,8 @@ test('native Ajv output disagreement never becomes owned verification',()=>{
 
 test('captured Ajv scope and mismatched generated function names refuse',()=>{
  const withScope=Object.assign(function validate(data){return data;},{
-  source:{validateCode:generated,scopeValues:{keyword:new Map()}}});
+  source:{validateCode:'function validate(data){return keyword0 === data;}',
+   scopeValues:{keyword:new Map()}}});
  let result=attemptOwnedAjvGeneratedValidator({
   validator:withScope,data:7,observedResult:true});
  assert.equal(result.row.status,'unsupported');
@@ -48,6 +49,11 @@ test('captured Ajv scope and mismatched generated function names refuse',()=>{
   validator:wrong,data:7,observedResult:true});
  assert.equal(result.row.status,'unsupported');
  assert.equal(result.row.verifiedOwned,false);
+ const unused=Object.assign(function validate(data){return typeof data==='string';},{
+  source:{validateCode:generated,scopeValues:{keyword:new Map()}}});
+ const check=attemptOwnedAjvGeneratedValidator({
+  validator:unused,data:'yes',observedResult:true});
+ assert.notEqual(check.row.reason,'Ajv generated function requires captured native scope');
 });
 
 test('malformed or multi-definition generated code is rejected before execution',()=>{
