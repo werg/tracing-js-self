@@ -3,7 +3,7 @@
 // Does not manufacture independent admission or model accuracy evidence.
 import {writeFileSync} from 'node:fs';
 import {createRuntime} from '../src/runtime.js';
-import {exportWitnessTraining} from '../src/training/export-v3.js';
+import {exportTraining} from '../src/training/export.js';
 
 const args=process.argv.slice(2);
 function option(name,fallback){const i=args.indexOf(name);return i<0?fallback:args[i+1];}
@@ -51,7 +51,7 @@ for(let index=0;index<count;index++){
       .startEntry({text:fixture.source,functionName:'run',args:values});
     if(runtime.drive().kind!=='terminated')
       throw new Error('Unsettled owned execution');
-    const exported=exportWitnessTraining(runtime,{maxBytes:512,maxGenerated:4096,maxOperators});
+    const exported=exportTraining(runtime,{maxBytes:512,maxGenerated:4096,maxOperators});
     exported.sidecar.sourceLineage=fixture.family;
     exported.sidecar.split=split(fixture.family);
     exported.sidecar.provenance={
