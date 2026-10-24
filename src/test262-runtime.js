@@ -96,6 +96,11 @@ function checkHarnessNames(node) {
   if (node.type === 'Assign' && (node.left.type === 'Identifier' && node.left.name === 'assert'
     || node.left.type === 'Member' && node.left.object.type === 'Identifier' && node.left.object.name === 'assert'))
     throw new Test262RuntimeProfileError('Test body replaces the scalar assertion harness');
+  if (node.type === 'Member' && node.object?.type === 'Identifier' &&
+      node.object.name === 'assert' &&
+      (node.property?.type !== 'Literal' ||
+       !['sameValue', 'notSameValue'].includes(node.property.value?.[1])))
+    throw new Test262RuntimeProfileError('Test body requires an unavailable assert helper');
   for (const value of Object.values(node)) {
     if (Array.isArray(value)) value.forEach(checkHarnessNames);
     else if (value && typeof value === 'object') checkHarnessNames(value);

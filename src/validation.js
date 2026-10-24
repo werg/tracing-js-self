@@ -140,7 +140,10 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
               state.promises[f.promiseExecutorTarget]?.resolverCalled));
            const thenableRejection=Object.values(state.frames).some(f=>f.status==='thrown'&&
              f.thenableJob&&eq(f.completion,c)&&
-             state.promises[f.thenableJob.promiseId]?.status==='rejected');
+             state.promises[f.thenableJob.promiseId]?.thenableLocked===true);
+           // A thenable that calls resolve() and then throws ignores the throw.
+           // It remains an executed guest abrupt completion, not a second
+           // promise rejection, and is validated against the locked capability.
            if(!rejection&&!reactionRejection&&!pendingCoercion&&!executorCompletion&&!thenableRejection&&(['failed','unsupported'].includes(state.control.a0.status)||active?.status!=='running'||
              !active.handlers?.some(h=>h.phase==='catch'||h.phase==='finally')))
             fail('Guest throw was not routed to a handler or async rejection',e.eventId);
