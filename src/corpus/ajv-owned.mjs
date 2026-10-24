@@ -36,13 +36,33 @@ export function attemptOwnedAjvGeneratedValidator({
  const codeSha256=hash(generated);
  const details={generatedCodeSha256:codeSha256,generatedFunction:entry,originalId};
  const scoped=validator.source?.scopeValues;
- if(scoped && Reflect.ownKeys(scoped).length)
-  return {row:refusal('unsupported','Ajv generated function requires captured native scope',details),
-   exported:null};
  let ast;
  try{ast=parse(generated,{ecmaVersion:2022,sourceType:'script'});}
  catch(error){
   return {row:refusal('unsupported','Generated Ajv code cannot be parsed: '+String(error.message).slice(0,160),details),exported:null};
+ }
+ // Ajv can retain unused scope registrations in its generated metadata.
+ // Permit those only if no generated identifier refers to them. Actual
+ // captured values (schema0, func1, etc.) must never be injected from V8.
+ // This is a conservative lexical preflight; the independent V8 oracle will
+ // still reject any missed ambient dependency in the executable program.
+ if(scoped && Reflect.ownKeys(scoped).length){
+  const keys=Reflect.ownKeys(scoped);
+  const identifiers=new Set(),stack=[ast];
+  while(stack.length){
+   const current=stack.pop();
+   if(!current||typeof current!=='object')continue;
+   if(current.type==='Identifier')identifiers.add(current.name);
+   for(const value of Object.values(current)){
+    if(Array.isArray(value))stack.push(...value);
+    else if(value&&typeof value==='object')stack.push(value);
+   }
+  }
+  if(keys.some(key=>typeof key!=='string'||!/^[A-Za-z_][\w]*$/.test(key)||
+      [...identifiers].some(name=>name.startsWith(key)&&
+       /^[0-9]+$/.test(name.slice(key.length)))))
+   return {row:refusal('unsupported','Ajv generated function requires captured native scope',details),
+    exported:null};
  }
  if(ast.body.length!==1||ast.body[0].type!=='FunctionDeclaration'||
     ast.body[0].id?.name!==entry||ast.body[0].generator||ast.body[0].async)
