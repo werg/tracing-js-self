@@ -1779,3 +1779,31 @@ does not treat native V8 as an owned interpreter.
   loop checkpoints, unhandled-rejection hooks, worker agents, Atomics,
   SharedArrayBuffer, or the official Test262 agent service. Full host
   scheduling and multi-agent conformance remain future work.
+
+
+### Bounded virtual scheduling and scripted shared-memory diagnostics (2026-10-24)
+
+- [x] Added replayable **owned** `Promise.all` and `Promise.race` over dense
+  arrays up to 64 entries, with explicit Promise observation jobs. General
+  iterators, thenables, executors, species/subclassing, `any`, and
+  `allSettled` are not implemented.
+- [x] Added an owned deterministic virtual-clock `setTimeout` /
+  `setInterval` task queue with cancellation. It drains existing Promise and
+  queued-microtask jobs before every timer turn, logs owned callback execution
+  and checks task-time/order receipts during replay. It is not a real platform
+  event loop or full Test262 host harness.
+- [x] Added a **separate scripted agent diagnostic**, `bounded-agents/1`,
+  that simulates sequentially consistent shared Int32 cells, `Atomics`-like
+  load/store/read-modify-write/compare-exchange and FIFO wait/notify with
+  bounded virtual timeouts. It is deterministic and replays its transcript.
+  Unlike owned bytecode execution, it does **not** interpret worker JavaScript
+  and is **not** an owned guest trace or training example.
+- [ ] Full outstanding roadmap: general module resolution and ESM/CJS
+  interoperability, arbitrary production-library initialization, Promise
+  constructors/executors and thenable assimilation, all Promise combinators,
+  real host tasks and environment capabilities, genuine workers,
+  `SharedArrayBuffer`-backed guest memory and agent memory ordering,
+  Test262 `$262.agent` integration, real production Ajv owned-trace yield,
+  cross-engine verification and megatoken training admission.
+  Previous measured corpus denominators are unchanged by these new
+  bounded capability regressions.
