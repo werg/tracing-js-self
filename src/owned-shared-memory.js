@@ -54,6 +54,58 @@ export function newSharedView(id,buffer,type,offset=0,length=undefined){
  return {id,kind:'shared-int32-view',bufferId:buffer.id,elementType:type,
    byteOffset:offset,length,lengthTracking,version:0};
 }
+// DataView views alias the same owned serializable SAB byte storage.
+const DV_TYPES=Object.freeze(Object.fromEntries(
+ Object.entries(SHARED_TYPES).map(([type,spec])=>[type.slice(0,-5),spec])));
+export const DATA_VIEW_GETTERS=Object.freeze(Object.keys(DV_TYPES).map(n=>'get'+n));
+export const DATA_VIEW_SETTERS=Object.freeze(Object.keys(DV_TYPES).map(n=>'set'+n));
+export function newSharedDataView(id,buffer,byteOffset=0,byteLength=undefined){
+ if(buffer?.kind!=='shared-int32-buffer')throw new TypeError('Owned SAB required');
+ if(!Number.isSafeInteger(byteOffset)||byteOffset<0||byteOffset>buffer.byteLength)
+   throw new RangeError('DataView offset');
+ const lengthTracking=byteLength===undefined&&buffer.growable===true;
+ const n=byteLength===undefined?buffer.byteLength-byteOffset:byteLength;
+ if(!Number.isSafeInteger(n)||n<0||byteOffset+n>buffer.byteLength)
+   throw new RangeError('DataView length');
+ return {id,kind:'shared-data-view',bufferId:buffer.id,byteOffset,byteLength:n,lengthTracking,version:0};
+}
+export function effectiveDataViewLength(buffer,view){
+ if(buffer?.kind!=='shared-int32-buffer'||view?.kind!=='shared-data-view')
+   throw new TypeError('Not an owned DataView');
+ return view.lengthTracking?buffer.byteLength-view.byteOffset:view.byteLength;
+}
+function dvAccess(buffer,view,method,index){
+ const setter=method.startsWith('set'),getter=method.startsWith('get');
+ const spec=DV_TYPES[method.slice(3)];
+ if((!setter&&!getter)||!spec)throw new TypeError('DataView method');
+ const length=effectiveDataViewLength(buffer,view);
+ if(!Number.isSafeInteger(index)||index<0||index+spec.bytes>length)
+   throw new RangeError('DataView index');
+ if(!Array.isArray(buffer.bytes)||buffer.bytes.length!==buffer.byteLength)
+   throw new TypeError('Invalid SAB bytes');
+ const bytes=Uint8Array.from(buffer.bytes);
+ return {setter,spec,bytes,view:new DataView(bytes.buffer),offset:view.byteOffset+index};
+}
+export function readSharedDataView(buffer,view,method,index,littleEndian=false){
+ const a=dvAccess(buffer,view,method,index);
+ if(a.setter)throw new TypeError('DataView getter expected');
+ return encode(a.view[a.spec.get](a.offset,Boolean(littleEndian)));
+}
+export function writeSharedDataView(buffer,view,method,index,value,littleEndian=false){
+ const a=dvAccess(buffer,view,method,index);
+ if(!a.setter)throw new TypeError('DataView setter expected');
+ let v;
+ if(a.spec.bigint){
+   if(value?.[0]!=='bigint')throw new TypeError('BigInt required');
+   v=decode(value);
+ }else{
+   if(!['num','bool','str','null','undefined'].includes(value?.[0]))
+     throw new TypeError('Owned number required');
+   v=Number(decode(value));
+ }
+ a.view[a.spec.set](a.offset,v,Boolean(littleEndian));
+ buffer.bytes=Array.from(a.bytes);
+}
 function data(buffer,view,index){
  const spec=SHARED_TYPES[view.elementType];
  if(!spec||buffer?.kind!=='shared-int32-buffer'||
