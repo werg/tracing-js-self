@@ -12,7 +12,7 @@ test('browser condition provides a no-Node-import bounded runtime and rejects ho
     assert.equal(api.executeWithNativeServices,undefined);
     const runtime=api.createRuntime({maxSteps:10000});
     const source=runtime.registerSource({
-      text:'function twice(x){return x*2;}',trainingProfile:true
+      text:'"use strict";function twice(x){return x*2;}',trainingProfile:true
     });
     runtime.startEntry({source,functionName:'twice',args:[4]});
     assert.equal(runtime.drive().kind,'terminated');
@@ -25,7 +25,7 @@ test('browser condition provides a no-Node-import bounded runtime and rejects ho
     assert.equal(Object.isFrozen(runtime.adapters),true);
     const next=api.createRuntime();
     const nextSource=next.registerSource({
-      text:'function read(x){return x.value;}',trainingProfile:true
+      text:'"use strict";function read(x){return x.value;}',trainingProfile:true
     });
     assert.throws(()=>next.startEntry({
       source:nextSource,functionName:'read',args:[{value:9}]
