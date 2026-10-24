@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Requires an externally installed, exact Ajv 8.17.1 package, verified by
-// the caller's package-lock/tarball integrity. No generated code is claimed
-// to be executed or traced by the owned runtime.
+// the caller's package-lock/tarball integrity. Native diagnostic rows are
+// never upgraded automatically; opt-in generated-code owned attempts are
+// separately reported and require full independent semantic evidence.
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {dirname,resolve} from 'node:path';
 import {createHash} from 'node:crypto';
@@ -119,7 +120,7 @@ const report={schema:'production-ajv-reference-report/1',
   locallyVerified:localEpisodes.length,
   refused:ownedRows.length-localEpisodes.length,admitted:0},
  authority:'native-v8-diagnostic-only',
- warning:'These are real Ajv native V8 executions with generated validator code hashes. No independent owned interpreter journal or downstream training admission is asserted.'};
+ warning:'The 907 native rows are diagnostic-only. Opt-in owned candidate attempts are a separate fail-closed ledger; only individually rechecked semantic journals qualify locally, never for automatic training admission.'};
 for(const filename of [output,reportPath,...(ownedMax?[ownedOutput,ownedEpisodes]:[])])
  mkdirSync(dirname(filename),{recursive:true});
 writeFileSync(output,rows.map(x=>JSON.stringify(x)).join('\n')+'\n');
