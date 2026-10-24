@@ -33,7 +33,9 @@ export function verifyWitnessEvidence(bundle,semantic,compiled) {
   const checker=new SemanticController(compiled.context);
   for(const line of compiled.generated)checker.commit(line);
   if(!checker.completion||checker.firstWitnessViolation)
-    throw new Error('Artifact integrity: generated public witness is inconsistent');
+    throw new Error('Artifact integrity: generated public witness is inconsistent'+
+      (checker.firstWitnessViolation?': '+JSON.stringify(checker.firstWitnessViolation):
+        ': no terminal completion'));
   return {valid:true,certificates:compiled.certificates.length,
     privateEvents:semantic.events.length,generated:compiled.generated.length};
 }
