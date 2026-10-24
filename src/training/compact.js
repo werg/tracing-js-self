@@ -6,12 +6,15 @@ import {normalizeJournal,validateSemantic} from '../semantic/normalize.js';
 import {replayExact} from '../replay.js';
 import {describeOwnedGraph} from './graph.js';
 import {trainingPrefix} from './visibility.js';
-import {encodeWitness} from './format.js';
+import {encodeWitness,decodeWitness} from './format.js';
+import {rewriteSemanticWitness} from './rewrite.js';
 import {normalizeCompletionFacts} from './completion-facts.js';
 
 export const COMPACTION_RULES=Object.freeze({
   'input/1':{boundary:'observed',effect:'publish supplied graph'},
   'primitive/1':{boundary:'primitive',effect:'preserve operator order and operand values'},
+  'fuse-expression/1':{boundary:'pure expression',effect:'combine verified nested primitive expressions'},
+  'fuse-bind/1':{boundary:'local',effect:'attach verified value to its binding'},
   'seeded-random/1':{boundary:'primitive',effect:'advance predeclared deterministic entropy'},
   'bind/1':{boundary:'local',effect:'commit supplied value'},
   'choice/1':{boundary:'control',effect:'retain chosen path'},
@@ -33,7 +36,7 @@ function primitiveTag(value){
   return value;
 }
 export function compileWitness(bundle,semantic=normalizeJournal(bundle),
-    {maxOperators=1}={}){
+    {maxOperators=4}={}){
   if(![1,2,4,8].includes(maxOperators))throw new RangeError('Unknown fusion policy');
   validateSemantic(bundle,semantic);
   replayExact(bundle);
@@ -83,11 +86,15 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
     if(!invocations.has(frame))invocations.set(frame,'i'+(++invocationNumber));
     return invocations.get(frame);
   }
-  const cellNames=new Map(),committedCells=new Set();
+  const cellNames=new Map(),cellSourceNames=new Map(),committedCells=new Set();
   let cellNumber=0;
   function local(write) {
     const key=write.env+':'+write.key;
-    if(!cellNames.has(key))cellNames.set(key,'l'+(++cellNumber));
+    if(!cellNames.has(key)){
+      const hint=/^[a-z][a-z0-9]*$/.test(write.key)?write.key:'v';
+      const name=hint+(++cellNumber);
+      cellNames.set(key,name);cellSourceNames.set(name,write.key);
+    }
     return cellNames.get(key);
   }
   // Root rest allocation takes place while the entry frame is created,
@@ -266,7 +273,12 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
   if(!terminal||!terminal.startsWith('return '))
     refuse('missing real root return boundary');
   emit('end',{kind:'return'},'completion/1',null);
-  return {schema:'semantic-compiler/3',context,generated,
-    certificates,elided,staticProgram:analyzed,
+  const rewritten=rewriteSemanticWitness({generated,certificates,
+    source:source.text,entry:entry.functionName,program:analyzed,
+    inputGraph:decodeWitness(prefix.input).fields.graph,
+    localNames:cellSourceNames,maxOperators});
+  return {schema:'semantic-compiler/3',context,
+    generated:rewritten.generated,certificates:rewritten.certificates,
+    elided,staticProgram:analyzed,
     policy:{maxOperators,maxExpressionNodes:32}};
 }
