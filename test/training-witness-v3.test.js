@@ -104,3 +104,28 @@ test('selected fresh object names are independent of reference spelling',()=>{
   controller.commit(encodeWitness('end',{kind:'return'}));
   assert.deepEqual(controller.observedGraph().objects[0].properties,[['n',['num',2]]]);
 });
+
+test('pending return through finally closes only after observable cleanup mutation',()=>{
+  const episode=sourceCase(
+    'function run(o){try{return o.n;}finally{o.n+=3;}}',[{n:2}]);
+  assert.equal(validateWitnessTrainingExport(episode).valid,true);
+  const trace=episode.sidecar.compiled.generated.map(decodeWitness);
+  assert.equal(trace.filter(e=>e.kind==='return').length,1);
+  const transfer=trace.findIndex(e=>e.kind==='transfer');
+  const update=trace.findIndex((e,i)=>i>transfer&&e.kind==='write');
+  const actual=trace.findIndex(e=>e.kind==='return');
+  assert(transfer>=0&&update>transfer&&actual>update);
+  assert.deepEqual(trace[actual].fields.value,['num',2]);
+  assert.equal(evaluateWitnessTrajectory({
+    groups:episode.public.groups,referenceOutcome:episode.sidecar.reference
+  }).correctness,'correct');
+});
+test('finally replacement return supersedes saved primitive but keeps mutation',()=>{
+  const episode=sourceCase(
+    'function run(o){try{return o.n;}finally{o.n+=3;return o.n;}}',[{n:2}]);
+  const trace=episode.sidecar.compiled.generated.map(decodeWitness);
+  assert.equal(trace.filter(e=>e.kind==='return').length,1);
+  assert(trace.findIndex(e=>e.kind==='transfer')>=0);
+  assert.deepEqual(trace.find(e=>e.kind==='return').fields.value,['num',5]);
+  assert.equal(validateWitnessTrainingExport(episode).valid,true);
+});
