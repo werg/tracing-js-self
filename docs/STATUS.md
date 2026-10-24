@@ -1,5 +1,10 @@
 # Implementation status (0.2.0)
 
+## Native execution observations for unsupported natlang JS/TS (October 24, 2026)
+
+- `werg/natlang` adds an opt-in `installObservedNativeTracingEnvironment` that emits `natlang-native-observation/1` start/completion/failure records for normal and asynchronous evaluations and retained module bootstrap. It executes unsupported language constructs in the original Node evaluator, so these are **boundary-only observations**; nested operations, retained-export calls, callbacks and host effects are not captured. See [native observation tracing](https://github.com/werg/natlang/blob/main/ts-host/NATIVE_OBSERVATION_TRACING.md).
+- These records are **not owned semantic traces**, do not pass replay verification, and are not eligible as independently validated megatoken training data. The trace-required hybrid route still refuses native execution. Full universal tracing and production cutover remain open.
+
 ## Opt-in native compatibility routing in natlang (October 24, 2026)
 
 - `werg/natlang` now exposes `installHybridTracingEnvironment` for explicit routing between this bounded owned evaluator and natlang's native TypeScript/Node evaluator. The compatibility-first default uses the native route, including the retained callable-folder seam. Native per-call results carry `execution.provenance` with `authority: native-untraced/1`; retained module evaluation requires the `onNativeExecution` hook for its separate provenance record.
