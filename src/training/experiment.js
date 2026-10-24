@@ -11,6 +11,7 @@ export const EXPERIMENT_CONDITIONS=Object.freeze([
 ]);
 export const EXPERIMENT_SEEDS=Object.freeze([17,29,43]);
 const hex=/^[0-9a-f]{64}$/;
+const commit=/^[0-9a-f]{40}$/;
 const allowedOutcomes=new Set(['correct','incorrect','invalid','incomplete']);
 const fail=(message)=>{throw new Error('Semantic experiment refused: '+message);};
 const digest=data=>createHash('sha256').update(JSON.stringify(data)).digest('hex');
@@ -29,12 +30,13 @@ export function validateExperimentManifest(manifest) {
   if(!manifest||manifest.schema!=='semantic-learning-experiment/1')
     fail('manifest schema');
   const pinned=manifest.pinned??{},training=manifest.training??{};
-  for(const key of ['tracerCommit','consumerCommit','historicalCommit',
-    'tokenizerSha256','initialCheckpointSha256','frozenCohortSha256']) {
-    if(!hex.test(pinned[key]??''))fail('missing exact pinned '+key);
-  }
+  for(const key of ['tracerCommit','consumerCommit','historicalCommit'])
+    if(!commit.test(pinned[key]??''))fail('missing exact Git commit '+key);
+  for(const key of ['tokenizerSha256','initialCheckpointSha256','frozenCohortSha256'])
+    if(!hex.test(pinned[key]??''))fail('missing content digest '+key);
   for(const key of ['architecture','optimizer','budgets','hardware']){
-    if(!training[key]||typeof training[key]!=='object')
+    if(!training[key]||typeof training[key]!=='object'||
+       Array.isArray(training[key])||!Object.keys(training[key]).length)
       fail('missing '+key+' configuration');
   }
   if(!isDeepStrictEqual(manifest.seeds,EXPERIMENT_SEEDS))
@@ -66,9 +68,9 @@ function outcomeForActualModel(candidate,reference) {
     referenceOutcome:reference.sidecar.reference,
     referenceGroups:reference.public.groups
   });
-  const correctness=scored.invalid?'invalid':
-    scored.correctness==='correct'?'correct':
-    scored.invalid?.category==='incomplete'?'incomplete':'incorrect';
+  const correctness=scored.invalid?.category==='incomplete'?'incomplete':
+    scored.invalid?'invalid':
+    scored.correctness==='correct'?'correct':'incorrect';
   return {correctness,witnessViolation:!!scored.firstWitnessViolation,
     firstWitnessViolation:scored.firstWitnessViolation,
     referenceTextDifference:!!scored.firstReferenceTraceDifference,
@@ -76,7 +78,7 @@ function outcomeForActualModel(candidate,reference) {
 }
 function outcomeForHistorical(candidate) {
   if(candidate?.provenance?.source!=='pinned-historical-runner'||
-     !hex.test(candidate.provenance.historicalCommit??'')||
+     !commit.test(candidate.provenance.historicalCommit??'')||
      !hex.test(candidate.provenance.evaluationReceiptSha256??'')||
      !allowedOutcomes.has(candidate.externalAdjudication?.correctness))
     fail('historical baseline requires pinned independent evaluation receipt');
