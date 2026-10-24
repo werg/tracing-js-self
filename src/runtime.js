@@ -1,5 +1,5 @@
 import { encode, decode, U, token, truthy, primitiveBinary, primitiveUnary } from './values.js';
-import {SHARED_TYPES,SHARED_TYPE_NAMES,newSharedBuffer,newSharedView,growSharedBuffer,effectiveSharedLength,readSharedElement,writeSharedElement,atomicSharedElement} from './owned-shared-memory.js';
+import {SHARED_TYPES,SHARED_TYPE_NAMES,newSharedBuffer,newSharedView,newSharedDataView,effectiveDataViewLength,DATA_VIEW_GETTERS,DATA_VIEW_SETTERS,readSharedDataView,writeSharedDataView,growSharedBuffer,effectiveSharedLength,readSharedElement,writeSharedElement,atomicSharedElement} from './owned-shared-memory.js';
 import { parse, compile } from './frontend.js';
 import { importGraph } from './training/graph.js';
 import { parseTraining, TRAINING_PARSER } from './training/profile.js';
@@ -232,7 +232,7 @@ export class Runtime {
     for(const name of ['queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
-    for(const name of ['Object','Array','Number','Math','SharedArrayBuffer',...SHARED_TYPE_NAMES,'Atomics'])
+    for(const name of ['Object','Array','Number','Math','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     s.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
@@ -276,7 +276,7 @@ export class Runtime {
     for(const name of ['parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
-    for(const name of ['Object','Array','Number','Math','Promise','Set','Error','TypeError','SharedArrayBuffer',...SHARED_TYPE_NAMES,'Atomics'])
+    for(const name of ['Object','Array','Number','Math','Promise','Set','Error','TypeError','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     state.control.a0.globalEnvId=global;
@@ -1042,6 +1042,19 @@ export class Runtime {
   const id=this.next(s,'obj');s.heap[id]=newSharedBuffer(id,length,max);
   return {...operands(fn,...args),...result(['ref',id])};
 }
+if(fn.value[0]==='intrinsic'&&fn.value[1]==='DataView'){
+  const b=args[0]?.value[0]==='ref'?s.heap[args[0].value[1]]:null;
+  if(b?.kind!=='shared-int32-buffer'||args.length>3)
+    guestFault('TypeError','DataView needs an owned SharedArrayBuffer');
+  const offset=args.length<2?0:args[1]?.value[0]==='num'?decode(args[1].value):NaN;
+  const length=args.length<3?undefined:args[2]?.value[0]==='num'?decode(args[2].value):NaN;
+  if(!Number.isSafeInteger(offset)||offset<0||offset>b.byteLength||
+     (length!==undefined&&(!Number.isSafeInteger(length)||length<0||offset+length>b.byteLength)))
+    guestFault('RangeError','DataView length or offset outside buffer');
+  const id=this.next(s,'obj');
+  s.heap[id]=newSharedDataView(id,b,offset,length);
+  return {...operands(fn,...args),...result(['ref',id])};
+}
 if(fn.value[0]==='intrinsic'&&Object.hasOwn(SHARED_TYPES,fn.value[1])){
   const b=args[0]?.value[0]==='ref'?s.heap[args[0].value[1]]:null;
   if(args.length<1||b?.kind!=='shared-int32-buffer')
@@ -1178,6 +1191,17 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
   }
   guestFault('TypeError','Unmodeled SAB property');
 }
+if(obj.kind==='shared-data-view'){
+  const length=effectiveDataViewLength(s.heap[obj.bufferId],obj);
+  if(property==='byteLength')return {...operands(base,key),...result(['num',length])};
+  if(property==='byteOffset')return {...operands(base,key),...result(['num',obj.byteOffset])};
+  if(property==='buffer')return {...operands(base,key),...result(['ref',obj.bufferId])};
+  if(DATA_VIEW_GETTERS.includes(property)||DATA_VIEW_SETTERS.includes(property)){
+    const method=['builtinfn','DataView.prototype.'+property];
+    return {...operands(base,key),...result(op==='GET_METHOD'?['method',method,base.value]:method)};
+  }
+  guestFault('TypeError','Unmodeled shared DataView property');
+}
 if(obj.kind==='shared-int32-view'){
   const bytes=SHARED_TYPES[obj.elementType].bytes;
   const length=effectiveSharedLength(s.heap[obj.bufferId],obj);
@@ -1263,7 +1287,7 @@ if(object.kind==='regexp'){
             putOwn(object,'lastIndex',v.value,eventId);
             return {...operands(base,key,v),...result(v.value)};
           }
-          if(['shared-int32-buffer','shared-int32-view'].includes(object.kind))
+          if(['shared-int32-buffer','shared-int32-view','shared-data-view'].includes(object.kind))
             guestFault('TypeError','Direct shared-memory writes are not owned; use Atomics');
           if(object.kind==='set')
             throw new TypeError('Owned intrinsic internal slots are not guest-writable properties');
@@ -1404,7 +1428,34 @@ if(callable[0]==='builtinfn' && callable[1]==='queueMicrotask'){
               putOwn(array,String(i),set.properties[String(i)].value,eventId);
             return {...operands(fn,...args),...result(['ref',id])};
           }
-          if(callable[0]==='builtinfn'&&callable[1]==='TypedArray.prototype.subarray'){
+          if(callable[0]==='builtinfn'&&callable[1].startsWith('DataView.prototype.')){
+  const view=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+  if(view?.kind!=='shared-data-view')
+    guestFault('TypeError','Invalid owned DataView receiver');
+  const method=callable[1].slice('DataView.prototype.'.length);
+  const getter=DATA_VIEW_GETTERS.includes(method),setter=DATA_VIEW_SETTERS.includes(method);
+  if(!getter&&!setter)throw new Error('Invalid DataView method');
+  const min=setter?2:1;
+  if(args.length<min||args.length>min+1)
+    guestFault('TypeError','Bounded DataView arity');
+  const offset=args[0]?.value[0]==='num'?decode(args[0].value):NaN;
+  const width=SHARED_TYPES[method.slice(3)+'Array'].bytes;
+  const length=effectiveDataViewLength(s.heap[view.bufferId],view);
+  if(!Number.isSafeInteger(offset)||offset<0||offset+width>length)
+    guestFault('RangeError','Owned DataView byte index out of bounds');
+  const littleEndian=truthy(args[min]?.value??['bool',false]);
+  if(setter){
+    const v=args[1]?.value;
+    if(SHARED_TYPES[method.slice(3)+'Array'].bigint?v?.[0]!=='bigint':
+      !['num','bool','str','null','undefined'].includes(v?.[0]))
+      guestFault('TypeError','Unowned DataView value coercion');
+    writeSharedDataView(s.heap[view.bufferId],view,method,offset,v,littleEndian);
+    return {...operands(fn,...args),...result(U)};
+  }
+  return {...operands(fn,...args),
+    ...result(readSharedDataView(s.heap[view.bufferId],view,method,offset,littleEndian))};
+}
+if(callable[0]==='builtinfn'&&callable[1]==='TypedArray.prototype.subarray'){
   const view=receiver[0]==='ref'?s.heap[receiver[1]]:null;
   if(view?.kind!=='shared-int32-view'||args.length>2)guestFault('TypeError','Invalid subarray call');
   const full=effectiveSharedLength(s.heap[view.bufferId],view);

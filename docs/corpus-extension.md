@@ -1935,3 +1935,17 @@ previous owned/admitted corpus totals is changed by diagnostic worker results.
 - [ ] These native V8 executions remain trusted-source diagnostics; they do
   **not** constitute owned multi-agent semantic journals, independent
   cross-engine atomics proofs, or complete Test262 agent conformance.
+
+
+### DataView views over owned shared byte memory (2026-10-24)
+
+- [x] Added the bounded `new DataView(sharedBuffer[,offset[,length]])`
+  constructor and all ten numeric/BigInt get/set pairs over the same
+  archived shared bytes as typed arrays. Both endiannesses, fixed and
+  length-tracking views, byte offset/length and underlying buffer
+  properties have replayed owned guest operations, with independent
+  native V8 output checks and explicit out-of-bounds tests.
+- [ ] DataView is a single-agent byte-accurate owned subset, **not** a
+  complete multi-agent shared-memory order or executable-worker model.
+  Native worker diagnostics remain separate, and corpus admission
+  numbers are unchanged.
