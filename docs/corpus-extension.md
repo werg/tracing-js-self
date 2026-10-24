@@ -1814,3 +1814,20 @@ does not treat native V8 as an owned interpreter.
   cross-engine verification and megatoken training admission.
   Previous measured corpus denominators are unchanged by these new
   bounded capability regressions.
+
+
+### Actual parallel native workers: separate diagnostic facility (2026-10-24)
+
+- [x] Added an opt-in, Node-only trusted-source `runNativeWorkerAgents`
+  diagnostic using genuine `worker_threads`. Agents receive the same native
+  SharedArrayBuffers and execute in parallel V8 agents; `Atomics` byte-level
+  aliasing, integer coercion, read-modify-write, wait/notify and native memory
+  ordering are supplied by the engine rather than a scripted model. Focused
+  tests cover concurrent Int32 increments, a blocking cross-agent notification
+  and BigInt64 atomic updates.
+- [ ] These native outcomes **are not** owned bytecode journals or independently
+  verified semantic traces. The interface is only safe with **trusted** worker
+  source; it must never execute automatically acquired untrusted programs.
+  Owned worker scheduling, arbitrary guest shared-memory typed arrays, full
+  Test262 agents, and cross-engine memory-order validation remain unfinished.
+  No owned/admitted corpus yield is claimed.

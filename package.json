@@ -43,6 +43,7 @@
       "default": "./src/storage/node.js"
     },
     "./agent-model": "./src/agent-model.js",
+    "./native-worker-agents": "./src/native-worker-agents.js",
     "./browser": {
       "types": "./src/browser.d.ts",
       "default": "./src/browser.js"
