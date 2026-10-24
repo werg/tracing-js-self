@@ -24,7 +24,9 @@ export function trainingPrefix(bundle,{maxSourceBytes=65536}={}){
       properties:x.properties.map(p=>({key:p.key,value:translate(p.value)}))}))};
   return {schema:CONTEXT_VERSION,program,
     source:encodeWitness('code',{entry:bundle.entrySpec.functionName,
-      source:source.text,sites:program.sites}),
+      source:source.text,sites:program.sites,
+      ...(bundle.initialState.control.a0.randomSeed!==undefined?
+        {randomSeed:bundle.initialState.control.a0.randomSeed}:{})}),
     input:encodeWitness('input',{graph})};
 }
 
