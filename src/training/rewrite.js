@@ -127,6 +127,10 @@ export function rewriteSemanticWitness({generated,certificates,source,entry,
       }
       const previous=emitted.at(-1);
       if(maxOperators>1 && previous?.kind==='compute' &&
+         // Random is deterministic but stateful. The current controller only
+         // advances the seed for a top-level random step; do not hide it in
+         // an enclosing expression or subsequent draws will be repeated.
+         previous.fields.expr.op!=='random' &&
          !previous.fields.bind && sameInvocation(previous.fields,item.fields) &&
          contains(item.cert.span,previous.cert.span) &&
          !same(item.cert.span,previous.cert.span) && node &&
