@@ -45,6 +45,7 @@ const constructors={
 const sha256=b=>createHash('sha256').update(b).digest('hex');
 const blob=b=>createHash('sha1').update('blob '+b.length+'\0').update(b).digest('hex');
 const checked=new Map(),rows=[],counts={},ownedRows=[],localEpisodes=[];
+const attemptedGeneratedCodes=new Set();
 for await(const record of importers['json-schema'](rootDir,{
  project:'json-schema-org/JSON-Schema-Test-Suite',
  repository:lock.repository,revision:lock.revision,license:'MIT'
@@ -73,7 +74,9 @@ for await(const record of importers['json-schema'](rootDir,{
  // Separate from the native agreement. A candidate must execute the exact
  // generated function through the owned machine and independently recheck
  // its *operations*, not merely reproduce a boolean diagnostic.
- if(ownedRows.length<ownedMax&&result.status==='reference-agreed'){
+ if(ownedRows.length<ownedMax&&result.status==='reference-agreed'&&
+    result.generatedCodeSha256&&!attemptedGeneratedCodes.has(result.generatedCodeSha256)){
+  attemptedGeneratedCodes.add(result.generatedCodeSha256);
   let attempted;
   try{
    const fresh=constructors[record.program.draft]().compile(record.fixture.schema);
