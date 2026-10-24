@@ -17,21 +17,24 @@ export function materializeJson(heap, args, {maxNodes=1024,maxDepth=64,maxBytes=
     if(!Array.isArray(value))throw new TypeError('Invalid tagged guest value');
     const [kind,payload]=value;
     switch(kind){
-      case 'null':return 'null';
+      case 'null':
+        if(value.length!==1)throw new TypeError('Invalid null token');
+        return 'null';
       case 'bool':
-        if(typeof payload!=='boolean')throw new TypeError('Invalid boolean');
+        if(value.length!==2||typeof payload!=='boolean')throw new TypeError('Invalid boolean');
         return payload?'true':'false';
       case 'str':
-        if(typeof payload!=='string')throw new TypeError('Invalid string');
+        if(value.length!==2||typeof payload!=='string')throw new TypeError('Invalid string');
         return literal(payload);
       case 'num': {
+        if(value.length!==2)throw new TypeError('Invalid number token');
         const n=decode(value);
         if(typeof n!=='number' || !Number.isFinite(n) || Object.is(n,-0))
           throw new TypeError('Non-roundtrippable JSON number');
         return literal(n);
       }
       case 'ref': {
-        if(typeof payload!=='string'||!Object.hasOwn(heap,payload))
+        if(value.length!==2||typeof payload!=='string'||!Object.hasOwn(heap,payload))
           throw new TypeError('Unresolved guest reference');
         if(stack.has(payload))throw new TypeError('Cycles require an explicit graph codec');
         if(seen.has(payload))throw new TypeError('Aliases require an explicit graph codec');
