@@ -152,7 +152,7 @@ test('selected external requests match actual fixture and preserve immutable arg
     arguments:[['str','n'],tag(8)]})),e=>e.category==='request-mismatch');
   const before=c.segmentPacket();
   assert.throws(()=>c.commit(rec('observe',{effect:'fx1',result:tag(99),
-    status:'fulfilled'})),e=>e.category==='observation');
+    status:'fulfilled'}),{mode:'observed'}),e=>e.category==='observation');
   assert.deepEqual(c.segmentPacket(),before);
   c.commit(rec('observe',{effect:'fx1',result:['undefined'],status:'fulfilled'}),
     {mode:'observed'});
