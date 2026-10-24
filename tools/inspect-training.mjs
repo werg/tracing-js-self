@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Inspect previously generated version-three JSONL without oracle leakage.
 import {readFileSync,writeFileSync} from 'node:fs';
-import {renderWitness} from '../src/training/render-v3.js';
+import {renderWitness} from '../src/training/render.js';
 import {restoreWitness} from '../src/training/format.js';
 import {validateTrainingExport} from '../src/training/export.js';
 
