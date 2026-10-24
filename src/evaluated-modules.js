@@ -135,7 +135,14 @@ function parseModule(file,text,sources){
        ['const','let'].includes(declaration.kind)){
       for(const item of declaration.declarations){
         const local=nodeName(item.id);
-        addSymbol(local,declaration.kind,item);
+        // A const initialized by a guest function expression/arrow is a
+        // callable export, but it is initialized during module evaluation,
+        // not hoisted like a FunctionDeclaration. Mutable let exports remain
+        // live data bindings and must not be mistaken for a stable callable.
+        const callable=declaration.kind==='const'&&
+          (item.init?.type==='ArrowFunctionExpression'||
+           item.init?.type==='FunctionExpression'&&!item.init.generator);
+        addSymbol(local,callable?'function':declaration.kind,item);
         if(exported)addExport(local,local);
       }
       initializers.push({kind:'node',node:declaration});
