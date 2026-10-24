@@ -2,13 +2,13 @@
 // Inspect previously generated version-three JSONL without oracle leakage.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {renderWitness} from '../src/training/render-v3.js';
-import {restoreWitness,validateWitnessTrainingExport} from '../src/training/export-v3.js';
+import {restoreWitness,validateTrainingExport} from '../src/training/export.js';
 
 const [input,output]=process.argv.slice(2);
 if(!input)throw new TypeError('Usage: node tools/inspect-witness-v3.mjs corpus.jsonl [report.json]');
 const entries=readFileSync(input,'utf8').split('\n').filter(Boolean).map(JSON.parse);
 const report=entries.map((episode,index)=>{
-  const valid=validateWitnessTrainingExport(episode);
+  const valid=validateTrainingExport(episode);
   const context=episode.public.groups.filter(g=>g.mode==='observed').map(g=>g.events[0].record);
   const generated=episode.public.groups.filter(g=>g.mode==='generated').map(g=>g.events[0].record);
   const semantic=[...restoreWitness(context),...restoreWitness(generated)];
