@@ -99,6 +99,14 @@ export function parse(source) {
     if (x.kind === 'literal') return {type:'Literal',value:encode(x.value),raw:x.raw,start:x.start,end:x.end};
     if (x.value === 'true' || x.value === 'false' || x.value === 'null') return {type:'Literal',value:encode(x.value === 'true'?true:x.value === 'false'?false:null),raw:x.value,start:x.start,end:x.end};
     if (x.value === 'this') return {type:'This',start:x.start,end:x.end};
+    if (x.value === 'function') {
+      if(peek().value!=='(')throw new SyntaxError('Named function expression not yet owned');
+      need('(');const params=[];
+      if(!match(')')){do{params.push(name());}while(match(','));need(')');}
+      const body=block();
+      return {type:'FunctionExpr',params,async:false,arrow:false,body,
+        start:x.start,end:body.end};
+    }
     if (x.value === 'await') return {type:'Await',argument:expression(8),start:x.start,end:t[p-1].end};
     if (x.value === 'new') {
       const callee=take();
