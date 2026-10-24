@@ -168,7 +168,7 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
       if(!allocs.length)refuse('allocation record lacks initialized identity');
       for(const a of allocs)id(a.identity);
       for(const a of allocs){
-        if(!['object','array','function'].includes(a.kind))
+        if(!['object','array','function','set','regexp'].includes(a.kind))
           refuse('unrepresentable owned allocation kind');
         const len=a.kind==='array'?a.properties.find(p=>p.key==='length')?.value?.[1]:null;
         emit('allocate',{name:id(a.identity),kind:a.kind==='function'?'closure':a.kind,
@@ -188,7 +188,7 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
       if(!row.child||!row.code||!Array.isArray(row.arguments))
         refuse('call lacks created owned guest frame');
       for(const a of row.allocations??[]){
-        if(!['object','array'].includes(a.kind))
+        if(!['object','array','set','regexp'].includes(a.kind))
           refuse('unsupported callback collection allocation');
         const len=a.kind==='array'?a.properties.find(p=>p.key==='length')?.value?.[1]:null;
         emit('allocate',{name:id(a.identity),kind:a.kind,
