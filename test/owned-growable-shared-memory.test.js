@@ -32,11 +32,11 @@ test('growable SAB expands zero-filled byte heap and tracking Int16 views',()=>{
  assert.throws(()=>growSharedBuffer(b,13),RangeError);
 });
 test('guest grow and length-tracking view agree with independent V8',()=>{
- const {r}=compare(`let b=new SharedArrayBuffer(3,{maxByteLength:12});
+ const {r}=compare(`let b=new SharedArrayBuffer(4,{maxByteLength:12});
  let v=new Int16Array(b);let fixed=new Uint8Array(b,0,1);
- let initial=v.length;b.grow(11);Atomics.store(v,4,99);
+ let initial=v.length;b.grow(12);Atomics.store(v,4,99);
  let out=initial*1000+v.length*100+fixed.length*10+Atomics.load(v,4);`);
- assert.deepEqual(read(r,'out'),['num',1609]);
+ assert.deepEqual(read(r,'out'),['num',2709]);
 });
 test('unbounded view subarray tracks subsequent growth and fixed view does not',()=>{
  const {r}=compare(`let b=new SharedArrayBuffer(4,{maxByteLength:12});
