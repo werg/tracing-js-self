@@ -195,7 +195,7 @@ export class Runtime {
   }
   next(draft,kind) {const ids=draft.counters.ids;return `${kind==='operation'?'op':kind[0]}${++ids[kind]}`;}
   newEnv(draft,parent=null) {const id=this.next(draft,'env');draft.envs[id]={id,parent,bindings:{},version:0};return id;}
-  newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,observers:[],adopters:[],adopting:null,resolverCalled:false,version:0};return id;}
+  newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,observers:[],adopters:[],adopting:null,resolverCalled:false,thenableSerial:0,thenableLocked:false,version:0};return id;}
   newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[],thisValue=U) {
     const id=this.next(draft,'frame'),envId=this.newEnv(draft,parentEnv);
     const params=this.programs[codeId].params;
@@ -352,6 +352,7 @@ export class Runtime {
         draft.control.a0.activeFrameId=caller.id;return;
       }
     }
+    if(frame.thenableJob){draft.control.a0.activeFrameId=null;return;}
     if(frame.reactionJob){draft.control.a0.activeFrameId=null;return;}
     if(frame.callerFrameId){
       const caller=draft.frames[frame.callerFrameId];
@@ -540,6 +541,25 @@ export class Runtime {
   resolvePromise(draft,id,value,origin) {
     const p=draft.promises[id];if(!p||p.status!=='pending'||p.adopting)
       throw new Error('Promise already settled or adopting another promise');
+    if(value[0]==='ref'){
+      const object=draft.heap[value[1]];
+      if(object&&['object','array'].includes(object.kind)){
+        const observed=ordinaryGet(draft.heap,value,'then');
+        if(!observed)throw new TypeError('Exotic thenable getter is unowned');
+        const then=observed.method.value;
+        if(this.callableGuest(draft,then)){
+          if(draft.heap[then[1]].async)throw new TypeError('Async then method is unowned');
+          if(p.thenableSerial>=128||draft.control.a0.queue.length>=256)
+            throw new RangeError('Bounded thenable jobs exceeded');
+          const serial=++p.thenableSerial;p.thenableLocked=false;
+          draft.control.a0.queue.push({kind:'thenable',promiseId:id,
+            thenableId:value[1],thenId:then[1],serial});
+          return;
+        }
+        if(['hostfn','builtinfn'].includes(then[0]))
+          throw new TypeError('Native thenable callable unowned');
+      }
+    }
     if(value[0]==='promise'){
       const target=draft.promises[value[1]];
       if(!target)throw new Error('Unknown guest promise');
@@ -622,7 +642,15 @@ export class Runtime {
       this.completeFrame(draft,frame,completion.value.value,completion.value.origin);
     }else if(completion.type==='throw'){
       frame.status='thrown';frame.completion=copy(completion);
-      if(frame.asyncPromiseId){
+      if(frame.thenableJob){
+        const p=draft.promises[frame.thenableJob.promiseId];
+        if(p.status==='pending'&&!p.thenableLocked){
+          p.thenableLocked=true;
+          const reason=this.caughtError(draft,completion,eventId);
+          this.rejectPromise(draft,p.id,reason.value,reason.origin);
+        }
+        draft.control.a0.activeFrameId=null;
+      }else if(frame.asyncPromiseId){
         // Async throws reject a guest promise, never the whole agent.
         const reason=this.caughtError(draft,completion,eventId);
         this.rejectPromise(draft,frame.asyncPromiseId,reason.value,reason.origin);
@@ -1260,6 +1288,20 @@ export class Runtime {
                  if(mode==='resolve')this.resolvePromise(s,pid,value,origin);
                  else this.rejectPromise(s,pid,value,origin);
                }
+             }
+             return {...operands(fn,...args),...result(U)};
+           }
+           if(callable[0]==='builtinfn' &&
+               /^Promise[.]thenable[.](resolve|reject):p[0-9]+:[0-9]+$/.test(callable[1])){
+             const [,mode,pid,serial]=callable[1].match(
+               /^Promise[.]thenable[.](resolve|reject):(p[0-9]+):([0-9]+)$/);
+             const p=s.promises[pid];
+             if(!p)throw new Error('Unknown thenable resolving function');
+             if(p.status==='pending'&&p.thenableSerial===Number(serial)&&!p.thenableLocked){
+               p.thenableLocked=true;
+               const v=args[0]?.value??U,origin=args[0]?.origin??eventId;
+               if(mode==='resolve')this.resolvePromise(s,pid,v,origin);
+               else this.rejectPromise(s,pid,v,origin);
              }
              return {...operands(fn,...args),...result(U)};
            }
@@ -1906,7 +1948,9 @@ export class Runtime {
             const v=args[0]?.value??U,origin=args[0]?.origin??null;
             if(callable[1]==='Promise.resolve' && v[0]==='promise')
               return {...operands(fn,...args),...result(v)};
-            const p=this.newPromise(s,callable[1]==='Promise.resolve'?'fulfilled':'rejected',token(v,origin));
+            const p=this.newPromise(s);
+            if(callable[1]==='Promise.resolve')this.resolvePromise(s,p,v,origin);
+            else this.rejectPromise(s,p,v,origin);
             return {...operands(fn,...args),...result(['promise',p])};
           }
           if(callable[0]==='builtinfn' && callable[1].startsWith('Atomics.')){
@@ -1971,7 +2015,8 @@ export class Runtime {
             }
             for(let i=0;i<length;i++){
               const v=values[i],inputId=v.value[0]==='promise'?v.value[1]:
-                this.newPromise(s,'fulfilled',v);
+                this.newPromise(s);
+              if(v.value[0]!=='promise')this.resolvePromise(s,inputId,v.value,v.origin);
               this.observePromise(s,inputId,{kind:'combinator',resultId,index:i,mode:kind});
             }
             return {...operands(fn,...args),...result(['promise',resultId])};
@@ -1994,7 +2039,8 @@ export class Runtime {
         }
         case 'AWAIT':{
           const a=pop(),v=a.value;if(!f.asyncPromiseId)throw new SyntaxError('await outside async function');
-          const promiseId=v[0]==='promise'?v[1]:this.newPromise(s,'fulfilled',a);
+          const promiseId=v[0]==='promise'?v[1]:this.newPromise(s);
+          if(v[0]!=='promise')this.resolvePromise(s,promiseId,v,a.origin);
           f.awaiting=promiseId;this.observePromise(s,promiseId,{kind:'await',frameId:f.id});
           this.suspendAsync(s,f);return {...operands(a),causes:[{kind:'promise',promiseId}]};
         }
@@ -2078,6 +2124,20 @@ export class Runtime {
     if(!item)return;
     this.commit('job.enter',(s,eventId)=>{
       const job=s.control.a0.queue.shift();
+      if(job.kind==='thenable'){
+        const p=s.promises[job.promiseId],callback=s.heap[job.thenId];
+        if(p?.status!=='pending'||p.thenableSerial!==job.serial||
+          callback?.kind!=='function'||callback.async||!s.heap[job.thenableId])
+          throw new Error('Invalid queued thenable job');
+        const resolve=['builtinfn','Promise.thenable.resolve:'+p.id+':'+job.serial];
+        const reject=['builtinfn','Promise.thenable.reject:'+p.id+':'+job.serial];
+        const id=this.newFrame(s,callback.codeId,callback.closureEnvId,null,null,
+          [token(resolve,eventId),token(reject,eventId)],['ref',job.thenableId]);
+        s.frames[id].thenableJob={promiseId:p.id,serial:job.serial};
+        s.control.a0.activeFrameId=id;
+        return {causes:[{kind:'promise',promiseId:p.id},
+          {kind:'invocation',frameId:id}],result:['promise',p.id]};
+      }
       if(job.kind==='microtask'){
         const callback=s.heap[job.functionId];
         if(callback?.kind!=='function')
