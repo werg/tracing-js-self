@@ -4,7 +4,8 @@ import {mkdtempSync,mkdirSync,writeFileSync,rmSync,cpSync,readFileSync}
  from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,dirname,resolve} from 'node:path';
-import {extractPinnedHelper,verifyPinnedProductionHelpers}
+import {extractPinnedHelper,verifyPinnedProductionHelpers,
+ extractPinnedTypeOfTestClosure,verifyPinnedProductionClosures}
  from '../src/corpus/production-owned.mjs';
 import {upstream} from '../corpus/stateful/cases.mjs';
 test('pinned original Axios helper body has unchanged exact-source span',()=>{
@@ -59,4 +60,36 @@ test('pinned production arrow-body projection preserves original expression byte
    source.slice(item.provenance.sourceSpan.start,item.provenance.sourceSpan.end));
   assert(item.originalArrow.includes('const '+name+' ='));
  }
+});
+
+
+test('pinned Axios closure factory runs as a real owned nested closure or refuses',()=>{
+ const artifact=extractPinnedTypeOfTestClosure();
+ const source=readFileSync('corpus/stateful/upstream/axios/lib/utils.js','utf8');
+ const {start,end}=artifact.provenance.sourceSpan;
+ assert.equal(artifact.projected.slice(artifact.provenance.projectionStart,
+  artifact.provenance.projectionStart+end-start),source.slice(start,end));
+ assert.match(artifact.projected,/predicate = typeOfTest\(type\)/);
+ const {report,verified}=verifyPinnedProductionClosures();
+ assert.equal(report.attempted,11);
+ assert.equal(report.locallyVerified+report.refused,11);
+ assert.equal(report.admitted,0);
+ assert.equal(verified.length,report.locallyVerified);
+ for(const row of report.rows){
+  assert.equal(row.admitted,false);
+  assert.equal(row.verifiedOwned,row.status==='locally_verified');
+  if(row.verifiedOwned)
+   assert.equal(row.evidence.modelVisibleSchema,'semantic-execution/2');
+  else assert.equal(typeof row.reason,'string');
+ }
+});
+
+test('modified vendor bytes refuse original factory extraction',()=>{
+ const root=mkdtempSync(join(tmpdir(),'production-closure-'));
+ try{
+  const file=join(root,'corpus/stateful/upstream/axios/lib/utils.js');
+  mkdirSync(dirname(file),{recursive:true});
+  writeFileSync(file,readFileSync('corpus/stateful/upstream/axios/lib/utils.js','utf8')+'\n');
+  assert.throws(()=>extractPinnedTypeOfTestClosure({root}),/SHA-256 mismatch/);
+ }finally{rmSync(root,{recursive:true,force:true});}
 });
