@@ -6,6 +6,8 @@ import {compileWitness} from './compact.js';
 import {verifyWitnessEvidence} from './witness-evidence.js';
 import {EXECUTION_VERSION,CONTEXT_VERSION,WITNESS_VERSION,SUPERVISION_VERSION} from './format.js';
 import {scheduleRecords} from './schedule.js';
+import {auditPublicCausality} from './causal-audit.js';
+import {verifyVisibleExport} from './visibility.js';
 import {evaluateSelectedTrajectory} from './rollout.js';
 import {referenceOutcome,ownedOutcome} from './reference.js';
 
@@ -46,6 +48,7 @@ export function validateTrainingExport(exported){
      pub.contextFormat!==CONTEXT_VERSION||pub.completionPolicy!=='immediate-root'||
      side?.schema!==SUPERVISION_VERSION||!Array.isArray(pub.groups))
     throw new TypeError('Unsupported version-three semantic demonstration');
+  verifyVisibleExport(exported);
   const {maxBytes,maxOperators}=side.limits;
   validateBundle(side.archive);replayExact(side.archive);
   const compiled=compileWitness(side.archive,side.semantic,{maxOperators});
@@ -67,6 +70,7 @@ export function validateTrainingExport(exported){
   if(pub.groups.some(g=>g.events.some(e=>
     Buffer.byteLength(e.record,'utf8')>maxBytes)))
     throw new RangeError('Witness transport exceeds byte capacity');
+  auditPublicCausality(pub,{maxBytes});
   const result=evaluateSelectedTrajectory({groups:pub.groups,referenceOutcome:side.reference});
   if(!result.valid||result.correctness!=='correct'||result.firstWitnessViolation)
     throw new Error('Artifact integrity: selected canonical witness fails independent outcome/checker');
