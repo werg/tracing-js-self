@@ -39,12 +39,10 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
   if(entry?.kind!=='function'||bundle.finalState.control.a0.completion?.kind!=='return')
     refuse('only settled owned function returns are currently certified');
   if(bundle.events.some(e=>e.operation==='spec.internal.call'||
-      e.operation==='completion.throw'||
-      e.operation==='completion.catch.bind'||e.operation==='external.input.arrive'||
+      e.operation==='external.input.arrive'||
       e.operation==='external.input.deliver'||e.operation==='job.enter'))
     refuse('guest dispatch, cleanup or external scheduling needs invocation certificates');
-  if(semantic.events.some(row=>['request','observe','await','resume','settle'].includes(row.op)||
-      row.op==='throw'))
+  if(semantic.events.some(row=>['request','observe','await','resume','settle'].includes(row.op)))
     refuse('unsupported dynamic dispatch or pending completion');
   const source=bundle.sources.find(s=>s.sourceId===entry.sourceId);
   if(!source)refuse('source unavailable');
@@ -125,11 +123,20 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
     const fact=completion.get(event.eventId);
     const rows=normalizedByEvent.get(event.eventId)??[];
     for(const row of rows){
-      if(fact && row.op==='return'){
-        effectiveRows.push(fact.operation==='transfer'?
-          {...row,op:'transfer',transferKind:'return',handler:fact.handler}:
-          row);
+      if(fact && ['return','throw'].includes(row.op)){
+        if(fact.operation==='transfer'){
+          effectiveRows.push({...row,op:'transfer',
+            result:fact.value,transferKind:fact.kind,handler:fact.handler});
+        }else if(fact.operation==='return'&&row.op==='return')
+          effectiveRows.push(row);
+        else refuse('unmodeled terminal throw completion');
       }else effectiveRows.push(row);
+    }
+    if(fact?.operation==='catch-bind'){
+      effectiveRows.push({id:null,journalEvent:event.eventId,
+        op:'catch-bind',invocation:fact.invocation,site:null,source:null,
+        bindingName:'caught'+event.eventId.replace(/[^0-9]/g,''),
+        result:fact.value,writes:[]});
     }
     if(fact?.operation==='return'&&
        !rows.some(r=>r.op==='return')){
@@ -137,7 +144,7 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
         op:'return',invocation:fact.invocation,site:null,source:null,
         result:fact.value,writes:[]});
     }
-    if(fact?.operation==='unhandled-throw')
+    if(fact?.operation==='unhandled-throw'||fact?.operation==='throw')
       refuse('terminal guest throw requires bounded error-value contract');
   }
   for(const row of effectiveRows){
@@ -190,10 +197,13 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
       emit('call',{child:invocation(row.child),callee:row.code,
         receiver:tag(row.receiver),arguments:row.arguments.map(tag)},'call/1',row);
     }else if(row.op==='transfer'){
-      if(row.transferKind!=='return'||!Array.isArray(row.result))
+      if(!['return','throw'].includes(row.transferKind)||
+         !Array.isArray(row.result))
         refuse('unmodeled completion transfer');
-      emit('transfer',{kind:'return',value:tag(row.result),
-        handler:row.handler??'finally'},'completion/1',row);
+      emit('transfer',{kind:row.transferKind,value:tag(row.result),
+        handler:row.handler??'catch-or-finally'},'completion/1',row);
+    }else if(row.op==='catch-bind'){
+      emit('bind',{name:row.bindingName,value:tag(row.result)},'bind/1',row);
     }else if(row.op==='write'){
       writesOf(row);
     }else if(row.op==='value'){
