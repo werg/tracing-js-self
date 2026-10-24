@@ -21,7 +21,7 @@ test('post-serialization recheck rejects forged reference and branch receipts',(
   const clean=JSON.parse(JSON.stringify(original.exported));
   const mutations=[
     e=>{e.sidecar.referenceStatus='not-checked';},
-    e=>{e.sidecar.reference.outcome.graph.roots.at(-1)[1]=99;},
+    e=>{e.sidecar.reference.graph.roots.at(-1)[1]=99;},
     e=>{e.sidecar.operationAudit.checked++;},
     e=>{e.sidecar.branchAudit.checked++;},
     e=>{e.sidecar.branchAudit.status='unverified';}
