@@ -476,3 +476,34 @@ test('namespace mutation and unsupported first-class/dynamic namespace exotics f
     entryModule:'main.js',exportName:'main'
   }),/Unsupported evaluated-module/);
 });
+
+test('ESM production-style initialization creates one owned shared closure with live state',async()=>{
+ const factory=`export function makeCounter(start){
+    let count=start;
+    return function next(){count+=1;return count;}
+  }
+  export const counter=makeCounter(4);
+  export function next(){return counter();}`;
+ const native=await import('data:text/javascript,'+encodeURIComponent(factory));
+ const expected=[native.next(),native.next(),native.next()];
+ const run=await verified({modules:{'factory.mjs':factory},entryModule:'factory.mjs',
+  calls:[{exportName:'next',args:[]},{exportName:'next',args:[]},
+   {exportName:'next',args:[]}]});
+ assert.deepEqual(run.result,expected);
+ assert.deepEqual(run.result,[5,6,7]);
+ assert.equal(run.metadata.evaluationOrder.filter(x=>x==='factory.mjs').length,1);
+});
+
+test('ESM owned top-level Promise reaction runs after initialization and before import read',async()=>{
+ const modules={
+  'state.mjs':`export let order='';
+    function record(x){order+=x;return x;}
+    export const settled=await Promise.resolve('a').then(record);`,
+  'main.mjs':`import {order,settled} from './state.mjs';
+    export function read(){return order+settled;}`
+ };
+ const run=await verified({modules,entryModule:'main.mjs',exportName:'read'});
+ assert.equal(run.result,'aa');
+ assert(run.bundle.events.some(e=>e.operation==='job.enter'));
+ assert.deepEqual(run.metadata.evaluationOrder,['state.mjs','main.mjs']);
+});
