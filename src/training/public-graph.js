@@ -17,7 +17,9 @@ export function validatePublishedGraph(graph) {
     throw new Error('Invalid published input graph shape or node budget');
   const ids=new Set();
   for(const obj of graph.objects) {
-    if(!exactKeys(obj,['id','kind','shapeVersion','properties'])||
+    if(!['id,kind,shapeVersion,properties','id,kind,prototype,shapeVersion,properties']
+       .some(names=>exactKeys(obj,names.split(',')))||
+       (Object.hasOwn(obj,'prototype')&&(obj.prototype!==null||obj.kind!=='object'))||
        typeof obj.id!=='string'||!obj.id||ids.has(obj.id)||
        !['object','array'].includes(obj.kind)||
        !Number.isSafeInteger(obj.shapeVersion)||obj.shapeVersion<0||
@@ -57,9 +59,6 @@ export function validatePublishedGraph(graph) {
       if(!Array.isArray(length)||length.length!==2||length[0]!=='num'||
          !Number.isSafeInteger(length[1])||length[1]<0||length[1]>4096)
         throw new Error('Invalid published input graph array length');
-      for(let i=0;i<length[1];i++)
-        if(!keys.has(String(i)))
-          throw new Error('Sparse published input graph array');
       for(const key of keys) {
         const n=indexOfKey(key);
         if(n!==null&&n>=length[1])

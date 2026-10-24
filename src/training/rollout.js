@@ -17,7 +17,8 @@ function project(controller) {
     if(!entity || !['array','object'].includes(entity.kind))
       throw new Error('Returned graph contains an unowned reference');
     const length=entity.kind==='array' && entity.properties.get('length');
-    const result=entity.kind==='array'?new Array(decode(length.value)):{};
+    const result=entity.kind==='array'?new Array(decode(length.value)):
+      entity.prototype===null?Object.create(null):{};
     seen.set(identity,result);
     for(const [key,property] of entity.properties){
       if(entity.kind==='array'&&key==='length')continue;

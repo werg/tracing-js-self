@@ -1,0 +1,192 @@
+// Causal compiler from verified private history to a separate public
+// computation language. Unsupported effects/refinements are refused rather
+// than being hidden behind an answer-bearing constant.
+import {isDeepStrictEqual} from 'node:util';
+import {normalizeJournal,validateSemantic} from '../semantic/normalize.js';
+import {replayExact} from '../replay.js';
+import {describeOwnedGraph} from './graph.js';
+import {analyzeSemanticProgram} from './semantic-program.js';
+import {encodeWitness} from './witness-ir.js';
+
+export const COMPACTION_RULES=Object.freeze({
+  'input/1':{boundary:'observed',effect:'publish supplied graph'},
+  'primitive/1':{boundary:'primitive',effect:'preserve operator order and operand values'},
+  'bind/1':{boundary:'local',effect:'commit supplied value'},
+  'choice/1':{boundary:'control',effect:'retain chosen path'},
+  'allocate/1':{boundary:'identity',effect:'initialize committed data properties'},
+  'call/1':{boundary:'activation',effect:'preserve dynamic guest invocation'},
+  'property/1':{boundary:'mutation',effect:'preserve property value and presence'},
+  'completion/1':{boundary:'terminal',effect:'preserve actual root completion'},
+  'elide-private/1':{boundary:'none',effect:'no externally observable work'}
+});
+
+function refuse(message){
+  const error=new Error('Unsupported compact witness: '+message);
+  error.category='unsupported.witness-projection';throw error;
+}
+function literal(value){return {op:'literal',value};}
+function primitiveTag(value){
+  if(!Array.isArray(value))refuse('missing journal operand tag');
+  return value;
+}
+export function compileWitness(bundle,semantic=normalizeJournal(bundle),
+    {maxOperators=1}={}){
+  if(![1,2,4,8].includes(maxOperators))throw new RangeError('Unknown fusion policy');
+  validateSemantic(bundle,semantic);
+  replayExact(bundle);
+  const entry=bundle.entrySpec;
+  if(entry?.kind!=='function'||bundle.finalState.control.a0.completion?.kind!=='return')
+    refuse('only settled owned function returns are currently certified');
+  if(bundle.events.some(e=>e.operation==='spec.internal.call'||
+      e.operation==='completion.finally.end'||e.operation==='completion.throw'||
+      e.operation==='completion.catch.bind'||e.operation==='external.input.arrive'||
+      e.operation==='external.input.deliver'||e.operation==='job.enter'))
+    refuse('guest dispatch, cleanup or external scheduling needs invocation certificates');
+  if(semantic.events.some(row=>['request','observe','await','resume','settle'].includes(row.op)||
+      row.op==='throw'))
+    refuse('unsupported dynamic dispatch or pending completion');
+  const source=bundle.sources.find(s=>s.sourceId===entry.sourceId);
+  if(!source)refuse('source unavailable');
+  const analyzed=analyzeSemanticProgram(source.text);
+  const mapping=new Map();let allocationCount=0;
+  function id(key){
+    if(!mapping.has(key))mapping.set(key,'o'+(++allocationCount));
+    return mapping.get(key);
+  }
+  function tag(value){
+    if(!Array.isArray(value))refuse('untyped guest value');
+    return value[0]==='ref'?['ref',id(value[1])]:structuredClone(value);
+  }
+  const original=describeOwnedGraph(bundle.initialState.heap,entry.arguments);
+  // Register identities before visiting values to preserve cycles.
+  for(const node of original.objects)id(node.id);
+  const graph={
+    roots:original.roots.map(tag),
+    objects:original.objects.map(node=>({
+      id:id(node.id),kind:node.kind,
+      ...(node.prototype===null?{prototype:null}:{}),
+      properties:node.properties.map(p=>({key:p.key,value:tag(p.value)}))
+    }))
+  };
+  const context=[
+    encodeWitness('code',{entry:entry.functionName,source:source.text,sites:analyzed.sites}),
+    encodeWitness('input',{graph})
+  ];
+  const generated=[],certificates=[],elided=[];
+  function emit(kind,fields,rule,row){
+    const publicFields=row?.invocation?{...fields,invocation:invocation(row.invocation)}:fields;
+    const record=encodeWitness(kind,publicFields);
+    generated.push(record);
+    certificates.push({record:generated.length-1,rule,
+      semanticEvents:row?[row.id]:[],
+      journalEvents:row?[row.journalEvent]:[],
+      ...(row?.source?{span:row.source}:{})});
+  }
+  function omission(row,reason){
+    elided.push({semanticEvent:row.id,journalEvent:row.journalEvent,reason,
+      rule:'elide-private/1'});
+  }
+  const invocations=new Map([[semantic.rootInvocation,'i1']]);
+  let invocationNumber=1;
+  function invocation(frame){
+    if(!invocations.has(frame))invocations.set(frame,'i'+(++invocationNumber));
+    return invocations.get(frame);
+  }
+  const cellNames=new Map();
+  let cellNumber=0;
+  function local(write) {
+    const key=write.env+':'+write.key;
+    if(!cellNames.has(key))cellNames.set(key,'l'+(++cellNumber));
+    return cellNames.get(key);
+  }
+  function writesOf(row) {
+    for(const w of row.writes??[]){
+      if(w.kind==='cell'){
+        if(!Array.isArray(w.value))refuse('untyped local write');
+        emit('bind',{name:local(w),value:tag(w.value)},'bind/1',row);
+      }else if(w.kind==='property') {
+        emit('write',{object:id(w.object),key:w.key,present:w.present,
+          value:w.present?tag(w.value):['undefined']},'property/1',row);
+      }else refuse('unknown effective mutation kind');
+    }
+  }
+  for(const row of semantic.events){
+    if(row.op==='value'&&row.arithmetic){
+      const op=row.arithmetic.operator;
+      const operands=(row.operands??[]).map(v=>tag(primitiveTag(
+        Array.isArray(v)?v:v?.value)));
+      if(operands.length!==2||!Array.isArray(row.result))
+        refuse('incomplete bounded primitive evidence');
+      // The operands are captured at operation start, before any destination
+      // write. Literal operand facts cannot change after the claim commits.
+      emit('compute',{expr:{op:'binary',operator:op,
+        left:literal(operands[0]),right:literal(operands[1])},
+        result:tag(row.result)},'primitive/1',row);
+      writesOf(row);
+    }else if(row.op==='branch'){
+      emit('choose',{expr:literal(tag(row.test)),decision:tag(row.test),
+        path:row.path},'choice/1',row);
+    }else if(row.op==='alloc'){
+      const allocs=row.allocations??[];
+      if(!allocs.length)refuse('allocation record lacks initialized identity');
+      for(const a of allocs)id(a.identity);
+      for(const a of allocs){
+        if(!['object','array','function'].includes(a.kind))
+          refuse('unrepresentable owned allocation kind');
+        const len=a.kind==='array'?a.properties.find(p=>p.key==='length')?.value?.[1]:null;
+        emit('allocate',{name:id(a.identity),kind:a.kind==='function'?'closure':a.kind,
+          ...(a.kind==='array'?{length:len}:{}),
+          ...(a.kind==='function'?{code:a.codeId}:{}),
+          properties:a.kind==='function'?[]:
+            a.properties.filter(p=>a.kind!=='array'||p.key!=='length')
+              .map(p=>({key:p.key,value:tag(p.value)}))},'allocate/1',row);
+      }
+      writesOf(row);
+    }else if(row.op==='call'){
+      // Child dispatch is a first-class semantic boundary. Its callback body
+      // runs under the child activation; the caller resumes at actual return.
+      if(!row.child||!row.code||!Array.isArray(row.arguments))
+        refuse('call lacks created owned guest frame');
+      for(const a of row.allocations??[]){
+        if(!['object','array'].includes(a.kind))
+          refuse('unsupported callback collection allocation');
+        const len=a.kind==='array'?a.properties.find(p=>p.key==='length')?.value?.[1]:null;
+        emit('allocate',{name:id(a.identity),kind:a.kind,
+          ...(a.kind==='array'?{length:len}:{}),
+          properties:a.properties.filter(p=>p.key!=='length')
+            .map(p=>({key:p.key,value:tag(p.value)}))},'allocate/1',row);
+      }
+      writesOf(row);
+      emit('call',{child:invocation(row.child),callee:row.code,
+        receiver:tag(row.receiver),arguments:row.arguments.map(tag)},'call/1',row);
+    }else if(row.op==='write'){
+      writesOf(row);
+    }else if(row.op==='value'){
+      if((row.writes??[]).length)writesOf(row);
+      else omission(row,'pure private temporary');
+    }else if(row.op==='read'){
+      if((row.reads??[]).some(r=>r.kind==='property'&&r.value?.[0]==='ref'&&
+          r.value[1]&&!mapping.has(r.value[1])))
+        refuse('behavioral property read cannot be absorbed');
+      omission(row,'ordinary operand read');
+    }else if(row.op==='loop'){
+      omission(row,'mechanical backedge');
+    }else if(row.op==='carry'){
+      // Only omit iteration copies in a program without function expressions.
+      // A captured mutable cell must remain represented as shared storage.
+      if(analyzed.functions.length>1)
+        refuse('captured loop cell requires shared-cell explanation');
+      omission(row,'uncaptured lexical iteration copy');
+    }else if(row.op==='return'){
+      writesOf(row);
+      emit('return',{value:tag(row.result)},'completion/1',row);
+    }else refuse('unrecognized semantic event '+row.op);
+  }
+  const terminal=generated.at(-1);
+  if(!terminal||!terminal.startsWith('return '))
+    refuse('missing real root return boundary');
+  emit('end',{kind:'return'},'completion/1',null);
+  return {schema:'semantic-compiler/3',context,generated,
+    certificates,elided,staticProgram:analyzed,
+    policy:{maxOperators,maxExpressionNodes:32}};
+}

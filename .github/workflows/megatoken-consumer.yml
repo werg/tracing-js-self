@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: werg/megatoken
-          ref: 986b9fce23f3343a8808c82b8ed330f644e07469 # semantic-trace/2 current emitter field compatibility
+          ref: f6c3932f5c755b94ea67bc638682ff763e75e9e2 # paired semantic-execution/3 native importer
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -72,4 +72,35 @@ jobs:
               assert all(b'sidecar' not in value and b'referenceStatus' not in value
                          for value in expected)
           print('Pinned megatoken Episode-v3 native importer: 8 byte-exact local cases, admitted=0')
+          PY
+      - name: Generate and post-serialization recheck actual semantic-trace v3
+        run: |
+          node tools/generate-witness-v3.mjs --seed 42 --count 1 \
+            --output "$RUNNER_TEMP/witness-v3.jsonl" \
+            --manifest "$RUNNER_TEMP/witness-v3-manifest.json"
+          node tools/recheck-witness-v3.mjs "$RUNNER_TEMP/witness-v3.jsonl"
+      - name: Import v3 into the pinned native Episode and check physical loss masks
+        run: |
+          python megatoken/scripts/import_semantic_execution.py \
+            --input "$RUNNER_TEMP/witness-v3.jsonl" \
+            --output "$RUNNER_TEMP/witness-native.jsonl" \
+            --diagnostic-byte --allow-local
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          from megatoken.data.schema import Episode
+          root=Path(os.environ["RUNNER_TEMP"])
+          exported=[json.loads(s) for s in (root/"witness-v3.jsonl").read_text().splitlines()]
+          imported=[Episode.from_dict(json.loads(s)) for s in
+                    (root/"witness-native.jsonl").read_text().splitlines()]
+          assert len(exported)==len(imported)==1
+          for source,native in zip(exported,imported,strict=True):
+              assert source["public"]["schema"]=="semantic-execution/3"
+              groups=source["public"]["groups"]
+              assert [x.payload for x in native.records]==[
+                  g["events"][0]["record"].encode("utf-8") for g in groups]
+              assert [x.policy_mask for x in native.records]==[
+                  g["mode"]=="generated" for g in groups]
+              assert native.supervision.outcome=="unknown"
+          print("Pinned megatoken v3 native importer: exact bytes/loss, no fabricated admission")
           PY

@@ -71,7 +71,8 @@ export class SemanticController {
         props.set(entry.key,{value:copy(entry.value),version:entry.version});
         versions.set(entry.key,entry.version);
       }
-      this.heap.set(obj.id,{kind:obj.kind,shapeVersion:obj.shapeVersion,properties:props,versions});
+      this.heap.set(obj.id,{kind:obj.kind,prototype:obj.prototype??'ordinary',
+        shapeVersion:obj.shapeVersion,properties:props,versions});
     }
     this.cells=new Map();
     this.activations=new Map();

@@ -38,7 +38,8 @@ export function referenceOutcome({source,entry,args,initialHeap,timeout=1000,obs
       const entity=heap[id];
       if(!entity || (entity.kind!=='array' && entity.kind!=='object'))
         throw new TypeError('Unsupported reference graph identity');
-      const result=entity.kind==='array'?[]:{};
+      const result=entity.kind==='array'?[]:
+        entity.prototype===null?Object.create(null):{};
       seen.set(id,result);
       if(entity.kind==='array') result.length=scalar(entity.properties.length.value);
       for(const [key,record] of Object.entries(entity.properties)) {

@@ -153,7 +153,7 @@ test('published graph supports verified aliases and cycles without private heap'
   }]};
   assert.equal(auditPublicCausality(withPublishedGraph(graph)).valid,true);
 });
-test('public-only audit rejects phantom references, malformed scalars and sparse arrays',()=>{
+test('public-only audit rejects phantom references and malformed scalar or array bounds',()=>{
   const makeGraph=()=>({roots:[['ref','o1']],objects:[{
     id:'o1',kind:'object',shapeVersion:0,
     properties:[{key:'x',value:['num',1],version:0}]
@@ -173,7 +173,8 @@ test('public-only audit rejects phantom references, malformed scalars and sparse
   }]};
   const extraProperty=makeGraph();
   extraProperty.objects[0].properties.push({key:'x',value:['num',9],version:1});
-  for(const graph of [dangling,missing,duplicate,malformed,sparse,overflow,extraProperty])
+  assert.equal(auditPublicCausality(withPublishedGraph(sparse)).valid,true);
+  for(const graph of [dangling,missing,duplicate,malformed,overflow,extraProperty])
     assert.throws(()=>auditPublicCausality(withPublishedGraph(graph)),/input graph|Unpublished reference/);
 });
 
