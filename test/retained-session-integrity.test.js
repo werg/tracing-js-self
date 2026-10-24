@@ -69,3 +69,40 @@ test('closed flag cannot be reset to reopen a retained session',async()=>{
   assert.throws(()=>{session.closed=false;},TypeError);
   await assert.rejects(session.invoke('answer'),/closed/);
 });
+
+test('trace hooks cannot reenter synchronous calls or rewrite retained archive evidence',()=>{
+  let session,seen=0;
+  session=createBoundedRetainedModuleSession({modules:{
+    'main.js':'export let n=0;export function add(x){n+=x;return n;}'
+  },entryModule:'main.js',onTrace:bundle=>{
+    seen++;
+    assert.throws(()=>session.invokeSync('add',[100]),/Reentrant synchronous/);
+    bundle.finalState.control.a0.completion={kind:'broken'};
+  }});
+  try{
+    const first=session.invokeSync('add',[2]);
+    assert.equal(first.result,2);
+    assert.equal(validateBundle(first.bundle).valid,true);
+    assert.equal(replayExact(first.bundle).valid,true);
+    const exposed=session.lastArchive;
+    exposed.finalState.control.a0.completion={kind:'forged'};
+    assert.equal(replayExact(session.lastArchive).valid,true);
+    first.bundle.finalState.control.a0.completion={kind:'forged'};
+    assert.equal(replayExact(session.lastArchive).valid,true);
+    assert.equal(session.invokeSync('add',[3]).result,5);
+    assert.equal(seen,2);
+    assert.deepEqual(session.history.map(x=>x.args[0]),[2,3]);
+    assert.throws(()=>{session.lastArchive=null;},TypeError);
+  }finally{session.close();}
+});
+
+test('closing an environment inside a trace hook aborts a retained commit',()=>{
+  let session;
+  session=createBoundedRetainedModuleSession({modules:{
+    'main.js':'export function value(){return 42;}'
+  },entryModule:'main.js',onTrace:()=>session.close()});
+  assert.throws(()=>session.invokeSync('value'),/closed during trace hook/);
+  assert.equal(session.closed,true);
+  assert.deepEqual(session.history,[]);
+  assert.equal(session.lastArchive,null);
+});
