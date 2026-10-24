@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: werg/megatoken
-          ref: 64bbcd23d638aacf33fb604564aad14547e605b7 # semantic-execution/3 only
+          ref: 530ec69e7774302eab0de94f59312f1f69dc9534 # semantic-execution/3 only
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@v4
