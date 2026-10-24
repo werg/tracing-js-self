@@ -4,12 +4,25 @@
 export function normalizeCompletionFacts(bundle) {
   const facts=new Map();
   for(const event of bundle.events){
-    if(!['call.return','completion.finally.end','completion.throw'].includes(event.operation))
+    if(!['call.return','completion.finally.end','completion.throw',
+      'completion.catch.bind'].includes(event.operation))
       continue;
     const frame=event.stateChanges.find(p=>p.table==='frames' &&
       p.id===event.invocationId);
     if(!frame)continue;
     const status=frame.after?.status;
+    if(event.operation==='completion.catch.bind'){
+      const introduced=event.stateChanges.filter(p=>p.table==='envs'&&p.after &&
+        p.before===null).flatMap(p=>Object.entries(p.after.bindings??{}));
+      if(introduced.length!==1||introduced[0][1].kind!=='catch'||
+         !Array.isArray(introduced[0][1].token?.value))
+        throw new TypeError('Catch binding lacks committed owned data cell');
+      const [name,binding]=introduced[0];
+      facts.set(event.eventId,{operation:'catch-bind',name,
+        value:binding.token.value,invocation:event.invocationId,
+        journalEvent:event.eventId});
+      continue;
+    }
     if(event.operation==='call.return'){
       if(!Array.isArray(event.result))
         throw new TypeError('Completion evidence missing evaluated return value');
