@@ -2,7 +2,8 @@
 // Inspect previously generated version-three JSONL without oracle leakage.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {renderWitness} from '../src/training/render-v3.js';
-import {restoreWitness,validateTrainingExport} from '../src/training/export.js';
+import {restoreWitness} from '../src/training/format.js';
+import {validateTrainingExport} from '../src/training/export.js';
 
 const [input,output]=process.argv.slice(2);
 if(!input)throw new TypeError('Usage: node tools/inspect-training.mjs corpus.jsonl [report.json]');
