@@ -12,7 +12,7 @@ import {evaluateSelectedTrajectory} from './rollout.js';
 import {referenceOutcome,ownedOutcome} from './reference.js';
 
 export function exportTraining(runtime,{maxBytes=512,maxGenerated=4096,
-  maxOperators=1}={}){
+  maxOperators=4}={}){
   const bundle=runtime.exportRun();
   validateBundle(bundle);replayExact(bundle);
   const semantic=normalizeJournal(bundle);
