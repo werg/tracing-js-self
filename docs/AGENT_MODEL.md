@@ -45,3 +45,19 @@ agent source. Real worker parallelism, `Atomics.waitAsync`, message ports,
 nondeterministic memory ordering, non-atomic accesses, `SharedArrayBuffer`
 aliasing, `$262.agent` and host scheduling integration remain out of scope.
 It does not produce locally verified JS traces or admit training episodes.
+
+## Separately owned single-agent SharedArrayBuffer subset
+
+The core owned bytecode machine also supports bounded `new
+SharedArrayBuffer(byteLength)`, `new Int32Array(sharedBuffer)`, and a
+selection of `Atomics` methods with **serialized internal Int32 cells**.
+Multiple views alias the same owned backing record. Atomic loads, stores,
+read-modify-write and compare/exchange are journaled as guest operations,
+independently replayed, and regression-compared with native V8 for the
+supported cases. A single agent can perform zero-timeout `Atomics.wait`
+and `Atomics.notify` (which wakes zero other agents).
+
+This is an owned **model of shared Int32 cell semantics**, not actual native
+backing memory or inter-agent concurrency. It does not link this interpreter
+realm to the separate scripted virtual-agent diagnostic above, support
+general typed arrays/non-atomic writes, or implement blocking workers.
