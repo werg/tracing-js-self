@@ -1853,3 +1853,41 @@ does not treat native V8 as an owned interpreter.
   source-level tests, journal validation and replay checks.
 - [ ] Species/subclassing, exotic and Proxy getters, general iterables,
   complete Promise and host scheduling conformance still remain open.
+
+
+### Integrated Promise, byte-backed shared memory and worker evidence (2026-10-24)
+
+This integration connects **owned byte-addressed memory**, the guest parser,
+Promise scheduling, real native worker diagnostics, runtime validation and
+differential regression tests. It is deliberately not a claim that the JS
+interpreter now executes native workers or that the entire roadmap is finished.
+
+- [x] Extended the bounded parser to accept anonymous function expressions
+  supplied to `new Promise`, ordinary owned thenable properties and Promise
+  reactions; executor tests now exercise parsed guest functions rather than
+  failing before execution.
+- [x] Owned Promise resolution now has queued ordinary data-property thenable
+  assimilation, first-settlement-wins capabilities, nested Promise adoption,
+  bounded cycle refusals and catchable executor/thenable throws. Expanded
+  dense-array combinator support to `Promise.allSettled` and `Promise.any`,
+  including ordered outcome records and AggregateError-shaped rejection data.
+  All interpreter jobs are logged with FIFO causal receipts and exact replay.
+- [x] Replaced the former owned Int32-cell-only shared buffer with serializable
+  **byte storage** and typed views across Int8/Uint8/Int16/Uint16/Int32/Uint32,
+  BigInt64/BigUint64 and Float32/Float64, with offsets, shared aliasing,
+  direct indexed stores, subarray and buffer slice, and integer Atomics
+  on the supported typed array classes. The same bytes are reconstructed from
+  the journal and tested against independent native V8 observations.
+- [x] Kept the distinct native `worker_threads` pathway for **actual parallel
+  V8 workers** sharing live `SharedArrayBuffer` objects, including blocking
+  Atomics.wait/notify and BigInt64 updates. Native concurrent results remain
+  trusted-input **diagnostics**, never owned semantic traces.
+
+**Explicit remaining gaps:** General ECMAScript iterators, Promise species and
+subclasses, proxy/accessor thenable continuation, unhandled-rejection host
+hooks, async executor corner cases, real timers and task host integration,
+arbitrary package loaders, true multi-agent owned-worker bytecode journals,
+the complete ECMAScript SharedArrayBuffer memory model, growable buffers,
+Test262 `$262.agent`, cross-engine interleaving adjudication, arbitrary
+production application initialization, and training admission. None of the
+previous owned/admitted corpus totals is changed by diagnostic worker results.

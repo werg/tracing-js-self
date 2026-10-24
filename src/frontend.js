@@ -86,6 +86,8 @@ function lex(source) {
   tokens.push({kind:'eof',value:'<eof>',start:i,end:i}); return tokens;
 }
 const precedence = { '||':1, '??':1, '&&':2, '==':3,'!=':3,'===':3,'!==':3,'<':4,'<=':4,'>':4,'>=':4,'+':5,'-':5,'*':6,'/':6,'%':6,'**':7 };
+const SHARED_CONSTRUCTORS=new Set(['Int8Array','Uint8Array','Int16Array','Uint16Array',
+ 'Int32Array','Uint32Array','BigInt64Array','BigUint64Array','Float32Array','Float64Array']);
 export function parse(source) {
   const t = lex(source); let p = 0;
   const peek = () => t[p];
@@ -99,18 +101,19 @@ export function parse(source) {
     if (x.kind === 'literal') return {type:'Literal',value:encode(x.value),raw:x.raw,start:x.start,end:x.end};
     if (x.value === 'true' || x.value === 'false' || x.value === 'null') return {type:'Literal',value:encode(x.value === 'true'?true:x.value === 'false'?false:null),raw:x.value,start:x.start,end:x.end};
     if (x.value === 'this') return {type:'This',start:x.start,end:x.end};
-    if (x.value === 'function') {
-      if(peek().value!=='(')throw new SyntaxError('Named function expression not yet owned');
+    if (x.value === 'await') return {type:'Await',argument:expression(8),start:x.start,end:t[p-1].end};
+    if(x.value==='function'||(x.value==='async'&&peek().value==='function')){
+      const async=x.value==='async';
+      if(async)need('function');
+      if(peek().value!=='(')throw new SyntaxError('Named function expression not owned');
       need('(');const params=[];
       if(!match(')')){do{params.push(name());}while(match(','));need(')');}
       const body=block();
-      return {type:'FunctionExpr',params,async:false,arrow:false,body,
-        start:x.start,end:body.end};
+      return {type:'FunctionExpr',params,async,arrow:false,body,start:x.start,end:body.end};
     }
-    if (x.value === 'await') return {type:'Await',argument:expression(8),start:x.start,end:t[p-1].end};
     if (x.value === 'new') {
       const callee=take();
-      if(!['Proxy','Set','Promise','SharedArrayBuffer','Int32Array'].includes(callee.value))
+      if(!['Proxy','Set','Promise','SharedArrayBuffer'].includes(callee.value)&&!SHARED_CONSTRUCTORS.has(callee.value))
         throw new SyntaxError('Unsupported bounded constructor');
       need('(');
       const args=[];if(!match(')')){do{args.push(expression(0,false));}while(match(','));need(')');}
@@ -118,7 +121,7 @@ export function parse(source) {
         if(args.length!==2)throw new SyntaxError('new Proxy needs target and handler');
         return {type:'Proxy',target:args[0],handler:args[1],start:x.start,end:t[p-1].end};
       }
-      if(args.length>1)throw new SyntaxError('Bounded constructor takes at most one argument');
+      if(args.length>3)throw new SyntaxError('Bounded constructor argument budget');
       return {type:'Construct',callee:callee.value,args,start:x.start,end:t[p-1].end};
     }
     if (['!','-','+','typeof'].includes(x.value)) return {type:'Unary',operator:x.value,argument:expression(8),start:x.start,end:t[p-1].end};

@@ -34,8 +34,21 @@ test('single-agent wait with timeout zero and notify',()=>{
  let a=Atomics.wait(v,0,0,0);let b=Atomics.notify(v,0,1);
  let out=a+'-'+b;`);
 });
-test('direct shared Int32 write refuses as a guest throw',()=>{
- const r=createRuntime().start('let v=new Int32Array(new SharedArrayBuffer(4));v[0]=3;');
- assert.equal(r.drive().kind,'runtime.failure');
- assert.equal(validateBundle(JSON.parse(JSON.stringify(r.exportRun()))).valid,true);
+test('direct shared typed array stores alias indexed and atomic reads',()=>{
+ const {r}=compare('let v=new Int32Array(new SharedArrayBuffer(4));v[0]=3;let out=Atomics.load(v,0);');
+ assert.deepEqual(value(r,'out'),['num',3]);
+});
+test('different owned typed array widths alias the same SAB byte storage',()=>{
+ compare(`let b=new SharedArrayBuffer(16);
+ let i=new Int32Array(b);let u=new Uint8Array(b);
+ Atomics.store(i,0,0);Atomics.store(u,0,17);
+ let out=Atomics.load(i,0)+u[0];`);
+});
+test('offset subarrays and shared buffer slice preserve byte-level semantics',()=>{
+ compare(`let b=new SharedArrayBuffer(16);
+ let view=new Uint8Array(b);view[4]=12;view[5]=23;
+ let narrow=new Uint8Array(b,4,2);
+ let sub=narrow.subarray(1,2);
+ let snap=new Uint8Array(b.slice(4,6));
+ let out=sub[0]+snap[0]+snap[1];`);
 });

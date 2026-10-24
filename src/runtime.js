@@ -1,4 +1,5 @@
 import { encode, decode, U, token, truthy, primitiveBinary, primitiveUnary } from './values.js';
+import {SHARED_TYPES,SHARED_TYPE_NAMES,newSharedBuffer,newSharedView,readSharedElement,writeSharedElement,atomicSharedElement} from './owned-shared-memory.js';
 import { parse, compile } from './frontend.js';
 import { importGraph } from './training/graph.js';
 import { parseTraining, TRAINING_PARSER } from './training/profile.js';
@@ -195,7 +196,7 @@ export class Runtime {
   }
   next(draft,kind) {const ids=draft.counters.ids;return `${kind==='operation'?'op':kind[0]}${++ids[kind]}`;}
   newEnv(draft,parent=null) {const id=this.next(draft,'env');draft.envs[id]={id,parent,bindings:{},version:0};return id;}
-  newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,observers:[],adopters:[],adopting:null,resolverCalled:false,thenableSerial:0,thenableLocked:false,version:0};return id;}
+  newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,observers:[],adopters:[],adopting:null,resolverCalled:false,thenableSerial:0,thenableLocked:false,thenableSeen:[],version:0};return id;}
   newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[],thisValue=U) {
     const id=this.next(draft,'frame'),envId=this.newEnv(draft,parentEnv);
     const params=this.programs[codeId].params;
@@ -231,7 +232,7 @@ export class Runtime {
     for(const name of ['queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
-    for(const name of ['Object','Array','Number','Math','SharedArrayBuffer','Int32Array','Atomics'])
+    for(const name of ['Object','Array','Number','Math','SharedArrayBuffer',...SHARED_TYPE_NAMES,'Atomics'])
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     s.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
@@ -275,7 +276,7 @@ export class Runtime {
     for(const name of ['parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
-    for(const name of ['Object','Array','Number','Math','Promise','Set','Error','TypeError','SharedArrayBuffer','Int32Array','Atomics'])
+    for(const name of ['Object','Array','Number','Math','Promise','Set','Error','TypeError','SharedArrayBuffer',...SHARED_TYPE_NAMES,'Atomics'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     state.control.a0.globalEnvId=global;
@@ -544,20 +545,27 @@ export class Runtime {
     if(value[0]==='ref'){
       const object=draft.heap[value[1]];
       if(object&&['object','array'].includes(object.kind)){
-        const observed=ordinaryGet(draft.heap,value,'then');
-        if(!observed)throw new TypeError('Exotic thenable getter is unowned');
-        const then=observed.method.value;
-        if(this.callableGuest(draft,then)){
-          if(draft.heap[then[1]].async)throw new TypeError('Async then method is unowned');
-          if(p.thenableSerial>=128||draft.control.a0.queue.length>=256)
-            throw new RangeError('Bounded thenable jobs exceeded');
-          const serial=++p.thenableSerial;p.thenableLocked=false;
-          draft.control.a0.queue.push({kind:'thenable',promiseId:id,
-            thenableId:value[1],thenId:then[1],serial});
+        const found=ordinaryGet(draft.heap,value,'then');
+        // No silent fallback to native accessors or Proxies.
+        if(!found)throw new TypeError('Accessor/exotic thenable needs an owned get continuation');
+        const method=found.method.value;
+        if(this.callableGuest(draft,method)){
+          if(p.thenableSeen.includes(value[1])){
+            const reason=this.caughtError(draft,
+              {errorType:'TypeError',message:'Thenable resolution cycle'},origin);
+            this.rejectPromise(draft,id,reason.value,reason.origin);return;
+          }
+          if(p.thenableSeen.length>=64||draft.control.a0.queue.length>=256)
+            throw new RangeError('Owned thenable assimilation budget');
+          p.thenableSeen.push(value[1]);
+          const serial=++p.thenableSerial;
+          p.thenableLocked=false;
+          draft.control.a0.queue.push({kind:'thenable',promiseId:id,thenableId:value[1],
+            thenId:method[1],serial});
           return;
         }
-        if(['hostfn','builtinfn'].includes(then[0]))
-          throw new TypeError('Native thenable callable unowned');
+        if(['builtinfn','hostfn'].includes(method[0]))
+          throw new TypeError('Native thenable method outside bounded profile');
       }
     }
     if(value[0]==='promise'){
@@ -642,16 +650,16 @@ export class Runtime {
       this.completeFrame(draft,frame,completion.value.value,completion.value.origin);
     }else if(completion.type==='throw'){
       frame.status='thrown';frame.completion=copy(completion);
-      if(frame.thenableJob){
-        const p=draft.promises[frame.thenableJob.promiseId];
-        if(p.status==='pending'&&!p.thenableLocked){
-          p.thenableLocked=true;
-          const reason=this.caughtError(draft,completion,eventId);
-          this.rejectPromise(draft,p.id,reason.value,reason.origin);
-        }
-        draft.control.a0.activeFrameId=null;
-      }else if(frame.asyncPromiseId){
-        // Async throws reject a guest promise, never the whole agent.
+      if(frame.thenableJob&&!frame.asyncPromiseId){
+         const p=draft.promises[frame.thenableJob.promiseId];
+         if(p?.status==='pending'&&!p.thenableLocked){
+           p.thenableLocked=true;
+           const reason=this.caughtError(draft,completion,eventId);
+           this.rejectPromise(draft,p.id,reason.value,reason.origin);
+         }
+         draft.control.a0.activeFrameId=null;
+       }else if(frame.asyncPromiseId){
+         // Async throws reject a guest promise, never the whole agent.
         const reason=this.caughtError(draft,completion,eventId);
         this.rejectPromise(draft,frame.asyncPromiseId,reason.value,reason.origin);
         if(frame.callerFrameId){
@@ -1003,24 +1011,23 @@ export class Runtime {
                result:['promise',p]};
            }
            if(fn.value[0]==='intrinsic'&&fn.value[1]==='SharedArrayBuffer'){
-            const length=args[0]?.value[0]==='num'?decode(args[0].value):NaN;
-            if(args.length!==1||!Number.isSafeInteger(length)||length<0||length>256)
-              guestFault('RangeError','Bounded shared buffer length expected');
-            const id=this.next(s,'obj');
-            s.heap[id]={id,kind:'shared-int32-buffer',byteLength:length,
-              cells:Array(Math.floor(length/4)).fill(0),version:0};
-            return {...operands(fn,...args),...result(['ref',id])};
-          }
-          if(fn.value[0]==='intrinsic'&&fn.value[1]==='Int32Array'){
-            const buffer=args[0]?.value[0]==='ref'?s.heap[args[0].value[1]]:null;
-            if(args.length!==1||buffer?.kind!=='shared-int32-buffer')
-              guestFault('TypeError','Int32Array needs owned shared buffer');
-            const id=this.next(s,'obj');
-            s.heap[id]={id,kind:'shared-int32-view',bufferId:buffer.id,
-              length:buffer.cells.length,version:0};
-            return {...operands(fn,...args),...result(['ref',id])};
-          }
-          if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
+  const length=args.length===0?0:args[0]?.value[0]==='num'?decode(args[0].value):NaN;
+  if(!Number.isSafeInteger(length)||length<0||length>1024)
+    guestFault('RangeError','SharedArrayBuffer byteLength out of bounds');
+  const id=this.next(s,'obj');s.heap[id]=newSharedBuffer(id,length);
+  return {...operands(fn,...args),...result(['ref',id])};
+}
+if(fn.value[0]==='intrinsic'&&Object.hasOwn(SHARED_TYPES,fn.value[1])){
+  const b=args[0]?.value[0]==='ref'?s.heap[args[0].value[1]]:null;
+  if(args.length<1||b?.kind!=='shared-int32-buffer')
+    guestFault('TypeError','Shared typed-array constructor needs owned SAB');
+  const offset=args.length<2?0:args[1]?.value[0]==='num'?decode(args[1].value):NaN;
+  const length=args.length<3?undefined:args[2]?.value[0]==='num'?decode(args[2].value):NaN;
+  const id=this.next(s,'obj');
+  s.heap[id]=newSharedView(id,b,fn.value[1],offset,length);
+  return {...operands(fn,...args),...result(['ref',id])};
+}
+if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
             const completion={type:'unsupported',feature:'Constructor requires owned semantics: '+String(fn.value[1])};
             this.failFrame(s,f,completion);return {...operands(fn,...args),completion};
           }
@@ -1076,7 +1083,7 @@ export class Runtime {
           else if(base.value[0]==='intrinsic' && base.value[1]==='Atomics' &&
              ['load','store','add','sub','and','or','xor','exchange','compareExchange','wait','notify'].includes(property))
             v=['builtinfn','Atomics.'+property];
-          else if(base.value[0]==='intrinsic' && base.value[1]==='Promise' && ['resolve','reject','all','race'].includes(property))v=['builtinfn',`Promise.${property}`];
+          else if(base.value[0]==='intrinsic' && base.value[1]==='Promise' && ['resolve','reject','all','race','allSettled','any'].includes(property))v=['builtinfn',`Promise.${property}`];
           else if(base.value[0]==='intrinsic' &&
              ((base.value[1]==='Math' &&
                ['abs','ceil','floor','trunc','round','max','min','pow','sign','sqrt','hypot','random'].includes(property)) ||
@@ -1133,17 +1140,28 @@ export class Runtime {
                throw new TypeError('Unmodeled RegExp property '+property);
              }
              if(obj.kind==='shared-int32-buffer'){
-               if(property!=='byteLength')guestFault('TypeError','Unmodeled shared buffer property');
-               return {...operands(base,key),...result(['num',obj.byteLength])};
-             }
-             if(obj.kind==='shared-int32-view'){
-               if(property==='length')return {...operands(base,key),...result(['num',obj.length])};
-               if(property==='byteLength')return {...operands(base,key),...result(['num',obj.length*4])};
-               if(!arrayIndex(property)||Number(property)>=obj.length)
-                 guestFault('TypeError','Unmodeled shared Int32 view property');
-               return {...operands(base,key),...result(['num',s.heap[obj.bufferId].cells[Number(property)]])};
-             }
-             if(obj.kind==='set'){
+  if(property==='byteLength')return {...operands(base,key),...result(['num',obj.byteLength])};
+  if(property==='slice'){
+    const method=['builtinfn','SharedArrayBuffer.prototype.slice'];
+    return {...operands(base,key),...result(op==='GET_METHOD'?['method',method,base.value]:method)};
+  }
+  guestFault('TypeError','Unmodeled SAB property');
+}
+if(obj.kind==='shared-int32-view'){
+  const bytes=SHARED_TYPES[obj.elementType].bytes;
+  for(const [prop,v] of Object.entries({length:obj.length,byteLength:obj.length*bytes,
+    byteOffset:obj.byteOffset,BYTES_PER_ELEMENT:bytes}))
+    if(property===prop)return {...operands(base,key),...result(['num',v])};
+  if(property==='buffer')return {...operands(base,key),...result(['ref',obj.bufferId])};
+  if(property==='subarray'){
+    const method=['builtinfn','TypedArray.prototype.subarray'];
+    return {...operands(base,key),...result(op==='GET_METHOD'?['method',method,base.value]:method)};
+  }
+  if(!arrayIndex(property)||Number(property)>=obj.length)
+    guestFault('TypeError','Unmodeled shared view property');
+  return {...operands(base,key),...result(readSharedElement(s.heap[obj.bufferId],obj,Number(property)))};
+}
+if(obj.kind==='set'){
                if(['has','add'].includes(property)){
                  const v=['builtinfn','Set.prototype.'+property];
                  const output=op==='GET_METHOD'?['method',v,base.value]:v;
@@ -1199,7 +1217,13 @@ export class Runtime {
              guestFault('TypeError',`Cannot set properties of ${base.value[0]}`);
            if(base.value[0]!=='ref'||!s.heap[base.value[1]]||s.heap[base.value[1]].kind==='function')throw new TypeError('Not a writable guest object');
           const object=s.heap[base.value[1]];
-          if(object.kind==='regexp'){
+          if(object.kind==='shared-int32-view'){
+  if(!arrayIndex(property)||Number(property)>=object.length)
+    guestFault('TypeError','Unmodeled typed-array property assignment');
+  writeSharedElement(s.heap[object.bufferId],object,Number(property),v.value);
+  return {...operands(base,key,v),...result(v.value)};
+}
+if(object.kind==='regexp'){
             if(property!=='lastIndex'||v.value[0]!=='num' ||
                !Number.isSafeInteger(decode(v.value)) ||
                decode(v.value)<0 || decode(v.value)>10001)
@@ -1291,21 +1315,20 @@ export class Runtime {
              }
              return {...operands(fn,...args),...result(U)};
            }
-           if(callable[0]==='builtinfn' &&
-               /^Promise[.]thenable[.](resolve|reject):p[0-9]+:[0-9]+$/.test(callable[1])){
-             const [,mode,pid,serial]=callable[1].match(
-               /^Promise[.]thenable[.](resolve|reject):(p[0-9]+):([0-9]+)$/);
-             const p=s.promises[pid];
-             if(!p)throw new Error('Unknown thenable resolving function');
-             if(p.status==='pending'&&p.thenableSerial===Number(serial)&&!p.thenableLocked){
-               p.thenableLocked=true;
-               const v=args[0]?.value??U,origin=args[0]?.origin??eventId;
-               if(mode==='resolve')this.resolvePromise(s,pid,v,origin);
-               else this.rejectPromise(s,pid,v,origin);
-             }
-             return {...operands(fn,...args),...result(U)};
-           }
-           if(callable[0]==='builtinfn' && callable[1]==='queueMicrotask'){
+           if(callable[0]==='builtinfn'&&
+  /^Promise[.]thenable[.](resolve|reject):(p[0-9]+):([0-9]+)$/.test(callable[1])){
+  const [,mode,pid,serial]=callable[1].match(/^Promise[.]thenable[.](resolve|reject):(p[0-9]+):([0-9]+)$/);
+  const p=s.promises[pid];
+  if(!p)throw new Error('Unknown thenable promise capability');
+  if(p.status==='pending'&&p.thenableSerial===Number(serial)&&!p.thenableLocked){
+    p.thenableLocked=true;
+    const value=args[0]?.value??U,origin=args[0]?.origin??eventId;
+    if(mode==='resolve')this.resolvePromise(s,pid,value,origin);
+    else this.rejectPromise(s,pid,value,origin);
+  }
+  return {...operands(fn,...args),...result(U)};
+}
+if(callable[0]==='builtinfn' && callable[1]==='queueMicrotask'){
             if(args.length!==1||!this.callableGuest(s,args[0]?.value))
               guestFault('TypeError','queueMicrotask requires one owned callable');
             if(s.control.a0.queue.filter(x=>x.kind==='microtask').length>=256)
@@ -1349,7 +1372,29 @@ export class Runtime {
               putOwn(array,String(i),set.properties[String(i)].value,eventId);
             return {...operands(fn,...args),...result(['ref',id])};
           }
-          if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
+          if(callable[0]==='builtinfn'&&callable[1]==='TypedArray.prototype.subarray'){
+  const view=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+  if(view?.kind!=='shared-int32-view'||args.length>2)guestFault('TypeError','Invalid subarray call');
+  const clip=(n,otherwise)=>n===undefined?otherwise:
+    n<0?Math.max(0,view.length+Math.trunc(n)):Math.min(view.length,Math.trunc(n));
+  const a=clip(args[0]?.value[0]==='num'?decode(args[0].value):undefined,0);
+  const b=clip(args[1]?.value[0]==='num'?decode(args[1].value):undefined,view.length);
+  const id=this.next(s,'obj');
+  s.heap[id]=newSharedView(id,s.heap[view.bufferId],view.elementType,
+    view.byteOffset+a*SHARED_TYPES[view.elementType].bytes,Math.max(0,b-a));
+  return {...operands(fn,...args),...result(['ref',id])};
+}
+if(callable[0]==='builtinfn'&&callable[1]==='SharedArrayBuffer.prototype.slice'){
+  const b=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+  if(b?.kind!=='shared-int32-buffer'||args.length>2)guestFault('TypeError','Invalid SAB slice call');
+  const read=(arg,fallback)=>arg?.value[0]==='num'?Math.trunc(decode(arg.value)):fallback;
+  const clip=n=>n<0?Math.max(0,b.byteLength+n):Math.min(b.byteLength,n);
+  const a=clip(read(args[0],0)),end=clip(read(args[1],b.byteLength));
+  const id=this.next(s,'obj'),len=Math.max(0,end-a),out=newSharedBuffer(id,len);
+  out.bytes=b.bytes.slice(a,a+len);s.heap[id]=out;
+  return {...operands(fn,...args),...result(['ref',id])};
+}
+if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             const set=receiver[0]==='ref'?s.heap[receiver[1]]:null;
             if(set?.kind!=='set')guestFault('TypeError','Set method on incompatible receiver');
             const value=args[0]?.value??U;
@@ -1949,49 +1994,25 @@ export class Runtime {
             if(callable[1]==='Promise.resolve' && v[0]==='promise')
               return {...operands(fn,...args),...result(v)};
             const p=this.newPromise(s);
-            if(callable[1]==='Promise.resolve')this.resolvePromise(s,p,v,origin);
-            else this.rejectPromise(s,p,v,origin);
+             if(callable[1]==='Promise.resolve')this.resolvePromise(s,p,v,origin);
+             else this.rejectPromise(s,p,v,origin);
             return {...operands(fn,...args),...result(['promise',p])};
           }
           if(callable[0]==='builtinfn' && callable[1].startsWith('Atomics.')){
-            const method=callable[1].slice(8),view=args[0]?.value[0]==='ref'?s.heap[args[0].value[1]]:null;
-            const index=args[1]?.value[0]==='num'?decode(args[1].value):NaN;
-            if(view?.kind!=='shared-int32-view'||!Number.isInteger(index)||
-               index<0||index>=view.length)guestFault('RangeError','Atomic index or view unsupported');
-            const buffer=s.heap[view.bufferId],old=buffer.cells[index];
-            const count=method==='compareExchange'||method==='wait'?4:
-              method==='load'?2:method==='notify'?(args.length===2?2:3):3;
-            if(args.length!==count||args.slice(2).some(a=>a.value[0]!=='num'||
-               !Number.isSafeInteger(decode(a.value))))
-              guestFault('TypeError','Unowned atomic argument or arity');
-            const n=(decode(args[2]?.value??['num',0]))|0;
-            let value=old;
-            switch(method){
-              case 'load':break;
-              case 'store':buffer.cells[index]=n;value=n;break;
-              case 'add':buffer.cells[index]=(old+n)|0;break;
-              case 'sub':buffer.cells[index]=(old-n)|0;break;
-              case 'and':buffer.cells[index]=old&n;break;
-              case 'or':buffer.cells[index]=old|n;break;
-              case 'xor':buffer.cells[index]=old^n;break;
-              case 'exchange':buffer.cells[index]=n;break;
-              case 'compareExchange':
-                if(old===n)buffer.cells[index]=decode(args[3].value)|0;
-                break;
-              case 'notify':
-                if(args.length===3&&decode(args[2].value)<0)
-                  guestFault('TypeError','Negative notification count');
-                value=0;break;
-              case 'wait':
-                if(decode(args[3].value)!==0)
-                  guestFault('TypeError','Only zero-timeout single-agent wait supported');
-                return {...operands(fn,...args),
-                  ...result(['str',old===n?'timed-out':'not-equal'])};
-              default:throw new Error('Unsupported bounded atomic method');
-            }
-            return {...operands(fn,...args),...result(['num',value])};
-          }
-          if(callable[0]==='builtinfn' && ['Promise.all','Promise.race'].includes(callable[1])){
+  const method=callable[1].slice(8);
+  const view=args[0]?.value[0]==='ref'?s.heap[args[0].value[1]]:null;
+  if(view?.kind!=='shared-int32-view')
+    guestFault('TypeError','Atomics requires owned integer shared view');
+  const index=args[1]?.value[0]==='num'?decode(args[1].value):NaN;
+  if(!Number.isInteger(index)||index<0||index>=view.length)
+    guestFault('RangeError','Invalid atomic index');
+  const count=method==='compareExchange'?4:method==='wait'?(args.length===3?3:4):
+    method==='notify'?(args.length===2?2:3):method==='load'?2:3;
+  if(args.length!==count)guestFault('TypeError','Atomic arity unsupported');
+  const out=atomicSharedElement(s.heap[view.bufferId],view,method,index,args.slice(2).map(x=>x.value));
+  return {...operands(fn,...args),...result(out)};
+}
+if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettled','Promise.any'].includes(callable[1])){
             const input=args[0]?.value,arr=input?.[0]==='ref'?s.heap[input[1]]:null;
             if(args.length!==1||arr?.kind!=='array'||Object.keys(arr.accessors??{}).length)
               guestFault('TypeError','Promise combinator requires an owned dense array');
@@ -2004,14 +2025,25 @@ export class Runtime {
               if(!entry)guestFault('TypeError','Sparse Promise combinator iterable unsupported');
               values.push(entry);
             }
-            const kind=callable[1]==='Promise.all'?'all':'race';
+            const kind=callable[1].slice('Promise.'.length);
             const resultId=this.newPromise(s);
-            if(kind==='all')s.promises[resultId].combinator={kind,remaining:length,values:Array(length).fill(null)};
-            if(kind==='all'&&length===0){
+            if(['all','allSettled','any'].includes(kind))s.promises[resultId].combinator={kind,remaining:length,values:Array(length).fill(null)};
+            if(['all','allSettled'].includes(kind)&&length===0){
               const id=this.next(s,'obj');
               s.heap[id]={id,kind:'array',properties:{length:token(['num',0],eventId)},
                 propertyVersions:{length:0},shapeVersion:0,version:0};
               this.resolvePromise(s,resultId,['ref',id],eventId);
+            }
+            if(kind==='any'&&length===0){
+              const errorId=this.next(s,'obj'),errorsId=this.next(s,'obj');
+              const error=s.heap[errorId]={id:errorId,kind:'object',properties:{},
+                propertyVersions:{},shapeVersion:0,version:0};
+              s.heap[errorsId]={id:errorsId,kind:'array',
+                properties:{length:token(['num',0],eventId)},
+                propertyVersions:{length:0},shapeVersion:0,version:0};
+              putOwn(error,'name',['str','AggregateError'],eventId);
+              putOwn(error,'errors',['ref',errorsId],eventId);
+              this.rejectPromise(s,resultId,['ref',errorId],eventId);
             }
             for(let i=0;i<length;i++){
               const v=values[i],inputId=v.value[0]==='promise'?v.value[1]:
@@ -2040,7 +2072,7 @@ export class Runtime {
         case 'AWAIT':{
           const a=pop(),v=a.value;if(!f.asyncPromiseId)throw new SyntaxError('await outside async function');
           const promiseId=v[0]==='promise'?v[1]:this.newPromise(s);
-          if(v[0]!=='promise')this.resolvePromise(s,promiseId,v,a.origin);
+           if(v[0]!=='promise')this.resolvePromise(s,promiseId,v,a.origin);
           f.awaiting=promiseId;this.observePromise(s,promiseId,{kind:'await',frameId:f.id});
           this.suspendAsync(s,f);return {...operands(a),causes:[{kind:'promise',promiseId}]};
         }
@@ -2125,21 +2157,22 @@ export class Runtime {
     this.commit('job.enter',(s,eventId)=>{
       const job=s.control.a0.queue.shift();
       if(job.kind==='thenable'){
-        const p=s.promises[job.promiseId],callback=s.heap[job.thenId];
-        if(p?.status!=='pending'||p.thenableSerial!==job.serial||
-          callback?.kind!=='function'||callback.async||!s.heap[job.thenableId])
-          throw new Error('Invalid queued thenable job');
-        const resolve=['builtinfn','Promise.thenable.resolve:'+p.id+':'+job.serial];
-        const reject=['builtinfn','Promise.thenable.reject:'+p.id+':'+job.serial];
-        const id=this.newFrame(s,callback.codeId,callback.closureEnvId,null,null,
-          [token(resolve,eventId),token(reject,eventId)],['ref',job.thenableId]);
-        s.frames[id].thenableJob={promiseId:p.id,serial:job.serial};
-        s.control.a0.activeFrameId=id;
-        return {causes:[{kind:'promise',promiseId:p.id},
-          {kind:'invocation',frameId:id}],result:['promise',p.id]};
-      }
-      if(job.kind==='microtask'){
-        const callback=s.heap[job.functionId];
+         const p=s.promises[job.promiseId],fn=s.heap[job.thenId];
+         if(p?.status!=='pending'||p.thenableSerial!==job.serial||
+           fn?.kind!=='function'||!s.heap[job.thenableId])
+           throw new Error('Invalid queued thenable');
+         const resolve=['builtinfn','Promise.thenable.resolve:'+p.id+':'+job.serial];
+         const reject=['builtinfn','Promise.thenable.reject:'+p.id+':'+job.serial];
+         const inner=fn.async?this.newPromise(s):null;
+         const id=this.newFrame(s,fn.codeId,fn.closureEnvId,null,inner,
+           [token(resolve,eventId),token(reject,eventId)],['ref',job.thenableId]);
+         s.frames[id].thenableJob={promiseId:p.id,serial:job.serial};
+         s.control.a0.activeFrameId=id;
+         return {causes:[{kind:'promise',promiseId:p.id},{kind:'invocation',frameId:id}],
+           result:['promise',p.id]};
+       }
+       if(job.kind==='microtask'){
+         const callback=s.heap[job.functionId];
         if(callback?.kind!=='function')
           throw new Error('Queued microtask lacks owned function identity');
         const inner=callback.async?this.newPromise(s):null;
@@ -2154,24 +2187,40 @@ export class Runtime {
         if(!p||!['fulfilled','rejected'].includes(p.status))
           throw new Error('Combinator job on unsettled promise');
         const target=s.promises[job.resultId];
-        if(!target)throw new Error('Unknown combinator target');
+        if(!target)throw new Error('Unknown combinator result');
         if(target.status!=='pending')
           return {causes:[{kind:'promise',promiseId:job.promiseId}],result:p.value.value};
-        if(p.status==='rejected')this.rejectPromise(s,job.resultId,p.value.value,p.value.origin);
-        else if(job.mode==='race')this.resolvePromise(s,job.resultId,p.value.value,p.value.origin);
-        else {
+        if(job.mode==='race'||(job.mode==='all'&&p.status==='rejected')||
+           (job.mode==='any'&&p.status==='fulfilled')){
+          if(p.status==='rejected')this.rejectPromise(s,job.resultId,p.value.value,p.value.origin);
+          else this.resolvePromise(s,job.resultId,p.value.value,p.value.origin);
+        }else{
           const comb=target.combinator;
-          if(comb?.kind!=='all'||comb.values[job.index]!==null)
-            throw new Error('Invalid Promise.all observation');
-          comb.values[job.index]=copy(p.value);
+          if(comb?.kind!==job.mode||comb.values[job.index]!==null)
+            throw new Error('Invalid combinator observation');
+          if(job.mode==='allSettled'){
+            const id=this.next(s,'obj');
+            const entry=s.heap[id]={id,kind:'object',properties:{},
+              propertyVersions:{},shapeVersion:0,version:0};
+            putOwn(entry,'status',['str',p.status],eventId);
+            putOwn(entry,p.status==='fulfilled'?'value':'reason',p.value.value,eventId);
+            comb.values[job.index]=token(['ref',id],eventId);
+          }else comb.values[job.index]=copy(p.value);
           comb.remaining--;
           if(comb.remaining===0){
-            const values=comb.values,id=this.next(s,'obj');
-            const array=s.heap[id]={id,kind:'array',properties:{
-              length:token(['num',values.length],eventId)},
+            const id=this.next(s,'obj'),values=comb.values;
+            const array=s.heap[id]={id,kind:'array',
+              properties:{length:token(['num',values.length],eventId)},
               propertyVersions:{length:0},shapeVersion:0,version:0};
             for(let i=0;i<values.length;i++)putOwn(array,String(i),values[i].value,eventId);
-            this.resolvePromise(s,job.resultId,['ref',id],eventId);
+            if(job.mode==='any'){
+              const errId=this.next(s,'obj');
+              const error=s.heap[errId]={id:errId,kind:'object',
+                properties:{},propertyVersions:{},shapeVersion:0,version:0};
+              putOwn(error,'name',['str','AggregateError'],eventId);
+              putOwn(error,'errors',['ref',id],eventId);
+              this.rejectPromise(s,job.resultId,['ref',errId],eventId);
+            }else this.resolvePromise(s,job.resultId,['ref',id],eventId);
           }
         }
         return {causes:[{kind:'promise',promiseId:job.promiseId}],result:p.value.value};

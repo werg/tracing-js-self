@@ -34,14 +34,14 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
            e.causes.filter(c=>c.kind==='invocation').length!==1||
            e.causes.some(c=>c.kind==='promise'))
           fail('Microtask entry lacks an owned queued callback',e.eventId);
-       }else if(job?.kind==='thenable'){
-        const p=state.promises[job.promiseId];
-        if(!p||p.status!=='pending'||p.thenableSerial!==job.serial||
-           state.heap[job.thenId]?.kind!=='function'||!state.heap[job.thenableId]||
-           e.causes.filter(c=>c.kind==='promise'&&c.promiseId===p.id).length!==1||
-           e.causes.filter(c=>c.kind==='invocation').length!==1)
-          fail('Invalid pending thenable microtask entry',e.eventId);
-      }else if(!job || !state.promises[job.promiseId] ||
+      }else if(job?.kind==='thenable'){
+         const p=state.promises[job.promiseId];
+         if(!p||p.status!=='pending'||p.thenableSerial!==job.serial||
+            state.heap[job.thenId]?.kind!=='function'||!state.heap[job.thenableId]||
+            e.causes.filter(c=>c.kind==='promise'&&c.promiseId===p.id).length!==1||
+            e.causes.filter(c=>c.kind==='invocation').length!==1)
+           fail('Queued thenable is not backed by an owned function and promise',e.eventId);
+       }else if(!job || !state.promises[job.promiseId] ||
          state.promises[job.promiseId].status==='pending' ||
          e.causes.filter(c=>c.kind==='promise').length!==1 ||
          e.causes.find(c=>c.kind==='promise').promiseId!==job.promiseId)
@@ -138,9 +138,10 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
              f.promiseExecutorTarget&&eq(f.completion,c)&&
              (state.promises[f.promiseExecutorTarget]?.status==='rejected'||
               state.promises[f.promiseExecutorTarget]?.resolverCalled));
-           const thenableCompletion=Object.values(state.frames).some(f=>f.status==='thrown'&&
-             f.thenableJob&&eq(f.completion,c)&&state.promises[f.thenableJob.promiseId]);
-           if(!rejection&&!reactionRejection&&!pendingCoercion&&!executorCompletion&&!thenableCompletion&&(['failed','unsupported'].includes(state.control.a0.status)||active?.status!=='running'||
+           const thenableRejection=Object.values(state.frames).some(f=>f.status==='thrown'&&
+             f.thenableJob&&eq(f.completion,c)&&
+             state.promises[f.thenableJob.promiseId]?.status==='rejected');
+           if(!rejection&&!reactionRejection&&!pendingCoercion&&!executorCompletion&&!thenableRejection&&(['failed','unsupported'].includes(state.control.a0.status)||active?.status!=='running'||
              !active.handlers?.some(h=>h.phase==='catch'||h.phase==='finally')))
             fail('Guest throw was not routed to a handler or async rejection',e.eventId);
         }
