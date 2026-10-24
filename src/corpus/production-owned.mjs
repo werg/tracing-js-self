@@ -139,3 +139,86 @@ export function verifyPinnedProductionHelpers({
     'Only model-visible semantic-execution/2 examples are locally verified; no megatoken admission is implied.']},
    verified};
 }
+
+
+// A deliberately narrow, original-source factory/closure execution path.
+// Unlike direct helper projection, this executes a real pinned Axios factory
+// and calls its captured arrow inside the same *owned* activation. It does not
+// claim that Axios module initialization, import graph or host callbacks ran.
+export const OWNED_PRODUCTION_CLOSURE_CASES=Object.freeze([
+ ['string','abc'],['string',4],['number',0],['number',null],
+ ['boolean',true],['boolean',false],['boolean',0],
+ ['undefined',null],['object',{}],['object',[1,2]],
+ ['function','text']
+]);
+
+export function extractPinnedTypeOfTestClosure({root=process.cwd()}={}){
+ const moduleName='axios-utils',pin=upstream[moduleName];
+ const original=readFileSync(resolve(root,fileFor(pin)),'utf8');
+ if(sha(original)!==pinnedSha256[moduleName])
+  throw new Error('Pinned production library SHA-256 mismatch: '+moduleName);
+ const parsed=parse(original,{ecmaVersion:2022,sourceType:'module'});
+ const declarations=parsed.body.filter(x=>x.type==='VariableDeclaration')
+  .flatMap(x=>x.declarations).filter(x=>x.id?.name==='typeOfTest');
+ if(declarations.length!==1||declarations[0].init?.type!=='ArrowFunctionExpression')
+  throw new Error('Pinned closure factory shape changed');
+ const factory=declarations[0].init;
+ if(factory.async||factory.generator||factory.params.length!==1||
+    factory.params[0].type!=='Identifier'||
+    factory.body.type!=='ArrowFunctionExpression'||
+    factory.body.params.length!==1||factory.body.params[0].type!=='Identifier')
+  throw new Error('Pinned closure factory is not the audited nested arrow');
+ // Pin the complete audited closure expression, not merely its interface:
+ // no other ambient binding, declaration or initializer may sneak in.
+ const exact=original.slice(factory.start,factory.end);
+ if(exact.replace(/\s+/g,'')!=='(type)=>(thing)=>typeofthing===type')
+  throw new Error('Pinned closure factory semantics changed');
+ const before='"use strict";\nfunction ownedTypeOfTest(type, thing) {\n  const typeOfTest = ';
+ const after=';\n  const predicate = typeOfTest(type);\n  return predicate(thing);\n}\n';
+ const projected=before+exact+after;
+ return {projected,entry:'ownedTypeOfTest',
+  provenance:{repository:pin.repository,revision:pin.revision,
+   license:pin.license,path:pin.path,sha256:pinnedSha256[moduleName],
+   sourceSpan:{start:factory.start,end:factory.end,unit:'utf16'},
+   projectionStart:before.length,extraction:'exact-source-closure-factory/1'}};
+}
+
+export function verifyPinnedProductionClosures({
+ root=process.cwd(),cases=OWNED_PRODUCTION_CLOSURE_CASES,maxGenerated=256}={}){
+ if(!Array.isArray(cases)||cases.length>32||
+    !Number.isSafeInteger(maxGenerated)||maxGenerated<1||maxGenerated>2048)
+  throw new TypeError('Invalid bounded production closure inventory');
+ const artifact=extractPinnedTypeOfTestClosure({root}),rows=[],verified=[];
+ for(let i=0;i<cases.length;i++){
+  const args=cases[i];
+  if(!Array.isArray(args)||args.length!==2||
+     typeof args[0]!=='string'||JSON.stringify(args).length>1000)
+   throw new TypeError('Invalid production closure arguments');
+  const id=sha(JSON.stringify([artifact.provenance,'typeOfTest',i,args]));
+  const result=verifyTrainingCase({source:artifact.projected,entry:artifact.entry,
+   args,maxGenerated,maxSteps:12000,lineage:{origin:'pinned-production-closure/1',
+    source:artifact.provenance,index:i}});
+  const row={schema:'production-closure-owned-result/1',id,args,
+   originalSource:artifact.provenance,verifiedOwned:false,admitted:false,
+   status:result.status};
+  if(result.status==='locally_verified'){
+   const serialized=JSON.parse(JSON.stringify(result.exported));
+   const evidence=recheckIndependentTrainingEvidence(serialized);
+   if(!evidence.valid)throw new Error('Production closure evidence recheck failed: '+evidence.reason);
+   const sourceText=serialized.sidecar.archive.sources.find(x=>
+    x.sourceId===serialized.sidecar.archive.entrySpec.sourceId)?.text;
+   if(sourceText!==artifact.projected)
+    throw new Error('Owned closure archive source does not match pinned projection');
+   row.verifiedOwned=true;
+   row.evidence={operations:evidence.operations,branches:evidence.branches,
+    modelVisibleSchema:serialized.public.schema};
+   verified.push({id,exported:serialized,provenance:artifact.provenance});
+  }else row.reason=String(result.reason??'Unsupported owned closure').slice(0,300);
+  rows.push(row);
+ }
+ return {report:{schema:'production-closure-owned-report/1',
+   attempted:rows.length,locallyVerified:verified.length,
+   refused:rows.length-verified.length,admitted:0,rows,
+   warning:'A pinned Axios factory is initialized and its captured closure called in one bounded owned function entry. No whole-library module graph is owned.'},
+   verified};
+}
