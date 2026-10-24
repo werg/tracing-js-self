@@ -480,7 +480,7 @@ test('namespace mutation and unsupported first-class/dynamic namespace exotics f
 test('ESM production-style initialization creates one owned shared closure with live state',async()=>{
  const factory=`export function makeCounter(start){
     let count=start;
-    return function next(){count+=1;return count;}
+    return function innerTick(){count+=1;return count;}
   }
   export const counter=makeCounter(4);
   export function next(){return counter();}`;
