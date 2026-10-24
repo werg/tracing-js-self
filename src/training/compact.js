@@ -81,7 +81,7 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
     if(!invocations.has(frame))invocations.set(frame,'i'+(++invocationNumber));
     return invocations.get(frame);
   }
-  const cellNames=new Map();
+  const cellNames=new Map(),committedCells=new Set();
   let cellNumber=0;
   function local(write) {
     const key=write.env+':'+write.key;
@@ -92,7 +92,9 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
     for(const w of row.writes??[]){
       if(w.kind==='cell'){
         if(!Array.isArray(w.value))refuse('untyped local write');
-        emit('bind',{name:local(w),value:tag(w.value)},'bind/1',row);
+        const cell=local(w);
+        emit('bind',{name:cell,value:tag(w.value)},'bind/1',row);
+        committedCells.add(cell);
       }else if(w.kind==='property') {
         emit('write',{object:id(w.object),key:w.key,present:w.present,
           value:w.present?tag(w.value):['undefined']},'property/1',row);
@@ -163,7 +165,10 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
         const len=a.kind==='array'?a.properties.find(p=>p.key==='length')?.value?.[1]:null;
         emit('allocate',{name:id(a.identity),kind:a.kind==='function'?'closure':a.kind,
           ...(a.kind==='array'?{length:len}:{}),
-          ...(a.kind==='function'?{code:a.codeId}:{}),
+          ...(a.kind==='function'?{code:a.codeId,
+            captures:[...cellNames].filter(([key,cell])=>
+              key.startsWith(a.capture+':')&&committedCells.has(cell))
+              .map(([key,cell])=>({binding:key.slice(a.capture.length+1),cell}))}:{}),
           properties:a.kind==='function'?[]:
             a.properties.filter(p=>a.kind!=='array'||p.key!=='length')
               .map(p=>({key:p.key,value:tag(p.value)}))},'allocate/1',row);
@@ -207,11 +212,25 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
     }else if(row.op==='loop'){
       omission(row,'mechanical backedge');
     }else if(row.op==='carry'){
-      // Only omit iteration copies in a program without function expressions.
-      // A captured mutable cell must remain represented as shared storage.
-      if(analyzed.functions.length>1)
-        refuse('captured loop cell requires shared-cell explanation');
-      omission(row,'uncaptured lexical iteration copy');
+      if(analyzed.functions.length<=1){
+        omission(row,'uncaptured lexical iteration copy');
+        continue;
+      }
+      // A loop-carried cell has a new semantic identity per iteration.
+      // The copy reads the previously committed cell at this boundary.
+      const copies=row.copies??[{from:row.from,to:row.to}];
+      for(const item of copies){
+        const from=local({env:item.from.env,key:item.from.key});
+        const to=local({env:item.to.env,key:item.to.key});
+        const observed=(row.reads??[]).find(read=>
+          read.kind==='binding'&&read.envId===item.from.env&&
+          read.name===item.from.key);
+        if(!observed||!Array.isArray(observed.value))
+          refuse('captured iteration copy lacks value evidence');
+        emit('bind',{name:to,value:tag(observed.value),
+          ...(committedCells.has(from)?{from}:{})},'bind/1',row);
+        committedCells.add(to);
+      }
     }else if(row.op==='return'){
       writesOf(row);
       emit('return',{value:tag(row.result)},'completion/1',row);
