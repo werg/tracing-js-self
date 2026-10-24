@@ -15,11 +15,26 @@ export const SHARED_TYPES=Object.freeze({
  Float64Array:{bytes:8,get:'getFloat64',set:'setFloat64',atomic:false}
 });
 export const SHARED_TYPE_NAMES=Object.freeze(Object.keys(SHARED_TYPES));
-export function newSharedBuffer(id,length){
- if(!Number.isSafeInteger(length)||length<0||length>1024)
+export function newSharedBuffer(id,length,maxByteLength=undefined){
+ const max=maxByteLength===undefined?length:maxByteLength;
+ if(!Number.isSafeInteger(length)||length<0||length>1024||
+    !Number.isSafeInteger(max)||max<length||max>1024)
    throw new RangeError('SharedArrayBuffer length outside bounded profile');
- return {id,kind:'shared-int32-buffer',byteLength:length,
-   bytes:Array(length).fill(0),version:0};
+ return {id,kind:'shared-int32-buffer',byteLength:length,maxByteLength:max,
+   growable:maxByteLength!==undefined,bytes:Array(length).fill(0),version:0};
+}
+export function growSharedBuffer(buffer,length){
+ if(buffer?.kind!=='shared-int32-buffer'||!buffer.growable)
+   throw new TypeError('SharedArrayBuffer is not growable');
+ if(!Number.isSafeInteger(length)||length<buffer.byteLength||
+    length>buffer.maxByteLength)throw new RangeError('Invalid buffer growth');
+ buffer.bytes.push(...Array(length-buffer.byteLength).fill(0));
+ buffer.byteLength=length;
+}
+export function effectiveSharedLength(buffer,view){
+ const width=SHARED_TYPES[view.elementType].bytes;
+ return view.lengthTracking
+   ? Math.max(0,Math.floor((buffer.byteLength-view.byteOffset)/width)):view.length;
 }
 export function newSharedView(id,buffer,type,offset=0,length=undefined){
  const spec=SHARED_TYPES[type];
@@ -28,21 +43,23 @@ export function newSharedView(id,buffer,type,offset=0,length=undefined){
  if(!Number.isSafeInteger(offset)||offset<0||offset%spec.bytes!==0||
    offset>buffer.byteLength)throw new RangeError('Invalid shared view byte offset');
  const available=buffer.byteLength-offset;
+ const lengthTracking=length===undefined&&buffer.growable===true;
  if(length===undefined){
-   if(available%spec.bytes!==0)throw new RangeError('Shared view byte size is not aligned');
-   length=available/spec.bytes;
+   if(!lengthTracking&&available%spec.bytes!==0)
+     throw new RangeError('Shared view byte size is not aligned');
+   length=Math.floor(available/spec.bytes);
  }
  if(!Number.isSafeInteger(length)||length<0||length*spec.bytes>available)
    throw new RangeError('Shared view length exceeds buffer');
  return {id,kind:'shared-int32-view',bufferId:buffer.id,elementType:type,
-   byteOffset:offset,length,version:0};
+   byteOffset:offset,length,lengthTracking,version:0};
 }
 function data(buffer,view,index){
  const spec=SHARED_TYPES[view.elementType];
  if(!spec||buffer?.kind!=='shared-int32-buffer'||
     !Array.isArray(buffer.bytes)||buffer.bytes.length!==buffer.byteLength)
    throw new TypeError('Corrupt owned shared-memory graph');
- if(!Number.isInteger(index)||index<0||index>=view.length)
+ if(!Number.isInteger(index)||index<0||index>=effectiveSharedLength(buffer,view))
    throw new RangeError('Shared array index out of bounds');
  const bytes=Uint8Array.from(buffer.bytes);
  return {spec,bytes,data:new DataView(bytes.buffer),
