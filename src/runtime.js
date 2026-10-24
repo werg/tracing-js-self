@@ -594,7 +594,12 @@ export class Runtime {
   suspendAsync(draft,frame) {
     frame.status='suspended';
     if(frame.callerFrameId) {
-      this.stackPush(draft.frames[frame.callerFrameId],['promise',frame.asyncPromiseId],null);
+      const caller=draft.frames[frame.callerFrameId];
+      const pending=caller.pendingPromiseExecutor;
+      if(pending?.waitingFrameId===frame.id){
+        delete caller.pendingPromiseExecutor;
+        this.stackPush(caller,['promise',pending.promiseId],null);
+      }else this.stackPush(caller,['promise',frame.asyncPromiseId],null);
       draft.control.a0.activeFrameId=frame.callerFrameId;frame.callerFrameId=null;
     } else draft.control.a0.activeFrameId=null;
   }
@@ -664,7 +669,11 @@ export class Runtime {
         this.rejectPromise(draft,frame.asyncPromiseId,reason.value,reason.origin);
         if(frame.callerFrameId){
           const caller=draft.frames[frame.callerFrameId];
-          this.stackPush(caller,['promise',frame.asyncPromiseId],eventId);
+          const pending=caller.pendingPromiseExecutor;
+          if(pending?.waitingFrameId===frame.id){
+            delete caller.pendingPromiseExecutor;
+            this.stackPush(caller,['promise',pending.promiseId],eventId);
+          }else this.stackPush(caller,['promise',frame.asyncPromiseId],eventId);
           draft.control.a0.activeFrameId=caller.id;
         }else draft.control.a0.activeFrameId=null;
       }else if(frame.reactionPromiseId){
@@ -998,10 +1007,11 @@ export class Runtime {
              if(args.length!==1||!this.callableGuest(s,args[0]?.value))
                guestFault('TypeError','Promise executor must be callable');
              const executor=s.heap[args[0].value[1]];
-             if(executor.async)throw new TypeError('Async Promise executor outside bounded profile');
+             // The Promise returned by an async executor is intentionally ignored.
              const p=this.newPromise(s),resolve=['builtinfn','Promise.executor.resolve:'+p],
                reject=['builtinfn','Promise.executor.reject:'+p];
-             const id=this.newFrame(s,executor.codeId,executor.closureEnvId,f.id,null,
+             const inner=executor.async?this.newPromise(s):null;
+              const id=this.newFrame(s,executor.codeId,executor.closureEnvId,f.id,inner,
                [token(resolve,eventId),token(reject,eventId)],
                executor.arrow?executor.lexicalThis:U);
              s.frames[id].promiseExecutorTarget=p;
