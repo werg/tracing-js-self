@@ -4,6 +4,7 @@
 import {isDeepStrictEqual} from 'node:util';
 import {parse} from 'acorn';
 import {decodeWitness,encodeWitness,validateExpression} from './format.js';
+import {checkWitnessClaim} from './witness-check.js';
 
 const same=isDeepStrictEqual;
 const contains=(outer,inner)=>outer&&inner&&
@@ -16,7 +17,7 @@ function sourceExpressions(source) {
   function visit(value) {
     if(Array.isArray(value)) {for(const part of value)visit(part);return;}
     if(!value||typeof value!=='object')return;
-    if(value.type==='BinaryExpression')
+    if(['BinaryExpression','AssignmentExpression'].includes(value.type))
       nodes.set(value.start+':'+value.end,value);
     for(const [key,child] of Object.entries(value))
       if(!['start','end','loc','raw'].includes(key))visit(child);
@@ -43,6 +44,54 @@ export function rewriteSemanticWitness({generated,certificates,source,entry,
   const locals=new Map();
   const inputAliases=new Set();
   const emitted=[];
+  function scalar(value) {
+    if(value===null)return ['null'];
+    if(typeof value==='boolean')return ['bool',value];
+    if(typeof value==='string')return ['str',value];
+    if(typeof value==='bigint')return ['bigint',String(value)];
+    if(typeof value==='number')return ['num',Object.is(value,-0)?'-0':
+      Number.isNaN(value)?'NaN':value===Infinity?'+Infinity':
+      value===-Infinity?'-Infinity':value];
+    return null;
+  }
+  // A branch can be made explanatory without manufacturing the execution:
+  // only literal/committed-local/input scalar operands may be reconstructed,
+  // and the independent bounded primitive evaluator checks its actual decision.
+  function sourceOperand(node,invocation,pendingAliases) {
+    if(node?.type==='Literal'&&!node.regex) {
+      const value=scalar(node.bigint!==undefined?BigInt(node.bigint):node.value);
+      return value?{op:'literal',value}:null;
+    }
+    if(node?.type!=='Identifier')return null;
+    for(const [name,item] of [...locals].reverse())
+      if(item.sourceName===node.name&&
+         (item.invocation===invocation||item.invocation==='i1'))
+        return {op:'local',name};
+    if(invocation==='i1'){
+      const index=params.indexOf(node.name);
+      if(index>=0&&index<arguments_.length){
+        pendingAliases.add(index);
+        return {op:'local',name:'arg'+index};
+      }
+    }
+    return null;
+  }
+  function checkedCondition(node,invocation,claimed){
+    if(!node||node.type!=='BinaryExpression'||
+       !['<','<=','>','>=','===','!==','==','!='].includes(node.operator))
+      return null;
+    const pending=new Set();
+    const left=sourceOperand(node.left,invocation,pending);
+    const right=sourceOperand(node.right,invocation,pending);
+    if(!left||!right)return null;
+    const expr={op:'binary',operator:node.operator,left,right};
+    const available=new Map([...locals].map(([name,item])=>[name,item.value]));
+    for(const index of pending)available.set('arg'+index,arguments_[index]);
+    const check=checkWitnessClaim(expr,claimed,{locals:available});
+    if(!check.consistent)return null;
+    for(const index of pending)inputAliases.add(index);
+    return expr;
+  }
   const arguments_=inputGraph.roots;
   function substitution(leaf,node,invocation) {
     if(leaf?.op!=='literal'||node?.type!=='Identifier')return leaf;
@@ -68,7 +117,9 @@ export function rewriteSemanticWitness({generated,certificates,source,entry,
     if(item.kind==='compute'&&item.fields.expr.op==='binary'){
       const span=item.cert.span;
       const node=span&&binaries.get(span.start+':'+span.end);
-      if(node){
+      if(node&&['BinaryExpression','AssignmentExpression'].includes(node.type) &&
+         (node.type==='BinaryExpression'||
+          node.operator===item.fields.expr.operator+'=')){
         const expr=item.fields.expr;
         item.fields={...item.fields,expr:{...expr,
           left:substitution(expr.left,node.left,invocation),
@@ -100,6 +151,12 @@ export function rewriteSemanticWitness({generated,certificates,source,entry,
           }
         }
       }
+    }
+    if(item.kind==='choose'&&item.fields.expr.op==='literal'){
+      const span=item.cert.span;
+      const node=span&&binaries.get(span.start+':'+span.end);
+      const expression=checkedCondition(node,invocation,item.fields.decision);
+      if(expression)item.fields={...item.fields,expr:expression};
     }
     if(item.kind==='bind'&&!item.fields.from){
       const previous=emitted.at(-1);
