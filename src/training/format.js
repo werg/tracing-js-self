@@ -32,6 +32,8 @@ const has=(object,key)=>Object.hasOwn(object,key);
 const scalarSpecial=new Set(['NaN','-0','+Infinity','-Infinity']);
 const decimal=/^(?:0|-?[1-9][0-9]*)$/;
 const identity=/^[a-z][a-z0-9]*$/;
+// Guest source identifiers use ECMAScript spelling; witness identities do not.
+const sourceIdentifier=/^[$_\\p{ID_Start}][$_\\u200C\\u200D\\p{ID_Continue}]*$/u;
 function fail(message){throw new TypeError('Invalid semantic-trace/3: '+message);}
 export function assertValue(v){
   if(!Array.isArray(v))fail('untagged value');
@@ -129,7 +131,7 @@ export function validateWitness(kind,fields){
   };
   if(required[kind].some(key=>!has(fields,key)))fail('missing required '+kind+' field');
   if(kind==='input')validateGraph(fields.graph);
-  if(kind==='code' && (typeof fields.entry!=='string'||!identity.test(fields.entry)||
+  if(kind==='code' && (typeof fields.entry!=='string'||!sourceIdentifier.test(fields.entry)||
      typeof fields.source!=='string'||!fields.source.length||!Array.isArray(fields.sites)))
     fail('source context');
   if(kind==='code'&&fields.randomSeed!==undefined&&
