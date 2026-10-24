@@ -29,6 +29,7 @@ export class SemanticController {
     if(!['immediate-root','owned-quiescence'].includes(completionPolicy))
       fail('policy','Unrecognized completion policy');
     this.source=code.fields;this.input=input.fields;this.completionPolicy=completionPolicy;
+    this.randomState=this.source.randomSeed??null;
     this.capabilities=new Set(capabilities);this.fixtureReplies=structuredClone(fixtureReplies);
     this.maxGenerated=maxGenerated;this.maxPacketBytes=maxPacketBytes;
     this.heap=new Map(this.input.graph.objects.map(node=>[node.id,{
@@ -79,7 +80,8 @@ export class SemanticController {
       heap:this.heap,locals:this.locals,stack:this.stack,completion:this.completion,
       effects:this.effects,jobs:this.jobs,ready:this.ready,
       pending:this.pending,lastReturn:this.lastReturn,fixtureReplies:this.fixtureReplies,
-      claims:this.claims,generated:this.generated,history:this.history
+      claims:this.claims,generated:this.generated,history:this.history,
+      randomState:this.randomState
     });
     try {
       const {kind,fields:f}=decodeWitness(line);
@@ -95,7 +97,13 @@ export class SemanticController {
       if(kind==='compute'||kind==='choose'){
         const claimed=kind==='compute'?f.result:f.decision;
         const claim=checkWitnessClaim(f.expr,claimed,{
-          locals:this.locals,readProperty:(id,key)=>this.readProperty(id,key)});
+          locals:this.locals,randomState:this.randomState,
+          readProperty:(id,key)=>this.readProperty(id,key)});
+        if(f.expr.op==='random'){
+          if(this.randomState===null)
+            fail('capability','Random computation requires a declared fixture seed');
+          this.randomState=(Math.imul(this.randomState,1664525)+1013904223)>>>0;
+        }
         this.claims.push({index:this.history.length,kind,...claim});
         // Witness inconsistency is a diagnostic; selected state is not
         // silently repaired from the checker or a reference outcome.
@@ -227,6 +235,7 @@ export class SemanticController {
       capabilities:[...this.capabilities],heap:[...this.heap],locals:[...this.locals],
       stack:this.stack,effects:[...this.effects],jobs:[...this.jobs],ready:this.ready,
       claims:this.claims,history:this.history,generated:this.generated,
+      randomState:this.randomState,
       pending:this.pending??null,lastReturn:this.lastReturn??null,
       completion:this.completion};
     if(Buffer.byteLength(JSON.stringify(packet),'utf8')>this.maxPacketBytes)
@@ -244,6 +253,7 @@ export class SemanticController {
     controller.effects=new Map(packet.effects);controller.jobs=new Map(packet.jobs);
     controller.ready=packet.ready;controller.claims=packet.claims;
     controller.history=packet.history;controller.generated=packet.generated;
+    controller.randomState=packet.randomState;
     controller.pending=packet.pending;controller.lastReturn=packet.lastReturn;
     controller.completion=packet.completion;
     return controller;
