@@ -46,3 +46,21 @@ test('synchronous retained API refuses concurrent async replay and rolls back er
     assert.equal(session.invokeSync('read').result,3);
   }finally{session.close();}
 });
+
+test('owned ESM linker invokes const arrow/function-expression exports',()=>{
+  const sources={'main.ts':`
+    export let total=1;
+    export const add=(n:number)=>{total+=n;return total;};
+    export const read=function(){return total;};
+    export const data=99;
+  `};
+  const run=executeEvaluatedModulesSync({modules:sources,entryModule:'main.ts',
+    calls:[{exportName:'add',args:[3]},
+      {exportName:'read',args:[]},{exportName:'add',args:[5]}]});
+  assert.deepEqual(run.result,[4,4,9]);
+  assert.equal(validateBundle(run.bundle).valid,true);
+  assert.equal(replayExact(run.bundle).valid,true);
+  assert.throws(()=>executeEvaluatedModulesSync({
+    modules:sources,entryModule:'main.ts',exportName:'data',args:[1]
+  }),/non-function/);
+});
