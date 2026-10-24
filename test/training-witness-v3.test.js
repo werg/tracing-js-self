@@ -148,3 +148,38 @@ test('a caught throw is a nonterminal transfer and introduces the real catch val
   assert.equal(evaluateSelectedTrajectory({groups:episode.public.groups,
     referenceOutcome:episode.sidecar.reference}).correctness,'correct');
 });
+
+test('seeded RNG is public context and checked as an independent primitive without repair',()=>{
+  const seed=17;
+  const code=encodeWitness('code',{entry:'run',
+    source:'function run(){return Math.random();}',sites:[],randomSeed:seed});
+  const input=encodeWitness('input',{graph:{roots:[],objects:[]}});
+  const selected=new SemanticController([code,input]);
+  const next=(Math.imul(seed,1664525)+1013904223)>>>0;
+  const expected=['num',next/4294967296];
+  selected.commit(encodeWitness('compute',{expr:{op:'random'},result:['num',0]}));
+  assert.equal(selected.firstWitnessViolation.consistent,false);
+  assert.deepEqual(selected.firstWitnessViolation.expected,expected);
+  assert.equal(selected.randomState,next);
+  const packet=selected.segmentPacket();
+  const resumed=SemanticController.fromPacket(packet);
+  assert.equal(resumed.randomState,next);
+  const after=(Math.imul(next,1664525)+1013904223)>>>0;
+  resumed.commit(encodeWitness('compute',{expr:{op:'random'},result:['num',after/4294967296]}));
+  assert.equal(resumed.claims.at(-1).consistent,true);
+  resumed.commit(encodeWitness('return',{value:['num',0]}));
+  resumed.commit(encodeWitness('end',{kind:'return'}));
+  assert.equal(resumed.completion.value[1],0);
+});
+test('owned deterministic Math.random source emits explicit checkable computation',()=>{
+  const runtime=createRuntime({maxSteps:30000,randomSeed:17}).startEntry({
+    text:'"use strict";function run(){return Math.random();}',functionName:'run',args:[]});
+  assert.equal(runtime.drive().kind,'terminated');
+  const exported=exportTraining(runtime);
+  const source=exported.sidecar.compiled.context[0];
+  assert.equal(decodeWitness(source).fields.randomSeed,17);
+  const records=exported.sidecar.compiled.generated.map(decodeWitness);
+  assert(records.some(r=>r.kind==='compute'&&r.fields.expr.op==='random'),
+    'random output must be a checkable primitive, not an opaque guessed return');
+  assert.equal(validateTrainingExport(exported).valid,true);
+});
