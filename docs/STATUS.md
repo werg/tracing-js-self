@@ -1,5 +1,10 @@
 # Implementation status (0.2.0)
 
+## Opt-in native compatibility routing in natlang (October 24, 2026)
+
+- `werg/natlang` now exposes `installHybridTracingEnvironment` for explicit routing between this bounded owned evaluator and natlang's native TypeScript/Node evaluator. The compatibility-first default uses the native route, including the retained callable-folder seam. Native per-call results carry `execution.provenance` with `authority: native-untraced/1`; retained module evaluation requires the `onNativeExecution` hook for its separate provenance record.
+- This route deliberately prioritizes application compatibility **without claiming a semantic trace for native execution**. There is no catch-and-retry after partly executing unsupported code. Native guest side effects, imports and callbacks remain outside owned replay and must not be admitted as verified `megatoken` training episodes. The independent conformance and production owned-runtime gates remain open. See [natlang hybrid integration](https://github.com/werg/natlang/blob/main/ts-host/HYBRID_TRACING.md). Commits have not yet passed a reported CI check.
+
 ## Restricted browser-safe interpreter entry (October 24, 2026)
 
 - An opt-in browser export condition and `tracing-js-self/browser` entry now load the bounded owned VM without static Node imports. The browser runtime forbids native host adapter installation and fails closed on host object/array entry graphs because transparent proxies cannot be reliably recognized on that platform; scalar entry arguments and owned guest allocations remain usable. Node retains its native proxy check. A conditional ESM smoke test covers bounded execution and forbidden inputs.
