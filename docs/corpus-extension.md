@@ -1899,3 +1899,17 @@ previous owned/admitted corpus totals is changed by diagnostic worker results.
   narrowing that return value to the typed lane's width. The shared bytes
   still truncate/wrap as specified. Differential cases cover seven native
   integer typed-array classes.
+
+
+### Bounded growable SharedArrayBuffer guest semantics (2026-10-24)
+
+- [x] Added owned growable SAB `new SharedArrayBuffer(n,{maxByteLength:m})`
+  state, observable growability/maxByteLength, synchronous `grow(n)`,
+  zero-filling of new bytes, length-tracking typed views and
+  length-tracking `subarray` slices. Explicit-length views stay fixed.
+  Tests require state-journal integrity, exact replay and native V8
+  differential values wherever the installed Node version supports GSAB.
+- [ ] Shared-memory agents remain single-agent inside the owned bytecode
+  machine; native worker threads provide actual parallel shared-memory
+  diagnostics. Full agent memory-order interleavings, native host effects,
+  cross-engine evidence and general ECMAScript conformance remain open.
