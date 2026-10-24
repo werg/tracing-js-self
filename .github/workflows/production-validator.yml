@@ -4,8 +4,10 @@ on:
     branches: [main]
     paths:
       - 'src/corpus/ajv-reference.mjs'
+      - 'src/corpus/ajv-owned.mjs'
       - 'tools/verify-ajv-snapshot.mjs'
       - 'test/ajv-reference.test.js'
+      - 'test/ajv-owned.test.js'
       - '.github/workflows/production-validator.yml'
       - 'corpus/extension/snapshots/json-schema/**'
   workflow_dispatch:
@@ -25,7 +27,7 @@ jobs:
           node-version: '22'
       - run: npm ci
       - name: Check local validator contracts without native package execution
-        run: node --test test/ajv-reference.test.js
+        run: node --test test/ajv-reference.test.js test/ajv-owned.test.js
       - name: Install exactly versioned Ajv with lifecycle scripts disabled
         run: |
           set -euo pipefail
@@ -57,13 +59,19 @@ jobs:
               --trusted-execution --ajv-root /ajv \
               --snapshot-root corpus/extension/snapshots/json-schema \
               --output /out/ajv-diagnostics.jsonl \
-              --report /out/ajv-report.json
+              --report /out/ajv-report.json \
+              --owned-max 12 \
+              --owned-output /out/ajv-owned-attempts.jsonl \
+              --owned-episodes /out/ajv-owned-local.jsonl
           AJV_REPORT="$RUNNER_TEMP/ajv-out/ajv-report.json" node --input-type=module -e '
             import {readFileSync} from "node:fs";
             const r=JSON.parse(readFileSync(process.env.AJV_REPORT));
             const total=Object.values(r.counts).reduce((a,b)=>a+b,0);
             if(r.attempted!==907||total!==907||r.sourceFilesChecked!==26||
-              r.verifiedOwned!==0||r.admitted!==0||!(r.counts["reference-agreed"]>0))
+              r.verifiedOwned!==0||r.admitted!==0||!(r.counts["reference-agreed"]>0)||
+              r.ownedCandidateSummary.attempted!==12||
+              r.ownedCandidateSummary.locallyVerified+r.ownedCandidateSummary.refused!==12||
+              r.ownedCandidateSummary.admitted!==0)
               throw Error("Incorrect real Ajv reference evidence "+JSON.stringify(r));
           '
       - uses: actions/upload-artifact@v4
@@ -72,4 +80,6 @@ jobs:
           path: |
             ${{ runner.temp }}/ajv-out/ajv-report.json
             ${{ runner.temp }}/ajv-out/ajv-diagnostics.jsonl
+            ${{ runner.temp }}/ajv-out/ajv-owned-attempts.jsonl
+            ${{ runner.temp }}/ajv-out/ajv-owned-local.jsonl
           if-no-files-found: error
