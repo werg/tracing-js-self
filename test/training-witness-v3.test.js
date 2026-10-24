@@ -70,12 +70,14 @@ test('controller mutations and FIFO jobs are independent of source interpreter',
   selected.commit(encodeWitness('job',{action:'enqueue',job:'j1',owner:'i1'}));
   selected.commit(encodeWitness('job',{action:'enqueue',job:'j2',owner:'i1'}));
   assert.throws(()=>selected.commit(encodeWitness('job',
+    {action:'dispatch',job:'j1',owner:'i1'})),e=>e.category==='job');
+  selected.commit(encodeWitness('return',{value:['ref','o1']}));
+  assert.throws(()=>selected.commit(encodeWitness('job',
     {action:'dispatch',job:'j2',owner:'i1'})),e=>e.category==='job');
   selected.commit(encodeWitness('job',{action:'dispatch',job:'j1',owner:'i1'}));
   selected.commit(encodeWitness('job',{action:'complete',job:'j1',owner:'i1'}));
   selected.commit(encodeWitness('job',{action:'dispatch',job:'j2',owner:'i1'}));
   selected.commit(encodeWitness('job',{action:'complete',job:'j2',owner:'i1'}));
-  selected.commit(encodeWitness('return',{value:['ref','o1']}));
   selected.commit(encodeWitness('end',{kind:'return'}));
   const graph=selected.observedGraph();
   assert.equal(graph.objects[0].properties.filter(p=>p[0]==='0').length,0);
