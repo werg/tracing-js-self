@@ -16,6 +16,7 @@ export const COMPACTION_RULES=Object.freeze({
   'bind/1':{boundary:'local',effect:'commit supplied value'},
   'choice/1':{boundary:'control',effect:'retain chosen path'},
   'allocate/1':{boundary:'identity',effect:'initialize committed data properties'},
+  'entry-rest/1':{boundary:'root entry',effect:'publish owned root rest array from supplied arguments'},
   'call/1':{boundary:'activation',effect:'preserve dynamic guest invocation'},
   'property/1':{boundary:'mutation',effect:'preserve property value and presence'},
   'completion/1':{boundary:'terminal',effect:'preserve actual root completion'},
@@ -88,6 +89,23 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
     const key=write.env+':'+write.key;
     if(!cellNames.has(key))cellNames.set(key,'l'+(++cellNumber));
     return cellNames.get(key);
+  }
+  // Root rest allocation takes place while the entry frame is created,
+  // before the first journal step. It is a real guest allocation, not an
+  // extra input root or a guessed future collection.
+  const rootFrame=bundle.initialState.frames[semantic.rootInvocation];
+  const rootProgram=rootFrame&&bundle.programs[rootFrame.codeId];
+  if((rootProgram?.restIndex??-1)>=0){
+    const name=rootProgram.params[rootProgram.restIndex];
+    const entryEnv=bundle.initialState.envs[rootFrame.envId];
+    const rest=entryEnv?.bindings?.[name]?.token?.value??rootFrame.restValue;
+    const entity=rest?.[0]==='ref'?bundle.initialState.heap[rest[1]]:null;
+    if(!entity||entity.kind!=='array')
+      refuse('root rest parameter lacks an owned initial array');
+    const len=entity.properties.length?.value?.[1];
+    emit('allocate',{name:id(rest[1]),kind:'array',length:len,
+      properties:Object.entries(entity.properties).filter(([key])=>key!=='length')
+        .map(([key,slot])=>({key,value:tag(slot.value)}))},'entry-rest/1',null);
   }
   function writesOf(row) {
     for(const w of row.writes??[]){
