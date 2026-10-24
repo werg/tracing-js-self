@@ -1716,3 +1716,47 @@ initialization in the owned interpreter, tracing Ajv-generated validation
 operations with independent owned verification, full ECMAScript
 module/Promise/event-loop conformance, native service and agent semantics,
 and downstream corpus admission.
+
+
+### Original Axios closures, generated Ajv verifier, ESM/Promise checks (2026-10-24)
+
+- [x] Extended source-locked Axios verification with the **actual unchanged
+  nested typeOfTest closure-factory expression** from pinned utils.js,
+  executed inside an owned guest entry as a closure allocation and captured
+  callback call. The exact source span, whole-vendor SHA-256, independent
+  V8 outcome, operation/branch audits, model-visible training projection and
+  post-serialization evidence recheck are all required for local verification.
+- [x] [Successful owned production run 40083313258](https://github.com/werg/tracing-js-self/actions/runs/40083313258)
+  measured **11/11 additional locally verified original Axios closure-entry
+  executions**, zero refusals, zero admissions. These are separate from the
+  existing **19/23** locally verified original Axios helper executions.
+  This is an original closure-expression entry projection, **not** complete
+  Axios module instantiation or InterceptorManager class execution.
+- [x] Added opt-in Ajv 8.17.1 generated-code owned attempts alongside, and
+  separate from, the original native reference run. The verifier hashes,
+  parses and checks the generated function, refuses referenced native scope
+  captures, supports only audited pure omitted-context parameter defaults,
+  independently checks original generated V8 output against real Ajv output,
+  and demands owned intermediate operation/branch evidence plus serialized
+  recheck. Source hashes or agreement alone never certify a trace.
+- [x] [Real Ajv run 40084271389](https://github.com/werg/tracing-js-self/actions/runs/40084271389)
+  tried **12 distinct generated validators from 12 original locked JSON Schema
+  source files**: **0 locally owned verified / 12 explicit refusals /
+  0 admitted**. Independent native diagnostic totals remained **822 reference
+  agreements, 29 disagreements and 56 unsupported** out of 907. Most rejected
+  generated code requires scope/context not owned by the interpreter.
+- [x] Added owned ESM regression coverage for one-time shared closure
+  initialization and for top-level-await Promise reaction ordering across
+  dependencies, including native ESM outcome comparison and exact replay.
+  This is a narrow test of existing bounded semantics, not full conformance.
+- [ ] **Full remaining roadmap is still open**: general production-library
+  class initialization, package and dependency loaders, Ajv generated
+  validators requiring native scope, complete ESM/CJS interop, Promise
+  executors/combinators/thenables, real host scheduling, worker agents and
+  SharedArrayBuffer semantics, cross-engine conformance, and downstream
+  megatoken training admission.
+
+The separate Ajv owned-attempt path is opt-in using --owned-max (CI uses 12)
+and retains both refusals and independently checked local candidates. It
+executes only in the trusted, source-locked restricted CI environment, and
+does not treat native V8 as an owned interpreter.
