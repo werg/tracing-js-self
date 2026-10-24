@@ -59,12 +59,14 @@ test('synchronous callback cannot reenter owned execution, outer run still commi
 });
 
 test('pending native service blocks another call and releases on completion',async()=>{
-  let release,dispatches=0;
+  let release,dispatches=0,signalDispatch;
+  const dispatched=new Promise(resolve=>{signalDispatch=resolve;});
   const env=createBoundedNatlangEnvironment({EvalFailure,
-    services:{'demo.readAsync':()=>{dispatches++;return new Promise(resolve=>{release=resolve;});}}});
+    services:{'demo.readAsync':()=>{dispatches++;signalDispatch();return new Promise(resolve=>{release=resolve;});}}});
   try{
     const first=env.executeAsync(request("return await host.readAsync('key');"));
-    // The native effect is dispatched before the first await is reached.
+    // Native service dispatch happens asynchronously after bounded owned compilation.
+    await dispatched;
     assert.equal(dispatches,1);
     assert.throws(()=>env.execute(request('return 5;')),
       error=>error instanceof EvalFailure && /[Oo]verlapping/.test(error.message));

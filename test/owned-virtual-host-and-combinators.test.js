@@ -46,9 +46,9 @@ test('Promise.all awaits values and preserves input positions',()=>{
   assert.deepEqual(read(runtime,'joined'),['num',42]);
 });
 test('Promise.race and Promise.all(empty) settle on owned jobs',()=>{
-  const {runtime,outcome}=check(`let result=0;function got(x){result+=x;}
+  const {runtime,outcome}=check(`let result=0;function got(x){result+=x;}function count(v){result+=v.length;}
     Promise.race([Promise.resolve(7),Promise.resolve(8)]).then(got);
-    Promise.all([]).then(function(v){result+=v.length;});`);
+    Promise.all([]).then(count);`);
   assert.equal(outcome.kind,'terminated');
   assert.deepEqual(read(runtime,'result'),['num',7]);
 });
