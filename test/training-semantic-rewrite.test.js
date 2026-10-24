@@ -36,13 +36,15 @@ test('nested verified arithmetic becomes a checkable input-relative expression',
   const certs=[certificate(small,0),certificate(large,1),
     certificate(null,2),certificate(null,3)];
   const result=rewrite(original,certs);
-  assert.equal(result.generated.length,3);
-  const first=decodeWitness(result.generated[0]);
+  assert.equal(result.generated.length,4);
+  assert.deepEqual(decodeWitness(result.generated[0]),
+    {kind:'bind',fields:{name:'arg0',value:value(7)}});
+  const first=decodeWitness(result.generated[1]);
   assert.equal(first.kind,'compute');
   assert.deepEqual(first.fields.expr,binary('+',
-    binary('*',{op:'input',index:0},lit(2)),lit(1)));
-  assert.equal(result.certificates[0].rule,'fuse-expression/1');
-  assert.deepEqual(result.certificates[0].journalEvents,['j1','j2']);
+    binary('*',{op:'local',name:'arg0'},lit(2)),lit(1)));
+  assert.equal(result.certificates[1].rule,'fuse-expression/1');
+  assert.deepEqual(result.certificates[1].journalEvents,['j1','j2']);
   const selected=new SemanticController(context);
   for(const line of result.generated)selected.commit(line);
   assert.deepEqual(selected.completion.value,value(15));
@@ -74,8 +76,9 @@ test('a source-related computed assignment becomes one coherent state transition
   const result=rewrite(originals,[
     certificate(calc,0),certificate(declaration,1),certificate(other,2)
   ],{source:text,localNames:new Map([['y1','y']])});
-  assert.equal(result.generated.length,2);
-  const [first,second]=result.generated.map(decodeWitness);
+  assert.equal(result.generated.length,3);
+  const [inputAlias,first,second]=result.generated.map(decodeWitness);
+  assert.equal(inputAlias.kind,'bind');
   assert.equal(first.fields.bind,'y1');
   assert.deepEqual(second.fields.expr.left,{op:'local',name:'y1'});
   const controller=new SemanticController([
