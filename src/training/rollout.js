@@ -1,4 +1,9 @@
-// Actual selected records commit before independent expected outcome is consulted.\nimport {isDeepStrictEqual} from 'node:util';\nimport {restoreWitness} from './format.js';\nimport {SemanticController} from './controller.js';\n\nexport function evaluateSelectedTrajectory({groups,referenceGroups=null,referenceOutcome=null}){
+// Actual selected records commit before independent expected outcome is consulted.
+import {isDeepStrictEqual} from 'node:util';
+import {restoreWitness} from './format.js';
+import {SemanticController} from './controller.js';
+
+export function evaluateSelectedTrajectory({groups,referenceGroups=null,referenceOutcome=null}){
   let invalid=null,firstReferenceTraceDifference=null,controller=null;
   const start=groups.findIndex(g=>g.mode==='generated');
   if(start<2)return {valid:false,invalid:{category:'context',message:'No observed context'}};
