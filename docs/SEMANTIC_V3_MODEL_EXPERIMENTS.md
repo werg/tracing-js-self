@@ -33,6 +33,26 @@ test-family inventory and actual model-selected output for each. Common
 capability refusal counts must be frozen **before** results are examined;
 unsupported new capabilities are reported separately.
 
+## Freeze the test cohort before tuning
+
+Export independently verified held-out v3 candidates only, with
+`sidecar.split="test"`, `referenceStatus="agreed"` and unchanged
+`sourceLineage`. Freeze their observed source/input identities first:
+
+```sh
+npm run training:freeze -- \
+  --references frozen-test.jsonl \
+  --output frozen-cohort.json
+```
+
+The receipt contains a deterministic SHA-256 over the sorted exact observed
+case IDs and an explicit source-family list; duplicate or non-test candidates
+are rejected. Put `cohortSha256` into
+`manifest.pinned.frozenCohortSha256` and use its family list for
+`manifest.splits.test.families`. Do this *before* looking at model outcomes.
+The historical baseline is scored in an isolated pinned checkout on the same
+frozen cases; production never opens an old trace.
+
 ## Required on-disk structure
 
 ```text
