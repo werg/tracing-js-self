@@ -2,7 +2,7 @@
 // Post-serialization, locally independent verification for version-three
 // demonstrations. Replays private archive and reruns trusted V8 reference.
 import {readFileSync} from 'node:fs';
-import {validateWitnessTrainingExport} from '../src/training/export-v3.js';
+import {validateTrainingExport} from '../src/training/export.js';
 
 const path=process.argv[2];
 if(!path)throw new TypeError('Usage: node tools/recheck-witness-v3.mjs <jsonl>');
@@ -11,7 +11,7 @@ const errors=[];
 for(const [index,line] of lines.entries()){
   try{
     const exported=JSON.parse(line);
-    validateWitnessTrainingExport(exported);
+    validateTrainingExport(exported);
   }catch(error){errors.push({index,reason:error.message});}
 }
 const result={schema:'semantic-recheck/3',count:lines.length,
