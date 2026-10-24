@@ -4,7 +4,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {validateSemantic} from '../semantic/normalize.js';
 import {replayExact} from '../replay.js';
 import {compileWitness,COMPACTION_RULES} from './compact.js';
-import {WitnessController} from './witness-controller.js';
+import {SemanticController} from './controller.js';
 
 export function verifyWitnessEvidence(bundle,semantic,compiled) {
   validateSemantic(bundle,semantic);
@@ -30,7 +30,7 @@ export function verifyWitnessEvidence(bundle,semantic,compiled) {
   }
   // The independent primitive checker rejects false declared computations,
   // without relying on the trace compiler's own interpreter semantics.
-  const checker=new WitnessController(compiled.context);
+  const checker=new SemanticController(compiled.context);
   for(const line of compiled.generated)checker.commit(line);
   if(!checker.completion||checker.firstWitnessViolation)
     throw new Error('Artifact integrity: generated public witness is inconsistent');
