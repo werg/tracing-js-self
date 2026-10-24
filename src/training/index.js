@@ -14,4 +14,4 @@ export {analyzeSemanticProgram} from './semantic-program.js';
 export {compileWitness,COMPACTION_RULES} from './compact.js';
 export {checkWitnessClaim,evaluateWitnessExpression} from './witness-check.js';
 export {verifyWitnessEvidence} from './witness-evidence.js';
-export {renderWitness,inspectWitnessPrefix} from './render-v3.js';
+export {renderWitness,inspectWitnessPrefix} from './render.js';
