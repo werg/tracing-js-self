@@ -1841,3 +1841,15 @@ does not treat native V8 as an owned interpreter.
   tests check journal reconstruction and exact replay.
 - [ ] Async executors, general thenable assimilation, species/subclassing
   and full combinators are not modeled. This does not change corpus counts.
+
+
+### Owned Promise thenable assimilation (2026-10-24)
+
+- [x] Added bounded ordinary-object `then` getter assimilation, serialized
+  FIFO callback execution, original receiver, first-call-wins resolving
+  functions, thrown then callbacks, and nested Promise adoption.
+  The owned interpreter now shares this path across `Promise.resolve`,
+  `await` and existing dense combinators. Verification includes new
+  source-level tests, journal validation and replay checks.
+- [ ] Species/subclassing, exotic and Proxy getters, general iterables,
+  complete Promise and host scheduling conformance still remain open.
