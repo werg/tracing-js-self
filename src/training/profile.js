@@ -496,6 +496,6 @@ export function parseTraining(source) {
     });
     statements.forEach(n=>statement(n,env));
   }
-  scope(body,{names:new Set(['undefined','Object','Array','Number','Math','Promise','Set','Error','TypeError','Date','console','host','NaN','Infinity','parseInt','isNaN']),parent:null},[],false,true);
+  scope(body,{names:new Set(['undefined','Object','Array','Number','Math','Promise','Set','Error','TypeError','Date','console','host','NaN','Infinity','parseInt','isNaN','queueMicrotask']),parent:null},[],false,true);
   return {type:'Program',body,start:0,end:source.length,profile:TRAINING_PROFILE};
 }
