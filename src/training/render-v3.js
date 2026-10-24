@@ -1,7 +1,7 @@
 // Deterministic inspection over a complete public witness prefix.
 // The renderer never looks at teacher source-execution futures or private heap.
-import {decodeWitness} from './witness-ir.js';
-import {WitnessController} from './witness-controller.js';
+import {decodeWitness} from './format.js';
+import {SemanticController} from './controller.js';
 
 function show(tag){
   if(tag===undefined)return '?';
@@ -61,7 +61,7 @@ export function renderWitness(record) {
 export function inspectWitnessPrefix(context,generated,options={}) {
   if(!Array.isArray(context)||!Array.isArray(generated))
     throw new TypeError('Semantic inspection requires explicit public context and trajectory');
-  const selected=new WitnessController(context,options);
+  const selected=new SemanticController(context,options);
   const rendered=context.map(renderWitness);
   for(const record of generated){
     // No future record is inspected before the current step commits.
