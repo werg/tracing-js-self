@@ -29,6 +29,12 @@ for(const fixture of semanticBoundaryCases){
       .map(e=>({
         event:e.eventId,operation:e.operation,invocation:e.invocationId,
         result:e.result??null,completion:e.completion??null,
+        operands:e.operands??null,
+        envChanges:e.operation==='completion.catch.bind'?
+          e.stateChanges.filter(p=>p.table==='envs').map(p=>({
+            id:p.id,
+            before:p.before?.bindings??null,after:p.after?.bindings??null
+          })):[],
         frameChanges:e.stateChanges.filter(p=>p.table==='frames')
           .map(p=>({id:p.id,
             beforeStatus:p.before?.status??null,afterStatus:p.after?.status??null,
@@ -69,8 +75,9 @@ for(const fixture of semanticBoundaryCases){
     events:record.events??null,referenceMatches:record.referenceMatches??null,
     expectedMatches:record.expectedMatches??null,
     argumentMatches:record.argumentMatches??null,errors:record.failure??null,
-    completionFacts:record.completionFacts?.map(({event,operation,frameChanges})=>
-      ({event,operation,frameChanges}))??[]}));
+    completionFacts:record.completionFacts?.map(({event,operation,
+      frameChanges,result,completion,operands,envChanges})=>
+      ({event,operation,frameChanges,result,completion,operands,envChanges}))??[]}));
 }
 if(output)writeFileSync(output,rows.map(JSON.stringify).join('\n')+'\n');
 if(rows.some(r=>r.referenceMatches===false||r.expectedMatches===false||
