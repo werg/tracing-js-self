@@ -6,7 +6,7 @@ export const EXECUTION_VERSION='semantic-execution/3';
 export const SUPERVISION_VERSION='semantic-supervision/2';
 
 const schema=Object.freeze({
-  code:['entry','source','sites'],
+  code:['entry','source','sites','randomSeed'],
   input:['graph'],
   compute:['expr','result','bind','invocation','site'],
   choose:['expr','decision','path','invocation','site'],
@@ -50,6 +50,9 @@ export function validateExpression(expr,{maxOperators=8}={}){
   let nodes=0,operators=0,operands=0;
   function visit(node){
     if(!object(node)||++nodes>32)fail('expression node budget exceeded');
+    if(node.op==='random'&&Object.keys(node).length===1){
+      operators++;return;
+    }
     if(node.op==='literal'&&Object.keys(node).length===2){
       assertValue(node.value);operands++;return;
     }
@@ -129,6 +132,9 @@ export function validateWitness(kind,fields){
   if(kind==='code' && (typeof fields.entry!=='string'||!identity.test(fields.entry)||
      typeof fields.source!=='string'||!fields.source.length||!Array.isArray(fields.sites)))
     fail('source context');
+  if(kind==='code'&&fields.randomSeed!==undefined&&
+     (!Number.isInteger(fields.randomSeed)||fields.randomSeed<0||
+      fields.randomSeed>0xffffffff))fail('unsupported deterministic seed');
   if(kind==='compute'||kind==='choose'){
     validateExpression(fields.expr);
     assertValue(kind==='compute'?fields.result:fields.decision);
