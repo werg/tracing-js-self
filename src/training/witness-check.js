@@ -1,7 +1,7 @@
 // Independent bounded witness semantics. Never runs guest source or consults
 // the teacher; a false result is reported, not repaired or substituted.
 import {isDeepStrictEqual} from 'node:util';
-import {assertValue,validateExpression} from './witness-ir.js';
+import {assertValue,validateExpression} from './format.js';
 
 function scalar(v){
   assertValue(v);
