@@ -1,5 +1,10 @@
 # Implementation status (0.2.0)
 
+## Restricted browser-safe interpreter entry (October 24, 2026)
+
+- An opt-in browser export condition and `tracing-js-self/browser` entry now load the bounded owned VM without static Node imports. The browser runtime forbids native host adapter installation and fails closed on host object/array entry graphs because transparent proxies cannot be reliably recognized on that platform; scalar entry arguments and owned guest allocations remain usable. Node retains its native proxy check. A conditional ESM smoke test covers bounded execution and forbidden inputs.
+- Browser-generated archives are still *candidates*: independent validation and replay remain Node-side, and no DOM, browser event loop, npm/Node host APIs or production natlang callable-folder realm is implemented. Browser, Test262 and WPT conformance are **not** established.
+
 ## Natlang execution admission and callback lifecycle hardening (October 24, 2026)
 
 - The bounded natlang bridge now admits only one active execution per environment. Concurrent native-service waits, synchronous trace callback reentry and retained CommonJS callable reentry fail closed without hijacking the active run's lifecycle. A closing `onTrace` callback prevents data-only host mutations from committing in both synchronous and journaled native execution. Callback archives are detached from the authoritative replay-verified bundle.

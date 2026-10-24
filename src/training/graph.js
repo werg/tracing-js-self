@@ -1,6 +1,6 @@
 // Identity-preserving boundary for the deliberately bounded training profile.
 // No user getter, toJSON, coercion hook, or guest code is invoked.
-import {types} from 'node:util';
+import {isProxy} from '#owned-proxy-check';
 import {encode, decode, token} from '../values.js';
 
 export function importGraph(state, roots, allocate, {maxNodes=256,maxProperties=4096}={}) {
@@ -9,7 +9,7 @@ export function importGraph(state, roots, allocate, {maxNodes=256,maxProperties=
   let properties = 0, nodes = 0;
   function visit(value) {
     if (value === null || typeof value !== 'object') return encode(value);
-    if (types.isProxy(value)) throw new TypeError('Proxy input is unsupported');
+    if (isProxy(value)) throw new TypeError('Proxy input is unsupported');
     if (seen.has(value)) return ['ref',seen.get(value)];
     const array = Array.isArray(value);
     const prototype = Object.getPrototypeOf(value);

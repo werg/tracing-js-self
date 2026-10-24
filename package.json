@@ -5,7 +5,10 @@
   "type": "module",
   "main": "./src/index.js",
   "exports": {
-    ".": "./src/index.js",
+    ".": {
+      "browser": "./src/browser.js",
+      "default": "./src/index.js"
+    },
     "./runtime": "./src/runtime.js",
     "./validation": "./src/validation.js",
     "./replay": "./src/replay.js",
@@ -39,7 +42,11 @@
       "types": "./src/storage/node.d.ts",
       "default": "./src/storage/node.js"
     },
-    "./agent-model": "./src/agent-model.js"
+    "./agent-model": "./src/agent-model.js",
+    "./browser": {
+      "types": "./src/browser.d.ts",
+      "default": "./src/browser.js"
+    }
   },
   "description": "Experimental owned-machine JavaScript semantic tracing runtime",
   "engines": {
@@ -80,5 +87,11 @@
   "dependencies": {
     "acorn": "8.15.0",
     "typescript": "5.9.3"
+  },
+  "imports": {
+    "#owned-proxy-check": {
+      "browser": "./src/host/proxy-check-browser.js",
+      "default": "./src/host/proxy-check-node.js"
+    }
   }
 }
