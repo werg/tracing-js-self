@@ -99,3 +99,26 @@ test('source-owned demonstrations retain independent outcome checks with a short
   assert.deepEqual(sourceRecord.fields.sites,[]);
   assert.deepEqual(checked.exported.sidecar.reference.graph.roots.at(-1),value(15));
 });
+
+test('source-guided loop conditions and compound assignments remain checked',()=>{
+  const program='"use strict";function run(x){let s=0;for(let i=0;i<3;i++)s+=x+i;return s;}';
+  const checked=verifyTrainingCase({source:program,entry:'run',args:[4]});
+  assert.equal(checked.status,'locally_verified',checked.reason);
+  const records=checked.exported.sidecar.compiled.generated.map(decodeWitness);
+  const decisions=records.filter(r=>r.kind==='choose');
+  assert.equal(decisions.length,4);
+  assert(decisions.every(r=>r.fields.expr.op==='binary'));
+  assert(records.some(r=>r.kind==='compute'&&r.fields.bind==='s1'&&
+    r.fields.expr.left.op==='local'));
+  assert.deepEqual(checked.exported.sidecar.reference.graph.roots.at(-1),value(15));
+});
+
+test('side-effecting conditions are not speculatively flattened',()=>{
+  const source='"use strict";function run(o){if(o.n++<3)return o.n;return -1;}';
+  const checked=verifyTrainingCase({source,entry:'run',args:[{n:2}]});
+  assert.equal(checked.status,'locally_verified',checked.reason);
+  const records=checked.exported.sidecar.compiled.generated.map(decodeWitness);
+  assert(records.some(r=>r.kind==='write'));
+  assert(records.some(r=>r.kind==='choose'&&r.fields.expr.op==='literal'));
+  assert.deepEqual(checked.exported.sidecar.reference.graph.roots.at(-1),value(3));
+});
