@@ -1798,6 +1798,13 @@ does not treat native V8 as an owned interpreter.
   bounded virtual timeouts. It is deterministic and replays its transcript.
   Unlike owned bytecode execution, it does **not** interpret worker JavaScript
   and is **not** an owned guest trace or training example.
+
+- [x] The owned bytecode machine now additionally models **single-agent**
+  `SharedArrayBuffer`/shared-`Int32Array` identities and bounded `Atomics`
+  load/store/read-modify-write, compare-exchange, zero-timeout wait and
+  notify. Its cell mutations and aliasing are archived and replayed, with
+  selected native-V8 outcome probes. This is not true shared native memory,
+  agent concurrency, general typed arrays or a cross-agent owned trace.
 - [ ] Full outstanding roadmap: general module resolution and ESM/CJS
   interoperability, arbitrary production-library initialization, Promise
   constructors/executors and thenable assimilation, all Promise combinators,
