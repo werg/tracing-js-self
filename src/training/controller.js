@@ -55,6 +55,8 @@ export class SemanticController {
       if(visited.has(id))return visited.get(id);
       const entity=this.heap.get(id);
       if(!entity)fail('identity','Returned unknown identity');
+      if(!['array','object'].includes(entity.kind))
+        fail('unsupported-boundary','Rich behavioral identity cannot cross ordinary data graph');
       const length=entity.kind==='array'?primitive(entity.properties.get('length')):null;
       const obj=entity.kind==='array'?new Array(length):
         entity.prototype===null?Object.create(null):{};
