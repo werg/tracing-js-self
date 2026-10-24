@@ -211,17 +211,17 @@ verification path. `src/index.js` is the public package facade.
 The paired implementation work is tracked in [the v3 implementation
 ledger](docs/SEMANTIC_TRACE_V3_IMPLEMENTATION.md) and governed by the
 [complete redesign plan](docs/SEMANTIC_TRACE_REDESIGN_PLAN.md).
-The separate `exportWitnessTraining`, `WitnessController`,
-`validateWitnessTrainingExport`, and `evaluateWitnessTrajectory` APIs
+The separate `exportTraining`, `SemanticController`,
+`validateTrainingExport`, and `evaluateSelectedTrajectory` APIs
 introduce a typed public reasoning language, private rule certificates,
 a no-repair selected witness checker, and bounded observable graph semantics.
 A paired native importer lives in `werg/megatoken`.
 
 For reproducible **local candidates**, run
-`node tools/generate-witness-v3.mjs --count 16 --seed 42`, followed by
-`node tools/recheck-witness-v3.mjs witness-v3-local.jsonl`.
+`node tools/generate-training.mjs --count 16 --seed 42`, followed by
+`node tools/recheck-training-evidence.mjs witness-v3-local.jsonl`.
 To inspect the actual public lines and private certificates separately run
-`node tools/inspect-witness-v3.mjs witness-v3-local.jsonl`.
+`node tools/inspect-training.mjs witness-v3-local.jsonl`.
 
 Version two remains the current default writer while the full migration,
 bounded async/effect normalizer, model-selected recurrence and required model
