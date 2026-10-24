@@ -26,6 +26,24 @@ export function experimentCaseId(exported) {
     contextFormat:exported.public.contextFormat,
     records:observed.map(g=>g.events?.map(e=>e.record))});
 }
+export function freezeExperimentCohort(references) {
+  if(!Array.isArray(references)||!references.length)
+    fail('cannot freeze an empty reference cohort');
+  const ids=new Set(),families=new Set(),cases=[];
+  for(const row of references){
+    if(row?.sidecar?.referenceStatus!=='agreed'||row.sidecar.split!=='test'||
+       typeof row.sidecar.sourceLineage!=='string'||!row.sidecar.sourceLineage)
+      fail('reference lacks independently verified test family provenance');
+    const caseId=experimentCaseId(row);
+    if(ids.has(caseId))fail('duplicate frozen test source and input');
+    ids.add(caseId);families.add(row.sidecar.sourceLineage);
+    cases.push({caseId,family:row.sidecar.sourceLineage});
+  }
+  return {schema:'semantic-frozen-cohort/1',cohortSha256:digest([...ids].sort()),
+    families:[...families].sort(),cases:cases.sort((a,b)=>a.caseId.localeCompare(b.caseId)),
+    scope:'verified observed source and supplied input only'};
+}
+
 export function validateExperimentManifest(manifest) {
   if(!manifest||manifest.schema!=='semantic-learning-experiment/1')
     fail('manifest schema');
