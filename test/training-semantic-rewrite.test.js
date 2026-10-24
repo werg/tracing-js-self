@@ -60,7 +60,7 @@ test('separate source expressions are not fused merely because values coincide',
   const s1={start:different.indexOf('x*2'),end:different.indexOf('x*2')+3};
   const s2={start:different.indexOf('14+1'),end:different.indexOf('14+1')+4};
   const result=rewrite(original,[certificate(s1,0),certificate(s2,1)],{source:different});
-  assert.equal(result.generated.length,2);
+  assert.equal(result.generated.map(decodeWitness).filter(r=>r.kind==='compute').length,2);
 });
 
 test('a source-related computed assignment becomes one coherent state transition',()=>{
