@@ -231,7 +231,7 @@ export class Runtime {
     for(const name of ['queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
-    for(const name of ['Object','Array','Number','Math'])
+    for(const name of ['Object','Array','Number','Math','SharedArrayBuffer','Int32Array','Atomics'])
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     s.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
@@ -275,7 +275,7 @@ export class Runtime {
     for(const name of ['parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
-    for(const name of ['Object','Array','Number','Math','Promise','Set','Error','TypeError'])
+    for(const name of ['Object','Array','Number','Math','Promise','Set','Error','TypeError','SharedArrayBuffer','Int32Array','Atomics'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     state.control.a0.globalEnvId=global;
@@ -940,6 +940,24 @@ export class Runtime {
         case 'CONSTRUCT':{
           const args=[];for(let i=0;i<arg;i++)args.unshift(pop());
           const fn=pop();
+          if(fn.value[0]==='intrinsic'&&fn.value[1]==='SharedArrayBuffer'){
+            const length=args[0]?.value[0]==='num'?decode(args[0].value):NaN;
+            if(args.length!==1||!Number.isSafeInteger(length)||length<0||length>256)
+              guestFault('RangeError','Bounded shared buffer length expected');
+            const id=this.next(s,'obj');
+            s.heap[id]={id,kind:'shared-int32-buffer',byteLength:length,
+              cells:Array(Math.floor(length/4)).fill(0),version:0};
+            return {...operands(fn,...args),...result(['ref',id])};
+          }
+          if(fn.value[0]==='intrinsic'&&fn.value[1]==='Int32Array'){
+            const buffer=args[0]?.value[0]==='ref'?s.heap[args[0].value[1]]:null;
+            if(args.length!==1||buffer?.kind!=='shared-int32-buffer')
+              guestFault('TypeError','Int32Array needs owned shared buffer');
+            const id=this.next(s,'obj');
+            s.heap[id]={id,kind:'shared-int32-view',bufferId:buffer.id,
+              length:buffer.cells.length,version:0};
+            return {...operands(fn,...args),...result(['ref',id])};
+          }
           if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
             const completion={type:'unsupported',feature:'Constructor requires owned semantics: '+String(fn.value[1])};
             this.failFrame(s,f,completion);return {...operands(fn,...args),completion};
@@ -993,6 +1011,9 @@ export class Runtime {
           if(base.value[0]==='host')v=['hostfn',`${base.value[1]}.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Date' &&
                   property==='now')v=['hostfn','platform.dateNow'];
+          else if(base.value[0]==='intrinsic' && base.value[1]==='Atomics' &&
+             ['load','store','add','sub','and','or','xor','exchange','compareExchange','wait','notify'].includes(property))
+            v=['builtinfn','Atomics.'+property];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Promise' && ['resolve','reject','all','race'].includes(property))v=['builtinfn',`Promise.${property}`];
           else if(base.value[0]==='intrinsic' &&
              ((base.value[1]==='Math' &&
@@ -1048,6 +1069,17 @@ export class Runtime {
                    supplyingEvent:read.origin??null}]};
                }
                throw new TypeError('Unmodeled RegExp property '+property);
+             }
+             if(obj.kind==='shared-int32-buffer'){
+               if(property!=='byteLength')guestFault('TypeError','Unmodeled shared buffer property');
+               return {...operands(base,key),...result(['num',obj.byteLength])};
+             }
+             if(obj.kind==='shared-int32-view'){
+               if(property==='length')return {...operands(base,key),...result(['num',obj.length])};
+               if(property==='byteLength')return {...operands(base,key),...result(['num',obj.length*4])};
+               if(!arrayIndex(property)||Number(property)>=obj.length)
+                 guestFault('TypeError','Unmodeled shared Int32 view property');
+               return {...operands(base,key),...result(['num',s.heap[obj.bufferId].cells[Number(property)]])};
              }
              if(obj.kind==='set'){
                if(['has','add'].includes(property)){
@@ -1113,6 +1145,8 @@ export class Runtime {
             putOwn(object,'lastIndex',v.value,eventId);
             return {...operands(base,key,v),...result(v.value)};
           }
+          if(['shared-int32-buffer','shared-int32-view'].includes(object.kind))
+            guestFault('TypeError','Direct shared-memory writes are not owned; use Atomics');
           if(object.kind==='set')
             throw new TypeError('Owned intrinsic internal slots are not guest-writable properties');
           const route=object.kind==='proxy'?proxyRoute(s.heap,base.value,'set'):
@@ -1823,6 +1857,44 @@ export class Runtime {
               return {...operands(fn,...args),...result(v)};
             const p=this.newPromise(s,callable[1]==='Promise.resolve'?'fulfilled':'rejected',token(v,origin));
             return {...operands(fn,...args),...result(['promise',p])};
+          }
+          if(callable[0]==='builtinfn' && callable[1].startsWith('Atomics.')){
+            const method=callable[1].slice(8),view=args[0]?.value[0]==='ref'?s.heap[args[0].value[1]]:null;
+            const index=args[1]?.value[0]==='num'?decode(args[1].value):NaN;
+            if(view?.kind!=='shared-int32-view'||!Number.isInteger(index)||
+               index<0||index>=view.length)guestFault('RangeError','Atomic index or view unsupported');
+            const buffer=s.heap[view.bufferId],old=buffer.cells[index];
+            const count=method==='compareExchange'||method==='wait'?4:
+              method==='load'?2:method==='notify'?(args.length===2?2:3):3;
+            if(args.length!==count||args.slice(2).some(a=>a.value[0]!=='num'||
+               !Number.isSafeInteger(decode(a.value))))
+              guestFault('TypeError','Unowned atomic argument or arity');
+            const n=(decode(args[2]?.value??['num',0]))|0;
+            let value=old;
+            switch(method){
+              case 'load':break;
+              case 'store':buffer.cells[index]=n;value=n;break;
+              case 'add':buffer.cells[index]=(old+n)|0;break;
+              case 'sub':buffer.cells[index]=(old-n)|0;break;
+              case 'and':buffer.cells[index]=old&n;break;
+              case 'or':buffer.cells[index]=old|n;break;
+              case 'xor':buffer.cells[index]=old^n;break;
+              case 'exchange':buffer.cells[index]=n;break;
+              case 'compareExchange':
+                if(old===n)buffer.cells[index]=decode(args[3].value)|0;
+                break;
+              case 'notify':
+                if(args.length===3&&decode(args[2].value)<0)
+                  guestFault('TypeError','Negative notification count');
+                value=0;break;
+              case 'wait':
+                if(decode(args[3].value)!==0)
+                  guestFault('TypeError','Only zero-timeout single-agent wait supported');
+                return {...operands(fn,...args),
+                  ...result(['str',old===n?'timed-out':'not-equal'])};
+              default:throw new Error('Unsupported bounded atomic method');
+            }
+            return {...operands(fn,...args),...result(['num',value])};
           }
           if(callable[0]==='builtinfn' && ['Promise.all','Promise.race'].includes(callable[1])){
             const input=args[0]?.value,arr=input?.[0]==='ref'?s.heap[input[1]]:null;
