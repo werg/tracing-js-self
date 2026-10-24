@@ -7,6 +7,7 @@ import {replayExact} from '../replay.js';
 import {describeOwnedGraph} from './graph.js';
 import {analyzeSemanticProgram} from './semantic-program.js';
 import {encodeWitness} from './witness-ir.js';
+import {normalizeCompletionFacts} from './completion-facts.js';
 
 export const COMPACTION_RULES=Object.freeze({
   'input/1':{boundary:'observed',effect:'publish supplied graph'},
@@ -38,7 +39,7 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
   if(entry?.kind!=='function'||bundle.finalState.control.a0.completion?.kind!=='return')
     refuse('only settled owned function returns are currently certified');
   if(bundle.events.some(e=>e.operation==='spec.internal.call'||
-      e.operation==='completion.finally.end'||e.operation==='completion.throw'||
+      e.operation==='completion.throw'||
       e.operation==='completion.catch.bind'||e.operation==='external.input.arrive'||
       e.operation==='external.input.deliver'||e.operation==='job.enter'))
     refuse('guest dispatch, cleanup or external scheduling needs invocation certificates');
@@ -78,7 +79,7 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
     const record=encodeWitness(kind,publicFields);
     generated.push(record);
     certificates.push({record:generated.length-1,rule,
-      semanticEvents:row?[row.id]:[],
+      semanticEvents:row?.id?[row.id]:[],
       journalEvents:row?[row.journalEvent]:[],
       ...(row?.source?{span:row.source}:{})});
   }
@@ -110,7 +111,36 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
       }else refuse('unknown effective mutation kind');
     }
   }
+  // Overlay the actual frame-exit facts on private normalization. New exit
+  // facts from finally are inserted at their real chronological event, not
+  // appended after cleanup or inferred from the eventual final answer.
+  const completion=normalizeCompletionFacts(bundle);
+  const normalizedByEvent=new Map();
   for(const row of semantic.events){
+    const list=normalizedByEvent.get(row.journalEvent)??[];
+    list.push(row);normalizedByEvent.set(row.journalEvent,list);
+  }
+  const effectiveRows=[];
+  for(const event of bundle.events){
+    const fact=completion.get(event.eventId);
+    const rows=normalizedByEvent.get(event.eventId)??[];
+    for(const row of rows){
+      if(fact && row.op==='return'){
+        effectiveRows.push(fact.operation==='transfer'?
+          {...row,op:'transfer',transferKind:'return',handler:fact.handler}:
+          row);
+      }else effectiveRows.push(row);
+    }
+    if(fact?.operation==='return'&&
+       !rows.some(r=>r.op==='return')){
+      effectiveRows.push({id:null,journalEvent:event.eventId,
+        op:'return',invocation:fact.invocation,site:null,source:null,
+        result:fact.value,writes:[]});
+    }
+    if(fact?.operation==='unhandled-throw')
+      refuse('terminal guest throw requires bounded error-value contract');
+  }
+  for(const row of effectiveRows){
     if(row.op==='value'&&row.arithmetic){
       const op=row.arithmetic.operator;
       const operands=(row.operands??[]).map(v=>tag(primitiveTag(
@@ -159,6 +189,11 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
       writesOf(row);
       emit('call',{child:invocation(row.child),callee:row.code,
         receiver:tag(row.receiver),arguments:row.arguments.map(tag)},'call/1',row);
+    }else if(row.op==='transfer'){
+      if(row.transferKind!=='return'||!Array.isArray(row.result))
+        refuse('unmodeled completion transfer');
+      emit('transfer',{kind:'return',value:tag(row.result),
+        handler:row.handler??'finally'},'completion/1',row);
     }else if(row.op==='write'){
       writesOf(row);
     }else if(row.op==='value'){
