@@ -17,7 +17,7 @@ test('rechecked owned source profiles carry quantitative trace review metrics',(
  const a=profileOwnedEpisode(make(6,'a'));
  const b=profileOwnedEpisode(make(1,'b'));
  assert(a.quality.rawEvents>0);
- assert(a.quality.generatedGroups>0);
+ assert(a.quality.generatedRecords>0);
  assert(a.quality.generatedBytes>0);
  assert.equal(a.quality.sourceAuditAvailable,false);
  const selection=selectNovelEpisodes([a,b]);

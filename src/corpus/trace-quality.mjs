@@ -9,12 +9,12 @@ const percentile=(values,p)=>{
 };
 export function measureOwnedTrace(row,semanticEvents){
  const archive=row?.exported?.sidecar?.archive;
- const groups=row?.exported?.public?.groups;
+ const timeline=row?.exported?.public?.timeline;
  if(!Array.isArray(semanticEvents)||!semanticEvents.length||
-   !Array.isArray(archive?.events)||!Array.isArray(groups))
+   !Array.isArray(archive?.events)||!Array.isArray(timeline))
   throw new TypeError('Missing independently verified trace');
- const generated=groups.filter(g=>g.mode==='generated');
- const records=generated.flatMap(g=>g.events.map(e=>e.record));
+ const generated=timeline.filter(item=>item.kind==='semantic'&&item.mode==='generated');
+ const records=generated.map(item=>item.line);
  if(!records.length)throw new Error('Empty model-visible generated trace');
  const sizes=records.map(x=>Buffer.byteLength(x,'utf8'));
  const bytes=sizes.reduce((sum,n)=>sum+n,0);
@@ -31,9 +31,9 @@ export function measureOwnedTrace(row,semanticEvents){
    round(sourceAudit.totals.mapped/sourceAudit.totals.total);
  }
  return {rawEvents:archive.events.length,semanticEvents:semanticEvents.length,
-  generatedGroups:generated.length,generatedRecords:records.length,
+  generatedRecords:records.length,
   generatedBytes:bytes,bytesPerRecord:round(bytes/records.length),
-  eventsPerGeneratedGroup:round(archive.events.length/generated.length),
+  eventsPerGeneratedRecord:round(archive.events.length/generated.length),
   over256ByteRecordFraction:round(sizes.filter(n=>n>256).length/sizes.length),
   reportedOriginalSourceCoverage:coverage,
   sourceAuditAvailable:sourceAudit!==undefined};
@@ -42,11 +42,11 @@ export function summarizeOwnedTraceQuality(profiles){
  if(!Array.isArray(profiles))throw new TypeError('Invalid quality inventory');
  const items=profiles.map(x=>x.quality);
  if(items.some(x=>!x||!Number.isSafeInteger(x.rawEvents)||
-   !Number.isFinite(x.eventsPerGeneratedGroup)||x.generatedGroups<1))
+   !Number.isFinite(x.eventsPerGeneratedRecord)||x.generatedRecords<1))
   throw new TypeError('Invalid owned trace quality');
  const quantiles={};
- for(const metric of ['rawEvents','semanticEvents','generatedGroups',
-  'generatedRecords','generatedBytes','eventsPerGeneratedGroup',
+ for(const metric of ['rawEvents','semanticEvents','generatedRecords',
+  'generatedRecords','generatedBytes','eventsPerGeneratedRecord',
   'over256ByteRecordFraction']){
   const xs=items.map(x=>x[metric]);
   quantiles[metric]={min:percentile(xs,0),p50:percentile(xs,0.5),
@@ -54,11 +54,11 @@ export function summarizeOwnedTraceQuality(profiles){
  }
  const reported=profiles.filter(x=>x.quality.sourceAuditAvailable);
  const inspectionQueue=[...profiles].sort((a,b)=>
-  b.quality.eventsPerGeneratedGroup-a.quality.eventsPerGeneratedGroup||
+  b.quality.eventsPerGeneratedRecord-a.quality.eventsPerGeneratedRecord||
   b.quality.generatedBytes-a.quality.generatedBytes||
   a.id.localeCompare(b.id)).slice(0,24).map(x=>({
    id:x.id,family:x.family,
-   eventsPerGeneratedGroup:x.quality.eventsPerGeneratedGroup,
+   eventsPerGeneratedRecord:x.quality.eventsPerGeneratedRecord,
    generatedBytes:x.quality.generatedBytes,
    reportedOriginalSourceCoverage:x.quality.reportedOriginalSourceCoverage}));
  return {schema:'owned-trace-quality-proxies/1',
