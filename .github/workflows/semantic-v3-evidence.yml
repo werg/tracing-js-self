@@ -44,6 +44,8 @@ jobs:
           node tools/recheck-training-evidence.mjs "$RUNNER_TEMP/witness-v3.jsonl"
           node tools/inspect-training.mjs "$RUNNER_TEMP/witness-v3.jsonl" \
             "$RUNNER_TEMP/witness-v3-inspection.json"
+      - name: Inspect representative verified semantic decisions
+        run: node tools/inspect-semantic-choices.mjs | tee "$RUNNER_TEMP/semantic-choice-inspection.txt"
       - name: Recreate owned semantic completion and callback boundary audits
         run: |
           node tools/inspect-semantic-boundaries-v3.mjs \
@@ -57,4 +59,5 @@ jobs:
             ${{ runner.temp }}/witness-v3-manifest.json
             ${{ runner.temp }}/witness-v3-inspection.json
             ${{ runner.temp }}/semantic-boundary-v3.jsonl
+            ${{ runner.temp }}/semantic-choice-inspection.txt
           retention-days: 14
