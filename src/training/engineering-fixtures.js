@@ -115,9 +115,9 @@ export const EFFECTFUL_ENGINEERING_FIXTURES=Object.freeze([
       {operation:'demo.store',arguments:['alias',true]}]}},
   ...[
     {id:'compound-pure',family:'compound-pure',source:compoundPure,
-      entry:'run',args:[1,2,3,4],fixture:{calls:[]},},
+      entry:'run',args:[1,2,3,4],fixture:{calls:[]}},
     {id:'compound-effectful',family:'compound-effectful',source:compoundEffectful,
-      entry:'run',args:['compound'],,fixture:{calls:[
+      entry:'run',args:['compound'],fixture:{calls:[
         {operation:'demo.readAsync',arguments:['compound'],result:5},
         {operation:'demo.store',arguments:['compound',31]}
       ]}}
