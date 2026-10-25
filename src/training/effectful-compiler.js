@@ -13,6 +13,7 @@ import {SelectedExecutionHarness} from './harness-v4.js';
 import {encodeWitness,decodeWitness,validateExpression} from './format.js';
 import {hostOperation,SUBSCRIPTION_CLOSERS} from '../host/operations.js';
 import {analyzeSemanticProgram} from './semantic-program.js';
+import {sourceLinkedComputation,sourceLinkedDecision} from './semantic-source.js';
 
 const copy=value=>structuredClone(value);
 const hash=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
@@ -26,7 +27,10 @@ function binarySourceNodes(source){
   function visit(node){
     if(!node||typeof node!=='object')return;
     if(Array.isArray(node)){for(const child of node)visit(child);return;}
-    if(node.type==='BinaryExpression')nodes.set(node.start+':'+node.end,node);
+    if(['BinaryExpression','AssignmentExpression','Identifier','MemberExpression',
+      'UnaryExpression','Literal','IfStatement','WhileStatement','DoWhileStatement',
+      'ForStatement','ConditionalExpression'].includes(node.type))
+      nodes.set(node.start+':'+node.end,node);
     for(const [key,value] of Object.entries(node))if(!['start','end','loc','raw'].includes(key))visit(value);
   }
   visit(parse(source,{ecmaVersion:'latest'}));return nodes;
@@ -82,7 +86,7 @@ export function ownedEffectfulOutcome(bundle){
 export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='program1',
     invocationId='invocation1',trackId='worker1',realmId='realm1',sourceLineage=null,
     maxGenerated=16384,realmPolicy='retained',triggerId='teacher-entry',checkpointAtFirstAwait=false,
-    representation='explicit',maxOperators=8}={}){
+    representation='compact',maxOperators=8}={}){
   if(typeof checkpointAtFirstAwait!=='boolean')refuse('checkpointAtFirstAwait must be boolean');
   if(!['explicit','compact'].includes(representation))refuse('unknown source representation');
   if(!Number.isInteger(maxOperators)||maxOperators<1||maxOperators>8)
@@ -95,6 +99,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   if(typeof source!=='string')refuse('exact source bytes are unavailable');
   const sourceReferences=closureReferences(source),functionReferences=new Map();
   const binaryNodes=binarySourceNodes(source),operationStarts=new Map();
+  const privateSites=new Map(bundle.sites.map(site=>[site.siteId,site]));
   for(const event of bundle.events)for(const change of event.stateChanges)
     if(change.kind==='operation.create')operationStarts.set(change.id,{event,operation:change.record});
   const capabilities=[...new Set(analyzeSemanticProgram(source).sites.map(site=>site.operation).filter(Boolean))].sort();
@@ -105,18 +110,22 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   const inputGraph={roots:initial.roots,objects:initial.objects.map(node=>({id:node.id,
     kind:node.kind,...(node.prototype===null?{prototype:null}:{}),
     properties:node.properties.map(({key,value})=>({key,value}))}))};
+  // The admitted entry graph is descriptor-inspected ordinary data. A guest
+  // allocation can have a getter or proxy-like behavior not encoded by the
+  // public heap's basic property map; do not reconstruct it as a pure read.
+  const certifiedDataIdentities=new Set(inputGraph.objects.map(node=>node.id));
   harness.admitInvocation({programId,invocationId,trackId,realmId,triggerId,
     inputGraph,realmPolicy,completionPolicy:'await-returned-promise'});
   const certificates=[],elided=[],checkpoints=[],rows=new Map(semantic.events.map(row=>[row.journalEvent,row]));
   const facts=normalizeCompletionFacts(bundle),state=copy(bundle.initialState);
   const roots=new Map([[semantic.rootInvocation,invocationId]]),frames=new Map([[semantic.rootInvocation,invocationId]]);
-  const cellNames=new Map(),functionNames=new Map(),pendingAwaits=new Map(),callbackArrivals=[];
+  const cellNames=new Map(),usedCellNames=new Set(),functionNames=new Map(),pendingAwaits=new Map(),callbackArrivals=[];
   const publicIdentities=new Map();
   const emittedPromises=new Set(),settledPromises=new Set(),returnedPromises=new Set(),reactionJobs=new Map();
   const reactionFrames=new Map(),reactionTargets=new Set(),microtasks=new Map(),privatePromises=new Set();
   const awaitingCompletion=new Map();
   const pendingComputations=[];
-  let fusedComputations=0;
+  let fusedComputations=0,foldedComputations=0,fusedBindings=0;
   let cellOrdinal=0,frameOrdinal=0,continuationOrdinal=0,eventOrdinal=0,generated=0,jobOrdinal=0;
   for(const program of Object.values(bundle.programs))for(const instruction of program.instructions)
     if(instruction.arg?.codeId&&['DEF_FN','MAKE_FUNCTION'].includes(instruction.op)){
@@ -140,6 +149,28 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     }))});
   };
   const controller=owner=>harness.invocations.get(owner).controller;
+  function publicScope(frame,owner){
+    const selected=controller(owner),locals=selected.visibleLocals();
+    return {
+      locals,
+      resolveLocal(name){
+        // Shadowing follows the live owned lexical environment, not a
+        // coincidental equal-valued local in another activation.
+        for(let env=state.frames[frame]?.envId;env;env=state.envs[env]?.parent){
+          if(!Object.hasOwn(state.envs[env]?.bindings??{},name))continue;
+          const key=cellNames.get(env+':'+name);
+          return key&&locals.has(key)?{name:key,value:locals.get(key)}:null;
+        }
+        return null;
+      },
+      hasOwnData(object,key){
+        const node=selected.heap.get(object);
+        return certifiedDataIdentities.has(object)&&
+          ['object','array'].includes(node?.kind)&&node.properties.has(key);
+      },
+      readProperty:(object,key)=>selected.readProperty(object,key)
+    };
+  }
   const callbackRegistration=(effectId,functionId)=>{
     const effect=state.effects[effectId],callOwner=rootFor(effect?.frameId);
     const slots=hostOperation(effect.operation).callbackIndices.filter(slot=>
@@ -152,7 +183,14 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   };
   const cell=(env,name)=>{
     const key=env+':'+name;
-    if(!cellNames.has(key))cellNames.set(key,'cell'+(++cellOrdinal));
+    if(!cellNames.has(key)){
+      // Readable source-oriented cells are local semantic identities, not
+      // references to VM environment IDs or an exact source/trace bijection.
+      const stem=/^[$_\p{ID_Start}][$_\u200C\u200D\p{ID_Continue}]*$/u.test(name)?name:'value';
+      let candidate=stem;
+      while(usedCellNames.has(candidate))candidate=stem+'_'+(++cellOrdinal);
+      usedCellNames.add(candidate);cellNames.set(key,candidate);
+    }
     return cellNames.get(key);
   };
   function commitEmission(owner,kind,fields,certificate){
@@ -168,16 +206,34 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     for(const item of pendingComputations)commitEmission(item.owner,'compute',item.fields,item.certificate);
     pendingComputations.length=0;
   }
+  function pendingBinding(row,event){
+    if(representation!=='compact'||!['binding.initialize','binding.write'].includes(event.operation)||
+       row?.op!=='value'||row.writes?.length!==1||row.writes[0].kind!=='cell')
+      return null;
+    const last=pendingComputations.at(-1),write=row.writes[0];
+    if(!last||last.fields.bind||last.owner!==rootFor(row.invocation)||
+       last.fields.invocation!==frameId(row.invocation)||
+       !row.dependsOn.includes(rows.get(last.producer)?.id)||
+       !graphValue(write.value)||!isDeepStrictEqual(tag(write.value),last.fields.result))
+      return null;
+    return {last,write};
+  }
   function emit(owner,kind,fields,event=null,rule=kind){
     const certificate={rule:'owned-'+rule+'/4',journalEvents:event?[event.eventId]:[],
       source:event?.siteId?{sourceId:event.sourceId,siteId:event.siteId}:null};
-    const node=fields.site&&binaryNodes.get(fields.site.start+':'+fields.site.end);
+    // Only external requests need model-predicted source coordinates for
+    // authorization. Pure calculations and choices keep source spans solely
+    // in the private certificate; their public explanation is the expression.
+    const sourceSite=event?.siteId&&privateSites.get(event.siteId);
+    const node=sourceSite&&binaryNodes.get(sourceSite.start+':'+sourceSite.end);
     const start=event&&operationStarts.get(event.causes.find(cause=>cause.kind==='spec-operation')?.operationId);
     const pure=representation==='compact'&&kind==='compute'&&!fields.bind&&
-      fields.expr.op==='binary'&&node?.operator===fields.expr.operator&&start&&
+      fields.expr.op==='binary'&&node?.type==='BinaryExpression'&&
+      node.operator===fields.expr.operator&&start&&
       start.event.sequence<event.sequence&&start.event.invocationId===event.invocationId&&
       start.event.siteId===event.siteId&&start.operation.operator===node.operator&&
       start.operation.operands.length===2&&[fields.expr.left,fields.expr.right].every(operand=>
+        operand.op==='local'||operand.op==='read'||
         operand.op==='literal'&&!['ref','promise'].includes(operand.value[0]));
     if(!pure){flushComputations();return commitEmission(owner,kind,fields,certificate);}
     const item={owner,fields:copy(fields),certificate,node,producer:event.eventId};
@@ -270,12 +326,19 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     // Private housekeeping can separate adjacent semantic computations, but
     // mutation, control, observation, call/job activation and cleanup cannot.
     // These boundaries flush even when they have no standalone public row.
+    const row=rows.get(event.eventId),fact=facts.get(event.eventId);
     const pureTransition=['binding.read','literal.materialize','primitive.binary'].includes(event.operation)||
       event.operation.startsWith('spec.');
-    if(!pureTransition||event.completion&&event.completion.type!=='normal'||
-      event.stateChanges.some(change=>['envs','heap','effects','inputs','promises','control'].includes(change.table)))
+    // A branch has no independent guest mutation. Keep its immediately
+    // preceding pure test pending so a checked condition can replace it.
+    // Likewise, an exact producer-dependent cell initialization can become
+    // the binding of its computation without an extra model target.
+    const possibleChoice=representation==='compact'&&row?.op==='branch';
+    const attachBinding=pendingBinding(row,event);
+    if(!possibleChoice&&!attachBinding&&(!pureTransition||
+      event.completion&&event.completion.type!=='normal'||
+      event.stateChanges.some(change=>['envs','heap','effects','inputs','promises','control'].includes(change.table))))
       flushComputations();
-    const row=rows.get(event.eventId),fact=facts.get(event.eventId);
     let owner=rootFor(event.invocationId),handled=false;
     const promiseChanges=event.stateChanges.filter(change=>change.table==='promises');
     const effectCreated=event.stateChanges.find(change=>change.table==='effects'&&change.before===null);
@@ -468,15 +531,59 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     }else if(row?.op==='value'&&row.arithmetic){
       const operands=row.operands.map(value=>tag(Array.isArray(value)?value:value.value));
       if(operands.length!==2)refuse('binary computation lacks evaluated operands');
-      emit(owner,'compute',{expr:{op:'binary',operator:row.arithmetic.operator,
-        left:literal(operands[0]),right:literal(operands[1])},result:tag(row.result),
-        invocation:frameId(row.invocation),...(row.source?{site:{start:row.source.start,end:row.source.end}}:{})},event,'compute');
+      const sourceNode=row.source&&binaryNodes.get(row.source.start+':'+row.source.end);
+      const expr=sourceLinkedComputation({op:'binary',operator:row.arithmetic.operator,
+        left:literal(operands[0]),right:literal(operands[1])},
+        sourceNode,publicScope(row.invocation,owner));
+      emit(owner,'compute',{expr,result:tag(row.result),
+        invocation:frameId(row.invocation)},event,'compute');
       writes(row,owner,event);handled=true;
     }else if(row?.op==='branch'){
-      emit(owner,'choose',{expr:literal(tag(row.test)),decision:tag(row.test),path:row.path,
-        invocation:frameId(row.invocation),...(row.source?{site:{start:row.source.start,end:row.source.end}}:{})},event,'branch');handled=true;
+      const sourceNode=row.source&&binaryNodes.get(row.source.start+':'+row.source.end);
+      const testNode=['IfStatement','WhileStatement','DoWhileStatement','ForStatement',
+        'ConditionalExpression'].includes(sourceNode?.type)?sourceNode.test:sourceNode;
+      const decision=tag(row.test);
+      const explained=sourceLinkedDecision(sourceNode,decision,publicScope(row.invocation,owner),
+        {maxOperators});
+      // Never erase a bound computation or one performed elsewhere. Every
+      // removed primitive must be the consecutive, source-contained producer
+      // of this very decision; its journal receipt stays on the choice.
+      let folded=[];
+      if(representation==='compact'&&explained&&testNode&&pendingComputations.length&&
+         isDeepStrictEqual(pendingComputations.at(-1).fields.result,decision)&&
+         pendingComputations.at(-1).node?.start===testNode.start&&
+         pendingComputations.at(-1).node?.end===testNode.end&&
+         pendingComputations.every(item=>item.owner===owner&&!item.fields.bind&&
+           item.fields.invocation===frameId(row.invocation)&&item.node&&
+           item.node.start>=testNode.start&&item.node.end<=testNode.end)){
+        folded=pendingComputations.splice(0);
+      }
+      emit(owner,'choose',{expr:explained??literal(decision),decision,path:row.path,
+        invocation:frameId(row.invocation)},event,'branch');
+      if(folded.length){
+        const certificate=certificates.at(-1);
+        certificate.rule='owned-source-choice/4';
+        certificate.journalEvents=[...new Set([
+          ...folded.flatMap(item=>item.certificate.journalEvents),...certificate.journalEvents])];
+        certificate.dependencies=folded.flatMap(item=>item.certificate.dependencies??[]);
+        foldedComputations+=folded.length;
+      }
+      handled=true;
     }else if(row?.op==='write'||row?.op==='value'){
-      writes(row,owner,event);handled=true;
+      if(attachBinding){
+        attachBinding.last.fields.bind=cell(attachBinding.write.env,attachBinding.write.key);
+        // Keep source-operation dependency receipts separate from the cell
+        // attachment. The same expression proof must still have exactly the
+        // actual operand producer edges, while the appended binding has its
+        // own source receipt and lexical identity.
+        if(attachBinding.last.certificate.rule!=='owned-compact-compute/4')
+          attachBinding.last.certificate.rule='owned-compact-bind/4';
+        attachBinding.last.certificate.binding={
+          name:attachBinding.last.fields.bind,journalEvent:event.eventId,
+          producer:attachBinding.last.producer};
+        flushComputations();fusedBindings++;
+      }else writes(row,owner,event);
+      handled=true;
     }else if(row?.op==='read'){
       for(const read of row.reads??[])if(read.kind==='property'&&controller(owner).heap.has(identity(read.objectId??read.object))){
         const object=identity(read.objectId??read.object),key=read.key??read.property;
@@ -556,7 +663,8 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   exported.sidecar.representation=representation;
   exported.sidecar.compiler={schema:'semantic-effectful-compiler/4',certificates,elided,checkpoints,
     sourceDigest:hash(source),archiveDigest:hash(bundle),capabilities,
-    representation,compaction:{maxOperators,maxNodes:32,removedComputations:fusedComputations},
+    representation,compaction:{maxOperators,maxNodes:32,removedComputations:fusedComputations,
+      foldedConditions:foldedComputations,fusedBindings},
     generatedRecords:generated,publicDigest:hash(exported.public)};
   const replayed=SelectedExecutionHarness.replay(exported);
   for(const activation of replayed.invocations.values())

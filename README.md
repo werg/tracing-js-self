@@ -10,42 +10,56 @@ small executed Test262 slice. It preserves the strict synchronous training
 foundation and its source-anchored trace format. See
 [owned arithmetic and evidence](docs/OWNED_ARITHMETIC.md).
 
-## Training-data direction
+## Model-facing semantic execution traces
 
-The **only active public training format is
-[semantic-execution/3 and semantic-trace/3](docs/EFFECTIVE_TRACE.md)**, with
-`semantic-context/3` and private `semantic-supervision/2`. The language
-profile is separately named `training-js/1`; the independently replayed raw
-journal retains its own version. There is **no legacy exporter, formatter,
-controller, native importer, or public format selector**.
+Production uses **`semantic-execution/4`, `semantic-trace/4`,
+`semantic-context/4`**, and `selected-harness/2`.
+The strict machine archive and its exact replay remain private certification
+evidence. The older version-three, group-shaped corpus is an **offline
+diagnostic archive**; its formats are not accepted by the production harness.
 
-Verified executions are compiled to small checkable source-level computations.
-The public prefix contains source/static sites and initial graph; generated
-records describe calculations, choices, live cells, allocations, mutations,
-calls, transfers and completion. The independent serving controller checks the
-*selected* records without substituting the expected trajectory. Private
-journal evidence, reference outcomes and transformation certificates are never
-predictor context.
+The training target is **an execution explanation**, not a bijection with
+interpreter instructions. Source-grounded, independently checked expressions
+pair a term with the actual value computed at that moment. A source binding
+uses its original name (`current`, `next`, `seen`); shadowed bindings
+receive a disambiguating suffix. Anonymous pure subexpressions get no synthetic
+temporary identities. For instance:
 
-From an installed checkout, generate and independently recheck local cases:
+```text
+bind current = 7
+next = (current + 1) -> 8
+request demo.store("counter", 8)
+observe fulfilled undefined
+return 8
+```
+
+The external request, ordered response, state mutations, event/callback
+activations, Promise transitions and completion remain explicit and must agree
+with the independently executed source. Checked reasoning claims are evaluated
+against **prior committed public state**, never private future results.
+Calls, getters, proxies, updates and other effectful terms cannot be silently
+flattened into pure arithmetic; unsupported projections fail closed.
+See [reasoning trace design](docs/SEMANTIC_REASONING_TRACE.md) and
+[production v4 implementation](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md).
+
+From an installed checkout:
 
 ```sh
 npm ci
 npm test
-npm run training:generate -- --seed 42 --count 16 \
-  --output training-local.jsonl --manifest training-manifest.json
-npm run training:recheck -- training-local.jsonl
-npm run training:inspect -- training-local.jsonl training-inspection.json
+node tools/inspect-semantic-reasoning.mjs
+npm run training:generate -- --out /tmp/semantic-v4 --representation compact
 ```
 
-The paired [megatoken](https://github.com/werg/megatoken) importer consumes
-only the version-three schema, preserving physical bytes, native recurrence,
-observed/generated boundaries and loss masks. `locally_verified` does **not**
-mean `admitted`; a byte-fallback diagnostic codec is not the pinned production
-tokenizer. External effects, complete async scheduling, automatic live
-continuations, and actual model training comparisons still have independent
-acceptance work. See the [implementation ledger](docs/TRAINING_IMPLEMENTATION.md)
-and [complete redesign plan](docs/SEMANTIC_TRACE_REDESIGN_PLAN.md).
+The inspection tool executes real pinned counter, choice, compound
+arithmetic, callback and rejection/finally fixtures and independently verifies
+each before printing its actual model-visible trace. The source verifier,
+selected-state controller and external reference compare **observable
+completion and effects** separately from witness consistency and exact
+reference trace bytes. Local verification is not final training admission:
+that also requires the pinned native Megatoken consumer, tokenizer and
+visibility/loss checks. Model learning gains are not established by a
+shorter trace alone.
 
 ## Executable external effects
 

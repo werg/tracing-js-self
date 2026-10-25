@@ -1,6 +1,6 @@
-# Semantic execution v3 — integrated draft implementation and admission boundaries
+# Historical semantic execution v3 — archived implementation and admission boundaries
 
-This document records exactly what is present on the paired draft branches.
+**Not current production documentation:** the active model-facing path is [v4 source-grounded reasoning traces](SEMANTIC_REASONING_TRACE.md). This document records the earlier v3 drafts.
 The governing acceptance contract is [SEMANTIC_TRACE_REDESIGN_PLAN.md](SEMANTIC_TRACE_REDESIGN_PLAN.md).
 An implemented component is **not** evidence that the complete plan is
 finished, and a local demonstration is **not** an admitted corpus example.

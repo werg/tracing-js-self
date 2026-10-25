@@ -47,7 +47,7 @@ test('pure and effectful compact teachers are source-certified, shorter and exec
 
 test('fusion requires exact source child and operand dependency instead of coincidentally equal results',async()=>{
   const bundle=await sourceBundle('function run(a,b){return ((a+b),(a+b))*2;}',[2,3]);
-  const explicit=compileEffectfulWitness(bundle).exported;
+  const explicit=compileEffectfulWitness(bundle,{representation:'explicit'}).exported;
   const compact=compileEffectfulWitness(bundle,{representation:'compact'}).exported;
   assert.deepEqual(compact.public,explicit.public,'sequence-discarded sibling computations cannot become an AST child');
   assert.equal(compact.sidecar.compiler.compaction.removedComputations,0);
@@ -60,7 +60,7 @@ test('fusion requires exact source child and operand dependency instead of coinc
 
 test('bounded compaction retains computations beyond eight operators and the thirty-two node ceiling',async()=>{
   const bundle=await sourceBundle('function run(value){return ((((((((((value+1)+2)+3)+4)+5)+6)+7)+8)+9)+10);}',[1]);
-  const explicit=compileEffectfulWitness(bundle).exported;
+  const explicit=compileEffectfulWitness(bundle,{representation:'explicit'}).exported;
   const compact=compileEffectfulWitness(bundle,{representation:'compact'}).exported;
   assert.equal(computations(explicit).length,10);assert.equal(computations(compact).length,2);
   const sizes=computations(compact).map(item=>validateExpression(item.fields.expr));
@@ -79,9 +79,17 @@ test('mutations, branches, calls, async observations and cleanup remain separate
   const explicit=await verifyEffectfulTrainingCase(fixture);
   const compact=await verifyEffectfulTrainingCase({...fixture,projectionOptions:{representation:'compact'}});
   assert.equal(explicit.status,'locally_verified',explicit.reason);assert.equal(compact.status,'locally_verified',compact.reason);
+  // A reasoning witness may fuse a source binding into the calculation
+  // itself, or explain a choice through the checked source expression.
+  // Compare semantic state/effect barriers, not the exact number of pure
+  // calculations, bindings, or their irrelevant witness spelling.
   const boundaries=episode=>episode.public.timeline.filter(item=>item.kind!=='semantic'||
-    decodeWitness(item.line).kind!=='compute').map(({sequence,ownerSequence,...item})=>item);
+    !['compute','bind','choose'].includes(decodeWitness(item.line).kind))
+    .map(({sequence,ownerSequence,...item})=>item);
   assert.deepEqual(boundaries(compact.exported),boundaries(explicit.exported));
+  const decisions=episode=>lines(episode).filter(item=>item.kind==='choose')
+    .map(item=>({path:item.fields.path,decision:item.fields.decision}));
+  assert.deepEqual(decisions(compact.exported),decisions(explicit.exported));
   assert.deepEqual(compact.exported.sidecar.reference,explicit.exported.sidecar.reference);
   assert.deepEqual(compact.exported.sidecar.effects,explicit.exported.sidecar.effects);
   for(const certificate of compact.exported.sidecar.compiler.certificates.filter(item=>item.dependencies)){

@@ -1,18 +1,17 @@
-# Effective semantic execution trace — sole public format
+# Historical v3 effective trace — offline diagnostics only
 
-> Current production implementation: [semantic execution v4](SEMANTIC_HARNESS_V4_IMPLEMENTATION.md). The bounded-pure/group workflow described below is retained as offline diagnostic and historical evidence; it is not the production harness admission route.
+> **Not a production format.** The active model-facing schema is [v4 source-grounded reasoning traces](SEMANTIC_REASONING_TRACE.md). The v3 records below are historical offline comparison material, not a supported production serving/import route.
 
 
 ## Versions and boundary
 
-The sole active model-visible wire contracts are
+The historical v3 model-visible wire contracts were
 **`semantic-execution/3`**, **`semantic-trace/3`** and
 **`semantic-context/3`**. Private supervision/certificates are
 `semantic-supervision/2`; committed-state packets use
 `semantic-continuation/3`. The raw owned interpreter journal and source-language
-profile have **separate versions**. Production does not parse, generate or
-serve an earlier public trace format. Historical version-two material is a
-pinned comparison artifact, never silently relabeled or interpreted as v3.
+profile have **separate versions**. The production harness now accepts only
+v4; v2/v3 diagnostic records are never silently reinterpreted as v4.
 
 The training target describes *what was computed*, not a lossless listing of
 interpreter instructions. Read provenance, intermediate VM stack state,

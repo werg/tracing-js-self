@@ -113,7 +113,7 @@ test('source-certified repeated ingress publishes one immutable program and keep
   assert(receipt.sourceValidated&&receipt.effectsValidated&&receipt.replayValidated);
   const fixture=controlledEvaluationCase(session.exported,{id:'repeated-ingress'});
   const actual=await evaluateSelectedCase({schema:'semantic-evaluation-request/4',caseId:fixture.id,
-    request:fixture.request,seed:29,representation:'explicit'});
+    request:fixture.request,seed:29,representation:session.exported.sidecar.representation});
   assert.deepEqual(actual.outcome,fixture.expected);
   const changed=structuredClone(session.exported);changed.sidecar.split='forged';
   await assert.rejects(recheckEffectfulSession(changed,{requireAdmitted:false}),/changed/);

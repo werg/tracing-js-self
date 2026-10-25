@@ -13,7 +13,8 @@ import {decodeWitness} from '../src/training/format.js';
 
 const copy=value=>structuredClone(value);
 const pure=verifyEffectfulTrainingCase({source:'"use strict";function run(){return 7;}',
-  entry:'run',args:[],family:'orchestration-unit',fixture:{calls:[]}}).then(result=>{
+  entry:'run',args:[],family:'orchestration-unit',fixture:{calls:[]},
+  projectionOptions:{representation:'explicit'}}).then(result=>{
   assert.equal(result.status,'locally_verified',result.reason);
   return controlledEvaluationCase(result.exported,{id:'pure-orchestration'});
 });
@@ -149,7 +150,8 @@ test('bounded coordinator failure cancels native tracks before any child can bec
 
 test('whole-task graph scoring normalizes child identity while retaining exact native progress bytes',async()=>{
   const source=await verifyEffectfulTrainingCase({source:'"use strict";function run(){const x={a:1};return x;}',
-    entry:'run',args:[],family:'orchestration-object',fixture:{calls:[]}});
+    entry:'run',args:[],family:'orchestration-object',fixture:{calls:[]},
+    projectionOptions:{representation:'explicit'}});
   assert.equal(source.status,'locally_verified',source.reason);
   const fixture=controlledOrchestrationCase(controlledEvaluationCase(source.exported));
   const actual=await evaluateOrchestrationCase(envelope(fixture),{select:fakeNativeSelector()});

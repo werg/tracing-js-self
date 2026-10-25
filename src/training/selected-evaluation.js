@@ -37,7 +37,7 @@ export function controlledEvaluationCase(exported,{id,family,split}={}){
       inputGraph:invocation.inputGraph,realmPolicy:invocation.realmPolicy,
       completionPolicy:invocation.completionPolicy,receiverValue:invocation.receiver},
     fixture:copy(exported.sidecar.referenceInput.fixture),
-    controlledSelectionsByRepresentation:{[exported.sidecar.representation??'explicit']:selections}};
+    controlledSelectionsByRepresentation:{[exported.sidecar.representation??'compact']:selections}};
   const references=exported.sidecar.reference.outcomes??[exported.sidecar.reference.outcome];
   const session=Boolean(exported.sidecar.reference.outcomes);
   if(session){

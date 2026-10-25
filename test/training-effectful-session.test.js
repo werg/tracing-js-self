@@ -31,7 +31,7 @@ for(const callbackId of ['callback-captured-write','persistent-external-trigger'
     const evaluation=controlledEvaluationCase(exported,{id:'session-'+callbackId});
     assert.equal(evaluation.request.invocations.length,2,'callback activations are driven by ingress, not root proposals');
     const actual=await evaluateSelectedCase({schema:'semantic-evaluation-request/4',caseId:evaluation.id,
-      request:evaluation.request,seed:17,representation:'explicit'});
+      request:evaluation.request,seed:17,representation:exported.sidecar.representation});
     assert.equal(actual.failure,null,JSON.stringify(actual.failure));
     assert.deepEqual(actual.outcome,evaluation.expected);
     assert.deepEqual(actual.outcome.cleanup,{pendingEffects:0,pendingJobs:0,openHandlers:0});

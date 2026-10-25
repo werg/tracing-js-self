@@ -16,7 +16,7 @@ function demand(allowed,message){if(!allowed)throw new TypeError(message);}
  * substitute for that selected-state validation.
  */
 export function createMegatokenProcessSelector({command,args=[],cwd=undefined,
-    env=undefined,maxLineBytes=1048576,maxOutstanding=32,timeoutMs=30000,representation='explicit'}={}){
+    env=undefined,maxLineBytes=1048576,maxOutstanding=32,timeoutMs=30000,representation='compact'}={}){
   demand(typeof command==='string'&&command.length,'Model process executable is required');
   demand(Array.isArray(args)&&args.every(x=>typeof x==='string'),'Model arguments must be strings');
   demand(['explicit','compact','outcome-only'].includes(representation),'Unknown selected model representation');
@@ -224,7 +224,7 @@ export function createMegatokenProcessSelector({command,args=[],cwd=undefined,
 /** Load only an already exported serving bundle. This never launches an
  * optimizer, trainer, teacher compiler or hidden Python guest execution. */
 export function createMegatokenPythonSelector({python='python3',
-    megatokenRepository,servedBundle,device='cpu',effort=1,maxTokens=512,representation='explicit'}={}){
+    megatokenRepository,servedBundle,device='cpu',effort=1,maxTokens=512,representation='compact'}={}){
   demand(typeof megatokenRepository==='string'&&megatokenRepository.length,
     'Pinned Megatoken repository path required');
   demand(typeof servedBundle==='string'&&servedBundle.length,

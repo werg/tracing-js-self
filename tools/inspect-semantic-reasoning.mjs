@@ -1,0 +1,66 @@
+// Inspect actual source-certified semantic witnesses, not hand-written trace
+// sketches. Produces human-readable observed context, computations, mutations,
+// callbacks, external operations, and completion in causal order.
+import assert from 'node:assert/strict';
+import {EFFECTFUL_ENGINEERING_FIXTURES} from '../src/training/engineering-fixtures.js';
+import {verifyEffectfulTrainingCase} from '../src/training/effectful-admit.js';
+import {decodeWitness} from '../src/training/format.js';
+import {renderWitness} from '../src/training/render.js';
+
+const wanted=process.argv.slice(2).length?process.argv.slice(2):[
+  'counter-0','branch-1','compound-pure-compact','compound-effectful-compact',
+  'callback-captured-write','rejection-finally'
+];
+const rows=[];
+for(const name of wanted){
+  const fixture=EFFECTFUL_ENGINEERING_FIXTURES.find(candidate=>candidate.id===name);
+  if(!fixture)throw new Error('Unknown fixture '+name);
+  const result=await verifyEffectfulTrainingCase({...fixture,
+    projectionOptions:{...fixture.projectionOptions,representation:'compact'}});
+  assert.equal(result.status,'locally_verified',name+': '+result.reason);
+  // A pinned source/control environment is the authority for both views.
+  // Verify that compaction changes the explanation, never the observable
+  // completion, effects, provenance, or reference graph.
+  const explicit=await verifyEffectfulTrainingCase({...fixture,
+    projectionOptions:{...fixture.projectionOptions,representation:'explicit'}});
+  assert.equal(explicit.status,'locally_verified',name+' explicit: '+explicit.reason);
+  assert.deepEqual(result.exported.sidecar.reference,explicit.exported.sidecar.reference);
+  assert.deepEqual(result.exported.sidecar.effects,explicit.exported.sidecar.effects);
+  assert.equal(result.exported.sidecar.split,explicit.exported.sidecar.split);
+  const episode=result.exported,trace=episode.public.timeline;
+  const physicalBytes=exported=>exported.public.timeline.filter(item=>item.kind==='semantic')
+    .reduce((n,item)=>n+Buffer.byteLength(item.line,'utf8'),0);
+  const semantic=trace.filter(row=>row.kind==='semantic')
+    .map(row=>({...decodeWitness(row.line),sequence:row.sequence}));
+  const markers={records:semantic.length,computations:semantic.filter(row=>row.kind==='compute').length,
+    bindings:semantic.filter(row=>row.kind==='bind').length,
+    choices:semantic.filter(row=>row.kind==='choose').length,
+    writes:semantic.filter(row=>row.kind==='write').length,
+    requests:semantic.filter(row=>row.kind==='request').length,
+    observations:trace.filter(row=>row.kind==='result').length,
+    events:trace.filter(row=>row.kind==='event').length,
+    foldedConditions:episode.sidecar.compiler.compaction.foldedConditions,
+    fusedBindings:episode.sidecar.compiler.compaction.fusedBindings,
+    explicitGeneratedRecords:explicit.exported.sidecar.compiler.generatedRecords,
+    compactGeneratedRecords:episode.sidecar.compiler.generatedRecords,
+    explicitWitnessBytes:physicalBytes(explicit.exported),
+    compactWitnessBytes:physicalBytes(episode)};
+  assert(markers.compactGeneratedRecords<=markers.explicitGeneratedRecords,
+    'semantic compaction must not add reasoning steps');
+  const readable=trace.flatMap(row=>{
+    if(['semantic','result'].includes(row.kind))return [
+      String(row.sequence).padStart(4)+' '+(row.kind==='semantic'?'compute':'observed')+
+        ': '+renderWitness(row.line)];
+    if(row.kind==='invocation')return [String(row.sequence).padStart(4)+
+      ' observed: invoke '+row.entry+' ('+row.activation+')'];
+    if(row.kind==='event')return [String(row.sequence).padStart(4)+
+      ' observed: event '+row.eventId+' -> '+row.invocationId];
+    return [];
+  });
+  rows.push({fixture:name,...markers});
+  console.log('\n=== '+name+' (actual verified source execution) ===');
+  console.log(fixture.source);
+  for(const line of readable)console.log(line);
+  console.log('CHECKS '+JSON.stringify(markers));
+}
+console.log('\nSEMANTIC_TRACE_INSPECTION '+JSON.stringify(rows));
