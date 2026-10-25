@@ -183,6 +183,10 @@ if(localEpisodesPath){
 console.log(JSON.stringify({families:output.totalFamilies,invocations:output.invocations,
   ownedVerified:output.ownedVerified,blockers:output.blockers,
   localEpisodes:localEpisodes.length}));
-if(output.ownedVerified<minOwnedVerified)
+if(output.ownedVerified<minOwnedVerified){
+  console.error('Owned verification blockers:',JSON.stringify(output.examples
+    .filter(item=>item.ownedStatus!=='locally_verified').map(item=>({
+      family:item.family,index:item.index,status:item.ownedStatus,reason:item.reason}))));
   throw new Error('Owned locally verified coverage regression: '+
     output.ownedVerified+' < '+minOwnedVerified);
+}
