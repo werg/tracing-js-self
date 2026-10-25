@@ -21,7 +21,7 @@ function sourceExpressions(source) {
     // Branch decisions may refer to identifiers, unary truth tests, and
     // nested pure expressions, not just a flat comparison.
     if(['BinaryExpression','AssignmentExpression','Identifier','UnaryExpression',
-        'Literal'].includes(value.type))
+        'Literal','MemberExpression'].includes(value.type))
       nodes.set(value.start+':'+value.end,value);
     for(const [key,child] of Object.entries(value))
       if(!['start','end','loc','raw'].includes(key))visit(child);
@@ -47,6 +47,11 @@ export function rewriteSemanticWitness({generated,certificates,source,entry,
   const params=program.functions.find(f=>f.name===entry)?.params??[];
   const locals=new Map();
   const inputAliases=new Set();
+  // A bounded copy of *public*, already-observed ordinary own-data slots.
+  // Do not infer prototype/getter reads, missing properties or other exotic
+  // behavior from source syntax alone. Writes advance this view in order.
+  const dataSlots=new Map(inputGraph.objects.filter(o=>o.kind==='object')
+    .map(o=>[o.id,new Map(o.properties.map(p=>[p.key,p.value]))]));
   const emitted=[];
   function scalar(value) {
     if(value===null)return ['null'];
@@ -84,6 +89,20 @@ export function rewriteSemanticWitness({generated,certificates,source,entry,
       const right=sourceOperand(node.right,invocation,pendingAliases,depth+1);
       return left&&right?{op:'binary',operator:node.operator,left,right}:null;
     }
+    if(node.type==='MemberExpression'&&!node.optional&&
+       !node.computed&&node.property?.type==='Identifier'){
+      const base=sourceOperand(node.object,invocation,pendingAliases,depth+1);
+      if(base?.op!=='local')return null;
+      const index=/^arg([0-9]+)$/.exec(base.name);
+      const value=locals.get(base.name)?.value??
+        (index?arguments_[Number(index[1])]:null);
+      if(value?.[0]!=='ref')return null;
+      const own=dataSlots.get(value[1]);
+      const key=node.property.name;
+      // Only an already-present own *data* slot can be read without a guest
+      // lookup/callback. The independent primitive checker verifies its value.
+      return own?.has(key)?{op:'read',object:value[1],key}:null;
+    }
     if(node.type!=='Identifier')return null;
     for(const [name,item] of [...locals].reverse())
       if(item.sourceName===node.name&&
@@ -108,7 +127,12 @@ export function rewriteSemanticWitness({generated,certificates,source,entry,
     for(const index of pending)available.set('arg'+index,arguments_[index]);
     // The reconstructed explanation must agree with the already-observed
     // decision using only previously committed public values.
-    const check=checkWitnessClaim(expr,claimed,{locals:available});
+    const check=checkWitnessClaim(expr,claimed,{locals:available,
+      readProperty:(id,key)=>{
+        const own=dataSlots.get(id);
+        if(!own?.has(key))throw new TypeError('Uncertified property read');
+        return own.get(key);
+      }});
     if(!check.consistent)return null;
     for(const index of pending)inputAliases.add(index);
     return expr;
@@ -214,6 +238,12 @@ export function rewriteSemanticWitness({generated,certificates,source,entry,
       }
     }
     emitted.push(item);
+    if(item.kind==='write'&&dataSlots.has(item.fields.object)){
+      if(item.fields.key==='__proto__')dataSlots.delete(item.fields.object);
+      else if(item.fields.present)dataSlots.get(item.fields.object)
+        .set(item.fields.key,item.fields.value);
+      else dataSlots.get(item.fields.object).delete(item.fields.key);
+    }
     if(item.kind==='bind'||(item.kind==='compute'&&item.fields.bind)){
       const name=item.kind==='bind'?item.fields.name:item.fields.bind;
       locals.set(name,{value:item.kind==='bind'?item.fields.value:item.fields.result,
