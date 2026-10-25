@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyOwnedSourceCase,recheckOwnedSourceEvidence,
-  validateTrainingExport} from '../src/training/source-check.js';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence} from '../src/training/source-check.js';
+import {SelectedExecutionHarness} from '../src/training/harness-v4.js';
 import {validateBundle,replayExact} from '../src/index.js';
 
 function verified(body,args=[]){
@@ -9,7 +9,7 @@ function verified(body,args=[]){
     entry:'f',args,maxGenerated:1024,maxSteps:10000});
   assert.equal(check.status,'locally_verified',JSON.stringify(check));
   const result=JSON.parse(JSON.stringify(check.exported));
-  assert.equal(validateTrainingExport(result).valid,true);
+  assert.doesNotThrow(()=>SelectedExecutionHarness.replay(result));
   assert.equal(recheckOwnedSourceEvidence(result).valid,true);
   assert.equal(validateBundle(result.sidecar.archive).valid,true);
   assert.equal(replayExact(result.sidecar.archive).valid,true);

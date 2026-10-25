@@ -5,7 +5,7 @@ import {
   replayExact, causalPrefix, TraceValidationError, TraceReplayError
 } from 'tracing-js-self';
 
-import {verifyOwnedSourceCase,SemanticController,evaluateSelectedTrajectory} from 'tracing-js-self/training';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence,SemanticController} from 'tracing-js-self/training';
 import {verifyEffectfulTrainingCase,SelectedExecutionHarness,HARNESS_PROFILE} from 'tracing-js-self/training';
 
 const archive = runtime => JSON.parse(JSON.stringify(runtime.exportRun()));
@@ -106,20 +106,16 @@ test('package exports the validation and replay error constructors thrown by its
   assert.throws(() => replayExact(invalidSource), TraceReplayError);
 });
 
-test('offline diagnostic subpath retains independent bounded-pure corpus checks',()=>{
+test('package uses one source-certified v4 witness without group transport',()=>{
   const checked=verifyOwnedSourceCase({
-    source:'"use strict";function f(x){return x+1;}',entry:'f',args:[4]
-  });
-  assert.equal(checked.status,'locally_verified');
+    source:'"use strict";function f(x){return x+1;}',entry:'f',args:[4]});
+  assert.equal(checked.status,'locally_verified',checked.reason);
   assert.equal(typeof SemanticController,'function');
-  const report=evaluateSelectedTrajectory({
-    groups:checked.exported.public.groups,
-    referenceOutcome:checked.exported.sidecar.reference
-  });
-  assert.equal(report.valid,true);
-  assert.equal(report.correctness,'correct');
+  assert.equal(checked.exported.public.groups,undefined);
+  assert.equal(recheckOwnedSourceEvidence(checked.exported).valid,true);
+  assert.equal(SelectedExecutionHarness.replay(checked.exported).invocations.get('invocation1')
+    .controller.completion.value[1],5);
 });
-
 test('production training subpath emits explicit harness invocations and exact source evidence',async()=>{
   assert.equal(HARNESS_PROFILE,'selected-harness/2');
   const result=await verifyEffectfulTrainingCase({source:'"use strict";function run(x){return x+1;}',

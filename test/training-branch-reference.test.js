@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyOwnedSourceCase,validateTrainingExport} from 'tracing-js-self/training';
+import {verifyOwnedSourceCase,SelectedExecutionHarness} from 'tracing-js-self/training';
 import {instrumentBranchSource,compareBranchObservations} from '../src/training/branch-reference.js';
 
 const strict=body=>'"use strict";\n'+body;
@@ -10,7 +10,7 @@ function verify(code,args=[]){
   const audit=result.exported.sidecar.branchAudit;
   assert.equal(audit.schema,'reference-branches/1');
   assert.equal(audit.status,'agreed');
-  assert.equal(validateTrainingExport(result.exported).valid,true);
+  assert.doesNotThrow(()=>SelectedExecutionHarness.replay(result.exported));
   assert(!Object.hasOwn(result.exported.public,'branchAudit'));
   return audit;
 }

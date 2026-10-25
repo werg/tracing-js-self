@@ -52,7 +52,6 @@
       "types": "./src/browser.d.ts",
       "default": "./src/browser.js"
     },
-    "./training/diagnostic": "./src/training/diagnostic.js",
     "./capabilities/node": "./src/host/selected-capabilities-node.js",
     "./capabilities/browser": "./src/host/selected-capabilities-browser.js",
     "./capabilities/graph": "./src/host/graph-codec.js"
@@ -88,12 +87,6 @@
     "corpus:owned:novelty": "node tools/select-owned-episodes.mjs",
     "corpus:production:owned": "node tools/verify-production-owned.mjs",
     "corpus:ajv:reference": "node tools/verify-ajv-snapshot.mjs",
-    "diagnostic:generate": "node tools/generate-diagnostic-training.mjs",
-    "diagnostic:evaluate": "node tools/evaluate-training.mjs",
-    "diagnostic:inspect": "node tools/inspect-training.mjs",
-    "diagnostic:recheck": "node tools/recheck-training-evidence.mjs",
-    "diagnostic:experiment": "node tools/evaluate-training-experiments.mjs",
-    "diagnostic:freeze": "node tools/freeze-training-test.mjs",
     "training:generate": "node tools/generate-effectful-training.mjs",
     "training:evaluate": "node tools/run-selected-evaluation.mjs",
     "training:freeze": "node tools/freeze-selected-evaluation.mjs",

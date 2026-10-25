@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyOwnedSourceCase,validateTrainingExport} from 'tracing-js-self/training';
+import {verifyOwnedSourceCase,SelectedExecutionHarness} from 'tracing-js-self/training';
 import {compareOperationObservations, instrumentOperationSource} from '../src/training/operation-reference.js';
 
 const strict=code=>'"use strict";\n'+code;
@@ -16,7 +16,7 @@ test('V8 independently observes nested, repeated, overwritten and compound inter
   assert(audit.covered.ownedArithmetic>=8);
   assert(audit.covered.binary>=4);
   assert(audit.unverifiedFamilies.includes('binding.read'));
-  assert.equal(validateTrainingExport(result.exported).valid,true);
+  assert.doesNotThrow(()=>SelectedExecutionHarness.replay(result.exported));
   assert(!Object.hasOwn(result.exported.public,'operationAudit'),
     'independent reference evidence belongs in the private sidecar');
 });

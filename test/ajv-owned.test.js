@@ -17,7 +17,7 @@ test('generated validator requires owned V8/operation/branch/replay evidence',()
   assert.equal(row.schema,'ajv-generated-owned-attempt/1');
   if(row.status==='locally_verified'){
    assert.equal(row.verifiedOwned,true);
-   assert.equal(row.evidence.modelVisibleSchema,'semantic-execution/2');
+   assert.equal(row.evidence.modelVisibleSchema,'semantic-execution/4');
    assert.equal(recheckOwnedSourceEvidence(exported).valid,true);
   }else{
    assert.equal(row.verifiedOwned,false);
