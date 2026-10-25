@@ -192,8 +192,8 @@ export async function evaluateSelectedCase(envelope,{origin='controlled',select=
     const intent=harness.intents.get(item.invocationId+'/'+item.effectId);
     return !intent||!capabilities.has(intent.operation);
   }).length;
-  const state=programList?completed.map(r=>traceGraph(r.observableGraph)):
-    result?traceGraph(result.observableGraph):null;
+  const state=programList?completed.map(r=>r.observableGraph===null?null:traceGraph(r.observableGraph)):
+    result?.observableGraph==null?null:traceGraph(result.observableGraph);
   const finalCleanup=cleanup(harness);
   const firstSemanticInconsistency=[...harness.invocations.values()]
     .map(a=>a.controller.firstWitnessViolation).find(Boolean)??null;

@@ -5,6 +5,7 @@ import {benchmarkFamiliesV1,BENCHMARK_ALGORITHMS,BENCHMARK_RECIPE_NAME,BENCHMARK
 import {effectfulFamilySplit,verifyEffectfulTrainingCase} from '../src/training/effectful-admit.js';
 import {verifyEffectfulSession} from '../src/training/effectful-session.js';
 import {controlledEvaluationCase,evaluateSelectedCase} from '../src/training/selected-evaluation.js';
+import {SelectedModelDriver} from '../src/training/model-driver.js';
 
 const normalizedAst=source=>{
   const ast=parse(source,{ecmaVersion:'latest'});
@@ -90,4 +91,26 @@ test('array-result reference graphs evaluate consistently in explicit compact an
     assert.deepEqual(result.outcome,fixture.expected,representation);
     assert.equal(result.firstSemanticInconsistency,null,representation);
   }
+});
+
+test('an unobservable completed graph retains the evaluation episode and effect receipts',async t=>{
+  const family=benchmarkFamiliesV1().find(item=>item.template==='array-sum');
+  const admitted=await verifyEffectfulTrainingCase(family.callbacks);
+  assert.equal(admitted.status,'locally_verified',admitted.reason);
+  const fixture=controlledEvaluationCase(admitted.exported,{id:'unobservable-completion'});
+  const run=SelectedModelDriver.prototype.run;
+  t.mock.method(SelectedModelDriver.prototype,'run',async function(...args){
+    const result=await run.apply(this,args);
+    // The driver permits this result when its ordinary graph materializer
+    // cannot expose a completed rich value. Keep all other real run evidence.
+    return {...result,observableGraph:null};
+  });
+  const result=await evaluateSelectedCase({schema:'semantic-evaluation-request/4',
+    caseId:fixture.id,request:fixture.request,seed:17,representation:'explicit'});
+  assert.equal(result.outcome.state,null);
+  assert.equal(result.failure,null);
+  assert(result.episode.public.timeline.length>0);
+  assert.deepEqual(result.outcome.effects,fixture.expected.effects);
+  assert.deepEqual(result.outcome.callbacks,fixture.expected.callbacks);
+  assert.deepEqual(result.outcome.cleanup,fixture.expected.cleanup);
 });

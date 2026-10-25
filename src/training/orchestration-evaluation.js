@@ -231,7 +231,7 @@ export async function evaluateOrchestrationCase(envelope,{origin='controlled',se
           args:[],signal:abort.signal});
         if(result.taskCompletion)result=await result.taskCompletion;
         completed.set(identity,{invocationId:identity,trackId:invocation.trackId,nativeTrack:track.address,
-          completion:copy(result.completion),state:traceGraph(result.observableGraph)});
+          completion:copy(result.completion),state:result.observableGraph===null?null:traceGraph(result.observableGraph)});
         return {identity};
       })().catch(error=>({identity,error}));
       running.set(identity,work);
