@@ -37,7 +37,7 @@ test('benchmark-v1 retains distinct canonical algorithms, ancestry and split',()
   }
   assert(counts.test>=2&&counts.validation>=2,JSON.stringify(counts));
   assert.equal(Object.values(counts).reduce((a,b)=>a+b,0),BENCHMARK_ALGORITHMS.length);
-  assert.throws(()=>benchmarkFamiliesV1({representation:'compact'}),/canonical semantic trace/);
+  assert.throws(()=>benchmarkFamiliesV1({representation:'explicit'}),/canonical semantic trace/);
 });
 test('benchmark-v1 generates executable pure, callback, repeated-input and recovery source paths',async()=>{
   const families=benchmarkFamiliesV1();

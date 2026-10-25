@@ -1,29 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {execFileSync} from 'node:child_process';
-import {mkdtempSync,readFileSync,rmSync} from 'node:fs';
-import {tmpdir} from 'node:os';
-import {join} from 'node:path';
+import {encodeWitness,decodeWitness} from '../src/training/format.js';
 
-test('fixture generator preserves seed identity and rejects out-of-range seeds',()=>{
-  const temp=mkdtempSync(join(tmpdir(),'tracing-training-seeds-'));
-  try {
-    const generate=seed=>{
-      const output=join(temp,'seed-'+seed+'.jsonl');
-      const manifest=join(temp,'seed-'+seed+'.json');
-      execFileSync(process.execPath,['tools/generate-diagnostic-training.mjs',
-        '--count','8','--seed',String(seed),'--output',output,'--manifest',manifest]);
-      const m=JSON.parse(readFileSync(manifest,'utf8'));
-      assert.equal(m.seed,seed);
-      return readFileSync(output,'utf8').trim().split('\n')
-        .map(line=>JSON.parse(line).sidecar.archive.entrySpec.arguments);
-    };
-    const zero=generate(0),one=generate(1);
-    assert.notDeepEqual(zero,one,'seed 0 must not alias seed 1');
-    assert.throws(()=>execFileSync(process.execPath,['tools/generate-diagnostic-training.mjs',
-      '--seed','4294967296','--output',join(temp,'bad.jsonl')],{stdio:'pipe'}),
-      /Command failed/);
-  } finally {
-    rmSync(temp,{recursive:true,force:true});
-  }
+test('canonical witness seed is exact, bounded, and cannot alias another seed',()=>{
+  const fields={entry:'run',source:'function run(){return Math.random();}',sites:[]};
+  const zero=encodeWitness('code',{...fields,randomSeed:0});
+  const one=encodeWitness('code',{...fields,randomSeed:1});
+  assert.notEqual(zero,one);
+  assert.equal(decodeWitness(zero).fields.randomSeed,0);
+  assert.equal(decodeWitness(one).fields.randomSeed,1);
+  assert.throws(()=>encodeWitness('code',{...fields,randomSeed:4294967296}),/seed/);
 });

@@ -45,7 +45,7 @@ test('void evaluates operand exactly once, including object mutation',()=>{
     return [x,y,o.value];
   }`,[{value:3}]);
   assert.equal(exported.sidecar.operationAudit.status,'agreed');
-  assert.deepEqual(exported.sidecar.reference.graph.roots.at(-1),['ref','o1']);
+  assert.deepEqual(exported.sidecar.reference.outcome.graph.roots.at(-1),['ref','o1']);
 });
 test('typeof uninitialized lexical binding is a guest throw, not undefined',()=>{
   const source=strict('function f(){return typeof x;let x=1;}');
