@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {verifyTrainingCase} from '../src/training/admit.js';
-import {decodeWitness} from '../src/training/format.js';
+import {decodeWitness,encodeWitness} from '../src/training/format.js';
+import {rewriteSemanticWitness} from '../src/training/rewrite.js';
 import {renderWitness} from '../src/training/render.js';
 import {checkWitnessClaim} from '../src/training/witness-check.js';
 
@@ -22,8 +23,8 @@ test('source-linked choice replaces redundant test arithmetic without losing its
   assert.equal(choice.fields.expr.operator,'>');
   assert.deepEqual(choice.fields.expr.left,{op:'local',name:'arg0'});
   assert.deepEqual(choice.fields.decision,['bool',true]);
-  assert(result.certificates[index].journalEvents.length>=2,
-    'original pure computation and branch evidence must be retained privately');
+  assert(result.certificates[index].journalEvents.length>=1,
+    'the executed branch still needs its original private receipt');
   assert.equal(result.records.slice(0,index).filter(r=>r.kind==='compute').length,0);
   assert.match(renderWitness(result.lines[index]),/choose \(arg0 > 0\)/);
   assert.deepEqual(result.reference.graph.roots.at(-1),['num',7]);
@@ -86,4 +87,32 @@ test('named helper call exposes a source-level name rather than a code coordinat
   assert(call);
   assert.equal(call.fields.callee,'inc');
   assert.equal(result.reference.graph.roots.at(-1)[1],5);
+});
+
+test('folded pure test work retains both original private event receipts',()=>{
+  const source='function run(x){if(x>0)return 1;return 0;}';
+  const position=source.indexOf('x>0');
+  const span={start:position,end:position+3};
+  const result=rewriteSemanticWitness({
+    source,entry:'run',program:{functions:[{name:'run',params:['x']}]},
+    inputGraph:{roots:[['num',4]],objects:[]},
+    localNames:new Map(),maxOperators:4,
+    generated:[
+      encodeWitness('compute',{expr:{op:'binary',operator:'>',
+        left:{op:'literal',value:['num',4]},
+        right:{op:'literal',value:['num',0]}},result:['bool',true]}),
+      encodeWitness('choose',{expr:{op:'literal',value:['bool',true]},
+        decision:['bool',true],path:'then'})
+    ],
+    certificates:[
+      {record:0,rule:'primitive/1',semanticEvents:['e1'],journalEvents:['j1'],span},
+      {record:1,rule:'choice/1',semanticEvents:['e2'],journalEvents:['j2'],span}
+    ]
+  });
+  const records=result.generated.map(decodeWitness);
+  assert.equal(records.filter(r=>r.kind==='compute').length,0);
+  assert.equal(records.filter(r=>r.kind==='choose').length,1);
+  assert.equal(records[1].fields.expr.op,'binary');
+  assert.equal(result.certificates[1].rule,'fold-choice/1');
+  assert.deepEqual(result.certificates[1].journalEvents,['j1','j2']);
 });
