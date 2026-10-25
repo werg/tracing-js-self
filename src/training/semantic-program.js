@@ -24,7 +24,7 @@ function directHostOperation(node) {
       callee.property.value:null):
     (callee.property?.type==='Identifier'?callee.property.name:null);
   if(!name)return null;
-  if(callee.object.name==='host')return 'demo.'+name;
+  if(callee.object.name==='host')return {"httpGet":"http.get","httpPost":"http.post","httpStatus":"http.responseStatus","httpRead":"http.responseRead","httpClose":"http.responseClose","httpAbort":"http.abort","readText":"fs.readText","writeText":"fs.writeText","listFiles":"fs.list","openRead":"fs.openRead","readChunk":"fs.readChunk","closeStream":"fs.close","socketConnect":"net.connect","socketWrite":"net.write","socketRead":"net.read","socketClose":"net.close"}[name]??'demo.'+name;
   if(callee.object.name==='Date'&&name==='now')return 'platform.dateNow';
   if(callee.object.name==='console')return 'platform.console.'+name;
   return null;
