@@ -3,6 +3,7 @@
 // envelope makes source, invocation, dispatch and external observation distinct;
 // it does NOT assert that the complete semantic-trace/4 migration has happened.
 import {createHash} from 'node:crypto';
+import {isDeepStrictEqual} from 'node:util';
 import {decodeWitness,encodeWitness} from './format.js';
 import {SemanticController} from './controller.js';
 import {analyzeSemanticProgram} from './semantic-program.js';
@@ -79,7 +80,7 @@ export class SelectedExecutionHarness {
     return this.record('observed','program','host',
       {programId,digest,entry,source,sites,capabilities});
   }
-  admitInvocation({programId,invocationId,trackId,realmId,triggerId,args=[],
+  admitInvocation({programId,invocationId,trackId,realmId,triggerId,args=[],inputGraph=null,
       completionPolicy='immediate-root'}){
     for(const [value,name] of [[programId,'program ID'],[invocationId,'invocation ID'],
       [trackId,'track ID'],[realmId,'realm ID'],[triggerId,'trigger ID']])id(value,name);
@@ -91,10 +92,12 @@ export class SelectedExecutionHarness {
       'Invalid completion policy');
     // A fresh selected state domain is an explicit policy, not an implicit
     // mutation of a previous invocation or native module initialization.
-    const comparison=describeGraph(args);
-    const graph={roots:comparison.roots,objects:comparison.objects.map(
+    demand(inputGraph===null||args.length===0,
+      'Cannot mix observed input graph with new JavaScript arguments');
+    const comparison=inputGraph===null?describeGraph(args):null;
+    const graph=inputGraph===null?{roots:comparison.roots,objects:comparison.objects.map(
       ({properties,...node})=>({...node,properties:properties.map(
-        ([key,value])=>({key,value}))}))};
+        ([key,value])=>({key,value}))}))}:clone(inputGraph);
     const input=encodeWitness('input',{graph});
     const controller=new SemanticController([program.code,input],{
       capabilities:program.capabilities,maxGenerated:this.maxGenerated,
@@ -195,6 +198,73 @@ export class SelectedExecutionHarness {
       sidecar:{schema:'semantic-supervision/2',admission:'locally_verified',
         referenceStatus:'unverified',sourceLineage,split,
         selectionOrigin:'controlled-or-model-output-unverified'}});
+  }
+  /**
+   * Independently apply only *previously committed* semantic and observed
+   * witness records. Never call native adapters, infer missing observations,
+   * or consult a private teacher journal. A replayed receipt is not evidence
+   * that the original external operation really happened: that needs broker
+   * receipts and an independent reference oracle.
+   */
+  static replay(exported,{requireTerminal=true}={}){
+    const publicData=exported?.public;
+    demand(publicData?.schema===HARNESS_ENVELOPE_VERSION&&
+      publicData.traceFormat===HARNESS_SELECTED_TRACE_VERSION&&
+      publicData.profile==='selected-harness/1','Unsupported public replay contract');
+    const records=publicData.timeline;
+    demand(Array.isArray(records)&&records.length>1&&records.length<=50000,
+      'Replay requires a bounded public causal timeline');
+    const h=new SelectedExecutionHarness({sessionId:records[0]?.session});
+    for(const [index,item] of records.entries()){
+      demand(item&&typeof item==='object','Malformed replay record');
+      if(item.kind==='program'){
+        h.publishProgram({programId:item.programId,source:item.source,
+          entry:item.entry,capabilities:item.capabilities});
+      }else if(item.kind==='invocation'){
+        h.admitInvocation({programId:item.programId,invocationId:item.invocationId,
+          trackId:item.track,realmId:item.realmId,triggerId:item.triggerId,
+          inputGraph:item.inputGraph,completionPolicy:item.completionPolicy});
+      }else if(item.kind==='semantic'){
+        h.selected(item.invocationId,item.line);
+      }else if(item.kind==='dispatch'){
+        const key=item.invocationId+'/'+item.effectId;
+        const intent=h.intents.get(key);
+        demand(intent?.status==='committed'&&item.attempt===1&&
+          item.key===key,'Replay dispatch has no valid committed action');
+        const activation=h.invocations.get(item.invocationId);
+        demand(activation?.trackId===item.track,'Replay dispatch ownership mismatch');
+        intent.status='dispatched';intent.attempts=1;
+        h.record('observed','dispatch',activation.trackId,
+          {invocationId:item.invocationId,effectId:item.effectId,key,attempt:1});
+      }else if(item.kind==='result'){
+        const key=item.invocationId+'/'+item.effectId;
+        const intent=h.intents.get(key);
+        demand(intent?.status==='dispatched','Replay result lacks dispatched cause');
+        const activation=h.invocations.get(item.invocationId);
+        demand(activation?.trackId===item.track,'Replay result owner mismatch');
+        const decoded=decodeWitness(item.line);
+        demand(decoded.kind==='observe'&&decoded.fields.effect===item.effectId&&
+          decoded.fields.status===item.status&&
+          isDeepStrictEqual(decoded.fields.result,item.result),
+          'Recorded result and observed witness disagree');
+        activation.controller.commit(item.line,{mode:'observed',track:'t0'});
+        intent.status='settled';
+        h.record('observed','result',activation.trackId,
+          {invocationId:item.invocationId,effectId:item.effectId,
+            status:item.status,result:item.result,line:item.line});
+      }else{
+        fail('Unregistered public replay record family');
+      }
+      demand(isDeepStrictEqual(h.timeline[index],item),
+        'Replay sequence, identity, authority or fields disagree at '+index);
+    }
+    if(requireTerminal){
+      demand([...h.invocations.values()].every(v=>v.status==='completed'),
+        'Incomplete replayed invocation');
+      demand([...h.intents.values()].every(v=>v.status==='settled'),
+        'Replay contains unsettled selected native actions');
+    }
+    return h;
   }
   /** No service code executes during state restoration or trace inspection. */
   checkpoint(){
