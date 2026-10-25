@@ -4,6 +4,7 @@ import {parse} from 'acorn';
 import {benchmarkFamiliesV1,BENCHMARK_ALGORITHMS,BENCHMARK_RECIPE_NAME,BENCHMARK_RECIPE_VERSION,semanticRecipeFamilies} from '../src/training/recipe-fixtures.js';
 import {effectfulFamilySplit,verifyEffectfulTrainingCase} from '../src/training/effectful-admit.js';
 import {verifyEffectfulSession} from '../src/training/effectful-session.js';
+import {controlledEvaluationCase,evaluateSelectedCase} from '../src/training/selected-evaluation.js';
 
 const normalizedAst=source=>{
   const ast=parse(source,{ecmaVersion:'latest'});
@@ -69,4 +70,24 @@ test('named bit and rotation algorithms retain their declared mathematical meani
   };
   assert.equal(run('gray-code')(13,2),(13^(13>>1))+2);
   assert.equal(run('array-rotate-left-checksum')([2,4,1],1),4+1*2+2*3+1);
+});
+
+test('array-result reference graphs evaluate consistently in explicit compact and outcome-only forms',async()=>{
+  const family=benchmarkFamiliesV1().find(item=>item.template==='array-sum');
+  const compactFamily=benchmarkFamiliesV1({representation:'compact'}).find(item=>item.template==='array-sum');
+  const admitted=await verifyEffectfulTrainingCase(family.pure);
+  const compactAdmitted=await verifyEffectfulTrainingCase(compactFamily.pure);
+  assert.equal(admitted.status,'locally_verified',admitted.reason);
+  assert.equal(compactAdmitted.status,'locally_verified',compactAdmitted.reason);
+  const fixture=controlledEvaluationCase(admitted.exported,{id:'array-sum-representation-parity'});
+  const compactFixture=controlledEvaluationCase(compactAdmitted.exported,{id:fixture.id});
+  Object.assign(fixture.request.controlledSelectionsByRepresentation,
+    compactFixture.request.controlledSelectionsByRepresentation);
+  for(const representation of ['explicit','compact','outcome-only']){
+    const result=await evaluateSelectedCase({schema:'semantic-evaluation-request/4',
+      caseId:fixture.id,request:fixture.request,seed:17,representation});
+    assert.equal(result.failure,null,`${representation}: ${JSON.stringify(result.failure)}`);
+    assert.deepEqual(result.outcome,fixture.expected,representation);
+    assert.equal(result.firstSemanticInconsistency,null,representation);
+  }
 });
