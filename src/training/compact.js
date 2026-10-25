@@ -15,6 +15,7 @@ export const COMPACTION_RULES=Object.freeze({
   'primitive/1':{boundary:'primitive',effect:'preserve operator order and operand values'},
   'fuse-expression/1':{boundary:'pure expression',effect:'combine verified nested primitive expressions'},
   'fuse-bind/1':{boundary:'local',effect:'attach verified value to its binding'},
+  'fold-choice/1':{boundary:'pure branch test',effect:'keep checked choice, remove redundant pure test computations'},
   'input-alias/1':{boundary:'observed input',effect:'name a supplied immutable argument value'},
   'seeded-random/1':{boundary:'primitive',effect:'advance predeclared deterministic entropy'},
   'bind/1':{boundary:'local',effect:'commit supplied value'},
@@ -81,6 +82,15 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
     elided.push({semanticEvent:row.id,journalEvent:row.journalEvent,reason,
       rule:'elide-private/1'});
   }
+  // Code IDs are private compiler coordinates, not semantic function names.
+  // Name only declarations with a certified source-level DEF_FN binding;
+  // anonymous/dynamic dispatch keeps its existing opaque fallback.
+  const sourceCallees=new Map();
+  for(const program of Object.values(bundle.programs))
+    for(const inst of program.instructions)
+      if(inst.op==='DEF_FN'&&typeof inst.arg?.name==='string'&&
+         typeof inst.arg?.codeId==='string')
+        sourceCallees.set(inst.arg.codeId,inst.arg.name);
   const invocations=new Map([[semantic.rootInvocation,'i1']]);
   let invocationNumber=1;
   function invocation(frame){
@@ -223,7 +233,7 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
             .map(p=>({key:p.key,value:tag(p.value)}))},'allocate/1',row);
       }
       writesOf(row);
-      emit('call',{child:invocation(row.child),callee:row.code,
+      emit('call',{child:invocation(row.child),callee:sourceCallees.get(row.code)??row.code,
         receiver:tag(row.receiver),arguments:row.arguments.map(tag)},'call/1',row);
     }else if(row.op==='transfer'){
       if(!['return','throw'].includes(row.transferKind)||
