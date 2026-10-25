@@ -186,15 +186,18 @@ export class SelectedExecutionHarness {
     const handler=this.handlers.get(subscriptionId);
     demand(handler,'Unknown subscription');
     if(handler.state!=='active'||!handler.queue.length||
-       this.realms.get(handler.realmId)?.running)return null;
+       (handler.realmPolicy==='retained'&&this.realms.get(handler.realmId)?.running))
+      return null;
     const next=handler.queue.shift();
     const invocationId='event'+(++this.nextEventDelivery);
     const triggerId='event:'+subscriptionId+':'+next.eventId;
+    const realmId=handler.realmPolicy==='retained'?
+      handler.realmId:handler.realmId+invocationId;
     this.record('observed','event',handler.trackId,
       {subscriptionId,eventId:next.eventId,invocationId,triggerId,
-        programId:handler.programId,realmId:handler.realmId});
+        programId:handler.programId,realmId});
     return this.admitInvocation({programId:handler.programId,invocationId,
-      realmId:handler.realmId,trackId:handler.trackId,triggerId,
+      realmId,trackId:handler.trackId,triggerId,
       realmPolicy:handler.realmPolicy,args:next.args,
       completionPolicy:next.completionPolicy});
   }
