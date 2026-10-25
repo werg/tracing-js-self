@@ -45,6 +45,9 @@ export function evaluateWitnessExpression(expr,{locals=new Map(),
     const left=node.op==='unary'?visit(node.arg):visit(node.left);
     const right=node.op==='binary'?visit(node.right):null;
     if(node.op==='unary'){
+      // ToBoolean of any object identity is true; ! never invokes a guest
+      // coercion hook. Other operators still require a primitive operand.
+      if(node.operator==='!'&&left[0]==='ref')return ['bool',false];
       const a=scalar(left);
       switch(node.operator){
         case '!':return tagged(!a);
