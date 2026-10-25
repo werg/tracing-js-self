@@ -162,3 +162,34 @@ independent V8 outcome, source-operation and branch audits, and selected
 witness controller checks. The GitHub `Semantic trace v3 local evidence`
 job also archives its human-readable output. It does not measure a
 transformer model's accuracy or assert corpus admission.
+
+## Owned input-property choices and named helpers
+
+For ordinary input data objects, an expression such as `if(o.n > 2)` can
+refer to the already-present `o.n` data slot using the existing pure
+`read` witness operand. The rewriter maintains a *forward-only* copy of
+input-graph own data slots and applies previously published writes and
+deletions in order. The bounded independent evaluator then checks the
+source-linked choice against this public state. Nothing is read from the
+teacher's final heap or from a host object.
+
+```text
+bind arg0 = &o1
+choose (&o1["n"] > 2) = true -> then
+return 3
+```
+
+The `arg0` alias provides the root input reference; the value of the
+property comes from the observed graph (or earlier public writes). Missing
+slots, array exotic behavior, accessors/proxies and computed-property
+expressions are not speculatively interpreted. Impure `o.n++` still emits
+a property write and a known-value choice, retaining its chronology.
+
+Named guest helper invocations also use the source-declared function name
+(e.g. `call inc(4) -> i2`) instead of an opaque compiler coordinate
+(e.g. `src1:code2`) when the compiler can resolve a `DEF_FN` declaration.
+Anonymous or otherwise unidentified calls retain their existing fallback.
+The callee identity and private dynamic call evidence are not discarded.
+
+These improvements change *reasoning readability*, not the required
+observable contract or the range of JavaScript accepted into training.
