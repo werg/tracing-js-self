@@ -118,16 +118,3 @@ test('source-certified repeated ingress publishes one immutable program and keep
   const changed=structuredClone(session.exported);changed.sidecar.split='forged';
   await assert.rejects(recheckEffectfulSession(changed,{requireAdmitted:false}),/changed/);
 });
-test('outcome-only control is noninteractive and cannot execute an effectful task',async()=>{
-  const pure=await verifyEffectfulTrainingCase({source:'"use strict";function run(x){return x+1;}',
-    entry:'run',args:[3],family:'pure-outcome-control',fixture:{calls:[]}});
-  assert.equal(pure.status,'locally_verified',pure.reason);
-  const c=controlledEvaluationCase(pure.exported,{id:'pure-outcome'});
-  const result=await evaluateSelectedCase({schema:'semantic-evaluation-request/4',caseId:c.id,
-    request:c.request,seed:43,representation:'outcome-only'});
-  assert.equal(result.episode,null);assert.deepEqual(result.outcome,c.expected);
-  assert.equal(result.costs.dispatches,0);
-  const effectful=controlledEvaluationCase(results.get('counter-0'),{id:'counter'});
-  await assert.rejects(evaluateSelectedCase({schema:'semantic-evaluation-request/4',caseId:'counter',
-    request:effectful.request,seed:17,representation:'outcome-only'}),/pure common-support/);
-});

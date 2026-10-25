@@ -14,12 +14,12 @@ import {decodeWitness} from '../src/training/format.js';
 const copy=value=>structuredClone(value);
 const pure=verifyEffectfulTrainingCase({source:'"use strict";function run(){return 7;}',
   entry:'run',args:[],family:'orchestration-unit',fixture:{calls:[]},
-  projectionOptions:{representation:'explicit'}}).then(result=>{
+  projectionOptions:{representation:'compact'}}).then(result=>{
   assert.equal(result.status,'locally_verified',result.reason);
   return controlledEvaluationCase(result.exported,{id:'pure-orchestration'});
 });
 const envelope=fixture=>({schema:'semantic-evaluation-request/4',caseId:fixture.id,
-  seed:17,representation:'explicit',request:fixture.request});
+  seed:17,representation:'compact',request:fixture.request});
 
 // This deliberately small fake tests the JavaScript scheduling boundary only.
 // Native lifecycle correctness is exercised separately below with Megatoken.
@@ -33,7 +33,7 @@ function fakeNativeSelector({onSelect=null,onStep=null,stallStep=false}={}){
   select.openOrchestration=async request=>{
     calls.push({op:'open',request:copy(request)});
     state={schema:'semantic-orchestration-state/4',session:request.session,track:'fake:coordinator',
-      representation:'explicit',origin:request.origin,status:'active',decisions:[],receipts:[],observations:[],
+      representation:'compact',origin:request.origin,status:'active',decisions:[],receipts:[],observations:[],
       tracks:[{address:'fake:coordinator',status:'active',parent:null}],
       children:request.proposals.map(prefix=>({execution:{invocation_id:prefix.invocationId},
         program:prefix.committed[0],invocation:prefix.committed[1]}))};
@@ -151,7 +151,7 @@ test('bounded coordinator failure cancels native tracks before any child can bec
 test('whole-task graph scoring normalizes child identity while retaining exact native progress bytes',async()=>{
   const source=await verifyEffectfulTrainingCase({source:'"use strict";function run(){const x={a:1};return x;}',
     entry:'run',args:[],family:'orchestration-object',fixture:{calls:[]},
-    projectionOptions:{representation:'explicit'}});
+    projectionOptions:{representation:'compact'}});
   assert.equal(source.status,'locally_verified',source.reason);
   const fixture=controlledOrchestrationCase(controlledEvaluationCase(source.exported));
   const actual=await evaluateOrchestrationCase(envelope(fixture),{select:fakeNativeSelector()});
@@ -165,7 +165,7 @@ test('whole-task graph scoring normalizes child identity while retaining exact n
 
 test('a rejected selected child preserves original evidence and cancels the joined coordinator',async()=>{
   const fixture=controlledOrchestrationCase(await pure);
-  fixture.request.controlledSelectionsByRepresentation.explicit[fixture.request.invocations[0].invocationId]=[
+  fixture.request.controlledSelectionsByRepresentation.compact[fixture.request.invocations[0].invocationId]=[
     'return {"value":["ref","missing"]}'];
   const select=fakeNativeSelector(),actual=await evaluateOrchestrationCase(envelope(fixture),{select});
   assert(actual.failure);
@@ -210,7 +210,7 @@ test('actual-model orchestration never forwards controlled lifecycle or child pl
 const nativeReady=Boolean(process.env.MEGATOKEN_ORCHESTRATION_SERVED&&process.env.MEGATOKEN_PYTHON&&
   process.env.MEGATOKEN_REPOSITORY);
 const nativeOptions={skip:nativeReady?false:'Set MEGATOKEN_ORCHESTRATION_SERVED, MEGATOKEN_PYTHON and MEGATOKEN_REPOSITORY for native runtime gates',timeout:120000};
-function nativeSelector({representation='explicit',controlled=true}={}){
+function nativeSelector({representation='compact',controlled=true}={}){
   return createMegatokenProcessSelector({command:process.env.MEGATOKEN_PYTHON,
     cwd:process.env.MEGATOKEN_REPOSITORY,representation,timeoutMs:30000,
     env:{...process.env,OMP_NUM_THREADS:'1'},args:['scripts/serve_selected_semantic.py',
@@ -240,7 +240,7 @@ function observedBootstrap(actual,selection){
   return packet;
 }
 
-for(const representation of ['explicit','compact'])test('native '+representation+
+for(const representation of ['compact'])test('native '+representation+
   ' coordinator runs async, callback and throwing children in one process with exact whole-task receipts',nativeOptions,async()=>{
   const cases=['counter-0','callback-captured-write'].map(id=>{
     const fixture=copy(EFFECTFUL_ENGINEERING_FIXTURES.find(item=>item.id===id));
@@ -341,7 +341,7 @@ test('native coordinator budget cancellation leaves no selected guest, effect, o
 test('native rejected semantic child preserves its committed bytes and cancels its waiting parent',nativeOptions,async()=>{
   const fixture=controlledOrchestrationCase(await pure,{sessionId:'native-invalid-child'});
   const record='return {"value":["ref","missing"]}';
-  fixture.request.controlledSelectionsByRepresentation.explicit[fixture.request.invocations[0].invocationId]=[record];
+  fixture.request.controlledSelectionsByRepresentation.compact[fixture.request.invocations[0].invocationId]=[record];
   const select=nativeSelector();
   try{
     const actual=await evaluateOrchestrationCase(envelope(fixture),{select,timeoutMs:30000});

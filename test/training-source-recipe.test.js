@@ -4,28 +4,22 @@ import {semanticRecipeFamilies,SEMANTIC_TASK_TEMPLATES} from '../src/training/re
 import {effectfulFamilySplit,verifyEffectfulTrainingCase} from '../src/training/effectful-admit.js';
 import {verifyEffectfulSession,recheckEffectfulSession} from '../src/training/effectful-session.js';
 
-test('authored source families retain every template and its ancestry across representations and splits',()=>{
-  const explicit=semanticRecipeFamilies(),compact=semanticRecipeFamilies({representation:'compact'});
-  assert.equal(explicit.length,SEMANTIC_TASK_TEMPLATES.length);
-  assert.equal(new Set(explicit.map(item=>item.pure.source)).size,explicit.length);
-  assert.deepEqual(explicit.map(item=>item.family),compact.map(item=>item.family));
-  assert.deepEqual(new Set(explicit.map(item=>effectfulFamilySplit(item.family))),new Set(['train','validation','test']));
-  for(const [index,family] of explicit.entries()){
-    const variants=[family.pure,family.callbacks,...family.repeated.cases];
-    for(const variant of variants){
-      assert.equal(variant.family,family.family);
-      assert.deepEqual(variant.ancestorIds,['source-template:'+family.template]);
-      assert.equal(effectfulFamilySplit(variant.family),effectfulFamilySplit(family.family));
-    }
-    assert.deepEqual(family.pure.args,compact[index].pure.args);
-    assert.equal(family.callbacks.source,compact[index].callbacks.source);
+test('authored source families use the canonical trace with stable lineage',()=>{
+  const families=semanticRecipeFamilies();
+  assert.equal(families.length,SEMANTIC_TASK_TEMPLATES.length);
+  assert.equal(new Set(families.map(item=>item.pure.source)).size,families.length);
+  assert.deepEqual(new Set(families.map(item=>effectfulFamilySplit(item.family))),
+    new Set(['train','validation','test']));
+  for(const family of families)for(const variant of [family.pure,family.callbacks,...family.repeated.cases]){
+    assert.equal(variant.family,family.family);
+    assert.deepEqual(variant.ancestorIds,['source-template:'+family.template]);
+    assert.equal(effectfulFamilySplit(variant.family),effectfulFamilySplit(family.family));
   }
-  assert.throws(()=>semanticRecipeFamilies({representation:'relabelled'}),/representation/);
+  assert.throws(()=>semanticRecipeFamilies({representation:'explicit'}),/canonical semantic trace/);
 });
-
 test('actual train and validation source collections contain pure, callback, recovery and repeated behavior',async()=>{
   for(const split of ['train','validation']){
-    const family=semanticRecipeFamilies({representation:'compact'}).find(item=>effectfulFamilySplit(item.family)===split);
+    const family=semanticRecipeFamilies().find(item=>effectfulFamilySplit(item.family)===split);
     const pure=await verifyEffectfulTrainingCase(family.pure);
     assert.equal(pure.status,'locally_verified',pure.reason);assert.equal(pure.exported.sidecar.split,split);
     assert.deepEqual(pure.exported.sidecar.effects,[]);
