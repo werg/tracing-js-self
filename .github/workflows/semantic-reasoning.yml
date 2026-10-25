@@ -14,4 +14,5 @@ jobs:
       - name: Check source expression grounding, admission and compaction
         run: node --test test/training-semantic-source.test.js test/training-effectful-compact.test.js
       - name: Generate readable source-certified traces with effects and callbacks
+        if: always()
         run: node tools/inspect-semantic-reasoning.mjs
