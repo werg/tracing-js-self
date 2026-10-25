@@ -79,3 +79,11 @@ test('small loops keep the iteration state while folding repeated pure checks',(
   assert(result.records.some(r=>r.kind==='compute'&&r.fields.bind?.startsWith('s')));
   assert.deepEqual(result.reference.graph.roots.at(-1),['num',15]);
 });
+
+test('named helper call exposes a source-level name rather than a code coordinate',()=>{
+  const result=verified('function inc(y){return y+1;}function run(x){return inc(x);}',[4]);
+  const call=result.records.find(r=>r.kind==='call');
+  assert(call);
+  assert.equal(call.fields.callee,'inc');
+  assert.equal(result.reference.graph.roots.at(-1)[1],5);
+});
