@@ -25,7 +25,7 @@ export const SEMANTIC_TASK_TEMPLATES=Object.freeze([
 ].map(template=>Object.freeze({...template,answers:Object.freeze(template.answers)})));
 
 const inputs=Object.freeze([[8,3],[5,2]].map(Object.freeze));
-export function semanticRecipeFamilies({representation='explicit'}={}){
+export function semanticRecipeFamilies({representation='compact'}={}){
   if(!['explicit','compact'].includes(representation))throw new TypeError('Unknown recipe representation');
   return SEMANTIC_TASK_TEMPLATES.map(template=>{
     const family='semantic-recipe:'+template.name;
