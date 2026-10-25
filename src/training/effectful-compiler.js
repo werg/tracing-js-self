@@ -120,7 +120,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   const reactionFrames=new Map(),reactionTargets=new Set(),microtasks=new Map(),privatePromises=new Set();
   const awaitingCompletion=new Map();
   const pendingComputations=[];
-  let fusedComputations=0;
+  let fusedComputations=0,foldedComputations=0,fusedBindings=0;
   let cellOrdinal=0,frameOrdinal=0,continuationOrdinal=0,eventOrdinal=0,generated=0,jobOrdinal=0;
   for(const program of Object.values(bundle.programs))for(const instruction of program.instructions)
     if(instruction.arg?.codeId&&['DEF_FN','MAKE_FUNCTION'].includes(instruction.op)){
@@ -198,13 +198,26 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     for(const item of pendingComputations)commitEmission(item.owner,'compute',item.fields,item.certificate);
     pendingComputations.length=0;
   }
+  function pendingBinding(row,event){
+    if(representation!=='compact'||!['binding.initialize','binding.write'].includes(event.operation)||
+       row?.op!=='value'||row.writes?.length!==1||row.writes[0].kind!=='cell')
+      return null;
+    const last=pendingComputations.at(-1),write=row.writes[0];
+    if(!last||last.fields.bind||last.owner!==rootFor(row.invocation)||
+       last.fields.invocation!==frameId(row.invocation)||
+       !row.dependsOn.includes(rows.get(last.producer)?.id)||
+       !graphValue(write.value)||!isDeepStrictEqual(tag(write.value),last.fields.result))
+      return null;
+    return {last,write};
+  }
   function emit(owner,kind,fields,event=null,rule=kind){
     const certificate={rule:'owned-'+rule+'/4',journalEvents:event?[event.eventId]:[],
       source:event?.siteId?{sourceId:event.sourceId,siteId:event.siteId}:null};
     const node=fields.site&&binaryNodes.get(fields.site.start+':'+fields.site.end);
     const start=event&&operationStarts.get(event.causes.find(cause=>cause.kind==='spec-operation')?.operationId);
     const pure=representation==='compact'&&kind==='compute'&&!fields.bind&&
-      fields.expr.op==='binary'&&node?.operator===fields.expr.operator&&start&&
+      fields.expr.op==='binary'&&node?.type==='BinaryExpression'&&
+      node.operator===fields.expr.operator&&start&&
       start.event.sequence<event.sequence&&start.event.invocationId===event.invocationId&&
       start.event.siteId===event.siteId&&start.operation.operator===node.operator&&
       start.operation.operands.length===2&&[fields.expr.left,fields.expr.right].every(operand=>
@@ -300,12 +313,19 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     // Private housekeeping can separate adjacent semantic computations, but
     // mutation, control, observation, call/job activation and cleanup cannot.
     // These boundaries flush even when they have no standalone public row.
+    const row=rows.get(event.eventId),fact=facts.get(event.eventId);
     const pureTransition=['binding.read','literal.materialize','primitive.binary'].includes(event.operation)||
       event.operation.startsWith('spec.');
-    if(!pureTransition||event.completion&&event.completion.type!=='normal'||
-      event.stateChanges.some(change=>['envs','heap','effects','inputs','promises','control'].includes(change.table)))
+    // A branch has no independent guest mutation. Keep its immediately
+    // preceding pure test pending so a checked condition can replace it.
+    // Likewise, an exact producer-dependent cell initialization can become
+    // the binding of its computation without an extra model target.
+    const possibleChoice=representation==='compact'&&row?.op==='branch';
+    const attachBinding=pendingBinding(row,event);
+    if(!possibleChoice&&!attachBinding&&(!pureTransition||
+      event.completion&&event.completion.type!=='normal'||
+      event.stateChanges.some(change=>['envs','heap','effects','inputs','promises','control'].includes(change.table))))
       flushComputations();
-    const row=rows.get(event.eventId),fact=facts.get(event.eventId);
     let owner=rootFor(event.invocationId),handled=false;
     const promiseChanges=event.stateChanges.filter(change=>change.table==='promises');
     const effectCreated=event.stateChanges.find(change=>change.table==='effects'&&change.before===null);
@@ -498,15 +518,55 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     }else if(row?.op==='value'&&row.arithmetic){
       const operands=row.operands.map(value=>tag(Array.isArray(value)?value:value.value));
       if(operands.length!==2)refuse('binary computation lacks evaluated operands');
-      emit(owner,'compute',{expr:{op:'binary',operator:row.arithmetic.operator,
-        left:literal(operands[0]),right:literal(operands[1])},result:tag(row.result),
+      const sourceNode=row.source&&binaryNodes.get(row.source.start+':'+row.source.end);
+      const expr=sourceLinkedComputation({op:'binary',operator:row.arithmetic.operator,
+        left:literal(operands[0]),right:literal(operands[1])},
+        sourceNode,publicScope(row.invocation,owner));
+      emit(owner,'compute',{expr,result:tag(row.result),
         invocation:frameId(row.invocation),...(row.source?{site:{start:row.source.start,end:row.source.end}}:{})},event,'compute');
       writes(row,owner,event);handled=true;
     }else if(row?.op==='branch'){
-      emit(owner,'choose',{expr:literal(tag(row.test)),decision:tag(row.test),path:row.path,
-        invocation:frameId(row.invocation),...(row.source?{site:{start:row.source.start,end:row.source.end}}:{})},event,'branch');handled=true;
+      const sourceNode=row.source&&binaryNodes.get(row.source.start+':'+row.source.end);
+      const testNode=['IfStatement','WhileStatement','DoWhileStatement','ForStatement',
+        'ConditionalExpression'].includes(sourceNode?.type)?sourceNode.test:sourceNode;
+      const decision=tag(row.test);
+      const explained=sourceLinkedDecision(sourceNode,decision,publicScope(row.invocation,owner),
+        {maxOperators});
+      // Never erase a bound computation or one performed elsewhere. Every
+      // removed primitive must be the consecutive, source-contained producer
+      // of this very decision; its journal receipt stays on the choice.
+      let folded=[];
+      if(representation==='compact'&&explained&&testNode&&pendingComputations.length&&
+         isDeepStrictEqual(pendingComputations.at(-1).fields.result,decision)&&
+         pendingComputations.at(-1).node?.start===testNode.start&&
+         pendingComputations.at(-1).node?.end===testNode.end&&
+         pendingComputations.every(item=>item.owner===owner&&!item.fields.bind&&
+           item.fields.invocation===frameId(row.invocation)&&item.node&&
+           item.node.start>=testNode.start&&item.node.end<=testNode.end)){
+        folded=pendingComputations.splice(0);
+      }
+      emit(owner,'choose',{expr:explained??literal(decision),decision,path:row.path,
+        invocation:frameId(row.invocation),...(row.source?{site:{start:row.source.start,end:row.source.end}}:{})},event,'branch');
+      if(folded.length){
+        const certificate=certificates.at(-1);
+        certificate.rule='owned-source-choice/4';
+        certificate.journalEvents=[...new Set([
+          ...folded.flatMap(item=>item.certificate.journalEvents),...certificate.journalEvents])];
+        certificate.dependencies=folded.flatMap(item=>item.certificate.dependencies??[]);
+        foldedComputations+=folded.length;
+      }
+      handled=true;
     }else if(row?.op==='write'||row?.op==='value'){
-      writes(row,owner,event);handled=true;
+      if(attachBinding){
+        attachBinding.last.fields.bind=cell(attachBinding.write.env,attachBinding.write.key);
+        attachBinding.last.certificate.rule='owned-compact-bind/4';
+        attachBinding.last.certificate.journalEvents.push(event.eventId);
+        attachBinding.last.certificate.dependencies=[
+          ...(attachBinding.last.certificate.dependencies??[]),
+          {producer:attachBinding.last.producer,consumer:event.eventId,kind:'cell-binding'}];
+        flushComputations();fusedBindings++;
+      }else writes(row,owner,event);
+      handled=true;
     }else if(row?.op==='read'){
       for(const read of row.reads??[])if(read.kind==='property'&&controller(owner).heap.has(identity(read.objectId??read.object))){
         const object=identity(read.objectId??read.object),key=read.key??read.property;
@@ -586,7 +646,8 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   exported.sidecar.representation=representation;
   exported.sidecar.compiler={schema:'semantic-effectful-compiler/4',certificates,elided,checkpoints,
     sourceDigest:hash(source),archiveDigest:hash(bundle),capabilities,
-    representation,compaction:{maxOperators,maxNodes:32,removedComputations:fusedComputations},
+    representation,compaction:{maxOperators,maxNodes:32,removedComputations:fusedComputations,
+      foldedConditions:foldedComputations,fusedBindings},
     generatedRecords:generated,publicDigest:hash(exported.public)};
   const replayed=SelectedExecutionHarness.replay(exported);
   for(const activation of replayed.invocations.values())
