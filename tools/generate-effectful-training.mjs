@@ -22,7 +22,7 @@ const recipe=flags.get('--recipe')??'engineering';
 if(!['engineering',SEMANTIC_RECIPE_NAME].includes(recipe))throw new Error('Unknown source recipe');
 const jobs=Number(flags.get('--jobs')??1);
 if(!Number.isSafeInteger(jobs)||jobs<1||jobs>8)throw new Error('--jobs must be between 1 and 8');
-const representation=flags.get('--representation')??(recipe==='engineering'?null:'explicit');
+const representation=flags.get('--representation')??'compact';
 if(representation!==null&&!['explicit','compact'].includes(representation))
   throw new Error('--representation must be explicit or compact');
 const fixtures=representation?EFFECTFUL_ENGINEERING_FIXTURES
