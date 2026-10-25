@@ -1,6 +1,6 @@
 # Semantic execution v4: implementation and operation
 
-This is the implementation guide for the [M0–M8 roadmap](LLM_SEMANTIC_EXECUTION_HARNESS_ROADMAP.md).
+This is the implementation guide for the [current semantic execution profile](STATUS.md).
 Engineering verification uses source-certified teachers, independent Node/browser references,
 controlled selected actions and initialized fixed-weight inference. It does not run an optimizer
 or establish learned execution quality. The exact compatible revisions and verification receipts

@@ -1,6 +1,13 @@
+> **Immutable historical engineering evidence.** This document and its hash-pinned
+> evidence describe the specific frozen M0–M8 experiment revisions, including
+> comparisons that are **no longer executable as current training modes**.
+> The sole active trace is [source-grounded semantic-trace/4](SEMANTIC_REASONING_TRACE.md).
+> Historical artifacts here are retained only to substantiate the published
+> engineering receipt; do not import them as today's training data.
+
 # Semantic execution v4: engineering completion ledger
 
-The M0–M8 implementation in the [roadmap](LLM_SEMANTIC_EXECUTION_HARNESS_ROADMAP.md)
+The M0–M8 implementation in the [current execution scope](STATUS.md)
 is complete across tracing-js-self, Megatoken and Natlang. This ledger records
 engineering evidence for the declared execution and capability profile. No semantic
 training, fine-tuning or optimizer-driven capability experiment was run. M9 learned
