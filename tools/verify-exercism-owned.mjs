@@ -237,7 +237,7 @@ if(reviewPath){
  const lines=[
   '# Original-source verified owned Exercism JS traces',
   '',
-  '**Only locally verified, non-admitted semantic-execution/3 candidates.**',
+  '**Only locally verified, non-admitted semantic-execution/4 candidates.**',
   'No claim of full JS semantics or minimal/lossless source-level trace compression.',
   '',
   '- Attempted original/canonical and generated candidates: '+report.totals.attempted,
