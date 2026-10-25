@@ -1,423 +1,492 @@
-# LLM semantic execution with real external tools: end-to-end delivery roadmap
+# Semantic execution harness: code, invocations, tools, and dynamic tracks
 
-**Status:** implementation plan, not a claim of completed functionality.  
-**Prepared:** 2026-10-25.  
-**Primary repositories:** [tracing-js-self](https://github.com/werg/tracing-js-self), [megatoken](https://github.com/werg/megatoken), [natlang](https://github.com/werg/natlang).  
-**Immediate integration branch:** [tracing-js-self PR #30](https://github.com/werg/tracing-js-self/pull/30).
+**Status:** implementation roadmap; proposed contracts below are not claims of working or trained functionality.
 
-## 0. The intended product and non-negotiable boundary
+**Reviewed:** 2026-10-25.
 
-The intended product is an **LLM that learns to simulate the semantics of executing a JavaScript/TypeScript program**, from readable, compact semantic execution demonstrations. At inference, that model must execute ordinary guest computations and control flow by committing semantic records. When the program calls into the outside world, the model must request a tool action with already-evaluated arguments. A trusted harness executes the real side effect in an authorized Node or browser environment and returns the result, Promise settlement, callback, or event as a causally observed input. The model then continues the *same* guest execution.
+**Repositories:** [tracing-js-self](https://github.com/werg/tracing-js-self), [Megatoken](https://github.com/werg/megatoken), [Natlang](https://github.com/werg/natlang).
 
-This is aimed at **actual Natlang tasks**, with Megatoken as the learned semantic executor. It is not a tracing viewer, an ordinary code-generation agent, or a system that secretly falls back to running the guest program in V8 during inference.
+**Prototype baseline:** [tracing-js-self PR #30](https://github.com/werg/tracing-js-self/pull/30) is merged. Exact inspected revisions and remaining gaps are in [section 1](#1-reviewed-baseline).
 
-The desired loop is:
+## 0. The product and the first useful delivery
 
-1. Natlang supplies source, resolved imports, entry arguments, persistent context, capabilities, and task identity.
-2. Megatoken observes that immutable starting context and committed history.
-3. Megatoken emits a bounded **generated** semantic operation: computation, branch, allocation, call, mutation, suspension, or a request for a real external effect.
-4. A deterministic selected-state controller validates and commits the operation **without reading the teacher's future execution**.
-5. On an effect request, the harness validates authority, code provenance, arguments, identity/lifetime and budget; it converts the *structured request* to executable external JavaScript or a native adapter call.
-6. Node/browser executes the actual effect once. The harness independently records dispatch, asynchronous arrival, callback events, cancellations, and delivery with stable IDs.
-7. Observations and callback activations enter the model-visible continuation at a legal service boundary; their contents have **no model-generation loss**. Guest callback bodies, Promise reactions, and await continuations remain the semantic executor's responsibility.
-8. Megatoken continues until a justified terminal completion or explicit waiting, error, unsupported-feature, cancellation, or resource-limit state.
-9. For training data, an owned interpreter acts as teacher and produces auditable records. For serving, **the model's selected records** advance state; an interpreter never repairs or supplies the model's hidden steps.
+The product is an LLM that executes supported JavaScript/TypeScript by producing a readable semantic trace. Each execution receives **the code first, then an explicit invocation, then generates the execution**. When execution reaches an external operation, the model emits a tool call with already evaluated arguments. The harness performs the operation and supplies the tool result. The model continues the same invocation from that observation.
 
-**Authority invariants**
+Outside callers and events can also start execution. In Megatoken, a selected lifecycle tool call can create a child execution track. That child receives its own code context and invocation, executes through the same tool/result protocol, and returns a correlated completion to its parent.
 
-- **Guest semantics:** teacher-owned interpreter when producing labels; Megatoken plus a public selected-state controller when serving. Never covertly substitute host V8 computation for a selected model step.
-- **External reality:** capability-controlled harness only. The LLM cannot fabricate observed tool responses or mark a pending external operation complete.
-- **Tool execution:** the model proposes a typed request; the harness constructs executable code from the validated operation contract and committed arguments. **The LLM must not supply unchecked arbitrary JavaScript for unrestricted evaluation.**
-- **Provenance and transport:** one authoritative raw journal for the teacher, one public v3 semantic witness language, and one versioned tool/event protocol integrated with that language. Do not create parallel public witness formats.
-- **Replay:** exact interpreter replay injects recorded external arrivals and callbacks but does **not** rerun real native effects. Deliberate re-execution of emitted external JS is explicitly distinct and may repeat side effects.
-- **Causality:** no teacher future, final-state heap, unobserved input, private certificate or retrospective correct answer may enter model context before its legal availability.
-- **Honest scope:** unsupported ES semantics or host APIs refuse; they are not quietly executed by an untraced compatibility route and then labelled owned or admitted.
+The execution trace should make the program's behavior easy to follow: values computed, branches taken, calls made, state changed, external interactions, and reasons for suspension and resumption. It is a structured account of executed semantics, not free-form reasoning prose.
 
-## 1. Baseline, confirmed gaps, and dependencies
+### Decisions to build around
 
-### 1.1 Current foundation in tracing-js-self
-
-The active public training contracts are **semantic-execution/3**, **semantic-trace/3**, and **semantic-context/3**; private supervision is **semantic-supervision/2**. A selected-state controller, compiler, witness checker, fragmentation/scheduling, and private journal replay exist. See [EFFECTIVE_TRACE.md](EFFECTIVE_TRACE.md), [TRAINING_IMPLEMENTATION.md](TRAINING_IMPLEMENTATION.md), and [SEMANTIC_TRACE_REDESIGN_PLAN.md](SEMANTIC_TRACE_REDESIGN_PLAN.md).
-
-PR #30 introduces executable external-effect JavaScript generation, more explicit source-call and argument binding, a native settlement bridge, and a bounded example of a callback returning into an owned guest closure. This is **foundational prototype scope**:
-
-- Supported external operations are still explicitly registered, predominantly demo and console/clock operations. It is **not** a real network, DOM, filesystem, or generic Node/browser capability layer.
-- Callback transport is demonstrated for a declared argument slot on a pending operation, with primitive callback arguments and fire-and-forget return behavior. It is **not** a general listener, Event object, synchronous callback return, reentrant native call, or durable subscription implementation.
-- A live native-driver demonstration is **not** model-selected execution. The owned interpreter is still performing program semantics.
-- The effectful semantic-witness compiler, admission gate, controller and native Megatoken model loop are **not** integrated end-to-end. Existing teacher export still refuses substantial effectful/async paths.
-- The semantic record language alone does not prove that a model can use tools, resume after a callback, or obtain a correct result.
-
-### 1.2 Verified cross-repository blocker: Megatoken schema skew
-
-At the checked public revisions, tracing-js-self's PR branch requires a generated v3 request to carry **effect, operation, arguments, invocation, site, payload**. The paired [Megatoken witness parser](https://github.com/werg/megatoken/blob/main/src/megatoken/data/witness_v3.py) still lists only **effect, operation, arguments, invocation** as allowed request fields and does not require the new grounding fields. Its [semantic execution adapter](https://github.com/werg/megatoken/blob/main/src/megatoken/data/semantic_execution.py) independently recognizes a smaller, partly differently named operation catalog and a scalar-only materializer. It has no general callback-capability protocol.
-
-Therefore a green diagnostic native-import workflow **does not establish that real effectful records from PR #30 can pass both validators**. This is a P0 stop-ship condition: update the paired grammar, request/callback materialization, operation catalog and complete negative/positive parity fixtures *together*. Pin exact compatible Git commits in CI. Do not add a second permissive legacy decoder or silently drop unrecognized fields.
-
-### 1.3 Natlang is a separately incomplete integration
-
-Natlang has fresh and retained evaluator seams, and [opt-in owned evaluator wiring](https://github.com/werg/natlang/blob/main/ts-host/OWNED_TRACING_INTEGRATION.md) already installs both. Its ordinary TypeScript/native and [hybrid route](https://github.com/werg/natlang/blob/main/ts-host/HYBRID_TRACING.md) must **not** be mistaken for an owned trace. Actual Natlang compiler output, callable-folder modules, live capture identities, imported packages, browser/Node resources, and tool-use lifetimes cover much more than the current bounded interpreter.
-
-The current EvalEnvironment shape includes fresh/retained mode, execute/executeAsync, evaluateModule, fork/close, scope, path, timeout, live bindings, events and compatible EvalFailure. Consult [NATLANG_INTEGRATION.md](NATLANG_INTEGRATION.md) and the current [Natlang evaluator contract](https://github.com/werg/natlang/blob/main/ts-host/src/native/evaluator.ts). Both runtime seams must pass real integration tests before production claims.
-
-### 1.4 Preserve the existing independent evidence boundaries
-
-Keep the original interpreter's private journal, structural validator, exact replay, source-independent reference observation, public controller and model-selected evaluation as **different authorities**, even if they duplicate some checks. Deduplicate competing *representations and execution paths*, not independent correctness checks. See [REDUNDANCY_AND_EFFECT_PROVENANCE_AUDIT.md](REDUNDANCY_AND_EFFECT_PROVENANCE_AUDIT.md).
-
-## 2. Target contract: semantic operations, tool requests, and environment events
-
-**Design decision:** keep **semantic-trace/3** (or one explicitly migrated successor, if unavoidable) as the only model-generated semantic language. Define a **typed external-harness protocol** for request/ack/observed event delivery. That protocol is a transport/state-machine companion to the public witness, not a second witness grammar. The same validated tool request must feed Node, browser, teacher collection and selected inference.
-
-### 2.1 Logical record and runtime identity requirements
-
-Every externally relevant record needs these concepts:
-
-| Field / concept | Required semantics |
+| Decision | Contract |
 | --- | --- |
-| Session / task / realm / track | Exact Natlang task and fresh-or-retained execution owner; prevent cross-task callback delivery. |
-| Execution / invocation / source | Stable dynamic activation ID and source span/source-map revision when available; distinguish repeated calls at one static site. |
-| Effect ID and operation | Fresh per invocation; registered capability name and versioned signature, not an arbitrary global function. |
-| Fully evaluated arguments | Canonical scalar tags and identity-bearing graph/handle/callback references from **committed selected state**, not source text re-evaluation. |
-| Materialized call | Operation-specific typed codec, immutable payload snapshot, byte count, effective version/identity evidence and signature. |
-| Dispatch ID and idempotency key | Distinct request submission, native start and completion; retries do not silently repeat non-idempotent effects. |
-| Callback / subscription ID | Stable owned closure + environment/receiver/realm identity, capture lifetime, callback slot, authorization and explicit revocation. |
-| Async outcome | One of fulfillment, rejection, callback, subscription event, cancellation/abort or resource failure; exact original effect linkage. |
-| Scheduling | Monotonic arrival sequence, authoritative receipt ordering, service-point eligibility and owned job FIFO / microtask semantics. |
-| Observation boundary | Environment-created observation may enter the model only after the harness says it is available; loss mask is observed-only. |
-| Continuation | Selected-state checkpoint references pending promises, event buffers, active callback handles, live cells, and authorized resources. |
+| Code precedes execution | Publish immutable source/module context before the invocation that uses it. Code loading, module initialization, and calling an entry point are separate operations. |
+| Invocations are explicit | Entry or closure, receiver, arguments, realm, trigger, and dynamic invocation identity are supplied as observed context. |
+| One semantic language | Extend the existing canonical witness and derive the readable view from it. Keep transport metadata and private teacher evidence out of the normal reading view. |
+| Tool calls are real actions | One committed semantic request deterministically becomes one native tool action. Do not ask the model to independently describe the same call twice. |
+| Results are observed | Only the harness supplies external results, arrivals, event payloads, allocated track addresses, and dispatch receipts. These are not prediction targets. |
+| Events have their own identity | A tool result answers a call; a subscription event identifies a subscription; a new outside invocation identifies its trigger. Do not invent a preceding call for an unsolicited event. |
+| Tracks describe continuing work | Reuse Megatoken's dynamic lifecycle and result routing. A track is not automatically a new JavaScript realm, thread, function call, or Promise. |
+| Training and serving agree | The teacher and the learned executor use the same public interaction contract, effect broker, codecs, and scheduling rules. Their authority to produce semantic steps differs. |
+| Correctness is observable | Check returned values, shared-state changes, ordered effects, callback order, cleanup, and completion. A correct final scalar alone is insufficient. |
 
-An **effect ID is not a callback ID, an invocation ID, a promise ID, or a transport delivery ID**. Explicitly type each; never infer one from a string prefix or a final heap lookup. IDs must survive fragmenting, tracking, checkpoint restore, process handoff and Natlang retained-mode calls, subject to their declared lifetimes.
+**First useful delivery:** one small program, two different outside invocations, one asynchronous read/compute/write interaction, a readable trace, an independently checked teacher episode, and a real Megatoken-selected continuation through the same harness. Then add a tool-created child track and an externally triggered handler. Broad DOM/Node coverage follows this complete path.
 
-### 2.2 Request and observation lifecycle
+**Reading guide:** [section 2](#2-what-a-good-trace-looks-like) shows the experience; [sections 3–5](#3-one-public-interaction-contract) define the protocol; [section 6](#6-training-the-same-interaction-the-model-will-serve) defines training; [section 7](#7-delivery-order-and-exit-gates) gives the implementation order.
 
-Specify and enforce a transition table, approximately:
+## 1. Reviewed baseline
 
-    proposed -> validated -> authorized -> journaled -> dispatched
-       -> pending -> (fulfilled | rejected | streaming | cancelled)
-       -> input-arrived -> input-delivered -> owned continuation
+These are findings from source inspection, not new test-run receipts. Recheck the pins before implementing a cross-repository change.
 
-Callback/subscription traffic is a parallel sequence of **environment event arrival -> validated callback routing -> owned job enqueue -> owned invocation -> completion**, and may repeat while registered. A service may settle before or after a callback; record actual order and apply declared JavaScript scheduling rules. A listener can outlive one Promise settlement only when the capability and retained realm explicitly permit it.
-
-Important distinct moments:
-
-- A model-predicted **request** is generated; its external result is never generated by the model.
-- Validation and authorization must occur **before** any native execution; persist intent and dispatch identity before execution.
-- The environment may report arrival while the guest is not ready to receive it. Record arrival privately, then expose a separately committed delivery.
-- Callback registration does not execute a guest callback. Native JS receives a trampoline; invoking it routes an event to the harness. The selected semantic executor activates the owned closure only when scheduled.
-- The host may create a native Promise as a **transport vehicle**; that Promise is not a guest activation. Its settlement becomes one checked observation that drives the guest's owned Promise state and reactions.
-- A terminal guest return does not mean the session is complete when required effects, callbacks, jobs, timers, or subscriptions remain. Declare explicit quiescence, detached-resource and task-close rules.
-
-### 2.3 Executable JavaScript must be an output of the broker, not a new model language
-
-The LLM should predict a typed external action with evaluated arguments. The harness should deterministically generate a **JS string for the actual external invocation**, using an allowlisted descriptor. The same contract must have an equivalent safe adapter in environments where dynamic function construction is forbidden (for example browser CSP). An emitted string must not acquire authority simply because it parses as JS.
-
-Use a single effect compiler/broker for:
-
-- **Live execution:** generate one call from an already validated pending effect, run once, capture sync return/throw or native Promise fulfillment/rejection, and deliver the observation to the owned-model loop.
-- **Archive inspection:** generate ordered external calls for display/test only, with a prominent warning that executing them again repeats effects and cannot replay guest semantics.
-- **Training teacher:** use the exact same registered operation descriptor and serialization/callback ABI, but require independent teacher evidence before admission.
-- **Model-selected inference:** never consult the teacher's private effect table to compile a model action; compile solely from committed selected state and the model's request.
-
-Retire/route around any separate native-only dispatch implementation and separate primitive-only controller request materializer **after** parity is demonstrated. Never use general-purpose eval on unrestricted model-generated text or infer a request by substring searching the source.
-
-### 2.4 Error, timeout and retry semantics
-
-Specify, test and version:
-
-- Missing capability, malformed arguments, graph/identity violation and unauthorized source/realm: **reject without dispatch**.
-- Adapter synchronous throw, Promise rejection and guest callback throw: distinct provenance and guest-visible rules; never silently convert all to the same normal string response.
-- Timeout, abort and native resource cancellation: a cancellation request is not proof a started side effect was undone. Emit a terminal policy result or an explicitly unresolved disposition.
-- Process failure between journaling dispatch and observing result: durable idempotency/reconciliation or **uncertain-outcome** state; never automatically retry a non-idempotent write.
-- Duplicated, late, unknown, revoked or cross-realm callback/event: refuse or quarantine with measured diagnostics, not implicit callback resurrection.
-- Callback returning a value required synchronously by a browser/Node API: either provide a proven synchronous model/harness handshake with latency contract, or reject that API. Do **not** fabricate undefined if the API depends on the return value.
-
-## 3. External capability families to implement
-
-Do not advertise generic DOM/network/Node support through an untyped open proxy. Build an explicit, versioned capability registry with: operations; effect class (sync, async, stream, listener); argument/result codecs; callback positions and return semantics; resource authority; origin and permission policy; replay policy; cancellation and lifetime; quota; and reference fixtures.
-
-Deliver in controlled increments:
-
-| Wave | Families | Required proof |
+| Repository / inspected commit | Implemented foundation | Gap this roadmap must close |
 | --- | --- | --- |
-| A — deterministic substrate | Clock/console, key-value store, simple Promise-returning service, one-shot owned callback | One dispatch, immutable args, ordered observations, exact replay without adapters. |
-| B — HTTP/network | fetch-like request, headers/body, status, errors/abort, response body/stream handles | No hidden re-fetch, URL/origin policy, body consumption and cancellation receipts. |
-| C — DOM | Query/selection handle, text/attribute/style/property mutation, append/remove, input value and event handler registration | Correct native DOM side effects; stable element identity and mutation order; DOM Event codec. |
-| D — browser lifecycle | add/removeEventListener, event objects, timers, animation/task turns, history/storage as granted | Listener lifetime, multiple callbacks, teardown, browser task/microtask ordering. |
-| E — Node | Scoped filesystem, process-safe services, stream/network sockets, package/native-module calls as explicitly granted | Resource and path authority, stream backpressure, exact errors and durable close. |
-| F — Natlang resources | Module/service objects, callable-folder exports, live capture cells, linked handles and persistent sessions | End-to-end module/cache/identity and cross-call event ownership tests. |
+| tracing-js-self [`e31ae33`](https://github.com/werg/tracing-js-self/commit/e31ae33d3ce4a7258d64393c7982445d40c0b297) | Public `semantic-execution/3`, `semantic-trace/3`, `semantic-context/3`; selected-state controller, renderer, private journal/replay; merged native effect/Promise/callback prototype. | Controller requires exactly `code` then `input`, creates an implicit root invocation, and accepts only `t0`. The selected effect path consumes authorized fixtures. General invocation ingress, dynamic tracks, persistent callbacks, live model dispatch, and effectful teacher admission are incomplete. |
+| Megatoken [`644cf7d`](https://github.com/werg/megatoken/commit/644cf7d3c7f7f83b7e48883b1df8a6cd1189d674) | Dynamic track creation/assignment/waiting/completion, committed lifecycle tools, ready queues, result routing, and track context management. | Its semantic importer still fixes lanes to `t0`–`t7`, constructs eight tracks, expects `code`/`input` on `t0`, and permits only a narrow observation/result pattern. It does not bind this semantic execution protocol to the dynamic runtime. |
+| Natlang [`38f1062`](https://github.com/werg/natlang/commit/38f10624bcddd2d7eae7ed86310da1fe8d0ebac3) | Fresh/retained evaluator seams and opt-in bounded owned wiring; stream/event interface decisions. | Real model execution needs asynchronous entry/module integration, broader live-resource semantics, and representative task tests. Synchronous `execute` and `evaluateModule` cannot generally be implemented by an asynchronous model loop without caller changes. |
 
-Where a native API exposes stateful objects or methods, use **opaque capability handles** with explicit operations and release rules. Avoid serializing DOM nodes, sockets, file handles, browser Events or function objects as ordinary JSON trees. Preserve aliasing, identity, provenance and ownership across calls.
+### Immediate compatibility blockers
 
-A complete claim for the intended Natlang task scope requires an audited inventory of external operations actually exercised by representative Natlang programs. Every observed operation must be classified as supported, explicitly refused, or not yet implemented; no silent fallback.
+1. **Request grammar:** the tracer requires `effect`, `operation`, `arguments`, `invocation`, `site`, and `payload`. The pinned Megatoken witness parser does not allow `site` or `payload`, and its request materializer has a smaller operation catalog and scalar-only boundary. A diagnostic importer pass is not proof that these real effectful requests interoperate.
+2. **Invocation and track assumptions:** change the tracer's single-lane controller and scheduler together with Megatoken's fixed-lane importer, initial prefix rules, completion policy, and observation validation. Merely adding `track_id` to a message will not integrate them.
+3. **Selected callbacks:** the native prototype supports declared callback slots, primitive callback arguments, and fire-and-forget callbacks only while the originating effect is pending. The selected controller does not yet provide the corresponding callback materialization/lifecycle. Registration that survives call completion is additional work.
+4. **Training:** the teacher compiler still refuses important request/observe/await/settlement paths. Wire support, interpreter demonstrations, and a green parser are distinct from admitted training data or learned execution.
+5. **Tool decoding:** Megatoken's generic tool decoder accepts structured tool JSON, not a `request ...` witness line. A deterministic bridge into its committed-action boundary is required.
 
-## 4. Fully general callback and event reentry
+Source anchors: [tracer grammar][tracer-format], [controller][tracer-controller], [compiler refusals][tracer-compact], [Megatoken witness parser][mega-witness], [semantic importer][mega-importer], [native tool decoder][mega-tools], and [Natlang evaluator][natlang-evaluator].
 
-PR #30's bounded callback slot is a proof of concept. Replace the pending-effect-only assumption with a true callback lifecycle.
+Use [Megatoken's current implementation status][mega-status], [lifecycle source][mega-lifecycle], and [track-context contract][mega-context] for current behavior. The dynamic-tracks design plan describes a reviewed starting point; older generation documentation is not authoritative for today's track topology. Existing lifecycle code does not establish trained delegation or semantic-execution quality.
 
-**Work required**
+## 2. What a good trace looks like
 
-1. Register callback capabilities at the actual guest function value and capture current invocation, receiver/this semantics, lexical cells, module realm and identity.
-2. Define callback argument/result codecs independently of ordinary effect argument JSON; support primitives first, then descriptor-only graphs and typed Event/Node/resource handles. Reject getters/proxies and cross-origin/realm references unless explicitly authorized.
-3. Support subscription ID, callback ID, removal token, event type, ordering index, active/paused/revoked state, one-shot vs persistent policy, and retained-session restoration.
-4. Distinguish callback enqueue, activation, nested/recursive call, completion, and return/throw. Preserve the precise callback's captured closure and its real selected-state mutations.
-5. Handle callbacks arriving during the current guest turn, while suspended, after cancellation, or after the enclosing effect settled. State whether they buffer, await service point, or are invalid.
-6. Support events from DOM listeners, Node EventEmitter-like services, timers, streams, and promise handlers; use **one callback ABI and scheduler** rather than API-specific backdoor invocation.
-7. Handle native APIs requiring synchronous return values as a separate, explicit supported subset. Generic remote asynchronous model inference cannot synchronously satisfy an arbitrary browser event callback.
-8. Prove that no V8 callback trampoline directly evaluates guest function source. Callback bodies are generated/selected semantic work, not native host code executed outside the model.
-9. Add unsubscribe, session close, resource cleanup and late-event quarantine tests. A callback can never be delivered to a new task merely because a string ID was reused.
+### 2.1 Code, invocation, tool result, continuation
 
-**Acceptance:** A model-selected execution can register a DOM listener, receive multiple typed events from a real browser fixture, mutate its captured state through the same owned invocation semantics, initiate another external effect, unsubscribe, and terminate with correct event order. Rejections, stale events, identity aliasing and retained-session close must behave deterministically.
+This is a **target readable rendering**, not literal v3 wire syntax. `host.read` and `host.write` below are proposed fixture bindings with declared Promise-returning signatures; they are not claims about today's registered API catalog. Full canonical fixtures are a deliverable of M1.
 
-## 5. Promise, job, suspension and continuation semantics
+First provide the code and its capability signatures:
 
-Bring the owned runtime's bounded async semantics all the way through the teacher projection, witness compiler, serving controller, Megatoken recurrence and external harness. Merely recording native Promise resolution into a teacher-owned VM is insufficient.
+```js
+async function increment(key) {
+  const current = await host.read(key);
+  const next = current + 1;
+  await host.write(key, next);
+  return next;
+}
+```
 
-- Model-visible operations must cover guest Promise creation, resolution/rejection, adoption/thenables, reaction registration, await suspend/resume, queueMicrotask, try/catch/finally and completion propagation where supported.
-- Distinguish host task arrival, microtask/reaction readiness and the model's semantic next-step choice. External arrival cannot arbitrarily preempt guest execution.
-- Preserve microtask FIFO, callback execution order, settled-promise reactions, cleanup/finally substitution, detached effects and required quiescence.
-- Add explicit buffered-delivery and fair scheduling policies for independent streams/tracks, without granting an episode access to future observations.
-- Make every continuation serializable from **only model-selected committed state**: live frames, captured cells, heap topology, pending handlers, promises, jobs, effect requests, callback subscriptions, event queues, source identity and capability registry snapshot.
-- Checkpoint at complete semantic boundaries, never at arbitrary Megatoken physical byte fragments. Restore and compare byte/identity equivalence; if limits are exceeded refuse rather than dropping required state.
-- Cancellation and timeouts must propagate to harness resources and owned continuations with explicit receipts; no phantom resolution.
+Then provide `increment("counter")` as a separate invocation with completion mode `await-returned-promise`. The outside task requests the eventual value; the JavaScript call itself still returns an owned Promise. A delayed fixture response produces this reading view:
 
-**Acceptance fixture set:** two concurrent HTTP effects settle B-before-A; Promise.all and finally are correct; callback C arrives between Promise settlements; callback causes a second effect; out-of-order and duplicate arrivals are rejected/queued appropriately; rollover and crash recovery preserve pending work; replay invokes zero real services.
-
-## 6. One Megatoken-native training and serving protocol
-
-### 6.1 Cross-repo schema migration is the first blocking delivery
-
-Update [megatoken witness_v3.py](https://github.com/werg/megatoken/blob/main/src/megatoken/data/witness_v3.py), [semantic_execution.py](https://github.com/werg/megatoken/blob/main/src/megatoken/data/semantic_execution.py), its tests, the tracer format/controller and the pinned CI workflow as a **single versioned contract**:
-
-- Agree on required request fields, operation signatures, callback-capability tokens, canonical byte encoding, graph handles and legal observation fields.
-- Include source span validation, call ownership, resource limits, effect ordering, no hidden result, and capability-bound delivery checks. Each language implementation must independently reject the same adversarial fixtures.
-- Either amend v3 in a proven compatible migration or issue one **new canonical version** for both repositories. Do not maintain two active production writers/readers or quietly accept old malformed requests.
-- Map physical record metadata to generation vs observation authority, action dependencies, ownership, effects, track, source and task lineage without exposing the private teacher sidecar.
-- Pin SHA, tokenizer fingerprint, schema/catalog versions and producer/consumer fixture digests; fail CI if exact bytes or field meanings diverge.
-- Verify actual effectful plus callback-bearing examples through the production tokenizer/consumer, not a scalar-only or diagnostic byte-codec smoke test.
-
-### 6.2 Real selected Megatoken recurrence
-
-Implement a model-facing runner with the following transaction:
-
-1. Render the initial source/static context, input graph, capabilities and prior selected state.
-2. Ask Megatoken for the next bounded logical semantic record/group using its **actual** production inference adapter, not teacher text replay.
-3. Parse canonical bytes and validate record schema, current dependencies and available identities.
-4. Commit atomically with the sole selected-state controller. On inconsistency record the error; **never replace the record with the teacher answer**.
-5. If it is a tool request, enqueue it in the harness; do not sample the next guest step until the required observation/scheduling condition is met.
-6. Integrate harness observations as observed records with correct loss mask and causal order.
-7. Resume the exact Megatoken session with same track/meridian identity, model recurrence and committed context. Repeat until terminal outcome/quiescence.
-8. Persist reproducible selected trajectory, exact bytes, tokenizer counts, tool and callback receipts, continuation hashes, and classification of each failure.
-
-Keep logical semantic records distinct from physical Megatoken fragments, meridians and generation groups. A meridian cannot contain a future external observation visible to the request that caused it. Physical splitting does not create a JS scheduling boundary. Keep strict real-token, model-history, latent-state and continuation budgets. The source of truth for byte codecs and model limits is the pinned consumer, **not** a hand-written mock.
-
-### 6.3 Training supervision
-
-- Generated semantic computations, choices, state transitions and tool requests receive the declared model loss.
-- Source, initially observed inputs, tool results, callbacks and environmental events are **observed**, not prediction targets.
-- Record all mandatory receipt fields so the learner can condition on and react to actual event arrivals, including negative outcomes.
-- Support continuation after multiple tool calls and intermittent host events in **one causal episode**; no teacher-completion leakage through prepacked future meridians.
-- Train explicit waiting, request/observe alternation, notification handling, subscription cleanup and repeated tool-use decisions rather than only single-call static traces.
-- Prevent shortcut learning from answer-bearing fixtures, final-state hashes or post-hoc proof artifacts shown as input.
-
-## 7. Teacher generation, independent reference and corpus admission
-
-Implement a real effectful **teacher** pipeline while retaining strict separation from inference.
-
-### 7.1 Capture and certification
-
-- Execute supported source in the owned interpreter and collect one complete authoritative journal, source/static inventory, effective invocations, exact evaluated arguments, every external dispatch, private arrival, legal delivery, callbacks/jobs, completion and reachable final state.
-- Use the same capability registry and harness request/observation protocol as inference. Reference fixtures and recorded native responses are evidence, not input to the future model.
-- Extend normalization, compaction, source-guided rewrite and private certificates to **all effective external effects and supported async control**. Do not elide a side effect, callback-triggered mutation, or cleanup simply to shorten a witness.
-- Certify source-level argument computations, callback/closure identity and invocation provenance; record conservative unverified/refused categories for inaccessible or ambiguous source behavior.
-- Validate against independent JS execution (Node V8 and real browser where applicable) with an **independently controlled external fixture schedule**. Owned exact replay is necessary but insufficient for independent semantic correctness.
-- Produce a complete selected public replay through the v3 controller before admission. Verify observations, ordered effects, callback/event sequence, outcome, graphs and termination.
-- Preserve raw journal, source hashes, tool fixture receipts and private proof objects in an access-controlled audit sidecar, never in public prediction context.
-
-### 7.2 Deterministic fixture environments
-
-Build capability-specific emulators for CI and training:
-
-- Network fixture with HTTP statuses, failure/retry, streaming chunks, redirect/abort and deliberately out-of-order replies.
-- Browser fixture with DOM snapshots, scripted clicks/inputs, event phases, listener subscriptions, timers and mutation assertions.
-- Node fixture with isolated/scoped filesystem, clock, timers, streams and explicit environmental faults.
-- Resource-handle fixture for identity, aliasing, disposal, cancellation and stale callback tests.
-
-The independent reference must not borrow model-selected values to decide future fixtures. If a selected request differs from the authorized fixture, report **request mismatch**, not the correct answer to some other request. Use hermetic, disposable targets; do not perform uncontrolled real network or user-visible DOM writes while scoring experiments.
-
-### 7.3 Admission and lineage
-
-Define explicit source provenance, license, trust tier, runtime capability profile, fixture digest, producer SHA, reference SHA, proof status, split family, tokenizer SHA, public transcript hash, callback/event counts, outcome, and reason for refusal. Distinguish:
-
-- Source parsed / executed by owned teacher.
-- Exact owned replay and structural journal validity.
-- Independent JS/reference effect and outcome agreement.
-- Source-level witness certificate validity.
-- Public selected-controller acceptance.
-- Megatoken-native format and causal visibility acceptance.
-- **Admitted** training example (all required gates), versus locally verified diagnostic only.
-
-Deduplicate by source family/task/fixture ancestry **before** train-validation-test split. Keep continuations and all variants of a program or fixture in one split. Keep unsupported, failed and over-budget candidates in a reported denominator. Do not relabel old versions or invent admission receipts.
-
-## 8. Natlang integration: actual execution paths and task fidelity
-
-### 8.1 Bind the model-selected executor to both evaluator seams
-
-Implement an explicit semantic-execution environment satisfying Natlang's real EvalEnvironment contract, including:
-
-- fresh and retained realm creation, closure/capture identity, source paths and TypeScript source maps;
-- execute and executeAsync, compatible result/events/logs and **the actual shared EvalFailure class**;
-- module evaluation, imports, exports, package capabilities, module caching and callable-folder persistent realm;
-- fork/close, abort/timeouts, live object and resource authority, cancellation and after-close late-event disposal;
-- the observable Natlang scope and compiler outputs used by real tasks, not only handcrafted minimal JS examples.
-
-Install the selected-model environment at **both** Natlang per-task factory and retained module realm. Preserve explicit opt-in in early milestones; production cutover requires running the same task suite through the model execution contract. An ordinary native TypeScript fallback may remain an explicitly labelled compatibility option for users, but its outputs are **native-untraced**, are not trained as model-owned semantic execution, and may not be silently used as a correct-looking model continuation.
-
-### 8.2 TypeScript and module semantics
-
-Handle actual Natlang-generated ES2022/TS, named imports, callable folder exports, persistent lexical cells, mutable bindings, async function entries, callback references, Node/browser native packages and source mapping. Share source lowering and module graph helpers rather than proliferating a static-module linker, evaluated-module linker and Natlang-specific executor with incompatible behavior. Preserve the different supported profiles until tests justify converging them; explicitly refuse unsupported grammar.
-
-### 8.3 Natlang application result contract
-
-Every task must return either a valid declared result with ordered effects and completion receipts, or an honest unsupported/failure/timeout/cancelled outcome. Tests must compare the task-visible result, live state mutations, emitted Natlang host events/logs, module state, persisted resources and all external effects; a correct scalar return with wrong DOM/network behavior is **incorrect**.
-
-### 8.4 Browser-specific delivery
-
-Implement an explicit browser adapter (worker/session transport where needed), DOM capability registry and signed/opaque handles; avoid unguarded eval/Function in CSP-constrained contexts. The emitted JS string should remain **inspectable** and executable in an authorized engine, with a policy-approved equivalent dispatch path in restricted contexts. Route browser Events and Promise settlements into the same protocol as Node. Preserve page/context origin boundaries, permissions, listener teardown, navigation/session reset and worker disconnection.
-
-## 9. Durability, security and real-world operations
-
-This architecture operates on real external systems and must be secure by design:
-
-1. **Capability authorization:** explicit operation allowlist, host/origin/path/realm scoping, grant expiry, quotas and per-task permission decisions. The model may not reach arbitrary globals, packages or network destinations through a generated JS string.
-2. **Value and handle codecs:** typed and depth/budget-limited. No getters/toJSON/coercion executed merely to serialize data. Real native resources remain opaque; preserve origin and lifetime.
-3. **Secret isolation:** authentication stays in trusted harness state. Training/public observations are scrubbed of secrets and credentials. Do not publish raw native handles or private journal state.
-4. **Idempotency and crash consistency:** durable dispatch IDs, ordered event log, atomic intent/receipt persistence and explicit unknown-outcome reconciliation. Exactly-once externally observable effects are not claimed unless the underlying service provides an idempotency guarantee.
-5. **Cancellation:** abort starts and guest continuation, unsubscribe listeners and release resources; late events are quarantined. No unowned background work changes a sealed training record.
-6. **Scheduling/backpressure:** bounded queues, fairness between independent tracks, streaming flow control, time budgets and controlled service points; disclose drops/overflows, do not hide them.
-7. **Prompt/tool injection:** external text and DOM content are untrusted **data**, not instructions that grant new capabilities or modify the public trace grammar.
-8. **Isolation:** Node vm is not a sandbox for arbitrary hostile JS. Real teacher/reference execution uses isolated workers/processes or browser contexts with restricted capabilities and disposable fixtures.
-9. **Auditability:** retain immutable code/operation digests, source snapshots, versions, graph identities, authorization, dispatch and external-event receipts. Observations remain visible to the model only when delivered.
-10. **Human-approved high-impact operations:** define policy/confirmation gates for destructive filesystem changes, irreversible messages/transactions, credentials and external writes; fail closed on missing approval.
-
-## 10. Remove parallel paths by migration, not by renaming
-
-Maintain **one canonical public witness**, **one selected controller**, **one effect broker/code emitter**, **one native callback/event ABI**, and **one training/inference interaction contract**. Work against these candidates:
-
-| Candidate | Migration | Removal condition |
+| Order | Author / kind | Track `worker`, invocation `i1` |
 | --- | --- | --- |
-| Separate archive-only external-call emitter vs live request compiler | Share registered operation descriptor, argument codec and JS generator; archive replay is an explicit inspection mode. | Same output/payload/identity tests across modes, no native dispatch bypass. |
-| Primitive-only external request match vs identity-aware materializer | Use one canonical request materializer over committed selected graph; keep separate independent validator as adversarial authority. | All reference, callback and graph fixtures pass; no forbidden coercion. |
-| Demo callback branch vs browser/Node callbacks | Move to shared callback registry, subscription lifecycle, scheduler and codecs; demo becomes fixture adapter. | EventEmitter/DOM/timer/stream parity and late-event refusal. |
-| Public causal prefix vs training v3 projection | Migrate active consumers to one public semantic projection; keep raw prefix as offline diagnostic only until consumers are accounted for. | Proven causal/visibility parity and recorded consumer migrations. |
-| Separate training exporter/controller/evaluator variants | Migrate all producers and Megatoken importer to the canonical v3/successor contract; remove format selection/fallback. | Cross-repo byte and behavior compatibility suite is green. |
-| Static ESM, evaluated ESM and Natlang module linking | Consolidate shared resolution, source lowering and identity rules without erasing distinct semantics; unify where a tested superset exists. | Actual Natlang module suite plus evaluated/static conformance parity. |
-| Ad hoc native service driver vs Natlang tool handling | Use one broker with Node/browser adapters and one authoritative event log. | No untraced tool-call path on the selected-model route. |
-| Old archive/legacy training formats | Offline migration with pinned historical reader only; production refuses old formats. | No active producer, importer or serving dependency. |
+| 1 | Observed code | Program `counter@hash`; source above, imports, sites, capability signatures. |
+| 2 | Observed invocation | Enter `increment("counter")`, receiver `undefined`, realm `r1`, outside trigger `trigger1`. |
+| 3 | Generated tool call | `c1: kv.read("counter")`; bind the declared asynchronous return to owned Promise `p1`. |
+| 4 | Generated suspension | Await `p1`; this continuation is waiting and the async call returns its owned result Promise `p0` to its caller. |
+| 5 | Observed tool result | `c1` fulfilled with `7`; settle `p1` and make its continuation eligible. |
+| 6 | Generated continuation | Resume; bind `current = 7`. |
+| 7 | Generated computation | `next = current + 1 = 8`. |
+| 8 | Generated tool call | `c2: kv.write("counter", 8)`; bind owned Promise `p2`. |
+| 9 | Generated suspension | Await `p2`. |
+| 10 | Observed tool result | `c2` fulfilled with `undefined`. |
+| 11 | Generated completion | Resume; the body returns `8`, fulfilling `p0`; the outside invocation completes with `8` under its declared completion mode. |
 
-**Intentionally keep separate:** independent host-request validation, journal structural reconstruction, exact replay, independent V8/browser reference oracle, public witness consistency checker, and final model-selected outcome comparison. Sharing execution authority between these would erase correctness evidence.
+The two tool calls have source-call spans and immutable evaluated argument snapshots. The renderer may combine adjacent display lines, but the canonical records still retain every required transition and dependency. Harness acceptance/dispatch receipts remain inspectable without crowding this default view.
 
-## 11. Work packages, deliverables and blocking gates
+A later invocation `i2` reuses the program identity and supplies new arguments. It does not resend the source as a new program or reinitialize a retained module. If source bytes have left the track's usable context, a checked source read/handoff must restore them before execution resumes.
 
-Do **not** turn this into a feature checklist where all rows are marked complete after one demo. Each milestone requires merged code, real tests, CI receipts, scope/refusal accounting and pinned cross-repository versions.
+### 2.2 Several pending operations must remain possible
 
-| Order | Deliverable | Primary repo(s) | Stop/go evidence |
-| --- | --- | --- | --- |
-| **M0** | Freeze capability/profile inventory; baseline PR #30 status; document exact API, grammar and known skips | tracer / Natlang / Megatoken | Checked current revisions, executable corpus and refusal matrix. |
-| **M1 — P0** | Resolve request/event/callback schema skew and migrate both validators, operation catalogs and physical import | tracer + Megatoken | Shared positive/negative effectful fixtures accepted/rejected identically; pinned compatible SHAs. |
-| **M2 — P0** | One typed selected tool-call broker, authorization, generated JS emitter, real result/event ingestion | tracer + harness | Model-selected request invokes exactly one authorized native effect; no interpreter fallback. |
-| **M3 — P0** | Persistent callback and event lifecycle, identity, cancellation, event codecs and async scheduling | tracer + Node/browser | Multi-event listener and out-of-order Promise fixtures; after-close and duplicate rejection. |
-| **M4** | Network, DOM, timers, Node and Natlang resource capability adapters | harness + Natlang | Real external fixtures, bounded all-family parity, side effect/accounting audit. |
-| **M5 — P0 for training** | Effectful/async teacher compiler, source certificates, independent V8/browser schedule oracle and strict admission | tracer | Every admitted trace has ordered effect/outcome and certificate receipts; all refusals counted. |
-| **M6 — P0 for serving** | Native free-running Megatoken semantic-step loop, observation injection, selected continuation and checkpointing | Megatoken + tracer | Real model-selected trajectory through multiple tools and callbacks, without teacher repair. |
-| **M7** | Full Natlang fresh/retained evaluator wiring, TS/module/live graph and lifecycle correctness | Natlang + tracer | Representative Natlang applications pass result/effects/event identity checks. |
-| **M8** | Production-quality episode preparation, tokenizer/physical grouping, train/eval splits and lineage | Megatoken + tracer + Natlang | Independently admitted corpus and no causal leakage with realistic event histories. |
-| **M9** | Model training, held-out benchmarks, ablations and production acceptance | all three | Reproducible checkpoint, inference logs, metrics, and no untracked external executions. |
-| **M10** | Remove deprecated parallel routes and align docs, consumer pins, deployment policy | all three | Repository-wide searches and consumer migration receipts; no ghost compatibility route. |
+```js
+async function total() {
+  const a = host.read("a");
+  const b = host.read("b");
+  return (await a) + (await b);
+}
+```
 
-**Required ordering:** M1 before admitting effectful data; M2 and M3 before claiming browser/Node callback support; M5 before effectful supervision; M6 before claiming an LLM has learned execution; M7–M9 before Natlang production claims. Independent M4 adapter development and negative tests may proceed earlier, but unsupported effects stay refused.
+The trace must issue both calls before waiting for `a`. If `b` settles first, record that result and its Promise state; resume the source continuation when `a` becomes available. Awaiting already-fulfilled `b` still follows the owned Promise-reaction/microtask rules. **Issuing a Promise-returning tool call does not imply awaiting it.** Transport acceptance, guest synchronous return, eventual settlement, and owned continuation are separate facts.
 
-### Per-PR evidence template
+### 2.3 Readability acceptance
 
-Every integration PR should include: exact capability scope; schema/version changes; public vs private field additions; side-effect and callback lifecycle table; example generated JS; source/teacher and selected-model tests; controlled native reference tests; counterexamples/refusals; artifact fingerprints; cross-repo compatibility pin; CI receipt links; rollback/migration procedure; and updated docs. For an unmerged upstream PR, state **not yet integrated** rather than implying main-branch readiness.
+Extend the existing [public renderer][tracer-render], which already consumes committed records without consulting a teacher future. Its default view must let a reader answer:
 
-## 12. Required adversarial and end-to-end test matrix
+- Which code and invocation is executing, and what triggered it?
+- Which expression produced this value, which branch was taken, and which object/cell changed?
+- What external call was made with which evaluated arguments, and which result belongs to it?
+- Why did execution wait, and which observation made it runnable?
+- Which parent, child, callback, or event caused the next activation?
+- Did the invocation return, fail, remain waiting, or finish while a retained subscription stayed alive?
 
-Establish an executable matrix covering each axis, with both allowed and rejected samples. At minimum:
+Use source names/snippets alongside stable identities; indent guest calls; distinguish generated work, provided inputs, tool results, and events. Show mutations as selected-state changes, preserving aliases. Provide chronological and per-track views with links between calls/results and triggers/activations. A causally grouped display must not imply a different actual delivery order.
 
-**Value/call provenance:** string vs number, signed zero/NaN, arrays/objects, aliases, cycles, sparse holes, null prototype, nested and computed call forms, evaluated getters/coercions, stale mutation snapshots, forged site/receiver/invocation, forged callback ID, ungranted operation, reordered/extra arguments.
+Keep VM stack bookkeeping, private journal IDs, byte fragments, and redundant whole-heap dumps out of the default view. Expand bounded pure computations when useful, but never compact across an external call, observation, behavior-changing branch, relevant mutation, callback boundary, or cleanup that changes completion. Preserve the current bounded-expression discipline (currently eight operators / 32 nodes) until measured evidence supports a change.
 
-**Scheduling:** synchronous return and throw, Promise fulfillment/rejection/thenable adoption, two competing promises settling out of order, nested awaits, finally cleanup, queueMicrotask, multiple callbacks, callbacks before/after settlement, callback-induced nested effect, clock/timer task turns, callback throw, stream chunks/backpressure, cancellation, duplicate/late arrivals and detached effects.
+Keep golden examples for pure computation, aliasing, a caught error/finally, one tool round trip, out-of-order results, repeated events, and parent/child execution. Review readability and semantic fidelity together; report generated tokens, observed tokens, and transport overhead separately.
 
-**DOM and Node:** real DOM mutation, event capture/bubble ordering, listener install/remove, multiple event dispatches, navigation/frame reset, native HTTP response and rejected fetch, network abort, filesystem open/write/close, stream resource cleanup and output audit.
+## 3. One public interaction contract
 
-**Natlang:** fresh eval, retained modules, two module importers of the same mutable cell, callable-folder function, TS source mapping, live capture mutation, nested Natlang/model call, fork/close, timeout, scope capabilities, browser worker/Node difference and accurate EvalFailure events/logs.
+### 3.1 Version and authority
 
-**Training/inference parity:** teacher episode -> independently verified public v3 -> exact native Megatoken import -> actual selected free-running recurrence -> tool dispatch -> observation injection -> same selected state after rollover. Perturb a hidden future fixture and prove the earlier visible prefix is unchanged. Independently vary the selected request and prove the harness does not return the teacher's answer for the wrong request.
+Adopt one coordinated successor to the current public contracts: **target `semantic-execution/4`, `semantic-trace/4`, and `semantic-context/4`**, plus a correspondingly versioned selected-state continuation. These names reserve the proposed migration; no v4 implementation is claimed here. Invocation/event authority, dynamic track ownership, and completion semantics are breaking changes and must not be silently added to v3.
 
-**Security and resilience:** malicious model-supplied operation names, payload injection, oversized data, hostile callback args, proxy/getter descriptors, cross-task/cross-origin handle, service crash, ambiguous request timeout, idempotency replay, crash between dispatch/receipt, revoked subscription, lost worker and incomplete checkpoint.
+Publish one typed harness envelope alongside that witness. It carries routing, identities, lifecycle and delivery receipts; it is not another language for generating guest computations. Generate the JS/Python schema fixtures from the same declared contract, retain independent validation, and pin schema, capability catalog, producer/consumer SHAs, tokenizer identity, and fixture digests. Reject incompatible artifacts; regenerate data and recollect affected model actions. Historical readers remain offline migration/analysis tools.
 
-### Metrics and failure taxonomy
+Three execution modes share this contract:
 
-Report at least:
+| Mode | Who supplies semantic work? | Who supplies external observations? |
+| --- | --- | --- |
+| Teacher collection | Owned interpreter and certified projection | The fixture/live harness, with independently captured receipts. |
+| Exact replay | Recorded committed operations | Recorded observations; **zero native effect execution**. |
+| Model serving | Actual selected Megatoken outputs and selected-state validation | The same broker and environment adapters used during collection. |
 
-- Task correctness: completion, reachable graph/state, ordered real external effects, callback/event order and resource cleanup.
-- Semantic correctness: first invalid/inconsistent witness, callsite/argument divergence, unsupported opcode, selected-controller rejection and completeness.
-- Tool correctness: authorization error, dispatch count, argument/payload mismatch, duplicate/late response, callback identity failure, promise and native error disposition.
-- Learning quality: actual model-selected success rate, no teacher repair, generated vs observed tokens, physical records, prediction groups, required tool turns, time to completion, peak memory, and measured compute per correct task.
-- Coverage: attempted, supported, unsupported, projection-refused, resource-limited, admitted and test-split counts by source family and external capability.
-- Operations: effect retries, outstanding/uncertain outcomes, cancelled resources, leaked listeners, callback queue depth and recoverable checkpoints.
+The model cannot manufacture an observation, use a private final heap, or receive a teacher correction as an unexplained continuation. Validation may reject a selection or report inconsistency; it never replaces the model's answer with a reference answer. Keep invalid selected output auditable while preventing it from committing an unauthorized semantic transition or external action.
 
-Zero hidden host side-effect executions, zero future-observation leakage, zero untracked native fallback, zero false-admitted examples, and zero side effects during exact replay are **hard correctness gates**, not average-performance metrics.
+### 3.2 Program context and explicit invocation
 
-## 13. Learning experiments and final acceptance
+Separate the reusable program from the dynamic activation:
 
-Follow [SEMANTIC_V3_MODEL_EXPERIMENTS.md](SEMANTIC_V3_MODEL_EXPERIMENTS.md) for pinned model/split/codec receipts and the existing seeds **17, 29, 43**. Preserve the frozen common-support cohort and explicit historical baseline, and add a separate **effectful, callback, async and Natlang task** cohort. Compare:
+| Object | Required information |
+| --- | --- |
+| Program context | Immutable program/module ID and digest, source bytes or available source reference, resolved dependency identities, entry/closure inventory, static sites, source maps, language profile, and capability signatures. |
+| Realm state | Fresh or retained policy; authoritative selected-state/checkpoint identity and version; module initialization status; captured cells, owned graphs, and authorized resource references. |
+| Invocation input | Invocation ID; program/closure and entry; receiver; evaluated argument graph; target realm and track binding; trigger/cause; completion mode (`call-return`, `await-returned-promise`, or declared required quiescence); requested deadline and bounds. |
+| Trigger | Direct caller, subscription/event ID, selected parent action, or continuation dependency. Include a stable ingress/delivery key for duplicate detection and a task revision for stale-work rejection. |
+| Authority | Runtime-established grants and ownership. A caller's or model's requested capabilities can only be narrowed by the host policy, not self-authorized by a payload. |
 
-1. Conservative explicit semantic steps vs source-guided compact witnesses and different bounded expression budgets.
-2. Same external actions/observations with outcome-only or no-intermediate-witness control.
-3. Teacher-forced loss vs **actual free-running model-selected execution**.
-4. Pure-JS semantic accuracy separately from external action selection, effect argument exactness, callbacks and final task correctness.
-5. Fixed-example, fixed-token and (where measurable) fixed-compute budgets; report actual costs, not byte counts as token proxies.
-6. Held-out source families, unfamiliar APIs within a registered capability family, longer tasks, larger legal graphs, deeper callbacks and multiple outstanding resources.
+The model-visible sequence is **program context, invocation/state inputs, generated execution**. An invocation may carry a reference to an earlier visible program, but a hash alone is not sufficient context for executing unseen source. Persist exact code identity through checkpointing and handoff.
 
-Run the **actual production Megatoken inference path** with checkpoint and tokenizer receipts. A correct interpreter demonstration, mocked controller trajectory, green importer, or selected teacher trace is **not a trained-model outcome**.
+Loading source is inert. Module initialization, when needed, is a separate owned activation with its own trace and effects, completed before dependent entry execution. Retained calls reuse initialized state and live cells. Restoring a checkpoint must not rerun initialization and repeat its effects. A code change creates a new program revision with an explicit state migration or fresh realm; do not silently apply old captures to new code.
 
-### Completion definition
+### 3.3 Message families and model loss
 
-Only declare this roadmap complete when all boxes are true:
+The names here describe the target contract; M1 freezes their exact canonical fields and physical encoding.
 
-- [ ] One canonical public semantic witness and synchronized tracer/Megatoken validators are in production.
-- [ ] A real model-selected semantic request becomes a vetted external JS/native call with exact committed arguments, without raw model eval.
-- [ ] Every admitted external side effect and its response/event is causally recorded, capability-authorized and delivered only when available.
-- [ ] Real browser/Node callback events reenter the selected model's **owned** closures with durable identity, listener lifecycle and correct scheduling.
-- [ ] Promise fulfillment, rejection, await, reactions, cleanup and required quiescence work across live inference and teacher generation.
-- [ ] Automatic continuation preserves pending tool calls, captured closures, callback subscriptions, real resource handles and legal queues without future knowledge.
-- [ ] Natlang's fresh and retained execution seams, real TS/module programs and task outcome contracts are validated on the selected-model path.
-- [ ] Independent JS/browser reference outcomes and actual ordered side effects are checked for every admitted supported family.
-- [ ] Native Megatoken episodes have correct observed/generated loss, causal dependencies and real tokenizer/physical boundaries.
-- [ ] A real trained Megatoken model completes held-out Natlang tasks with external calls and callback/Promise feedback; all baselines, costs and failure categories are reported.
-- [ ] Unsupported families and permission failures are explicit and counted, never silently routed to native evaluation.
-- [ ] No redundant active witness, broker, callback or untraced serving path remains; independent correctness authorities are preserved.
-- [ ] CI includes the full regression and cross-repo compatibility matrix, pinned SHAs, signed/fingerprinted artifacts and reproducible reports.
-- [ ] Security, cancellation, idempotency, teardown and incident/rollback procedures are documented and exercised.
+| Family | Authority and loss | Meaning |
+| --- | --- | --- |
+| `code` / input-state context | Harness-observed; no generation loss | Exact available program and initial/retained inputs. |
+| `invoke` | Harness-observed; no generation loss | An admitted outside/child/callback activation. Internal synchronous guest calls still use generated `call`. |
+| Existing semantic operations | Generated; semantic loss | Computation, choice, bind, allocation, read/write, call, completion transfer, return/throw. |
+| `request` / tool call | Generated; action loss once | A typed external action with committed arguments and provenance. Its native tool envelope is a deterministic projection. |
+| Acceptance / tool result / `observe` | Harness-observed; no generation loss | Dispatch disposition, synchronous return/throw, eventual Promise settlement, or declared stream part. Correlated to the initiating action. |
+| `event` | Harness-observed; no generation loss | A distinct notification or external trigger with origin, payload, ordering and routing identity. |
+| Scheduling and lifecycle receipts | Harness-observed; no generation loss | Actual readiness, delivery, allocated addresses, task revisions, cancellation or resource disposition. |
+| Owned job / await / resume work | Generated; semantic loss | The executor's legal reaction to an eligible observation. The scheduler constrains eligibility and ordering. |
+| Selected lifecycle tool action | Generated when model-selected; action loss once | Create/assign/wait/complete/cancel work through Megatoken's existing lifecycle contract. Host-triggered lifecycle changes are observed instead. |
 
-**Until then, describe the system precisely:** executable external-effect code and callback/Promise transport may be implemented for a bounded profile, but that is not yet a Megatoken model learning to execute arbitrary real Natlang tasks.
+An external arrival, delivery, and callback activation are not the same event. Record arrival privately when it happens; expose only the declared delivery at a legal boundary. Observed fields may describe a callback's arguments and eligible activation, but the callback body and its semantic transitions remain generated execution.
 
-## 14. Related documents and source-of-truth hierarchy
+### 3.4 Identity and causal links
 
-Use this document as the **cross-repository integration and delivery checklist**. It extends rather than silently replacing the existing detailed implementation plans:
+Keep **session, task/revision, JS agent, realm, track, invocation, semantic record, action/effect, guest Promise, callback, subscription, event, delivery, and transport attempt** distinct. A runtime may store a checked one-to-one alias between an effect and native action; it must not derive unrelated identities from a string prefix.
 
-- [Semantic trace redesign and training contracts](SEMANTIC_TRACE_REDESIGN_PLAN.md)
-- [Active implemented/refused training paths](TRAINING_IMPLEMENTATION.md)
+At the harness boundary retain: schema/version; owning identities; per-owner sequence; cause/dependency references; source callsite where applicable; action and attempt keys; immutable payload digest; public availability/delivery point; and capability/resource ownership. Global receipt order is useful for replay but does not grant visibility across tracks. The scheduling profile determines which eligible event is delivered next.
+
+Carry these links across physical fragments, meridians, track retirement/resumption, checkpoint restore, and Natlang retained calls. Source offsets alone do not distinguish repeated dynamic calls. A late result must retain its original owner even after labels change or a new task begins.
+
+### 3.5 The committed-action bridge
+
+For a source-grounded external call:
+
+1. The model selects a complete canonical `request` using evaluated values from committed selected state, with active invocation and exact source-call provenance.
+2. The semantic controller validates the complete record, argument/handle/callback materialization, capability, source relationship, ownership, and budgets. Incomplete fragments, rejected records, and discarded speculative selections dispatch nothing.
+3. A deterministic adapter maps that single selection into Megatoken's committed tool-action boundary. Extend that boundary to accept a validated derived action bound to the original committed group/event and immutable witness bytes. Today's `dispatch_tools` parses tool JSON before calling its selected-payload adapter; do not rewrite a selected group or fabricate tape bytes to bypass that parser. Reuse its authority, dispatch, and result-routing machinery without a second generated argument list.
+4. Persist the dispatch intent and stable action key, then invoke the registered adapter. Generate external JS only from the validated descriptor and arguments, with an equivalent direct adapter for CSP-restricted environments.
+5. The broker correlates native returns, throws, acceptance, settlements and callbacks. Deliver an observed result on the requesting work track, preserving the action identity and chunk/terminal status.
+6. The selected executor performs the corresponding owned return, Promise reaction, callback body, or continuation. Native trampolines never execute guest source.
+
+Lifecycle actions from a coordinator have explicit orchestration provenance and policy; they need not invent a JavaScript source span. A guest program requesting lifecycle work must still have a supported, source-grounded capability call. Ordinary guest function calls do not gain permission to spawn tracks.
+
+The readable trace shows the selected call once and the observed result once. The tool envelope, semantic record, and broker receipt are linked views/evidence of that interaction, not three independent model predictions.
+
+## 4. Megatoken tracks and outside execution triggers
+
+### 4.1 Reuse the dynamic lifecycle
+
+Megatoken already provides `track_create`, `track_assign`, `track_output`, `track_progress`, `track_wait`, `track_continue`, `track_complete`, `track_cancel`, and `track_resume`. Its runtime allocates addresses, applies task revisions and budgets, schedules ready work, and routes tool results. Integrate those facilities instead of adding a semantic-only track scheduler.
+
+**Add a versioned typed execution binding to that lifecycle:** immutable program, invocation inputs, fresh/retained realm policy, input/state references, granted capability subset, causal parent, and completion destination. Bind it when creating an execution track or assigning a new activation to an eligible idle track. The current `purpose`/`completion` strings are descriptive metadata; they are not an executable invocation payload. This binding is a proposed schema change, not a field already accepted by today's `track_create` or `track_assign`.
+
+Creation plus bootstrap is one idempotent activation transaction: reserve an address, validate the binding, publish its result, provide code/state/invocation context, and mark the child ready only once the prerequisites are visible. On a failed bootstrap, record failure and release the reservation; never leave a runnable child without its invocation. A transport retry must not create a second child.
+
+### 4.2 Tool-created child: required walkthrough
+
+| Step | Parent work track | Child execution track |
+| --- | --- | --- |
+| 1 | Select a `track_create` lifecycle tool action with the proposed typed execution binding and a capability subset. | Not runnable yet. |
+| 2 | Observe creation success with runtime-allocated address and invocation binding, or a creation error. | Address exists; bootstrap is pending. |
+| 3 | May continue independent work or wait on the declared child-completion dependency. | Observe exact program context, current allowed state, then invocation. |
+| 4 | Waiting releases active execution capacity; it does not erase parent state. | Generate semantic work; issue tools and observe their results on this child track. |
+| 5 | No child result is visible prematurely. | Generate return/throw; validate required work and publish a scoped completion receipt. |
+| 6 | Observe correlated child completion; continue from that result. | Complete or remain retained according to the declared lifecycle policy. |
+
+The creation tool result acknowledges creation. The later child result completes the invocation; it is a separate correlated completion observation, not a second terminal result for the creation call. For an async entry, distinguish its immediate owned Promise return, later settlement, and the completion mode requested by the parent. A waiting parent uses a runtime-established completion dependency. If a public API chooses an explicit join call, its result represents that completion; it must not create another competing completion authority.
+
+Specify parent cancellation, child failure, deadlines, detached work, and resource ownership. Initial policy: children belong to their parent task and cancellation propagates; detachment needs an explicit grant and a durable owner. A cancelled parent cannot silently leave an unowned child writing to the world.
+
+Results of creation, child execution, context reads, or external effects are unavailable to the model selection that caused them. In particular, no child can use a newly allocated address or future result inside the same prediction group. Start with serial semantic groups; introduce grouped work only for records whose prerequisites are already committed and whose state accesses are independent.
+
+### 4.3 Outside invocations and events
+
+Implement one host ingress operation that admits an invocation/event, records its identity and ownership, then creates or wakes the appropriate work through the same lifecycle registry. It does not require a model to be already running to receive an execution trigger.
+
+Implement the wake transition explicitly: after the matching dependency is complete and its input is delivered, admit active capacity, continue the waiting track, and queue its legal next output request. Current waiting status does not become active merely because a prerequisite completes, and creation/assignment alone does not start guest execution. Use runtime-issued typed dependency references; callers must not guess completion-key strings. Closed/cancelled work needs an explicit lifecycle decision rather than automatic resurrection.
+
+| Incoming item | Required route |
+| --- | --- |
+| Direct call / job submission | Validate program and entry; allocate or reuse an eligible execution track; deliver code before invocation; publish completion to the caller. |
+| Result for pending tool call | Route to its existing requesting track and invocation/Promise dependency. Usually resume that work; do not create a new track merely because a result arrived. |
+| Subscription notification | Validate subscription lifetime and event identity; enqueue the bound owned callback. Use the existing execution track or the explicitly configured handler-track policy. |
+| Independent external event | Resolve a registered handler/program and an authorized fresh/retained invocation policy. Create an observed invocation without fabricating a model request. |
+| Retained stream item | Queue under the stream's ordering/cursor policy; invoke the next handler when eligible. Empty, closed, failed, and cancelled are distinct states. |
+
+A handler-track policy is established at registration; each event does not need another model-generated `track_create` decision unless the program actually calls for one. Host-created lifecycle receipts are observed; train the model on the handler execution and any explicit scheduling decisions it really owns.
+
+Align the first Natlang event path with [its stream contract][natlang-interfaces]: Fold completes the current step before consuming the next item; independent Map work is bounded and retains input-order result identity. Do not add arbitrary in-episode interruption as an accidental consequence of event ingestion. Waiting is host-managed; do not train repeated polling calls when no input is available.
+
+### 4.4 Two scheduling responsibilities
+
+Megatoken schedules model work across tracks. The owned semantic scheduler preserves JavaScript execution order. A physical fragment, model yield, new meridian, or ready neighboring track is not automatically a legal guest callback boundary.
+
+Initial policy: **one active guest turn per JS agent/shared state domain**, including realms that can access the same mutable state. Independent realms with no shared state can progress concurrently. Within a retained realm, all tracks refer to one authoritative selected heap and captured-cell set; they do not clone closures by copying their current values.
+
+Release the active turn only at a legal empty-stack/job boundary, while retaining pending continuations. Suspending an inner async frame does not release a still-running caller's turn. Do not hold an invocation-wide lock across an await that would prevent its child/callback from making progress. Promise jobs and callbacks run at the declared legal checkpoints. This follows the [ECMAScript job constraints][ecma-jobs]; browser adapters additionally follow the [HTML task/microtask model][html-events]. Node-specific task sources require their own declared and tested profile.
+
+Synchronous reentrant native callbacks are a separate supported profile. If the API requires immediate callback execution, return values, event propagation control, or `preventDefault` during native dispatch, asynchronous later delivery is not equivalent. Either implement and prove the required handshake/timing semantics or explicitly refuse that API. An asynchronous event notification adapter must describe its narrower semantics honestly.
+
+### 4.5 Context and continuation
+
+Megatoken's [local/foreign context windows][mega-context] mean shared session membership does not guarantee source availability. Each new or resumed execution must have a checked available code prefix, explicit handoff/reread, or supported retained source reference before generation. Retrieval is a new observed event with original provenance; it cannot inject future state.
+
+At complete semantic boundaries, checkpoint source identities, selected frames, heap/cell topology, module state, pending Promises/reactions/jobs, subscriptions, event cursors, action ledger, realm/track ownership, and model continuation references. Preserve exact selected state; do not reconstruct it from the teacher's completed execution. Resource handles require explicit reattachment/reconciliation rules. A non-restorable native handle causes a declared failure, not fabricated resource continuity.
+
+Semantic-state restoration and model-cache/recurrence restoration are separate obligations. Test both with production tokenizer/history limits. If exact model-state restoration is unavailable, declare a new observed checkpoint bootstrap and its supported equivalence; do not claim bit-identical inference replay. Unrepresentable state refuses instead of silently truncating required context.
+
+## 5. External effects, callbacks, and reliable delivery
+
+### 5.1 Preserve each operation's JavaScript behavior
+
+| Operation class | What happens at the call boundary | What happens later |
+| --- | --- | --- |
+| Synchronous external call | Current call waits for observed return/throw; no guest continuation uses a missing value. | Continue or throw in the same activation. |
+| Promise-returning call | Bind an owned Promise identity according to the declared adapter contract; independent guest work can continue. | One observed settlement updates that Promise and enqueues eligible reactions. |
+| Listener registration | Complete registration and return its declared token/handle; capture a registered owned callback identity. | Independently identified events can arrive after registration completes, until revocation. |
+| Stream operation | Establish a handle or declared stream result. | Ordered parts plus explicit close/error/cancel, with bounded buffering and backpressure. |
+| Lifecycle creation | Return an allocated track/binding receipt. | Separate child-invocation completion or failure. |
+
+Do not confuse transport acceptance with fulfillment. Before application-level acceptance, a rejection must map to the declared sync/async error behavior. Once accepted, apply the declared settlement and delivery rules exactly. Guest Promise identities are owned semantic state; native Promises are transport vehicles.
+
+### 5.2 One broker and capability registry
+
+Use one registered operation descriptor for teacher collection, selected inference, native JS emission, and archive inspection. Each descriptor declares version, argument/result codecs, sync/async class, callback slots and return rules, authority, resource scope, replay policy, cancellation, lifetime, and limits.
+
+Materialize arguments from current committed state. Preserve canonical scalar tags, aliases, holes, receiver identity, captures, and declared graph references. Use opaque capability handles for DOM nodes, sockets, files, subscriptions, and other native resources. Handle ownership, origin, aliasing, expiry, release, and checkpoint policy are explicit. Serialization must not invoke getters, proxies, `toJSON`, or coercions as a hidden effect.
+
+The broker may emit executable external JS from the validated descriptor, as the existing prototype does. The model supplies typed actions, not arbitrary unrestricted code for evaluation. Direct adapters and emitted code must have matching payload/behavior fixtures. Archive effect re-execution is explicitly distinct from replay and may repeat real effects.
+
+Authorization uses the embedding's existing grants and approval policy. Keep credentials in the harness, exclude secrets from public/training observations, and treat external text as data. Model output cannot expand permissions. Teacher/reference execution uses appropriate isolated processes or browser fixtures for the task; Node `vm` alone is not a security boundary for hostile programs.
+
+### 5.3 Independent lifecycle state machines
+
+Do not flatten dispatch, streaming, callback lifetime, and model readiness into one status field.
+
+| Object | Required lifecycle distinctions |
+| --- | --- |
+| Action | Proposed; validated/rejected; intent persisted; dispatched; accepted/pending; terminal outcome or uncertain external outcome. Attempts retain one logical action key. |
+| Delivery | Arrived; validated; buffered; eligible; delivered/acknowledged; duplicate or quarantined. |
+| Invocation | Admitted; runnable; running; suspended; returned/thrown; cancelled/failed. |
+| Track | Created; bootstrapping; active/waiting; completed/cancelled; explicitly resumed/reassigned under a new revision. |
+| Subscription | Registered; active/paused; closing; revoked/closed. Events have independent IDs and delivery dispositions. |
+| Resource | Owned; released/closed; lost or awaiting reconciliation. |
+
+A return finishes one invocation. It does not automatically close a retained realm, all child tracks, or a live event source. Define completion policies for root return, required quiescence, stream closure, and explicitly retained resources. Pending required work blocks terminal success; permitted retained resources keep a named owner.
+
+### 5.4 Callbacks and scheduling
+
+Register the actual owned closure and its lexical cells, realm, receiver/`this` behavior, callback slot, and lifetime. A native trampoline submits typed arguments to that registry. The selected executor performs the body, mutations, nested calls, return/throw, and subsequent effects.
+
+Persistent subscriptions outlive the registration call. Test two or more later events, callback-caused effects, unsubscribe, already queued events, after-close arrivals, and callback throws. Event order follows the declared source/host profile; receipt sequence is not a universal event-loop ordering rule. Apply owned Promise adoption, settled-Promise reactions, await, `queueMicrotask`, catch/finally and completion transfer for every claimed supported case.
+
+Declare queue bounds, backpressure and fair service policy. Overflow, refusal, or any source-permitted coalescing/drop must have a recorded disposition; semantic events never disappear silently. A source that cannot be paused needs an explicit overflow outcome.
+
+### 5.5 Failure, retries, and replay
+
+- Malformed/unauthorized actions and stale/cross-realm handles fail before dispatch. Unknown/duplicated/revoked deliveries cannot resurrect an invocation.
+- Preserve the provenance of adapter sync throws, Promise rejections, guest callback throws, transport failures, and unsupported semantics. They are not all normal string results.
+- Persist intent before dispatch and retain an idempotency/reconciliation key. Suppress repeated local execution of the same selected action. **Do not claim globally exactly-once side effects without support from the external service.**
+- Crash or timeout after possible dispatch can leave an uncertain outcome. Do not automatically retry a non-idempotent write or report that cancellation undid it. Reconcile or expose the unresolved disposition.
+- Cancellation stops/aborts what the adapter can actually stop, propagates to children/resources, and records receipts. Late completion remains attributable even if its recipient is cancelled.
+- Replay injects recorded results, event order, and lifecycle receipts with native adapters disabled. Deliberate new execution uses new attempts under explicit policy.
+
+## 6. Training the same interaction the model will serve
+
+### 6.1 Episode layout and teacher pipeline
+
+An episode is a causal graph of tracks and observations, with a recorded legal delivery order. Its linearized training form contains:
+
+1. Observed code/module context and required state.
+2. Observed invocation or trigger.
+3. Generated semantic work and selected tool/lifecycle actions.
+4. Observed results/events when available to their recipient.
+5. Generated continuation, child/handler work, and scoped completion.
+
+Repeated invocations, descendants, subscriptions, and resumed fragments retain their relationships. They must not be packed as unrelated examples that lose pending effects or pretend later values were opening inputs.
+
+The owned teacher executes supported source against the same broker protocol, records its authoritative private journal, and projects a canonical public episode. Extend the effectful/async compiler and source certificates before admitting these examples. Capture all effective external calls, evaluated arguments, callback/Promise work, relevant mutations, and cleanup; compact only certified pure work.
+
+Check that episode independently with controlled Node/browser reference execution, then replay its public selected-state transitions and import the exact bytes through Megatoken's production consumer. A shared execution path is not an independent oracle. Preserve separate checks for journal integrity, exact replay, source/witness consistency, observable correctness, and consumer acceptance.
+
+The private audit sidecar and dataset manifest retain source provenance, license/trust tier, capability profile, source/fixture digests, dispatch evidence, reference results, certificates, lineage, and admission status. They never become prediction context. Unsupported, over-budget, failed, projection-refused, locally verified, and fully admitted candidates remain separately counted.
+
+### 6.2 Loss and causal visibility
+
+Train on semantic transitions and tool/lifecycle decisions that the model owns at serving time, using teacher-generated labels during collection. Host-created lifecycle changes remain observed. Mask source, invocation arguments, externally supplied state, tool results, events, runtime allocation receipts, and harness scheduling receipts from generation loss. Selecting an already observed track address or handle as a later action argument is a learned reference choice and retains its appropriate action/binding loss. Preserve action ownership through physical splitting and native recurrence; do not score a projected tool envelope a second time.
+
+Masking loss alone does not prevent leakage. The attention/dependency graph must also keep later results invisible to earlier selections, including peers in a prediction group and neighboring tracks. A semantic action cannot depend on its own future acceptance/result. A chunked tool result is usable only according to its declared incremental or complete-value contract.
+
+Keep logical semantics separate from physical fragments and meridians. Fragmentation must neither dispatch a partial request nor introduce a guest scheduling boundary. Use real tokenizer counts and production model-history limits. A byte-codec smoke test is diagnostic, not a token-budget or learning-quality result.
+
+### 6.3 Curriculum and held-out evidence
+
+| Stage | Required examples |
+| --- | --- |
+| Code and invocation | Pure execution; same code with varied inputs; repeated fresh calls; retained captures and initialization once. |
+| Tool feedback | One read/compute/write round trip; changed tool answer changes later branch/result; sync throw and async rejection. |
+| Async execution | Two outstanding requests, reversed settlements, nested awaits, caught rejection/finally, callback-induced tool call. |
+| Tracks | Selected create/bind; child code before invocation; child return/throw; parent join/resume; bounded active work across more than eight lifetime tracks. |
+| External triggers | Direct outside invocation, multiple events after registration completes, ordered retained handlers, unsubscribe and late-event disposition. |
+| Long sessions | Source eviction and checked reread; checkpoint with pending effect/subscription; timeout, cancellation, uncertain-outcome recovery. |
+
+Build counterfactual pairs with identical visible prefixes and different later tool outcomes or event schedules. The prefix must remain unchanged before delivery; the correct continuation should change afterward. A different selected request must receive its own validated response or a request-mismatch error, never the teacher's answer for another request.
+
+Split by source/task/fixture ancestry before expansion. Keep every child, continuation, retry, input variant, schedule variant, and counterfactual world from the same family in one split. Hold out source families and task compositions, not just random records. Follow Natlang's [source-first, causally decisive data requirements][natlang-data].
+
+Begin with small production-path training and free-running serving tests; use scripted selected records only to test protocol mechanics. Preserve seeds **17, 29, 43**, the frozen common-support cohort, and the historical baseline in [SEMANTIC_V3_MODEL_EXPERIMENTS.md](SEMANTIC_V3_MODEL_EXPERIMENTS.md). Add a separately reported effectful/track/event cohort. Compare readable explicit and bounded compact traces with outcome-only controls under fixed-example, fixed-token, and measured compute budgets. Teacher-forced loss and actual free-running task success are different measurements.
+
+## 7. Delivery order and exit gates
+
+Deliver a narrow complete interaction before broad API coverage. Each gate needs pinned code, fixtures, scope/refusal counts, and receipts. A protocol test does not establish model quality; a learned toy example does not establish Natlang production readiness.
+
+| Milestone | Deliverable and main owners | Exit gate |
+| --- | --- | --- |
+| **M0 — baseline and examples** | Tracer + Megatoken + Natlang: freeze inspected pins, supported profile, readable transcripts, and operation inventory. | Identify current schema/lane/callback limitations and async Natlang seams; approve exact first examples and expected state/effects. |
+| **M1 — paired protocol** | Tracer + Megatoken: versioned code/invoke/result/event/lifecycle binding; dynamic identities; single selected-action bridge; JS/Python schemas and renderer. | Both validators agree on positive/negative fixtures; old artifacts reject; code-before-invocation and no-future-visibility checks pass. |
+| **M2 — one complete tool episode** | Tracer + harness + Megatoken: one fixture-backed async read/compute/write, teacher projection/admission, selected live adapter, production consumer. | Two outside invocations execute through the same contract; exact arguments and one logical dispatch per action; recorded replay calls no adapters. Run a small real-model training/free-running smoke experiment and report success/failure honestly. |
+| **M3 — tool-created execution track** | Megatoken + tracer: typed create/assign binding, source handoff, child execution, parent completion dependency. | Selected lifecycle call creates one child; code precedes invocation; child result/throw reaches parent; duplicate create, failed bootstrap, cancellation, capacity and more-than-eight-lifetime-track tests pass. |
+| **M4 — events and async ownership** | Tracer + harness + Megatoken: persistent subscriptions, outside triggers, owned jobs/Promises, retained state, event routing. | Register once, handle two later events, mutate a captured cell, call a tool, unsubscribe; two effects settle in reverse order; legal checkpoints and shared-state exclusion are preserved. |
+| **M5 — continuity and recovery** | Harness + Megatoken + tracer: bounded queues, source reread, selected-state/model continuation, dispatch reconciliation. | Restore pending tool, child, and subscription without duplicate effects; handle evicted code, late/duplicate results, lost resource, cancellation, and uncertain writes. |
+| **M6 — real Natlang path** | Natlang + tracer + Megatoken: async entry/module caller migration; fresh/retained execution; actual compiler output and live-resource contracts. | Representative tasks compare result, ordered effects, events/logs, module/cache/capture state, and correct failure classes on the selected-model route. |
+| **M7 — capability and corpus expansion** | All three: evidence-led HTTP/DOM/Node/resource adapters and production episode supply. | Each claimed family passes independent native fixtures, codec/lifetime tests, admission and whole-family split checks; unsupported operations remain explicit. |
+| **M8 — learned acceptance and consolidation** | All three: held-out model runs, equal-budget comparisons, deployment acceptance, removal of superseded paths. | Reproducible checkpoints and selected rollouts meet declared task/effect/trace targets; consumer pins, migration and operational receipts are complete. |
+
+M1 blocks new-format admission. M2 must include the teacher and selected-inference path for its narrow profile; do not postpone that connection until every adapter exists. M3 and M4 may develop in parallel after the shared contract is stable. M5 is required before durable/long-running claims. Begin Natlang async-interface design in M0, while its full acceptance remains M6. Individual adapter prototypes can proceed earlier, but a prototype does not pass M7.
+
+### Minimal executable acceptance suite
+
+| Fixture | Required assertion |
+| --- | --- |
+| Code once, invoke twice | Correct different inputs; intentional fresh/retained state; no repeated initialization effects. |
+| Tool round trip | Generated call, observed result, correct continuation and ordered external writes. |
+| Incomplete/invalid selection | No dispatch before complete validated commit; rejected output remains auditable. |
+| Two pending calls | A and B both dispatch before settlement; B-before-A does not reorder source semantics. |
+| Outside trigger | An admitted event/call starts or wakes execution without a fictitious request. |
+| Persistent listener | Events after registration completion run the correct closure; unsubscribe/late-event behavior is explicit. |
+| Child track | Creation receipt differs from child completion; parent resumes with correct result/error; no duplicate child. |
+| Same realm, several tracks | Captures and aliases remain shared under one legal commit order; no concurrent guest-turn mutation. |
+| Visibility and context | No same-group future read; source eviction forces checked reread; future fixture perturbation leaves earlier prefix unchanged. |
+| Restore and retry | No repeated live initialization/effect; duplicate delivery is harmless; uncertain write remains unresolved until reconciled. |
+| End-to-end learner | Teacher admission, native import, actual selected model calls, observed feedback, and correct effects/outcome are all separately evidenced. |
+
+Also retain adversarial fixtures for special scalars, sparse arrays, aliases/cycles, receiver/callsite forgery, stale argument snapshots, callback/handle ownership, malformed payloads, quotas, Promise adoption, cleanup overriding completion, cross-origin resources, and stream overflow. Add each supported API's specific failure and lifecycle cases rather than claiming generic coverage from a single demo.
+
+## 8. Natlang and external capability expansion
+
+### 8.1 Resolve asynchronous execution at the real seams
+
+Natlang currently exposes synchronous `execute` and `evaluateModule` alongside asynchronous `executeAsync`; [module loading][natlang-modules] uses the synchronous module seam. Specify and implement an asynchronous entry/module contract and migrate callers that select the model executor. Until then, those synchronous paths are explicitly unsupported for model execution. `executeAsync` alone does not solve retained module initialization; running guest code in V8 to fill the gap would invalidate the selected-model claim.
+
+Install the selected executor at both the per-task fresh factory and retained callable-module realm, with compatible scope, path/source maps, events/logs, limits, fork/close, and the actual shared `EvalFailure` class. Test real Natlang-generated ES/TS, imports/exports, callable-folder functions, module caching, shared live capture cells, nested model calls, and supported native services.
+
+Changing the module realm already closes the old realm and invalidates the shared instance cache, but active task-local caches and handed-out references are not magically migrated. Make cutover explicit and test it. Preserve early opt-in and label any ordinary native/hybrid route accurately; its outputs cannot silently substitute for a selected semantic continuation or enter owned training data.
+
+### 8.2 Grow the registered capability surface
+
+| Wave | Scope | Required evidence before claiming support |
+| --- | --- | --- |
+| First complete slice | Deterministic key/value fixture, clock/console where needed, one async service. | Evaluated arguments, result/error semantics, independent effects/outcome, replay with no services. |
+| Callback/event slice | One owned callback and a persistent fixture event source. | Correct captures, repeated events, scheduling, registration/teardown, late-event rejection. |
+| HTTP | Request/response/status/error/abort; later streaming bodies. | URL/origin authority, response identity, consumption/backpressure and no hidden refetch. |
+| DOM/browser | Explicit selection and mutation handles, declared event/timer profiles. | Real browser changes, event identity/order, supported propagation behavior, CSP-compatible dispatch, navigation/close cleanup. |
+| Node | Scoped filesystem, streams/sockets, explicit package/service operations. | Resource/path authority, precise errors, identity, backpressure and durable close. |
+| Natlang resources | Callable modules, live cells, linked services and retained sessions. | Real task fidelity across imports, caching, state ownership, fork/close, and model/native boundaries. |
+
+Inventory actual operations exercised by representative Natlang tasks. Mark every operation supported, refused, or planned. Do not use an untyped generic proxy to hide missing semantics. Support for a DOM mutation does not imply all DOM event semantics; one primitive callback does not imply synchronous/reentrant callback compatibility.
+
+## 9. Evidence, metrics, and completion
+
+### 9.1 Keep independent authorities; consolidate duplicate paths
+
+Maintain one canonical public witness, one selected semantic controller per authoritative state domain, one broker/operation registry, one callback/event ABI, and Megatoken's existing lifecycle machinery. Consolidate archive/live emitters and primitive/callback materialization only after parity fixtures pass. Remove obsolete production writers/importers after all consumers move to the pinned successor; keep historical tooling explicitly offline.
+
+Preserve separate private journal reconstruction, exact replay, source-independent Node/browser reference checks, public witness validation, and selected-model outcome evaluation. These checks provide different evidence and must not become one shared oracle.
+
+Every integration PR records: supported profile; schema/pin changes; public versus private fields; one readable and canonical transcript; selected/teacher/native fixture receipts; counterexamples/refusals; tokenizer and lineage fingerprints; and migration/recovery behavior. Implementation ledgers record exact compatible commits across repositories, not simply that one PR merged.
+
+### 9.2 Report what matters
+
+| Area | Measures |
+| --- | --- |
+| Execution | Whole-task success, returned/raised completion, reachable state, ordered effects, callback order, and cleanup. |
+| Trace quality | First semantic inconsistency, source/callsite fidelity, reader-visible causality, generated tokens per correct task, observation and transport cost. |
+| Tools and triggers | Argument accuracy, dispatch count, result correlation, event/invocation routing, child creation/completion, duplicates and uncertain outcomes. |
+| Learning | Free-running selected-model success, teacher-forced loss separately, held-out family results, no teacher repair, equal-budget controls and seeds. |
+| Coverage | Attempted/supported/refused/admitted counts by source family, effect class, event type, track pattern and resource limit. |
+| Operations | Latency, queue depth, fairness, active/waiting tracks, leaked resources, checkpoint recoverability, and measured memory/compute per correct task. |
+
+Zero future-observation leakage, unauthorized/hidden native effects, untracked native fallback, false admission, and native effects during exact replay are hard gates. The performance threshold for a capability/task cohort must be declared before the held-out run; do not convert a successful toy demo into a production claim.
+
+### Completion checklist
+
+- [ ] A reader can follow code, invocation, semantic work, tool calls/results, events, and parent/child relationships in one deterministic trace view.
+- [ ] Code and initialization are separate from repeated invocations; retained state and source availability are explicit.
+- [ ] Tracer and Megatoken share one versioned contract with dynamic track bindings and independently checked fixtures.
+- [ ] Actual selected semantic requests reach the real broker; results enter as observed input and resume owned execution without teacher repair.
+- [ ] Selected lifecycle tools create execution tracks with code before invocation and correctly correlated child completion.
+- [ ] Outside invocations and subscription events start/wake the right execution without fabricated tool-call history.
+- [ ] Sync calls, Promise-returning calls, persistent listeners and streams preserve their declared semantics and scheduling.
+- [ ] Shared realms, callbacks, checkpoints, retries, cancellation and resource lifetime preserve identity and causality.
+- [ ] Effectful teacher episodes pass independent reference, replay, witness, native-consumer, loss-mask and visibility gates.
+- [ ] Natlang's async entry/module integration and fresh/retained application behavior pass on the selected-model path.
+- [ ] Trained Megatoken runs held-out tasks through this interaction protocol; outcomes, side effects, costs, baselines and failures are reported.
+- [ ] Superseded active routes are removed; pinned integration, migration and recovery receipts are documented.
+
+Until these gates pass, describe the implementation by its verified profile: a native bridge, a protocol test, an admitted teacher subset, or a measured learned capability. Those are useful milestones with different meanings.
+
+## 10. References and maintenance
+
+Local detailed plans and ledgers:
+
 - [Effective public witness contract](EFFECTIVE_TRACE.md)
-- [Native side effects and callback prototype](NATIVE_HOST.md)
-- [Current redundancy/migration inventory](REDUNDANCY_AND_EFFECT_PROVENANCE_AUDIT.md)
-- [Natlang integration blockers](NATLANG_INTEGRATION.md)
-- [Megatoken semantic execution importer](https://github.com/werg/megatoken/blob/main/docs/semantic_execution.md)
-- [Megatoken generation/recurrence](https://github.com/werg/megatoken/blob/main/docs/generation.md)
-- [Megatoken dynamic tracks and real tool-use training](https://github.com/werg/megatoken/blob/main/docs/dynamic-tracks-and-concordant-training-plan.md)
-- [Natlang owned evaluator wiring](https://github.com/werg/natlang/blob/main/ts-host/OWNED_TRACING_INTEGRATION.md)
-- [Natlang hybrid native/non-owned distinction](https://github.com/werg/natlang/blob/main/ts-host/HYBRID_TRACING.md)
-- [Natlang evaluator execution interfaces](https://github.com/werg/natlang/blob/main/plans/EXECUTION_INTERFACES.md)
-- [Natlang inline training-data ambitions](https://github.com/werg/natlang/blob/main/docs/INLINE_NATLANG_TRAINING_DATA_PLAN.md)
+- [Implemented and refused training paths](TRAINING_IMPLEMENTATION.md)
+- [Semantic trace redesign](SEMANTIC_TRACE_REDESIGN_PLAN.md)
+- [Model experiment requirements](SEMANTIC_V3_MODEL_EXPERIMENTS.md)
+- [Native effect/callback prototype](NATIVE_HOST.md)
+- [Redundancy and provenance audit](REDUNDANCY_AND_EFFECT_PROVENANCE_AUDIT.md)
+- [Natlang integration details](NATLANG_INTEGRATION.md)
 
-**Maintenance rule:** when a work package merges, record its exact tracer, Megatoken and Natlang commit SHAs and test receipts in a follow-up implementation ledger. Change this roadmap's status only for completed, independently validated gates. A change in one repository does not establish integration until the pinned counterparts accept the same contract.
+Pinned sources for the reviewed baseline follow. New deliveries update the implementation ledger and compatible commit pins; they do not retroactively turn proposed contracts in this roadmap into implemented features.
+
+[tracer-format]: https://github.com/werg/tracing-js-self/blob/e31ae33d3ce4a7258d64393c7982445d40c0b297/src/training/format.js
+[tracer-controller]: https://github.com/werg/tracing-js-self/blob/e31ae33d3ce4a7258d64393c7982445d40c0b297/src/training/controller.js
+[tracer-compact]: https://github.com/werg/tracing-js-self/blob/e31ae33d3ce4a7258d64393c7982445d40c0b297/src/training/compact.js
+[tracer-render]: https://github.com/werg/tracing-js-self/blob/e31ae33d3ce4a7258d64393c7982445d40c0b297/src/training/render.js
+[mega-status]: https://github.com/werg/megatoken/blob/644cf7d3c7f7f83b7e48883b1df8a6cd1189d674/docs/multi-track-implementation.md
+[mega-lifecycle]: https://github.com/werg/megatoken/blob/644cf7d3c7f7f83b7e48883b1df8a6cd1189d674/src/megatoken/lifecycle.py
+[mega-context]: https://github.com/werg/megatoken/blob/644cf7d3c7f7f83b7e48883b1df8a6cd1189d674/docs/track-context.md
+[mega-witness]: https://github.com/werg/megatoken/blob/644cf7d3c7f7f83b7e48883b1df8a6cd1189d674/src/megatoken/data/witness_v3.py
+[mega-importer]: https://github.com/werg/megatoken/blob/644cf7d3c7f7f83b7e48883b1df8a6cd1189d674/src/megatoken/data/semantic_execution.py
+[mega-tools]: https://github.com/werg/megatoken/blob/644cf7d3c7f7f83b7e48883b1df8a6cd1189d674/src/megatoken/tool_schema.py
+[natlang-evaluator]: https://github.com/werg/natlang/blob/38f10624bcddd2d7eae7ed86310da1fe8d0ebac3/ts-host/src/native/evaluator.ts
+[natlang-modules]: https://github.com/werg/natlang/blob/38f10624bcddd2d7eae7ed86310da1fe8d0ebac3/ts-host/src/runtime/modules.ts
+[natlang-interfaces]: https://github.com/werg/natlang/blob/38f10624bcddd2d7eae7ed86310da1fe8d0ebac3/plans/EXECUTION_INTERFACES.md
+[natlang-data]: https://github.com/werg/natlang/blob/38f10624bcddd2d7eae7ed86310da1fe8d0ebac3/docs/INLINE_NATLANG_TRAINING_DATA_PLAN.md
+[ecma-jobs]: https://tc39.es/ecma262/multipage/executable-code-and-execution-contexts.html#sec-jobs
+[html-events]: https://html.spec.whatwg.org/multipage/webappapis.html#event-loops
