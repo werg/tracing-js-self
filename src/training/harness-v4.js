@@ -181,6 +181,21 @@ export class SelectedExecutionHarness {
     }
     return visible;
   }
+  /**
+   * The public transcript is intentionally not marked admitted. Independent
+   * Node/browser reference evidence and source certificates are separate
+   * authorities; a controlled selection is not teacher or learned success.
+   */
+  exportEpisode({sourceLineage=null,split=null}={}){
+    if(split!==null&&!['train','validation','test','quarantine'].includes(split))
+      throw new TypeError('Unknown frozen source-family split');
+    return clone({public:{schema:HARNESS_ENVELOPE_VERSION,
+        profile:'selected-harness/1',traceFormat:HARNESS_SELECTED_TRACE_VERSION,
+        timeline:this.timeline},
+      sidecar:{schema:'semantic-supervision/2',admission:'locally_verified',
+        referenceStatus:'unverified',sourceLineage,split,
+        selectionOrigin:'controlled-or-model-output-unverified'}});
+  }
   /** No service code executes during state restoration or trace inspection. */
   checkpoint(){
     return clone({schema:'semantic-checkpoint/4',sessionId:this.sessionId,
