@@ -1,0 +1,171 @@
+{
+  "accepted": 16,
+  "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+  "consumerRevision": "9470de7fee27481856ec6dc59fce0932e45534d1",
+  "counts": {
+    "accepted_candidate": 16,
+    "admission_rejected": 26,
+    "admitted": 16,
+    "attempted": 42
+  },
+  "familySplits": {
+    "semantic-benchmark-v1:count-digits": "validation",
+    "semantic-benchmark-v1:euclidean-gcd": "validation",
+    "semantic-benchmark-v1:factorial-iterative": "train",
+    "semantic-benchmark-v1:fibonacci-iterative": "train",
+    "semantic-benchmark-v1:gray-code": "train",
+    "semantic-benchmark-v1:hamming-distance": "train",
+    "semantic-benchmark-v1:integer-square-root": "train",
+    "semantic-benchmark-v1:least-common-multiple": "train",
+    "semantic-benchmark-v1:modular-exponentiation": "train",
+    "semantic-benchmark-v1:population-count": "train",
+    "semantic-benchmark-v1:power-squaring": "validation",
+    "semantic-benchmark-v1:prime-count-to-bound": "train",
+    "semantic-benchmark-v1:repeated-subtraction-division": "train",
+    "semantic-benchmark-v1:reverse-digits": "train",
+    "semantic-benchmark-v1:sum-digits": "train",
+    "semantic-benchmark-v1:trailing-zero-count": "test"
+  },
+  "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+  "maxHistory": 1024,
+  "maxPositions": 1024,
+  "optimizerSteps": 0,
+  "producerRevision": "1952ee3ae3bb24b8d2c9d975ca3ed7e86e18ab38",
+  "refusals": [
+    {
+      "candidate": 16,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 17,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 18,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 19,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 20,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 21,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 22,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 23,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 24,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 25,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 26,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 27,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 28,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 29,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 30,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 31,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 32,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 33,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 34,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 35,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 36,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 37,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 38,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 39,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 40,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 41,
+      "reason": "Invalid semantic-trace/4: Graph property fields",
+      "status": "admission_rejected"
+    }
+  ],
+  "representation": "outcome-only",
+  "schema": "semantic-preparation/4",
+  "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+  "splitSeed": "semantic-family/4",
+  "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+}

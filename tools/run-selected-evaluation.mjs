@@ -21,4 +21,4 @@ try{
   const result=await evaluateSelectedCase(envelope,{origin,select,
     checkpointIdentity:flags.get('--checkpoint-identity')??null,timeoutMs,cleanupTimeoutMs});
   process.stdout.write(JSON.stringify(result)+'\n');
-}finally{select?.close();}
+}finally{if(select){if(select.status().closed||select.status().pending)select.close();else await select.shutdown();}}

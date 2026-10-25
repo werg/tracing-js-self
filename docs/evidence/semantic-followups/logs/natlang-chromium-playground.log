@@ -1,0 +1,7 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> @natlang/typescript-host@0.1.0 test:playground
+> node scripts/browser-build-freshness.mjs --rebuild && node scripts/playground-smoke.mjs
+
+dist/browser is fresh
+PASS browser playground: edit, run, cases, persist, live UI, time travel, model gate, mobile, and local job API

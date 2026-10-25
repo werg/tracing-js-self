@@ -1,0 +1,378 @@
+{
+  "schema": "semantic-serving-probe/1",
+  "origin": "fixed-weights",
+  "identity": {
+    "schema": "semantic-inference-identity/4",
+    "seed": 17,
+    "checkpointIdentity": "c7d9040ec72553cf84d1030bd8481b0f03dcfaeb989b2e347239aee135aa0943",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "revisions": {
+    "tracing-js-self": "1952ee3ae3bb24b8d2c9d975ca3ed7e86e18ab38",
+    "megatoken": "50ed039f8dbd4f8016d0e081fa5f9495e89f17df"
+  },
+  "source": "function run(a,b){return a+b;}",
+  "sourceSha256": "5e153b513edec0192e482bf022082bf83fa3271d7cd8358cb9790d6af50dd260",
+  "args": [
+    11,
+    12
+  ],
+  "attempts": [
+    {
+      "invocationId": "i0",
+      "outputs": [
+        {
+          "schema": "selected-model-output/2",
+          "representation": "explicit",
+          "record": " Stoke routinesFant",
+          "selection": {
+            "modelTrack": "track:0",
+            "ownerTrack": "t0",
+            "selectedEventId": "selected:11:track:0",
+            "meridian": 11,
+            "fragments": [
+              {
+                "selectedEventId": "selected:11:track:0",
+                "meridian": 11,
+                "modelTrack": "track:0",
+                "payloadHex": "2053746f6b6520726f7574696e657346616e74",
+                "emittedTokenIds": [
+                  115396,
+                  35727,
+                  53286
+                ]
+              }
+            ],
+            "codecFingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+            "modelSelected": true,
+            "origin": "actual-model-selected",
+            "sourceReads": [],
+            "stateBootstrap": null
+          }
+        }
+      ],
+      "controllerStatus": "rejected",
+      "failure": {
+        "message": "Invalid semantic-trace/4: missing record separator",
+        "category": null,
+        "evidence": null
+      },
+      "wallSeconds": 1.3541442529999994,
+      "invocationStatus": "cancelled"
+    },
+    {
+      "invocationId": "i1",
+      "outputs": [
+        {
+          "schema": "selected-model-output/2",
+          "representation": "explicit",
+          "record": " Silicon闪光灯",
+          "selection": {
+            "modelTrack": "track:1",
+            "ownerTrack": "t1",
+            "selectedEventId": "selected:22:track:1",
+            "meridian": 22,
+            "fragments": [
+              {
+                "selectedEventId": "selected:22:track:1",
+                "meridian": 22,
+                "modelTrack": "track:1",
+                "payloadHex": "2053696c69636f6ee997aae58589e781af",
+                "emittedTokenIds": [
+                  49617,
+                  116780
+                ]
+              }
+            ],
+            "codecFingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+            "modelSelected": true,
+            "origin": "actual-model-selected",
+            "sourceReads": [],
+            "stateBootstrap": null
+          }
+        }
+      ],
+      "controllerStatus": "rejected",
+      "failure": {
+        "message": "Invalid semantic-trace/4: missing record separator",
+        "category": null,
+        "evidence": null
+      },
+      "wallSeconds": 0.7872440180000003,
+      "invocationStatus": "cancelled"
+    },
+    {
+      "invocationId": "i2",
+      "outputs": [
+        {
+          "schema": "selected-model-output/2",
+          "representation": "explicit",
+          "record": "wonίας",
+          "selection": {
+            "modelTrack": "track:2",
+            "ownerTrack": "t2",
+            "selectedEventId": "selected:33:track:2",
+            "meridian": 33,
+            "fragments": [
+              {
+                "selectedEventId": "selected:33:track:2",
+                "meridian": 33,
+                "modelTrack": "track:2",
+                "payloadHex": "776f6eceafceb1cf82",
+                "emittedTokenIds": [
+                  78087,
+                  99946
+                ]
+              }
+            ],
+            "codecFingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+            "modelSelected": true,
+            "origin": "actual-model-selected",
+            "sourceReads": [],
+            "stateBootstrap": null
+          }
+        }
+      ],
+      "controllerStatus": "rejected",
+      "failure": {
+        "message": "Invalid semantic-trace/4: missing record separator",
+        "category": null,
+        "evidence": null
+      },
+      "wallSeconds": 0.7832134240000005,
+      "invocationStatus": "cancelled"
+    },
+    {
+      "invocationId": "i3",
+      "outputs": [
+        {
+          "schema": "selected-model-output/2",
+          "representation": "explicit",
+          "record": "叽叽，日本",
+          "selection": {
+            "modelTrack": "track:3",
+            "ownerTrack": "t3",
+            "selectedEventId": "selected:44:track:3",
+            "meridian": 44,
+            "fragments": [
+              {
+                "selectedEventId": "selected:44:track:3",
+                "meridian": 44,
+                "modelTrack": "track:3",
+                "payloadHex": "e58fbde58fbdefbc8ce697a5e69cac",
+                "emittedTokenIds": [
+                  105260,
+                  34867
+                ]
+              }
+            ],
+            "codecFingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+            "modelSelected": true,
+            "origin": "actual-model-selected",
+            "sourceReads": [],
+            "stateBootstrap": null
+          }
+        }
+      ],
+      "controllerStatus": "rejected",
+      "failure": {
+        "message": "Invalid semantic-trace/4: missing record separator",
+        "category": null,
+        "evidence": null
+      },
+      "wallSeconds": 0.7219285609999997,
+      "invocationStatus": "cancelled"
+    },
+    {
+      "invocationId": "i4",
+      "outputs": [
+        {
+          "error": "Selected Megatoken inference refused: SemanticSelectionError: Model did not render one complete valid text action",
+          "category": "SemanticSelectionError",
+          "evidence": {
+            "reason": "Model did not render one complete valid text action",
+            "meridian": 58,
+            "eventIds": [
+              "selected:58:track:4"
+            ],
+            "valid": [
+              false
+            ],
+            "payloadHex": [
+              "20636865636b6572207a61637ae8baabe4bbbde79a84e6adbbe6adbbd8aed8a7d8b520616666696474657a2057617465726c6f6f",
+              "e789bae789b2e5818fe5818f2050726f7465696e73e89c95e58f9820696e74726963e58589e78eafefbc8ce4bdbfe4bb96efbc8ce4bdbfe4bb962d656e65726779efbc8ce6898b71756574206265796f6e646f706f74e69d9ce7bb9deca18ceb8ba420736c617368",
+              "efbc8ce9878ce38082e68a95e8b584e88085204368696c652053746f6b65",
+              "e7ad89e59084e7b1bb2d656e65726779e8bfb7e683915f4e4557636f727020c59fb4ebe59490e995bfe7949f"
+            ],
+            "fragments": [
+              {
+                "selectedEventId": "selected:55:track:4",
+                "meridian": 55,
+                "modelTrack": "track:4",
+                "payloadHex": "20636865636b6572207a61637ae8baabe4bbbde79a84e6adbbe6adbbd8aed8a7d8b520616666696474657a2057617465726c6f6f",
+                "emittedTokenIds": [
+                  65236,
+                  151380,
+                  102301,
+                  60731,
+                  147424,
+                  152779,
+                  128305,
+                  87852
+                ]
+              },
+              {
+                "selectedEventId": "selected:56:track:4",
+                "meridian": 56,
+                "modelTrack": "track:4",
+                "payloadHex": "e789bae789b2e5818fe5818f2050726f7465696e73e89c95e58f9820696e74726963e58589e78eafefbc8ce4bdbfe4bb96efbc8ce4bdbfe4bb962d656e65726779efbc8ce6898b71756574206265796f6e646f706f74e69d9ce7bb9deca18ceb8ba420736c617368",
+                "emittedTokenIds": [
+                  22454,
+                  30557,
+                  119956,
+                  82311,
+                  39480,
+                  77297,
+                  116645,
+                  116645,
+                  45250,
+                  13281,
+                  25582,
+                  7267,
+                  121382,
+                  60214,
+                  139916,
+                  57536
+                ]
+              },
+              {
+                "selectedEventId": "selected:57:track:4",
+                "meridian": 57,
+                "modelTrack": "track:4",
+                "payloadHex": "efbc8ce9878ce38082e68a95e8b584e88085204368696c652053746f6b65",
+                "emittedTokenIds": [
+                  74557,
+                  122785,
+                  38698,
+                  115396
+                ]
+              },
+              {
+                "selectedEventId": "selected:58:track:4",
+                "meridian": 58,
+                "modelTrack": "track:4",
+                "payloadHex": "e7ad89e59084e7b1bb2d656e65726779e8bfb7e683915f4e4557636f727020c59fb4ebe59490e995bfe7949f",
+                "emittedTokenIds": [
+                  88912,
+                  45250,
+                  50130,
+                  51230,
+                  107433,
+                  81606,
+                  126149,
+                  110332
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "controllerStatus": "rejected",
+      "failure": {
+        "message": "Selected Megatoken inference refused: SemanticSelectionError: Model did not render one complete valid text action",
+        "category": "SemanticSelectionError",
+        "evidence": {
+          "reason": "Model did not render one complete valid text action",
+          "meridian": 58,
+          "eventIds": [
+            "selected:58:track:4"
+          ],
+          "valid": [
+            false
+          ],
+          "payloadHex": [
+            "20636865636b6572207a61637ae8baabe4bbbde79a84e6adbbe6adbbd8aed8a7d8b520616666696474657a2057617465726c6f6f",
+            "e789bae789b2e5818fe5818f2050726f7465696e73e89c95e58f9820696e74726963e58589e78eafefbc8ce4bdbfe4bb96efbc8ce4bdbfe4bb962d656e65726779efbc8ce6898b71756574206265796f6e646f706f74e69d9ce7bb9deca18ceb8ba420736c617368",
+            "efbc8ce9878ce38082e68a95e8b584e88085204368696c652053746f6b65",
+            "e7ad89e59084e7b1bb2d656e65726779e8bfb7e683915f4e4557636f727020c59fb4ebe59490e995bfe7949f"
+          ],
+          "fragments": [
+            {
+              "selectedEventId": "selected:55:track:4",
+              "meridian": 55,
+              "modelTrack": "track:4",
+              "payloadHex": "20636865636b6572207a61637ae8baabe4bbbde79a84e6adbbe6adbbd8aed8a7d8b520616666696474657a2057617465726c6f6f",
+              "emittedTokenIds": [
+                65236,
+                151380,
+                102301,
+                60731,
+                147424,
+                152779,
+                128305,
+                87852
+              ]
+            },
+            {
+              "selectedEventId": "selected:56:track:4",
+              "meridian": 56,
+              "modelTrack": "track:4",
+              "payloadHex": "e789bae789b2e5818fe5818f2050726f7465696e73e89c95e58f9820696e74726963e58589e78eafefbc8ce4bdbfe4bb96efbc8ce4bdbfe4bb962d656e65726779efbc8ce6898b71756574206265796f6e646f706f74e69d9ce7bb9deca18ceb8ba420736c617368",
+              "emittedTokenIds": [
+                22454,
+                30557,
+                119956,
+                82311,
+                39480,
+                77297,
+                116645,
+                116645,
+                45250,
+                13281,
+                25582,
+                7267,
+                121382,
+                60214,
+                139916,
+                57536
+              ]
+            },
+            {
+              "selectedEventId": "selected:57:track:4",
+              "meridian": 57,
+              "modelTrack": "track:4",
+              "payloadHex": "efbc8ce9878ce38082e68a95e8b584e88085204368696c652053746f6b65",
+              "emittedTokenIds": [
+                74557,
+                122785,
+                38698,
+                115396
+              ]
+            },
+            {
+              "selectedEventId": "selected:58:track:4",
+              "meridian": 58,
+              "modelTrack": "track:4",
+              "payloadHex": "e7ad89e59084e7b1bb2d656e65726779e8bfb7e683915f4e4557636f727020c59fb4ebe59490e995bfe7949f",
+              "emittedTokenIds": [
+                88912,
+                45250,
+                50130,
+                51230,
+                107433,
+                81606,
+                126149,
+                110332
+              ]
+            }
+          ]
+        }
+      },
+      "wallSeconds": 0.9036764049999992,
+      "invocationStatus": "cancelled"
+    }
+  ],
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "scope": "Five real frozen-model attempts; original outputs were checked by the selected controller; no guest reference execution or corrections"
+}

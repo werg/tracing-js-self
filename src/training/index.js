@@ -16,6 +16,7 @@ export {EXECUTION_VERSION,WITNESS_VERSION,CONTEXT_VERSION,SUPERVISION_VERSION,
 export {analyzeSemanticProgram} from './semantic-program.js';
 export {renderWitness,inspectWitnessPrefix} from './render.js';
 export {renderOrchestration} from './render-orchestration.js';
+export {buildSemanticDiagnostics,renderSemanticDiagnosticsHtml} from './semantic-diagnostics.js';
 
 // Explicit observed source/invocation and validated live broker adapter.
 export {SelectedExecutionHarness,HARNESS_ENVELOPE_VERSION,

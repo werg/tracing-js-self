@@ -8,6 +8,7 @@ import {createFixtureBroker} from './fixture-broker.js';
 import {decodeWitness} from './format.js';
 import {hostOperation} from '../host/operations.js';
 import {evaluateOrchestrationCase} from './orchestration-evaluation.js';
+import {traceGraph} from './evaluation-graph.js';
 
 const hash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const copy=value=>structuredClone(value);
@@ -52,7 +53,8 @@ export function controlledEvaluationCase(exported,{id,family,split}={}){
   }
   const completions=references.map(reference=>({kind:reference.kind,value:reference.graph.roots.at(-1)}));
   const expected={completion:session?{kind:'session',value:completions}:completions[0],
-    state:copy(session?references.map(reference=>reference.graph):references[0].graph),effects:copy(exported.sidecar.effects),
+    state:session?references.map(reference=>traceGraph(reference.graph)):traceGraph(references[0].graph),
+    effects:copy(exported.sidecar.effects),
     callbacks:copy(exported.sidecar.effects.filter(item=>item.kind==='callback')),
     cleanup:{pendingEffects:0,pendingJobs:0,openHandlers:0}};
   if(!session&&!request.fixture.calls.length&&!program.capabilities.length)
@@ -190,7 +192,8 @@ export async function evaluateSelectedCase(envelope,{origin='controlled',select=
     const intent=harness.intents.get(item.invocationId+'/'+item.effectId);
     return !intent||!capabilities.has(intent.operation);
   }).length;
-  const state=programList?completed.map(r=>r.observableGraph):result?.observableGraph??null;
+  const state=programList?completed.map(r=>r.observableGraph===null?null:traceGraph(r.observableGraph)):
+    result?.observableGraph==null?null:traceGraph(result.observableGraph);
   const finalCleanup=cleanup(harness);
   const firstSemanticInconsistency=[...harness.invocations.values()]
     .map(a=>a.controller.firstWitnessViolation).find(Boolean)??null;

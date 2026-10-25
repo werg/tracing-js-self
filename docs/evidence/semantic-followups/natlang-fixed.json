@@ -1,0 +1,477 @@
+{
+  "schema": "natlang-workflow-selected-order/1",
+  "origin": "model",
+  "seed": 17,
+  "checkpointIdentity": "c7d9040ec72553cf84d1030bd8481b0f03dcfaeb989b2e347239aee135aa0943",
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "outcome": "rejected",
+  "journeys": {
+    "ordinary-success": {
+      "outcome": "rejected",
+      "failure": {
+        "name": "EvalFailure",
+        "category": null,
+        "message": "Selected Megatoken inference refused: SemanticSelectionError: Published source cannot fit the model's declared history",
+        "evidence": null,
+        "events": [
+          {
+            "schema": "semantic-execution/4",
+            "session": "natlang2",
+            "sequence": 2,
+            "ownerSequence": 1,
+            "track": "worker:module1",
+            "mode": "observed",
+            "kind": "invocation",
+            "programId": "pf9bb54cdacf23ef0c81901d6",
+            "invocationId": "natlang1",
+            "realmId": "module1",
+            "triggerId": "natlang:natlang1",
+            "completionPolicy": "await-returned-promise",
+            "realmPolicy": "retained",
+            "inputGraph": {
+              "roots": [
+                [
+                  "ref",
+                  "o0"
+                ],
+                [
+                  "ref",
+                  "o1"
+                ],
+                [
+                  "ref",
+                  "o2"
+                ],
+                [
+                  "ref",
+                  "o3"
+                ],
+                [
+                  "ref",
+                  "o4"
+                ],
+                [
+                  "ref",
+                  "o5"
+                ]
+              ],
+              "objects": [
+                {
+                  "id": "o0",
+                  "kind": "object",
+                  "properties": []
+                },
+                {
+                  "id": "o1",
+                  "kind": "object",
+                  "properties": [
+                    {
+                      "key": "exports",
+                      "value": [
+                        "ref",
+                        "o0"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "o2",
+                  "kind": "object",
+                  "prototype": null,
+                  "properties": []
+                },
+                {
+                  "id": "o3",
+                  "kind": "object",
+                  "properties": [
+                    {
+                      "key": "guard",
+                      "value": [
+                        "undefined"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "o4",
+                  "kind": "object",
+                  "properties": [
+                    {
+                      "key": "__inline",
+                      "value": [
+                        "undefined"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "o5",
+                  "kind": "array",
+                  "properties": [
+                    {
+                      "key": "length",
+                      "value": [
+                        "num",
+                        0
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "entry": "initialize",
+            "sourceDigest": "f9bb54cdacf23ef0c81901d60d1109a0a8c2bec0b9f82fb83af5b2b74ff5edd3",
+            "receiver": [
+              "undefined"
+            ],
+            "closureId": null,
+            "activation": "module-init",
+            "parentInvocationId": null,
+            "taskRevision": 1,
+            "deadline": null,
+            "bindings": {},
+            "ingressKey": "natlang:natlang1",
+            "operation": "selected.observation"
+          },
+          {
+            "schema": "semantic-execution/4",
+            "session": "natlang2",
+            "sequence": 3,
+            "ownerSequence": 2,
+            "track": "worker:module1",
+            "mode": "observed",
+            "kind": "cancel",
+            "invocationId": "natlang1",
+            "reason": "Selected Megatoken inference refused: SemanticSelectionError: Published source cannot fit the model's declared history",
+            "uncertain": [],
+            "operation": "selected.observation"
+          }
+        ]
+      },
+      "state": {
+        "order_id": "ordinary-success",
+        "amount": 1250,
+        "revision": 0,
+        "phase": "new",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [],
+        "outbox": []
+      }
+    },
+    "rejected-operation": {
+      "outcome": "not-run-after-model-rejection",
+      "state": {
+        "order_id": "rejected-operation",
+        "amount": 1250,
+        "revision": 0,
+        "phase": "new",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [],
+        "outbox": []
+      }
+    },
+    "lost-ack": {
+      "outcome": "not-run-after-model-rejection",
+      "state": {
+        "order_id": "lost-ack",
+        "amount": 1250,
+        "revision": 0,
+        "phase": "new",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [],
+        "outbox": []
+      }
+    },
+    "pending-restart": {
+      "outcome": "not-run-after-model-rejection",
+      "state": {
+        "order_id": "pending-restart",
+        "amount": 1250,
+        "revision": 0,
+        "phase": "new",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [],
+        "outbox": []
+      }
+    },
+    "cancel": {
+      "outcome": "not-run-after-model-rejection",
+      "state": {
+        "order_id": "cancel",
+        "amount": 1250,
+        "revision": 0,
+        "phase": "new",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [],
+        "outbox": []
+      }
+    },
+    "refund-release": {
+      "outcome": "not-run-after-model-rejection",
+      "state": {
+        "order_id": "refund-release",
+        "amount": 1250,
+        "revision": 0,
+        "phase": "new",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [],
+        "outbox": []
+      }
+    },
+    "repeated": {
+      "outcome": "not-run-after-model-rejection",
+      "state": {
+        "order_id": "repeated",
+        "amount": 1250,
+        "revision": 0,
+        "phase": "new",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [],
+        "outbox": []
+      }
+    }
+  },
+  "journal": [
+    {
+      "order": "ordinary-success",
+      "event": {
+        "kind": "continue"
+      },
+      "failure": {
+        "name": "EvalFailure",
+        "category": null,
+        "message": "Selected Megatoken inference refused: SemanticSelectionError: Published source cannot fit the model's declared history",
+        "evidence": null,
+        "events": [
+          {
+            "schema": "semantic-execution/4",
+            "session": "natlang2",
+            "sequence": 2,
+            "ownerSequence": 1,
+            "track": "worker:module1",
+            "mode": "observed",
+            "kind": "invocation",
+            "programId": "pf9bb54cdacf23ef0c81901d6",
+            "invocationId": "natlang1",
+            "realmId": "module1",
+            "triggerId": "natlang:natlang1",
+            "completionPolicy": "await-returned-promise",
+            "realmPolicy": "retained",
+            "inputGraph": {
+              "roots": [
+                [
+                  "ref",
+                  "o0"
+                ],
+                [
+                  "ref",
+                  "o1"
+                ],
+                [
+                  "ref",
+                  "o2"
+                ],
+                [
+                  "ref",
+                  "o3"
+                ],
+                [
+                  "ref",
+                  "o4"
+                ],
+                [
+                  "ref",
+                  "o5"
+                ]
+              ],
+              "objects": [
+                {
+                  "id": "o0",
+                  "kind": "object",
+                  "properties": []
+                },
+                {
+                  "id": "o1",
+                  "kind": "object",
+                  "properties": [
+                    {
+                      "key": "exports",
+                      "value": [
+                        "ref",
+                        "o0"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "o2",
+                  "kind": "object",
+                  "prototype": null,
+                  "properties": []
+                },
+                {
+                  "id": "o3",
+                  "kind": "object",
+                  "properties": [
+                    {
+                      "key": "guard",
+                      "value": [
+                        "undefined"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "o4",
+                  "kind": "object",
+                  "properties": [
+                    {
+                      "key": "__inline",
+                      "value": [
+                        "undefined"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "o5",
+                  "kind": "array",
+                  "properties": [
+                    {
+                      "key": "length",
+                      "value": [
+                        "num",
+                        0
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "entry": "initialize",
+            "sourceDigest": "f9bb54cdacf23ef0c81901d60d1109a0a8c2bec0b9f82fb83af5b2b74ff5edd3",
+            "receiver": [
+              "undefined"
+            ],
+            "closureId": null,
+            "activation": "module-init",
+            "parentInvocationId": null,
+            "taskRevision": 1,
+            "deadline": null,
+            "bindings": {},
+            "ingressKey": "natlang:natlang1",
+            "operation": "selected.observation"
+          },
+          {
+            "schema": "semantic-execution/4",
+            "session": "natlang2",
+            "sequence": 3,
+            "ownerSequence": 2,
+            "track": "worker:module1",
+            "mode": "observed",
+            "kind": "cancel",
+            "invocationId": "natlang1",
+            "reason": "Selected Megatoken inference refused: SemanticSelectionError: Published source cannot fit the model's declared history",
+            "uncertain": [],
+            "operation": "selected.observation"
+          }
+        ]
+      },
+      "state": {
+        "order_id": "ordinary-success",
+        "amount": 1250,
+        "revision": 0,
+        "phase": "new",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [],
+        "outbox": []
+      }
+    }
+  ],
+  "effects": [],
+  "serviceEvents": [
+    {
+      "operation": "workflow.open",
+      "order_id": "ordinary-success",
+      "amount": 1250
+    },
+    {
+      "operation": "workflow.open",
+      "order_id": "rejected-operation",
+      "amount": 1250
+    },
+    {
+      "operation": "workflow.open",
+      "order_id": "lost-ack",
+      "amount": 1250
+    },
+    {
+      "operation": "workflow.open",
+      "order_id": "pending-restart",
+      "amount": 1250
+    },
+    {
+      "operation": "workflow.open",
+      "order_id": "cancel",
+      "amount": 1250
+    },
+    {
+      "operation": "workflow.open",
+      "order_id": "refund-release",
+      "amount": 1250
+    },
+    {
+      "operation": "workflow.open",
+      "order_id": "repeated",
+      "amount": 1250
+    }
+  ],
+  "selectedTrace": [
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pf9bb54cdacf23ef0c81901d6",
+      "sourceDigest": "f9bb54cdacf23ef0c81901d60d1109a0a8c2bec0b9f82fb83af5b2b74ff5edd3",
+      "committed": 2,
+      "selectedRecord": null,
+      "failure": {
+        "category": "SemanticSelectionError",
+        "message": "Selected Megatoken inference refused: SemanticSelectionError: Published source cannot fit the model's declared history",
+        "evidence": null
+      }
+    }
+  ],
+  "controlledProjections": [],
+  "cleanup": {
+    "temporaryDirectoryRemoved": true
+  },
+  "identity": {
+    "schema": "semantic-inference-identity/4",
+    "seed": 17,
+    "checkpointIdentity": "c7d9040ec72553cf84d1030bd8481b0f03dcfaeb989b2e347239aee135aa0943",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "processShutdown": {
+    "schema": "semantic-process-shutdown/1",
+    "graceful": true,
+    "exitCode": 0
+  }
+}

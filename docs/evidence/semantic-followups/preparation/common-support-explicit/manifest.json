@@ -1,0 +1,1008 @@
+{
+  "behavior_coverage": {
+    "episodes": {
+      "test|semantic_execution|public_context_window": 3,
+      "test|semantic_execution|semantic_code_invocation": 3,
+      "train|semantic_execution|public_context_window": 32,
+      "train|semantic_execution|semantic_code_invocation": 32,
+      "validation|semantic_execution|public_context_window": 7,
+      "validation|semantic_execution|semantic_code_invocation": 7
+    },
+    "original_families": {
+      "test|semantic_execution|public_context_window": 3,
+      "test|semantic_execution|semantic_code_invocation": 3,
+      "train|semantic_execution|public_context_window": 32,
+      "train|semantic_execution|semantic_code_invocation": 32,
+      "validation|semantic_execution|public_context_window": 7,
+      "validation|semantic_execution|semantic_code_invocation": 7
+    },
+    "original_family_ids": {
+      "test|semantic_execution|public_context_window": [
+        "semantic-benchmark-v1:is-nondecreasing",
+        "semantic-benchmark-v1:trailing-zero-count",
+        "semantic-benchmark-v1:weighted-index-sum"
+      ],
+      "test|semantic_execution|semantic_code_invocation": [
+        "semantic-benchmark-v1:is-nondecreasing",
+        "semantic-benchmark-v1:trailing-zero-count",
+        "semantic-benchmark-v1:weighted-index-sum"
+      ],
+      "train|semantic_execution|public_context_window": [
+        "semantic-benchmark-v1:alternating-array-sum",
+        "semantic-benchmark-v1:array-argmax",
+        "semantic-benchmark-v1:array-dot-product",
+        "semantic-benchmark-v1:array-mean-scaled",
+        "semantic-benchmark-v1:array-minimum",
+        "semantic-benchmark-v1:array-palindrome",
+        "semantic-benchmark-v1:array-rotate-left-checksum",
+        "semantic-benchmark-v1:array-unique-adjacent-count",
+        "semantic-benchmark-v1:binary-search-index",
+        "semantic-benchmark-v1:count-equal-pairs",
+        "semantic-benchmark-v1:count-in-range",
+        "semantic-benchmark-v1:count-negative",
+        "semantic-benchmark-v1:count-positive",
+        "semantic-benchmark-v1:factorial-iterative",
+        "semantic-benchmark-v1:fibonacci-iterative",
+        "semantic-benchmark-v1:first-match-index",
+        "semantic-benchmark-v1:gray-code",
+        "semantic-benchmark-v1:hamming-distance",
+        "semantic-benchmark-v1:integer-square-root",
+        "semantic-benchmark-v1:inversion-count",
+        "semantic-benchmark-v1:kadane-maximum-subarray",
+        "semantic-benchmark-v1:last-match-index",
+        "semantic-benchmark-v1:least-common-multiple",
+        "semantic-benchmark-v1:modular-exponentiation",
+        "semantic-benchmark-v1:population-count",
+        "semantic-benchmark-v1:prime-count-to-bound",
+        "semantic-benchmark-v1:repeated-subtraction-division",
+        "semantic-benchmark-v1:reverse-digits",
+        "semantic-benchmark-v1:running-prefix-checksum",
+        "semantic-benchmark-v1:second-largest-distinct",
+        "semantic-benchmark-v1:single-transaction-profit",
+        "semantic-benchmark-v1:sum-digits"
+      ],
+      "train|semantic_execution|semantic_code_invocation": [
+        "semantic-benchmark-v1:alternating-array-sum",
+        "semantic-benchmark-v1:array-argmax",
+        "semantic-benchmark-v1:array-dot-product",
+        "semantic-benchmark-v1:array-mean-scaled",
+        "semantic-benchmark-v1:array-minimum",
+        "semantic-benchmark-v1:array-palindrome",
+        "semantic-benchmark-v1:array-rotate-left-checksum",
+        "semantic-benchmark-v1:array-unique-adjacent-count",
+        "semantic-benchmark-v1:binary-search-index",
+        "semantic-benchmark-v1:count-equal-pairs",
+        "semantic-benchmark-v1:count-in-range",
+        "semantic-benchmark-v1:count-negative",
+        "semantic-benchmark-v1:count-positive",
+        "semantic-benchmark-v1:factorial-iterative",
+        "semantic-benchmark-v1:fibonacci-iterative",
+        "semantic-benchmark-v1:first-match-index",
+        "semantic-benchmark-v1:gray-code",
+        "semantic-benchmark-v1:hamming-distance",
+        "semantic-benchmark-v1:integer-square-root",
+        "semantic-benchmark-v1:inversion-count",
+        "semantic-benchmark-v1:kadane-maximum-subarray",
+        "semantic-benchmark-v1:last-match-index",
+        "semantic-benchmark-v1:least-common-multiple",
+        "semantic-benchmark-v1:modular-exponentiation",
+        "semantic-benchmark-v1:population-count",
+        "semantic-benchmark-v1:prime-count-to-bound",
+        "semantic-benchmark-v1:repeated-subtraction-division",
+        "semantic-benchmark-v1:reverse-digits",
+        "semantic-benchmark-v1:running-prefix-checksum",
+        "semantic-benchmark-v1:second-largest-distinct",
+        "semantic-benchmark-v1:single-transaction-profit",
+        "semantic-benchmark-v1:sum-digits"
+      ],
+      "validation|semantic_execution|public_context_window": [
+        "semantic-benchmark-v1:array-maximum",
+        "semantic-benchmark-v1:array-sum",
+        "semantic-benchmark-v1:count-digits",
+        "semantic-benchmark-v1:euclidean-gcd",
+        "semantic-benchmark-v1:longest-equal-run",
+        "semantic-benchmark-v1:power-squaring",
+        "semantic-benchmark-v1:subarray-target-count"
+      ],
+      "validation|semantic_execution|semantic_code_invocation": [
+        "semantic-benchmark-v1:array-maximum",
+        "semantic-benchmark-v1:array-sum",
+        "semantic-benchmark-v1:count-digits",
+        "semantic-benchmark-v1:euclidean-gcd",
+        "semantic-benchmark-v1:longest-equal-run",
+        "semantic-benchmark-v1:power-squaring",
+        "semantic-benchmark-v1:subarray-target-count"
+      ]
+    },
+    "version": 2
+  },
+  "census": {
+    "U": 144872,
+    "U_definition": "Raw-codec tokens in accepted deduplicated complete transcripts, including shared context.",
+    "accepted_episodes": 42,
+    "duplicates": 0,
+    "executed_transcript_U": 111465,
+    "filtered_rows": 0,
+    "free_position_candidates": 65782,
+    "free_position_candidates_definition": "The static masked target inventory: positions that could carry loss.",
+    "incomplete_transcript_U": 0,
+    "independent_families": 42,
+    "parser_review_rows": 0,
+    "quarantined": 0,
+    "rejected_rows": 0,
+    "simulated_transcript_U": 0,
+    "strata": [
+      {
+        "U": 2174,
+        "eligible_assistant_tokens": 1042,
+        "episodes": 1,
+        "executed_observation_tokens": 1132,
+        "families": 1,
+        "free_position_candidates": 1042,
+        "source_id": "semantic-harness:095b331755613803",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 3981,
+        "eligible_assistant_tokens": 1950,
+        "episodes": 1,
+        "executed_observation_tokens": 2031,
+        "families": 1,
+        "free_position_candidates": 1950,
+        "source_id": "semantic-harness:0a3d74424c6ae4cb",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 439
+      },
+      {
+        "U": 2831,
+        "eligible_assistant_tokens": 1125,
+        "episodes": 1,
+        "executed_observation_tokens": 1706,
+        "families": 1,
+        "free_position_candidates": 1125,
+        "source_id": "semantic-harness:0c1bea5b234e1b4b",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 4410,
+        "eligible_assistant_tokens": 2055,
+        "episodes": 1,
+        "executed_observation_tokens": 2355,
+        "families": 1,
+        "free_position_candidates": 2055,
+        "source_id": "semantic-harness:0ce4d62c22b1dffa",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 505
+      },
+      {
+        "U": 2873,
+        "eligible_assistant_tokens": 1045,
+        "episodes": 1,
+        "executed_observation_tokens": 1828,
+        "families": 1,
+        "free_position_candidates": 1045,
+        "source_id": "semantic-harness:1282522e96f7eb9d",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 458
+      },
+      {
+        "U": 4582,
+        "eligible_assistant_tokens": 2026,
+        "episodes": 1,
+        "executed_observation_tokens": 2556,
+        "families": 1,
+        "free_position_candidates": 2026,
+        "source_id": "semantic-harness:1d916bb573652f31",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 505
+      },
+      {
+        "U": 8147,
+        "eligible_assistant_tokens": 4446,
+        "episodes": 1,
+        "executed_observation_tokens": 3701,
+        "families": 1,
+        "free_position_candidates": 4446,
+        "source_id": "semantic-harness:25616b1f89521d52",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 1563
+      },
+      {
+        "U": 2318,
+        "eligible_assistant_tokens": 926,
+        "episodes": 1,
+        "executed_observation_tokens": 1392,
+        "families": 1,
+        "free_position_candidates": 926,
+        "source_id": "semantic-harness:25ea00d9770bb949",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 3125,
+        "eligible_assistant_tokens": 1179,
+        "episodes": 1,
+        "executed_observation_tokens": 1946,
+        "families": 1,
+        "free_position_candidates": 1179,
+        "source_id": "semantic-harness:26eb9f9b69f5d126",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 504
+      },
+      {
+        "U": 2539,
+        "eligible_assistant_tokens": 1265,
+        "episodes": 1,
+        "executed_observation_tokens": 1274,
+        "families": 1,
+        "free_position_candidates": 1265,
+        "source_id": "semantic-harness:2727e6af837a4e86",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 4274,
+        "eligible_assistant_tokens": 2127,
+        "episodes": 1,
+        "executed_observation_tokens": 2147,
+        "families": 1,
+        "free_position_candidates": 2127,
+        "source_id": "semantic-harness:27550f8baaaf4da5",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 486
+      },
+      {
+        "U": 1991,
+        "eligible_assistant_tokens": 762,
+        "episodes": 1,
+        "executed_observation_tokens": 1229,
+        "families": 1,
+        "free_position_candidates": 762,
+        "source_id": "semantic-harness:2bb21e0aae4b12dd",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 2512,
+        "eligible_assistant_tokens": 1284,
+        "episodes": 1,
+        "executed_observation_tokens": 1228,
+        "families": 1,
+        "free_position_candidates": 1284,
+        "source_id": "semantic-harness:36e93ebc1090dc10",
+        "split": "test",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 3851,
+        "eligible_assistant_tokens": 1700,
+        "episodes": 1,
+        "executed_observation_tokens": 2151,
+        "families": 1,
+        "free_position_candidates": 1700,
+        "source_id": "semantic-harness:4a29561c7e464907",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 479
+      },
+      {
+        "U": 4550,
+        "eligible_assistant_tokens": 2116,
+        "episodes": 1,
+        "executed_observation_tokens": 2434,
+        "families": 1,
+        "free_position_candidates": 2116,
+        "source_id": "semantic-harness:52685eaef25c221d",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 949
+      },
+      {
+        "U": 2833,
+        "eligible_assistant_tokens": 1256,
+        "episodes": 1,
+        "executed_observation_tokens": 1577,
+        "families": 1,
+        "free_position_candidates": 1256,
+        "source_id": "semantic-harness:5a17f9a956ad9220",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 403
+      },
+      {
+        "U": 2467,
+        "eligible_assistant_tokens": 1087,
+        "episodes": 1,
+        "executed_observation_tokens": 1380,
+        "families": 1,
+        "free_position_candidates": 1087,
+        "source_id": "semantic-harness:6b34495e6ccf7c73",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 3085,
+        "eligible_assistant_tokens": 1145,
+        "episodes": 1,
+        "executed_observation_tokens": 1940,
+        "families": 1,
+        "free_position_candidates": 1145,
+        "source_id": "semantic-harness:6ecd290d4e5ee10b",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 459
+      },
+      {
+        "U": 4756,
+        "eligible_assistant_tokens": 2280,
+        "episodes": 1,
+        "executed_observation_tokens": 2476,
+        "families": 1,
+        "free_position_candidates": 2280,
+        "source_id": "semantic-harness:74e53e9f30cc4116",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 511
+      },
+      {
+        "U": 3197,
+        "eligible_assistant_tokens": 1227,
+        "episodes": 1,
+        "executed_observation_tokens": 1970,
+        "families": 1,
+        "free_position_candidates": 1227,
+        "source_id": "semantic-harness:75c63fb7a924b3c1",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 467
+      },
+      {
+        "U": 3268,
+        "eligible_assistant_tokens": 1250,
+        "episodes": 1,
+        "executed_observation_tokens": 2018,
+        "families": 1,
+        "free_position_candidates": 1250,
+        "source_id": "semantic-harness:7e342cee738aeb25",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 472
+      },
+      {
+        "U": 3265,
+        "eligible_assistant_tokens": 1383,
+        "episodes": 1,
+        "executed_observation_tokens": 1882,
+        "families": 1,
+        "free_position_candidates": 1383,
+        "source_id": "semantic-harness:8064866bc4ff9099",
+        "split": "test",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 454
+      },
+      {
+        "U": 2300,
+        "eligible_assistant_tokens": 948,
+        "episodes": 1,
+        "executed_observation_tokens": 1352,
+        "families": 1,
+        "free_position_candidates": 948,
+        "source_id": "semantic-harness:80cbd779073886d6",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 841,
+        "eligible_assistant_tokens": 121,
+        "episodes": 1,
+        "executed_observation_tokens": 720,
+        "families": 1,
+        "free_position_candidates": 121,
+        "source_id": "semantic-harness:91833f4de848e3e6",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 3033,
+        "eligible_assistant_tokens": 1230,
+        "episodes": 1,
+        "executed_observation_tokens": 1803,
+        "families": 1,
+        "free_position_candidates": 1230,
+        "source_id": "semantic-harness:9263d0caf8c6355c",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 457
+      },
+      {
+        "U": 4119,
+        "eligible_assistant_tokens": 1528,
+        "episodes": 1,
+        "executed_observation_tokens": 2591,
+        "families": 1,
+        "free_position_candidates": 1528,
+        "source_id": "semantic-harness:9a697cad069ef856",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 510
+      },
+      {
+        "U": 6190,
+        "eligible_assistant_tokens": 3207,
+        "episodes": 1,
+        "executed_observation_tokens": 2983,
+        "families": 1,
+        "free_position_candidates": 3207,
+        "source_id": "semantic-harness:9c3c71d7c32193e9",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 990
+      },
+      {
+        "U": 3806,
+        "eligible_assistant_tokens": 1684,
+        "episodes": 1,
+        "executed_observation_tokens": 2122,
+        "families": 1,
+        "free_position_candidates": 1684,
+        "source_id": "semantic-harness:af382bf08395f4b9",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 475
+      },
+      {
+        "U": 3081,
+        "eligible_assistant_tokens": 1135,
+        "episodes": 1,
+        "executed_observation_tokens": 1946,
+        "families": 1,
+        "free_position_candidates": 1135,
+        "source_id": "semantic-harness:b15bff473ce30c82",
+        "split": "test",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 465
+      },
+      {
+        "U": 3359,
+        "eligible_assistant_tokens": 1740,
+        "episodes": 1,
+        "executed_observation_tokens": 1619,
+        "families": 1,
+        "free_position_candidates": 1740,
+        "source_id": "semantic-harness:bdb793f565137ba4",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 401
+      },
+      {
+        "U": 4250,
+        "eligible_assistant_tokens": 2015,
+        "episodes": 1,
+        "executed_observation_tokens": 2235,
+        "families": 1,
+        "free_position_candidates": 2015,
+        "source_id": "semantic-harness:ceb6a743ce5ec36c",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 528
+      },
+      {
+        "U": 2020,
+        "eligible_assistant_tokens": 835,
+        "episodes": 1,
+        "executed_observation_tokens": 1185,
+        "families": 1,
+        "free_position_candidates": 835,
+        "source_id": "semantic-harness:cec31ecafebd9ac4",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 6145,
+        "eligible_assistant_tokens": 3056,
+        "episodes": 1,
+        "executed_observation_tokens": 3089,
+        "families": 1,
+        "free_position_candidates": 3056,
+        "source_id": "semantic-harness:d2eef7e55f10c9a8",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 1033
+      },
+      {
+        "U": 4849,
+        "eligible_assistant_tokens": 3345,
+        "episodes": 1,
+        "executed_observation_tokens": 1504,
+        "families": 1,
+        "free_position_candidates": 3345,
+        "source_id": "semantic-harness:d4aa043e514b9418",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 382
+      },
+      {
+        "U": 6113,
+        "eligible_assistant_tokens": 3124,
+        "episodes": 1,
+        "executed_observation_tokens": 2989,
+        "families": 1,
+        "free_position_candidates": 3124,
+        "source_id": "semantic-harness:db74acdcebdda6eb",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 999
+      },
+      {
+        "U": 3158,
+        "eligible_assistant_tokens": 1248,
+        "episodes": 1,
+        "executed_observation_tokens": 1910,
+        "families": 1,
+        "free_position_candidates": 1248,
+        "source_id": "semantic-harness:e02f0e72a9e9f6fe",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 464
+      },
+      {
+        "U": 2320,
+        "eligible_assistant_tokens": 928,
+        "episodes": 1,
+        "executed_observation_tokens": 1392,
+        "families": 1,
+        "free_position_candidates": 928,
+        "source_id": "semantic-harness:e9acab9c912e4126",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1653,
+        "eligible_assistant_tokens": 603,
+        "episodes": 1,
+        "executed_observation_tokens": 1050,
+        "families": 1,
+        "free_position_candidates": 603,
+        "source_id": "semantic-harness:eb7fdafe18fd1755",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 3056,
+        "eligible_assistant_tokens": 1088,
+        "episodes": 1,
+        "executed_observation_tokens": 1968,
+        "families": 1,
+        "free_position_candidates": 1088,
+        "source_id": "semantic-harness:f1f491c5f31e2511",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 2271,
+        "eligible_assistant_tokens": 1047,
+        "episodes": 1,
+        "executed_observation_tokens": 1224,
+        "families": 1,
+        "free_position_candidates": 1047,
+        "source_id": "semantic-harness:f41f98d881430d5c",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 2114,
+        "eligible_assistant_tokens": 975,
+        "episodes": 1,
+        "executed_observation_tokens": 1139,
+        "families": 1,
+        "free_position_candidates": 975,
+        "source_id": "semantic-harness:facef0043efa2f4f",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 3165,
+        "eligible_assistant_tokens": 1249,
+        "episodes": 1,
+        "executed_observation_tokens": 1916,
+        "families": 1,
+        "free_position_candidates": 1249,
+        "source_id": "semantic-harness:fe147144368edfd7",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 465
+      }
+    ],
+    "verified_success_U": 144872
+  },
+  "chunking": {
+    "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "config": {
+      "chat_template": "auto",
+      "code_tree_scale": 1.5,
+      "hard_max_tokens": 1024,
+      "limits": {
+        "isolate_native": true,
+        "max_depth": 12,
+        "max_injections": 2048,
+        "max_nodes": 100000,
+        "max_parse_bytes": 1048576,
+        "max_parse_milliseconds": 0,
+        "max_regions": 20000,
+        "max_tree_depth": 128,
+        "worker_timeout_ms": 5000
+      },
+      "max_bytes": 16384,
+      "parser_backend": "tree_sitter",
+      "planner_max_edges": 64,
+      "soft_max_tokens": 768,
+      "target_tokens": 512,
+      "tree_distance_budget": 4.0,
+      "tree_distance_weight": 0.15,
+      "use_icu": false,
+      "version": "recursive-parser-v2"
+    },
+    "config_fingerprint": "a27349660d498c535e0a8af5bd6c6e126a69c67a1a4e0398193e1dc832933277",
+    "fingerprint": "7cebc47329c000282659ce2f7498e5528a636e79a0d6d6e62ef36c79588a1f87",
+    "parsers": {
+      "chat": {
+        "templates": {
+          "chatml": {
+            "aliases": [
+              "qwen"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 0,
+            "channel_markers": [],
+            "ends": [
+              "3c7c696d5f656e647c3e"
+            ],
+            "format_markers": [],
+            "mode": "delimited",
+            "name": "chatml",
+            "prefixes": [],
+            "separator": "0a",
+            "start": "3c7c696d5f73746172747c3e"
+          },
+          "deepseek": {
+            "aliases": [
+              "deepseek-v3",
+              "deepseek-r1"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 0,
+            "channel_markers": [],
+            "ends": [
+              "3cefbd9c656e64e296816f66e2968173656e74656e6365efbd9c3e"
+            ],
+            "format_markers": [],
+            "mode": "deepseek",
+            "name": "deepseek",
+            "prefixes": [
+              "3cefbd9c626567696ee296816f66e2968173656e74656e6365efbd9c3e"
+            ],
+            "separator": "3cefbd9c417373697374616e74efbd9c3e",
+            "start": "3cefbd9c55736572efbd9c3e"
+          },
+          "gemma": {
+            "aliases": [
+              "gemma2",
+              "gemma3"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 0,
+            "channel_markers": [],
+            "ends": [
+              "3c656e645f6f665f7475726e3e"
+            ],
+            "format_markers": [],
+            "mode": "delimited",
+            "name": "gemma",
+            "prefixes": [
+              "3c626f733e"
+            ],
+            "separator": "0a",
+            "start": "3c73746172745f6f665f7475726e3e"
+          },
+          "harmony": {
+            "aliases": [],
+            "allow_named_tools": true,
+            "body_newlines": 0,
+            "channel_markers": [
+              "3c7c6368616e6e656c7c3e"
+            ],
+            "ends": [
+              "3c7c656e647c3e",
+              "3c7c72657475726e7c3e",
+              "3c7c63616c6c7c3e"
+            ],
+            "format_markers": [
+              "3c7c636f6e73747261696e7c3e"
+            ],
+            "mode": "delimited",
+            "name": "harmony",
+            "prefixes": [],
+            "separator": "3c7c6d6573736167657c3e",
+            "start": "3c7c73746172747c3e"
+          },
+          "harmony_legacy": {
+            "aliases": [],
+            "allow_named_tools": true,
+            "body_newlines": 0,
+            "channel_markers": [
+              "3c7c6d6574615f7365707c3e"
+            ],
+            "ends": [
+              "3c7c696d5f656e647c3e",
+              "3c7c66696d5f7375666669787c3e",
+              "3c7c676869737375657c3e"
+            ],
+            "format_markers": [
+              "3c7c6d6574615f73746172747c3e"
+            ],
+            "mode": "delimited",
+            "name": "harmony_legacy",
+            "prefixes": [
+              "3c7c656e646f66746578747c3e"
+            ],
+            "separator": "3c7c696d5f7365707c3e",
+            "start": "3c7c696d5f73746172747c3e"
+          },
+          "inst": {
+            "aliases": [
+              "llama2",
+              "llama-2",
+              "mistral"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 0,
+            "channel_markers": [],
+            "ends": [
+              "3c2f733e"
+            ],
+            "format_markers": [],
+            "mode": "inst",
+            "name": "inst",
+            "prefixes": [
+              "3c733e"
+            ],
+            "separator": "5b2f494e53545d",
+            "start": "5b494e53545d"
+          },
+          "llama3": {
+            "aliases": [
+              "llama-3",
+              "llama3.1",
+              "llama3.2",
+              "llama3.3"
+            ],
+            "allow_named_tools": true,
+            "body_newlines": 2,
+            "channel_markers": [],
+            "ends": [
+              "3c7c656f745f69647c3e",
+              "3c7c656f6d5f69647c3e",
+              "3c7c656e645f6f665f746578747c3e"
+            ],
+            "format_markers": [],
+            "mode": "delimited",
+            "name": "llama3",
+            "prefixes": [
+              "3c7c626567696e5f6f665f746578747c3e"
+            ],
+            "separator": "3c7c656e645f6865616465725f69647c3e",
+            "start": "3c7c73746172745f6865616465725f69647c3e"
+          },
+          "phi3": {
+            "aliases": [
+              "phi-3",
+              "phi4"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 1,
+            "channel_markers": [],
+            "ends": [
+              "3c7c656e647c3e",
+              "3c7c656e646f66746578747c3e"
+            ],
+            "format_markers": [],
+            "mode": "delimited",
+            "name": "phi3",
+            "prefixes": [],
+            "separator": "7c3e",
+            "start": "3c7c"
+          }
+        },
+        "version": "chat-framing-v1"
+      },
+      "implementation": "37d0fe140981a40d4dffe07c77f0e3030e0e463e7af7c67b7c86fe29080a10c8",
+      "prose": {
+        "icu": null,
+        "rules": "unicode-prose-v1",
+        "unicode": "16.0.0",
+        "uniseg": "0.10.1"
+      },
+      "syntax": {
+        "backend": "tree_sitter",
+        "grammar_dependencies": {
+          "tree-sitter-c-sharp": "0.23.5",
+          "tree-sitter-embedded-template": "0.25.0",
+          "tree-sitter-yaml": "0.7.2"
+        },
+        "markdown_it_py": "4.0.0",
+        "network": "disabled",
+        "providers": [],
+        "registry": "offline-grammar-registry-v1",
+        "tree_sitter": "0.25.2",
+        "tree_sitter_language_pack": "0.13.0"
+      }
+    }
+  },
+  "chunking_stats": {
+    "boundaries": {
+      "end": 2090,
+      "word": 41
+    },
+    "bytes": 413633,
+    "diagnostics": {},
+    "forced_splits": 0,
+    "histogram": {
+      "0": 0,
+      "1024": 10,
+      "128": 0,
+      "192": 33,
+      "256": 18,
+      "32": 985,
+      "384": 57,
+      "512": 31,
+      "64": 499,
+      "768": 42,
+      "96": 456,
+      ">1024": 0
+    },
+    "histogram_kind": "disjoint buckets, inclusive upper bounds",
+    "languages": {
+      "text": 2131
+    },
+    "max_positions": 877,
+    "mean_positions": 67.98310652275927,
+    "over_soft_max": 10,
+    "positions": 144872,
+    "records": 2131,
+    "reference_tokens": 144872,
+    "unversioned_records": 0
+  },
+  "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+  "complete": true,
+  "counts": {
+    "*": 42,
+    "split:test": 3,
+    "split:test|stream:semantic_execution": 3,
+    "split:train": 32,
+    "split:train|stream:semantic_execution": 32,
+    "split:validation": 7,
+    "split:validation|stream:semantic_execution": 7,
+    "stream:semantic_execution": 42
+  },
+  "dedup": {
+    "anchor_count": 8,
+    "evaluation_after": null,
+    "max_candidates": 4096,
+    "max_descendants_per_parent": 1024,
+    "min_near_words": 40,
+    "near_threshold": 0.94,
+    "shingle_words": 5,
+    "sketch_size": 256,
+    "split_seed": "semantic-family/4",
+    "train_fraction": 0.8,
+    "validation_fraction": 0.1
+  },
+  "feature_counts": {},
+  "feature_extractors": [],
+  "fingerprint": "a8082793c0c8c0dfddb4af7f8e25d3d5aefae935a5331c862ea6a47ea407226c",
+  "index": {
+    "path": "index.sqlite",
+    "sha256": "d2b3d35688342b9616a010038a1b10e81de75e919b737fd7c0bfd429b20ce385"
+  },
+  "parser_review": {},
+  "pipeline_fingerprint": "548d0764bd065ecc645604ad5a3e94a056653a494bbe71dbe4cf7f6094f88e12",
+  "schema_version": 6,
+  "scored_media_counts": {},
+  "shards": [
+    {
+      "bytes": 4405515,
+      "episodes": 42,
+      "path": "episodes-000000.jsonl",
+      "sha256": "5a4738ab816f39a374ed0509d4e5f60911cfdaed097100e60d627c0a321c4311"
+    }
+  ],
+  "sources": [
+    {
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "50ed039f8dbd4f8016d0e081fa5f9495e89f17df",
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "maxHistory": 1024,
+      "maxPositions": 1024,
+      "producerRevision": "1952ee3ae3bb24b8d2c9d975ca3ed7e86e18ab38",
+      "representation": "explicit",
+      "schema": "semantic-preparation/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "splitSeed": "semantic-family/4",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    }
+  ],
+  "structured_supply": {
+    "counts": {
+      "test|semantic_execution|episode_views": 3,
+      "test|semantic_execution|event_modality:text": 120,
+      "test|semantic_execution|group_clock:unknown": 120,
+      "test|semantic_execution|group_modalities:text": 120,
+      "test|semantic_execution|group_width:1": 120,
+      "test|semantic_execution|record_provenance:executed": 20,
+      "test|semantic_execution|record_provenance:teacher": 100,
+      "train|semantic_execution|episode_views": 32,
+      "train|semantic_execution|event_modality:text": 1637,
+      "train|semantic_execution|group_clock:unknown": 1637,
+      "train|semantic_execution|group_modalities:text": 1637,
+      "train|semantic_execution|group_width:1": 1637,
+      "train|semantic_execution|record_provenance:executed": 230,
+      "train|semantic_execution|record_provenance:teacher": 1407,
+      "validation|semantic_execution|episode_views": 7,
+      "validation|semantic_execution|event_modality:text": 374,
+      "validation|semantic_execution|group_clock:unknown": 374,
+      "validation|semantic_execution|group_modalities:text": 374,
+      "validation|semantic_execution|group_width:1": 374,
+      "validation|semantic_execution|record_provenance:executed": 49,
+      "validation|semantic_execution|record_provenance:teacher": 325
+    },
+    "denominators": "group_* count committed groups; event_* and availability count events; record_* count physical records; language_pair and episode_views count episodes; original_families deduplicate each dimension",
+    "original_families": {
+      "test|semantic_execution|episode_views": 3,
+      "test|semantic_execution|event_modality:text": 3,
+      "test|semantic_execution|group_clock:unknown": 3,
+      "test|semantic_execution|group_modalities:text": 3,
+      "test|semantic_execution|group_width:1": 3,
+      "test|semantic_execution|record_provenance:executed": 3,
+      "test|semantic_execution|record_provenance:teacher": 3,
+      "train|semantic_execution|episode_views": 32,
+      "train|semantic_execution|event_modality:text": 32,
+      "train|semantic_execution|group_clock:unknown": 32,
+      "train|semantic_execution|group_modalities:text": 32,
+      "train|semantic_execution|group_width:1": 32,
+      "train|semantic_execution|record_provenance:executed": 32,
+      "train|semantic_execution|record_provenance:teacher": 32,
+      "validation|semantic_execution|episode_views": 7,
+      "validation|semantic_execution|event_modality:text": 7,
+      "validation|semantic_execution|group_clock:unknown": 7,
+      "validation|semantic_execution|group_modalities:text": 7,
+      "validation|semantic_execution|group_width:1": 7,
+      "validation|semantic_execution|record_provenance:executed": 7,
+      "validation|semantic_execution|record_provenance:teacher": 7
+    },
+    "version": 1
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "schema": "semantic-serving-profile/1",
+  "declaredOrigin": "fixed",
+  "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+  "device": "cpu",
+  "identity": {
+    "modelSha256": "c7d9040ec72553cf84d1030bd8481b0f03dcfaeb989b2e347239aee135aa0943",
+    "manifestSha256": "c4db4e15265bc8280ea8a13f5908af1a87b6aec00dc80444619f92992b5bb466",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "initialization": {
+    "schema": "semantic-inference-identity/4",
+    "seed": 17,
+    "checkpointIdentity": "c7d9040ec72553cf84d1030bd8481b0f03dcfaeb989b2e347239aee135aa0943",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "coldLoadSeconds": 1.8014315139953396,
+  "operations": {
+    "initialize": {
+      "count": 1,
+      "successfulRpcCalls": 1,
+      "firstSeconds": 0.008108430003630929,
+      "p50Seconds": 0.008108430003630929,
+      "p95Seconds": 0.008108430003630929,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 0.008108430003630929
+    },
+    "select": {
+      "count": 1,
+      "successfulRpcCalls": 0,
+      "firstSeconds": 79.43081473200436,
+      "p50Seconds": 79.43081473200436,
+      "p95Seconds": 79.43081473200436,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 79.43081473200436
+    }
+  },
+  "records": [
+    {
+      "id": "s1",
+      "operation": "initialize",
+      "ok": true,
+      "wallSeconds": 0.008108430003630929,
+      "state": {
+        "retainedSessions": 0,
+        "retainedInvocations": 0,
+        "activeInvocations": 0,
+        "trackStatuses": {},
+        "rendering": 0,
+        "selectedGroups": 0,
+        "reservedOutputBytes": 0
+      },
+      "selectionAuthority": null,
+      "failure": null
+    },
+    {
+      "id": "s2",
+      "operation": "select",
+      "ok": false,
+      "wallSeconds": 79.43081473200436,
+      "state": {
+        "retainedSessions": 1,
+        "retainedInvocations": 1,
+        "activeInvocations": 1,
+        "trackStatuses": {
+          "active": 1
+        },
+        "rendering": 0,
+        "selectedGroups": 0,
+        "reservedOutputBytes": 0
+      },
+      "selectionAuthority": null,
+      "failure": {
+        "category": "SemanticSelectionError",
+        "message": "Published source cannot fit the model's declared history",
+        "evidence": null
+      }
+    }
+  ],
+  "droppedRecords": 0,
+  "complete": true,
+  "memory": {
+    "hostLifetimePeakRssBytes": 572170240,
+    "cudaPeakAllocatedBytes": null,
+    "cudaPeakReservedBytes": null,
+    "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+  },
+  "peakActiveInvocationsAtRpcBoundaries": 1,
+  "stateBeforeRuntimeClose": {
+    "retainedSessions": 1,
+    "retainedInvocations": 1,
+    "activeInvocations": 1,
+    "trackStatuses": {
+      "active": 1
+    },
+    "rendering": 0,
+    "selectedGroups": 0,
+    "reservedOutputBytes": 0
+  },
+  "runtimeClosed": true,
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "trainingMemoryFit": "unmeasured",
+  "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+  "warmDefinition": "All calls after the first call of the same operation in this process",
+  "digest": "bf1413b3fd3dc5d2be8a030b864adb1055edacfdc5ea6b4e5f5dee8001c231b0"
+}

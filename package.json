@@ -99,6 +99,7 @@
     "training:freeze": "node tools/freeze-selected-evaluation.mjs",
     "training:recheck": "node tools/verify-effectful-admission.mjs",
     "training:inspect": "node tools/inspect-selected-harness.mjs",
+    "training:session-campaign": "node tools/semantic-session-campaign.mjs",
     "contracts:check": "node tools/generate-host-contract.mjs --check && node tools/generate-semantic-contract.mjs --check",
     "test:browser": "node --test test/browser/selected-dom.test.mjs"
   },

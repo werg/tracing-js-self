@@ -1,0 +1,32 @@
+{
+  "algorithmCount": 42,
+  "familyCount": 42,
+  "familyRoles": {
+    "common-support": 42,
+    "effectful": 42,
+    "lifecycle-child": 2
+  },
+  "learnedSuccess": null,
+  "lifecycleInputCount": 2,
+  "normalizedAstAncestorDuplicateCount": 0,
+  "normalizedAstDuplicateCount": 0,
+  "optimizerSteps": 0,
+  "preparedCaseCounts": {
+    "common-support/compact": 42,
+    "common-support/explicit": 42,
+    "common-support/outcome-only": 42,
+    "effectful-tracks-events/compact": 84,
+    "effectful-tracks-events/explicit": 84
+  },
+  "primaryCaseCounts": {
+    "common-support": 42,
+    "effectful": 84
+  },
+  "recipe": "benchmark-v1",
+  "schema": "semantic-benchmark-preparation/1",
+  "splitCounts": {
+    "test": 3,
+    "train": 32,
+    "validation": 7
+  }
+}

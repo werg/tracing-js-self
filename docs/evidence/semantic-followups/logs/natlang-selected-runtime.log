@@ -1,0 +1,14 @@
+✔ test/owned-tracing-wiring.test.mjs (449.134305ms)
+✔ test/selected-captures.test.mjs (396.923124ms)
+✔ test/selected-events.test.mjs (82.03445ms)
+✔ test/selected-semantic-module.test.mjs (483.394155ms)
+✔ test/selected-semantic-real-driver.test.mjs (2097.92039ms)
+✔ test/workflow-selected-pilot.test.mjs (7852.263801ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7876.082827
