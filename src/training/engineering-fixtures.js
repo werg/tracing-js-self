@@ -113,15 +113,15 @@ export const EFFECTFUL_ENGINEERING_FIXTURES=Object.freeze([
           {id:'o1',kind:'object',properties:[{key:'n',value:['num',4]}]}
         ]}},
       {operation:'demo.store',arguments:['alias',true]}]}},
-  ...['explicit','compact'].flatMap(representation=>[
-    {id:'compound-pure-'+representation,family:'compound-pure',source:compoundPure,
-      entry:'run',args:[1,2,3,4],fixture:{calls:[]},projectionOptions:{representation}},
-    {id:'compound-effectful-'+representation,family:'compound-effectful',source:compoundEffectful,
-      entry:'run',args:['compound'],projectionOptions:{representation},fixture:{calls:[
+  ...[
+    {id:'compound-pure',family:'compound-pure',source:compoundPure,
+      entry:'run',args:[1,2,3,4],fixture:{calls:[]},},
+    {id:'compound-effectful',family:'compound-effectful',source:compoundEffectful,
+      entry:'run',args:['compound'],,fixture:{calls:[
         {operation:'demo.readAsync',arguments:['compound'],result:5},
         {operation:'demo.store',arguments:['compound',31]}
       ]}}
-  ]),
+  ],
   {id:'persistent-external-trigger',family:'persistent-external-trigger',
     source:'"use strict";async function run(){let seen=0;const token=await host.listen("tick",n=>{seen+=n;host.store("event",seen);});await host.readAsync("events-complete");await host.unlisten(token);return seen;}',
     entry:'run',args:[],fixture:{calls:[

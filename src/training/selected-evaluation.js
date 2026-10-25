@@ -38,7 +38,7 @@ export function controlledEvaluationCase(exported,{id,family,split}={}){
       inputGraph:invocation.inputGraph,realmPolicy:invocation.realmPolicy,
       completionPolicy:invocation.completionPolicy,receiverValue:invocation.receiver},
     fixture:copy(exported.sidecar.referenceInput.fixture),
-    controlledSelectionsByRepresentation:{[exported.sidecar.representation??'compact']:selections}};
+    controlledSelectionsByRepresentation:{['compact']:selections}};
   const references=exported.sidecar.reference.outcomes??[exported.sidecar.reference.outcome];
   const session=Boolean(exported.sidecar.reference.outcomes);
   if(session){
@@ -57,8 +57,6 @@ export function controlledEvaluationCase(exported,{id,family,split}={}){
     effects:copy(exported.sidecar.effects),
     callbacks:copy(exported.sidecar.effects.filter(item=>item.kind==='callback')),
     cleanup:{pendingEffects:0,pendingJobs:0,openHandlers:0}};
-  if(!session&&!request.fixture.calls.length&&!program.capabilities.length)
-    request.controlledOutcome={schema:'semantic-outcome/4',completion:copy(expected.completion),state:copy(expected.state)};
   return {id:id??exported.sidecar.taskId,family:family??exported.sidecar.sourceFamily,
     split:split??exported.sidecar.split,request,expected,referenceReceipt:{status:'agreed',
       requestDigest:hash(request),outcomeDigest:hash(expected)}};
@@ -70,7 +68,7 @@ export async function evaluateSelectedCase(envelope,{origin='controlled',select=
     return evaluateOrchestrationCase(envelope,{origin,select,checkpointIdentity,timeoutMs,cleanupTimeoutMs});
   if(envelope?.schema!=='semantic-evaluation-request/4'||
     envelope.request?.schema!=='selected-evaluation-case/4'||
-    ![17,29,43].includes(envelope.seed)||!['explicit','compact','outcome-only'].includes(envelope.representation))
+    ![17,29,43].includes(envelope.seed)||envelope.representation!=='compact')
     throw new TypeError('Invalid frozen evaluation request');
   if(!['controlled','fixed-weights','trained'].includes(origin))throw new TypeError('Invalid execution authority');
   if(origin!=='controlled'&&(typeof select!=='function'||!/^[0-9a-f]{64}$/.test(checkpointIdentity??'')))
@@ -89,37 +87,6 @@ export async function evaluateSelectedCase(envelope,{origin='controlled',select=
     controlledSelectionsByRepresentation}=copy(envelope.request);
   const programs=programList??[program],invocations=invocationList??[invocation];
   const capabilities=new Set(programs.flatMap(p=>p.capabilities));
-  if(envelope.representation==='outcome-only'){
-    if(programs.length!==1||invocations.length!==1||capabilities.size||fixture.calls.length)
-      throw new TypeError('Outcome-only evaluation requires one pure common-support invocation');
-    const started=performance.now(),harness=new SelectedExecutionHarness({sessionId:'outcomeevaluation'});
-    harness.publishProgram(programs[0]);harness.admitInvocation(invocations[0]);
-    const driver=new SelectedModelDriver({harness,select:select??(()=>{throw new Error('No semantic stepping in outcome-only control');})});
-    const servedPrefix=driver.prefix(invocations[0].invocationId);
-    let predicted,selection=null,record=null,failure=null;
-    try{
-      if(origin==='controlled'){
-        predicted=copy(envelope.request.controlledOutcome);
-        if(predicted?.schema!=='semantic-outcome/4')throw new TypeError('Explicit controlled outcome fixture required');
-        record=JSON.stringify(predicted);
-      }else{
-        if(typeof select.outcome!=='function')throw new TypeError('Actual model outcome adapter required');
-        const output=await select.outcome(servedPrefix);
-        predicted=output.outcome;selection=output.selection;record=output.record;
-      }
-    }catch(error){failure={category:error.category??error.name,message:String(error.message??error),
-      evidence:copy(error.evidence??null)};}
-    finally{driver.close();}
-    return {schema:'semantic-evaluation-result/4',origin,representation:'outcome-only',checkpointIdentity,
-      inferenceIdentity,episode:null,record,selection,servedPrefix,failure,firstSemanticInconsistency:null,
-      nativeRuntimeMetrics:select?.metrics?.()??null,costScope,
-      outcome:{completion:predicted?.completion??{kind:'failure',failure},state:predicted?.state??null,
-        effects:[],callbacks:[],cleanup:{pendingEffects:0,pendingJobs:0,openHandlers:0}},
-      hardGates:{futureObservationLeaks:0,unauthorizedEffects:0,untrackedNativeFallback:0,
-        falseAdmissions:0,replayNativeEffects:0},optimizerSteps:0,
-      costs:{computeSeconds:(performance.now()-started)/1000,peakMemoryBytes:memoryUsage(select),
-        dispatches:0,queueDepth:0,leakedResources:0}};
-  }
   const broker=createFixtureBroker(fixture),services={};
   let nativeCalls=0,unauthorized=0,queueDepth=0,futureLeaks=0;
   for(const operation of [...new Set(fixture.calls.map(call=>call.operation))])

@@ -26,7 +26,7 @@ export const SEMANTIC_TASK_TEMPLATES=Object.freeze([
 
 const inputs=Object.freeze([[8,3],[5,2]].map(Object.freeze));
 export function semanticRecipeFamilies({representation='compact'}={}){
-  if(!['explicit','compact'].includes(representation))throw new TypeError('Unknown recipe representation');
+  if(representation!=='compact')throw new TypeError('Only the canonical semantic trace is supported');
   return SEMANTIC_TASK_TEMPLATES.map(template=>{
     const family='semantic-recipe:'+template.name;
     const common={family,ancestorIds:['source-template:'+template.name],entry:'run',
@@ -108,8 +108,8 @@ export const BENCHMARK_ALGORITHMS=Object.freeze([
 ].map(item=>Object.freeze({...item,inputs:Object.freeze(item.inputs.map(Object.freeze))})));
 
 function evaluateBenchmarkBody(body,a,b){return Function('a','b','"use strict";'+body)(a,b);}
-export function benchmarkFamiliesV1({representation='explicit'}={}){
-  if(!['explicit','compact'].includes(representation))throw new TypeError('Unknown recipe representation');
+export function benchmarkFamiliesV1({representation='compact'}={}){
+  if(representation!=='compact')throw new TypeError('Only the canonical semantic trace is supported');
   return BENCHMARK_ALGORITHMS.map(({name,body,inputs})=>{
     const family='semantic-benchmark-v1:'+name,ancestorIds=['source-algorithm-v1:'+name];
     const common={family,ancestorIds,entry:'run',projectionOptions:{representation}};

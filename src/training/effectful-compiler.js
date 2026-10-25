@@ -88,7 +88,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     maxGenerated=16384,realmPolicy='retained',triggerId='teacher-entry',checkpointAtFirstAwait=false,
     representation='compact',maxOperators=8}={}){
   if(typeof checkpointAtFirstAwait!=='boolean')refuse('checkpointAtFirstAwait must be boolean');
-  if(!['explicit','compact'].includes(representation))refuse('unknown source representation');
+  if(representation!=='compact')refuse('Only the canonical semantic trace is supported');
   if(!Number.isInteger(maxOperators)||maxOperators<1||maxOperators>8)
     refuse('compact expressions require an operator bound from 1 through 8');
   validateBundle(bundle);replayExact(bundle);
@@ -207,7 +207,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     pendingComputations.length=0;
   }
   function pendingBinding(row,event){
-    if(representation!=='compact'||!['binding.initialize','binding.write'].includes(event.operation)||
+    if(!['binding.initialize','binding.write'].includes(event.operation)||
        row?.op!=='value'||row.writes?.length!==1||row.writes[0].kind!=='cell')
       return null;
     const last=pendingComputations.at(-1),write=row.writes[0];
@@ -227,7 +227,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     const sourceSite=event?.siteId&&privateSites.get(event.siteId);
     const node=sourceSite&&binaryNodes.get(sourceSite.start+':'+sourceSite.end);
     const start=event&&operationStarts.get(event.causes.find(cause=>cause.kind==='spec-operation')?.operationId);
-    const pure=representation==='compact'&&kind==='compute'&&!fields.bind&&
+    const pure=kind==='compute'&&!fields.bind&&
       fields.expr.op==='binary'&&node?.type==='BinaryExpression'&&
       node.operator===fields.expr.operator&&start&&
       start.event.sequence<event.sequence&&start.event.invocationId===event.invocationId&&
@@ -333,7 +333,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     // preceding pure test pending so a checked condition can replace it.
     // Likewise, an exact producer-dependent cell initialization can become
     // the binding of its computation without an extra model target.
-    const possibleChoice=representation==='compact'&&row?.op==='branch';
+    const possibleChoice=row?.op==='branch';
     const attachBinding=pendingBinding(row,event);
     if(!possibleChoice&&!attachBinding&&(!pureTransition||
       event.completion&&event.completion.type!=='normal'||
@@ -549,7 +549,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       // removed primitive must be the consecutive, source-contained producer
       // of this very decision; its journal receipt stays on the choice.
       let folded=[];
-      if(representation==='compact'&&explained&&testNode&&pendingComputations.length&&
+      if(explained&&testNode&&pendingComputations.length&&
          isDeepStrictEqual(pendingComputations.at(-1).fields.result,decision)&&
          pendingComputations.at(-1).node?.start===testNode.start&&
          pendingComputations.at(-1).node?.end===testNode.end&&
@@ -660,10 +660,10 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   exported.sidecar.selectionOrigin='owned-interpreter-teacher';
   exported.sidecar.referenceStatus='unverified';
   exported.sidecar.admission='projected';
-  exported.sidecar.representation=representation;
+  exported.sidecar.representation='compact';
   exported.sidecar.compiler={schema:'semantic-effectful-compiler/4',certificates,elided,checkpoints,
     sourceDigest:hash(source),archiveDigest:hash(bundle),capabilities,
-    representation,compaction:{maxOperators,maxNodes:32,removedComputations:fusedComputations,
+    representation:'compact',compaction:{maxOperators,maxNodes:32,removedComputations:fusedComputations,
       foldedConditions:foldedComputations,fusedBindings},
     generatedRecords:generated,publicDigest:hash(exported.public)};
   const replayed=SelectedExecutionHarness.replay(exported);
