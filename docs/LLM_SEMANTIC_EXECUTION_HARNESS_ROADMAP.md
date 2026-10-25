@@ -8,13 +8,23 @@
 
 **Prototype baseline:** [tracing-js-self PR #30](https://github.com/werg/tracing-js-self/pull/30) is merged. Exact inspected revisions and remaining gaps are in [section 1](#1-reviewed-baseline).
 
-## 0. The product and the first useful delivery
+## 0. The product and implementation mandate
 
 The product is an LLM that executes supported JavaScript/TypeScript by producing a readable semantic trace. Each execution receives **the code first, then an explicit invocation, then generates the execution**. When execution reaches an external operation, the model emits a tool call with already evaluated arguments. The harness performs the operation and supplies the tool result. The model continues the same invocation from that observation.
 
 Outside callers and events can also start execution. In Megatoken, a selected lifecycle tool call can create a child execution track. That child receives its own code context and invocation, executes through the same tool/result protocol, and returns a correlated completion to its parent.
 
 The execution trace should make the program's behavior easy to follow: values computed, branches taken, calls made, state changed, external interactions, and reasons for suspension and resumption. It is a structured account of executed semantics, not free-form reasoning prose.
+
+### Mandatory instructions to the implementer
+
+**Complete the entire implementation scope in one continuous, coordinated effort across tracing-js-self, Megatoken, and Natlang. Finish all required implementation and integration work in all three repositories before starting or requiring any training.** The milestones in this document specify dependency order and verification checkpoints. They are not stopping points, optional follow-up projects, or requests for the user to authorize each next stage. Use multiple commits, branches, or coordinated PRs as useful, and continue through the full engineering completion gate in section 7.
+
+The required delivery includes the protocol and schemas, readable trace, controller, effect broker and adapters, dynamic tracks, invocation/event ingress, callbacks and Promises, retained state and recovery, actual Natlang integration, and all training-data, model-inference, training, evaluation, migration, CI, and documentation infrastructure. Implement these comprehensively; do not leave an in-scope component as a stub, deferred TODO, or work to be filled in after training. Explicit refusals for semantics outside the declared scope remain valid; they must not be used to silently defer an in-scope feature.
+
+**Training infrastructure is implementation work; running training is a later activity.** Complete the teacher/compiler and corpus-admission pipelines, production tokenizer/consumer, loss and visibility handling, model adapter, training configuration, checkpoint/restart support, evaluation tools, and reporting during this effort. Validate them using deterministic fixtures and non-optimizing tests. Do not insert a small training, fine-tuning, overfitting, optimizer-driven smoke run, or learned-success threshold as a prerequisite for continuing to another repository or finishing another component.
+
+If a real access or infrastructure blocker prevents a component, record the exact blocker and complete all unaffected work. A missing trained checkpoint, low model quality, or unavailable training compute is not a reason to stop implementation. The handoff is a comprehensive, tested cross-repository implementation ready for training, with empirical learned quality explicitly left for the subsequent training stage.
 
 ### Decisions to build around
 
@@ -30,7 +40,7 @@ The execution trace should make the program's behavior easy to follow: values co
 | Training and serving agree | The teacher and the learned executor use the same public interaction contract, effect broker, codecs, and scheduling rules. Their authority to produce semantic steps differs. |
 | Correctness is observable | Check returned values, shared-state changes, ordered effects, callback order, cleanup, and completion. A correct final scalar alone is insufficient. |
 
-**First useful delivery:** one small program, two different outside invocations, one asynchronous read/compute/write interaction, a readable trace, an independently checked teacher episode, and a real Megatoken-selected continuation through the same harness. Then add a tool-created child track and an externally triggered handler. Broad DOM/Node coverage follows this complete path.
+**First internal integration checkpoint:** exercise one small program, two outside invocations, an asynchronous read/compute/write interaction, a readable trace, and an independently checked teacher episode through the production selected-execution interfaces using controlled test selections. Continue directly through child tracks, external handlers, recovery, Natlang integration, and all required capability families. This checkpoint neither reduces the delivery scope nor requires training.
 
 **Reading guide:** [section 2](#2-what-a-good-trace-looks-like) shows the experience; [sections 3–5](#3-one-public-interaction-contract) define the protocol; [section 6](#6-training-the-same-interaction-the-model-will-serve) defines training; [section 7](#7-delivery-order-and-exit-gates) gives the implementation order.
 
@@ -318,6 +328,8 @@ Declare queue bounds, backpressure and fair service policy. Overflow, refusal, o
 
 ## 6. Training the same interaction the model will serve
 
+Implement all infrastructure and test fixtures specified in this section during M0–M8. The curriculum and learning experiments describe subsequent use of the completed system; execute training only after the full cross-repository engineering completion gate passes.
+
 ### 6.1 Episode layout and teacher pipeline
 
 An episode is a causal graph of tracks and observations, with a recorded legal delivery order. Its linearized training form contains:
@@ -359,25 +371,40 @@ Build counterfactual pairs with identical visible prefixes and different later t
 
 Split by source/task/fixture ancestry before expansion. Keep every child, continuation, retry, input variant, schedule variant, and counterfactual world from the same family in one split. Hold out source families and task compositions, not just random records. Follow Natlang's [source-first, causally decisive data requirements][natlang-data].
 
-Begin with small production-path training and free-running serving tests; use scripted selected records only to test protocol mechanics. Preserve seeds **17, 29, 43**, the frozen common-support cohort, and the historical baseline in [SEMANTIC_V3_MODEL_EXPERIMENTS.md](SEMANTIC_V3_MODEL_EXPERIMENTS.md). Add a separately reported effectful/track/event cohort. Compare readable explicit and bounded compact traces with outcome-only controls under fixed-example, fixed-token, and measured compute budgets. Teacher-forced loss and actual free-running task success are different measurements.
+Complete the data, training, serving, and evaluation implementations during M0–M8 using deterministic teacher/reference fixtures, controlled selected-output fixtures, tokenizer/visibility/loss checks, and non-optimizing integration tests. Training, fine-tuning, optimizer-driven smoke runs, and learned-success thresholds are not prerequisites for continuing implementation. Controlled trajectories test engineering behavior and must be labeled as such; they do not demonstrate learned execution.
+
+After M8 passes, run the learning experiments in M9. Preserve seeds **17, 29, 43**, the frozen common-support cohort, and the historical baseline in [SEMANTIC_V3_MODEL_EXPERIMENTS.md](SEMANTIC_V3_MODEL_EXPERIMENTS.md). Add a separately reported effectful/track/event cohort. Compare readable explicit and bounded compact traces with outcome-only controls under fixed-example, fixed-token, and measured compute budgets. Teacher-forced loss and actual free-running task success are different measurements. Implement the experiment configurations, evaluators, and reporting before this training stage.
 
 ## 7. Delivery order and exit gates
 
-Deliver a narrow complete interaction before broad API coverage. Each gate needs pinned code, fixtures, scope/refusal counts, and receipts. A protocol test does not establish model quality; a learned toy example does not establish Natlang production readiness.
+**Execute M0–M8 as one comprehensive implementation effort across all three repositories, then begin M9 training.** Start with a narrow interaction to verify the architecture and continue through all remaining implementation scope. Each engineering checkpoint needs pinned code, fixtures, scope/refusal counts, and receipts. Checkpoints organize the work; they do not create phase-by-phase handoffs or training dependencies. Engineering acceptance and empirical learned quality have separate gates.
 
 | Milestone | Deliverable and main owners | Exit gate |
 | --- | --- | --- |
-| **M0 — baseline and examples** | Tracer + Megatoken + Natlang: freeze inspected pins, supported profile, readable transcripts, and operation inventory. | Identify current schema/lane/callback limitations and async Natlang seams; approve exact first examples and expected state/effects. |
+| **M0 — baseline and examples** | Tracer + Megatoken + Natlang: freeze inspected pins, full implementation scope, supported profile, readable transcripts, and operation inventory. | Identify current schema/lane/callback limitations and async Natlang seams; record exact first examples and expected state/effects without narrowing the remaining required scope. |
 | **M1 — paired protocol** | Tracer + Megatoken: versioned code/invoke/result/event/lifecycle binding; dynamic identities; single selected-action bridge; JS/Python schemas and renderer. | Both validators agree on positive/negative fixtures; old artifacts reject; code-before-invocation and no-future-visibility checks pass. |
-| **M2 — one complete tool episode** | Tracer + harness + Megatoken: one fixture-backed async read/compute/write, teacher projection/admission, selected live adapter, production consumer. | Two outside invocations execute through the same contract; exact arguments and one logical dispatch per action; recorded replay calls no adapters. Run a small real-model training/free-running smoke experiment and report success/failure honestly. |
+| **M2 — one complete tool episode** | Tracer + harness + Megatoken: one fixture-backed async read/compute/write, teacher projection/admission, selected live adapter, production consumer and inference plumbing. | Two outside invocations execute through the production interfaces using controlled selections; exact arguments and one logical dispatch per action; recorded replay calls no adapters. Verify actual inference-adapter boundaries without optimizing weights or requiring successful learned execution. |
 | **M3 — tool-created execution track** | Megatoken + tracer: typed create/assign binding, source handoff, child execution, parent completion dependency. | Selected lifecycle call creates one child; code precedes invocation; child result/throw reaches parent; duplicate create, failed bootstrap, cancellation, capacity and more-than-eight-lifetime-track tests pass. |
 | **M4 — events and async ownership** | Tracer + harness + Megatoken: persistent subscriptions, outside triggers, owned jobs/Promises, retained state, event routing. | Register once, handle two later events, mutate a captured cell, call a tool, unsubscribe; two effects settle in reverse order; legal checkpoints and shared-state exclusion are preserved. |
 | **M5 — continuity and recovery** | Harness + Megatoken + tracer: bounded queues, source reread, selected-state/model continuation, dispatch reconciliation. | Restore pending tool, child, and subscription without duplicate effects; handle evicted code, late/duplicate results, lost resource, cancellation, and uncertain writes. |
-| **M6 — real Natlang path** | Natlang + tracer + Megatoken: async entry/module caller migration; fresh/retained execution; actual compiler output and live-resource contracts. | Representative tasks compare result, ordered effects, events/logs, module/cache/capture state, and correct failure classes on the selected-model route. |
-| **M7 — capability and corpus expansion** | All three: evidence-led HTTP/DOM/Node/resource adapters and production episode supply. | Each claimed family passes independent native fixtures, codec/lifetime tests, admission and whole-family split checks; unsupported operations remain explicit. |
-| **M8 — learned acceptance and consolidation** | All three: held-out model runs, equal-budget comparisons, deployment acceptance, removal of superseded paths. | Reproducible checkpoints and selected rollouts meet declared task/effect/trace targets; consumer pins, migration and operational receipts are complete. |
+| **M6 — real Natlang path** | Natlang + tracer + Megatoken: async entry/module caller migration; fresh/retained execution; actual compiler output and live-resource contracts. | Representative tasks compare result, ordered effects, events/logs, module/cache/capture state, and failure classes through the production selected-execution route with controlled action fixtures. No training requirement. |
+| **M7 — complete capabilities and data infrastructure** | All three: all in-scope HTTP/DOM/Node/resource adapters, corpus preparation/admission, representative admitted data, and reproducible production data recipes. | Every required supported family has functioning code and passes independent native fixtures, codec/lifetime tests, admission and whole-family split checks. Out-of-profile refusals remain explicit; missing in-scope adapters do not pass. |
+| **M8 — implementation completion and consolidation** | All three: complete training/inference/evaluation infrastructure and configurations, checkpoint/restart, cross-repo CI, migration, recovery documentation, and removal of superseded paths. | The engineering completion gate below passes at pinned compatible revisions across all target repos. No required code remains deferred, and no training run or learned-quality threshold is needed to establish engineering completion. |
+| **M9 — post-implementation training and learned acceptance** | All three: run the completed training recipes, held-out model evaluations and equal-budget comparisons; assess deployment quality. | Only starts after M0–M8 are complete. Reproducible trained checkpoints and actual selected rollouts meet declared task/effect/trace targets; empirical costs and failures are reported separately from engineering completion. |
 
-M1 blocks new-format admission. M2 must include the teacher and selected-inference path for its narrow profile; do not postpone that connection until every adapter exists. M3 and M4 may develop in parallel after the shared contract is stable. M5 is required before durable/long-running claims. Begin Natlang async-interface design in M0, while its full acceptance remains M6. Individual adapter prototypes can proceed earlier, but a prototype does not pass M7.
+M1 blocks new-format admission. M2 connects the teacher and production selected-execution interfaces early, and the implementer then continues through the full scope. M3 and M4 may develop in parallel after the shared contract is stable. M5 is required before durable/long-running claims. Begin Natlang async-interface design in M0 and complete it in M6. Adapter prototypes may proceed earlier, but all required implementations must pass M7. **M0–M8 are mandatory work in the same effort; no intermediate milestone may demand training resources, a newly trained checkpoint, or successful learning as a condition for finishing subsequent code.**
+
+### Engineering completion gate — required before any training
+
+All of the following must be complete before M9:
+
+- All required protocol, renderer, controller, broker, lifecycle, invocation/event, callback/Promise, retained-state, and recovery paths are implemented across the target repositories, including their real production entry points.
+- Required HTTP, DOM/browser, Node, and Natlang resource adapters and actual fresh/retained Natlang integration are implemented and verified within the declared scope. No in-scope feature is replaced by a stub or silently reclassified as future work.
+- Teacher projection, independent reference checks, corpus generation/admission, native import, tokenizer/fragmentation, loss/visibility handling, training configuration, checkpoint/restart, inference recurrence, evaluation, and reporting tools are implemented and exercised with non-optimizing checks.
+- Cross-repository contract fixtures, real Node/browser adapter fixtures, deterministic end-to-end execution, negative cases, cancellation/recovery, and all relevant engineering regression checks pass at pinned compatible revisions. Required test and evaluation code is already present; it is not postponed until after training.
+- Consumer migrations, version/lockfile updates, obsolete-path removal, CI wiring, reproducible commands, implementation ledgers, and operational/recovery documentation are complete across all three repositories.
+
+Use controlled selected-action drivers through the same parsing, commitment, dispatch, observation, and continuation interfaces used by serving. Exercise the real inference adapter separately with initialized or existing fixed weights where needed; this validates plumbing and failure handling without demanding learned task success. Do not optimize weights during these checks. Mark test-injected actions honestly and keep them out of learned-success reports. Passing this gate establishes **implementation complete and ready to train**; M9 establishes learned behavior.
 
 ### Minimal executable acceptance suite
 
@@ -393,7 +420,9 @@ M1 blocks new-format admission. M2 must include the teacher and selected-inferen
 | Same realm, several tracks | Captures and aliases remain shared under one legal commit order; no concurrent guest-turn mutation. |
 | Visibility and context | No same-group future read; source eviction forces checked reread; future fixture perturbation leaves earlier prefix unchanged. |
 | Restore and retry | No repeated live initialization/effect; duplicate delivery is harmless; uncertain write remains unresolved until reconciled. |
-| End-to-end learner | Teacher admission, native import, actual selected model calls, observed feedback, and correct effects/outcome are all separately evidenced. |
+| End-to-end engineering | Teacher admission, native import, production commitment/dispatch, observed feedback, and correct effects/outcome pass with controlled selections; actual inference-adapter plumbing is verified without training. |
+
+Actual free-running learned execution is evaluated in M9, after this implementation suite and the full engineering completion gate pass.
 
 Also retain adversarial fixtures for special scalars, sparse arrays, aliases/cycles, receiver/callsite forgery, stale argument snapshots, callback/handle ownership, malformed payloads, quotas, Promise adoption, cleanup overriding completion, cross-origin resources, and stream overflow. Add each supported API's specific failure and lifecycle cases rather than claiming generic coverage from a single demo.
 
@@ -408,6 +437,8 @@ Install the selected executor at both the per-task fresh factory and retained ca
 Changing the module realm already closes the old realm and invalidates the shared instance cache, but active task-local caches and handed-out references are not magically migrated. Make cutover explicit and test it. Preserve early opt-in and label any ordinary native/hybrid route accurately; its outputs cannot silently substitute for a selected semantic continuation or enter owned training data.
 
 ### 8.2 Grow the registered capability surface
+
+Every in-scope capability family below is part of the comprehensive implementation required before M8 completes. The waves specify internal development order, not optional follow-up projects or opportunities to pause for training.
 
 | Wave | Scope | Required evidence before claiming support |
 | --- | --- | --- |
@@ -443,22 +474,31 @@ Every integration PR records: supported profile; schema/pin changes; public vers
 
 Zero future-observation leakage, unauthorized/hidden native effects, untracked native fallback, false admission, and native effects during exact replay are hard gates. The performance threshold for a capability/task cohort must be declared before the held-out run; do not convert a successful toy demo into a production claim.
 
-### Completion checklist
+### Engineering completion checklist — before training
+
+Evaluate these implementation checks with the production interfaces, controlled selected trajectories, independent reference fixtures, and non-optimizing inference-boundary tests described in section 7. They do not depend on a trained model achieving task success.
 
 - [ ] A reader can follow code, invocation, semantic work, tool calls/results, events, and parent/child relationships in one deterministic trace view.
 - [ ] Code and initialization are separate from repeated invocations; retained state and source availability are explicit.
 - [ ] Tracer and Megatoken share one versioned contract with dynamic track bindings and independently checked fixtures.
-- [ ] Actual selected semantic requests reach the real broker; results enter as observed input and resume owned execution without teacher repair.
+- [ ] The production selected-request interface reaches the real broker; results enter as observed input and resume owned execution without teacher repair.
 - [ ] Selected lifecycle tools create execution tracks with code before invocation and correctly correlated child completion.
 - [ ] Outside invocations and subscription events start/wake the right execution without fabricated tool-call history.
 - [ ] Sync calls, Promise-returning calls, persistent listeners and streams preserve their declared semantics and scheduling.
 - [ ] Shared realms, callbacks, checkpoints, retries, cancellation and resource lifetime preserve identity and causality.
 - [ ] Effectful teacher episodes pass independent reference, replay, witness, native-consumer, loss-mask and visibility gates.
 - [ ] Natlang's async entry/module integration and fresh/retained application behavior pass on the selected-model path.
-- [ ] Trained Megatoken runs held-out tasks through this interaction protocol; outcomes, side effects, costs, baselines and failures are reported.
+- [ ] All required training-data, loss/visibility, training-configuration, checkpoint/restart, inference, evaluation, and reporting implementations are complete and tested without a training prerequisite.
+- [ ] Every required capability family and cross-repository implementation milestone M0–M8 is complete, with no in-scope code deferred until after training.
 - [ ] Superseded active routes are removed; pinned integration, migration and recovery receipts are documented.
 
-Until these gates pass, describe the implementation by its verified profile: a native bridge, a protocol test, an admitted teacher subset, or a measured learned capability. Those are useful milestones with different meanings.
+### Post-implementation empirical acceptance — M9
+
+- [ ] Training starts only after the full engineering completion gate passes across all three repositories.
+- [ ] Trained Megatoken runs held-out tasks through the completed interaction protocol; outcomes, side effects, trace correctness, costs, baselines, seeds and failure categories are reported.
+- [ ] Learned-quality thresholds and deployment acceptance are assessed from real free-running selected-model trajectories, separately from deterministic implementation tests.
+
+Report engineering completion and empirical learned quality separately. Before M8 passes, continue implementation through the remaining required work. Once it passes, the complete cross-repository implementation is ready for training; learned-capability claims await M9 evidence.
 
 ## 10. References and maintenance
 
