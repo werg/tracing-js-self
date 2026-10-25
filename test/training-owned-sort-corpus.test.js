@@ -1,19 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import ts from 'typescript';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence,validateTrainingExport} from '../src/training/diagnostic.js';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence,validateTrainingExport} from '../src/training/source-check.js';
 import {validateBundle,replayExact} from '../src/index.js';
 import {cases} from '../corpus/cases.mjs';
 import {original} from '../corpus/pinned-source.mjs';
 import {buildOwnedFixtureEntry} from '../corpus/owned-fixture-adapter.mjs';
 
 function verify(source,entry,args=[]){
- const result=verifyTrainingCase({source,entry,args,maxGenerated:1024,maxSteps:10000});
+ const result=verifyOwnedSourceCase({source,entry,args,maxGenerated:1024,maxSteps:10000});
  assert.equal(result.status,'locally_verified',JSON.stringify(result).slice(0,700));
  assert.equal(replayExact(result.exported.sidecar.archive).valid,true);
  assert.equal(validateBundle(result.exported.sidecar.archive).valid,true);
  assert.equal(validateTrainingExport(result.exported).valid,true);
- assert.equal(recheckIndependentTrainingEvidence(result.exported).valid,true);
+ assert.equal(recheckOwnedSourceEvidence(result.exported).valid,true);
  return result.exported;
 }
 test('real pinned groupBy comparator with representative original inputs',()=>{
@@ -28,6 +28,6 @@ test('real pinned groupBy comparator with representative original inputs',()=>{
  }
 });
 test('array-mutating comparators are not promoted to locally verified sort traces',()=>{
- const r=verifyTrainingCase({source:'"use strict";function f(a){a.sort((x,y)=>{a.push(9);return x-y;});return a;}',entry:'f',args:[[3,2,1]]});
+ const r=verifyOwnedSourceCase({source:'"use strict";function f(a){a.sort((x,y)=>{a.push(9);return x-y;});return a;}',entry:'f',args:[[3,2,1]]});
  assert.notEqual(r.status,'locally_verified');
 });

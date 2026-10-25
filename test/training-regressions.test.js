@@ -4,7 +4,7 @@ import {createRuntime} from '../src/runtime.js';
 import {validateBundle} from '../src/validation.js';
 import {replayExact} from '../src/replay.js';
 import {causalPrefix} from '../src/causal.js';
-import {verifyTrainingCase} from '../src/training/admit.js';
+import {verifyOwnedSourceCase} from '../src/training/source-check.js';
 
 test('async returns adopt a fulfilled promise rather than returning its identity',()=>{
   const source='async function a(){return Promise.resolve(3);} async function b(){return await a();} let promise=b();';
@@ -68,6 +68,6 @@ test('unstarted registered sources are not published as predictor-visible code',
 });
 
 test('bounded array length expansion creates genuine absent slots and verifies against V8',()=>{
-  const result=verifyTrainingCase({source:'"use strict"; function run(){const a=[1];a.length=4;return a;}',entry:'run'});
+  const result=verifyOwnedSourceCase({source:'"use strict"; function run(){const a=[1];a.length=4;return a;}',entry:'run'});
   assert.equal(result.status,'locally_verified',JSON.stringify(result));
 });

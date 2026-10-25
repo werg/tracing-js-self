@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase,validateTrainingExport} from 'tracing-js-self/training/diagnostic';
+import {verifyOwnedSourceCase,validateTrainingExport} from 'tracing-js-self/training';
 import {validateBundle,replayExact} from 'tracing-js-self';
 
 function check(body,args=[]){
-  const result=verifyTrainingCase({source:'"use strict";\n'+body,entry:'f',
+  const result=verifyOwnedSourceCase({source:'"use strict";\n'+body,entry:'f',
     args,maxGenerated:1024});
   assert.equal(result.status,'locally_verified',JSON.stringify(result));
   assert.equal(result.exported.sidecar.operationAudit.status,'agreed');
@@ -39,7 +39,7 @@ test('unmodeled callbacks and coercions never silently pass',()=>{
     ['function f(o){return [1,2].join(o);}',[{}]],
     ['function f(o){return [o].join(",");}',[{}]]
   ]){
-    const result=verifyTrainingCase({source:'"use strict"; '+body,entry:'f',args});
+    const result=verifyOwnedSourceCase({source:'"use strict"; '+body,entry:'f',args});
     assert.notEqual(result.status,'locally_verified',body);
   }
 });

@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence} from 'tracing-js-self/training/diagnostic';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence} from 'tracing-js-self/training';
 import {createBoundedNatlangEnvironment} from '../src/natlang.js';
 const strict=code=>'"use strict";\n'+code;
 function verified(body,args=[]){
-  const result=verifyTrainingCase({source:strict(body),entry:'f',args,maxGenerated:1024});
+  const result=verifyOwnedSourceCase({source:strict(body),entry:'f',args,maxGenerated:1024});
   assert.equal(result.status,'locally_verified',JSON.stringify(result));
-  const evidence=recheckIndependentTrainingEvidence(JSON.parse(JSON.stringify(result.exported)));
+  const evidence=recheckOwnedSourceEvidence(JSON.parse(JSON.stringify(result.exported)));
   assert.equal(evidence.valid,true,JSON.stringify(evidence));
   return result.exported;
 }
@@ -27,7 +27,7 @@ test('arrow property-call ignores method receiver and still closes over bound va
 });
 test('named expressions still fail closed; rest arrows remain owned',()=>{
   const body='function f(){const a=function self(x){return x;};return a(2);}';
-  assert.equal(verifyTrainingCase({source:strict(body),entry:'f'}).status,'unsupported');
+  assert.equal(verifyOwnedSourceCase({source:strict(body),entry:'f'}).status,'unsupported');
   verified('function f(){const a=(...x)=>x[0];return a(3);}');
 });
 test('natlang TS annotations on synchronous arrows lower to guest frames',()=>{

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase} from '../src/training/diagnostic.js';
+import {verifyOwnedSourceCase} from '../src/training/source-check.js';
 import {createRuntime,validateBundle,replayExact} from '../src/index.js';
 import {referenceOutcome} from '../src/training/reference.js';
 import {describeGraph,realizeGraph} from '../src/training/graph.js';
@@ -74,7 +74,7 @@ test('typed natlang logical assignment executes entirely in owned interpreter',(
 
 
 test('logical assignments cannot be admitted before independent operation/branch audit support',()=>{
-  const report=verifyTrainingCase({source:'"use strict";\nfunction f(x){x ||= 7; return x;}',entry:'f',args:[0]});
+  const report=verifyOwnedSourceCase({source:'"use strict";\nfunction f(x){x ||= 7; return x;}',entry:'f',args:[0]});
   assert.notEqual(report.status,'locally_verified',
     'whole-graph V8 equivalence cannot substitute for source-operation receipts');
 });

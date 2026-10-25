@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence} from '../src/training/diagnostic.js';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence} from '../src/training/source-check.js';
 import {replayExact} from '../src/replay.js';
 
 function checked(source,args=[]) {
-  const result=verifyTrainingCase({source:'"use strict";\n'+source,entry:'f',args,
+  const result=verifyOwnedSourceCase({source:'"use strict";\n'+source,entry:'f',args,
     maxSteps:10000,maxGenerated:1024});
   assert.equal(result.status,'locally_verified',JSON.stringify(result));
   assert.equal(replayExact(result.exported.sidecar.archive).valid,true);
-  assert.equal(recheckIndependentTrainingEvidence(
+  assert.equal(recheckOwnedSourceEvidence(
     JSON.parse(JSON.stringify(result.exported))).valid,true);
   return result;
 }
@@ -20,7 +20,7 @@ test('owned Set constructor, insertion order, SameValueZero and synchronous call
 });
 
 test('Set constructor is only a bounded ordinary owned array iterable',()=>{
-  const bad=verifyTrainingCase({source:'"use strict"; function f(){return new Set(5)}',entry:'f'});
+  const bad=verifyOwnedSourceCase({source:'"use strict"; function f(){return new Set(5)}',entry:'f'});
   assert.notEqual(bad.status,'locally_verified');
 });
 
@@ -29,7 +29,7 @@ test('unreached Error constructor and RegExp literal remain fail-closed when exe
   checked('function f(x,flag=false){if(flag)return x.replace(/\\./g, "");return x.toUpperCase()!==x;}', ['abc']);
   for(const text of ['function f(){return new Error("no")}',
     'function f(){return /a/g}']){
-    const check=verifyTrainingCase({source:'"use strict"; '+text,entry:'f'});
+    const check=verifyOwnedSourceCase({source:'"use strict"; '+text,entry:'f'});
     assert.notEqual(check.status,'locally_verified');
   }
 });
@@ -38,7 +38,7 @@ test('bounded CR/LF RegExp split is an owned deterministic source-level leaf',()
   checked('function f(s){return s.split(/\\r\\n|\\r|\\n/);}', ['a\r\nb\nc\rd']);
   checked('function f(s){return s.split(/(\\r\\n|\\r|\\n)/);}', ['a\r\nb\nc\rd']);
   checked('function f(s){return s.split(/(\\r\\n|\\r|\\n)/);}', ['']);
-  const bad=verifyTrainingCase({source:'"use strict"; function f(s){return s.split(/x/)}',entry:'f',args:['x']});
+  const bad=verifyOwnedSourceCase({source:'"use strict"; function f(s){return s.split(/x/)}',entry:'f',args:['x']});
   assert.notEqual(bad.status,'locally_verified');
 });
 
