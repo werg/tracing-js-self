@@ -47,7 +47,7 @@ test('pure and effectful compact teachers are source-certified, shorter and exec
 
 test('fusion requires exact source child and operand dependency instead of coincidentally equal results',async()=>{
   const bundle=await sourceBundle('function run(a,b){return ((a+b),(a+b))*2;}',[2,3]);
-  const explicit=compileEffectfulWitness(bundle).exported;
+  const explicit=compileEffectfulWitness(bundle,{representation:'explicit'}).exported;
   const compact=compileEffectfulWitness(bundle,{representation:'compact'}).exported;
   assert.deepEqual(compact.public,explicit.public,'sequence-discarded sibling computations cannot become an AST child');
   assert.equal(compact.sidecar.compiler.compaction.removedComputations,0);
@@ -60,7 +60,7 @@ test('fusion requires exact source child and operand dependency instead of coinc
 
 test('bounded compaction retains computations beyond eight operators and the thirty-two node ceiling',async()=>{
   const bundle=await sourceBundle('function run(value){return ((((((((((value+1)+2)+3)+4)+5)+6)+7)+8)+9)+10);}',[1]);
-  const explicit=compileEffectfulWitness(bundle).exported;
+  const explicit=compileEffectfulWitness(bundle,{representation:'explicit'}).exported;
   const compact=compileEffectfulWitness(bundle,{representation:'compact'}).exported;
   assert.equal(computations(explicit).length,10);assert.equal(computations(compact).length,2);
   const sizes=computations(compact).map(item=>validateExpression(item.fields.expr));
