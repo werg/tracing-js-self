@@ -47,6 +47,30 @@ continuations, and actual model training comparisons still have independent
 acceptance work. See the [implementation ledger](docs/TRAINING_IMPLEMENTATION.md)
 and [complete redesign plan](docs/SEMANTIC_TRACE_REDESIGN_PLAN.md).
 
+## Executable external effects
+
+`compileExternalEffectsJS(bundle)` returns a JavaScript **function body** for
+the external operations actually dispatched by a validated owned run. This is
+for deliberate effect replay in an independent JS engine, **not** for rebuilding
+the whole guest program, its results, or async scheduling. It does not perform
+any external effects until you execute the returned string.
+
+```js
+import {compileExternalEffectsJS} from 'tracing-js-self';
+
+const javascript = compileExternalEffectsJS(bundle);
+const effects = {'demo.store': (key, value) => save(key, value)};
+new Function('effects', javascript)(effects);
+```
+
+The emitted JavaScript calls `effects["operation"](...materializedArgs)` in
+recorded dispatch order. The argument values are copied directly from the
+verified immutable request payload (including the snapshot of a later-mutated
+object). All required handlers are checked before the first call. Handler
+results do not resume the source program, and asynchronous completions are not
+reconstructed. Running the generated string **executes effects again**;
+use only trusted archives and deliberately supplied handlers.
+
 ## Quick start
 
 Requires Node.js 20 or later. Acorn 8.15.0 is the integrity-locked parser dependency
