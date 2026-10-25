@@ -82,7 +82,7 @@ export function materializeJson(heap, args,
   const payload='['+args.map((value,index)=>{
     if(!callbackIndices.includes(index))return serialize(value,0);
     const id=value?.[0]==='ref'&&value.length===2?value[1]:null;
-    if(typeof id!=='string'||heap[id]?.kind!=='function'||heap[id].async)
+    if(typeof id!=='string'||!['function','closure'].includes(heap[id]?.kind)||heap[id].async)
       throw new TypeError('Callback argument requires a synchronous owned guest function');
     return '{"$ownedCallback":'+literal(id)+'}';
   }).join(',')+']';
