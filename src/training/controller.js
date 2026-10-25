@@ -215,7 +215,7 @@ export class SemanticController {
           ]))
         }]));
         let prepared;
-        try {prepared=materializeJson(heap,f.arguments);}
+        try {prepared=materializeJson(heap,f.arguments,{callbackIndices:spec.callbackIndices??[]});}
         catch(error){fail('request-arguments',error.message);}
         if(prepared.payload!==f.payload)
           fail('request-arguments','External payload differs from grounded arguments');
