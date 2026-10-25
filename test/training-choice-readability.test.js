@@ -116,3 +116,28 @@ test('folded pure test work retains both original private event receipts',()=>{
   assert.equal(result.certificates[1].rule,'fold-choice/1');
   assert.deepEqual(result.certificates[1].journalEvents,['j1','j2']);
 });
+
+test('a known ordinary data-property read explains a decision',()=>{
+  const result=verified('function run(o){if(o.n>2)return o.n;return 0;}',[{n:3}]);
+  const choice=result.records.find(r=>r.kind==='choose');
+  assert.equal(choice.fields.expr.op,'binary');
+  assert.deepEqual(choice.fields.expr.left,{op:'read',object:'o1',key:'n'});
+  assert(result.records.some(r=>r.kind==='bind'&&r.fields.name==='arg0'));
+  assert.deepEqual(result.reference.graph.roots.at(-1),['num',3]);
+});
+
+test('a prior write advances the available property value without using a future snapshot',()=>{
+  const result=verified('function run(o){o.n=4;if(o.n>2)return o.n;return 0;}',[{n:1}]);
+  const writeIndex=result.records.findIndex(r=>r.kind==='write'&&r.fields.key==='n');
+  const choiceIndex=result.records.findIndex(r=>r.kind==='choose');
+  assert(writeIndex>=0&&choiceIndex>writeIndex);
+  assert.deepEqual(result.records[choiceIndex].fields.expr.left,
+    {op:'read',object:'o1',key:'n'});
+  assert.deepEqual(result.reference.graph.roots.at(-1),['num',4]);
+});
+
+test('unknown or deleted properties never become invented pure reads',()=>{
+  const result=verified('function run(o){if(o.missing)return 1;return 2;}',[{n:3}]);
+  assert(result.records.some(r=>r.kind==='choose'&&r.fields.expr.op==='literal'));
+  assert.equal(result.reference.graph.roots.at(-1)[1],2);
+});
