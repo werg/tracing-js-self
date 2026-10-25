@@ -99,6 +99,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   if(typeof source!=='string')refuse('exact source bytes are unavailable');
   const sourceReferences=closureReferences(source),functionReferences=new Map();
   const binaryNodes=binarySourceNodes(source),operationStarts=new Map();
+  const privateSites=new Map(bundle.sites.map(site=>[site.siteId,site]));
   for(const event of bundle.events)for(const change of event.stateChanges)
     if(change.kind==='operation.create')operationStarts.set(change.id,{event,operation:change.record});
   const capabilities=[...new Set(analyzeSemanticProgram(source).sites.map(site=>site.operation).filter(Boolean))].sort();
@@ -215,7 +216,11 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   function emit(owner,kind,fields,event=null,rule=kind){
     const certificate={rule:'owned-'+rule+'/4',journalEvents:event?[event.eventId]:[],
       source:event?.siteId?{sourceId:event.sourceId,siteId:event.siteId}:null};
-    const node=fields.site&&binaryNodes.get(fields.site.start+':'+fields.site.end);
+    // Only external requests need model-predicted source coordinates for
+    // authorization. Pure calculations and choices keep source spans solely
+    // in the private certificate; their public explanation is the expression.
+    const sourceSite=event?.siteId&&privateSites.get(event.siteId);
+    const node=sourceSite&&binaryNodes.get(sourceSite.start+':'+sourceSite.end);
     const start=event&&operationStarts.get(event.causes.find(cause=>cause.kind==='spec-operation')?.operationId);
     const pure=representation==='compact'&&kind==='compute'&&!fields.bind&&
       fields.expr.op==='binary'&&node?.type==='BinaryExpression'&&
@@ -526,7 +531,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
         left:literal(operands[0]),right:literal(operands[1])},
         sourceNode,publicScope(row.invocation,owner));
       emit(owner,'compute',{expr,result:tag(row.result),
-        invocation:frameId(row.invocation),...(row.source?{site:{start:row.source.start,end:row.source.end}}:{})},event,'compute');
+        invocation:frameId(row.invocation)},event,'compute');
       writes(row,owner,event);handled=true;
     }else if(row?.op==='branch'){
       const sourceNode=row.source&&binaryNodes.get(row.source.start+':'+row.source.end);
@@ -549,7 +554,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
         folded=pendingComputations.splice(0);
       }
       emit(owner,'choose',{expr:explained??literal(decision),decision,path:row.path,
-        invocation:frameId(row.invocation),...(row.source?{site:{start:row.source.start,end:row.source.end}}:{})},event,'branch');
+        invocation:frameId(row.invocation)},event,'branch');
       if(folded.length){
         const certificate=certificates.at(-1);
         certificate.rule='owned-source-choice/4';
