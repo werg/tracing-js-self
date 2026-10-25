@@ -10,7 +10,12 @@ import {evaluateSelectedTrajectory} from '../src/training/rollout.js';
 import {trainingPrefix} from '../src/training/visibility.js';
 
 const input=encodeWitness('input',{graph:{roots:[],objects:[]}});
-const code=encodeWitness('code',{entry:'run',source:'function run(){}',sites:[]});
+const code=encodeWitness('code',{entry:'run',source:"function run(){host.store(\"n\",5);host.store(\"n\",8);host.readNumber(\"x\");}",sites:[]});
+const site=text=>{
+  const start="function run(){host.store(\"n\",5);host.store(\"n\",8);host.readNumber(\"x\");}".indexOf(text);
+  assert(start>=0);
+  return {start,end:start+text.length};
+};
 const tag=n=>['num',n];
 const lit=value=>({op:'literal',value});
 const rec=(kind,fields)=>encodeWitness(kind,fields);
@@ -145,11 +150,14 @@ test('selected external requests match actual fixture and preserve immutable arg
     status:'fulfilled',result:['undefined']};
   const c=controller({capabilities:['demo.store'],fixtureReplies:[fixture]});
   c.commit(rec('request',{effect:'fx1',operation:'demo.store',
-    arguments:[['str','n'],tag(5)]}));
+    invocation:'i1',site:site('host.store("n",5)'),
+    arguments:[['str','n'],tag(5)],payload:'["n",5]'}));
   c.commit(rec('bind',{name:'n',value:tag(8)}));
   assert.deepEqual(c.effects.get('fx1').arguments,['n',5]);
   assert.throws(()=>c.commit(rec('request',{effect:'fx2',operation:'demo.store',
-    arguments:[['str','n'],tag(8)]})),e=>e.category==='request-mismatch');
+    invocation:'i1',site:site('host.store("n",8)'),
+    arguments:[['str','n'],tag(8)],payload:'["n",8]'})),
+    e=>e.category==='request-mismatch');
   const before=c.segmentPacket();
   assert.throws(()=>c.commit(rec('observe',{effect:'fx1',result:tag(99),
     status:'fulfilled'}),{mode:'observed'}),e=>e.category==='observation');
@@ -166,7 +174,8 @@ test('required outstanding effect cannot be hidden behind an end record',()=>{
     fixtureReplies:[{operation:'demo.readNumber',arguments:['x'],
       status:'fulfilled',result:tag(3)}]});
   c.commit(rec('request',{effect:'f1',operation:'demo.readNumber',
-    arguments:[['str','x']]}));
+    invocation:'i1',site:site('host.readNumber("x")'),
+    arguments:[['str','x']],payload:'["x"]'}));
   c.commit(rec('return',{value:tag(2)}));
   assert.throws(()=>c.commit(rec('end',{kind:'return'})),e=>e.category==='incomplete');
   c.commit(rec('observe',{effect:'f1',status:'fulfilled',result:tag(3)}),
@@ -240,4 +249,69 @@ test('JavaScript source names and witness identities use different strict gramma
   }
   assert.throws(()=>rec('allocate',{name:'Δsum',kind:'object',properties:[]}),
     /identity/);
+});
+
+test('external requests require an active source call and grounded canonical arguments',()=>{
+  const c=controller({capabilities:['demo.store'],fixtureReplies:[
+    {operation:'demo.store',arguments:['n',5],status:'fulfilled',result:['undefined']}
+  ]});
+  const good={effect:'fx1',operation:'demo.store',invocation:'i1',
+    site:site('host.store("n",5)'),arguments:[['str','n'],tag(5)],
+    payload:'["n",5]'};
+  assert.throws(()=>rec('request',{...good,invocation:undefined}),/Invalid semantic/);
+  const before=c.segmentPacket();
+  for(const changed of [
+    {...good,site:site('host.readNumber("x")')},
+    {...good,invocation:'i2'},
+    {...good,payload:'["n",6]'},
+    {...good,arguments:[['str','n'],tag(6)]}
+  ]){
+    assert.throws(()=>c.commit(rec('request',changed)),
+      e=>['invocation','request-arguments'].includes(e.category));
+    assert.deepEqual(c.segmentPacket(),before);
+  }
+  c.commit(rec('request',good));
+  assert.equal(c.effects.get('fx1').payload,'["n",5]');
+});
+
+test('external fixtures preserve their order and consumed state across continuation',()=>{
+  const replies=[
+    {operation:'demo.store',arguments:['n',5],status:'fulfilled',result:['undefined']},
+    {operation:'demo.readNumber',arguments:['x'],status:'fulfilled',result:tag(3)}
+  ];
+  const c=controller({capabilities:['demo.store','demo.readNumber'],
+    fixtureReplies:replies});
+  const second=rec('request',{effect:'fx2',operation:'demo.readNumber',
+    invocation:'i1',site:site('host.readNumber("x")'),
+    arguments:[['str','x']],payload:'["x"]'});
+  assert.throws(()=>c.commit(second),e=>e.category==='request-mismatch');
+  c.commit(rec('request',{effect:'fx1',operation:'demo.store',
+    invocation:'i1',site:site('host.store("n",5)'),
+    arguments:[['str','n'],tag(5)],payload:'["n",5]'}));
+  const restored=SemanticController.fromPacket(c.segmentPacket());
+  assert.equal(restored.fixtureReplies[0].claimed,true);
+  restored.commit(second);
+  assert.equal(restored.effects.get('fx2').invocation,'i1');
+  assert.equal(restored.effects.get('fx2').payload,'["x"]');
+});
+
+test('request arguments share the owned host codec for committed object graphs',()=>{
+  const source='function run(){host.store("n",{x:2});}';
+  const c=new SemanticController([
+    rec('code',{entry:'run',source,sites:[]}),input
+  ],{capabilities:['demo.store'],fixtureReplies:[
+    {operation:'demo.store',arguments:['n',{x:2}],
+      status:'fulfilled',result:['undefined']}
+  ]});
+  c.commit(rec('allocate',{name:'o1',kind:'object',
+    properties:[{key:'x',value:tag(2)}]}));
+  const expression='host.store("n",{x:2})';
+  const start=source.indexOf(expression);
+  const request=rec('request',{effect:'fx1',operation:'demo.store',
+    invocation:'i1',site:{start,end:start+expression.length},
+    arguments:[['str','n'],['ref','o1']],payload:'["n",{"x":2}]'});
+  c.commit(request);
+  c.commit(rec('write',{object:'o1',key:'x',present:true,value:tag(9)}));
+  assert.equal(c.effects.get('fx1').payload,'["n",{"x":2}]');
+  assert.deepEqual(c.effects.get('fx1').arguments,['n',{x:2}]);
 });

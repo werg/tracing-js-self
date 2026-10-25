@@ -12,7 +12,7 @@ export class TraceValidationError extends Error {
 function fail(message,eventId=null){throw new TraceValidationError(message,eventId);}
 /** Apply the canonical per-entity typed patches to an independently held state. */
 export function reconstruct(bundle,{throughEventId=null}={}) {
-  if(!['semantic-tracing-run/1','semantic-tracing-run/2'].includes(bundle.manifest?.schema))fail('Unknown run schema');
+  if(bundle.manifest?.schema!=='semantic-tracing-run/2')fail('Unknown run schema');
   const state=clone(bundle.initialState);
   const sites=new Set(bundle.sites.map(s=>s.siteId));
   const seen=new Set();

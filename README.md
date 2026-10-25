@@ -122,9 +122,8 @@ archive. Candidate targets still require the admission gates above.
 `drive()` reports `terminated`, `waiting`, `runtime.failure`, or `unsupported`.
 Recorded guest throws are terminal in the bounded script profile; catch/finally
 and async rejection delivery remain open. The locally verified training profile
-admits only synchronous, effect-free, non-throwing entries. New archives use
-`semantic-tracing-run/2`; the structural reader supports old `/1` archives, while
-exact replay requires `/2`. The language profiles remain separate:
+admits only synchronous, effect-free, non-throwing entries. New archives and supported readers use `semantic-tracing-run/2`; older `/1`
+archives require an explicit offline migration and are not silently accepted. The language profiles remain separate:
 `bounded-js-subset/2` for the original script path and `training-js/1` for strict
 function entry.
 

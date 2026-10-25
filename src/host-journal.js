@@ -74,6 +74,13 @@ export function validateHostJournal(bundle, fail) {
           !['promise', 'synchronous'].includes(p.after.kind) ||
           cause(event, 'effect', 'effectId') !== p.id || created.has(p.id))
         fail('Malformed effect creation', event.eventId);
+      if(!event.siteId||!event.invocationId||
+          p.after.frameId!==event.invocationId||
+          !isDeepStrictEqual(event.operands?.[0],['hostfn',p.after.operation])||
+          !isDeepStrictEqual(p.after.args,event.operands?.slice(1))||
+          !isDeepStrictEqual(p.after.argOrigins,event.operandOrigins?.slice(1)))
+        fail('External request differs from originating JS invocation or operands',
+          event.eventId);
       try {validatePreparedRequest(heap,p.after);}
       catch(error) {fail(error.message,event.eventId);}
       created.add(p.id);

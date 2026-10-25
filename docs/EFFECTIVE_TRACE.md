@@ -36,7 +36,7 @@ scalars and incorrect fragment framing. Public fields and operations:
 | `call` | Dynamic invocation and explicit receiver/arguments |
 | `transfer` | Pending return/throw redirected through cleanup or handler |
 | `return` / `throw` | Actual completion of an invocation |
-| `request` | Materialized versioned external operation and its immutable semantic arguments |
+| `request` | Active invocation ID, exact JS call expression span, evaluated tagged arguments and canonical immutable JSON payload; consumed against ordered authorized fixtures |
 | `observe` (observed) | Result supplied by an authorized committed external effect |
 | `job` | Bounded owned FIFO enqueue/dispatch/complete |
 | `end` | Terminal root completion after required work is resolved |
@@ -69,6 +69,13 @@ Three checks remain independent:
    verifies compaction certificates and reruns reference comparisons on the
    serialized demonstration. Locally verified does not imply independent
    megatoken corpus admission.
+
+External requests are checked against the same static Acorn site inventory and
+`canonical-json/1` host argument codec used by the owned runtime. Requests
+whose operation, source callsite, active invocation, current argument graph or
+immutable payload disagree are rejected before fixture consumption. This is
+selected-state consistency, not independent proof that an effectful JS program
+executed correctly: the effectful training compiler remains fail-closed.
 
 The selected controller lives in `src/training/controller.js`; only that
 controller, plus `src/training/rollout.js`, determines selected-state validity.

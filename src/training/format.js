@@ -18,7 +18,7 @@ const schema=Object.freeze({
   transfer:['kind','value','handler','invocation'],
   return:['value','invocation'],
   throw:['value','invocation'],
-  request:['effect','operation','arguments','invocation'],
+  request:['effect','operation','arguments','invocation','site','payload'],
   observe:['effect','result','status'],
   job:['action','job','owner','result'],
   end:['kind'],
@@ -125,7 +125,7 @@ export function validateWitness(kind,fields){
     read:['object','key','value','present'],write:['object','key','value','present'],
     bind:['name','value'],call:['child','callee','receiver','arguments'],
     transfer:['kind','value','handler'],return:['value'],throw:['value'],
-    request:['effect','operation','arguments'],observe:['effect','result','status'],
+    request:['effect','operation','arguments','invocation','site','payload'],observe:['effect','result','status'],
     job:['action','job','owner'],end:['kind'],
     'value-open':['id','type'],'value-part':['id','data'],'value-close':['id']
   };
@@ -162,6 +162,23 @@ export function validateWitness(kind,fields){
   if(kind==='bind'&&fields.from!==undefined&&
      (typeof fields.from!=='string'||!identity.test(fields.from)||
       fields.from===fields.name))fail('invalid source cell relation');
+  if(kind==='request'){
+    const site=fields.site;
+    if(typeof fields.operation!=='string'||!fields.operation||
+       typeof fields.effect!=='string'||!identity.test(fields.effect)||
+       !Array.isArray(fields.arguments)||fields.arguments.length>32||
+       !object(site)||Object.keys(site).sort().join(',')!=='end,start'||
+       !Number.isSafeInteger(site.start)||site.start<0||
+       !Number.isSafeInteger(site.end)||site.end<=site.start||
+       typeof fields.payload!=='string'||
+       Buffer.byteLength(fields.payload,'utf8')>65536)
+      fail('grounded external invocation');
+    for(const argument of fields.arguments)assertValue(argument);
+    let parsed;
+    try {parsed=JSON.parse(fields.payload);}catch{fail('invalid external payload');}
+    if(!Array.isArray(parsed)||JSON.stringify(parsed)!==fields.payload)
+      fail('noncanonical external payload');
+  }
   if(kind==='call' && (typeof fields.callee!=='string' ||
       !Array.isArray(fields.arguments)))fail('call arguments or source code');
   if(kind==='call'){

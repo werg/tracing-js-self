@@ -41,6 +41,9 @@ test('host request is JSON materialized before dispatch, immutable, and never re
   assert.equal(outgoing.payload,wire.payload);
   assert.equal(outgoing.codec,'canonical-json/1');
   assert.equal(outgoing.signature,'demo.store/1');
+  assert.deepEqual(outgoing.arguments[0],['str','item']);
+  assert.equal(outgoing.arguments[1][0],'ref');
+  assert.equal(outgoing.producers.length,2);
   assert.equal(causal.events.some(e=>e.operation==='external.input.arrive'),false);
 });
 
@@ -101,4 +104,36 @@ test('unknown global NaN is a guest ReferenceError without dispatch',()=>{
   assert.equal(Object.keys(r.state.effects).length,0);
   const b=JSON.parse(JSON.stringify(r.exportRun()));
   assert(validateBundle(b).valid);assert(replayExact(b).valid);
+});
+
+test('effect request is bound to its actual JS call operands and activation',()=>{
+  const runtime=createRuntime({adapters:{
+    'demo.store':()=>({kind:'normal',value:undefined})
+  }}).start('host.store("x",{n:2});');
+  assert.equal(runtime.drive().kind,'terminated');
+  const bundle=runtime.exportRun();
+  const call=bundle.events.find(e=>e.operation==='call.enter'&&
+    e.stateChanges.some(p=>p.table==='effects'&&p.before===null));
+  const mutation=call.stateChanges.find(p=>p.table==='effects');
+  assert.deepEqual(mutation.after.args,call.operands.slice(1));
+  assert.deepEqual(mutation.after.argOrigins,call.operandOrigins.slice(1));
+  for(const forged of [
+    archive=>{
+      const e=archive.events.find(x=>x.eventId===call.eventId);
+      e.stateChanges.find(p=>p.table==='effects').after.argOrigins[0]='a0:e1';
+    },
+    archive=>{
+      const e=archive.events.find(x=>x.eventId===call.eventId);
+      e.stateChanges.find(p=>p.table==='effects').after.frameId='other';
+    },
+    archive=>{
+      const e=archive.events.find(x=>x.eventId===call.eventId);
+      e.stateChanges.find(p=>p.table==='effects').after.args[0]=['str','wrong'];
+    }
+  ]){
+    const altered=structuredClone(bundle);
+    forged(altered);
+    assert.throws(()=>validateHostJournal(altered,(message)=>{throw new Error(message);}),
+      /originating JS invocation or operands/);
+  }
 });
