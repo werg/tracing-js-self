@@ -13,6 +13,11 @@ export const HOST_OPERATIONS=Object.freeze({
   // plain object data or executed in the native host's JS realm.
   'demo.withCallback':Object.freeze({kind:'promise',signature:'demo.withCallback/1',
     arity:2,key:0,callbackIndices:Object.freeze([1]),codec:JSON_CODEC}),
+  'demo.listen':Object.freeze({kind:'promise',signature:'demo.listen/1',arity:2,
+    key:0,callbackIndices:Object.freeze([1]),callbackLifetime:'subscription',
+    codec:JSON_CODEC}),
+  'demo.unlisten':Object.freeze({kind:'promise',signature:'demo.unlisten/1',
+    arity:1,key:0,codec:JSON_CODEC}),
   'demo.readNumber':Object.freeze({kind:'synchronous',signature:'demo.readNumber/1',arity:1,key:0,codec:JSON_CODEC}),
   'demo.store':Object.freeze({kind:'synchronous',signature:'demo.store/1',arity:2,key:0,codec:JSON_CODEC}),
   'http.get':Object.freeze({kind:'promise',signature:'http.get/1',arity:1,key:0,codec:JSON_CODEC}),
