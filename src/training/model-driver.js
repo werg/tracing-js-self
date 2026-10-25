@@ -43,14 +43,15 @@ export class SelectedModelDriver {
    * The supplier's only inputs are the declared source and visible committed
    * history. Pending native values cannot appear as prediction arguments. */
   async run({programId,source=null,entry=null,capabilities=[],invocationId,trackId,
-      realmId,triggerId,args=[],realmPolicy='fresh',completionPolicy='immediate-root'}){
+      realmId,triggerId,args=[],realmPolicy='fresh',completionPolicy='immediate-root',
+      selectedEntry=null}){
     if(!this.harness.programs.has(programId)){
       if(typeof source!=='string'||typeof entry!=='string')
         fail('First invocation must publish exact immutable source and entry');
       this.harness.publishProgram({programId,source,entry,capabilities});
     }
     this.harness.admitInvocation({programId,invocationId,trackId,realmId,
-      triggerId,args,realmPolicy,completionPolicy});
+      triggerId,args,realmPolicy,completionPolicy,entry:selectedEntry});
     const pending=new Map();
     const completed=[];
     let selected=0;
@@ -61,7 +62,7 @@ export class SelectedModelDriver {
         event.kind==='program'&&event.programId===programId ||
         event.invocationId===invocationId);
       const request=copy({schema:'selected-inference-prefix/1',programId,
-        entry:program.entry,source:program.source,sourceDigest:program.digest,
+        entry:activation().entry,source:program.source,sourceDigest:program.digest,
         invocationId,trackId,realmId,
         committed:exposed,completionPolicy,maxOutstanding});
       // Do not hand the model the service functions, broker intent ledger,
