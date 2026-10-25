@@ -215,3 +215,70 @@ test('independent events queue behind one retained JS turn and activate separate
   assert.deepEqual(replay.timeline,h.timeline);
   assert.equal(replay.handlers.get('updates').state,'closed');
 });
+
+test('selected closure listener survives registration, handles repeated events and revokes',async()=>{
+  const source='function run(){const token=host.listen("tick",onTick);host.unlisten(token);return token;}'+
+    'function onTick(delta){return delta;}';
+  const callSites=analyzeSemanticProgram(source).sites;
+  const siteFor=operation=>{
+    const found=callSites.find(s=>s.operation===operation);
+    assert(found);return {start:found.start,end:found.end};
+  };
+  let fire;let revocations=0;
+  const h=new SelectedExecutionHarness({services:{
+    'demo.listen':([topic,callback],meta)=>{
+      assert.equal(topic,'tick');assert.equal(callback.$ownedCallback,'o1');
+      fire=meta.callback(1);
+      return meta.subscriptionId(1);
+    },
+    'demo.unlisten':([token],meta)=>{
+      revocations++;meta.closeSubscription(token);
+    }
+  }});
+  h.publishProgram({programId:'p',source,entry:'run',
+    capabilities:['demo.listen','demo.unlisten']});
+  h.admitInvocation({programId:'p',invocationId:'call1',trackId:'worker1',
+    realmId:'retained',triggerId:'outside1',realmPolicy:'retained'});
+  h.selected('call1',encodeWitness('bind',{name:'l1',value:tag(0)}));
+  h.selected('call1',encodeWitness('allocate',{name:'o1',kind:'closure',code:'onTick',
+    properties:[],captures:[{binding:'counter',cell:'l1'}]}));
+  h.selected('call1',encodeWitness('request',{effect:'fx1',operation:'demo.listen',
+    invocation:'i1',site:siteFor('demo.listen'),
+    arguments:[['str','tick'],['ref','o1']],
+    payload:'["tick",{"$ownedCallback":"o1"}]'}));
+  const observed=await h.dispatch('call1','fx1');
+  assert.equal(observed.status,'fulfilled');
+  assert.equal(observed.result[1],'callback1');
+  assert.equal(h.handlers.get('callback1').state,'active');
+  h.selected('call1',encodeWitness('return',{value:['str','callback1']}));
+  h.selected('call1',encodeWitness('end',{kind:'return'}));
+  assert.equal(h.handlers.get('callback1').state,'active');
+  const executeHandler=(id,delta,result)=>{
+    const invocation=h.invocations.get(id);
+    assert.equal(invocation.entry,'onTick');
+    h.selected(id,encodeWitness('compute',{expr:{op:'binary',operator:'+',
+      left:{op:'local',name:'l1'},
+      right:{op:'literal',value:tag(delta)}},result:tag(result),bind:'l1'}));
+    h.selected(id,encodeWitness('return',{value:tag(result)}));
+    h.selected(id,encodeWitness('end',{kind:'return'}));
+  };
+  fire(2);
+  executeHandler('event1',2,2);
+  fire(3);
+  executeHandler('event2',3,5);
+  assert.deepEqual(h.realms.get('retained').locals.get('l1'),tag(5));
+  h.admitInvocation({programId:'p',invocationId:'call2',trackId:'worker1',
+    realmId:'retained',triggerId:'outside2',realmPolicy:'retained'});
+  h.selected('call2',encodeWitness('request',{effect:'fx2',operation:'demo.unlisten',
+    invocation:'i1',site:siteFor('demo.unlisten'),
+    arguments:[['str','callback1']],payload:'["callback1"]'}));
+  await h.dispatch('call2','fx2');
+  h.selected('call2',encodeWitness('return',{value:['undefined']}));
+  h.selected('call2',encodeWitness('end',{kind:'return'}));
+  assert.equal(revocations,1);
+  assert.throws(()=>fire(4),/revoked/);
+  assert.equal(h.timeline.filter(x=>x.kind==='handler').length,1);
+  assert.equal(h.timeline.filter(x=>x.kind==='event').length,2);
+  assert.equal(h.timeline.filter(x=>x.kind==='handler-close').length,1);
+  assert.deepEqual(SelectedExecutionHarness.replay(h.exportEpisode()).timeline,h.timeline);
+});
