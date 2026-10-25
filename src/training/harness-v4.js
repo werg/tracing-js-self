@@ -58,6 +58,7 @@ export class SelectedExecutionHarness {
     this.programs=new Map();this.invocations=new Map();
     this.intents=new Map();this.inflight=new Map();this.timeline=[];
     this.ownerSequences=new Map();this.globalSequence=0;
+    this.realms=new Map();this.handlers=new Map();this.nextEventDelivery=0;
   }
   record(mode,kind,track,details){
     const ownerSequence=(this.ownerSequences.get(track)??0)+1;
@@ -81,7 +82,7 @@ export class SelectedExecutionHarness {
       {programId,digest,entry,source,sites,capabilities});
   }
   admitInvocation({programId,invocationId,trackId,realmId,triggerId,args=[],inputGraph=null,
-      completionPolicy='immediate-root'}){
+      completionPolicy='immediate-root',realmPolicy='fresh'}){
     for(const [value,name] of [[programId,'program ID'],[invocationId,'invocation ID'],
       [trackId,'track ID'],[realmId,'realm ID'],[triggerId,'trigger ID']])id(value,name);
     demand(!this.invocations.has(invocationId),'Invocation already admitted');
@@ -90,6 +91,11 @@ export class SelectedExecutionHarness {
     demand(Array.isArray(args),'Invocation arguments must be a graph');
     demand(completionPolicy==='immediate-root'||completionPolicy==='owned-quiescence',
       'Invalid completion policy');
+    demand(realmPolicy==='fresh'||realmPolicy==='retained','Invalid realm policy');
+    const previous=this.realms.get(realmId);
+    demand(!previous||!previous.running,'Shared realm already has an active guest turn');
+    demand(!previous||realmPolicy==='retained','Fresh realm identity cannot be reused');
+    demand(!previous||previous.digest===program.digest,'Retained realm source revision mismatch');
     // A fresh selected state domain is an explicit policy, not an implicit
     // mutation of a previous invocation or native module initialization.
     demand(inputGraph===null||args.length===0,
@@ -98,15 +104,109 @@ export class SelectedExecutionHarness {
     const graph=inputGraph===null?{roots:comparison.roots,objects:comparison.objects.map(
       ({properties,...node})=>({...node,properties:properties.map(
         ([key,value])=>({key,value}))}))}:clone(inputGraph);
+    // New argument objects must not reuse identities held by live captured
+    // closures or old input graphs. Preserve aliases, sparse entries and cycles.
+    if(previous){
+      const reserved=new Set(previous.heap.keys());
+      const aliases=new Map();
+      let ordinal=0;
+      for(const node of graph.objects){
+        let candidate;
+        do {candidate='o'+ordinal++;} while(reserved.has(candidate));
+        aliases.set(node.id,candidate);reserved.add(candidate);
+      }
+      for(const node of graph.objects){
+        node.id=aliases.get(node.id);
+        for(const prop of node.properties)
+          if(prop.value[0]==='ref'&&aliases.has(prop.value[1]))
+            prop.value[1]=aliases.get(prop.value[1]);
+      }
+      for(const root of graph.roots)
+        if(root[0]==='ref'&&aliases.has(root[1]))
+          root[1]=aliases.get(root[1]);
+    }
     const input=encodeWitness('input',{graph});
     const controller=new SemanticController([program.code,input],{
       capabilities:program.capabilities,maxGenerated:this.maxGenerated,
       completionPolicy,observationAuthority:'broker'});
+    if(previous){
+      // A retained realm has one authoritative selected heap/cell set.
+      // Copy-on-new-invocation is safe because another turn cannot be active;
+      // the new controller becomes the realm's only mutable owner.
+      for(const [name,value] of previous.heap)
+        if(!controller.heap.has(name))controller.heap.set(name,clone(value));
+      controller.locals=new Map(clone([...previous.locals]));
+    }
+    this.realms.set(realmId,{digest:program.digest,programId,policy:realmPolicy,
+      running:invocationId,heap:controller.heap,locals:controller.locals,
+      revision:(previous?.revision??0)+1});
     this.invocations.set(invocationId,{programId,trackId,realmId,triggerId,
-      controller,input,status:'running',completionPolicy});
+      controller,input,status:'running',completionPolicy,realmPolicy});
     return this.record('observed','invocation',trackId,
-      {programId,invocationId,realmId,triggerId,completionPolicy,
+      {programId,invocationId,realmId,triggerId,completionPolicy,realmPolicy,
         inputGraph:graph,entry:program.entry,sourceDigest:program.digest});
+  }
+  /** Outside handler ingress is host-authorized. It never invents a guest
+   * subscription request; JS-selected listener registration has a separate
+   * effect/callback ABI. One event activates a selected handler only after
+   * a real host delivery has been admitted. */
+  registerEventHandler({subscriptionId,programId,realmId,trackId,entry=null,
+      realmPolicy='retained',queueLimit=64}){
+    for(const [value,name] of [[subscriptionId,'subscription ID'],
+      [programId,'program ID'],[realmId,'realm ID'],[trackId,'track ID']])
+      id(value,name);
+    demand(this.programs.has(programId),'Handler requires an observed program');
+    demand(!this.handlers.has(subscriptionId),'Subscription identity already exists');
+    demand(realmPolicy==='retained'||realmPolicy==='fresh','Invalid handler realm policy');
+    demand(Number.isSafeInteger(queueLimit)&&queueLimit>=1&&queueLimit<=4096,
+      'Invalid bounded event queue');
+    const program=this.programs.get(programId);
+    demand(entry===null||entry===program.entry,
+      'Event handler entry must match its published source context');
+    this.handlers.set(subscriptionId,{programId,realmId,trackId,realmPolicy,
+      entry:program.entry,queueLimit,seen:new Set(),queue:[],state:'active'});
+    return this.record('observed','handler','host',
+      {subscriptionId,programId,realmId,trackId,realmPolicy,
+        entry:program.entry,queueLimit});
+  }
+  /** Queue each accepted outside arrival once. Delivery is separate, and
+   * model-visible only when its realm can legally accept another turn. */
+  postEvent({subscriptionId,eventId,args=[],completionPolicy='immediate-root'}){
+    id(subscriptionId,'subscription ID');id(eventId,'event ID');
+    const handler=this.handlers.get(subscriptionId);
+    demand(handler&&handler.state==='active','Subscription is closed or unregistered');
+    demand(!handler.seen.has(eventId),'Duplicate event identity');
+    demand(Array.isArray(args),'Event arguments require an explicit graph');
+    demand(handler.queue.length<handler.queueLimit,'Event queue overflow');
+    handler.seen.add(eventId);
+    handler.queue.push({eventId,args:clone(args),completionPolicy});
+    return this.deliverReadyEvents(subscriptionId);
+  }
+  deliverReadyEvents(subscriptionId){
+    const handler=this.handlers.get(subscriptionId);
+    demand(handler,'Unknown subscription');
+    if(handler.state!=='active'||!handler.queue.length||
+       this.realms.get(handler.realmId)?.running)return null;
+    const next=handler.queue.shift();
+    const invocationId='event'+(++this.nextEventDelivery);
+    const triggerId='event:'+subscriptionId+':'+next.eventId;
+    this.record('observed','event',handler.trackId,
+      {subscriptionId,eventId:next.eventId,invocationId,triggerId,
+        programId:handler.programId,realmId:handler.realmId});
+    return this.admitInvocation({programId:handler.programId,invocationId,
+      realmId:handler.realmId,trackId:handler.trackId,triggerId,
+      realmPolicy:handler.realmPolicy,args:next.args,
+      completionPolicy:next.completionPolicy});
+  }
+  closeEventHandler(subscriptionId){
+    id(subscriptionId,'subscription ID');
+    const handler=this.handlers.get(subscriptionId);
+    demand(handler&&handler.state==='active','No active subscription to close');
+    handler.state='closed';
+    const discarded=handler.queue.map(event=>event.eventId);
+    handler.queue.length=0;
+    return this.record('observed','handler-close','host',
+      {subscriptionId,discarded});
   }
   selected(invocationId,line){
     id(invocationId,'invocation ID');
@@ -126,7 +226,13 @@ export class SelectedExecutionHarness {
         args:clone(effect.arguments),payload:effect.payload,invocationId,
         effectId:fields.effect,attempts:0});
     }
-    if(kind==='end')activation.status='completed';
+    if(kind==='end'){
+      activation.status='completed';
+      const realm=this.realms.get(activation.realmId);
+      realm.heap=activation.controller.heap;
+      realm.locals=activation.controller.locals;
+      realm.running=null;
+    }
     this.record('generated','semantic',activation.trackId,
       {invocationId,traceFormat:HARNESS_SELECTED_TRACE_VERSION,line});
     return answer;
@@ -223,9 +329,35 @@ export class SelectedExecutionHarness {
       }else if(item.kind==='invocation'){
         h.admitInvocation({programId:item.programId,invocationId:item.invocationId,
           trackId:item.track,realmId:item.realmId,triggerId:item.triggerId,
-          inputGraph:item.inputGraph,completionPolicy:item.completionPolicy});
+          inputGraph:item.inputGraph,completionPolicy:item.completionPolicy,
+          realmPolicy:item.realmPolicy??'fresh'});
       }else if(item.kind==='semantic'){
         h.selected(item.invocationId,item.line);
+      }else if(item.kind==='handler'){
+        h.registerEventHandler({subscriptionId:item.subscriptionId,
+          programId:item.programId,realmId:item.realmId,trackId:item.trackId,
+          entry:item.entry,realmPolicy:item.realmPolicy,queueLimit:item.queueLimit});
+      }else if(item.kind==='event'){
+        const handler=h.handlers.get(item.subscriptionId);
+        demand(handler?.state==='active'&&!handler.seen.has(item.eventId),
+          'Replay event has no live unique subscription');
+        const realm=h.realms.get(item.realmId);
+        demand(!realm?.running,'Replay event delivered during active guest turn');
+        handler.seen.add(item.eventId);
+        const n=Number(String(item.invocationId).replace(/^event/,''));
+        demand(Number.isSafeInteger(n)&&n>h.nextEventDelivery,
+          'Invalid replay dynamic event invocation identity');
+        h.nextEventDelivery=n;
+        h.record('observed','event',item.track,{
+          subscriptionId:item.subscriptionId,eventId:item.eventId,
+          invocationId:item.invocationId,triggerId:item.triggerId,
+          programId:item.programId,realmId:item.realmId});
+      }else if(item.kind==='handler-close'){
+        const handler=h.handlers.get(item.subscriptionId);
+        demand(handler?.state==='active','Replay closes nonexistent subscription');
+        handler.state='closed';
+        h.record('observed','handler-close','host',{
+          subscriptionId:item.subscriptionId,discarded:item.discarded});
       }else if(item.kind==='dispatch'){
         const key=item.invocationId+'/'+item.effectId;
         const intent=h.intents.get(key);
@@ -269,7 +401,10 @@ export class SelectedExecutionHarness {
   /** No service code executes during state restoration or trace inspection. */
   checkpoint(){
     return clone({schema:'semantic-checkpoint/4',sessionId:this.sessionId,
-      programs:[...this.programs],invocations:[...this.invocations].map(([key,v])=>[
+      programs:[...this.programs],realms:[...this.realms],
+      handlers:[...this.handlers].map(([key,v])=>[key,{...v,seen:[...v.seen]}]),
+      nextEventDelivery:this.nextEventDelivery,
+      invocations:[...this.invocations].map(([key,v])=>[
         key,{...v,controller:v.controller.segmentPacket()}]),
       intents:[...this.intents],timeline:this.timeline,
       ownerSequences:[...this.ownerSequences],globalSequence:this.globalSequence,
@@ -280,6 +415,10 @@ export class SelectedExecutionHarness {
     const harness=new SelectedExecutionHarness({
       sessionId:packet.sessionId,services,maxGenerated:packet.maxGenerated});
     harness.programs=new Map(clone(packet.programs));
+    harness.realms=new Map(clone(packet.realms??[]));
+    harness.handlers=new Map((packet.handlers??[]).map(([key,v])=>[key,
+      {...v,seen:new Set(v.seen)}]));
+    harness.nextEventDelivery=packet.nextEventDelivery??0;
     harness.invocations=new Map(packet.invocations.map(([id,v])=>[id,{
       ...v,controller:SemanticController.fromPacket(v.controller)}]));
     harness.intents=new Map(clone(packet.intents).map(([id,intent])=>[
