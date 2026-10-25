@@ -91,7 +91,10 @@ export class SelectedExecutionHarness {
       'Invalid completion policy');
     // A fresh selected state domain is an explicit policy, not an implicit
     // mutation of a previous invocation or native module initialization.
-    const graph=describeGraph(args);
+    const comparison=describeGraph(args);
+    const graph={roots:comparison.roots,objects:comparison.objects.map(
+      ({properties,...node})=>({...node,properties:properties.map(
+        ([key,value])=>({key,value}))}))};
     const input=encodeWitness('input',{graph});
     const controller=new SemanticController([program.code,input],{
       capabilities:program.capabilities,maxGenerated:this.maxGenerated,
