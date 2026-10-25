@@ -14,6 +14,10 @@
     "./replay": "./src/replay.js",
     "./causal": "./src/causal.js",
     "./training": "./src/training/index.js",
+    "./natlang-selected": {
+      "types": "./src/natlang-selected.d.ts",
+      "default": "./src/natlang-selected.js"
+    },
     "./natlang": {
       "types": "./src/natlang.d.ts",
       "default": "./src/natlang.js"
