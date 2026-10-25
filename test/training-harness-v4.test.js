@@ -50,7 +50,10 @@ test('source is published once, two explicit outside calls dispatch one action e
   assert.equal(receipts.length,4);
   assert.equal(harness.timeline.filter(x=>x.kind==='program').length,1);
   assert.equal(harness.timeline.filter(x=>x.kind==='invocation').length,2);
-  assert.throws(()=>harness.dispatch('call1','read1'),/redispatch/);
+  const count=receipts.length;
+  const duplicate=await harness.dispatch('call1','read1');
+  assert.equal(duplicate.status,'fulfilled','repeat dispatch gets the same committed outcome');
+  assert.equal(receipts.length,count,'repeat dispatch must never reinvoke the native adapter');
 });
 
 test('partial or ungrounded selection does not dispatch or corrupt selected state',()=>{
