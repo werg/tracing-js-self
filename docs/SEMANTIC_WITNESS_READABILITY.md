@@ -109,3 +109,56 @@ updates (careful about callback ordering), and single-invocation summaries
 only for independently certified pure helpers. Do not erase guest side effects
 to make a trace shorter. The paired learning protocol is documented in
 `docs/SEMANTIC_V3_MODEL_EXPERIMENTS.md`.
+
+## Source-linked decisions as single semantic steps
+
+A branch should ordinarily explain **why** it chose a path, rather than
+present a duplicated calculation followed by an opaque literal choice. The
+bounded rewriter now admits identifier tests, safe unary expressions and
+nested pure binary expressions; each is reconstructed from *previously
+committed* public locals or immutable input aliases, within the existing
+operator/node budget, and independently checked against the recorded choice.
+The source and actual observed decision are not replaced by a guessed result.
+
+For example, a conditional using an input `x=4` may read:
+
+```text
+bind arg0 = 4
+choose (arg0 > 0) = true -> then
+compute (arg0 + 3) -> 7
+return 7
+```
+
+Instead of emitting a separate `compute (4 > 0) -> true` followed by
+`choose true = true -> then`. Multiple adjacent *unbound, pure* test
+computations can be represented by that one checked choice. Their private
+journal receipts stay attached to the resulting `fold-choice/1` certificate.
+This is **not** a claim that the model must reproduce every execution step:
+the source-explained choice is a shorter, checked reasoning witness.
+
+Direct tests (`if(x)`), negation (`if(!x)`) and nested tests
+(`if(x + 1 >= 3)`) similarly use source-linked expressions when checked
+against prior public values. The `!` operator accepts a reference as
+truthy without running coercion; generic arithmetic or `typeof` on
+opaque references remain uncheckable.
+
+**Safety boundaries:** the rewrite never infers hidden inputs, attempts an
+accessor/property read, executes source expressions, or reduces short-circuit,
+assignment, update, call or other effectful tests to a pure expression.
+`if(o.n++ < 3)` remains a separate mutation and a known-value choice.
+Missing/stale inputs, failed primitive checks or over-budget expressions
+fall back to the original witness. The observable result, ordered effects,
+independent V8 checks and private execution archive remain authoritative.
+
+To inspect actual source-run traces, not fabricated examples:
+
+```sh
+node tools/inspect-semantic-choices.mjs
+node --test test/training-choice-readability.test.js
+```
+
+This script records cases that pass the existing local runtime/replay,
+independent V8 outcome, source-operation and branch audits, and selected
+witness controller checks. The GitHub `Semantic trace v3 local evidence`
+job also archives its human-readable output. It does not measure a
+transformer model's accuracy or assert corpus admission.
