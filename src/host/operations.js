@@ -14,7 +14,23 @@ export const HOST_OPERATIONS=Object.freeze({
   'demo.withCallback':Object.freeze({kind:'promise',signature:'demo.withCallback/1',
     arity:2,key:0,callbackIndices:Object.freeze([1]),codec:JSON_CODEC}),
   'demo.readNumber':Object.freeze({kind:'synchronous',signature:'demo.readNumber/1',arity:1,key:0,codec:JSON_CODEC}),
-  'demo.store':Object.freeze({kind:'synchronous',signature:'demo.store/1',arity:2,key:0,codec:JSON_CODEC})
+  'demo.store':Object.freeze({kind:'synchronous',signature:'demo.store/1',arity:2,key:0,codec:JSON_CODEC}),
+  'http.get':Object.freeze({kind:'promise',signature:'http.get/1',arity:1,key:0,codec:JSON_CODEC}),
+  'http.post':Object.freeze({kind:'promise',signature:'http.post/1',arity:2,key:0,codec:JSON_CODEC}),
+  'http.responseStatus':Object.freeze({kind:'promise',signature:'http.responseStatus/1',arity:1,key:0,codec:JSON_CODEC}),
+  'http.responseRead':Object.freeze({kind:'promise',signature:'http.responseRead/1',arity:1,key:0,codec:JSON_CODEC}),
+  'http.responseClose':Object.freeze({kind:'promise',signature:'http.responseClose/1',arity:1,key:0,codec:JSON_CODEC}),
+  'http.abort':Object.freeze({kind:'promise',signature:'http.abort/1',arity:1,key:0,codec:JSON_CODEC}),
+  'fs.readText':Object.freeze({kind:'promise',signature:'fs.readText/1',arity:1,key:0,codec:JSON_CODEC}),
+  'fs.writeText':Object.freeze({kind:'promise',signature:'fs.writeText/1',arity:2,key:0,codec:JSON_CODEC}),
+  'fs.list':Object.freeze({kind:'promise',signature:'fs.list/1',arity:1,key:0,codec:JSON_CODEC}),
+  'fs.openRead':Object.freeze({kind:'promise',signature:'fs.openRead/1',arity:1,key:0,codec:JSON_CODEC}),
+  'fs.readChunk':Object.freeze({kind:'promise',signature:'fs.readChunk/1',arity:1,key:0,codec:JSON_CODEC}),
+  'fs.close':Object.freeze({kind:'promise',signature:'fs.close/1',arity:1,key:0,codec:JSON_CODEC}),
+  'net.connect':Object.freeze({kind:'promise',signature:'net.connect/1',arity:2,key:0,codec:JSON_CODEC}),
+  'net.write':Object.freeze({kind:'promise',signature:'net.write/1',arity:2,key:0,codec:JSON_CODEC}),
+  'net.read':Object.freeze({kind:'promise',signature:'net.read/1',arity:1,key:0,codec:JSON_CODEC}),
+  'net.close':Object.freeze({kind:'promise',signature:'net.close/1',arity:1,key:0,codec:JSON_CODEC})
 });
 
 export function hostOperation(name) {
