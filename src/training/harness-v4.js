@@ -908,7 +908,7 @@ export class SelectedExecutionHarness {
         profile:HARNESS_PROFILE,traceFormat:HARNESS_SELECTED_TRACE_VERSION,contextFormat:CONTEXT_VERSION,
         timeline:this.timeline},
       sidecar:{schema:'semantic-supervision/2',admission:'locally_verified',
-        referenceStatus:'unverified',sourceLineage,split,
+        representation:'compact',referenceStatus:'unverified',sourceLineage,split,
         selectionOrigin:'controlled-or-model-output-unverified'}});
   }
   /**
