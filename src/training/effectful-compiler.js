@@ -106,8 +106,19 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   for(const operation of capabilities)hostOperation(operation);
   let harness=new SelectedExecutionHarness({sessionId,maxGenerated,automaticDelivery:false});
   harness.publishProgram({programId,source,entry:entry.functionName,capabilities});
-  const initial=describeOwnedGraph(bundle.initialState.heap,entry.arguments);
-  const inputGraph={roots:initial.roots,objects:initial.objects.map(node=>({id:node.id,
+  // Rest parameters are ordinary arrays already created at the *entry*
+  // boundary. They are neither source-provided positional arguments nor
+  // later guest allocations. Include their descriptor-inspected identities
+  // in the observed graph while preserving the actual argument root list.
+  const entryEnvironment=bundle.initialState.envs[
+    bundle.initialState.frames[semantic.rootInvocation]?.envId];
+  const entryData=Object.values(entryEnvironment?.bindings??{}).flatMap(binding=>{
+    const value=binding.initialized?binding.token?.value:null;
+    return value?.[0]==='ref'&&['array','object'].includes(
+      bundle.initialState.heap[value[1]]?.kind)?[value]:[];
+  });
+  const initial=describeOwnedGraph(bundle.initialState.heap,[...entry.arguments,...entryData]);
+  const inputGraph={roots:initial.roots.slice(0,entry.arguments.length),objects:initial.objects.map(node=>({id:node.id,
     kind:node.kind,...(node.prototype===null?{prototype:null}:{}),
     properties:node.properties.map(({key,value})=>({key,value}))}))};
   // The admitted entry graph is descriptor-inspected ordinary data. A guest
