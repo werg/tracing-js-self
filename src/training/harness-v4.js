@@ -290,7 +290,7 @@ export class SelectedExecutionHarness {
   }
   /** Queue each accepted outside arrival once. Delivery is separate, and
    * model-visible only when its realm can legally accept another turn. */
-  postEvent({subscriptionId,eventId,args=[],completionPolicy='immediate-root',deliver=true}){
+  postEvent({subscriptionId,eventId,args=[],completionPolicy='call-return',deliver=true}){
     id(subscriptionId,'subscription ID');id(eventId,'event ID');
     const handler=this.handlers.get(subscriptionId);
     if(!handler||handler.state!=='active'){

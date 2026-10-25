@@ -9,10 +9,8 @@ export const COMPLETION_POLICIES=Object.freeze([
   'call-return','await-returned-promise','owned-quiescence'
 ]);
 export function canonicalCompletionPolicy(policy){
-  // Input API compatibility only. Persisted v4 contracts always use v4 names.
-  const result=policy==='immediate-root'?'call-return':policy;
-  if(!COMPLETION_POLICIES.includes(result))throw new TypeError('Invalid completion policy');
-  return result;
+  if(!COMPLETION_POLICIES.includes(policy))throw new TypeError('Invalid completion policy');
+  return policy;
 }
 export const SUPERVISION_VERSION='semantic-supervision/2';
 export const SELECTED_STATE_FIELDS=Object.freeze(['schema','heap','locals','captureAliases','stack',

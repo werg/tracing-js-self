@@ -23,7 +23,7 @@ function primitive(value){
   }
 }
 export class SemanticController {
-  constructor(context,{completionPolicy='immediate-root',capabilities=[],fixtureReplies=[],
+  constructor(context,{completionPolicy='call-return',capabilities=[],fixtureReplies=[],
     maxGenerated=4096,maxPacketBytes=1048576,observationAuthority='fixture',
     rootInvocation='i1',trackId='t0',receiver=['undefined'],retainedState=null,
     initialBindings={},captureAliases={},strictRequests=false}={}){
