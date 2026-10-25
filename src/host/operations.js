@@ -35,7 +35,17 @@ export const HOST_OPERATIONS=Object.freeze({
   'net.connect':Object.freeze({kind:'promise',signature:'net.connect/1',arity:2,key:0,codec:JSON_CODEC}),
   'net.write':Object.freeze({kind:'promise',signature:'net.write/1',arity:2,key:0,codec:JSON_CODEC}),
   'net.read':Object.freeze({kind:'promise',signature:'net.read/1',arity:1,key:0,codec:JSON_CODEC}),
-  'net.close':Object.freeze({kind:'promise',signature:'net.close/1',arity:1,key:0,codec:JSON_CODEC})
+  'net.close':Object.freeze({kind:'promise',signature:'net.close/1',arity:1,key:0,codec:JSON_CODEC}),
+  'dom.query':Object.freeze({kind:'promise',signature:'dom.query/1',arity:1,key:0,codec:JSON_CODEC}),
+  'dom.getText':Object.freeze({kind:'promise',signature:'dom.getText/1',arity:1,key:0,codec:JSON_CODEC}),
+  'dom.setText':Object.freeze({kind:'promise',signature:'dom.setText/1',arity:2,key:0,codec:JSON_CODEC}),
+  'dom.setAttribute':Object.freeze({kind:'promise',signature:'dom.setAttribute/1',arity:3,key:0,codec:JSON_CODEC}),
+  'dom.getAttribute':Object.freeze({kind:'promise',signature:'dom.getAttribute/1',arity:2,key:0,codec:JSON_CODEC}),
+  'dom.remove':Object.freeze({kind:'promise',signature:'dom.remove/1',arity:1,key:0,codec:JSON_CODEC}),
+  'dom.on':Object.freeze({kind:'promise',signature:'dom.on/1',arity:3,key:0,callbackIndices:Object.freeze([2]),callbackLifetime:'subscription',codec:JSON_CODEC}),
+  'dom.off':Object.freeze({kind:'promise',signature:'dom.off/1',arity:1,key:0,codec:JSON_CODEC}),
+  'dom.startTimer':Object.freeze({kind:'promise',signature:'dom.startTimer/1',arity:2,key:null,callbackIndices:Object.freeze([1]),callbackLifetime:'subscription',codec:JSON_CODEC}),
+  'dom.stopTimer':Object.freeze({kind:'promise',signature:'dom.stopTimer/1',arity:1,key:0,codec:JSON_CODEC})
 });
 
 export function hostOperation(name) {
