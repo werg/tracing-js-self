@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: werg/megatoken
-          ref: d8f692ec44deba7f7e6a40abf8728104cb3e09f2 # exact paired implementation, updated with integration ledger
+          ref: 95115e7cb08b8681cae9769b1a134bf4ee9ca70e # exact paired implementation, updated with integration ledger
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -110,6 +110,15 @@ jobs:
         run: |
           python megatoken/scripts/check_semantic_inference.py \
             --tokenizer-json "$RUNNER_TEMP/tokenizer.json" --output "$RUNNER_TEMP/native-inference"
+          MEGATOKEN_ORCHESTRATION_SERVED="$RUNNER_TEMP/native-inference/served" \
+          MEGATOKEN_PYTHON="$(command -v python)" \
+          MEGATOKEN_REPOSITORY="$GITHUB_WORKSPACE/megatoken" \
+          MEGATOKEN_ORCHESTRATION_EVIDENCE_DIR="$RUNNER_TEMP/native-orchestration" \
+          OMP_NUM_THREADS=1 node --test test/training-orchestration-evaluation.test.js
+          python megatoken/scripts/validate_semantic_orchestration.py \
+            --evidence-dir "$RUNNER_TEMP/native-orchestration" \
+            --tokenizer-json "$RUNNER_TEMP/tokenizer.json" \
+            --output "$RUNNER_TEMP/native-orchestration-validation.json"
           node tools/freeze-selected-evaluation.mjs "$RUNNER_TEMP/corpus" "$RUNNER_TEMP/declaration.json" --with-orchestration
           python megatoken/scripts/evaluate_semantic.py freeze \
             --declaration "$RUNNER_TEMP/declaration.json" --output "$RUNNER_TEMP/cohort.json"
@@ -141,4 +150,5 @@ jobs:
             ${{ runner.temp }}/recipe-*/manifest.json
             ${{ runner.temp }}/experiment-data/experiment-preparation.json
             ${{ runner.temp }}/native-inference/inference-check.json
+            ${{ runner.temp }}/native-orchestration-validation.json
           if-no-files-found: error
