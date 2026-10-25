@@ -1,0 +1,7 @@
+BLOCKED exact historical helper integrity gate; no substitute assets are accepted:
+  - missing regular file: /mnt/external/natlang-development-data/teacher198-current-admission-20261019/teacher-runtime-alias-legacy-default-source-closure-compatibility-0aad212b5-v1.json
+  - missing regular file: /mnt/external/natlang-development-data/teacher198-current-admission-20261019/teacher-runtime-alias-legacy-0aad212b5-immutable-helper-authority/authority.json
+  - missing regular file: /home/werg/data/dgxops/acquired-connected-source-protection-20261017-d13-d14-d32-v3/closure-receipt-full-20261020-content-facade-helper-v1.json
+  - missing regular file: /home/werg/data/dgxops/acquired-connected-source-protection-20261017-d13-d14-d32-v3/closure-code-transition-content-facade-helper-v1.json
+Provision the preserved files at the exact pinned paths from the immutable historical authority, then rerun this preflight and tests/test_teacher_helper_continuation.py.
+strict_history_exit=1

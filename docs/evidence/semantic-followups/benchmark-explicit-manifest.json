@@ -1,0 +1,3011 @@
+{
+  "schema": "semantic-corpus-manifest/4",
+  "execution": "semantic-execution/4",
+  "trace": "semantic-trace/4",
+  "context": "semantic-context/4",
+  "profile": "selected-harness/2",
+  "producerRevision": "1952ee3ae3bb24b8d2c9d975ca3ed7e86e18ab38",
+  "representation": "explicit",
+  "recipe": {
+    "schema": "semantic-source-benchmark/1",
+    "name": "benchmark-v1",
+    "algorithms": [
+      {
+        "name": "euclidean-gcd",
+        "body": "let x=a;let y=b;while(y!==0){const r=x%y;x=y;y=r;}return x;",
+        "family": "semantic-benchmark-v1:euclidean-gcd",
+        "ancestor": "source-algorithm-v1:euclidean-gcd",
+        "split": "validation",
+        "normalizedAstDigest": "a7b26d3e525455a102b742cdb0e5fc3204c4538e691b4ba652e401418266d81c"
+      },
+      {
+        "name": "least-common-multiple",
+        "body": "let x=a;let y=b;let p=x*y;while(y!==0){const r=x%y;x=y;y=r;}return p/x;",
+        "family": "semantic-benchmark-v1:least-common-multiple",
+        "ancestor": "source-algorithm-v1:least-common-multiple",
+        "split": "train",
+        "normalizedAstDigest": "f9ec85616ba61011d4d86dd69a9c2d56431228f094cc5b31aaebb88740545180"
+      },
+      {
+        "name": "factorial-iterative",
+        "body": "let n=a;let out=1;while(n>1){out=out*n;n=n-1;}return out+b;",
+        "family": "semantic-benchmark-v1:factorial-iterative",
+        "ancestor": "source-algorithm-v1:factorial-iterative",
+        "split": "train",
+        "normalizedAstDigest": "2b3287f3b548746844b48c07a6bc5445ffb80efd3a865c1db845e086f15792f7"
+      },
+      {
+        "name": "fibonacci-iterative",
+        "body": "let n=a;let x=0;let y=1;while(n>0){const z=x+y;x=y;y=z;n=n-1;}return x+b;",
+        "family": "semantic-benchmark-v1:fibonacci-iterative",
+        "ancestor": "source-algorithm-v1:fibonacci-iterative",
+        "split": "train",
+        "normalizedAstDigest": "1c530097d04b954507f1c3d6c752161489b2dff3fa27d7a954460bdd49693597"
+      },
+      {
+        "name": "power-squaring",
+        "body": "let base=a;let exp=b;let out=1;while(exp>0){if(exp%2===1)out=out*base;base=base*base;exp=exp>>1;}return out;",
+        "family": "semantic-benchmark-v1:power-squaring",
+        "ancestor": "source-algorithm-v1:power-squaring",
+        "split": "validation",
+        "normalizedAstDigest": "9f2f93438b9b8d61dd5fb2e3966a0718b208835f4a88fdc242f980353b4c2e43"
+      },
+      {
+        "name": "sum-digits",
+        "body": "let n=a;let total=0;while(n>0){total=total+n%10;n=Math.floor(n/10);}return total+b;",
+        "family": "semantic-benchmark-v1:sum-digits",
+        "ancestor": "source-algorithm-v1:sum-digits",
+        "split": "train",
+        "normalizedAstDigest": "fee3b9b5243753007a6739a27f2b5e2e688b922b7ee7d42df49b4ab6274ebcca"
+      },
+      {
+        "name": "count-digits",
+        "body": "let n=a;let count=0;while(n>0){count=count+1;n=Math.floor(n/10);}return count+b;",
+        "family": "semantic-benchmark-v1:count-digits",
+        "ancestor": "source-algorithm-v1:count-digits",
+        "split": "validation",
+        "normalizedAstDigest": "49022d19be7c92d5fdf5100fe848073f5359e003c31985f33609e59ce80aa303"
+      },
+      {
+        "name": "reverse-digits",
+        "body": "let n=a;let out=0;while(n>0){out=out*10+n%10;n=Math.floor(n/10);}return out+b;",
+        "family": "semantic-benchmark-v1:reverse-digits",
+        "ancestor": "source-algorithm-v1:reverse-digits",
+        "split": "train",
+        "normalizedAstDigest": "b45462c2623115c96a6a6a6cb8f58ad9db1fe54c5abec456dba3aea5a8f59b5d"
+      },
+      {
+        "name": "population-count",
+        "body": "let n=a;let count=0;while(n!==0){count=count+(n&1);n=n>>>1;}return count+b;",
+        "family": "semantic-benchmark-v1:population-count",
+        "ancestor": "source-algorithm-v1:population-count",
+        "split": "train",
+        "normalizedAstDigest": "3602f23701cf85a85b6e13d70d567e474476fb7fa2c7e0bb02bfb30958e64b8d"
+      },
+      {
+        "name": "trailing-zero-count",
+        "body": "let n=a;let count=0;while(n>0&&n%2===0){count=count+1;n=n/2;}return count+b;",
+        "family": "semantic-benchmark-v1:trailing-zero-count",
+        "ancestor": "source-algorithm-v1:trailing-zero-count",
+        "split": "test",
+        "normalizedAstDigest": "e0f3d5d7c92e4e129cbd9d996e1e94a928be10576d41c07a6c08ed88617d96cb"
+      },
+      {
+        "name": "hamming-distance",
+        "body": "let n=a^b;let count=0;while(n!==0){count=count+(n&1);n=n>>>1;}return count;",
+        "family": "semantic-benchmark-v1:hamming-distance",
+        "ancestor": "source-algorithm-v1:hamming-distance",
+        "split": "train",
+        "normalizedAstDigest": "7252738070b3608bb2157986efaa8d1d74963eeb57ea334648b2dc584e277d92"
+      },
+      {
+        "name": "gray-code",
+        "body": "return (a^(a>>1))+b;",
+        "family": "semantic-benchmark-v1:gray-code",
+        "ancestor": "source-algorithm-v1:gray-code",
+        "split": "train",
+        "normalizedAstDigest": "11a763fb92a7d94eacb6e0ba7041156996f9fcdd21e57f6169844fc50fb3dc99"
+      },
+      {
+        "name": "integer-square-root",
+        "body": "let x=0;while((x+1)*(x+1)<=a){x=x+1;}return x+b;",
+        "family": "semantic-benchmark-v1:integer-square-root",
+        "ancestor": "source-algorithm-v1:integer-square-root",
+        "split": "train",
+        "normalizedAstDigest": "84c1ce36b72982a4c2cda8259bdd24f637fe1bfe2a2e49c0adc96f37d1e080ef"
+      },
+      {
+        "name": "repeated-subtraction-division",
+        "body": "let n=a;let q=0;while(n>=b){n=n-b;q=q+1;}return q*10+n;",
+        "family": "semantic-benchmark-v1:repeated-subtraction-division",
+        "ancestor": "source-algorithm-v1:repeated-subtraction-division",
+        "split": "train",
+        "normalizedAstDigest": "20019c27255069697abc828ed9348829074d8ee5b78a8ad341323741bcd6df00"
+      },
+      {
+        "name": "modular-exponentiation",
+        "body": "let base=a;let exp=b;let out=1;while(exp>0){if(exp%2===1)out=(out*base)%97;base=(base*base)%97;exp=exp>>1;}return out;",
+        "family": "semantic-benchmark-v1:modular-exponentiation",
+        "ancestor": "source-algorithm-v1:modular-exponentiation",
+        "split": "train",
+        "normalizedAstDigest": "09c23da05890d5077ab613beaed8cde636232b60b041171573f62dfc0180d356"
+      },
+      {
+        "name": "prime-count-to-bound",
+        "body": "let n=a;let count=0;let x=2;while(x<=n){let prime=true;let d=2;while(d*d<=x){if(x%d===0)prime=false;d=d+1;}if(prime)count=count+1;x=x+1;}return count+b;",
+        "family": "semantic-benchmark-v1:prime-count-to-bound",
+        "ancestor": "source-algorithm-v1:prime-count-to-bound",
+        "split": "train",
+        "normalizedAstDigest": "c361d59828672e608466c252183d2735fd08576ff41b96bef60b74f64a09b03d"
+      },
+      {
+        "name": "array-sum",
+        "body": "let i=0;let total=0;while(i<a.length){total=total+a[i];i=i+1;}return total+b;",
+        "family": "semantic-benchmark-v1:array-sum",
+        "ancestor": "source-algorithm-v1:array-sum",
+        "split": "validation",
+        "normalizedAstDigest": "975bbe331b8865d0556567044d16b4dd59051319ec4e30655a28747191ab05c2"
+      },
+      {
+        "name": "array-minimum",
+        "body": "let i=1;let low=a[0];while(i<a.length){if(a[i]<low)low=a[i];i=i+1;}return low+b;",
+        "family": "semantic-benchmark-v1:array-minimum",
+        "ancestor": "source-algorithm-v1:array-minimum",
+        "split": "train",
+        "normalizedAstDigest": "4ecc8166415d365f9fb75369945786c8e70552d68a83c9f5bf91fd174768c25c"
+      },
+      {
+        "name": "array-argmax",
+        "body": "let i=1;let best=0;while(i<a.length){if(a[i]>a[best])best=i;i=i+1;}return best+b;",
+        "family": "semantic-benchmark-v1:array-argmax",
+        "ancestor": "source-algorithm-v1:array-argmax",
+        "split": "train",
+        "normalizedAstDigest": "5775e0f42f1ef55fb83ab7c86dc8a1731bc5e493de87d31f31040fb113e1a80a"
+      },
+      {
+        "name": "array-dot-product",
+        "body": "let i=0;let total=0;while(i<a.length){total=total+a[i]*b[i];i=i+1;}return total;",
+        "family": "semantic-benchmark-v1:array-dot-product",
+        "ancestor": "source-algorithm-v1:array-dot-product",
+        "split": "train",
+        "normalizedAstDigest": "b08abf8b63d4d46b120ddb029115a93775b1888c7b96c4a556b5147526fce54f"
+      },
+      {
+        "name": "count-in-range",
+        "body": "let i=0;let count=0;while(i<a.length){if(a[i]>=b[0]&&a[i]<=b[1])count=count+1;i=i+1;}return count;",
+        "family": "semantic-benchmark-v1:count-in-range",
+        "ancestor": "source-algorithm-v1:count-in-range",
+        "split": "train",
+        "normalizedAstDigest": "206117fd358a1182a2911965c624dc7bfb022d86ca320f81da760af6e12666b0"
+      },
+      {
+        "name": "longest-equal-run",
+        "body": "let i=1;let run=1;let best=a.length===0?0:1;while(i<a.length){if(a[i]===a[i-1])run=run+1;else run=1;if(run>best)best=run;i=i+1;}return best+b;",
+        "family": "semantic-benchmark-v1:longest-equal-run",
+        "ancestor": "source-algorithm-v1:longest-equal-run",
+        "split": "validation",
+        "normalizedAstDigest": "0157ac658c913f0a4d3f75e5d3d5bc0fefb0dc69542a35bddc684307ef216997"
+      },
+      {
+        "name": "array-palindrome",
+        "body": "let i=0;let ok=1;while(i<a.length/2){if(a[i]!==a[a.length-1-i])ok=0;i=i+1;}return ok+b;",
+        "family": "semantic-benchmark-v1:array-palindrome",
+        "ancestor": "source-algorithm-v1:array-palindrome",
+        "split": "train",
+        "normalizedAstDigest": "f1e24fd8dc7184ff134508971a4715461db1b3572c565a7f9377c04e67929315"
+      },
+      {
+        "name": "binary-search-index",
+        "body": "let lo=0;let hi=a.length-1;let found=-1;while(lo<=hi){let mid=Math.floor((lo+hi)/2);if(a[mid]===b)found=mid;if(a[mid]<b)lo=mid+1;else hi=mid-1;}return found;",
+        "family": "semantic-benchmark-v1:binary-search-index",
+        "ancestor": "source-algorithm-v1:binary-search-index",
+        "split": "train",
+        "normalizedAstDigest": "377e4a07c207ac952b5ff955fa1c778a078a2c4deb9614fc383d72dbfbe9bb93"
+      },
+      {
+        "name": "inversion-count",
+        "body": "let i=0;let count=0;while(i<a.length){let j=i+1;while(j<a.length){if(a[i]>a[j])count=count+1;j=j+1;}i=i+1;}return count+b;",
+        "family": "semantic-benchmark-v1:inversion-count",
+        "ancestor": "source-algorithm-v1:inversion-count",
+        "split": "train",
+        "normalizedAstDigest": "948ca193f439a679914eb18554d9397194499d5140c6ecec0f014a5fd3d5f8ac"
+      },
+      {
+        "name": "kadane-maximum-subarray",
+        "body": "let i=0;let ending=0;let best=a[0];while(i<a.length){if(ending<0)ending=0;ending=ending+a[i];if(ending>best)best=ending;i=i+1;}return best+b;",
+        "family": "semantic-benchmark-v1:kadane-maximum-subarray",
+        "ancestor": "source-algorithm-v1:kadane-maximum-subarray",
+        "split": "train",
+        "normalizedAstDigest": "9953042fef77f5689b5ef7530ece1700e84df438b34338f83833a93bc882653e"
+      },
+      {
+        "name": "single-transaction-profit",
+        "body": "let i=1;let low=a[0];let best=0;while(i<a.length){if(a[i]-low>best)best=a[i]-low;if(a[i]<low)low=a[i];i=i+1;}return best+b;",
+        "family": "semantic-benchmark-v1:single-transaction-profit",
+        "ancestor": "source-algorithm-v1:single-transaction-profit",
+        "split": "train",
+        "normalizedAstDigest": "b7a0c7a0c03ed12068e1b4dd910d19be8d22409120c023e9090fbbe9d561d6bb"
+      },
+      {
+        "name": "array-maximum",
+        "body": "let i=1;let high=a[0];while(i<a.length){if(a[i]>high)high=a[i];i=i+1;}return high+b;",
+        "family": "semantic-benchmark-v1:array-maximum",
+        "ancestor": "source-algorithm-v1:array-maximum",
+        "split": "validation",
+        "normalizedAstDigest": "5001fbc83f8e03f136ecc613ce508db96074b0d53513f825cc481524ee8491ef"
+      },
+      {
+        "name": "second-largest-distinct",
+        "body": "let i=0;let high=-1000000;let second=-1000000;while(i<a.length){if(a[i]>high){second=high;high=a[i];}else if(a[i]>second&&a[i]!==high)second=a[i];i=i+1;}return second+b;",
+        "family": "semantic-benchmark-v1:second-largest-distinct",
+        "ancestor": "source-algorithm-v1:second-largest-distinct",
+        "split": "train",
+        "normalizedAstDigest": "3376053a17fe0a26141ec516de6845a3709f63d57e85dc33dc5a8034ec72187a"
+      },
+      {
+        "name": "count-positive",
+        "body": "let i=0;let count=0;while(i<a.length){if(a[i]>0)count=count+1;i=i+1;}return count+b;",
+        "family": "semantic-benchmark-v1:count-positive",
+        "ancestor": "source-algorithm-v1:count-positive",
+        "split": "train",
+        "normalizedAstDigest": "bdfacd641a77b348667963a342600c0c0332b529e35d562f452f8c0009909f52"
+      },
+      {
+        "name": "count-negative",
+        "body": "let i=0;let count=0;while(i<a.length){if(a[i]<0)count=count+1;i=i+1;}return count+b;",
+        "family": "semantic-benchmark-v1:count-negative",
+        "ancestor": "source-algorithm-v1:count-negative",
+        "split": "train",
+        "normalizedAstDigest": "da57d8326570ae9e034606a23a99ef8f7a5560030823a77775ad3a76a729e478"
+      },
+      {
+        "name": "array-mean-scaled",
+        "body": "let i=0;let total=0;while(i<a.length){total=total+a[i];i=i+1;}return total*10/a.length+b;",
+        "family": "semantic-benchmark-v1:array-mean-scaled",
+        "ancestor": "source-algorithm-v1:array-mean-scaled",
+        "split": "train",
+        "normalizedAstDigest": "4232c0bb67dd1e8ee92dab762b139a2be078d1bf56bc22ff74dd5e7f097d8084"
+      },
+      {
+        "name": "running-prefix-checksum",
+        "body": "let i=0;let total=0;let checksum=0;while(i<a.length){total=total+a[i];checksum=checksum+total;i=i+1;}return checksum+b;",
+        "family": "semantic-benchmark-v1:running-prefix-checksum",
+        "ancestor": "source-algorithm-v1:running-prefix-checksum",
+        "split": "train",
+        "normalizedAstDigest": "93f258de13d8e623ed8dc63c171515e77c6b50d5a1b4bae146495c19e0053439"
+      },
+      {
+        "name": "is-nondecreasing",
+        "body": "let i=1;let ok=1;while(i<a.length){if(a[i]<a[i-1])ok=0;i=i+1;}return ok+b;",
+        "family": "semantic-benchmark-v1:is-nondecreasing",
+        "ancestor": "source-algorithm-v1:is-nondecreasing",
+        "split": "test",
+        "normalizedAstDigest": "736ea47de13ac90e546b76e25247df56698ab13652100ed535b6d86b3f0a02bf"
+      },
+      {
+        "name": "first-match-index",
+        "body": "let i=0;let found=-1;while(i<a.length){if(a[i]===b&&found===-1)found=i;i=i+1;}return found;",
+        "family": "semantic-benchmark-v1:first-match-index",
+        "ancestor": "source-algorithm-v1:first-match-index",
+        "split": "train",
+        "normalizedAstDigest": "2579c4aba4453cd192b18c6a5d7460bb3689c234acb01faee4751f74ae8a04ab"
+      },
+      {
+        "name": "last-match-index",
+        "body": "let i=0;let found=-1;while(i<a.length){if(a[i]===b)found=i;i=i+1;}return found;",
+        "family": "semantic-benchmark-v1:last-match-index",
+        "ancestor": "source-algorithm-v1:last-match-index",
+        "split": "train",
+        "normalizedAstDigest": "c877b582473bb7d91d79c220ddac48738436a8975ed56434fcd1ccc92c926a6e"
+      },
+      {
+        "name": "array-rotate-left-checksum",
+        "body": "let i=1;let total=0;while(i<a.length){total=total+a[i]*i;i=i+1;}if(a.length>0)total=total+a[0]*a.length;return total+b;",
+        "family": "semantic-benchmark-v1:array-rotate-left-checksum",
+        "ancestor": "source-algorithm-v1:array-rotate-left-checksum",
+        "split": "train",
+        "normalizedAstDigest": "8019d39860b993847365d378ff19e04b1541878e8b1bff26b5ef168952057703"
+      },
+      {
+        "name": "alternating-array-sum",
+        "body": "let i=0;let total=0;while(i<a.length){if(i%2===0)total=total+a[i];else total=total-a[i];i=i+1;}return total+b;",
+        "family": "semantic-benchmark-v1:alternating-array-sum",
+        "ancestor": "source-algorithm-v1:alternating-array-sum",
+        "split": "train",
+        "normalizedAstDigest": "d740f9a87a4a0261184b129cea09a10cd6d9dead4f2c252ad9fd492fd956e63e"
+      },
+      {
+        "name": "count-equal-pairs",
+        "body": "let i=0;let count=0;while(i<a.length){let j=i+1;while(j<a.length){if(a[i]===a[j])count=count+1;j=j+1;}i=i+1;}return count+b;",
+        "family": "semantic-benchmark-v1:count-equal-pairs",
+        "ancestor": "source-algorithm-v1:count-equal-pairs",
+        "split": "train",
+        "normalizedAstDigest": "b55b5f0e7341fb9ff6f4109a1eef4d70153183d22bb10ed606856dd4837326e6"
+      },
+      {
+        "name": "array-unique-adjacent-count",
+        "body": "let i=0;let count=0;while(i<a.length){if(i===0||a[i]!==a[i-1])count=count+1;i=i+1;}return count+b;",
+        "family": "semantic-benchmark-v1:array-unique-adjacent-count",
+        "ancestor": "source-algorithm-v1:array-unique-adjacent-count",
+        "split": "train",
+        "normalizedAstDigest": "cbb3771646c7239c7f3741d3e8a0072638957dbe89ce38de412a1e00824861c5"
+      },
+      {
+        "name": "weighted-index-sum",
+        "body": "let i=0;let total=0;while(i<a.length){total=total+a[i]*(i+1);i=i+1;}return total+b;",
+        "family": "semantic-benchmark-v1:weighted-index-sum",
+        "ancestor": "source-algorithm-v1:weighted-index-sum",
+        "split": "test",
+        "normalizedAstDigest": "d2c7d26c209558f9fca8aaef062a1cbb541a83160861828c2c900f086bf67f21"
+      },
+      {
+        "name": "subarray-target-count",
+        "body": "let i=0;let count=0;while(i<a.length){let total=0;let j=i;while(j<a.length){total=total+a[j];if(total===b)count=count+1;j=j+1;}i=i+1;}return count;",
+        "family": "semantic-benchmark-v1:subarray-target-count",
+        "ancestor": "source-algorithm-v1:subarray-target-count",
+        "split": "validation",
+        "normalizedAstDigest": "964516bad66d37ffd62b261c42837a19eb03f45ad74f84ea792d87fd194fa55b"
+      }
+    ],
+    "families": [
+      "semantic-benchmark-v1:euclidean-gcd",
+      "semantic-benchmark-v1:least-common-multiple",
+      "semantic-benchmark-v1:factorial-iterative",
+      "semantic-benchmark-v1:fibonacci-iterative",
+      "semantic-benchmark-v1:power-squaring",
+      "semantic-benchmark-v1:sum-digits",
+      "semantic-benchmark-v1:count-digits",
+      "semantic-benchmark-v1:reverse-digits",
+      "semantic-benchmark-v1:population-count",
+      "semantic-benchmark-v1:trailing-zero-count",
+      "semantic-benchmark-v1:hamming-distance",
+      "semantic-benchmark-v1:gray-code",
+      "semantic-benchmark-v1:integer-square-root",
+      "semantic-benchmark-v1:repeated-subtraction-division",
+      "semantic-benchmark-v1:modular-exponentiation",
+      "semantic-benchmark-v1:prime-count-to-bound",
+      "semantic-benchmark-v1:array-sum",
+      "semantic-benchmark-v1:array-minimum",
+      "semantic-benchmark-v1:array-argmax",
+      "semantic-benchmark-v1:array-dot-product",
+      "semantic-benchmark-v1:count-in-range",
+      "semantic-benchmark-v1:longest-equal-run",
+      "semantic-benchmark-v1:array-palindrome",
+      "semantic-benchmark-v1:binary-search-index",
+      "semantic-benchmark-v1:inversion-count",
+      "semantic-benchmark-v1:kadane-maximum-subarray",
+      "semantic-benchmark-v1:single-transaction-profit",
+      "semantic-benchmark-v1:array-maximum",
+      "semantic-benchmark-v1:second-largest-distinct",
+      "semantic-benchmark-v1:count-positive",
+      "semantic-benchmark-v1:count-negative",
+      "semantic-benchmark-v1:array-mean-scaled",
+      "semantic-benchmark-v1:running-prefix-checksum",
+      "semantic-benchmark-v1:is-nondecreasing",
+      "semantic-benchmark-v1:first-match-index",
+      "semantic-benchmark-v1:last-match-index",
+      "semantic-benchmark-v1:array-rotate-left-checksum",
+      "semantic-benchmark-v1:alternating-array-sum",
+      "semantic-benchmark-v1:count-equal-pairs",
+      "semantic-benchmark-v1:array-unique-adjacent-count",
+      "semantic-benchmark-v1:weighted-index-sum",
+      "semantic-benchmark-v1:subarray-target-count"
+    ],
+    "splitCounts": {
+      "train": 32,
+      "validation": 7,
+      "test": 3
+    },
+    "normalizedAstDuplicateCount": 0,
+    "normalizedAstAncestorDuplicateCount": 0,
+    "retainEveryAuthoredFamily": true,
+    "lifecycleInputs": [
+      {
+        "id": "least-common-multiple-child",
+        "path": "least-common-multiple-child.json",
+        "family": "semantic-benchmark-v1:least-common-multiple",
+        "split": "train",
+        "representation": "explicit"
+      },
+      {
+        "id": "euclidean-gcd-child",
+        "path": "euclidean-gcd-child.json",
+        "family": "semantic-benchmark-v1:euclidean-gcd",
+        "split": "validation",
+        "representation": "explicit"
+      }
+    ],
+    "coverage": {
+      "familyCount": 42,
+      "splitCounts": {
+        "train": 32,
+        "validation": 7,
+        "test": 3
+      },
+      "sourceKinds": [
+        "pure",
+        "retained-callback-recovery",
+        "repeated-invocation",
+        "lifecycle-child"
+      ],
+      "familyRoles": {
+        "common-support": 42,
+        "effectful": 42,
+        "lifecycle-child": 2
+      }
+    }
+  },
+  "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+  "counts": {
+    "attempted": 128,
+    "admitted": 128,
+    "locally_verified": 0
+  },
+  "cases": [
+    {
+      "id": "euclidean-gcd-pure",
+      "family": "semantic-benchmark-v1:euclidean-gcd",
+      "status": "admitted",
+      "path": "euclidean-gcd-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "fd401878403a72fcaa753075cb693e3f1d9413e7675307daa8c2f8a25061c6e5",
+      "metrics": {
+        "generatedBytes": 1814,
+        "observedBytes": 2731,
+        "transportBytes": 5053,
+        "actions": 0,
+        "generatedTokens": 603,
+        "observedTokens": 1050,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "euclidean-gcd-callbacks-recovery",
+      "family": "semantic-benchmark-v1:euclidean-gcd",
+      "status": "admitted",
+      "path": "euclidean-gcd-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "760849e6d5120337b85aedebc6e7643d2e2a4182021366a6140afa251e50db64",
+      "metrics": {
+        "generatedBytes": 4624,
+        "observedBytes": 20725,
+        "transportBytes": 11962,
+        "actions": 4,
+        "generatedTokens": 1506,
+        "observedTokens": 7986,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "euclidean-gcd-repeated",
+      "family": "semantic-benchmark-v1:euclidean-gcd",
+      "status": "admitted",
+      "path": "euclidean-gcd-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "3d970742e2c958e9af270ac9ae2ae14c1b284e8ae6b301fb2cc4d14e5836946e",
+      "metrics": {
+        "generatedBytes": 6240,
+        "observedBytes": 12081,
+        "transportBytes": 17277,
+        "actions": 4,
+        "generatedTokens": 2066,
+        "observedTokens": 4616,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "least-common-multiple-pure",
+      "family": "semantic-benchmark-v1:least-common-multiple",
+      "status": "admitted",
+      "path": "least-common-multiple-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "48223e6bb297b682071e735b3e69903c4fcdcf802f86071984de66c7a6b8632d",
+      "metrics": {
+        "generatedBytes": 2278,
+        "observedBytes": 3140,
+        "transportBytes": 5791,
+        "actions": 0,
+        "generatedTokens": 762,
+        "observedTokens": 1229,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "least-common-multiple-callbacks-recovery",
+      "family": "semantic-benchmark-v1:least-common-multiple",
+      "status": "admitted",
+      "path": "least-common-multiple-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "15cc23ae95af9921f4be5844a61930480ea16c2dd50ffb6c99c3b79fecdb71e3",
+      "metrics": {
+        "generatedBytes": 5161,
+        "observedBytes": 21374,
+        "transportBytes": 12700,
+        "actions": 4,
+        "generatedTokens": 1674,
+        "observedTokens": 8169,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "least-common-multiple-repeated",
+      "family": "semantic-benchmark-v1:least-common-multiple",
+      "status": "admitted",
+      "path": "least-common-multiple-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "c65fb22f692d97387994fd739e87dd922d4443fa0307f96db8ab3860a4cfc423",
+      "metrics": {
+        "generatedBytes": 7244,
+        "observedBytes": 12631,
+        "transportBytes": 18771,
+        "actions": 4,
+        "generatedTokens": 2396,
+        "observedTokens": 4818,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "factorial-iterative-pure",
+      "family": "semantic-benchmark-v1:factorial-iterative",
+      "status": "admitted",
+      "path": "factorial-iterative-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "c527f01a85600fa97c26fbe2fa3005cfb41479bbf7d78fa4ce0eab2cebfc3199",
+      "metrics": {
+        "generatedBytes": 3818,
+        "observedBytes": 3791,
+        "transportBytes": 7823,
+        "actions": 0,
+        "generatedTokens": 1256,
+        "observedTokens": 1577,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "factorial-iterative-callbacks-recovery",
+      "family": "semantic-benchmark-v1:factorial-iterative",
+      "status": "admitted",
+      "path": "factorial-iterative-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "ca3e6e15245c1914b81e47a1bbf9ef64fd69a65ebd8f7f98020a07589b14ef3e",
+      "metrics": {
+        "generatedBytes": 6645,
+        "observedBytes": 20576,
+        "transportBytes": 14732,
+        "actions": 4,
+        "generatedTokens": 2171,
+        "observedTokens": 7841,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "factorial-iterative-repeated",
+      "family": "semantic-benchmark-v1:factorial-iterative",
+      "status": "admitted",
+      "path": "factorial-iterative-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "1f071fe02a9bf0b66d80a077be8dc799e8f903adda26545d7162c40c948a8da6",
+      "metrics": {
+        "generatedBytes": 9585,
+        "observedBytes": 12056,
+        "transportBytes": 21671,
+        "actions": 4,
+        "generatedTokens": 3160,
+        "observedTokens": 4570,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "fibonacci-iterative-pure",
+      "family": "semantic-benchmark-v1:fibonacci-iterative",
+      "status": "admitted",
+      "path": "fibonacci-iterative-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "199f9b07a3f0c3e8b5363bd60bce89274134e82a4185fcbaf9628ea2042c85a4",
+      "metrics": {
+        "generatedBytes": 6402,
+        "observedBytes": 5617,
+        "transportBytes": 15203,
+        "actions": 0,
+        "generatedTokens": 2116,
+        "observedTokens": 2434,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "fibonacci-iterative-callbacks-recovery",
+      "family": "semantic-benchmark-v1:fibonacci-iterative",
+      "status": "admitted",
+      "path": "fibonacci-iterative-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "190f3d69a8f78d83307152c9052e948bd8c82e7277bf0a8cd97b7fa34b90a692",
+      "metrics": {
+        "generatedBytes": 9178,
+        "observedBytes": 23939,
+        "transportBytes": 22137,
+        "actions": 4,
+        "generatedTokens": 3016,
+        "observedTokens": 9366,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "fibonacci-iterative-repeated",
+      "family": "semantic-benchmark-v1:fibonacci-iterative",
+      "status": "admitted",
+      "path": "fibonacci-iterative-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "f294891151aca93200bd4bfa3e1f744a4a37e1f31184424a26c239e5c4f71efc",
+      "metrics": {
+        "generatedBytes": 14583,
+        "observedBytes": 16825,
+        "transportBytes": 36235,
+        "actions": 4,
+        "generatedTokens": 4832,
+        "observedTokens": 6609,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "power-squaring-pure",
+      "family": "semantic-benchmark-v1:power-squaring",
+      "status": "admitted",
+      "path": "power-squaring-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "31a5cb6dd37703ff1e0c424d71005c1cdb19554ae20da667990d6d9663901bc9",
+      "metrics": {
+        "generatedBytes": 3309,
+        "observedBytes": 3521,
+        "transportBytes": 7069,
+        "actions": 0,
+        "generatedTokens": 1087,
+        "observedTokens": 1380,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "power-squaring-callbacks-recovery",
+      "family": "semantic-benchmark-v1:power-squaring",
+      "status": "admitted",
+      "path": "power-squaring-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "69d24dbed1ecbf141f0c1b0c859dbaa136364fc28f93c1156712635b161d8a05",
+      "metrics": {
+        "generatedBytes": 6102,
+        "observedBytes": 21610,
+        "transportBytes": 13978,
+        "actions": 4,
+        "generatedTokens": 1996,
+        "observedTokens": 8285,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "power-squaring-repeated",
+      "family": "semantic-benchmark-v1:power-squaring",
+      "status": "admitted",
+      "path": "power-squaring-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "03ada6fa471aca30fa1ded54ee106b2c10fd136654e4d05c3c59733a1e1ee57b",
+      "metrics": {
+        "generatedBytes": 9410,
+        "observedBytes": 12906,
+        "transportBytes": 21849,
+        "actions": 4,
+        "generatedTokens": 3109,
+        "observedTokens": 4938,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "sum-digits-pure",
+      "family": "semantic-benchmark-v1:sum-digits",
+      "status": "admitted",
+      "path": "sum-digits-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "5a9bfde412d550913edefa4002f31a9c2d5cf5301c86c391b1a8dfd1eef1a7db",
+      "metrics": {
+        "generatedBytes": 3163,
+        "observedBytes": 3146,
+        "transportBytes": 6193,
+        "actions": 0,
+        "generatedTokens": 1047,
+        "observedTokens": 1224,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "sum-digits-callbacks-recovery",
+      "family": "semantic-benchmark-v1:sum-digits",
+      "status": "admitted",
+      "path": "sum-digits-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "fc40b281a5e0e9acb1f08c163fa916b0d7ab5291e5d1e2ec3728e0302051479d",
+      "metrics": {
+        "generatedBytes": 5917,
+        "observedBytes": 20998,
+        "transportBytes": 13102,
+        "actions": 4,
+        "generatedTokens": 1940,
+        "observedTokens": 8026,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "sum-digits-repeated",
+      "family": "semantic-benchmark-v1:sum-digits",
+      "status": "admitted",
+      "path": "sum-digits-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "cdd4f60de18810cd703af2e8d12ccc1cbd3038b94227bcf1241e4cbe9f650972",
+      "metrics": {
+        "generatedBytes": 8855,
+        "observedBytes": 12430,
+        "transportBytes": 19581,
+        "actions": 4,
+        "generatedTokens": 2947,
+        "observedTokens": 4734,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "count-digits-pure",
+      "family": "semantic-benchmark-v1:count-digits",
+      "status": "admitted",
+      "path": "count-digits-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "8741da3a6dd0a84f8304827b37fbc762150697f7a30d2965cabef482746cae50",
+      "metrics": {
+        "generatedBytes": 2531,
+        "observedBytes": 3031,
+        "transportBytes": 5419,
+        "actions": 0,
+        "generatedTokens": 835,
+        "observedTokens": 1185,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "count-digits-callbacks-recovery",
+      "family": "semantic-benchmark-v1:count-digits",
+      "status": "admitted",
+      "path": "count-digits-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "2800c56b1e68e68d56eb4040f3ebf49403829ccfab3be3787de286610401da67",
+      "metrics": {
+        "generatedBytes": 5301,
+        "observedBytes": 20866,
+        "transportBytes": 12328,
+        "actions": 4,
+        "generatedTokens": 1714,
+        "observedTokens": 7992,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "count-digits-repeated",
+      "family": "semantic-benchmark-v1:count-digits",
+      "status": "admitted",
+      "path": "count-digits-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "5f0333090f05c543fad977299f579142a3146a1c56fb8fe9b31251c997e03233",
+      "metrics": {
+        "generatedBytes": 7620,
+        "observedBytes": 12297,
+        "transportBytes": 18015,
+        "actions": 4,
+        "generatedTokens": 2508,
+        "observedTokens": 4684,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "reverse-digits-pure",
+      "family": "semantic-benchmark-v1:reverse-digits",
+      "status": "admitted",
+      "path": "reverse-digits-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "ae2a45cfc6bb465ec8723778a3a1865fc11e12e5728bc832d7e1e5d3c7cd1fa3",
+      "metrics": {
+        "generatedBytes": 3801,
+        "observedBytes": 3250,
+        "transportBytes": 6967,
+        "actions": 0,
+        "generatedTokens": 1265,
+        "observedTokens": 1274,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "reverse-digits-callbacks-recovery",
+      "family": "semantic-benchmark-v1:reverse-digits",
+      "status": "admitted",
+      "path": "reverse-digits-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "5cd5dbb0efa0ca770c6af0b8d2d0225dce488d66d60d9144a5eb8af95cafd84a",
+      "metrics": {
+        "generatedBytes": 6587,
+        "observedBytes": 21115,
+        "transportBytes": 13876,
+        "actions": 4,
+        "generatedTokens": 2166,
+        "observedTokens": 8125,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "reverse-digits-repeated",
+      "family": "semantic-benchmark-v1:reverse-digits",
+      "status": "admitted",
+      "path": "reverse-digits-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "b9fd986a9adfbb393f026aca0533a8f1e575e674d773d158cada597271d4ab1f",
+      "metrics": {
+        "generatedBytes": 10144,
+        "observedBytes": 12545,
+        "transportBytes": 21150,
+        "actions": 4,
+        "generatedTokens": 3380,
+        "observedTokens": 4814,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "population-count-pure",
+      "family": "semantic-benchmark-v1:population-count",
+      "status": "admitted",
+      "path": "population-count-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "c8df8b9ad6ca383464a124761e3cd429c1bb433b1caa9aaf78abb6a6b50341e7",
+      "metrics": {
+        "generatedBytes": 3197,
+        "observedBytes": 2913,
+        "transportBytes": 7477,
+        "actions": 0,
+        "generatedTokens": 1042,
+        "observedTokens": 1132,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "population-count-callbacks-recovery",
+      "family": "semantic-benchmark-v1:population-count",
+      "status": "admitted",
+      "path": "population-count-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "6f062c0c49695e1a641e747bc8f9b706fa3a950330773229258413fb7d5e2b6c",
+      "metrics": {
+        "generatedBytes": 5992,
+        "observedBytes": 20761,
+        "transportBytes": 14386,
+        "actions": 4,
+        "generatedTokens": 1913,
+        "observedTokens": 7914,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "population-count-repeated",
+      "family": "semantic-benchmark-v1:population-count",
+      "status": "admitted",
+      "path": "population-count-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "65348345aaffe59f44c92d753af9a7a09922380a0a48ef00265b7734535c17e0",
+      "metrics": {
+        "generatedBytes": 8535,
+        "observedBytes": 12208,
+        "transportBytes": 21233,
+        "actions": 4,
+        "generatedTokens": 2764,
+        "observedTokens": 4632,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "trailing-zero-count-pure",
+      "family": "semantic-benchmark-v1:trailing-zero-count",
+      "status": "admitted",
+      "path": "trailing-zero-count-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "test",
+      "episodeDigest": "d269e7ee7a45ca1c0c3b1aee5470caf84e2d48a0018ed6a24040c5073f97ac7f",
+      "metrics": {
+        "generatedBytes": 3988,
+        "observedBytes": 3133,
+        "transportBytes": 7419,
+        "actions": 0,
+        "generatedTokens": 1284,
+        "observedTokens": 1228,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "trailing-zero-count-callbacks-recovery",
+      "family": "semantic-benchmark-v1:trailing-zero-count",
+      "status": "admitted",
+      "path": "trailing-zero-count-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "test",
+      "episodeDigest": "1075f36f09ca53e6608e42f0ad714bd279e9ea96faa011a6ce857f83dce8cf7b",
+      "metrics": {
+        "generatedBytes": 6780,
+        "observedBytes": 21013,
+        "transportBytes": 14328,
+        "actions": 4,
+        "generatedTokens": 2163,
+        "observedTokens": 8011,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "trailing-zero-count-repeated",
+      "family": "semantic-benchmark-v1:trailing-zero-count",
+      "status": "admitted",
+      "path": "trailing-zero-count-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "test",
+      "episodeDigest": "dc23333dc75a2aef86bb6461b5da29b87a8bf03013f001a950451ce962ac00a4",
+      "metrics": {
+        "generatedBytes": 10518,
+        "observedBytes": 12449,
+        "transportBytes": 22069,
+        "actions": 4,
+        "generatedTokens": 3394,
+        "observedTokens": 4733,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "hamming-distance-pure",
+      "family": "semantic-benchmark-v1:hamming-distance",
+      "status": "admitted",
+      "path": "hamming-distance-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "4f913bbe8292fefe604e4019619e02ca09b052a870327f1bf8347cd1034356f6",
+      "metrics": {
+        "generatedBytes": 2990,
+        "observedBytes": 2912,
+        "transportBytes": 7219,
+        "actions": 0,
+        "generatedTokens": 975,
+        "observedTokens": 1139,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "hamming-distance-callbacks-recovery",
+      "family": "semantic-benchmark-v1:hamming-distance",
+      "status": "admitted",
+      "path": "hamming-distance-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "7c53f8841b617df9c6f5e5694c9368a14045b9c81b0e0a3441e2dfac923acd62",
+      "metrics": {
+        "generatedBytes": 5786,
+        "observedBytes": 20765,
+        "transportBytes": 14128,
+        "actions": 4,
+        "generatedTokens": 1852,
+        "observedTokens": 7971,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "hamming-distance-repeated",
+      "family": "semantic-benchmark-v1:hamming-distance",
+      "status": "admitted",
+      "path": "hamming-distance-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "1c857a9967ab89dffd2cc28033bae55db8fea4e973f73032922de739f12c6c08",
+      "metrics": {
+        "generatedBytes": 8130,
+        "observedBytes": 12206,
+        "transportBytes": 20710,
+        "actions": 4,
+        "generatedTokens": 2641,
+        "observedTokens": 4617,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "gray-code-pure",
+      "family": "semantic-benchmark-v1:gray-code",
+      "status": "admitted",
+      "path": "gray-code-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "330328a089a555ee8b78568fdae17951e45f37a90ec906f56913df2e22abc3e0",
+      "metrics": {
+        "generatedBytes": 363,
+        "observedBytes": 1854,
+        "transportBytes": 1132,
+        "actions": 0,
+        "generatedTokens": 121,
+        "observedTokens": 720,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "gray-code-callbacks-recovery",
+      "family": "semantic-benchmark-v1:gray-code",
+      "status": "admitted",
+      "path": "gray-code-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "7c9f40110dbdfb300e9c40cfcea0b05a97b0ad98256058785bf281640814d819",
+      "metrics": {
+        "generatedBytes": 3167,
+        "observedBytes": 17386,
+        "transportBytes": 8036,
+        "actions": 4,
+        "generatedTokens": 1012,
+        "observedTokens": 6611,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "gray-code-repeated",
+      "family": "semantic-benchmark-v1:gray-code",
+      "status": "admitted",
+      "path": "gray-code-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "f56b13d29a1967437bd2afeaa79a86cf5faf8f63095eb8b3991427a984319ffe",
+      "metrics": {
+        "generatedBytes": 3362,
+        "observedBytes": 7414,
+        "transportBytes": 9323,
+        "actions": 4,
+        "generatedTokens": 1098,
+        "observedTokens": 2661,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "integer-square-root-pure",
+      "family": "semantic-benchmark-v1:integer-square-root",
+      "status": "admitted",
+      "path": "integer-square-root-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "f82b7d8264a038f8f28a0db529a2ec0aa69827434edaa97bade3900cc74f17d6",
+      "metrics": {
+        "generatedBytes": 10329,
+        "observedBytes": 3615,
+        "transportBytes": 15829,
+        "actions": 0,
+        "generatedTokens": 3345,
+        "observedTokens": 1504,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "integer-square-root-callbacks-recovery",
+      "family": "semantic-benchmark-v1:integer-square-root",
+      "status": "admitted",
+      "path": "integer-square-root-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "4799623f0d509f8ff39eb86ebf9bd26b82d7d737451eaf87ce44c860d8f904cf",
+      "metrics": {
+        "generatedBytes": 12978,
+        "observedBytes": 22208,
+        "transportBytes": 22762,
+        "actions": 4,
+        "generatedTokens": 4196,
+        "observedTokens": 8564,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "integer-square-root-repeated",
+      "family": "semantic-benchmark-v1:integer-square-root",
+      "status": "admitted",
+      "path": "integer-square-root-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "9d02ec61d3b1ba63a0ec0496aabb67627c2343e580c0866e2d32f46cdaa07ebf",
+      "metrics": {
+        "generatedBytes": 21899,
+        "observedBytes": 15499,
+        "transportBytes": 37633,
+        "actions": 4,
+        "generatedTokens": 7121,
+        "observedTokens": 6001,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "repeated-subtraction-division-pure",
+      "family": "semantic-benchmark-v1:repeated-subtraction-division",
+      "status": "admitted",
+      "path": "repeated-subtraction-division-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "554949efdd2ad6be35dbe7fc3c11785fea56e34c05aa6720879f5fd35fcc177f",
+      "metrics": {
+        "generatedBytes": 5308,
+        "observedBytes": 3877,
+        "transportBytes": 10485,
+        "actions": 0,
+        "generatedTokens": 1740,
+        "observedTokens": 1619,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "repeated-subtraction-division-callbacks-recovery",
+      "family": "semantic-benchmark-v1:repeated-subtraction-division",
+      "status": "admitted",
+      "path": "repeated-subtraction-division-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "523ecd0d103d0964a3c0d1bb262f9d078883d56cf664b7a23b220f1277f62ece",
+      "metrics": {
+        "generatedBytes": 8178,
+        "observedBytes": 20753,
+        "transportBytes": 17396,
+        "actions": 4,
+        "generatedTokens": 2645,
+        "observedTokens": 7898,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "repeated-subtraction-division-repeated",
+      "family": "semantic-benchmark-v1:repeated-subtraction-division",
+      "status": "admitted",
+      "path": "repeated-subtraction-division-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "eaabfc44a110541e67d315a283b288361d365c3e35f4a84bec9621b6b97c8959",
+      "metrics": {
+        "generatedBytes": 13219,
+        "observedBytes": 12223,
+        "transportBytes": 28303,
+        "actions": 4,
+        "generatedTokens": 4327,
+        "observedTokens": 4642,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "modular-exponentiation-pure",
+      "family": "semantic-benchmark-v1:modular-exponentiation",
+      "status": "admitted",
+      "path": "modular-exponentiation-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "e32cd3d5f10d90a9c98b5fbd3f87576484529b7da2d9939805a3515bc360e1b9",
+      "metrics": {
+        "generatedBytes": 5853,
+        "observedBytes": 4829,
+        "transportBytes": 10799,
+        "actions": 0,
+        "generatedTokens": 1950,
+        "observedTokens": 2031,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "modular-exponentiation-callbacks-recovery",
+      "family": "semantic-benchmark-v1:modular-exponentiation",
+      "status": "admitted",
+      "path": "modular-exponentiation-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "e7244d60fa671d0ae3cea9c2f2b35e66b8d439a3244738e4dbfa4a33bebadf19",
+      "metrics": {
+        "generatedBytes": 8646,
+        "observedBytes": 21965,
+        "transportBytes": 17711,
+        "actions": 4,
+        "generatedTokens": 2844,
+        "observedTokens": 8492,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "modular-exponentiation-repeated",
+      "family": "semantic-benchmark-v1:modular-exponentiation",
+      "status": "admitted",
+      "path": "modular-exponentiation-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "30d0c0feb0995420eb55f5075c8a0af1d4252c12320f8673b28a6e836b08cc94",
+      "metrics": {
+        "generatedBytes": 14199,
+        "observedBytes": 13220,
+        "transportBytes": 28939,
+        "actions": 4,
+        "generatedTokens": 4721,
+        "observedTokens": 5063,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "prime-count-to-bound-pure",
+      "family": "semantic-benchmark-v1:prime-count-to-bound",
+      "status": "admitted",
+      "path": "prime-count-to-bound-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "3125382177fe91f983f6c5c3da56ca5edbc9198a9e7005a06450d625972858d1",
+      "metrics": {
+        "generatedBytes": 9342,
+        "observedBytes": 7218,
+        "transportBytes": 17899,
+        "actions": 0,
+        "generatedTokens": 3056,
+        "observedTokens": 3089,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "prime-count-to-bound-callbacks-recovery",
+      "family": "semantic-benchmark-v1:prime-count-to-bound",
+      "status": "admitted",
+      "path": "prime-count-to-bound-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "693bad6c8aff4cdb4a4360f0940d33075eab303772ca9edeb8a0309e37bc4de0",
+      "metrics": {
+        "generatedBytes": 12018,
+        "observedBytes": 26034,
+        "transportBytes": 24842,
+        "actions": 4,
+        "generatedTokens": 3914,
+        "observedTokens": 10145,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "prime-count-to-bound-repeated",
+      "family": "semantic-benchmark-v1:prime-count-to-bound",
+      "status": "admitted",
+      "path": "prime-count-to-bound-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "1ddf2b8feed1b28275423e7904d7b289338e46052782b3c7a2e1cbc257dfd116",
+      "metrics": {
+        "generatedBytes": 23140,
+        "observedBytes": 20869,
+        "transportBytes": 47324,
+        "actions": 4,
+        "generatedTokens": 7606,
+        "observedTokens": 8254,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-sum-pure",
+      "family": "semantic-benchmark-v1:array-sum",
+      "status": "admitted",
+      "path": "array-sum-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "c3aa69b9168f8b07c5dfe57e6b44eab4cf2fff34fa4391775c2e78eb7cce8a9b",
+      "metrics": {
+        "generatedBytes": 3754,
+        "observedBytes": 4390,
+        "transportBytes": 8675,
+        "actions": 0,
+        "generatedTokens": 1230,
+        "observedTokens": 1803,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-sum-callbacks-recovery",
+      "family": "semantic-benchmark-v1:array-sum",
+      "status": "admitted",
+      "path": "array-sum-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "9dbc5adc8f8f214330cb9ae803cd8938fb436f6406f9624bb64ca718b745ada4",
+      "metrics": {
+        "generatedBytes": 6498,
+        "observedBytes": 21633,
+        "transportBytes": 15588,
+        "actions": 4,
+        "generatedTokens": 2110,
+        "observedTokens": 8244,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-sum-repeated",
+      "family": "semantic-benchmark-v1:array-sum",
+      "status": "admitted",
+      "path": "array-sum-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "ebe10a7ead996ad7635dbefbac4934d4cd7520657f9ca285a7b057360763f4c1",
+      "metrics": {
+        "generatedBytes": 9265,
+        "observedBytes": 12941,
+        "transportBytes": 22951,
+        "actions": 4,
+        "generatedTokens": 3043,
+        "observedTokens": 4933,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-minimum-pure",
+      "family": "semantic-benchmark-v1:array-minimum",
+      "status": "admitted",
+      "path": "array-minimum-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "96df33d52a4e8026c805cd1c7fd3d1c2af411b40a46d03d62f1db9d505e42c07",
+      "metrics": {
+        "generatedBytes": 2855,
+        "observedBytes": 3564,
+        "transportBytes": 6981,
+        "actions": 0,
+        "generatedTokens": 926,
+        "observedTokens": 1392,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-minimum-callbacks-recovery",
+      "family": "semantic-benchmark-v1:array-minimum",
+      "status": "admitted",
+      "path": "array-minimum-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "ecae63291960a986abe3c4480db065442f36e24000c602b79b6eee4175807e83",
+      "metrics": {
+        "generatedBytes": 5639,
+        "observedBytes": 22017,
+        "transportBytes": 13894,
+        "actions": 4,
+        "generatedTokens": 1807,
+        "observedTokens": 8376,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-minimum-repeated",
+      "family": "semantic-benchmark-v1:array-minimum",
+      "status": "admitted",
+      "path": "array-minimum-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "7ffe49ab6ebac16fa9272d28dcec96deed02dbd8c1e92d39814b2b0d318f8e5f",
+      "metrics": {
+        "generatedBytes": 7625,
+        "observedBytes": 13308,
+        "transportBytes": 19751,
+        "actions": 4,
+        "generatedTokens": 2479,
+        "observedTokens": 5066,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-argmax-pure",
+      "family": "semantic-benchmark-v1:array-argmax",
+      "status": "admitted",
+      "path": "array-argmax-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "765f70c2d29a5c4a6d71326a20294765c05ad2ef4f5b4af45bba3e69ccfb6bdd",
+      "metrics": {
+        "generatedBytes": 2918,
+        "observedBytes": 3453,
+        "transportBytes": 7209,
+        "actions": 0,
+        "generatedTokens": 948,
+        "observedTokens": 1352,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-argmax-callbacks-recovery",
+      "family": "semantic-benchmark-v1:array-argmax",
+      "status": "admitted",
+      "path": "array-argmax-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "eaada35480ff338025f465682a1e2574452ed7b4dffab35cf9aca7e97f9eda6a",
+      "metrics": {
+        "generatedBytes": 5693,
+        "observedBytes": 21902,
+        "transportBytes": 14122,
+        "actions": 4,
+        "generatedTokens": 1838,
+        "observedTokens": 8425,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-argmax-repeated",
+      "family": "semantic-benchmark-v1:array-argmax",
+      "status": "admitted",
+      "path": "array-argmax-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "d55705a0db216768650bbf502537cf65a9c6a05dcd16bddc65737aeae9183771",
+      "metrics": {
+        "generatedBytes": 7641,
+        "observedBytes": 13184,
+        "transportBytes": 19757,
+        "actions": 4,
+        "generatedTokens": 2497,
+        "observedTokens": 5036,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-dot-product-pure",
+      "family": "semantic-benchmark-v1:array-dot-product",
+      "status": "admitted",
+      "path": "array-dot-product-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "ea5af5e6c1c33981c615ed32d4c78544188b0af2f728c789e4ac543639f86a43",
+      "metrics": {
+        "generatedBytes": 3587,
+        "observedBytes": 4765,
+        "transportBytes": 8219,
+        "actions": 0,
+        "generatedTokens": 1179,
+        "observedTokens": 1946,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-dot-product-callbacks-recovery",
+      "family": "semantic-benchmark-v1:array-dot-product",
+      "status": "admitted",
+      "path": "array-dot-product-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "90335a5a629b51148a383773305d6a84fb2cc8fd5bf1640da0f7bc2672c35c30",
+      "metrics": {
+        "generatedBytes": 6417,
+        "observedBytes": 22461,
+        "transportBytes": 15136,
+        "actions": 4,
+        "generatedTokens": 2084,
+        "observedTokens": 8603,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-dot-product-repeated",
+      "family": "semantic-benchmark-v1:array-dot-product",
+      "status": "admitted",
+      "path": "array-dot-product-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "16ac0736c50278a30629014200dc248e4f2abd766dab34ed81bdba4e35ef40c7",
+      "metrics": {
+        "generatedBytes": 9798,
+        "observedBytes": 13681,
+        "transportBytes": 23717,
+        "actions": 4,
+        "generatedTokens": 3226,
+        "observedTokens": 5215,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "count-in-range-pure",
+      "family": "semantic-benchmark-v1:count-in-range",
+      "status": "admitted",
+      "path": "count-in-range-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "a681812e89e14d492ee126aec03d7b52b80cedfe6074783c8d592c977b246a24",
+      "metrics": {
+        "generatedBytes": 6198,
+        "observedBytes": 5414,
+        "transportBytes": 14501,
+        "actions": 0,
+        "generatedTokens": 2015,
+        "observedTokens": 2235,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "count-in-range-callbacks-recovery",
+      "family": "semantic-benchmark-v1:count-in-range",
+      "status": "admitted",
+      "path": "count-in-range-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "60444b48d46f04d64873f60713bbba0f4ae4e9d35a4f57ad0476b89da0eb75a1",
+      "metrics": {
+        "generatedBytes": 8929,
+        "observedBytes": 25434,
+        "transportBytes": 21441,
+        "actions": 4,
+        "generatedTokens": 2883,
+        "observedTokens": 9851,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "count-in-range-repeated",
+      "family": "semantic-benchmark-v1:count-in-range",
+      "status": "admitted",
+      "path": "count-in-range-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "370f733e126a85c4806d0322c7c355045abe37c80b2003edb417d7022bae117e",
+      "metrics": {
+        "generatedBytes": 12735,
+        "observedBytes": 16441,
+        "transportBytes": 31701,
+        "actions": 4,
+        "generatedTokens": 4152,
+        "observedTokens": 6369,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "longest-equal-run-pure",
+      "family": "semantic-benchmark-v1:longest-equal-run",
+      "status": "admitted",
+      "path": "longest-equal-run-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "632149179e198537ed6edf7c1972de423e6866aa52c467eaa657674a980d250d",
+      "metrics": {
+        "generatedBytes": 6190,
+        "observedBytes": 6183,
+        "transportBytes": 13433,
+        "actions": 0,
+        "generatedTokens": 2026,
+        "observedTokens": 2556,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "longest-equal-run-callbacks-recovery",
+      "family": "semantic-benchmark-v1:longest-equal-run",
+      "status": "admitted",
+      "path": "longest-equal-run-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "29c95559945081e605860ee3505fd627e7e528cc39970c65e048c104b1fc61e1",
+      "metrics": {
+        "generatedBytes": 8937,
+        "observedBytes": 26066,
+        "transportBytes": 20366,
+        "actions": 4,
+        "generatedTokens": 2912,
+        "observedTokens": 10155,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "longest-equal-run-repeated",
+      "family": "semantic-benchmark-v1:longest-equal-run",
+      "status": "admitted",
+      "path": "longest-equal-run-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "2da0191cc9d49ba16b58d74e1321afdbd4c50728caae28bdefd4d1dbefb85306",
+      "metrics": {
+        "generatedBytes": 12169,
+        "observedBytes": 16986,
+        "transportBytes": 28743,
+        "actions": 4,
+        "generatedTokens": 3998,
+        "observedTokens": 6607,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-palindrome-pure",
+      "family": "semantic-benchmark-v1:array-palindrome",
+      "status": "admitted",
+      "path": "array-palindrome-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "2567e2f724d63ad0d7f00ad8d0a7bd8884830e0e133663bea8b2c8bad61bd7c6",
+      "metrics": {
+        "generatedBytes": 5169,
+        "observedBytes": 5123,
+        "transportBytes": 10251,
+        "actions": 0,
+        "generatedTokens": 1684,
+        "observedTokens": 2122,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-palindrome-callbacks-recovery",
+      "family": "semantic-benchmark-v1:array-palindrome",
+      "status": "admitted",
+      "path": "array-palindrome-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "cc402f3da13c9dd86a6522a2d5beeae1b4ea635e16ea651ee5825b76b7900bff",
+      "metrics": {
+        "generatedBytes": 7927,
+        "observedBytes": 22519,
+        "transportBytes": 17165,
+        "actions": 4,
+        "generatedTokens": 2570,
+        "observedTokens": 8694,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-palindrome-repeated",
+      "family": "semantic-benchmark-v1:array-palindrome",
+      "status": "admitted",
+      "path": "array-palindrome-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "8d501fce10e4c3e685690e9ff59e6bf1be875b926bbe1143f3bcfe1a63e1d5c2",
+      "metrics": {
+        "generatedBytes": 11431,
+        "observedBytes": 13783,
+        "transportBytes": 25141,
+        "actions": 4,
+        "generatedTokens": 3738,
+        "observedTokens": 5311,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "binary-search-index-pure",
+      "family": "semantic-benchmark-v1:binary-search-index",
+      "status": "admitted",
+      "path": "binary-search-index-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "ed27fd5a8d9acbd4b0fe442ec81c91c87d1efa18f7c69ba6e56775f310d7c7d5",
+      "metrics": {
+        "generatedBytes": 3308,
+        "observedBytes": 4950,
+        "transportBytes": 7287,
+        "actions": 0,
+        "generatedTokens": 1088,
+        "observedTokens": 1968,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "binary-search-index-callbacks-recovery",
+      "family": "semantic-benchmark-v1:binary-search-index",
+      "status": "admitted",
+      "path": "binary-search-index-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "5423a6869d65db4d3f9e1ba2c264050b394d085a140801419b53fb453cc35d35",
+      "metrics": {
+        "generatedBytes": 6134,
+        "observedBytes": 24171,
+        "transportBytes": 14200,
+        "actions": 4,
+        "generatedTokens": 1969,
+        "observedTokens": 9338,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "binary-search-index-repeated",
+      "family": "semantic-benchmark-v1:binary-search-index",
+      "status": "admitted",
+      "path": "binary-search-index-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "d4b6d2453507302961d25a5ccedf89da17b01d9c71b58f60b91d19971ca84e57",
+      "metrics": {
+        "generatedBytes": 9194,
+        "observedBytes": 15069,
+        "transportBytes": 21587,
+        "actions": 4,
+        "generatedTokens": 3005,
+        "observedTokens": 5817,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "inversion-count-pure",
+      "family": "semantic-benchmark-v1:inversion-count",
+      "status": "admitted",
+      "path": "inversion-count-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "a45e56635aace65d8a67706042ad059337cc0c48fbd80c684df158da5d117584",
+      "metrics": {
+        "generatedBytes": 9829,
+        "observedBytes": 7007,
+        "transportBytes": 21451,
+        "actions": 0,
+        "generatedTokens": 3207,
+        "observedTokens": 2983,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "inversion-count-callbacks-recovery",
+      "family": "semantic-benchmark-v1:inversion-count",
+      "status": "admitted",
+      "path": "inversion-count-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "e7b1b9d5f1e1b0099d265152755cdf2e07c655280934b597b22356113e4e8396",
+      "metrics": {
+        "generatedBytes": 12496,
+        "observedBytes": 27886,
+        "transportBytes": 28429,
+        "actions": 4,
+        "generatedTokens": 4069,
+        "observedTokens": 10862,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "inversion-count-repeated",
+      "family": "semantic-benchmark-v1:inversion-count",
+      "status": "admitted",
+      "path": "inversion-count-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "ee387d19c0ef9d1bcc57eb0fb3086f694efee218700edb8620373af720169a98",
+      "metrics": {
+        "generatedBytes": 18628,
+        "observedBytes": 20749,
+        "transportBytes": 43182,
+        "actions": 4,
+        "generatedTokens": 6100,
+        "observedTokens": 8158,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "kadane-maximum-subarray-pure",
+      "family": "semantic-benchmark-v1:kadane-maximum-subarray",
+      "status": "admitted",
+      "path": "kadane-maximum-subarray-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "3992fd0771e5e3dfa5f75d177a482bc3567fa6d57e6371b538f84d58c94c703f",
+      "metrics": {
+        "generatedBytes": 6284,
+        "observedBytes": 5680,
+        "transportBytes": 13869,
+        "actions": 0,
+        "generatedTokens": 2055,
+        "observedTokens": 2355,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "kadane-maximum-subarray-callbacks-recovery",
+      "family": "semantic-benchmark-v1:kadane-maximum-subarray",
+      "status": "admitted",
+      "path": "kadane-maximum-subarray-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "eace70ccca8e58d2e3f3d5912eb1072bf94f0822217e53d6c7b0e130f54c9ec2",
+      "metrics": {
+        "generatedBytes": 9086,
+        "observedBytes": 25630,
+        "transportBytes": 20802,
+        "actions": 4,
+        "generatedTokens": 2955,
+        "observedTokens": 9933,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "kadane-maximum-subarray-repeated",
+      "family": "semantic-benchmark-v1:kadane-maximum-subarray",
+      "status": "admitted",
+      "path": "kadane-maximum-subarray-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "2de7d2ac22e1e35c7e75d78d016fc4581c1bc4c3333fa9c2c471991147a954b3",
+      "metrics": {
+        "generatedBytes": 14023,
+        "observedBytes": 18731,
+        "transportBytes": 33023,
+        "actions": 4,
+        "generatedTokens": 4597,
+        "observedTokens": 7278,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "single-transaction-profit-pure",
+      "family": "semantic-benchmark-v1:single-transaction-profit",
+      "status": "admitted",
+      "path": "single-transaction-profit-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "1e110041f75c170de55ea39052fe9581ebb2809728d3887826256ee6857df0a5",
+      "metrics": {
+        "generatedBytes": 6992,
+        "observedBytes": 5971,
+        "transportBytes": 15099,
+        "actions": 0,
+        "generatedTokens": 2280,
+        "observedTokens": 2476,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "single-transaction-profit-callbacks-recovery",
+      "family": "semantic-benchmark-v1:single-transaction-profit",
+      "status": "admitted",
+      "path": "single-transaction-profit-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "7c93cc3546a3080570f87ed4a7ea2142bd23d5260201488883342d1330332d08",
+      "metrics": {
+        "generatedBytes": 9802,
+        "observedBytes": 25916,
+        "transportBytes": 22036,
+        "actions": 4,
+        "generatedTokens": 3160,
+        "observedTokens": 10077,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "single-transaction-profit-repeated",
+      "family": "semantic-benchmark-v1:single-transaction-profit",
+      "status": "admitted",
+      "path": "single-transaction-profit-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "e210f975a8e30d0a8d9fcb983647d3b787c211eba68601951cc6386dade48c8b",
+      "metrics": {
+        "generatedBytes": 14147,
+        "observedBytes": 16860,
+        "transportBytes": 33071,
+        "actions": 4,
+        "generatedTokens": 4609,
+        "observedTokens": 6557,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-maximum-pure",
+      "family": "semantic-benchmark-v1:array-maximum",
+      "status": "admitted",
+      "path": "array-maximum-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "f448f0335bad79eef2bbf01513c81d05db4afedada19cf32cdf368a605205f99",
+      "metrics": {
+        "generatedBytes": 2857,
+        "observedBytes": 3570,
+        "transportBytes": 6981,
+        "actions": 0,
+        "generatedTokens": 928,
+        "observedTokens": 1392,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-maximum-callbacks-recovery",
+      "family": "semantic-benchmark-v1:array-maximum",
+      "status": "admitted",
+      "path": "array-maximum-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "c604ae6981980498247d3211a76deea4327798e6ccb845e2c948cbef115d43ca",
+      "metrics": {
+        "generatedBytes": 5658,
+        "observedBytes": 22048,
+        "transportBytes": 13894,
+        "actions": 4,
+        "generatedTokens": 1826,
+        "observedTokens": 8423,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-maximum-repeated",
+      "family": "semantic-benchmark-v1:array-maximum",
+      "status": "admitted",
+      "path": "array-maximum-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "c993bf9a16750609fe14182a801b5fdf7d956af73240cad64082b11b0d88ae0f",
+      "metrics": {
+        "generatedBytes": 7646,
+        "observedBytes": 13324,
+        "transportBytes": 19751,
+        "actions": 4,
+        "generatedTokens": 2500,
+        "observedTokens": 5048,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "second-largest-distinct-pure",
+      "family": "semantic-benchmark-v1:second-largest-distinct",
+      "status": "admitted",
+      "path": "second-largest-distinct-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "8e20401e1664ddf84b56c35c6527508b431c527d30c1fcc1d0a8e61d16c0e012",
+      "metrics": {
+        "generatedBytes": 4632,
+        "observedBytes": 6279,
+        "transportBytes": 11391,
+        "actions": 0,
+        "generatedTokens": 1528,
+        "observedTokens": 2591,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "second-largest-distinct-callbacks-recovery",
+      "family": "semantic-benchmark-v1:second-largest-distinct",
+      "status": "admitted",
+      "path": "second-largest-distinct-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "63ea121731e5625dbe548a9a3c4f027c9822603fff97d1acd20281aaf5db9fbd",
+      "metrics": {
+        "generatedBytes": 7483,
+        "observedBytes": 24097,
+        "transportBytes": 18312,
+        "actions": 4,
+        "generatedTokens": 2423,
+        "observedTokens": 9308,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "second-largest-distinct-repeated",
+      "family": "semantic-benchmark-v1:second-largest-distinct",
+      "status": "admitted",
+      "path": "second-largest-distinct-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "10a31765315df48c816622a825bfea3db8ede474e53ab7954a69829f088a23f7",
+      "metrics": {
+        "generatedBytes": 10678,
+        "observedBytes": 15035,
+        "transportBytes": 27305,
+        "actions": 4,
+        "generatedTokens": 3503,
+        "observedTokens": 5765,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "count-positive-pure",
+      "family": "semantic-benchmark-v1:count-positive",
+      "status": "admitted",
+      "path": "count-positive-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "fc141ced34e18686a9ddb991fe0686a541c6576013ab518ea2bc162851b5d544",
+      "metrics": {
+        "generatedBytes": 3858,
+        "observedBytes": 4620,
+        "transportBytes": 8683,
+        "actions": 0,
+        "generatedTokens": 1248,
+        "observedTokens": 1910,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "count-positive-callbacks-recovery",
+      "family": "semantic-benchmark-v1:count-positive",
+      "status": "admitted",
+      "path": "count-positive-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "c7693425f27f4bba9abd02050468886a32396a4a6105f019d2f993a40bd975d6",
+      "metrics": {
+        "generatedBytes": 6627,
+        "observedBytes": 21939,
+        "transportBytes": 15596,
+        "actions": 4,
+        "generatedTokens": 2116,
+        "observedTokens": 8372,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "count-positive-repeated",
+      "family": "semantic-benchmark-v1:count-positive",
+      "status": "admitted",
+      "path": "count-positive-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "23ebfd22964ac463692cae97e792165f0a6c94351e13e24232c3ada18bc7e079",
+      "metrics": {
+        "generatedBytes": 9593,
+        "observedBytes": 13216,
+        "transportBytes": 23209,
+        "actions": 4,
+        "generatedTokens": 3105,
+        "observedTokens": 5027,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "count-negative-pure",
+      "family": "semantic-benchmark-v1:count-negative",
+      "status": "admitted",
+      "path": "count-negative-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "56c0dec18866c5178f3edc0cd7fe73fd904eda0c9e98d15941719190adbcde29",
+      "metrics": {
+        "generatedBytes": 3859,
+        "observedBytes": 4622,
+        "transportBytes": 8683,
+        "actions": 0,
+        "generatedTokens": 1249,
+        "observedTokens": 1916,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "count-negative-callbacks-recovery",
+      "family": "semantic-benchmark-v1:count-negative",
+      "status": "admitted",
+      "path": "count-negative-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "43f9114e80424847e717c20e0efa6870cfb261e1238fcd86f2529899ac925878",
+      "metrics": {
+        "generatedBytes": 6628,
+        "observedBytes": 21944,
+        "transportBytes": 15596,
+        "actions": 4,
+        "generatedTokens": 2117,
+        "observedTokens": 8379,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "count-negative-repeated",
+      "family": "semantic-benchmark-v1:count-negative",
+      "status": "admitted",
+      "path": "count-negative-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "58138ef670c87a7e5c943e51244c377dd2b668aeb2ac5c14ac413b3ce14a5d5c",
+      "metrics": {
+        "generatedBytes": 9595,
+        "observedBytes": 13220,
+        "transportBytes": 23209,
+        "actions": 4,
+        "generatedTokens": 3107,
+        "observedTokens": 5045,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-mean-scaled-pure",
+      "family": "semantic-benchmark-v1:array-mean-scaled",
+      "status": "admitted",
+      "path": "array-mean-scaled-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "b0f71bb17952d19cb9b8deecd45102d2308e1395c5ea61aa0516527eb6d607c5",
+      "metrics": {
+        "generatedBytes": 3475,
+        "observedBytes": 4732,
+        "transportBytes": 7761,
+        "actions": 0,
+        "generatedTokens": 1145,
+        "observedTokens": 1940,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-mean-scaled-callbacks-recovery",
+      "family": "semantic-benchmark-v1:array-mean-scaled",
+      "status": "admitted",
+      "path": "array-mean-scaled-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "61c6cf4a82c5094ad3387f1ccd1a4995b0b3313899c4b0b03b6faf4758a37061",
+      "metrics": {
+        "generatedBytes": 6296,
+        "observedBytes": 22028,
+        "transportBytes": 14674,
+        "actions": 4,
+        "generatedTokens": 2044,
+        "observedTokens": 8422,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-mean-scaled-repeated",
+      "family": "semantic-benchmark-v1:array-mean-scaled",
+      "status": "admitted",
+      "path": "array-mean-scaled-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "7400bce1adba3d23961df78a47b36615874ad489056eb1ef3bf50be57667d51a",
+      "metrics": {
+        "generatedBytes": 10316,
+        "observedBytes": 13372,
+        "transportBytes": 24463,
+        "actions": 4,
+        "generatedTokens": 3398,
+        "observedTokens": 5090,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "running-prefix-checksum-pure",
+      "family": "semantic-benchmark-v1:running-prefix-checksum",
+      "status": "admitted",
+      "path": "running-prefix-checksum-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "d91af7dc6706bc8e1abe049ba34ca5bdb3153adf3caf38908cba600049cdcea3",
+      "metrics": {
+        "generatedBytes": 3774,
+        "observedBytes": 4918,
+        "transportBytes": 8679,
+        "actions": 0,
+        "generatedTokens": 1250,
+        "observedTokens": 2018,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "running-prefix-checksum-callbacks-recovery",
+      "family": "semantic-benchmark-v1:running-prefix-checksum",
+      "status": "admitted",
+      "path": "running-prefix-checksum-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "833835f5fd5acf960b21e706aecf525d638ef9340d7834f816cc1b111102be1d",
+      "metrics": {
+        "generatedBytes": 6645,
+        "observedBytes": 22474,
+        "transportBytes": 15592,
+        "actions": 4,
+        "generatedTokens": 2149,
+        "observedTokens": 8497,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "running-prefix-checksum-repeated",
+      "family": "semantic-benchmark-v1:running-prefix-checksum",
+      "status": "admitted",
+      "path": "running-prefix-checksum-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "99601f30e6876f0b68f833b11565aeafc5c8284b3b41002e8c5bac66409fc5ec",
+      "metrics": {
+        "generatedBytes": 10202,
+        "observedBytes": 13620,
+        "transportBytes": 24645,
+        "actions": 4,
+        "generatedTokens": 3352,
+        "observedTokens": 5137,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "is-nondecreasing-pure",
+      "family": "semantic-benchmark-v1:is-nondecreasing",
+      "status": "admitted",
+      "path": "is-nondecreasing-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "test",
+      "episodeDigest": "6e50fa2dd477d4b98fe135419cef54a93507692f475a87c4fcbecef363db5fba",
+      "metrics": {
+        "generatedBytes": 3502,
+        "observedBytes": 4726,
+        "transportBytes": 7761,
+        "actions": 0,
+        "generatedTokens": 1135,
+        "observedTokens": 1946,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "is-nondecreasing-callbacks-recovery",
+      "family": "semantic-benchmark-v1:is-nondecreasing",
+      "status": "admitted",
+      "path": "is-nondecreasing-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "test",
+      "episodeDigest": "663f4a88b5721944105b4aca61eaded0a9db2c5a3bf1e1c4b1caf9199781f567",
+      "metrics": {
+        "generatedBytes": 6295,
+        "observedBytes": 21997,
+        "transportBytes": 14674,
+        "actions": 4,
+        "generatedTokens": 2028,
+        "observedTokens": 8453,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "is-nondecreasing-repeated",
+      "family": "semantic-benchmark-v1:is-nondecreasing",
+      "status": "admitted",
+      "path": "is-nondecreasing-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "test",
+      "episodeDigest": "e0473c3ec643d352c3927493da4ab1ea7a000c2e89aba0fc37e5179a46a64282",
+      "metrics": {
+        "generatedBytes": 8686,
+        "observedBytes": 13299,
+        "transportBytes": 21065,
+        "actions": 4,
+        "generatedTokens": 2832,
+        "observedTokens": 5089,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "first-match-index-pure",
+      "family": "semantic-benchmark-v1:first-match-index",
+      "status": "admitted",
+      "path": "first-match-index-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "e722ce160993da43324a4f3b4ed18f51145f103b7ed04d4359f66bd3aba776ca",
+      "metrics": {
+        "generatedBytes": 3834,
+        "observedBytes": 4762,
+        "transportBytes": 8655,
+        "actions": 0,
+        "generatedTokens": 1227,
+        "observedTokens": 1970,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "first-match-index-callbacks-recovery",
+      "family": "semantic-benchmark-v1:first-match-index",
+      "status": "admitted",
+      "path": "first-match-index-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "40ebe0789e3d5e43d1bd7d5694cfcc74b790c8f498a8a87f5b92730d9e8cb012",
+      "metrics": {
+        "generatedBytes": 6621,
+        "observedBytes": 22129,
+        "transportBytes": 15568,
+        "actions": 4,
+        "generatedTokens": 2099,
+        "observedTokens": 8419,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "first-match-index-repeated",
+      "family": "semantic-benchmark-v1:first-match-index",
+      "status": "admitted",
+      "path": "first-match-index-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "d68e10c0c398ac9a7e83a1f2808a12a7a4a844172451d9505864f52da022a68e",
+      "metrics": {
+        "generatedBytes": 9402,
+        "observedBytes": 13377,
+        "transportBytes": 22907,
+        "actions": 4,
+        "generatedTokens": 3016,
+        "observedTokens": 5082,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "last-match-index-pure",
+      "family": "semantic-benchmark-v1:last-match-index",
+      "status": "admitted",
+      "path": "last-match-index-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "cb718217d9a51f3902871c1811e6a6ef9e72ba19b62899957ee4c56b8a002902",
+      "metrics": {
+        "generatedBytes": 3235,
+        "observedBytes": 4442,
+        "transportBytes": 7909,
+        "actions": 0,
+        "generatedTokens": 1045,
+        "observedTokens": 1828,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "last-match-index-callbacks-recovery",
+      "family": "semantic-benchmark-v1:last-match-index",
+      "status": "admitted",
+      "path": "last-match-index-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "07eec80d25128a59c083d3e07ac3013675faa844bc17c9c2161e0ce6138ab67e",
+      "metrics": {
+        "generatedBytes": 6033,
+        "observedBytes": 21753,
+        "transportBytes": 14822,
+        "actions": 4,
+        "generatedTokens": 1921,
+        "observedTokens": 8288,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "last-match-index-repeated",
+      "family": "semantic-benchmark-v1:last-match-index",
+      "status": "admitted",
+      "path": "last-match-index-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "96f24e9aec2905adbf8826d9b113cf1c075a3a7a6d1a5e96fe1361f27c132068",
+      "metrics": {
+        "generatedBytes": 8390,
+        "observedBytes": 13040,
+        "transportBytes": 21637,
+        "actions": 4,
+        "generatedTokens": 2708,
+        "observedTokens": 4966,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-rotate-left-checksum-pure",
+      "family": "semantic-benchmark-v1:array-rotate-left-checksum",
+      "status": "admitted",
+      "path": "array-rotate-left-checksum-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "0c217fdaa873a0b189c246d2738b422f18f8f088f71b869b55fbc93f15f907cc",
+      "metrics": {
+        "generatedBytes": 3430,
+        "observedBytes": 4326,
+        "transportBytes": 7539,
+        "actions": 0,
+        "generatedTokens": 1125,
+        "observedTokens": 1706,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-rotate-left-checksum-callbacks-recovery",
+      "family": "semantic-benchmark-v1:array-rotate-left-checksum",
+      "status": "admitted",
+      "path": "array-rotate-left-checksum-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "1090953407a71e0703921d45693676bef905f08f126b9ef759f77021cbb46740",
+      "metrics": {
+        "generatedBytes": 6333,
+        "observedBytes": 23036,
+        "transportBytes": 14452,
+        "actions": 4,
+        "generatedTokens": 2043,
+        "observedTokens": 8794,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-rotate-left-checksum-repeated",
+      "family": "semantic-benchmark-v1:array-rotate-left-checksum",
+      "status": "admitted",
+      "path": "array-rotate-left-checksum-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "f74da1fccdde440756dcc87808f73bc2d1df87dc7779d212983bf2e944894000",
+      "metrics": {
+        "generatedBytes": 10520,
+        "observedBytes": 14257,
+        "transportBytes": 24273,
+        "actions": 4,
+        "generatedTokens": 3446,
+        "observedTokens": 5456,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "alternating-array-sum-pure",
+      "family": "semantic-benchmark-v1:alternating-array-sum",
+      "status": "admitted",
+      "path": "alternating-array-sum-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "1665610c1ebddb58f531221d531194b88fa0d45e78dcb615c2816539c60215b8",
+      "metrics": {
+        "generatedBytes": 5200,
+        "observedBytes": 5201,
+        "transportBytes": 10675,
+        "actions": 0,
+        "generatedTokens": 1700,
+        "observedTokens": 2151,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "alternating-array-sum-callbacks-recovery",
+      "family": "semantic-benchmark-v1:alternating-array-sum",
+      "status": "admitted",
+      "path": "alternating-array-sum-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "3572b45edc6b3d187661a96f9b4298a0673f38091efdb4ea25faed8c99347e2b",
+      "metrics": {
+        "generatedBytes": 8009,
+        "observedBytes": 22687,
+        "transportBytes": 17591,
+        "actions": 4,
+        "generatedTokens": 2587,
+        "observedTokens": 8725,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "alternating-array-sum-repeated",
+      "family": "semantic-benchmark-v1:alternating-array-sum",
+      "status": "admitted",
+      "path": "alternating-array-sum-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "9fb598e6950f26e52c9e286e6dab7c0a181ae2c66c806e32f7293b1932ea05e3",
+      "metrics": {
+        "generatedBytes": 11840,
+        "observedBytes": 13864,
+        "transportBytes": 26505,
+        "actions": 4,
+        "generatedTokens": 3867,
+        "observedTokens": 5277,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "count-equal-pairs-pure",
+      "family": "semantic-benchmark-v1:count-equal-pairs",
+      "status": "admitted",
+      "path": "count-equal-pairs-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "02f3d858d472ffa517b7f12f239489e1effde6f0dee2ff469005d343fff99784",
+      "metrics": {
+        "generatedBytes": 9583,
+        "observedBytes": 7033,
+        "transportBytes": 20971,
+        "actions": 0,
+        "generatedTokens": 3124,
+        "observedTokens": 2989,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "count-equal-pairs-callbacks-recovery",
+      "family": "semantic-benchmark-v1:count-equal-pairs",
+      "status": "admitted",
+      "path": "count-equal-pairs-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "d9846768d38b2f82cdea930dea26e14e0bb26ba7ceff66e4d7a3461bf72feef5",
+      "metrics": {
+        "generatedBytes": 12268,
+        "observedBytes": 27927,
+        "transportBytes": 27945,
+        "actions": 4,
+        "generatedTokens": 4000,
+        "observedTokens": 10918,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "count-equal-pairs-repeated",
+      "family": "semantic-benchmark-v1:count-equal-pairs",
+      "status": "admitted",
+      "path": "count-equal-pairs-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "f04e177bd13ec37a082619ef64280947aed7f75f3c6844f666a24dca2dbb8297",
+      "metrics": {
+        "generatedBytes": 17925,
+        "observedBytes": 20785,
+        "transportBytes": 41716,
+        "actions": 4,
+        "generatedTokens": 5874,
+        "observedTokens": 8180,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-unique-adjacent-count-pure",
+      "family": "semantic-benchmark-v1:array-unique-adjacent-count",
+      "status": "admitted",
+      "path": "array-unique-adjacent-count-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "b1da8176de1eb04aa6ada8c08abf951d1b0a2be8b1b2a6b68b0d319f56ccba8a",
+      "metrics": {
+        "generatedBytes": 6605,
+        "observedBytes": 5154,
+        "transportBytes": 13509,
+        "actions": 0,
+        "generatedTokens": 2127,
+        "observedTokens": 2147,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-unique-adjacent-count-callbacks-recovery",
+      "family": "semantic-benchmark-v1:array-unique-adjacent-count",
+      "status": "admitted",
+      "path": "array-unique-adjacent-count-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "a8485d85c0b614655ed0839e5449398f9b0997dc8ffeac129deb8cc8d17e3a2c",
+      "metrics": {
+        "generatedBytes": 9425,
+        "observedBytes": 24829,
+        "transportBytes": 20442,
+        "actions": 4,
+        "generatedTokens": 3026,
+        "observedTokens": 9576,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "array-unique-adjacent-count-repeated",
+      "family": "semantic-benchmark-v1:array-unique-adjacent-count",
+      "status": "admitted",
+      "path": "array-unique-adjacent-count-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "f6bc2579a8c4f94b65a471c634adc4283ba492c5be32953f879be37b3d260ff4",
+      "metrics": {
+        "generatedBytes": 13096,
+        "observedBytes": 15906,
+        "transportBytes": 29121,
+        "actions": 4,
+        "generatedTokens": 4236,
+        "observedTokens": 6148,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "weighted-index-sum-pure",
+      "family": "semantic-benchmark-v1:weighted-index-sum",
+      "status": "admitted",
+      "path": "weighted-index-sum-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "test",
+      "episodeDigest": "bebae5294377de76c38d0c5d11fbe6ecbe1da8d9f10f8a36c6fda5f66efa4eda",
+      "metrics": {
+        "generatedBytes": 4227,
+        "observedBytes": 4577,
+        "transportBytes": 8565,
+        "actions": 0,
+        "generatedTokens": 1383,
+        "observedTokens": 1882,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "weighted-index-sum-callbacks-recovery",
+      "family": "semantic-benchmark-v1:weighted-index-sum",
+      "status": "admitted",
+      "path": "weighted-index-sum-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "test",
+      "episodeDigest": "2aeabb91747aef2fd4bd8209f70fff789996d7218e9087179f8234ed920601e5",
+      "metrics": {
+        "generatedBytes": 7040,
+        "observedBytes": 21884,
+        "transportBytes": 15478,
+        "actions": 4,
+        "generatedTokens": 2272,
+        "observedTokens": 8338,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "weighted-index-sum-repeated",
+      "family": "semantic-benchmark-v1:weighted-index-sum",
+      "status": "admitted",
+      "path": "weighted-index-sum-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "test",
+      "episodeDigest": "5ec85653c01f07e7eefbb24ff96533fca4eac29aceca9b7aa17786aecd8cb0a4",
+      "metrics": {
+        "generatedBytes": 11036,
+        "observedBytes": 13196,
+        "transportBytes": 24409,
+        "actions": 4,
+        "generatedTokens": 3610,
+        "observedTokens": 5001,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "subarray-target-count-pure",
+      "family": "semantic-benchmark-v1:subarray-target-count",
+      "status": "admitted",
+      "path": "subarray-target-count-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "a54e8e66b9e3d127e93ee826311e2698e2b4d5edaa9af142f25cb08fc8432af7",
+      "metrics": {
+        "generatedBytes": 13549,
+        "observedBytes": 8615,
+        "transportBytes": 29746,
+        "actions": 0,
+        "generatedTokens": 4446,
+        "observedTokens": 3701,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "subarray-target-count-callbacks-recovery",
+      "family": "semantic-benchmark-v1:subarray-target-count",
+      "status": "admitted",
+      "path": "subarray-target-count-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "f73c95a140fad812607744ad3efb074212cf1968bfcc63594cb5dbcc79be364c",
+      "metrics": {
+        "generatedBytes": 16193,
+        "observedBytes": 30962,
+        "transportBytes": 36729,
+        "actions": 4,
+        "generatedTokens": 5304,
+        "observedTokens": 12149,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "subarray-target-count-repeated",
+      "family": "semantic-benchmark-v1:subarray-target-count",
+      "status": "admitted",
+      "path": "subarray-target-count-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "00a757b13d1701ad25cf701d2a603dbaf86058f5a1e48de5f4ec05f3f3dc35e0",
+      "metrics": {
+        "generatedBytes": 24687,
+        "observedBytes": 25708,
+        "transportBytes": 57300,
+        "actions": 4,
+        "generatedTokens": 8133,
+        "observedTokens": 10169,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "least-common-multiple-child",
+      "family": "semantic-benchmark-v1:least-common-multiple",
+      "status": "admitted",
+      "path": "least-common-multiple-child.json",
+      "role": "lifecycle-child",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "4d6a93df791991ca16eed4ee630f8dbd73b36883ce12b4796d72903ab50613a6",
+      "metrics": {
+        "generatedBytes": 3622,
+        "observedBytes": 8828,
+        "transportBytes": 9383,
+        "actions": 2,
+        "generatedTokens": 1198,
+        "observedTokens": 3380,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "euclidean-gcd-child",
+      "family": "semantic-benchmark-v1:euclidean-gcd",
+      "status": "admitted",
+      "path": "euclidean-gcd-child.json",
+      "role": "lifecycle-child",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "242e4515789e0c32272a64fbf4630183e55d4e474f363ab9c47b30d1a9ab7c9f",
+      "metrics": {
+        "generatedBytes": 3120,
+        "observedBytes": 8346,
+        "transportBytes": 8636,
+        "actions": 2,
+        "generatedTokens": 1033,
+        "observedTokens": 3197,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    }
+  ],
+  "counterfactuals": [],
+  "selectionOrigin": "certified_teacher",
+  "evidenceKind": "deterministic-engineering",
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}

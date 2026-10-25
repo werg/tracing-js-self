@@ -1,0 +1,155 @@
+{
+  "schema": "semantic-followup-validation/1",
+  "implementationRevisions": {
+    "tracing-js-self": "8a1ef48a0399f9440208d293e5625d42b1051294",
+    "megatoken": "50ed039f8dbd4f8016d0e081fa5f9495e89f17df",
+    "natlang": "f02ed2ed651f35f6fc91037644ea752a3374ad20"
+  },
+  "checks": [
+    {
+      "name": "tracer-unit",
+      "status": "passed",
+      "passed": 815,
+      "skipped": 6,
+      "command": "npm test",
+      "scope": "Completed source implementation regression; additional diagnostics and benchmark checks cover final edits.",
+      "log": "logs/tracer-unit.log",
+      "logSha256": "3e247597aa3a5e3580b4bfd589126af3e30ee2235df8f4a4658708536fbcabf6"
+    },
+    {
+      "name": "tracer-chromium",
+      "status": "passed",
+      "passed": 1,
+      "skipped": 0,
+      "command": "npm run test:browser",
+      "scope": "Actual local Chromium.",
+      "log": "logs/tracer-chromium.log",
+      "logSha256": "71896d7c2115224ea1f1b32e2606e4ccbf141e034aa59eae6869df378060fb99"
+    },
+    {
+      "name": "tracer-diagnostics",
+      "status": "passed",
+      "passed": 3,
+      "skipped": 0,
+      "command": "node --test test/semantic-diagnostics.test.js test/semantic-session-campaign.test.js",
+      "scope": "Final diagnostics and session campaign regressions.",
+      "log": "logs/tracer-diagnostics.log",
+      "logSha256": "2be049e14adcdad900383f1e6d301f232b65b90a0ee0808726a5cc751a7a6825"
+    },
+    {
+      "name": "megatoken-cpu",
+      "status": "passed",
+      "passed": 2837,
+      "skipped": 28,
+      "command": "python -m pytest -q",
+      "scope": "Complete local development CPU suite; final graph-conversion delta is verified separately. Hardware and optional-integration skips are retained in the log.",
+      "log": "logs/megatoken-cpu.log",
+      "logSha256": "61072d73fc04365bf8a04b6b7b493b65f27b076b4867d72454fb4f3fffcb599d"
+    },
+    {
+      "name": "megatoken-focused",
+      "status": "passed",
+      "passed": 67,
+      "skipped": 0,
+      "command": "python -m pytest -q tests/test_semantic_launch.py tests/test_semantic_profile.py tests/test_semantic_analysis.py tests/test_semantic_recipe_preparation.py tests/test_semantic_model_adapter.py tests/test_semantic_runtime_integration.py tests/test_semantic_orchestration.py tests/test_semantic_data_pipeline.py tests/test_assets.py",
+      "scope": "Final first implementation integration set; later per-family and graph conversion checks are separate.",
+      "log": "logs/megatoken-focused.log",
+      "logSha256": "7a6e850a5c54be7d8eb9d9beecb14ea2dee4f892600ad99cbd5141c8ab75f546"
+    },
+    {
+      "name": "megatoken-array-conversion",
+      "status": "passed",
+      "passed": 28,
+      "skipped": 0,
+      "command": "MEGATOKEN_TOKENIZER_JSON=.validation/tokenizer.json python -m pytest -q tests/test_semantic_data_pipeline.py tests/test_semantic_analysis.py tests/test_semantic_recipe_preparation.py",
+      "scope": "Final consumer graph-conversion revision with actual production tokenizer.",
+      "log": "logs/megatoken-array-conversion.log",
+      "logSha256": "7ecac1af9fe7eed75e1b73ed8868b59b6914f93519447859a715d97d99eebe3a"
+    },
+    {
+      "name": "natlang-workflow",
+      "status": "passed",
+      "passed": 5,
+      "skipped": 0,
+      "command": "node --test ts-host/test/workflow-selected-pilot.test.mjs",
+      "scope": "Final application report and rejection paths.",
+      "log": "logs/natlang-workflow.log",
+      "logSha256": "59ebf8a24bbad34d0aa782068d4a73bbac7af1aa490910c6bbd5546aa79d8891"
+    },
+    {
+      "name": "natlang-selected-runtime",
+      "status": "passed",
+      "passed": 6,
+      "skipped": 0,
+      "command": "node --test test/owned-tracing-wiring.test.mjs test/selected-semantic-module.test.mjs test/selected-semantic-real-driver.test.mjs test/selected-captures.test.mjs test/selected-events.test.mjs test/workflow-selected-pilot.test.mjs",
+      "scope": "Six passing test files; direct per-file execution confirmed 37 passing cases. See natlang-selected-runtime-tests.json.",
+      "log": "logs/natlang-selected-runtime.log",
+      "logSha256": "716c70bebeda4e8f2cc6ff7ab97ebc93960be53b001854c799f629342a9e3dbf",
+      "caseReport": "natlang-selected-runtime-tests.json",
+      "testCases": 37
+    },
+    {
+      "name": "natlang-history-portable",
+      "status": "passed",
+      "passed": 1,
+      "skipped": 9,
+      "command": "python -m pytest -q tests/test_teacher_helper_continuation.py tests/test_teacher_helper_history_preflight.py",
+      "scope": "The exact external-asset gate remains blocked; portable skips do not qualify history.",
+      "log": "logs/natlang-history-portable.log",
+      "logSha256": "de4db206acc07108d4dd49eabd3f0be2b04f5e30269809d897ce72fa0f86aa31"
+    },
+    {
+      "name": "natlang-quick-check",
+      "status": "passed",
+      "scope": "Final TypeScript/Python quick check",
+      "log": "logs/natlang-quick-check.log",
+      "logSha256": "d04fa63c9cfbb2c75b6aa7a19a732fc23d4ed22b3041dd4cf8437061944bac69"
+    },
+    {
+      "name": "natlang-chromium-interpreter",
+      "status": "passed",
+      "scope": "Actual local Chromium, no browser simulation",
+      "log": "logs/natlang-chromium-interpreter.log",
+      "logSha256": "c55f665835747ac1f4fbf3dde33ede273e398a81adf949f5fdcbcc278d286d15"
+    },
+    {
+      "name": "natlang-chromium-board",
+      "status": "passed",
+      "scope": "Actual local Chromium, no browser simulation",
+      "log": "logs/natlang-chromium-board.log",
+      "logSha256": "96beeb874dc12cac5596d8137055ac19169f808786926b3f76fc007c6b14dd2a"
+    },
+    {
+      "name": "natlang-chromium-playground",
+      "status": "passed",
+      "scope": "Actual local Chromium, no browser simulation",
+      "log": "logs/natlang-chromium-playground.log",
+      "logSha256": "62dcf7b263ebec9487de8d8749d74ab9898cdb3a07d87d73fcd7734df80c100c"
+    },
+    {
+      "name": "tracer-array-evaluator",
+      "status": "passed",
+      "passed": 15,
+      "skipped": 6,
+      "command": "node --test test/training-benchmark-recipe.test.js test/benchmark-cohort-metadata.test.js test/training-orchestration-evaluation.test.js",
+      "scope": "Final evaluator graph normalization, ordinary/compact/outcome parity, child-task state comparison and retention of evidence for unobservable completed values. Six native-runtime tests require separately configured served artifacts; see CI/native evidence.",
+      "log": "logs/tracer-array-evaluator.log",
+      "logSha256": "fddf738c2c47a05005375c72be5128e087d589f282ca1598b468316ed152b350"
+    },
+    {
+      "name": "tracer-final-implementation",
+      "status": "passed",
+      "passed": 817,
+      "skipped": 6,
+      "total": 823,
+      "command": "npm test",
+      "revision": "8a1ef48a0399f9440208d293e5625d42b1051294",
+      "scope": "Complete local suite at the final published evaluator implementation, plus the reference fixture. Six native-runtime tests are environment-gated and are reported separately in CI/native evidence.",
+      "log": "logs/tracer-final-implementation.log",
+      "logSha256": "f522a05eb8cdebed71fd72dcaf5d51f454f90a618761e8312cda3654f3bde119"
+    }
+  ],
+  "productionTrainingStarted": false,
+  "learnedSuccess": null,
+  "scope": "Local engineering validation. Development full-suite results and final focused results are labeled separately; raw model reports retain the revisions at which they were actually produced."
+}

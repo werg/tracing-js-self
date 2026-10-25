@@ -1,0 +1,174 @@
+{
+  "schema": "semantic-evaluation-report/4",
+  "cohortDigest": "8b7853063839105c8d62c7be6ef4c1e27033730d4e44f8714d43c0203e18f120",
+  "cohort": "common-support",
+  "evaluationSplits": [
+    "test"
+  ],
+  "historicalBaseline": {
+    "sourceRunbook": "https://github.com/werg/tracing-js-self/blob/e31ae33d3ce4a7258d64393c7982445d40c0b297/docs/SEMANTIC_V3_MODEL_EXPERIMENTS.md",
+    "conditions": [
+      "historical-v2",
+      "v3-fine",
+      "v3-fused",
+      "v3-expr-2",
+      "v3-expr-4",
+      "v3-expr-8",
+      "v3-collections",
+      "v3-outcome-only"
+    ],
+    "seeds": [
+      17,
+      29,
+      43
+    ]
+  },
+  "historicalBaselinePending": true,
+  "seed": 17,
+  "origin": "controlled",
+  "representation": "outcome-only",
+  "checkpointIdentity": null,
+  "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+  "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+  "thresholds": {
+    "wholeTaskSuccess": 0.9,
+    "traceValid": 1
+  },
+  "summary": {
+    "tasks": 3,
+    "wholeTaskSuccess": 0.3333333333333333,
+    "traceValid": 0.3333333333333333,
+    "correctTasks": 1,
+    "generatedTokens": 244,
+    "canonicalGeneratedTokens": 244,
+    "observedTokens": 3800,
+    "computeSeconds": 0.028706126,
+    "hardGates": {
+      "futureObservationLeaks": 0,
+      "unauthorizedEffects": 0,
+      "untrackedNativeFallback": 0,
+      "falseAdmissions": 0,
+      "replayNativeEffects": 0
+    },
+    "failureCounts": {
+      "WitnessV4Error: Invalid semantic-trace/4: Graph property fields": 2
+    },
+    "generatedTokensPerCorrectTask": 244.0,
+    "computeSecondsPerCorrectTask": 0.028706126
+  },
+  "cases": [
+    {
+      "caseId": "trailing-zero-count-pure",
+      "family": "semantic-benchmark-v1:trailing-zero-count",
+      "wholeTaskSuccess": true,
+      "traceValid": true,
+      "firstSemanticInconsistency": null,
+      "matches": {
+        "completion": true,
+        "state": true,
+        "effects": true,
+        "callbacks": true,
+        "cleanup": true
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "generatedTokens": 48,
+      "canonicalGeneratedTokens": 48,
+      "generatedTokenBasis": "canonical-native-records",
+      "observedTokens": 1181,
+      "physicalRecords": null,
+      "latencySeconds": 0.08557360000122571,
+      "costs": {
+        "computeSeconds": 0.008594804000000003,
+        "peakMemoryBytes": 337068032,
+        "dispatches": 0,
+        "queueDepth": 0,
+        "leakedResources": 0
+      },
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "nativeRuntimeMetrics": null,
+      "failure": null,
+      "failureEvidence": null,
+      "evidenceDigest": "4e191b9f63040327e365a8cb3acd7ded7463e122a49e1ffde89193bf61715b53"
+    },
+    {
+      "caseId": "is-nondecreasing-pure",
+      "family": "semantic-benchmark-v1:is-nondecreasing",
+      "wholeTaskSuccess": false,
+      "traceValid": false,
+      "generatedTokens": 101,
+      "canonicalGeneratedTokens": 101,
+      "generatedTokenBasis": "canonical-native-records",
+      "observedTokens": 1336,
+      "physicalRecords": null,
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "costs": {
+        "computeSeconds": 0.010376731,
+        "peakMemoryBytes": 337068032,
+        "dispatches": 0,
+        "queueDepth": 0,
+        "leakedResources": 0
+      },
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "nativeRuntimeMetrics": null,
+      "failureEvidence": null,
+      "latencySeconds": 0.07915792199491989,
+      "failure": "WitnessV4Error: Invalid semantic-trace/4: Graph property fields",
+      "evidenceDigest": "6ba6047277c6aaaf698e16bf1b1beb1ad5f164d709db5355f5dbed855cbc1181"
+    },
+    {
+      "caseId": "weighted-index-sum-pure",
+      "family": "semantic-benchmark-v1:weighted-index-sum",
+      "wholeTaskSuccess": false,
+      "traceValid": false,
+      "generatedTokens": 95,
+      "canonicalGeneratedTokens": 95,
+      "generatedTokenBasis": "canonical-native-records",
+      "observedTokens": 1283,
+      "physicalRecords": null,
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "costs": {
+        "computeSeconds": 0.009734590999999994,
+        "peakMemoryBytes": 337068032,
+        "dispatches": 0,
+        "queueDepth": 0,
+        "leakedResources": 0
+      },
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "nativeRuntimeMetrics": null,
+      "failureEvidence": null,
+      "latencySeconds": 0.07544098999642301,
+      "failure": "WitnessV4Error: Invalid semantic-trace/4: Graph property fields",
+      "evidenceDigest": "5b1a1a3b47ce82fb71a7341299100d5e217ace1a7881cf246400b8b8b60515b6"
+    }
+  ],
+  "learnedSuccess": null,
+  "acceptance": false,
+  "optimizerStepsDuringEvaluation": 0
+}

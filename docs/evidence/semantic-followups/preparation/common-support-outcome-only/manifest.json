@@ -1,0 +1,1008 @@
+{
+  "behavior_coverage": {
+    "episodes": {
+      "test|semantic_execution|public_context_window": 3,
+      "test|semantic_execution|semantic_outcome_control": 3,
+      "train|semantic_execution|public_context_window": 32,
+      "train|semantic_execution|semantic_outcome_control": 32,
+      "validation|semantic_execution|public_context_window": 7,
+      "validation|semantic_execution|semantic_outcome_control": 7
+    },
+    "original_families": {
+      "test|semantic_execution|public_context_window": 3,
+      "test|semantic_execution|semantic_outcome_control": 3,
+      "train|semantic_execution|public_context_window": 32,
+      "train|semantic_execution|semantic_outcome_control": 32,
+      "validation|semantic_execution|public_context_window": 7,
+      "validation|semantic_execution|semantic_outcome_control": 7
+    },
+    "original_family_ids": {
+      "test|semantic_execution|public_context_window": [
+        "semantic-benchmark-v1:is-nondecreasing",
+        "semantic-benchmark-v1:trailing-zero-count",
+        "semantic-benchmark-v1:weighted-index-sum"
+      ],
+      "test|semantic_execution|semantic_outcome_control": [
+        "semantic-benchmark-v1:is-nondecreasing",
+        "semantic-benchmark-v1:trailing-zero-count",
+        "semantic-benchmark-v1:weighted-index-sum"
+      ],
+      "train|semantic_execution|public_context_window": [
+        "semantic-benchmark-v1:alternating-array-sum",
+        "semantic-benchmark-v1:array-argmax",
+        "semantic-benchmark-v1:array-dot-product",
+        "semantic-benchmark-v1:array-mean-scaled",
+        "semantic-benchmark-v1:array-minimum",
+        "semantic-benchmark-v1:array-palindrome",
+        "semantic-benchmark-v1:array-rotate-left-checksum",
+        "semantic-benchmark-v1:array-unique-adjacent-count",
+        "semantic-benchmark-v1:binary-search-index",
+        "semantic-benchmark-v1:count-equal-pairs",
+        "semantic-benchmark-v1:count-in-range",
+        "semantic-benchmark-v1:count-negative",
+        "semantic-benchmark-v1:count-positive",
+        "semantic-benchmark-v1:factorial-iterative",
+        "semantic-benchmark-v1:fibonacci-iterative",
+        "semantic-benchmark-v1:first-match-index",
+        "semantic-benchmark-v1:gray-code",
+        "semantic-benchmark-v1:hamming-distance",
+        "semantic-benchmark-v1:integer-square-root",
+        "semantic-benchmark-v1:inversion-count",
+        "semantic-benchmark-v1:kadane-maximum-subarray",
+        "semantic-benchmark-v1:last-match-index",
+        "semantic-benchmark-v1:least-common-multiple",
+        "semantic-benchmark-v1:modular-exponentiation",
+        "semantic-benchmark-v1:population-count",
+        "semantic-benchmark-v1:prime-count-to-bound",
+        "semantic-benchmark-v1:repeated-subtraction-division",
+        "semantic-benchmark-v1:reverse-digits",
+        "semantic-benchmark-v1:running-prefix-checksum",
+        "semantic-benchmark-v1:second-largest-distinct",
+        "semantic-benchmark-v1:single-transaction-profit",
+        "semantic-benchmark-v1:sum-digits"
+      ],
+      "train|semantic_execution|semantic_outcome_control": [
+        "semantic-benchmark-v1:alternating-array-sum",
+        "semantic-benchmark-v1:array-argmax",
+        "semantic-benchmark-v1:array-dot-product",
+        "semantic-benchmark-v1:array-mean-scaled",
+        "semantic-benchmark-v1:array-minimum",
+        "semantic-benchmark-v1:array-palindrome",
+        "semantic-benchmark-v1:array-rotate-left-checksum",
+        "semantic-benchmark-v1:array-unique-adjacent-count",
+        "semantic-benchmark-v1:binary-search-index",
+        "semantic-benchmark-v1:count-equal-pairs",
+        "semantic-benchmark-v1:count-in-range",
+        "semantic-benchmark-v1:count-negative",
+        "semantic-benchmark-v1:count-positive",
+        "semantic-benchmark-v1:factorial-iterative",
+        "semantic-benchmark-v1:fibonacci-iterative",
+        "semantic-benchmark-v1:first-match-index",
+        "semantic-benchmark-v1:gray-code",
+        "semantic-benchmark-v1:hamming-distance",
+        "semantic-benchmark-v1:integer-square-root",
+        "semantic-benchmark-v1:inversion-count",
+        "semantic-benchmark-v1:kadane-maximum-subarray",
+        "semantic-benchmark-v1:last-match-index",
+        "semantic-benchmark-v1:least-common-multiple",
+        "semantic-benchmark-v1:modular-exponentiation",
+        "semantic-benchmark-v1:population-count",
+        "semantic-benchmark-v1:prime-count-to-bound",
+        "semantic-benchmark-v1:repeated-subtraction-division",
+        "semantic-benchmark-v1:reverse-digits",
+        "semantic-benchmark-v1:running-prefix-checksum",
+        "semantic-benchmark-v1:second-largest-distinct",
+        "semantic-benchmark-v1:single-transaction-profit",
+        "semantic-benchmark-v1:sum-digits"
+      ],
+      "validation|semantic_execution|public_context_window": [
+        "semantic-benchmark-v1:array-maximum",
+        "semantic-benchmark-v1:array-sum",
+        "semantic-benchmark-v1:count-digits",
+        "semantic-benchmark-v1:euclidean-gcd",
+        "semantic-benchmark-v1:longest-equal-run",
+        "semantic-benchmark-v1:power-squaring",
+        "semantic-benchmark-v1:subarray-target-count"
+      ],
+      "validation|semantic_execution|semantic_outcome_control": [
+        "semantic-benchmark-v1:array-maximum",
+        "semantic-benchmark-v1:array-sum",
+        "semantic-benchmark-v1:count-digits",
+        "semantic-benchmark-v1:euclidean-gcd",
+        "semantic-benchmark-v1:longest-equal-run",
+        "semantic-benchmark-v1:power-squaring",
+        "semantic-benchmark-v1:subarray-target-count"
+      ]
+    },
+    "version": 2
+  },
+  "census": {
+    "U": 64259,
+    "U_definition": "Raw-codec tokens in accepted deduplicated complete transcripts, including shared context.",
+    "accepted_episodes": 42,
+    "duplicates": 0,
+    "executed_transcript_U": 0,
+    "filtered_rows": 0,
+    "free_position_candidates": 4226,
+    "free_position_candidates_definition": "The static masked target inventory: positions that could carry loss.",
+    "incomplete_transcript_U": 0,
+    "independent_families": 42,
+    "parser_review_rows": 0,
+    "quarantined": 0,
+    "rejected_rows": 0,
+    "simulated_transcript_U": 0,
+    "strata": [
+      {
+        "U": 1180,
+        "eligible_assistant_tokens": 48,
+        "episodes": 1,
+        "executed_observation_tokens": 1132,
+        "families": 1,
+        "free_position_candidates": 48,
+        "source_id": "semantic-harness:095b331755613803",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1544,
+        "eligible_assistant_tokens": 50,
+        "episodes": 1,
+        "executed_observation_tokens": 1494,
+        "families": 1,
+        "free_position_candidates": 50,
+        "source_id": "semantic-harness:0a3d74424c6ae4cb",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1820,
+        "eligible_assistant_tokens": 114,
+        "episodes": 1,
+        "executed_observation_tokens": 1706,
+        "families": 1,
+        "free_position_candidates": 114,
+        "source_id": "semantic-harness:0c1bea5b234e1b4b",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1893,
+        "eligible_assistant_tokens": 141,
+        "episodes": 1,
+        "executed_observation_tokens": 1752,
+        "families": 1,
+        "free_position_candidates": 141,
+        "source_id": "semantic-harness:0ce4d62c22b1dffa",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1397,
+        "eligible_assistant_tokens": 125,
+        "episodes": 1,
+        "executed_observation_tokens": 1272,
+        "families": 1,
+        "free_position_candidates": 125,
+        "source_id": "semantic-harness:1282522e96f7eb9d",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 2091,
+        "eligible_assistant_tokens": 138,
+        "episodes": 1,
+        "executed_observation_tokens": 1953,
+        "families": 1,
+        "free_position_candidates": 138,
+        "source_id": "semantic-harness:1d916bb573652f31",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1969,
+        "eligible_assistant_tokens": 125,
+        "episodes": 1,
+        "executed_observation_tokens": 1844,
+        "families": 1,
+        "free_position_candidates": 125,
+        "source_id": "semantic-harness:25616b1f89521d52",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1517,
+        "eligible_assistant_tokens": 125,
+        "episodes": 1,
+        "executed_observation_tokens": 1392,
+        "families": 1,
+        "free_position_candidates": 125,
+        "source_id": "semantic-harness:25ea00d9770bb949",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1524,
+        "eligible_assistant_tokens": 180,
+        "episodes": 1,
+        "executed_observation_tokens": 1344,
+        "families": 1,
+        "free_position_candidates": 180,
+        "source_id": "semantic-harness:26eb9f9b69f5d126",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1327,
+        "eligible_assistant_tokens": 53,
+        "episodes": 1,
+        "executed_observation_tokens": 1274,
+        "families": 1,
+        "free_position_candidates": 53,
+        "source_id": "semantic-harness:2727e6af837a4e86",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1701,
+        "eligible_assistant_tokens": 138,
+        "episodes": 1,
+        "executed_observation_tokens": 1563,
+        "families": 1,
+        "free_position_candidates": 138,
+        "source_id": "semantic-harness:27550f8baaaf4da5",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1280,
+        "eligible_assistant_tokens": 51,
+        "episodes": 1,
+        "executed_observation_tokens": 1229,
+        "families": 1,
+        "free_position_candidates": 51,
+        "source_id": "semantic-harness:2bb21e0aae4b12dd",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1276,
+        "eligible_assistant_tokens": 48,
+        "episodes": 1,
+        "executed_observation_tokens": 1228,
+        "families": 1,
+        "free_position_candidates": 48,
+        "source_id": "semantic-harness:36e93ebc1090dc10",
+        "split": "test",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1701,
+        "eligible_assistant_tokens": 127,
+        "episodes": 1,
+        "executed_observation_tokens": 1574,
+        "families": 1,
+        "free_position_candidates": 127,
+        "source_id": "semantic-harness:4a29561c7e464907",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1338,
+        "eligible_assistant_tokens": 49,
+        "episodes": 1,
+        "executed_observation_tokens": 1289,
+        "families": 1,
+        "free_position_candidates": 49,
+        "source_id": "semantic-harness:52685eaef25c221d",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1127,
+        "eligible_assistant_tokens": 51,
+        "episodes": 1,
+        "executed_observation_tokens": 1076,
+        "families": 1,
+        "free_position_candidates": 51,
+        "source_id": "semantic-harness:5a17f9a956ad9220",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1431,
+        "eligible_assistant_tokens": 51,
+        "episodes": 1,
+        "executed_observation_tokens": 1380,
+        "families": 1,
+        "free_position_candidates": 51,
+        "source_id": "semantic-harness:6b34495e6ccf7c73",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1497,
+        "eligible_assistant_tokens": 114,
+        "episodes": 1,
+        "executed_observation_tokens": 1383,
+        "families": 1,
+        "free_position_candidates": 114,
+        "source_id": "semantic-harness:6ecd290d4e5ee10b",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 2018,
+        "eligible_assistant_tokens": 151,
+        "episodes": 1,
+        "executed_observation_tokens": 1867,
+        "families": 1,
+        "free_position_candidates": 151,
+        "source_id": "semantic-harness:74e53e9f30cc4116",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1530,
+        "eligible_assistant_tokens": 125,
+        "episodes": 1,
+        "executed_observation_tokens": 1405,
+        "families": 1,
+        "free_position_candidates": 125,
+        "source_id": "semantic-harness:75c63fb7a924b3c1",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1562,
+        "eligible_assistant_tokens": 114,
+        "episodes": 1,
+        "executed_observation_tokens": 1448,
+        "families": 1,
+        "free_position_candidates": 114,
+        "source_id": "semantic-harness:7e342cee738aeb25",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1444,
+        "eligible_assistant_tokens": 114,
+        "episodes": 1,
+        "executed_observation_tokens": 1330,
+        "families": 1,
+        "free_position_candidates": 114,
+        "source_id": "semantic-harness:8064866bc4ff9099",
+        "split": "test",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1477,
+        "eligible_assistant_tokens": 125,
+        "episodes": 1,
+        "executed_observation_tokens": 1352,
+        "families": 1,
+        "free_position_candidates": 125,
+        "source_id": "semantic-harness:80cbd779073886d6",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 770,
+        "eligible_assistant_tokens": 50,
+        "episodes": 1,
+        "executed_observation_tokens": 720,
+        "families": 1,
+        "free_position_candidates": 50,
+        "source_id": "semantic-harness:91833f4de848e3e6",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1375,
+        "eligible_assistant_tokens": 127,
+        "episodes": 1,
+        "executed_observation_tokens": 1248,
+        "families": 1,
+        "free_position_candidates": 127,
+        "source_id": "semantic-harness:9263d0caf8c6355c",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 2108,
+        "eligible_assistant_tokens": 125,
+        "episodes": 1,
+        "executed_observation_tokens": 1983,
+        "families": 1,
+        "free_position_candidates": 125,
+        "source_id": "semantic-harness:9a697cad069ef856",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1922,
+        "eligible_assistant_tokens": 125,
+        "episodes": 1,
+        "executed_observation_tokens": 1797,
+        "families": 1,
+        "free_position_candidates": 125,
+        "source_id": "semantic-harness:9c3c71d7c32193e9",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1687,
+        "eligible_assistant_tokens": 138,
+        "episodes": 1,
+        "executed_observation_tokens": 1549,
+        "families": 1,
+        "free_position_candidates": 138,
+        "source_id": "semantic-harness:af382bf08395f4b9",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1508,
+        "eligible_assistant_tokens": 125,
+        "episodes": 1,
+        "executed_observation_tokens": 1383,
+        "families": 1,
+        "free_position_candidates": 125,
+        "source_id": "semantic-harness:b15bff473ce30c82",
+        "split": "test",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1170,
+        "eligible_assistant_tokens": 50,
+        "episodes": 1,
+        "executed_observation_tokens": 1120,
+        "families": 1,
+        "free_position_candidates": 50,
+        "source_id": "semantic-harness:bdb793f565137ba4",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1800,
+        "eligible_assistant_tokens": 191,
+        "episodes": 1,
+        "executed_observation_tokens": 1609,
+        "families": 1,
+        "free_position_candidates": 191,
+        "source_id": "semantic-harness:ceb6a743ce5ec36c",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1234,
+        "eligible_assistant_tokens": 49,
+        "episodes": 1,
+        "executed_observation_tokens": 1185,
+        "families": 1,
+        "free_position_candidates": 49,
+        "source_id": "semantic-harness:cec31ecafebd9ac4",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1907,
+        "eligible_assistant_tokens": 47,
+        "episodes": 1,
+        "executed_observation_tokens": 1860,
+        "families": 1,
+        "free_position_candidates": 47,
+        "source_id": "semantic-harness:d2eef7e55f10c9a8",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1074,
+        "eligible_assistant_tokens": 50,
+        "episodes": 1,
+        "executed_observation_tokens": 1024,
+        "families": 1,
+        "free_position_candidates": 50,
+        "source_id": "semantic-harness:d4aa043e514b9418",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1919,
+        "eligible_assistant_tokens": 125,
+        "episodes": 1,
+        "executed_observation_tokens": 1794,
+        "families": 1,
+        "free_position_candidates": 125,
+        "source_id": "semantic-harness:db74acdcebdda6eb",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1474,
+        "eligible_assistant_tokens": 126,
+        "episodes": 1,
+        "executed_observation_tokens": 1348,
+        "families": 1,
+        "free_position_candidates": 126,
+        "source_id": "semantic-harness:e02f0e72a9e9f6fe",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1519,
+        "eligible_assistant_tokens": 127,
+        "episodes": 1,
+        "executed_observation_tokens": 1392,
+        "families": 1,
+        "free_position_candidates": 127,
+        "source_id": "semantic-harness:e9acab9c912e4126",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1099,
+        "eligible_assistant_tokens": 49,
+        "episodes": 1,
+        "executed_observation_tokens": 1050,
+        "families": 1,
+        "free_position_candidates": 49,
+        "source_id": "semantic-harness:eb7fdafe18fd1755",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 2106,
+        "eligible_assistant_tokens": 138,
+        "episodes": 1,
+        "executed_observation_tokens": 1968,
+        "families": 1,
+        "free_position_candidates": 138,
+        "source_id": "semantic-harness:f1f491c5f31e2511",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1275,
+        "eligible_assistant_tokens": 51,
+        "episodes": 1,
+        "executed_observation_tokens": 1224,
+        "families": 1,
+        "free_position_candidates": 51,
+        "source_id": "semantic-harness:f41f98d881430d5c",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1188,
+        "eligible_assistant_tokens": 49,
+        "episodes": 1,
+        "executed_observation_tokens": 1139,
+        "families": 1,
+        "free_position_candidates": 49,
+        "source_id": "semantic-harness:facef0043efa2f4f",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1480,
+        "eligible_assistant_tokens": 127,
+        "episodes": 1,
+        "executed_observation_tokens": 1353,
+        "families": 1,
+        "free_position_candidates": 127,
+        "source_id": "semantic-harness:fe147144368edfd7",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      }
+    ],
+    "verified_success_U": 64259
+  },
+  "chunking": {
+    "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "config": {
+      "chat_template": "auto",
+      "code_tree_scale": 1.5,
+      "hard_max_tokens": 1024,
+      "limits": {
+        "isolate_native": true,
+        "max_depth": 12,
+        "max_injections": 2048,
+        "max_nodes": 100000,
+        "max_parse_bytes": 1048576,
+        "max_parse_milliseconds": 0,
+        "max_regions": 20000,
+        "max_tree_depth": 128,
+        "worker_timeout_ms": 5000
+      },
+      "max_bytes": 16384,
+      "parser_backend": "tree_sitter",
+      "planner_max_edges": 64,
+      "soft_max_tokens": 768,
+      "target_tokens": 512,
+      "tree_distance_budget": 4.0,
+      "tree_distance_weight": 0.15,
+      "use_icu": false,
+      "version": "recursive-parser-v2"
+    },
+    "config_fingerprint": "a27349660d498c535e0a8af5bd6c6e126a69c67a1a4e0398193e1dc832933277",
+    "fingerprint": "7cebc47329c000282659ce2f7498e5528a636e79a0d6d6e62ef36c79588a1f87",
+    "parsers": {
+      "chat": {
+        "templates": {
+          "chatml": {
+            "aliases": [
+              "qwen"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 0,
+            "channel_markers": [],
+            "ends": [
+              "3c7c696d5f656e647c3e"
+            ],
+            "format_markers": [],
+            "mode": "delimited",
+            "name": "chatml",
+            "prefixes": [],
+            "separator": "0a",
+            "start": "3c7c696d5f73746172747c3e"
+          },
+          "deepseek": {
+            "aliases": [
+              "deepseek-v3",
+              "deepseek-r1"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 0,
+            "channel_markers": [],
+            "ends": [
+              "3cefbd9c656e64e296816f66e2968173656e74656e6365efbd9c3e"
+            ],
+            "format_markers": [],
+            "mode": "deepseek",
+            "name": "deepseek",
+            "prefixes": [
+              "3cefbd9c626567696ee296816f66e2968173656e74656e6365efbd9c3e"
+            ],
+            "separator": "3cefbd9c417373697374616e74efbd9c3e",
+            "start": "3cefbd9c55736572efbd9c3e"
+          },
+          "gemma": {
+            "aliases": [
+              "gemma2",
+              "gemma3"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 0,
+            "channel_markers": [],
+            "ends": [
+              "3c656e645f6f665f7475726e3e"
+            ],
+            "format_markers": [],
+            "mode": "delimited",
+            "name": "gemma",
+            "prefixes": [
+              "3c626f733e"
+            ],
+            "separator": "0a",
+            "start": "3c73746172745f6f665f7475726e3e"
+          },
+          "harmony": {
+            "aliases": [],
+            "allow_named_tools": true,
+            "body_newlines": 0,
+            "channel_markers": [
+              "3c7c6368616e6e656c7c3e"
+            ],
+            "ends": [
+              "3c7c656e647c3e",
+              "3c7c72657475726e7c3e",
+              "3c7c63616c6c7c3e"
+            ],
+            "format_markers": [
+              "3c7c636f6e73747261696e7c3e"
+            ],
+            "mode": "delimited",
+            "name": "harmony",
+            "prefixes": [],
+            "separator": "3c7c6d6573736167657c3e",
+            "start": "3c7c73746172747c3e"
+          },
+          "harmony_legacy": {
+            "aliases": [],
+            "allow_named_tools": true,
+            "body_newlines": 0,
+            "channel_markers": [
+              "3c7c6d6574615f7365707c3e"
+            ],
+            "ends": [
+              "3c7c696d5f656e647c3e",
+              "3c7c66696d5f7375666669787c3e",
+              "3c7c676869737375657c3e"
+            ],
+            "format_markers": [
+              "3c7c6d6574615f73746172747c3e"
+            ],
+            "mode": "delimited",
+            "name": "harmony_legacy",
+            "prefixes": [
+              "3c7c656e646f66746578747c3e"
+            ],
+            "separator": "3c7c696d5f7365707c3e",
+            "start": "3c7c696d5f73746172747c3e"
+          },
+          "inst": {
+            "aliases": [
+              "llama2",
+              "llama-2",
+              "mistral"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 0,
+            "channel_markers": [],
+            "ends": [
+              "3c2f733e"
+            ],
+            "format_markers": [],
+            "mode": "inst",
+            "name": "inst",
+            "prefixes": [
+              "3c733e"
+            ],
+            "separator": "5b2f494e53545d",
+            "start": "5b494e53545d"
+          },
+          "llama3": {
+            "aliases": [
+              "llama-3",
+              "llama3.1",
+              "llama3.2",
+              "llama3.3"
+            ],
+            "allow_named_tools": true,
+            "body_newlines": 2,
+            "channel_markers": [],
+            "ends": [
+              "3c7c656f745f69647c3e",
+              "3c7c656f6d5f69647c3e",
+              "3c7c656e645f6f665f746578747c3e"
+            ],
+            "format_markers": [],
+            "mode": "delimited",
+            "name": "llama3",
+            "prefixes": [
+              "3c7c626567696e5f6f665f746578747c3e"
+            ],
+            "separator": "3c7c656e645f6865616465725f69647c3e",
+            "start": "3c7c73746172745f6865616465725f69647c3e"
+          },
+          "phi3": {
+            "aliases": [
+              "phi-3",
+              "phi4"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 1,
+            "channel_markers": [],
+            "ends": [
+              "3c7c656e647c3e",
+              "3c7c656e646f66746578747c3e"
+            ],
+            "format_markers": [],
+            "mode": "delimited",
+            "name": "phi3",
+            "prefixes": [],
+            "separator": "7c3e",
+            "start": "3c7c"
+          }
+        },
+        "version": "chat-framing-v1"
+      },
+      "implementation": "37d0fe140981a40d4dffe07c77f0e3030e0e463e7af7c67b7c86fe29080a10c8",
+      "prose": {
+        "icu": null,
+        "rules": "unicode-prose-v1",
+        "unicode": "16.0.0",
+        "uniseg": "0.10.1"
+      },
+      "syntax": {
+        "backend": "tree_sitter",
+        "grammar_dependencies": {
+          "tree-sitter-c-sharp": "0.23.5",
+          "tree-sitter-embedded-template": "0.25.0",
+          "tree-sitter-yaml": "0.7.2"
+        },
+        "markdown_it_py": "4.0.0",
+        "network": "disabled",
+        "providers": [],
+        "registry": "offline-grammar-registry-v1",
+        "tree_sitter": "0.25.2",
+        "tree_sitter_language_pack": "0.13.0"
+      }
+    }
+  },
+  "chunking_stats": {
+    "boundaries": {
+      "end": 168,
+      "word": 41
+    },
+    "bytes": 172382,
+    "diagnostics": {},
+    "forced_splits": 0,
+    "histogram": {
+      "0": 0,
+      "1024": 10,
+      "128": 18,
+      "192": 8,
+      "256": 16,
+      "32": 0,
+      "384": 26,
+      "512": 31,
+      "64": 58,
+      "768": 42,
+      "96": 0,
+      ">1024": 0
+    },
+    "histogram_kind": "disjoint buckets, inclusive upper bounds",
+    "languages": {
+      "text": 209
+    },
+    "max_positions": 877,
+    "mean_positions": 307.4593301435407,
+    "over_soft_max": 10,
+    "positions": 64259,
+    "records": 209,
+    "reference_tokens": 64259,
+    "unversioned_records": 0
+  },
+  "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+  "complete": true,
+  "counts": {
+    "*": 42,
+    "split:test": 3,
+    "split:test|stream:semantic_execution": 3,
+    "split:train": 32,
+    "split:train|stream:semantic_execution": 32,
+    "split:validation": 7,
+    "split:validation|stream:semantic_execution": 7,
+    "stream:semantic_execution": 42
+  },
+  "dedup": {
+    "anchor_count": 8,
+    "evaluation_after": null,
+    "max_candidates": 4096,
+    "max_descendants_per_parent": 1024,
+    "min_near_words": 40,
+    "near_threshold": 0.94,
+    "shingle_words": 5,
+    "sketch_size": 256,
+    "split_seed": "semantic-family/4",
+    "train_fraction": 0.8,
+    "validation_fraction": 0.1
+  },
+  "feature_counts": {},
+  "feature_extractors": [],
+  "fingerprint": "4fcee3121ab1780c9e96de4a6d5dca0e88c78a7354f65403877255468e808b05",
+  "index": {
+    "path": "index.sqlite",
+    "sha256": "99e60d9345f9d20cc8095df5157dae7175fd17d444b2aed7a169a34a8107cda3"
+  },
+  "parser_review": {},
+  "pipeline_fingerprint": "b5c73fea22764f49a8eea7d57d35be114292e17d5bdc1e53600641dc3734133b",
+  "schema_version": 6,
+  "scored_media_counts": {},
+  "shards": [
+    {
+      "bytes": 864299,
+      "episodes": 42,
+      "path": "episodes-000000.jsonl",
+      "sha256": "a951542bc5a370663a1eeb1d6aacd34a46fd845cc544f4a9e9b556b161ae9aac"
+    }
+  ],
+  "sources": [
+    {
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "50ed039f8dbd4f8016d0e081fa5f9495e89f17df",
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "maxHistory": 1024,
+      "maxPositions": 1024,
+      "producerRevision": "1952ee3ae3bb24b8d2c9d975ca3ed7e86e18ab38",
+      "representation": "outcome-only",
+      "schema": "semantic-preparation/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "splitSeed": "semantic-family/4",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    }
+  ],
+  "structured_supply": {
+    "counts": {
+      "test|semantic_execution|episode_views": 3,
+      "test|semantic_execution|event_modality:text": 15,
+      "test|semantic_execution|group_clock:unknown": 15,
+      "test|semantic_execution|group_modalities:text": 15,
+      "test|semantic_execution|group_width:1": 15,
+      "test|semantic_execution|record_provenance:executed": 12,
+      "test|semantic_execution|record_provenance:teacher": 3,
+      "train|semantic_execution|episode_views": 32,
+      "train|semantic_execution|event_modality:text": 158,
+      "train|semantic_execution|group_clock:unknown": 158,
+      "train|semantic_execution|group_modalities:text": 158,
+      "train|semantic_execution|group_width:1": 158,
+      "train|semantic_execution|record_provenance:executed": 126,
+      "train|semantic_execution|record_provenance:teacher": 32,
+      "validation|semantic_execution|episode_views": 7,
+      "validation|semantic_execution|event_modality:text": 36,
+      "validation|semantic_execution|group_clock:unknown": 36,
+      "validation|semantic_execution|group_modalities:text": 36,
+      "validation|semantic_execution|group_width:1": 36,
+      "validation|semantic_execution|record_provenance:executed": 29,
+      "validation|semantic_execution|record_provenance:teacher": 7
+    },
+    "denominators": "group_* count committed groups; event_* and availability count events; record_* count physical records; language_pair and episode_views count episodes; original_families deduplicate each dimension",
+    "original_families": {
+      "test|semantic_execution|episode_views": 3,
+      "test|semantic_execution|event_modality:text": 3,
+      "test|semantic_execution|group_clock:unknown": 3,
+      "test|semantic_execution|group_modalities:text": 3,
+      "test|semantic_execution|group_width:1": 3,
+      "test|semantic_execution|record_provenance:executed": 3,
+      "test|semantic_execution|record_provenance:teacher": 3,
+      "train|semantic_execution|episode_views": 32,
+      "train|semantic_execution|event_modality:text": 32,
+      "train|semantic_execution|group_clock:unknown": 32,
+      "train|semantic_execution|group_modalities:text": 32,
+      "train|semantic_execution|group_width:1": 32,
+      "train|semantic_execution|record_provenance:executed": 32,
+      "train|semantic_execution|record_provenance:teacher": 32,
+      "validation|semantic_execution|episode_views": 7,
+      "validation|semantic_execution|event_modality:text": 7,
+      "validation|semantic_execution|group_clock:unknown": 7,
+      "validation|semantic_execution|group_modalities:text": 7,
+      "validation|semantic_execution|group_width:1": 7,
+      "validation|semantic_execution|record_provenance:executed": 7,
+      "validation|semantic_execution|record_provenance:teacher": 7
+    },
+    "version": 1
+  }
+}

@@ -1,0 +1,8 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> @natlang/typescript-host@0.1.0 test:browser
+> node scripts/browser-build-freshness.mjs --rebuild && node scripts/browser-pilot.mjs --application
+
+dist/browser is fresh
+PASS actual Chromium browser interpreter smoke
+PASS browser natlang application and DOM event smoke

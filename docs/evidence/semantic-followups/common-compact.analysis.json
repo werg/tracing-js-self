@@ -1,0 +1,491 @@
+{
+  "schema": "semantic-evaluation-analysis/1",
+  "input": {
+    "cohortDigest": "c291eaf01c1e0540f39741af7d07b80c99cff670a92d82f4f7fe0e6dc29bc7c9",
+    "evaluationReportSchema": "semantic-evaluation-report/4"
+  },
+  "evaluation": {
+    "cohort": "common-support",
+    "origin": "controlled",
+    "checkpointIdentity": null,
+    "seed": 17,
+    "representation": "compact",
+    "learnedSuccess": null
+  },
+  "sourceLengthBands": [
+    {
+      "name": "0-255",
+      "minBytes": 0,
+      "maxBytes": 255
+    },
+    {
+      "name": "256-1023",
+      "minBytes": 256,
+      "maxBytes": 1023
+    },
+    {
+      "name": "1024-4095",
+      "minBytes": 1024,
+      "maxBytes": 4095
+    },
+    {
+      "name": "4096+",
+      "minBytes": 4096,
+      "maxBytes": null
+    }
+  ],
+  "summary": {
+    "families": 3,
+    "cases": 3,
+    "successfulCases": 3,
+    "measuredSuccessCases": 3,
+    "successEvidenceCoverage": 1.0,
+    "caseSuccessRate": 1.0,
+    "successfulFamilies": 3,
+    "measuredFamilies": 3,
+    "familySuccessEvidenceCoverage": 1.0,
+    "familySuccessRate": 1.0,
+    "traceValidCases": 3,
+    "hardGates": {
+      "futureObservationLeaks": {
+        "total": 0,
+        "measuredCases": 3,
+        "missingCases": 0
+      },
+      "unauthorizedEffects": {
+        "total": 0,
+        "measuredCases": 3,
+        "missingCases": 0
+      },
+      "untrackedNativeFallback": {
+        "total": 0,
+        "measuredCases": 3,
+        "missingCases": 0
+      },
+      "falseAdmissions": {
+        "total": 0,
+        "measuredCases": 3,
+        "missingCases": 0
+      },
+      "replayNativeEffects": {
+        "total": 0,
+        "measuredCases": 3,
+        "missingCases": 0
+      }
+    },
+    "failureCounts": {},
+    "latencySeconds": {
+      "count": 3,
+      "p50": 0.2500014050019672,
+      "p95": 0.2749012650019722,
+      "min": 0.23412380399531685,
+      "max": 0.2749012650019722
+    }
+  },
+  "familySummaries": [
+    {
+      "family": "semantic-benchmark-v1:is-nondecreasing",
+      "caseCount": 1,
+      "successfulCases": 1,
+      "traceValidCases": 1,
+      "familySuccess": true,
+      "successMeasurementComplete": true,
+      "measuredSuccessCases": 1,
+      "familyTraceValid": true,
+      "taskSuccessRate": 1.0,
+      "traceValidRate": 1.0,
+      "behaviors": null,
+      "behaviorMetadataStatus": "unknown",
+      "failureCounts": {},
+      "hardGates": {
+        "futureObservationLeaks": {
+          "total": 0,
+          "measuredCases": 1,
+          "missingCases": 0
+        },
+        "unauthorizedEffects": {
+          "total": 0,
+          "measuredCases": 1,
+          "missingCases": 0
+        },
+        "untrackedNativeFallback": {
+          "total": 0,
+          "measuredCases": 1,
+          "missingCases": 0
+        },
+        "falseAdmissions": {
+          "total": 0,
+          "measuredCases": 1,
+          "missingCases": 0
+        },
+        "replayNativeEffects": {
+          "total": 0,
+          "measuredCases": 1,
+          "missingCases": 0
+        }
+      },
+      "firstSemanticInconsistency": [],
+      "failureEvidence": []
+    },
+    {
+      "family": "semantic-benchmark-v1:trailing-zero-count",
+      "caseCount": 1,
+      "successfulCases": 1,
+      "traceValidCases": 1,
+      "familySuccess": true,
+      "successMeasurementComplete": true,
+      "measuredSuccessCases": 1,
+      "familyTraceValid": true,
+      "taskSuccessRate": 1.0,
+      "traceValidRate": 1.0,
+      "behaviors": null,
+      "behaviorMetadataStatus": "unknown",
+      "failureCounts": {},
+      "hardGates": {
+        "futureObservationLeaks": {
+          "total": 0,
+          "measuredCases": 1,
+          "missingCases": 0
+        },
+        "unauthorizedEffects": {
+          "total": 0,
+          "measuredCases": 1,
+          "missingCases": 0
+        },
+        "untrackedNativeFallback": {
+          "total": 0,
+          "measuredCases": 1,
+          "missingCases": 0
+        },
+        "falseAdmissions": {
+          "total": 0,
+          "measuredCases": 1,
+          "missingCases": 0
+        },
+        "replayNativeEffects": {
+          "total": 0,
+          "measuredCases": 1,
+          "missingCases": 0
+        }
+      },
+      "firstSemanticInconsistency": [],
+      "failureEvidence": []
+    },
+    {
+      "family": "semantic-benchmark-v1:weighted-index-sum",
+      "caseCount": 1,
+      "successfulCases": 1,
+      "traceValidCases": 1,
+      "familySuccess": true,
+      "successMeasurementComplete": true,
+      "measuredSuccessCases": 1,
+      "familyTraceValid": true,
+      "taskSuccessRate": 1.0,
+      "traceValidRate": 1.0,
+      "behaviors": null,
+      "behaviorMetadataStatus": "unknown",
+      "failureCounts": {},
+      "hardGates": {
+        "futureObservationLeaks": {
+          "total": 0,
+          "measuredCases": 1,
+          "missingCases": 0
+        },
+        "unauthorizedEffects": {
+          "total": 0,
+          "measuredCases": 1,
+          "missingCases": 0
+        },
+        "untrackedNativeFallback": {
+          "total": 0,
+          "measuredCases": 1,
+          "missingCases": 0
+        },
+        "falseAdmissions": {
+          "total": 0,
+          "measuredCases": 1,
+          "missingCases": 0
+        },
+        "replayNativeEffects": {
+          "total": 0,
+          "measuredCases": 1,
+          "missingCases": 0
+        }
+      },
+      "firstSemanticInconsistency": [],
+      "failureEvidence": []
+    }
+  ],
+  "costBreakdownByScope": [
+    {
+      "scope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "caseCount": 3,
+      "latencySeconds": {
+        "count": 3,
+        "p50": 0.2500014050019672,
+        "p95": 0.2749012650019722,
+        "min": 0.23412380399531685,
+        "max": 0.2749012650019722
+      },
+      "costs": {
+        "computeSeconds": {
+          "count": 3,
+          "p50": 0.06174288500000002,
+          "p95": 0.089305604,
+          "min": 0.054852774,
+          "max": 0.089305604,
+          "missingCases": 0
+        },
+        "peakMemoryBytes": {
+          "count": 3,
+          "p50": 336433152.0,
+          "p95": 336433152.0,
+          "min": 336433152.0,
+          "max": 336433152.0,
+          "missingCases": 0
+        },
+        "dispatches": {
+          "count": 3,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "missingCases": 0
+        },
+        "queueDepth": {
+          "count": 3,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "missingCases": 0
+        },
+        "leakedResources": {
+          "count": 3,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "missingCases": 0
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "caseId": "trailing-zero-count-pure",
+      "family": "semantic-benchmark-v1:trailing-zero-count",
+      "wholeTaskSuccess": true,
+      "traceValid": true,
+      "firstSemanticInconsistency": null,
+      "matches": {
+        "completion": true,
+        "state": true,
+        "effects": true,
+        "callbacks": true,
+        "cleanup": true
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "generatedTokens": 1284,
+      "canonicalGeneratedTokens": 1284,
+      "generatedTokenBasis": "canonical-native-records",
+      "observedTokens": 1226,
+      "physicalRecords": 35,
+      "latencySeconds": 0.2500014050019672,
+      "costs": {
+        "computeSeconds": 0.06174288500000002,
+        "peakMemoryBytes": 336433152,
+        "dispatches": 0,
+        "queueDepth": 0,
+        "leakedResources": 0
+      },
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "nativeRuntimeMetrics": null,
+      "failure": null,
+      "failureEvidence": null,
+      "evidenceDigest": "a1f9b63b839bebf37eefc1d42a2bb96dadc571c4b6e2d60b01725da233516dee",
+      "reportedWholeTaskSuccess": true,
+      "successMeasurementComplete": true,
+      "outcomeMatchCoverage": [
+        "callbacks",
+        "cleanup",
+        "completion",
+        "effects",
+        "state"
+      ],
+      "hardGateCoverage": [
+        "falseAdmissions",
+        "futureObservationLeaks",
+        "replayNativeEffects",
+        "unauthorizedEffects",
+        "untrackedNativeFallback"
+      ],
+      "costCoverage": [
+        "computeSeconds",
+        "dispatches",
+        "leakedResources",
+        "peakMemoryBytes",
+        "queueDepth"
+      ],
+      "semanticConsistencyStatus": "provided",
+      "sourceLengthBytes": 108,
+      "sourceLengthBand": "0-255",
+      "behaviorMetadata": null,
+      "behaviorMetadataStatus": "unknown"
+    },
+    {
+      "caseId": "is-nondecreasing-pure",
+      "family": "semantic-benchmark-v1:is-nondecreasing",
+      "wholeTaskSuccess": true,
+      "traceValid": true,
+      "firstSemanticInconsistency": null,
+      "matches": {
+        "completion": true,
+        "state": true,
+        "effects": true,
+        "callbacks": true,
+        "cleanup": true
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "generatedTokens": 1135,
+      "canonicalGeneratedTokens": 1135,
+      "generatedTokenBasis": "canonical-native-records",
+      "observedTokens": 1942,
+      "physicalRecords": 41,
+      "latencySeconds": 0.2749012650019722,
+      "costs": {
+        "computeSeconds": 0.089305604,
+        "peakMemoryBytes": 336433152,
+        "dispatches": 0,
+        "queueDepth": 0,
+        "leakedResources": 0
+      },
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "nativeRuntimeMetrics": null,
+      "failure": null,
+      "failureEvidence": null,
+      "evidenceDigest": "81aef549789bde4d13a5260e69d8eb8a1f93c8d7f2777e8960736ff4264b2365",
+      "reportedWholeTaskSuccess": true,
+      "successMeasurementComplete": true,
+      "outcomeMatchCoverage": [
+        "callbacks",
+        "cleanup",
+        "completion",
+        "effects",
+        "state"
+      ],
+      "hardGateCoverage": [
+        "falseAdmissions",
+        "futureObservationLeaks",
+        "replayNativeEffects",
+        "unauthorizedEffects",
+        "untrackedNativeFallback"
+      ],
+      "costCoverage": [
+        "computeSeconds",
+        "dispatches",
+        "leakedResources",
+        "peakMemoryBytes",
+        "queueDepth"
+      ],
+      "semanticConsistencyStatus": "provided",
+      "sourceLengthBytes": 106,
+      "sourceLengthBand": "0-255",
+      "behaviorMetadata": null,
+      "behaviorMetadataStatus": "unknown"
+    },
+    {
+      "caseId": "weighted-index-sum-pure",
+      "family": "semantic-benchmark-v1:weighted-index-sum",
+      "wholeTaskSuccess": true,
+      "traceValid": true,
+      "firstSemanticInconsistency": null,
+      "matches": {
+        "completion": true,
+        "state": true,
+        "effects": true,
+        "callbacks": true,
+        "cleanup": true
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "generatedTokens": 1125,
+      "canonicalGeneratedTokens": 1125,
+      "generatedTokenBasis": "canonical-native-records",
+      "observedTokens": 1328,
+      "physicalRecords": 34,
+      "latencySeconds": 0.23412380399531685,
+      "costs": {
+        "computeSeconds": 0.054852774,
+        "peakMemoryBytes": 336433152,
+        "dispatches": 0,
+        "queueDepth": 0,
+        "leakedResources": 0
+      },
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "nativeRuntimeMetrics": null,
+      "failure": null,
+      "failureEvidence": null,
+      "evidenceDigest": "549ac343582c608075a096b70d861e1097692456130ab2e5afdf0df6965b4219",
+      "reportedWholeTaskSuccess": true,
+      "successMeasurementComplete": true,
+      "outcomeMatchCoverage": [
+        "callbacks",
+        "cleanup",
+        "completion",
+        "effects",
+        "state"
+      ],
+      "hardGateCoverage": [
+        "falseAdmissions",
+        "futureObservationLeaks",
+        "replayNativeEffects",
+        "unauthorizedEffects",
+        "untrackedNativeFallback"
+      ],
+      "costCoverage": [
+        "computeSeconds",
+        "dispatches",
+        "leakedResources",
+        "peakMemoryBytes",
+        "queueDepth"
+      ],
+      "semanticConsistencyStatus": "provided",
+      "sourceLengthBytes": 115,
+      "sourceLengthBand": "0-255",
+      "behaviorMetadata": null,
+      "behaviorMetadataStatus": "unknown"
+    }
+  ],
+  "statisticsNote": "Family-level success is primary. Case-level rates describe this frozen cohort only; repeated cases within a family are correlated and do not support population generalization.",
+  "analysisLabelsForInference": false
+}

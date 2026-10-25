@@ -1,0 +1,11 @@
+✔ diagnostic HTML is self-contained and escapes hostile source and identifiers (15.986753ms)
+✔ invalid partial traces remain visible and expected comparison reports first divergence (7.078933ms)
+✔ bounded campaign verifies repeated ingress, checkpoint safety, cancellation and reverse settlement (2091.39696ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2201.957574

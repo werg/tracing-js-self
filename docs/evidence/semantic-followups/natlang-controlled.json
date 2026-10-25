@@ -1,0 +1,4544 @@
+{
+  "schema": "natlang-workflow-selected-order/1",
+  "origin": "controlled",
+  "seed": 17,
+  "checkpointIdentity": null,
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "outcome": "applied",
+  "journeys": {
+    "ordinary-success": {
+      "outcome": "complete",
+      "state": {
+        "order_id": "ordinary-success",
+        "amount": 1250,
+        "revision": 7,
+        "phase": "shipped",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "ordinary-success:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "ordinary-success:charge",
+            "action": "charge",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "ordinary-success:ship",
+            "action": "ship",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    "rejected-operation": {
+      "outcome": "complete",
+      "state": {
+        "order_id": "rejected-operation",
+        "amount": 1250,
+        "revision": 6,
+        "phase": "released",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "rejected-operation:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "rejected-operation:charge",
+            "action": "charge",
+            "status": "failed",
+            "detail": "definite_failure"
+          },
+          {
+            "key": "rejected-operation:release",
+            "action": "release",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    "lost-ack": {
+      "outcome": "complete",
+      "state": {
+        "order_id": "lost-ack",
+        "amount": 1250,
+        "revision": 3,
+        "phase": "reserved",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "lost-ack:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    "pending-restart": {
+      "outcome": "complete",
+      "state": {
+        "order_id": "pending-restart",
+        "amount": 1250,
+        "revision": 3,
+        "phase": "new",
+        "pending": "pending-restart:reserve",
+        "checks": 1,
+        "obligations": [
+          "outcome unresolved: pending-restart:reserve"
+        ],
+        "history": [
+          {
+            "key": "pending-restart:reserve",
+            "action": "reserve",
+            "status": "intent",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    "cancel": {
+      "outcome": "complete",
+      "state": {
+        "order_id": "cancel",
+        "amount": 1250,
+        "revision": 4,
+        "phase": "released",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "cancel:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "cancel:release",
+            "action": "release",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    "refund-release": {
+      "outcome": "complete",
+      "state": {
+        "order_id": "refund-release",
+        "amount": 1250,
+        "revision": 8,
+        "phase": "released",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "refund-release:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "refund-release:charge",
+            "action": "charge",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "refund-release:refund",
+            "action": "refund",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "refund-release:release",
+            "action": "release",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    "repeated": {
+      "outcome": "complete",
+      "state": {
+        "order_id": "repeated",
+        "amount": 1250,
+        "revision": 8,
+        "phase": "shipped",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "repeated:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "repeated:charge",
+            "action": "charge",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "repeated:ship",
+            "action": "ship",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    }
+  },
+  "journal": [
+    {
+      "order": "ordinary-success",
+      "event": {
+        "kind": "continue"
+      },
+      "decision": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      },
+      "state": {
+        "order_id": "ordinary-success",
+        "amount": 1250,
+        "revision": 2,
+        "phase": "reserved",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "ordinary-success:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "ordinary-success",
+      "event": {
+        "kind": "continue"
+      },
+      "decision": {
+        "action": "charge",
+        "reason": "the stock is reserved, so the customer is charged"
+      },
+      "state": {
+        "order_id": "ordinary-success",
+        "amount": 1250,
+        "revision": 4,
+        "phase": "charged",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "ordinary-success:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "ordinary-success:charge",
+            "action": "charge",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "ordinary-success",
+      "event": {
+        "kind": "continue"
+      },
+      "decision": {
+        "action": "ship",
+        "reason": "the payment is done, so the order ships"
+      },
+      "state": {
+        "order_id": "ordinary-success",
+        "amount": 1250,
+        "revision": 6,
+        "phase": "shipped",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "ordinary-success:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "ordinary-success:charge",
+            "action": "charge",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "ordinary-success:ship",
+            "action": "ship",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "ordinary-success",
+      "event": {
+        "kind": "continue"
+      },
+      "decision": {
+        "action": "wait",
+        "reason": "the order is shipped"
+      },
+      "state": {
+        "order_id": "ordinary-success",
+        "amount": 1250,
+        "revision": 7,
+        "phase": "shipped",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "ordinary-success:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "ordinary-success:charge",
+            "action": "charge",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "ordinary-success:ship",
+            "action": "ship",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "rejected-operation",
+      "event": {
+        "kind": "continue"
+      },
+      "decision": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      },
+      "state": {
+        "order_id": "rejected-operation",
+        "amount": 1250,
+        "revision": 2,
+        "phase": "reserved",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "rejected-operation:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "rejected-operation",
+      "event": {
+        "kind": "continue",
+        "fault": "definite_failure"
+      },
+      "decision": {
+        "action": "charge",
+        "reason": "the stock is reserved, so the customer is charged"
+      },
+      "state": {
+        "order_id": "rejected-operation",
+        "amount": 1250,
+        "revision": 4,
+        "phase": "charge-failed",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "rejected-operation:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "rejected-operation:charge",
+            "action": "charge",
+            "status": "failed",
+            "detail": "definite_failure"
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "rejected-operation",
+      "event": {
+        "kind": "continue"
+      },
+      "decision": {
+        "action": "release",
+        "reason": "rejected-operation:charge failed for good: the reserved stock stands and the order is being undone"
+      },
+      "state": {
+        "order_id": "rejected-operation",
+        "amount": 1250,
+        "revision": 6,
+        "phase": "released",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "rejected-operation:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "rejected-operation:charge",
+            "action": "charge",
+            "status": "failed",
+            "detail": "definite_failure"
+          },
+          {
+            "key": "rejected-operation:release",
+            "action": "release",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "lost-ack",
+      "event": {
+        "kind": "continue",
+        "fault": "lost_ack"
+      },
+      "decision": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      },
+      "state": {
+        "order_id": "lost-ack",
+        "amount": 1250,
+        "revision": 2,
+        "phase": "new",
+        "pending": "lost-ack:reserve",
+        "checks": 0,
+        "obligations": [
+          "outcome unresolved: lost-ack:reserve"
+        ],
+        "history": [
+          {
+            "key": "lost-ack:reserve",
+            "action": "reserve",
+            "status": "intent",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "lost-ack",
+      "event": {
+        "kind": "reconcile"
+      },
+      "decision": {
+        "action": "reconcile",
+        "reason": "the remote has a receipt for lost-ack:reserve"
+      },
+      "state": {
+        "order_id": "lost-ack",
+        "amount": 1250,
+        "revision": 3,
+        "phase": "reserved",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "lost-ack:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "pending-restart",
+      "event": {
+        "kind": "continue",
+        "fault": "lost_request"
+      },
+      "decision": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      },
+      "state": {
+        "order_id": "pending-restart",
+        "amount": 1250,
+        "revision": 2,
+        "phase": "new",
+        "pending": "pending-restart:reserve",
+        "checks": 0,
+        "obligations": [
+          "outcome unresolved: pending-restart:reserve"
+        ],
+        "history": [
+          {
+            "key": "pending-restart:reserve",
+            "action": "reserve",
+            "status": "intent",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "pending-restart",
+      "event": {
+        "kind": "reconcile"
+      },
+      "decision": {
+        "action": "reconcile",
+        "reason": "no receipt for pending-restart:reserve yet; look again",
+        "waitMs": 30000
+      },
+      "state": {
+        "order_id": "pending-restart",
+        "amount": 1250,
+        "revision": 3,
+        "phase": "new",
+        "pending": "pending-restart:reserve",
+        "checks": 1,
+        "obligations": [
+          "outcome unresolved: pending-restart:reserve"
+        ],
+        "history": [
+          {
+            "key": "pending-restart:reserve",
+            "action": "reserve",
+            "status": "intent",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "cancel",
+      "event": {
+        "kind": "continue"
+      },
+      "decision": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      },
+      "state": {
+        "order_id": "cancel",
+        "amount": 1250,
+        "revision": 2,
+        "phase": "reserved",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "cancel:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "cancel",
+      "event": {
+        "kind": "cancel"
+      },
+      "decision": {
+        "action": "release",
+        "reason": "the order was cancelled: the reserved stock stands and the order is being undone"
+      },
+      "state": {
+        "order_id": "cancel",
+        "amount": 1250,
+        "revision": 4,
+        "phase": "released",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "cancel:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "cancel:release",
+            "action": "release",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "refund-release",
+      "event": {
+        "kind": "continue"
+      },
+      "decision": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      },
+      "state": {
+        "order_id": "refund-release",
+        "amount": 1250,
+        "revision": 2,
+        "phase": "reserved",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "refund-release:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "refund-release",
+      "event": {
+        "kind": "continue"
+      },
+      "decision": {
+        "action": "charge",
+        "reason": "the stock is reserved, so the customer is charged"
+      },
+      "state": {
+        "order_id": "refund-release",
+        "amount": 1250,
+        "revision": 4,
+        "phase": "charged",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "refund-release:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "refund-release:charge",
+            "action": "charge",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "refund-release",
+      "event": {
+        "kind": "cancel"
+      },
+      "decision": {
+        "action": "refund",
+        "reason": "the order was cancelled: the charge stands and the order is being undone"
+      },
+      "state": {
+        "order_id": "refund-release",
+        "amount": 1250,
+        "revision": 6,
+        "phase": "refunded",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "refund-release:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "refund-release:charge",
+            "action": "charge",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "refund-release:refund",
+            "action": "refund",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "refund-release",
+      "event": {
+        "kind": "cancel"
+      },
+      "decision": {
+        "action": "release",
+        "reason": "the order was cancelled: the reserved stock stands and the order is being undone"
+      },
+      "state": {
+        "order_id": "refund-release",
+        "amount": 1250,
+        "revision": 8,
+        "phase": "released",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "refund-release:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "refund-release:charge",
+            "action": "charge",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "refund-release:refund",
+            "action": "refund",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "refund-release:release",
+            "action": "release",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "repeated",
+      "event": {
+        "kind": "continue"
+      },
+      "decision": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      },
+      "state": {
+        "order_id": "repeated",
+        "amount": 1250,
+        "revision": 2,
+        "phase": "reserved",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "repeated:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "repeated",
+      "event": {
+        "kind": "continue"
+      },
+      "decision": {
+        "action": "charge",
+        "reason": "the stock is reserved, so the customer is charged"
+      },
+      "state": {
+        "order_id": "repeated",
+        "amount": 1250,
+        "revision": 4,
+        "phase": "charged",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "repeated:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "repeated:charge",
+            "action": "charge",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "repeated",
+      "event": {
+        "kind": "continue"
+      },
+      "decision": {
+        "action": "ship",
+        "reason": "the payment is done, so the order ships"
+      },
+      "state": {
+        "order_id": "repeated",
+        "amount": 1250,
+        "revision": 6,
+        "phase": "shipped",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "repeated:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "repeated:charge",
+            "action": "charge",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "repeated:ship",
+            "action": "ship",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "repeated",
+      "event": {
+        "kind": "continue"
+      },
+      "decision": {
+        "action": "wait",
+        "reason": "the order is shipped"
+      },
+      "state": {
+        "order_id": "repeated",
+        "amount": 1250,
+        "revision": 7,
+        "phase": "shipped",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "repeated:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "repeated:charge",
+            "action": "charge",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "repeated:ship",
+            "action": "ship",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    },
+    {
+      "order": "repeated",
+      "event": {
+        "kind": "continue"
+      },
+      "decision": {
+        "action": "wait",
+        "reason": "the order is shipped"
+      },
+      "state": {
+        "order_id": "repeated",
+        "amount": 1250,
+        "revision": 8,
+        "phase": "shipped",
+        "pending": "",
+        "checks": 0,
+        "obligations": [],
+        "history": [
+          {
+            "key": "repeated:reserve",
+            "action": "reserve",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "repeated:charge",
+            "action": "charge",
+            "status": "done",
+            "detail": ""
+          },
+          {
+            "key": "repeated:ship",
+            "action": "ship",
+            "status": "done",
+            "detail": ""
+          }
+        ],
+        "outbox": []
+      }
+    }
+  ],
+  "effects": [
+    {
+      "key": "ordinary-success:reserve",
+      "action": "reserve",
+      "order_id": "ordinary-success",
+      "amount": 1250,
+      "status": "done"
+    },
+    {
+      "key": "ordinary-success:charge",
+      "action": "charge",
+      "order_id": "ordinary-success",
+      "amount": 1250,
+      "status": "done"
+    },
+    {
+      "key": "ordinary-success:ship",
+      "action": "ship",
+      "order_id": "ordinary-success",
+      "amount": 1250,
+      "status": "done"
+    },
+    {
+      "key": "rejected-operation:reserve",
+      "action": "reserve",
+      "order_id": "rejected-operation",
+      "amount": 1250,
+      "status": "done"
+    },
+    {
+      "key": "rejected-operation:release",
+      "action": "release",
+      "order_id": "rejected-operation",
+      "amount": 1250,
+      "status": "done"
+    },
+    {
+      "key": "lost-ack:reserve",
+      "action": "reserve",
+      "order_id": "lost-ack",
+      "amount": 1250,
+      "status": "done"
+    },
+    {
+      "key": "cancel:reserve",
+      "action": "reserve",
+      "order_id": "cancel",
+      "amount": 1250,
+      "status": "done"
+    },
+    {
+      "key": "cancel:release",
+      "action": "release",
+      "order_id": "cancel",
+      "amount": 1250,
+      "status": "done"
+    },
+    {
+      "key": "refund-release:reserve",
+      "action": "reserve",
+      "order_id": "refund-release",
+      "amount": 1250,
+      "status": "done"
+    },
+    {
+      "key": "refund-release:charge",
+      "action": "charge",
+      "order_id": "refund-release",
+      "amount": 1250,
+      "status": "done"
+    },
+    {
+      "key": "refund-release:refund",
+      "action": "refund",
+      "order_id": "refund-release",
+      "amount": 1250,
+      "status": "done"
+    },
+    {
+      "key": "refund-release:release",
+      "action": "release",
+      "order_id": "refund-release",
+      "amount": 1250,
+      "status": "done"
+    },
+    {
+      "key": "repeated:reserve",
+      "action": "reserve",
+      "order_id": "repeated",
+      "amount": 1250,
+      "status": "done"
+    },
+    {
+      "key": "repeated:charge",
+      "action": "charge",
+      "order_id": "repeated",
+      "amount": 1250,
+      "status": "done"
+    },
+    {
+      "key": "repeated:ship",
+      "action": "ship",
+      "order_id": "repeated",
+      "amount": 1250,
+      "status": "done"
+    }
+  ],
+  "serviceEvents": [
+    {
+      "operation": "workflow.open",
+      "order_id": "ordinary-success",
+      "amount": 1250
+    },
+    {
+      "operation": "workflow.intent",
+      "order_id": "ordinary-success",
+      "key": "ordinary-success:reserve",
+      "action": "reserve"
+    },
+    {
+      "operation": "workflow.ack",
+      "order_id": "ordinary-success",
+      "key": "ordinary-success:reserve",
+      "phase": "reserved"
+    },
+    {
+      "operation": "workflow.intent",
+      "order_id": "ordinary-success",
+      "key": "ordinary-success:charge",
+      "action": "charge"
+    },
+    {
+      "operation": "workflow.ack",
+      "order_id": "ordinary-success",
+      "key": "ordinary-success:charge",
+      "phase": "charged"
+    },
+    {
+      "operation": "workflow.intent",
+      "order_id": "ordinary-success",
+      "key": "ordinary-success:ship",
+      "action": "ship"
+    },
+    {
+      "operation": "workflow.ack",
+      "order_id": "ordinary-success",
+      "key": "ordinary-success:ship",
+      "phase": "shipped"
+    },
+    {
+      "operation": "workflow.open",
+      "order_id": "rejected-operation",
+      "amount": 1250
+    },
+    {
+      "operation": "workflow.intent",
+      "order_id": "rejected-operation",
+      "key": "rejected-operation:reserve",
+      "action": "reserve"
+    },
+    {
+      "operation": "workflow.ack",
+      "order_id": "rejected-operation",
+      "key": "rejected-operation:reserve",
+      "phase": "reserved"
+    },
+    {
+      "operation": "workflow.intent",
+      "order_id": "rejected-operation",
+      "key": "rejected-operation:charge",
+      "action": "charge"
+    },
+    {
+      "operation": "workflow.failure",
+      "order_id": "rejected-operation",
+      "key": "rejected-operation:charge",
+      "detail": "definite_failure"
+    },
+    {
+      "operation": "workflow.intent",
+      "order_id": "rejected-operation",
+      "key": "rejected-operation:release",
+      "action": "release"
+    },
+    {
+      "operation": "workflow.ack",
+      "order_id": "rejected-operation",
+      "key": "rejected-operation:release",
+      "phase": "released"
+    },
+    {
+      "operation": "workflow.open",
+      "order_id": "lost-ack",
+      "amount": 1250
+    },
+    {
+      "operation": "workflow.intent",
+      "order_id": "lost-ack",
+      "key": "lost-ack:reserve",
+      "action": "reserve"
+    },
+    {
+      "operation": "workflow.response-lost",
+      "order_id": "lost-ack",
+      "key": "lost-ack:reserve"
+    },
+    {
+      "operation": "workflow.ack",
+      "order_id": "lost-ack",
+      "key": "lost-ack:reserve",
+      "phase": "reserved"
+    },
+    {
+      "operation": "workflow.reconcile",
+      "order_id": "lost-ack",
+      "key": "lost-ack:reserve",
+      "found": true
+    },
+    {
+      "operation": "workflow.open",
+      "order_id": "pending-restart",
+      "amount": 1250
+    },
+    {
+      "operation": "workflow.intent",
+      "order_id": "pending-restart",
+      "key": "pending-restart:reserve",
+      "action": "reserve"
+    },
+    {
+      "operation": "workflow.request-lost",
+      "order_id": "pending-restart",
+      "key": "pending-restart:reserve"
+    },
+    {
+      "operation": "workflow.reconcile",
+      "order_id": "pending-restart",
+      "key": "pending-restart:reserve",
+      "found": false
+    },
+    {
+      "operation": "workflow.open",
+      "order_id": "cancel",
+      "amount": 1250
+    },
+    {
+      "operation": "workflow.intent",
+      "order_id": "cancel",
+      "key": "cancel:reserve",
+      "action": "reserve"
+    },
+    {
+      "operation": "workflow.ack",
+      "order_id": "cancel",
+      "key": "cancel:reserve",
+      "phase": "reserved"
+    },
+    {
+      "operation": "workflow.intent",
+      "order_id": "cancel",
+      "key": "cancel:release",
+      "action": "release"
+    },
+    {
+      "operation": "workflow.ack",
+      "order_id": "cancel",
+      "key": "cancel:release",
+      "phase": "released"
+    },
+    {
+      "operation": "workflow.open",
+      "order_id": "refund-release",
+      "amount": 1250
+    },
+    {
+      "operation": "workflow.intent",
+      "order_id": "refund-release",
+      "key": "refund-release:reserve",
+      "action": "reserve"
+    },
+    {
+      "operation": "workflow.ack",
+      "order_id": "refund-release",
+      "key": "refund-release:reserve",
+      "phase": "reserved"
+    },
+    {
+      "operation": "workflow.intent",
+      "order_id": "refund-release",
+      "key": "refund-release:charge",
+      "action": "charge"
+    },
+    {
+      "operation": "workflow.ack",
+      "order_id": "refund-release",
+      "key": "refund-release:charge",
+      "phase": "charged"
+    },
+    {
+      "operation": "workflow.intent",
+      "order_id": "refund-release",
+      "key": "refund-release:refund",
+      "action": "refund"
+    },
+    {
+      "operation": "workflow.ack",
+      "order_id": "refund-release",
+      "key": "refund-release:refund",
+      "phase": "refunded"
+    },
+    {
+      "operation": "workflow.intent",
+      "order_id": "refund-release",
+      "key": "refund-release:release",
+      "action": "release"
+    },
+    {
+      "operation": "workflow.ack",
+      "order_id": "refund-release",
+      "key": "refund-release:release",
+      "phase": "released"
+    },
+    {
+      "operation": "workflow.open",
+      "order_id": "repeated",
+      "amount": 1250
+    },
+    {
+      "operation": "workflow.intent",
+      "order_id": "repeated",
+      "key": "repeated:reserve",
+      "action": "reserve"
+    },
+    {
+      "operation": "workflow.ack",
+      "order_id": "repeated",
+      "key": "repeated:reserve",
+      "phase": "reserved"
+    },
+    {
+      "operation": "workflow.intent",
+      "order_id": "repeated",
+      "key": "repeated:charge",
+      "action": "charge"
+    },
+    {
+      "operation": "workflow.ack",
+      "order_id": "repeated",
+      "key": "repeated:charge",
+      "phase": "charged"
+    },
+    {
+      "operation": "workflow.intent",
+      "order_id": "repeated",
+      "key": "repeated:ship",
+      "action": "ship"
+    },
+    {
+      "operation": "workflow.ack",
+      "order_id": "repeated",
+      "key": "repeated:ship",
+      "phase": "shipped"
+    }
+  ],
+  "selectedTrace": [
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pf9bb54cdacf23ef0c81901d6",
+      "sourceDigest": "f9bb54cdacf23ef0c81901d60d1109a0a8c2bec0b9f82fb83af5b2b74ff5edd3",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pf9bb54cdacf23ef0c81901d6",
+      "sourceDigest": "f9bb54cdacf23ef0c81901d60d1109a0a8c2bec0b9f82fb83af5b2b74ff5edd3",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pf9bb54cdacf23ef0c81901d6",
+      "sourceDigest": "f9bb54cdacf23ef0c81901d60d1109a0a8c2bec0b9f82fb83af5b2b74ff5edd3",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pf9bb54cdacf23ef0c81901d6",
+      "sourceDigest": "f9bb54cdacf23ef0c81901d60d1109a0a8c2bec0b9f82fb83af5b2b74ff5edd3",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pf9bb54cdacf23ef0c81901d6",
+      "sourceDigest": "f9bb54cdacf23ef0c81901d60d1109a0a8c2bec0b9f82fb83af5b2b74ff5edd3",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o13\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"reserve\"]},{\"key\":\"reason\",\"value\":[\"str\",\"a new order reserves its stock\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pf9bb54cdacf23ef0c81901d6",
+      "sourceDigest": "f9bb54cdacf23ef0c81901d60d1109a0a8c2bec0b9f82fb83af5b2b74ff5edd3",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o13\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pf9bb54cdacf23ef0c81901d6",
+      "sourceDigest": "f9bb54cdacf23ef0c81901d60d1109a0a8c2bec0b9f82fb83af5b2b74ff5edd3",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p2970fec81dc1baadfb82ef44",
+      "sourceDigest": "2970fec81dc1baadfb82ef443adfab87705acb372fe38d8fcee28024d52d56b1",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p2970fec81dc1baadfb82ef44",
+      "sourceDigest": "2970fec81dc1baadfb82ef443adfab87705acb372fe38d8fcee28024d52d56b1",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p2970fec81dc1baadfb82ef44",
+      "sourceDigest": "2970fec81dc1baadfb82ef443adfab87705acb372fe38d8fcee28024d52d56b1",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p2970fec81dc1baadfb82ef44",
+      "sourceDigest": "2970fec81dc1baadfb82ef443adfab87705acb372fe38d8fcee28024d52d56b1",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p2970fec81dc1baadfb82ef44",
+      "sourceDigest": "2970fec81dc1baadfb82ef443adfab87705acb372fe38d8fcee28024d52d56b1",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o14\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"charge\"]},{\"key\":\"reason\",\"value\":[\"str\",\"the stock is reserved, so the customer is charged\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p2970fec81dc1baadfb82ef44",
+      "sourceDigest": "2970fec81dc1baadfb82ef443adfab87705acb372fe38d8fcee28024d52d56b1",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o14\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p2970fec81dc1baadfb82ef44",
+      "sourceDigest": "2970fec81dc1baadfb82ef443adfab87705acb372fe38d8fcee28024d52d56b1",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p982f663d72e1ec0af17cebc6",
+      "sourceDigest": "982f663d72e1ec0af17cebc624ea7c8a9a1802a7302c43ddd4b1c300beba4b1d",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p982f663d72e1ec0af17cebc6",
+      "sourceDigest": "982f663d72e1ec0af17cebc624ea7c8a9a1802a7302c43ddd4b1c300beba4b1d",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p982f663d72e1ec0af17cebc6",
+      "sourceDigest": "982f663d72e1ec0af17cebc624ea7c8a9a1802a7302c43ddd4b1c300beba4b1d",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p982f663d72e1ec0af17cebc6",
+      "sourceDigest": "982f663d72e1ec0af17cebc624ea7c8a9a1802a7302c43ddd4b1c300beba4b1d",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p982f663d72e1ec0af17cebc6",
+      "sourceDigest": "982f663d72e1ec0af17cebc624ea7c8a9a1802a7302c43ddd4b1c300beba4b1d",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o15\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"ship\"]},{\"key\":\"reason\",\"value\":[\"str\",\"the payment is done, so the order ships\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p982f663d72e1ec0af17cebc6",
+      "sourceDigest": "982f663d72e1ec0af17cebc624ea7c8a9a1802a7302c43ddd4b1c300beba4b1d",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o15\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p982f663d72e1ec0af17cebc6",
+      "sourceDigest": "982f663d72e1ec0af17cebc624ea7c8a9a1802a7302c43ddd4b1c300beba4b1d",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p5ee06933a342d5caaa048fcf",
+      "sourceDigest": "5ee06933a342d5caaa048fcf764d8639fa65c6ad61f1c25ebe6886945bcc9fbd",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p5ee06933a342d5caaa048fcf",
+      "sourceDigest": "5ee06933a342d5caaa048fcf764d8639fa65c6ad61f1c25ebe6886945bcc9fbd",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p5ee06933a342d5caaa048fcf",
+      "sourceDigest": "5ee06933a342d5caaa048fcf764d8639fa65c6ad61f1c25ebe6886945bcc9fbd",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p5ee06933a342d5caaa048fcf",
+      "sourceDigest": "5ee06933a342d5caaa048fcf764d8639fa65c6ad61f1c25ebe6886945bcc9fbd",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p5ee06933a342d5caaa048fcf",
+      "sourceDigest": "5ee06933a342d5caaa048fcf764d8639fa65c6ad61f1c25ebe6886945bcc9fbd",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o16\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"wait\"]},{\"key\":\"reason\",\"value\":[\"str\",\"the order is shipped\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p5ee06933a342d5caaa048fcf",
+      "sourceDigest": "5ee06933a342d5caaa048fcf764d8639fa65c6ad61f1c25ebe6886945bcc9fbd",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o16\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p5ee06933a342d5caaa048fcf",
+      "sourceDigest": "5ee06933a342d5caaa048fcf764d8639fa65c6ad61f1c25ebe6886945bcc9fbd",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pf56191a1d1e5c3069bb53add",
+      "sourceDigest": "f56191a1d1e5c3069bb53addaba95fc13a53f0f2543fd1bed4ca489363f54cb4",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pf56191a1d1e5c3069bb53add",
+      "sourceDigest": "f56191a1d1e5c3069bb53addaba95fc13a53f0f2543fd1bed4ca489363f54cb4",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pf56191a1d1e5c3069bb53add",
+      "sourceDigest": "f56191a1d1e5c3069bb53addaba95fc13a53f0f2543fd1bed4ca489363f54cb4",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pf56191a1d1e5c3069bb53add",
+      "sourceDigest": "f56191a1d1e5c3069bb53addaba95fc13a53f0f2543fd1bed4ca489363f54cb4",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pf56191a1d1e5c3069bb53add",
+      "sourceDigest": "f56191a1d1e5c3069bb53addaba95fc13a53f0f2543fd1bed4ca489363f54cb4",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o13\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"reserve\"]},{\"key\":\"reason\",\"value\":[\"str\",\"a new order reserves its stock\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pf56191a1d1e5c3069bb53add",
+      "sourceDigest": "f56191a1d1e5c3069bb53addaba95fc13a53f0f2543fd1bed4ca489363f54cb4",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o13\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pf56191a1d1e5c3069bb53add",
+      "sourceDigest": "f56191a1d1e5c3069bb53addaba95fc13a53f0f2543fd1bed4ca489363f54cb4",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p31b746ad6c314fb7fc9c1024",
+      "sourceDigest": "31b746ad6c314fb7fc9c1024939f42f2f4b5c4fa33150741424971b5c67b732f",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p31b746ad6c314fb7fc9c1024",
+      "sourceDigest": "31b746ad6c314fb7fc9c1024939f42f2f4b5c4fa33150741424971b5c67b732f",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p31b746ad6c314fb7fc9c1024",
+      "sourceDigest": "31b746ad6c314fb7fc9c1024939f42f2f4b5c4fa33150741424971b5c67b732f",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p31b746ad6c314fb7fc9c1024",
+      "sourceDigest": "31b746ad6c314fb7fc9c1024939f42f2f4b5c4fa33150741424971b5c67b732f",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p31b746ad6c314fb7fc9c1024",
+      "sourceDigest": "31b746ad6c314fb7fc9c1024939f42f2f4b5c4fa33150741424971b5c67b732f",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o14\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"charge\"]},{\"key\":\"reason\",\"value\":[\"str\",\"the stock is reserved, so the customer is charged\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p31b746ad6c314fb7fc9c1024",
+      "sourceDigest": "31b746ad6c314fb7fc9c1024939f42f2f4b5c4fa33150741424971b5c67b732f",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o14\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p31b746ad6c314fb7fc9c1024",
+      "sourceDigest": "31b746ad6c314fb7fc9c1024939f42f2f4b5c4fa33150741424971b5c67b732f",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pc4ba78e8d25d97d316f25bc6",
+      "sourceDigest": "c4ba78e8d25d97d316f25bc68d26a579f08617f67468c44c2f6e8ecff2916a27",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pc4ba78e8d25d97d316f25bc6",
+      "sourceDigest": "c4ba78e8d25d97d316f25bc68d26a579f08617f67468c44c2f6e8ecff2916a27",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pc4ba78e8d25d97d316f25bc6",
+      "sourceDigest": "c4ba78e8d25d97d316f25bc68d26a579f08617f67468c44c2f6e8ecff2916a27",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pc4ba78e8d25d97d316f25bc6",
+      "sourceDigest": "c4ba78e8d25d97d316f25bc68d26a579f08617f67468c44c2f6e8ecff2916a27",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pc4ba78e8d25d97d316f25bc6",
+      "sourceDigest": "c4ba78e8d25d97d316f25bc68d26a579f08617f67468c44c2f6e8ecff2916a27",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o15\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"release\"]},{\"key\":\"reason\",\"value\":[\"str\",\"rejected-operation:charge failed for good: the reserved stock stands and the order is being undone\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pc4ba78e8d25d97d316f25bc6",
+      "sourceDigest": "c4ba78e8d25d97d316f25bc68d26a579f08617f67468c44c2f6e8ecff2916a27",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o15\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pc4ba78e8d25d97d316f25bc6",
+      "sourceDigest": "c4ba78e8d25d97d316f25bc68d26a579f08617f67468c44c2f6e8ecff2916a27",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pa8957b16881f6d4274c34bcc",
+      "sourceDigest": "a8957b16881f6d4274c34bccf819791ff77e16e46fdf217341c8d60f9774c89e",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pa8957b16881f6d4274c34bcc",
+      "sourceDigest": "a8957b16881f6d4274c34bccf819791ff77e16e46fdf217341c8d60f9774c89e",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pa8957b16881f6d4274c34bcc",
+      "sourceDigest": "a8957b16881f6d4274c34bccf819791ff77e16e46fdf217341c8d60f9774c89e",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pa8957b16881f6d4274c34bcc",
+      "sourceDigest": "a8957b16881f6d4274c34bccf819791ff77e16e46fdf217341c8d60f9774c89e",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pa8957b16881f6d4274c34bcc",
+      "sourceDigest": "a8957b16881f6d4274c34bccf819791ff77e16e46fdf217341c8d60f9774c89e",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o13\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"reserve\"]},{\"key\":\"reason\",\"value\":[\"str\",\"a new order reserves its stock\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pa8957b16881f6d4274c34bcc",
+      "sourceDigest": "a8957b16881f6d4274c34bccf819791ff77e16e46fdf217341c8d60f9774c89e",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o13\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pa8957b16881f6d4274c34bcc",
+      "sourceDigest": "a8957b16881f6d4274c34bccf819791ff77e16e46fdf217341c8d60f9774c89e",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p23e18100526ea42897c8ff80",
+      "sourceDigest": "23e18100526ea42897c8ff800b489243263891c86adaef1bf241ced86c6a1db5",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p23e18100526ea42897c8ff80",
+      "sourceDigest": "23e18100526ea42897c8ff800b489243263891c86adaef1bf241ced86c6a1db5",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p23e18100526ea42897c8ff80",
+      "sourceDigest": "23e18100526ea42897c8ff800b489243263891c86adaef1bf241ced86c6a1db5",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p23e18100526ea42897c8ff80",
+      "sourceDigest": "23e18100526ea42897c8ff800b489243263891c86adaef1bf241ced86c6a1db5",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p23e18100526ea42897c8ff80",
+      "sourceDigest": "23e18100526ea42897c8ff800b489243263891c86adaef1bf241ced86c6a1db5",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o15\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"reconcile\"]},{\"key\":\"reason\",\"value\":[\"str\",\"the remote has a receipt for lost-ack:reserve\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p23e18100526ea42897c8ff80",
+      "sourceDigest": "23e18100526ea42897c8ff800b489243263891c86adaef1bf241ced86c6a1db5",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o15\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p23e18100526ea42897c8ff80",
+      "sourceDigest": "23e18100526ea42897c8ff800b489243263891c86adaef1bf241ced86c6a1db5",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pf038ecc1bb3c3cd63d6acadf",
+      "sourceDigest": "f038ecc1bb3c3cd63d6acadfdf16dc6c0da3692def8b209498f489520ddb58dd",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pf038ecc1bb3c3cd63d6acadf",
+      "sourceDigest": "f038ecc1bb3c3cd63d6acadfdf16dc6c0da3692def8b209498f489520ddb58dd",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pf038ecc1bb3c3cd63d6acadf",
+      "sourceDigest": "f038ecc1bb3c3cd63d6acadfdf16dc6c0da3692def8b209498f489520ddb58dd",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pf038ecc1bb3c3cd63d6acadf",
+      "sourceDigest": "f038ecc1bb3c3cd63d6acadfdf16dc6c0da3692def8b209498f489520ddb58dd",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pf038ecc1bb3c3cd63d6acadf",
+      "sourceDigest": "f038ecc1bb3c3cd63d6acadfdf16dc6c0da3692def8b209498f489520ddb58dd",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o13\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"reserve\"]},{\"key\":\"reason\",\"value\":[\"str\",\"a new order reserves its stock\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pf038ecc1bb3c3cd63d6acadf",
+      "sourceDigest": "f038ecc1bb3c3cd63d6acadfdf16dc6c0da3692def8b209498f489520ddb58dd",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o13\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pf038ecc1bb3c3cd63d6acadf",
+      "sourceDigest": "f038ecc1bb3c3cd63d6acadfdf16dc6c0da3692def8b209498f489520ddb58dd",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pfc4da3c24134a89924289214",
+      "sourceDigest": "fc4da3c24134a899242892146f5b1fc525b164a25b8f182fd88902815357ee36",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pfc4da3c24134a89924289214",
+      "sourceDigest": "fc4da3c24134a899242892146f5b1fc525b164a25b8f182fd88902815357ee36",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pfc4da3c24134a89924289214",
+      "sourceDigest": "fc4da3c24134a899242892146f5b1fc525b164a25b8f182fd88902815357ee36",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pfc4da3c24134a89924289214",
+      "sourceDigest": "fc4da3c24134a899242892146f5b1fc525b164a25b8f182fd88902815357ee36",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pfc4da3c24134a89924289214",
+      "sourceDigest": "fc4da3c24134a899242892146f5b1fc525b164a25b8f182fd88902815357ee36",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o14\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"reconcile\"]},{\"key\":\"reason\",\"value\":[\"str\",\"no receipt for pending-restart:reserve yet; look again\"]},{\"key\":\"waitMs\",\"value\":[\"num\",30000]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pfc4da3c24134a89924289214",
+      "sourceDigest": "fc4da3c24134a899242892146f5b1fc525b164a25b8f182fd88902815357ee36",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o14\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pfc4da3c24134a89924289214",
+      "sourceDigest": "fc4da3c24134a899242892146f5b1fc525b164a25b8f182fd88902815357ee36",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pa1ddc4582ea2740779270ae6",
+      "sourceDigest": "a1ddc4582ea2740779270ae6e1b631029187e14220f0710ef6ac91cc96714768",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pa1ddc4582ea2740779270ae6",
+      "sourceDigest": "a1ddc4582ea2740779270ae6e1b631029187e14220f0710ef6ac91cc96714768",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pa1ddc4582ea2740779270ae6",
+      "sourceDigest": "a1ddc4582ea2740779270ae6e1b631029187e14220f0710ef6ac91cc96714768",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pa1ddc4582ea2740779270ae6",
+      "sourceDigest": "a1ddc4582ea2740779270ae6e1b631029187e14220f0710ef6ac91cc96714768",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pa1ddc4582ea2740779270ae6",
+      "sourceDigest": "a1ddc4582ea2740779270ae6e1b631029187e14220f0710ef6ac91cc96714768",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o13\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"reserve\"]},{\"key\":\"reason\",\"value\":[\"str\",\"a new order reserves its stock\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pa1ddc4582ea2740779270ae6",
+      "sourceDigest": "a1ddc4582ea2740779270ae6e1b631029187e14220f0710ef6ac91cc96714768",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o13\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pa1ddc4582ea2740779270ae6",
+      "sourceDigest": "a1ddc4582ea2740779270ae6e1b631029187e14220f0710ef6ac91cc96714768",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pa6ec32a107a66436bf038e18",
+      "sourceDigest": "a6ec32a107a66436bf038e18b505ff219b856328d3ca23ed5dd1e820fb128760",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pa6ec32a107a66436bf038e18",
+      "sourceDigest": "a6ec32a107a66436bf038e18b505ff219b856328d3ca23ed5dd1e820fb128760",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pa6ec32a107a66436bf038e18",
+      "sourceDigest": "a6ec32a107a66436bf038e18b505ff219b856328d3ca23ed5dd1e820fb128760",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pa6ec32a107a66436bf038e18",
+      "sourceDigest": "a6ec32a107a66436bf038e18b505ff219b856328d3ca23ed5dd1e820fb128760",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pa6ec32a107a66436bf038e18",
+      "sourceDigest": "a6ec32a107a66436bf038e18b505ff219b856328d3ca23ed5dd1e820fb128760",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o14\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"release\"]},{\"key\":\"reason\",\"value\":[\"str\",\"the order was cancelled: the reserved stock stands and the order is being undone\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pa6ec32a107a66436bf038e18",
+      "sourceDigest": "a6ec32a107a66436bf038e18b505ff219b856328d3ca23ed5dd1e820fb128760",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o14\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pa6ec32a107a66436bf038e18",
+      "sourceDigest": "a6ec32a107a66436bf038e18b505ff219b856328d3ca23ed5dd1e820fb128760",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pd5a9466b7126b2aafb980785",
+      "sourceDigest": "d5a9466b7126b2aafb98078566feb84196c122faceacc2c36dd1c12846cbdc1d",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pd5a9466b7126b2aafb980785",
+      "sourceDigest": "d5a9466b7126b2aafb98078566feb84196c122faceacc2c36dd1c12846cbdc1d",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pd5a9466b7126b2aafb980785",
+      "sourceDigest": "d5a9466b7126b2aafb98078566feb84196c122faceacc2c36dd1c12846cbdc1d",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pd5a9466b7126b2aafb980785",
+      "sourceDigest": "d5a9466b7126b2aafb98078566feb84196c122faceacc2c36dd1c12846cbdc1d",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pd5a9466b7126b2aafb980785",
+      "sourceDigest": "d5a9466b7126b2aafb98078566feb84196c122faceacc2c36dd1c12846cbdc1d",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o13\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"reserve\"]},{\"key\":\"reason\",\"value\":[\"str\",\"a new order reserves its stock\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pd5a9466b7126b2aafb980785",
+      "sourceDigest": "d5a9466b7126b2aafb98078566feb84196c122faceacc2c36dd1c12846cbdc1d",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o13\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pd5a9466b7126b2aafb980785",
+      "sourceDigest": "d5a9466b7126b2aafb98078566feb84196c122faceacc2c36dd1c12846cbdc1d",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p4c3865584edb136f45ee261c",
+      "sourceDigest": "4c3865584edb136f45ee261cb4f3451b09b6d1c46c8a4e17e42df1aced9f63e4",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p4c3865584edb136f45ee261c",
+      "sourceDigest": "4c3865584edb136f45ee261cb4f3451b09b6d1c46c8a4e17e42df1aced9f63e4",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p4c3865584edb136f45ee261c",
+      "sourceDigest": "4c3865584edb136f45ee261cb4f3451b09b6d1c46c8a4e17e42df1aced9f63e4",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p4c3865584edb136f45ee261c",
+      "sourceDigest": "4c3865584edb136f45ee261cb4f3451b09b6d1c46c8a4e17e42df1aced9f63e4",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p4c3865584edb136f45ee261c",
+      "sourceDigest": "4c3865584edb136f45ee261cb4f3451b09b6d1c46c8a4e17e42df1aced9f63e4",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o14\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"charge\"]},{\"key\":\"reason\",\"value\":[\"str\",\"the stock is reserved, so the customer is charged\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p4c3865584edb136f45ee261c",
+      "sourceDigest": "4c3865584edb136f45ee261cb4f3451b09b6d1c46c8a4e17e42df1aced9f63e4",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o14\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p4c3865584edb136f45ee261c",
+      "sourceDigest": "4c3865584edb136f45ee261cb4f3451b09b6d1c46c8a4e17e42df1aced9f63e4",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p3935b896659829551541b991",
+      "sourceDigest": "3935b896659829551541b991ebc2916ea3df7c21a5ebc5b9fb7975af2da961b7",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p3935b896659829551541b991",
+      "sourceDigest": "3935b896659829551541b991ebc2916ea3df7c21a5ebc5b9fb7975af2da961b7",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p3935b896659829551541b991",
+      "sourceDigest": "3935b896659829551541b991ebc2916ea3df7c21a5ebc5b9fb7975af2da961b7",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p3935b896659829551541b991",
+      "sourceDigest": "3935b896659829551541b991ebc2916ea3df7c21a5ebc5b9fb7975af2da961b7",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p3935b896659829551541b991",
+      "sourceDigest": "3935b896659829551541b991ebc2916ea3df7c21a5ebc5b9fb7975af2da961b7",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o15\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"refund\"]},{\"key\":\"reason\",\"value\":[\"str\",\"the order was cancelled: the charge stands and the order is being undone\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p3935b896659829551541b991",
+      "sourceDigest": "3935b896659829551541b991ebc2916ea3df7c21a5ebc5b9fb7975af2da961b7",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o15\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p3935b896659829551541b991",
+      "sourceDigest": "3935b896659829551541b991ebc2916ea3df7c21a5ebc5b9fb7975af2da961b7",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p6e7e2ee40f207deab8cde521",
+      "sourceDigest": "6e7e2ee40f207deab8cde5216830aeb9e2b6b720965d87b8f4c5c98cdf2df626",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p6e7e2ee40f207deab8cde521",
+      "sourceDigest": "6e7e2ee40f207deab8cde5216830aeb9e2b6b720965d87b8f4c5c98cdf2df626",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p6e7e2ee40f207deab8cde521",
+      "sourceDigest": "6e7e2ee40f207deab8cde5216830aeb9e2b6b720965d87b8f4c5c98cdf2df626",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p6e7e2ee40f207deab8cde521",
+      "sourceDigest": "6e7e2ee40f207deab8cde5216830aeb9e2b6b720965d87b8f4c5c98cdf2df626",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p6e7e2ee40f207deab8cde521",
+      "sourceDigest": "6e7e2ee40f207deab8cde5216830aeb9e2b6b720965d87b8f4c5c98cdf2df626",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o16\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"release\"]},{\"key\":\"reason\",\"value\":[\"str\",\"the order was cancelled: the reserved stock stands and the order is being undone\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p6e7e2ee40f207deab8cde521",
+      "sourceDigest": "6e7e2ee40f207deab8cde5216830aeb9e2b6b720965d87b8f4c5c98cdf2df626",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o16\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p6e7e2ee40f207deab8cde521",
+      "sourceDigest": "6e7e2ee40f207deab8cde5216830aeb9e2b6b720965d87b8f4c5c98cdf2df626",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pdf19579894f140542b801c8c",
+      "sourceDigest": "df19579894f140542b801c8c9e932b7e93bfc3d59bc211b51f805dc89b274aa3",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pdf19579894f140542b801c8c",
+      "sourceDigest": "df19579894f140542b801c8c9e932b7e93bfc3d59bc211b51f805dc89b274aa3",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pdf19579894f140542b801c8c",
+      "sourceDigest": "df19579894f140542b801c8c9e932b7e93bfc3d59bc211b51f805dc89b274aa3",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pdf19579894f140542b801c8c",
+      "sourceDigest": "df19579894f140542b801c8c9e932b7e93bfc3d59bc211b51f805dc89b274aa3",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pdf19579894f140542b801c8c",
+      "sourceDigest": "df19579894f140542b801c8c9e932b7e93bfc3d59bc211b51f805dc89b274aa3",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o13\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"reserve\"]},{\"key\":\"reason\",\"value\":[\"str\",\"a new order reserves its stock\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pdf19579894f140542b801c8c",
+      "sourceDigest": "df19579894f140542b801c8c9e932b7e93bfc3d59bc211b51f805dc89b274aa3",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o13\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pdf19579894f140542b801c8c",
+      "sourceDigest": "df19579894f140542b801c8c9e932b7e93bfc3d59bc211b51f805dc89b274aa3",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p46878ac0460eb4632952fb9f",
+      "sourceDigest": "46878ac0460eb4632952fb9fcc7719f8296a2b376cf8c8196c09a0f0d1686aa0",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p46878ac0460eb4632952fb9f",
+      "sourceDigest": "46878ac0460eb4632952fb9fcc7719f8296a2b376cf8c8196c09a0f0d1686aa0",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p46878ac0460eb4632952fb9f",
+      "sourceDigest": "46878ac0460eb4632952fb9fcc7719f8296a2b376cf8c8196c09a0f0d1686aa0",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p46878ac0460eb4632952fb9f",
+      "sourceDigest": "46878ac0460eb4632952fb9fcc7719f8296a2b376cf8c8196c09a0f0d1686aa0",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p46878ac0460eb4632952fb9f",
+      "sourceDigest": "46878ac0460eb4632952fb9fcc7719f8296a2b376cf8c8196c09a0f0d1686aa0",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o14\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"charge\"]},{\"key\":\"reason\",\"value\":[\"str\",\"the stock is reserved, so the customer is charged\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p46878ac0460eb4632952fb9f",
+      "sourceDigest": "46878ac0460eb4632952fb9fcc7719f8296a2b376cf8c8196c09a0f0d1686aa0",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o14\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p46878ac0460eb4632952fb9f",
+      "sourceDigest": "46878ac0460eb4632952fb9fcc7719f8296a2b376cf8c8196c09a0f0d1686aa0",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p0fe8223b5b445b900ce3a6e0",
+      "sourceDigest": "0fe8223b5b445b900ce3a6e065b09680268f0f673bbb080848d84416cfbf7856",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p0fe8223b5b445b900ce3a6e0",
+      "sourceDigest": "0fe8223b5b445b900ce3a6e065b09680268f0f673bbb080848d84416cfbf7856",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p0fe8223b5b445b900ce3a6e0",
+      "sourceDigest": "0fe8223b5b445b900ce3a6e065b09680268f0f673bbb080848d84416cfbf7856",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p0fe8223b5b445b900ce3a6e0",
+      "sourceDigest": "0fe8223b5b445b900ce3a6e065b09680268f0f673bbb080848d84416cfbf7856",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p0fe8223b5b445b900ce3a6e0",
+      "sourceDigest": "0fe8223b5b445b900ce3a6e065b09680268f0f673bbb080848d84416cfbf7856",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o15\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"ship\"]},{\"key\":\"reason\",\"value\":[\"str\",\"the payment is done, so the order ships\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p0fe8223b5b445b900ce3a6e0",
+      "sourceDigest": "0fe8223b5b445b900ce3a6e065b09680268f0f673bbb080848d84416cfbf7856",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o15\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p0fe8223b5b445b900ce3a6e0",
+      "sourceDigest": "0fe8223b5b445b900ce3a6e065b09680268f0f673bbb080848d84416cfbf7856",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pb43f5cd06bae972e4cea5c6f",
+      "sourceDigest": "b43f5cd06bae972e4cea5c6f2560956d38e7c2c8afb4e2743b44fb03b47277fc",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pb43f5cd06bae972e4cea5c6f",
+      "sourceDigest": "b43f5cd06bae972e4cea5c6f2560956d38e7c2c8afb4e2743b44fb03b47277fc",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pb43f5cd06bae972e4cea5c6f",
+      "sourceDigest": "b43f5cd06bae972e4cea5c6f2560956d38e7c2c8afb4e2743b44fb03b47277fc",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "pb43f5cd06bae972e4cea5c6f",
+      "sourceDigest": "b43f5cd06bae972e4cea5c6f2560956d38e7c2c8afb4e2743b44fb03b47277fc",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pb43f5cd06bae972e4cea5c6f",
+      "sourceDigest": "b43f5cd06bae972e4cea5c6f2560956d38e7c2c8afb4e2743b44fb03b47277fc",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o16\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"wait\"]},{\"key\":\"reason\",\"value\":[\"str\",\"the order is shipped\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pb43f5cd06bae972e4cea5c6f",
+      "sourceDigest": "b43f5cd06bae972e4cea5c6f2560956d38e7c2c8afb4e2743b44fb03b47277fc",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o16\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "pb43f5cd06bae972e4cea5c6f",
+      "sourceDigest": "b43f5cd06bae972e4cea5c6f2560956d38e7c2c8afb4e2743b44fb03b47277fc",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p80d71e721c8a89c13b7fa28b",
+      "sourceDigest": "80d71e721c8a89c13b7fa28bb7d27384afd51c8e6eaf6d8ecac4a212334c738e",
+      "committed": 2,
+      "selectedRecord": "allocate {\"name\":\"o99\",\"kind\":\"closure\",\"code\":\"crisp\",\"properties\":[],\"captures\":[]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p80d71e721c8a89c13b7fa28b",
+      "sourceDigest": "80d71e721c8a89c13b7fa28bb7d27384afd51c8e6eaf6d8ecac4a212334c738e",
+      "committed": 3,
+      "selectedRecord": "write {\"object\":\"o0\",\"key\":\"default\",\"value\":[\"ref\",\"o99\"],\"present\":true}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p80d71e721c8a89c13b7fa28b",
+      "sourceDigest": "80d71e721c8a89c13b7fa28bb7d27384afd51c8e6eaf6d8ecac4a212334c738e",
+      "committed": 4,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o0\"]}",
+      "selection": null
+    },
+    {
+      "entry": "initialize",
+      "invocationId": "natlang1",
+      "trackId": "worker:module1",
+      "programId": "p80d71e721c8a89c13b7fa28b",
+      "sourceDigest": "80d71e721c8a89c13b7fa28bb7d27384afd51c8e6eaf6d8ecac4a212334c738e",
+      "committed": 5,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p80d71e721c8a89c13b7fa28b",
+      "sourceDigest": "80d71e721c8a89c13b7fa28bb7d27384afd51c8e6eaf6d8ecac4a212334c738e",
+      "committed": 4,
+      "selectedRecord": "allocate {\"name\":\"o16\",\"kind\":\"object\",\"properties\":[{\"key\":\"action\",\"value\":[\"str\",\"wait\"]},{\"key\":\"reason\",\"value\":[\"str\",\"the order is shipped\"]}]}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p80d71e721c8a89c13b7fa28b",
+      "sourceDigest": "80d71e721c8a89c13b7fa28bb7d27384afd51c8e6eaf6d8ecac4a212334c738e",
+      "committed": 5,
+      "selectedRecord": "return {\"value\":[\"ref\",\"o16\"],\"invocation\":\"natlang2\"}",
+      "selection": null
+    },
+    {
+      "entry": "crisp",
+      "invocationId": "natlang2",
+      "trackId": "worker:module1",
+      "programId": "p80d71e721c8a89c13b7fa28b",
+      "sourceDigest": "80d71e721c8a89c13b7fa28bb7d27384afd51c8e6eaf6d8ecac4a212334c738e",
+      "committed": 6,
+      "selectedRecord": "end {\"kind\":\"return\"}",
+      "selection": null
+    }
+  ],
+  "controlledProjections": [
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "pf9bb54cdacf23ef0c81901d6",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "f9bb54cdacf23ef0c81901d60d1109a0a8c2bec0b9f82fb83af5b2b74ff5edd3",
+      "applicationSourceDigest": "fd404a7f60a62573d9de335bcf010e1fcb815b05020cbf9513e427b2ab5e8c09",
+      "compiledSelectedSourceDigest": "f9bb54cdacf23ef0c81901d60d1109a0a8c2bec0b9f82fb83af5b2b74ff5edd3",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "f9bb54cdacf23ef0c81901d60d1109a0a8c2bec0b9f82fb83af5b2b74ff5edd3",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "083882788cce369e99797229c111a532df5133c7ef567fb4dd9395d7bed141e7",
+      "independentExpected": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      },
+      "ownedInputRoots": [
+        [
+          "ref",
+          "o0"
+        ],
+        [
+          "ref",
+          "o6"
+        ]
+      ],
+      "ownedRootProps": [
+        [
+          [
+            "state",
+            [
+              "ref",
+              "o1"
+            ]
+          ],
+          [
+            "event",
+            [
+              "ref",
+              "o5"
+            ]
+          ],
+          [
+            "receipt",
+            [
+              "null"
+            ]
+          ]
+        ],
+        [
+          [
+            "transientRetries",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "checksBeforeRetry",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "recheckMs",
+            [
+              "num",
+              30000
+            ]
+          ]
+        ]
+      ],
+      "publicDigest": "853c20756273f1e898801ff379a5e6b55bcec012d04268307678ba20e4433e08",
+      "generatedRecords": 34,
+      "verification": "owned-tracer",
+      "ownedTracerBoundaryFailure": null,
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "p2970fec81dc1baadfb82ef44",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "2970fec81dc1baadfb82ef443adfab87705acb372fe38d8fcee28024d52d56b1",
+      "applicationSourceDigest": "fd404a7f60a62573d9de335bcf010e1fcb815b05020cbf9513e427b2ab5e8c09",
+      "compiledSelectedSourceDigest": "2970fec81dc1baadfb82ef443adfab87705acb372fe38d8fcee28024d52d56b1",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "2970fec81dc1baadfb82ef443adfab87705acb372fe38d8fcee28024d52d56b1",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "47d4051618dc846751c144da85da5802467c9c92e7524072482037b9a62ebc1f",
+      "independentExpected": {
+        "action": "charge",
+        "reason": "the stock is reserved, so the customer is charged"
+      },
+      "ownedInputRoots": [
+        [
+          "ref",
+          "o0"
+        ],
+        [
+          "ref",
+          "o7"
+        ]
+      ],
+      "ownedRootProps": [
+        [
+          [
+            "state",
+            [
+              "ref",
+              "o1"
+            ]
+          ],
+          [
+            "event",
+            [
+              "ref",
+              "o6"
+            ]
+          ],
+          [
+            "receipt",
+            [
+              "null"
+            ]
+          ]
+        ],
+        [
+          [
+            "transientRetries",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "checksBeforeRetry",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "recheckMs",
+            [
+              "num",
+              30000
+            ]
+          ]
+        ]
+      ],
+      "publicDigest": "bb2f7f8174e934f7f4e2fe31012a6d8c278e85e76204b0e4f63a60ee96ec2d0b",
+      "generatedRecords": 36,
+      "verification": "owned-tracer",
+      "ownedTracerBoundaryFailure": null,
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "charge",
+        "reason": "the stock is reserved, so the customer is charged"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "p982f663d72e1ec0af17cebc6",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "982f663d72e1ec0af17cebc624ea7c8a9a1802a7302c43ddd4b1c300beba4b1d",
+      "applicationSourceDigest": "fd404a7f60a62573d9de335bcf010e1fcb815b05020cbf9513e427b2ab5e8c09",
+      "compiledSelectedSourceDigest": "982f663d72e1ec0af17cebc624ea7c8a9a1802a7302c43ddd4b1c300beba4b1d",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "982f663d72e1ec0af17cebc624ea7c8a9a1802a7302c43ddd4b1c300beba4b1d",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "34f30283bca24925a22a5aace28d76481f778192fc87c89f653f4c8ba17d129f",
+      "independentExpected": {
+        "action": "ship",
+        "reason": "the payment is done, so the order ships"
+      },
+      "ownedInputRoots": [
+        [
+          "ref",
+          "o0"
+        ],
+        [
+          "ref",
+          "o8"
+        ]
+      ],
+      "ownedRootProps": [
+        [
+          [
+            "state",
+            [
+              "ref",
+              "o1"
+            ]
+          ],
+          [
+            "event",
+            [
+              "ref",
+              "o7"
+            ]
+          ],
+          [
+            "receipt",
+            [
+              "null"
+            ]
+          ]
+        ],
+        [
+          [
+            "transientRetries",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "checksBeforeRetry",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "recheckMs",
+            [
+              "num",
+              30000
+            ]
+          ]
+        ]
+      ],
+      "publicDigest": "622e16d70c8712e16cf0cc492455133cc55e476f894b6bc13a17b6ac8896f7cd",
+      "generatedRecords": 37,
+      "verification": "owned-tracer",
+      "ownedTracerBoundaryFailure": null,
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "ship",
+        "reason": "the payment is done, so the order ships"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "p5ee06933a342d5caaa048fcf",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "5ee06933a342d5caaa048fcf764d8639fa65c6ad61f1c25ebe6886945bcc9fbd",
+      "applicationSourceDigest": "fd404a7f60a62573d9de335bcf010e1fcb815b05020cbf9513e427b2ab5e8c09",
+      "compiledSelectedSourceDigest": "5ee06933a342d5caaa048fcf764d8639fa65c6ad61f1c25ebe6886945bcc9fbd",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "5ee06933a342d5caaa048fcf764d8639fa65c6ad61f1c25ebe6886945bcc9fbd",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "8c0a35938b97907f18a75766f93d3ecda5d9b78298225cec477bdd431bebae5b",
+      "independentExpected": {
+        "action": "wait",
+        "reason": "the order is shipped"
+      },
+      "ownedInputRoots": [
+        [
+          "ref",
+          "o0"
+        ],
+        [
+          "ref",
+          "o9"
+        ]
+      ],
+      "ownedRootProps": [
+        [
+          [
+            "state",
+            [
+              "ref",
+              "o1"
+            ]
+          ],
+          [
+            "event",
+            [
+              "ref",
+              "o8"
+            ]
+          ],
+          [
+            "receipt",
+            [
+              "null"
+            ]
+          ]
+        ],
+        [
+          [
+            "transientRetries",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "checksBeforeRetry",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "recheckMs",
+            [
+              "num",
+              30000
+            ]
+          ]
+        ]
+      ],
+      "publicDigest": "278ecf2adeb47fb7c6182369b17921cd3f31adf9b5b877c8c983cdf3e1c68c0d",
+      "generatedRecords": 38,
+      "verification": "owned-tracer",
+      "ownedTracerBoundaryFailure": null,
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "wait",
+        "reason": "the order is shipped"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "pf56191a1d1e5c3069bb53add",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "f56191a1d1e5c3069bb53addaba95fc13a53f0f2543fd1bed4ca489363f54cb4",
+      "applicationSourceDigest": "fd404a7f60a62573d9de335bcf010e1fcb815b05020cbf9513e427b2ab5e8c09",
+      "compiledSelectedSourceDigest": "f56191a1d1e5c3069bb53addaba95fc13a53f0f2543fd1bed4ca489363f54cb4",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "f56191a1d1e5c3069bb53addaba95fc13a53f0f2543fd1bed4ca489363f54cb4",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "69533a3fc5c44150ead3897f9e35b8f1526cab7a9b7b5c2aa197a0d59bf67cc4",
+      "independentExpected": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      },
+      "ownedInputRoots": [
+        [
+          "ref",
+          "o0"
+        ],
+        [
+          "ref",
+          "o6"
+        ]
+      ],
+      "ownedRootProps": [
+        [
+          [
+            "state",
+            [
+              "ref",
+              "o1"
+            ]
+          ],
+          [
+            "event",
+            [
+              "ref",
+              "o5"
+            ]
+          ],
+          [
+            "receipt",
+            [
+              "null"
+            ]
+          ]
+        ],
+        [
+          [
+            "transientRetries",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "checksBeforeRetry",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "recheckMs",
+            [
+              "num",
+              30000
+            ]
+          ]
+        ]
+      ],
+      "publicDigest": "5fa519daeeccceee6cb96964486f3b8b80cf8cba7ff85ab558deddd76982b12f",
+      "generatedRecords": 34,
+      "verification": "owned-tracer",
+      "ownedTracerBoundaryFailure": null,
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "p31b746ad6c314fb7fc9c1024",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "31b746ad6c314fb7fc9c1024939f42f2f4b5c4fa33150741424971b5c67b732f",
+      "applicationSourceDigest": "fd404a7f60a62573d9de335bcf010e1fcb815b05020cbf9513e427b2ab5e8c09",
+      "compiledSelectedSourceDigest": "31b746ad6c314fb7fc9c1024939f42f2f4b5c4fa33150741424971b5c67b732f",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "31b746ad6c314fb7fc9c1024939f42f2f4b5c4fa33150741424971b5c67b732f",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "5d8f6ef561c31038b0ef403598fa7c8df70360f562c8ade0e8e8b6baab991a46",
+      "independentExpected": {
+        "action": "charge",
+        "reason": "the stock is reserved, so the customer is charged"
+      },
+      "ownedInputRoots": [
+        [
+          "ref",
+          "o0"
+        ],
+        [
+          "ref",
+          "o7"
+        ]
+      ],
+      "ownedRootProps": [
+        [
+          [
+            "state",
+            [
+              "ref",
+              "o1"
+            ]
+          ],
+          [
+            "event",
+            [
+              "ref",
+              "o6"
+            ]
+          ],
+          [
+            "receipt",
+            [
+              "null"
+            ]
+          ]
+        ],
+        [
+          [
+            "transientRetries",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "checksBeforeRetry",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "recheckMs",
+            [
+              "num",
+              30000
+            ]
+          ]
+        ]
+      ],
+      "publicDigest": "bb5234cef689c6d425ca9bc81d4f9f31670322a2613a7eda6f0925995d8bd502",
+      "generatedRecords": 36,
+      "verification": "owned-tracer",
+      "ownedTracerBoundaryFailure": null,
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "charge",
+        "reason": "the stock is reserved, so the customer is charged"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "pc4ba78e8d25d97d316f25bc6",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "c4ba78e8d25d97d316f25bc68d26a579f08617f67468c44c2f6e8ecff2916a27",
+      "applicationSourceDigest": null,
+      "compiledSelectedSourceDigest": "c4ba78e8d25d97d316f25bc68d26a579f08617f67468c44c2f6e8ecff2916a27",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "c4ba78e8d25d97d316f25bc68d26a579f08617f67468c44c2f6e8ecff2916a27",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "19f2988fc970eea975b6bd6c6e93165364aa73fe73b1addc4febad6169eb2da4",
+      "independentExpected": {
+        "action": "release",
+        "reason": "rejected-operation:charge failed for good: the reserved stock stands and the order is being undone"
+      },
+      "ownedInputRoots": [],
+      "ownedRootProps": [],
+      "publicDigest": null,
+      "generatedRecords": 0,
+      "verification": "compiled-source-v8",
+      "ownedTracerBoundaryFailure": "Unmodeled ordinary [[Get]] or exotic property",
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "release",
+        "reason": "rejected-operation:charge failed for good: the reserved stock stands and the order is being undone"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "pa8957b16881f6d4274c34bcc",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "a8957b16881f6d4274c34bccf819791ff77e16e46fdf217341c8d60f9774c89e",
+      "applicationSourceDigest": "fd404a7f60a62573d9de335bcf010e1fcb815b05020cbf9513e427b2ab5e8c09",
+      "compiledSelectedSourceDigest": "a8957b16881f6d4274c34bccf819791ff77e16e46fdf217341c8d60f9774c89e",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "a8957b16881f6d4274c34bccf819791ff77e16e46fdf217341c8d60f9774c89e",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "ada25e37c8b4d0ea6aaa0317455b0c2fa057cb9584a4030228fe13acfea4511d",
+      "independentExpected": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      },
+      "ownedInputRoots": [
+        [
+          "ref",
+          "o0"
+        ],
+        [
+          "ref",
+          "o6"
+        ]
+      ],
+      "ownedRootProps": [
+        [
+          [
+            "state",
+            [
+              "ref",
+              "o1"
+            ]
+          ],
+          [
+            "event",
+            [
+              "ref",
+              "o5"
+            ]
+          ],
+          [
+            "receipt",
+            [
+              "null"
+            ]
+          ]
+        ],
+        [
+          [
+            "transientRetries",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "checksBeforeRetry",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "recheckMs",
+            [
+              "num",
+              30000
+            ]
+          ]
+        ]
+      ],
+      "publicDigest": "b813ed42f14828fec728bce6ed8fe9315ee192de68393b54ffe7d569f8e22e7b",
+      "generatedRecords": 34,
+      "verification": "owned-tracer",
+      "ownedTracerBoundaryFailure": null,
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "p23e18100526ea42897c8ff80",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "23e18100526ea42897c8ff800b489243263891c86adaef1bf241ced86c6a1db5",
+      "applicationSourceDigest": "fd404a7f60a62573d9de335bcf010e1fcb815b05020cbf9513e427b2ab5e8c09",
+      "compiledSelectedSourceDigest": "23e18100526ea42897c8ff800b489243263891c86adaef1bf241ced86c6a1db5",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "23e18100526ea42897c8ff800b489243263891c86adaef1bf241ced86c6a1db5",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "14c20f3663adbf582b888df6d7b71e410c3cebc73be2f77f5d22469f060d3bec",
+      "independentExpected": {
+        "action": "reconcile",
+        "reason": "the remote has a receipt for lost-ack:reserve"
+      },
+      "ownedInputRoots": [
+        [
+          "ref",
+          "o0"
+        ],
+        [
+          "ref",
+          "o8"
+        ]
+      ],
+      "ownedRootProps": [
+        [
+          [
+            "state",
+            [
+              "ref",
+              "o1"
+            ]
+          ],
+          [
+            "event",
+            [
+              "ref",
+              "o6"
+            ]
+          ],
+          [
+            "receipt",
+            [
+              "ref",
+              "o7"
+            ]
+          ]
+        ],
+        [
+          [
+            "transientRetries",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "checksBeforeRetry",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "recheckMs",
+            [
+              "num",
+              30000
+            ]
+          ]
+        ]
+      ],
+      "publicDigest": "718a6a92f6728a895d25e9849edd3ac8f4008e96adea8555a01f32fc3f73810c",
+      "generatedRecords": 23,
+      "verification": "owned-tracer",
+      "ownedTracerBoundaryFailure": null,
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "reconcile",
+        "reason": "the remote has a receipt for lost-ack:reserve"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "pf038ecc1bb3c3cd63d6acadf",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "f038ecc1bb3c3cd63d6acadfdf16dc6c0da3692def8b209498f489520ddb58dd",
+      "applicationSourceDigest": "fd404a7f60a62573d9de335bcf010e1fcb815b05020cbf9513e427b2ab5e8c09",
+      "compiledSelectedSourceDigest": "f038ecc1bb3c3cd63d6acadfdf16dc6c0da3692def8b209498f489520ddb58dd",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "f038ecc1bb3c3cd63d6acadfdf16dc6c0da3692def8b209498f489520ddb58dd",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "3cb537333db61d249c314e178e8f70cbde857c2ec45dba68fba5df8fcff1e8ab",
+      "independentExpected": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      },
+      "ownedInputRoots": [
+        [
+          "ref",
+          "o0"
+        ],
+        [
+          "ref",
+          "o6"
+        ]
+      ],
+      "ownedRootProps": [
+        [
+          [
+            "state",
+            [
+              "ref",
+              "o1"
+            ]
+          ],
+          [
+            "event",
+            [
+              "ref",
+              "o5"
+            ]
+          ],
+          [
+            "receipt",
+            [
+              "null"
+            ]
+          ]
+        ],
+        [
+          [
+            "transientRetries",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "checksBeforeRetry",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "recheckMs",
+            [
+              "num",
+              30000
+            ]
+          ]
+        ]
+      ],
+      "publicDigest": "00d8be6a25f03676653adb760fdcd3f55c5aa351c2731c309ce22b8dd7fd9b6f",
+      "generatedRecords": 34,
+      "verification": "owned-tracer",
+      "ownedTracerBoundaryFailure": null,
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "pfc4da3c24134a89924289214",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "fc4da3c24134a899242892146f5b1fc525b164a25b8f182fd88902815357ee36",
+      "applicationSourceDigest": "fd404a7f60a62573d9de335bcf010e1fcb815b05020cbf9513e427b2ab5e8c09",
+      "compiledSelectedSourceDigest": "fc4da3c24134a899242892146f5b1fc525b164a25b8f182fd88902815357ee36",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "fc4da3c24134a899242892146f5b1fc525b164a25b8f182fd88902815357ee36",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "8ffea81d0580e4c455597f7a724c4f7c57a66691cee8ae452b84f0a3bd99ad62",
+      "independentExpected": {
+        "action": "reconcile",
+        "reason": "no receipt for pending-restart:reserve yet; look again",
+        "waitMs": 30000
+      },
+      "ownedInputRoots": [
+        [
+          "ref",
+          "o0"
+        ],
+        [
+          "ref",
+          "o7"
+        ]
+      ],
+      "ownedRootProps": [
+        [
+          [
+            "state",
+            [
+              "ref",
+              "o1"
+            ]
+          ],
+          [
+            "event",
+            [
+              "ref",
+              "o6"
+            ]
+          ],
+          [
+            "receipt",
+            [
+              "null"
+            ]
+          ]
+        ],
+        [
+          [
+            "transientRetries",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "checksBeforeRetry",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "recheckMs",
+            [
+              "num",
+              30000
+            ]
+          ]
+        ]
+      ],
+      "publicDigest": "9b489e18c68442aede6d9a7afb5f757ac1cd05ab69401a676e58429054e91963",
+      "generatedRecords": 28,
+      "verification": "owned-tracer",
+      "ownedTracerBoundaryFailure": null,
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "reconcile",
+        "reason": "no receipt for pending-restart:reserve yet; look again",
+        "waitMs": 30000
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "pa1ddc4582ea2740779270ae6",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "a1ddc4582ea2740779270ae6e1b631029187e14220f0710ef6ac91cc96714768",
+      "applicationSourceDigest": "fd404a7f60a62573d9de335bcf010e1fcb815b05020cbf9513e427b2ab5e8c09",
+      "compiledSelectedSourceDigest": "a1ddc4582ea2740779270ae6e1b631029187e14220f0710ef6ac91cc96714768",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "a1ddc4582ea2740779270ae6e1b631029187e14220f0710ef6ac91cc96714768",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "a245f3820f34112c3ba437702716542b092ea054f9dba1218887874bd06a22e4",
+      "independentExpected": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      },
+      "ownedInputRoots": [
+        [
+          "ref",
+          "o0"
+        ],
+        [
+          "ref",
+          "o6"
+        ]
+      ],
+      "ownedRootProps": [
+        [
+          [
+            "state",
+            [
+              "ref",
+              "o1"
+            ]
+          ],
+          [
+            "event",
+            [
+              "ref",
+              "o5"
+            ]
+          ],
+          [
+            "receipt",
+            [
+              "null"
+            ]
+          ]
+        ],
+        [
+          [
+            "transientRetries",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "checksBeforeRetry",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "recheckMs",
+            [
+              "num",
+              30000
+            ]
+          ]
+        ]
+      ],
+      "publicDigest": "6f7c6496e9719689ff95f1f39acf0a85daf797ac0e90f43bd99abfc32ba7af0c",
+      "generatedRecords": 34,
+      "verification": "owned-tracer",
+      "ownedTracerBoundaryFailure": null,
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "pa6ec32a107a66436bf038e18",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "a6ec32a107a66436bf038e18b505ff219b856328d3ca23ed5dd1e820fb128760",
+      "applicationSourceDigest": null,
+      "compiledSelectedSourceDigest": "a6ec32a107a66436bf038e18b505ff219b856328d3ca23ed5dd1e820fb128760",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "a6ec32a107a66436bf038e18b505ff219b856328d3ca23ed5dd1e820fb128760",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "da0dd544bbc3807031f8a9da162b72f2cb7ad287d92252b5e645fc82fac0f775",
+      "independentExpected": {
+        "action": "release",
+        "reason": "the order was cancelled: the reserved stock stands and the order is being undone"
+      },
+      "ownedInputRoots": [],
+      "ownedRootProps": [],
+      "publicDigest": null,
+      "generatedRecords": 0,
+      "verification": "compiled-source-v8",
+      "ownedTracerBoundaryFailure": "Unmodeled ordinary [[Get]] or exotic property",
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "release",
+        "reason": "the order was cancelled: the reserved stock stands and the order is being undone"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "pd5a9466b7126b2aafb980785",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "d5a9466b7126b2aafb98078566feb84196c122faceacc2c36dd1c12846cbdc1d",
+      "applicationSourceDigest": "fd404a7f60a62573d9de335bcf010e1fcb815b05020cbf9513e427b2ab5e8c09",
+      "compiledSelectedSourceDigest": "d5a9466b7126b2aafb98078566feb84196c122faceacc2c36dd1c12846cbdc1d",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "d5a9466b7126b2aafb98078566feb84196c122faceacc2c36dd1c12846cbdc1d",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "0497bbee18def14d7bc9d077042ef748120a22f908872a3521eb36ae3e9635f9",
+      "independentExpected": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      },
+      "ownedInputRoots": [
+        [
+          "ref",
+          "o0"
+        ],
+        [
+          "ref",
+          "o6"
+        ]
+      ],
+      "ownedRootProps": [
+        [
+          [
+            "state",
+            [
+              "ref",
+              "o1"
+            ]
+          ],
+          [
+            "event",
+            [
+              "ref",
+              "o5"
+            ]
+          ],
+          [
+            "receipt",
+            [
+              "null"
+            ]
+          ]
+        ],
+        [
+          [
+            "transientRetries",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "checksBeforeRetry",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "recheckMs",
+            [
+              "num",
+              30000
+            ]
+          ]
+        ]
+      ],
+      "publicDigest": "11a8eecaac934c507e6e547fc993b81c0481a7cbcd605b53bd8ba44922d54ec8",
+      "generatedRecords": 34,
+      "verification": "owned-tracer",
+      "ownedTracerBoundaryFailure": null,
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "p4c3865584edb136f45ee261c",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "4c3865584edb136f45ee261cb4f3451b09b6d1c46c8a4e17e42df1aced9f63e4",
+      "applicationSourceDigest": "fd404a7f60a62573d9de335bcf010e1fcb815b05020cbf9513e427b2ab5e8c09",
+      "compiledSelectedSourceDigest": "4c3865584edb136f45ee261cb4f3451b09b6d1c46c8a4e17e42df1aced9f63e4",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "4c3865584edb136f45ee261cb4f3451b09b6d1c46c8a4e17e42df1aced9f63e4",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "669e025bc4e823e98b824eb2bac1d63dedd224f0b4ccad863340f2023bc2478d",
+      "independentExpected": {
+        "action": "charge",
+        "reason": "the stock is reserved, so the customer is charged"
+      },
+      "ownedInputRoots": [
+        [
+          "ref",
+          "o0"
+        ],
+        [
+          "ref",
+          "o7"
+        ]
+      ],
+      "ownedRootProps": [
+        [
+          [
+            "state",
+            [
+              "ref",
+              "o1"
+            ]
+          ],
+          [
+            "event",
+            [
+              "ref",
+              "o6"
+            ]
+          ],
+          [
+            "receipt",
+            [
+              "null"
+            ]
+          ]
+        ],
+        [
+          [
+            "transientRetries",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "checksBeforeRetry",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "recheckMs",
+            [
+              "num",
+              30000
+            ]
+          ]
+        ]
+      ],
+      "publicDigest": "9675417d211b0ca452a8edb1467614835ca1d61751f91a221ba9be11ef408c58",
+      "generatedRecords": 36,
+      "verification": "owned-tracer",
+      "ownedTracerBoundaryFailure": null,
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "charge",
+        "reason": "the stock is reserved, so the customer is charged"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "p3935b896659829551541b991",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "3935b896659829551541b991ebc2916ea3df7c21a5ebc5b9fb7975af2da961b7",
+      "applicationSourceDigest": null,
+      "compiledSelectedSourceDigest": "3935b896659829551541b991ebc2916ea3df7c21a5ebc5b9fb7975af2da961b7",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "3935b896659829551541b991ebc2916ea3df7c21a5ebc5b9fb7975af2da961b7",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "5cbe5145a1a2fc1a6a9c4496ea80f47b468c4fdc650c6070385e87d0e02c49bc",
+      "independentExpected": {
+        "action": "refund",
+        "reason": "the order was cancelled: the charge stands and the order is being undone"
+      },
+      "ownedInputRoots": [],
+      "ownedRootProps": [],
+      "publicDigest": null,
+      "generatedRecords": 0,
+      "verification": "compiled-source-v8",
+      "ownedTracerBoundaryFailure": "Unmodeled ordinary [[Get]] or exotic property",
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "refund",
+        "reason": "the order was cancelled: the charge stands and the order is being undone"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "p6e7e2ee40f207deab8cde521",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "6e7e2ee40f207deab8cde5216830aeb9e2b6b720965d87b8f4c5c98cdf2df626",
+      "applicationSourceDigest": null,
+      "compiledSelectedSourceDigest": "6e7e2ee40f207deab8cde5216830aeb9e2b6b720965d87b8f4c5c98cdf2df626",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "6e7e2ee40f207deab8cde5216830aeb9e2b6b720965d87b8f4c5c98cdf2df626",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "ddbce357ead5e5b965e5f43578a88412d56d42f6647c1f2a7e0686c2ce2423c1",
+      "independentExpected": {
+        "action": "release",
+        "reason": "the order was cancelled: the reserved stock stands and the order is being undone"
+      },
+      "ownedInputRoots": [],
+      "ownedRootProps": [],
+      "publicDigest": null,
+      "generatedRecords": 0,
+      "verification": "compiled-source-v8",
+      "ownedTracerBoundaryFailure": "Unmodeled ordinary [[Get]] or exotic property",
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "release",
+        "reason": "the order was cancelled: the reserved stock stands and the order is being undone"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "pdf19579894f140542b801c8c",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "df19579894f140542b801c8c9e932b7e93bfc3d59bc211b51f805dc89b274aa3",
+      "applicationSourceDigest": "fd404a7f60a62573d9de335bcf010e1fcb815b05020cbf9513e427b2ab5e8c09",
+      "compiledSelectedSourceDigest": "df19579894f140542b801c8c9e932b7e93bfc3d59bc211b51f805dc89b274aa3",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "df19579894f140542b801c8c9e932b7e93bfc3d59bc211b51f805dc89b274aa3",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "242c17f5c08cc8b91259f6b3c3138162f923532be441093da935c5b3939778bd",
+      "independentExpected": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      },
+      "ownedInputRoots": [
+        [
+          "ref",
+          "o0"
+        ],
+        [
+          "ref",
+          "o6"
+        ]
+      ],
+      "ownedRootProps": [
+        [
+          [
+            "state",
+            [
+              "ref",
+              "o1"
+            ]
+          ],
+          [
+            "event",
+            [
+              "ref",
+              "o5"
+            ]
+          ],
+          [
+            "receipt",
+            [
+              "null"
+            ]
+          ]
+        ],
+        [
+          [
+            "transientRetries",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "checksBeforeRetry",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "recheckMs",
+            [
+              "num",
+              30000
+            ]
+          ]
+        ]
+      ],
+      "publicDigest": "3a7db2e5e74c60cfd3d823dcb3400f2319f96efac38371988f917a3a6f344dce",
+      "generatedRecords": 34,
+      "verification": "owned-tracer",
+      "ownedTracerBoundaryFailure": null,
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "reserve",
+        "reason": "a new order reserves its stock"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "p46878ac0460eb4632952fb9f",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "46878ac0460eb4632952fb9fcc7719f8296a2b376cf8c8196c09a0f0d1686aa0",
+      "applicationSourceDigest": "fd404a7f60a62573d9de335bcf010e1fcb815b05020cbf9513e427b2ab5e8c09",
+      "compiledSelectedSourceDigest": "46878ac0460eb4632952fb9fcc7719f8296a2b376cf8c8196c09a0f0d1686aa0",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "46878ac0460eb4632952fb9fcc7719f8296a2b376cf8c8196c09a0f0d1686aa0",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "3e7fcfde41be28ee53d7e41d793b0ac4d5816157eecd0a29da69ec1a1c242838",
+      "independentExpected": {
+        "action": "charge",
+        "reason": "the stock is reserved, so the customer is charged"
+      },
+      "ownedInputRoots": [
+        [
+          "ref",
+          "o0"
+        ],
+        [
+          "ref",
+          "o7"
+        ]
+      ],
+      "ownedRootProps": [
+        [
+          [
+            "state",
+            [
+              "ref",
+              "o1"
+            ]
+          ],
+          [
+            "event",
+            [
+              "ref",
+              "o6"
+            ]
+          ],
+          [
+            "receipt",
+            [
+              "null"
+            ]
+          ]
+        ],
+        [
+          [
+            "transientRetries",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "checksBeforeRetry",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "recheckMs",
+            [
+              "num",
+              30000
+            ]
+          ]
+        ]
+      ],
+      "publicDigest": "c495fa61e50b80aad73d28643036f715f0a85eaccc3c5bcd6a30afa5d89224f2",
+      "generatedRecords": 36,
+      "verification": "owned-tracer",
+      "ownedTracerBoundaryFailure": null,
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "charge",
+        "reason": "the stock is reserved, so the customer is charged"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "p0fe8223b5b445b900ce3a6e0",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "0fe8223b5b445b900ce3a6e065b09680268f0f673bbb080848d84416cfbf7856",
+      "applicationSourceDigest": "fd404a7f60a62573d9de335bcf010e1fcb815b05020cbf9513e427b2ab5e8c09",
+      "compiledSelectedSourceDigest": "0fe8223b5b445b900ce3a6e065b09680268f0f673bbb080848d84416cfbf7856",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "0fe8223b5b445b900ce3a6e065b09680268f0f673bbb080848d84416cfbf7856",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "8bfcf808a1cd0fead4061c555229bad483dd101d577bfc4dd3bdbbbfc4ceebf8",
+      "independentExpected": {
+        "action": "ship",
+        "reason": "the payment is done, so the order ships"
+      },
+      "ownedInputRoots": [
+        [
+          "ref",
+          "o0"
+        ],
+        [
+          "ref",
+          "o8"
+        ]
+      ],
+      "ownedRootProps": [
+        [
+          [
+            "state",
+            [
+              "ref",
+              "o1"
+            ]
+          ],
+          [
+            "event",
+            [
+              "ref",
+              "o7"
+            ]
+          ],
+          [
+            "receipt",
+            [
+              "null"
+            ]
+          ]
+        ],
+        [
+          [
+            "transientRetries",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "checksBeforeRetry",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "recheckMs",
+            [
+              "num",
+              30000
+            ]
+          ]
+        ]
+      ],
+      "publicDigest": "554ad42fae7172c788efb435ef87c14aaf8356fa2e115f375ab75b47c246de1f",
+      "generatedRecords": 37,
+      "verification": "owned-tracer",
+      "ownedTracerBoundaryFailure": null,
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "ship",
+        "reason": "the payment is done, so the order ships"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "pb43f5cd06bae972e4cea5c6f",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "b43f5cd06bae972e4cea5c6f2560956d38e7c2c8afb4e2743b44fb03b47277fc",
+      "applicationSourceDigest": "fd404a7f60a62573d9de335bcf010e1fcb815b05020cbf9513e427b2ab5e8c09",
+      "compiledSelectedSourceDigest": "b43f5cd06bae972e4cea5c6f2560956d38e7c2c8afb4e2743b44fb03b47277fc",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "b43f5cd06bae972e4cea5c6f2560956d38e7c2c8afb4e2743b44fb03b47277fc",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "5896c1b15fb9258e86e4ed3438e5a2dacd12ed24b7b09f1153757378cf72963c",
+      "independentExpected": {
+        "action": "wait",
+        "reason": "the order is shipped"
+      },
+      "ownedInputRoots": [
+        [
+          "ref",
+          "o0"
+        ],
+        [
+          "ref",
+          "o9"
+        ]
+      ],
+      "ownedRootProps": [
+        [
+          [
+            "state",
+            [
+              "ref",
+              "o1"
+            ]
+          ],
+          [
+            "event",
+            [
+              "ref",
+              "o8"
+            ]
+          ],
+          [
+            "receipt",
+            [
+              "null"
+            ]
+          ]
+        ],
+        [
+          [
+            "transientRetries",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "checksBeforeRetry",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "recheckMs",
+            [
+              "num",
+              30000
+            ]
+          ]
+        ]
+      ],
+      "publicDigest": "ff9bb3b9c60db5662caf92b69c83644f581e22a0f8373d2e1a53b4e7b853702b",
+      "generatedRecords": 38,
+      "verification": "owned-tracer",
+      "ownedTracerBoundaryFailure": null,
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "wait",
+        "reason": "the order is shipped"
+      }
+    },
+    {
+      "invocationId": "natlang2",
+      "entry": "crisp",
+      "programId": "p80d71e721c8a89c13b7fa28b",
+      "trackId": "worker:module1",
+      "realmId": "module1",
+      "sourceDigest": "80d71e721c8a89c13b7fa28bb7d27384afd51c8e6eaf6d8ecac4a212334c738e",
+      "applicationSourceDigest": "fd404a7f60a62573d9de335bcf010e1fcb815b05020cbf9513e427b2ab5e8c09",
+      "compiledSelectedSourceDigest": "80d71e721c8a89c13b7fa28bb7d27384afd51c8e6eaf6d8ecac4a212334c738e",
+      "trustedPolicyBinding": "exact application crisp.ts bytes enforced before selected compilation",
+      "observedEntrySourceDigest": "80d71e721c8a89c13b7fa28bb7d27384afd51c8e6eaf6d8ecac4a212334c738e",
+      "originalCrispSourceDigest": "e24637da2698a32470d225f01e5f3366113b7b9d9b46aab26ee6d7977fa22bae",
+      "projectionDefinitionDigest": "d18b284176de6ee7fc5a612bd28767e5cb3f38fc71ae39167b1f46e1a9dcd641",
+      "snapshotLimitsDigest": "befe84e23b3abf76cfcf82ce99c60acc6fb5cec4e851737d451fa85781ba59f5",
+      "independentExpected": {
+        "action": "wait",
+        "reason": "the order is shipped"
+      },
+      "ownedInputRoots": [
+        [
+          "ref",
+          "o0"
+        ],
+        [
+          "ref",
+          "o9"
+        ]
+      ],
+      "ownedRootProps": [
+        [
+          [
+            "state",
+            [
+              "ref",
+              "o1"
+            ]
+          ],
+          [
+            "event",
+            [
+              "ref",
+              "o8"
+            ]
+          ],
+          [
+            "receipt",
+            [
+              "null"
+            ]
+          ]
+        ],
+        [
+          [
+            "transientRetries",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "checksBeforeRetry",
+            [
+              "num",
+              2
+            ]
+          ],
+          [
+            "recheckMs",
+            [
+              "num",
+              30000
+            ]
+          ]
+        ]
+      ],
+      "publicDigest": "00ba19f4e3bfc3d68c3fefd310c3c3600bf10544309db43767d791c67e88242b",
+      "generatedRecords": 38,
+      "verification": "owned-tracer",
+      "ownedTracerBoundaryFailure": null,
+      "controlledProjectionRecords": 3,
+      "expected": {
+        "action": "wait",
+        "reason": "the order is shipped"
+      }
+    }
+  ],
+  "cleanup": {
+    "temporaryDirectoryRemoved": true
+  }
+}
