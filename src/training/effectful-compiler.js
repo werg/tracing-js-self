@@ -110,6 +110,10 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   const inputGraph={roots:initial.roots,objects:initial.objects.map(node=>({id:node.id,
     kind:node.kind,...(node.prototype===null?{prototype:null}:{}),
     properties:node.properties.map(({key,value})=>({key,value}))}))};
+  // The admitted entry graph is descriptor-inspected ordinary data. A guest
+  // allocation can have a getter or proxy-like behavior not encoded by the
+  // public heap's basic property map; do not reconstruct it as a pure read.
+  const certifiedDataIdentities=new Set(inputGraph.objects.map(node=>node.id));
   harness.admitInvocation({programId,invocationId,trackId,realmId,triggerId,
     inputGraph,realmPolicy,completionPolicy:'await-returned-promise'});
   const certificates=[],elided=[],checkpoints=[],rows=new Map(semantic.events.map(row=>[row.journalEvent,row]));
@@ -161,7 +165,8 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       },
       hasOwnData(object,key){
         const node=selected.heap.get(object);
-        return ['object','array'].includes(node?.kind)&&node.properties.has(key);
+        return certifiedDataIdentities.has(object)&&
+          ['object','array'].includes(node?.kind)&&node.properties.has(key);
       },
       readProperty:(object,key)=>selected.readProperty(object,key)
     };
