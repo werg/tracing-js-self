@@ -47,7 +47,8 @@ function renderOne(kind,f) {
     case 'return':return 'return '+show(f.value);
     case 'throw':return 'throw '+show(f.value);
     case 'request':return 'request '+f.effect+' '+f.operation+'('+
-      f.arguments.map(show).join(', ')+')';
+      f.arguments.map(show).join(', ')+') in '+f.invocation+
+      ' @'+f.site.start+':'+f.site.end;
     case 'observe':return 'observe '+f.effect+' '+f.status+' '+show(f.result);
     case 'job':return 'job '+f.action+' '+f.job+' owner '+f.owner;
     case 'end':return 'end '+f.kind;

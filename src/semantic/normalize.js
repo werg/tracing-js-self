@@ -13,7 +13,8 @@ const selection={
   'property.read':'read','property.write':'write','property.update':'write',
   'call.enter':'call','call.return':'return','completion.throw':'throw',
   'control.branch':'branch','environment.iteration':'carry','async.await':'await',
-  'external.input.deliver':'observe','job.enter':'resume'
+  'external.input.deliver':'observe','external.callback.enqueue':'callback',
+  'job.enter':'resume'
 };
 function allocation(p) {
   const obj=p.after;
@@ -152,7 +153,13 @@ export function normalizeJournal(bundle) {
         op=r.op='request';
         const created=e.stateChanges.find(p=>p.table==='effects' && p.id===effect.effectId);
         r.effect=effect.effectId;r.operation=created?.after?.operation??null;
-        r.arguments=created?.after?.request?JSON.parse(created.after.request.payload):[];
+        // Preserve evaluated identity-bearing argument tags, never reinterpret
+        // the JSON transport payload as if it were a JS operand list.
+        if(!created?.after?.request||!Array.isArray(created.after.args)||
+           created.after.frameId!==e.invocationId||!e.siteId)
+          throw new Error('External request lacks an originating JS invocation');
+        r.arguments=structuredClone(created.after.args);
+        r.argumentOrigins=structuredClone(created.after.argOrigins);
         r.codec=created?.after?.request?.codec??null;
         r.payload=created?.after?.request?.payload??null;
         r.signature=created?.after?.request?.signature??null;

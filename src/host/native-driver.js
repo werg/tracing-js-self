@@ -5,6 +5,7 @@ import {createRuntime} from '../runtime.js';
 import {hostOperation} from './operations.js';
 import {validateBundle} from '../validation.js';
 import {replayExact} from '../replay.js';
+import {compilePendingEffectJS} from '../effect-javascript.js';
 
 const primitive=value=>value===null||
   ['undefined','boolean','number','string','bigint'].includes(typeof value);
@@ -32,12 +33,30 @@ export async function executeWithNativeServices({text,entry=null,services={},max
   if(signal?.aborted)throw signal.reason??new Error('Native driver aborted');
   const pending=new Set(),arrivals=[];
   let wake=null,active=true;
-  const settled=(effectId,value,abrupt)=>{
-    // A cancelled run must never synthesize a guest-visible host arrival.
-    if(!active||signal?.aborted||!pending.has(effectId))return;
-    arrivals.push({effectId,value,abrupt});
+  const enqueue=item=>{
+    if(!active||signal?.aborted)return;
+    arrivals.push(item);
     if(wake){const notify=wake;wake=null;notify();}
   };
+  // The emitted effect JS always calls this bridge; no service call bypasses
+  // the native-to-owned settlement or callback scheduling boundary.
+  const bridge=Object.freeze({
+    settle:(effectId,value,abrupt=false)=>{
+      if(!pending.has(effectId))return;
+      if(!primitive(value)){
+        value='Native service returned a non-primitive result';abrupt=true;
+      }
+      enqueue({kind:'settlement',effectId,value,abrupt});
+    },
+    callback:(effectId,callbackId)=>(...args)=>{
+      if(!active||signal?.aborted||!pending.has(effectId))
+        throw new Error('Owned callback is no longer active');
+      if(args.length>32||!args.every(primitive))
+        throw new TypeError('Owned callback requires at most 32 primitive arguments');
+      enqueue({kind:'callback',effectId,callbackId,args});
+      return undefined; // Guest closure runs later in the owned VM.
+    }
+  });
   const adapters=Object.create(null);
   for(const operation of Reflect.ownKeys(services)){
     // Do not execute accessors or proxy traps merely by registering services.
@@ -52,17 +71,16 @@ export async function executeWithNativeServices({text,entry=null,services={},max
       if(pending.has(context.effectId))throw new Error('Duplicate native dispatch');
       pending.add(context.effectId);
       const input=Object.freeze({...context,signal});
-      // Native promises settle strictly outside the owned interpreter.
+      // Real external JS is compiled once, after owned dispatch. Service
+      // handlers still receive the existing native-driver context signature.
+      const javascript=compilePendingEffectJS(runtime,context.effectId);
       Promise.resolve().then(()=>{
-        // Dispatch was journaled before this microtask. Abort before starting
-        // native work means the side effect must not be invoked at all.
         if(!active||signal?.aborted)return;
-        return service(input);
-      }).then(value=>{
-        if(!primitive(value))
-          settled(context.effectId,'Native service returned a non-primitive result',true);
-        else settled(context.effectId,value,false);
-      },error=>settled(context.effectId,errorMessage(error),true));
+        const wrapped=(...args)=>service(Object.freeze({...input,
+          args:Object.freeze(args)}));
+        return new Function('effects','bridge',javascript)(
+          {[operation]:wrapped},bridge);
+      }).catch(error=>bridge.settle(context.effectId,errorMessage(error),true));
       return {kind:'pending'};
     };
   }
@@ -79,13 +97,22 @@ export async function executeWithNativeServices({text,entry=null,services={},max
     for(;;){
       if(signal?.aborted)throw signal.reason??new Error('Native driver aborted');
       // Arrival is committed independently before any guest-visible delivery.
-      for(const {effectId,value,abrupt} of arrivals.splice(0)){
-        if(!pending.delete(effectId))throw new Error('Unexpected duplicate service completion');
-        const effect=runtime.state.effects[effectId];
-        if(!effect)throw new Error('Unknown native completion effect');
-        const received=runtime.recordInputArrival({effectId,
-          kind:effect.kind==='promise'?'completion':'immediate',value,abrupt});
-        runtime.deliverInput(received.inputId);
+      // One environment event, then owned scheduler. Native callback
+      // reentry cannot skip ahead of an earlier queued callback or run guest
+      // source in V8, even when the service settles in the same microtask.
+      if(arrivals.length){
+        const next=arrivals.shift();
+        if(next.kind==='callback'){
+          runtime.recordExternalCallback(next);
+        }else{
+          const {effectId,value,abrupt}=next;
+          if(!pending.delete(effectId))throw new Error('Unexpected duplicate service completion');
+          const effect=runtime.state.effects[effectId];
+          if(!effect)throw new Error('Unknown native completion effect');
+          const received=runtime.recordInputArrival({effectId,
+            kind:effect.kind==='promise'?'completion':'immediate',value,abrupt});
+          runtime.deliverInput(received.inputId);
+        }
       }
       const progress=runtime.drive();
       if(progress.kind!=='waiting'){

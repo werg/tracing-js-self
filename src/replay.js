@@ -70,6 +70,7 @@ function nextInternalAction(runtime) {
 }
 function assertSchedulerAction(runtime, event) {
   if (event.operation === 'external.input.arrive' ||
+      event.operation === 'external.callback.enqueue' ||
       event.operation === 'external.input.deliver') return;
   const expected = nextInternalAction(runtime);
   const action = ['effect.dispatch','job.enter','host.task.enter'].includes(event.operation)
@@ -171,6 +172,15 @@ export function replayExact(bundle) {
         case 'external.input.arrive':
           inputArrival(runtime, expected);
           break;
+        case 'external.callback.enqueue': {
+          const patch=expected.stateChanges.find(p=>p.table==='control'&&p.id==='a0');
+          const job=patch?.after?.queue?.at(-1);
+          if(job?.kind!=='external-callback')
+            fail('Missing external callback job',expected.eventId);
+          runtime.recordExternalCallback({effectId:causeId(expected,'effect','effectId'),
+            callbackId:job.functionId,args:job.args});
+          break;
+        }
         case 'external.input.deliver':
           runtime.deliverInput(causeId(expected, 'input', 'inputId'));
           break;

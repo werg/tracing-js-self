@@ -2,7 +2,7 @@
 // In particular, canonical inbox state, host-arrival records, state roots, indexes,
 // hashes and raw state patches are NEVER exposed to the model context.
 export function causalPrefix(bundle,{throughEventId=null}={}) {
-  if(!['semantic-tracing-run/1','semantic-tracing-run/2'].includes(bundle.manifest?.schema))throw new Error('Unsupported run bundle');
+  if(bundle.manifest?.schema!=='semantic-tracing-run/2')throw new Error('Unsupported run bundle');
   const limit=throughEventId ? bundle.events.findIndex(e=>e.eventId===throughEventId) : bundle.events.length-1;
   if(throughEventId && limit<0)throw new Error('Unknown boundary');
   const visible=bundle.events.slice(0,limit+1).filter(e=>e.operation!=='external.input.arrive');
@@ -49,7 +49,13 @@ export function causalPrefix(bundle,{throughEventId=null}={}) {
       const created=e.stateChanges.filter(p=>p.table==='effects'&&p.before===null);
       if(created.length)row.outgoing=created.map(p=>({effect:local(effects,p.id,'fx'),
         operation:p.after.operation,codec:p.after.request.codec,
-        signature:p.after.request.signature,payload:p.after.request.payload}));
+        signature:p.after.request.signature,payload:p.after.request.payload,
+        arguments:p.after.args.map(opaque),
+        producers:p.after.argOrigins.map(origin=>origin?events[origin]??null:null)}));
+    }
+    if(e.operation==='external.callback.enqueue'){
+      const fx=e.causes.find(x=>x.kind==='effect');
+      row.externalCallback=fx?local(effects,fx.effectId,'fx'):null;
     }
     if(e.operation==='external.input.deliver') {
       const input=e.causes.find(x=>x.kind==='input');

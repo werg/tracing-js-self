@@ -180,6 +180,11 @@
       "kind": "external"
     },
     {
+      "operationId": "external.callback.enqueue",
+      "version": 1,
+      "kind": "external"
+    },
+    {
       "operationId": "external.input.arrive",
       "version": 1,
       "kind": "external"

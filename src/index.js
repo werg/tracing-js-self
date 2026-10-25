@@ -6,3 +6,4 @@ export { validateBundle, reconstruct, TraceValidationError } from './validation.
 export { replayExact, TraceReplayError } from './replay.js';
 export { causalPrefix } from './causal.js';
 export {executeWithNativeServices} from './host/native-driver.js';
+export {compileExternalEffectsJS,compilePendingEffectJS,createOwnedEffectBridge} from './effect-javascript.js';

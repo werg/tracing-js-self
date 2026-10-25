@@ -47,6 +47,77 @@ continuations, and actual model training comparisons still have independent
 acceptance work. See the [implementation ledger](docs/TRAINING_IMPLEMENTATION.md)
 and [complete redesign plan](docs/SEMANTIC_TRACE_REDESIGN_PLAN.md).
 
+## Executable external effects
+
+`compileExternalEffectsJS(bundle)` returns a JavaScript **function body** for
+the external operations actually dispatched by a validated owned run. This is
+for deliberate effect replay in an independent JS engine, **not** for rebuilding
+the whole guest program, its results, or async scheduling. It does not perform
+any external effects until you execute the returned string.
+
+```js
+import {compileExternalEffectsJS} from 'tracing-js-self';
+
+const javascript = compileExternalEffectsJS(bundle);
+const effects = {'demo.store': (key, value) => save(key, value)};
+new Function('effects','bridge',javascript)(effects); // bridge needed only for registered callbacks
+```
+
+For an **active** external effect, the live entry point also returns code
+that routes both synchronous exceptions and native Promise settlements into
+the journalled owned input path:
+
+```js
+import {compilePendingEffectJS,createOwnedEffectBridge} from 'tracing-js-self';
+const effect = Object.values(runtime.state.effects).find(e => e.dispatch === 'dispatched' && e.external === 'pending');
+const js = compilePendingEffectJS(runtime,effect.id);
+new Function('effects','bridge',js)(effects,createOwnedEffectBridge(runtime));
+// After the service settles, drive the owned runtime at the next legal point.
+```
+
+The live bridge invokes `recordInputArrival` and `deliverInput` for
+both normal and rejected native Promise settlements. For a **declared callback
+slot**, `bridge.callback(effectId, callbackId)` constructs a native callable
+which queues `external.callback.enqueue` and runs the *original guest closure*
+through the owned VM's FIFO scheduler; it never runs guest source natively.
+The currently implemented example is `host.withCallback(key, fn)`, exposed as
+the versioned `demo.withCallback/1` capability. The native service receives
+`{args:[key,callback], effectId, request, signal,...}`, and callback arguments
+must be primitives. The host's synchronous callback return value is always
+`undefined`; callbacks needing a synchronous guest return are unsupported.
+
+```js
+const result=await executeWithNativeServices({
+  text:`async function run(){
+    let total=0;
+    await host.withCallback('value', function(n){total+=n;});
+    host.store('total',total);
+  } run();`,
+  services:{
+    'demo.withCallback':({args})=>{
+      args[1](7); // queue the owned guest closure, not native guest execution
+      return Promise.resolve();
+    },
+    'demo.store':({args})=>console.log(args)
+  }
+});
+replayExact(result.bundle); // does NOT repeat native calls
+```
+
+General DOM/Node/Web callback APIs, object-valued DOM Event arguments,
+callbacks with native-dependent synchronous return values, and persistent
+subscriptions beyond the lifetime of a pending service are **not yet supported**.
+Add them through explicit callback-slot and argument-codec declarations, never
+by calling guest closures directly in the native realm.
+
+The emitted JavaScript calls `effects["operation"](...materializedArgs)` in
+recorded dispatch order. The argument values are copied directly from the
+verified immutable request payload (including the snapshot of a later-mutated
+object). All required handlers are checked before the first call. Handler
+results do not resume the source program, and asynchronous completions are not
+reconstructed. Running the generated string **executes effects again**;
+use only trusted archives and deliberately supplied handlers.
+
 ## Quick start
 
 Requires Node.js 20 or later. Acorn 8.15.0 is the integrity-locked parser dependency
@@ -122,9 +193,8 @@ archive. Candidate targets still require the admission gates above.
 `drive()` reports `terminated`, `waiting`, `runtime.failure`, or `unsupported`.
 Recorded guest throws are terminal in the bounded script profile; catch/finally
 and async rejection delivery remain open. The locally verified training profile
-admits only synchronous, effect-free, non-throwing entries. New archives use
-`semantic-tracing-run/2`; the structural reader supports old `/1` archives, while
-exact replay requires `/2`. The language profiles remain separate:
+admits only synchronous, effect-free, non-throwing entries. New archives and supported readers use `semantic-tracing-run/2`; older `/1`
+archives require an explicit offline migration and are not silently accepted. The language profiles remain separate:
 `bounded-js-subset/2` for the original script path and `training-js/1` for strict
 function entry.
 

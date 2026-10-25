@@ -14,6 +14,21 @@ const semanticNodes=new Set([
 ]);
 const opaqueEffects=new Set(['CallExpression','NewExpression','AwaitExpression',
   'AssignmentExpression','UpdateExpression','ThrowStatement']);
+// Source callsite attribution shares the existing AST inventory. There is no
+// separate parser or second effect-call grammar in the serving controller.
+function directHostOperation(node) {
+  const callee=node.callee;
+  if(callee?.type!=='MemberExpression'||callee.object?.type!=='Identifier')return null;
+  const name=callee.computed?
+    (callee.property?.type==='Literal'&&typeof callee.property.value==='string'?
+      callee.property.value:null):
+    (callee.property?.type==='Identifier'?callee.property.name:null);
+  if(!name)return null;
+  if(callee.object.name==='host')return 'demo.'+name;
+  if(callee.object.name==='Date'&&name==='now')return 'platform.dateNow';
+  if(callee.object.name==='console')return 'platform.console.'+name;
+  return null;
+}
 export function analyzeSemanticProgram(source) {
   if(typeof source!=='string')throw new TypeError('Missing static program source');
   const ast=parse(source,{ecmaVersion:'latest',sourceType:'script',allowReturnOutsideFunction:false});
@@ -23,7 +38,9 @@ export function analyzeSemanticProgram(source) {
     if(semanticNodes.has(node.type)){
       const key=node.start+':'+node.end+':'+node.type;
       if(!dictionary.has(key))
-        dictionary.set(key,{start:node.start,end:node.end,role:node.type});
+        dictionary.set(key,{start:node.start,end:node.end,role:node.type,
+          ...(node.type==='CallExpression'&&directHostOperation(node)?
+            {operation:directHostOperation(node)}:{})});
     }
     if(opaqueEffects.has(node.type))
       effects.push({start:node.start,end:node.end,type:node.type});

@@ -12,7 +12,7 @@ export class TraceValidationError extends Error {
 function fail(message,eventId=null){throw new TraceValidationError(message,eventId);}
 /** Apply the canonical per-entity typed patches to an independently held state. */
 export function reconstruct(bundle,{throughEventId=null}={}) {
-  if(!['semantic-tracing-run/1','semantic-tracing-run/2'].includes(bundle.manifest?.schema))fail('Unknown run schema');
+  if(bundle.manifest?.schema!=='semantic-tracing-run/2')fail('Unknown run schema');
   const state=clone(bundle.initialState);
   const sites=new Set(bundle.sites.map(s=>s.siteId));
   const seen=new Set();
@@ -27,8 +27,27 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     }
     const job=e.operation==='job.enter'?state.control.a0.queue[0]:null;
     const queuedBefore=job?state.control.a0.queue.slice(1):null;
+    if(e.operation==='external.callback.enqueue'){
+      const effect=e.causes.filter(c=>c.kind==='effect');
+      const patch=e.stateChanges.find(p=>p.table==='control'&&p.id==='a0');
+      const job=patch?.after?.queue?.at(-1);
+      if(effect.length!==1||e.stateChanges.length!==1||!job||
+         job.kind!=='external-callback'||job.effectId!==effect[0].effectId||
+         state.effects[job.effectId]?.dispatch!=='dispatched'||
+         state.effects[job.effectId]?.external!=='pending'||
+         !Array.isArray(job.args)||!eq(job.args,e.operands)||
+         !eq(patch.after.queue.slice(0,-1),state.control.a0.queue))
+        fail('External callback must enqueue a registered owned job',e.eventId);
+    }
     if(e.operation==='job.enter'){
-      if(job?.kind==='microtask'){
+      if(job?.kind==='external-callback'){
+        const fx=state.effects[job.effectId],fn=state.heap[job.functionId];
+        if(!fx||fx.dispatch!=='dispatched'||fn?.kind!=='function'||fn.async||
+           !Array.isArray(job.args)||e.causes.filter(c=>c.kind==='effect'&&
+             c.effectId===fx.id).length!==1||
+           e.causes.filter(c=>c.kind==='invocation').length!==1)
+          fail('External callback job lacks registered owned function',e.eventId);
+      }else if(job?.kind==='microtask'){
         if(typeof job.functionId!=='string'||
            state.heap[job.functionId]?.kind!=='function'||
            e.causes.filter(c=>c.kind==='invocation').length!==1||

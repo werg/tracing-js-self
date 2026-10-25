@@ -3,6 +3,9 @@
 import {decodeWitness,EXECUTION_VERSION,CONTEXT_VERSION} from './format.js';
 import {checkWitnessClaim} from './witness-check.js';
 import {describeGraph} from './graph.js';
+import {analyzeSemanticProgram} from './semantic-program.js';
+import {materializeJson} from '../host/materialize.js';
+import {hostOperation} from '../host/operations.js';
 
 const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 function fail(category,message) {
@@ -29,6 +32,9 @@ export class SemanticController {
     if(!['immediate-root','owned-quiescence'].includes(completionPolicy))
       fail('policy','Unrecognized completion policy');
     this.source=code.fields;this.input=input.fields;this.completionPolicy=completionPolicy;
+    this.callSites=new Map(analyzeSemanticProgram(this.source.source).sites
+      .filter(site=>site.role==='CallExpression'&&site.operation)
+      .map(site=>[site.start+':'+site.end,site.operation]));
     this.randomState=this.source.randomSeed??null;
     this.capabilities=new Set(capabilities);this.fixtureReplies=structuredClone(fixtureReplies);
     this.maxGenerated=maxGenerated;this.maxPacketBytes=maxPacketBytes;
@@ -185,13 +191,40 @@ export class SemanticController {
       }else if(kind==='request'){
         if(!this.capabilities.has(f.operation))fail('capability','External operation not granted');
         if(this.effects.has(f.effect))fail('effect','Effect identity reused');
-        const args=f.arguments.map(v=>primitive(v));
-        const matched=this.fixtureReplies.find(e=>e.operation===f.operation&&
-          eq(e.arguments,args)&&!e.claimed);
-        if(!matched)fail('request-mismatch','Selected request lacks matching deterministic fixture');
+        if(f.invocation!==active||
+           this.callSites.get(f.site.start+':'+f.site.end)!==f.operation)
+          fail('invocation','External request must identify its active JS callsite');
+        let spec;
+        try {spec=hostOperation(f.operation);}
+        catch{fail('capability','Unregistered external operation');}
+        if(f.arguments.length!==spec.arity||
+           (spec.key!==null&&f.arguments[spec.key]?.[0]!=='str'))
+          fail('request-arguments','External invocation violates operation signature');
+        // The owned host codec is the single authority for guest argument
+        // materialization. The current committed heap, not a future final
+        // graph or a parallel primitive-only path, supplies references.
+        const heap=Object.fromEntries([...this.heap].map(([id,node])=>[id,{
+          kind:node.kind,prototype:node.prototype,
+          properties:Object.fromEntries([...node.properties].map(([key,value])=>[
+            key,{value}
+          ]))
+        }]));
+        let prepared;
+        try {prepared=materializeJson(heap,f.arguments);}
+        catch(error){fail('request-arguments',error.message);}
+        if(prepared.payload!==f.payload)
+          fail('request-arguments','External payload differs from grounded arguments');
+        const args=JSON.parse(prepared.payload);
+        // Ordering of authorized effects is observable: do not search for
+        // a convenient matching future reply in an unordered fixture bag.
+        const matched=this.fixtureReplies.find(e=>!e.claimed);
+        if(!matched||matched.operation!==f.operation||!eq(matched.arguments,args))
+          fail('request-mismatch','Selected request differs from next authorized fixture');
         matched.claimed=true;
-        this.effects.set(f.effect,{operation:f.operation,arguments:structuredClone(args),
-          status:'requested',fixture:structuredClone(matched)});
+        this.effects.set(f.effect,{operation:f.operation,invocation:f.invocation,
+          site:structuredClone(f.site),payload:f.payload,
+          arguments:structuredClone(args),status:'requested',
+          fixture:structuredClone(matched)});
       }else if(kind==='observe'){
         const effect=this.effects.get(f.effect);
         if(!effect||effect.status!=='requested')
@@ -237,7 +270,8 @@ export class SemanticController {
       capabilities:[...this.capabilities],heap:[...this.heap],locals:[...this.locals],
       stack:this.stack,effects:[...this.effects],jobs:[...this.jobs],ready:this.ready,
       claims:this.claims,history:this.history,generated:this.generated,
-      randomState:this.randomState,
+      randomState:this.randomState,fixtureReplies:this.fixtureReplies,
+      maxGenerated:this.maxGenerated,maxPacketBytes:this.maxPacketBytes,
       pending:this.pending??null,lastReturn:this.lastReturn??null,
       completion:this.completion};
     if(Buffer.byteLength(JSON.stringify(packet),'utf8')>this.maxPacketBytes)
@@ -249,7 +283,9 @@ export class SemanticController {
       fail('continuation','Wrong committed-state packet version');
     const controller=new SemanticController([
       'code '+JSON.stringify(packet.context),'input '+JSON.stringify(packet.input)
-    ],{completionPolicy:packet.policy,capabilities:packet.capabilities,...options});
+    ],{...options,completionPolicy:packet.policy,capabilities:packet.capabilities,
+      fixtureReplies:packet.fixtureReplies,maxGenerated:packet.maxGenerated,
+      maxPacketBytes:packet.maxPacketBytes});
     controller.heap=new Map(packet.heap.map(([id,e])=>[id,{...e,properties:new Map(e.properties)}]));
     controller.locals=new Map(packet.locals);controller.stack=packet.stack;
     controller.effects=new Map(packet.effects);controller.jobs=new Map(packet.jobs);
