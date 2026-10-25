@@ -157,9 +157,9 @@ behavior. Catch/finally control transfer is explicit.
 
 ```sh
 npm ci
-node --test test/training-semantic-source.test.js test/training-effectful-compact.test.js
+node --test test/training-semantic-source.test.js test/training-semantic-projection.test.js
 node tools/inspect-semantic-reasoning.mjs
-npm run training:generate -- --out /tmp/semantic-v4 --representation compact
+npm run training:generate -- --out /tmp/semantic-v4
 ```
 
 The inspection command refuses to print a case that fails independent local
@@ -180,9 +180,4 @@ source calculations. CI runs the same fixture collection on PRs.
    training/serving comparisons. Fewer records are evidence about compactness,
    not evidence of learning improvement.
 
-Historical v3/group-shaped tooling is not a production wire format. The
-`explicit` v4 representation is retained as an ablation baseline for
-controlled comparisons; the deployed source-grounded representation is
-`compact`. Deleting those baselines before paired Megatoken evaluations
-would destroy comparability, but neither should be described as the preferred
-model-learning target.
+The only supported public execution witness is semantic-trace/4. Previous v2/v3 group formats, explicit/compact selection switches and outcome-only generation have been removed. The private journal, selected replay and independent V8 reference are correctness evidence, not alternative model targets.

@@ -128,13 +128,11 @@ invocations into one source-once session, retaining all source ancestry and rech
 Megatoken's lifecycle collector adds explicit coordinator-teacher decisions and real runtime
 allocation/join/restore receipts around individually admitted guest executions.
 
-Pass `--representation explicit` or `--representation compact` to the generator to collect the
-entire curriculum in that certified representation, including subscriptions, recovery and repeated
-ingress. Without this flag the engineering manifest includes both compact comparison pairs.
-Compact projection is bounded to eight operators and thirty-two expression nodes and requires
-the exact source spans and operand-producer dependencies. Effect, mutation, callback, suspension
-and cleanup boundaries remain visible. Recollecting changes the public witness and admission digest;
-changing a sidecar label alone cannot convert a dataset.
+The generator emits one canonical source-grounded semantic trace. It fuses
+independently certified pure subexpressions, source choices and immediately
+bound values, while preserving effects, mutation, callback, await and cleanup
+boundaries. No representation selector or alternate learner format remains.
+Recollection changes the witness and admission digest; relabeling is refused.
 
 Families are assigned before input, schedule, retry and counterfactual expansion. All descendants
 remain in that family's split. The production preparer reruns the source verifier and native
@@ -165,8 +163,9 @@ node tools/inspect-selected-harness.mjs /tmp/semantic-v4/counter-0.json
 `megatoken/scripts/prepare_semantic_corpus.py` takes repeated `--input` files, exact
 `--producer-revision`/`--consumer-revision`, `--tracer-root`, `--tokenizer-json` and an output directory.
 This exports data without an optimizer. `plan_semantic_training.py` validates the frozen data/config,
-curriculum supply, seeds and token/compute budgets before later training. The checked-in semantic
-configs declare explicit/compact/outcome-only controls and seeds 17, 29 and 43. Outcome-only controls
+curriculum supply, seeds and token/compute budgets before later training. The pinned consumer must accept canonical compact semantic-trace/4 and
+must reject other model targets. Older multi-arm experiment configurations
+are not part of the current producer.
 are confined to the common-support cohort; they cannot silently replace interactive effects.
 
 ```sh
@@ -228,9 +227,9 @@ and supports chronological or per-track inspection without executing guest code.
 ## Migration and integration
 
 The package version is 0.3.0. Active training exports and `training:*` commands use harness/2.
-The bounded-pure group writer, historical comparisons and source-corpus analysis remain explicitly
-offline under `/training/diagnostic` and `diagnostic:*`. Old v3 serving artifacts and mismatched
-catalog/schema/tokenizer pins are rejected; recollect affected trajectories instead of relabeling them.
+Historical group-shaped writers, compatibility readers and offline diagnostic
+CLI entry points are removed. The native consumer and any pinned archival
+evidence must not be mistaken for executable support of legacy formats.
 The immutable historical baseline and frozen common-support comparisons remain separate from the
 new effectful/track/event cohort.
 

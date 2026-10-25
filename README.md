@@ -2,7 +2,7 @@
 
 An **experimental, owned-machine JavaScript semantic tracing runtime**, bootstrapped from the *Complete JavaScript Semantic Tracing Runtime* revision 2 implementation plan.
 
-This is a working **bounded prototype**, **not** a complete JavaScript interpreter or complete Node/browser runtime. Unsupported language features fail explicitly rather than running guest JavaScript outside the tracer. See [implementation status and gaps](docs/STATUS.md) and [coverage ledger](coverage/required.json).
+This is a working **bounded prototype**, **not** a complete JavaScript interpreter or complete Node/browser runtime. Unsupported language features fail explicitly rather than running guest JavaScript outside the tracer. See [current semantic-execution scope](docs/SEMANTIC_REASONING_TRACE.md) and [coverage ledger](coverage/required.json).
 
 Version 0.2.0 adds the first serializable spec-operation path for primitive
 arithmetic, typed operation commands, a pinned upstream source inventory, and a
@@ -48,7 +48,7 @@ From an installed checkout:
 npm ci
 npm test
 node tools/inspect-semantic-reasoning.mjs
-npm run training:generate -- --out /tmp/semantic-v4 --representation compact
+npm run training:generate -- --out /tmp/semantic-v4
 ```
 
 The inspection tool executes real pinned counter, choice, compound
@@ -214,10 +214,10 @@ rereads. Fully admitted data additionally requires the real production tokenizer
 native consumer, visibility and loss gates. A locally verified result is not
 automatically admitted data or learned model success.
 
-The former group-shaped bounded-pure corpus APIs now live exclusively under
-`tracing-js-self/training/diagnostic` and `npm run diagnostic:*`. They remain useful
-for independent source analysis and historical comparisons. Production training
-and serving accept `semantic-execution/4` with `selected-harness/2` only.
+The only supported model-facing training producer, controller and serializer are
+the v4 source-certified semantic witness. Independent V8 reference checks and
+private journal replay are verification authorities, not alternative trace
+formats. No diagnostic subpath, legacy exporter or representation selector exists.
 
 `drive()` reports `terminated`, `waiting`, `runtime.failure`, or `unsupported`.
 Owned catch/finally, Promise rejection, continuation and callback semantics are
