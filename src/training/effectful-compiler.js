@@ -86,7 +86,7 @@ export function ownedEffectfulOutcome(bundle){
 export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='program1',
     invocationId='invocation1',trackId='worker1',realmId='realm1',sourceLineage=null,
     maxGenerated=16384,realmPolicy='retained',triggerId='teacher-entry',checkpointAtFirstAwait=false,
-    representation='explicit',maxOperators=8}={}){
+    representation='compact',maxOperators=8}={}){
   if(typeof checkpointAtFirstAwait!=='boolean')refuse('checkpointAtFirstAwait must be boolean');
   if(!['explicit','compact'].includes(representation))refuse('unknown source representation');
   if(!Number.isInteger(maxOperators)||maxOperators<1||maxOperators>8)
