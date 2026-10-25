@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase,validateTrainingExport} from 'tracing-js-self/training';
+import {verifyTrainingCase,validateTrainingExport} from 'tracing-js-self/training/diagnostic';
 import {compareOperationObservations, instrumentOperationSource} from '../src/training/operation-reference.js';
 
 const strict=code=>'"use strict";\n'+code;

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRuntime,replayExact,validateBundle} from 'tracing-js-self';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence} from 'tracing-js-self/training';
+import {verifyTrainingCase,recheckIndependentTrainingEvidence} from 'tracing-js-self/training/diagnostic';
 
 const strict=code=>'"use strict";\n'+code;
 function agree(body,args=[]){

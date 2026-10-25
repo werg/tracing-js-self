@@ -5,7 +5,8 @@ import {createRuntime} from '../runtime.js';
 import {hostOperation} from './operations.js';
 import {validateBundle} from '../validation.js';
 import {replayExact} from '../replay.js';
-import {compilePendingEffectJS} from '../effect-javascript.js';
+import {compilePendingEffectJS,materializeNativeEffectArguments} from '../effect-javascript.js';
+import {encodeNativeGraph} from './graph-codec.js';
 
 const primitive=value=>value===null||
   ['undefined','boolean','number','string','bigint'].includes(typeof value);
@@ -31,25 +32,37 @@ export async function executeWithNativeServices({text,entry=null,services={},max
      typeof signal.removeEventListener!=='function'))
     throw new TypeError('signal must be an AbortSignal');
   if(signal?.aborted)throw signal.reason??new Error('Native driver aborted');
+  const owner=new AbortController();
   const pending=new Set(),arrivals=[];
   let wake=null,active=true;
   const enqueue=item=>{
-    if(!active||signal?.aborted)return;
+    if(!active||owner.signal.aborted)return;
     arrivals.push(item);
     if(wake){const notify=wake;wake=null;notify();}
   };
   // The emitted effect JS always calls this bridge; no service call bypasses
   // the native-to-owned settlement or callback scheduling boundary.
   const bridge=Object.freeze({
+    arguments:(effectId,payload)=>{
+      const effect=runtime.state.effects[effectId];
+      if(!effect||effect.request?.payload!==payload||!pending.has(effectId))
+        throw new Error('Owned argument snapshot is unavailable or changed');
+      return materializeNativeEffectArguments(effect,bridge.callback);
+    },
     settle:(effectId,value,abrupt=false)=>{
       if(!pending.has(effectId))return;
-      if(!primitive(value)){
-        value='Native service returned a non-primitive result';abrupt=true;
-      }
-      enqueue({kind:'settlement',effectId,value,abrupt});
+      if(abrupt&&value instanceof Error)value=value.message;
+      let graph=null;
+      if(!primitive(value))try{
+        if(hostOperation(runtime.state.effects[effectId].operation).resultCodec!=='owned-graph/1')
+          throw new TypeError('Native service returned a non-primitive result outside its declared codec');
+        graph=encodeNativeGraph([value]);
+      }catch(error){value=errorMessage(error);abrupt=true;}
+      enqueue({kind:'settlement',effectId,value:graph?undefined:value,graph,abrupt});
     },
     callback:(effectId,callbackId)=>(...args)=>{
-      if(!active||signal?.aborted||!pending.has(effectId))
+      if(!active||owner.signal.aborted||!pending.has(effectId)&&
+          runtime.state.effects[effectId]?.subscription?.state!=='active')
         throw new Error('Owned callback is no longer active');
       if(args.length>32||!args.every(primitive))
         throw new TypeError('Owned callback requires at most 32 primitive arguments');
@@ -70,12 +83,12 @@ export async function executeWithNativeServices({text,entry=null,services={},max
     adapters[operation]=context=>{
       if(pending.has(context.effectId))throw new Error('Duplicate native dispatch');
       pending.add(context.effectId);
-      const input=Object.freeze({...context,signal});
+      const input=Object.freeze({...context,signal:owner.signal});
       // Real external JS is compiled once, after owned dispatch. Service
       // handlers still receive the existing native-driver context signature.
       const javascript=compilePendingEffectJS(runtime,context.effectId);
       Promise.resolve().then(()=>{
-        if(!active||signal?.aborted)return;
+        if(!active||owner.signal.aborted)return;
         const wrapped=(...args)=>service(Object.freeze({...input,
           args:Object.freeze(args)}));
         return new Function('effects','bridge',javascript)(
@@ -91,8 +104,10 @@ export async function executeWithNativeServices({text,entry=null,services={},max
     runtime.startEntry({source,functionName:entry.functionName,
       args:entry.args??[],allowAsync:true,allowHost:true});
   }else runtime.start(text);
-  const abort=()=>{if(wake){const notify=wake;wake=null;notify();}};
+  const abort=()=>{owner.abort(signal?.reason??new Error('Native driver aborted'));
+    if(wake){const notify=wake;wake=null;notify();}};
   signal?.addEventListener('abort',abort,{once:true});
+  if(signal?.aborted)abort();
   try{
     for(;;){
       if(signal?.aborted)throw signal.reason??new Error('Native driver aborted');
@@ -105,12 +120,12 @@ export async function executeWithNativeServices({text,entry=null,services={},max
         if(next.kind==='callback'){
           runtime.recordExternalCallback(next);
         }else{
-          const {effectId,value,abrupt}=next;
+          const {effectId,value,graph,abrupt}=next;
           if(!pending.delete(effectId))throw new Error('Unexpected duplicate service completion');
           const effect=runtime.state.effects[effectId];
           if(!effect)throw new Error('Unknown native completion effect');
           const received=runtime.recordInputArrival({effectId,
-            kind:effect.kind==='promise'?'completion':'immediate',value,abrupt});
+            kind:effect.kind==='promise'?'completion':'immediate',value,graph,abrupt});
           runtime.deliverInput(received.inputId);
         }
       }
@@ -127,13 +142,17 @@ export async function executeWithNativeServices({text,entry=null,services={},max
         return {progress,bundle,runtime};
       }
       if(arrivals.length)continue;
-      if(!pending.size)
+      if(!pending.size&&!Object.values(runtime.state.effects).some(effect=>effect.subscription?.state==='active'))
         throw new Error('Guest is waiting for an external effect without a registered native service');
       await new Promise(resolve=>{wake=resolve;});
     }
   }finally{
     active=false;
     signal?.removeEventListener('abort',abort);
+    // Retained native listeners and timers belong to this collection run.
+    // Abort also releases them when a VM limit or invalid delivery stops the
+    // run before guest source can issue its ordinary close operation.
+    owner.abort(new Error('Native service owner closed'));
     // Native deliveries belong to this run. Late external settlement cannot
     // append an arrival to an exported archive or wake another invocation.
     pending.clear();

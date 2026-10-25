@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildOwnedFixtureEntry} from '../corpus/owned-fixture-adapter.mjs';
 import {cases} from '../corpus/cases.mjs';
-import {verifyTrainingCase} from 'tracing-js-self/training';
+import {verifyTrainingCase} from 'tracing-js-self/training/diagnostic';
 
 test('pinned callback executes in an owned guest closure, with independently verified data',()=>{
   const spec=cases.find(c=>c.project==='lodash'&&c.entry==='arrayMap');

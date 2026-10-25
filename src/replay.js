@@ -49,7 +49,7 @@ function inputArrival(runtime, event) {
       (countPatch !== undefined) !== (afterCount > beforeCount))
     fail('Invalid input allocation', event.eventId);
   runtime.recordInputArrival({
-    effectId, kind: input.kind, value: input.value, abrupt: input.abrupt,
+    effectId, kind: input.kind, value: input.value, graph: input.graph??null, abrupt: input.abrupt,
     inputId: afterCount > beforeCount ? null : input.id
   });
 }
@@ -90,7 +90,7 @@ function exitKind(runtime) {
   if (active?.status === 'blocked') return 'waiting';
   if (c.queue.length || c.timers?.length) return null;
   const pending = Object.values(runtime.state.promises).some(p => p.status === 'pending') ||
-    Object.values(runtime.state.effects).some(e => e.external === 'pending');
+    Object.values(runtime.state.effects).some(e => e.external === 'pending'||e.subscription?.state==='active');
   return pending ? 'waiting' : 'terminated';
 }
 

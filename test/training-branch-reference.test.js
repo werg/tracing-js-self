@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase,validateTrainingExport} from 'tracing-js-self/training';
+import {verifyTrainingCase,validateTrainingExport} from 'tracing-js-self/training/diagnostic';
 import {instrumentBranchSource,compareBranchObservations} from '../src/training/branch-reference.js';
 
 const strict=body=>'"use strict";\n'+body;

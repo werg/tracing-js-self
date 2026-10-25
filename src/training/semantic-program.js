@@ -1,6 +1,7 @@
 // Static semantic site inventory constructed before guest execution. No
 // executed-site pruning, bytecode sites or private future events are consulted.
 import {parse} from 'acorn';
+import {HOST_METHODS} from '../host/operations.js';
 
 const semanticNodes=new Set([
   'Identifier','Literal','BinaryExpression','LogicalExpression',
@@ -24,7 +25,7 @@ function directHostOperation(node) {
       callee.property.value:null):
     (callee.property?.type==='Identifier'?callee.property.name:null);
   if(!name)return null;
-  if(callee.object.name==='host')return {"httpGet":"http.get","httpPost":"http.post","httpStatus":"http.responseStatus","httpRead":"http.responseRead","httpClose":"http.responseClose","httpAbort":"http.abort","readText":"fs.readText","writeText":"fs.writeText","listFiles":"fs.list","openRead":"fs.openRead","readChunk":"fs.readChunk","closeStream":"fs.close","socketConnect":"net.connect","socketWrite":"net.write","socketRead":"net.read","socketClose":"net.close","domQuery":"dom.query","domGetText":"dom.getText","domSetText":"dom.setText","domSetAttribute":"dom.setAttribute","domGetAttribute":"dom.getAttribute","domRemove":"dom.remove","domOn":"dom.on","domOff":"dom.off","domStartTimer":"dom.startTimer","domStopTimer":"dom.stopTimer"}[name]??'demo.'+name;
+  if(callee.object.name==='host')return HOST_METHODS[name]??'demo.'+name;
   if(callee.object.name==='Date'&&name==='now')return 'platform.dateNow';
   if(callee.object.name==='console')return 'platform.console.'+name;
   return null;

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRuntime} from 'tracing-js-self';
 import {verifyTrainingCase,recheckIndependentTrainingEvidence,
-  exportTraining} from 'tracing-js-self/training';
+  exportTraining} from 'tracing-js-self/training/diagnostic';
 
 const source='"use strict";function f(x){let y=x+1;if(y>3)y+=2;return y;}';
 test('serialized locally verified episodes independently recheck with V8',()=>{

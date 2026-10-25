@@ -8,7 +8,7 @@ import {analyzeSemanticProgram} from '../src/training/semantic-program.js';
 const source='function run(){const a=host.readAsync("a");const b=host.readAsync("b");return 1;}';
 const calls=analyzeSemanticProgram(source).sites.filter(x=>x.operation==='demo.readAsync');
 const request=(fx,key,index)=>encodeWitness('request',{effect:fx,operation:'demo.readAsync',
-  invocation:'i1',site:{start:calls[index].start,end:calls[index].end},
+  invocation:'call1',promise:'p'+fx,site:{start:calls[index].start,end:calls[index].end},
   arguments:[['str',key]],payload:JSON.stringify([key])});
 const returns=encodeWitness('return',{value:['num',1]});
 const end=encodeWitness('end',{kind:'return'});
@@ -23,7 +23,7 @@ test('selected supplier issues two effects before waiting and observes reverse s
   }});
   let polls=0;
   const selector=async prefix=>{
-    assert.equal(prefix.schema,'selected-inference-prefix/1');
+    assert.equal(prefix.schema,'selected-inference-prefix/2');
     assert.equal(prefix.programId,'p');
     assert.equal(prefix.entry,'run');
     assert(!JSON.stringify(prefix).includes('fixtureReplies'));

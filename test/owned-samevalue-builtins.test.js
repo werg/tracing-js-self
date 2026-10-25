@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createRuntime} from '../src/runtime.js';
 import {validateBundle} from '../src/validation.js';
 import {replayExact} from '../src/replay.js';
-import {verifyTrainingCase} from '../src/training/index.js';
+import {verifyTrainingCase} from '../src/training/diagnostic.js';
 
 function verified(code){
   const result=verifyTrainingCase({source:'"use strict";\nfunction f(){'+code+'}',entry:'f'});

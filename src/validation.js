@@ -34,7 +34,8 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
       if(effect.length!==1||e.stateChanges.length!==1||!job||
          job.kind!=='external-callback'||job.effectId!==effect[0].effectId||
          state.effects[job.effectId]?.dispatch!=='dispatched'||
-         state.effects[job.effectId]?.external!=='pending'||
+         !(state.effects[job.effectId]?.external==='pending'||
+           state.effects[job.effectId]?.external==='completed'&&state.effects[job.effectId]?.subscription?.state==='active')||
          !Array.isArray(job.args)||!eq(job.args,e.operands)||
          !eq(patch.after.queue.slice(0,-1),state.control.a0.queue))
         fail('External callback must enqueue a registered owned job',e.eventId);

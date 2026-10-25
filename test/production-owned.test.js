@@ -31,7 +31,7 @@ test('actual pinned production functions produce independently checked owned can
  for(const row of report.rows){
   assert(row.status==='locally_verified'||row.verifiedOwned===false);
   if(row.verifiedOwned){
-   assert.equal(row.evidence.modelVisibleSchema,'semantic-execution/3');
+   assert.equal(row.evidence.modelVisibleSchema,'semantic-execution/4');
    assert.equal(row.evidence.originalExactText.length,
     row.originalSource.sourceSpan.end-row.originalSource.sourceSpan.start);
   }
@@ -79,7 +79,7 @@ test('pinned Axios closure factory runs as a real owned nested closure or refuse
   assert.equal(row.admitted,false);
   assert.equal(row.verifiedOwned,row.status==='locally_verified');
   if(row.verifiedOwned)
-   assert.equal(row.evidence.modelVisibleSchema,'semantic-execution/3');
+   assert.equal(row.evidence.modelVisibleSchema,'semantic-execution/4');
   else assert.equal(typeof row.reason,'string');
  }
 });

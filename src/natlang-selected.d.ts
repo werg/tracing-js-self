@@ -9,6 +9,7 @@ export interface SelectedNatlangRequest {
   body: boolean;
   path: string;
   timeoutMs?: number;
+  signal?: AbortSignal;
   live?: Record<string, unknown>;
 }
 export type SelectedNatlangEvent = {operation:string;[key:string]:unknown};
@@ -22,6 +23,8 @@ export interface SelectedNatlangEnvironment {
   }>;
   evaluateModule(code:string,bindings:Record<string,unknown>):never;
   evaluateModuleAsync(code:string,bindings:Record<string,unknown>):Promise<unknown>;
+  configureNativeBindings(configuration:{adaptValue(value:unknown):unknown;resourceIdentity?(value:unknown):object|null;
+    resourceCleanup?(value:object):(()=>void)|null}):void;
   fork(): SelectedNatlangEnvironment;
   close():void;
   selectedHarness():unknown;
@@ -36,6 +39,20 @@ export interface SelectedNatlangOptions {
   maxSelections?:number;
   sessionId?:string;
   onClose?:()=>void;
+  EvalFailure?:new(message:string,events:SelectedNatlangEvent[],debug?:{
+    sourceStack?:string;logs?:string[]})=>Error;
+  /** Exact published binding paths, for example `__live["read"]`. */
+  callKinds?:Record<string,'promise'|'synchronous'>;
+  /** Explicit package/service namespace grants. No ambient package loader. */
+  modules?:Record<string,unknown>;
+  /** Constructor-registered native resource surfaces; arbitrary proxies are not probed. */
+  adaptValue?:(value:unknown)=>unknown;
+  resourceIdentity?:(value:unknown)=>object|null;
+  resourceCleanup?:(value:object)=>(()=>void)|null;
 }
+export declare function selectedCallable(invoke:(...args:unknown[])=>unknown,
+  options?:{kind?:'promise'|'synchronous';name?:string}):object;
+export declare function selectedCell(get:()=>unknown,set?:((value:unknown)=>void)|null,
+  options?:{name?:string}):object;
 export declare function createNatlangSelectedEnvironment(
   options:SelectedNatlangOptions):SelectedNatlangEnvironment;

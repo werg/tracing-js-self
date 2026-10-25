@@ -179,7 +179,7 @@ export function compileWitness(bundle,semantic=normalizeJournal(bundle),
   for(const row of effectiveRows){
     if(row.op==='value'&&row.source&&
        source.text.slice(row.source.start,row.source.end).trim()==='Math.random()'){
-      if(prefix.schema!=='semantic-context/3'||
+      if(prefix.schema!=='semantic-context/4'||
          bundle.initialState.control.a0.randomSeed===undefined)
         refuse('random computation lacks a published deterministic seed');
       emit('compute',{expr:{op:'random'},result:tag(row.result)},'seeded-random/1',row);

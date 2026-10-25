@@ -1,4 +1,5 @@
-// Reproducible, fail-closed actual-model comparison over a frozen common cohort.
+// Offline diagnostic comparison preserving the historical experiment conditions.
+// New production harness cohorts use selected-evaluation.js and Megatoken evaluation.
 // Historical v2 baseline is evaluated by its PINNED EXTERNAL harness, never
 // parsed or replayed through the active v3 production parser.
 import {createHash} from 'node:crypto';
@@ -17,9 +18,9 @@ const fail=(message)=>{throw new Error('Semantic experiment refused: '+message);
 const digest=data=>createHash('sha256').update(JSON.stringify(data)).digest('hex');
 
 export function experimentCaseId(exported) {
-  if(exported?.public?.schema!=='semantic-execution/3' ||
-     exported.public.traceFormat!=='semantic-trace/3'||
-     !Array.isArray(exported.public.groups))fail('reference is not a v3 exported case');
+  if(exported?.public?.schema!=='semantic-execution/4' ||
+     exported.public.traceFormat!=='semantic-trace/4'||
+     !Array.isArray(exported.public.groups))fail('reference is not a current bounded-pure diagnostic case');
   const observed=exported.public.groups.filter(g=>g.mode==='observed');
   if(!observed.length)fail('reference context absent');
   return digest({profile:exported.public.profile,

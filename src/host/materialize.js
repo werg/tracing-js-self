@@ -2,8 +2,27 @@
 // Never call a guest function, getter, toJSON, Symbol.toPrimitive or prototype.
 // This is a transport encoder, not an ECMAScript ToJSON operation.
 import {decode} from '../values.js';
+import {GRAPH_CODEC,materializeOwnedGraph,decodeOwnedGraph} from './graph-codec.js';
+
+export {GRAPH_CODEC,materializeOwnedGraph,decodeOwnedGraph,encodeNativeGraph,
+  validateOwnedGraph,ownedCallbackId} from './graph-codec.js';
 
 export const JSON_CODEC='canonical-json/1';
+
+export function materializeHostArguments(heap,args,{codec=JSON_CODEC,...options}={}){
+  if(codec===JSON_CODEC)return materializeJson(heap,args,options);
+  if(codec===GRAPH_CODEC)return materializeOwnedGraph(heap,args,options);
+  throw new TypeError('Unregistered host argument codec '+codec);
+}
+
+export function decodeHostPayload(payload,codec=JSON_CODEC,options={}){
+  if(codec===GRAPH_CODEC)return decodeOwnedGraph(payload,options);
+  if(codec!==JSON_CODEC)throw new TypeError('Unregistered host argument codec '+codec);
+  const args=JSON.parse(payload);
+  if(!Array.isArray(args)||JSON.stringify(args)!==payload)
+    throw new TypeError('Noncanonical host JSON payload');
+  return args;
+}
 const arrayIndex=key=>/^(0|[1-9]\d*)$/.test(key) && Number(key)<4294967295;
 const literal=s=>JSON.stringify(s);
 

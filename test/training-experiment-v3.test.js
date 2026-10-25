@@ -17,8 +17,8 @@ function witnessReference(){
     group('generated',record('return',{value:['num',1]}),2),
     group('generated',record('end',{kind:'return'}),3)
   ];
-  return {public:{schema:'semantic-execution/3',traceFormat:'semantic-trace/3',
-    contextFormat:'semantic-context/3',profile:'training-js/1',groups},
+  return {public:{schema:'semantic-execution/4',traceFormat:'semantic-trace/4',
+    contextFormat:'semantic-context/4',profile:'training-js/1',groups},
     sidecar:{referenceStatus:'agreed',split:'test',sourceLineage:'test-family',
       reference:{kind:'return',graph:{roots:[['num',1]],objects:[]}}}};
 }

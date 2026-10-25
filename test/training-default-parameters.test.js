@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase} from 'tracing-js-self/training';
+import {verifyTrainingCase} from 'tracing-js-self/training/diagnostic';
 function verify(code,args=[]){
  const checked=verifyTrainingCase({source:'"use strict";\n'+code,
    entry:'f',args,maxGenerated:1024});

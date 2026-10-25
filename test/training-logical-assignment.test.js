@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase} from '../src/training/index.js';
+import {verifyTrainingCase} from '../src/training/diagnostic.js';
 import {createRuntime,validateBundle,replayExact} from '../src/index.js';
 import {referenceOutcome} from '../src/training/reference.js';
 import {describeGraph,realizeGraph} from '../src/training/graph.js';

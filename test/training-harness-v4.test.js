@@ -10,9 +10,9 @@ const site=operation=>{
   assert(found,'missing grounded source operation '+operation);
   return {start:found.start,end:found.end};
 };
-const req=(effect,operation,args,payload)=>
-  encodeWitness('request',{effect,operation,invocation:'i1',site:site(operation),
-    arguments:args,payload});
+const req=(invocation,effect,operation,args,payload)=>
+  encodeWitness('request',{effect,operation,invocation,site:site(operation),
+    arguments:args,payload,...(operation==='demo.readAsync'?{promise:'p'+effect}:{})});
 const tag=n=>['num',n];
 const selectedValue=(h,invocation,value)=>{
   h.selected(invocation,encodeWitness('return',{value:tag(value)}));
@@ -31,14 +31,14 @@ test('source is published once, two explicit outside calls dispatch one action e
     harness.admitInvocation({programId:'counter',invocationId:invocation,
       trackId:'worker:'+invocation,realmId:'realm:'+invocation,
       triggerId:'outside:'+invocation,args:[key]});
-    harness.selected(invocation,req('read1','demo.readAsync',[['str',key]],JSON.stringify([key])));
+    harness.selected(invocation,req(invocation,'read1','demo.readAsync',[['str',key]],JSON.stringify([key])));
     const result=await harness.dispatch(invocation,'read1');
     assert.equal(result.status,'fulfilled');
     assert.deepEqual(result.result,tag(next-1));
     harness.selected(invocation,encodeWitness('compute',{expr:{op:'binary',operator:'+',
       left:{op:'literal',value:tag(next-1)},right:{op:'literal',value:tag(1)}},
       result:tag(next)}));
-    harness.selected(invocation,req('write1','demo.store',[['str',key],tag(next)],
+    harness.selected(invocation,req(invocation,'write1','demo.store',[['str',key],tag(next)],
       JSON.stringify([key,next])));
     const written=await harness.dispatch(invocation,'write1');
     assert.equal(written.status,'fulfilled');
@@ -66,7 +66,7 @@ test('partial or ungrounded selection does not dispatch or corrupt selected stat
     trackId:'dynamic:9',triggerId:'outside:1',args:['x']});
   const packet=h.invocations.get('i').controller.segmentPacket();
   assert.throws(()=>h.selected('i','request {"effect":'),/Invalid|Malformed|JSON/);
-  assert.throws(()=>h.selected('i',req('fx1','demo.readAsync',
+  assert.throws(()=>h.selected('i',req('i','fx1','demo.readAsync',
     [['str','x']],'["forged"]')),/payload|arguments/i);
   assert.deepEqual(h.invocations.get('i').controller.segmentPacket(),packet);
   assert.equal(h.intents.size,0);assert.equal(calls,0);
@@ -90,7 +90,7 @@ test('two pending async tools may settle in opposite order',async()=>{
   for(const [n,key] of [['f1','a'],['f2','b']]){
     const s=sites[key==='a'?0:1];
     h.selected('i',encodeWitness('request',{effect:n,operation:'demo.readAsync',
-      invocation:'i1',site:{start:s.start,end:s.end},
+      invocation:'i',promise:'p'+n,site:{start:s.start,end:s.end},
       arguments:[['str',key]],payload:JSON.stringify([key])}));
   }
   const one=h.dispatch('i','f1'),two=h.dispatch('i','f2');
@@ -108,7 +108,7 @@ test('restoration preserves uncertain intent and does not replay native side eff
   h.publishProgram({programId:'p',source,entry:'run',capabilities:['demo.readAsync']});
   h.admitInvocation({programId:'p',invocationId:'i',trackId:'t0',
     realmId:'r1',triggerId:'call1',args:['counter']});
-  h.selected('i',req('fx','demo.readAsync',[['str','counter']],'["counter"]'));
+  h.selected('i',req('i','fx','demo.readAsync',[['str','counter']],'["counter"]'));
   const pending=h.dispatch('i','fx');
   const restored=SelectedExecutionHarness.restore(h.checkpoint(),{services:service});
   assert.throws(()=>restored.dispatch('i','fx'),/uncertain/);
@@ -130,7 +130,7 @@ test('exact replay verifies public causal selected records without invoking any 
     capabilities:['demo.readAsync']});
   h.admitInvocation({programId:'counter',invocationId:'call1',
     realmId:'realm1',trackId:'worker:1',triggerId:'outside:1',args:['counter']});
-  h.selected('call1',req('fx1','demo.readAsync',
+  h.selected('call1',req('call1','fx1','demo.readAsync',
     [['str','counter']],'["counter"]'));
   await h.dispatch('call1','fx1');
   selectedValue(h,'call1',7);
@@ -198,8 +198,7 @@ test('independent events queue behind one retained JS turn and activate separate
   assert.equal(h.invocations.size,1,'event arrival cannot reenter a busy realm');
   assert.throws(()=>h.postEvent({subscriptionId:'updates',eventId:'e4',args:[4]}),
     /overflow/);
-  assert.throws(()=>h.postEvent({subscriptionId:'updates',eventId:'e2',args:[2]}),
-    /Duplicate/);
+  assert.equal(h.postEvent({subscriptionId:'updates',eventId:'e2',args:[2]}).status,'duplicate');
   selectedValue(h,'event1',1);
   h.deliverReadyEvents('updates');
   assert.equal(h.invocations.size,2);
@@ -243,7 +242,7 @@ test('selected closure listener survives registration, handles repeated events a
   h.selected('call1',encodeWitness('allocate',{name:'o1',kind:'closure',code:'onTick',
     properties:[],captures:[{binding:'counter',cell:'l1'}]}));
   h.selected('call1',encodeWitness('request',{effect:'fx1',operation:'demo.listen',
-    invocation:'i1',site:siteFor('demo.listen'),
+    invocation:'call1',promise:'p1',site:siteFor('demo.listen'),
     arguments:[['str','tick'],['ref','o1']],
     payload:'["tick",{"$ownedCallback":"o1"}]'}));
   const observed=await h.dispatch('call1','fx1');
@@ -270,7 +269,7 @@ test('selected closure listener survives registration, handles repeated events a
   h.admitInvocation({programId:'p',invocationId:'call2',trackId:'worker1',
     realmId:'retained',triggerId:'outside2',realmPolicy:'retained'});
   h.selected('call2',encodeWitness('request',{effect:'fx2',operation:'demo.unlisten',
-    invocation:'i1',site:siteFor('demo.unlisten'),
+    invocation:'call2',promise:'p2',site:siteFor('demo.unlisten'),
     arguments:[['str','callback1']],payload:'["callback1"]'}));
   await h.dispatch('call2','fx2');
   h.selected('call2',encodeWitness('return',{value:['undefined']}));

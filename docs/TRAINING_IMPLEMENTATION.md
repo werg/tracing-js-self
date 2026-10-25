@@ -1,5 +1,8 @@
 # Semantic execution training: active v3 implementation ledger
 
+> Current production implementation: [semantic execution v4](SEMANTIC_HARNESS_V4_IMPLEMENTATION.md). The bounded-pure/group workflow described below is retained as offline diagnostic and historical evidence; it is not the production harness admission route.
+
+
 The one active public representation is
 [semantic-execution/3 and semantic-trace/3](EFFECTIVE_TRACE.md).
 The raw owned journal is separately versioned. This ledger describes **actual
