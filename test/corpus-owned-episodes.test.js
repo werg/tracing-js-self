@@ -1,3 +1,4 @@
+import {SelectedExecutionHarness} from '../src/training/harness-v4.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -7,7 +8,7 @@ import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {cases,sources} from '../corpus/cases.mjs';
 import {original,corpusSplit} from '../corpus/pinned-source.mjs';
-import {validateTrainingExport,recheckOwnedSourceEvidence} from '../src/training/source-check.js';
+import {recheckOwnedSourceEvidence} from '../src/training/source-check.js';
 
 const sha=text=>createHash('sha256').update(text).digest('hex');
 const specimen=cases.find(c=>c.project==='vscode'&&c.entry==='clamp');
@@ -53,7 +54,7 @@ test('owned corpus bridge emits only independently rechecked, provenance-tagged 
     assert.equal(episode.sidecar.split,inputRow().split);
     assert.equal(episode.sidecar.provenance.corpus,'pinned-real-source');
     assert.equal(episode.sidecar.provenance.admission,'pending external megatoken gate');
-    assert.equal(validateTrainingExport(episode).valid,true);
+    assert.doesNotThrow(()=>SelectedExecutionHarness.replay(episode));
     assert.equal(recheckOwnedSourceEvidence(episode).valid,true);
   }finally{rmSync(dir,{recursive:true,force:true});}
 });

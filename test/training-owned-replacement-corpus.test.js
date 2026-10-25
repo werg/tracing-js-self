@@ -1,7 +1,7 @@
+import {SelectedExecutionHarness} from '../src/training/harness-v4.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyOwnedSourceCase,recheckOwnedSourceEvidence,
-  validateTrainingExport} from '../src/training/source-check.js';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence} from '../src/training/source-check.js';
 import {validateBundle,replayExact} from '../src/index.js';
 import {RTL_PATTERN} from '../src/owned-rtl-pattern.js';
 
@@ -10,7 +10,7 @@ function verified(source,entry,args){
     entry,args,maxGenerated:1024});
   assert.equal(result.status,'locally_verified',JSON.stringify(result));
   const e=JSON.parse(JSON.stringify(result.exported));
-  assert.equal(validateTrainingExport(e).valid,true);
+  assert.doesNotThrow(()=>SelectedExecutionHarness.replay(e));
   assert.equal(recheckOwnedSourceEvidence(e).valid,true);
   assert.equal(validateBundle(e.sidecar.archive).valid,true);
   assert.equal(replayExact(e.sidecar.archive).valid,true);

@@ -1,7 +1,8 @@
+import {SelectedExecutionHarness} from '../src/training/harness-v4.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import ts from 'typescript';
-import {verifyOwnedSourceCase,recheckOwnedSourceEvidence,validateTrainingExport} from '../src/training/source-check.js';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence} from '../src/training/source-check.js';
 import {validateBundle,replayExact} from '../src/index.js';
 import {cases} from '../corpus/cases.mjs';
 import {original} from '../corpus/pinned-source.mjs';
@@ -12,7 +13,7 @@ function verify(source,entry,args=[]){
  assert.equal(result.status,'locally_verified',JSON.stringify(result).slice(0,700));
  assert.equal(replayExact(result.exported.sidecar.archive).valid,true);
  assert.equal(validateBundle(result.exported.sidecar.archive).valid,true);
- assert.equal(validateTrainingExport(result.exported).valid,true);
+ assert.doesNotThrow(()=>SelectedExecutionHarness.replay(result.exported));
  assert.equal(recheckOwnedSourceEvidence(result.exported).valid,true);
  return result.exported;
 }

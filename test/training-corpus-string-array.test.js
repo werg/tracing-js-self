@@ -1,6 +1,7 @@
+import {SelectedExecutionHarness} from '../src/training/harness-v4.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyOwnedSourceCase,validateTrainingExport} from 'tracing-js-self/training';
+import {verifyOwnedSourceCase} from 'tracing-js-self/training';
 import {validateBundle,replayExact} from 'tracing-js-self';
 
 function check(body,args=[]){
@@ -9,7 +10,7 @@ function check(body,args=[]){
   assert.equal(result.status,'locally_verified',JSON.stringify(result));
   assert.equal(result.exported.sidecar.operationAudit.status,'agreed');
   assert.equal(result.exported.sidecar.branchAudit.status,'agreed');
-  assert.equal(validateTrainingExport(result.exported).valid,true);
+  assert.doesNotThrow(()=>SelectedExecutionHarness.replay(result.exported));
   const archive=structuredClone(result.exported.sidecar.archive);
   assert.equal(validateBundle(archive).valid,true);
   assert.equal(replayExact(archive).valid,true);
