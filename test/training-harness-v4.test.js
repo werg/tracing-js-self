@@ -120,3 +120,41 @@ test('restoration preserves uncertain intent and does not replay native side eff
   resolve(5);await pending;
   assert.equal(restored.invocations.get('i').controller.completion.value[1],5);
 });
+
+test('exact replay verifies public causal selected records without invoking any native adapter',async()=>{
+  let executions=0;
+  const h=new SelectedExecutionHarness({sessionId:'replay1',services:{
+    'demo.readAsync':([key])=>{executions++;assert.equal(key,'counter');return 7;}
+  }});
+  h.publishProgram({programId:'counter',source,entry:'run',
+    capabilities:['demo.readAsync']});
+  h.admitInvocation({programId:'counter',invocationId:'call1',
+    realmId:'realm1',trackId:'worker:1',triggerId:'outside:1',args:['counter']});
+  h.selected('call1',req('fx1','demo.readAsync',
+    [['str','counter']],'["counter"]'));
+  await h.dispatch('call1','fx1');
+  selectedValue(h,'call1',7);
+  const exported=h.exportEpisode();
+  const original=executions;
+  const replay=SelectedExecutionHarness.replay(exported);
+  assert.equal(executions,original,'archive validation cannot repeat native effects');
+  assert.deepEqual(replay.timeline,h.timeline,'all receipt bytes and causal records agree');
+  assert.equal(replay.invocations.get('call1').controller.completion.value[1],7);
+  assert.throws(()=>replay.dispatch('call1','fx1'),/redispatch/);
+  assert.equal(replay.exportEpisode().sidecar.admission,'locally_verified');
+  const forbidden=structuredClone(exported);
+  forbidden.public.timeline.find(x=>x.kind==='semantic').mode='observed';
+  assert.throws(()=>SelectedExecutionHarness.replay(forbidden),/Replay|observed|sequence/i);
+  const reorder=structuredClone(exported);
+  const index=reorder.public.timeline.findIndex(x=>x.kind==='result');
+  [reorder.public.timeline[index],reorder.public.timeline[index-1]]=[
+    reorder.public.timeline[index-1],reorder.public.timeline[index]
+  ];
+  assert.throws(()=>SelectedExecutionHarness.replay(reorder),/Replay|cause|sequence/i);
+  const mismatched=structuredClone(exported);
+  mismatched.public.timeline.find(x=>x.kind==='result').result=['num',99];
+  assert.throws(()=>SelectedExecutionHarness.replay(mismatched),/Recorded result/);
+  const uncommitted=structuredClone(exported);
+  uncommitted.public.timeline=uncommitted.public.timeline.filter(x=>x.kind!=='dispatch');
+  assert.throws(()=>SelectedExecutionHarness.replay(uncommitted),/Replay result|dispatched cause/i);
+});
