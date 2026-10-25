@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence} from 'tracing-js-self/training/diagnostic';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence} from 'tracing-js-self/training';
 import {createBoundedNatlangEnvironment} from '../src/natlang.js';
 const strict=code=>'"use strict";\n'+code;
 function verified(code,args=[]){
-  const result=verifyTrainingCase({source:strict(code),entry:'f',args,maxGenerated:1024});
+  const result=verifyOwnedSourceCase({source:strict(code),entry:'f',args,maxGenerated:1024});
   assert.equal(result.status,'locally_verified',JSON.stringify(result));
   const episode=JSON.parse(JSON.stringify(result.exported));
-  const evidence=recheckIndependentTrainingEvidence(episode);
+  const evidence=recheckOwnedSourceEvidence(episode);
   assert.equal(evidence.valid,true,JSON.stringify(evidence));
   assert(evidence.operations>0);
   return episode;
@@ -31,7 +31,7 @@ test('substitutions execute exactly once in source order',()=>{
   assert.equal(result.sidecar.operationAudit.covered.templates,1);
 });
 test('object substitution fails closed without native guest ToString',()=>{
-  const result=verifyTrainingCase({
+  const result=verifyOwnedSourceCase({
     source:strict('function f(o){return `${o}`;}'),entry:'f',args:[{}]});
   assert.notEqual(result.status,'locally_verified');
 });

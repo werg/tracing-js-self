@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRuntime,validateBundle,replayExact} from 'tracing-js-self';
-import {verifyTrainingCase,exportTraining} from 'tracing-js-self/training/diagnostic';
+import {verifyOwnedSourceCase,exportTraining} from 'tracing-js-self/training';
 import {createBoundedNatlangEnvironment} from '../src/natlang.js';
 const strict=body=>'"use strict";\n'+body;
 function completed(body,args=[]){
@@ -26,7 +26,7 @@ test('finally executes after return and supports normal fallthrough',()=>{
 });
 test('caught throw has one actual v3 exit after handler binding',()=>{
   const source=strict('function f(){try{throw 1;}catch(e){return e+2;}}');
-  const result=verifyTrainingCase({source,entry:'f'});
+  const result=verifyOwnedSourceCase({source,entry:'f'});
   assert.equal(result.status,'locally_verified',JSON.stringify(result));
   const runtime=createRuntime().startEntry({text:source,functionName:'f'});
   assert.equal(runtime.drive().kind,'terminated');
@@ -46,5 +46,5 @@ test('natlang TS catch/finally guest values execute and exactly replay',()=>{
   assert.equal(archives.length,1);
 });
 test('destructured catch and exotic thrown values remain outside profile',()=>{
-  assert.equal(verifyTrainingCase({source:strict('function f(){try{throw 1;}catch({message}){return message;}}'),entry:'f'}).status,'unsupported');
+  assert.equal(verifyOwnedSourceCase({source:strict('function f(){try{throw 1;}catch({message}){return message;}}'),entry:'f'}).status,'unsupported');
 });

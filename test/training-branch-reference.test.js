@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase,validateTrainingExport} from 'tracing-js-self/training/diagnostic';
+import {verifyOwnedSourceCase,validateTrainingExport} from 'tracing-js-self/training';
 import {instrumentBranchSource,compareBranchObservations} from '../src/training/branch-reference.js';
 
 const strict=body=>'"use strict";\n'+body;
 function verify(code,args=[]){
-  const result=verifyTrainingCase({source:strict(code),entry:'f',args,maxGenerated:1024});
+  const result=verifyOwnedSourceCase({source:strict(code),entry:'f',args,maxGenerated:1024});
   assert.equal(result.status,'locally_verified',JSON.stringify(result));
   const audit=result.exported.sidecar.branchAudit;
   assert.equal(audit.schema,'reference-branches/1');

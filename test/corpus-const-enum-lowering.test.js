@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import ts from 'typescript';
 import {cases} from '../corpus/cases.mjs';
 import {original,lowerPinnedCharCode} from '../corpus/pinned-source.mjs';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence} from '../src/training/diagnostic.js';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence} from '../src/training/source-check.js';
 
 const functions=['firstNonWhitespaceIndex','getLeadingWhitespace',
   'lastNonWhitespaceIndex','getIndentationLength'];
@@ -24,10 +24,10 @@ test('pinned TypeScript const enum is lowered to only verified compile-time cons
     .outputText.replace(/^["']use strict["'];\s*/,'');
   assert(Buffer.byteLength(js)<2048);
   for(const index of [0,4,11]){
-    const verified=verifyTrainingCase({source:'"use strict";\n'+js,
+    const verified=verifyOwnedSourceCase({source:'"use strict";\n'+js,
       entry,args:spec.args(index),maxGenerated:1024});
     assert.equal(verified.status,'locally_verified',JSON.stringify(verified).slice(0,500));
-    assert.equal(recheckIndependentTrainingEvidence(verified.exported).valid,true);
+    assert.equal(recheckOwnedSourceEvidence(verified.exported).valid,true);
   }
  }
 });
