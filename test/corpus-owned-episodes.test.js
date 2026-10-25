@@ -7,7 +7,7 @@ import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {cases,sources} from '../corpus/cases.mjs';
 import {original,corpusSplit} from '../corpus/pinned-source.mjs';
-import {validateTrainingExport,recheckIndependentTrainingEvidence} from '../src/training/diagnostic.js';
+import {validateTrainingExport,recheckOwnedSourceEvidence} from '../src/training/source-check.js';
 
 const sha=text=>createHash('sha256').update(text).digest('hex');
 const specimen=cases.find(c=>c.project==='vscode'&&c.entry==='clamp');
@@ -54,7 +54,7 @@ test('owned corpus bridge emits only independently rechecked, provenance-tagged 
     assert.equal(episode.sidecar.provenance.corpus,'pinned-real-source');
     assert.equal(episode.sidecar.provenance.admission,'pending external megatoken gate');
     assert.equal(validateTrainingExport(episode).valid,true);
-    assert.equal(recheckIndependentTrainingEvidence(episode).valid,true);
+    assert.equal(recheckOwnedSourceEvidence(episode).valid,true);
   }finally{rmSync(dir,{recursive:true,force:true});}
 });
 

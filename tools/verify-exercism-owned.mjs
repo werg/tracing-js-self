@@ -11,8 +11,8 @@ import {createHash} from 'node:crypto';
 import {runInNewContext} from 'node:vm';
 import {isDeepStrictEqual} from 'node:util';
 import ts from 'typescript';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence}
-  from '../src/training/admit.js';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence}
+  from '../src/training/source-check.js';
 import {loadPinnedPairs,lowerPinnedProof,extractCanonicalCases}
   from '../src/corpus/owned-exercism.mjs';
 import {generateInputVariations} from '../src/corpus/variation-exercism.mjs';
@@ -164,7 +164,7 @@ try{
      lowering:lowered.lowering,loweredSha256:sha(lowered.source)};
    let checked;
    try {
-     checked=verifyTrainingCase({
+     checked=verifyOwnedSourceCase({
        source:lowered.source,entry:fixture.entry,args:structuredClone(fixture.args),
        lineage,maxSteps:12000,maxGenerated
      });
@@ -178,7 +178,7 @@ try{
      continue;
    }
    const serialized=JSON.parse(JSON.stringify(checked.exported));
-   const renewed=recheckIndependentTrainingEvidence(serialized);
+   const renewed=recheckOwnedSourceEvidence(serialized);
    if(!renewed.valid){
      fail(item,'independent_recheck_failure',renewed.reason);continue;
    }

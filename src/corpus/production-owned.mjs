@@ -7,8 +7,8 @@ import {resolve} from 'node:path';
 import {parse} from 'acorn';
 import {runInNewContext} from 'node:vm';
 import {upstream,pinnedSha256} from '../../corpus/stateful/cases.mjs';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence}
- from '../training/admit.js';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence}
+ from '../training/source-check.js';
 
 const sha=value=>createHash('sha256').update(value).digest('hex');
 export const OWNED_PRODUCTION_HELPERS=Object.freeze([
@@ -106,7 +106,7 @@ export function verifyPinnedProductionHelpers({
      continue;
     }
    }
-   const result=verifyTrainingCase({source:artifact.projected,
+   const result=verifyOwnedSourceCase({source:artifact.projected,
     entry:artifact.entry,args,lineage:{origin:'pinned-production-owned/1',
      source:artifact.provenance,index:i},maxGenerated,maxSteps:12000});
    const row={schema:'production-helper-owned-result/1',id,entry:artifact.entry,
@@ -114,7 +114,7 @@ export function verifyPinnedProductionHelpers({
     status:result.status,verifiedOwned:false};
    if(result.status==='locally_verified'){
     const serialized=JSON.parse(JSON.stringify(result.exported));
-    const evidence=recheckIndependentTrainingEvidence(serialized);
+    const evidence=recheckOwnedSourceEvidence(serialized);
     if(!evidence.valid)throw new Error('Production helper independent recheck failed: '+evidence.reason);
     const text=serialized.sidecar.archive.sources.find(x=>
       x.sourceId===serialized.sidecar.archive.entrySpec.sourceId)?.text;
@@ -195,7 +195,7 @@ export function verifyPinnedProductionClosures({
      typeof args[0]!=='string'||JSON.stringify(args).length>1000)
    throw new TypeError('Invalid production closure arguments');
   const id=sha(JSON.stringify([artifact.provenance,'typeOfTest',i,args]));
-  const result=verifyTrainingCase({source:artifact.projected,entry:artifact.entry,
+  const result=verifyOwnedSourceCase({source:artifact.projected,entry:artifact.entry,
    args,maxGenerated,maxSteps:12000,lineage:{origin:'pinned-production-closure/1',
     source:artifact.provenance,index:i}});
   const row={schema:'production-closure-owned-result/1',id,args,
@@ -203,7 +203,7 @@ export function verifyPinnedProductionClosures({
    status:result.status};
   if(result.status==='locally_verified'){
    const serialized=JSON.parse(JSON.stringify(result.exported));
-   const evidence=recheckIndependentTrainingEvidence(serialized);
+   const evidence=recheckOwnedSourceEvidence(serialized);
    if(!evidence.valid)throw new Error('Production closure evidence recheck failed: '+evidence.reason);
    const sourceText=serialized.sidecar.archive.sources.find(x=>
     x.sourceId===serialized.sidecar.archive.entrySpec.sourceId)?.text;

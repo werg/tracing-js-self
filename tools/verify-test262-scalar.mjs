@@ -12,8 +12,8 @@ import {scalarTest262Reference} from '../src/corpus/test262-scalar-reference.mjs
 import {executeRuntimeTest262} from '../src/test262-runtime.js';
 import {wrapOwnedScalarTest262,runWrappedScalarReference,mapTest262ScalarSites}
   from '../src/corpus/test262-training.mjs';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence}
-  from '../src/training/admit.js';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence}
+  from '../src/training/source-check.js';
 const argv=process.argv.slice(2);
 const arg=(k,v)=>{const i=argv.indexOf('--'+k);return i===-1?v:argv[i+1]};
 const root=resolve(arg('root','corpus/extension/snapshots/test262'));
@@ -71,7 +71,7 @@ function runCase(path,seed=false){
        if(wrapReference.status!=='passed'||
           wrapReference.assertionCount!==reference.assertionCount)
          throw new Error('Function-entry execution does not preserve independent original script assertions');
-       const checked=verifyTrainingCase({source:wrapped.source,entry:wrapped.entry,
+       const checked=verifyOwnedSourceCase({source:wrapped.source,entry:wrapped.entry,
          args:[],maxSteps:14000,maxGenerated:512,
          lineage:{kind:'test262-scalar-wrapper/1',path,
            originalSha256:item.sourceSha256,suiteCommit,
@@ -80,7 +80,7 @@ function runCase(path,seed=false){
          throw new Error('Owned training-js profile refused: '+
            checked.status+' '+String(checked.reason??'').slice(0,180));
        const exported=JSON.parse(JSON.stringify(checked.exported));
-       const rechecked=recheckIndependentTrainingEvidence(exported);
+       const rechecked=recheckOwnedSourceEvidence(exported);
        if(!rechecked.valid)throw new Error('Independent training evidence recheck failed: '+rechecked.reason);
        const sites=mapTest262ScalarSites(wrapped,source,exported.sidecar.semantic);
        if(sites.stats.mapped===0)throw new Error('No original source-body site receipts');

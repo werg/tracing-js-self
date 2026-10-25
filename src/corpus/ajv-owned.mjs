@@ -6,8 +6,8 @@
 import {createHash} from 'node:crypto';
 import {parse} from 'acorn';
 import {runInNewContext} from 'node:vm';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence}
- from '../training/admit.js';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence}
+ from '../training/source-check.js';
 
 const hash=s=>createHash('sha256').update(s).digest('hex');
 // Ajv 8's generated functions use a standard optional context parameter.
@@ -155,7 +155,7 @@ export function attemptOwnedAjvGeneratedValidator({
    String(error.message??error).slice(0,140),details),exported:null};
  }
  const source=projected.source;
- const result=verifyTrainingCase({source,entry,args:[cloned],maxSteps,maxGenerated,
+ const result=verifyOwnedSourceCase({source,entry,args:[cloned],maxSteps,maxGenerated,
   lineage:{origin:'ajv-generated-owned-attempt/1',originalId,
    generatedCodeSha256:codeSha256}});
  if(result.status!=='locally_verified')
@@ -167,7 +167,7 @@ export function attemptOwnedAjvGeneratedValidator({
     JSON.stringify(reference.graph?.roots?.at(-1))!==JSON.stringify(['bool',observedResult]))
   return {row:refusal('reference_mismatch',
    'Generated standalone function differs from real Ajv compiled validator',details),exported:null};
- const evidence=recheckIndependentTrainingEvidence(exported);
+ const evidence=recheckOwnedSourceEvidence(exported);
  if(!evidence.valid)
   return {row:refusal('reference_mismatch',
    'Independent serialized owned evidence fails: '+String(evidence.reason).slice(0,160),details),
