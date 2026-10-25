@@ -176,6 +176,8 @@ export class SelectedExecutionHarness {
       'Event handler closure must have a static function source site');
     this.handlers.set(subscriptionId,{programId,realmId,trackId,realmPolicy,
       entry:entry??program.entry,queueLimit,seen:new Set(),queue:[],state:'active'});
+    for(const callback of this.callbacks.values())
+      if(callback.subscriptionId===subscriptionId)callback.state='active';
     return this.record('observed','handler','host',
       {subscriptionId,programId,realmId,trackId,realmPolicy,
         entry:entry??program.entry,queueLimit});
@@ -231,6 +233,18 @@ export class SelectedExecutionHarness {
     const {kind,fields}=decodeWitness(line);
     demand(kind!=='observe'&&kind!=='code'&&kind!=='input',
       'Host observations are not selected model actions');
+    if(kind==='request'){
+      const spec=hostOperation(fields.operation);
+      for(const slot of spec.callbackIndices??[]){
+        const argument=fields.arguments[slot];
+        const closure=argument?.[0]==='ref'?
+          activation.controller.heap.get(argument[1]):null;
+        const program=this.programs.get(activation.programId);
+        demand(closure?.kind==='closure'&&typeof closure.code==='string'&&
+          program.functions.some(fn=>fn.name===closure.code),
+          'Selected callback must be a declared owned closure');
+      }
+    }
     const answer=activation.controller.commit(line,{track:'t0',mode:'generated'});
     if(kind==='request'){
       const key=invocationId+'/'+fields.effect;
@@ -269,6 +283,12 @@ export class SelectedExecutionHarness {
     }
     this.record('generated','semantic',activation.trackId,
       {invocationId,traceFormat:HARNESS_SELECTED_TRACE_VERSION,line});
+    if(kind==='end'&&!this.replaying)
+      for(const [subscriptionId,handler] of this.handlers)
+        if(handler.realmId===activation.realmId&&handler.queue.length){
+          this.deliverReadyEvents(subscriptionId);
+          break; // One guest turn at a time within an authoritative realm.
+        }
     return answer;
   }
   /**
@@ -399,6 +419,7 @@ export class SelectedExecutionHarness {
     demand(Array.isArray(records)&&records.length>1&&records.length<=50000,
       'Replay requires a bounded public causal timeline');
     const h=new SelectedExecutionHarness({sessionId:records[0]?.session});
+    h.replaying=true;
     for(const [index,item] of records.entries()){
       demand(item&&typeof item==='object','Malformed replay record');
       if(item.kind==='program'){
@@ -476,6 +497,7 @@ export class SelectedExecutionHarness {
       demand([...h.intents.values()].every(v=>v.status==='settled'),
         'Replay contains unsettled selected native actions');
     }
+    h.replaying=false;
     return h;
   }
   /** No service code executes during state restoration or trace inspection. */
