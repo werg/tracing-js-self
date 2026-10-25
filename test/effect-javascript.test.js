@@ -56,5 +56,6 @@ test('live generated effect JavaScript sends rejection back through owned input'
   },bridge);
   await new Promise(resolve=>setImmediate(resolve));
   assert.equal(runtime.state.effects[fx.id].external,'rejected');
-  assert.equal(runtime.state.inputs[fx.inputIds[0]].abrupt,true);
+  const inputId=runtime.state.effects[fx.id].inputIds[0];
+  assert.equal(runtime.state.inputs[inputId].abrupt,true);
 });
