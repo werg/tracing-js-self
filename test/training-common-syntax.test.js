@@ -1,18 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence} from 'tracing-js-self/training/diagnostic';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence} from 'tracing-js-self/training';
 import {createBoundedNatlangEnvironment} from '../src/natlang.js';
 const strict=body=>'"use strict";\n'+body;
 function verified(body,args=[]){
-  const res=verifyTrainingCase({source:strict(body),entry:'f',args,maxGenerated:1024});
+  const res=verifyOwnedSourceCase({source:strict(body),entry:'f',args,maxGenerated:1024});
   assert.equal(res.status,'locally_verified',JSON.stringify(res));
-  const check=recheckIndependentTrainingEvidence(JSON.parse(JSON.stringify(res.exported)));
+  const check=recheckOwnedSourceEvidence(JSON.parse(JSON.stringify(res.exported)));
   assert.equal(check.valid,true,JSON.stringify(check));
   return res.exported;
 }
 test('multiple lexical declarations evaluate left-to-right and preserve TDZ',()=>{
   verified('function f(x){let a=x+1,b=a*2,c=b-2;const data={a,b,c};return [data.a,data.b,data.c];}',[4]);
-  assert.notEqual(verifyTrainingCase({source:strict('function f(){let x=y,y=2;return x;}'),entry:'f'}).status,'locally_verified');
+  assert.notEqual(verifyOwnedSourceCase({source:strict('function f(){let x=y,y=2;return x;}'),entry:'f'}).status,'locally_verified');
 });
 test('object shorthand supports lexical inputs and identical named values',()=>{
   verified('function f(a,b){const c=3;const obj={a,b,c};return [obj.a,obj.b,obj.c];}',[4,5]);
@@ -39,5 +39,5 @@ test('nested destructuring is owned and independently checked; unsupported sprea
   for(const body of [
     'function f(o){return {...o};}',
     'function f(a){return [...a];}'
-  ])assert.equal(verifyTrainingCase({source:strict(body),entry:'f',args:[{x:2}]}).status,'unsupported');
+  ])assert.equal(verifyOwnedSourceCase({source:strict(body),entry:'f',args:[{x:2}]}).status,'unsupported');
 });

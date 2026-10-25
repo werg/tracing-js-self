@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRuntime,replayExact,validateBundle} from 'tracing-js-self';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence} from 'tracing-js-self/training/diagnostic';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence} from 'tracing-js-self/training';
 
 const strict=code=>'"use strict";\n'+code;
 function agree(body,args=[]){
-  const result=verifyTrainingCase({source:strict(body),entry:'f',args,maxGenerated:1024});
+  const result=verifyOwnedSourceCase({source:strict(body),entry:'f',args,maxGenerated:1024});
   assert.equal(result.status,'locally_verified',JSON.stringify(result));
   const copy=JSON.parse(JSON.stringify(result.exported));
-  assert.deepEqual(recheckIndependentTrainingEvidence(copy).valid,true);
+  assert.deepEqual(recheckOwnedSourceEvidence(copy).valid,true);
   assert.equal(copy.sidecar.branchAudit.status,'agreed');
   return copy;
 }
@@ -56,11 +56,11 @@ test('typeof uninitialized lexical binding is a guest throw, not undefined',()=>
   assert.equal(validateBundle(bundle).valid,true);
   assert.equal(replayExact(bundle).valid,true);
   assert.equal(bundle.finalState.control.a0.failure.completion.type,'throw');
-  assert.notEqual(verifyTrainingCase({source,entry:'f'}).status,'locally_verified');
+  assert.notEqual(verifyOwnedSourceCase({source,entry:'f'}).status,'locally_verified');
 });
 test('unresolved assignment and value reads remain unbound, no ambient fallback',()=>{
   for(const body of ['function f(){return absent+1;}',
     'function f(){absent=3;return 3;}']){
-    assert.equal(verifyTrainingCase({source:strict(body),entry:'f'}).status,'unsupported');
+    assert.equal(verifyOwnedSourceCase({source:strict(body),entry:'f'}).status,'unsupported');
   }
 });

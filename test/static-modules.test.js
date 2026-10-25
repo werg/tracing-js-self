@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {executeStaticModule,linkStaticModules} from 'tracing-js-self/modules';
 import {validateBundle,replayExact} from 'tracing-js-self';
-import {verifyTrainingCase} from 'tracing-js-self/training/diagnostic';
+import {verifyOwnedSourceCase} from 'tracing-js-self/training';
 
 test('TypeScript static imports and aliased exports link as owned JS',()=>{
   const modules={
@@ -19,7 +19,7 @@ test('TypeScript static imports and aliased exports link as owned JS',()=>{
   assert.equal(validateBundle(run.bundle).valid,true);
   assert.equal(replayExact(run.bundle).valid,true);
   const compiled=linkStaticModules(request);
-  assert.equal(verifyTrainingCase({source:compiled.source,
+  assert.equal(verifyOwnedSourceCase({source:compiled.source,
     entry:compiled.entryFunction,args:[4]}).status,'locally_verified');
 });
 

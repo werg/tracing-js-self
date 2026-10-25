@@ -5,7 +5,7 @@ import {
   replayExact, causalPrefix, TraceValidationError, TraceReplayError
 } from 'tracing-js-self';
 
-import {verifyTrainingCase,SemanticController,evaluateSelectedTrajectory} from 'tracing-js-self/training/diagnostic';
+import {verifyOwnedSourceCase,SemanticController,evaluateSelectedTrajectory} from 'tracing-js-self/training';
 import {verifyEffectfulTrainingCase,SelectedExecutionHarness,HARNESS_PROFILE} from 'tracing-js-self/training';
 
 const archive = runtime => JSON.parse(JSON.stringify(runtime.exportRun()));
@@ -107,7 +107,7 @@ test('package exports the validation and replay error constructors thrown by its
 });
 
 test('offline diagnostic subpath retains independent bounded-pure corpus checks',()=>{
-  const checked=verifyTrainingCase({
+  const checked=verifyOwnedSourceCase({
     source:'"use strict";function f(x){return x+1;}',entry:'f',args:[4]
   });
   assert.equal(checked.status,'locally_verified');
