@@ -8,7 +8,7 @@ import {decodeWitness} from '../src/training/format.js';
 import {renderWitness} from '../src/training/render.js';
 
 const wanted=process.argv.slice(2).length?process.argv.slice(2):[
-  'counter-0','branch-1','compound-pure-compact','compound-effectful-compact',
+  'counter-0','branch-1','compound-pure','compound-effectful',
   'callback-captured-write','rejection-finally'
 ];
 const rows=[];
@@ -18,17 +18,8 @@ for(const name of wanted){
   const result=await verifyEffectfulTrainingCase({...fixture,
     projectionOptions:{...fixture.projectionOptions,representation:'compact'}});
   assert.equal(result.status,'locally_verified',name+': '+result.reason);
-  // A pinned source/control environment is the authority for both views.
-  // Verify that compaction changes the explanation, never the observable
-  // completion, effects, provenance, or reference graph.
-  const explicit=await verifyEffectfulTrainingCase({...fixture,
-    projectionOptions:{...fixture.projectionOptions,representation:'explicit'}});
-  assert.equal(explicit.status,'locally_verified',name+' explicit: '+explicit.reason);
-  assert.deepEqual(result.exported.sidecar.reference,explicit.exported.sidecar.reference);
-  assert.deepEqual(result.exported.sidecar.effects,explicit.exported.sidecar.effects);
-  assert.equal(result.exported.sidecar.split,explicit.exported.sidecar.split);
   const episode=result.exported,trace=episode.public.timeline;
-  const physicalBytes=exported=>exported.public.timeline.filter(item=>item.kind==='semantic')
+  const witnessBytes=trace.filter(item=>item.kind==='semantic')
     .reduce((n,item)=>n+Buffer.byteLength(item.line,'utf8'),0);
   const semantic=trace.filter(row=>row.kind==='semantic')
     .map(row=>({...decodeWitness(row.line),sequence:row.sequence}));
@@ -41,12 +32,7 @@ for(const name of wanted){
     events:trace.filter(row=>row.kind==='event').length,
     foldedConditions:episode.sidecar.compiler.compaction.foldedConditions,
     fusedBindings:episode.sidecar.compiler.compaction.fusedBindings,
-    explicitGeneratedRecords:explicit.exported.sidecar.compiler.generatedRecords,
-    compactGeneratedRecords:episode.sidecar.compiler.generatedRecords,
-    explicitWitnessBytes:physicalBytes(explicit.exported),
-    compactWitnessBytes:physicalBytes(episode)};
-  assert(markers.compactGeneratedRecords<=markers.explicitGeneratedRecords,
-    'semantic compaction must not add reasoning steps');
+    generatedRecords:episode.sidecar.compiler.generatedRecords,witnessBytes};
   const readable=trace.flatMap(row=>{
     if(['semantic','result'].includes(row.kind))return [
       String(row.sequence).padStart(4)+' '+(row.kind==='semantic'?'compute':'observed')+

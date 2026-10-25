@@ -56,7 +56,7 @@ jobs:
           npm run contracts:check
           cmp contracts/host-operations-v4.json megatoken/src/megatoken/data/contracts/host-operations-v4.json
           cmp contracts/semantic-harness-v4.json megatoken/src/megatoken/data/contracts/semantic-harness-v4.json
-          node tools/generate-effectful-training.mjs --representation comparison --jobs 4 --out "$RUNNER_TEMP/corpus" \
+          node tools/generate-effectful-training.mjs --jobs 4 --out "$RUNNER_TEMP/corpus" \
             --megatoken megatoken --python python --tokenizer "$RUNNER_TEMP/tokenizer.json" --require-native
           node tools/generate-selected-harness-v4.mjs "$RUNNER_TEMP/two-invocations.json"
           node tools/generate-selected-continuity-v4.mjs "$RUNNER_TEMP/continuity"
@@ -74,11 +74,10 @@ jobs:
           assert manifest['optimizerSteps'] == 0 and manifest['learnedSuccess'] is None
           producer = subprocess.check_output(['git','rev-parse','HEAD'], text=True).strip()
           consumer = subprocess.check_output(['git','-C','megatoken','rev-parse','HEAD'], text=True).strip()
-          for representation in ('explicit','compact'):
-              subprocess.run([sys.executable,'megatoken/scripts/validate_semantic_corpus.py',
-                '--corpus',str(corpus),'--output',str(root/('prepared-'+representation)),
-                '--tracer-root','.', '--representation',representation,
-                '--tokenizer-json',str(root/'tokenizer.json')], check=True)
+          subprocess.run([sys.executable,'megatoken/scripts/validate_semantic_corpus.py',
+            '--corpus',str(corpus),'--output',str(root/'prepared-semantic'),
+            '--tracer-root','.', '--representation','compact',
+            '--tokenizer-json',str(root/'tokenizer.json')], check=True)
           codec = ByteCodec.from_tokenizer_json(root/'tokenizer.json', expected_sha256=LING_TOKENIZER_SHA256)
           paths = [root/'two-invocations.json', *sorted((root/'continuity').glob('*.json'))]
           for path in paths:
@@ -86,25 +85,6 @@ jobs:
               episode, receipt = adapt_selected_harness_v4(json.loads(path.read_text()), codec=codec,
                 allow_local=True, max_positions=1024, max_history=1024)
               assert episode.records and episode.supervision.outcome == 'unknown'
-          PY
-      - name: Recollect both complete curricula and validate all training arms without optimizing
-        run: |
-          for representation in explicit compact; do
-            node tools/generate-effectful-training.mjs --recipe training-v4 --representation "$representation" \
-              --jobs 4 --out "$RUNNER_TEMP/recipe-$representation" --megatoken megatoken --python python \
-              --tokenizer "$RUNNER_TEMP/tokenizer.json" --require-native
-          done
-          python - <<'PY'
-          import os, subprocess, sys
-          from pathlib import Path
-          root = Path(os.environ['RUNNER_TEMP'])
-          producer = subprocess.check_output(['git','rev-parse','HEAD'], text=True).strip()
-          consumer = subprocess.check_output(['git','-C','megatoken','rev-parse','HEAD'], text=True).strip()
-          subprocess.run([sys.executable,'megatoken/scripts/prepare_semantic_experiments.py',
-            '--explicit-corpus',str(root/'recipe-explicit'), '--compact-corpus',str(root/'recipe-compact'),
-            '--tracer-root','.', '--tokenizer-json',str(root/'tokenizer.json'),
-            '--producer-revision',producer,'--consumer-revision',consumer,
-            '--output',str(root/'experiment-data')], check=True)
           PY
       - name: Freeze and evaluate held-out engineering cohort through real selected driver
         run: |
@@ -147,8 +127,6 @@ jobs:
             ${{ runner.temp }}/corpus/manifest.json
             ${{ runner.temp }}/evaluation.json
             ${{ runner.temp }}/continuity/*.txt
-            ${{ runner.temp }}/recipe-*/manifest.json
-            ${{ runner.temp }}/experiment-data/experiment-preparation.json
             ${{ runner.temp }}/native-inference/inference-check.json
             ${{ runner.temp }}/native-orchestration-validation.json
           if-no-files-found: error

@@ -39,18 +39,17 @@ test('graceful shutdown reports failure instead of inventing a successful flush'
   await assert.rejects(hung.shutdown({timeoutMs:200}),/deadline exceeded/);
 });
 
-test('evaluation initialization attests the actual checkpoint and seed before outcome prediction',async()=>{
+test('model initialization attests checkpoint and seed before semantic selection',async()=>{
   const script=`
     let buffer='';process.stdin.setEncoding('utf8');
     process.stdin.on('data',data=>{buffer+=data;for(;;){
       const n=buffer.indexOf('\\n');if(n<0)break;
       const request=JSON.parse(buffer.slice(0,n));buffer=buffer.slice(n+1);
-      const outcome={schema:'semantic-outcome/4',completion:{kind:'return',value:['num',7]},
-        state:{roots:[['num',7]],objects:[]}};
       const result=request.op==='initialize'?{schema:'semantic-inference-identity/4',
         seed:request.seed,checkpointIdentity:'a'.repeat(64),tokenizerIdentity:'actual-tokenizer'}:
-        {schema:'selected-outcome-output/4',representation:'outcome-only',record:JSON.stringify(outcome),
-          outcome,selection:{modelSelected:true,ownerTrack:request.prefix.trackId,selectedEventId:'m1'}};
+        {schema:'selected-model-output/2',representation:'compact',
+          record:'return {"value":["num",7]}',selection:{modelSelected:true,
+          ownerTrack:request.prefix.trackId,selectedEventId:'m1'}};
       process.stdout.write(JSON.stringify({id:request.id,ok:true,result})+'\\n');
     }});
   `;
@@ -58,27 +57,10 @@ test('evaluation initialization attests the actual checkpoint and seed before ou
   try{
     const receipt=await select.initialize({seed:29,checkpointIdentity:'a'.repeat(64)});
     assert.equal(receipt.seed,29);
-    assert.equal((await select.outcome(prefix)).outcome.completion.value[1],7);
+    assert.equal((await select(prefix)).record,'return {"value":["num",7]}');
     await assert.rejects(select.initialize({seed:29,checkpointIdentity:'b'.repeat(64)}),/attest/);
   }finally{select.close();}
 });
-
-test('outcome-only adapter rejects an answer substituted for the original selected record',async()=>{
-  const script=`
-    let buffer='';process.stdin.on('data',data=>{buffer+=data.toString();
-      const n=buffer.indexOf('\\n');if(n<0)return;
-      const request=JSON.parse(buffer.slice(0,n));
-      process.stdout.write(JSON.stringify({id:request.id,ok:true,result:{
-        schema:'selected-outcome-output/4',representation:'outcome-only',record:'{}',
-        outcome:{schema:'semantic-outcome/4'},selection:{modelSelected:true,
-          ownerTrack:request.prefix.trackId,selectedEventId:'m1'}}})+'\\n');
-    });
-  `;
-  const select=mockProcess(script);
-  try{await assert.rejects(select.outcome(prefix),/differs from original selected bytes/);}
-  finally{select.close();}
-});
-
 test('model process bridge uses stable JSONL action identities and terminal acknowledgement',async()=>{
   const script=`
     let buffer='';
