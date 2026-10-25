@@ -1,0 +1,119 @@
+{
+  "schema": "semantic-controlled-evaluation-matrix/4",
+  "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+  "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+  "runs": [
+    {
+      "cohort": "common-support",
+      "representation": "explicit",
+      "tasks": 2,
+      "wholeTaskSuccess": 1.0,
+      "traceValid": 1.0,
+      "correctTasks": 2,
+      "generatedTokens": 605,
+      "canonicalGeneratedTokens": 605,
+      "observedTokens": 1537,
+      "computeSeconds": 0.04649371800000001,
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "failureCounts": {},
+      "generatedTokensPerCorrectTask": 302.5,
+      "computeSecondsPerCorrectTask": 0.023246859000000005
+    },
+    {
+      "cohort": "common-support",
+      "representation": "compact",
+      "tasks": 2,
+      "wholeTaskSuccess": 1.0,
+      "traceValid": 1.0,
+      "correctTasks": 2,
+      "generatedTokens": 389,
+      "canonicalGeneratedTokens": 389,
+      "observedTokens": 1537,
+      "computeSeconds": 0.038687811000000016,
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "failureCounts": {},
+      "generatedTokensPerCorrectTask": 194.5,
+      "computeSecondsPerCorrectTask": 0.019343905500000008
+    },
+    {
+      "cohort": "common-support",
+      "representation": "outcome-only",
+      "tasks": 2,
+      "wholeTaskSuccess": 1.0,
+      "traceValid": 1.0,
+      "correctTasks": 2,
+      "generatedTokens": 108,
+      "canonicalGeneratedTokens": 108,
+      "observedTokens": 1447,
+      "computeSeconds": 0.018178169000000004,
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "failureCounts": {},
+      "generatedTokensPerCorrectTask": 54.0,
+      "computeSecondsPerCorrectTask": 0.009089084500000002
+    },
+    {
+      "cohort": "effectful-tracks-events",
+      "representation": "explicit",
+      "tasks": 6,
+      "wholeTaskSuccess": 1.0,
+      "traceValid": 1.0,
+      "correctTasks": 6,
+      "generatedTokens": 6732,
+      "canonicalGeneratedTokens": 6732,
+      "observedTokens": 40966,
+      "computeSeconds": 44.058815126000006,
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "failureCounts": {},
+      "generatedTokensPerCorrectTask": 1122.0,
+      "computeSecondsPerCorrectTask": 7.343135854333334
+    },
+    {
+      "cohort": "effectful-tracks-events",
+      "representation": "compact",
+      "tasks": 6,
+      "wholeTaskSuccess": 1.0,
+      "traceValid": 1.0,
+      "correctTasks": 6,
+      "generatedTokens": 6210,
+      "canonicalGeneratedTokens": 6210,
+      "observedTokens": 40951,
+      "computeSeconds": 43.773701798,
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "failureCounts": {},
+      "generatedTokensPerCorrectTask": 1035.0,
+      "computeSecondsPerCorrectTask": 7.295616966333333
+    }
+  ],
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}

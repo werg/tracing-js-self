@@ -1,0 +1,93 @@
+{
+  "inferenceIdentity": {
+    "checkpointIdentity": "c7d9040ec72553cf84d1030bd8481b0f03dcfaeb989b2e347239aee135aa0943",
+    "schema": "semantic-inference-identity/4",
+    "seed": 17,
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "learnedSuccess": null,
+  "nativeEffects": 0,
+  "optimizerSteps": 0,
+  "origin": "initialized-fixed-weights",
+  "outcomeReply": {
+    "error": {
+      "category": "SemanticSelectionError",
+      "evidence": {
+        "payloadHex": "207765656b6c7928e5a6823a6164645f6d756c7469706c654765737475726528737472ebaa85ec9d8427757365425720e696b0e5938120e4b8a4e4b8aa2064766f75207a61637ae7a88d",
+        "reason": "Expecting value: line 1 column 2 (char 1)",
+        "representation": "outcome-only",
+        "selection": {
+          "codecFingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "fragments": [
+            {
+              "emittedTokenIds": [
+                15231,
+                43503,
+                87931,
+                105065
+              ],
+              "meridian": 11,
+              "modelTrack": "track:0",
+              "payloadHex": "207765656b6c7928e5a6823a6164645f6d756c7469706c65",
+              "selectedEventId": "selected:11:track:0"
+            },
+            {
+              "emittedTokenIds": [
+                55776,
+                15732,
+                148149,
+                78352
+              ],
+              "meridian": 12,
+              "modelTrack": "track:0",
+              "payloadHex": "4765737475726528737472ebaa85ec9d8427757365",
+              "selectedEventId": "selected:12:track:0"
+            },
+            {
+              "emittedTokenIds": [
+                74872,
+                150664,
+                61286,
+                152121
+              ],
+              "meridian": 13,
+              "modelTrack": "track:0",
+              "payloadHex": "425720e696b0e5938120e4b8a4e4b8aa2064766f75",
+              "selectedEventId": "selected:13:track:0"
+            },
+            {
+              "emittedTokenIds": [
+                151380,
+                8626
+              ],
+              "meridian": 14,
+              "modelTrack": "track:0",
+              "payloadHex": "207a61637ae7a88d",
+              "selectedEventId": "selected:14:track:0"
+            }
+          ],
+          "meridian": 14,
+          "modelSelected": true,
+          "modelTrack": "track:0",
+          "origin": "actual-model-selected",
+          "ownerTrack": "worker",
+          "selectedEventId": "selected:14:track:0",
+          "sourceReads": [],
+          "stateBootstrap": null
+        }
+      },
+      "message": "Model emitted an invalid noninteractive outcome"
+    },
+    "id": "outcome",
+    "ok": false,
+    "runtimeMetrics": {
+      "computeSeconds": 1.4116920460000983,
+      "peakMemoryBytes": 740409344,
+      "schema": "semantic-inference-metrics/4",
+      "scope": "native-process-rpc-wall-time-and-lifetime-peak-rss"
+    }
+  },
+  "schema": "semantic-fixed-inference-check/4",
+  "served": "/workspace/scratch/6825113a40ea/final-fixed-inference-b2/served",
+  "weightsUnchanged": true
+}

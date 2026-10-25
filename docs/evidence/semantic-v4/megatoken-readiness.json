@@ -1,0 +1,146 @@
+{
+  "schema": "semantic-megatoken-readiness/4",
+  "repositories": {
+    "tracing-js-self": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+    "megatoken": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+    "natlang": "ffdcf5a0d3d871bf600626627fa44dbf324039e3"
+  },
+  "engineeringDataPreparationValidated": true,
+  "trainingInfrastructureValidated": true,
+  "preparedSourceViews": 112,
+  "nativeLifecycleEpisodes": 4,
+  "stageSupply": [
+    {
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "corpusIdentity": "ed0c3c37b8e1b7552f533b090266418294bb0dcdf0ab2006b2f22280bf7d59e3",
+      "episodes": {
+        "train": 13,
+        "validation": 2
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "optimizerSteps": 0,
+      "phase": "SC",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "representation": "explicit",
+      "schema": "semantic-stage-supply/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    {
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "corpusIdentity": "b96742ff013838a9e2b92ce1e507371839ecb6738c3976f110e9ae7d9e49c7e9",
+      "episodes": {
+        "train": 13,
+        "validation": 2
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "optimizerSteps": 0,
+      "phase": "SO",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "representation": "outcome-only",
+      "schema": "semantic-stage-supply/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    {
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "corpusIdentity": "0e8a4bf0090e41c76f7e3b083cb08a5fc96569b353f64d465ef9b1dab3f2e0bd",
+      "episodes": {
+        "train": 13,
+        "validation": 2
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "optimizerSteps": 0,
+      "phase": "SC",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "representation": "compact",
+      "schema": "semantic-stage-supply/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    {
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "corpusIdentity": "355fcd8139a818a366d1cab579d0d3594ed849213e9a4de6d722c60b6c89e79c",
+      "episodes": {
+        "train": 27,
+        "validation": 5
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "optimizerSteps": 0,
+      "phase": "SE",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "representation": "explicit",
+      "schema": "semantic-stage-supply/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    {
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "corpusIdentity": "db42bc350027c3d2627a7e36919ec727d9490ad1298e9b74ebaef24cb822e81d",
+      "episodes": {
+        "train": 27,
+        "validation": 5
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "optimizerSteps": 0,
+      "phase": "SE",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "representation": "compact",
+      "schema": "semantic-stage-supply/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    }
+  ],
+  "configurationShapes": 45,
+  "incompleteEngineeringPreflightRejections": 45,
+  "externalAssetsAdmitted": false,
+  "trainingLaunchReady": false,
+  "launchReadinessScope": "All native source, lifecycle, tokenizer, visibility, loss-mask and curriculum gates are verified. Donor and hindsight assets and live coordinator resources remain explicit launch bindings. Configuration-shape validation used a provisional incomplete engineering receipt and verified that it blocks every launch.",
+  "evidence": {
+    "preparation": {
+      "path": "/workspace/scratch/6825113a40ea/final-prepared-experiments-b2/experiment-preparation.json",
+      "sha256": "aeef9165b7860c01ab978618c3cdabb2648bc63d689c79b27f2a480a0a7dbee1"
+    },
+    "matrixShape": {
+      "path": "/workspace/scratch/6825113a40ea/final-training-matrix-b2-validation.json",
+      "sha256": "320a6959b2e4fad2cda09b8991d3d441af22aa2065b43074e0580f16276aae1b"
+    },
+    "stateContinuity": {
+      "path": "/workspace/scratch/6825113a40ea/final-state-continuity-b2-validation.json",
+      "sha256": "93b718119e73ca139fb3a5dcfa6b7cf3daa14e21de70109bb6f1aa1416a8a06e"
+    },
+    "coreTests": {
+      "path": "/workspace/scratch/6825113a40ea/megatoken/.validation/final-core-test-summary.json",
+      "sha256": "163d7c29e2589b2aa3693275ff24e37a6e71256f3afe731878abad25f5ca7125"
+    },
+    "ciRepairTests": {
+      "path": "/workspace/scratch/6825113a40ea/megatoken/.validation/final-general-ci-repair-validation.json",
+      "sha256": "e9d68b04bbfe36fda806ac9fb71e7ce2884c5e5e3ea015691992a1ccd7daef5a"
+    },
+    "nativeOrchestration": {
+      "path": "/workspace/scratch/6825113a40ea/orchestration-b2-final-validation.json",
+      "sha256": "df0d380a5e44b0ea2589bcb3e864b98ddd2920c94f4bd1ba0f3d6b9b67aa5986"
+    },
+    "frozenControlledEvaluation": {
+      "path": "/workspace/scratch/6825113a40ea/final-evaluation-b2/controlled-matrix-summary.json",
+      "sha256": "30ac5e513ff7a8429d50716efb0ad58acf3800efe52a764a02311e7a1c2b2bdf"
+    },
+    "sourceCollection": {
+      "path": "/workspace/scratch/6825113a40ea/final-native-collection-b2-summary.json",
+      "sha256": "4d53aadcdaac7ec234d455629a393391e49c4e443e365858da7af0d5c5cea236"
+    }
+  },
+  "commands": {
+    "prepare": ".venv/bin/python scripts/prepare_semantic_experiments.py --explicit-corpus ../final-native-recipe-explicit-b2 --compact-corpus ../final-native-recipe-compact-b2 --tracer-root ../tracing-js-self --tokenizer-json .validation/tokenizer.json --producer-revision b238fb48e6dc2b3a97e8c1280d4b961c0593466c --consumer-revision 95115e7cb08b8681cae9769b1a134bf4ee9ca70e --output ../final-prepared-experiments-b2",
+    "matrix": ".venv/bin/python scripts/plan_semantic_training.py --bindings .validation/final-matrix-shape-bindings-b2.json --engineering-receipt .validation/configuration-shape-engineering-pins-b2.json --output ../final-training-matrix-b2",
+    "preflight": "For each of the 45 generated files: TrainConfig.load(path, expand_data=False), then SemanticExperimentConfig(**config.semantic_experiment).preflight(phase=config.phase); each must raise the explicit incomplete-engineering error."
+  },
+  "workingTreeClean": true,
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}

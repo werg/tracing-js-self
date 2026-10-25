@@ -1,0 +1,28 @@
+{
+  "codec": "/workspace/scratch/6825113a40ea/megatoken/.validation/tokenizer.json",
+  "datasets": {
+    "common-support": {
+      "compact": [
+        "/workspace/scratch/6825113a40ea/final-prepared-experiments-b2/common-support-compact"
+      ],
+      "explicit": [
+        "/workspace/scratch/6825113a40ea/final-prepared-experiments-b2/common-support-explicit"
+      ],
+      "outcome-only": [
+        "/workspace/scratch/6825113a40ea/final-prepared-experiments-b2/common-support-outcome-only"
+      ]
+    },
+    "effectful-tracks-events": {
+      "compact": [
+        "/workspace/scratch/6825113a40ea/final-prepared-experiments-b2/effectful-tracks-events-compact",
+        "/workspace/scratch/6825113a40ea/final-prepared-experiments-b2/lifecycle-compact-train",
+        "/workspace/scratch/6825113a40ea/final-prepared-experiments-b2/lifecycle-compact-validation"
+      ],
+      "explicit": [
+        "/workspace/scratch/6825113a40ea/final-prepared-experiments-b2/effectful-tracks-events-explicit",
+        "/workspace/scratch/6825113a40ea/final-prepared-experiments-b2/lifecycle-explicit-train",
+        "/workspace/scratch/6825113a40ea/final-prepared-experiments-b2/lifecycle-explicit-validation"
+      ]
+    }
+  }
+}

@@ -4,7 +4,8 @@ This is the implementation guide for the [M0–M8 roadmap](LLM_SEMANTIC_EXECUTIO
 Engineering verification uses source-certified teachers, independent Node/browser references,
 controlled selected actions and initialized fixed-weight inference. It does not run an optimizer
 or establish learned execution quality. The exact compatible revisions and verification receipts
-are recorded in `contracts/semantic-integration-lock.json` and the accompanying completion ledger.
+are recorded in the [integration lock](../contracts/semantic-integration-lock.json) and
+[engineering completion ledger](SEMANTIC_HARNESS_V4_COMPLETION.md).
 
 ## Public contract and authority
 

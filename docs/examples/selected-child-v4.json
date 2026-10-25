@@ -18582,8 +18582,8 @@
   "nativeRuntimeMetrics": {
     "schema": "semantic-inference-metrics/4",
     "rpcCalls": 75,
-    "computeSeconds": 18.10790503399403,
-    "peakMemoryBytes": 564318208
+    "computeSeconds": 21.23988217300939,
+    "peakMemoryBytes": 566415360
   },
   "hardGates": {
     "futureObservationLeaks": 0,
@@ -18597,8 +18597,8 @@
     "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
   },
   "costs": {
-    "computeSeconds": 20.901716710000002,
-    "peakMemoryBytes": 670285824,
+    "computeSeconds": 24.282612035000003,
+    "peakMemoryBytes": 665911296,
     "dispatches": 8,
     "queueDepth": 1,
     "leakedResources": 0

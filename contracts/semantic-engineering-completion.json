@@ -1,0 +1,95 @@
+{
+  "schema": "semantic-engineering-completion/4",
+  "complete": true,
+  "repositories": {
+    "tracing-js-self": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+    "megatoken": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+    "natlang": "ffdcf5a0d3d871bf600626627fa44dbf324039e3"
+  },
+  "gates": {
+    "protocol": true,
+    "committedBridge": true,
+    "lifecycle": true,
+    "externalEvents": true,
+    "recovery": true,
+    "hostCapabilities": true,
+    "natlang": true,
+    "teacherAdmission": true,
+    "productionTokenizer": true,
+    "inference": true,
+    "trainingInfrastructure": true,
+    "evaluation": true
+  },
+  "scope": "M0–M8 engineering completion for the declared v4 execution and capability profile; controlled actions and fixed-weight inference, no learned-quality claim.",
+  "integrationLock": "semantic-integration-lock.json",
+  "ledger": "../docs/SEMANTIC_HARNESS_V4_COMPLETION.md",
+  "evidence": [
+    {
+      "path": "../docs/evidence/semantic-v4/verification-summary.json",
+      "sha256": "908e95c0dd7a12b71edded86997ac37794c241cd4a7bbb75a2fa3b1940182737"
+    },
+    {
+      "path": "../docs/evidence/semantic-v4/verification-log-identities.json",
+      "sha256": "d4f704957f05da494432502bc83033f2572fdd660cc725cb74d1ed4c5db7509c"
+    },
+    {
+      "path": "../docs/evidence/semantic-v4/native-collection.json",
+      "sha256": "4d53aadcdaac7ec234d455629a393391e49c4e443e365858da7af0d5c5cea236"
+    },
+    {
+      "path": "../docs/evidence/semantic-v4/native-orchestration.json",
+      "sha256": "df0d380a5e44b0ea2589bcb3e864b98ddd2920c94f4bd1ba0f3d6b9b67aa5986"
+    },
+    {
+      "path": "../docs/evidence/semantic-v4/state-continuity.json",
+      "sha256": "93b718119e73ca139fb3a5dcfa6b7cf3daa14e21de70109bb6f1aa1416a8a06e"
+    },
+    {
+      "path": "../docs/evidence/semantic-v4/fixed-inference.json",
+      "sha256": "1fad464f672382aceaef7367ba17c5e308259d6237d265ca0d637188280252eb"
+    },
+    {
+      "path": "../docs/evidence/semantic-v4/experiment-preparation.json",
+      "sha256": "aeef9165b7860c01ab978618c3cdabb2648bc63d689c79b27f2a480a0a7dbee1"
+    },
+    {
+      "path": "../docs/evidence/semantic-v4/training-matrix-validation.json",
+      "sha256": "320a6959b2e4fad2cda09b8991d3d441af22aa2065b43074e0580f16276aae1b"
+    },
+    {
+      "path": "../docs/evidence/semantic-v4/controlled-matrix-summary.json",
+      "sha256": "30ac5e513ff7a8429d50716efb0ad58acf3800efe52a764a02311e7a1c2b2bdf"
+    },
+    {
+      "path": "../docs/evidence/semantic-v4/common-support-cohort.json",
+      "sha256": "fc347312d77198d23cc5ac49adaa45f5e34a33e91f126e94d5a36665c8263c71"
+    },
+    {
+      "path": "../docs/evidence/semantic-v4/effectful-tracks-events-cohort.json",
+      "sha256": "02f92905ff10ad8ff75913341124feff243e42e837ab162de07e074d60f5da3b"
+    },
+    {
+      "path": "../docs/evidence/semantic-v4/megatoken-core-tests.json",
+      "sha256": "163d7c29e2589b2aa3693275ff24e37a6e71256f3afe731878abad25f5ca7125"
+    },
+    {
+      "path": "../docs/evidence/semantic-v4/megatoken-integration-tests.json",
+      "sha256": "e9d68b04bbfe36fda806ac9fb71e7ce2884c5e5e3ea015691992a1ccd7daef5a"
+    }
+  ],
+  "externalTrainingLaunchAssetsAdmitted": false,
+  "externalTrainingLaunchInputs": [
+    "immutable donor assets",
+    "immutable hindsight targets",
+    "live training coordinator binding"
+  ],
+  "postImplementationEmpiricalAcceptance": {
+    "milestone": "M9",
+    "trainingRun": false,
+    "trainedCheckpoint": false,
+    "learnedQualityMeasured": false,
+    "deploymentAcceptanceMeasured": false
+  },
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}

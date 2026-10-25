@@ -1,0 +1,325 @@
+{
+  "schema": "semantic-evaluation-cohort/4",
+  "name": "common-support",
+  "cases": [
+    {
+      "id": "compound-pure-explicit",
+      "family": "compound-pure",
+      "split": "test",
+      "request": {
+        "schema": "selected-evaluation-case/4",
+        "program": {
+          "programId": "program1",
+          "source": "\"use strict\";function run(a,b,c,d){return (a+b)*(c+d)+1;}",
+          "entry": "run",
+          "capabilities": []
+        },
+        "invocation": {
+          "programId": "program1",
+          "invocationId": "invocation1",
+          "trackId": "worker1",
+          "realmId": "realm1",
+          "triggerId": "teacher-entry",
+          "inputGraph": {
+            "roots": [
+              [
+                "num",
+                1
+              ],
+              [
+                "num",
+                2
+              ],
+              [
+                "num",
+                3
+              ],
+              [
+                "num",
+                4
+              ]
+            ],
+            "objects": []
+          },
+          "realmPolicy": "retained",
+          "completionPolicy": "await-returned-promise",
+          "receiverValue": [
+            "undefined"
+          ]
+        },
+        "fixture": {
+          "calls": [],
+          "settlementOrder": null
+        },
+        "controlledSelectionsByRepresentation": {
+          "explicit": {
+            "invocation1": [
+              "bind {\"name\":\"cell1\",\"value\":[\"num\",1]}",
+              "bind {\"name\":\"cell2\",\"value\":[\"num\",2]}",
+              "bind {\"name\":\"cell3\",\"value\":[\"num\",3]}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",4]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",1]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",2]}},\"result\":[\"num\",3],\"invocation\":\"invocation1\",\"site\":{\"start\":43,\"end\":46}}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",3]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",4]}},\"result\":[\"num\",7],\"invocation\":\"invocation1\",\"site\":{\"start\":49,\"end\":52}}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",3]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",7]}},\"result\":[\"num\",21],\"invocation\":\"invocation1\",\"site\":{\"start\":42,\"end\":53}}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",21]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",1]}},\"result\":[\"num\",22],\"invocation\":\"invocation1\",\"site\":{\"start\":42,\"end\":55}}",
+              "return {\"value\":[\"num\",22],\"invocation\":\"invocation1\"}",
+              "end {\"kind\":\"return\"}"
+            ]
+          },
+          "compact": {
+            "invocation1": [
+              "bind {\"name\":\"cell1\",\"value\":[\"num\",1]}",
+              "bind {\"name\":\"cell2\",\"value\":[\"num\",2]}",
+              "bind {\"name\":\"cell3\",\"value\":[\"num\",3]}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",4]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",1]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",2]}},\"right\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",3]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",4]}}},\"right\":{\"op\":\"literal\",\"value\":[\"num\",1]}},\"result\":[\"num\",22],\"invocation\":\"invocation1\",\"site\":{\"start\":42,\"end\":55}}",
+              "return {\"value\":[\"num\",22],\"invocation\":\"invocation1\"}",
+              "end {\"kind\":\"return\"}"
+            ]
+          }
+        },
+        "controlledOutcome": {
+          "schema": "semantic-outcome/4",
+          "completion": {
+            "kind": "return",
+            "value": [
+              "num",
+              22
+            ]
+          },
+          "state": {
+            "roots": [
+              [
+                "num",
+                1
+              ],
+              [
+                "num",
+                2
+              ],
+              [
+                "num",
+                3
+              ],
+              [
+                "num",
+                4
+              ],
+              [
+                "num",
+                22
+              ]
+            ],
+            "objects": []
+          }
+        }
+      },
+      "expected": {
+        "completion": {
+          "kind": "return",
+          "value": [
+            "num",
+            22
+          ]
+        },
+        "state": {
+          "roots": [
+            [
+              "num",
+              1
+            ],
+            [
+              "num",
+              2
+            ],
+            [
+              "num",
+              3
+            ],
+            [
+              "num",
+              4
+            ],
+            [
+              "num",
+              22
+            ]
+          ],
+          "objects": []
+        },
+        "effects": [],
+        "callbacks": [],
+        "cleanup": {
+          "pendingEffects": 0,
+          "pendingJobs": 0,
+          "openHandlers": 0
+        }
+      },
+      "referenceReceipt": {
+        "status": "agreed",
+        "requestDigest": "cbf2188323550854bfdb6358603895b518d1db4171ed5612a15003606b15769f",
+        "outcomeDigest": "b7e7674cb678339722846ff33f832c5243a1a7af9e13c0d3aeaf7c19d5f83aac"
+      }
+    },
+    {
+      "id": "squared-distance-pure",
+      "family": "semantic-recipe:squared-distance",
+      "split": "test",
+      "request": {
+        "schema": "selected-evaluation-case/4",
+        "program": {
+          "programId": "program1",
+          "source": "\"use strict\";function run(a,b){return a*a+b*b;}",
+          "entry": "run",
+          "capabilities": []
+        },
+        "invocation": {
+          "programId": "program1",
+          "invocationId": "invocation1",
+          "trackId": "worker1",
+          "realmId": "realm1",
+          "triggerId": "teacher-entry",
+          "inputGraph": {
+            "roots": [
+              [
+                "num",
+                8
+              ],
+              [
+                "num",
+                3
+              ]
+            ],
+            "objects": []
+          },
+          "realmPolicy": "retained",
+          "completionPolicy": "await-returned-promise",
+          "receiverValue": [
+            "undefined"
+          ]
+        },
+        "fixture": {
+          "calls": [],
+          "settlementOrder": null
+        },
+        "controlledSelectionsByRepresentation": {
+          "explicit": {
+            "invocation1": [
+              "bind {\"name\":\"cell1\",\"value\":[\"num\",8]}",
+              "bind {\"name\":\"cell2\",\"value\":[\"num\",3]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",8]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",8]}},\"result\":[\"num\",64],\"invocation\":\"invocation1\",\"site\":{\"start\":38,\"end\":41}}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",3]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",3]}},\"result\":[\"num\",9],\"invocation\":\"invocation1\",\"site\":{\"start\":42,\"end\":45}}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",64]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",9]}},\"result\":[\"num\",73],\"invocation\":\"invocation1\",\"site\":{\"start\":38,\"end\":45}}",
+              "return {\"value\":[\"num\",73],\"invocation\":\"invocation1\"}",
+              "end {\"kind\":\"return\"}"
+            ]
+          },
+          "compact": {
+            "invocation1": [
+              "bind {\"name\":\"cell1\",\"value\":[\"num\",8]}",
+              "bind {\"name\":\"cell2\",\"value\":[\"num\",3]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",8]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",8]}},\"right\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",3]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",3]}}},\"result\":[\"num\",73],\"invocation\":\"invocation1\",\"site\":{\"start\":38,\"end\":45}}",
+              "return {\"value\":[\"num\",73],\"invocation\":\"invocation1\"}",
+              "end {\"kind\":\"return\"}"
+            ]
+          }
+        },
+        "controlledOutcome": {
+          "schema": "semantic-outcome/4",
+          "completion": {
+            "kind": "return",
+            "value": [
+              "num",
+              73
+            ]
+          },
+          "state": {
+            "roots": [
+              [
+                "num",
+                8
+              ],
+              [
+                "num",
+                3
+              ],
+              [
+                "num",
+                73
+              ]
+            ],
+            "objects": []
+          }
+        }
+      },
+      "expected": {
+        "completion": {
+          "kind": "return",
+          "value": [
+            "num",
+            73
+          ]
+        },
+        "state": {
+          "roots": [
+            [
+              "num",
+              8
+            ],
+            [
+              "num",
+              3
+            ],
+            [
+              "num",
+              73
+            ]
+          ],
+          "objects": []
+        },
+        "effects": [],
+        "callbacks": [],
+        "cleanup": {
+          "pendingEffects": 0,
+          "pendingJobs": 0,
+          "openHandlers": 0
+        }
+      },
+      "referenceReceipt": {
+        "status": "agreed",
+        "requestDigest": "d244135d22116ea27403fe298aa29c3332b8c031e3f74dcf2d16539c34e0d24e",
+        "outcomeDigest": "5ec4a714e280b19129fcd240246015486885c86e81e2ac90030d0c2784072a87"
+      }
+    }
+  ],
+  "thresholds": {
+    "wholeTaskSuccess": 0.9,
+    "traceValid": 1
+  },
+  "historicalBaseline": {
+    "sourceRunbook": "https://github.com/werg/tracing-js-self/blob/e31ae33d3ce4a7258d64393c7982445d40c0b297/docs/SEMANTIC_V3_MODEL_EXPERIMENTS.md",
+    "conditions": [
+      "historical-v2",
+      "v3-fine",
+      "v3-fused",
+      "v3-expr-2",
+      "v3-expr-4",
+      "v3-expr-8",
+      "v3-collections",
+      "v3-outcome-only"
+    ],
+    "seeds": [
+      17,
+      29,
+      43
+    ]
+  },
+  "historicalBaselinePending": true,
+  "seeds": [
+    17,
+    29,
+    43
+  ],
+  "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+  "digest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec"
+}

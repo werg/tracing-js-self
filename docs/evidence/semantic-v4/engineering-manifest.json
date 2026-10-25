@@ -1,0 +1,557 @@
+{
+  "schema": "semantic-corpus-manifest/4",
+  "execution": "semantic-execution/4",
+  "trace": "semantic-trace/4",
+  "context": "semantic-context/4",
+  "profile": "selected-harness/2",
+  "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+  "representation": "mixed",
+  "recipe": {
+    "name": "engineering"
+  },
+  "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+  "counts": {
+    "attempted": 27,
+    "admitted": 27,
+    "locally_verified": 0
+  },
+  "cases": [
+    {
+      "id": "counter-0",
+      "family": "async-counter",
+      "status": "admitted",
+      "path": "counter-0.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "f2f150f00da1937a5113cc829f18376e3cc333921178ad2ae5f49c56ffee9e75",
+      "metrics": {
+        "generatedBytes": 1075,
+        "observedBytes": 3794,
+        "transportBytes": 2763,
+        "actions": 2,
+        "generatedTokens": 327,
+        "observedTokens": 1326,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "counter-1",
+      "family": "async-counter",
+      "status": "admitted",
+      "path": "counter-1.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "0b624456581627ab060ac5b73c5ffd4f2abfe98676c4eb37e83475e85b98bc94",
+      "metrics": {
+        "generatedBytes": 1083,
+        "observedBytes": 3796,
+        "transportBytes": 2763,
+        "actions": 2,
+        "generatedTokens": 335,
+        "observedTokens": 1328,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "checkpoint-source-reread",
+      "family": "async-counter",
+      "status": "admitted",
+      "path": "checkpoint-source-reread.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "6c47ff28d24343cdc31b2d5fa21253d5b9064dbb838f9a76df7cda6ee75ba4be",
+      "metrics": {
+        "generatedBytes": 1075,
+        "observedBytes": 4674,
+        "transportBytes": 2766,
+        "actions": 2,
+        "generatedTokens": 327,
+        "observedTokens": 1735,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "two-pending-reversed",
+      "family": "two-outstanding",
+      "status": "admitted",
+      "path": "two-pending-reversed.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "bb28e6d5f6bb0f3eb00419be6ca25c444172e4decac0091cec32ecb610c61c9c",
+      "metrics": {
+        "generatedBytes": 1203,
+        "observedBytes": 3637,
+        "transportBytes": 3001,
+        "actions": 2,
+        "generatedTokens": 365,
+        "observedTokens": 1277,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "branch-0",
+      "family": "observed-branch",
+      "status": "admitted",
+      "path": "branch-0.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "b4ec9c5e314e06af354e2ddc835dabeef403cc8c4a9fc2dd562a01a18713ed1b",
+      "metrics": {
+        "generatedBytes": 928,
+        "observedBytes": 4139,
+        "transportBytes": 2301,
+        "actions": 2,
+        "generatedTokens": 280,
+        "observedTokens": 1483,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "branch-1",
+      "family": "observed-branch",
+      "status": "admitted",
+      "path": "branch-1.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "5525382880081aafc471ecb248e45113ff84a83618d87b97fa606e4288742dce",
+      "metrics": {
+        "generatedBytes": 925,
+        "observedBytes": 4139,
+        "transportBytes": 2301,
+        "actions": 2,
+        "generatedTokens": 279,
+        "observedTokens": 1483,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "rejection-finally",
+      "family": "async-cleanup",
+      "status": "admitted",
+      "path": "rejection-finally.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "51433b7f1b4bba5b2577f45b0331166dfcb57a78f710dfbf636fdb837ac51441",
+      "metrics": {
+        "generatedBytes": 1072,
+        "observedBytes": 4516,
+        "transportBytes": 2547,
+        "actions": 3,
+        "generatedTokens": 316,
+        "observedTokens": 1541,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "uncaught-rejection-finally",
+      "family": "async-cleanup",
+      "status": "admitted",
+      "path": "uncaught-rejection-finally.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "200aa346dbd13284115ad5825cad7afa8ff6eab07fa7efa4d195bd566c6f017d",
+      "metrics": {
+        "generatedBytes": 749,
+        "observedBytes": 3324,
+        "transportBytes": 1842,
+        "actions": 2,
+        "generatedTokens": 219,
+        "observedTokens": 1152,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "callback-captured-write",
+      "family": "owned-callback",
+      "status": "admitted",
+      "path": "callback-captured-write.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "505ded7c059dffeb2f166e8484e83ef4fa5a5fe3845dfbb5c5bbce7738b2dc78",
+      "metrics": {
+        "generatedBytes": 2003,
+        "observedBytes": 12298,
+        "transportBytes": 5030,
+        "actions": 4,
+        "generatedTokens": 622,
+        "observedTokens": 4555,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "long-callback-retained-tail",
+      "family": "long-callback-retained-tail",
+      "status": "admitted",
+      "path": "long-callback-retained-tail.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "820accadafc3a156919cd8779e4cdf3fc2723e474c63d21e42a383f8e3785158",
+      "metrics": {
+        "generatedBytes": 21123,
+        "observedBytes": 24990,
+        "transportBytes": 50157,
+        "actions": 2,
+        "generatedTokens": 7258,
+        "observedTokens": 10650,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "sync-rejection",
+      "family": "synchronous-error",
+      "status": "admitted",
+      "path": "sync-rejection.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "78bcb8e619fbedbf57ca8414e9fba61e189f84e5c5622cc37537e6ccbf49d40b",
+      "metrics": {
+        "generatedBytes": 469,
+        "observedBytes": 3491,
+        "transportBytes": 1157,
+        "actions": 2,
+        "generatedTokens": 142,
+        "observedTokens": 1215,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "promise-reaction",
+      "family": "promise-reaction",
+      "status": "admitted",
+      "path": "promise-reaction.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "51843daaaf844d5cf96d4bc3b940067aa2fd12561166a2167966f46abfe316c6",
+      "metrics": {
+        "generatedBytes": 1450,
+        "observedBytes": 4184,
+        "transportBytes": 3905,
+        "actions": 2,
+        "generatedTokens": 451,
+        "observedTokens": 1492,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "promise-rejection-finally",
+      "family": "promise-cleanup",
+      "status": "admitted",
+      "path": "promise-rejection-finally.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "93d9448e92424242079295e9db17b199e7d9ba43e5c9838f4b76e215a93bc97c",
+      "metrics": {
+        "generatedBytes": 1861,
+        "observedBytes": 5303,
+        "transportBytes": 4831,
+        "actions": 3,
+        "generatedTokens": 554,
+        "observedTokens": 1858,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "owned-microtask",
+      "family": "owned-microtask",
+      "status": "admitted",
+      "path": "owned-microtask.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "e04c55dd7813a00317f0c391fe16fbdb8fdcf96418075c1b5a4417599ceac8bf",
+      "metrics": {
+        "generatedBytes": 617,
+        "observedBytes": 2557,
+        "transportBytes": 1811,
+        "actions": 1,
+        "generatedTokens": 184,
+        "observedTokens": 916,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "clock-console",
+      "family": "platform-observation",
+      "status": "admitted",
+      "path": "clock-console.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "dd893827debc1232692838c76a1b8ba695d81c8bf18aa2033c403e3700f0b3e8",
+      "metrics": {
+        "generatedBytes": 455,
+        "observedBytes": 3254,
+        "transportBytes": 1133,
+        "actions": 2,
+        "generatedTokens": 172,
+        "observedTokens": 1108,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "http-response-stream",
+      "family": "http-response-stream",
+      "status": "admitted",
+      "path": "http-response-stream.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "c82661451b5ddf500c0af87ba64af002946f04606ff53676c62a073a2a54bd47",
+      "metrics": {
+        "generatedBytes": 2003,
+        "observedBytes": 5941,
+        "transportBytes": 4407,
+        "actions": 4,
+        "generatedTokens": 605,
+        "observedTokens": 2036,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "filesystem-stream-copy",
+      "family": "filesystem-stream-copy",
+      "status": "admitted",
+      "path": "filesystem-stream-copy.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "3896bcf863844039492469e3334baee1e0fc147205ea2dd677f092c64d8cbd6e",
+      "metrics": {
+        "generatedBytes": 2681,
+        "observedBytes": 7701,
+        "transportBytes": 5807,
+        "actions": 6,
+        "generatedTokens": 802,
+        "observedTokens": 2607,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "socket-round-trip",
+      "family": "socket-round-trip",
+      "status": "admitted",
+      "path": "socket-round-trip.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "0daf6ea36dae304797c68b0045017e784f3aeca86c9248ec587504266c308707",
+      "metrics": {
+        "generatedBytes": 1899,
+        "observedBytes": 5658,
+        "transportBytes": 4171,
+        "actions": 4,
+        "generatedTokens": 581,
+        "observedTokens": 1933,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "dom-mutation-release",
+      "family": "dom-mutation-release",
+      "status": "admitted",
+      "path": "dom-mutation-release.json",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "5409aba937c5a0a20f56bc199bfef8a479298db5183e1d771454e0d5a14c9fa9",
+      "metrics": {
+        "generatedBytes": 1866,
+        "observedBytes": 5594,
+        "transportBytes": 4169,
+        "actions": 4,
+        "generatedTokens": 552,
+        "observedTokens": 1899,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "natlang-cell-call",
+      "family": "natlang-cell-call",
+      "status": "admitted",
+      "path": "natlang-cell-call.json",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "e214b38e2d556cd9102c3345e9a1cd5247f5d711f28704e05297b2fee3b1b6ce",
+      "metrics": {
+        "generatedBytes": 1994,
+        "observedBytes": 4720,
+        "transportBytes": 3638,
+        "actions": 3,
+        "generatedTokens": 625,
+        "observedTokens": 1648,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "native-result-graph",
+      "family": "native-result-graph",
+      "status": "admitted",
+      "path": "native-result-graph.json",
+      "representation": "explicit",
+      "split": "test",
+      "episodeDigest": "748696bd4ac377bcb3cff0f411d6737e84139d118f65013354bac3fd795ccfcd",
+      "metrics": {
+        "generatedBytes": 2251,
+        "observedBytes": 6030,
+        "transportBytes": 4393,
+        "actions": 3,
+        "generatedTokens": 715,
+        "observedTokens": 2124,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "compound-pure-explicit",
+      "family": "compound-pure",
+      "status": "admitted",
+      "path": "compound-pure-explicit.json",
+      "representation": "explicit",
+      "split": "test",
+      "episodeDigest": "23ed0e9db7bc48c1578e0357adbf96bf0cba293c993db8b3b65045b6293078f4",
+      "metrics": {
+        "generatedBytes": 1062,
+        "observedBytes": 2104,
+        "transportBytes": 2345,
+        "actions": 0,
+        "generatedTokens": 350,
+        "observedTokens": 822,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "compound-effectful-explicit",
+      "family": "compound-effectful",
+      "status": "admitted",
+      "path": "compound-effectful-explicit.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "f84ae87a9f66ff1219b99cd20cc2e777ee4df25f298908b5bf80a6df177bff93",
+      "metrics": {
+        "generatedBytes": 1712,
+        "observedBytes": 4147,
+        "transportBytes": 3537,
+        "actions": 2,
+        "generatedTokens": 544,
+        "observedTokens": 1474,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "compound-pure-compact",
+      "family": "compound-pure",
+      "status": "admitted",
+      "path": "compound-pure-compact.json",
+      "representation": "compact",
+      "split": "test",
+      "episodeDigest": "b9a078c754d66d1db46940f144ed1ae3400e43486723d892c5abc2b8482249cb",
+      "metrics": {
+        "generatedBytes": 682,
+        "observedBytes": 2104,
+        "transportBytes": 1632,
+        "actions": 0,
+        "generatedTokens": 221,
+        "observedTokens": 822,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "compound-effectful-compact",
+      "family": "compound-effectful",
+      "status": "admitted",
+      "path": "compound-effectful-compact.json",
+      "representation": "compact",
+      "split": "train",
+      "episodeDigest": "2c5d7c27cfaae547024fc009a7714051ad8e35772030f4b5bb5ba4574bb4ccd4",
+      "metrics": {
+        "generatedBytes": 1330,
+        "observedBytes": 4147,
+        "transportBytes": 2823,
+        "actions": 2,
+        "generatedTokens": 413,
+        "observedTokens": 1474,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "persistent-external-trigger",
+      "family": "persistent-external-trigger",
+      "status": "admitted",
+      "path": "persistent-external-trigger.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "8f190568516d55c1de80696708fa8e5a7ee08ee7f3f7402958c6d03329227031",
+      "metrics": {
+        "generatedBytes": 2625,
+        "observedBytes": 14054,
+        "transportBytes": 6419,
+        "actions": 5,
+        "generatedTokens": 792,
+        "observedTokens": 5101,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "repeated-ingress",
+      "family": "async-counter",
+      "status": "admitted",
+      "path": "repeated-ingress.json",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "6422de6d56e0d668e012d109f84342ac4aa5b278428ae2ad076c4be7b8a89fd1",
+      "metrics": {
+        "generatedBytes": 2122,
+        "observedBytes": 5524,
+        "transportBytes": 5603,
+        "actions": 4,
+        "generatedTokens": 662,
+        "observedTokens": 1905,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    }
+  ],
+  "counterfactuals": [
+    {
+      "pair": [
+        "counter-0",
+        "counter-1"
+      ],
+      "valid": true,
+      "identicalRecords": 7,
+      "firstChangedObservation": 8
+    },
+    {
+      "pair": [
+        "branch-0",
+        "branch-1"
+      ],
+      "valid": true,
+      "identicalRecords": 6,
+      "firstChangedObservation": 7
+    }
+  ],
+  "selectionOrigin": "certified_teacher",
+  "evidenceKind": "deterministic-engineering",
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}

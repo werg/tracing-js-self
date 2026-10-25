@@ -1,0 +1,321 @@
+{
+  "schema": "semantic-final-collection/4",
+  "identities": {
+    "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+    "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+    "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+    "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+    "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "counts": {
+    "attempted": 152,
+    "admitted": 152,
+    "refused": 0
+  },
+  "collections": [
+    {
+      "schema": "semantic-final-collection/4",
+      "directory": "/workspace/scratch/6825113a40ea/final-native-engineering-b2",
+      "manifestPath": "/workspace/scratch/6825113a40ea/final-native-engineering-b2/manifest.json",
+      "logPath": "/workspace/scratch/6825113a40ea/final-native-engineering-b2.log",
+      "identities": {
+        "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+        "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+        "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+        "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+      },
+      "counts": {
+        "attempted": 27,
+        "admitted": 27,
+        "locally_verified": 0
+      },
+      "metrics": {
+        "generatedTokens": 18693,
+        "observedTokens": 56964,
+        "generatedBytes": 58315,
+        "observedBytes": 155820,
+        "transportBytes": 137252,
+        "actions": 70,
+        "physicalRecords": 914,
+        "logicalRecords": 835,
+        "contextTransportRecords": 63
+      },
+      "splits": {
+        "train": 22,
+        "validation": 2,
+        "test": 3
+      },
+      "roles": {
+        "engineering": 27
+      },
+      "representations": {
+        "explicit": 25,
+        "compact": 2
+      },
+      "families": 20,
+      "refusalCategories": {},
+      "allReceiptPinsExact": true,
+      "allPublicDigestsMatch": true,
+      "allIndependentReferencesAgreed": true,
+      "wholeFamilySplitsVerified": true,
+      "recipe": {
+        "name": "engineering"
+      },
+      "evidenceKind": "deterministic-engineering",
+      "optimizerSteps": 0,
+      "learnedSuccess": null
+    },
+    {
+      "schema": "semantic-final-collection/4",
+      "directory": "/workspace/scratch/6825113a40ea/final-native-engineering-compact-b2",
+      "manifestPath": "/workspace/scratch/6825113a40ea/final-native-engineering-compact-b2/manifest.json",
+      "logPath": "/workspace/scratch/6825113a40ea/final-native-engineering-compact-b2.log",
+      "identities": {
+        "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+        "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+        "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+        "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+      },
+      "counts": {
+        "attempted": 25,
+        "admitted": 25,
+        "locally_verified": 0
+      },
+      "metrics": {
+        "generatedTokens": 17799,
+        "observedTokens": 54668,
+        "generatedBytes": 55541,
+        "observedBytes": 149569,
+        "transportBytes": 131370,
+        "actions": 68,
+        "physicalRecords": 879,
+        "logicalRecords": 802,
+        "contextTransportRecords": 61
+      },
+      "splits": {
+        "train": 21,
+        "validation": 2,
+        "test": 2
+      },
+      "roles": {
+        "engineering": 25
+      },
+      "representations": {
+        "compact": 25
+      },
+      "families": 20,
+      "refusalCategories": {},
+      "allReceiptPinsExact": true,
+      "allPublicDigestsMatch": true,
+      "allIndependentReferencesAgreed": true,
+      "wholeFamilySplitsVerified": true,
+      "recipe": {
+        "name": "engineering"
+      },
+      "evidenceKind": "deterministic-engineering",
+      "optimizerSteps": 0,
+      "learnedSuccess": null
+    },
+    {
+      "schema": "semantic-final-collection/4",
+      "directory": "/workspace/scratch/6825113a40ea/final-native-recipe-explicit-b2",
+      "manifestPath": "/workspace/scratch/6825113a40ea/final-native-recipe-explicit-b2/manifest.json",
+      "logPath": "/workspace/scratch/6825113a40ea/final-native-recipe-explicit-b2.log",
+      "identities": {
+        "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+        "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+        "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+        "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+      },
+      "counts": {
+        "attempted": 50,
+        "admitted": 50,
+        "locally_verified": 0
+      },
+      "metrics": {
+        "generatedTokens": 33345,
+        "observedTokens": 138678,
+        "generatedBytes": 104752,
+        "observedBytes": 374592,
+        "transportBytes": 246239,
+        "actions": 132,
+        "physicalRecords": 1928,
+        "logicalRecords": 1678,
+        "contextTransportRecords": 226
+      },
+      "splits": {
+        "train": 40,
+        "test": 3,
+        "validation": 7
+      },
+      "roles": {
+        "common-support": 16,
+        "effectful": 32,
+        "lifecycle-child": 2
+      },
+      "representations": {
+        "explicit": 50
+      },
+      "families": 16,
+      "refusalCategories": {},
+      "allReceiptPinsExact": true,
+      "allPublicDigestsMatch": true,
+      "allIndependentReferencesAgreed": true,
+      "wholeFamilySplitsVerified": true,
+      "recipe": {
+        "schema": "semantic-source-recipe/4",
+        "name": "training-v4",
+        "templateDigest": "ccef64126613701d0bf4058ecc2af28738096b5fd7b553cf8e1a3464586f4998",
+        "families": [
+          "semantic-recipe:rectangle-perimeter",
+          "semantic-recipe:rectangular-capacity",
+          "semantic-recipe:squared-distance",
+          "semantic-recipe:absolute-distance",
+          "semantic-recipe:weighted-average",
+          "semantic-recipe:unit-conversion",
+          "semantic-recipe:triangular-series",
+          "semantic-recipe:modular-clock",
+          "semantic-recipe:flag-intersection",
+          "semantic-recipe:flag-union",
+          "semantic-recipe:inventory-shortfall",
+          "semantic-recipe:capped-budget",
+          "semantic-recipe:overtime-rate",
+          "semantic-recipe:midpoint",
+          "semantic-recipe:relative-growth",
+          "semantic-recipe:parity-adjustment"
+        ],
+        "splitSeed": 17,
+        "retainEveryAuthoredFamily": true,
+        "lifecycleInputs": [
+          {
+            "id": "rectangle-perimeter-child",
+            "path": "rectangle-perimeter-child.json",
+            "family": "semantic-recipe:rectangle-perimeter",
+            "split": "train",
+            "representation": "explicit"
+          },
+          {
+            "id": "modular-clock-child",
+            "path": "modular-clock-child.json",
+            "family": "semantic-recipe:modular-clock",
+            "split": "validation",
+            "representation": "explicit"
+          }
+        ]
+      },
+      "evidenceKind": "deterministic-engineering",
+      "optimizerSteps": 0,
+      "learnedSuccess": null
+    },
+    {
+      "schema": "semantic-final-collection/4",
+      "directory": "/workspace/scratch/6825113a40ea/final-native-recipe-compact-b2",
+      "manifestPath": "/workspace/scratch/6825113a40ea/final-native-recipe-compact-b2/manifest.json",
+      "logPath": "/workspace/scratch/6825113a40ea/final-native-recipe-compact-b2.log",
+      "identities": {
+        "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+        "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+        "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+        "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+      },
+      "counts": {
+        "attempted": 50,
+        "admitted": 50,
+        "locally_verified": 0
+      },
+      "metrics": {
+        "generatedTokens": 30215,
+        "observedTokens": 138663,
+        "generatedBytes": 95778,
+        "observedBytes": 374592,
+        "transportBytes": 229265,
+        "actions": 132,
+        "physicalRecords": 1857,
+        "logicalRecords": 1607,
+        "contextTransportRecords": 226
+      },
+      "splits": {
+        "train": 40,
+        "test": 3,
+        "validation": 7
+      },
+      "roles": {
+        "common-support": 16,
+        "effectful": 32,
+        "lifecycle-child": 2
+      },
+      "representations": {
+        "compact": 50
+      },
+      "families": 16,
+      "refusalCategories": {},
+      "allReceiptPinsExact": true,
+      "allPublicDigestsMatch": true,
+      "allIndependentReferencesAgreed": true,
+      "wholeFamilySplitsVerified": true,
+      "recipe": {
+        "schema": "semantic-source-recipe/4",
+        "name": "training-v4",
+        "templateDigest": "ccef64126613701d0bf4058ecc2af28738096b5fd7b553cf8e1a3464586f4998",
+        "families": [
+          "semantic-recipe:rectangle-perimeter",
+          "semantic-recipe:rectangular-capacity",
+          "semantic-recipe:squared-distance",
+          "semantic-recipe:absolute-distance",
+          "semantic-recipe:weighted-average",
+          "semantic-recipe:unit-conversion",
+          "semantic-recipe:triangular-series",
+          "semantic-recipe:modular-clock",
+          "semantic-recipe:flag-intersection",
+          "semantic-recipe:flag-union",
+          "semantic-recipe:inventory-shortfall",
+          "semantic-recipe:capped-budget",
+          "semantic-recipe:overtime-rate",
+          "semantic-recipe:midpoint",
+          "semantic-recipe:relative-growth",
+          "semantic-recipe:parity-adjustment"
+        ],
+        "splitSeed": 17,
+        "retainEveryAuthoredFamily": true,
+        "lifecycleInputs": [
+          {
+            "id": "rectangle-perimeter-child",
+            "path": "rectangle-perimeter-child.json",
+            "family": "semantic-recipe:rectangle-perimeter",
+            "split": "train",
+            "representation": "compact"
+          },
+          {
+            "id": "modular-clock-child",
+            "path": "modular-clock-child.json",
+            "family": "semantic-recipe:modular-clock",
+            "split": "validation",
+            "representation": "compact"
+          }
+        ]
+      },
+      "evidenceKind": "deterministic-engineering",
+      "optimizerSteps": 0,
+      "learnedSuccess": null
+    }
+  ],
+  "pairedRecipeLineageVerified": true,
+  "refusalCategories": {},
+  "evidenceKind": "deterministic-engineering",
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}

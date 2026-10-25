@@ -1,0 +1,230 @@
+{
+  "schema": "semantic-state-continuity-engineering/4",
+  "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+  "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+  "checks": [
+    {
+      "representation": "explicit",
+      "maxHistory": 1024,
+      "sourceArtifact": "/workspace/scratch/6825113a40ea/final-native-engineering-b2/long-callback-retained-tail.json",
+      "sourceArtifactSha256": "b0a5e3aa6bfa1f9c5f46c3b92bbfb57398c77dc8b3672ac16f379516cb1331e6",
+      "receipt": {
+        "actions": 2,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+        "contextTransportRecords": 18,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "820accadafc3a156919cd8779e4cdf3fc2723e474c63d21e42a383f8e3785158",
+        "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+        "fragmentationValidated": true,
+        "generatedTokens": 7258,
+        "importReceipt": {
+          "actions": 2,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                3
+              ]
+            },
+            {
+              "invocationId": "event1",
+              "kind": "return",
+              "value": [
+                "undefined"
+              ]
+            }
+          ],
+          "invocations": 2,
+          "observations": 26,
+          "records": 266,
+          "tracks": 2
+        },
+        "logicalRecords": 244,
+        "lossMaskValidated": true,
+        "observedTokens": 10650,
+        "optimizerSteps": 0,
+        "physicalRecords": 266,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "representation": "explicit",
+      "maxHistory": 128,
+      "sourceArtifact": "/workspace/scratch/6825113a40ea/final-native-engineering-b2/long-callback-retained-tail.json",
+      "sourceArtifactSha256": "b0a5e3aa6bfa1f9c5f46c3b92bbfb57398c77dc8b3672ac16f379516cb1331e6",
+      "receipt": {
+        "actions": 2,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+        "contextTransportRecords": 18,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "820accadafc3a156919cd8779e4cdf3fc2723e474c63d21e42a383f8e3785158",
+        "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+        "fragmentationValidated": true,
+        "generatedTokens": 7258,
+        "importReceipt": {
+          "actions": 2,
+          "admission": "admitted",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                3
+              ]
+            },
+            {
+              "invocationId": "event1",
+              "kind": "return",
+              "value": [
+                "undefined"
+              ]
+            }
+          ],
+          "invocations": 2,
+          "observations": 26,
+          "records": 266,
+          "tracks": 2
+        },
+        "logicalRecords": 244,
+        "lossMaskValidated": true,
+        "observedTokens": 10614,
+        "optimizerSteps": 0,
+        "physicalRecords": 266,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "representation": "compact",
+      "maxHistory": 1024,
+      "sourceArtifact": "/workspace/scratch/6825113a40ea/final-native-engineering-compact-b2/long-callback-retained-tail.json",
+      "sourceArtifactSha256": "ddf3e268c12d277bc0e23fd325b71efa3665d4106a71730655bbd777028bc55f",
+      "receipt": {
+        "actions": 2,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+        "contextTransportRecords": 18,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "820accadafc3a156919cd8779e4cdf3fc2723e474c63d21e42a383f8e3785158",
+        "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+        "fragmentationValidated": true,
+        "generatedTokens": 7258,
+        "importReceipt": {
+          "actions": 2,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                3
+              ]
+            },
+            {
+              "invocationId": "event1",
+              "kind": "return",
+              "value": [
+                "undefined"
+              ]
+            }
+          ],
+          "invocations": 2,
+          "observations": 26,
+          "records": 266,
+          "tracks": 2
+        },
+        "logicalRecords": 244,
+        "lossMaskValidated": true,
+        "observedTokens": 10650,
+        "optimizerSteps": 0,
+        "physicalRecords": 266,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "representation": "compact",
+      "maxHistory": 128,
+      "sourceArtifact": "/workspace/scratch/6825113a40ea/final-native-engineering-compact-b2/long-callback-retained-tail.json",
+      "sourceArtifactSha256": "ddf3e268c12d277bc0e23fd325b71efa3665d4106a71730655bbd777028bc55f",
+      "receipt": {
+        "actions": 2,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+        "contextTransportRecords": 18,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "820accadafc3a156919cd8779e4cdf3fc2723e474c63d21e42a383f8e3785158",
+        "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+        "fragmentationValidated": true,
+        "generatedTokens": 7258,
+        "importReceipt": {
+          "actions": 2,
+          "admission": "admitted",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                3
+              ]
+            },
+            {
+              "invocationId": "event1",
+              "kind": "return",
+              "value": [
+                "undefined"
+              ]
+            }
+          ],
+          "invocations": 2,
+          "observations": 26,
+          "records": 266,
+          "tracks": 2
+        },
+        "logicalRecords": 244,
+        "lossMaskValidated": true,
+        "observedTokens": 10614,
+        "optimizerSteps": 0,
+        "physicalRecords": 266,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    }
+  ],
+  "semanticRecords": 218,
+  "stateReceipts": 8,
+  "physicalRecords": 266,
+  "passed": true,
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "scope": "Both independently source-certified representations, with default 1,024-record and bounded 128-record resident context through the production tokenizer, at exact published code pins."
+}

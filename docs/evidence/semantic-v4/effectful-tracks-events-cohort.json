@@ -1,0 +1,3423 @@
+{
+  "schema": "semantic-evaluation-cohort/4",
+  "name": "effectful-tracks-events",
+  "cases": [
+    {
+      "id": "native-result-graph",
+      "family": "native-result-graph",
+      "split": "test",
+      "request": {
+        "schema": "selected-evaluation-case/4",
+        "program": {
+          "programId": "program1",
+          "source": "\"use strict\";async function run(){const value=await host.natlangCall(\"graph:fixture\",null,[]);value.left.n=value.left.n+1;host.natlangWriteCell(\"graph:output\",value);host.store(\"alias\",value.left===value.right);return value;}",
+          "entry": "run",
+          "capabilities": [
+            "demo.store",
+            "natlang.call",
+            "natlang.writeCell"
+          ]
+        },
+        "invocation": {
+          "programId": "program1",
+          "invocationId": "invocation1",
+          "trackId": "worker1",
+          "realmId": "realm1",
+          "triggerId": "teacher-entry",
+          "inputGraph": {
+            "roots": [],
+            "objects": []
+          },
+          "realmPolicy": "retained",
+          "completionPolicy": "await-returned-promise",
+          "receiverValue": [
+            "undefined"
+          ]
+        },
+        "fixture": {
+          "calls": [
+            {
+              "operation": "natlang.call",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "graph:fixture"
+                  ],
+                  [
+                    "null"
+                  ],
+                  [
+                    "ref",
+                    "o0"
+                  ]
+                ],
+                "objects": [
+                  {
+                    "id": "o0",
+                    "kind": "array",
+                    "properties": [
+                      {
+                        "key": "length",
+                        "value": [
+                          "num",
+                          0
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "ref",
+                    "o0"
+                  ]
+                ],
+                "objects": [
+                  {
+                    "id": "o0",
+                    "kind": "object",
+                    "properties": [
+                      {
+                        "key": "left",
+                        "value": [
+                          "ref",
+                          "o1"
+                        ]
+                      },
+                      {
+                        "key": "right",
+                        "value": [
+                          "ref",
+                          "o1"
+                        ]
+                      },
+                      {
+                        "key": "self",
+                        "value": [
+                          "ref",
+                          "o0"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "o1",
+                    "kind": "object",
+                    "properties": [
+                      {
+                        "key": "n",
+                        "value": [
+                          "num",
+                          3
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "operation": "natlang.writeCell",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "graph:output"
+                  ],
+                  [
+                    "ref",
+                    "o0"
+                  ]
+                ],
+                "objects": [
+                  {
+                    "id": "o0",
+                    "kind": "object",
+                    "properties": [
+                      {
+                        "key": "left",
+                        "value": [
+                          "ref",
+                          "o1"
+                        ]
+                      },
+                      {
+                        "key": "right",
+                        "value": [
+                          "ref",
+                          "o1"
+                        ]
+                      },
+                      {
+                        "key": "self",
+                        "value": [
+                          "ref",
+                          "o0"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "o1",
+                    "kind": "object",
+                    "properties": [
+                      {
+                        "key": "n",
+                        "value": [
+                          "num",
+                          4
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "undefined"
+                  ]
+                ],
+                "objects": []
+              }
+            },
+            {
+              "operation": "demo.store",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "alias"
+                  ],
+                  [
+                    "bool",
+                    true
+                  ]
+                ],
+                "objects": []
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "undefined"
+                  ]
+                ],
+                "objects": []
+              }
+            }
+          ],
+          "settlementOrder": null
+        },
+        "controlledSelectionsByRepresentation": {
+          "explicit": {
+            "invocation1": [
+              "promise {\"action\":\"create\",\"promise\":\"p1\"}",
+              "allocate {\"name\":\"o2\",\"kind\":\"array\",\"properties\":[],\"length\":0}",
+              "request {\"effect\":\"e1\",\"operation\":\"natlang.call\",\"arguments\":[[\"str\",\"graph:fixture\"],[\"null\"],[\"ref\",\"o2\"]],\"invocation\":\"invocation1\",\"site\":{\"start\":52,\"end\":93},\"payload\":\"{\\\"schema\\\":\\\"owned-graph/1\\\",\\\"roots\\\":[[\\\"str\\\",\\\"graph:fixture\\\"],[\\\"null\\\"],[\\\"ref\\\",\\\"o2\\\"]],\\\"objects\\\":[{\\\"id\\\":\\\"o2\\\",\\\"kind\\\":\\\"array\\\",\\\"properties\\\":[{\\\"key\\\":\\\"length\\\",\\\"value\\\":[\\\"num\\\",0]}]}]}\",\"promise\":\"p2\"}",
+              "await {\"promise\":\"p2\",\"continuation\":\"continuation1\",\"invocation\":\"invocation1\",\"returnPromise\":\"p1\"}",
+              "resume {\"continuation\":\"continuation1\",\"invocation\":\"invocation1\",\"result\":[\"ref\",\"o0\"],\"status\":\"fulfilled\"}",
+              "bind {\"name\":\"cell1\",\"value\":[\"ref\",\"o0\"]}",
+              "read {\"object\":\"o0\",\"key\":\"left\",\"present\":true,\"value\":[\"ref\",\"o1\"]}",
+              "read {\"object\":\"o0\",\"key\":\"left\",\"present\":true,\"value\":[\"ref\",\"o1\"]}",
+              "read {\"object\":\"o1\",\"key\":\"n\",\"present\":true,\"value\":[\"num\",3]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",3]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",1]}},\"result\":[\"num\",4],\"invocation\":\"invocation1\",\"site\":{\"start\":107,\"end\":121}}",
+              "write {\"object\":\"o1\",\"key\":\"n\",\"present\":true,\"value\":[\"num\",4]}",
+              "request {\"effect\":\"e2\",\"operation\":\"natlang.writeCell\",\"arguments\":[[\"str\",\"graph:output\"],[\"ref\",\"o0\"]],\"invocation\":\"invocation1\",\"site\":{\"start\":122,\"end\":165},\"payload\":\"{\\\"schema\\\":\\\"owned-graph/1\\\",\\\"roots\\\":[[\\\"str\\\",\\\"graph:output\\\"],[\\\"ref\\\",\\\"o0\\\"]],\\\"objects\\\":[{\\\"id\\\":\\\"o0\\\",\\\"kind\\\":\\\"object\\\",\\\"properties\\\":[{\\\"key\\\":\\\"left\\\",\\\"value\\\":[\\\"ref\\\",\\\"o1\\\"]},{\\\"key\\\":\\\"right\\\",\\\"value\\\":[\\\"ref\\\",\\\"o1\\\"]},{\\\"key\\\":\\\"self\\\",\\\"value\\\":[\\\"ref\\\",\\\"o0\\\"]}]},{\\\"id\\\":\\\"o1\\\",\\\"kind\\\":\\\"object\\\",\\\"properties\\\":[{\\\"key\\\":\\\"n\\\",\\\"value\\\":[\\\"num\\\",4]}]}]}\"}",
+              "read {\"object\":\"o0\",\"key\":\"left\",\"present\":true,\"value\":[\"ref\",\"o1\"]}",
+              "read {\"object\":\"o0\",\"key\":\"right\",\"present\":true,\"value\":[\"ref\",\"o1\"]}",
+              "request {\"effect\":\"e3\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"alias\"],[\"bool\",true]],\"invocation\":\"invocation1\",\"site\":{\"start\":166,\"end\":210},\"payload\":\"[\\\"alias\\\",true]\"}",
+              "promise {\"action\":\"resolve\",\"promise\":\"p1\",\"value\":[\"ref\",\"o0\"]}",
+              "return {\"value\":[\"ref\",\"p1\"],\"invocation\":\"invocation1\"}",
+              "end {\"kind\":\"return\"}"
+            ]
+          },
+          "compact": {
+            "invocation1": [
+              "promise {\"action\":\"create\",\"promise\":\"p1\"}",
+              "allocate {\"name\":\"o2\",\"kind\":\"array\",\"properties\":[],\"length\":0}",
+              "request {\"effect\":\"e1\",\"operation\":\"natlang.call\",\"arguments\":[[\"str\",\"graph:fixture\"],[\"null\"],[\"ref\",\"o2\"]],\"invocation\":\"invocation1\",\"site\":{\"start\":52,\"end\":93},\"payload\":\"{\\\"schema\\\":\\\"owned-graph/1\\\",\\\"roots\\\":[[\\\"str\\\",\\\"graph:fixture\\\"],[\\\"null\\\"],[\\\"ref\\\",\\\"o2\\\"]],\\\"objects\\\":[{\\\"id\\\":\\\"o2\\\",\\\"kind\\\":\\\"array\\\",\\\"properties\\\":[{\\\"key\\\":\\\"length\\\",\\\"value\\\":[\\\"num\\\",0]}]}]}\",\"promise\":\"p2\"}",
+              "await {\"promise\":\"p2\",\"continuation\":\"continuation1\",\"invocation\":\"invocation1\",\"returnPromise\":\"p1\"}",
+              "resume {\"continuation\":\"continuation1\",\"invocation\":\"invocation1\",\"result\":[\"ref\",\"o0\"],\"status\":\"fulfilled\"}",
+              "bind {\"name\":\"cell1\",\"value\":[\"ref\",\"o0\"]}",
+              "read {\"object\":\"o0\",\"key\":\"left\",\"present\":true,\"value\":[\"ref\",\"o1\"]}",
+              "read {\"object\":\"o0\",\"key\":\"left\",\"present\":true,\"value\":[\"ref\",\"o1\"]}",
+              "read {\"object\":\"o1\",\"key\":\"n\",\"present\":true,\"value\":[\"num\",3]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",3]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",1]}},\"result\":[\"num\",4],\"invocation\":\"invocation1\",\"site\":{\"start\":107,\"end\":121}}",
+              "write {\"object\":\"o1\",\"key\":\"n\",\"present\":true,\"value\":[\"num\",4]}",
+              "request {\"effect\":\"e2\",\"operation\":\"natlang.writeCell\",\"arguments\":[[\"str\",\"graph:output\"],[\"ref\",\"o0\"]],\"invocation\":\"invocation1\",\"site\":{\"start\":122,\"end\":165},\"payload\":\"{\\\"schema\\\":\\\"owned-graph/1\\\",\\\"roots\\\":[[\\\"str\\\",\\\"graph:output\\\"],[\\\"ref\\\",\\\"o0\\\"]],\\\"objects\\\":[{\\\"id\\\":\\\"o0\\\",\\\"kind\\\":\\\"object\\\",\\\"properties\\\":[{\\\"key\\\":\\\"left\\\",\\\"value\\\":[\\\"ref\\\",\\\"o1\\\"]},{\\\"key\\\":\\\"right\\\",\\\"value\\\":[\\\"ref\\\",\\\"o1\\\"]},{\\\"key\\\":\\\"self\\\",\\\"value\\\":[\\\"ref\\\",\\\"o0\\\"]}]},{\\\"id\\\":\\\"o1\\\",\\\"kind\\\":\\\"object\\\",\\\"properties\\\":[{\\\"key\\\":\\\"n\\\",\\\"value\\\":[\\\"num\\\",4]}]}]}\"}",
+              "read {\"object\":\"o0\",\"key\":\"left\",\"present\":true,\"value\":[\"ref\",\"o1\"]}",
+              "read {\"object\":\"o0\",\"key\":\"right\",\"present\":true,\"value\":[\"ref\",\"o1\"]}",
+              "request {\"effect\":\"e3\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"alias\"],[\"bool\",true]],\"invocation\":\"invocation1\",\"site\":{\"start\":166,\"end\":210},\"payload\":\"[\\\"alias\\\",true]\"}",
+              "promise {\"action\":\"resolve\",\"promise\":\"p1\",\"value\":[\"ref\",\"o0\"]}",
+              "return {\"value\":[\"ref\",\"p1\"],\"invocation\":\"invocation1\"}",
+              "end {\"kind\":\"return\"}"
+            ]
+          }
+        }
+      },
+      "expected": {
+        "completion": {
+          "kind": "return",
+          "value": [
+            "ref",
+            "o0"
+          ]
+        },
+        "state": {
+          "roots": [
+            [
+              "ref",
+              "o0"
+            ]
+          ],
+          "objects": [
+            {
+              "id": "o0",
+              "kind": "object",
+              "properties": [
+                [
+                  "left",
+                  [
+                    "ref",
+                    "o1"
+                  ]
+                ],
+                [
+                  "right",
+                  [
+                    "ref",
+                    "o1"
+                  ]
+                ],
+                [
+                  "self",
+                  [
+                    "ref",
+                    "o0"
+                  ]
+                ]
+              ]
+            },
+            {
+              "id": "o1",
+              "kind": "object",
+              "properties": [
+                [
+                  "n",
+                  [
+                    "num",
+                    4
+                  ]
+                ]
+              ]
+            }
+          ]
+        },
+        "effects": [
+          {
+            "kind": "dispatch",
+            "call": 0,
+            "operation": "natlang.call",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "graph:fixture"
+                ],
+                [
+                  "null"
+                ],
+                [
+                  "ref",
+                  "o0"
+                ]
+              ],
+              "objects": [
+                {
+                  "id": "o0",
+                  "kind": "array",
+                  "properties": [
+                    {
+                      "key": "length",
+                      "value": [
+                        "num",
+                        0
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 0,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "ref",
+                  "o0"
+                ]
+              ],
+              "objects": [
+                {
+                  "id": "o0",
+                  "kind": "object",
+                  "properties": [
+                    {
+                      "key": "left",
+                      "value": [
+                        "ref",
+                        "o1"
+                      ]
+                    },
+                    {
+                      "key": "right",
+                      "value": [
+                        "ref",
+                        "o1"
+                      ]
+                    },
+                    {
+                      "key": "self",
+                      "value": [
+                        "ref",
+                        "o0"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "o1",
+                  "kind": "object",
+                  "properties": [
+                    {
+                      "key": "n",
+                      "value": [
+                        "num",
+                        3
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 1,
+            "operation": "natlang.writeCell",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "graph:output"
+                ],
+                [
+                  "ref",
+                  "o0"
+                ]
+              ],
+              "objects": [
+                {
+                  "id": "o0",
+                  "kind": "object",
+                  "properties": [
+                    {
+                      "key": "left",
+                      "value": [
+                        "ref",
+                        "o1"
+                      ]
+                    },
+                    {
+                      "key": "right",
+                      "value": [
+                        "ref",
+                        "o1"
+                      ]
+                    },
+                    {
+                      "key": "self",
+                      "value": [
+                        "ref",
+                        "o0"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "o1",
+                  "kind": "object",
+                  "properties": [
+                    {
+                      "key": "n",
+                      "value": [
+                        "num",
+                        4
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 1,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 2,
+            "operation": "demo.store",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "alias"
+                ],
+                [
+                  "bool",
+                  true
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 2,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          }
+        ],
+        "callbacks": [],
+        "cleanup": {
+          "pendingEffects": 0,
+          "pendingJobs": 0,
+          "openHandlers": 0
+        }
+      },
+      "referenceReceipt": {
+        "status": "agreed",
+        "requestDigest": "fa1772f78c6f2c1948a73bda61eee082ce5cd4b657f785b2169fa668370465d8",
+        "outcomeDigest": "67da2a1ad291e7e1d4d43d6b8c95d78761237ef0399b953a06aedeb50dd28af6"
+      }
+    },
+    {
+      "id": "squared-distance-callbacks-recovery",
+      "family": "semantic-recipe:squared-distance",
+      "split": "test",
+      "request": {
+        "schema": "selected-evaluation-case/4",
+        "program": {
+          "programId": "program1",
+          "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);let answer=a*a+b*b;await host.withCallback(key,function(delta){answer=answer+delta;host.store(key,answer);});return answer;}",
+          "entry": "run",
+          "capabilities": [
+            "demo.readAsync",
+            "demo.store",
+            "demo.withCallback"
+          ]
+        },
+        "invocation": {
+          "programId": "program1",
+          "invocationId": "invocation1",
+          "trackId": "worker1",
+          "realmId": "realm1",
+          "triggerId": "teacher-entry",
+          "inputGraph": {
+            "roots": [
+              [
+                "str",
+                "squared-distance"
+              ],
+              [
+                "num",
+                3
+              ]
+            ],
+            "objects": []
+          },
+          "realmPolicy": "retained",
+          "completionPolicy": "await-returned-promise",
+          "receiverValue": [
+            "undefined"
+          ]
+        },
+        "fixture": {
+          "calls": [
+            {
+              "operation": "demo.readAsync",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "squared-distance"
+                  ]
+                ],
+                "objects": []
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "num",
+                    8
+                  ]
+                ],
+                "objects": []
+              }
+            },
+            {
+              "operation": "demo.withCallback",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "squared-distance"
+                  ],
+                  [
+                    "ref",
+                    "o0"
+                  ]
+                ],
+                "objects": [
+                  {
+                    "id": "o0",
+                    "kind": "object",
+                    "properties": [
+                      {
+                        "key": "callback",
+                        "value": [
+                          "bool",
+                          true
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "undefined"
+                  ]
+                ],
+                "objects": []
+              },
+              "callbacks": [
+                {
+                  "slot": 1,
+                  "argumentGraph": {
+                    "schema": "owned-graph/1",
+                    "roots": [
+                      [
+                        "num",
+                        2
+                      ]
+                    ],
+                    "objects": []
+                  }
+                },
+                {
+                  "slot": 1,
+                  "argumentGraph": {
+                    "schema": "owned-graph/1",
+                    "roots": [
+                      [
+                        "num",
+                        3
+                      ]
+                    ],
+                    "objects": []
+                  }
+                }
+              ]
+            },
+            {
+              "operation": "demo.store",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "squared-distance"
+                  ],
+                  [
+                    "num",
+                    75
+                  ]
+                ],
+                "objects": []
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "undefined"
+                  ]
+                ],
+                "objects": []
+              }
+            },
+            {
+              "operation": "demo.store",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "squared-distance"
+                  ],
+                  [
+                    "num",
+                    78
+                  ]
+                ],
+                "objects": []
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "undefined"
+                  ]
+                ],
+                "objects": []
+              }
+            }
+          ],
+          "settlementOrder": null
+        },
+        "controlledSelectionsByRepresentation": {
+          "explicit": {
+            "invocation1": [
+              "promise {\"action\":\"create\",\"promise\":\"p1\"}",
+              "bind {\"name\":\"cell1\",\"value\":[\"str\",\"squared-distance\"]}",
+              "bind {\"name\":\"cell2\",\"value\":[\"num\",3]}",
+              "request {\"effect\":\"e1\",\"operation\":\"demo.readAsync\",\"arguments\":[[\"str\",\"squared-distance\"]],\"invocation\":\"invocation1\",\"site\":{\"start\":53,\"end\":72},\"payload\":\"[\\\"squared-distance\\\"]\",\"promise\":\"p2\"}",
+              "await {\"promise\":\"p2\",\"continuation\":\"continuation1\",\"invocation\":\"invocation1\",\"returnPromise\":\"p1\"}",
+              "resume {\"continuation\":\"continuation1\",\"invocation\":\"invocation1\",\"result\":[\"num\",8],\"status\":\"fulfilled\"}",
+              "bind {\"name\":\"cell3\",\"value\":[\"num\",8]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",8]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",8]}},\"result\":[\"num\",64],\"invocation\":\"invocation1\",\"site\":{\"start\":84,\"end\":87}}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",3]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",3]}},\"result\":[\"num\",9],\"invocation\":\"invocation1\",\"site\":{\"start\":88,\"end\":91}}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",64]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",9]}},\"result\":[\"num\",73],\"invocation\":\"invocation1\",\"site\":{\"start\":84,\"end\":91}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",73]}",
+              "allocate {\"name\":\"o2\",\"kind\":\"closure\",\"properties\":[],\"code\":\"function:120\",\"captures\":[{\"binding\":\"key\",\"cell\":\"cell1\"},{\"binding\":\"answer\",\"cell\":\"cell4\"}]}",
+              "request {\"effect\":\"e2\",\"operation\":\"demo.withCallback\",\"arguments\":[[\"str\",\"squared-distance\"],[\"ref\",\"o2\"]],\"invocation\":\"invocation1\",\"site\":{\"start\":98,\"end\":181},\"payload\":\"[\\\"squared-distance\\\",{\\\"$ownedCallback\\\":\\\"o2\\\"}]\",\"promise\":\"p3\"}",
+              "await {\"promise\":\"p3\",\"continuation\":\"continuation2\",\"invocation\":\"invocation1\"}",
+              "resume {\"continuation\":\"continuation2\",\"invocation\":\"invocation1\",\"result\":[\"undefined\"],\"status\":\"fulfilled\"}",
+              "promise {\"action\":\"resolve\",\"promise\":\"p1\",\"value\":[\"num\",78]}",
+              "return {\"value\":[\"ref\",\"p1\"],\"invocation\":\"invocation1\"}",
+              "end {\"kind\":\"return\"}"
+            ],
+            "event1": [
+              "bind {\"name\":\"cell5\",\"value\":[\"num\",2]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",73]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",2]}},\"result\":[\"num\",75],\"invocation\":\"event1\",\"site\":{\"start\":143,\"end\":155}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",75]}",
+              "request {\"effect\":\"e3\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"squared-distance\"],[\"num\",75]],\"invocation\":\"event1\",\"site\":{\"start\":156,\"end\":178},\"payload\":\"[\\\"squared-distance\\\",75]\"}",
+              "return {\"value\":[\"undefined\"],\"invocation\":\"event1\"}",
+              "end {\"kind\":\"return\"}"
+            ],
+            "event2": [
+              "bind {\"name\":\"cell6\",\"value\":[\"num\",3]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",75]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",3]}},\"result\":[\"num\",78],\"invocation\":\"event2\",\"site\":{\"start\":143,\"end\":155}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",78]}",
+              "request {\"effect\":\"e4\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"squared-distance\"],[\"num\",78]],\"invocation\":\"event2\",\"site\":{\"start\":156,\"end\":178},\"payload\":\"[\\\"squared-distance\\\",78]\"}",
+              "return {\"value\":[\"undefined\"],\"invocation\":\"event2\"}",
+              "end {\"kind\":\"return\"}"
+            ]
+          },
+          "compact": {
+            "invocation1": [
+              "promise {\"action\":\"create\",\"promise\":\"p1\"}",
+              "bind {\"name\":\"cell1\",\"value\":[\"str\",\"squared-distance\"]}",
+              "bind {\"name\":\"cell2\",\"value\":[\"num\",3]}",
+              "request {\"effect\":\"e1\",\"operation\":\"demo.readAsync\",\"arguments\":[[\"str\",\"squared-distance\"]],\"invocation\":\"invocation1\",\"site\":{\"start\":53,\"end\":72},\"payload\":\"[\\\"squared-distance\\\"]\",\"promise\":\"p2\"}",
+              "await {\"promise\":\"p2\",\"continuation\":\"continuation1\",\"invocation\":\"invocation1\",\"returnPromise\":\"p1\"}",
+              "resume {\"continuation\":\"continuation1\",\"invocation\":\"invocation1\",\"result\":[\"num\",8],\"status\":\"fulfilled\"}",
+              "bind {\"name\":\"cell3\",\"value\":[\"num\",8]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",8]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",8]}},\"right\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",3]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",3]}}},\"result\":[\"num\",73],\"invocation\":\"invocation1\",\"site\":{\"start\":84,\"end\":91}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",73]}",
+              "allocate {\"name\":\"o2\",\"kind\":\"closure\",\"properties\":[],\"code\":\"function:120\",\"captures\":[{\"binding\":\"key\",\"cell\":\"cell1\"},{\"binding\":\"answer\",\"cell\":\"cell4\"}]}",
+              "request {\"effect\":\"e2\",\"operation\":\"demo.withCallback\",\"arguments\":[[\"str\",\"squared-distance\"],[\"ref\",\"o2\"]],\"invocation\":\"invocation1\",\"site\":{\"start\":98,\"end\":181},\"payload\":\"[\\\"squared-distance\\\",{\\\"$ownedCallback\\\":\\\"o2\\\"}]\",\"promise\":\"p3\"}",
+              "await {\"promise\":\"p3\",\"continuation\":\"continuation2\",\"invocation\":\"invocation1\"}",
+              "resume {\"continuation\":\"continuation2\",\"invocation\":\"invocation1\",\"result\":[\"undefined\"],\"status\":\"fulfilled\"}",
+              "promise {\"action\":\"resolve\",\"promise\":\"p1\",\"value\":[\"num\",78]}",
+              "return {\"value\":[\"ref\",\"p1\"],\"invocation\":\"invocation1\"}",
+              "end {\"kind\":\"return\"}"
+            ],
+            "event1": [
+              "bind {\"name\":\"cell5\",\"value\":[\"num\",2]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",73]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",2]}},\"result\":[\"num\",75],\"invocation\":\"event1\",\"site\":{\"start\":143,\"end\":155}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",75]}",
+              "request {\"effect\":\"e3\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"squared-distance\"],[\"num\",75]],\"invocation\":\"event1\",\"site\":{\"start\":156,\"end\":178},\"payload\":\"[\\\"squared-distance\\\",75]\"}",
+              "return {\"value\":[\"undefined\"],\"invocation\":\"event1\"}",
+              "end {\"kind\":\"return\"}"
+            ],
+            "event2": [
+              "bind {\"name\":\"cell6\",\"value\":[\"num\",3]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",75]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",3]}},\"result\":[\"num\",78],\"invocation\":\"event2\",\"site\":{\"start\":143,\"end\":155}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",78]}",
+              "request {\"effect\":\"e4\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"squared-distance\"],[\"num\",78]],\"invocation\":\"event2\",\"site\":{\"start\":156,\"end\":178},\"payload\":\"[\\\"squared-distance\\\",78]\"}",
+              "return {\"value\":[\"undefined\"],\"invocation\":\"event2\"}",
+              "end {\"kind\":\"return\"}"
+            ]
+          }
+        }
+      },
+      "expected": {
+        "completion": {
+          "kind": "return",
+          "value": [
+            "num",
+            78
+          ]
+        },
+        "state": {
+          "roots": [
+            [
+              "str",
+              "squared-distance"
+            ],
+            [
+              "num",
+              3
+            ],
+            [
+              "num",
+              78
+            ]
+          ],
+          "objects": []
+        },
+        "effects": [
+          {
+            "kind": "dispatch",
+            "call": 0,
+            "operation": "demo.readAsync",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 0,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  8
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 1,
+            "operation": "demo.withCallback",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ],
+                [
+                  "ref",
+                  "o0"
+                ]
+              ],
+              "objects": [
+                {
+                  "id": "o0",
+                  "kind": "object",
+                  "properties": [
+                    {
+                      "key": "callback",
+                      "value": [
+                        "bool",
+                        true
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "kind": "callback",
+            "call": 1,
+            "slot": 1,
+            "args": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  2
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "callback",
+            "call": 1,
+            "slot": 1,
+            "args": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  3
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 1,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 2,
+            "operation": "demo.store",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ],
+                [
+                  "num",
+                  75
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 2,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 3,
+            "operation": "demo.store",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ],
+                [
+                  "num",
+                  78
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 3,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          }
+        ],
+        "callbacks": [
+          {
+            "kind": "callback",
+            "call": 1,
+            "slot": 1,
+            "args": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  2
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "callback",
+            "call": 1,
+            "slot": 1,
+            "args": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  3
+                ]
+              ],
+              "objects": []
+            }
+          }
+        ],
+        "cleanup": {
+          "pendingEffects": 0,
+          "pendingJobs": 0,
+          "openHandlers": 0
+        }
+      },
+      "referenceReceipt": {
+        "status": "agreed",
+        "requestDigest": "0037b760c4542a5117c9e90eb89d856eaa3bcba8fdc0e6ea8d4bea09cff9a556",
+        "outcomeDigest": "b96d640baee4bb43b97b6775ec11229730b7c33fa1808f9a716911b573e9794a"
+      }
+    },
+    {
+      "id": "squared-distance-repeated",
+      "family": "semantic-recipe:squared-distance",
+      "split": "test",
+      "request": {
+        "schema": "selected-evaluation-case/4",
+        "fixture": {
+          "calls": [
+            {
+              "operation": "demo.readAsync",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "squared-distance"
+                  ]
+                ],
+                "objects": []
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "num",
+                    8
+                  ]
+                ],
+                "objects": []
+              }
+            },
+            {
+              "operation": "demo.store",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "squared-distance"
+                  ],
+                  [
+                    "num",
+                    73
+                  ]
+                ],
+                "objects": []
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "undefined"
+                  ]
+                ],
+                "objects": []
+              }
+            },
+            {
+              "operation": "demo.readAsync",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "squared-distance"
+                  ]
+                ],
+                "objects": []
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "num",
+                    5
+                  ]
+                ],
+                "objects": []
+              }
+            },
+            {
+              "operation": "demo.store",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "squared-distance"
+                  ],
+                  [
+                    "num",
+                    29
+                  ]
+                ],
+                "objects": []
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "undefined"
+                  ]
+                ],
+                "objects": []
+              }
+            }
+          ],
+          "settlementOrder": [
+            0,
+            2
+          ]
+        },
+        "controlledSelectionsByRepresentation": {
+          "explicit": {
+            "ingress1": [
+              "promise {\"action\":\"create\",\"promise\":\"p1\"}",
+              "bind {\"name\":\"cell1\",\"value\":[\"str\",\"squared-distance\"]}",
+              "bind {\"name\":\"cell2\",\"value\":[\"num\",3]}",
+              "request {\"effect\":\"e1\",\"operation\":\"demo.readAsync\",\"arguments\":[[\"str\",\"squared-distance\"]],\"invocation\":\"ingress1\",\"site\":{\"start\":53,\"end\":72},\"payload\":\"[\\\"squared-distance\\\"]\",\"promise\":\"p2\"}",
+              "await {\"promise\":\"p2\",\"continuation\":\"continuation1\",\"invocation\":\"ingress1\",\"returnPromise\":\"p1\"}",
+              "resume {\"continuation\":\"continuation1\",\"invocation\":\"ingress1\",\"result\":[\"num\",8],\"status\":\"fulfilled\"}",
+              "bind {\"name\":\"cell3\",\"value\":[\"num\",8]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",8]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",8]}},\"result\":[\"num\",64],\"invocation\":\"ingress1\",\"site\":{\"start\":86,\"end\":89}}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",3]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",3]}},\"result\":[\"num\",9],\"invocation\":\"ingress1\",\"site\":{\"start\":90,\"end\":93}}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",64]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",9]}},\"result\":[\"num\",73],\"invocation\":\"ingress1\",\"site\":{\"start\":86,\"end\":93}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",73]}",
+              "request {\"effect\":\"e2\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"squared-distance\"],[\"num\",73]],\"invocation\":\"ingress1\",\"site\":{\"start\":94,\"end\":116},\"payload\":\"[\\\"squared-distance\\\",73]\"}",
+              "promise {\"action\":\"resolve\",\"promise\":\"p1\",\"value\":[\"num\",73]}",
+              "return {\"value\":[\"ref\",\"p1\"],\"invocation\":\"ingress1\"}",
+              "end {\"kind\":\"return\"}"
+            ],
+            "ingress2": [
+              "promise {\"action\":\"create\",\"promise\":\"p1\"}",
+              "bind {\"name\":\"cell1\",\"value\":[\"str\",\"squared-distance\"]}",
+              "bind {\"name\":\"cell2\",\"value\":[\"num\",2]}",
+              "request {\"effect\":\"e1\",\"operation\":\"demo.readAsync\",\"arguments\":[[\"str\",\"squared-distance\"]],\"invocation\":\"ingress2\",\"site\":{\"start\":53,\"end\":72},\"payload\":\"[\\\"squared-distance\\\"]\",\"promise\":\"p2\"}",
+              "await {\"promise\":\"p2\",\"continuation\":\"continuation1\",\"invocation\":\"ingress2\",\"returnPromise\":\"p1\"}",
+              "resume {\"continuation\":\"continuation1\",\"invocation\":\"ingress2\",\"result\":[\"num\",5],\"status\":\"fulfilled\"}",
+              "bind {\"name\":\"cell3\",\"value\":[\"num\",5]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",5]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",5]}},\"result\":[\"num\",25],\"invocation\":\"ingress2\",\"site\":{\"start\":86,\"end\":89}}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",2]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",2]}},\"result\":[\"num\",4],\"invocation\":\"ingress2\",\"site\":{\"start\":90,\"end\":93}}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",25]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",4]}},\"result\":[\"num\",29],\"invocation\":\"ingress2\",\"site\":{\"start\":86,\"end\":93}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",29]}",
+              "request {\"effect\":\"e2\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"squared-distance\"],[\"num\",29]],\"invocation\":\"ingress2\",\"site\":{\"start\":94,\"end\":116},\"payload\":\"[\\\"squared-distance\\\",29]\"}",
+              "promise {\"action\":\"resolve\",\"promise\":\"p1\",\"value\":[\"num\",29]}",
+              "return {\"value\":[\"ref\",\"p1\"],\"invocation\":\"ingress2\"}",
+              "end {\"kind\":\"return\"}"
+            ]
+          },
+          "compact": {
+            "ingress1": [
+              "promise {\"action\":\"create\",\"promise\":\"p1\"}",
+              "bind {\"name\":\"cell1\",\"value\":[\"str\",\"squared-distance\"]}",
+              "bind {\"name\":\"cell2\",\"value\":[\"num\",3]}",
+              "request {\"effect\":\"e1\",\"operation\":\"demo.readAsync\",\"arguments\":[[\"str\",\"squared-distance\"]],\"invocation\":\"ingress1\",\"site\":{\"start\":53,\"end\":72},\"payload\":\"[\\\"squared-distance\\\"]\",\"promise\":\"p2\"}",
+              "await {\"promise\":\"p2\",\"continuation\":\"continuation1\",\"invocation\":\"ingress1\",\"returnPromise\":\"p1\"}",
+              "resume {\"continuation\":\"continuation1\",\"invocation\":\"ingress1\",\"result\":[\"num\",8],\"status\":\"fulfilled\"}",
+              "bind {\"name\":\"cell3\",\"value\":[\"num\",8]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",8]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",8]}},\"right\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",3]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",3]}}},\"result\":[\"num\",73],\"invocation\":\"ingress1\",\"site\":{\"start\":86,\"end\":93}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",73]}",
+              "request {\"effect\":\"e2\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"squared-distance\"],[\"num\",73]],\"invocation\":\"ingress1\",\"site\":{\"start\":94,\"end\":116},\"payload\":\"[\\\"squared-distance\\\",73]\"}",
+              "promise {\"action\":\"resolve\",\"promise\":\"p1\",\"value\":[\"num\",73]}",
+              "return {\"value\":[\"ref\",\"p1\"],\"invocation\":\"ingress1\"}",
+              "end {\"kind\":\"return\"}"
+            ],
+            "ingress2": [
+              "promise {\"action\":\"create\",\"promise\":\"p1\"}",
+              "bind {\"name\":\"cell1\",\"value\":[\"str\",\"squared-distance\"]}",
+              "bind {\"name\":\"cell2\",\"value\":[\"num\",2]}",
+              "request {\"effect\":\"e1\",\"operation\":\"demo.readAsync\",\"arguments\":[[\"str\",\"squared-distance\"]],\"invocation\":\"ingress2\",\"site\":{\"start\":53,\"end\":72},\"payload\":\"[\\\"squared-distance\\\"]\",\"promise\":\"p2\"}",
+              "await {\"promise\":\"p2\",\"continuation\":\"continuation1\",\"invocation\":\"ingress2\",\"returnPromise\":\"p1\"}",
+              "resume {\"continuation\":\"continuation1\",\"invocation\":\"ingress2\",\"result\":[\"num\",5],\"status\":\"fulfilled\"}",
+              "bind {\"name\":\"cell3\",\"value\":[\"num\",5]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",5]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",5]}},\"right\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",2]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",2]}}},\"result\":[\"num\",29],\"invocation\":\"ingress2\",\"site\":{\"start\":86,\"end\":93}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",29]}",
+              "request {\"effect\":\"e2\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"squared-distance\"],[\"num\",29]],\"invocation\":\"ingress2\",\"site\":{\"start\":94,\"end\":116},\"payload\":\"[\\\"squared-distance\\\",29]\"}",
+              "promise {\"action\":\"resolve\",\"promise\":\"p1\",\"value\":[\"num\",29]}",
+              "return {\"value\":[\"ref\",\"p1\"],\"invocation\":\"ingress2\"}",
+              "end {\"kind\":\"return\"}"
+            ]
+          }
+        },
+        "programs": [
+          {
+            "programId": "program1",
+            "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);const answer=a*a+b*b;host.store(key,answer);return answer;}",
+            "entry": "run",
+            "capabilities": [
+              "demo.readAsync",
+              "demo.store"
+            ]
+          }
+        ],
+        "invocations": [
+          {
+            "programId": "program1",
+            "invocationId": "ingress1",
+            "trackId": "worker1",
+            "realmId": "realm1",
+            "triggerId": "outside1",
+            "inputGraph": {
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ],
+                [
+                  "num",
+                  3
+                ]
+              ],
+              "objects": []
+            },
+            "realmPolicy": "fresh",
+            "completionPolicy": "await-returned-promise",
+            "receiverValue": [
+              "undefined"
+            ]
+          },
+          {
+            "programId": "program1",
+            "invocationId": "ingress2",
+            "trackId": "worker2",
+            "realmId": "realm2",
+            "triggerId": "outside2",
+            "inputGraph": {
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ],
+                [
+                  "num",
+                  2
+                ]
+              ],
+              "objects": []
+            },
+            "realmPolicy": "fresh",
+            "completionPolicy": "await-returned-promise",
+            "receiverValue": [
+              "undefined"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "completion": {
+          "kind": "session",
+          "value": [
+            {
+              "kind": "return",
+              "value": [
+                "num",
+                73
+              ]
+            },
+            {
+              "kind": "return",
+              "value": [
+                "num",
+                29
+              ]
+            }
+          ]
+        },
+        "state": [
+          {
+            "roots": [
+              [
+                "str",
+                "squared-distance"
+              ],
+              [
+                "num",
+                3
+              ],
+              [
+                "num",
+                73
+              ]
+            ],
+            "objects": []
+          },
+          {
+            "roots": [
+              [
+                "str",
+                "squared-distance"
+              ],
+              [
+                "num",
+                2
+              ],
+              [
+                "num",
+                29
+              ]
+            ],
+            "objects": []
+          }
+        ],
+        "effects": [
+          {
+            "kind": "dispatch",
+            "call": 0,
+            "operation": "demo.readAsync",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 0,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  8
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 1,
+            "operation": "demo.store",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ],
+                [
+                  "num",
+                  73
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 1,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 2,
+            "operation": "demo.readAsync",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 2,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  5
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 3,
+            "operation": "demo.store",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ],
+                [
+                  "num",
+                  29
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 3,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          }
+        ],
+        "callbacks": [],
+        "cleanup": {
+          "pendingEffects": 0,
+          "pendingJobs": 0,
+          "openHandlers": 0
+        }
+      },
+      "referenceReceipt": {
+        "status": "agreed",
+        "requestDigest": "9906f4a32a8d4104ddea4dc6a4c3412d4fcec8dcc07a9f083c2fb586e8cb6c63",
+        "outcomeDigest": "d4c7e74bd2854225a58e29ea48877271e1779b7425c97b67e40fee3d041c99fd"
+      }
+    },
+    {
+      "id": "native-result-graph:orchestration",
+      "family": "native-result-graph",
+      "split": "test",
+      "request": {
+        "schema": "selected-orchestration-evaluation-case/4",
+        "sessionId": "orchestration",
+        "programs": [
+          {
+            "programId": "program1",
+            "source": "\"use strict\";async function run(){const value=await host.natlangCall(\"graph:fixture\",null,[]);value.left.n=value.left.n+1;host.natlangWriteCell(\"graph:output\",value);host.store(\"alias\",value.left===value.right);return value;}",
+            "entry": "run",
+            "capabilities": [
+              "demo.store",
+              "natlang.call",
+              "natlang.writeCell"
+            ]
+          }
+        ],
+        "invocations": [
+          {
+            "programId": "program1",
+            "invocationId": "invocation1",
+            "trackId": "worker1",
+            "realmId": "realm1",
+            "triggerId": "teacher-entry",
+            "inputGraph": {
+              "roots": [],
+              "objects": []
+            },
+            "realmPolicy": "retained",
+            "completionPolicy": "await-returned-promise",
+            "receiverValue": [
+              "undefined"
+            ]
+          }
+        ],
+        "fixture": {
+          "calls": [
+            {
+              "operation": "natlang.call",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "graph:fixture"
+                  ],
+                  [
+                    "null"
+                  ],
+                  [
+                    "ref",
+                    "o0"
+                  ]
+                ],
+                "objects": [
+                  {
+                    "id": "o0",
+                    "kind": "array",
+                    "properties": [
+                      {
+                        "key": "length",
+                        "value": [
+                          "num",
+                          0
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "ref",
+                    "o0"
+                  ]
+                ],
+                "objects": [
+                  {
+                    "id": "o0",
+                    "kind": "object",
+                    "properties": [
+                      {
+                        "key": "left",
+                        "value": [
+                          "ref",
+                          "o1"
+                        ]
+                      },
+                      {
+                        "key": "right",
+                        "value": [
+                          "ref",
+                          "o1"
+                        ]
+                      },
+                      {
+                        "key": "self",
+                        "value": [
+                          "ref",
+                          "o0"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "o1",
+                    "kind": "object",
+                    "properties": [
+                      {
+                        "key": "n",
+                        "value": [
+                          "num",
+                          3
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "operation": "natlang.writeCell",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "graph:output"
+                  ],
+                  [
+                    "ref",
+                    "o0"
+                  ]
+                ],
+                "objects": [
+                  {
+                    "id": "o0",
+                    "kind": "object",
+                    "properties": [
+                      {
+                        "key": "left",
+                        "value": [
+                          "ref",
+                          "o1"
+                        ]
+                      },
+                      {
+                        "key": "right",
+                        "value": [
+                          "ref",
+                          "o1"
+                        ]
+                      },
+                      {
+                        "key": "self",
+                        "value": [
+                          "ref",
+                          "o0"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "o1",
+                    "kind": "object",
+                    "properties": [
+                      {
+                        "key": "n",
+                        "value": [
+                          "num",
+                          4
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "undefined"
+                  ]
+                ],
+                "objects": []
+              }
+            },
+            {
+              "operation": "demo.store",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "alias"
+                  ],
+                  [
+                    "bool",
+                    true
+                  ]
+                ],
+                "objects": []
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "undefined"
+                  ]
+                ],
+                "objects": []
+              }
+            }
+          ],
+          "settlementOrder": null
+        },
+        "limits": {
+          "maxActive": 1,
+          "maxCoordinatorDecisions": 128,
+          "maxChildSelections": 4096
+        },
+        "controlledCoordinatorActions": [
+          {
+            "name": "track_create",
+            "arguments": {
+              "purpose": "Execute observed child invocation1",
+              "completion": "Deliver its observed return or throw",
+              "budget": 4096,
+              "capabilities": [
+                "text",
+                "demo.store",
+                "natlang.call",
+                "natlang.writeCell"
+              ],
+              "execution": {
+                "$observed": [
+                  "state",
+                  "children",
+                  0,
+                  "execution"
+                ]
+              }
+            }
+          },
+          {
+            "name": "track_join",
+            "arguments": {
+              "address": {
+                "$observed": [
+                  "state",
+                  "track"
+                ]
+              },
+              "completion_dependency": {
+                "$observed": [
+                  "decisions",
+                  0,
+                  "outcomes",
+                  0,
+                  "completion_dependency"
+                ]
+              }
+            }
+          },
+          {
+            "name": "track_progress",
+            "arguments": {
+              "address": {
+                "$observed": [
+                  "state",
+                  "track"
+                ]
+              },
+              "progress": {
+                "$json": {
+                  "kind": {
+                    "$observed": [
+                      "completions",
+                      0,
+                      "kind"
+                    ]
+                  },
+                  "value": {
+                    "$observed": [
+                      "completions",
+                      0,
+                      "value"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "track_complete",
+            "arguments": {
+              "address": {
+                "$observed": [
+                  "state",
+                  "track"
+                ]
+              }
+            }
+          }
+        ],
+        "controlledSelectionsByRepresentation": {
+          "explicit": {
+            "invocation1": [
+              "promise {\"action\":\"create\",\"promise\":\"p1\"}",
+              "allocate {\"name\":\"o2\",\"kind\":\"array\",\"properties\":[],\"length\":0}",
+              "request {\"effect\":\"e1\",\"operation\":\"natlang.call\",\"arguments\":[[\"str\",\"graph:fixture\"],[\"null\"],[\"ref\",\"o2\"]],\"invocation\":\"invocation1\",\"site\":{\"start\":52,\"end\":93},\"payload\":\"{\\\"schema\\\":\\\"owned-graph/1\\\",\\\"roots\\\":[[\\\"str\\\",\\\"graph:fixture\\\"],[\\\"null\\\"],[\\\"ref\\\",\\\"o2\\\"]],\\\"objects\\\":[{\\\"id\\\":\\\"o2\\\",\\\"kind\\\":\\\"array\\\",\\\"properties\\\":[{\\\"key\\\":\\\"length\\\",\\\"value\\\":[\\\"num\\\",0]}]}]}\",\"promise\":\"p2\"}",
+              "await {\"promise\":\"p2\",\"continuation\":\"continuation1\",\"invocation\":\"invocation1\",\"returnPromise\":\"p1\"}",
+              "resume {\"continuation\":\"continuation1\",\"invocation\":\"invocation1\",\"result\":[\"ref\",\"o0\"],\"status\":\"fulfilled\"}",
+              "bind {\"name\":\"cell1\",\"value\":[\"ref\",\"o0\"]}",
+              "read {\"object\":\"o0\",\"key\":\"left\",\"present\":true,\"value\":[\"ref\",\"o1\"]}",
+              "read {\"object\":\"o0\",\"key\":\"left\",\"present\":true,\"value\":[\"ref\",\"o1\"]}",
+              "read {\"object\":\"o1\",\"key\":\"n\",\"present\":true,\"value\":[\"num\",3]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",3]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",1]}},\"result\":[\"num\",4],\"invocation\":\"invocation1\",\"site\":{\"start\":107,\"end\":121}}",
+              "write {\"object\":\"o1\",\"key\":\"n\",\"present\":true,\"value\":[\"num\",4]}",
+              "request {\"effect\":\"e2\",\"operation\":\"natlang.writeCell\",\"arguments\":[[\"str\",\"graph:output\"],[\"ref\",\"o0\"]],\"invocation\":\"invocation1\",\"site\":{\"start\":122,\"end\":165},\"payload\":\"{\\\"schema\\\":\\\"owned-graph/1\\\",\\\"roots\\\":[[\\\"str\\\",\\\"graph:output\\\"],[\\\"ref\\\",\\\"o0\\\"]],\\\"objects\\\":[{\\\"id\\\":\\\"o0\\\",\\\"kind\\\":\\\"object\\\",\\\"properties\\\":[{\\\"key\\\":\\\"left\\\",\\\"value\\\":[\\\"ref\\\",\\\"o1\\\"]},{\\\"key\\\":\\\"right\\\",\\\"value\\\":[\\\"ref\\\",\\\"o1\\\"]},{\\\"key\\\":\\\"self\\\",\\\"value\\\":[\\\"ref\\\",\\\"o0\\\"]}]},{\\\"id\\\":\\\"o1\\\",\\\"kind\\\":\\\"object\\\",\\\"properties\\\":[{\\\"key\\\":\\\"n\\\",\\\"value\\\":[\\\"num\\\",4]}]}]}\"}",
+              "read {\"object\":\"o0\",\"key\":\"left\",\"present\":true,\"value\":[\"ref\",\"o1\"]}",
+              "read {\"object\":\"o0\",\"key\":\"right\",\"present\":true,\"value\":[\"ref\",\"o1\"]}",
+              "request {\"effect\":\"e3\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"alias\"],[\"bool\",true]],\"invocation\":\"invocation1\",\"site\":{\"start\":166,\"end\":210},\"payload\":\"[\\\"alias\\\",true]\"}",
+              "promise {\"action\":\"resolve\",\"promise\":\"p1\",\"value\":[\"ref\",\"o0\"]}",
+              "return {\"value\":[\"ref\",\"p1\"],\"invocation\":\"invocation1\"}",
+              "end {\"kind\":\"return\"}"
+            ]
+          },
+          "compact": {
+            "invocation1": [
+              "promise {\"action\":\"create\",\"promise\":\"p1\"}",
+              "allocate {\"name\":\"o2\",\"kind\":\"array\",\"properties\":[],\"length\":0}",
+              "request {\"effect\":\"e1\",\"operation\":\"natlang.call\",\"arguments\":[[\"str\",\"graph:fixture\"],[\"null\"],[\"ref\",\"o2\"]],\"invocation\":\"invocation1\",\"site\":{\"start\":52,\"end\":93},\"payload\":\"{\\\"schema\\\":\\\"owned-graph/1\\\",\\\"roots\\\":[[\\\"str\\\",\\\"graph:fixture\\\"],[\\\"null\\\"],[\\\"ref\\\",\\\"o2\\\"]],\\\"objects\\\":[{\\\"id\\\":\\\"o2\\\",\\\"kind\\\":\\\"array\\\",\\\"properties\\\":[{\\\"key\\\":\\\"length\\\",\\\"value\\\":[\\\"num\\\",0]}]}]}\",\"promise\":\"p2\"}",
+              "await {\"promise\":\"p2\",\"continuation\":\"continuation1\",\"invocation\":\"invocation1\",\"returnPromise\":\"p1\"}",
+              "resume {\"continuation\":\"continuation1\",\"invocation\":\"invocation1\",\"result\":[\"ref\",\"o0\"],\"status\":\"fulfilled\"}",
+              "bind {\"name\":\"cell1\",\"value\":[\"ref\",\"o0\"]}",
+              "read {\"object\":\"o0\",\"key\":\"left\",\"present\":true,\"value\":[\"ref\",\"o1\"]}",
+              "read {\"object\":\"o0\",\"key\":\"left\",\"present\":true,\"value\":[\"ref\",\"o1\"]}",
+              "read {\"object\":\"o1\",\"key\":\"n\",\"present\":true,\"value\":[\"num\",3]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",3]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",1]}},\"result\":[\"num\",4],\"invocation\":\"invocation1\",\"site\":{\"start\":107,\"end\":121}}",
+              "write {\"object\":\"o1\",\"key\":\"n\",\"present\":true,\"value\":[\"num\",4]}",
+              "request {\"effect\":\"e2\",\"operation\":\"natlang.writeCell\",\"arguments\":[[\"str\",\"graph:output\"],[\"ref\",\"o0\"]],\"invocation\":\"invocation1\",\"site\":{\"start\":122,\"end\":165},\"payload\":\"{\\\"schema\\\":\\\"owned-graph/1\\\",\\\"roots\\\":[[\\\"str\\\",\\\"graph:output\\\"],[\\\"ref\\\",\\\"o0\\\"]],\\\"objects\\\":[{\\\"id\\\":\\\"o0\\\",\\\"kind\\\":\\\"object\\\",\\\"properties\\\":[{\\\"key\\\":\\\"left\\\",\\\"value\\\":[\\\"ref\\\",\\\"o1\\\"]},{\\\"key\\\":\\\"right\\\",\\\"value\\\":[\\\"ref\\\",\\\"o1\\\"]},{\\\"key\\\":\\\"self\\\",\\\"value\\\":[\\\"ref\\\",\\\"o0\\\"]}]},{\\\"id\\\":\\\"o1\\\",\\\"kind\\\":\\\"object\\\",\\\"properties\\\":[{\\\"key\\\":\\\"n\\\",\\\"value\\\":[\\\"num\\\",4]}]}]}\"}",
+              "read {\"object\":\"o0\",\"key\":\"left\",\"present\":true,\"value\":[\"ref\",\"o1\"]}",
+              "read {\"object\":\"o0\",\"key\":\"right\",\"present\":true,\"value\":[\"ref\",\"o1\"]}",
+              "request {\"effect\":\"e3\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"alias\"],[\"bool\",true]],\"invocation\":\"invocation1\",\"site\":{\"start\":166,\"end\":210},\"payload\":\"[\\\"alias\\\",true]\"}",
+              "promise {\"action\":\"resolve\",\"promise\":\"p1\",\"value\":[\"ref\",\"o0\"]}",
+              "return {\"value\":[\"ref\",\"p1\"],\"invocation\":\"invocation1\"}",
+              "end {\"kind\":\"return\"}"
+            ]
+          }
+        }
+      },
+      "expected": {
+        "completion": {
+          "kind": "orchestration",
+          "value": {
+            "children": [
+              {
+                "invocationId": "invocation1",
+                "kind": "return",
+                "value": [
+                  "ref",
+                  "o0"
+                ]
+              }
+            ],
+            "progress": [
+              {
+                "kind": "return",
+                "value": [
+                  "ref",
+                  "o0"
+                ]
+              }
+            ]
+          }
+        },
+        "state": [
+          {
+            "roots": [
+              [
+                "ref",
+                "o0"
+              ]
+            ],
+            "objects": [
+              {
+                "id": "o0",
+                "kind": "object",
+                "properties": [
+                  [
+                    "left",
+                    [
+                      "ref",
+                      "o1"
+                    ]
+                  ],
+                  [
+                    "right",
+                    [
+                      "ref",
+                      "o1"
+                    ]
+                  ],
+                  [
+                    "self",
+                    [
+                      "ref",
+                      "o0"
+                    ]
+                  ]
+                ]
+              },
+              {
+                "id": "o1",
+                "kind": "object",
+                "properties": [
+                  [
+                    "n",
+                    [
+                      "num",
+                      4
+                    ]
+                  ]
+                ]
+              }
+            ]
+          }
+        ],
+        "effects": [
+          {
+            "kind": "dispatch",
+            "call": 0,
+            "operation": "natlang.call",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "graph:fixture"
+                ],
+                [
+                  "null"
+                ],
+                [
+                  "ref",
+                  "o0"
+                ]
+              ],
+              "objects": [
+                {
+                  "id": "o0",
+                  "kind": "array",
+                  "properties": [
+                    {
+                      "key": "length",
+                      "value": [
+                        "num",
+                        0
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 0,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "ref",
+                  "o0"
+                ]
+              ],
+              "objects": [
+                {
+                  "id": "o0",
+                  "kind": "object",
+                  "properties": [
+                    {
+                      "key": "left",
+                      "value": [
+                        "ref",
+                        "o1"
+                      ]
+                    },
+                    {
+                      "key": "right",
+                      "value": [
+                        "ref",
+                        "o1"
+                      ]
+                    },
+                    {
+                      "key": "self",
+                      "value": [
+                        "ref",
+                        "o0"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "o1",
+                  "kind": "object",
+                  "properties": [
+                    {
+                      "key": "n",
+                      "value": [
+                        "num",
+                        3
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 1,
+            "operation": "natlang.writeCell",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "graph:output"
+                ],
+                [
+                  "ref",
+                  "o0"
+                ]
+              ],
+              "objects": [
+                {
+                  "id": "o0",
+                  "kind": "object",
+                  "properties": [
+                    {
+                      "key": "left",
+                      "value": [
+                        "ref",
+                        "o1"
+                      ]
+                    },
+                    {
+                      "key": "right",
+                      "value": [
+                        "ref",
+                        "o1"
+                      ]
+                    },
+                    {
+                      "key": "self",
+                      "value": [
+                        "ref",
+                        "o0"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "o1",
+                  "kind": "object",
+                  "properties": [
+                    {
+                      "key": "n",
+                      "value": [
+                        "num",
+                        4
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 1,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 2,
+            "operation": "demo.store",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "alias"
+                ],
+                [
+                  "bool",
+                  true
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 2,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          }
+        ],
+        "callbacks": [],
+        "cleanup": {
+          "pendingEffects": 0,
+          "pendingJobs": 0,
+          "openHandlers": 0,
+          "pendingTracks": 0
+        }
+      },
+      "referenceReceipt": {
+        "status": "agreed",
+        "requestDigest": "73838164fae9ed3fef60234dadd7a492864a4c42ae76b7ad2267a7ebfde39caf",
+        "outcomeDigest": "25739a6713f9e333ff8e348f3033d4e77dd9390d628a032f3992af86f2858d3c"
+      }
+    },
+    {
+      "id": "squared-distance-callbacks-recovery:orchestration",
+      "family": "semantic-recipe:squared-distance",
+      "split": "test",
+      "request": {
+        "schema": "selected-orchestration-evaluation-case/4",
+        "sessionId": "orchestration",
+        "programs": [
+          {
+            "programId": "program1",
+            "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);let answer=a*a+b*b;await host.withCallback(key,function(delta){answer=answer+delta;host.store(key,answer);});return answer;}",
+            "entry": "run",
+            "capabilities": [
+              "demo.readAsync",
+              "demo.store",
+              "demo.withCallback"
+            ]
+          }
+        ],
+        "invocations": [
+          {
+            "programId": "program1",
+            "invocationId": "invocation1",
+            "trackId": "worker1",
+            "realmId": "realm1",
+            "triggerId": "teacher-entry",
+            "inputGraph": {
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ],
+                [
+                  "num",
+                  3
+                ]
+              ],
+              "objects": []
+            },
+            "realmPolicy": "retained",
+            "completionPolicy": "await-returned-promise",
+            "receiverValue": [
+              "undefined"
+            ]
+          }
+        ],
+        "fixture": {
+          "calls": [
+            {
+              "operation": "demo.readAsync",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "squared-distance"
+                  ]
+                ],
+                "objects": []
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "num",
+                    8
+                  ]
+                ],
+                "objects": []
+              }
+            },
+            {
+              "operation": "demo.withCallback",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "squared-distance"
+                  ],
+                  [
+                    "ref",
+                    "o0"
+                  ]
+                ],
+                "objects": [
+                  {
+                    "id": "o0",
+                    "kind": "object",
+                    "properties": [
+                      {
+                        "key": "callback",
+                        "value": [
+                          "bool",
+                          true
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "undefined"
+                  ]
+                ],
+                "objects": []
+              },
+              "callbacks": [
+                {
+                  "slot": 1,
+                  "argumentGraph": {
+                    "schema": "owned-graph/1",
+                    "roots": [
+                      [
+                        "num",
+                        2
+                      ]
+                    ],
+                    "objects": []
+                  }
+                },
+                {
+                  "slot": 1,
+                  "argumentGraph": {
+                    "schema": "owned-graph/1",
+                    "roots": [
+                      [
+                        "num",
+                        3
+                      ]
+                    ],
+                    "objects": []
+                  }
+                }
+              ]
+            },
+            {
+              "operation": "demo.store",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "squared-distance"
+                  ],
+                  [
+                    "num",
+                    75
+                  ]
+                ],
+                "objects": []
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "undefined"
+                  ]
+                ],
+                "objects": []
+              }
+            },
+            {
+              "operation": "demo.store",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "squared-distance"
+                  ],
+                  [
+                    "num",
+                    78
+                  ]
+                ],
+                "objects": []
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "undefined"
+                  ]
+                ],
+                "objects": []
+              }
+            }
+          ],
+          "settlementOrder": null
+        },
+        "limits": {
+          "maxActive": 1,
+          "maxCoordinatorDecisions": 128,
+          "maxChildSelections": 4096
+        },
+        "controlledCoordinatorActions": [
+          {
+            "name": "track_create",
+            "arguments": {
+              "purpose": "Execute observed child invocation1",
+              "completion": "Deliver its observed return or throw",
+              "budget": 4096,
+              "capabilities": [
+                "text",
+                "demo.readAsync",
+                "demo.store",
+                "demo.withCallback"
+              ],
+              "execution": {
+                "$observed": [
+                  "state",
+                  "children",
+                  0,
+                  "execution"
+                ]
+              }
+            }
+          },
+          {
+            "name": "track_join",
+            "arguments": {
+              "address": {
+                "$observed": [
+                  "state",
+                  "track"
+                ]
+              },
+              "completion_dependency": {
+                "$observed": [
+                  "decisions",
+                  0,
+                  "outcomes",
+                  0,
+                  "completion_dependency"
+                ]
+              }
+            }
+          },
+          {
+            "name": "track_progress",
+            "arguments": {
+              "address": {
+                "$observed": [
+                  "state",
+                  "track"
+                ]
+              },
+              "progress": {
+                "$json": {
+                  "kind": {
+                    "$observed": [
+                      "completions",
+                      0,
+                      "kind"
+                    ]
+                  },
+                  "value": {
+                    "$observed": [
+                      "completions",
+                      0,
+                      "value"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "track_complete",
+            "arguments": {
+              "address": {
+                "$observed": [
+                  "state",
+                  "track"
+                ]
+              }
+            }
+          }
+        ],
+        "controlledSelectionsByRepresentation": {
+          "explicit": {
+            "invocation1": [
+              "promise {\"action\":\"create\",\"promise\":\"p1\"}",
+              "bind {\"name\":\"cell1\",\"value\":[\"str\",\"squared-distance\"]}",
+              "bind {\"name\":\"cell2\",\"value\":[\"num\",3]}",
+              "request {\"effect\":\"e1\",\"operation\":\"demo.readAsync\",\"arguments\":[[\"str\",\"squared-distance\"]],\"invocation\":\"invocation1\",\"site\":{\"start\":53,\"end\":72},\"payload\":\"[\\\"squared-distance\\\"]\",\"promise\":\"p2\"}",
+              "await {\"promise\":\"p2\",\"continuation\":\"continuation1\",\"invocation\":\"invocation1\",\"returnPromise\":\"p1\"}",
+              "resume {\"continuation\":\"continuation1\",\"invocation\":\"invocation1\",\"result\":[\"num\",8],\"status\":\"fulfilled\"}",
+              "bind {\"name\":\"cell3\",\"value\":[\"num\",8]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",8]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",8]}},\"result\":[\"num\",64],\"invocation\":\"invocation1\",\"site\":{\"start\":84,\"end\":87}}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",3]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",3]}},\"result\":[\"num\",9],\"invocation\":\"invocation1\",\"site\":{\"start\":88,\"end\":91}}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",64]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",9]}},\"result\":[\"num\",73],\"invocation\":\"invocation1\",\"site\":{\"start\":84,\"end\":91}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",73]}",
+              "allocate {\"name\":\"o2\",\"kind\":\"closure\",\"properties\":[],\"code\":\"function:120\",\"captures\":[{\"binding\":\"key\",\"cell\":\"cell1\"},{\"binding\":\"answer\",\"cell\":\"cell4\"}]}",
+              "request {\"effect\":\"e2\",\"operation\":\"demo.withCallback\",\"arguments\":[[\"str\",\"squared-distance\"],[\"ref\",\"o2\"]],\"invocation\":\"invocation1\",\"site\":{\"start\":98,\"end\":181},\"payload\":\"[\\\"squared-distance\\\",{\\\"$ownedCallback\\\":\\\"o2\\\"}]\",\"promise\":\"p3\"}",
+              "await {\"promise\":\"p3\",\"continuation\":\"continuation2\",\"invocation\":\"invocation1\"}",
+              "resume {\"continuation\":\"continuation2\",\"invocation\":\"invocation1\",\"result\":[\"undefined\"],\"status\":\"fulfilled\"}",
+              "promise {\"action\":\"resolve\",\"promise\":\"p1\",\"value\":[\"num\",78]}",
+              "return {\"value\":[\"ref\",\"p1\"],\"invocation\":\"invocation1\"}",
+              "end {\"kind\":\"return\"}"
+            ],
+            "event1": [
+              "bind {\"name\":\"cell5\",\"value\":[\"num\",2]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",73]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",2]}},\"result\":[\"num\",75],\"invocation\":\"event1\",\"site\":{\"start\":143,\"end\":155}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",75]}",
+              "request {\"effect\":\"e3\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"squared-distance\"],[\"num\",75]],\"invocation\":\"event1\",\"site\":{\"start\":156,\"end\":178},\"payload\":\"[\\\"squared-distance\\\",75]\"}",
+              "return {\"value\":[\"undefined\"],\"invocation\":\"event1\"}",
+              "end {\"kind\":\"return\"}"
+            ],
+            "event2": [
+              "bind {\"name\":\"cell6\",\"value\":[\"num\",3]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",75]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",3]}},\"result\":[\"num\",78],\"invocation\":\"event2\",\"site\":{\"start\":143,\"end\":155}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",78]}",
+              "request {\"effect\":\"e4\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"squared-distance\"],[\"num\",78]],\"invocation\":\"event2\",\"site\":{\"start\":156,\"end\":178},\"payload\":\"[\\\"squared-distance\\\",78]\"}",
+              "return {\"value\":[\"undefined\"],\"invocation\":\"event2\"}",
+              "end {\"kind\":\"return\"}"
+            ]
+          },
+          "compact": {
+            "invocation1": [
+              "promise {\"action\":\"create\",\"promise\":\"p1\"}",
+              "bind {\"name\":\"cell1\",\"value\":[\"str\",\"squared-distance\"]}",
+              "bind {\"name\":\"cell2\",\"value\":[\"num\",3]}",
+              "request {\"effect\":\"e1\",\"operation\":\"demo.readAsync\",\"arguments\":[[\"str\",\"squared-distance\"]],\"invocation\":\"invocation1\",\"site\":{\"start\":53,\"end\":72},\"payload\":\"[\\\"squared-distance\\\"]\",\"promise\":\"p2\"}",
+              "await {\"promise\":\"p2\",\"continuation\":\"continuation1\",\"invocation\":\"invocation1\",\"returnPromise\":\"p1\"}",
+              "resume {\"continuation\":\"continuation1\",\"invocation\":\"invocation1\",\"result\":[\"num\",8],\"status\":\"fulfilled\"}",
+              "bind {\"name\":\"cell3\",\"value\":[\"num\",8]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",8]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",8]}},\"right\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",3]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",3]}}},\"result\":[\"num\",73],\"invocation\":\"invocation1\",\"site\":{\"start\":84,\"end\":91}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",73]}",
+              "allocate {\"name\":\"o2\",\"kind\":\"closure\",\"properties\":[],\"code\":\"function:120\",\"captures\":[{\"binding\":\"key\",\"cell\":\"cell1\"},{\"binding\":\"answer\",\"cell\":\"cell4\"}]}",
+              "request {\"effect\":\"e2\",\"operation\":\"demo.withCallback\",\"arguments\":[[\"str\",\"squared-distance\"],[\"ref\",\"o2\"]],\"invocation\":\"invocation1\",\"site\":{\"start\":98,\"end\":181},\"payload\":\"[\\\"squared-distance\\\",{\\\"$ownedCallback\\\":\\\"o2\\\"}]\",\"promise\":\"p3\"}",
+              "await {\"promise\":\"p3\",\"continuation\":\"continuation2\",\"invocation\":\"invocation1\"}",
+              "resume {\"continuation\":\"continuation2\",\"invocation\":\"invocation1\",\"result\":[\"undefined\"],\"status\":\"fulfilled\"}",
+              "promise {\"action\":\"resolve\",\"promise\":\"p1\",\"value\":[\"num\",78]}",
+              "return {\"value\":[\"ref\",\"p1\"],\"invocation\":\"invocation1\"}",
+              "end {\"kind\":\"return\"}"
+            ],
+            "event1": [
+              "bind {\"name\":\"cell5\",\"value\":[\"num\",2]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",73]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",2]}},\"result\":[\"num\",75],\"invocation\":\"event1\",\"site\":{\"start\":143,\"end\":155}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",75]}",
+              "request {\"effect\":\"e3\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"squared-distance\"],[\"num\",75]],\"invocation\":\"event1\",\"site\":{\"start\":156,\"end\":178},\"payload\":\"[\\\"squared-distance\\\",75]\"}",
+              "return {\"value\":[\"undefined\"],\"invocation\":\"event1\"}",
+              "end {\"kind\":\"return\"}"
+            ],
+            "event2": [
+              "bind {\"name\":\"cell6\",\"value\":[\"num\",3]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",75]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",3]}},\"result\":[\"num\",78],\"invocation\":\"event2\",\"site\":{\"start\":143,\"end\":155}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",78]}",
+              "request {\"effect\":\"e4\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"squared-distance\"],[\"num\",78]],\"invocation\":\"event2\",\"site\":{\"start\":156,\"end\":178},\"payload\":\"[\\\"squared-distance\\\",78]\"}",
+              "return {\"value\":[\"undefined\"],\"invocation\":\"event2\"}",
+              "end {\"kind\":\"return\"}"
+            ]
+          }
+        }
+      },
+      "expected": {
+        "completion": {
+          "kind": "orchestration",
+          "value": {
+            "children": [
+              {
+                "invocationId": "invocation1",
+                "kind": "return",
+                "value": [
+                  "num",
+                  78
+                ]
+              }
+            ],
+            "progress": [
+              {
+                "kind": "return",
+                "value": [
+                  "num",
+                  78
+                ]
+              }
+            ]
+          }
+        },
+        "state": [
+          {
+            "roots": [
+              [
+                "str",
+                "squared-distance"
+              ],
+              [
+                "num",
+                3
+              ],
+              [
+                "num",
+                78
+              ]
+            ],
+            "objects": []
+          }
+        ],
+        "effects": [
+          {
+            "kind": "dispatch",
+            "call": 0,
+            "operation": "demo.readAsync",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 0,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  8
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 1,
+            "operation": "demo.withCallback",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ],
+                [
+                  "ref",
+                  "o0"
+                ]
+              ],
+              "objects": [
+                {
+                  "id": "o0",
+                  "kind": "object",
+                  "properties": [
+                    {
+                      "key": "callback",
+                      "value": [
+                        "bool",
+                        true
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "kind": "callback",
+            "call": 1,
+            "slot": 1,
+            "args": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  2
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "callback",
+            "call": 1,
+            "slot": 1,
+            "args": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  3
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 1,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 2,
+            "operation": "demo.store",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ],
+                [
+                  "num",
+                  75
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 2,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 3,
+            "operation": "demo.store",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ],
+                [
+                  "num",
+                  78
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 3,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          }
+        ],
+        "callbacks": [
+          {
+            "kind": "callback",
+            "call": 1,
+            "slot": 1,
+            "args": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  2
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "callback",
+            "call": 1,
+            "slot": 1,
+            "args": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  3
+                ]
+              ],
+              "objects": []
+            }
+          }
+        ],
+        "cleanup": {
+          "pendingEffects": 0,
+          "pendingJobs": 0,
+          "openHandlers": 0,
+          "pendingTracks": 0
+        }
+      },
+      "referenceReceipt": {
+        "status": "agreed",
+        "requestDigest": "193bcabeb9ca28f03996c2ce19e778d799d37cc5f54f89a3f4e89f11f4d34ffa",
+        "outcomeDigest": "b75f467aea26250c0e1f2214635305b44aa17be01b486ee9c4a1895ec270a0f2"
+      }
+    },
+    {
+      "id": "squared-distance-repeated:orchestration",
+      "family": "semantic-recipe:squared-distance",
+      "split": "test",
+      "request": {
+        "schema": "selected-orchestration-evaluation-case/4",
+        "sessionId": "orchestration",
+        "programs": [
+          {
+            "programId": "program1",
+            "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);const answer=a*a+b*b;host.store(key,answer);return answer;}",
+            "entry": "run",
+            "capabilities": [
+              "demo.readAsync",
+              "demo.store"
+            ]
+          }
+        ],
+        "invocations": [
+          {
+            "programId": "program1",
+            "invocationId": "ingress1",
+            "trackId": "worker1",
+            "realmId": "realm1",
+            "triggerId": "outside1",
+            "inputGraph": {
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ],
+                [
+                  "num",
+                  3
+                ]
+              ],
+              "objects": []
+            },
+            "realmPolicy": "fresh",
+            "completionPolicy": "await-returned-promise",
+            "receiverValue": [
+              "undefined"
+            ]
+          },
+          {
+            "programId": "program1",
+            "invocationId": "ingress2",
+            "trackId": "worker2",
+            "realmId": "realm2",
+            "triggerId": "outside2",
+            "inputGraph": {
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ],
+                [
+                  "num",
+                  2
+                ]
+              ],
+              "objects": []
+            },
+            "realmPolicy": "fresh",
+            "completionPolicy": "await-returned-promise",
+            "receiverValue": [
+              "undefined"
+            ]
+          }
+        ],
+        "fixture": {
+          "calls": [
+            {
+              "operation": "demo.readAsync",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "squared-distance"
+                  ]
+                ],
+                "objects": []
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "num",
+                    8
+                  ]
+                ],
+                "objects": []
+              }
+            },
+            {
+              "operation": "demo.store",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "squared-distance"
+                  ],
+                  [
+                    "num",
+                    73
+                  ]
+                ],
+                "objects": []
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "undefined"
+                  ]
+                ],
+                "objects": []
+              }
+            },
+            {
+              "operation": "demo.readAsync",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "squared-distance"
+                  ]
+                ],
+                "objects": []
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "num",
+                    5
+                  ]
+                ],
+                "objects": []
+              }
+            },
+            {
+              "operation": "demo.store",
+              "status": "fulfilled",
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "str",
+                    "squared-distance"
+                  ],
+                  [
+                    "num",
+                    29
+                  ]
+                ],
+                "objects": []
+              },
+              "resultGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "undefined"
+                  ]
+                ],
+                "objects": []
+              }
+            }
+          ],
+          "settlementOrder": [
+            0,
+            2
+          ]
+        },
+        "limits": {
+          "maxActive": 1,
+          "maxCoordinatorDecisions": 128,
+          "maxChildSelections": 4096
+        },
+        "controlledCoordinatorActions": [
+          {
+            "name": "track_create",
+            "arguments": {
+              "purpose": "Execute observed child ingress1",
+              "completion": "Deliver its observed return or throw",
+              "budget": 4096,
+              "capabilities": [
+                "text",
+                "demo.readAsync",
+                "demo.store"
+              ],
+              "execution": {
+                "$observed": [
+                  "state",
+                  "children",
+                  0,
+                  "execution"
+                ]
+              }
+            }
+          },
+          {
+            "name": "track_join",
+            "arguments": {
+              "address": {
+                "$observed": [
+                  "state",
+                  "track"
+                ]
+              },
+              "completion_dependency": {
+                "$observed": [
+                  "decisions",
+                  0,
+                  "outcomes",
+                  0,
+                  "completion_dependency"
+                ]
+              }
+            }
+          },
+          {
+            "name": "track_progress",
+            "arguments": {
+              "address": {
+                "$observed": [
+                  "state",
+                  "track"
+                ]
+              },
+              "progress": {
+                "$json": {
+                  "kind": {
+                    "$observed": [
+                      "completions",
+                      0,
+                      "kind"
+                    ]
+                  },
+                  "value": {
+                    "$observed": [
+                      "completions",
+                      0,
+                      "value"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "track_create",
+            "arguments": {
+              "purpose": "Execute observed child ingress2",
+              "completion": "Deliver its observed return or throw",
+              "budget": 4096,
+              "capabilities": [
+                "text",
+                "demo.readAsync",
+                "demo.store"
+              ],
+              "execution": {
+                "$observed": [
+                  "state",
+                  "children",
+                  1,
+                  "execution"
+                ]
+              }
+            }
+          },
+          {
+            "name": "track_join",
+            "arguments": {
+              "address": {
+                "$observed": [
+                  "state",
+                  "track"
+                ]
+              },
+              "completion_dependency": {
+                "$observed": [
+                  "decisions",
+                  3,
+                  "outcomes",
+                  0,
+                  "completion_dependency"
+                ]
+              }
+            }
+          },
+          {
+            "name": "track_progress",
+            "arguments": {
+              "address": {
+                "$observed": [
+                  "state",
+                  "track"
+                ]
+              },
+              "progress": {
+                "$json": {
+                  "kind": {
+                    "$observed": [
+                      "completions",
+                      1,
+                      "kind"
+                    ]
+                  },
+                  "value": {
+                    "$observed": [
+                      "completions",
+                      1,
+                      "value"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "track_complete",
+            "arguments": {
+              "address": {
+                "$observed": [
+                  "state",
+                  "track"
+                ]
+              }
+            }
+          }
+        ],
+        "controlledSelectionsByRepresentation": {
+          "explicit": {
+            "ingress1": [
+              "promise {\"action\":\"create\",\"promise\":\"p1\"}",
+              "bind {\"name\":\"cell1\",\"value\":[\"str\",\"squared-distance\"]}",
+              "bind {\"name\":\"cell2\",\"value\":[\"num\",3]}",
+              "request {\"effect\":\"e1\",\"operation\":\"demo.readAsync\",\"arguments\":[[\"str\",\"squared-distance\"]],\"invocation\":\"ingress1\",\"site\":{\"start\":53,\"end\":72},\"payload\":\"[\\\"squared-distance\\\"]\",\"promise\":\"p2\"}",
+              "await {\"promise\":\"p2\",\"continuation\":\"continuation1\",\"invocation\":\"ingress1\",\"returnPromise\":\"p1\"}",
+              "resume {\"continuation\":\"continuation1\",\"invocation\":\"ingress1\",\"result\":[\"num\",8],\"status\":\"fulfilled\"}",
+              "bind {\"name\":\"cell3\",\"value\":[\"num\",8]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",8]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",8]}},\"result\":[\"num\",64],\"invocation\":\"ingress1\",\"site\":{\"start\":86,\"end\":89}}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",3]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",3]}},\"result\":[\"num\",9],\"invocation\":\"ingress1\",\"site\":{\"start\":90,\"end\":93}}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",64]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",9]}},\"result\":[\"num\",73],\"invocation\":\"ingress1\",\"site\":{\"start\":86,\"end\":93}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",73]}",
+              "request {\"effect\":\"e2\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"squared-distance\"],[\"num\",73]],\"invocation\":\"ingress1\",\"site\":{\"start\":94,\"end\":116},\"payload\":\"[\\\"squared-distance\\\",73]\"}",
+              "promise {\"action\":\"resolve\",\"promise\":\"p1\",\"value\":[\"num\",73]}",
+              "return {\"value\":[\"ref\",\"p1\"],\"invocation\":\"ingress1\"}",
+              "end {\"kind\":\"return\"}"
+            ],
+            "ingress2": [
+              "promise {\"action\":\"create\",\"promise\":\"p1\"}",
+              "bind {\"name\":\"cell1\",\"value\":[\"str\",\"squared-distance\"]}",
+              "bind {\"name\":\"cell2\",\"value\":[\"num\",2]}",
+              "request {\"effect\":\"e1\",\"operation\":\"demo.readAsync\",\"arguments\":[[\"str\",\"squared-distance\"]],\"invocation\":\"ingress2\",\"site\":{\"start\":53,\"end\":72},\"payload\":\"[\\\"squared-distance\\\"]\",\"promise\":\"p2\"}",
+              "await {\"promise\":\"p2\",\"continuation\":\"continuation1\",\"invocation\":\"ingress2\",\"returnPromise\":\"p1\"}",
+              "resume {\"continuation\":\"continuation1\",\"invocation\":\"ingress2\",\"result\":[\"num\",5],\"status\":\"fulfilled\"}",
+              "bind {\"name\":\"cell3\",\"value\":[\"num\",5]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",5]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",5]}},\"result\":[\"num\",25],\"invocation\":\"ingress2\",\"site\":{\"start\":86,\"end\":89}}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",2]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",2]}},\"result\":[\"num\",4],\"invocation\":\"ingress2\",\"site\":{\"start\":90,\"end\":93}}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",25]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",4]}},\"result\":[\"num\",29],\"invocation\":\"ingress2\",\"site\":{\"start\":86,\"end\":93}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",29]}",
+              "request {\"effect\":\"e2\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"squared-distance\"],[\"num\",29]],\"invocation\":\"ingress2\",\"site\":{\"start\":94,\"end\":116},\"payload\":\"[\\\"squared-distance\\\",29]\"}",
+              "promise {\"action\":\"resolve\",\"promise\":\"p1\",\"value\":[\"num\",29]}",
+              "return {\"value\":[\"ref\",\"p1\"],\"invocation\":\"ingress2\"}",
+              "end {\"kind\":\"return\"}"
+            ]
+          },
+          "compact": {
+            "ingress1": [
+              "promise {\"action\":\"create\",\"promise\":\"p1\"}",
+              "bind {\"name\":\"cell1\",\"value\":[\"str\",\"squared-distance\"]}",
+              "bind {\"name\":\"cell2\",\"value\":[\"num\",3]}",
+              "request {\"effect\":\"e1\",\"operation\":\"demo.readAsync\",\"arguments\":[[\"str\",\"squared-distance\"]],\"invocation\":\"ingress1\",\"site\":{\"start\":53,\"end\":72},\"payload\":\"[\\\"squared-distance\\\"]\",\"promise\":\"p2\"}",
+              "await {\"promise\":\"p2\",\"continuation\":\"continuation1\",\"invocation\":\"ingress1\",\"returnPromise\":\"p1\"}",
+              "resume {\"continuation\":\"continuation1\",\"invocation\":\"ingress1\",\"result\":[\"num\",8],\"status\":\"fulfilled\"}",
+              "bind {\"name\":\"cell3\",\"value\":[\"num\",8]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",8]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",8]}},\"right\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",3]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",3]}}},\"result\":[\"num\",73],\"invocation\":\"ingress1\",\"site\":{\"start\":86,\"end\":93}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",73]}",
+              "request {\"effect\":\"e2\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"squared-distance\"],[\"num\",73]],\"invocation\":\"ingress1\",\"site\":{\"start\":94,\"end\":116},\"payload\":\"[\\\"squared-distance\\\",73]\"}",
+              "promise {\"action\":\"resolve\",\"promise\":\"p1\",\"value\":[\"num\",73]}",
+              "return {\"value\":[\"ref\",\"p1\"],\"invocation\":\"ingress1\"}",
+              "end {\"kind\":\"return\"}"
+            ],
+            "ingress2": [
+              "promise {\"action\":\"create\",\"promise\":\"p1\"}",
+              "bind {\"name\":\"cell1\",\"value\":[\"str\",\"squared-distance\"]}",
+              "bind {\"name\":\"cell2\",\"value\":[\"num\",2]}",
+              "request {\"effect\":\"e1\",\"operation\":\"demo.readAsync\",\"arguments\":[[\"str\",\"squared-distance\"]],\"invocation\":\"ingress2\",\"site\":{\"start\":53,\"end\":72},\"payload\":\"[\\\"squared-distance\\\"]\",\"promise\":\"p2\"}",
+              "await {\"promise\":\"p2\",\"continuation\":\"continuation1\",\"invocation\":\"ingress2\",\"returnPromise\":\"p1\"}",
+              "resume {\"continuation\":\"continuation1\",\"invocation\":\"ingress2\",\"result\":[\"num\",5],\"status\":\"fulfilled\"}",
+              "bind {\"name\":\"cell3\",\"value\":[\"num\",5]}",
+              "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",5]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",5]}},\"right\":{\"op\":\"binary\",\"operator\":\"*\",\"left\":{\"op\":\"literal\",\"value\":[\"num\",2]},\"right\":{\"op\":\"literal\",\"value\":[\"num\",2]}}},\"result\":[\"num\",29],\"invocation\":\"ingress2\",\"site\":{\"start\":86,\"end\":93}}",
+              "bind {\"name\":\"cell4\",\"value\":[\"num\",29]}",
+              "request {\"effect\":\"e2\",\"operation\":\"demo.store\",\"arguments\":[[\"str\",\"squared-distance\"],[\"num\",29]],\"invocation\":\"ingress2\",\"site\":{\"start\":94,\"end\":116},\"payload\":\"[\\\"squared-distance\\\",29]\"}",
+              "promise {\"action\":\"resolve\",\"promise\":\"p1\",\"value\":[\"num\",29]}",
+              "return {\"value\":[\"ref\",\"p1\"],\"invocation\":\"ingress2\"}",
+              "end {\"kind\":\"return\"}"
+            ]
+          }
+        }
+      },
+      "expected": {
+        "completion": {
+          "kind": "orchestration",
+          "value": {
+            "children": [
+              {
+                "invocationId": "ingress1",
+                "kind": "return",
+                "value": [
+                  "num",
+                  73
+                ]
+              },
+              {
+                "invocationId": "ingress2",
+                "kind": "return",
+                "value": [
+                  "num",
+                  29
+                ]
+              }
+            ],
+            "progress": [
+              {
+                "kind": "return",
+                "value": [
+                  "num",
+                  73
+                ]
+              },
+              {
+                "kind": "return",
+                "value": [
+                  "num",
+                  29
+                ]
+              }
+            ]
+          }
+        },
+        "state": [
+          {
+            "roots": [
+              [
+                "str",
+                "squared-distance"
+              ],
+              [
+                "num",
+                3
+              ],
+              [
+                "num",
+                73
+              ]
+            ],
+            "objects": []
+          },
+          {
+            "roots": [
+              [
+                "str",
+                "squared-distance"
+              ],
+              [
+                "num",
+                2
+              ],
+              [
+                "num",
+                29
+              ]
+            ],
+            "objects": []
+          }
+        ],
+        "effects": [
+          {
+            "kind": "dispatch",
+            "call": 0,
+            "operation": "demo.readAsync",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 0,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  8
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 1,
+            "operation": "demo.store",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ],
+                [
+                  "num",
+                  73
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 1,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 2,
+            "operation": "demo.readAsync",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 2,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  5
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 3,
+            "operation": "demo.store",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "squared-distance"
+                ],
+                [
+                  "num",
+                  29
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 3,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          }
+        ],
+        "callbacks": [],
+        "cleanup": {
+          "pendingEffects": 0,
+          "pendingJobs": 0,
+          "openHandlers": 0,
+          "pendingTracks": 0
+        }
+      },
+      "referenceReceipt": {
+        "status": "agreed",
+        "requestDigest": "e1ecc937d380bc4f9cd27a07e18de1062f2ecdefac93f6be7ac019177f39f004",
+        "outcomeDigest": "3808d376b23984b9547d55725d7a8854a43dddd076821e3464bbb3edeff483e0"
+      }
+    }
+  ],
+  "thresholds": {
+    "wholeTaskSuccess": 0.9,
+    "traceValid": 1
+  },
+  "historicalBaseline": null,
+  "historicalBaselinePending": false,
+  "seeds": [
+    17,
+    29,
+    43
+  ],
+  "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+  "digest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4"
+}

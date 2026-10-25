@@ -1,0 +1,146 @@
+{
+  "schema": "semantic-evaluation-report/4",
+  "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+  "cohort": "common-support",
+  "evaluationSplits": [
+    "test"
+  ],
+  "historicalBaseline": {
+    "sourceRunbook": "https://github.com/werg/tracing-js-self/blob/e31ae33d3ce4a7258d64393c7982445d40c0b297/docs/SEMANTIC_V3_MODEL_EXPERIMENTS.md",
+    "conditions": [
+      "historical-v2",
+      "v3-fine",
+      "v3-fused",
+      "v3-expr-2",
+      "v3-expr-4",
+      "v3-expr-8",
+      "v3-collections",
+      "v3-outcome-only"
+    ],
+    "seeds": [
+      17,
+      29,
+      43
+    ]
+  },
+  "historicalBaselinePending": true,
+  "seed": 17,
+  "origin": "controlled",
+  "representation": "outcome-only",
+  "checkpointIdentity": null,
+  "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+  "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+  "thresholds": {
+    "wholeTaskSuccess": 0.9,
+    "traceValid": 1
+  },
+  "summary": {
+    "tasks": 2,
+    "wholeTaskSuccess": 1.0,
+    "traceValid": 1.0,
+    "correctTasks": 2,
+    "generatedTokens": 108,
+    "canonicalGeneratedTokens": 108,
+    "observedTokens": 1447,
+    "computeSeconds": 0.018178169000000004,
+    "hardGates": {
+      "futureObservationLeaks": 0,
+      "unauthorizedEffects": 0,
+      "untrackedNativeFallback": 0,
+      "falseAdmissions": 0,
+      "replayNativeEffects": 0
+    },
+    "failureCounts": {},
+    "generatedTokensPerCorrectTask": 54.0,
+    "computeSecondsPerCorrectTask": 0.009089084500000002
+  },
+  "cases": [
+    {
+      "caseId": "compound-pure-explicit",
+      "family": "compound-pure",
+      "wholeTaskSuccess": true,
+      "traceValid": true,
+      "firstSemanticInconsistency": null,
+      "matches": {
+        "completion": true,
+        "state": true,
+        "effects": true,
+        "callbacks": true,
+        "cleanup": true
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "generatedTokens": 59,
+      "canonicalGeneratedTokens": 59,
+      "generatedTokenBasis": "canonical-native-records",
+      "observedTokens": 775,
+      "physicalRecords": null,
+      "latencySeconds": 0.09424935699644266,
+      "costs": {
+        "computeSeconds": 0.009469523000000002,
+        "peakMemoryBytes": 336097280,
+        "dispatches": 0,
+        "queueDepth": 0,
+        "leakedResources": 0
+      },
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "nativeRuntimeMetrics": null,
+      "failure": null,
+      "failureEvidence": null,
+      "evidenceDigest": "035860a60320f698ce5670a0e336a65948e63c919fd47baae74189c64a2a5f77"
+    },
+    {
+      "caseId": "squared-distance-pure",
+      "family": "semantic-recipe:squared-distance",
+      "wholeTaskSuccess": true,
+      "traceValid": true,
+      "firstSemanticInconsistency": null,
+      "matches": {
+        "completion": true,
+        "state": true,
+        "effects": true,
+        "callbacks": true,
+        "cleanup": true
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "generatedTokens": 49,
+      "canonicalGeneratedTokens": 49,
+      "generatedTokenBasis": "canonical-native-records",
+      "observedTokens": 672,
+      "physicalRecords": null,
+      "latencySeconds": 0.08196232399859582,
+      "costs": {
+        "computeSeconds": 0.008708646000000002,
+        "peakMemoryBytes": 336097280,
+        "dispatches": 0,
+        "queueDepth": 0,
+        "leakedResources": 0
+      },
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "nativeRuntimeMetrics": null,
+      "failure": null,
+      "failureEvidence": null,
+      "evidenceDigest": "6f5885d67bc58821c81b68112f45f4fb4a411fa8919bc457ed9733f86ba34314"
+    }
+  ],
+  "learnedSuccess": null,
+  "acceptance": false,
+  "optimizerStepsDuringEvaluation": 0
+}

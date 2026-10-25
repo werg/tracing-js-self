@@ -1,0 +1,408 @@
+{
+  "optimizerSteps": 0,
+  "runs": [
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-explicit-fixed-examples-17.json",
+      "regime": "fixed-examples",
+      "representation": "explicit",
+      "seed": 17
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-explicit-fixed-examples-29.json",
+      "regime": "fixed-examples",
+      "representation": "explicit",
+      "seed": 29
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-explicit-fixed-examples-43.json",
+      "regime": "fixed-examples",
+      "representation": "explicit",
+      "seed": 43
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-explicit-fixed-tokens-17.json",
+      "regime": "fixed-tokens",
+      "representation": "explicit",
+      "seed": 17
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-explicit-fixed-tokens-29.json",
+      "regime": "fixed-tokens",
+      "representation": "explicit",
+      "seed": 29
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-explicit-fixed-tokens-43.json",
+      "regime": "fixed-tokens",
+      "representation": "explicit",
+      "seed": 43
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-explicit-measured-compute-17.json",
+      "regime": "measured-compute",
+      "representation": "explicit",
+      "seed": 17
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-explicit-measured-compute-29.json",
+      "regime": "measured-compute",
+      "representation": "explicit",
+      "seed": 29
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-explicit-measured-compute-43.json",
+      "regime": "measured-compute",
+      "representation": "explicit",
+      "seed": 43
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-compact-fixed-examples-17.json",
+      "regime": "fixed-examples",
+      "representation": "compact",
+      "seed": 17
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-compact-fixed-examples-29.json",
+      "regime": "fixed-examples",
+      "representation": "compact",
+      "seed": 29
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-compact-fixed-examples-43.json",
+      "regime": "fixed-examples",
+      "representation": "compact",
+      "seed": 43
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-compact-fixed-tokens-17.json",
+      "regime": "fixed-tokens",
+      "representation": "compact",
+      "seed": 17
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-compact-fixed-tokens-29.json",
+      "regime": "fixed-tokens",
+      "representation": "compact",
+      "seed": 29
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-compact-fixed-tokens-43.json",
+      "regime": "fixed-tokens",
+      "representation": "compact",
+      "seed": 43
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-compact-measured-compute-17.json",
+      "regime": "measured-compute",
+      "representation": "compact",
+      "seed": 17
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-compact-measured-compute-29.json",
+      "regime": "measured-compute",
+      "representation": "compact",
+      "seed": 29
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-compact-measured-compute-43.json",
+      "regime": "measured-compute",
+      "representation": "compact",
+      "seed": 43
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-outcome-only-fixed-examples-17.json",
+      "regime": "fixed-examples",
+      "representation": "outcome-only",
+      "seed": 17
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-outcome-only-fixed-examples-29.json",
+      "regime": "fixed-examples",
+      "representation": "outcome-only",
+      "seed": 29
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-outcome-only-fixed-examples-43.json",
+      "regime": "fixed-examples",
+      "representation": "outcome-only",
+      "seed": 43
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-outcome-only-fixed-tokens-17.json",
+      "regime": "fixed-tokens",
+      "representation": "outcome-only",
+      "seed": 17
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-outcome-only-fixed-tokens-29.json",
+      "regime": "fixed-tokens",
+      "representation": "outcome-only",
+      "seed": 29
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-outcome-only-fixed-tokens-43.json",
+      "regime": "fixed-tokens",
+      "representation": "outcome-only",
+      "seed": 43
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-outcome-only-measured-compute-17.json",
+      "regime": "measured-compute",
+      "representation": "outcome-only",
+      "seed": 17
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-outcome-only-measured-compute-29.json",
+      "regime": "measured-compute",
+      "representation": "outcome-only",
+      "seed": 29
+    },
+    {
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "path": "../final-training-matrix-b2/common-support-outcome-only-measured-compute-43.json",
+      "regime": "measured-compute",
+      "representation": "outcome-only",
+      "seed": 43
+    },
+    {
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "path": "../final-training-matrix-b2/effectful-tracks-events-explicit-fixed-examples-17.json",
+      "regime": "fixed-examples",
+      "representation": "explicit",
+      "seed": 17
+    },
+    {
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "path": "../final-training-matrix-b2/effectful-tracks-events-explicit-fixed-examples-29.json",
+      "regime": "fixed-examples",
+      "representation": "explicit",
+      "seed": 29
+    },
+    {
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "path": "../final-training-matrix-b2/effectful-tracks-events-explicit-fixed-examples-43.json",
+      "regime": "fixed-examples",
+      "representation": "explicit",
+      "seed": 43
+    },
+    {
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "path": "../final-training-matrix-b2/effectful-tracks-events-explicit-fixed-tokens-17.json",
+      "regime": "fixed-tokens",
+      "representation": "explicit",
+      "seed": 17
+    },
+    {
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "path": "../final-training-matrix-b2/effectful-tracks-events-explicit-fixed-tokens-29.json",
+      "regime": "fixed-tokens",
+      "representation": "explicit",
+      "seed": 29
+    },
+    {
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "path": "../final-training-matrix-b2/effectful-tracks-events-explicit-fixed-tokens-43.json",
+      "regime": "fixed-tokens",
+      "representation": "explicit",
+      "seed": 43
+    },
+    {
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "path": "../final-training-matrix-b2/effectful-tracks-events-explicit-measured-compute-17.json",
+      "regime": "measured-compute",
+      "representation": "explicit",
+      "seed": 17
+    },
+    {
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "path": "../final-training-matrix-b2/effectful-tracks-events-explicit-measured-compute-29.json",
+      "regime": "measured-compute",
+      "representation": "explicit",
+      "seed": 29
+    },
+    {
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "path": "../final-training-matrix-b2/effectful-tracks-events-explicit-measured-compute-43.json",
+      "regime": "measured-compute",
+      "representation": "explicit",
+      "seed": 43
+    },
+    {
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "path": "../final-training-matrix-b2/effectful-tracks-events-compact-fixed-examples-17.json",
+      "regime": "fixed-examples",
+      "representation": "compact",
+      "seed": 17
+    },
+    {
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "path": "../final-training-matrix-b2/effectful-tracks-events-compact-fixed-examples-29.json",
+      "regime": "fixed-examples",
+      "representation": "compact",
+      "seed": 29
+    },
+    {
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "path": "../final-training-matrix-b2/effectful-tracks-events-compact-fixed-examples-43.json",
+      "regime": "fixed-examples",
+      "representation": "compact",
+      "seed": 43
+    },
+    {
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "path": "../final-training-matrix-b2/effectful-tracks-events-compact-fixed-tokens-17.json",
+      "regime": "fixed-tokens",
+      "representation": "compact",
+      "seed": 17
+    },
+    {
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "path": "../final-training-matrix-b2/effectful-tracks-events-compact-fixed-tokens-29.json",
+      "regime": "fixed-tokens",
+      "representation": "compact",
+      "seed": 29
+    },
+    {
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "path": "../final-training-matrix-b2/effectful-tracks-events-compact-fixed-tokens-43.json",
+      "regime": "fixed-tokens",
+      "representation": "compact",
+      "seed": 43
+    },
+    {
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "path": "../final-training-matrix-b2/effectful-tracks-events-compact-measured-compute-17.json",
+      "regime": "measured-compute",
+      "representation": "compact",
+      "seed": 17
+    },
+    {
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "path": "../final-training-matrix-b2/effectful-tracks-events-compact-measured-compute-29.json",
+      "regime": "measured-compute",
+      "representation": "compact",
+      "seed": 29
+    },
+    {
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "path": "../final-training-matrix-b2/effectful-tracks-events-compact-measured-compute-43.json",
+      "regime": "measured-compute",
+      "representation": "compact",
+      "seed": 43
+    }
+  ],
+  "schema": "semantic-training-matrix/4",
+  "stageSupply": [
+    {
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "corpusIdentity": "ed0c3c37b8e1b7552f533b090266418294bb0dcdf0ab2006b2f22280bf7d59e3",
+      "episodes": {
+        "train": 13,
+        "validation": 2
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "optimizerSteps": 0,
+      "phase": "SC",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "representation": "explicit",
+      "schema": "semantic-stage-supply/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    {
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "corpusIdentity": "0e8a4bf0090e41c76f7e3b083cb08a5fc96569b353f64d465ef9b1dab3f2e0bd",
+      "episodes": {
+        "train": 13,
+        "validation": 2
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "optimizerSteps": 0,
+      "phase": "SC",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "representation": "compact",
+      "schema": "semantic-stage-supply/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    {
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "corpusIdentity": "b96742ff013838a9e2b92ce1e507371839ecb6738c3976f110e9ae7d9e49c7e9",
+      "episodes": {
+        "train": 13,
+        "validation": 2
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "optimizerSteps": 0,
+      "phase": "SO",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "representation": "outcome-only",
+      "schema": "semantic-stage-supply/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    {
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "corpusIdentity": "355fcd8139a818a366d1cab579d0d3594ed849213e9a4de6d722c60b6c89e79c",
+      "episodes": {
+        "train": 27,
+        "validation": 5
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "optimizerSteps": 0,
+      "phase": "SE",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "representation": "explicit",
+      "schema": "semantic-stage-supply/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    {
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "corpusIdentity": "db42bc350027c3d2627a7e36919ec727d9490ad1298e9b74ebaef24cb822e81d",
+      "episodes": {
+        "train": 27,
+        "validation": 5
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "optimizerSteps": 0,
+      "phase": "SE",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "representation": "compact",
+      "schema": "semantic-stage-supply/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    }
+  ]
+}

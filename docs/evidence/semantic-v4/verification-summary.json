@@ -1,0 +1,93 @@
+{
+  "schema": "semantic-engineering-verification/4",
+  "repositories": {
+    "tracing-js-self": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+    "megatoken": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+    "natlang": "ffdcf5a0d3d871bf600626627fa44dbf324039e3"
+  },
+  "scope": "Nonoptimizing cross-repository semantic engineering gates; general CI training regressions are separate.",
+  "tracer": {
+    "passed": 811,
+    "skipped": 0,
+    "command": "npm test",
+    "referenceFixturePassed": true,
+    "browserPassed": 1,
+    "browserCommand": "npm run test:browser"
+  },
+  "nativeCoordinator": {
+    "passed": 14,
+    "skipped": 0,
+    "actualNativeCases": 6,
+    "independentAccepted": 6,
+    "completeCases": 3,
+    "expectedRefusals": 3,
+    "command": "node --test test/training-orchestration-evaluation.test.js"
+  },
+  "megatoken": {
+    "corePassed": 146,
+    "coreCudaOnlySkipped": 2,
+    "forwardOnlyPassed": 1,
+    "integrationRepairPassed": 37,
+    "integrationRepairCudaOnlySkipped": 1,
+    "countsOverlap": true,
+    "details": [
+      "megatoken-core-tests.json",
+      "megatoken-integration-tests.json"
+    ]
+  },
+  "natlang": {
+    "runtimePassed": 208,
+    "runtimeSkipped": 0,
+    "supportingPythonPassed": 12,
+    "sourceReviewPassed": true,
+    "typecheckPassed": true,
+    "nodeBuildPassed": true,
+    "browserTypesPassed": true,
+    "layeringPassed": true
+  },
+  "sourceAdmission": {
+    "attempted": 152,
+    "admitted": 152,
+    "refused": 0
+  },
+  "dataPreparation": {
+    "sourceViews": 112,
+    "nativeLifecycleRoots": 4,
+    "stageSupplies": 5
+  },
+  "configurationValidation": {
+    "variants": 45,
+    "incompleteEngineeringRefusals": 45,
+    "externalAssetsAdmitted": false
+  },
+  "stateContinuity": {
+    "checks": 4,
+    "representations": [
+      "explicit",
+      "compact"
+    ],
+    "histories": [
+      1024,
+      128
+    ]
+  },
+  "evaluation": {
+    "comparisonForms": 5,
+    "tasks": 18,
+    "correct": 18,
+    "traceValid": 18,
+    "hardGateViolations": 0,
+    "leakedResources": 0,
+    "origin": "controlled"
+  },
+  "inference": {
+    "origin": "initialized-fixed-weights",
+    "weightsUnchanged": true,
+    "invalidOriginalSelectionPreserved": true,
+    "nativeEffects": 0,
+    "checkpointIdentity": "c7d9040ec72553cf84d1030bd8481b0f03dcfaeb989b2e347239aee135aa0943"
+  },
+  "logIdentities": "verification-log-identities.json",
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}

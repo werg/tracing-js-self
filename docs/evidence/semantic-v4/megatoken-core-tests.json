@@ -1,0 +1,54 @@
+{
+  "schema": "semantic-core-test-summary/4",
+  "localCodeRevision": "2c89760e40a0dcffe07063766e5dd6092c7b5b85",
+  "publishedCodeRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+  "scope": "Executed focused nonoptimizing tests; not a learned-quality report",
+  "pytest": {
+    "passed": 146,
+    "skipped": 2,
+    "seconds": 43.82,
+    "skipReasons": [
+      "Pinned device snapshot needs CUDA",
+      "CUDA context regression requires an accelerator"
+    ],
+    "command": ".venv/bin/python -m pytest -q tests/test_semantic_data_pipeline.py tests/test_semantic_model_adapter.py tests/test_semantic_runtime_integration.py tests/test_semantic_orchestration.py tests/test_semantic_harness_v4.py tests/test_semantic_contract_v4.py tests/test_semantic_host_contract.py tests/test_selected_semantic_bridge_v4.py tests/test_semantic_harness_lifecycle_v4.py tests/test_semantic_execution.py tests/test_training_stream.py tests/test_checkpoint_async.py tests/test_checkpoint_replace.py tests/test_track_context.py tests/test_context_preparation.py",
+    "testedCodeRevision": "d8f692ec44deba7f7e6a40abf8728104cb3e09f2"
+  },
+  "staticChecks": {
+    "ruffCheck": true,
+    "ruffFormatFiles": 443,
+    "gitDiffCheck": true
+  },
+  "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+  "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+  "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "actualNativeOrchestrationReceipt": "/workspace/scratch/6825113a40ea/orchestration-b2-final-validation.json",
+  "developmentStateContinuityReceipt": "/workspace/scratch/6825113a40ea/megatoken/.validation/state-continuity-admission.json",
+  "forwardOnlyRegression": {
+    "passed": 1,
+    "deselected": 6,
+    "seconds": 1.57,
+    "command": ".venv/bin/python -m pytest -q tests/test_meridian_training.py -k semantic_execution_continues_from_teacher_recorded_semantics",
+    "testedCodeRevision": "d8f692ec44deba7f7e6a40abf8728104cb3e09f2"
+  },
+  "ciRepairRegression": {
+    "passed": 37,
+    "skipped": 1,
+    "seconds": 17.07,
+    "skipReason": "Pinned device snapshot requires CUDA",
+    "command": ".venv/bin/python -m pytest -q tests/test_semantic_training_state.py tests/test_checkpoint_async.py tests/test_checkpoint_replace.py tests/test_engram_prepare.py tests/test_open_media.py::test_every_stream_this_module_emits_is_in_the_stage_plan tests/test_open_media.py::test_registered_producers_belong_to_their_declared_stages tests/test_probe_rehearsal.py::test_launch_readiness_catches_the_known_configuration_gaps tests/test_probe_rehearsal.py::test_readiness_only_command_writes_a_report tests/test_semantic_data_pipeline.py",
+    "testedCodeRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e"
+  },
+  "testCountsOverlap": true,
+  "testCountPolicy": "The original 146-case result and 37-case repair result are separate overlapping runs; do not add them into a combined count.",
+  "coreStaticChecks": {
+    "ruffCheck": "passed",
+    "ruffFormatFiles": 442,
+    "gitDiffCheck": "passed"
+  },
+  "priorNativeEvidenceRevision": "d8f692ec44deba7f7e6a40abf8728104cb3e09f2",
+  "priorActualNativeOrchestrationReceipt": "/workspace/scratch/6825113a40ea/orchestration-final-validation.json",
+  "finalStateContinuityReceipt": "/workspace/scratch/6825113a40ea/final-state-continuity-b2-validation.json"
+}

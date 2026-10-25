@@ -1,0 +1,43 @@
+{
+  "schema": "semantic-integration-lock/4",
+  "repositories": {
+    "tracing-js-self": {
+      "codeRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "tree": "2a5dbca75971c8390f843f30fc38b37a5afbcb2c",
+      "pullRequest": "https://github.com/werg/tracing-js-self/pull/32"
+    },
+    "megatoken": {
+      "codeRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "tree": "14001470251d3307ffbd469bfd11606505bfa270",
+      "pullRequest": "https://github.com/werg/megatoken/pull/27"
+    },
+    "natlang": {
+      "codeRevision": "ffdcf5a0d3d871bf600626627fa44dbf324039e3",
+      "tree": "1d370f7f38629a47d05623433511690c7866834f",
+      "tracerDependency": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "pullRequest": "https://github.com/werg/natlang/pull/1"
+    }
+  },
+  "contracts": {
+    "execution": "semantic-execution/4",
+    "trace": "semantic-trace/4",
+    "context": "semantic-context/4",
+    "continuation": "semantic-continuation/4",
+    "profile": "selected-harness/2"
+  },
+  "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+  "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+  "contractFileSha256": "705ffa3a75b72e0c878d11b409074c5f8c2bcd3c3c589d369959b0ff402aad26",
+  "hostCatalogSha256": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+  "tokenizer": {
+    "repository": "inclusionAI/Ling-3.0-tiny",
+    "revision": "9a98e35fe1c9ee255f78dd64771c7ae15a799481",
+    "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "trainingCheckpointFormat": 18,
+  "evidence": "../docs/SEMANTIC_HARNESS_V4_COMPLETION.md",
+  "pinPolicy": "These are tested implementation and source/native collection revisions. Later documentation or workflow-only commits retain these code pins; old artifacts are not relabeled.",
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}

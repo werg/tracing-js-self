@@ -1,6 +1,9 @@
 # Semantic execution harness: code, invocations, tools, and dynamic tracks
 
-**Status:** implementation roadmap; proposed contracts below are not claims of working or trained functionality.
+**Status:** M0–M8 engineering implementation complete at the compatible revisions
+in the [completion ledger](SEMANTIC_HARNESS_V4_COMPLETION.md). The ledger records
+executed checks, evidence and supported-profile limits. M9 training and learned
+acceptance remain unrun; engineering completion makes no learned-quality claim.
 
 **Reviewed:** 2026-10-25.
 
@@ -46,7 +49,9 @@ If a real access or infrastructure blocker prevents a component, record the exac
 
 ## 1. Reviewed baseline
 
-These are findings from source inspection, not new test-run receipts. Recheck the pins before implementing a cross-repository change.
+These are the historical findings that motivated this roadmap, not the current
+implementation status or new test-run receipts. The completion ledger records the
+implemented resolutions and exact tested revisions.
 
 | Repository / inspected commit | Implemented foundation | Gap this roadmap must close |
 | --- | --- | --- |
@@ -478,19 +483,23 @@ Zero future-observation leakage, unauthorized/hidden native effects, untracked n
 
 Evaluate these implementation checks with the production interfaces, controlled selected trajectories, independent reference fixtures, and non-optimizing inference-boundary tests described in section 7. They do not depend on a trained model achieving task success.
 
-- [ ] A reader can follow code, invocation, semantic work, tool calls/results, events, and parent/child relationships in one deterministic trace view.
-- [ ] Code and initialization are separate from repeated invocations; retained state and source availability are explicit.
-- [ ] Tracer and Megatoken share one versioned contract with dynamic track bindings and independently checked fixtures.
-- [ ] The production selected-request interface reaches the real broker; results enter as observed input and resume owned execution without teacher repair.
-- [ ] Selected lifecycle tools create execution tracks with code before invocation and correctly correlated child completion.
-- [ ] Outside invocations and subscription events start/wake the right execution without fabricated tool-call history.
-- [ ] Sync calls, Promise-returning calls, persistent listeners and streams preserve their declared semantics and scheduling.
-- [ ] Shared realms, callbacks, checkpoints, retries, cancellation and resource lifetime preserve identity and causality.
-- [ ] Effectful teacher episodes pass independent reference, replay, witness, native-consumer, loss-mask and visibility gates.
-- [ ] Natlang's async entry/module integration and fresh/retained application behavior pass on the selected-model path.
-- [ ] All required training-data, loss/visibility, training-configuration, checkpoint/restart, inference, evaluation, and reporting implementations are complete and tested without a training prerequisite.
-- [ ] Every required capability family and cross-repository implementation milestone M0–M8 is complete, with no in-scope code deferred until after training.
-- [ ] Superseded active routes are removed; pinned integration, migration and recovery receipts are documented.
+All checks below passed for the declared profile. See the
+[milestone and verification evidence](SEMANTIC_HARNESS_V4_COMPLETION.md) and the
+[machine-readable engineering gate](../contracts/semantic-engineering-completion.json).
+
+- [x] A reader can follow code, invocation, semantic work, tool calls/results, events, and parent/child relationships in one deterministic trace view.
+- [x] Code and initialization are separate from repeated invocations; retained state and source availability are explicit.
+- [x] Tracer and Megatoken share one versioned contract with dynamic track bindings and independently checked fixtures.
+- [x] The production selected-request interface reaches the real broker; results enter as observed input and resume owned execution without teacher repair.
+- [x] Selected lifecycle tools create execution tracks with code before invocation and correctly correlated child completion.
+- [x] Outside invocations and subscription events start/wake the right execution without fabricated tool-call history.
+- [x] Sync calls, Promise-returning calls, persistent listeners and streams preserve their declared semantics and scheduling.
+- [x] Shared realms, callbacks, checkpoints, retries, cancellation and resource lifetime preserve identity and causality.
+- [x] Effectful teacher episodes pass independent reference, replay, witness, native-consumer, loss-mask and visibility gates.
+- [x] Natlang's async entry/module integration and fresh/retained application behavior pass on the selected-model path.
+- [x] All required training-data, loss/visibility, training-configuration, checkpoint/restart, inference, evaluation, and reporting implementations are complete and tested without a training prerequisite.
+- [x] Every required capability family and cross-repository implementation milestone M0–M8 is complete, with no in-scope code deferred until after training.
+- [x] Superseded active routes are removed; pinned integration, migration and recovery receipts are documented.
 
 ### Post-implementation empirical acceptance — M9
 

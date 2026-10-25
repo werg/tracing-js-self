@@ -173,6 +173,9 @@ embedded Node.js ESM API. The opt-in `tracing-js-self/natlang-selected` adapter
 supports asynchronous fresh and retained Natlang evaluation, including module
 loading and registered native resources. The [implementation guide](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md)
 describes the supported profile, independent checks, and paired repository pins.
+The [engineering completion ledger](docs/SEMANTIC_HARNESS_V4_COMPLETION.md)
+records all M0–M8 results, admitted source/native data, controlled evaluation and
+the separate inputs still needed for later training.
 
 For programmatic fixture verification and training export, use the separate
 `tracing-js-self/training` entry point:
@@ -300,5 +303,7 @@ still applies to the broader complete-JavaScript target, and this package does
 not claim arbitrary JavaScript compatibility, a hostile-code sandbox or learned
 execution quality. The [v4 implementation guide](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md)
 records the current supported profile and evidence.
+The [completion receipt](contracts/semantic-engineering-completion.json) pins the
+three compatible implementations; it does not certify learned model quality.
 
 
