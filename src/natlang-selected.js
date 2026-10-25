@@ -98,11 +98,13 @@ export function createNatlangSelectedEnvironment({mode='fresh',select,services={
       check();
       demand(request&&typeof request.code==='string'&&typeof request.path==='string',
         'Natlang selected entry needs exact code and source path');
-      const translated=transpile(request.code,{path:request.path,body:request.body});
+      const translated=transpile(request.body?request.code:
+        '('+request.code+')',{path:request.path,body:request.body});
       demand(typeof translated==='string','Selected source compiler returned nontext');
+      const expression=translated.trim().replace(/;\s*$/,'');
       const code=request.body?
         'function run(self){\n'+translated+'\n}':
-        'function run(self){return ('+translated+');}';
+        'function run(self){return ('+expression+');}';
       const response=await run({code,entry:'run',args:[request.scope],
         path:request.path});
       return {result:response.value,
