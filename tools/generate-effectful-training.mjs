@@ -22,9 +22,12 @@ const recipe=flags.get('--recipe')??'engineering';
 if(!['engineering',SEMANTIC_RECIPE_NAME].includes(recipe))throw new Error('Unknown source recipe');
 const jobs=Number(flags.get('--jobs')??1);
 if(!Number.isSafeInteger(jobs)||jobs<1||jobs>8)throw new Error('--jobs must be between 1 and 8');
-const representation=flags.get('--representation')??'compact';
-if(representation!==null&&!['explicit','compact'].includes(representation))
-  throw new Error('--representation must be explicit or compact');
+const requestedRepresentation=flags.get('--representation')??'compact';
+// Only explicit corpus comparisons and paired native admission collect both
+// arms. Ordinary generation has one canonical compact reasoning target.
+const representation=requestedRepresentation==='comparison'?null:requestedRepresentation;
+if(!['explicit','compact','comparison'].includes(requestedRepresentation))
+  throw new Error('--representation must be compact, explicit or comparison');
 const fixtures=representation?EFFECTFUL_ENGINEERING_FIXTURES
   .filter(fixture=>!fixture.projectionOptions?.representation||fixture.projectionOptions.representation===representation)
   .map(fixture=>({...fixture,projectionOptions:{...fixture.projectionOptions,representation}})):
