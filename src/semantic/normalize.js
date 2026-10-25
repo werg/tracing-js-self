@@ -13,7 +13,8 @@ const selection={
   'property.read':'read','property.write':'write','property.update':'write',
   'call.enter':'call','call.return':'return','completion.throw':'throw',
   'control.branch':'branch','environment.iteration':'carry','async.await':'await',
-  'external.input.deliver':'observe','job.enter':'resume'
+  'external.input.deliver':'observe','external.callback.enqueue':'callback',
+  'job.enter':'resume'
 };
 function allocation(p) {
   const obj=p.after;

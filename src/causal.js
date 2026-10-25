@@ -53,6 +53,10 @@ export function causalPrefix(bundle,{throughEventId=null}={}) {
         arguments:p.after.args.map(opaque),
         producers:p.after.argOrigins.map(origin=>origin?events[origin]??null:null)}));
     }
+    if(e.operation==='external.callback.enqueue'){
+      const fx=e.causes.find(x=>x.kind==='effect');
+      row.externalCallback=fx?local(effects,fx.effectId,'fx'):null;
+    }
     if(e.operation==='external.input.deliver') {
       const input=e.causes.find(x=>x.kind==='input');
       const effected=e.causes.find(x=>x.kind==='effect');

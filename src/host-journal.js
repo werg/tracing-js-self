@@ -2,6 +2,7 @@
 // Does not import or invoke the runtime, replay guest code, or claim native/spec correctness.
 import { isDeepStrictEqual } from 'node:util';
 import {validatePreparedRequest} from './host/validate-request.js';
+import {hostOperation} from './host/operations.js';
 
 // External payloads are scalar tuples: reconstructing arbitrary host objects is
 // not supported. Check the wire format independently of Runtime.guestValue.
@@ -23,6 +24,7 @@ function canonicalScalar(value) {
 export function validateHostJournal(bundle, fail) {
   const dispatched = new Set();
   const created = new Set();
+  const createdEffects = new Map();
   const arrived = new Map(); // input ID -> effect ID
   const inputForEffect = new Map(); // bounded profile: one input per effect
   const delivered = new Set();
@@ -87,7 +89,7 @@ export function validateHostJournal(bundle, fail) {
           event.eventId);
       try {validatePreparedRequest(heap,p.after);}
       catch(error) {fail(error.message,event.eventId);}
-      created.add(p.id);
+      created.add(p.id);createdEffects.set(p.id,p.after);
       continue;
     }
 
@@ -99,6 +101,26 @@ export function validateHostJournal(bundle, fail) {
           !changedOnly(p.before, p.after, { dispatch: 'dispatched' }))
         fail('Invalid dispatch transition', event.eventId);
       dispatched.add(id);
+      continue;
+    }
+
+    if (event.operation === 'external.callback.enqueue') {
+      const effectId=cause(event,'effect','effectId');
+      const createdEffect=createdEffects.get(effectId);
+      const patches=event.stateChanges;
+      const control=patches.find(p=>p.table==='control'&&p.id==='a0');
+      const queued=control?.after?.queue?.at(-1);
+      if(!dispatched.has(effectId)||!createdEffect||
+         patches.length!==1||!control||
+         queued?.kind!=='external-callback'||
+         queued.effectId!==effectId||
+         !hostOperation(createdEffect.operation).callbackIndices?.some(i=>
+           createdEffect.args[i]?.[0]==='ref'&&
+           createdEffect.args[i][1]===queued.functionId)||
+         !isDeepStrictEqual(queued.args,event.operands)||
+         !isDeepStrictEqual(control.after.queue.slice(0,-1),control.before?.queue)||
+         control.after.version!==control.before.version+1)
+        fail('Invalid owned external callback registration',event.eventId);
       continue;
     }
 

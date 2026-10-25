@@ -7,7 +7,8 @@ export const JSON_CODEC='canonical-json/1';
 const arrayIndex=key=>/^(0|[1-9]\d*)$/.test(key) && Number(key)<4294967295;
 const literal=s=>JSON.stringify(s);
 
-export function materializeJson(heap, args, {maxNodes=1024,maxDepth=64,maxBytes=65536}={}) {
+export function materializeJson(heap, args,
+    {maxNodes=1024,maxDepth=64,maxBytes=65536,callbackIndices=[]}={}) {
   if(!heap || typeof heap!=='object' || !Array.isArray(args))
     throw new TypeError('Expected a guest heap and argument token list');
   const seen=new Set(),versions=[],stack=new Set();
@@ -78,7 +79,13 @@ export function materializeJson(heap, args, {maxNodes=1024,maxDepth=64,maxBytes=
         throw new TypeError('External JSON codec cannot materialize '+String(kind));
     }
   }
-  const payload='['+args.map(value=>serialize(value,0)).join(',')+']';
+  const payload='['+args.map((value,index)=>{
+    if(!callbackIndices.includes(index))return serialize(value,0);
+    const id=value?.[0]==='ref'&&value.length===2?value[1]:null;
+    if(typeof id!=='string'||heap[id]?.kind!=='function'||heap[id].async)
+      throw new TypeError('Callback argument requires a synchronous owned guest function');
+    return '{"$ownedCallback":'+literal(id)+'}';
+  }).join(',')+']';
   const byteLength=Buffer.byteLength(payload,'utf8');
   if(byteLength>maxBytes)throw new RangeError('External JSON payload limit');
   // Strings are immutable. Return versions as a separate frozen snapshot;

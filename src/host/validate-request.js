@@ -78,7 +78,13 @@ export function validatePreparedRequest(heap,effect) {
       default:throw new TypeError('Host request integrity: unresolved internal guest value');
     }
   }
-  const expected='['+effect.args.map(v=>encode(v,0)).join(',')+']';
+  const expected='['+effect.args.map((v,index)=>{
+    if(!spec.callbackIndices?.includes(index))return encode(v,0);
+    const id=v?.[0]==='ref'&&v.length===2?v[1]:null;
+    checked(typeof id==='string'&&heap[id]?.kind==='function'&&!heap[id].async,
+      'callback must be an owned synchronous guest function');
+    return '{"$ownedCallback":'+JSON.stringify(id)+'}';
+  }).join(',')+']';
   checked(expected===request.payload,'materialized bytes differ from committed argument graph');
   checked(isDeepStrictEqual(versions,request.graphVersions),
     'graph provenance or property versions do not match');

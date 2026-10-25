@@ -2216,6 +2216,32 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
       this.deliverInput(input.inputId);
     } else if(outcome && outcome.kind!=='pending')throw new TypeError('Invalid adapter outcome');
   }
+  /**
+   * An external callback is a delivered environment event. It queues the
+   * original owned closure, never executing guest source in the native realm.
+   * Current callback arguments must be primitive values; native objects and
+   * DOM Event handles require a separately declared host data codec.
+   */
+  recordExternalCallback({effectId,callbackId,args=[]}={}){
+    const effect=this.state.effects[effectId];
+    if(!effect||effect.dispatch!=='dispatched'||effect.external!=='pending')
+      throw new Error('Callback requires an outstanding dispatched effect');
+    const spec=hostOperation(effect.operation);
+    if(!spec.callbackIndices?.some(i=>effect.args[i]?.[0]==='ref'&&
+      effect.args[i][1]===callbackId))
+      throw new TypeError('Callback handle was not passed by this guest invocation');
+    const fn=this.state.heap[callbackId];
+    if(fn?.kind!=='function'||fn.async||!Array.isArray(args)||args.length>32)
+      throw new TypeError('Unowned or unsupported external callback');
+    const values=args.map(value=>guestValue(value)?copy(value):encode(value));
+    if(values.some(v=>v[0]==='ref'||v[0]==='promise'))
+      throw new TypeError('External callback needs primitive serializable arguments');
+    this.commit('external.callback.enqueue',s=>{
+      s.control.a0.queue.push({kind:'external-callback',effectId,
+        functionId:callbackId,args:values});
+      return {operands:values,causes:[{kind:'effect',effectId}]};
+    });
+  }
   recordInputArrival({effectId,kind,value,abrupt=false,inputId=null}={}) {
     const e=this.state.effects[effectId];if(!e||e.dispatch!=='dispatched')throw new Error('Input requires a dispatched effect');
     if(kind!==(e.kind==='promise'?'completion':'immediate'))throw new Error('Wrong input kind for host call');
@@ -2277,7 +2303,21 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
          return {causes:[{kind:'promise',promiseId:p.id},{kind:'invocation',frameId:id}],
            result:['promise',p.id]};
        }
-       if(job.kind==='microtask'){
+       if(job.kind==='external-callback'){
+        const effect=s.effects[job.effectId],fn=s.heap[job.functionId];
+        if(!effect||effect.dispatch!=='dispatched'||fn?.kind!=='function'||
+           fn.async||!Array.isArray(job.args)||
+           !hostOperation(effect.operation).callbackIndices?.some(i=>
+             effect.args[i]?.[0]==='ref'&&effect.args[i][1]===job.functionId))
+          throw new Error('External callback has no owned registered function');
+        const id=this.newFrame(s,fn.codeId,fn.closureEnvId,null,null,
+          job.args.map(v=>token(v,eventId)),fn.arrow?fn.lexicalThis:U);
+        s.frames[id].reactionJob=true;
+        s.control.a0.activeFrameId=id;
+        return {causes:[{kind:'effect',effectId:job.effectId},
+          {kind:'invocation',frameId:id}],result:U};
+      }
+      if(job.kind==='microtask'){
          const callback=s.heap[job.functionId];
         if(callback?.kind!=='function')
           throw new Error('Queued microtask lacks owned function identity');

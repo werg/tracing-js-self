@@ -9,6 +9,10 @@ export const HOST_OPERATIONS=Object.freeze({
   'platform.console.warn':Object.freeze({kind:'synchronous',signature:'platform.console.warn/1',arity:1,key:0,codec:JSON_CODEC}),
   'platform.console.error':Object.freeze({kind:'synchronous',signature:'platform.console.error/1',arity:1,key:0,codec:JSON_CODEC}),
   'demo.readAsync':Object.freeze({kind:'promise',signature:'demo.readAsync/1',arity:1,key:0,codec:JSON_CODEC}),
+  // Callback slots are explicit operation capabilities, never encoded as
+  // plain object data or executed in the native host's JS realm.
+  'demo.withCallback':Object.freeze({kind:'promise',signature:'demo.withCallback/1',
+    arity:2,key:0,callbackIndices:Object.freeze([1]),codec:JSON_CODEC}),
   'demo.readNumber':Object.freeze({kind:'synchronous',signature:'demo.readNumber/1',arity:1,key:0,codec:JSON_CODEC}),
   'demo.store':Object.freeze({kind:'synchronous',signature:'demo.store/1',arity:2,key:0,codec:JSON_CODEC})
 });
@@ -26,7 +30,7 @@ export function prepareHostRequest(heap,operation,args,limits={}) {
   if(spec.key!==null&&(!Array.isArray(args[spec.key])||
      args[spec.key][0]!=='str'||typeof args[spec.key][1]!=='string'))
     throw new TypeError(`${operation} expects a string operation key`);
-  const data=materializeJson(heap,args,limits);
+  const data=materializeJson(heap,args,{...limits,callbackIndices:spec.callbackIndices??[]});
   if(data.codec!==spec.codec)throw new Error('Unregistered host codec');
   return Object.freeze({schema:'host-request/1',operation,signature:spec.signature,
     codec:spec.codec,payload:data.payload,byteLength:data.byteLength,

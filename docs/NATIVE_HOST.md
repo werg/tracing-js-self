@@ -41,7 +41,8 @@ bounded graph codec and strict TypeScript/ES2022 grammar. Native resource
 handles, arbitrary `require` and unjournaled host callbacks are not exported.
 
 The declared operation registry includes `demo.readAsync`, `demo.readNumber`,
-`demo.store`, `platform.dateNow`, and the four `platform.console.*` text effects, with the existing versioned `host-request/1` and canonical
+`demo.store`, `demo.withCallback` (one registered synchronous owned closure
+in argument slot 1), `platform.dateNow`, and the four `platform.console.*` text effects, with the existing versioned `host-request/1` and canonical
 JSON argument codec. Native handlers receive frozen, materialized JSON argument
 trees and a frozen request, not guest object handles. Their primitive return
 values are converted to owned input tokens. Native rejections and nonprimitive
@@ -52,11 +53,28 @@ as `external.input.arrive`, separately records `external.input.deliver`, then
 resumes the owned guest interpreter. Asynchronous services can complete out
 of dispatch order. The completed archive is structurally validated and exact-
 replayed without adapters (native services are not called during replay).
+Service invocation now executes the JavaScript string emitted by the one
+`compilePendingEffectJS` code generator. Its returned Promise is observed
+through the native settlement bridge, which calls the same owned
+`recordInputArrival` and `deliverInput` paths as before. Rejection becomes
+an owned abrupt input; native Promise reactions are never guest continuations.
+
+For `host.withCallback('name', function(value){...})` the request codec
+publishes an explicit `{"$ownedCallback":"oN"}` capability in the declared
+callback argument slot. Native `services['demo.withCallback']({args})` receives
+a callable trampoline instead of that serialized marker. Calling it enqueues
+`external.callback.enqueue`, which the owned scheduler consumes at
+`job.enter` and activates the original closure with its captured lexical
+environment. The callback may receive at most 32 primitive arguments.
+Callback effects, activation order and captured mutations remain in the owned
+journal and are checked by replay; no callback body runs in the native engine.
+The native return from the trampoline is always `undefined`: APIs demanding
+a synchronous JS return from the guest callback remain unsupported.
 
 An `AbortSignal` can interrupt the wait but does **not** magically cancel an
 underlying native resource: services must honor the signal themselves. This
 driver does not itself implement callable-folder module realms, general
-native callback reentry, arbitrary host objects,
+arbitrary general/persistent native callback reentry, arbitrary host objects,
 streaming, crash recovery or physical native activation ownership. The opt-in natlang adapter can synchronize data-only `__live` graphs after
 replay; the native driver remains independent of arbitrary live host objects.
 Native promises **never** become guest frames, promises or continuations.
@@ -73,4 +91,4 @@ When explicitly provided in `services`, a strict owned function entry can invoke
 }
 ~~~
 
-The host samples time or performs output only after effect intent is journaled. Exact replay injects the committed arrival values without resampling or logging again. The opt-in natlang native-service adapter exposes completed single-string console messages through its `logs` field. The API does not claim `new Date()`, general timer scheduling, console format-string semantics, multiple-argument logging, arbitrary native host callbacks, browser APIs or Node handles. Started native effects cannot be rolled back.
+The host samples time or performs output only after effect intent is journaled. Exact replay injects the committed arrival values without resampling or logging again. The opt-in natlang native-service adapter exposes completed single-string console messages through its `logs` field. The API does not claim `new Date()`, general timer scheduling, console format-string semantics, multiple-argument logging, general DOM/Node callbacks, object-valued DOM Event arguments, browser APIs or Node handles. Started native effects cannot be rolled back.
