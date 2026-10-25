@@ -34,7 +34,7 @@ test('source-certified persistent callbacks occur after registration and close t
   assert.equal(timeline.filter(item=>item.kind==='event').length,2);
   const cohort=controlledEvaluationCase(result.exported,{id:fixture.id});
   const selected=await evaluateSelectedCase({schema:'semantic-evaluation-request/4',caseId:fixture.id,
-    representation:'explicit',seed:17,request:cohort.request});
+    representation:result.exported.sidecar.representation,seed:17,request:cohort.request});
   assert.equal(selected.failure,null);assert.deepEqual(selected.outcome,cohort.expected);
   assert.deepEqual(selected.outcome.cleanup,{pendingEffects:0,pendingJobs:0,openHandlers:0});
 });
