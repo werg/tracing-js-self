@@ -203,9 +203,9 @@ test('independent events queue behind one retained JS turn and activate separate
   selectedValue(h,'event1',1);
   h.deliverReadyEvents('updates');
   assert.equal(h.invocations.size,2);
-  selectedValue(h,'event2',2);
   const close=h.closeEventHandler('updates');
   assert.deepEqual(close.discarded,['e3']);
+  selectedValue(h,'event2',2);
   assert.throws(()=>h.postEvent({subscriptionId:'updates',eventId:'e5',args:[5]}),
     /closed/);
   const eventKinds=h.timeline.filter(x=>['event','invocation'].includes(x.kind))
