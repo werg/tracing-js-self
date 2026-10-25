@@ -223,6 +223,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       start.event.sequence<event.sequence&&start.event.invocationId===event.invocationId&&
       start.event.siteId===event.siteId&&start.operation.operator===node.operator&&
       start.operation.operands.length===2&&[fields.expr.left,fields.expr.right].every(operand=>
+        operand.op==='local'||operand.op==='read'||
         operand.op==='literal'&&!['ref','promise'].includes(operand.value[0]));
     if(!pure){flushComputations();return commitEmission(owner,kind,fields,certificate);}
     const item={owner,fields:copy(fields),certificate,node,producer:event.eventId};
