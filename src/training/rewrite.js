@@ -17,7 +17,11 @@ function sourceExpressions(source) {
   function visit(value) {
     if(Array.isArray(value)) {for(const part of value)visit(part);return;}
     if(!value||typeof value!=='object')return;
-    if(['BinaryExpression','AssignmentExpression'].includes(value.type))
+    // Keep only the source tree privately. The model never sees AST sites.
+    // Branch decisions may refer to identifiers, unary truth tests, and
+    // nested pure expressions, not just a flat comparison.
+    if(['BinaryExpression','AssignmentExpression','Identifier','UnaryExpression',
+        'Literal'].includes(value.type))
       nodes.set(value.start+':'+value.end,value);
     for(const [key,child] of Object.entries(value))
       if(!['start','end','loc','raw'].includes(key))visit(child);
@@ -57,12 +61,30 @@ export function rewriteSemanticWitness({generated,certificates,source,entry,
   // A branch can be made explanatory without manufacturing the execution:
   // only literal/committed-local/input scalar operands may be reconstructed,
   // and the independent bounded primitive evaluator checks its actual decision.
-  function sourceOperand(node,invocation,pendingAliases) {
-    if(node?.type==='Literal'&&!node.regex) {
+  const explainableBinary=new Set([
+    '+','-','*','/','%','**','<','<=','>','>=','===','!==','==','!=',
+    '&','|','^','<<','>>','>>>'
+  ]);
+  // Only primitive, side-effect-free source expressions are candidates for
+  // reconstruction. Accessors, calls, assignments, updates, short-circuit
+  // execution and other potentially observable work remain separate.
+  function sourceOperand(node,invocation,pendingAliases,depth=0) {
+    if(!node||depth>8)return null;
+    if(node.type==='Literal'&&!node.regex) {
       const value=scalar(node.bigint!==undefined?BigInt(node.bigint):node.value);
       return value?{op:'literal',value}:null;
     }
-    if(node?.type!=='Identifier')return null;
+    if(node.type==='UnaryExpression'&&
+       ['!','+','-','~','typeof','void'].includes(node.operator)){
+      const arg=sourceOperand(node.argument,invocation,pendingAliases,depth+1);
+      return arg?{op:'unary',operator:node.operator,arg}:null;
+    }
+    if(node.type==='BinaryExpression'&&explainableBinary.has(node.operator)){
+      const left=sourceOperand(node.left,invocation,pendingAliases,depth+1);
+      const right=sourceOperand(node.right,invocation,pendingAliases,depth+1);
+      return left&&right?{op:'binary',operator:node.operator,left,right}:null;
+    }
+    if(node.type!=='Identifier')return null;
     for(const [name,item] of [...locals].reverse())
       if(item.sourceName===node.name&&
          (item.invocation===invocation||item.invocation==='i1'))
@@ -77,16 +99,15 @@ export function rewriteSemanticWitness({generated,certificates,source,entry,
     return null;
   }
   function checkedCondition(node,invocation,claimed){
-    if(!node||node.type!=='BinaryExpression'||
-       !['<','<=','>','>=','===','!==','==','!='].includes(node.operator))
-      return null;
     const pending=new Set();
-    const left=sourceOperand(node.left,invocation,pending);
-    const right=sourceOperand(node.right,invocation,pending);
-    if(!left||!right)return null;
-    const expr={op:'binary',operator:node.operator,left,right};
+    const expr=sourceOperand(node,invocation,pending);
+    if(!expr||expr.op==='literal')return null;
+    try{validateExpression(expr,{maxOperators});}
+    catch{return null;}
     const available=new Map([...locals].map(([name,item])=>[name,item.value]));
     for(const index of pending)available.set('arg'+index,arguments_[index]);
+    // The reconstructed explanation must agree with the already-observed
+    // decision using only previously committed public values.
     const check=checkWitnessClaim(expr,claimed,{locals:available});
     if(!check.consistent)return null;
     for(const index of pending)inputAliases.add(index);
@@ -160,7 +181,22 @@ export function rewriteSemanticWitness({generated,certificates,source,entry,
       const span=item.cert.span;
       const node=span&&binaries.get(span.start+':'+span.end);
       const expression=checkedCondition(node,invocation,item.fields.decision);
-      if(expression)item.fields={...item.fields,expr:expression};
+      if(expression){
+        item.fields={...item.fields,expr:expression};
+        // A checked source-level choice already explains its primitive test.
+        // Pure, unbound intermediates wholly inside that test add no state
+        // or effects, and merely make the model repeat the same calculation.
+        // Never cross a binding, mutation, call, allocation or random draw.
+        while(emitted.length){
+          const previous=emitted.at(-1);
+          if(previous.kind!=='compute'||previous.fields.bind||
+             previous.fields.expr.op==='random'||
+             !sameInvocation(previous.fields,item.fields)||
+             !contains(item.cert.span,previous.cert.span))break;
+          emitted.pop();
+          item.cert=mergedCertificate(previous.cert,item.cert,'fold-choice/1');
+        }
+      }
     }
     if(item.kind==='bind'&&!item.fields.from){
       const previous=emitted.at(-1);
