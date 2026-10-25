@@ -10,6 +10,8 @@ const cases=[
   ['nested choice', 'function run(x){if(x+1>=3)return 10;return 20;}',[3]],
   ['falsy input', 'function run(x){if(x)return 1;return 0;}',[0]],
   ['object truthiness','function run(o){if(!o)return 1;return 2;}',[{n:3}]],
+  ['property choice','function run(o){if(o.n>2)return o.n;return 0;}',[{n:3}]],
+  ['prior write','function run(o){o.n=4;if(o.n>2)return o.n;return 0;}',[{n:1}]],
   ['side-effect test','function run(o){if(o.n++<3)return o.n;return -1;}',[{n:2}]],
   ['loop','function run(x){let s=0;for(let i=0;i<3;i++)s+=x+i;return s;}',[4]],
   ['helper','function inc(y){return y+1;}function run(x){return inc(x);}',[4]]
