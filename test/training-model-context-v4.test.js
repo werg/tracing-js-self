@@ -26,7 +26,9 @@ test('long callback tail publishes bounded observed code and exact publicly repl
   const resume=decoded.find(item=>item.invocationId===root.invocationId&&item.kind==='resume');
   assert(decoded.filter(item=>item.sequence>mutation.sequence&&item.sequence<resume.sequence).length>128);
   const receipts=timeline.filter(isState),callbackReceipts=receipts.filter(item=>item.invocationId===callback.invocationId);
-  assert(callbackReceipts.length>=7);
+  const callbackRecords=decoded.filter(item=>item.invocationId===callback.invocationId);
+  assert(callbackReceipts.length>=Math.ceil(callbackRecords.length/MODEL_CONTEXT_INTERVAL),
+    'state refresh cadence must follow actual selected records, not legacy trace length');
   for(const [index,receipt] of callbackReceipts.entries()){
     const next=callbackReceipts[index+1]?.sequence??Infinity;
     assert(decoded.filter(item=>item.invocationId===callback.invocationId&&
@@ -56,7 +58,13 @@ test('source-certified long callback tail executes with the same pre-inference s
   const actual=await evaluateSelectedCase({schema:'semantic-evaluation-request/4',caseId:fixture.id,
     request:fixture.request,seed:17,representation:'compact'});
   assert.equal(actual.failure,null,JSON.stringify(actual.failure));assert.deepEqual(actual.outcome,fixture.expected);
-  assert(actual.episode.public.timeline.filter(isState).length>=8);
+  const receipts=actual.episode.public.timeline.filter(isState);
+  const activations=actual.episode.public.timeline.filter(item=>
+    item.kind==='invocation'&&item.activation==='callback');
+  assert(activations.length>0);
+  for(const activation of activations)
+    assert(receipts.some(item=>item.invocationId===activation.invocationId),
+      'every callback must receive a fresh publicly replayable state receipt');
   SelectedExecutionHarness.replay(actual.episode);
 });
 
