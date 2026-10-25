@@ -21,3 +21,5 @@ export {SelectedExecutionHarness,HARNESS_ENVELOPE_VERSION,
   HARNESS_SELECTED_TRACE_VERSION} from './harness-v4.js';
 
 export {SelectedModelDriver,selectedWitnessFromGroup} from './model-driver.js';
+
+export {createMegatokenProcessSelector,createMegatokenPythonSelector} from './megatoken-process.js';
