@@ -2,6 +2,7 @@
 // Function, vm, or a native/hybrid fallback. A real Megatoken selector supplies
 // each semantic record and the shared broker supplies external observations.
 import {createHash} from 'node:crypto';
+import ts from 'typescript';
 import {SelectedExecutionHarness} from './training/harness-v4.js';
 import {SelectedModelDriver} from './training/model-driver.js';
 
@@ -25,7 +26,10 @@ function primitive(value){
  * source-to-source compilation only, not execute guest code.
  */
 export function createNatlangSelectedEnvironment({mode='fresh',select,services={},
-    transpile=source=>source,capabilities=null,maxSelections=4096,
+    transpile=source=>ts.transpileModule(source,{compilerOptions:{
+      target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.None,
+      isolatedModules:true,removeComments:false}}).outputText,
+    capabilities=null,maxSelections=4096,
     sessionId='natlang1',onClose=()=>{}}={}){
   demand(mode==='fresh'||mode==='retained','Natlang environment needs an explicit mode');
   demand(typeof select==='function','A Megatoken selected-model adapter is required');
