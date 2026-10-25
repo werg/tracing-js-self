@@ -56,22 +56,24 @@ export class SelectedModelDriver {
     const completed=[];
     let selected=0;
     const activation=()=>this.harness.invocations.get(invocationId);
-    const invokeModel=async()=>{
+    const publicPrefix=()=>{
       const program=this.harness.programs.get(programId);
       const exposed=this.harness.timeline.filter(event=>
         event.kind==='program'&&event.programId===programId ||
         event.invocationId===invocationId);
-      const request=copy({schema:'selected-inference-prefix/1',programId,
+      return copy({schema:'selected-inference-prefix/1',programId,
         entry:activation().entry,source:program.source,sourceDigest:program.digest,
         invocationId,trackId,realmId,
         committed:exposed,completionPolicy,maxOutstanding:this.maxOutstanding});
-      // Do not hand the model the service functions, broker intent ledger,
-      // private teacher journal, future results or reference correctness.
-      return this.select(request);
     };
+    // Only causally available public records reach the model. The broker
+    // ledger, native service closures, teacher state and future results do not.
+    const invokeModel=async()=>this.select(publicPrefix());
     for(;;){
       if(activation().status==='completed'){
         if(pending.size)await Promise.all(pending.values());
+        if(typeof this.select.complete==='function')
+          await this.select.complete(publicPrefix());
         const controller=activation().controller;
         let observableGraph=null;
         try{observableGraph=controller.observedGraph();}
