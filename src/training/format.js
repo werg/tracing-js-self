@@ -189,7 +189,10 @@ export function validateWitness(kind,fields){
       typeof fields.object!=='string'||typeof fields.present!=='boolean'))
     fail('location');
   if(kind==='end'&&!['return','throw'].includes(fields.kind))fail('completion kind');
-  if(kind==='observe'&&!['fulfilled','rejected'].includes(fields.status))fail('observation status');
+  if(kind==='observe'){
+    assertValue(fields.result);
+    if(!['fulfilled','rejected'].includes(fields.status))fail('observation status');
+  }
   if(kind==='job'&&!['enqueue','dispatch','complete'].includes(fields.action))fail('job action');
   for(const key of ['name','bind','invocation','child','object']){
     if(has(fields,key)&&(typeof fields[key]!=='string'||!identity.test(fields[key])))
