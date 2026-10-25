@@ -9,6 +9,7 @@ import {SemanticController} from './controller.js';
 import {analyzeSemanticProgram} from './semantic-program.js';
 import {describeGraph} from './graph.js';
 import {renderWitness} from './render.js';
+import {hostOperation} from '../host/operations.js';
 
 export const HARNESS_ENVELOPE_VERSION='semantic-execution/4';
 export const HARNESS_SELECTED_TRACE_VERSION='semantic-trace/3';
@@ -59,6 +60,7 @@ export class SelectedExecutionHarness {
     this.intents=new Map();this.inflight=new Map();this.timeline=[];
     this.ownerSequences=new Map();this.globalSequence=0;
     this.realms=new Map();this.handlers=new Map();this.nextEventDelivery=0;
+    this.callbacks=new Map();this.nextCallback=0;
   }
   record(mode,kind,track,details){
     const ownerSequence=(this.ownerSequences.get(track)??0)+1;
@@ -74,20 +76,25 @@ export class SelectedExecutionHarness {
       'Exact JS source and entry are required');
     demand(Array.isArray(capabilities)&&capabilities.every(c=>typeof c==='string')&&
       new Set(capabilities).size===capabilities.length,'Invalid capability grant');
-    const sites=analyzeSemanticProgram(source).sites;
+    const analyzed=analyzeSemanticProgram(source);
+    const {sites,functions}=analyzed;
     const digest=createHash('sha256').update(source,'utf8').digest('hex');
     const code=encodeWitness('code',{entry,source,sites});
-    this.programs.set(programId,{source,entry,code,digest,capabilities:[...capabilities]});
+    this.programs.set(programId,{source,entry,code,digest,functions,
+      capabilities:[...capabilities]});
     return this.record('observed','program','host',
-      {programId,digest,entry,source,sites,capabilities});
+      {programId,digest,entry,source,sites,functions,capabilities});
   }
   admitInvocation({programId,invocationId,trackId,realmId,triggerId,args=[],inputGraph=null,
-      completionPolicy='immediate-root',realmPolicy='fresh'}){
+      completionPolicy='immediate-root',realmPolicy='fresh',entry=null}){
     for(const [value,name] of [[programId,'program ID'],[invocationId,'invocation ID'],
       [trackId,'track ID'],[realmId,'realm ID'],[triggerId,'trigger ID']])id(value,name);
     demand(!this.invocations.has(invocationId),'Invocation already admitted');
     const program=this.programs.get(programId);
     demand(program,'Program must be observed before an invocation');
+    const selectedEntry=entry??program.entry;
+    demand(selectedEntry===program.entry||program.functions.some(f=>f.name===selectedEntry),
+      'Invoked closure must have a declared static function site');
     demand(Array.isArray(args),'Invocation arguments must be a graph');
     demand(completionPolicy==='immediate-root'||completionPolicy==='owned-quiescence',
       'Invalid completion policy');
@@ -126,7 +133,10 @@ export class SelectedExecutionHarness {
           root[1]=aliases.get(root[1]);
     }
     const input=encodeWitness('input',{graph});
-    const controller=new SemanticController([program.code,input],{
+    const sourceCode=selectedEntry===program.entry?program.code:
+      encodeWitness('code',{entry:selectedEntry,source:program.source,
+        sites:analyzeSemanticProgram(program.source).sites});
+    const controller=new SemanticController([sourceCode,input],{
       capabilities:program.capabilities,maxGenerated:this.maxGenerated,
       completionPolicy,observationAuthority:'broker'});
     if(previous){
@@ -141,10 +151,10 @@ export class SelectedExecutionHarness {
       running:invocationId,heap:controller.heap,locals:controller.locals,
       revision:(previous?.revision??0)+1});
     this.invocations.set(invocationId,{programId,trackId,realmId,triggerId,
-      controller,input,status:'running',completionPolicy,realmPolicy});
+      controller,input,status:'running',completionPolicy,realmPolicy,entry:selectedEntry});
     return this.record('observed','invocation',trackId,
       {programId,invocationId,realmId,triggerId,completionPolicy,realmPolicy,
-        inputGraph:graph,entry:program.entry,sourceDigest:program.digest});
+        inputGraph:graph,entry:selectedEntry,sourceDigest:program.digest});
   }
   /** Outside handler ingress is host-authorized. It never invents a guest
    * subscription request; JS-selected listener registration has a separate
@@ -161,13 +171,14 @@ export class SelectedExecutionHarness {
     demand(Number.isSafeInteger(queueLimit)&&queueLimit>=1&&queueLimit<=4096,
       'Invalid bounded event queue');
     const program=this.programs.get(programId);
-    demand(entry===null||entry===program.entry,
-      'Event handler entry must match its published source context');
+    demand(entry===null||entry===program.entry||
+      program.functions.some(f=>f.name===entry),
+      'Event handler closure must have a static function source site');
     this.handlers.set(subscriptionId,{programId,realmId,trackId,realmPolicy,
-      entry:program.entry,queueLimit,seen:new Set(),queue:[],state:'active'});
+      entry:entry??program.entry,queueLimit,seen:new Set(),queue:[],state:'active'});
     return this.record('observed','handler','host',
       {subscriptionId,programId,realmId,trackId,realmPolicy,
-        entry:program.entry,queueLimit});
+        entry:entry??program.entry,queueLimit});
   }
   /** Queue each accepted outside arrival once. Delivery is separate, and
    * model-visible only when its realm can legally accept another turn. */
@@ -198,7 +209,7 @@ export class SelectedExecutionHarness {
         programId:handler.programId,realmId});
     return this.admitInvocation({programId:handler.programId,invocationId,
       realmId,trackId:handler.trackId,triggerId,
-      realmPolicy:handler.realmPolicy,args:next.args,
+      realmPolicy:handler.realmPolicy,entry:handler.entry,args:next.args,
       completionPolicy:next.completionPolicy});
   }
   closeEventHandler(subscriptionId){
@@ -206,6 +217,8 @@ export class SelectedExecutionHarness {
     const handler=this.handlers.get(subscriptionId);
     demand(handler&&handler.state==='active','No active subscription to close');
     handler.state='closed';
+    for(const callback of this.callbacks.values())
+      if(callback.subscriptionId===subscriptionId)callback.state='revoked';
     const discarded=handler.queue.map(event=>event.eventId);
     handler.queue.length=0;
     return this.record('observed','handler-close','host',
@@ -228,6 +241,24 @@ export class SelectedExecutionHarness {
       this.intents.set(key,{status:'committed',operation:effect.operation,
         args:clone(effect.arguments),payload:effect.payload,invocationId,
         effectId:fields.effect,attempts:0});
+      const spec=hostOperation(effect.operation);
+      for(const slot of spec.callbackIndices??[]){
+        const descriptor=effect.arguments[slot];
+        const closureId=descriptor?.$ownedCallback;
+        const selectedClosure=activation.controller.heap.get(closureId);
+        if(typeof closureId!=='string'||selectedClosure?.kind!=='closure'||
+           typeof selectedClosure.code!=='string')
+          throw new TypeError('Selected callback must reference an owned closure');
+        const program=this.programs.get(activation.programId);
+        demand(program.functions.some(f=>f.name===selectedClosure.code),
+          'Callback source closure is not declared in immutable program');
+        const callbackKey=key+'/'+slot;
+        this.callbacks.set(callbackKey,{state:'pending',slot,closureId,
+          entry:selectedClosure.code,realmId:activation.realmId,
+          programId:activation.programId,trackId:activation.trackId,
+          subscriptionId:'callback'+(++this.nextCallback),
+          lifetime:spec.callbackLifetime??'call',sequence:0,queued:[]});
+      }
     }
     if(kind==='end'){
       activation.status='completed';
@@ -256,10 +287,36 @@ export class SelectedExecutionHarness {
     intent.status='dispatched';intent.attempts++;
     this.record('observed','dispatch',this.invocations.get(invocationId).trackId,
       {invocationId,effectId,key,attempt:intent.attempts});
+    const callbackFor=slot=>{
+      const registration=this.callbacks.get(key+'/'+slot);
+      demand(registration,'Native adapter requested an undeclared callback slot');
+      const fn=(...args)=>{
+        if(registration.state==='revoked'||registration.state==='lost')
+          throw new Error('Owned callback was revoked or lost');
+        if(args.length>32||args.some(x=>x!==null&&!['undefined','boolean',
+             'number','string','bigint'].includes(typeof x)))
+          throw new TypeError('Native callback result needs primitive arguments');
+        const eventId='callbackevent'+(++registration.sequence);
+        if(registration.state==='pending'){
+          if(registration.queued.length>=64)throw new Error('Callback event queue overflow');
+          registration.queued.push({eventId,args});
+        }else this.postEvent({subscriptionId:registration.subscriptionId,eventId,args});
+        return undefined;
+      };
+      return Object.freeze(fn);
+    };
     const run=Promise.resolve().then(()=>adapter(clone(intent.args),
       Object.freeze({sessionId:this.sessionId,invocationId,effectId,
         idempotencyKey:key,operation:intent.operation,
-        realmId:this.invocations.get(invocationId).realmId})))
+        realmId:this.invocations.get(invocationId).realmId,
+        callback:callbackFor,
+        subscriptionId:slot=>this.callbacks.get(key+'/'+slot)?.subscriptionId,
+        closeSubscription:id=>{
+          const handler=this.handlers.get(id);
+          demand(handler&&handler.realmId===this.invocations.get(invocationId).realmId,
+            'Cannot revoke a foreign or unknown listener');
+          return this.closeEventHandler(id);
+        }})))
       .then(value=>this.deliverResult(invocationId,effectId,
         {status:'fulfilled',value}))
       .catch(error=>this.deliverResult(invocationId,effectId,
@@ -278,8 +335,25 @@ export class SelectedExecutionHarness {
     const line=encodeWitness('observe',{effect:effectId,status,result});
     activation.controller.commit(line,{mode:'observed',track:'t0'});
     intent.status='settled';
-    return this.record('observed','result',activation.trackId,
+    const receipt=this.record('observed','result',activation.trackId,
       {invocationId,effectId,status,result,line});
+    const callbacks=[...this.callbacks].filter(([callbackKey])=>callbackKey.startsWith(key+'/'));
+    for(const [callbackKey,callback] of callbacks){
+      if(status!=='fulfilled'){
+        callback.state='revoked';callback.queued.length=0;continue;
+      }
+      if(callback.lifetime!=='subscription'){
+        callback.state='revoked';callback.queued.length=0;continue;
+      }
+      this.registerEventHandler({subscriptionId:callback.subscriptionId,
+        programId:callback.programId,realmId:callback.realmId,
+        trackId:callback.trackId,entry:callback.entry,realmPolicy:'retained'});
+      callback.state='active';
+      for(const event of callback.queued)this.postEvent({
+        subscriptionId:callback.subscriptionId,eventId:event.eventId,args:event.args});
+      callback.queued.length=0;
+    }
+    return receipt;
   }
   inspect(invocationId){
     const activation=this.invocations.get(invocationId);
@@ -334,7 +408,7 @@ export class SelectedExecutionHarness {
         h.admitInvocation({programId:item.programId,invocationId:item.invocationId,
           trackId:item.track,realmId:item.realmId,triggerId:item.triggerId,
           inputGraph:item.inputGraph,completionPolicy:item.completionPolicy,
-          realmPolicy:item.realmPolicy??'fresh'});
+          realmPolicy:item.realmPolicy??'fresh',entry:item.entry});
       }else if(item.kind==='semantic'){
         h.selected(item.invocationId,item.line);
       }else if(item.kind==='handler'){
@@ -360,6 +434,8 @@ export class SelectedExecutionHarness {
         const handler=h.handlers.get(item.subscriptionId);
         demand(handler?.state==='active','Replay closes nonexistent subscription');
         handler.state='closed';
+        for(const callback of h.callbacks.values())
+          if(callback.subscriptionId===item.subscriptionId)callback.state='revoked';
         h.record('observed','handler-close','host',{
           subscriptionId:item.subscriptionId,discarded:item.discarded});
       }else if(item.kind==='dispatch'){
@@ -405,6 +481,7 @@ export class SelectedExecutionHarness {
   /** No service code executes during state restoration or trace inspection. */
   checkpoint(){
     return clone({schema:'semantic-checkpoint/4',sessionId:this.sessionId,
+      callbacks:[...this.callbacks],nextCallback:this.nextCallback,
       programs:[...this.programs],realms:[...this.realms],
       handlers:[...this.handlers].map(([key,v])=>[key,{...v,seen:[...v.seen]}]),
       nextEventDelivery:this.nextEventDelivery,
@@ -420,6 +497,9 @@ export class SelectedExecutionHarness {
       sessionId:packet.sessionId,services,maxGenerated:packet.maxGenerated});
     harness.programs=new Map(clone(packet.programs));
     harness.realms=new Map(clone(packet.realms??[]));
+    harness.callbacks=new Map(clone(packet.callbacks??[]).map(([key,value])=>[
+      key,{...value,state:value.state==='active'?'lost':value.state}]));
+    harness.nextCallback=packet.nextCallback??0;
     harness.handlers=new Map((packet.handlers??[]).map(([key,v])=>[key,
       {...v,seen:new Set(v.seen)}]));
     harness.nextEventDelivery=packet.nextEventDelivery??0;
