@@ -71,11 +71,20 @@ export class SelectedModelDriver {
     for(;;){
       if(activation().status==='completed'){
         if(pending.size)await Promise.all(pending.values());
-        return {completion:copy(activation().controller.completion),
+        const controller=activation().controller;
+        let observableGraph=null;
+        try{observableGraph=controller.observedGraph();}
+        catch(error){
+          // A returned owned function/Promise is an internal semantic value,
+          // not JSON. Callers such as Natlang use selected handles and make
+          // separately modeled later invocations; they never run guest code.
+          if(error.category!=='unsupported-boundary')throw error;
+        }
+        return {completion:copy(controller.completion),
+          selectedState:controller.segmentPacket(),
           rendered:this.harness.inspect(invocationId),
           episode:this.harness.exportEpisode(),
-          selectedRecords:selected,
-          observableGraph:activation().controller.observedGraph()};
+          selectedRecords:selected,observableGraph};
       }
       if(selected++>=this.maxSelections)
         fail('Model selection budget exhausted without a complete return/throw');
