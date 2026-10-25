@@ -73,3 +73,40 @@ test('the branch choice is semantically grounded without erasing an effect',asyn
   assert(!trace.some(record=>record.kind==='bind'&&/^cell[0-9]+$/.test(record.fields.name)),
     'opaque VM cell names should not appear in new witnesses');
 });
+
+test('grounded property values are temporal and require a committed own data slot',()=>{
+  let value=['num',4],own=true;
+  const ctx={
+    locals:new Map([['object',['ref','o1']]]),
+    resolveLocal:name=>name==='object'?{name,value:['ref','o1']}:null,
+    hasOwnData:(identity,key)=>own&&identity==='o1'&&key==='n',
+    readProperty:()=>value
+  };
+  const member={type:'MemberExpression',computed:false,optional:false,
+    object:identifier('object'),property:identifier('n')};
+  assert.deepEqual(sourceLinkedDecision(member,['num',4],ctx),{
+    op:'read',object:'o1',key:'n'});
+  value=['num',7]; // Committed mutation; the earlier ground value is not re-evaluated.
+  assert.equal(sourceLinkedDecision(member,['num',4],ctx),null,
+    'stale values must not be projected from a future changed heap');
+  assert.deepEqual(sourceLinkedDecision(member,['num',7],ctx),{
+    op:'read',object:'o1',key:'n'});
+  own=false;
+  assert.equal(sourceLinkedDecision(member,['num',7],ctx),null,
+    'missing/getter/inherited properties are not a pure-data read');
+});
+
+test('repeated callback parameters are separate source cells; captures stay shared',async()=>{
+  const fixture=EFFECTFUL_ENGINEERING_FIXTURES.find(item=>item.id==='callback-captured-write');
+  const result=await verifyEffectfulTrainingCase({...fixture,
+    projectionOptions:{representation:'compact'}});
+  assert.equal(result.status,'locally_verified',result.reason);
+  const trace=decoded(result.exported),seen=trace.filter(row=>row.kind==='compute'&&
+    row.fields.bind==='seen');
+  assert.equal(seen.length,2,'each callback updates the same captured source cell');
+  assert.deepEqual(seen.map(row=>row.fields.result),[['num',3],['num',7]]);
+  assert.deepEqual(seen.map(row=>row.fields.expr.right.name),['n','n_1'],
+    'source param spelling is preserved and disambiguated for each callback');
+  assert.equal(trace.filter(row=>row.kind==='request'&&
+    row.fields.operation==='demo.store').length,3);
+});
