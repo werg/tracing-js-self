@@ -205,9 +205,15 @@ export function nodeSocketServices({allowedEndpoints=[],registry=new NativeCapab
       if(!allowed.has(host+':'+port))throw new Error('Socket endpoint not granted');
       const socket=socketConnect({host,port});
       socket.pause();socket.setTimeout(timeoutMs);
-      try{await Promise.race([once(socket,'connect'),once(socket,'error').then(
-        ([e])=>Promise.reject(e))]);}
-      catch(error){socket.destroy();throw error;}
+      try{
+        await new Promise((resolve,reject)=>{
+          const cleanup=()=>{socket.off('connect',connected);socket.off('error',failed);};
+          const connected=()=>{cleanup();resolve();};
+          const failed=error=>{cleanup();reject(error);};
+          socket.once('connect',connected);
+          socket.once('error',failed);
+        });
+      }catch(error){socket.destroy();throw error;}
       return registry.add('socket',{socket,pendingBytes:0},meta,{
         origin:host+':'+port,close:()=>{socket.destroy();}
       });
@@ -221,16 +227,21 @@ export function nodeSocketServices({allowedEndpoints=[],registry=new NativeCapab
     'net.read':async([handle],meta)=>{
       const {socket}=registry.get(handle,'socket',meta).value;
       if(socket.destroyed)return '';
-      socket.resume();
-      try{
-        const item=await Promise.race([
-          once(socket,'data').then(([b])=>({data:b})),
-          once(socket,'end').then(()=>({data:Buffer.alloc(0)})),
-          once(socket,'error').then(([err])=>Promise.reject(err))
-        ]);
-        if(item.data.byteLength>maxPendingBytes)throw new RangeError('Socket read quota');
-        return item.data.toString('base64');
-      }finally{socket.pause();}
+      const data=await new Promise((resolve,reject)=>{
+        const cleanup=()=>{
+          socket.off('data',onData);socket.off('end',onEnd);
+          socket.off('error',onError);
+        };
+        const onData=bytes=>{cleanup();socket.pause();resolve(bytes);};
+        const onEnd=()=>{cleanup();socket.pause();resolve(Buffer.alloc(0));};
+        const onError=error=>{cleanup();socket.pause();reject(error);};
+        socket.once('data',onData);
+        socket.once('end',onEnd);
+        socket.once('error',onError);
+        socket.resume();
+      });
+      if(data.byteLength>maxPendingBytes)throw new RangeError('Socket read quota');
+      return data.toString('base64');
     },
     'net.close':async([handle],meta)=>registry.release(handle,'socket',meta)
   });
