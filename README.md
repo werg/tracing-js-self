@@ -15,8 +15,8 @@ foundation and its source-anchored trace format. See
 Production uses **`semantic-execution/4`, `semantic-trace/4`,
 `semantic-context/4`**, and `selected-harness/2`.
 The strict machine archive and its exact replay remain private certification
-evidence. The older version-three, group-shaped corpus is an **offline
-diagnostic archive**; its formats are not accepted by the production harness.
+evidence. Earlier group-shaped corpus exporters and their public formats are
+removed; old bytes can only be recovered from pinned Git history.
 
 The training target is **an execution explanation**, not a bijection with
 interpreter instructions. Source-grounded, independently checked expressions
