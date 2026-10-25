@@ -59,6 +59,12 @@ test('teacher traces retain source variable names, correct effects and outcome',
     record.fields.operation==='demo.store');
   assert.deepEqual(store.fields.arguments,[['str','counter'],['num',8]]);
   assert(trace.some(record=>record.kind==='end'&&record.fields.kind==='return'));
+  assert(trace.filter(record=>['compute','choose'].includes(record.kind))
+    .every(record=>!Object.hasOwn(record.fields,'site')),
+    'pure reasoning should not force prediction of interpreter source coordinates');
+  assert(trace.filter(record=>record.kind==='request')
+    .every(record=>Number.isSafeInteger(record.fields.site?.start)),
+    'effect dispatch still needs a grounded, authorized source callsite');
 });
 
 test('the branch choice is semantically grounded without erasing an effect',async()=>{
