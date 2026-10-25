@@ -23,7 +23,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Independently check selected witness and observable graph regressions
-        run: node --test test/training-witness-v3.test.js test/training-data-boundary-v3.test.js test/training-readability-v3.test.js test/training-v3-contracts.test.js test/training-experiment-v3.test.js
+        run: node --test test/training-witness-v3.test.js test/training-choice-readability.test.js test/training-data-boundary-v3.test.js test/training-readability-v3.test.js test/training-v3-contracts.test.js test/training-experiment-v3.test.js
       - name: Generate all deterministic v3 candidate families without hiding refusals
         run: |
           node tools/generate-training.mjs --count 16 --seed 42 \
