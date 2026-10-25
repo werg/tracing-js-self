@@ -1,0 +1,312 @@
+{
+  "schema": "semantic-evaluation-report/4",
+  "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+  "cohort": "effectful-tracks-events",
+  "evaluationSplits": [
+    "test"
+  ],
+  "historicalBaseline": null,
+  "historicalBaselinePending": false,
+  "seed": 17,
+  "origin": "controlled",
+  "representation": "explicit",
+  "checkpointIdentity": null,
+  "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+  "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+  "thresholds": {
+    "wholeTaskSuccess": 0.9,
+    "traceValid": 1
+  },
+  "summary": {
+    "tasks": 6,
+    "wholeTaskSuccess": 1.0,
+    "traceValid": 1.0,
+    "correctTasks": 6,
+    "generatedTokens": 6732,
+    "canonicalGeneratedTokens": 6732,
+    "observedTokens": 40966,
+    "computeSeconds": 44.058815126000006,
+    "hardGates": {
+      "futureObservationLeaks": 0,
+      "unauthorizedEffects": 0,
+      "untrackedNativeFallback": 0,
+      "falseAdmissions": 0,
+      "replayNativeEffects": 0
+    },
+    "failureCounts": {},
+    "generatedTokensPerCorrectTask": 1122.0,
+    "computeSecondsPerCorrectTask": 7.343135854333334
+  },
+  "cases": [
+    {
+      "caseId": "native-result-graph",
+      "family": "native-result-graph",
+      "wholeTaskSuccess": true,
+      "traceValid": true,
+      "firstSemanticInconsistency": null,
+      "matches": {
+        "completion": true,
+        "state": true,
+        "effects": true,
+        "callbacks": true,
+        "cleanup": true
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "generatedTokens": 715,
+      "canonicalGeneratedTokens": 715,
+      "generatedTokenBasis": "canonical-native-records",
+      "observedTokens": 2116,
+      "physicalRecords": 28,
+      "latencySeconds": 0.18202304200167418,
+      "costs": {
+        "computeSeconds": 0.036806319,
+        "peakMemoryBytes": 336195584,
+        "dispatches": 3,
+        "queueDepth": 1,
+        "leakedResources": 0
+      },
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "nativeRuntimeMetrics": null,
+      "failure": null,
+      "failureEvidence": null,
+      "evidenceDigest": "f6c5765bf2a34f255466644b109114f7aafb56089509f35e67fb52c56bf98725"
+    },
+    {
+      "caseId": "squared-distance-callbacks-recovery",
+      "family": "semantic-recipe:squared-distance",
+      "wholeTaskSuccess": true,
+      "traceValid": true,
+      "firstSemanticInconsistency": null,
+      "matches": {
+        "completion": true,
+        "state": true,
+        "effects": true,
+        "callbacks": true,
+        "cleanup": true
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "generatedTokens": 959,
+      "canonicalGeneratedTokens": 959,
+      "generatedTokenBasis": "canonical-native-records",
+      "observedTokens": 5234,
+      "physicalRecords": 62,
+      "latencySeconds": 0.19566537400169182,
+      "costs": {
+        "computeSeconds": 0.058167893000000005,
+        "peakMemoryBytes": 336195584,
+        "dispatches": 4,
+        "queueDepth": 1,
+        "leakedResources": 0
+      },
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "nativeRuntimeMetrics": null,
+      "failure": null,
+      "failureEvidence": null,
+      "evidenceDigest": "6ee830d27d8a858344b071a9ddd1321504fbe1e9f31e606112adacc7fb80af96"
+    },
+    {
+      "caseId": "squared-distance-repeated",
+      "family": "semantic-recipe:squared-distance",
+      "wholeTaskSuccess": true,
+      "traceValid": true,
+      "firstSemanticInconsistency": null,
+      "matches": {
+        "completion": true,
+        "state": true,
+        "effects": true,
+        "callbacks": true,
+        "cleanup": true
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "generatedTokens": 984,
+      "canonicalGeneratedTokens": 984,
+      "generatedTokenBasis": "canonical-native-records",
+      "observedTokens": 2015,
+      "physicalRecords": 43,
+      "latencySeconds": 0.17994546499903663,
+      "costs": {
+        "computeSeconds": 0.04671902200000001,
+        "peakMemoryBytes": 336195584,
+        "dispatches": 4,
+        "queueDepth": 1,
+        "leakedResources": 0
+      },
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "nativeRuntimeMetrics": null,
+      "failure": null,
+      "failureEvidence": null,
+      "evidenceDigest": "0f0b491d1c5c69d477d39d79162b688d5cb1d46918d823d552adbd50895cb1db"
+    },
+    {
+      "caseId": "native-result-graph:orchestration",
+      "family": "native-result-graph",
+      "wholeTaskSuccess": true,
+      "traceValid": true,
+      "firstSemanticInconsistency": null,
+      "matches": {
+        "completion": true,
+        "state": true,
+        "effects": true,
+        "callbacks": true,
+        "cleanup": true
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "generatedTokens": 1075,
+      "canonicalGeneratedTokens": 1075,
+      "generatedTokenBasis": "canonical-native-records",
+      "observedTokens": 6675,
+      "physicalRecords": 144,
+      "latencySeconds": 10.957650961001491,
+      "costs": {
+        "computeSeconds": 10.768354857,
+        "peakMemoryBytes": 898461696,
+        "dispatches": 3,
+        "queueDepth": 1,
+        "leakedResources": 0
+      },
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "nativeRuntimeMetrics": {
+        "schema": "semantic-inference-metrics/4",
+        "rpcCalls": 30,
+        "computeSeconds": 7.959218151991081,
+        "peakMemoryBytes": 562266112
+      },
+      "failure": null,
+      "failureEvidence": null,
+      "evidenceDigest": "d873f0a3f50c0684e6806cc6fbd715399ef1fa8192c479f82e7fa709ba91aa09"
+    },
+    {
+      "caseId": "squared-distance-callbacks-recovery:orchestration",
+      "family": "semantic-recipe:squared-distance",
+      "wholeTaskSuccess": true,
+      "traceValid": true,
+      "firstSemanticInconsistency": null,
+      "matches": {
+        "completion": true,
+        "state": true,
+        "effects": true,
+        "callbacks": true,
+        "cleanup": true
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "generatedTokens": 1321,
+      "canonicalGeneratedTokens": 1321,
+      "generatedTokenBasis": "canonical-native-records",
+      "observedTokens": 14364,
+      "physicalRecords": 274,
+      "latencySeconds": 17.228736578999815,
+      "costs": {
+        "computeSeconds": 17.002347141,
+        "peakMemoryBytes": 900861952,
+        "dispatches": 4,
+        "queueDepth": 1,
+        "leakedResources": 0
+      },
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "nativeRuntimeMetrics": {
+        "schema": "semantic-inference-metrics/4",
+        "rpcCalls": 47,
+        "computeSeconds": 13.872299072991154,
+        "peakMemoryBytes": 564666368
+      },
+      "failure": null,
+      "failureEvidence": null,
+      "evidenceDigest": "700d8ab738a36f3c93038127e86d9ebe3d9c9e0331cc537b54fe2c59a52d51f3"
+    },
+    {
+      "caseId": "squared-distance-repeated:orchestration",
+      "family": "semantic-recipe:squared-distance",
+      "wholeTaskSuccess": true,
+      "traceValid": true,
+      "firstSemanticInconsistency": null,
+      "matches": {
+        "completion": true,
+        "state": true,
+        "effects": true,
+        "callbacks": true,
+        "cleanup": true
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "generatedTokens": 1678,
+      "canonicalGeneratedTokens": 1678,
+      "generatedTokenBasis": "canonical-native-records",
+      "observedTokens": 10562,
+      "physicalRecords": 241,
+      "latencySeconds": 16.3406803939979,
+      "costs": {
+        "computeSeconds": 16.146419894,
+        "peakMemoryBytes": 898965504,
+        "dispatches": 4,
+        "queueDepth": 1,
+        "leakedResources": 0
+      },
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "nativeRuntimeMetrics": {
+        "schema": "semantic-inference-metrics/4",
+        "rpcCalls": 49,
+        "computeSeconds": 13.058422819991392,
+        "peakMemoryBytes": 562769920
+      },
+      "failure": null,
+      "failureEvidence": null,
+      "evidenceDigest": "60e5dbdb0018cc00927ace0fb6181e10c9f7a83d571cfb72747c88dd88534bea"
+    }
+  ],
+  "learnedSuccess": null,
+  "acceptance": false,
+  "optimizerStepsDuringEvaluation": 0
+}

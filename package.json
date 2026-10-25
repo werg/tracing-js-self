@@ -1,6 +1,6 @@
 {
   "name": "tracing-js-self",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "main": "./src/index.js",
@@ -14,6 +14,10 @@
     "./replay": "./src/replay.js",
     "./causal": "./src/causal.js",
     "./training": "./src/training/index.js",
+    "./natlang-selected": {
+      "types": "./src/natlang-selected.d.ts",
+      "default": "./src/natlang-selected.js"
+    },
     "./natlang": {
       "types": "./src/natlang.d.ts",
       "default": "./src/natlang.js"
@@ -47,7 +51,11 @@
     "./browser": {
       "types": "./src/browser.d.ts",
       "default": "./src/browser.js"
-    }
+    },
+    "./training/diagnostic": "./src/training/diagnostic.js",
+    "./capabilities/node": "./src/host/selected-capabilities-node.js",
+    "./capabilities/browser": "./src/host/selected-capabilities-browser.js",
+    "./capabilities/graph": "./src/host/graph-codec.js"
   },
   "description": "Experimental owned-machine JavaScript semantic tracing runtime",
   "engines": {
@@ -61,8 +69,6 @@
     "demo": "node bin/tracing.js demo",
     "trace": "node bin/tracing.js run",
     "test:selected-test262": "node tools/test262-baseline.mjs",
-    "training:generate": "node tools/generate-training.mjs",
-    "training:evaluate": "node tools/evaluate-training.mjs",
     "corpus:generate": "node tools/build-real-corpus.mjs",
     "corpus:audit": "node tools/audit-real-corpus.mjs",
     "corpus:owned-coverage": "node tools/audit-owned-coverage.mjs",
@@ -82,10 +88,19 @@
     "corpus:owned:novelty": "node tools/select-owned-episodes.mjs",
     "corpus:production:owned": "node tools/verify-production-owned.mjs",
     "corpus:ajv:reference": "node tools/verify-ajv-snapshot.mjs",
-    "training:inspect": "node tools/inspect-training.mjs",
-    "training:recheck": "node tools/recheck-training-evidence.mjs",
-    "training:experiment": "node tools/evaluate-training-experiments.mjs",
-    "training:freeze": "node tools/freeze-training-test.mjs"
+    "diagnostic:generate": "node tools/generate-diagnostic-training.mjs",
+    "diagnostic:evaluate": "node tools/evaluate-training.mjs",
+    "diagnostic:inspect": "node tools/inspect-training.mjs",
+    "diagnostic:recheck": "node tools/recheck-training-evidence.mjs",
+    "diagnostic:experiment": "node tools/evaluate-training-experiments.mjs",
+    "diagnostic:freeze": "node tools/freeze-training-test.mjs",
+    "training:generate": "node tools/generate-effectful-training.mjs",
+    "training:evaluate": "node tools/run-selected-evaluation.mjs",
+    "training:freeze": "node tools/freeze-selected-evaluation.mjs",
+    "training:recheck": "node tools/verify-effectful-admission.mjs",
+    "training:inspect": "node tools/inspect-selected-harness.mjs",
+    "contracts:check": "node tools/generate-host-contract.mjs --check && node tools/generate-semantic-contract.mjs --check",
+    "test:browser": "node --test test/browser/selected-dom.test.mjs"
   },
   "bin": {
     "tracing-js-self": "./bin/tracing.js"
@@ -99,5 +114,8 @@
       "browser": "./src/host/proxy-check-browser.js",
       "default": "./src/host/proxy-check-node.js"
     }
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
   }
 }

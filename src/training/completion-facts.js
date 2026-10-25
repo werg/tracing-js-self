@@ -4,9 +4,19 @@
 export function normalizeCompletionFacts(bundle) {
   const facts=new Map();
   for(const event of bundle.events){
-    if(!['call.return','completion.finally.end','completion.throw',
+    if(!['call.return','completion.finally.end','completion.throw','job.enter',
       'completion.catch.bind'].includes(event.operation))
       continue;
+    if(event.operation==='job.enter'){
+      // Rejected await may unwind the resumed async frame in this same job;
+      // no later THROW opcode exists to carry that actual body completion.
+      const exited=event.stateChanges.find(p=>p.table==='frames'&&
+        p.before?.status==='suspended'&&p.after?.status==='thrown');
+      if(exited&&event.completion?.type==='throw'&&Array.isArray(event.completion.value?.value))
+        facts.set(event.eventId,{operation:'throw',kind:'throw',value:event.completion.value.value,
+          invocation:exited.id,journalEvent:event.eventId});
+      continue;
+    }
     const frame=event.stateChanges.find(p=>p.table==='frames' &&
       p.id===event.invocationId);
     if(!frame)continue;
@@ -46,6 +56,7 @@ export function normalizeCompletionFacts(bundle) {
         // The classified error boundary is deliberately a distinct contract:
         // do not synthesize an ordinary data return from a native exception.
         facts.set(event.eventId,{operation:'unhandled-throw',
+          ...(Array.isArray(frame.after.completion?.value?.value)?{value:frame.after.completion.value.value}:{}),
           invocation:event.invocationId,journalEvent:event.eventId});
       }
     }else if(event.operation==='completion.throw'){

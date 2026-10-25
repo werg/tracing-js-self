@@ -1,0 +1,423 @@
+{
+  "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+  "datasets": {
+    "common-support": {
+      "compact": [
+        "/workspace/scratch/6825113a40ea/final-prepared-experiments-b2/common-support-compact"
+      ],
+      "explicit": [
+        "/workspace/scratch/6825113a40ea/final-prepared-experiments-b2/common-support-explicit"
+      ],
+      "outcome-only": [
+        "/workspace/scratch/6825113a40ea/final-prepared-experiments-b2/common-support-outcome-only"
+      ]
+    },
+    "effectful-tracks-events": {
+      "compact": [
+        "/workspace/scratch/6825113a40ea/final-prepared-experiments-b2/effectful-tracks-events-compact",
+        "/workspace/scratch/6825113a40ea/final-prepared-experiments-b2/lifecycle-compact-train",
+        "/workspace/scratch/6825113a40ea/final-prepared-experiments-b2/lifecycle-compact-validation"
+      ],
+      "explicit": [
+        "/workspace/scratch/6825113a40ea/final-prepared-experiments-b2/effectful-tracks-events-explicit",
+        "/workspace/scratch/6825113a40ea/final-prepared-experiments-b2/lifecycle-explicit-train",
+        "/workspace/scratch/6825113a40ea/final-prepared-experiments-b2/lifecycle-explicit-validation"
+      ]
+    }
+  },
+  "learnedSuccess": null,
+  "lifecycle": [
+    {
+      "admitted": true,
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "childAdmissionValidated": true,
+      "children": 1,
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "episodeDigest": "037e6894b5b0f76f5c0d25aaaf889746c856b362dec9fd936278e99a0eb6a4bc",
+      "episodeId": "a6628e2ac8712976425b21591bd66f730e84a650fb907fb806dda12e44838401",
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "guestActions": 2,
+      "lifecycleActions": 4,
+      "lifetimeTracks": 2,
+      "lossMaskValidated": true,
+      "maxActive": 1,
+      "nativeEffectsDuringReplay": 0,
+      "observedPeakActive": 1,
+      "optimizerSteps": 0,
+      "policyDigest": "5997e67deab7be91fb99fb4385428ddd38ece56f78e4074f3ae24999778a87b9",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "representation": "explicit",
+      "schema": "semantic-lifecycle-admission/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "split": "train",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "visibilityValidated": true
+    },
+    {
+      "admitted": true,
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "childAdmissionValidated": true,
+      "children": 1,
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "episodeDigest": "0f400bec0bd073c00b1ab4cd19e29f67d2b89f0b25dee3d715821efbd7f9bb13",
+      "episodeId": "4184ceb7ff1a4e936ba43c5fc1c0face34362b50d93fe58dfb843de83bf19790",
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "guestActions": 2,
+      "lifecycleActions": 4,
+      "lifetimeTracks": 2,
+      "lossMaskValidated": true,
+      "maxActive": 1,
+      "nativeEffectsDuringReplay": 0,
+      "observedPeakActive": 1,
+      "optimizerSteps": 0,
+      "policyDigest": "5997e67deab7be91fb99fb4385428ddd38ece56f78e4074f3ae24999778a87b9",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "representation": "explicit",
+      "schema": "semantic-lifecycle-admission/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "split": "validation",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "visibilityValidated": true
+    },
+    {
+      "admitted": true,
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "childAdmissionValidated": true,
+      "children": 1,
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "episodeDigest": "d1eef8a82c72b029813ae44a6b0d116b60e474e0387f21ed40b1a1de6141d8f2",
+      "episodeId": "695f88704e1baf9eecdd15fedc2e294dc2c119ac8c099780232ce5c450cbe551",
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "guestActions": 2,
+      "lifecycleActions": 4,
+      "lifetimeTracks": 2,
+      "lossMaskValidated": true,
+      "maxActive": 1,
+      "nativeEffectsDuringReplay": 0,
+      "observedPeakActive": 1,
+      "optimizerSteps": 0,
+      "policyDigest": "5997e67deab7be91fb99fb4385428ddd38ece56f78e4074f3ae24999778a87b9",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "representation": "compact",
+      "schema": "semantic-lifecycle-admission/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "split": "train",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "visibilityValidated": true
+    },
+    {
+      "admitted": true,
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "childAdmissionValidated": true,
+      "children": 1,
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "episodeDigest": "712a88a46b07e293cb66dff8efcd5e2ff23cb02f16a7e9250c97fd25e9c5ba4a",
+      "episodeId": "3cccb858db757f6f9f338efe859f84aaf69976d5a8ac829ccdadfc42eb48b015",
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "guestActions": 2,
+      "lifecycleActions": 4,
+      "lifetimeTracks": 2,
+      "lossMaskValidated": true,
+      "maxActive": 1,
+      "nativeEffectsDuringReplay": 0,
+      "observedPeakActive": 1,
+      "optimizerSteps": 0,
+      "policyDigest": "5997e67deab7be91fb99fb4385428ddd38ece56f78e4074f3ae24999778a87b9",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "representation": "compact",
+      "schema": "semantic-lifecycle-admission/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "split": "validation",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "visibilityValidated": true
+    }
+  ],
+  "optimizerSteps": 0,
+  "preparation": [
+    {
+      "accepted": 16,
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "counts": {
+        "accepted_candidate": 16,
+        "admitted": 16,
+        "attempted": 16
+      },
+      "familySplits": {
+        "semantic-recipe:absolute-distance": "train",
+        "semantic-recipe:capped-budget": "train",
+        "semantic-recipe:flag-intersection": "train",
+        "semantic-recipe:flag-union": "validation",
+        "semantic-recipe:inventory-shortfall": "train",
+        "semantic-recipe:midpoint": "train",
+        "semantic-recipe:modular-clock": "validation",
+        "semantic-recipe:overtime-rate": "train",
+        "semantic-recipe:parity-adjustment": "train",
+        "semantic-recipe:rectangle-perimeter": "train",
+        "semantic-recipe:rectangular-capacity": "train",
+        "semantic-recipe:relative-growth": "train",
+        "semantic-recipe:squared-distance": "test",
+        "semantic-recipe:triangular-series": "train",
+        "semantic-recipe:unit-conversion": "train",
+        "semantic-recipe:weighted-average": "train"
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "maxHistory": 1024,
+      "maxPositions": 1024,
+      "optimizerSteps": 0,
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "refusals": [],
+      "representation": "explicit",
+      "schema": "semantic-preparation/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "splitSeed": "semantic-family/4",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    {
+      "accepted": 16,
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "counts": {
+        "accepted_candidate": 16,
+        "admitted": 16,
+        "attempted": 16
+      },
+      "familySplits": {
+        "semantic-recipe:absolute-distance": "train",
+        "semantic-recipe:capped-budget": "train",
+        "semantic-recipe:flag-intersection": "train",
+        "semantic-recipe:flag-union": "validation",
+        "semantic-recipe:inventory-shortfall": "train",
+        "semantic-recipe:midpoint": "train",
+        "semantic-recipe:modular-clock": "validation",
+        "semantic-recipe:overtime-rate": "train",
+        "semantic-recipe:parity-adjustment": "train",
+        "semantic-recipe:rectangle-perimeter": "train",
+        "semantic-recipe:rectangular-capacity": "train",
+        "semantic-recipe:relative-growth": "train",
+        "semantic-recipe:squared-distance": "test",
+        "semantic-recipe:triangular-series": "train",
+        "semantic-recipe:unit-conversion": "train",
+        "semantic-recipe:weighted-average": "train"
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "maxHistory": 1024,
+      "maxPositions": 1024,
+      "optimizerSteps": 0,
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "refusals": [],
+      "representation": "outcome-only",
+      "schema": "semantic-preparation/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "splitSeed": "semantic-family/4",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    {
+      "accepted": 32,
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "counts": {
+        "accepted_candidate": 32,
+        "admitted": 32,
+        "attempted": 32
+      },
+      "familySplits": {
+        "semantic-recipe:absolute-distance": "train",
+        "semantic-recipe:capped-budget": "train",
+        "semantic-recipe:flag-intersection": "train",
+        "semantic-recipe:flag-union": "validation",
+        "semantic-recipe:inventory-shortfall": "train",
+        "semantic-recipe:midpoint": "train",
+        "semantic-recipe:modular-clock": "validation",
+        "semantic-recipe:overtime-rate": "train",
+        "semantic-recipe:parity-adjustment": "train",
+        "semantic-recipe:rectangle-perimeter": "train",
+        "semantic-recipe:rectangular-capacity": "train",
+        "semantic-recipe:relative-growth": "train",
+        "semantic-recipe:squared-distance": "test",
+        "semantic-recipe:triangular-series": "train",
+        "semantic-recipe:unit-conversion": "train",
+        "semantic-recipe:weighted-average": "train"
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "maxHistory": 1024,
+      "maxPositions": 1024,
+      "optimizerSteps": 0,
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "refusals": [],
+      "representation": "explicit",
+      "schema": "semantic-preparation/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "splitSeed": "semantic-family/4",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    {
+      "accepted": 16,
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "counts": {
+        "accepted_candidate": 16,
+        "admitted": 16,
+        "attempted": 16
+      },
+      "familySplits": {
+        "semantic-recipe:absolute-distance": "train",
+        "semantic-recipe:capped-budget": "train",
+        "semantic-recipe:flag-intersection": "train",
+        "semantic-recipe:flag-union": "validation",
+        "semantic-recipe:inventory-shortfall": "train",
+        "semantic-recipe:midpoint": "train",
+        "semantic-recipe:modular-clock": "validation",
+        "semantic-recipe:overtime-rate": "train",
+        "semantic-recipe:parity-adjustment": "train",
+        "semantic-recipe:rectangle-perimeter": "train",
+        "semantic-recipe:rectangular-capacity": "train",
+        "semantic-recipe:relative-growth": "train",
+        "semantic-recipe:squared-distance": "test",
+        "semantic-recipe:triangular-series": "train",
+        "semantic-recipe:unit-conversion": "train",
+        "semantic-recipe:weighted-average": "train"
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "maxHistory": 1024,
+      "maxPositions": 1024,
+      "optimizerSteps": 0,
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "refusals": [],
+      "representation": "compact",
+      "schema": "semantic-preparation/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "splitSeed": "semantic-family/4",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    {
+      "accepted": 32,
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "counts": {
+        "accepted_candidate": 32,
+        "admitted": 32,
+        "attempted": 32
+      },
+      "familySplits": {
+        "semantic-recipe:absolute-distance": "train",
+        "semantic-recipe:capped-budget": "train",
+        "semantic-recipe:flag-intersection": "train",
+        "semantic-recipe:flag-union": "validation",
+        "semantic-recipe:inventory-shortfall": "train",
+        "semantic-recipe:midpoint": "train",
+        "semantic-recipe:modular-clock": "validation",
+        "semantic-recipe:overtime-rate": "train",
+        "semantic-recipe:parity-adjustment": "train",
+        "semantic-recipe:rectangle-perimeter": "train",
+        "semantic-recipe:rectangular-capacity": "train",
+        "semantic-recipe:relative-growth": "train",
+        "semantic-recipe:squared-distance": "test",
+        "semantic-recipe:triangular-series": "train",
+        "semantic-recipe:unit-conversion": "train",
+        "semantic-recipe:weighted-average": "train"
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "maxHistory": 1024,
+      "maxPositions": 1024,
+      "optimizerSteps": 0,
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "refusals": [],
+      "representation": "compact",
+      "schema": "semantic-preparation/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "splitSeed": "semantic-family/4",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    }
+  ],
+  "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+  "schema": "semantic-experiment-preparation/4",
+  "stageSupply": [
+    {
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "corpusIdentity": "ed0c3c37b8e1b7552f533b090266418294bb0dcdf0ab2006b2f22280bf7d59e3",
+      "episodes": {
+        "train": 13,
+        "validation": 2
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "optimizerSteps": 0,
+      "phase": "SC",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "representation": "explicit",
+      "schema": "semantic-stage-supply/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    {
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "corpusIdentity": "b96742ff013838a9e2b92ce1e507371839ecb6738c3976f110e9ae7d9e49c7e9",
+      "episodes": {
+        "train": 13,
+        "validation": 2
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "optimizerSteps": 0,
+      "phase": "SO",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "representation": "outcome-only",
+      "schema": "semantic-stage-supply/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    {
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "corpusIdentity": "0e8a4bf0090e41c76f7e3b083cb08a5fc96569b353f64d465ef9b1dab3f2e0bd",
+      "episodes": {
+        "train": 13,
+        "validation": 2
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "optimizerSteps": 0,
+      "phase": "SC",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "representation": "compact",
+      "schema": "semantic-stage-supply/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    {
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "corpusIdentity": "355fcd8139a818a366d1cab579d0d3594ed849213e9a4de6d722c60b6c89e79c",
+      "episodes": {
+        "train": 27,
+        "validation": 5
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "optimizerSteps": 0,
+      "phase": "SE",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "representation": "explicit",
+      "schema": "semantic-stage-supply/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    {
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+      "corpusIdentity": "db42bc350027c3d2627a7e36919ec727d9490ad1298e9b74ebaef24cb822e81d",
+      "episodes": {
+        "train": 27,
+        "validation": 5
+      },
+      "fixtureDigest": "bef4c96b9713a7f9cfc21a2afb287fc3f8920bc53a4a951f20f5e86d1a673072",
+      "optimizerSteps": 0,
+      "phase": "SE",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "representation": "compact",
+      "schema": "semantic-stage-supply/4",
+      "schemaDigest": "83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    }
+  ],
+  "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+}

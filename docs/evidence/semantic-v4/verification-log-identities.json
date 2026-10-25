@@ -1,0 +1,66 @@
+{
+  "tracer": {
+    "log": "tracer-final-integrated-test.log",
+    "sha256": "86e866df4cf0426f94fab7c774af85a5aa838da400dece3f246e4ed0a9942d32",
+    "bytes": 74755,
+    "counts": {
+      "tests": 811,
+      "pass": 811,
+      "fail": 0,
+      "skipped": 0
+    }
+  },
+  "browser": {
+    "log": "tracer-final-browser.log",
+    "sha256": "4a2c8a14daf165642a0fc863425bc99b540f127a9a9aed67dc0bd4ae92e721ff",
+    "bytes": 405,
+    "counts": {
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "skipped": 0
+    }
+  },
+  "nativeCoordinator": {
+    "log": "orchestration-b2-final.log",
+    "sha256": "0291c1d37e63e91f8bc586d8d286cd95c964e1156f6065c1e727414b66ace946",
+    "bytes": 1707,
+    "counts": {
+      "tests": 14,
+      "pass": 14,
+      "fail": 0,
+      "skipped": 0
+    }
+  },
+  "natlang": {
+    "log": "natlang-final-runtime-gate.log",
+    "sha256": "01caf85c6df451ba0bf093750e387ff36de3b3b6173e4ab85dbf5263cacd28d7",
+    "bytes": 20166,
+    "counts": {
+      "tests": 208,
+      "pass": 208,
+      "fail": 0,
+      "skipped": 0
+    }
+  },
+  "natlangSupporting": {
+    "log": "natlang-final-check-quick.log",
+    "sha256": "68b0e439c03bdcc9a31bd60a3abe302c7b65df99eb12973a87af708844a40ff4",
+    "bytes": 942
+  },
+  "natlangBuild": {
+    "log": "natlang-final-build.log",
+    "sha256": "8ef05c5a9f241fdb916f331d259c54460f0933e22da8f8ebb105d9873d77cf82",
+    "bytes": 491
+  },
+  "natlangBrowserTypes": {
+    "log": "natlang-final-browser-types.log",
+    "sha256": "47d293a47e0b3c198c8aad0f4d4c3ff81a473f6a81b37beffbf605795b7c5ef6",
+    "bytes": 191
+  },
+  "natlangLayering": {
+    "log": "natlang-final-layering.log",
+    "sha256": "0527a7efdbda2f715c19c317147a2f253b1b2039e983a5c98b5f1e0f342168c4",
+    "bytes": 338
+  }
+}

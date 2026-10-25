@@ -152,18 +152,19 @@ test('selected external requests match actual fixture and preserve immutable arg
   c.commit(rec('request',{effect:'fx1',operation:'demo.store',
     invocation:'i1',site:site('host.store("n",5)'),
     arguments:[['str','n'],tag(5)],payload:'["n",5]'}));
-  c.commit(rec('bind',{name:'n',value:tag(8)}));
+  assert.throws(()=>c.commit(rec('bind',{name:'n',value:tag(8)})),e=>e.category==='synchronous-effect');
   assert.deepEqual(c.effects.get('fx1').arguments,['n',5]);
   assert.throws(()=>c.commit(rec('request',{effect:'fx2',operation:'demo.store',
     invocation:'i1',site:site('host.store("n",8)'),
     arguments:[['str','n'],tag(8)],payload:'["n",8]'})),
-    e=>e.category==='request-mismatch');
+    e=>e.category==='synchronous-effect');
   const before=c.segmentPacket();
   assert.throws(()=>c.commit(rec('observe',{effect:'fx1',result:tag(99),
     status:'fulfilled'}),{mode:'observed'}),e=>e.category==='observation');
   assert.deepEqual(c.segmentPacket(),before);
   c.commit(rec('observe',{effect:'fx1',result:['undefined'],status:'fulfilled'}),
     {mode:'observed'});
+  c.commit(rec('bind',{name:'n',value:tag(8)}));
   c.commit(rec('return',{value:tag(8)}));
   c.commit(rec('end',{kind:'return'}));
   assert.equal(c.completion.kind,'return');
@@ -176,10 +177,11 @@ test('required outstanding effect cannot be hidden behind an end record',()=>{
   c.commit(rec('request',{effect:'f1',operation:'demo.readNumber',
     invocation:'i1',site:site('host.readNumber("x")'),
     arguments:[['str','x']],payload:'["x"]'}));
-  c.commit(rec('return',{value:tag(2)}));
-  assert.throws(()=>c.commit(rec('end',{kind:'return'})),e=>e.category==='incomplete');
+  assert.throws(()=>c.commit(rec('return',{value:tag(2)})),e=>e.category==='synchronous-effect');
+  assert.throws(()=>c.commit(rec('end',{kind:'return'})),e=>e.category==='synchronous-effect');
   c.commit(rec('observe',{effect:'f1',status:'fulfilled',result:tag(3)}),
     {mode:'observed'});
+  c.commit(rec('return',{value:tag(2)}));
   c.commit(rec('end',{kind:'return'}));
   assert.equal(c.completion.kind,'return');
 });
@@ -208,7 +210,7 @@ test('canonical compiler records contain no private journal counters or shape re
   assert(!corpus.includes('journalEvent'));
   assert(!corpus.includes('shapeVersion'));
   assert(!corpus.includes('envId'));
-  assert.equal(exported.public.schema,'semantic-execution/3');
+  assert.equal(exported.public.schema,'semantic-execution/4');
 });
 
 test('transformation certificates remain private and forged sidecar fails integrity',()=>{
@@ -290,6 +292,8 @@ test('external fixtures preserve their order and consumed state across continuat
     arguments:[['str','n'],tag(5)],payload:'["n",5]'}));
   const restored=SemanticController.fromPacket(c.segmentPacket());
   assert.equal(restored.fixtureReplies[0].claimed,true);
+  assert.throws(()=>restored.commit(second),e=>e.category==='synchronous-effect');
+  restored.commit(rec('observe',{effect:'fx1',status:'fulfilled',result:['undefined']}),{mode:'observed'});
   restored.commit(second);
   assert.equal(restored.effects.get('fx2').invocation,'i1');
   assert.equal(restored.effects.get('fx2').payload,'["x"]');
@@ -311,6 +315,7 @@ test('request arguments share the owned host codec for committed object graphs',
     invocation:'i1',site:{start,end:start+expression.length},
     arguments:[['str','n'],['ref','o1']],payload:'["n",{"x":2}]'});
   c.commit(request);
+  c.commit(rec('observe',{effect:'fx1',status:'fulfilled',result:['undefined']}),{mode:'observed'});
   c.commit(rec('write',{object:'o1',key:'x',present:true,value:tag(9)}));
   assert.equal(c.effects.get('fx1').payload,'["n",{"x":2}]');
   assert.deepEqual(c.effects.get('fx1').arguments,['n',{x:2}]);

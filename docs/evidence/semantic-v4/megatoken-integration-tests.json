@@ -1,0 +1,30 @@
+{
+  "schema": "semantic-general-ci-repair-validation/4",
+  "localRevision": "2c89760e40a0dcffe07063766e5dd6092c7b5b85",
+  "tree": "14001470251d3307ffbd469bfd11606505bfa270",
+  "publishedRevision": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+  "changes": [
+    "Semantic exposure accumulation, restore, checkpoint, log and result fields are scoped to an actual semantic experiment",
+    "Training checkpoint format18 rejects earlier contracts",
+    "SC/SE/SO launch examples bind source-corpus/lifecycle producer roles in readiness inventory",
+    "Registered stream producer inventory follows each declared curriculum stage",
+    "Existing dual-donor private-key fixture now creates the key path required by its unchanged production branch"
+  ],
+  "pytest": {
+    "passed": 37,
+    "skipped": 1,
+    "seconds": 17.07,
+    "skipReason": "Pinned device snapshot requires CUDA",
+    "command": ".venv/bin/python -m pytest -q tests/test_semantic_training_state.py tests/test_checkpoint_async.py tests/test_checkpoint_replace.py tests/test_engram_prepare.py tests/test_open_media.py::test_every_stream_this_module_emits_is_in_the_stage_plan tests/test_open_media.py::test_registered_producers_belong_to_their_declared_stages tests/test_probe_rehearsal.py::test_launch_readiness_catches_the_known_configuration_gaps tests/test_probe_rehearsal.py::test_readiness_only_command_writes_a_report tests/test_semantic_data_pipeline.py"
+  },
+  "staticChecks": {
+    "ruffCheck": true,
+    "ruffFormatFiles": 443,
+    "gitDiffCheck": true
+  },
+  "distributedTrainingTestRunLocally": false,
+  "distributedTrainingValidation": "Existing CI regression remains the end-to-end rank-summary gate; local verification used actual nonoptimizing checkpoint round trips and engine scope inspection",
+  "nativeImportProtocolChanged": false,
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}

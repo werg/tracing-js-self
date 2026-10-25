@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence} from 'tracing-js-self/training';
+import {verifyTrainingCase,recheckIndependentTrainingEvidence} from 'tracing-js-self/training/diagnostic';
 import {createBoundedNatlangEnvironment} from '../src/natlang.js';
 const strict=code=>'"use strict";\n'+code;
 function verified(code,args=[]){

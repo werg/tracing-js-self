@@ -21,7 +21,7 @@ const counts={episodes:actual.length,correct:0,incorrect:0,incomplete:0,invalid:
 let logicalRecords=0,physicalGroups=0,observedUtf8Bytes=0,generatedUtf8Bytes=0;
 for(const [index,selectedEpisode] of actual.entries()){
   const referenceEpisode=gold[index];
-  if(referenceEpisode?.public?.schema!=='semantic-execution/3'||
+  if(referenceEpisode?.public?.schema!=='semantic-execution/4'||
      referenceEpisode.sidecar?.schema!=='semantic-supervision/2'||
      referenceEpisode.sidecar?.referenceStatus!=='agreed')
     throw new Error('Missing independently verified v3 reference at line '+(index+1));

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRuntime,validateBundle,replayExact} from 'tracing-js-self';
-import {verifyTrainingCase,exportTraining} from 'tracing-js-self/training';
+import {verifyTrainingCase,exportTraining} from 'tracing-js-self/training/diagnostic';
 import {createBoundedNatlangEnvironment} from '../src/natlang.js';
 const strict=body=>'"use strict";\n'+body;
 function completed(body,args=[]){

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Version-three deterministic local fixture generation with explicit refusals.
+// Offline bounded-pure diagnostic fixture generation; not production training data.
 // Does not manufacture independent admission or model accuracy evidence.
 import {writeFileSync} from 'node:fs';
 import {verifyTrainingCase} from '../src/training/admit.js';
@@ -80,7 +80,7 @@ for(let index=0;index<count;index++){
 }
 writeFileSync(output,rows.map(JSON.stringify).join('\n')+(rows.length?'\n':''));
 const manifest={schema:'semantic-corpus-manifest/3',source:'werg/tracing-js-self',
-  traceFormat:'semantic-trace/3',contextFormat:'semantic-context/3',
+  traceFormat:'semantic-trace/4',contextFormat:'semantic-context/4',
   supervisionFormat:'semantic-supervision/2',profile:'training-js/1',
   policy:{maxOperators,maxExpressionNodes:32,completionPolicy:'immediate-root'},
   seed,requested:count,counts,metrics,

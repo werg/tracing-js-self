@@ -5,7 +5,8 @@ import {
   replayExact, causalPrefix, TraceValidationError, TraceReplayError
 } from 'tracing-js-self';
 
-import {verifyTrainingCase,SemanticController,evaluateSelectedTrajectory} from 'tracing-js-self/training';
+import {verifyTrainingCase,SemanticController,evaluateSelectedTrajectory} from 'tracing-js-self/training/diagnostic';
+import {verifyEffectfulTrainingCase,SelectedExecutionHarness,HARNESS_PROFILE} from 'tracing-js-self/training';
 
 const archive = runtime => JSON.parse(JSON.stringify(runtime.exportRun()));
 const binding = (state, name) => Object.values(state.envs)
@@ -105,7 +106,7 @@ test('package exports the validation and replay error constructors thrown by its
   assert.throws(() => replayExact(invalidSource), TraceReplayError);
 });
 
-test('training subpath exposes the selected-state controller and supervised evaluation',()=>{
+test('offline diagnostic subpath retains independent bounded-pure corpus checks',()=>{
   const checked=verifyTrainingCase({
     source:'"use strict";function f(x){return x+1;}',entry:'f',args:[4]
   });
@@ -117,4 +118,14 @@ test('training subpath exposes the selected-state controller and supervised eval
   });
   assert.equal(report.valid,true);
   assert.equal(report.correctness,'correct');
+});
+
+test('production training subpath emits explicit harness invocations and exact source evidence',async()=>{
+  assert.equal(HARNESS_PROFILE,'selected-harness/2');
+  const result=await verifyEffectfulTrainingCase({source:'"use strict";function run(x){return x+1;}',
+    entry:'run',args:[4],fixture:{calls:[]},family:'package-api'});
+  assert.equal(result.status,'locally_verified',result.reason);
+  assert.equal(result.exported.public.profile,HARNESS_PROFILE);
+  assert.equal(result.exported.public.groups,undefined);
+  assert.equal(SelectedExecutionHarness.replay(result.exported).invocations.get('invocation1').controller.completion.value[1],5);
 });

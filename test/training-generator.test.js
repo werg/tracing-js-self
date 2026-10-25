@@ -11,7 +11,7 @@ test('fixture generator preserves seed identity and rejects out-of-range seeds',
     const generate=seed=>{
       const output=join(temp,'seed-'+seed+'.jsonl');
       const manifest=join(temp,'seed-'+seed+'.json');
-      execFileSync(process.execPath,['tools/generate-training.mjs',
+      execFileSync(process.execPath,['tools/generate-diagnostic-training.mjs',
         '--count','8','--seed',String(seed),'--output',output,'--manifest',manifest]);
       const m=JSON.parse(readFileSync(manifest,'utf8'));
       assert.equal(m.seed,seed);
@@ -20,7 +20,7 @@ test('fixture generator preserves seed identity and rejects out-of-range seeds',
     };
     const zero=generate(0),one=generate(1);
     assert.notDeepEqual(zero,one,'seed 0 must not alias seed 1');
-    assert.throws(()=>execFileSync(process.execPath,['tools/generate-training.mjs',
+    assert.throws(()=>execFileSync(process.execPath,['tools/generate-diagnostic-training.mjs',
       '--seed','4294967296','--output',join(temp,'bad.jsonl')],{stdio:'pipe'}),
       /Command failed/);
   } finally {

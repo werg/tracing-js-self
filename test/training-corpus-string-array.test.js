@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase,validateTrainingExport} from 'tracing-js-self/training';
+import {verifyTrainingCase,validateTrainingExport} from 'tracing-js-self/training/diagnostic';
 import {validateBundle,replayExact} from 'tracing-js-self';
 
 function check(body,args=[]){

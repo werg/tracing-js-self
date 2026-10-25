@@ -127,7 +127,7 @@ export function recheckIndependentTrainingEvidence(exported) {
     if(branches.status!=='agreed'||!isDeepStrictEqual(branches,branchAudit))
       throw new Error('Independent control evidence disagrees');
     return {valid:true,scope:'locally_verified_only',admitted:false,
-      traceFormat:'semantic-trace/3',operations:operations.checked,branches:branches.checked};
+      traceFormat:'semantic-trace/4',operations:operations.checked,branches:branches.checked};
   } catch(error) {
     return {valid:false,scope:'locally_verified_only',admitted:false,
       reason:String(error.message)};

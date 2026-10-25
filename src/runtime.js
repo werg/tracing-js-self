@@ -5,7 +5,8 @@ import { importGraph } from './training/graph.js';
 import { parseTraining, TRAINING_PARSER } from './training/profile.js';
 import { createArithmetic, advanceArithmetic, isOwnedArithmetic, ordinaryGet, ordinaryBuiltin, objectPrototype } from './spec-operations.js';
 import { operationMutation } from './spec-mutations.js';
-import {hostOperation,prepareHostRequest} from './host/operations.js';
+import {hostOperation,prepareHostRequest,HOST_METHODS,SUBSCRIPTION_CLOSERS} from './host/operations.js';
+import {encodeNativeGraph,validateOwnedGraph} from './host/graph-codec.js';
 import { specStep, ENGINE_REVISION } from './spec-schema.js';
 import {supportsPinnedRegExp,testPinnedRegExp,scanPinnedReplacement} from './owned-pinned-regexp.js';
 
@@ -1115,7 +1116,7 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
             this.failFrame(s,f,completion);
             return {...operands(base,key),completion};
           }
-          if(base.value[0]==='host')v=['hostfn',`${base.value[1]}.${property}`];
+          if(base.value[0]==='host')v=['hostfn',base.value[1]==='demo'?(HOST_METHODS[property]??`demo.${property}`):`${base.value[1]}.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Date' &&
                   property==='now')v=['hostfn','platform.dateNow'];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Atomics' &&
@@ -2168,6 +2169,8 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
             const id=this.next(s,'effect'),promiseId=kind==='promise'?this.newPromise(s):null;
             s.effects[id]={id,operation,kind,args:args.map(x=>x.value),argOrigins:args.map(x=>x.origin),
               request,frameId:f.id,promiseId,
+              ...(hostOperation(operation).callbackLifetime==='subscription'?
+                {subscription:{state:'pending',token:null,closedBy:null}}:{}),
               dispatch:'prepared',external:'pending',immediate:kind==='promise'?'completed':'awaiting',outcomeIds:[],inputIds:[],version:0};
             if(kind==='promise')this.stackPush(f,['promise',promiseId],eventId);
             else {f.status='blocked';f.blockedOn=id;}
@@ -2224,8 +2227,9 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
    */
   recordExternalCallback({effectId,callbackId,args=[]}={}){
     const effect=this.state.effects[effectId];
-    if(!effect||effect.dispatch!=='dispatched'||effect.external!=='pending')
-      throw new Error('Callback requires an outstanding dispatched effect');
+    if(!effect||effect.dispatch!=='dispatched'||
+       !(effect.external==='pending'||effect.external==='completed'&&effect.subscription?.state==='active'))
+      throw new Error('Callback requires an outstanding dispatched effect or active subscription');
     const spec=hostOperation(effect.operation);
     if(!spec.callbackIndices?.some(i=>effect.args[i]?.[0]==='ref'&&
       effect.args[i][1]===callbackId))
@@ -2242,7 +2246,7 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
       return {operands:values,causes:[{kind:'effect',effectId}]};
     });
   }
-  recordInputArrival({effectId,kind,value,abrupt=false,inputId=null}={}) {
+  recordInputArrival({effectId,kind,value,graph=null,abrupt=false,inputId=null}={}) {
     const e=this.state.effects[effectId];if(!e||e.dispatch!=='dispatched')throw new Error('Input requires a dispatched effect');
     if(kind!==(e.kind==='promise'?'completion':'immediate'))throw new Error('Wrong input kind for host call');
     if(e.external!=='pending')throw new Error('Effect already completed');
@@ -2250,15 +2254,28 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
     if(typeof abrupt!=='boolean')throw new TypeError('Input abrupt must be boolean');
     if(inputId!==null && (typeof inputId!=='string'||!inputId||['__proto__','constructor','prototype'].includes(inputId)))
       throw new TypeError('Transport input ID must be a nonempty, non-reserved string');
-    if(Array.isArray(value) && !guestValue(value))throw new TypeError('Unsupported canonical external payload');
-    const encoded=guestValue(value)?copy(value):encode(value);
+    const spec=hostOperation(e.operation);
+    if(graph===null&&Array.isArray(value)&&!guestValue(value))
+      throw new TypeError('Unsupported canonical external payload');
+    if(graph===null&&value!==null&&typeof value==='object'&&!guestValue(value)){
+      if(spec.resultCodec!=='owned-graph/1')throw new TypeError('Operation requires a scalar external result');
+      graph=encodeNativeGraph([value]);
+    }
+    if(graph!==null){
+      if(spec.resultCodec!=='owned-graph/1')throw new TypeError('Operation has no declared result graph codec');
+      validateOwnedGraph(graph);
+      if(graph.roots.length!==1)throw new TypeError('External result graph needs exactly one root');
+      graph=copy(graph);
+    }else if(Array.isArray(value)&&!guestValue(value))throw new TypeError('Unsupported canonical external payload');
+    const encoded=graph?copy(graph.roots[0]):guestValue(value)?copy(value):encode(value);
     let allocated;
     this.commit('external.input.arrive',s=>{
       if(inputId===null) {
         do { allocated=this.next(s,'input'); } while(Object.hasOwn(s.inputs,allocated));
       } else allocated=inputId;
       if(Object.hasOwn(s.inputs,allocated))throw new Error('Duplicate input ID');
-      s.inputs[allocated]={id:allocated,effectId,kind,abrupt,value:encoded,status:'arrived',version:0};
+      s.inputs[allocated]={id:allocated,effectId,kind,abrupt,value:encoded,
+        ...(graph?{graph}:{}),status:'arrived',version:0};
       s.effects[effectId].inputIds.push(allocated);
       return {causes:[{kind:'effect',effectId}]};
     });
@@ -2269,6 +2286,42 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
     const e=this.state.effects[input.effectId];
     return this.commit('external.input.deliver',(s,eventId)=>{
       const i=s.inputs[inputId],fx=s.effects[i.effectId];i.status='delivered';fx.external=i.abrupt?'rejected':'completed';
+      // Outside identities remain private arrival data until this delivery.
+      // Allocate all nodes first, then link them, so aliases and cycles enter
+      // the owned heap atomically without borrowing native object identities.
+      if(i.graph){
+        const identities=new Map(i.graph.objects.map(node=>[node.id,this.next(s,'obj')]));
+        const value=tag=>tag[0]==='ref'?['ref',identities.get(tag[1])]:copy(tag);
+        i.graphIdentities=[...identities].map(([source,target])=>({source,target}));
+        for(const node of i.graph.objects){
+          const id=identities.get(node.id),properties={},propertyVersions={};
+          for(const member of node.properties){
+            properties[member.key]=token(value(member.value),eventId);
+            propertyVersions[member.key]=0;
+          }
+          s.heap[id]={id,kind:node.kind,...(node.prototype===null?{prototype:null}:{}),
+            properties,propertyVersions,shapeVersion:0,version:0};
+        }
+        i.value=value(i.graph.roots[0]);
+      }
+      if(fx.subscription){
+        if(!i.abrupt&&(i.value[0]!=='str'||Object.values(s.effects).some(other=>other.id!==fx.id&&
+            other.operation===fx.operation&&other.subscription?.token&&equal(other.subscription.token,i.value))))
+          throw new TypeError('Subscription registration requires a unique native string token');
+        fx.subscription={state:i.abrupt?'closed':'active',token:i.abrupt?null:copy(i.value),
+          closedBy:i.abrupt?fx.id:null};
+      }
+      const registration=SUBSCRIPTION_CLOSERS[fx.operation];
+      if(registration&&!i.abrupt){
+        const targets=Object.values(s.effects).filter(other=>other.operation===registration&&
+          other.subscription?.token&&equal(other.subscription.token,fx.args[0]));
+        if(targets.length!==1)throw new TypeError('Subscription close token has no unique owned registration');
+        const target=targets[0];
+        if(target.subscription.state==='active'){
+          target.subscription={...target.subscription,state:'closed',closedBy:fx.id};
+          s.control.a0.queue=s.control.a0.queue.filter(job=>job.kind!=='external-callback'||job.effectId!==target.id);
+        }
+      }
       let completion=null;
       if(fx.kind==='promise'){
         if(i.abrupt)this.rejectPromise(s,fx.promiseId,i.value,eventId);
@@ -2481,7 +2534,8 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
       if(c.timers.length){this.enterTimerTask();continue;}
       const pendingPromises=Object.values(this.state.promises).some(p=>p.status==='pending');
       const pendingEffects=Object.values(this.state.effects).some(e=>e.external==='pending');
-      const kind=pendingPromises||pendingEffects?'waiting':'terminated';
+      const subscriptions=Object.values(this.state.effects).some(e=>e.subscription?.state==='active');
+      const kind=pendingPromises||pendingEffects||subscriptions?'waiting':'terminated';
       this.seal(kind);return {kind,waitingOn:this.chunks.at(-1)?.exit.waitingOn??[],pendingEffects:this.chunks.at(-1)?.exit.pendingEffects??[]};
     }
     throw new Error(`Driver safety limit (${this.maxSteps} steps); no chunk has been misreported as complete`);

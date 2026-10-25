@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {verifyTrainingCase,recheckIndependentTrainingEvidence,
-  validateTrainingExport} from '../src/training/index.js';
+  validateTrainingExport} from '../src/training/diagnostic.js';
 import {validateBundle,replayExact} from '../src/index.js';
 
 function check(source,args){

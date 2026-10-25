@@ -18,6 +18,7 @@ function show(tag){
   }
 }
 function expr(node){
+  if(node.op==='random')return 'declared random()';
   if(node.op==='literal')return show(node.value);
   if(node.op==='local')return node.name;
   if(node.op==='read')return '&'+node.object+'['+JSON.stringify(node.key)+']';
@@ -48,9 +49,16 @@ function renderOne(kind,f) {
     case 'throw':return 'throw '+show(f.value);
     case 'request':return 'request '+f.effect+' '+f.operation+'('+
       f.arguments.map(show).join(', ')+') in '+f.invocation+
-      ' @'+f.site.start+':'+f.site.end;
+      ' @'+f.site.start+':'+f.site.end+(f.promise?' -> Promise &'+f.promise:'');
     case 'observe':return 'observe '+f.effect+' '+f.status+' '+show(f.result);
     case 'job':return 'job '+f.action+' '+f.job+' owner '+f.owner;
+    case 'promise':return f.action==='create'?'create owned Promise &'+f.promise:
+      f.action==='react'?'when &'+f.promise+' settles, '+f.reaction+' '+
+        (f.closure?'&'+f.closure:'propagation')+' as '+f.job+(f.target?' -> &'+f.target:''):
+      f.action+' Promise &'+f.promise+' '+(f.target?'from &'+f.target:show(f.value));
+    case 'await':return 'await Promise &'+f.promise+'; suspend '+f.invocation+
+      ' as '+f.continuation+(f.returnPromise?'; call returns owned Promise &'+f.returnPromise:'');
+    case 'resume':return 'resume '+f.invocation+' via '+f.continuation+' with '+f.status+' '+show(f.result);
     case 'end':return 'end '+f.kind;
     default:throw new TypeError('Unsupported semantic renderer record '+kind);
   }

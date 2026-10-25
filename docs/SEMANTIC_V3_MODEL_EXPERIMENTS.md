@@ -1,5 +1,8 @@
 # Reproducible model-learning comparison (not a smoke test)
 
+> Historical comparison runbook. The original seeds, conditions and externally scored baseline remain preserved here. New production harness cohorts and actual runner attestation are described in [the v4 implementation guide](SEMANTIC_HARNESS_V4_IMPLEMENTATION.md).
+
+
 This runbook implements the **required recording and analysis contract** for
 [the redesign experiment plan](SEMANTIC_TRACE_REDESIGN_PLAN.md). It does not
 assert that a model has been trained or that measured learning results exist.
@@ -40,7 +43,7 @@ Export independently verified held-out v3 candidates only, with
 `sourceLineage`. Freeze their observed source/input identities first:
 
 ```sh
-npm run training:freeze -- \
+npm run diagnostic:freeze -- \
   --references frozen-test.jsonl \
   --output frozen-cohort.json
 ```
@@ -102,7 +105,7 @@ and generates **family-clustered deterministic bootstrap intervals** for
 correctness differences from the pinned historical baseline.
 
 ```sh
-npm run training:experiment -- \
+npm run diagnostic:experiment -- \
   --manifest pinned-manifest.json \
   --references frozen-test.jsonl \
   --runs selected \

@@ -15,8 +15,8 @@ function sourceCase(body,args){
 }
 test('typed public v3 arithmetic computes and serializes separately from private journal',()=>{
   const episode=sourceCase('function run(x){return x*2+1;}',[7]);
-  assert.equal(episode.public.schema,'semantic-execution/3');
-  assert.equal(episode.public.traceFormat,'semantic-trace/3');
+  assert.equal(episode.public.schema,'semantic-execution/4');
+  assert.equal(episode.public.traceFormat,'semantic-trace/4');
   assert.equal(episode.sidecar.schema,'semantic-supervision/2');
   assert.equal(validateTrainingExport(episode).valid,true);
   const result=evaluateSelectedTrajectory({groups:episode.public.groups,

@@ -1,0 +1,472 @@
+{
+  "schema": "semantic-completion-preflight/4",
+  "repositories": {
+    "tracing-js-self": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+    "megatoken": "95115e7cb08b8681cae9769b1a134bf4ee9ca70e",
+    "natlang": "ffdcf5a0d3d871bf600626627fa44dbf324039e3"
+  },
+  "passed": true,
+  "configurations": 45,
+  "engineeringReceipt": "../../../contracts/semantic-engineering-completion.json",
+  "engineeringReceiptSha256": "97ebe62c79894107df451c9b86b887e751700f76c84ad8dd907e952ae1515cfd",
+  "sourceMatrixSha256": "bf529c2242603d5a7f9a582406ee00647bbd574daa5c578404529a73ff649408",
+  "method": "Actual SemanticExperimentConfig.preflight(phase=config.phase) for all original 45 matrix configurations, replacing only engineering_receipt in memory with the final completion receipt. All frozen cohort digests matched. No model or optimizer was created.",
+  "checks": [
+    {
+      "configuration": "common-support-explicit-fixed-examples-17.json",
+      "configurationSha256": "f7cd376b5cdec924bad69c0a515af5d58a117dd29b9fe69d72d81717effcda57",
+      "phase": "SC",
+      "representation": "explicit",
+      "regime": "fixed-examples",
+      "seed": 17,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-explicit-fixed-examples-29.json",
+      "configurationSha256": "54de0a3c3407dbcaf37ec72f0084b9ef7f5c98e125e29280b44c56f0aa52847a",
+      "phase": "SC",
+      "representation": "explicit",
+      "regime": "fixed-examples",
+      "seed": 29,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-explicit-fixed-examples-43.json",
+      "configurationSha256": "967897255965580a4f834782ef0e44bd0426ae725ed87d46f216811f34e87d04",
+      "phase": "SC",
+      "representation": "explicit",
+      "regime": "fixed-examples",
+      "seed": 43,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-explicit-fixed-tokens-17.json",
+      "configurationSha256": "a3fa07542bd9b871bb765fea6fc81cb7668dbdb63456eccac1dfaf2919616859",
+      "phase": "SC",
+      "representation": "explicit",
+      "regime": "fixed-tokens",
+      "seed": 17,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-explicit-fixed-tokens-29.json",
+      "configurationSha256": "2f1d91df939d3db655843ae7d4e71e18943b4bcf0f6c8ca03bc794c9eab0e6da",
+      "phase": "SC",
+      "representation": "explicit",
+      "regime": "fixed-tokens",
+      "seed": 29,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-explicit-fixed-tokens-43.json",
+      "configurationSha256": "9c51f6a5c1c922954de1fc27a3f8460c08dffb7289536f2fb7c44d070d0ac6ba",
+      "phase": "SC",
+      "representation": "explicit",
+      "regime": "fixed-tokens",
+      "seed": 43,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-explicit-measured-compute-17.json",
+      "configurationSha256": "24176ab24c4b393475581379372d30006991c69f9aa85de8e087c1e4c67206b5",
+      "phase": "SC",
+      "representation": "explicit",
+      "regime": "measured-compute",
+      "seed": 17,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-explicit-measured-compute-29.json",
+      "configurationSha256": "4b787397f045ef8b8aeb025a576e4533ddce865faaaafd7bf4faf8e60f44d8db",
+      "phase": "SC",
+      "representation": "explicit",
+      "regime": "measured-compute",
+      "seed": 29,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-explicit-measured-compute-43.json",
+      "configurationSha256": "57ce3f563fc4fa25b8c05ea301c89260bf77492b5146b1e5dba997d2de98bca8",
+      "phase": "SC",
+      "representation": "explicit",
+      "regime": "measured-compute",
+      "seed": 43,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-compact-fixed-examples-17.json",
+      "configurationSha256": "8d865e8a0d6ad42f1b06b34d7e134b2aad363a1e014fa979289f680345c7b8b8",
+      "phase": "SC",
+      "representation": "compact",
+      "regime": "fixed-examples",
+      "seed": 17,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-compact-fixed-examples-29.json",
+      "configurationSha256": "ea18eaf8964fd8cb20d305826ac0b26279aed68684b1132b6fd3f5794dfa9723",
+      "phase": "SC",
+      "representation": "compact",
+      "regime": "fixed-examples",
+      "seed": 29,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-compact-fixed-examples-43.json",
+      "configurationSha256": "e1d4701b391b65b2cfe190b814ac479a690ac632040773a29494f741a90b09f9",
+      "phase": "SC",
+      "representation": "compact",
+      "regime": "fixed-examples",
+      "seed": 43,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-compact-fixed-tokens-17.json",
+      "configurationSha256": "de6907bcd7333678d6e1651f0380c576c20cd06524210e21c4d02027d39dbaaa",
+      "phase": "SC",
+      "representation": "compact",
+      "regime": "fixed-tokens",
+      "seed": 17,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-compact-fixed-tokens-29.json",
+      "configurationSha256": "1ea66dd739a9f48753183469f08ca083e4a6d389f197be07009d70889f83de51",
+      "phase": "SC",
+      "representation": "compact",
+      "regime": "fixed-tokens",
+      "seed": 29,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-compact-fixed-tokens-43.json",
+      "configurationSha256": "d5c7cfd5ad54611a77ea43eb37264bbf4ec815da7538273f69c776686481a6b1",
+      "phase": "SC",
+      "representation": "compact",
+      "regime": "fixed-tokens",
+      "seed": 43,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-compact-measured-compute-17.json",
+      "configurationSha256": "e6bc00a37675a85396126136a40e18b8cb238104869d9dfec6b63594d4714829",
+      "phase": "SC",
+      "representation": "compact",
+      "regime": "measured-compute",
+      "seed": 17,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-compact-measured-compute-29.json",
+      "configurationSha256": "dd7a0b8b413bf59fc98b119ca16d6ece278858bae9ea7a299be214ae392d6917",
+      "phase": "SC",
+      "representation": "compact",
+      "regime": "measured-compute",
+      "seed": 29,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-compact-measured-compute-43.json",
+      "configurationSha256": "c01101195bce7a8f3e239f6db1c3a26c140b53dc5e240c9fe3735dbdb80825ba",
+      "phase": "SC",
+      "representation": "compact",
+      "regime": "measured-compute",
+      "seed": 43,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-outcome-only-fixed-examples-17.json",
+      "configurationSha256": "6dc70bceec663cba83f56e515e69e5de19525e2401f4f4a134a4b7aa8f522761",
+      "phase": "SO",
+      "representation": "outcome-only",
+      "regime": "fixed-examples",
+      "seed": 17,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-outcome-only-fixed-examples-29.json",
+      "configurationSha256": "b0720b7eda41cfec8a1c7d02597d9622b29965bb1a39fba4ad7877a587426588",
+      "phase": "SO",
+      "representation": "outcome-only",
+      "regime": "fixed-examples",
+      "seed": 29,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-outcome-only-fixed-examples-43.json",
+      "configurationSha256": "339f9ea9ca604a2558a5a495559c09914d0e47980eee86d4d866e7050f6230d8",
+      "phase": "SO",
+      "representation": "outcome-only",
+      "regime": "fixed-examples",
+      "seed": 43,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-outcome-only-fixed-tokens-17.json",
+      "configurationSha256": "8ee9435a03b0e61f06f2d824342cdeeedfe3d265be995c38e067af16c59823fb",
+      "phase": "SO",
+      "representation": "outcome-only",
+      "regime": "fixed-tokens",
+      "seed": 17,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-outcome-only-fixed-tokens-29.json",
+      "configurationSha256": "9da107df04dffaa90b7d9f732008d617a346c0598d5e034fb8c198ddf043a6a5",
+      "phase": "SO",
+      "representation": "outcome-only",
+      "regime": "fixed-tokens",
+      "seed": 29,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-outcome-only-fixed-tokens-43.json",
+      "configurationSha256": "7d52640075c6b7eea17d682fc8632dd62a42eff7638bc32695e3c1ad10a31124",
+      "phase": "SO",
+      "representation": "outcome-only",
+      "regime": "fixed-tokens",
+      "seed": 43,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-outcome-only-measured-compute-17.json",
+      "configurationSha256": "c5493d3e827f921d77b25c9022bfc9075ee43e649366775f2f466fe37ae20f71",
+      "phase": "SO",
+      "representation": "outcome-only",
+      "regime": "measured-compute",
+      "seed": 17,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-outcome-only-measured-compute-29.json",
+      "configurationSha256": "b6d36165b1af5e989bd7fd097250523b84aa20c25d8615e17faa8772bc568550",
+      "phase": "SO",
+      "representation": "outcome-only",
+      "regime": "measured-compute",
+      "seed": 29,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "common-support-outcome-only-measured-compute-43.json",
+      "configurationSha256": "86724acbc72befb7ddc8e7d24f7c6674b64965d3655f3119803b13f0bd0623cc",
+      "phase": "SO",
+      "representation": "outcome-only",
+      "regime": "measured-compute",
+      "seed": 43,
+      "cohortDigest": "dd04f57613840a5ca47a4b9423a82ed3e76213c4b56f2ecbcf6b2818890a27ec",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "effectful-tracks-events-explicit-fixed-examples-17.json",
+      "configurationSha256": "79172b704dcb4ed017f6a9114d5fa08f41d4c595e5cdd84847f2fff0e14d5bfb",
+      "phase": "SE",
+      "representation": "explicit",
+      "regime": "fixed-examples",
+      "seed": 17,
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "effectful-tracks-events-explicit-fixed-examples-29.json",
+      "configurationSha256": "d24e43e2329ce8546149f485e4703fb26f321349b8a3c78d8b4e63904332940e",
+      "phase": "SE",
+      "representation": "explicit",
+      "regime": "fixed-examples",
+      "seed": 29,
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "effectful-tracks-events-explicit-fixed-examples-43.json",
+      "configurationSha256": "7642f8a5f3e1561a796ac0d0c574e20be0f894ac3c048a1bb81e82a3b60459e1",
+      "phase": "SE",
+      "representation": "explicit",
+      "regime": "fixed-examples",
+      "seed": 43,
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "effectful-tracks-events-explicit-fixed-tokens-17.json",
+      "configurationSha256": "81f3e0df4f8957264e5332795c7c603dcaf92c4845f9616ee8fca5e197fff8a4",
+      "phase": "SE",
+      "representation": "explicit",
+      "regime": "fixed-tokens",
+      "seed": 17,
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "effectful-tracks-events-explicit-fixed-tokens-29.json",
+      "configurationSha256": "3cdd9b89c292f70d86f2426b7c461466392700e72c9fc6a8e25fc281ce3e5f88",
+      "phase": "SE",
+      "representation": "explicit",
+      "regime": "fixed-tokens",
+      "seed": 29,
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "effectful-tracks-events-explicit-fixed-tokens-43.json",
+      "configurationSha256": "76d3bdc0c47642ce3a4329ffc7fad138056c1a06ffc6f3dfe5938746d51cbe0a",
+      "phase": "SE",
+      "representation": "explicit",
+      "regime": "fixed-tokens",
+      "seed": 43,
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "effectful-tracks-events-explicit-measured-compute-17.json",
+      "configurationSha256": "715f7f9d08c1a68b41235e618c9fe90134984c868da50c573770fcc9b18a9925",
+      "phase": "SE",
+      "representation": "explicit",
+      "regime": "measured-compute",
+      "seed": 17,
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "effectful-tracks-events-explicit-measured-compute-29.json",
+      "configurationSha256": "d85fac33d586664c23f48737fda16b411e201752d37961cf12af82e876db7d1f",
+      "phase": "SE",
+      "representation": "explicit",
+      "regime": "measured-compute",
+      "seed": 29,
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "effectful-tracks-events-explicit-measured-compute-43.json",
+      "configurationSha256": "b59ebd6b98eedaee6feafd2877b0fbdc8c8fbfb3fdf7b6c442cc15203191899c",
+      "phase": "SE",
+      "representation": "explicit",
+      "regime": "measured-compute",
+      "seed": 43,
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "effectful-tracks-events-compact-fixed-examples-17.json",
+      "configurationSha256": "c1465c416d226f18e1cc383dab6c85ba1505ba180c2ed4362eedd325f25bfbea",
+      "phase": "SE",
+      "representation": "compact",
+      "regime": "fixed-examples",
+      "seed": 17,
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "effectful-tracks-events-compact-fixed-examples-29.json",
+      "configurationSha256": "97ece627d106c1aaf2ce51505c2dc371519b19783a0dbe845b6d5fadf369a2ab",
+      "phase": "SE",
+      "representation": "compact",
+      "regime": "fixed-examples",
+      "seed": 29,
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "effectful-tracks-events-compact-fixed-examples-43.json",
+      "configurationSha256": "b8a6c0fd914d144643fc82fbabfedd0cb5a09fcd37f11d902ae491ceb5a58eab",
+      "phase": "SE",
+      "representation": "compact",
+      "regime": "fixed-examples",
+      "seed": 43,
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "effectful-tracks-events-compact-fixed-tokens-17.json",
+      "configurationSha256": "06208e14361095a3506f8c32397cf3f23b3c774e78cd795da5d6742684c7e0fb",
+      "phase": "SE",
+      "representation": "compact",
+      "regime": "fixed-tokens",
+      "seed": 17,
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "effectful-tracks-events-compact-fixed-tokens-29.json",
+      "configurationSha256": "8dc93b98653d08ab976ab57f3b6ec0c30b97de583204fb3cba3d911c3fe86a91",
+      "phase": "SE",
+      "representation": "compact",
+      "regime": "fixed-tokens",
+      "seed": 29,
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "effectful-tracks-events-compact-fixed-tokens-43.json",
+      "configurationSha256": "596702d7b25b7af836c139fffc8e997998d068288012fc593597f7719416f15d",
+      "phase": "SE",
+      "representation": "compact",
+      "regime": "fixed-tokens",
+      "seed": 43,
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "effectful-tracks-events-compact-measured-compute-17.json",
+      "configurationSha256": "5600208838278587c53cde492bd262adde1260383a36441ee3af6bef5c1c8cac",
+      "phase": "SE",
+      "representation": "compact",
+      "regime": "measured-compute",
+      "seed": 17,
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "effectful-tracks-events-compact-measured-compute-29.json",
+      "configurationSha256": "86b229278b4083fc7484c860a3b8f7a9c0602f9a89d0287e48981df9bdabf4b2",
+      "phase": "SE",
+      "representation": "compact",
+      "regime": "measured-compute",
+      "seed": 29,
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "engineeringPreflightPassed": true
+    },
+    {
+      "configuration": "effectful-tracks-events-compact-measured-compute-43.json",
+      "configurationSha256": "4e7d5d25e2993fc265125bd96cdcbbfc50d93a9650d2be719f4f77f2a79b7b68",
+      "phase": "SE",
+      "representation": "compact",
+      "regime": "measured-compute",
+      "seed": 43,
+      "cohortDigest": "e1b0ab3b3cc93f81a79689bdbb9e028e1f979defda192428def177a920880ad4",
+      "engineeringPreflightPassed": true
+    }
+  ],
+  "priorIncompleteReceiptRefusals": 45,
+  "externalAssetsAdmitted": false,
+  "trainingLaunchReady": false,
+  "launchReadinessScope": "The engineering prerequisite passes. Donor and hindsight assets and live training coordinator resources remain unbound and are not admitted by this check.",
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}

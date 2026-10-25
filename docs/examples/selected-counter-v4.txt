@@ -1,0 +1,28 @@
+0001 [host] observed: code run @a66d7c5931a7
+"use strict";async function run(key){const current=await host.readAsync(key);const next=current+1;host.store(key,next);return next;}
+0002 [worker:9 / outside1] observed: invoke run caused by caller:outside1 in realm shared (await-returned-promise)
+0003 [worker:9 / outside1] generated: create owned Promise &rootoutside1
+0004 [worker:9 / outside1] generated: request read demo.readAsync("counter") in outside1 @57:76 -> Promise &readoutside1 — host.readAsync(key)
+0006 [worker:9 / outside1] observed: observe read fulfilled 7
+0007 [worker:9 / outside1] generated: await Promise &readoutside1; suspend outside1 as resume; call returns owned Promise &rootoutside1
+0008 [worker:9 / outside1] generated: resume outside1 via resume with fulfilled 7
+0009 [worker:9 / outside1] generated: compute (7 + 1) -> 8
+0010 [worker:9 / outside1] generated: request write demo.store("counter", 8) in outside1 @98:118 — host.store(key,next)
+0012 [worker:9 / outside1] observed: observe write fulfilled undefined
+0013 [worker:9 / outside1] generated: resolve Promise &rootoutside1 8
+0014 [worker:9 / outside1] generated: return &rootoutside1
+0015 [worker:9 / outside1] generated: end return
+0016 [worker:12 / outside2] observed: invoke run caused by caller:outside2 in realm shared (await-returned-promise)
+0017 [worker:12] observed: restore checked source counter @a66d7c5931a7
+0018 [worker:12 / outside2] observed: refresh committed selected state through 17 @a2bcb2f0b29b
+0019 [worker:12 / outside2] generated: create owned Promise &rootoutside2
+0020 [worker:12 / outside2] generated: request read demo.readAsync("second") in outside2 @57:76 -> Promise &readoutside2 — host.readAsync(key)
+0022 [worker:12 / outside2] observed: observe read fulfilled 21
+0023 [worker:12 / outside2] generated: await Promise &readoutside2; suspend outside2 as resume; call returns owned Promise &rootoutside2
+0024 [worker:12 / outside2] generated: resume outside2 via resume with fulfilled 21
+0025 [worker:12 / outside2] generated: compute (21 + 1) -> 22
+0026 [worker:12 / outside2] generated: request write demo.store("second", 22) in outside2 @98:118 — host.store(key,next)
+0028 [worker:12 / outside2] observed: observe write fulfilled undefined
+0029 [worker:12 / outside2] generated: resolve Promise &rootoutside2 22
+0030 [worker:12 / outside2] generated: return &rootoutside2
+0031 [worker:12 / outside2] generated: end return

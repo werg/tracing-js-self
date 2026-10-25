@@ -1,0 +1,42 @@
+name: Selected semantic v4 runtime and real browser
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  selected-harness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npm run contracts:check
+      - name: Run selected invocation, model, callback, Natlang, Node and browser adapters
+        run: |
+          node --test test/training-harness-v4.test.js \
+            test/training-model-driver.test.js \
+            test/training-harness-v4-continuity.test.js \
+            test/training-selected-intent-journal.test.js \
+            test/training-megatoken-process.test.js \
+            test/training-effectful-v4.test.js \
+            test/training-effectful-compact.test.js \
+            test/native-subscription-lifetime.test.js \
+            test/host-graph-codec.test.js \
+            test/native-result-graph.test.js \
+            test/natlang-selected-executor.test.js \
+            test/selected-browser-capabilities.test.js \
+            test/selected-node-capabilities.test.js \
+            test/selected-capability-lifecycle.test.js
+      - name: Verify real Chromium DOM, events, CSP and cleanup
+        run: |
+          npx playwright install --with-deps chromium
+          npm run test:browser
+      - name: Generate actual controlled broker fixture
+        run: node tools/generate-selected-harness-v4.mjs "$RUNNER_TEMP/selected.json"

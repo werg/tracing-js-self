@@ -2,6 +2,8 @@
 // remains responsible for all computations, callbacks and promise continuations.
 import {validateBundle} from './validation.js';
 import {hostOperation} from './host/operations.js';
+import {decodeHostPayload,ownedCallbackId} from './host/materialize.js';
+import {encodeNativeGraph} from './host/graph-codec.js';
 
 const quote=JSON.stringify;
 const fail=message=>{throw new TypeError('Executable effects: '+message);};
@@ -10,9 +12,15 @@ function argumentsJS(fx) {
   const spec=hostOperation(fx.operation);
   const request=fx.request;
   if(!request||request.schema!=='host-request/1'||
-     request.codec!=='canonical-json/1'||
+     request.codec!==spec.codec||
      request.operation!==fx.operation||request.signature!==spec.signature)
     fail('unregistered canonical host request');
+  if(request.codec==='owned-graph/1'){
+    const args=decodeHostPayload(request.payload,spec.codec,spec);
+    if(args.length!==spec.arity)fail('incorrect graph argument arity');
+    return {rendered:[],argumentExpression:'bridge.arguments('+quote(fx.id)+','+quote(request.payload)+')',
+      hasCallback:spec.callbackGraph||spec.callbackIndices.length>0,hasGraph:true};
+  }
   let args;
   try{args=JSON.parse(request.payload);}catch{fail('invalid canonical payload');}
   if(!Array.isArray(args)||args.length!==spec.arity||
@@ -28,7 +36,28 @@ function argumentsJS(fx) {
       fail('invalid owned callback token');
     return 'bridge.callback('+quote(fx.id)+','+quote(callbackId)+')';
   });
-  return {rendered,hasCallback:(spec.callbackIndices?.length??0)>0};
+  return {rendered,argumentExpression:'['+rendered.join(',')+']',hasCallback:(spec.callbackIndices?.length??0)>0,hasGraph:false};
+}
+
+/** Decode only the committed, declared argument snapshot. Callback handles are
+ * branded by the graph decoder and recursively replaced with owned trampolines;
+ * ordinary lookalike objects never gain callback authority. */
+export function materializeNativeEffectArguments(fx,callback){
+  const spec=hostOperation(fx.operation),args=decodeHostPayload(fx.request.payload,spec.codec,spec);
+  const seen=new WeakSet();
+  function visit(value){
+    const id=ownedCallbackId(value);
+    if(id)return callback(fx.id,id);
+    if(value===null||typeof value!=='object'||seen.has(value))return value;
+    seen.add(value);
+    for(const key of Object.keys(value))value[key]=visit(value[key]);
+    return value;
+  }
+  return args.map((value,index)=>{
+    if(spec.codec==='canonical-json/1'&&spec.callbackIndices.includes(index))
+      return callback(fx.id,value.$ownedCallback);
+    return visit(value);
+  });
 }
 
 /** Re-execute the *external side effects* in an already validated archive.
@@ -62,8 +91,10 @@ export function compileExternalEffectsJS(bundle){
       quote('Missing effect handler: '+name)+');');
   if(calls.some(c=>c.hasCallback))
     lines.push('if(!bridge||typeof bridge.callback!=="function")throw new TypeError("Missing owned callback bridge");');
-  for(const {fx,rendered} of calls)
-    lines.push('effects['+quote(fx.operation)+'](...['+rendered.join(',')+']);');
+  if(calls.some(c=>c.hasGraph))
+    lines.push('if(!bridge||typeof bridge.arguments!=="function")throw new TypeError("Missing owned graph bridge");');
+  for(const {fx,argumentExpression} of calls)
+    lines.push('effects['+quote(fx.operation)+'](...'+argumentExpression+');');
   return lines.join('\n')+'\n';
 }
 
@@ -80,20 +111,21 @@ export function compilePendingEffectJS(runtime,effectId){
   if(!fx||fx.id!==effectId||fx.dispatch!=='dispatched'||
      fx.external!=='pending')
     fail('expected an owned, already-dispatched pending effect');
-  const {rendered,hasCallback}=argumentsJS(fx);
+  const {argumentExpression,hasCallback,hasGraph}=argumentsJS(fx);
   const operation=quote(fx.operation),id=quote(effectId);
   return [
     '"use strict";',
     'if(!effects||typeof effects['+operation+']!=="function")throw new TypeError("Missing effect handler");',
     'if(!bridge||typeof bridge.settle!=="function"'+
       (hasCallback?'||typeof bridge.callback!=="function"':'')+
+      (hasGraph?'||typeof bridge.arguments!=="function"':'')+
       ')throw new TypeError("Missing owned effect bridge");',
     'let outcome;',
-    'try{outcome=effects['+operation+'](...['+rendered.join(',')+']);}',
-    'catch(error){bridge.settle('+id+',String(error&&error.message||error),true);return;}',
+    'try{outcome=effects['+operation+'](...'+argumentExpression+');}',
+    'catch(error){bridge.settle('+id+',error,true);return;}',
     'Promise.resolve(outcome).then(',
     '  value=>bridge.settle('+id+',value,false),',
-    '  error=>bridge.settle('+id+',String(error&&error.message||error),true)',
+    '  error=>bridge.settle('+id+',error,true)',
     ');'
   ].join('\n')+'\n';
 }
@@ -109,10 +141,16 @@ export function createOwnedEffectBridge(runtime){
      typeof runtime.recordExternalCallback!=='function')
     fail('expected an owned runtime');
   const received=new Set();
-  return Object.freeze({
+  const bridge={
+    arguments(effectId,payload){
+      const fx=runtime.state.effects[effectId];
+      if(!fx||fx.request?.payload!==payload)fail('arguments differ from dispatched effect');
+      return materializeNativeEffectArguments(fx,bridge.callback);
+    },
     callback(effectId,callbackId){
       const fx=runtime.state.effects[effectId];
-      if(!fx||fx.external!=='pending'||fx.dispatch!=='dispatched')
+      if(!fx||fx.dispatch!=='dispatched'||!(fx.external==='pending'||
+          fx.external==='completed'&&fx.subscription?.state==='active'))
         fail('callback effect is not pending');
       return (...args)=>{
         runtime.recordExternalCallback({effectId,callbackId,args});
@@ -127,10 +165,18 @@ export function createOwnedEffectBridge(runtime){
       if(typeof abrupt!=='boolean')fail('invalid settlement status');
       received.add(effectId);
       try{
+        if(abrupt&&value instanceof Error)value=value.message;
+        let graph=null;
+        if(value!==null&&typeof value==='object'){
+          if(hostOperation(fx.operation).resultCodec!=='owned-graph/1')
+            fail('operation has no declared result graph codec');
+          graph=encodeNativeGraph([value]);
+        }
         const {inputId}=runtime.recordInputArrival({effectId,
-          kind:fx.kind==='promise'?'completion':'immediate',value,abrupt});
+          kind:fx.kind==='promise'?'completion':'immediate',value:graph?undefined:value,graph,abrupt});
         runtime.deliverInput(inputId);
       }catch(error){received.delete(effectId);throw error;}
     }
-  });
+  };
+  return Object.freeze(bridge);
 }

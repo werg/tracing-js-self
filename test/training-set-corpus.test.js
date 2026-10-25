@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence} from '../src/training/index.js';
+import {verifyTrainingCase,recheckIndependentTrainingEvidence} from '../src/training/diagnostic.js';
 import {replayExact} from '../src/replay.js';
 
 function checked(source,args=[]) {

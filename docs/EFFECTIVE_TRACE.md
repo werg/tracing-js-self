@@ -1,5 +1,8 @@
 # Effective semantic execution trace — sole public format
 
+> Current production implementation: [semantic execution v4](SEMANTIC_HARNESS_V4_IMPLEMENTATION.md). The bounded-pure/group workflow described below is retained as offline diagnostic and historical evidence; it is not the production harness admission route.
+
+
 ## Versions and boundary
 
 The sole active model-visible wire contracts are

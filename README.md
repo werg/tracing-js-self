@@ -104,11 +104,14 @@ const result=await executeWithNativeServices({
 replayExact(result.bundle); // does NOT repeat native calls
 ```
 
-General DOM/Node/Web callback APIs, object-valued DOM Event arguments,
-callbacks with native-dependent synchronous return values, and persistent
-subscriptions beyond the lifetime of a pending service are **not yet supported**.
-Add them through explicit callback-slot and argument-codec declarations, never
-by calling guest closures directly in the native realm.
+Declared subscription callbacks also survive registration settlement and the
+original call's completion. `demo.listen`/`demo.unlisten` retain and close the
+owned handler; queued and late events have explicit dispositions. The selected
+browser adapter supplies scoped passive event notifications and timers, and the
+Natlang adapter supplies registered graph-valued asynchronous callback returns.
+These are separate declared operation profiles. General DOM Event objects and
+native-dependent synchronous guest return/propagation control remain outside
+the passive profile. See [the v4 capability and lifetime contract](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md).
 
 The emitted JavaScript calls `effects["operation"](...materializedArgs)` in
 recorded dispatch order. The argument values are copied directly from the
@@ -162,38 +165,49 @@ unsupported numeric encodings and unknown host methods fail closed before an
 effect can be dispatched. The private archived `effect.args` retains the
 original identity-bearing tuples solely for verification and replay.
 
-Async adapters **do not** return native promises: after the machine emits `effect.dispatch`, they call `recordInputArrival({effectId,kind:'completion',value})` and `deliverInput(inputId)` at the chosen legal service point. Synchronous mock calls use `kind:'immediate'`. In a future production native integration these service permissions, typed native handoffs, caller retention and transport durability must be enforced by a versioned adapter/runner.
+Low-level runtime adapters publish arrivals using `recordInputArrival` and `deliverInput` at a legal service point. The production selected harness provides the higher-level Promise/callback bridge, source and capability checks, owned resource lifetimes, durable intent journal, and checkpoint/reconciliation interface. See [the v4 runtime contract](docs/SELECTED_HARNESS_V4.md).
 
 The package root also exports `Runtime`, `encode`/`decode`, `reconstruct`,
 `causalPrefix`, and the trace validation/replay error classes. The package is an
-embedded Node.js ESM API. It is not yet a natlang runtime replacement: the
-[integration contract](docs/NATLANG_INTEGRATION.md) covers both per-call evaluation
-and the separate module realm, together with megatoken's causal/physical chunk
-requirements.
+embedded Node.js ESM API. The opt-in `tracing-js-self/natlang-selected` adapter
+supports asynchronous fresh and retained Natlang evaluation, including module
+loading and registered native resources. The [implementation guide](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md)
+describes the supported profile, independent checks, and paired repository pins.
+The [engineering completion ledger](docs/SEMANTIC_HARNESS_V4_COMPLETION.md)
+records all M0–M8 results, admitted source/native data, controlled evaluation and
+the separate inputs still needed for later training.
 
 For programmatic fixture verification and training export, use the separate
 `tracing-js-self/training` entry point:
 
 ```js
-import { verifyTrainingCase } from 'tracing-js-self/training';
-const checked = verifyTrainingCase({
+import { verifyEffectfulTrainingCase } from 'tracing-js-self/training';
+const checked = await verifyEffectfulTrainingCase({
   source: '"use strict"; function run(x) { return x * 2 + 1; }',
-  entry: 'run', args: [7]
+  entry: 'run', args: [7], fixture: { calls: [] }, family: 'example-arithmetic'
 });
 if (checked.status !== 'locally_verified') throw new Error(checked.status);
 const candidate = checked.exported; // public targets plus a private audit sidecar
 ```
 
-This entry point also exports `exportTraining`, `validateTrainingExport`, `SemanticController` and `evaluateSelectedTrajectory`. The serving controller commits model-selected semantic records without an interpreter fallback; selected-trace evaluation compares against reference outcomes only after the record has committed.
-Direct export refuses incomplete, abrupt, asynchronous or effectful runs.
-Successful arithmetic becomes a single semantic value at its completed phase,
-with the original input dependencies; its full phase trace remains in the private
-archive. Candidate targets still require the admission gates above.
+The production entry point also exports `SelectedExecutionHarness`,
+`SelectedModelDriver`, `SelectedIntentJournal`, `verifyEffectfulSession`,
+`recheckEffectfulAdmission`, and the Megatoken process selectors. Code publication
+precedes explicit invocation; requests carry evaluated arguments and exact source
+provenance; external results remain observations. The teacher compiler supports
+async effects, reactions, callbacks, cleanup, graph feedback and checkpoint/source
+rereads. Fully admitted data additionally requires the real production tokenizer,
+native consumer, visibility and loss gates. A locally verified result is not
+automatically admitted data or learned model success.
+
+The former group-shaped bounded-pure corpus APIs now live exclusively under
+`tracing-js-self/training/diagnostic` and `npm run diagnostic:*`. They remain useful
+for independent source analysis and historical comparisons. Production training
+and serving accept `semantic-execution/4` with `selected-harness/2` only.
 
 `drive()` reports `terminated`, `waiting`, `runtime.failure`, or `unsupported`.
-Recorded guest throws are terminal in the bounded script profile; catch/finally
-and async rejection delivery remain open. The locally verified training profile
-admits only synchronous, effect-free, non-throwing entries. New archives and supported readers use `semantic-tracing-run/2`; older `/1`
+Owned catch/finally, Promise rejection, continuation and callback semantics are
+covered by the declared profile and independent fixtures. New archives and supported readers use `semantic-tracing-run/2`; older `/1`
 archives require an explicit offline migration and are not silently accepted. The language profiles remain separate:
 `bounded-js-subset/2` for the original script path and `training-js/1` for strict
 function entry.
@@ -279,6 +293,17 @@ arrival payloads. `src/semantic/normalize.js` and `src/training/` provide the
 bounded training projection, formatting, scheduling, visibility and local
 verification path. `src/index.js` is the public package facade.
 
-**Evidence boundary:** exact replay is an interpreter self-consistency check against its recorded journal, **not** an independent semantic oracle, real native-effect replay, proof of standards compliance, or safe execution of arbitrary full JavaScript. It requires a complete sealed run and uses the recorded external values only at their arrival events. The prototype's tests establish only the behaviors they exercise. They do not pass the completion criteria from the full plan. In particular, `completeSemanticTrace: false` applies to the declared complete JavaScript target; the supported subset is instrumented at the interpreter's declared bytecode vocabulary.
+**Evidence boundary:** exact replay checks the interpreter against its recorded
+journal. Independent source execution, source-operation certificates, native
+consumer validation and selected-model evaluation provide separate authorities.
+Replay requires a complete sealed run and uses external values at their recorded
+arrival boundaries; it calls no native adapter. The v4 engineering gate covers
+the declared execution and capability profile. `completeSemanticTrace: false`
+still applies to the broader complete-JavaScript target, and this package does
+not claim arbitrary JavaScript compatibility, a hostile-code sandbox or learned
+execution quality. The [v4 implementation guide](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md)
+records the current supported profile and evidence.
+The [completion receipt](contracts/semantic-engineering-completion.json) pins the
+three compatible implementations; it does not certify learned model quality.
 
 

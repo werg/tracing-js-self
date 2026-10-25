@@ -1,6 +1,7 @@
 // Static semantic site inventory constructed before guest execution. No
 // executed-site pruning, bytecode sites or private future events are consulted.
 import {parse} from 'acorn';
+import {HOST_METHODS} from '../host/operations.js';
 
 const semanticNodes=new Set([
   'Identifier','Literal','BinaryExpression','LogicalExpression',
@@ -24,7 +25,7 @@ function directHostOperation(node) {
       callee.property.value:null):
     (callee.property?.type==='Identifier'?callee.property.name:null);
   if(!name)return null;
-  if(callee.object.name==='host')return 'demo.'+name;
+  if(callee.object.name==='host')return HOST_METHODS[name]??'demo.'+name;
   if(callee.object.name==='Date'&&name==='now')return 'platform.dateNow';
   if(callee.object.name==='console')return 'platform.console.'+name;
   return null;

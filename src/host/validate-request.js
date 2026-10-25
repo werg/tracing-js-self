@@ -2,6 +2,8 @@
 // neither the interpreter nor its request serializer runs in this validator.
 import {isDeepStrictEqual} from 'node:util';
 import {hostOperation} from './operations.js';
+import {validateOwnedGraph} from './graph-codec.js';
+import {encode as encodeScalar,decode as decodeScalar} from '../values.js';
 
 const indexKey = key => /^(0|[1-9]\d*)$/.test(key) && Number(key)<4294967295;
 const checked = (condition,message) => {
@@ -22,6 +24,7 @@ export function validatePreparedRequest(heap,effect) {
   checked(typeof request.payload==='string' &&
     Buffer.byteLength(request.payload,'utf8')===request.byteLength,'invalid immutable payload size');
   checked(request.byteLength<=65536 && request.byteLength>=2,'payload size limit');
+  if(spec.codec==='owned-graph/1')return validateGraphRequest(heap,effect,spec);
   const visited=new Set(),versions=[];
   function encode(value,depth) {
     checked(depth<=64 && Array.isArray(value),'unsupported nested guest value');
@@ -90,4 +93,44 @@ export function validatePreparedRequest(heap,effect) {
     'graph provenance or property versions do not match');
   return {valid:true,operation:effect.operation,byteLength:request.byteLength,
     graphNodes:versions.length};
+}
+
+// Independent archive reconstruction for the alias-preserving codec. This
+// deliberately does not call the production materializer: exact tags, graph
+// order, identities, property versions and callback grants are checked here.
+function validateGraphRequest(heap,effect,spec){
+  const visited=new Set(),objects=[],versions=[];let properties=0;
+  function value(tag,depth,callbackAllowed=false){
+    checked(Array.isArray(tag)&&depth<=64,'invalid graph value/depth');
+    if(tag[0]!=='ref'){
+      checked(isDeepStrictEqual(encodeScalar(decodeScalar(tag)),tag),'noncanonical graph scalar');
+      return structuredClone(tag);
+    }
+    const id=tag[1],node=heap[id];checked(tag.length===2&&node,'missing graph identity');
+    if(node.kind==='function'){
+      checked(callbackAllowed,'undeclared callback graph identity');
+      return ['callback',id];
+    }
+    if(visited.has(id))return ['ref',id];
+    checked(['object','array'].includes(node.kind)&&visited.size<256,'non-data graph or node quota');
+    checked(Object.keys(node.accessors??{}).length===0,'graph accessor refused');
+    checked((node.kind==='array'?[undefined,'ordinary','Array.prototype']:
+      [undefined,null,'ordinary','Object.prototype']).includes(node.prototype),'graph prototype refused');
+    visited.add(id);
+    const out={id,kind:node.kind,...(node.prototype===null?{prototype:null}:{}),properties:[]};
+    const version={id,version:node.version??0,shapeVersion:node.shapeVersion??0,properties:{}};
+    objects.push(out);versions.push(version);
+    for(const [key,member] of Object.entries(node.properties??{})){
+      checked(++properties<=4096&&key!=='__proto__'&&member&&Array.isArray(member.value),'invalid graph property');
+      version.properties[key]=node.propertyVersions?.[key]??0;
+      out.properties.push({key,value:value(member.value,depth+1,Boolean(spec.callbackGraph))});
+    }
+    return ['ref',id];
+  }
+  const graph={schema:'owned-graph/1',roots:effect.args.map((tag,index)=>
+    value(tag,0,Boolean(spec.callbackGraph)||spec.callbackIndices.includes(index))),objects};
+  validateOwnedGraph(graph,{callbackIndices:spec.callbackIndices,callbackGraph:Boolean(spec.callbackGraph)});
+  checked(JSON.stringify(graph)===effect.request.payload,'graph bytes differ from committed arguments');
+  checked(isDeepStrictEqual(versions,effect.request.graphVersions),'graph provenance versions differ');
+  return {valid:true,operation:effect.operation,byteLength:effect.request.byteLength,graphNodes:versions.length};
 }

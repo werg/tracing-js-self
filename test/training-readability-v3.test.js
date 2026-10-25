@@ -16,13 +16,13 @@ const cases=[
   {name:'loop_captured',body:'function run(){ const fs=[]; for(let i=0;i<3;i++) { fs.push(()=>i); } return [fs[0](),fs[1](),fs[2]()]; }',args:[]}
 ];
 for(const fixture of cases){
-  test('version-three readability acceptance: '+fixture.name,()=>{
+  test('version-four readability acceptance: '+fixture.name,()=>{
     const verified=verifyTrainingCase({source:'"use strict"; '+fixture.body,
       entry:'run',args:fixture.args,maxGenerated:2048,maxSteps:30000});
     assert.equal(verified.status,'locally_verified',fixture.name+' '+JSON.stringify({
       status:verified.status,reason:verified.reason}));
     const groups=verified.exported.public.groups;
-    assert.equal(verified.exported.public.schema,'semantic-execution/3');
+    assert.equal(verified.exported.public.schema,'semantic-execution/4');
     const lines=restoreWitness(groups.filter(g=>g.mode==='generated')
       .flatMap(g=>g.events.map(e=>e.record)));
     const decoded=lines.map(decodeWitness);

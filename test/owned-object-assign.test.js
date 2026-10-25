@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRuntime,validateBundle,replayExact} from 'tracing-js-self';
 import {realizeGraph,describeGraph} from '../src/training/graph.js';
-import {verifyTrainingCase} from 'tracing-js-self/training';
+import {verifyTrainingCase} from 'tracing-js-self/training/diagnostic';
 
 function run(body,args){
   const runtime=createRuntime().startEntry({

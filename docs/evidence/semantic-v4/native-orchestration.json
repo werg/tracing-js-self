@@ -1,0 +1,183 @@
+{
+  "cases": [
+    {
+      "canonicalGeneratedTokens": 238,
+      "caseId": "pure-orchestration",
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "costs": {
+        "computeSeconds": 4.207732978,
+        "dispatches": 0,
+        "leakedResources": 0,
+        "peakMemoryBytes": 738205696,
+        "queueDepth": 1
+      },
+      "disposition": "expected-refusal",
+      "evidenceSha256": "0f13706c54343759e3437c708e1c9aa7b34b5e7018323f6fb4842c511547257a",
+      "generatedTokens": 238,
+      "nativeRuntimeMetrics": {
+        "computeSeconds": 1.4917985190004401,
+        "peakMemoryBytes": 562806784,
+        "rpcCalls": 3,
+        "schema": "semantic-inference-metrics/4"
+      },
+      "observedTokens": 2123,
+      "origin": "controlled",
+      "physicalRecords": 13,
+      "representation": "explicit",
+      "sourceSplit": "train"
+    },
+    {
+      "canonicalGeneratedTokens": 303,
+      "caseId": "pure-orchestration",
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "costs": {
+        "computeSeconds": 5.085081588000001,
+        "dispatches": 0,
+        "leakedResources": 0,
+        "peakMemoryBytes": 737144832,
+        "queueDepth": 1
+      },
+      "disposition": "expected-refusal",
+      "evidenceSha256": "8a84cce40ab65f8d5e13de7bd3eb34a2719c710aae079cb4c5e1954417890493",
+      "generatedTokens": 303,
+      "nativeRuntimeMetrics": {
+        "computeSeconds": 2.1452732699981425,
+        "peakMemoryBytes": 561745920,
+        "rpcCalls": 6,
+        "schema": "semantic-inference-metrics/4"
+      },
+      "observedTokens": 2565,
+      "origin": "controlled",
+      "physicalRecords": 18,
+      "representation": "explicit",
+      "sourceSplit": "train"
+    },
+    {
+      "canonicalGeneratedTokens": 3,
+      "caseId": "pure-orchestration",
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "costs": {
+        "computeSeconds": 1.0238187619999954,
+        "dispatches": 0,
+        "leakedResources": 0,
+        "peakMemoryBytes": 739155968,
+        "queueDepth": 0
+      },
+      "disposition": "expected-refusal",
+      "evidenceSha256": "2a33df0a547c7c82c890d8ca33315921a205dd167d0d21b7b6a02f550f77b0de",
+      "generatedTokens": 3,
+      "nativeRuntimeMetrics": {
+        "computeSeconds": 1.0264543730008882,
+        "peakMemoryBytes": 563757056,
+        "rpcCalls": 4,
+        "schema": "semantic-inference-metrics/4"
+      },
+      "observedTokens": 927,
+      "origin": "fixed-weights",
+      "physicalRecords": 9,
+      "representation": "explicit",
+      "sourceSplit": "train"
+    },
+    {
+      "canonicalGeneratedTokens": 5898,
+      "caseId": "native-retained-tail-compact",
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "costs": {
+        "computeSeconds": 23.016743781,
+        "dispatches": 2,
+        "leakedResources": 0,
+        "peakMemoryBytes": 740769792,
+        "queueDepth": 1
+      },
+      "disposition": "complete",
+      "evidenceSha256": "47dba1f48f5d9c1ecffd2aba4994461eff3d68d20ac0ccb47f44ab5ae889a4ac",
+      "generatedTokens": 5898,
+      "nativeRuntimeMetrics": {
+        "computeSeconds": 19.898462146011298,
+        "peakMemoryBytes": 565370880,
+        "rpcCalls": 181,
+        "schema": "semantic-inference-metrics/4"
+      },
+      "observedTokens": 14006,
+      "origin": "controlled",
+      "physicalRecords": 395,
+      "representation": "compact",
+      "sourceSplit": "train"
+    },
+    {
+      "canonicalGeneratedTokens": 2193,
+      "caseId": "native-services-compact",
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "costs": {
+        "computeSeconds": 24.011324699,
+        "dispatches": 8,
+        "leakedResources": 0,
+        "peakMemoryBytes": 676474880,
+        "queueDepth": 1
+      },
+      "disposition": "complete",
+      "evidenceSha256": "0358d342dc3ace87e30c28a59e25cb5c90863e7772981972845ef59b4e8bfaa2",
+      "generatedTokens": 2193,
+      "nativeRuntimeMetrics": {
+        "computeSeconds": 20.89735427499545,
+        "peakMemoryBytes": 566415360,
+        "rpcCalls": 75,
+        "schema": "semantic-inference-metrics/4"
+      },
+      "observedTokens": 23579,
+      "origin": "controlled",
+      "physicalRecords": 418,
+      "representation": "compact",
+      "sourceSplit": "train"
+    },
+    {
+      "canonicalGeneratedTokens": 2193,
+      "caseId": "native-services-explicit",
+      "costScope": {
+        "computeSeconds": "case-wall-time-excluding-model-initialization",
+        "peakMemoryBytes": "sum-of-runner-and-native-process-lifetime-peak-rss-upper-bound"
+      },
+      "costs": {
+        "computeSeconds": 24.282612035000003,
+        "dispatches": 8,
+        "leakedResources": 0,
+        "peakMemoryBytes": 665911296,
+        "queueDepth": 1
+      },
+      "disposition": "complete",
+      "evidenceSha256": "373ab41b3b45c05e79ca6ac795cde6d168c6bff68409ec14b61eead44e174a28",
+      "generatedTokens": 2193,
+      "nativeRuntimeMetrics": {
+        "computeSeconds": 21.23988217300939,
+        "peakMemoryBytes": 566415360,
+        "rpcCalls": 75,
+        "schema": "semantic-inference-metrics/4"
+      },
+      "observedTokens": 23620,
+      "origin": "controlled",
+      "physicalRecords": 418,
+      "representation": "explicit",
+      "sourceSplit": "train"
+    }
+  ],
+  "learnedSuccess": null,
+  "optimizerSteps": 0,
+  "passed": true,
+  "schema": "semantic-orchestration-engineering/4",
+  "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+}

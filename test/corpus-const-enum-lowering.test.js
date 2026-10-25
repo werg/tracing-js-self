@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import ts from 'typescript';
 import {cases} from '../corpus/cases.mjs';
 import {original,lowerPinnedCharCode} from '../corpus/pinned-source.mjs';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence} from '../src/training/index.js';
+import {verifyTrainingCase,recheckIndependentTrainingEvidence} from '../src/training/diagnostic.js';
 
 const functions=['firstNonWhitespaceIndex','getLeadingWhitespace',
   'lastNonWhitespaceIndex','getIndentationLength'];

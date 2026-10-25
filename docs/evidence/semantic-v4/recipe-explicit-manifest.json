@@ -1,0 +1,1063 @@
+{
+  "schema": "semantic-corpus-manifest/4",
+  "execution": "semantic-execution/4",
+  "trace": "semantic-trace/4",
+  "context": "semantic-context/4",
+  "profile": "selected-harness/2",
+  "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+  "representation": "explicit",
+  "recipe": {
+    "schema": "semantic-source-recipe/4",
+    "name": "training-v4",
+    "templateDigest": "ccef64126613701d0bf4058ecc2af28738096b5fd7b553cf8e1a3464586f4998",
+    "families": [
+      "semantic-recipe:rectangle-perimeter",
+      "semantic-recipe:rectangular-capacity",
+      "semantic-recipe:squared-distance",
+      "semantic-recipe:absolute-distance",
+      "semantic-recipe:weighted-average",
+      "semantic-recipe:unit-conversion",
+      "semantic-recipe:triangular-series",
+      "semantic-recipe:modular-clock",
+      "semantic-recipe:flag-intersection",
+      "semantic-recipe:flag-union",
+      "semantic-recipe:inventory-shortfall",
+      "semantic-recipe:capped-budget",
+      "semantic-recipe:overtime-rate",
+      "semantic-recipe:midpoint",
+      "semantic-recipe:relative-growth",
+      "semantic-recipe:parity-adjustment"
+    ],
+    "splitSeed": 17,
+    "retainEveryAuthoredFamily": true,
+    "lifecycleInputs": [
+      {
+        "id": "rectangle-perimeter-child",
+        "path": "rectangle-perimeter-child.json",
+        "family": "semantic-recipe:rectangle-perimeter",
+        "split": "train",
+        "representation": "explicit"
+      },
+      {
+        "id": "modular-clock-child",
+        "path": "modular-clock-child.json",
+        "family": "semantic-recipe:modular-clock",
+        "split": "validation",
+        "representation": "explicit"
+      }
+    ]
+  },
+  "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+  "counts": {
+    "attempted": 50,
+    "admitted": 50,
+    "locally_verified": 0
+  },
+  "cases": [
+    {
+      "id": "rectangle-perimeter-pure",
+      "family": "semantic-recipe:rectangle-perimeter",
+      "status": "admitted",
+      "path": "rectangle-perimeter-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "f8f1de550e7f12d63aa33fd7fb45ef164fa22918880f3cbf6c6491a75f28a331",
+      "metrics": {
+        "generatedBytes": 570,
+        "observedBytes": 1736,
+        "transportBytes": 1388,
+        "actions": 0,
+        "generatedTokens": 188,
+        "observedTokens": 673,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "rectangle-perimeter-callbacks-recovery",
+      "family": "semantic-recipe:rectangle-perimeter",
+      "status": "admitted",
+      "path": "rectangle-perimeter-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "ecc853d56b79165c8aaf248b89c2199dcf9d1b68f0e4f0eeb0ffa418548b5a01",
+      "metrics": {
+        "generatedBytes": 2896,
+        "observedBytes": 15036,
+        "transportBytes": 6680,
+        "actions": 4,
+        "generatedTokens": 892,
+        "observedTokens": 5657,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "rectangle-perimeter-repeated",
+      "family": "semantic-recipe:rectangle-perimeter",
+      "status": "admitted",
+      "path": "rectangle-perimeter-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "e156342ee495f68b551645991f6d2cc58b0934058c31eaf4a66842442a6b4c1a",
+      "metrics": {
+        "generatedBytes": 2732,
+        "observedBytes": 5733,
+        "transportBytes": 6575,
+        "actions": 4,
+        "generatedTokens": 848,
+        "observedTokens": 1983,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "rectangular-capacity-pure",
+      "family": "semantic-recipe:rectangular-capacity",
+      "status": "admitted",
+      "path": "rectangular-capacity-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "8a1269c921faf95664328f02fc664c43b8632a4df812e29fdf75dfced67d04e7",
+      "metrics": {
+        "generatedBytes": 361,
+        "observedBytes": 1623,
+        "transportBytes": 1132,
+        "actions": 0,
+        "generatedTokens": 119,
+        "observedTokens": 629,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "rectangular-capacity-callbacks-recovery",
+      "family": "semantic-recipe:rectangular-capacity",
+      "status": "admitted",
+      "path": "rectangular-capacity-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "99c00d2a55f005062d383fd5362b2c7a0a0309fb4ac530ca6ccc74236e9554d6",
+      "metrics": {
+        "generatedBytes": 2696,
+        "observedBytes": 14912,
+        "transportBytes": 6422,
+        "actions": 4,
+        "generatedTokens": 832,
+        "observedTokens": 5631,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "rectangular-capacity-repeated",
+      "family": "semantic-recipe:rectangular-capacity",
+      "status": "admitted",
+      "path": "rectangular-capacity-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "8085767a4019fc84fef5678d069c74b4dc1a80649891f5dd1e750725e583c4fc",
+      "metrics": {
+        "generatedBytes": 2332,
+        "observedBytes": 5622,
+        "transportBytes": 6053,
+        "actions": 4,
+        "generatedTokens": 722,
+        "observedTokens": 1939,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "squared-distance-pure",
+      "family": "semantic-recipe:squared-distance",
+      "status": "admitted",
+      "path": "squared-distance-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "test",
+      "episodeDigest": "fec930e81224defd2c8231b32a85f30fe9da647d64e067ea748f0b03875d45a0",
+      "metrics": {
+        "generatedBytes": 777,
+        "observedBytes": 1851,
+        "transportBytes": 1644,
+        "actions": 0,
+        "generatedTokens": 255,
+        "observedTokens": 719,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "squared-distance-callbacks-recovery",
+      "family": "semantic-recipe:squared-distance",
+      "status": "admitted",
+      "path": "squared-distance-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "test",
+      "episodeDigest": "d1a7f7093e9c3a49620561bfb6d8cec7fa68e111d23b729417b93b688974cd85",
+      "metrics": {
+        "generatedBytes": 3076,
+        "observedBytes": 15130,
+        "transportBytes": 6938,
+        "actions": 4,
+        "generatedTokens": 959,
+        "observedTokens": 5714,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "squared-distance-repeated",
+      "family": "semantic-recipe:squared-distance",
+      "status": "admitted",
+      "path": "squared-distance-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "test",
+      "episodeDigest": "de4a3eba768d63618aa23d796e577d6db46b07f469f7f9c26cfc937d5473b991",
+      "metrics": {
+        "generatedBytes": 3112,
+        "observedBytes": 5842,
+        "transportBytes": 7097,
+        "actions": 4,
+        "generatedTokens": 984,
+        "observedTokens": 2037,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "absolute-distance-pure",
+      "family": "semantic-recipe:absolute-distance",
+      "status": "admitted",
+      "path": "absolute-distance-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "5943d906244b51bdc230805a46d91fdf0f1eb83e96dcb879b272fdbebaa34fca",
+      "metrics": {
+        "generatedBytes": 508,
+        "observedBytes": 2025,
+        "transportBytes": 1372,
+        "actions": 0,
+        "generatedTokens": 163,
+        "observedTokens": 779,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "absolute-distance-callbacks-recovery",
+      "family": "semantic-recipe:absolute-distance",
+      "status": "admitted",
+      "path": "absolute-distance-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "b6ef94a14ec113d4a3b93cab8fd7dfa96474d31679270fe897837801a97a4553",
+      "metrics": {
+        "generatedBytes": 2811,
+        "observedBytes": 15328,
+        "transportBytes": 6664,
+        "actions": 4,
+        "generatedTokens": 853,
+        "observedTokens": 5775,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "absolute-distance-repeated",
+      "family": "semantic-recipe:absolute-distance",
+      "status": "admitted",
+      "path": "absolute-distance-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "6ac233e763a77756b838bb5cd897fbba1c6baa9882ca34af87e45d753497322b",
+      "metrics": {
+        "generatedBytes": 2584,
+        "observedBytes": 6020,
+        "transportBytes": 6543,
+        "actions": 4,
+        "generatedTokens": 784,
+        "observedTokens": 2096,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "weighted-average-pure",
+      "family": "semantic-recipe:weighted-average",
+      "status": "admitted",
+      "path": "weighted-average-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "24874a248f79b54fc9dbe6a75b2044d7b651394526ef0c47ee3e07f10db4d591",
+      "metrics": {
+        "generatedBytes": 984,
+        "observedBytes": 1958,
+        "transportBytes": 1901,
+        "actions": 0,
+        "generatedTokens": 322,
+        "observedTokens": 755,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "weighted-average-callbacks-recovery",
+      "family": "semantic-recipe:weighted-average",
+      "status": "admitted",
+      "path": "weighted-average-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "a39fefcd91d098965385b07d627ea635ebe84455f2369789c94590edb18a987d",
+      "metrics": {
+        "generatedBytes": 3278,
+        "observedBytes": 15254,
+        "transportBytes": 7196,
+        "actions": 4,
+        "generatedTokens": 1012,
+        "observedTokens": 5745,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "weighted-average-repeated",
+      "family": "semantic-recipe:weighted-average",
+      "status": "admitted",
+      "path": "weighted-average-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "5a006eb0502e70b979246d18a10269661356c2c8592dfdadc203dd6cf56f1ca8",
+      "metrics": {
+        "generatedBytes": 3524,
+        "observedBytes": 5951,
+        "transportBytes": 7619,
+        "actions": 4,
+        "generatedTokens": 1112,
+        "observedTokens": 2061,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "unit-conversion-pure",
+      "family": "semantic-recipe:unit-conversion",
+      "status": "admitted",
+      "path": "unit-conversion-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "08c179a3af847f821bd40b94341ed4cc27a7a987b4f6fbd599237128528145e0",
+      "metrics": {
+        "generatedBytes": 609,
+        "observedBytes": 1737,
+        "transportBytes": 1388,
+        "actions": 0,
+        "generatedTokens": 227,
+        "observedTokens": 677,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "unit-conversion-callbacks-recovery",
+      "family": "semantic-recipe:unit-conversion",
+      "status": "admitted",
+      "path": "unit-conversion-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "05740cb487b3aed3badc43d022aba6030b206e951921f249abd06dc82c57c44a",
+      "metrics": {
+        "generatedBytes": 3075,
+        "observedBytes": 15061,
+        "transportBytes": 6680,
+        "actions": 4,
+        "generatedTokens": 1107,
+        "observedTokens": 5729,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "unit-conversion-repeated",
+      "family": "semantic-recipe:unit-conversion",
+      "status": "admitted",
+      "path": "unit-conversion-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "f9b4cfd378d8c83222925f633a2275f0872eee3fde8cf4705d45ef84a5352c6a",
+      "metrics": {
+        "generatedBytes": 2798,
+        "observedBytes": 5727,
+        "transportBytes": 6575,
+        "actions": 4,
+        "generatedTokens": 954,
+        "observedTokens": 1983,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "triangular-series-pure",
+      "family": "semantic-recipe:triangular-series",
+      "status": "admitted",
+      "path": "triangular-series-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "a7553530bd65ca9d7718c195fcb827d27c5628deae7a7124195680161a21c6f9",
+      "metrics": {
+        "generatedBytes": 986,
+        "observedBytes": 1961,
+        "transportBytes": 1901,
+        "actions": 0,
+        "generatedTokens": 324,
+        "observedTokens": 760,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "triangular-series-callbacks-recovery",
+      "family": "semantic-recipe:triangular-series",
+      "status": "admitted",
+      "path": "triangular-series-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "afceb05bc6188539b30714bccb71939312bde99d171ee6becdce4b28b764f6e4",
+      "metrics": {
+        "generatedBytes": 3295,
+        "observedBytes": 15266,
+        "transportBytes": 7196,
+        "actions": 4,
+        "generatedTokens": 1029,
+        "observedTokens": 5702,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "triangular-series-repeated",
+      "family": "semantic-recipe:triangular-series",
+      "status": "admitted",
+      "path": "triangular-series-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "4c7ae18ecbc237f0775ebd59991cf3624adc68e0bae2d74560165f504302d5ed",
+      "metrics": {
+        "generatedBytes": 3534,
+        "observedBytes": 5956,
+        "transportBytes": 7619,
+        "actions": 4,
+        "generatedTokens": 1122,
+        "observedTokens": 2068,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "modular-clock-pure",
+      "family": "semantic-recipe:modular-clock",
+      "status": "admitted",
+      "path": "modular-clock-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "de28a8ef74c5a4c614c8756597500d0742bc95a1cb82eb972b5f6446344f0be8",
+      "metrics": {
+        "generatedBytes": 783,
+        "observedBytes": 1849,
+        "transportBytes": 1644,
+        "actions": 0,
+        "generatedTokens": 261,
+        "observedTokens": 714,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "modular-clock-callbacks-recovery",
+      "family": "semantic-recipe:modular-clock",
+      "status": "admitted",
+      "path": "modular-clock-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "94f356306e0ec8903772d1060928939e85f9dba1b9851eea930637eb070391db",
+      "metrics": {
+        "generatedBytes": 3045,
+        "observedBytes": 15123,
+        "transportBytes": 6938,
+        "actions": 4,
+        "generatedTokens": 955,
+        "observedTokens": 5676,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "modular-clock-repeated",
+      "family": "semantic-recipe:modular-clock",
+      "status": "admitted",
+      "path": "modular-clock-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "2223e5000f351c18e2c47472dfadef1312ae5e042183af4c6299d85f257f1034",
+      "metrics": {
+        "generatedBytes": 3093,
+        "observedBytes": 5836,
+        "transportBytes": 7097,
+        "actions": 4,
+        "generatedTokens": 995,
+        "observedTokens": 2053,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "flag-intersection-pure",
+      "family": "semantic-recipe:flag-intersection",
+      "status": "admitted",
+      "path": "flag-intersection-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "cfce3f1a4e0006c34e8eb90c82df8ff3d3993c1cfc998578c95f135c8a6c3fe5",
+      "metrics": {
+        "generatedBytes": 152,
+        "observedBytes": 1623,
+        "transportBytes": 876,
+        "actions": 0,
+        "generatedTokens": 50,
+        "observedTokens": 634,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "flag-intersection-callbacks-recovery",
+      "family": "semantic-recipe:flag-intersection",
+      "status": "admitted",
+      "path": "flag-intersection-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "91f355cfc3543bbe6732a55c15736e69672d19783b1c80bdc414eca7fa0c6aaf",
+      "metrics": {
+        "generatedBytes": 2449,
+        "observedBytes": 14888,
+        "transportBytes": 6164,
+        "actions": 4,
+        "generatedTokens": 743,
+        "observedTokens": 5599,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "flag-intersection-repeated",
+      "family": "semantic-recipe:flag-intersection",
+      "status": "admitted",
+      "path": "flag-intersection-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "361b98d191baed6164b052aed25071e4a4c0f21a6f71fd913c057a186fd3185a",
+      "metrics": {
+        "generatedBytes": 1884,
+        "observedBytes": 5616,
+        "transportBytes": 5531,
+        "actions": 4,
+        "generatedTokens": 568,
+        "observedTokens": 1938,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "flag-union-pure",
+      "family": "semantic-recipe:flag-union",
+      "status": "admitted",
+      "path": "flag-union-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "a9dc9694dfc498c7da7920971a88dde60db53b1a931785432670dcc74e671530",
+      "metrics": {
+        "generatedBytes": 153,
+        "observedBytes": 1623,
+        "transportBytes": 876,
+        "actions": 0,
+        "generatedTokens": 51,
+        "observedTokens": 634,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "flag-union-callbacks-recovery",
+      "family": "semantic-recipe:flag-union",
+      "status": "admitted",
+      "path": "flag-union-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "312e0e99ce69fc49ae9781fdf2eb83805392cb26793a1c09c7c6e9a1a60bfca2",
+      "metrics": {
+        "generatedBytes": 2398,
+        "observedBytes": 14842,
+        "transportBytes": 6164,
+        "actions": 4,
+        "generatedTokens": 755,
+        "observedTokens": 5601,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "flag-union-repeated",
+      "family": "semantic-recipe:flag-union",
+      "status": "admitted",
+      "path": "flag-union-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "b41450b7deb45643bab30c827058f48d7d3288c064d8b22bf32c453ba8ad9e83",
+      "metrics": {
+        "generatedBytes": 1818,
+        "observedBytes": 5602,
+        "transportBytes": 5531,
+        "actions": 4,
+        "generatedTokens": 572,
+        "observedTokens": 1938,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "inventory-shortfall-pure",
+      "family": "semantic-recipe:inventory-shortfall",
+      "status": "admitted",
+      "path": "inventory-shortfall-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "b50932b152ac7416b95f24fd5ea917c4159a721c144d900a59cc10caf1a37ca3",
+      "metrics": {
+        "generatedBytes": 508,
+        "observedBytes": 1908,
+        "transportBytes": 1372,
+        "actions": 0,
+        "generatedTokens": 163,
+        "observedTokens": 736,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "inventory-shortfall-callbacks-recovery",
+      "family": "semantic-recipe:inventory-shortfall",
+      "status": "admitted",
+      "path": "inventory-shortfall-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "ed0daab20f996c6c38b229633c7d553eaa040c0ef6e5e5bff17cfce4bceeb962",
+      "metrics": {
+        "generatedBytes": 2829,
+        "observedBytes": 15217,
+        "transportBytes": 6664,
+        "actions": 4,
+        "generatedTokens": 862,
+        "observedTokens": 5772,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "inventory-shortfall-repeated",
+      "family": "semantic-recipe:inventory-shortfall",
+      "status": "admitted",
+      "path": "inventory-shortfall-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "047ceaa3857ca0d215bacbd869cbd888a774a4b22398818d1b4e543bb3b8ec00",
+      "metrics": {
+        "generatedBytes": 2604,
+        "observedBytes": 5907,
+        "transportBytes": 6543,
+        "actions": 4,
+        "generatedTokens": 794,
+        "observedTokens": 2049,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "capped-budget-pure",
+      "family": "semantic-recipe:capped-budget",
+      "status": "admitted",
+      "path": "capped-budget-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "dfa44b55e23938daee5ce9526ba4097004ebf163a4b31f0657768c9aec5aa63b",
+      "metrics": {
+        "generatedBytes": 510,
+        "observedBytes": 2021,
+        "transportBytes": 1372,
+        "actions": 0,
+        "generatedTokens": 165,
+        "observedTokens": 785,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "capped-budget-callbacks-recovery",
+      "family": "semantic-recipe:capped-budget",
+      "status": "admitted",
+      "path": "capped-budget-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "6a1bcd207963979311a1f0a2307309e24f60148b2d6f16b4a4cb445734d5a86a",
+      "metrics": {
+        "generatedBytes": 2783,
+        "observedBytes": 15306,
+        "transportBytes": 6664,
+        "actions": 4,
+        "generatedTokens": 870,
+        "observedTokens": 5825,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "capped-budget-repeated",
+      "family": "semantic-recipe:capped-budget",
+      "status": "admitted",
+      "path": "capped-budget-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "4d7040d1d1754883a7ea39a3fa670b943d30fe8f81de1a415a8dc4016e94ab13",
+      "metrics": {
+        "generatedBytes": 2757,
+        "observedBytes": 6011,
+        "transportBytes": 6804,
+        "actions": 4,
+        "generatedTokens": 868,
+        "observedTokens": 2106,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "overtime-rate-pure",
+      "family": "semantic-recipe:overtime-rate",
+      "status": "admitted",
+      "path": "overtime-rate-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "d1d540c3cf9de37500edbcf860484bba402b8723be67760f9627b546fba6adff",
+      "metrics": {
+        "generatedBytes": 1342,
+        "observedBytes": 2471,
+        "transportBytes": 2401,
+        "actions": 0,
+        "generatedTokens": 437,
+        "observedTokens": 963,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "overtime-rate-callbacks-recovery",
+      "family": "semantic-recipe:overtime-rate",
+      "status": "admitted",
+      "path": "overtime-rate-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "3af78de7fed34bf47dc3ccdaa362e6e0067a46e711a4e6084030f646bd867bd9",
+      "metrics": {
+        "generatedBytes": 3617,
+        "observedBytes": 15801,
+        "transportBytes": 7696,
+        "actions": 4,
+        "generatedTokens": 1144,
+        "observedTokens": 5995,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "overtime-rate-repeated",
+      "family": "semantic-recipe:overtime-rate",
+      "status": "admitted",
+      "path": "overtime-rate-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "4f8b588e511d6bc5b3d7321e4cc3080ad4cc89a21c81892b6b64155f75cd985f",
+      "metrics": {
+        "generatedBytes": 3383,
+        "observedBytes": 6476,
+        "transportBytes": 7587,
+        "actions": 4,
+        "generatedTokens": 1083,
+        "observedTokens": 2305,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "midpoint-pure",
+      "family": "semantic-recipe:midpoint",
+      "status": "admitted",
+      "path": "midpoint-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "b11a8e22d2573650135ceaff60ba2611c811c6216e74c13388d655fcf45aecb7",
+      "metrics": {
+        "generatedBytes": 572,
+        "observedBytes": 1736,
+        "transportBytes": 1388,
+        "actions": 0,
+        "generatedTokens": 190,
+        "observedTokens": 671,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "midpoint-callbacks-recovery",
+      "family": "semantic-recipe:midpoint",
+      "status": "admitted",
+      "path": "midpoint-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "2c32158c7ef355ea80cef6093ed8c7d81583b3ea1e762b431915a4e500ddba00",
+      "metrics": {
+        "generatedBytes": 2815,
+        "observedBytes": 14963,
+        "transportBytes": 6680,
+        "actions": 4,
+        "generatedTokens": 901,
+        "observedTokens": 5612,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "midpoint-repeated",
+      "family": "semantic-recipe:midpoint",
+      "status": "admitted",
+      "path": "midpoint-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "15cb4af5dfec8f6f82a6c2b30282e766170419754090bf99ecd87a3a9ae89868",
+      "metrics": {
+        "generatedBytes": 2632,
+        "observedBytes": 5711,
+        "transportBytes": 6575,
+        "actions": 4,
+        "generatedTokens": 848,
+        "observedTokens": 1990,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "relative-growth-pure",
+      "family": "semantic-recipe:relative-growth",
+      "status": "admitted",
+      "path": "relative-growth-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "5e2c4fcdd963be16c2fdf7a54febc47345c3559c3f9aa5a364a1217dabeff016",
+      "metrics": {
+        "generatedBytes": 600,
+        "observedBytes": 1739,
+        "transportBytes": 1388,
+        "actions": 0,
+        "generatedTokens": 218,
+        "observedTokens": 667,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "relative-growth-callbacks-recovery",
+      "family": "semantic-recipe:relative-growth",
+      "status": "admitted",
+      "path": "relative-growth-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "4d700b890db1e22d4f6fd6a2562dad51b8777213c04a5b8362d338b33b2b0968",
+      "metrics": {
+        "generatedBytes": 3056,
+        "observedBytes": 15057,
+        "transportBytes": 6680,
+        "actions": 4,
+        "generatedTokens": 1079,
+        "observedTokens": 5640,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "relative-growth-repeated",
+      "family": "semantic-recipe:relative-growth",
+      "status": "admitted",
+      "path": "relative-growth-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "ae8f2303aaa32178f4e93ed923a1ed07e7ca62c192bd25e7642901247a0e945a",
+      "metrics": {
+        "generatedBytes": 2775,
+        "observedBytes": 5728,
+        "transportBytes": 6575,
+        "actions": 4,
+        "generatedTokens": 921,
+        "observedTokens": 1993,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "parity-adjustment-pure",
+      "family": "semantic-recipe:parity-adjustment",
+      "status": "admitted",
+      "path": "parity-adjustment-pure.json",
+      "role": "common-support",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "f24f23f26cdf697801c680b686bb36751c0c06d579e10bc956d23de76e8c063d",
+      "metrics": {
+        "generatedBytes": 717,
+        "observedBytes": 2135,
+        "transportBytes": 1628,
+        "actions": 0,
+        "generatedTokens": 232,
+        "observedTokens": 830,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "parity-adjustment-callbacks-recovery",
+      "family": "semantic-recipe:parity-adjustment",
+      "status": "admitted",
+      "path": "parity-adjustment-callbacks-recovery.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "516c859e5ec5b5b8eba4ed1217cbb7d412021882e0db9a56f0736135e5761afd",
+      "metrics": {
+        "generatedBytes": 3026,
+        "observedBytes": 15457,
+        "transportBytes": 6922,
+        "actions": 4,
+        "generatedTokens": 946,
+        "observedTokens": 5810,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "parity-adjustment-repeated",
+      "family": "semantic-recipe:parity-adjustment",
+      "status": "admitted",
+      "path": "parity-adjustment-repeated.json",
+      "role": "effectful",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "ee18aeb756e0aabe6af6609df07560123b7e78e823ef128bc72fcc552f52b1cd",
+      "metrics": {
+        "generatedBytes": 3002,
+        "observedBytes": 6138,
+        "transportBytes": 7065,
+        "actions": 4,
+        "generatedTokens": 946,
+        "observedTokens": 2159,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "rectangle-perimeter-child",
+      "family": "semantic-recipe:rectangle-perimeter",
+      "status": "admitted",
+      "path": "rectangle-perimeter-child.json",
+      "role": "lifecycle-child",
+      "representation": "explicit",
+      "split": "train",
+      "episodeDigest": "8fa37ef7f0164ef692f74dec90fe5eff156a0bf485f46b220f3a1ca8919d2103",
+      "metrics": {
+        "generatedBytes": 1367,
+        "observedBytes": 3985,
+        "transportBytes": 3285,
+        "actions": 2,
+        "generatedTokens": 425,
+        "observedTokens": 1404,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "id": "modular-clock-child",
+      "family": "semantic-recipe:modular-clock",
+      "status": "admitted",
+      "path": "modular-clock-child.json",
+      "role": "lifecycle-child",
+      "representation": "explicit",
+      "split": "validation",
+      "episodeDigest": "f45365976c0e0050d2812907a068887ead14fdcde3ab90013cb42a0621d2cf40",
+      "metrics": {
+        "generatedBytes": 1544,
+        "observedBytes": 4094,
+        "transportBytes": 3546,
+        "actions": 2,
+        "generatedTokens": 495,
+        "observedTokens": 1467,
+        "learnedSuccess": null,
+        "optimizerSteps": 0
+      }
+    }
+  ],
+  "counterfactuals": [],
+  "selectionOrigin": "certified_teacher",
+  "evidenceKind": "deterministic-engineering",
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}
