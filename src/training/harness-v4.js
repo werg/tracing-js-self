@@ -258,7 +258,8 @@ export class SelectedExecutionHarness {
       {invocationId,effectId,key,attempt:intent.attempts});
     const run=Promise.resolve().then(()=>adapter(clone(intent.args),
       Object.freeze({sessionId:this.sessionId,invocationId,effectId,
-        idempotencyKey:key,operation:intent.operation})))
+        idempotencyKey:key,operation:intent.operation,
+        realmId:this.invocations.get(invocationId).realmId})))
       .then(value=>this.deliverResult(invocationId,effectId,
         {status:'fulfilled',value}))
       .catch(error=>this.deliverResult(invocationId,effectId,
