@@ -25,7 +25,7 @@ export function createMegatokenProcessSelector({command,args=[],cwd=undefined,
     Number.isSafeInteger(timeoutMs)&&timeoutMs>0,'Model JSONL limits are invalid');
   const process=spawn(command,args,{cwd,env,stdio:['pipe','pipe','pipe'],
     shell:false,windowsHide:true});
-  let closed=false,nextId=0,buffer='',stderr='';
+  let closed=false,nextId=0,buffer='',stderr='',shutdownPromise=null;
   const decoder=new StringDecoder('utf8');
   const pending=new Map();
   const nativeMetrics={schema:'semantic-inference-metrics/4',rpcCalls:0,computeSeconds:0,peakMemoryBytes:0};
@@ -214,6 +214,34 @@ export function createMegatokenProcessSelector({command,args=[],cwd=undefined,
   select.close=()=>{
     if(closed)return;
     abort(new Error('Megatoken selected process was closed'));
+  };
+  // EOF lets the real server release its runtime and flush measured evidence.
+  // An active RPC must complete or be cancelled before a graceful shutdown.
+  select.shutdown=({timeoutMs:shutdownTimeoutMs=10000}={})=>{
+    demand(Number.isSafeInteger(shutdownTimeoutMs)&&shutdownTimeoutMs>0&&shutdownTimeoutMs<=120000,
+      'Model shutdown deadline must be between 1 and 120000 milliseconds');
+    if(shutdownPromise)return shutdownPromise;
+    if(closed)return Promise.reject(new Error('Model process already aborted; graceful shutdown unavailable'));
+    if(pending.size)return Promise.reject(new Error('Finish outstanding model RPCs before graceful shutdown'));
+    closed=true;
+    shutdownPromise=new Promise((resolveShutdown,rejectShutdown)=>{
+      let timedOut=false,forceTimer=null;
+      const timer=setTimeout(()=>{
+        timedOut=true;process.kill();
+        forceTimer=setTimeout(()=>process.kill('SIGKILL'),250);
+        forceTimer.unref?.();
+      },shutdownTimeoutMs);
+      timer.unref?.();
+      process.once('close',(code,signal)=>{
+        clearTimeout(timer);if(forceTimer!==null)clearTimeout(forceTimer);
+        if(timedOut)rejectShutdown(new Error('Megatoken graceful shutdown deadline exceeded'));
+        else if(code!==0)rejectShutdown(new Error('Megatoken shutdown failed '+String(code??signal)+
+          (stderr?' (stderr: '+stderr.slice(-1000)+')':'')));
+        else resolveShutdown({schema:'semantic-process-shutdown/1',graceful:true,exitCode:code});
+      });
+      process.stdin.end();
+    });
+    return shutdownPromise;
   };
   select.status=()=>({closed,pending:pending.size,stderr:stderr.slice(-1000)});
   select.metrics=()=>({...nativeMetrics});

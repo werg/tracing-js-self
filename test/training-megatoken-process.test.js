@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {createMegatokenProcessSelector} from '../src/training/megatoken-process.js';
 import {createHash} from 'node:crypto';
+import {mkdtemp,readFile,rm} from 'node:fs/promises';
+import {join} from 'node:path';
 
 function mockProcess(script){
   return createMegatokenProcessSelector({
@@ -10,6 +12,32 @@ function mockProcess(script){
 }
 const prefix={schema:'selected-inference-prefix/2',
   invocationId:'call1',trackId:'worker1',committed:[{session:'s1'}]};
+
+test('graceful model shutdown waits for EOF evidence and is idempotent',async()=>{
+  const root=await mkdtemp(join(process.cwd(),'.process-shutdown-'));
+  const output=join(root,'flushed.json');
+  const select=mockProcess(`
+    process.stdin.resume();
+    process.stdin.on('end',()=>{
+      require('node:fs').writeFileSync(${JSON.stringify(output)},JSON.stringify({runtimeClosed:true}));
+    });
+  `);
+  try{
+    const receipt=await select.shutdown();
+    assert.equal(receipt.graceful,true);
+    assert.equal((await select.shutdown()).exitCode,0);
+    assert.deepEqual(JSON.parse(await readFile(output,'utf8')),{runtimeClosed:true});
+    assert.equal(select.status().closed,true);
+    await assert.rejects(select(prefix),/closed/);
+  }finally{select.close();await rm(root,{recursive:true,force:true});}
+});
+
+test('graceful shutdown reports failure instead of inventing a successful flush',async()=>{
+  const select=mockProcess(`process.stdin.resume();process.stdin.on('end',()=>process.exit(7));`);
+  await assert.rejects(select.shutdown(),/shutdown failed 7/);
+  const hung=mockProcess(`process.stdin.resume();setInterval(()=>{},1000);`);
+  await assert.rejects(hung.shutdown({timeoutMs:200}),/deadline exceeded/);
+});
 
 test('evaluation initialization attests the actual checkpoint and seed before outcome prediction',async()=>{
   const script=`

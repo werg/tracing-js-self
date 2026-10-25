@@ -109,3 +109,62 @@ Run the source lineage and behavior regression with:
 ```sh
 node --test test/training-source-recipe.test.js
 ```
+
+## Expanded benchmark fixtures
+
+`benchmark-v1` is a separate authored engineering fixture catalogue. It does not
+change `training-v4`, any archived cohort, or the semantic protocol version.
+The declarations in `src/training/recipe-fixtures.js` each specify a distinct
+source algorithm; the generator derives external fixture observations from
+those declarations, then the ordinary owned execution, independent Node
+reference, projection/replay and optional native-consumer gates produce labels.
+The declarations are engineering fixtures, not learned or model-generated
+data. Family splits use the existing seed-17 family hash policy and are
+reported as observed; the catalogue retains every family without tuning names
+or seeds to force a desired split.
+
+The initial catalogue declares 42 loop, state and array algorithms, including
+Euclidean GCD/LCM, iterative factorial and Fibonacci, bit operations, integer
+square root, prime counting, array reductions/search, inversion counting,
+maximum subarray, and stock profit. Their bounded inputs are fixed in the
+catalogue. Normalized AST checks reject duplicate algorithms within this
+catalogue and against the original `training-v4` pure-source families. With the
+current seed-17 hash this yields 32 train, 7 validation and 3 test families.
+Each family expands to one pure case, one retained-callback recovery case and
+one composed repeated-invocation session containing two separately checked
+inputs. This is 126 primary outputs per representation, plus two source-derived
+lifecycle child inputs (one from train and one from validation). A family is
+counted once regardless of its input variants, callback activations or
+representation. The generated manifest includes per-family split and
+normalized source-AST digests, the split counts, role coverage and ancestry.
+
+Generate explicit or compact candidates with the same native preparation
+arguments documented above, replacing `training-v4` with `benchmark-v1` and
+using a fresh output path. The manifest lists all algorithm declarations,
+family identities, source ancestors and actual family-hash splits. Every pure,
+callback and repeated-invocation variant inherits its source algorithm family;
+input variants and representations never increase the independent-family
+count. The benchmark regression is:
+
+```sh
+node --test test/training-benchmark-recipe.test.js
+```
+
+Freeze a benchmark test declaration and its versioned source-family metadata
+sidecar separately from the v4 cohort contract:
+
+```sh
+node tools/freeze-selected-evaluation.mjs /tmp/semantic-benchmark-explicit \
+  /tmp/benchmark-test-declaration.json --benchmark-v1 \
+  --metadata-output /tmp/benchmark-test-metadata.json
+
+node tools/freeze-selected-evaluation.mjs /tmp/semantic-benchmark-explicit \
+  /tmp/benchmark-common-test-declaration.json --benchmark-v1 --common-support \
+  --metadata-output /tmp/benchmark-common-test-metadata.json
+```
+
+The declaration retains the existing Megatoken evaluation schema. The sidecar
+pins the source manifest and declaration digests and lists each held-out family,
+algorithm, ancestor, fixed split, observed case roles and normalized AST digest.
+The freezer refuses a non-benchmark corpus and does not modify the frozen v4
+cohorts or their split policy.

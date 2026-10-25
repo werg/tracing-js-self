@@ -3,10 +3,14 @@ import {spawn,execFileSync} from 'node:child_process';
 import {mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
 import {resolve,join} from 'node:path';
 import {createHash} from 'node:crypto';
+import {parse} from 'acorn';
 import {EFFECTFUL_ENGINEERING_FIXTURES} from '../src/training/engineering-fixtures.js';
 import {verifyEffectfulTrainingCase,effectfulMetrics,checkCounterfactualPrefixes,requireNativeAdmission}
   from '../src/training/effectful-admit.js';
+import {effectfulFamilySplit} from '../src/training/effectful-admit.js';
 import {semanticRecipeFamilies,SEMANTIC_TASK_TEMPLATES,SEMANTIC_RECIPE_VERSION,SEMANTIC_RECIPE_NAME}
+  from '../src/training/recipe-fixtures.js';
+import {benchmarkFamiliesV1,BENCHMARK_ALGORITHMS,BENCHMARK_RECIPE_NAME,BENCHMARK_RECIPE_VERSION}
   from '../src/training/recipe-fixtures.js';
 import {hostOperationContract} from '../src/host/operations.js';
 import {verifyEffectfulSession} from '../src/training/effectful-session.js';
@@ -19,7 +23,7 @@ const flags=new Map();for(let i=2;i<process.argv.length;i++){
 const output=resolve(flags.get('--out')??'artifacts/semantic-v4');mkdirSync(output,{recursive:true});
 const megatoken=flags.get('--megatoken'),tokenizer=flags.get('--tokenizer'),python=flags.get('--python')??'python3';
 const recipe=flags.get('--recipe')??'engineering';
-if(!['engineering',SEMANTIC_RECIPE_NAME].includes(recipe))throw new Error('Unknown source recipe');
+if(!['engineering',SEMANTIC_RECIPE_NAME,BENCHMARK_RECIPE_NAME].includes(recipe))throw new Error('Unknown source recipe');
 const jobs=Number(flags.get('--jobs')??1);
 if(!Number.isSafeInteger(jobs)||jobs<1||jobs>8)throw new Error('--jobs must be between 1 and 8');
 const representation=flags.get('--representation')??(recipe==='engineering'?null:'explicit');
@@ -33,6 +37,12 @@ if(flags.has('--require-native')&&(!megatoken||!tokenizer))
   throw new Error('--require-native requires --megatoken and --tokenizer');
 const producerRevision=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 const hash=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
+const normalizedSourceAst=source=>{
+  const visit=value=>Array.isArray(value)?value.map(visit):value&&typeof value==='object'?
+    Object.fromEntries(Object.entries(value).filter(([key])=>!['start','end','loc'].includes(key))
+      .map(([key,item])=>[key,visit(item)])):value;
+  return visit(parse(source,{ecmaVersion:'latest'}));
+};
 let serial=0;
 const nativeConsumer=megatoken&&tokenizer?async exported=>{
   const input=join(output,'.native-input-'+(++serial)+'.json'),receipt=input+'.receipt';
@@ -68,7 +78,9 @@ if(recipe==='engineering'){
   tasks.push({fixture,run:()=>verifyEffectfulSession({cases:fixtures.slice(0,2),
     family:fixture.family,nativeConsumer,producerRevision})});
 }else{
-  for(const family of semanticRecipeFamilies({representation})){
+  const authoredFamilies=recipe===BENCHMARK_RECIPE_NAME?benchmarkFamiliesV1({representation}):
+    semanticRecipeFamilies({representation});
+  for(const family of authoredFamilies){
     sourceTask({...family.pure,role:'common-support'});
     sourceTask({...family.callbacks,role:'effectful'});
     const fixture={...family.repeated,role:'effectful'};
@@ -102,12 +114,34 @@ const counterfactuals=[];
 for(const pair of [['counter-0','counter-1'],['branch-0','branch-1']])
   if(pair.every(id=>exports.has(id)))counterfactuals.push({pair,
     ...checkCounterfactualPrefixes(exports.get(pair[0]),exports.get(pair[1]))});
+const recipeMetadata=recipe==='engineering'?{name:recipe}:recipe===BENCHMARK_RECIPE_NAME?{
+  schema:BENCHMARK_RECIPE_VERSION,name:recipe,
+  algorithms:BENCHMARK_ALGORITHMS.map(({name,body})=>({name,body,
+    family:'semantic-benchmark-v1:'+name,ancestor:'source-algorithm-v1:'+name,
+    split:effectfulFamilySplit('semantic-benchmark-v1:'+name),
+    normalizedAstDigest:hash(normalizedSourceAst('function run(a,b){'+body+'}'))})),
+  families:BENCHMARK_ALGORITHMS.map(({name})=>'semantic-benchmark-v1:'+name),
+  splitCounts:Object.fromEntries(['train','validation','test'].map(split=>[split,
+    BENCHMARK_ALGORITHMS.filter(({name})=>effectfulFamilySplit('semantic-benchmark-v1:'+name)===split).length])),
+  normalizedAstDuplicateCount:BENCHMARK_ALGORITHMS.length-new Set(BENCHMARK_ALGORITHMS.map(({body})=>
+    hash(normalizedSourceAst('function run(a,b){'+body+'}')))).size,
+  normalizedAstAncestorDuplicateCount:BENCHMARK_ALGORITHMS.filter(({body})=>
+    SEMANTIC_TASK_TEMPLATES.some(template=>hash(normalizedSourceAst('function run(a,b){return '+template.expression+';}'))===
+      hash(normalizedSourceAst('function run(a,b){'+body+'}')))).length,
+  retainEveryAuthoredFamily:true,lifecycleInputs,
+  coverage:{familyCount:BENCHMARK_ALGORITHMS.length,
+    splitCounts:Object.fromEntries(['train','validation','test'].map(split=>[split,
+      BENCHMARK_ALGORITHMS.filter(({name})=>effectfulFamilySplit('semantic-benchmark-v1:'+name)===split).length])),
+    sourceKinds:['pure','retained-callback-recovery','repeated-invocation','lifecycle-child'],
+    familyRoles:Object.fromEntries(['common-support','effectful','lifecycle-child'].map(role=>[role,
+      [...new Set(cases.filter(item=>item.role===role).map(item=>item.family))].length]))}
+}:{schema:SEMANTIC_RECIPE_VERSION,name:recipe,
+  templateDigest:hash(SEMANTIC_TASK_TEMPLATES),families:SEMANTIC_TASK_TEMPLATES.map(t=>'semantic-recipe:'+t.name),
+  splitSeed:17,retainEveryAuthoredFamily:true,lifecycleInputs};
 const manifest={schema:'semantic-corpus-manifest/4',execution:EXECUTION_VERSION,trace:WITNESS_VERSION,
   context:CONTEXT_VERSION,profile:HARNESS_PROFILE,producerRevision,
   representation:representation??'mixed',
-  recipe:recipe==='engineering'?{name:recipe}:{schema:SEMANTIC_RECIPE_VERSION,name:recipe,
-    templateDigest:hash(SEMANTIC_TASK_TEMPLATES),families:SEMANTIC_TASK_TEMPLATES.map(t=>'semantic-recipe:'+t.name),
-    splitSeed:17,retainEveryAuthoredFamily:true,lifecycleInputs},
+  recipe:recipeMetadata,
   catalogDigest:hash(JSON.stringify(hostOperationContract(),null,2)+'\n'),
   counts,cases,counterfactuals,selectionOrigin:nativeConsumer?'certified_teacher':'owned-interpreter-teacher',
   evidenceKind:'deterministic-engineering',optimizerSteps:0,learnedSuccess:null};
