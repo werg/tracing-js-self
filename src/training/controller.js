@@ -24,13 +24,18 @@ function primitive(value){
 }
 export class SemanticController {
   constructor(context,{completionPolicy='immediate-root',capabilities=[],fixtureReplies=[],
-    maxGenerated=4096,maxPacketBytes=65536}={}){
+    maxGenerated=4096,maxPacketBytes=65536,observationAuthority='fixture'}={}){
     if(!Array.isArray(context)||context.length!==2)fail('context','Expected code and input');
     const [code,input]=context.map(decodeWitness);
     if(code.kind!=='code'||input.kind!=='input')
       fail('context','Observed source/graph order');
     if(!['immediate-root','owned-quiescence'].includes(completionPolicy))
       fail('policy','Unrecognized completion policy');
+    if(!['fixture','broker'].includes(observationAuthority))
+      fail('policy','Unrecognized external observation authority');
+    if(observationAuthority==='broker'&&fixtureReplies.length)
+      fail('policy','Broker observations cannot be combined with teacher fixtures');
+    this.observationAuthority=observationAuthority;
     this.source=code.fields;this.input=input.fields;this.completionPolicy=completionPolicy;
     this.callSites=new Map(analyzeSemanticProgram(this.source.source).sites
       .filter(site=>site.role==='CallExpression'&&site.operation)
@@ -217,10 +222,13 @@ export class SemanticController {
         const args=JSON.parse(prepared.payload);
         // Ordering of authorized effects is observable: do not search for
         // a convenient matching future reply in an unordered fixture bag.
-        const matched=this.fixtureReplies.find(e=>!e.claimed);
-        if(!matched||matched.operation!==f.operation||!eq(matched.arguments,args))
-          fail('request-mismatch','Selected request differs from next authorized fixture');
-        matched.claimed=true;
+        const matched=this.observationAuthority==='fixture'?
+          this.fixtureReplies.find(e=>!e.claimed):null;
+        if(this.observationAuthority==='fixture'){
+          if(!matched||matched.operation!==f.operation||!eq(matched.arguments,args))
+            fail('request-mismatch','Selected request differs from next authorized fixture');
+          matched.claimed=true;
+        }
         this.effects.set(f.effect,{operation:f.operation,invocation:f.invocation,
           site:structuredClone(f.site),payload:f.payload,
           arguments:structuredClone(args),status:'requested',
@@ -229,7 +237,7 @@ export class SemanticController {
         const effect=this.effects.get(f.effect);
         if(!effect||effect.status!=='requested')
           fail('effect','Observation lacks an outstanding request');
-        if(effect.fixture.status!==f.status||!eq(effect.fixture.result,f.result))
+        if(effect.fixture&&(effect.fixture.status!==f.status||!eq(effect.fixture.result,f.result)))
           fail('observation','External delivery differs from committed fixture');
         effect.status=f.status;effect.result=structuredClone(f.result);
       }else if(kind==='job'){
@@ -267,6 +275,7 @@ export class SemanticController {
   segmentPacket(){
     const packet={schema:'semantic-continuation/3',source:'committed-selected-state',
       input:this.input,context:this.source,policy:this.completionPolicy,
+      observationAuthority:this.observationAuthority,
       capabilities:[...this.capabilities],heap:[...this.heap],locals:[...this.locals],
       stack:this.stack,effects:[...this.effects],jobs:[...this.jobs],ready:this.ready,
       claims:this.claims,history:this.history,generated:this.generated,
@@ -284,7 +293,8 @@ export class SemanticController {
     const controller=new SemanticController([
       'code '+JSON.stringify(packet.context),'input '+JSON.stringify(packet.input)
     ],{...options,completionPolicy:packet.policy,capabilities:packet.capabilities,
-      fixtureReplies:packet.fixtureReplies,maxGenerated:packet.maxGenerated,
+      fixtureReplies:packet.fixtureReplies,observationAuthority:packet.observationAuthority??'fixture',
+      maxGenerated:packet.maxGenerated,
       maxPacketBytes:packet.maxPacketBytes});
     controller.heap=new Map(packet.heap.map(([id,e])=>[id,{...e,properties:new Map(e.properties)}]));
     controller.locals=new Map(packet.locals);controller.stack=packet.stack;
