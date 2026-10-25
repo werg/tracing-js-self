@@ -562,11 +562,15 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     }else if(row?.op==='write'||row?.op==='value'){
       if(attachBinding){
         attachBinding.last.fields.bind=cell(attachBinding.write.env,attachBinding.write.key);
-        attachBinding.last.certificate.rule='owned-compact-bind/4';
-        attachBinding.last.certificate.journalEvents.push(event.eventId);
-        attachBinding.last.certificate.dependencies=[
-          ...(attachBinding.last.certificate.dependencies??[]),
-          {producer:attachBinding.last.producer,consumer:event.eventId,kind:'cell-binding'}];
+        // Keep source-operation dependency receipts separate from the cell
+        // attachment. The same expression proof must still have exactly the
+        // actual operand producer edges, while the appended binding has its
+        // own source receipt and lexical identity.
+        if(attachBinding.last.certificate.rule!=='owned-compact-compute/4')
+          attachBinding.last.certificate.rule='owned-compact-bind/4';
+        attachBinding.last.certificate.binding={
+          name:attachBinding.last.fields.bind,journalEvent:event.eventId,
+          producer:attachBinding.last.producer};
         flushComputations();fusedBindings++;
       }else writes(row,owner,event);
       handled=true;
