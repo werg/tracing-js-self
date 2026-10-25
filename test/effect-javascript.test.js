@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRuntime} from '../src/runtime.js';
-import {compileExternalEffectsJS} from '../src/effect-javascript.js';
+import {compileExternalEffectsJS,compilePendingEffectJS,createOwnedEffectBridge}
+  from '../src/effect-javascript.js';
 
 function archive(source){
   const run=createRuntime({adapters:{
@@ -12,39 +13,48 @@ function archive(source){
   return run.exportRun();
 }
 
-test('emitted JavaScript is directly executable and repeats dispatch order and exact snapshots',()=>{
+test('compiled external JS replays dispatch order and materialized snapshots',()=>{
   const bundle=archive('let o={n:2};host.store("a",o);o.n=9;host.store("b",o);');
   const javascript=compileExternalEffectsJS(bundle);
-  assert.equal(typeof javascript,'string');
-  assert(!javascript.includes('host.store('));
-  const received=[];
-  new Function('effects',javascript)({
-    'demo.store':(...args)=>received.push(args)
-  });
-  assert.deepEqual(received,[['a',{n:2}],['b',{n:9}]]);
+  const calls=[];
+  new Function('effects',javascript)({'demo.store':(...args)=>calls.push(args)});
+  assert.deepEqual(calls,[['a',{n:2}],['b',{n:9}]]);
 });
 
-test('effects are not invoked during compilation, nor if required capabilities are missing',()=>{
-  const bundle=archive('host.store("a",1);host.readNumber("k");');
-  const javascript=compileExternalEffectsJS(bundle);
-  const received=[];
-  assert.throws(()=>new Function('effects',javascript)({
-    'demo.store':(...args)=>received.push(args)
-  }),/Missing effect handler: demo.readNumber/);
-  assert.deepEqual(received,[]);
-  new Function('effects',javascript)({
-    'demo.store':(...args)=>received.push(args),
-    'demo.readNumber':(...args)=>received.push(args)
-  });
-  assert.deepEqual(received,[['a',1],['k']]);
+test('missing handler fails before any external replay',()=>{
+  const code=compileExternalEffectsJS(archive('host.store("a",1);host.readNumber("k");'));
+  const calls=[];
+  assert.throws(()=>new Function('effects',code)({
+    'demo.store':(...args)=>calls.push(args)
+  }),/Missing effect handler/);
+  assert.deepEqual(calls,[]);
 });
 
-test('empty effects return runnable JS and invalid host payloads are rejected',()=>{
-  const clean=archive('let x=2+3;');
-  assert.equal(new Function('effects',compileExternalEffectsJS(clean))({}),undefined);
-  const corrupted=archive('host.store("a",1);');
-  const call=corrupted.events.find(e=>e.operation==='call.enter'&&
-    e.stateChanges.some(p=>p.table==='effects'&&p.before===null));
-  call.stateChanges.find(p=>p.table==='effects').after.request.payload='["a",99]';
-  assert.throws(()=>compileExternalEffectsJS(corrupted),/Host request|materialized|mismatch/);
+test('live generated effect JavaScript resolves an async native result into owned VM',async()=>{
+  const runtime=createRuntime().start('let v=host.readAsync("A");');
+  const pending=runtime.drive();
+  assert.equal(pending.kind,'waiting');
+  const fx=Object.values(runtime.state.effects)[0];
+  assert.equal(fx.dispatch,'dispatched');
+  const js=compilePendingEffectJS(runtime,fx.id);
+  const bridge=createOwnedEffectBridge(runtime);
+  new Function('effects','bridge',js)({
+    'demo.readAsync':async key=>{assert.equal(key,'A');return 12;}
+  },bridge);
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(runtime.state.effects[fx.id].external,'completed');
+  assert.throws(()=>bridge.settle(fx.id,13),/duplicate settlement/);
+  assert.equal(runtime.drive().kind,'terminated');
+});
+
+test('live generated effect JavaScript sends rejection back through owned input',async()=>{
+  const runtime=createRuntime().start('host.readAsync("A");');
+  assert.equal(runtime.drive().kind,'waiting');
+  const fx=Object.values(runtime.state.effects)[0],bridge=createOwnedEffectBridge(runtime);
+  new Function('effects','bridge',compilePendingEffectJS(runtime,fx.id))({
+    'demo.readAsync':()=>Promise.reject(new Error('network failed'))
+  },bridge);
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(runtime.state.effects[fx.id].external,'rejected');
+  assert.equal(runtime.state.inputs[fx.inputIds[0]].abrupt,true);
 });

@@ -63,6 +63,25 @@ const effects = {'demo.store': (key, value) => save(key, value)};
 new Function('effects', javascript)(effects);
 ```
 
+For an **active** external effect, the live entry point also returns code
+that routes both synchronous exceptions and native Promise settlements into
+the journalled owned input path:
+
+```js
+import {compilePendingEffectJS,createOwnedEffectBridge} from 'tracing-js-self';
+const effect = Object.values(runtime.state.effects).find(e => e.dispatch === 'dispatched' && e.external === 'pending');
+const js = compilePendingEffectJS(runtime,effect.id);
+new Function('effects','bridge',js)(effects,createOwnedEffectBridge(runtime));
+// After the service settles, drive the owned runtime at the next legal point.
+```
+
+The live bridge invokes `recordInputArrival` and `deliverInput`, but never
+executes guest code from native handlers. **Callback-taking DOM APIs are still
+unsupported**: the current `canonical-json/1` contract cannot carry guest
+functions or their continuation identities. A future callback ABI must register
+owned function identities and schedule invocation back into the VM; native
+callbacks must not silently execute guest closures.
+
 The emitted JavaScript calls `effects["operation"](...materializedArgs)` in
 recorded dispatch order. The argument values are copied directly from the
 verified immutable request payload (including the snapshot of a later-mutated
