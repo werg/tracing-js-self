@@ -1,0 +1,17 @@
+name: Inspect source-grounded semantic traces
+on:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  semantic-inspection:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Check source expression grounding, admission and compaction
+        run: node --test test/training-semantic-source.test.js test/training-effectful-compact.test.js
+      - name: Generate readable source-certified traces with effects and callbacks
+        run: node tools/inspect-semantic-reasoning.mjs
