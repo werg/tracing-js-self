@@ -101,7 +101,6 @@ export function createDomServices({root,allowedEvents=['click','input','change']
       ensure(allowedId(token)&&!timers.has(token),'Owned timer callback required');
       let enabled=true;
       const timer=setTimeout(()=>{
-        timers.delete(token);
         if(enabled&&!closed)queueMicrotask(()=>{if(enabled&&!closed)callback(token);});
       },delay);
       timers.set(token,{realmId:meta.realmId,sessionId:meta.sessionId,
