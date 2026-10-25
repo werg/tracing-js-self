@@ -10,6 +10,7 @@ import {auditReferenceOperations} from './operation-reference.js';
 import {auditReferenceBranches} from './branch-reference.js';
 import {compileEffectfulWitness,verifyEffectfulProjection} from './effectful-compiler.js';
 import {realizeGraph,describeGraph} from './graph.js';
+import {validateSemantic} from '../semantic/normalize.js';
 
 function checkSource(bundle,source,entry,owned,reference){
   const options={source,entry,args:bundle.entrySpec.arguments,
@@ -65,7 +66,7 @@ export function verifyOwnedSourceCase({source,entry,args=[],seed=null,lineage=nu
       throw new Error('Canonical selected outcome diverges from independent reference');
     const exported=compiled.exported;
     Object.assign(exported.sidecar,{
-      archive:bundle,projectionOptions,referenceStatus:'agreed',
+      archive:bundle,semantic:compiled.semantic,projectionOptions,referenceStatus:'agreed',
       reference:{outcome:reference},sourceLineage:lineage,
       operationAudit:evidence.operationAudit,branchAudit:evidence.branchAudit,
       generationSeed:seed,referenceEngine:'Node.js V8 (trusted-source reference only)'});
@@ -84,6 +85,7 @@ export function recheckOwnedSourceEvidence(exported){
        side.operationAudit?.status!=='agreed'||side.branchAudit?.status!=='agreed')
       throw new Error('Missing independent source evidence for canonical representation');
     const bundle=side.archive;
+    validateSemantic(bundle,side.semantic);
     if(validateBundle(bundle).valid!==true||replayExact(bundle).valid!==true)
       throw new Error('Invalid owned journal or private replay');
     if(bundle.manifest.profile!=='training-js/1')
