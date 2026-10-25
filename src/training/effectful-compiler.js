@@ -13,6 +13,7 @@ import {SelectedExecutionHarness} from './harness-v4.js';
 import {encodeWitness,decodeWitness,validateExpression} from './format.js';
 import {hostOperation,SUBSCRIPTION_CLOSERS} from '../host/operations.js';
 import {analyzeSemanticProgram} from './semantic-program.js';
+import {sourceLinkedComputation,sourceLinkedDecision} from './semantic-source.js';
 
 const copy=value=>structuredClone(value);
 const hash=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
@@ -26,7 +27,10 @@ function binarySourceNodes(source){
   function visit(node){
     if(!node||typeof node!=='object')return;
     if(Array.isArray(node)){for(const child of node)visit(child);return;}
-    if(node.type==='BinaryExpression')nodes.set(node.start+':'+node.end,node);
+    if(['BinaryExpression','AssignmentExpression','Identifier','MemberExpression',
+      'UnaryExpression','Literal','IfStatement','WhileStatement','DoWhileStatement',
+      'ForStatement','ConditionalExpression'].includes(node.type))
+      nodes.set(node.start+':'+node.end,node);
     for(const [key,value] of Object.entries(node))if(!['start','end','loc','raw'].includes(key))visit(value);
   }
   visit(parse(source,{ecmaVersion:'latest'}));return nodes;
@@ -140,6 +144,27 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     }))});
   };
   const controller=owner=>harness.invocations.get(owner).controller;
+  function publicScope(frame,owner){
+    const selected=controller(owner),locals=selected.visibleLocals();
+    return {
+      locals,
+      resolveLocal(name){
+        // Shadowing follows the live owned lexical environment, not a
+        // coincidental equal-valued local in another activation.
+        for(let env=state.frames[frame]?.envId;env;env=state.envs[env]?.parent){
+          if(!Object.hasOwn(state.envs[env]?.bindings??{},name))continue;
+          const key=cellNames.get(env+':'+name);
+          return key&&locals.has(key)?{name:key,value:locals.get(key)}:null;
+        }
+        return null;
+      },
+      hasOwnData(object,key){
+        const node=selected.heap.get(object);
+        return ['object','array'].includes(node?.kind)&&node.properties.has(key);
+      },
+      readProperty:(object,key)=>selected.readProperty(object,key)
+    };
+  }
   const callbackRegistration=(effectId,functionId)=>{
     const effect=state.effects[effectId],callOwner=rootFor(effect?.frameId);
     const slots=hostOperation(effect.operation).callbackIndices.filter(slot=>
@@ -152,7 +177,12 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   };
   const cell=(env,name)=>{
     const key=env+':'+name;
-    if(!cellNames.has(key))cellNames.set(key,'cell'+(++cellOrdinal));
+    if(!cellNames.has(key)){
+      // Readable source-oriented cells are local semantic identities, not
+      // references to VM environment IDs or an exact source/trace bijection.
+      const stem=name.replace(/[^a-zA-Z0-9]/g,'').toLowerCase();
+      cellNames.set(key,(stem&&/^[a-z]/.test(stem)?stem:'cell')+'_'+(++cellOrdinal));
+    }
     return cellNames.get(key);
   };
   function commitEmission(owner,kind,fields,certificate){
