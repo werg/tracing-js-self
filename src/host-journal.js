@@ -74,9 +74,13 @@ export function validateHostJournal(bundle, fail) {
           !['promise', 'synchronous'].includes(p.after.kind) ||
           cause(event, 'effect', 'effectId') !== p.id || created.has(p.id))
         fail('Malformed effect creation', event.eventId);
+      // Member calls record a receiver-bearing method token; direct calls
+      // record the underlying hostfn token. Both denote one precise target.
+      const callee=event.operands?.[0];
+      const callable=callee?.[0]==='method'&&callee.length===3?callee[1]:callee;
       if(!event.siteId||!event.invocationId||
           p.after.frameId!==event.invocationId||
-          !isDeepStrictEqual(event.operands?.[0],['hostfn',p.after.operation])||
+          !isDeepStrictEqual(callable,['hostfn',p.after.operation])||
           !isDeepStrictEqual(p.after.args,event.operands?.slice(1))||
           !isDeepStrictEqual(p.after.argOrigins,event.operandOrigins?.slice(1)))
         fail('External request differs from originating JS invocation or operands',
