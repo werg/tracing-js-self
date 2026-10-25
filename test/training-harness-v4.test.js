@@ -158,3 +158,60 @@ test('exact replay verifies public causal selected records without invoking any 
   uncommitted.public.timeline=uncommitted.public.timeline.filter(x=>x.kind!=='dispatch');
   assert.throws(()=>SelectedExecutionHarness.replay(uncommitted),/Replay result|dispatched cause/i);
 });
+
+test('retained invocation reuses committed heap cells without source reload or native effects',()=>{
+  const h=new SelectedExecutionHarness();
+  const program='function run(state){return state.n;}';
+  h.publishProgram({programId:'retained',source:program,entry:'run'});
+  h.admitInvocation({programId:'retained',invocationId:'call1',trackId:'w1',
+    realmId:'shared',triggerId:'outside1',realmPolicy:'retained',args:[{n:1}]});
+  h.selected('call1',encodeWitness('write',{object:'o0',key:'n',
+    value:tag(2),present:true}));
+  selectedValue(h,'call1',2);
+  assert.equal(h.realms.get('shared').heap.get('o0').properties.get('n')[1],2);
+  h.admitInvocation({programId:'retained',invocationId:'call2',trackId:'w1',
+    realmId:'shared',triggerId:'outside2',realmPolicy:'retained',args:[]});
+  h.selected('call2',encodeWitness('read',{object:'o0',key:'n',
+    value:tag(2),present:true}));
+  h.selected('call2',encodeWitness('write',{object:'o0',key:'n',
+    value:tag(3),present:true}));
+  selectedValue(h,'call2',3);
+  assert.equal(h.realms.get('shared').heap.get('o0').properties.get('n')[1],3);
+  assert.equal(h.timeline.filter(e=>e.kind==='program').length,1);
+  assert.equal(h.timeline.filter(e=>e.kind==='invocation').length,2);
+  const replay=SelectedExecutionHarness.replay(h.exportEpisode());
+  assert.equal(replay.realms.get('shared').heap.get('o0').properties.get('n')[1],3);
+  assert.deepEqual(replay.timeline,h.timeline);
+});
+
+test('independent events queue behind one retained JS turn and activate separately',()=>{
+  const h=new SelectedExecutionHarness();
+  h.publishProgram({programId:'events',source:'function run(x){return x;}',
+    entry:'run'});
+  h.registerEventHandler({subscriptionId:'updates',programId:'events',
+    trackId:'worker1',realmId:'shared',queueLimit:2});
+  h.postEvent({subscriptionId:'updates',eventId:'e1',args:[1]});
+  assert.equal(h.invocations.size,1);
+  assert.equal(h.timeline.filter(x=>x.kind==='event').length,1);
+  h.postEvent({subscriptionId:'updates',eventId:'e2',args:[2]});
+  h.postEvent({subscriptionId:'updates',eventId:'e3',args:[3]});
+  assert.equal(h.invocations.size,1,'event arrival cannot reenter a busy realm');
+  assert.throws(()=>h.postEvent({subscriptionId:'updates',eventId:'e4',args:[4]}),
+    /overflow/);
+  assert.throws(()=>h.postEvent({subscriptionId:'updates',eventId:'e2',args:[2]}),
+    /Duplicate/);
+  selectedValue(h,'event1',1);
+  h.deliverReadyEvents('updates');
+  assert.equal(h.invocations.size,2);
+  selectedValue(h,'event2',2);
+  const close=h.closeEventHandler('updates');
+  assert.deepEqual(close.discarded,['e3']);
+  assert.throws(()=>h.postEvent({subscriptionId:'updates',eventId:'e5',args:[5]}),
+    /closed/);
+  const eventKinds=h.timeline.filter(x=>['event','invocation'].includes(x.kind))
+    .map(x=>x.kind);
+  assert.deepEqual(eventKinds,['event','invocation','event','invocation']);
+  const replay=SelectedExecutionHarness.replay(h.exportEpisode());
+  assert.deepEqual(replay.timeline,h.timeline);
+  assert.equal(replay.handlers.get('updates').state,'closed');
+});
