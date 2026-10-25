@@ -64,7 +64,7 @@ export class SelectedModelDriver {
       const request=copy({schema:'selected-inference-prefix/1',programId,
         entry:activation().entry,source:program.source,sourceDigest:program.digest,
         invocationId,trackId,realmId,
-        committed:exposed,completionPolicy,maxOutstanding});
+        committed:exposed,completionPolicy,maxOutstanding:this.maxOutstanding});
       // Do not hand the model the service functions, broker intent ledger,
       // private teacher journal, future results or reference correctness.
       return this.select(request);
