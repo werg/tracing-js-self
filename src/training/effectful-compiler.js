@@ -114,7 +114,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   const certificates=[],elided=[],checkpoints=[],rows=new Map(semantic.events.map(row=>[row.journalEvent,row]));
   const facts=normalizeCompletionFacts(bundle),state=copy(bundle.initialState);
   const roots=new Map([[semantic.rootInvocation,invocationId]]),frames=new Map([[semantic.rootInvocation,invocationId]]);
-  const cellNames=new Map(),functionNames=new Map(),pendingAwaits=new Map(),callbackArrivals=[];
+  const cellNames=new Map(),usedCellNames=new Set(),functionNames=new Map(),pendingAwaits=new Map(),callbackArrivals=[];
   const publicIdentities=new Map();
   const emittedPromises=new Set(),settledPromises=new Set(),returnedPromises=new Set(),reactionJobs=new Map();
   const reactionFrames=new Map(),reactionTargets=new Set(),microtasks=new Map(),privatePromises=new Set();
@@ -180,8 +180,10 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     if(!cellNames.has(key)){
       // Readable source-oriented cells are local semantic identities, not
       // references to VM environment IDs or an exact source/trace bijection.
-      const stem=name.replace(/[^a-zA-Z0-9]/g,'').toLowerCase();
-      cellNames.set(key,(stem&&/^[a-z]/.test(stem)?stem:'cell')+'_'+(++cellOrdinal));
+      const stem=/^[$_\\p{ID_Start}][$_\\u200C\\u200D\\p{ID_Continue}]*$/u.test(name)?name:'value';
+      let candidate=stem;
+      while(usedCellNames.has(candidate))candidate=stem+'_'+(++cellOrdinal);
+      usedCellNames.add(candidate);cellNames.set(key,candidate);
     }
     return cellNames.get(key);
   };
