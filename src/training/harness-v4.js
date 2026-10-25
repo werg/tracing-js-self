@@ -3,7 +3,7 @@
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {decodeWitness,encodeWitness,WITNESS_VERSION,EXECUTION_VERSION,CONTEXT_VERSION,HARNESS_PROFILE,
-  canonicalCompletionPolicy,validateGraph,assertValue} from './format.js';
+  canonicalCompletionPolicy,validateGraph,assertValue,SELECTED_STATE_FIELDS,MODEL_CONTEXT_INTERVAL} from './format.js';
 import {validateHarnessRecord} from './format.js';
 import {SemanticController} from './controller.js';
 import {analyzeSemanticProgram} from './semantic-program.js';
@@ -736,14 +736,56 @@ export class SelectedExecutionHarness {
     return this.record('observed','source-read',trackId,
       {programId,digest:program.digest,source:program.source});
   }
-  recordModelContext(invocationId,sourceReads){
+  selectionContext(invocationId){
+    const activation=this.invocations.get(invocationId);demand(activation,'Unknown invocation');
+    const realmActivations=[...this.invocations].filter(([,item])=>item.realmId===activation.realmId);
+    const realmInvocations=new Set(realmActivations.map(([identity])=>identity));
+    const realmPrograms=new Set(realmActivations.map(([,item])=>item.programId));
+    const realmTracks=new Set(realmActivations.map(([,item])=>item.trackId));
+    const realmSubscriptions=new Set([...this.handlers].filter(([,handler])=>handler.realmId===activation.realmId)
+      .map(([identity])=>identity));
+    const realmCommitted=this.timeline.filter(event=>
+      event.kind==='program'&&realmPrograms.has(event.programId)||realmInvocations.has(event.invocationId)||
+      realmSubscriptions.has(event.subscriptionId)||
+      ['source-read','source-evict'].includes(event.kind)&&realmTracks.has(event.track)&&realmPrograms.has(event.programId));
+    const packet=activation.controller.segmentPacket();
+    return clone({realmCommitted,selectedState:Object.fromEntries(SELECTED_STATE_FIELDS.map(field=>[field,packet[field]]))});
+  }
+  prepareModelContext(invocationId){
+    const activation=this.invocations.get(invocationId);demand(activation,'Unknown invocation');
+    if(['completed','cancelled','failed'].includes(activation.status))return null;
+    const invocation=this.timeline.find(item=>item.kind==='invocation'&&item.invocationId===invocationId);
+    const previous=this.timeline.findLast(item=>item.kind==='model-context'&&item.invocationId===invocationId&&
+      Object.hasOwn(item,'selectedState'));
+    const selected=this.timeline.filter(item=>item.kind==='semantic'&&item.invocationId===invocationId);
+    const boundary=Math.max(previous?.sequence??invocation.sequence,selected.at(-1)?.sequence??invocation.sequence);
+    const others=new Set([...this.invocations].filter(([identity,item])=>identity!==invocationId&&
+      item.realmId===activation.realmId).map(([identity])=>identity));
+    const retainedEntry=!previous&&!selected.length&&others.size>0;
+    const changedTurn=this.timeline.some(item=>item.sequence>boundary&&item.kind==='semantic'&&others.has(item.invocationId));
+    const segment=selected.filter(item=>item.sequence>(previous?.sequence??invocation.sequence)).length>=MODEL_CONTEXT_INTERVAL;
+    if(!retainedEntry&&!changedTurn&&!segment)return null;
+    this.restoreSource(activation.trackId,activation.programId);
+    return this.recordModelContext(invocationId,[],{includeState:true});
+  }
+  recordModelContext(invocationId,sourceReads,{includeState=false}={}){
     const activation=this.invocations.get(invocationId);demand(activation,'Unknown invocation');
     const program=this.programs.get(activation.programId);
     demand(Array.isArray(sourceReads)&&sourceReads.every(read=>
       read.sourceDigest===program.digest&&read.mode==='checked-reread'&&
       Array.isArray(read.originalEventIds)&&Array.isArray(read.observedEventIds)),
       'Model source receipt has invalid provenance');
-    return this.record('observed','model-context',activation.trackId,{invocationId,sourceReads});
+    let context={};
+    if(includeState){
+      const reread=this.timeline.at(-1);
+      demand(reread?.kind==='source-read'&&reread.track===activation.trackId&&
+        reread.programId===activation.programId&&reread.digest===program.digest,
+        'Selected state refresh requires its immediately preceding checked source reread');
+      const {realmCommitted,selectedState}=this.selectionContext(invocationId);
+      context={selectedState,realmPrefixDigest:createHash('sha256').update(JSON.stringify(realmCommitted),'utf8').digest('hex'),
+        visibleThrough:this.globalSequence};
+    }
+    return this.record('observed','model-context',activation.trackId,{invocationId,sourceReads,...context});
   }
   cancelInvocation(invocationId,{reason='cancelled'}={}){
     const activation=this.invocations.get(invocationId);demand(activation,'Unknown invocation');
@@ -844,6 +886,9 @@ export class SelectedExecutionHarness {
         (item.uncertain.length?'; uncertain effects '+item.uncertain.join(', '):'');
       else if(item.kind==='source-read')rendered='restore checked source '+item.programId+' @'+item.digest.slice(0,12);
       else if(item.kind==='source-evict')rendered='source unavailable '+item.programId+'; checked reread required';
+      else if(item.kind==='model-context'&&item.selectedState)rendered='refresh committed selected state through '+
+        item.visibleThrough+' @'+item.realmPrefixDigest.slice(0,12)+(includeTransport?' '+JSON.stringify(item.selectedState):'');
+      else if(item.kind==='model-context')rendered='restore checked model source context';
       else if(item.kind==='reconcile')rendered='reconcile '+item.effectId+': '+item.disposition;
       else if(includeTransport)rendered=item.kind+' '+JSON.stringify(item);
       else continue;
@@ -959,7 +1004,8 @@ export class SelectedExecutionHarness {
           other.controller.refreshReady();
       }else if(item.kind==='source-evict')h.evictSource(item.track,item.programId);
       else if(item.kind==='source-read')h.restoreSource(item.track,item.programId,{digest:item.digest});
-      else if(item.kind==='model-context')h.recordModelContext(item.invocationId,item.sourceReads);
+      else if(item.kind==='model-context')h.recordModelContext(item.invocationId,item.sourceReads,
+        {includeState:Object.hasOwn(item,'selectedState')});
       else if(item.kind==='cancel')h.cancelInvocation(item.invocationId,{reason:item.reason});
       else if(item.kind==='reconcile'){
         const intent=h.intents.get(item.invocationId+'/'+item.effectId);

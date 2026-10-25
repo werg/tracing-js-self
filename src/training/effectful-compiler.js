@@ -58,7 +58,15 @@ function closureReferences(source){
 }
 
 export function ownedEffectfulOutcome(bundle){
-  const root=bundle.finalState.control.a0.completion;
+  // Async entry returns the Promise owned by the original entry frame. A
+  // rejection does not complete the entire agent, and a later callback can
+  // replace the agent's last completion. Neither is the root call's outcome.
+  const entryId=bundle.initialState.control.a0.activeFrameId;
+  const entry=bundle.initialState.frames[entryId],frame=bundle.finalState.frames[entryId];
+  if(entry?.asyncPromiseId&&(frame?.asyncPromiseId!==entry.asyncPromiseId||
+    !['completed','thrown'].includes(frame.status)))refuse('async root body has not completed');
+  const root=entry?.asyncPromiseId?{kind:'return',value:['promise',entry.asyncPromiseId]}:
+    bundle.finalState.control.a0.completion;
   if(!root)refuse('missing completed root outcome');
   let kind=root.kind,value=root.value;
   if(value?.[0]==='promise'){
@@ -150,6 +158,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   function commitEmission(owner,kind,fields,certificate){
     if(++generated>maxGenerated)throw new RangeError('Effectful teacher record budget');
     const line=encodeWitness(kind,fields);
+    harness.prepareModelContext(owner);
     harness.selected(owner,line);
     const receipt=harness.timeline.findLast(item=>item.kind==='semantic'&&item.invocationId===owner);
     certificates.push({sequence:receipt.sequence,...certificate,digest:hash(line)});
@@ -409,7 +418,8 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       }
       handled=true;
     }else if(event.operation==='job.enter'){
-      const changed=event.stateChanges.find(change=>change.table==='frames'&&change.after?.status==='running');
+      const changed=event.stateChanges.find(change=>change.table==='frames'&&
+        (change.after?.status==='running'||change.before?.status==='suspended'&&change.after?.status==='thrown'));
       const queue=state.control.a0.queue?.[0];
       if(changed?.before?.status==='suspended'){
         owner=rootFor(changed.id);

@@ -29,6 +29,7 @@ export function createMegatokenProcessSelector({command,args=[],cwd=undefined,
   const decoder=new StringDecoder('utf8');
   const pending=new Map();
   const nativeMetrics={schema:'semantic-inference-metrics/4',rpcCalls:0,computeSeconds:0,peakMemoryBytes:0};
+  const orchestrations=new Map();
   const abort=error=>{
     if(closed)return;
     closed=true;
@@ -122,6 +123,58 @@ export function createMegatokenProcessSelector({command,args=[],cwd=undefined,
       receipt.checkpointIdentity===checkpointIdentity&&typeof receipt.tokenizerIdentity==='string',
       'Inference process did not attest its actual checkpoint and seed');
     return receipt;
+  };
+  const orchestrationState=(state,session,track=null)=>{
+    const authority=orchestrations.get(session);
+    demand(state?.schema==='semantic-orchestration-state/4'&&state.session===session&&
+      typeof state.track==='string'&&(!track||state.track===track)&&
+      state.representation===representation&&Array.isArray(state.tracks)&&
+      ['active','waiting','completed','cancelled'].includes(state.status)&&
+      Array.isArray(state.children)&&Array.isArray(state.receipts)&&Array.isArray(state.observations)&&
+      Array.isArray(state.decisions)&&
+      (!authority||state.origin===authority.origin&&state.track===authority.track),
+      'Native orchestration state changed its session, owner or authority');
+    return state;
+  };
+  select.openOrchestration=async({session,proposals,maxActive=1,origin='model'})=>{
+    demand(['model','controlled'].includes(origin)&&!orchestrations.has(session),
+      'Orchestration requires an explicit fresh session authority');
+    const state=orchestrationState(await send({op:'open-orchestration',session,proposals,
+      maxActive,representation,origin}),session);
+    demand(state.origin===origin,'Native orchestration changed its requested origin');
+    orchestrations.set(session,{track:state.track,origin});return state;
+  };
+  select.stepOrchestration=async({session,track,controlledRecord})=>{
+    const authority=orchestrations.get(session);
+    demand(authority?.track===track,'Unknown orchestration owner');
+    demand(authority.origin==='controlled'?typeof controlledRecord==='string':controlledRecord===undefined,
+      'Controlled lifecycle bytes cannot enter actual model inference');
+    const state=orchestrationState(await send({op:'step-orchestration',session,track,
+      ...(controlledRecord===undefined?{}:{controlledRecord})}),session,track);
+    const decision=state.decision,selection=decision?.selection;
+    demand(typeof decision?.record==='string'&&Array.isArray(decision.outcomes)&&
+      selection?.modelSelected===(authority.origin==='model')&&selection.origin===authority.origin&&
+      selection.modelTrack===track&&typeof selection.selectedEventId==='string'&&selection.selectedEventId.length>0&&
+      (controlledRecord===undefined||decision.record===controlledRecord),
+      'Lifecycle output lacks its original committed native selection');
+    return state;
+  };
+  select.statusOrchestration=async({session,track})=>orchestrationState(
+    await send({op:'status-orchestration',session,track}),session,track);
+  select.cancelOrchestration=async({session,track,reason})=>orchestrationState(
+    await send({op:'cancel-orchestration',session,track,reason}),session,track);
+  select.selectControlled=async(prefix,record)=>{
+    const session=prefix.committed[0]?.session;
+    demand(orchestrations.get(session)?.origin==='controlled'&&typeof record==='string',
+      'Controlled semantic bytes require an explicitly opened fixture session');
+    const output=await send({op:'select-controlled',prefix,record,representation});
+    demand(output?.schema==='selected-model-output/2'&&output.record===record&&
+      output.selection?.modelSelected===false&&output.selection.origin==='controlled-test-injected'&&
+      output.selection.ownerTrack===prefix.trackId&&typeof output.selection.modelTrack==='string'&&
+      typeof output.selection.selectedEventId==='string'&&output.selection.selectedEventId.length>0&&
+      (output.representation===undefined||output.representation===representation),
+      'Controlled child output lacks its original native fixture selection');
+    return output;
   };
   select.outcome=async prefix=>{
     const output=await send({op:'outcome',prefix});

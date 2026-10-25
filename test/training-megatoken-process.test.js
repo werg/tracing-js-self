@@ -181,3 +181,72 @@ test('a nonresponsive inference process times out and clears all pending RPCs',a
     assert.equal(select.status().closed,true);assert.equal(select.status().pending,0);
   }finally{select.close();}
 });
+
+function orchestrationProcess({substituteRecord=false,forgeAuthority=false}={}){
+  return mockProcess(`
+    const states=new Map();let buffer='';process.stdin.setEncoding('utf8');
+    process.stdin.on('data',data=>{buffer+=data;for(;;){
+      const n=buffer.indexOf('\\n');if(n<0)break;
+      const req=JSON.parse(buffer.slice(0,n));buffer=buffer.slice(n+1);let result;
+      if(req.op==='open-orchestration'){
+        result={schema:'semantic-orchestration-state/4',session:req.session,track:'native:'+req.session,
+          representation:req.representation,origin:req.origin,status:'active',steps:0,
+          children:[],tracks:[],receipts:[],observations:[],decisions:[]};states.set(req.session,result);
+      }else if(req.op==='select-controlled'){
+        result={schema:'selected-model-output/2',record:req.record,representation:req.representation,
+          selection:{modelSelected:${forgeAuthority},origin:'controlled-test-injected',
+            ownerTrack:req.prefix.trackId,modelTrack:'native:child',selectedEventId:'native:semantic'}};
+      }else{
+        result=states.get(req.session);
+        if(req.op==='step-orchestration'){
+          result.steps++;
+          result.decision={record:${substituteRecord}?'{}':req.controlledRecord??'{"name":"track_complete","arguments":{}}',
+            outcomes:[],selection:{modelSelected:result.origin==='model',origin:result.origin,
+              modelTrack:result.track,selectedEventId:'native:lifecycle'+result.steps}};
+          result.decisions.push(result.decision);
+        }else if(req.op==='cancel-orchestration')result.status='cancelled';
+      }
+      process.stdout.write(JSON.stringify({id:req.id,ok:true,result})+'\\n');
+    }});
+  `);
+}
+
+test('orchestration transport preserves explicit fixture authority within one native process',async()=>{
+  const select=orchestrationProcess(),record='{"name":"track_complete","arguments":{"address":"native:fixture"}}';
+  try{
+    const state=await select.openOrchestration({session:'fixture',proposals:[],origin:'controlled'});
+    const decision=await select.stepOrchestration({session:'fixture',track:state.track,controlledRecord:record});
+    assert.equal(decision.decision.record,record);assert.equal(decision.decision.selection.modelSelected,false);
+    const actual=await select.selectControlled({...prefix,committed:[{session:'fixture'}]},'return {"value":["num",7]}');
+    assert.equal(actual.selection.origin,'controlled-test-injected');assert.equal(actual.selection.modelSelected,false);
+    assert.equal((await select.statusOrchestration({session:'fixture',track:state.track})).steps,1);
+    assert.equal((await select.cancelOrchestration({session:'fixture',track:state.track,reason:'done'})).status,'cancelled');
+    await assert.rejects(select.openOrchestration({session:'fixture',proposals:[],origin:'controlled'}),/fresh session/);
+  }finally{select.close();}
+});
+
+test('actual-model orchestration refuses fixture injection before any native RPC',async()=>{
+  const select=orchestrationProcess();
+  try{
+    const state=await select.openOrchestration({session:'actual',proposals:[],origin:'model'});
+    await assert.rejects(select.stepOrchestration({session:'actual',track:state.track,controlledRecord:'{}'}),/cannot enter actual model/);
+    await assert.rejects(select.selectControlled({...prefix,committed:[{session:'actual'}]},'return {}'),/explicitly opened fixture/);
+    assert.equal((await select.statusOrchestration({session:'actual',track:state.track})).steps,0);
+    const output=await select.stepOrchestration({session:'actual',track:state.track});
+    assert.equal(output.decision.selection.modelSelected,true);
+    await assert.rejects(select.stepOrchestration({session:'actual',track:'wrong'}),/Unknown orchestration owner/);
+  }finally{select.close();}
+});
+
+test('orchestration rejects replaced lifecycle bytes and relabeled controlled child actions',async()=>{
+  for(const options of [{substituteRecord:true},{forgeAuthority:true}]){
+    const select=orchestrationProcess(options);
+    try{
+      const state=await select.openOrchestration({session:'fixture',proposals:[],origin:'controlled'});
+      if(options.substituteRecord)await assert.rejects(select.stepOrchestration({session:'fixture',track:state.track,
+        controlledRecord:'{"name":"track_complete","arguments":{}}'}),/original committed native/);
+      else await assert.rejects(select.selectControlled({...prefix,committed:[{session:'fixture'}]},
+        'return {"value":["num",7]}'),/original native fixture/);
+    }finally{select.close();}
+  }
+});

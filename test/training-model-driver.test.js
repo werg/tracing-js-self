@@ -78,3 +78,58 @@ test('model group bridge reads one committed owner from its actual selected tape
   assert.throws(()=>selectedWitnessFromGroup({...group,
     tape:{...group.tape,payloads:['observe {}']}},'worker1'),/Invalid|missing/i);
 });
+
+test('retained model prefixes expose earlier public realm history without unrelated realms or private broker data',async()=>{
+  const harness=new SelectedExecutionHarness(),select=prefix=>
+    prefix.committed.some(item=>item.kind==='semantic')?end:returns;
+  const driver=new SelectedModelDriver({harness,select});
+  try{
+    for(const [invocationId,realmId] of [['first','shared'],['foreign','other'],['next','shared']])
+      await driver.run({programId:'pure',source:'function run(){return 1;}',entry:'run',
+        invocationId,trackId:'track:'+invocationId,realmId,triggerId:'input:'+invocationId,realmPolicy:'retained'});
+    const prefix=driver.prefix('next');
+    assert.deepEqual(prefix.realmCommitted.filter(item=>item.kind==='invocation').map(item=>item.invocationId),['first','next']);
+    assert.equal(prefix.realmCommitted.filter(item=>item.kind==='program').length,1);
+    assert(prefix.realmCommitted.some(item=>item.invocationId==='first'&&item.kind==='semantic'));
+    assert(!prefix.committed.some(item=>item.invocationId==='first'));
+    assert(!prefix.realmCommitted.some(item=>item.invocationId==='foreign'));
+    assert(prefix.realmCommitted.every(item=>item.sequence<=harness.globalSequence));
+    assert.equal(Object.hasOwn(prefix,'intents'),false);
+    const before=harness.timeline[0].source;
+    prefix.realmCommitted[0].source='mutated model context';
+    assert.equal(harness.timeline[0].source,before);
+  }finally{driver.close();}
+});
+
+test('back-to-back callbacks wait for the previous native completion acknowledgement without blocking suspended parents',async()=>{
+  const harness=new SelectedExecutionHarness(),selected=[];
+  let release,acknowledgeStarted;
+  const acknowledgementStarted=new Promise(resolve=>{acknowledgeStarted=resolve;});
+  const acknowledgement=new Promise(resolve=>{release=resolve;});
+  const select=prefix=>{
+    selected.push(prefix.invocationId);
+    const count=prefix.committed.filter(item=>item.kind==='semantic').length;
+    if(prefix.invocationId==='owner')return [
+      encodeWitness('allocate',{name:'closure',kind:'closure',properties:[],code:'later',captures:[]}),
+      encodeWitness('return',{value:['ref','closure']}),end][count];
+    return [returns,end][count];
+  };
+  select.complete=async prefix=>{
+    if(prefix.invocationId==='callbackinvoke1'){acknowledgeStarted();await acknowledgement;}
+  };
+  const driver=new SelectedModelDriver({harness,select});
+  try{
+    let owner=await driver.run({programId:'closures',source:'function run(){return function later(){return 1;};}',
+      entry:'run',invocationId:'owner',realmId:'retained',realmPolicy:'retained',trackId:'worker',triggerId:'outside'});
+    if(owner.taskCompletion)owner=await owner.taskCompletion;
+    const first=driver.invokeClosure({ownerInvocationId:'owner',closureId:'closure'});
+    const second=driver.invokeClosure({ownerInvocationId:'owner',closureId:'closure'});
+    await acknowledgementStarted;
+    await new Promise(resolve=>setImmediate(resolve));
+    assert(selected.includes('callbackinvoke1'));
+    assert(!selected.includes('callbackinvoke2'),'next callback cannot consume native capacity before close acknowledgement');
+    release();await first;await second;
+    await Promise.all([...driver.running.values()].map(run=>run.task));
+    assert(selected.includes('callbackinvoke2'));
+  }finally{release();driver.close();}
+});

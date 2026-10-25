@@ -6,6 +6,15 @@ import {SelectedExecutionHarness} from './harness-v4.js';
 import {hostOperation} from '../host/operations.js';
 const copy=value=>structuredClone(value);
 function fail(message){throw new Error('Selected execution: '+message);}
+function readyToEnd(activation){
+  const controller=activation.controller,returned=controller.pending?.value;
+  return Boolean(controller.pending&&!controller.stack.length&&!controller.ready.length&&
+    [...controller.jobs.values()].every(job=>job.status==='completed')&&
+    [...controller.continuations.values()].every(continuation=>continuation.state==='resumed')&&
+    [...controller.effects.values()].every(effect=>effect.status!=='requested')&&
+    !(activation.completionPolicy==='await-returned-promise'&&returned?.[0]==='ref'&&
+      controller.heap.get(returned[1])?.kind==='promise'&&controller.heap.get(returned[1]).state==='pending'));
+}
 
 export function selectedWitnessFromGroup(group,trackId){
   const tape=group?.tape;
@@ -41,16 +50,13 @@ export class SelectedModelDriver {
     const committed=this.harness.timeline.filter(event=>
       event.kind==='program'&&event.programId===a.programId||event.invocationId===invocationId||
       ['source-read','source-evict'].includes(event.kind)&&event.track===a.trackId&&event.programId===a.programId);
-    const state=a.controller.segmentPacket();
+    const {realmCommitted,selectedState}=this.harness.selectionContext(invocationId);
     return copy({schema:'selected-inference-prefix/2',programId:a.programId,entry:a.entry,
       source:p.source,sourceDigest:p.digest,invocationId,trackId:a.trackId,realmId:a.realmId,
-      committed,completionPolicy:a.completionPolicy,maxOutstanding:this.maxOutstanding,
+      committed,realmCommitted,completionPolicy:a.completionPolicy,maxOutstanding:this.maxOutstanding,
       taskRevision:a.taskRevision,parentInvocationId:a.parentInvocationId,receiver:a.receiver,
       closureId:a.closureId,activation:a.activation,
-      selectedState:{schema:state.schema,heap:state.heap,locals:state.locals,
-        captureAliases:state.captureAliases,stack:state.stack,continuations:state.continuations,
-        ready:state.ready,callReturn:state.callReturn,pending:state.pending,
-        completion:state.completion}});
+      selectedState});
   }
   async run({programId,source=null,entry=null,capabilities=[],invocationId,trackId,realmId,
       triggerId,args=[],inputGraph=null,realmPolicy='fresh',completionPolicy='call-return',
@@ -126,15 +132,24 @@ export class SelectedModelDriver {
             rendered:this.harness.inspect(invocationId),episode:this.harness.exportEpisode(),
             selectedRecords:selections,modelCalls,jobErrors:copy(a.controller.jobErrors),observableGraph};
         }
+        if(typeof this.select.complete==='function'){
+          // A callback can release its guest turn at return before its selected
+          // end and native completion acknowledgement. Finish that owned task
+          // before asking the same bounded native realm to select another one.
+          // Suspended parents remain runnable dependencies, never barriers.
+          const earlier=[];
+          for(const entry of this.running){if(entry[0]===invocationId)break;earlier.push(entry);}
+          const previous=earlier.find(([identity,run])=>{
+            if(!run.task)return false;
+            const other=this.harness.invocations.get(identity);
+            return other?.realmId===a.realmId&&(other.status==='completed'||
+              other.activation==='callback'&&readyToEnd(other));
+          });
+          if(previous){await Promise.race([previous[1].task,aborted]);continue;}
+        }
         const realm=this.harness.realms.get(a.realmId);
         const controller=a.controller;
-        const returned=controller.pending?.value;
-        const endEligible=controller.pending&&!controller.stack.length&&!controller.ready.length&&
-          [...controller.jobs.values()].every(job=>job.status==='completed')&&
-          [...controller.continuations.values()].every(continuation=>continuation.state==='resumed')&&
-          [...controller.effects.values()].every(effect=>effect.status!=='requested')&&
-          !(a.completionPolicy==='await-returned-promise'&&returned?.[0]==='ref'&&
-            controller.heap.get(returned[1])?.kind==='promise'&&controller.heap.get(returned[1]).state==='pending');
+        const endEligible=readyToEnd(a);
         if(!endEligible&&realm.running&&realm.running!==invocationId){
           if(this.harness.invocations.get(realm.running).activation==='callback')
             await Promise.race([this.runInvocation(realm.running,{signal:abort.signal}),aborted]);
@@ -157,6 +172,7 @@ export class SelectedModelDriver {
         if(!this.harness.sourceAvailability.get(a.trackId)?.has(a.programId))
           this.harness.restoreSource(a.trackId,a.programId);
         if(modelCalls++>=this.maxSelections)fail('Model selection budget exhausted without complete return/throw');
+        this.harness.prepareModelContext(invocationId);
         let decision=await Promise.race([this.select(this.prefix(invocationId)),aborted]);check();
         if(transportFailures.length)throw transportFailures.shift();
         const selection=decision?.selection??null;
@@ -179,10 +195,14 @@ export class SelectedModelDriver {
           ({kind,fields}=decodeWitness(decision));
           if(kind==='request'&&pending.size>=this.maxOutstanding)fail('Outstanding native effect budget exhausted');
           this.harness.selected(invocationId,decision);selections++;
-        }catch(error){this.rejections.push({invocationId,record:decision,error:String(error)});throw error;}
+        }catch(error){this.rejections.push({invocationId,record:decision,selection:copy(selection),
+          error:String(error),phase:'semantic-validation'});throw error;}
         if(kind==='request'){
           let beforeDispatch=null;
-          if(selection?.modelSelected===true){
+          if(selection?.modelSelected===true||this.select.nativeCommitRequired===true){
+            if(!selection||typeof selection.selectedEventId!=='string'||
+                typeof selection.modelTrack!=='string'||selection.ownerTrack!==a.trackId)
+              fail('Native request needs its original committed selection receipt');
             if(typeof this.select.commitRequest!=='function')fail('Actual model request requires native committed-action validation');
             const heap=Object.fromEntries([...a.controller.heap].map(([id,node])=>[id,
               {id,kind:node.kind,properties:[...node.properties].map(([key,value])=>({key,value})),

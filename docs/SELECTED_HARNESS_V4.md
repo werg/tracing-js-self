@@ -142,6 +142,24 @@ observed source receipt. Actual model-context rereads retain original and new
 observation provenance. The model receives committed state, not a private
 teacher heap or undispatched fixture future.
 
+`prepareModelContext` publishes a checked source reread followed by an observed
+`model-context` state refresh before retained activation, before a parent takes
+back its realm turn, and every 32 selected records within a long turn. The
+teacher and serving driver call this same method before selection. The receipt
+contains the current controller's heap, cells, capture aliases, stack,
+continuations, readiness and completion state. Its `visibleThrough` is the
+immediately preceding global sequence; `realmPrefixDigest` hashes the exact
+JSON bytes of the preceding public history for that realm. Source and state
+therefore remain available together when a bounded history retires old records.
+
+State refreshes carry zero prediction loss. Public replay recomputes the entire
+snapshot and digest from prior observed inputs and selected semantics before
+accepting it; checkpoint restoration repeats that verification. A snapshot
+cannot replace an earlier computation, import a future arrival or change a
+captured cell. Normal inspection shows the observed refresh, cutoff and digest;
+transport inspection additionally displays the full packet. The shared contract
+includes forged-cell, future-cutoff and foreign-prefix refusal fixtures.
+
 `checkpoint()` produces JSON-safe maps and graphs, source identities,
 initialization status, shared cells, frame ownership, Promise/adoption state,
 jobs/continuations, subscriptions, event cursors, ingress keys, action ledger,
@@ -170,7 +188,7 @@ Semantic-state recovery is separate from Megatoken model recurrence recovery.
 ```sh
 node tools/generate-semantic-contract.mjs --check
 node tools/generate-selected-continuity-v4.mjs artifacts/selected-continuity-v4
-node --test test/training-harness-v4.test.js test/training-harness-v4-continuity.test.js test/training-model-driver.test.js test/training-selected-intent-journal.test.js
+node --test test/training-harness-v4.test.js test/training-harness-v4-continuity.test.js test/training-model-driver.test.js test/training-model-context-v4.test.js test/training-selected-intent-journal.test.js
 ```
 
 The continuity generator writes canonical JSON and readable chronological

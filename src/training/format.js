@@ -15,6 +15,9 @@ export function canonicalCompletionPolicy(policy){
   return result;
 }
 export const SUPERVISION_VERSION='semantic-supervision/2';
+export const SELECTED_STATE_FIELDS=Object.freeze(['schema','heap','locals','captureAliases','stack',
+  'continuations','ready','callReturn','pending','completion']);
+export const MODEL_CONTEXT_INTERVAL=32;
 
 const schema=Object.freeze({
   code:['entry','source','sites','randomSeed'],
@@ -68,7 +71,8 @@ export const HARNESS_RECORD_SCHEMAS=Object.freeze(Object.fromEntries(Object.entr
   reconcile:['invocationId','effectId','disposition','evidenceId'],
   'callback-reattach':['subscriptionId','realmId','evidenceId']
 }).map(([kind,required])=>[kind,Object.freeze({mode:kind==='semantic'?'generated':'observed',
-  required:Object.freeze(required),optional:Object.freeze(kind==='dispatch'?['nativeAction']:[])})])));
+  required:Object.freeze(required),optional:Object.freeze(kind==='dispatch'?['nativeAction']:
+    kind==='model-context'?['selectedState','realmPrefixDigest','visibleThrough']:[])})])));
 export const HARNESS_COMMON_FIELDS=Object.freeze(['schema','session','sequence','ownerSequence','track','mode','kind']);
 export function validateHarnessRecord(record){
   const spec=Object.hasOwn(HARNESS_RECORD_SCHEMAS,record?.kind)?HARNESS_RECORD_SCHEMAS[record.kind]:null;
@@ -82,6 +86,21 @@ export function validateHarnessRecord(record){
   if(!Number.isSafeInteger(record.sequence)||record.sequence<1||
      !Number.isSafeInteger(record.ownerSequence)||record.ownerSequence<1)
     throw new TypeError('Invalid harness sequence');
+  if(record.kind==='model-context'){
+    const stateFields=['selectedState','realmPrefixDigest','visibleThrough'];
+    if(stateFields.some(field=>Object.hasOwn(record,field))){
+      const state=record.selectedState;
+      if(!stateFields.every(field=>Object.hasOwn(record,field))||
+        !state||typeof state!=='object'||Array.isArray(state)||
+        Object.keys(state).length!==SELECTED_STATE_FIELDS.length||
+        SELECTED_STATE_FIELDS.some(field=>!Object.hasOwn(state,field))||
+        state.schema!==CONTINUATION_VERSION||
+        !['heap','locals','captureAliases','stack','continuations','ready'].every(field=>Array.isArray(state[field]))||
+        typeof record.realmPrefixDigest!=='string'||!/^[0-9a-f]{64}$/.test(record.realmPrefixDigest)||
+        record.visibleThrough!==record.sequence-1)
+        throw new TypeError('Selected context requires its exact state and prior public cutoff');
+    }
+  }
   if(record.kind==='invocation'){
     if(!COMPLETION_POLICIES.includes(record.completionPolicy)||!['fresh','retained'].includes(record.realmPolicy)||
        !['call','callback','module-init'].includes(record.activation)||

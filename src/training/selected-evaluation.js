@@ -7,6 +7,7 @@ import {SelectedModelDriver} from './model-driver.js';
 import {createFixtureBroker} from './fixture-broker.js';
 import {decodeWitness} from './format.js';
 import {hostOperation} from '../host/operations.js';
+import {evaluateOrchestrationCase} from './orchestration-evaluation.js';
 
 const hash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const copy=value=>structuredClone(value);
@@ -42,7 +43,8 @@ export function controlledEvaluationCase(exported,{id,family,split}={}){
   if(session){
     request.programs=exported.public.timeline.filter(item=>item.kind==='program').map(item=>({
       programId:item.programId,source:item.source,entry:item.entry,capabilities:item.capabilities}));
-    request.invocations=exported.public.timeline.filter(item=>item.kind==='invocation').map(item=>({
+    request.invocations=exported.public.timeline.filter(item=>item.kind==='invocation'&&
+      item.parentInvocationId===null).map(item=>({
       programId:item.programId,invocationId:item.invocationId,trackId:item.track,realmId:item.realmId,
       triggerId:item.triggerId,inputGraph:item.inputGraph,realmPolicy:item.realmPolicy,
       completionPolicy:item.completionPolicy,receiverValue:item.receiver}));
@@ -61,7 +63,9 @@ export function controlledEvaluationCase(exported,{id,family,split}={}){
 }
 
 export async function evaluateSelectedCase(envelope,{origin='controlled',select=null,
-    checkpointIdentity=null,timeoutMs=15000}={}){
+    checkpointIdentity=null,timeoutMs=15000,cleanupTimeoutMs=1000}={}){
+  if(envelope?.request?.schema==='selected-orchestration-evaluation-case/4')
+    return evaluateOrchestrationCase(envelope,{origin,select,checkpointIdentity,timeoutMs,cleanupTimeoutMs});
   if(envelope?.schema!=='semantic-evaluation-request/4'||
     envelope.request?.schema!=='selected-evaluation-case/4'||
     ![17,29,43].includes(envelope.seed)||!['explicit','compact','outcome-only'].includes(envelope.representation))
@@ -144,12 +148,16 @@ export async function evaluateSelectedCase(envelope,{origin='controlled',select=
     };
   }
   const actualSelect=select;
+  const selections=[];
   const auditedSelect=async prefix=>{
     const visibleAt=harness.globalSequence;
     futureLeaks+=prefix.committed.filter(record=>record.sequence>visibleAt).length;
     queueDepth=Math.max(queueDepth,harness.closureQueue.length,
       ...[...harness.invocations.values()].map(a=>a.controller.ready.length));
-    return actualSelect(prefix);
+    const decision=await actualSelect(prefix);
+    if(decision?.selection&&typeof decision.record==='string')
+      selections.push({invocationId:prefix.invocationId,record:decision.record,selection:copy(decision.selection)});
+    return decision;
   };
   for(const method of ['commitRequest','complete','cancel'])if(typeof actualSelect[method]==='function')
     auditedSelect[method]=actualSelect[method].bind(actualSelect);
@@ -194,6 +202,7 @@ export async function evaluateSelectedCase(envelope,{origin='controlled',select=
   broker.abort();
   return {schema:'semantic-evaluation-result/4',origin,representation:envelope.representation,
     checkpointIdentity,inferenceIdentity,episode,outcome,
+    selections,
     nativeRuntimeMetrics:select?.metrics?.()??null,costScope,
     firstSemanticInconsistency,failure,rejections:copy(driver.rejections),optimizerSteps:0,
     hardGates:{futureObservationLeaks:futureLeaks,unauthorizedEffects:unauthorized,

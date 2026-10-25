@@ -25,6 +25,10 @@ export const EFFECTFUL_ENGINEERING_FIXTURES=Object.freeze([
     source:'"use strict";async function run(){try{return await host.readAsync("bad");}catch(error){host.store("error",error);return 11;}finally{host.store("cleanup",1);}}',
     entry:'run',args:[],fixture:{calls:[{operation:'demo.readAsync',arguments:['bad'],status:'rejected',result:'missing'},
       {operation:'demo.store',arguments:['error','missing']},{operation:'demo.store',arguments:['cleanup',1]}]}},
+  {id:'uncaught-rejection-finally',family:'async-cleanup',
+    source:'"use strict";async function run(){try{return await host.readAsync("bad");}finally{host.store("cleanup",1);}}',
+    entry:'run',args:[],fixture:{calls:[{operation:'demo.readAsync',arguments:['bad'],status:'rejected',result:'missing'},
+      {operation:'demo.store',arguments:['cleanup',1]}]}},
   {id:'callback-captured-write',family:'owned-callback',
     source:'"use strict";async function run(){let seen=0;await host.withCallback("value",function(n){seen=seen+n;host.store("callback",seen);});host.store("result",seen);return seen;}',
     entry:'run',args:[],fixture:{calls:[
@@ -33,6 +37,11 @@ export const EFFECTFUL_ENGINEERING_FIXTURES=Object.freeze([
       {operation:'demo.store',arguments:['callback',3]},
       {operation:'demo.store',arguments:['callback',7]},
       {operation:'demo.store',arguments:['result',7]}]}},
+  {id:'long-callback-retained-tail',family:'long-callback-retained-tail',
+    source:'"use strict";async function run(){let seen=0;await host.withCallback("tick",function(n){seen+=n;for(let i=0;i<40;i++){const ignored=i+1;}host.store("callback",seen);});return seen;}',
+    entry:'run',args:[],fixture:{calls:[
+      {operation:'demo.withCallback',arguments:['tick',{callback:true}],callbacks:[{slot:1,arguments:[3]}]},
+      {operation:'demo.store',arguments:['callback',3]}]}},
   {id:'sync-rejection',family:'synchronous-error',
     source:'"use strict";function run(){try{return host.readNumber("bad");}catch(error){host.store("error",error);return 4;}}',
     entry:'run',args:[],fixture:{calls:[{operation:'demo.readNumber',arguments:['bad'],status:'rejected',result:'missing'},

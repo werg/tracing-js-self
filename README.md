@@ -104,11 +104,14 @@ const result=await executeWithNativeServices({
 replayExact(result.bundle); // does NOT repeat native calls
 ```
 
-General DOM/Node/Web callback APIs, object-valued DOM Event arguments,
-callbacks with native-dependent synchronous return values, and persistent
-subscriptions beyond the lifetime of a pending service are **not yet supported**.
-Add them through explicit callback-slot and argument-codec declarations, never
-by calling guest closures directly in the native realm.
+Declared subscription callbacks also survive registration settlement and the
+original call's completion. `demo.listen`/`demo.unlisten` retain and close the
+owned handler; queued and late events have explicit dispositions. The selected
+browser adapter supplies scoped passive event notifications and timers, and the
+Natlang adapter supplies registered graph-valued asynchronous callback returns.
+These are separate declared operation profiles. General DOM Event objects and
+native-dependent synchronous guest return/propagation control remain outside
+the passive profile. See [the v4 capability and lifetime contract](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md).
 
 The emitted JavaScript calls `effects["operation"](...materializedArgs)` in
 recorded dispatch order. The argument values are copied directly from the
@@ -287,6 +290,15 @@ arrival payloads. `src/semantic/normalize.js` and `src/training/` provide the
 bounded training projection, formatting, scheduling, visibility and local
 verification path. `src/index.js` is the public package facade.
 
-**Evidence boundary:** exact replay is an interpreter self-consistency check against its recorded journal, **not** an independent semantic oracle, real native-effect replay, proof of standards compliance, or safe execution of arbitrary full JavaScript. It requires a complete sealed run and uses the recorded external values only at their arrival events. The prototype's tests establish only the behaviors they exercise. They do not pass the completion criteria from the full plan. In particular, `completeSemanticTrace: false` applies to the declared complete JavaScript target; the supported subset is instrumented at the interpreter's declared bytecode vocabulary.
+**Evidence boundary:** exact replay checks the interpreter against its recorded
+journal. Independent source execution, source-operation certificates, native
+consumer validation and selected-model evaluation provide separate authorities.
+Replay requires a complete sealed run and uses external values at their recorded
+arrival boundaries; it calls no native adapter. The v4 engineering gate covers
+the declared execution and capability profile. `completeSemanticTrace: false`
+still applies to the broader complete-JavaScript target, and this package does
+not claim arbitrary JavaScript compatibility, a hostile-code sandbox or learned
+execution quality. The [v4 implementation guide](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md)
+records the current supported profile and evidence.
 
 

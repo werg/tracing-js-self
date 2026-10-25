@@ -34,6 +34,22 @@ Each family supplies three source executions:
   combined session retains both original private source checks and distinct
   invocation, realm, track and trigger identities.
 
+Session composition keeps each independently collected root in a distinct realm.
+Owned callbacks retain that root's realm, source, and declared parent; they are
+activated by their certified event ingress rather than proposed again as roots.
+Composition requires globally unique invocation, subscription, and event-ingress
+identities. Independently collected components that both allocated `event1` or
+`callback1` are refused explicitly: composition never renames already certified
+selected bytes. This is a limit of combining separate collections; a single live
+harness allocates unique identities for multiple subscriptions normally. Fixture
+call indices, including callbacks targeting an earlier subscription and its close
+receipt, are rebased into the combined external environment.
+Observed state-refresh cutoffs and digests are reconstructed by replaying the
+composed public prefix, because envelope sequence numbers change during
+composition. Original component source certificates and every selected witness
+byte remain unchanged; the composed receipt contains only the state justified
+by the combined prior public history.
+
 The first repeated-session component in each of train and validation is also
 native-admitted as a single-root child input. These two files are listed in
 `manifest.recipe.lifecycleInputs`; they are genuine source executions with

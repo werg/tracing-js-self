@@ -1,0 +1,100 @@
+0001 [track:0] observed: track:0 is active
+0003 [track:0] observed: admit 3 child source/invocation proposals
+0080 [track:0] generated: create child for program1/ingress1 in realm realm1
+0081 [track:0] observed: created track:1 for ingress1; parent track:0; completion dependency completion:track:1:0
+0082 [track:0] generated: join child track:1/ingress1 through completion:track:1:0
+0083 [track:0] observed: track:0 is waiting; waiting on completion:track:1:0
+0084 [host] observed: code run @a66d7c5931a7
+"use strict";async function run(key){const current=await host.readAsync(key);const next=current+1;host.store(key,next);return next;}
+0085 [worker1 / ingress1] observed: invoke run caused by outside1 in realm realm1 (await-returned-promise)
+0086 [worker1 / ingress1] generated: create owned Promise &p1
+0087 [worker1 / ingress1] generated: bind cell1 = "counter"
+0088 [worker1 / ingress1] generated: request e1 demo.readAsync("counter") in ingress1 @57:76 -> Promise &p2 — host.readAsync(key)
+0089 [worker1 / ingress1] generated: await Promise &p2; suspend ingress1 as continuation1; call returns owned Promise &p1
+0091 [worker1 / ingress1] observed: observe e1 fulfilled 7
+0092 [worker1 / ingress1] generated: resume ingress1 via continuation1 with fulfilled 7
+0093 [worker1 / ingress1] generated: bind cell2 = 7
+0094 [worker1 / ingress1] generated: compute (7 + 1) -> 8 — current+1
+0095 [worker1 / ingress1] generated: bind cell3 = 8
+0096 [worker1 / ingress1] generated: request e2 demo.store("counter", 8) in ingress1 @98:118 — host.store(key,next)
+0098 [worker1 / ingress1] observed: observe e2 fulfilled undefined
+0099 [worker1 / ingress1] generated: resolve Promise &p1 8
+0100 [worker1 / ingress1] generated: return &p1
+0101 [worker1 / ingress1] generated: end return
+0102 [track:0] observed: child track:1/ingress1 return 8; wake track:0
+0103 [track:0] generated: publish child completion {"kind":"return","value":["num",8]}
+0104 [track:0] observed: track:0 is active
+0105 [track:0] observed: track:0 is active
+0106 [track:0] generated: create child for program2/ingress2 in realm realm2
+0107 [track:0] observed: created track:2 for ingress2; parent track:0; completion dependency completion:track:2:0
+0108 [track:0] generated: join child track:2/ingress2 through completion:track:2:0
+0109 [track:0] observed: track:0 is waiting; waiting on completion:track:1:0, completion:track:2:0
+0110 [host] observed: code run @5420f516a01b
+"use strict";async function run(){let seen=0;await host.withCallback("value",function(n){seen=seen+n;host.store("callback",seen);});host.store("result",seen);return seen;}
+0111 [worker2 / ingress2] observed: invoke run caused by outside2 in realm realm2 (await-returned-promise)
+0112 [worker2 / ingress2] generated: create owned Promise &p1
+0113 [worker2 / ingress2] generated: bind cell1 = 0
+0114 [worker2 / ingress2] generated: allocate &o2 closure {}
+0115 [worker2 / ingress2] generated: request e1 demo.withCallback("value", &o2) in ingress2 @51:131 -> Promise &p2 — host.withCallback("value",function(n){seen=seen+n;host.store("callback",seen);})
+0116 [worker2 / ingress2] generated: await Promise &p2; suspend ingress2 as continuation1; call returns owned Promise &p1
+0118 [host] observed: register callback1 for function:77
+0119 [worker2 / event1] observed: event callbackevent1 from callback1 activates event1
+0120 [worker2 / event1] observed: invoke function:77 caused by event:callback1:callbackevent1 from ingress2 in realm realm2 (call-return)
+0121 [worker2] observed: restore checked source program2 @5420f516a01b
+0122 [worker2 / event1] observed: refresh committed selected state through 30 @0e1030de7b63
+0123 [worker2 / ingress2] observed: observe e1 fulfilled undefined
+0124 [worker2 / event1] generated: bind cell2 = 3
+0125 [worker2 / event1] generated: compute (0 + 3) -> 3 — seen+n
+0126 [worker2 / event1] generated: bind cell1 = 3
+0127 [worker2 / event1] generated: request e2 demo.store("callback", 3) in event1 @101:128 — host.store("callback",seen)
+0129 [worker2 / event1] observed: observe e2 fulfilled undefined
+0130 [worker2 / event1] generated: return undefined
+0131 [worker2 / event2] observed: event callbackevent2 from callback1 activates event2
+0132 [worker2 / event2] observed: invoke function:77 caused by event:callback1:callbackevent2 from ingress2 in realm realm2 (call-return)
+0133 [worker2 / event1] generated: end return
+0134 [worker2] observed: restore checked source program2 @5420f516a01b
+0135 [worker2 / event2] observed: refresh committed selected state through 43 @3a4a7739f2cc
+0136 [worker2 / event2] generated: bind cell3 = 4
+0137 [worker2 / event2] generated: compute (3 + 4) -> 7 — seen+n
+0138 [worker2 / event2] generated: bind cell1 = 7
+0139 [worker2 / event2] generated: request e3 demo.store("callback", 7) in event2 @101:128 — host.store("callback",seen)
+0141 [worker2 / event2] observed: observe e3 fulfilled undefined
+0142 [worker2 / event2] generated: return undefined
+0143 [worker2 / event2] generated: end return
+0144 [host] observed: close callback1
+0145 [worker2] observed: restore checked source program2 @5420f516a01b
+0146 [worker2 / ingress2] observed: refresh committed selected state through 54 @405db1d58b34
+0147 [worker2 / ingress2] generated: resume ingress2 via continuation1 with fulfilled undefined
+0148 [worker2 / ingress2] generated: request e4 demo.store("result", 7) in ingress2 @132:157 — host.store("result",seen)
+0150 [worker2 / ingress2] observed: observe e4 fulfilled undefined
+0151 [worker2 / ingress2] generated: resolve Promise &p1 7
+0152 [worker2 / ingress2] generated: return &p1
+0153 [worker2 / ingress2] generated: end return
+0154 [track:0] observed: child track:2/ingress2 return 7; wake track:0
+0155 [track:0] generated: publish child completion {"kind":"return","value":["num",7]}
+0156 [track:0] observed: track:0 is active
+0157 [track:0] observed: track:0 is active
+0158 [track:0] generated: create child for program3/ingress3 in realm realm3
+0159 [track:0] observed: created track:5 for ingress3; parent track:0; completion dependency completion:track:5:0
+0160 [track:0] generated: join child track:5/ingress3 through completion:track:5:0
+0161 [track:0] observed: track:0 is waiting; waiting on completion:track:1:0, completion:track:2:0, completion:track:5:0
+0162 [host] observed: code run @8d16f5941025
+"use strict";async function run(){try{return await host.readAsync("bad");}finally{host.store("cleanup",1);}}
+0163 [worker3 / ingress3] observed: invoke run caused by outside3 in realm realm3 (await-returned-promise)
+0164 [worker3 / ingress3] generated: create owned Promise &p1
+0165 [worker3 / ingress3] generated: request e1 demo.readAsync("bad") in ingress3 @51:72 -> Promise &p2 — host.readAsync("bad")
+0166 [worker3 / ingress3] generated: await Promise &p2; suspend ingress3 as continuation1; call returns owned Promise &p1
+0168 [worker3 / ingress3] observed: observe e1 rejected "missing"
+0169 [worker3 / ingress3] generated: resume ingress3 via continuation1 with rejected "missing"
+0170 [worker3 / ingress3] generated: request e2 demo.store("cleanup", 1) in ingress3 @82:105 — host.store("cleanup",1)
+0172 [worker3 / ingress3] observed: observe e2 fulfilled undefined
+0173 [worker3 / ingress3] generated: reject Promise &p1 "missing"
+0174 [worker3 / ingress3] generated: return &p1
+0175 [worker3 / ingress3] generated: end return
+0176 [track:0] observed: child track:5/ingress3 throw "missing"; wake track:0
+0177 [track:0] generated: publish child completion {"kind":"throw","value":["str","missing"]}
+0178 [track:0] observed: track:0 is active
+0179 [track:0] observed: track:0 is active
+0180 [track:0] generated: complete coordinator track:0
+0181 [track:0] observed: track:0 is completed
+0183 [track:0] observed: track:0 is completed

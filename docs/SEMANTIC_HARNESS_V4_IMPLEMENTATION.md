@@ -63,6 +63,16 @@ There is no global exactly-once guarantee without service support. Exact replay 
 Model restore establishes an explicit observed checkpoint bootstrap with verified source/state;
 it does not claim bit-identical reconstruction of discarded hidden activations.
 
+Bounded model history does not discard the authority for a live capture. The teacher and serving
+driver publish the same observed state receipt when a retained callback starts, when a parent
+regains its realm turn, and after thirty-two selected records in a long turn. Each receipt contains
+only the committed controller state, the exact public sequence cutoff and a digest of its preceding
+realm history. Public replay and checkpoint restore independently reconstruct and check those
+values. The native consumer uses the same retention rule in prepared data and serving; these
+receipts have zero prediction loss. A real native test mutates a capture, executes enough callback
+work to evict the mutation from a 128-record model history, then resumes the parent with the correct
+current value. Private arrivals and final teacher archives never supply that state.
+
 ## Capability profile
 
 | Family | Implemented boundary | Evidence |
@@ -180,6 +190,39 @@ tokens, dispatches, memory, time, queues and leaked resources. Controlled inject
 produce a learned-success score. Model runs require the actual inference process to attest its
 checkpoint digest and initialize the requested seed before any selection. They cannot use the
 controlled selection fixture as a model repair path.
+
+The freezer defaults to test families. `--include-validation` is an explicit engineering diagnostic;
+learned comparisons require the test cohort. Original model fragment token IDs and rejected bytes
+remain in inference receipts. Reports separate actual decoder emission cost from canonical witness
+token counts. Timing is case wall time excluding model initialization. Memory is the documented
+upper bound obtained by adding the runner's and native model process's measured lifetime peak RSS.
+
+### Coordinator and child evaluation
+
+`--with-orchestration` adds independently referenced coordinator variants to the effectful cohort.
+The coordinator and all children share one actual Megatoken process and session. Native lifecycle
+actions allocate children, bootstrap their code/input, establish typed completion dependencies,
+join, publish observed child completions and finish the parent. The existing selected driver and
+broker execute every child. Native active-capacity receipts decide when a child can begin.
+
+The process adapter exposes `openOrchestration`, `stepOrchestration`, `statusOrchestration` and
+`cancelOrchestration`. Actual model origins receive source/input proposals and observed receipts;
+controlled coordinator actions and child selections are removed before a model runner receives
+the request. The server accepts injected engineering actions only with the explicit
+`--controlled-lifecycle-fixtures` flag. Those actions still cross native selection, commitment,
+allocation and result-routing boundaries and remain labeled as controlled evidence.
+
+`controlledOrchestrationCase` derives its outcome from an independently checked source case.
+The native evaluator independently validates original coordinator bytes, action ownership,
+creation-before-bootstrap order, typed joins, actual child completion, progress, and final cleanup.
+Invalid model output retains its bytes and token IDs; it cannot become an empty successful trace.
+Object reference names are normalized only for scoring observable graphs; original native progress
+and completion receipts remain unchanged and are checked against each other.
+
+Canonical and readable examples are in `docs/examples/selected-child-v4.json` and `.txt`.
+`tools/inspect-selected-harness.mjs` reads both ordinary episodes and orchestration evaluation receipts.
+`renderOrchestration` combines native coordinator records with the existing semantic witness renderer
+and supports chronological or per-track inspection without executing guest code.
 
 ## Migration and integration
 
