@@ -1,4 +1,6 @@
-# Source-guided semantic reasoning witnesses
+# Historical source-guided semantic reasoning witnesses (v3 diagnostics)
+
+Production uses [source-grounded v4 semantic reasoning traces](SEMANTIC_REASONING_TRACE.md). The experiments below belong to the offline v3 diagnostic corpus.
 
 The learner's contract is the observable outcome (completion, reachable input/result
 data graph, and ordered external effects). A model's intermediate witness is a
