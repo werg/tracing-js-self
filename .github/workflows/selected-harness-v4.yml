@@ -1,4 +1,4 @@
-name: Selected semantic v4 runtime and real browser
+name: Selected semantic v5 runtime and real browser
 
 on:
   pull_request:

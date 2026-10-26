@@ -48,7 +48,7 @@ From an installed checkout:
 npm ci
 npm test
 node tools/inspect-semantic-reasoning.mjs
-npm run training:generate -- --out /tmp/semantic-v4
+npm run training:generate -- --out /tmp/semantic-v5
 ```
 
 The inspection tool executes real pinned counter, choice, compound
@@ -215,7 +215,7 @@ native consumer, visibility and loss gates. A locally verified result is not
 automatically admitted data or learned model success.
 
 The only supported model-facing training producer, controller and serializer are
-the v4 source-certified semantic witness. Independent V8 reference checks and
+the v5 source-certified semantic witness. Independent V8 reference checks and
 private journal replay are verification authorities, not alternative trace
 formats. No diagnostic subpath, legacy exporter or representation selector exists.
 
@@ -311,13 +311,15 @@ verification path. `src/index.js` is the public package facade.
 journal. Independent source execution, source-operation certificates, native
 consumer validation and selected-model evaluation provide separate authorities.
 Replay requires a complete sealed run and uses external values at their recorded
-arrival boundaries; it calls no native adapter. The v4 engineering gate covers
-the declared execution and capability profile. `completeSemanticTrace: false`
+arrival boundaries; it calls no native adapter. The historical v4 engineering gate
+covers the declared profile at its frozen revisions; current v5 verification is
+recorded by the current cross-repository workflows. `completeSemanticTrace: false`
 still applies to the broader complete-JavaScript target, and this package does
 not claim arbitrary JavaScript compatibility, a hostile-code sandbox or learned
-execution quality. The [v4 implementation guide](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md)
-records the current supported profile and evidence.
-The [completion receipt](contracts/semantic-engineering-completion.json) pins the
-three compatible implementations; it does not certify learned model quality.
+execution quality. The [v5 implementation guide](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md)
+records the current supported profile.
+The historical [completion receipt](contracts/semantic-engineering-completion.json)
+pins its original three tested implementations; it does not qualify v5 artifacts
+or certify learned model quality.
 
 
