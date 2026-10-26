@@ -10,7 +10,7 @@ import {EXECUTION_VERSION,WITNESS_VERSION,CONTEXT_VERSION,CONTINUATION_VERSION,H
 import {SelectedExecutionHarness} from '../src/training/harness-v4.js';
 
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
-const definition={schema:'semantic-harness-contract/4',execution:EXECUTION_VERSION,trace:WITNESS_VERSION,
+const definition={schema:'semantic-harness-contract/5',execution:EXECUTION_VERSION,trace:WITNESS_VERSION,
   context:CONTEXT_VERSION,continuation:CONTINUATION_VERSION,profile:HARNESS_PROFILE,
   completionPolicies:COMPLETION_POLICIES,commonFields:HARNESS_COMMON_FIELDS,
   witness:{allowed:WITNESS_SCHEMA,required:WITNESS_REQUIRED},envelope:HARNESS_RECORD_SCHEMAS,
@@ -72,14 +72,34 @@ forgedState.public.timeline[3].selectedState.locals[0][1]=['num',8];
 futureState.public.timeline[3].visibleThrough++;
 foreignPrefix.public.timeline[3].realmPrefixDigest='0'.repeat(64);
 invalidEnvelope.push(forgedState,futureState,foreignPrefix);
+const obsolete=structuredClone(validEnvelope);
+obsolete.public.schema='semantic-execution/4';
+obsolete.public.traceFormat='semantic-trace/4';
+obsolete.public.contextFormat='semantic-context/4';
+for(const record of obsolete.public.timeline){
+  record.schema='semantic-execution/4';
+  if(record.traceFormat)record.traceFormat='semantic-trace/4';
+}
+invalidEnvelope.push(obsolete);
+for(const state of [undefined,true,-1,4294967296,0.5,0]){
+  const invalid=structuredClone(validContext);
+  if(state===undefined)delete invalid.public.timeline[3].selectedState.randomState;
+  else invalid.public.timeline[3].selectedState.randomState=state;
+  invalidEnvelope.push(invalid);
+}
 const seeded=new SelectedExecutionHarness({sessionId:'seedcontract'});
 seeded.publishProgram({programId:'random',source:'function run(){return Math.random();}',entry:'run',randomSeed:0});
 seeded.admitInvocation({programId:'random',invocationId:'sample',trackId:'worker',realmId:'realm',
   triggerId:'caller',args:[]});
 seeded.selected('sample',w('compute',{expr:{op:'random'},result:['num',1013904223/4294967296]}));
+seeded.restoreSource('worker','random');
+seeded.recordModelContext('sample',[],{includeState:true});
 seeded.selected('sample',w('return',{value:['num',1013904223/4294967296]}));
 seeded.selected('sample',w('end',{kind:'return'}));
 const validSeed=seeded.exportEpisode();
+const forgedRandomState=structuredClone(validSeed);
+forgedRandomState.public.timeline.find(record=>record.kind==='model-context').selectedState.randomState=0;
+invalidEnvelope.push(forgedRandomState);
 for(const seed of [-1,4294967296,0.5,true,null]){
   const invalid=structuredClone(validSeed);invalid.public.timeline[0].randomSeed=seed;
   invalidEnvelope.push(invalid);
@@ -94,7 +114,7 @@ const fixtures={witness:{valid:validWitness,invalid:invalidWitness},
   envelope:{valid:[validEnvelope,validContext,validSeed],invalid:invalidEnvelope}};
 const artifact={definition,digest:digest(definition),fixtureDigest:digest(fixtures),fixtures};
 const bytes=JSON.stringify(artifact,null,2)+'\n';
-const destination=new URL('../contracts/semantic-harness-v4.json',import.meta.url);
+const destination=new URL('../contracts/semantic-harness-v5.json',import.meta.url);
 if(process.argv.includes('--check')){
   if(await readFile(destination,'utf8')!==bytes)throw new Error('Shared semantic contract needs regeneration');
 }else await writeFile(destination,bytes);

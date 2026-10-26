@@ -1,7 +1,7 @@
 # Canonical semantic source curriculum
 
 Every executable source family is independently checked and emitted through
-the same `semantic-execution/4` / `semantic-trace/4` selected harness.
+the same `semantic-execution/5` / `semantic-trace/5` selected harness.
 There are **no alternative representation controls**.
 
 The two source recipe catalogues remain useful for covering genuinely
@@ -38,4 +38,4 @@ native consumer visibility/loss checks. All failures and unsupported
 source profiles remain explicit refusals.
 
 See [semantic reasoning traces](SEMANTIC_REASONING_TRACE.md) and
-[the v4 harness](SEMANTIC_HARNESS_V4_IMPLEMENTATION.md).
+[the current harness](SEMANTIC_HARNESS_V4_IMPLEMENTATION.md).

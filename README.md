@@ -12,8 +12,8 @@ foundation and its source-anchored trace format. See
 
 ## Model-facing semantic execution traces
 
-Production uses **`semantic-execution/4`, `semantic-trace/4`,
-`semantic-context/4`**, and `selected-harness/2`.
+Production uses **`semantic-execution/5`, `semantic-trace/5`,
+`semantic-context/5`**, and `selected-harness/2`.
 The strict machine archive and its exact replay remain private certification
 evidence. Earlier group-shaped corpus exporters and their public formats are
 removed; old bytes can only be recovered from pinned Git history.
@@ -40,7 +40,7 @@ against **prior committed public state**, never private future results.
 Calls, getters, proxies, updates and other effectful terms cannot be silently
 flattened into pure arithmetic; unsupported projections fail closed.
 See [reasoning trace design](docs/SEMANTIC_REASONING_TRACE.md) and
-[production v4 implementation](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md).
+[production v5 implementation](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md).
 
 From an installed checkout:
 
@@ -125,7 +125,7 @@ browser adapter supplies scoped passive event notifications and timers, and the
 Natlang adapter supplies registered graph-valued asynchronous callback returns.
 These are separate declared operation profiles. General DOM Event objects and
 native-dependent synchronous guest return/propagation control remain outside
-the passive profile. See [the v4 capability and lifetime contract](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md).
+the passive profile. See [the v5 capability and lifetime contract](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md).
 
 The emitted JavaScript calls `effects["operation"](...materializedArgs)` in
 recorded dispatch order. The argument values are copied directly from the
@@ -179,7 +179,7 @@ unsupported numeric encodings and unknown host methods fail closed before an
 effect can be dispatched. The private archived `effect.args` retains the
 original identity-bearing tuples solely for verification and replay.
 
-Low-level runtime adapters publish arrivals using `recordInputArrival` and `deliverInput` at a legal service point. The production selected harness provides the higher-level Promise/callback bridge, source and capability checks, owned resource lifetimes, durable intent journal, and checkpoint/reconciliation interface. See [the v4 runtime contract](docs/SELECTED_HARNESS_V4.md).
+Low-level runtime adapters publish arrivals using `recordInputArrival` and `deliverInput` at a legal service point. The production selected harness provides the higher-level Promise/callback bridge, source and capability checks, owned resource lifetimes, durable intent journal, and checkpoint/reconciliation interface. See [the v5 runtime contract](docs/SELECTED_HARNESS_V4.md).
 
 The package root also exports `Runtime`, `encode`/`decode`, `reconstruct`,
 `causalPrefix`, and the trace validation/replay error classes. The package is an

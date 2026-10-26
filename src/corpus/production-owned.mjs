@@ -136,7 +136,7 @@ export function verifyPinnedProductionHelpers({
    refused:rows.length-verified.length,admitted:0,
    rows,warnings:['Only individually rechecked original helper bodies qualify.',
     'The extracted function is a strict function-entry projection, not arbitrary ESM module execution.',
-    'Only model-visible semantic-execution/4 examples are locally verified; no megatoken admission is implied.']},
+    'Only model-visible semantic-execution/5 examples are locally verified; no megatoken admission is implied.']},
    verified};
 }
 

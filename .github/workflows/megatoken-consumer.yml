@@ -55,7 +55,7 @@ jobs:
         run: |
           npm run contracts:check
           cmp contracts/host-operations-v4.json megatoken/src/megatoken/data/contracts/host-operations-v4.json
-          cmp contracts/semantic-harness-v4.json megatoken/src/megatoken/data/contracts/semantic-harness-v4.json
+          cmp contracts/semantic-harness-v5.json megatoken/src/megatoken/data/contracts/semantic-harness-v5.json
           node tools/generate-effectful-training.mjs --jobs 4 --out "$RUNNER_TEMP/corpus" \
             --megatoken megatoken --python python --tokenizer "$RUNNER_TEMP/tokenizer.json" --require-native
           node tools/generate-selected-harness-v4.mjs "$RUNNER_TEMP/two-invocations.json"

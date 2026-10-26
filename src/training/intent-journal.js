@@ -62,7 +62,7 @@ export class SelectedIntentJournal {
     return record;
   }
   putCheckpoint(packet){
-    if(packet?.schema!=='semantic-checkpoint/4')throw new TypeError('Expected selected checkpoint');
+    if(packet?.schema!=='semantic-checkpoint/5')throw new TypeError('Expected selected checkpoint');
     const {integrity,...body}=packet;
     if(digest(JSON.stringify(body))!==integrity)throw new Error('Selected checkpoint integrity mismatch');
     return this.put(digest(JSON.stringify(packet)+'\n'),packet);
@@ -71,7 +71,7 @@ export class SelectedIntentJournal {
     const bytes=await this.readBytes(key);
     if(digest(bytes)!==key)throw new Error('Selected checkpoint object digest mismatch');
     const packet=JSON.parse(bytes),{integrity,...body}=packet;
-    if(packet.schema!=='semantic-checkpoint/4'||digest(JSON.stringify(body))!==integrity)
+    if(packet.schema!=='semantic-checkpoint/5'||digest(JSON.stringify(body))!==integrity)
       throw new Error('Selected checkpoint integrity mismatch');
     return packet;
   }

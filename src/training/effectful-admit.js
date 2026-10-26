@@ -85,7 +85,7 @@ function independentSemanticChecks(bundle,source,operations,decisions){
 }
 export function requireNativeAdmission(exported,receipt,{consumerRevision=null,tokenizerIdentity=null}={}){
   const catalog=JSON.stringify(hostOperationContract(),null,2)+'\n';
-  const contract=JSON.parse(readFileSync(new URL('../../contracts/semantic-harness-v4.json',import.meta.url),'utf8'));
+  const contract=JSON.parse(readFileSync(new URL('../../contracts/semantic-harness-v5.json',import.meta.url),'utf8'));
   if(receipt?.schema!=='semantic-native-admission/4'||receipt.componentGate!=='native-consumer-only'||
     receipt.admitted!==true||receipt.episodeDigest!==hash(exported.public)||
     receipt.contractDigest!==hash(catalog)||!receipt.lossMaskValidated||!receipt.visibilityValidated||

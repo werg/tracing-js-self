@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Attempt actual owned semantic-execution/4 traces for pinned, real JavaScript
+// Attempt actual owned semantic-execution/5 traces for pinned, real JavaScript
 // Exercism reference implementations with independently specified inputs.
 // All refusals are retained; source acquisition does NOT imply verification.
 // Only declared, SHA-locked, audited upstream snapshots may execute in Node vm.
@@ -237,7 +237,7 @@ if(reviewPath){
  const lines=[
   '# Original-source verified owned Exercism JS traces',
   '',
-  '**Only locally verified, non-admitted semantic-execution/4 candidates.**',
+  '**Only locally verified, non-admitted semantic-execution/5 candidates.**',
   'No claim of full JS semantics or minimal/lossless source-level trace compression.',
   '',
   '- Attempted original/canonical and generated candidates: '+report.totals.attempted,

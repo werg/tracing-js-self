@@ -759,6 +759,9 @@ export class SelectedExecutionHarness {
       realmSubscriptions.has(event.subscriptionId)||
       ['source-read','source-evict'].includes(event.kind)&&realmTracks.has(event.track)&&realmPrograms.has(event.programId));
     const packet=activation.controller.segmentPacket();
+    // A suspended parent can lag behind a child in the same realm. Publish the
+    // current realm stream so bounded model history can determine the next draw.
+    packet.randomState=this.realms.get(activation.realmId)?.randomState??null;
     return clone({realmCommitted,selectedState:Object.fromEntries(SELECTED_STATE_FIELDS.map(field=>[field,packet[field]]))});
   }
   prepareModelContext(invocationId){
@@ -1053,7 +1056,7 @@ export class SelectedExecutionHarness {
   }
   /** No service code executes during state restoration or trace inspection. */
   checkpoint(){
-    const packet={schema:'semantic-checkpoint/4',profile:HARNESS_PROFILE,sessionId:this.sessionId,
+    const packet={schema:'semantic-checkpoint/5',profile:HARNESS_PROFILE,sessionId:this.sessionId,
       callbacks:[...this.callbacks],nextCallback:this.nextCallback,
       programs:[...this.programs],realms:[...this.realms].map(([key,realm])=>[key,{
         ...realm,heap:[...realm.heap].map(([id,node])=>[id,{...node,properties:[...node.properties]}]),
@@ -1075,7 +1078,7 @@ export class SelectedExecutionHarness {
   }
   static restore(packet,{services={},journal=null,grants=null,now=Date.now,
       materializeCallbackResult=null,prepareCallbackInput=null}={}){
-    demand(packet?.schema==='semantic-checkpoint/4'&&packet.profile===HARNESS_PROFILE,'Wrong checkpoint version');
+    demand(packet?.schema==='semantic-checkpoint/5'&&packet.profile===HARNESS_PROFILE,'Wrong checkpoint version');
     const {integrity,...body}=packet;
     demand(integrity===createHash('sha256').update(JSON.stringify(body)).digest('hex'),
       'Checkpoint integrity mismatch');

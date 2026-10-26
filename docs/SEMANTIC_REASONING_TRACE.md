@@ -1,7 +1,7 @@
 # Source-grounded semantic reasoning traces
 
-**Authoritative production contracts:** `semantic-execution/4`,
-`semantic-trace/4`, `semantic-context/4`, `semantic-continuation/4`
+**Authoritative production contracts:** `semantic-execution/5`,
+`semantic-trace/5`, `semantic-context/5`, `semantic-continuation/5`
 and `selected-harness/2`.
 
 The model's task is to **execute the supplied program**, not reproduce a
@@ -229,4 +229,4 @@ source calculations. CI runs the same fixture collection on PRs.
    training/serving comparisons. Fewer records are evidence about compactness,
    not evidence of learning improvement.
 
-The only supported public execution witness is semantic-trace/4. Previous v2/v3 group formats, explicit/compact selection switches and outcome-only generation have been removed. The private journal, selected replay and independent V8 reference are correctness evidence, not alternative model targets.
+The only supported public execution witness is semantic-trace/5. Previous v2/v3 group formats, explicit/compact selection switches and outcome-only generation have been removed. The private journal, selected replay and independent V8 reference are correctness evidence, not alternative model targets.

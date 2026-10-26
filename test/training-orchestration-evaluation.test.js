@@ -230,7 +230,7 @@ function observedBootstrap(actual,selection){
   const rows=actual.orchestration.finalState.observations.filter(item=>ids.has(item.eventId));
   assert.equal(rows.length,ids.size,'Every current-state bootstrap fragment must exist in native observations');
   const packet=JSON.parse(Buffer.concat(rows.map(item=>Buffer.from(item.payloadHex,'hex'))).toString('utf8'));
-  if(packet.schema==='semantic-execution/4'&&packet.kind==='model-context'){
+  if(packet.schema==='semantic-execution/5'&&packet.kind==='model-context'){
     assert.equal(packet.mode,'observed');assert.equal(packet.sequence,receipt.publicSequence);
     assert.equal(packet.realmPrefixDigest,receipt.prefixDigest);assert.equal(packet.visibleThrough,receipt.visibleThrough);
     return {...packet,state:packet.selectedState,reason:receipt.reason};

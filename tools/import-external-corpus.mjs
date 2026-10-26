@@ -84,7 +84,7 @@ totals.diagnosticOnly=true;
 totals.warnings=[
   'Acquisition does not execute guest source or establish observable or intermediate semantic correctness.',
   'Test262 programs require exact harness and mode handling; data contracts require a separately pinned implementation.',
-  'Do not import these records as semantic-execution/4 training trajectories.'
+  'Do not import these records as semantic-execution/5 training trajectories.'
 ];
 import {writeFileSync} from 'node:fs';
 writeFileSync(reportPath,JSON.stringify(totals,null,2)+'\n');

@@ -1,7 +1,7 @@
 # Current execution tracing status
 
-**Only model-facing execution representation:** `semantic-execution/4`,
-`semantic-trace/4`, `semantic-context/4`, `semantic-continuation/4`,
+**Only model-facing execution representation:** `semantic-execution/5`,
+`semantic-trace/5`, `semantic-context/5`, `semantic-continuation/5`,
 `selected-harness/2`.
 
 The canonical target is a **source-grounded semantic account**: calculations
@@ -20,11 +20,11 @@ source execution, but are not learner trace targets.
 ## Active code
 
 - `src/training/effectful-compiler.js`: sole source-certified witness producer
-- `src/training/format.js`: sole public codec and strict v4 validator
+- `src/training/format.js`: sole public codec and strict v5 validator
 - `src/training/harness-v4.js`, `controller.js`, `model-driver.js`:
   selected execution, state, external effects and observed continuations
 - `src/training/source-check.js`: synchronous trusted-source verification
-  through the **same** v4 producer; does not grant admitted training status
+  through the **same** v5 producer; does not grant admitted training status
 - `src/training/effectful-admit.js`: independent source/effect/replay gates
   and optional pinned Megatoken native admission
 - `src/training/semantic-source.js`: independently checked, bounded source

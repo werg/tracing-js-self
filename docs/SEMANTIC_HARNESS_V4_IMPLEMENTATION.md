@@ -1,17 +1,19 @@
-# Semantic execution v4: implementation and operation
+# Semantic execution v5: implementation and operation
 
 This is the implementation guide for the [current semantic execution profile](STATUS.md).
 Engineering verification uses source-certified teachers, independent Node/browser references,
 controlled selected actions and initialized fixed-weight inference. It does not run an optimizer
-or establish learned execution quality. The exact compatible revisions and verification receipts
-are recorded in the [integration lock](../contracts/semantic-integration-lock.json) and
-[engineering completion ledger](SEMANTIC_HARNESS_V4_COMPLETION.md).
+or establish learned execution quality. The version 5 artifact boundary is described
+in [the current contract guide](SEMANTIC_CONTRACT_V5.md). The
+[integration lock](../contracts/semantic-integration-lock.json) and
+[engineering completion ledger](SEMANTIC_HARNESS_V4_COMPLETION.md) preserve the exact
+earlier v4 revisions and receipts; they do not qualify newly generated v5 artifacts.
 
 ## Public contract and authority
 
-The active production contracts are `semantic-execution/4`, `semantic-trace/4`,
-`semantic-context/4`, `semantic-continuation/4` and profile `selected-harness/2`.
-`contracts/semantic-harness-v4.json` is generated from the executable JavaScript declarations.
+The active production contracts are `semantic-execution/5`, `semantic-trace/5`,
+`semantic-context/5`, `semantic-continuation/5` and profile `selected-harness/2`.
+`contracts/semantic-harness-v5.json` is generated from the executable JavaScript declarations.
 Megatoken ships the same bytes and independently validates the positive and negative examples.
 `contracts/host-operations-v4.json` declares every operation's signature, codec, ownership,
 callback lifetime, result codec, cancellation, retry and quota policy. Both files are checked in CI.
@@ -163,7 +165,7 @@ node tools/inspect-selected-harness.mjs /tmp/semantic-v4/counter-0.json
 `megatoken/scripts/prepare_semantic_corpus.py` takes repeated `--input` files, exact
 `--producer-revision`/`--consumer-revision`, `--tracer-root`, `--tokenizer-json` and an output directory.
 This exports data without an optimizer. `plan_semantic_training.py` validates the frozen data/config,
-curriculum supply, seeds and token/compute budgets before later training. The pinned consumer must accept canonical compact semantic-trace/4 and
+curriculum supply, seeds and token/compute budgets before later training. The pinned consumer must accept canonical compact semantic-trace/5 and
 must reject other model targets. Older multi-arm experiment configurations
 are not part of the current producer.
 are confined to the common-support cohort; they cannot silently replace interactive effects.

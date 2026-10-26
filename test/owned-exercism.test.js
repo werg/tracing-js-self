@@ -43,7 +43,7 @@ test('original leap proof and canonical input pass owned independent recheck',()
  assert.equal(verified.status,'locally_verified',verified.reason??'');
  const checked=recheckOwnedSourceEvidence(JSON.parse(JSON.stringify(verified.exported)));
  assert.equal(checked.valid,true,checked.reason??'');
- assert.equal(verified.exported.public.schema,'semantic-execution/4');
+ assert.equal(verified.exported.public.schema,'semantic-execution/5');
  assert.equal(verified.exported.sidecar.referenceStatus,'agreed');
 });
 test('canonical identity and split are stable by exercise, not input',()=>{

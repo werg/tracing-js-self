@@ -1,4 +1,4 @@
-// Sole production semantic-execution/4 witness and independent source checks.
+// Sole production semantic-execution/5 witness and independent source checks.
 export {verifyOwnedSourceCase,recheckOwnedSourceEvidence} from './source-check.js';
 export {verifyEffectfulTrainingCase,recheckEffectfulAdmission,requireNativeAdmission,
   effectfulFamilySplit,effectfulMetrics,checkCounterfactualPrefixes} from './effectful-admit.js';

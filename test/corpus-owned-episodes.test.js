@@ -50,7 +50,7 @@ test('owned corpus bridge emits only independently rechecked, provenance-tagged 
     const rows=readFileSync(episodes,'utf8').trim().split('\n').map(JSON.parse);
     assert.equal(rows.length,1);
     const episode=rows[0];
-    assert.equal(episode.public.schema,'semantic-execution/4');
+    assert.equal(episode.public.schema,'semantic-execution/5');
     assert.equal(episode.sidecar.split,inputRow().split);
     assert.equal(episode.sidecar.provenance.corpus,'pinned-real-source');
     assert.equal(episode.sidecar.provenance.admission,'pending external megatoken gate');

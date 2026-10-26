@@ -73,7 +73,7 @@ jobs:
             const rows=readFileSync("corpus/out/exercism-owned-locally-verified.jsonl","utf8")
               .trim().split("\n").map(JSON.parse);
             if(rows.length!==r.totals.locallyVerified||
-              rows.some(x=>x.admitted!==false||x.exported?.public?.schema!=="semantic-execution/4"))
+              rows.some(x=>x.admitted!==false||x.exported?.public?.schema!=="semantic-execution/5"))
               throw Error("Mismatch in rechecked owned episode manifest");
             console.log("Locally verified owned traces",r.totals.locallyVerified,
               "out of",r.totals.attempted,"explicitly audited candidates");

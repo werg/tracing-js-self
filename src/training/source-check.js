@@ -108,7 +108,7 @@ export function recheckOwnedSourceEvidence(exported){
       throw new Error('Independent source operation or branch evidence has changed');
     verifyEffectfulProjection(bundle,exported,side.projectionOptions);
     return {valid:true,scope:'locally_verified_only',admitted:false,
-      traceFormat:'semantic-trace/4',operations:current.operationAudit.checked,
+      traceFormat:'semantic-trace/5',operations:current.operationAudit.checked,
       branches:current.branchAudit.checked};
   }catch(error){return {valid:false,scope:'locally_verified_only',admitted:false,
     reason:String(error.message)};}

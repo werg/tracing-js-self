@@ -1,9 +1,9 @@
 // Strict public witness language. This grammar does not expose VM frames,
 // property versions, journal origins, or the normalized teacher event stream.
-export const WITNESS_VERSION='semantic-trace/4';
-export const CONTEXT_VERSION='semantic-context/4';
-export const EXECUTION_VERSION='semantic-execution/4';
-export const CONTINUATION_VERSION='semantic-continuation/4';
+export const WITNESS_VERSION='semantic-trace/5';
+export const CONTEXT_VERSION='semantic-context/5';
+export const EXECUTION_VERSION='semantic-execution/5';
+export const CONTINUATION_VERSION='semantic-continuation/5';
 export const HARNESS_PROFILE='selected-harness/2';
 export const COMPLETION_POLICIES=Object.freeze([
   'call-return','await-returned-promise','owned-quiescence'
@@ -14,7 +14,7 @@ export function canonicalCompletionPolicy(policy){
 }
 export const SUPERVISION_VERSION='semantic-supervision/2';
 export const SELECTED_STATE_FIELDS=Object.freeze(['schema','heap','locals','captureAliases','stack',
-  'continuations','ready','callReturn','pending','completion']);
+  'continuations','ready','callReturn','pending','completion','randomState']);
 export const MODEL_CONTEXT_INTERVAL=32;
 
 const schema=Object.freeze({
@@ -97,6 +97,7 @@ export function validateHarnessRecord(record){
         Object.keys(state).length!==SELECTED_STATE_FIELDS.length||
         SELECTED_STATE_FIELDS.some(field=>!Object.hasOwn(state,field))||
         state.schema!==CONTINUATION_VERSION||
+        !(state.randomState===null||Number.isInteger(state.randomState)&&state.randomState>=0&&state.randomState<=0xffffffff)||
         !['heap','locals','captureAliases','stack','continuations','ready'].every(field=>Array.isArray(state[field]))||
         typeof record.realmPrefixDigest!=='string'||!/^[0-9a-f]{64}$/.test(record.realmPrefixDigest)||
         record.visibleThrough!==record.sequence-1)

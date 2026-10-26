@@ -1,17 +1,24 @@
-# Selected semantic execution v4
+# Selected semantic execution v5
 
-The production selected interface uses `semantic-execution/4`,
-`semantic-trace/4`, `semantic-context/4`, `semantic-continuation/4`, and
+The production selected interface uses `semantic-execution/5`,
+`semantic-trace/5`, `semantic-context/5`, `semantic-continuation/5`, and
 `selected-harness/2`. Old envelopes and continuation versions fail closed.
 The grammar remains readable semantic work; routing, delivery, source access,
 and native dispatch receipts are separate observed envelope records.
+
+Version 5 publishes the program's deterministic seed and the current realm
+random-generator state in selected-state observations. A paused parent sees the
+stream after any child or callback draws, even when those draws have left the
+bounded model history. Unseeded state is explicitly `null`. See the
+[version 5 contract boundary](SEMANTIC_CONTRACT_V5.md) for artifact rejection and
+regeneration requirements.
 
 ## Contract and independent consumers
 
 `src/training/format.js` declares witness fields, required fields, envelope
 families, authority, completion modes, identities, and expression bounds.
 `tools/generate-semantic-contract.mjs` generates
-`contracts/semantic-harness-v4.json`, including positive and negative witness
+`contracts/semantic-harness-v5.json`, including positive and negative witness
 and envelope fixtures. `--check` detects drift. The Python consumer uses the
 same declared fixture bytes and retains independent grammar, scheduling,
 visibility, action-materialization, and loss validation.
