@@ -76,7 +76,7 @@ jobs:
           consumer = subprocess.check_output(['git','-C','megatoken','rev-parse','HEAD'], text=True).strip()
           subprocess.run([sys.executable,'megatoken/scripts/validate_semantic_corpus.py',
             '--corpus',str(corpus),'--output',str(root/'prepared-semantic'),
-            '--tracer-root','.', '--representation','compact',
+            '--tracer-root','.',
             '--tokenizer-json',str(root/'tokenizer.json')], check=True)
           codec = ByteCodec.from_tokenizer_json(root/'tokenizer.json', expected_sha256=LING_TOKENIZER_SHA256)
           paths = [root/'two-invocations.json', *sorted((root/'continuity').glob('*.json'))]
