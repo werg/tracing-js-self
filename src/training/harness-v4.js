@@ -121,7 +121,7 @@ export class SelectedExecutionHarness {
     this.timeline.push(item);return item;
   }
   publishProgram({programId,source,entry,capabilities=[],dependencies=[],sourceMap=null,
-      languageProfile='owned-javascript/1',module=false,sourceMetadata=null}){
+      languageProfile='owned-javascript/1',module=false,sourceMetadata=null,randomSeed=null}){
     id(programId,'program ID');
     demand(!this.programs.has(programId),'Program IDs are immutable and cannot be republished');
     demand(typeof source==='string'&&source.length&&typeof entry==='string',
@@ -139,13 +139,14 @@ export class SelectedExecutionHarness {
     const analyzed=analyzeSemanticProgram(source);
     const {sites,functions}=analyzed;
     const digest=createHash('sha256').update(source,'utf8').digest('hex');
-    const code=encodeWitness('code',{entry,source,sites});
+    const random=randomSeed===null?{}:{randomSeed};
+    const code=encodeWitness('code',{entry,source,sites,...random});
     this.programs.set(programId,freeze({source,entry,code,digest,functions,
       capabilities:[...capabilities],dependencies:clone(dependencies),sourceMap:clone(sourceMap),
-      languageProfile,module:Boolean(module),sourceMetadata:clone(sourceMetadata)}));
+      languageProfile,module:Boolean(module),sourceMetadata:clone(sourceMetadata),...random}));
     return this.record('observed','program','host',
       {programId,digest,entry,source,sites,functions,capabilities,
-        dependencies,sourceMap,languageProfile,module:Boolean(module),sourceMetadata});
+        dependencies,sourceMap,languageProfile,module:Boolean(module),sourceMetadata,...random});
   }
   admitInvocation({programId,invocationId,trackId,realmId,triggerId,args=[],inputGraph=null,
       completionPolicy='call-return',realmPolicy='fresh',entry=null,receiver=undefined,
@@ -187,6 +188,8 @@ export class SelectedExecutionHarness {
     demand(!previous?.closed,'Closed realm cannot be resurrected');
     demand(!previous||realmPolicy==='retained','Fresh realm identity cannot be reused');
     demand(!previous||previous.digest===program.digest,'Retained realm source revision mismatch');
+    demand(!previous||this.programs.get(previous.programId)?.randomSeed===program.randomSeed,
+      'Retained realm deterministic seed mismatch');
     demand(!previous||taskRevision>=previous.taskRevision,'Stale task revision');
     demand(activation==='module-init'||!program.module||previous?.initialized,
       'Module initialization must complete before entry invocation');
@@ -215,7 +218,8 @@ export class SelectedExecutionHarness {
     const input=encodeWitness('input',{graph,...(retained.length?{retained}:{})});
     const sourceCode=selectedEntry===program.entry?program.code:
       encodeWitness('code',{entry:selectedEntry,source:program.source,
-        sites:analyzeSemanticProgram(program.source).sites});
+        sites:analyzeSemanticProgram(program.source).sites,
+        ...(program.randomSeed===undefined?{}:{randomSeed:program.randomSeed})});
     const initialBindings={};
     for(const [index,name] of (declared?.params??[]).entries())
       if(name)initialBindings[name]=graph.roots[index]??['undefined'];
@@ -235,8 +239,10 @@ export class SelectedExecutionHarness {
       completionPolicy,observationAuthority:'broker',rootInvocation:invocationId,
       trackId,receiver:selectedReceiver,retainedState:previous,initialBindings,captureAliases,
       strictRequests:true});
+    if(previous&&program.randomSeed!==undefined)controller.randomState=previous.randomState;
     this.realms.set(realmId,{...previous,digest:program.digest,programId,policy:realmPolicy,
       running:invocationId,heap:controller.heap,locals:controller.locals,
+      ...(program.randomSeed===undefined?{}:{randomState:controller.randomState}),
       scheduler:controller.scheduler,
       revision:(previous?.revision??0)+1,taskRevision,
       initialized:previous?.initialized??!program.module,
@@ -402,7 +408,11 @@ export class SelectedExecutionHarness {
           'Selected callback must be a declared owned closure');
       }
     }
+    // Suspended invocations and callbacks share the realm's deterministic
+    // stream. Refresh it before a resumed turn instead of resetting its seed.
+    if(Object.hasOwn(realm,'randomState'))activation.controller.randomState=realm.randomState;
     const answer=activation.controller.commit(line,{track:activation.trackId,mode:'generated'});
+    if(Object.hasOwn(realm,'randomState'))realm.randomState=activation.controller.randomState;
     if(kind!=='end')realm.running=invocationId;
     activation.status='running';
     if(kind==='request'){
@@ -935,7 +945,7 @@ export class SelectedExecutionHarness {
         h.publishProgram({programId:item.programId,source:item.source,
           entry:item.entry,capabilities:item.capabilities,dependencies:item.dependencies,
           sourceMap:item.sourceMap,languageProfile:item.languageProfile,module:item.module,
-          sourceMetadata:item.sourceMetadata});
+          sourceMetadata:item.sourceMetadata,randomSeed:item.randomSeed??null});
       }else if(item.kind==='invocation'){
         h.admitInvocation({programId:item.programId,invocationId:item.invocationId,
           trackId:item.track,realmId:item.realmId,triggerId:item.triggerId,
@@ -1077,7 +1087,8 @@ export class SelectedExecutionHarness {
       demand(expected,'Checkpoint invocation lacks public provenance');
       for(const field of ['heap','locals','stack','effects','jobs','ready','pending','completion','continuations',
         'frameFunctions','callReturn','captureAliases','activeJob','scheduler','receiver',
-        'context','input','rootInvocation','trackId','capabilities','observationAuthority','strictRequests'])
+        'context','input','rootInvocation','trackId','capabilities','observationAuthority','strictRequests',
+        'randomState'])
         demand(isDeepStrictEqual(expected[field],activation.controller[field]),
           'Checkpoint selected state contradicts committed public history: '+field);
     }
@@ -1090,7 +1101,7 @@ export class SelectedExecutionHarness {
       demand(isDeepStrictEqual(heap,realm.heap)&&isDeepStrictEqual([...expected.locals],realm.locals),
         'Checkpoint realm state contradicts committed public history');
       for(const field of ['digest','programId','policy','revision','taskRevision','initialized',
-        'initializationStarted','running','scheduler'])
+        'initializationStarted','running','scheduler','randomState'])
         demand(isDeepStrictEqual(expected[field],realm[field]),'Checkpoint realm ownership mismatch: '+field);
     }
     const harness=new SelectedExecutionHarness({

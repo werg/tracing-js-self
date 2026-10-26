@@ -32,7 +32,8 @@ export function controlledEvaluationCase(exported,{id,family,split}={}){
     (selections[item.invocationId]??=[]).push(item.line);
   const request={schema:'selected-evaluation-case/4',
     program:{programId:program.programId,source:program.source,entry:program.entry,
-      capabilities:program.capabilities},
+      capabilities:program.capabilities,
+      ...(program.randomSeed===undefined?{}:{randomSeed:program.randomSeed})},
     invocation:{programId:invocation.programId,invocationId:invocation.invocationId,
       trackId:invocation.track,realmId:invocation.realmId,triggerId:invocation.triggerId,
       inputGraph:invocation.inputGraph,realmPolicy:invocation.realmPolicy,
@@ -43,7 +44,8 @@ export function controlledEvaluationCase(exported,{id,family,split}={}){
   const session=Boolean(exported.sidecar.reference.outcomes);
   if(session){
     request.programs=exported.public.timeline.filter(item=>item.kind==='program').map(item=>({
-      programId:item.programId,source:item.source,entry:item.entry,capabilities:item.capabilities}));
+      programId:item.programId,source:item.source,entry:item.entry,capabilities:item.capabilities,
+      ...(item.randomSeed===undefined?{}:{randomSeed:item.randomSeed})}));
     request.invocations=exported.public.timeline.filter(item=>item.kind==='invocation'&&
       item.parentInvocationId===null).map(item=>({
       programId:item.programId,invocationId:item.invocationId,trackId:item.track,realmId:item.realmId,

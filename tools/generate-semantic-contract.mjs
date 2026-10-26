@@ -23,6 +23,8 @@ const definition={schema:'semantic-harness-contract/4',execution:EXECUTION_VERSI
   authority:{generated:['semantic'],observed:Object.keys(HARNESS_RECORD_SCHEMAS).filter(kind=>kind!=='semantic'),
     observationLoss:0,transportCreatesGuestBoundary:false,requestsPerCommittedSelection:1}};
 const validWitness=[
+  w('code',{entry:'run',source:'function run(){return Math.random();}',sites:[],randomSeed:0}),
+  w('compute',{expr:{op:'random'},result:['num',1013904223/4294967296]}),
   w('input',{graph:{roots:[['ref','retained']],objects:[]},retained:['retained']}),
   w('promise',{action:'create',promise:'result'}),
   w('promise',{action:'react',promise:'source',reaction:'then',closure:'fulfilled',rejectionClosure:'rejected',target:'result',job:'reaction'}),
@@ -35,6 +37,7 @@ const validWitness=[
     objects:[{id:'o0',kind:'object',properties:[{key:'self',value:['ref','o0']}]}]}})
 ];
 const invalidWitness=[
+  'compute {"expr":{"op":"binary","operator":"+","left":{"op":"random"},"right":{"op":"random"}},"result":["num",0]}',
   'request {"effect":"effect","operation":"demo.readAsync","arguments":[],"invocation":"i1","payload":"[]"}',
   'promise {"action":"react","promise":"p","reaction":"catch","job":"j","rejectionClosure":"f"}',
   'resume {"continuation":"c","invocation":"i","status":"pending","result":["undefined"]}',
@@ -69,14 +72,26 @@ forgedState.public.timeline[3].selectedState.locals[0][1]=['num',8];
 futureState.public.timeline[3].visibleThrough++;
 foreignPrefix.public.timeline[3].realmPrefixDigest='0'.repeat(64);
 invalidEnvelope.push(forgedState,futureState,foreignPrefix);
-for(const document of [validEnvelope,validContext]){
+const seeded=new SelectedExecutionHarness({sessionId:'seedcontract'});
+seeded.publishProgram({programId:'random',source:'function run(){return Math.random();}',entry:'run',randomSeed:0});
+seeded.admitInvocation({programId:'random',invocationId:'sample',trackId:'worker',realmId:'realm',
+  triggerId:'caller',args:[]});
+seeded.selected('sample',w('compute',{expr:{op:'random'},result:['num',1013904223/4294967296]}));
+seeded.selected('sample',w('return',{value:['num',1013904223/4294967296]}));
+seeded.selected('sample',w('end',{kind:'return'}));
+const validSeed=seeded.exportEpisode();
+for(const seed of [-1,4294967296,0.5,true,null]){
+  const invalid=structuredClone(validSeed);invalid.public.timeline[0].randomSeed=seed;
+  invalidEnvelope.push(invalid);
+}
+for(const document of [validEnvelope,validContext,validSeed]){
   for(const record of document.public.timeline)validateHarnessRecord(record);
   SelectedExecutionHarness.replay(document);
 }
 for(const document of invalidEnvelope){let rejected=false;try{SelectedExecutionHarness.replay(document);}catch{rejected=true;}
   if(!rejected)throw new Error('Invalid envelope fixture was accepted');}
 const fixtures={witness:{valid:validWitness,invalid:invalidWitness},
-  envelope:{valid:[validEnvelope,validContext],invalid:invalidEnvelope}};
+  envelope:{valid:[validEnvelope,validContext,validSeed],invalid:invalidEnvelope}};
 const artifact={definition,digest:digest(definition),fixtureDigest:digest(fixtures),fixtures};
 const bytes=JSON.stringify(artifact,null,2)+'\n';
 const destination=new URL('../contracts/semantic-harness-v4.json',import.meta.url);

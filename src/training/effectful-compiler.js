@@ -105,7 +105,8 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   const capabilities=[...new Set(analyzeSemanticProgram(source).sites.map(site=>site.operation).filter(Boolean))].sort();
   for(const operation of capabilities)hostOperation(operation);
   let harness=new SelectedExecutionHarness({sessionId,maxGenerated,automaticDelivery:false});
-  harness.publishProgram({programId,source,entry:entry.functionName,capabilities});
+  harness.publishProgram({programId,source,entry:entry.functionName,capabilities,
+    randomSeed:bundle.initialState.control.a0.randomSeed??null});
   // Rest parameters are ordinary arrays already created at the *entry*
   // boundary. They are neither source-provided positional arguments nor
   // later guest allocations. Include their descriptor-inspected identities
@@ -539,6 +540,14 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
         receiver:tag(row.receiver),arguments:row.arguments.map(tag)},event,'call');writes(row,owner,event);handled=true;
     }else if(row?.op==='alloc'){
       allocations(row,owner,event);writes(row,owner,event);handled=true;
+    }else if(row?.op==='value'&&event.operation==='call.enter'&&row.operands.length===1&&
+        isDeepStrictEqual(row.operands[0]?.[0]==='method'?row.operands[0][1]:row.operands[0],
+          ['builtinfn','Math.random'])){
+      // Retain every owned PRNG transition, including an otherwise discarded
+      // sample. A literal result would erase the dependency on prior samples.
+      emit(owner,'compute',{expr:{op:'random'},result:tag(row.result),
+        invocation:frameId(row.invocation)},event,'random');
+      writes(row,owner,event);handled=true;
     }else if(row?.op==='value'&&row.arithmetic){
       const operands=row.operands.map(value=>tag(Array.isArray(value)?value:value.value));
       if(operands.length!==2)refuse('binary computation lacks evaluated operands');

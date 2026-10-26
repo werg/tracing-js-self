@@ -153,11 +153,60 @@ resolve Promise &p1 11
 The cleanup write is not a reasoning detail; it is mandatory observable
 behavior. Catch/finally control transfer is explicit.
 
+### Own-property choices and named helpers
+
+The `property-helper` inspection case starts with the ordinary input
+`{count: 4}`, tests `box.count > 3`, writes `box.count = 2`, tests the
+same property again, and calls the declared `helper` function. Its actual
+selected sequence includes:
+
+```text
+bind box = &o3
+read &o3["count"] -> 4
+choose (&o3["count"] > 3) = true -> then
+write &o3["count"] = 2
+read &o3["count"] -> 2
+choose (&o3["count"] > 3) = false -> else
+call helper(2) -> guest1
+compute (2 + 1) -> 3
+```
+
+The property operand refers to the already-published input graph and prior
+committed writes. Both choices remain valid at their respective execution
+points; inspecting the final heap cannot justify the first one. The source
+rewriter reads only certified ordinary own data slots. Missing or inherited
+slots, getters, proxies and dynamic property expressions are not guessed;
+supported effectful reads retain their executed effects. A statically known
+literal property key can be checked under the same own-data rule.
+
+The helper label comes from its source declaration. Persistent invocation,
+closure and object identities still distinguish separate activations and
+aliases, and private certificates retain the actual dynamic call evidence.
+These readability conventions do not broaden source admission.
+
+### Deterministic randomness
+
+A seeded fixture publishes its unsigned 32-bit `randomSeed` on the observed
+program before the first selection. Every actual `Math.random()` call emits
+a standalone checked `random` computation, including discarded samples and
+calls made inside helpers. The `seeded-random` inspection case starts at zero
+and emits `0.23606797284446657`, `0.278566908556968` and
+`0.8195337599609047` in that order. The stream follows
+`state = (1664525 * state + 1013904223) mod 2^32`, with each result equal to
+`state / 2^32`.
+
+Retained invocations and callbacks use the realm's continuing stream;
+checkpoint restoration verifies it against public replay. A different seed
+therefore changes the observed context, and an incorrect random result is
+diagnosed without replacing the model's selected bytes. Random transitions
+cannot be folded into pure compound expressions. Unseeded fixture randomness
+is refused.
+
 ## How to reproduce and test
 
 ```sh
 npm ci
-node --test test/training-semantic-source.test.js test/training-semantic-projection.test.js
+node --test test/training-semantic-source.test.js test/training-semantic-projection.test.js test/training-generator.test.js
 node tools/inspect-semantic-reasoning.mjs
 npm run training:generate -- --out /tmp/semantic-v4
 ```

@@ -70,6 +70,7 @@ export const HARNESS_RECORD_SCHEMAS=Object.freeze(Object.fromEntries(Object.entr
   'callback-reattach':['subscriptionId','realmId','evidenceId']
 }).map(([kind,required])=>[kind,Object.freeze({mode:kind==='semantic'?'generated':'observed',
   required:Object.freeze(required),optional:Object.freeze(kind==='dispatch'?['nativeAction']:
+    kind==='program'?['randomSeed']:
     kind==='model-context'?['selectedState','realmPrefixDigest','visibleThrough']:[])})])));
 export const HARNESS_COMMON_FIELDS=Object.freeze(['schema','session','sequence','ownerSequence','track','mode','kind']);
 export function validateHarnessRecord(record){
@@ -84,6 +85,9 @@ export function validateHarnessRecord(record){
   if(!Number.isSafeInteger(record.sequence)||record.sequence<1||
      !Number.isSafeInteger(record.ownerSequence)||record.ownerSequence<1)
     throw new TypeError('Invalid harness sequence');
+  if(record.kind==='program'&&Object.hasOwn(record,'randomSeed')&&
+     (!Number.isInteger(record.randomSeed)||record.randomSeed<0||record.randomSeed>0xffffffff))
+    throw new TypeError('Invalid program deterministic seed');
   if(record.kind==='model-context'){
     const stateFields=['selectedState','realmPrefixDigest','visibleThrough'];
     if(stateFields.some(field=>Object.hasOwn(record,field))){
@@ -139,6 +143,7 @@ export function validateExpression(expr,{maxOperators=8}={}){
   function visit(node){
     if(!object(node)||++nodes>32)fail('expression node budget exceeded');
     if(node.op==='random'&&Object.keys(node).length===1){
+      if(node!==expr)fail('random transition requires a standalone computation');
       operators++;return;
     }
     if(node.op==='literal'&&Object.keys(node).length===2){
