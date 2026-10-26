@@ -20,13 +20,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
       - run: npm test
-      - name: Verify deterministic local training fixtures
-        run: |
-          npm run diagnostic:generate -- --seed 42 --count 20 --output "$RUNNER_TEMP/training-local.jsonl" --manifest "$RUNNER_TEMP/training-manifest.json"
-          npm run diagnostic:generate -- --seed 42 --count 20 --output "$RUNNER_TEMP/training-repeat.jsonl" --manifest "$RUNNER_TEMP/training-repeat-manifest.json"
-          cmp "$RUNNER_TEMP/training-local.jsonl" "$RUNNER_TEMP/training-repeat.jsonl"
-          node tools/recheck-training-evidence.mjs "$RUNNER_TEMP/training-local.jsonl"
-          node --input-type=module -e "import {readFileSync} from 'node:fs'; const j=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/training-manifest.json')); if(j.counts.locally_verified !== 20 || j.counts.admitted !== 0) process.exit(1);"
-
+      - name: Verify canonical semantic reasoning fixtures
+        run: node tools/inspect-semantic-reasoning.mjs
       - run: node bin/tracing.js demo --output "${RUNNER_TEMP}/demo.trace.json"
       - run: node bin/tracing.js replay "${RUNNER_TEMP}/demo.trace.json"

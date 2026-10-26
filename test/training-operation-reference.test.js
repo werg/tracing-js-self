@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase,validateTrainingExport} from 'tracing-js-self/training/diagnostic';
+import {verifyOwnedSourceCase,SelectedExecutionHarness} from 'tracing-js-self/training';
 import {compareOperationObservations, instrumentOperationSource} from '../src/training/operation-reference.js';
 
 const strict=code=>'"use strict";\n'+code;
 
 test('V8 independently observes nested, repeated, overwritten and compound intermediate results',()=>{
   const source=strict('function inc(x){return x+1;} function f(n){let discarded=n*9; discarded=0;let sum=0;while(n>0){sum+=inc(n);n-=1;}return sum+discarded;}');
-  const result=verifyTrainingCase({source,entry:'f',args:[3]});
+  const result=verifyOwnedSourceCase({source,entry:'f',args:[3]});
   assert.equal(result.status,'locally_verified',JSON.stringify(result));
   const audit=result.exported.sidecar.operationAudit;
   assert.equal(audit.schema,'reference-operations/1');
@@ -16,14 +16,14 @@ test('V8 independently observes nested, repeated, overwritten and compound inter
   assert(audit.covered.ownedArithmetic>=8);
   assert(audit.covered.binary>=4);
   assert(audit.unverifiedFamilies.includes('binding.read'));
-  assert.equal(validateTrainingExport(result.exported).valid,true);
+  assert.doesNotThrow(()=>SelectedExecutionHarness.replay(result.exported));
   assert(!Object.hasOwn(result.exported.public,'operationAudit'),
     'independent reference evidence belongs in the private sidecar');
 });
 
 test('independent source observations preserve BigInt, -0, equality and reference typeof',()=>{
   const source=strict('function f(a,b){let overwritten=a**2n;overwritten=0n;return [-0, a**2n,b===b,typeof b];}');
-  const result=verifyTrainingCase({source,entry:'f',args:[3n,{x:1}]});
+  const result=verifyOwnedSourceCase({source,entry:'f',args:[3n,{x:1}]});
   assert.equal(result.status,'locally_verified',JSON.stringify(result));
   const audit=result.exported.sidecar.operationAudit;
   assert.equal(audit.status,'agreed');

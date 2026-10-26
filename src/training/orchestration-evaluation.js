@@ -106,7 +106,7 @@ export async function evaluateOrchestrationCase(envelope,{origin='controlled',se
     checkpointIdentity=null,timeoutMs=15000,cleanupTimeoutMs=1000}={}){
   demand(envelope?.schema==='semantic-evaluation-request/4'&&
     envelope.request?.schema==='selected-orchestration-evaluation-case/4'&&
-    [17,29,43].includes(envelope.seed)&&['explicit','compact'].includes(envelope.representation),
+    [17,29,43].includes(envelope.seed)&&envelope.representation==='compact',
     'Invalid interactive orchestration evaluation request');
   demand(['controlled','fixed-weights','trained'].includes(origin),'Invalid orchestration authority');
   for(const method of ['openOrchestration','stepOrchestration','statusOrchestration','cancelOrchestration',

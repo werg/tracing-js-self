@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase} from 'tracing-js-self/training/diagnostic';
+import {verifyOwnedSourceCase} from 'tracing-js-self/training';
 function check(code,args=[]){
-  const r=verifyTrainingCase({source:'"use strict";\n'+code,entry:'f',args,maxGenerated:1024});
+  const r=verifyOwnedSourceCase({source:'"use strict";\n'+code,entry:'f',args,maxGenerated:1024});
   assert.equal(r.status,'locally_verified',JSON.stringify(r));
 }
 test('var hoisting and initialized undefined',()=>{

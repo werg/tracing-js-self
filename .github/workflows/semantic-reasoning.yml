@@ -12,7 +12,7 @@ jobs:
           node-version: '22'
       - run: npm ci
       - name: Check source expression grounding, admission and compaction
-        run: node --test test/training-semantic-source.test.js test/training-effectful-compact.test.js test/training-model-context-v4.test.js
+        run: node --test test/training-semantic-source.test.js test/training-semantic-projection.test.js test/training-model-context-v4.test.js
       - name: Generate readable source-certified traces with effects and callbacks
         if: always()
         run: node tools/inspect-semantic-reasoning.mjs

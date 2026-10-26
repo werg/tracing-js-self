@@ -1,4 +1,4 @@
-// Transactional selected-trajectory state machine for semantic-trace/4.
+// Transactional selected-trajectory state machine for semantic-trace/5.
 // No teacher records, VM instructions or source interpreter are loaded here.
 import {decodeWitness,CONTINUATION_VERSION,canonicalCompletionPolicy,assertValue} from './format.js';
 import {checkWitnessClaim} from './witness-check.js';
@@ -23,7 +23,7 @@ function primitive(value){
   }
 }
 export class SemanticController {
-  constructor(context,{completionPolicy='immediate-root',capabilities=[],fixtureReplies=[],
+  constructor(context,{completionPolicy='call-return',capabilities=[],fixtureReplies=[],
     maxGenerated=4096,maxPacketBytes=1048576,observationAuthority='fixture',
     rootInvocation='i1',trackId='t0',receiver=['undefined'],retainedState=null,
     initialBindings={},captureAliases={},strictRequests=false}={}){
@@ -569,6 +569,8 @@ export class SemanticController {
   static fromPacket(packet,options={}){
     if(packet?.schema!==CONTINUATION_VERSION||packet.source!=='committed-selected-state')
       fail('continuation','Wrong committed-state packet version');
+    if(!(packet.randomState===null||Number.isInteger(packet.randomState)&&packet.randomState>=0&&packet.randomState<=0xffffffff))
+      fail('continuation','Committed-state packet requires an explicit null or unsigned 32-bit random state');
     const copied=structuredClone(packet);
     const controller=new SemanticController([
       'code '+JSON.stringify(packet.context),'input '+JSON.stringify({graph:{roots:[],objects:[]}})

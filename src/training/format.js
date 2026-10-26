@@ -1,22 +1,20 @@
 // Strict public witness language. This grammar does not expose VM frames,
 // property versions, journal origins, or the normalized teacher event stream.
-export const WITNESS_VERSION='semantic-trace/4';
-export const CONTEXT_VERSION='semantic-context/4';
-export const EXECUTION_VERSION='semantic-execution/4';
-export const CONTINUATION_VERSION='semantic-continuation/4';
+export const WITNESS_VERSION='semantic-trace/5';
+export const CONTEXT_VERSION='semantic-context/5';
+export const EXECUTION_VERSION='semantic-execution/5';
+export const CONTINUATION_VERSION='semantic-continuation/5';
 export const HARNESS_PROFILE='selected-harness/2';
 export const COMPLETION_POLICIES=Object.freeze([
   'call-return','await-returned-promise','owned-quiescence'
 ]);
 export function canonicalCompletionPolicy(policy){
-  // Input API compatibility only. Persisted v4 contracts always use v4 names.
-  const result=policy==='immediate-root'?'call-return':policy;
-  if(!COMPLETION_POLICIES.includes(result))throw new TypeError('Invalid completion policy');
-  return result;
+  if(!COMPLETION_POLICIES.includes(policy))throw new TypeError('Invalid completion policy');
+  return policy;
 }
 export const SUPERVISION_VERSION='semantic-supervision/2';
 export const SELECTED_STATE_FIELDS=Object.freeze(['schema','heap','locals','captureAliases','stack',
-  'continuations','ready','callReturn','pending','completion']);
+  'continuations','ready','callReturn','pending','completion','randomState']);
 export const MODEL_CONTEXT_INTERVAL=32;
 
 const schema=Object.freeze({
@@ -72,6 +70,7 @@ export const HARNESS_RECORD_SCHEMAS=Object.freeze(Object.fromEntries(Object.entr
   'callback-reattach':['subscriptionId','realmId','evidenceId']
 }).map(([kind,required])=>[kind,Object.freeze({mode:kind==='semantic'?'generated':'observed',
   required:Object.freeze(required),optional:Object.freeze(kind==='dispatch'?['nativeAction']:
+    kind==='program'?['randomSeed']:
     kind==='model-context'?['selectedState','realmPrefixDigest','visibleThrough']:[])})])));
 export const HARNESS_COMMON_FIELDS=Object.freeze(['schema','session','sequence','ownerSequence','track','mode','kind']);
 export function validateHarnessRecord(record){
@@ -86,6 +85,9 @@ export function validateHarnessRecord(record){
   if(!Number.isSafeInteger(record.sequence)||record.sequence<1||
      !Number.isSafeInteger(record.ownerSequence)||record.ownerSequence<1)
     throw new TypeError('Invalid harness sequence');
+  if(record.kind==='program'&&Object.hasOwn(record,'randomSeed')&&
+     (!Number.isInteger(record.randomSeed)||record.randomSeed<0||record.randomSeed>0xffffffff))
+    throw new TypeError('Invalid program deterministic seed');
   if(record.kind==='model-context'){
     const stateFields=['selectedState','realmPrefixDigest','visibleThrough'];
     if(stateFields.some(field=>Object.hasOwn(record,field))){
@@ -95,6 +97,7 @@ export function validateHarnessRecord(record){
         Object.keys(state).length!==SELECTED_STATE_FIELDS.length||
         SELECTED_STATE_FIELDS.some(field=>!Object.hasOwn(state,field))||
         state.schema!==CONTINUATION_VERSION||
+        !(state.randomState===null||Number.isInteger(state.randomState)&&state.randomState>=0&&state.randomState<=0xffffffff)||
         !['heap','locals','captureAliases','stack','continuations','ready'].every(field=>Array.isArray(state[field]))||
         typeof record.realmPrefixDigest!=='string'||!/^[0-9a-f]{64}$/.test(record.realmPrefixDigest)||
         record.visibleThrough!==record.sequence-1)
@@ -141,6 +144,7 @@ export function validateExpression(expr,{maxOperators=8}={}){
   function visit(node){
     if(!object(node)||++nodes>32)fail('expression node budget exceeded');
     if(node.op==='random'&&Object.keys(node).length===1){
+      if(node!==expr)fail('random transition requires a standalone computation');
       operators++;return;
     }
     if(node.op==='literal'&&Object.keys(node).length===2){

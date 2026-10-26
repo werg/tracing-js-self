@@ -1,4 +1,4 @@
-// Reference archives use tuple properties; semantic-trace/4 graph records use
+// Reference archives use tuple properties; semantic-trace/5 graph records use
 // named properties. Keep this conversion at the evaluation boundary only.
 export const traceGraph=graph=>{
   if(!graph||typeof graph!=='object'||!Array.isArray(graph.roots)||!Array.isArray(graph.objects))

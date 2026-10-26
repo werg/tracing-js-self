@@ -62,11 +62,13 @@ export class SelectedModelDriver {
       triggerId,args=[],inputGraph=null,realmPolicy='fresh',completionPolicy='call-return',
       selectedEntry=null,receiver=undefined,receiverValue=null,closureId=null,activation='call',
       parentInvocationId=null,taskRevision=1,deadline=null,signal=null,bindings={},
-      sourceMetadata=null,dependencies=[],sourceMap=null,module=false}={}){
+      sourceMetadata=null,dependencies=[],sourceMap=null,module=false,randomSeed}={}){
     if(!this.harness.programs.has(programId)){
       if(typeof source!=='string'||typeof entry!=='string')
         fail('First invocation must publish exact immutable source and entry');
-      this.harness.publishProgram({programId,source,entry,capabilities,sourceMetadata,dependencies,sourceMap,module});
+      this.harness.publishProgram({programId,source,entry,capabilities,sourceMetadata,dependencies,sourceMap,module,randomSeed});
+    }else if(randomSeed!==undefined&&randomSeed!==(this.harness.programs.get(programId).randomSeed??null)){
+      fail('Invocation cannot change the immutable program deterministic seed');
     }
     this.harness.admitInvocation({programId,invocationId,trackId,realmId,triggerId,args,inputGraph,
       realmPolicy,completionPolicy,entry:selectedEntry,receiver,receiverValue,closureId,activation,

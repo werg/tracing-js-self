@@ -1,3 +1,4 @@
+import {SelectedExecutionHarness} from '../src/training/harness-v4.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -7,7 +8,7 @@ import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {cases,sources} from '../corpus/cases.mjs';
 import {original,corpusSplit} from '../corpus/pinned-source.mjs';
-import {validateTrainingExport,recheckIndependentTrainingEvidence} from '../src/training/diagnostic.js';
+import {recheckOwnedSourceEvidence} from '../src/training/source-check.js';
 
 const sha=text=>createHash('sha256').update(text).digest('hex');
 const specimen=cases.find(c=>c.project==='vscode'&&c.entry==='clamp');
@@ -49,12 +50,12 @@ test('owned corpus bridge emits only independently rechecked, provenance-tagged 
     const rows=readFileSync(episodes,'utf8').trim().split('\n').map(JSON.parse);
     assert.equal(rows.length,1);
     const episode=rows[0];
-    assert.equal(episode.public.schema,'semantic-execution/4');
+    assert.equal(episode.public.schema,'semantic-execution/5');
     assert.equal(episode.sidecar.split,inputRow().split);
     assert.equal(episode.sidecar.provenance.corpus,'pinned-real-source');
     assert.equal(episode.sidecar.provenance.admission,'pending external megatoken gate');
-    assert.equal(validateTrainingExport(episode).valid,true);
-    assert.equal(recheckIndependentTrainingEvidence(episode).valid,true);
+    assert.doesNotThrow(()=>SelectedExecutionHarness.replay(episode));
+    assert.equal(recheckOwnedSourceEvidence(episode).valid,true);
   }finally{rmSync(dir,{recursive:true,force:true});}
 });
 

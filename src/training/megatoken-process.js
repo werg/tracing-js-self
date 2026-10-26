@@ -19,7 +19,7 @@ export function createMegatokenProcessSelector({command,args=[],cwd=undefined,
     env=undefined,maxLineBytes=1048576,maxOutstanding=32,timeoutMs=30000,representation='compact'}={}){
   demand(typeof command==='string'&&command.length,'Model process executable is required');
   demand(Array.isArray(args)&&args.every(x=>typeof x==='string'),'Model arguments must be strings');
-  demand(['explicit','compact','outcome-only'].includes(representation),'Unknown selected model representation');
+  demand(representation==='compact','Only the canonical semantic trace is supported');
   demand(Number.isSafeInteger(maxLineBytes)&&maxLineBytes>=1024&&
     Number.isSafeInteger(maxOutstanding)&&maxOutstanding>=1&&
     Number.isSafeInteger(timeoutMs)&&timeoutMs>0,'Model JSONL limits are invalid');
@@ -174,19 +174,6 @@ export function createMegatokenProcessSelector({command,args=[],cwd=undefined,
       typeof output.selection.selectedEventId==='string'&&output.selection.selectedEventId.length>0&&
       (output.representation===undefined||output.representation===representation),
       'Controlled child output lacks its original native fixture selection');
-    return output;
-  };
-  select.outcome=async prefix=>{
-    const output=await send({op:'outcome',prefix});
-    demand(output?.schema==='selected-outcome-output/4'&&output.representation==='outcome-only'&&
-      typeof output.record==='string'&&output.outcome?.schema==='semantic-outcome/4'&&
-      output.selection?.modelSelected===true&&output.selection.ownerTrack===prefix.trackId&&
-      typeof output.selection.selectedEventId==='string'&&output.selection.selectedEventId.length>0,
-      'Outcome prediction is not bound to an actual selected model record');
-    let parsed;try{parsed=JSON.parse(output.record);}catch{
-      throw new TypeError('Outcome prediction is not a complete selected JSON record');
-    }
-    demand(isDeepStrictEqual(parsed,output.outcome),'Outcome prediction differs from original selected bytes');
     return output;
   };
   select.complete=prefix=>{

@@ -4,8 +4,8 @@ import {loadPinnedPairs,lowerPinnedProof,extractCanonicalCases,stableSplit,bindi
   from '../src/corpus/owned-exercism.mjs';
 import {generateInputVariations} from '../src/corpus/variation-exercism.mjs';
 import {buildOwnedSourceMap,mapSourceSite,auditSourceSites} from '../src/corpus/original-sites.mjs';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence}
-  from '../src/training/admit.js';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence}
+  from '../src/training/source-check.js';
 
 test('20 independently pinned real JS proof implementations pair with canonical inputs',()=>{
  const pairs=loadPinnedPairs();
@@ -38,12 +38,12 @@ test('original leap proof and canonical input pass owned independent recheck',()
  const fixture=extractCanonicalCases(pair).find(x=>x.status==='candidate'&&x.args[0]===1996);
  assert.equal(fixture.expected,true);
  const p=lowerPinnedProof(pair.source);
- const verified=verifyTrainingCase({source:p.source,entry:fixture.entry,args:fixture.args,
+ const verified=verifyOwnedSourceCase({source:p.source,entry:fixture.entry,args:fixture.args,
    maxSteps:12000,maxGenerated:256,lineage:{exercise:'leap',caseId:fixture.caseId}});
  assert.equal(verified.status,'locally_verified',verified.reason??'');
- const checked=recheckIndependentTrainingEvidence(JSON.parse(JSON.stringify(verified.exported)));
+ const checked=recheckOwnedSourceEvidence(JSON.parse(JSON.stringify(verified.exported)));
  assert.equal(checked.valid,true,checked.reason??'');
- assert.equal(verified.exported.public.schema,'semantic-execution/4');
+ assert.equal(verified.exported.public.schema,'semantic-execution/5');
  assert.equal(verified.exported.sidecar.referenceStatus,'agreed');
 });
 test('canonical identity and split are stable by exercise, not input',()=>{
@@ -89,7 +89,7 @@ test('source-site audit maps original function bodies without guessing synthetic
  const mapped=mapSourceSite(map,fragment.generatedStart,fragment.generatedStart+1);
  assert.equal(mapped.start,fragment.originalStart);
  const fixture=extractCanonicalCases(pair).find(x=>x.status==='candidate'&&x.args[0]===1996);
- const verified=verifyTrainingCase({source:lowered.source,entry:fixture.entry,args:fixture.args});
+ const verified=verifyOwnedSourceCase({source:lowered.source,entry:fixture.entry,args:fixture.args});
  assert.equal(verified.status,'locally_verified',verified.reason??'');
  const siteAudit=auditSourceSites(map,verified.exported.sidecar.semantic,
     pair.source,lowered.source);

@@ -40,7 +40,7 @@ test('real fsynced intent and JSON checkpoint survive new journal and harness in
     const record=await reopened.readIntent('session1','call/effect');
     assert.deepEqual(await reopened.append(record),await reopened.append(record));
     await assert.rejects(reopened.append({...record,witness:'forged bytes'}),/Conflicting/);
-    assert.equal(JSON.parse(await readFile(join(directory,receipt.key+'.json'))).schema,'semantic-checkpoint/4');
+    assert.equal(JSON.parse(await readFile(join(directory,receipt.key+'.json'))).schema,'semantic-checkpoint/5');
     resolve(5);await pending;
   }finally{await rm(directory,{recursive:true,force:true});}
 });

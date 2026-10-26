@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {attemptOwnedAjvGeneratedValidator}
  from '../src/corpus/ajv-owned.mjs';
-import {recheckIndependentTrainingEvidence} from '../src/training/admit.js';
+import {recheckOwnedSourceEvidence} from '../src/training/source-check.js';
 
 const generated='function validate(data){return typeof data === "string";}';
 const validator=Object.assign(function validate(data){
@@ -17,8 +17,8 @@ test('generated validator requires owned V8/operation/branch/replay evidence',()
   assert.equal(row.schema,'ajv-generated-owned-attempt/1');
   if(row.status==='locally_verified'){
    assert.equal(row.verifiedOwned,true);
-   assert.equal(row.evidence.modelVisibleSchema,'semantic-execution/2');
-   assert.equal(recheckIndependentTrainingEvidence(exported).valid,true);
+   assert.equal(row.evidence.modelVisibleSchema,'semantic-execution/5');
+   assert.equal(recheckOwnedSourceEvidence(exported).valid,true);
   }else{
    assert.equal(row.verifiedOwned,false);
    assert.equal(exported,null);
@@ -84,7 +84,7 @@ test('Ajv omitted optional context is lowered only with audited pure defaults',(
  assert.equal(row.admitted,false);
  if(row.verifiedOwned){
   assert.equal(row.status,'locally_verified');
-  assert.equal(recheckIndependentTrainingEvidence(exported).valid,true);
+  assert.equal(recheckOwnedSourceEvidence(exported).valid,true);
  }else{
   assert.equal(exported,null);
   assert(row.reason);

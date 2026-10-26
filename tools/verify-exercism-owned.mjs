@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Attempt actual owned semantic-execution/3 traces for pinned, real JavaScript
+// Attempt actual owned semantic-execution/5 traces for pinned, real JavaScript
 // Exercism reference implementations with independently specified inputs.
 // All refusals are retained; source acquisition does NOT imply verification.
 // Only declared, SHA-locked, audited upstream snapshots may execute in Node vm.
@@ -11,8 +11,8 @@ import {createHash} from 'node:crypto';
 import {runInNewContext} from 'node:vm';
 import {isDeepStrictEqual} from 'node:util';
 import ts from 'typescript';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence}
-  from '../src/training/admit.js';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence}
+  from '../src/training/source-check.js';
 import {loadPinnedPairs,lowerPinnedProof,extractCanonicalCases}
   from '../src/corpus/owned-exercism.mjs';
 import {generateInputVariations} from '../src/corpus/variation-exercism.mjs';
@@ -54,7 +54,7 @@ const report={schema:'owned-exercism-evidence/1',admitted:false,profile:'trainin
     'Compactness counters are diagnostics, not evidence that omitted intermediate effects are safe.',
     'No result is admitted for megatoken training by this local gate.'
   ],records,byExercise,failuresByReason:failureReasons,
-  quality:{groups:0,generatedGroups:0,generatedBytes:0,originalJournalEvents:0}};
+  quality:{records:0,generatedRecords:0,generatedBytes:0,originalJournalEvents:0}};
 const fail=(record,why,reason)=>{
  record.status=why;record.reason=String(reason).slice(0,400);
  const key=why+': '+record.reason.slice(0,120);
@@ -164,7 +164,7 @@ try{
      lowering:lowered.lowering,loweredSha256:sha(lowered.source)};
    let checked;
    try {
-     checked=verifyTrainingCase({
+     checked=verifyOwnedSourceCase({
        source:lowered.source,entry:fixture.entry,args:structuredClone(fixture.args),
        lineage,maxSteps:12000,maxGenerated
      });
@@ -178,7 +178,7 @@ try{
      continue;
    }
    const serialized=JSON.parse(JSON.stringify(checked.exported));
-   const renewed=recheckIndependentTrainingEvidence(serialized);
+   const renewed=recheckOwnedSourceEvidence(serialized);
    if(!renewed.valid){
      fail(item,'independent_recheck_failure',renewed.reason);continue;
    }
@@ -190,22 +190,21 @@ try{
      fail(item,'source_site_audit_failure',error.message);
      continue;
    }
-   const publicGroups=serialized.public.groups;
-   const generated=publicGroups.filter(g=>g.mode==='generated');
-   const quality={totalGroups:publicGroups.length,generatedGroups:generated.length,
-     generatedBytes:generated.reduce((n,g)=>n+
-       g.events.reduce((m,e)=>m+Buffer.byteLength(e.record,'utf8'),0),0),
+   const tape=serialized.public.timeline;
+   const generated=tape.filter(item=>item.kind==='semantic'&&item.mode==='generated');
+   const quality={totalRecords:tape.length,generatedRecords:generated.length,
+     generatedBytes:generated.reduce((n,item)=>n+Buffer.byteLength(item.line,'utf8'),0),
      journalEvents:serialized.sidecar.archive.events.length,
      sourceBytes:Buffer.byteLength(lowered.source,'utf8'),
      originalSourceBytes:Buffer.byteLength(pair.source,'utf8'),
-     shortPreview:generated.slice(0,12).flatMap(g=>g.events.map(e=>e.record.slice(0,140)))};
+     shortPreview:generated.slice(0,12).map(item=>item.line.slice(0,140))};
    item.status='locally_verified';
    item.quality=quality;
    item.evidence={postSerialization:renewed,reference:item.reference,
      originalSites:{valid:sourceSites.valid,totals:sourceSites.totals}};
    group.locallyVerified++;committed++;
-   report.quality.groups+=quality.totalGroups;
-   report.quality.generatedGroups+=quality.generatedGroups;
+   report.quality.records+=quality.totalRecords;
+   report.quality.generatedRecords+=quality.generatedRecords;
    report.quality.generatedBytes+=quality.generatedBytes;
    report.quality.originalJournalEvents+=quality.journalEvents;
    if(stream){
@@ -228,8 +227,8 @@ report.totals={attempted,locallyVerified:committed,refused:attempted-committed,
   distinctVerifiedExercises:Object.values(byExercise).filter(v=>v.locallyVerified>0).length};
 report.quality.avgGeneratedBytes=committed?
   Math.round(report.quality.generatedBytes/committed):null;
-report.quality.avgGeneratedGroups=committed?
-  Math.round(100*report.quality.generatedGroups/committed)/100:null;
+report.quality.avgGeneratedRecords=committed?
+  Math.round(100*report.quality.generatedRecords/committed)/100:null;
 report.quality.avgJournalEvents=committed?
   Math.round(100*report.quality.originalJournalEvents/committed)/100:null;
 writeFileSync(output,JSON.stringify(report,null,2)+'\n');
@@ -238,15 +237,15 @@ if(reviewPath){
  const lines=[
   '# Original-source verified owned Exercism JS traces',
   '',
-  '**Only locally verified, non-admitted semantic-execution/3 candidates.**',
+  '**Only locally verified, non-admitted semantic-execution/5 candidates.**',
   'No claim of full JS semantics or minimal/lossless source-level trace compression.',
   '',
   '- Attempted original/canonical and generated candidates: '+report.totals.attempted,
   '- Independently rechecked owned successes: '+report.totals.locallyVerified,
   '- Explicit refusals: '+report.totals.refused,
   '- Distinct successful source families: '+report.totals.distinctVerifiedExercises,
-  '- Generated semantic groups / original owned journal events: '+
-    report.quality.generatedGroups+' / '+report.quality.originalJournalEvents,
+  '- Generated semantic records / original owned journal events: '+
+    report.quality.generatedRecords+' / '+report.quality.originalJournalEvents,
   '- Generated semantic record bytes: '+report.quality.generatedBytes,
   '',
   '## Harder verified traces for human review',
@@ -256,7 +255,7 @@ if(reviewPath){
   ''
  ];
  const best=records.filter(x=>x.status==='locally_verified')
-   .sort((a,b)=>b.quality.generatedGroups-a.quality.generatedGroups);
+   .sort((a,b)=>b.quality.generatedRecords-a.quality.generatedRecords);
  const shown=new Set();
  for(const x of best){
   if(shown.has(x.slug)||shown.size>=12)continue;
@@ -266,7 +265,7 @@ if(reviewPath){
    '- Original source: '+x.provenance.solution.repository+'@'+
       x.provenance.solution.revision+'/'+x.provenance.solution.path,
    '- Split: '+x.split,
-   '- Generated groups: '+x.quality.generatedGroups+
+   '- Generated records: '+x.quality.generatedRecords+
       '; owned journal events: '+x.quality.journalEvents+
       '; generated bytes: '+x.quality.generatedBytes,
    '- Source lowering: '+x.lowering,

@@ -2,12 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildOwnedFixtureEntry} from '../corpus/owned-fixture-adapter.mjs';
 import {cases} from '../corpus/cases.mjs';
-import {verifyTrainingCase} from 'tracing-js-self/training/diagnostic';
+import {verifyOwnedSourceCase} from 'tracing-js-self/training';
 
 test('pinned callback executes in an owned guest closure, with independently verified data',()=>{
   const spec=cases.find(c=>c.project==='lodash'&&c.entry==='arrayMap');
   const fixture=buildOwnedFixtureEntry(spec.setup(0),'sample');
-  const checked=verifyTrainingCase({
+  const checked=verifyOwnedSourceCase({
     source:'"use strict";\nfunction sample(array,callback){'+
       'const out=[];for(let i=0;i<array.length;i++){out.push(callback(array[i]));}'+
       'return out;}\n'+fixture.source,

@@ -1,12 +1,12 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase} from '../src/training/admit.js';
+import {verifyOwnedSourceCase} from '../src/training/source-check.js';
 import {profileOwnedEpisode,selectNovelEpisodes}
  from '../src/corpus/coverage-selection.mjs';
 
 const source='"use strict";function answer(n){if(n>4)return n*2;return n+1;}';
 const make=(n,id)=>{
- const verified=verifyTrainingCase({source,entry:'answer',args:[n],maxGenerated:256});
+ const verified=verifyOwnedSourceCase({source,entry:'answer',args:[n],maxGenerated:256});
  assert.equal(verified.status,'locally_verified',verified.reason);
  return {schema:'owned-exercism-local-episode/1',admitted:false,id,slug:'answer',
   split:'train',inputOrigin:'upstream-canonical',
@@ -17,7 +17,7 @@ test('rechecked owned source profiles carry quantitative trace review metrics',(
  const a=profileOwnedEpisode(make(6,'a'));
  const b=profileOwnedEpisode(make(1,'b'));
  assert(a.quality.rawEvents>0);
- assert(a.quality.generatedGroups>0);
+ assert(a.quality.generatedRecords>0);
  assert(a.quality.generatedBytes>0);
  assert.equal(a.quality.sourceAuditAvailable,false);
  const selection=selectNovelEpisodes([a,b]);

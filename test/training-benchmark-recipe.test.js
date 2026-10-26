@@ -15,29 +15,30 @@ const normalizedAst=source=>{
   return JSON.stringify(clean(ast));
 };
 
-test('benchmark-v1 retains distinct declared source algorithms with stable family ancestry and hash splits',()=>{
-  const explicit=benchmarkFamiliesV1(),compact=benchmarkFamiliesV1({representation:'compact'});
-  assert.equal(BENCHMARK_RECIPE_NAME,'benchmark-v1');assert.equal(BENCHMARK_RECIPE_VERSION,'semantic-source-benchmark/1');
-  assert.equal(explicit.length,BENCHMARK_ALGORITHMS.length);assert.equal(compact.length,explicit.length);
-  assert.deepEqual(explicit.map(x=>x.family),compact.map(x=>x.family));
+test('benchmark-v1 retains distinct canonical algorithms, ancestry and split',()=>{
+  const families=benchmarkFamiliesV1();
+  assert.equal(BENCHMARK_RECIPE_NAME,'benchmark-v1');
+  assert.equal(BENCHMARK_RECIPE_VERSION,'semantic-source-benchmark/1');
+  assert.equal(families.length,BENCHMARK_ALGORITHMS.length);
   const asts=BENCHMARK_ALGORITHMS.map(x=>normalizedAst('function run(a,b){'+x.body+'}'));
-  const oldAsts=semanticRecipeFamilies().map(x=>normalizedAst(x.pure.source));
-  assert.equal(new Set(asts).size,asts.length,'catalogue contains normalized-AST duplicate algorithms');
-  assert(asts.every(ast=>!oldAsts.includes(ast)),'new family duplicates an old recipe AST');
+  const prior=semanticRecipeFamilies().map(x=>normalizedAst(x.pure.source));
+  assert.equal(new Set(asts).size,asts.length);
+  assert(asts.every(ast=>!prior.includes(ast)));
   const counts={train:0,validation:0,test:0};
-  for(const [i,f] of explicit.entries()){
+  for(const [index,f] of families.entries()){
     const split=effectfulFamilySplit(f.family);counts[split]++;
-    assert.equal(f.family,compact[i].family);assert.equal(f.pure.family,f.family);
+    assert.equal(f.pure.family,f.family);
     for(const variant of [f.pure,f.callbacks,...f.repeated.cases]){
-      assert.equal(variant.family,f.family);assert.deepEqual(variant.ancestorIds,['source-algorithm-v1:'+f.template]);
+      assert.equal(variant.family,f.family);
+      assert.deepEqual(variant.ancestorIds,['source-algorithm-v1:'+f.template]);
       assert.equal(effectfulFamilySplit(variant.family),split);
     }
-    assert.equal(normalizedAst('function run(a,b){'+BENCHMARK_ALGORITHMS[i].body+'}'),asts[i]);
+    assert.equal(normalizedAst('function run(a,b){'+BENCHMARK_ALGORITHMS[index].body+'}'),asts[index]);
   }
   assert(counts.test>=2&&counts.validation>=2,JSON.stringify(counts));
   assert.equal(Object.values(counts).reduce((a,b)=>a+b,0),BENCHMARK_ALGORITHMS.length);
+  assert.throws(()=>benchmarkFamiliesV1({representation:'explicit'}),/canonical semantic trace/);
 });
-
 test('benchmark-v1 generates executable pure, callback, repeated-input and recovery source paths',async()=>{
   const families=benchmarkFamiliesV1();
   for(const split of ['train','validation','test']){
@@ -73,26 +74,17 @@ test('named bit and rotation algorithms retain their declared mathematical meani
   assert.equal(run('array-rotate-left-checksum')([2,4,1],1),4+1*2+2*3+1);
 });
 
-test('array-result reference graphs evaluate consistently in explicit compact and outcome-only forms',async()=>{
+test('array-result references agree with canonical selected execution',async()=>{
   const family=benchmarkFamiliesV1().find(item=>item.template==='array-sum');
-  const compactFamily=benchmarkFamiliesV1({representation:'compact'}).find(item=>item.template==='array-sum');
-  const admitted=await verifyEffectfulTrainingCase(family.pure);
-  const compactAdmitted=await verifyEffectfulTrainingCase(compactFamily.pure);
-  assert.equal(admitted.status,'locally_verified',admitted.reason);
-  assert.equal(compactAdmitted.status,'locally_verified',compactAdmitted.reason);
-  const fixture=controlledEvaluationCase(admitted.exported,{id:'array-sum-representation-parity'});
-  const compactFixture=controlledEvaluationCase(compactAdmitted.exported,{id:fixture.id});
-  Object.assign(fixture.request.controlledSelectionsByRepresentation,
-    compactFixture.request.controlledSelectionsByRepresentation);
-  for(const representation of ['explicit','compact','outcome-only']){
-    const result=await evaluateSelectedCase({schema:'semantic-evaluation-request/4',
-      caseId:fixture.id,request:fixture.request,seed:17,representation});
-    assert.equal(result.failure,null,`${representation}: ${JSON.stringify(result.failure)}`);
-    assert.deepEqual(result.outcome,fixture.expected,representation);
-    assert.equal(result.firstSemanticInconsistency,null,representation);
-  }
+  const admission=await verifyEffectfulTrainingCase(family.pure);
+  assert.equal(admission.status,'locally_verified',admission.reason);
+  const fixture=controlledEvaluationCase(admission.exported,{id:'array-sum-canonical'});
+  const actual=await evaluateSelectedCase({schema:'semantic-evaluation-request/4',
+    caseId:fixture.id,request:fixture.request,seed:17,representation:'compact'});
+  assert.equal(actual.failure,null,JSON.stringify(actual.failure));
+  assert.deepEqual(actual.outcome,fixture.expected);
+  assert.equal(actual.firstSemanticInconsistency,null);
 });
-
 test('an unobservable completed graph retains the evaluation episode and effect receipts',async t=>{
   const family=benchmarkFamiliesV1().find(item=>item.template==='array-sum');
   const admitted=await verifyEffectfulTrainingCase(family.callbacks);
@@ -106,7 +98,7 @@ test('an unobservable completed graph retains the evaluation episode and effect 
     return {...result,observableGraph:null};
   });
   const result=await evaluateSelectedCase({schema:'semantic-evaluation-request/4',
-    caseId:fixture.id,request:fixture.request,seed:17,representation:'explicit'});
+    caseId:fixture.id,request:fixture.request,seed:17,representation:'compact'});
   assert.equal(result.outcome.state,null);
   assert.equal(result.failure,null);
   assert(result.episode.public.timeline.length>0);

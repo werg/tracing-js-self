@@ -6,7 +6,7 @@ import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {createHash} from 'node:crypto';
 import ts from 'typescript';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence} from '../src/training/admit.js';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence} from '../src/training/source-check.js';
 import {cases,sources} from '../corpus/cases.mjs';
 import {original,corpusSplit,lowerPinnedCharCode} from '../corpus/pinned-source.mjs';
 import {buildOwnedFixtureEntry} from '../corpus/owned-fixture-adapter.mjs';
@@ -108,7 +108,7 @@ for(const row of records){
         row.observation.evidence?.randomSeed:null;
       if(randomSeed!==null && randomSeed!==42)
         throw new TypeError('Missing pinned random fixture seed');
-      checked=verifyTrainingCase({source,entry,args,seed:randomSeed,
+      checked=verifyOwnedSourceCase({source,entry,args,seed:randomSeed,
         maxSteps:10000,maxGenerated:1024});
       status=checked.status;
       reason=checked.reason??null;
@@ -117,7 +117,7 @@ for(const row of records){
   if(status==='locally_verified'){
     // Re-run independent outcome and source-operation/control audits from the
     // serialized archive before emitting any local training candidate.
-    const evidence=recheckIndependentTrainingEvidence(checked.exported);
+    const evidence=recheckOwnedSourceEvidence(checked.exported);
     if(!evidence.valid){
       status='evidence_recheck_failure';
       reason=evidence.reason;

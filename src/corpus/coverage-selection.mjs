@@ -2,7 +2,7 @@
 // non-admitted owned episodes. Never turn V8 observations into owned evidence.
 import {createHash} from 'node:crypto';
 import {normalizeJournal} from '../semantic/normalize.js';
-import {recheckIndependentTrainingEvidence} from '../training/admit.js';
+import {recheckOwnedSourceEvidence} from '../training/source-check.js';
 import {fingerprintOwnedSource,clusterOwnedSources} from './source-clusters.mjs';
 import {measureOwnedTrace,summarizeOwnedTraceQuality} from './trace-quality.mjs';
 
@@ -15,7 +15,7 @@ export function profileOwnedEpisode(row){
    row.exported.sidecar.branchAudit?.status!=='agreed'||
    row.exported.sidecar.operationAudit?.status!=='agreed')
   throw new TypeError('Not an independently audited owned episode');
- const recheck=recheckIndependentTrainingEvidence(row.exported);
+ const recheck=recheckOwnedSourceEvidence(row.exported);
  if(recheck.valid!==true||recheck.admitted!==false)
   throw new Error('Owned evidence failed independent replay/reference recheck');
  const archive=row.exported.sidecar.archive;

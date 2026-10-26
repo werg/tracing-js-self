@@ -1,15 +1,15 @@
+import {SelectedExecutionHarness} from '../src/training/harness-v4.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence,
-  validateTrainingExport} from '../src/training/diagnostic.js';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence} from '../src/training/source-check.js';
 import {validateBundle,replayExact} from '../src/index.js';
 
 const verified=(code,args=[])=>{
-  const result=verifyTrainingCase({source:'"use strict";\n'+code,
+  const result=verifyOwnedSourceCase({source:'"use strict";\n'+code,
     entry:'f',args,maxGenerated:1024,maxSteps:10000});
   assert.equal(result.status,'locally_verified',JSON.stringify(result));
-  assert.equal(validateTrainingExport(result.exported).valid,true);
-  assert.equal(recheckIndependentTrainingEvidence(result.exported).valid,true);
+  assert.doesNotThrow(()=>SelectedExecutionHarness.replay(result.exported));
+  assert.equal(recheckOwnedSourceEvidence(result.exported).valid,true);
   assert.equal(validateBundle(result.exported.sidecar.archive).valid,true);
   assert.equal(replayExact(result.exported.sidecar.archive).valid,true);
   return result.exported;
@@ -63,7 +63,7 @@ test('for-of refuses non-array iterables, nested patterns and for-await',()=>{
     ['function f(xs){for(const [x,y] of xs){}return 1;}',[[1,2]]],
     ['async function f(xs){for await(const x of xs){}return 1;}',[[1,2]]]
   ]){
-    const result=verifyTrainingCase({source:'"use strict";\n'+code,entry:'f',args});
+    const result=verifyOwnedSourceCase({source:'"use strict";\n'+code,entry:'f',args});
     assert.notEqual(result.status,'locally_verified');
   }
 });

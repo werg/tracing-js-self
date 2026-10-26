@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase} from '../src/training/admit.js';
+import {verifyOwnedSourceCase} from '../src/training/source-check.js';
 import {profileOwnedEpisode,selectNovelEpisodes}
  from '../src/corpus/coverage-selection.mjs';
 import {mkdtempSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
@@ -11,7 +11,7 @@ const revision='a'.repeat(40);
 const branchSource='"use strict";function f(n){let sum=0;if(n>0){sum=n+1;}else{sum=n-1;}return sum;}';
 const otherSource='"use strict";function f(n){let result=n*3;return result;}';
 const make=(source,args,id,slug='branch')=>{
- const verified=verifyTrainingCase({source,entry:'f',args,maxGenerated:2048});
+ const verified=verifyOwnedSourceCase({source,entry:'f',args,maxGenerated:2048});
  assert.equal(verified.status,'locally_verified',JSON.stringify(verified).slice(0,400));
  return {schema:'owned-exercism-local-episode/1',admitted:false,
   id,slug,caseId:id,split:'train',inputOrigin:'upstream-canonical',

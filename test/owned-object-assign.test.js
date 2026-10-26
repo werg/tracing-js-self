@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRuntime,validateBundle,replayExact} from 'tracing-js-self';
 import {realizeGraph,describeGraph} from '../src/training/graph.js';
-import {verifyTrainingCase} from 'tracing-js-self/training/diagnostic';
+import {verifyOwnedSourceCase} from 'tracing-js-self/training';
 
 function run(body,args){
   const runtime=createRuntime().startEntry({
@@ -45,7 +45,7 @@ test('Object.assign writes the same target object identity and avoids native fal
 });
 test('Object.assign admits simple scalar-free candidate traces through independent V8 gate',()=>{
   const source='"use strict";function f(a,b){return Object.assign({x:1},a,b); }';
-  const check=verifyTrainingCase({source,entry:'f',args:[{a:2},{b:3}]});
+  const check=verifyOwnedSourceCase({source,entry:'f',args:[{a:2},{b:3}]});
   assert.equal(check.status,'locally_verified',JSON.stringify(check));
   assert.equal(validateBundle(check.exported.sidecar.archive).valid,true);
 });

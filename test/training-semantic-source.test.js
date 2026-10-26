@@ -4,6 +4,7 @@ import {verifyEffectfulTrainingCase} from '../src/training/effectful-admit.js';
 import {EFFECTFUL_ENGINEERING_FIXTURES} from '../src/training/engineering-fixtures.js';
 import {decodeWitness} from '../src/training/format.js';
 import {sourceLinkedComputation,sourceLinkedDecision} from '../src/training/semantic-source.js';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence} from '../src/training/source-check.js';
 
 const decoded=exported=>exported.public.timeline.filter(row=>row.kind==='semantic')
   .map(row=>decodeWitness(row.line));
@@ -115,4 +116,22 @@ test('repeated callback parameters are separate source cells; captures stay shar
     'source param spelling is preserved and disambiguated for each callback');
   assert.equal(trace.filter(row=>row.kind==='request'&&
     row.fields.operation==='demo.store').length,3);
+});
+
+test('actual property choices follow prior writes and helper calls retain source names',()=>{
+  const result=verifyOwnedSourceCase({source:'"use strict"; function helper(value){return value+1;} '+
+    'function run(box){if(box.count>3){box.count=2;} if(box.count>3){return 0;} return helper(box.count);}',
+    entry:'run',args:[{count:4}]});
+  assert.equal(result.status,'locally_verified',result.reason);
+  assert.equal(recheckOwnedSourceEvidence(result.exported).valid,true);
+  const trace=decoded(result.exported),choices=trace.filter(row=>row.kind==='choose');
+  assert.deepEqual(choices.map(row=>row.fields.decision),[['bool',true],['bool',false]]);
+  const reads=choices.map(row=>row.fields.expr.left);
+  assert.equal(reads[0].op,'read');
+  assert.deepEqual(reads[0],reads[1],'both choices refer to the same persistent own slot');
+  const writeIndex=trace.findIndex(row=>row.kind==='write'&&row.fields.key==='count');
+  const choiceIndices=trace.flatMap((row,index)=>row.kind==='choose'?[index]:[]);
+  assert(choiceIndices[0]<writeIndex&&writeIndex<choiceIndices[1]);
+  assert.deepEqual(trace[writeIndex].fields.value,['num',2]);
+  assert.equal(trace.find(row=>row.kind==='call').fields.callee,'helper');
 });

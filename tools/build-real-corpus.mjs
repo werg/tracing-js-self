@@ -148,7 +148,7 @@ const review=[
 '# Real-world effective execution trace inspection',
 '',
 'These are **native V8 diagnostic observations**, not independently admitted',
-'owned semantic-execution/3 trajectories. Every accepted example matches a',
+'owned semantic-execution/5 trajectories. Every accepted example matches a',
 'second, uninstrumented V8 run on its return/throw and reachable argument/result',
 'graph. Source family (not individual invocation) determines the frozen split.',
 '',

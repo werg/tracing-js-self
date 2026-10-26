@@ -2,7 +2,7 @@
 
 An **experimental, owned-machine JavaScript semantic tracing runtime**, bootstrapped from the *Complete JavaScript Semantic Tracing Runtime* revision 2 implementation plan.
 
-This is a working **bounded prototype**, **not** a complete JavaScript interpreter or complete Node/browser runtime. Unsupported language features fail explicitly rather than running guest JavaScript outside the tracer. See [implementation status and gaps](docs/STATUS.md) and [coverage ledger](coverage/required.json).
+This is a working **bounded prototype**, **not** a complete JavaScript interpreter or complete Node/browser runtime. Unsupported language features fail explicitly rather than running guest JavaScript outside the tracer. See [current semantic-execution scope](docs/SEMANTIC_REASONING_TRACE.md) and [coverage ledger](coverage/required.json).
 
 Version 0.2.0 adds the first serializable spec-operation path for primitive
 arithmetic, typed operation commands, a pinned upstream source inventory, and a
@@ -12,11 +12,11 @@ foundation and its source-anchored trace format. See
 
 ## Model-facing semantic execution traces
 
-Production uses **`semantic-execution/4`, `semantic-trace/4`,
-`semantic-context/4`**, and `selected-harness/2`.
+Production uses **`semantic-execution/5`, `semantic-trace/5`,
+`semantic-context/5`**, and `selected-harness/2`.
 The strict machine archive and its exact replay remain private certification
-evidence. The older version-three, group-shaped corpus is an **offline
-diagnostic archive**; its formats are not accepted by the production harness.
+evidence. Earlier group-shaped corpus exporters and their public formats are
+removed; old bytes can only be recovered from pinned Git history.
 
 The training target is **an execution explanation**, not a bijection with
 interpreter instructions. Source-grounded, independently checked expressions
@@ -40,7 +40,7 @@ against **prior committed public state**, never private future results.
 Calls, getters, proxies, updates and other effectful terms cannot be silently
 flattened into pure arithmetic; unsupported projections fail closed.
 See [reasoning trace design](docs/SEMANTIC_REASONING_TRACE.md) and
-[production v4 implementation](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md).
+[production v5 implementation](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md).
 
 From an installed checkout:
 
@@ -48,7 +48,7 @@ From an installed checkout:
 npm ci
 npm test
 node tools/inspect-semantic-reasoning.mjs
-npm run training:generate -- --out /tmp/semantic-v4 --representation compact
+npm run training:generate -- --out /tmp/semantic-v5
 ```
 
 The inspection tool executes real pinned counter, choice, compound
@@ -125,7 +125,7 @@ browser adapter supplies scoped passive event notifications and timers, and the
 Natlang adapter supplies registered graph-valued asynchronous callback returns.
 These are separate declared operation profiles. General DOM Event objects and
 native-dependent synchronous guest return/propagation control remain outside
-the passive profile. See [the v4 capability and lifetime contract](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md).
+the passive profile. See [the v5 capability and lifetime contract](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md).
 
 The emitted JavaScript calls `effects["operation"](...materializedArgs)` in
 recorded dispatch order. The argument values are copied directly from the
@@ -179,7 +179,7 @@ unsupported numeric encodings and unknown host methods fail closed before an
 effect can be dispatched. The private archived `effect.args` retains the
 original identity-bearing tuples solely for verification and replay.
 
-Low-level runtime adapters publish arrivals using `recordInputArrival` and `deliverInput` at a legal service point. The production selected harness provides the higher-level Promise/callback bridge, source and capability checks, owned resource lifetimes, durable intent journal, and checkpoint/reconciliation interface. See [the v4 runtime contract](docs/SELECTED_HARNESS_V4.md).
+Low-level runtime adapters publish arrivals using `recordInputArrival` and `deliverInput` at a legal service point. The production selected harness provides the higher-level Promise/callback bridge, source and capability checks, owned resource lifetimes, durable intent journal, and checkpoint/reconciliation interface. See [the v5 runtime contract](docs/SELECTED_HARNESS_V4.md).
 
 The package root also exports `Runtime`, `encode`/`decode`, `reconstruct`,
 `causalPrefix`, and the trace validation/replay error classes. The package is an
@@ -214,10 +214,10 @@ rereads. Fully admitted data additionally requires the real production tokenizer
 native consumer, visibility and loss gates. A locally verified result is not
 automatically admitted data or learned model success.
 
-The former group-shaped bounded-pure corpus APIs now live exclusively under
-`tracing-js-self/training/diagnostic` and `npm run diagnostic:*`. They remain useful
-for independent source analysis and historical comparisons. Production training
-and serving accept `semantic-execution/4` with `selected-harness/2` only.
+The only supported model-facing training producer, controller and serializer are
+the v5 source-certified semantic witness. Independent V8 reference checks and
+private journal replay are verification authorities, not alternative trace
+formats. No diagnostic subpath, legacy exporter or representation selector exists.
 
 `drive()` reports `terminated`, `waiting`, `runtime.failure`, or `unsupported`.
 Owned catch/finally, Promise rejection, continuation and callback semantics are
@@ -311,13 +311,15 @@ verification path. `src/index.js` is the public package facade.
 journal. Independent source execution, source-operation certificates, native
 consumer validation and selected-model evaluation provide separate authorities.
 Replay requires a complete sealed run and uses external values at their recorded
-arrival boundaries; it calls no native adapter. The v4 engineering gate covers
-the declared execution and capability profile. `completeSemanticTrace: false`
+arrival boundaries; it calls no native adapter. The historical v4 engineering gate
+covers the declared profile at its frozen revisions; current v5 verification is
+recorded by the current cross-repository workflows. `completeSemanticTrace: false`
 still applies to the broader complete-JavaScript target, and this package does
 not claim arbitrary JavaScript compatibility, a hostile-code sandbox or learned
-execution quality. The [v4 implementation guide](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md)
-records the current supported profile and evidence.
-The [completion receipt](contracts/semantic-engineering-completion.json) pins the
-three compatible implementations; it does not certify learned model quality.
+execution quality. The [v5 implementation guide](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md)
+records the current supported profile.
+The historical [completion receipt](contracts/semantic-engineering-completion.json)
+pins its original three tested implementations; it does not qualify v5 artifacts
+or certify learned model quality.
 
 

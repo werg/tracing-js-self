@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRuntime,validateBundle,replayExact} from 'tracing-js-self';
-import {verifyTrainingCase,exportTraining} from 'tracing-js-self/training/diagnostic';
+import {verifyOwnedSourceCase,decodeWitness} from 'tracing-js-self/training';
 import {createBoundedNatlangEnvironment} from '../src/natlang.js';
 const strict=body=>'"use strict";\n'+body;
 function completed(body,args=[]){
@@ -24,17 +24,14 @@ test('finally executes after return and supports normal fallthrough',()=>{
   assert.deepEqual(b.finalState.control.a0.completion.value,['num',2]);
   assert.equal(b.finalState.heap[Object.keys(b.finalState.heap).find(k=>b.finalState.heap[k].kind==='object')].properties.n.value[1],5);
 });
-test('caught throw has one actual v3 exit after handler binding',()=>{
+test('caught throw has one v4 semantic return after handler binding',()=>{
   const source=strict('function f(){try{throw 1;}catch(e){return e+2;}}');
-  const result=verifyTrainingCase({source,entry:'f'});
-  assert.equal(result.status,'locally_verified',JSON.stringify(result));
-  const runtime=createRuntime().startEntry({text:source,functionName:'f'});
-  assert.equal(runtime.drive().kind,'terminated');
-  const episode=exportTraining(runtime);
-  const records=episode.sidecar.compiled.generated;
-  assert.equal(records.filter(r=>r.startsWith('return ')).length,1);
-  assert(records.some(r=>r.startsWith('transfer ')));
-  assert(records.some(r=>r.startsWith('bind ')));
+  const result=verifyOwnedSourceCase({source,entry:'f'});
+  assert.equal(result.status,'locally_verified',result.reason);
+  const records=result.exported.public.timeline.filter(r=>r.kind==='semantic').map(r=>decodeWitness(r.line));
+  assert.equal(records.filter(r=>r.kind==='return').length,1);
+  assert(records.some(r=>r.kind==='transfer'));
+  assert(records.some(r=>r.kind==='bind'));
 });
 test('natlang TS catch/finally guest values execute and exactly replay',()=>{
   class EvalFailure extends Error{constructor(message,events){super(message);this.events=events;}}
@@ -46,5 +43,5 @@ test('natlang TS catch/finally guest values execute and exactly replay',()=>{
   assert.equal(archives.length,1);
 });
 test('destructured catch and exotic thrown values remain outside profile',()=>{
-  assert.equal(verifyTrainingCase({source:strict('function f(){try{throw 1;}catch({message}){return message;}}'),entry:'f'}).status,'unsupported');
+  assert.equal(verifyOwnedSourceCase({source:strict('function f(){try{throw 1;}catch({message}){return message;}}'),entry:'f'}).status,'unsupported');
 });

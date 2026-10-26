@@ -15,11 +15,11 @@ const cases=[
     kind:'return',value:['num',7],cleanup:true}
 ];
 
-for(const representation of ['explicit','compact'])for(const scenario of cases)
-  test(representation+' '+scenario.name+' preserves the root Promise outcome and ordered finally effects',async()=>{
+for(const scenario of cases)
+  test(scenario.name+' preserves the root Promise outcome and ordered finally effects',async()=>{
     const result=await verifyEffectfulTrainingCase({
       source:'"use strict";async function run(){'+scenario.body+'}',entry:'run',args:[],
-      family:scenario.name,projectionOptions:{representation},fixture:{calls:[
+      family:scenario.name,fixture:{calls:[
         {operation:'demo.readAsync',arguments:['bad'],status:'rejected',result:'missing'},
         ...(scenario.cleanup?[{operation:'demo.store',arguments:['cleanup',1]}]:[])
       ]}});
@@ -35,9 +35,9 @@ for(const representation of ['explicit','compact'])for(const scenario of cases)
       item.fields.value[1]===rootPromise),'async call returns its original Promise even when its body throws');
     const rechecked=await recheckEffectfulAdmission(exported,{requireAdmitted:false});
     assert(rechecked.sourceValidated&&rechecked.effectsValidated&&rechecked.replayValidated);
-    const fixture=controlledEvaluationCase(exported,{id:scenario.name+'-'+representation});
+    const fixture=controlledEvaluationCase(exported,{id:scenario.name});
     const actual=await evaluateSelectedCase({schema:'semantic-evaluation-request/4',caseId:fixture.id,
-      request:fixture.request,seed:17,representation});
+      request:fixture.request,seed:17,representation:'compact'});
     assert.equal(actual.failure,null,JSON.stringify(actual.failure));
     assert.deepEqual(actual.outcome,fixture.expected);
     assert.deepEqual(actual.outcome.completion,{kind:scenario.kind,value:scenario.value});

@@ -88,7 +88,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     maxGenerated=16384,realmPolicy='retained',triggerId='teacher-entry',checkpointAtFirstAwait=false,
     representation='compact',maxOperators=8}={}){
   if(typeof checkpointAtFirstAwait!=='boolean')refuse('checkpointAtFirstAwait must be boolean');
-  if(!['explicit','compact'].includes(representation))refuse('unknown source representation');
+  if(representation!=='compact')refuse('Only the canonical semantic trace is supported');
   if(!Number.isInteger(maxOperators)||maxOperators<1||maxOperators>8)
     refuse('compact expressions require an operator bound from 1 through 8');
   validateBundle(bundle);replayExact(bundle);
@@ -105,9 +105,21 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   const capabilities=[...new Set(analyzeSemanticProgram(source).sites.map(site=>site.operation).filter(Boolean))].sort();
   for(const operation of capabilities)hostOperation(operation);
   let harness=new SelectedExecutionHarness({sessionId,maxGenerated,automaticDelivery:false});
-  harness.publishProgram({programId,source,entry:entry.functionName,capabilities});
-  const initial=describeOwnedGraph(bundle.initialState.heap,entry.arguments);
-  const inputGraph={roots:initial.roots,objects:initial.objects.map(node=>({id:node.id,
+  harness.publishProgram({programId,source,entry:entry.functionName,capabilities,
+    randomSeed:bundle.initialState.control.a0.randomSeed??null});
+  // Rest parameters are ordinary arrays already created at the *entry*
+  // boundary. They are neither source-provided positional arguments nor
+  // later guest allocations. Include their descriptor-inspected identities
+  // in the observed graph while preserving the actual argument root list.
+  const entryEnvironment=bundle.initialState.envs[
+    bundle.initialState.frames[semantic.rootInvocation]?.envId];
+  const entryData=Object.values(entryEnvironment?.bindings??{}).flatMap(binding=>{
+    const value=binding.initialized?binding.token?.value:null;
+    return value?.[0]==='ref'&&['array','object'].includes(
+      bundle.initialState.heap[value[1]]?.kind)?[value]:[];
+  });
+  const initial=describeOwnedGraph(bundle.initialState.heap,[...entry.arguments,...entryData]);
+  const inputGraph={roots:initial.roots.slice(0,entry.arguments.length),objects:initial.objects.map(node=>({id:node.id,
     kind:node.kind,...(node.prototype===null?{prototype:null}:{}),
     properties:node.properties.map(({key,value})=>({key,value}))}))};
   // The admitted entry graph is descriptor-inspected ordinary data. A guest
@@ -207,7 +219,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     pendingComputations.length=0;
   }
   function pendingBinding(row,event){
-    if(representation!=='compact'||!['binding.initialize','binding.write'].includes(event.operation)||
+    if(!['binding.initialize','binding.write'].includes(event.operation)||
        row?.op!=='value'||row.writes?.length!==1||row.writes[0].kind!=='cell')
       return null;
     const last=pendingComputations.at(-1),write=row.writes[0];
@@ -227,7 +239,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     const sourceSite=event?.siteId&&privateSites.get(event.siteId);
     const node=sourceSite&&binaryNodes.get(sourceSite.start+':'+sourceSite.end);
     const start=event&&operationStarts.get(event.causes.find(cause=>cause.kind==='spec-operation')?.operationId);
-    const pure=representation==='compact'&&kind==='compute'&&!fields.bind&&
+    const pure=kind==='compute'&&!fields.bind&&
       fields.expr.op==='binary'&&node?.type==='BinaryExpression'&&
       node.operator===fields.expr.operator&&start&&
       start.event.sequence<event.sequence&&start.event.invocationId===event.invocationId&&
@@ -333,7 +345,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     // preceding pure test pending so a checked condition can replace it.
     // Likewise, an exact producer-dependent cell initialization can become
     // the binding of its computation without an extra model target.
-    const possibleChoice=representation==='compact'&&row?.op==='branch';
+    const possibleChoice=row?.op==='branch';
     const attachBinding=pendingBinding(row,event);
     if(!possibleChoice&&!attachBinding&&(!pureTransition||
       event.completion&&event.completion.type!=='normal'||
@@ -528,6 +540,14 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
         receiver:tag(row.receiver),arguments:row.arguments.map(tag)},event,'call');writes(row,owner,event);handled=true;
     }else if(row?.op==='alloc'){
       allocations(row,owner,event);writes(row,owner,event);handled=true;
+    }else if(row?.op==='value'&&event.operation==='call.enter'&&row.operands.length===1&&
+        isDeepStrictEqual(row.operands[0]?.[0]==='method'?row.operands[0][1]:row.operands[0],
+          ['builtinfn','Math.random'])){
+      // Retain every owned PRNG transition, including an otherwise discarded
+      // sample. A literal result would erase the dependency on prior samples.
+      emit(owner,'compute',{expr:{op:'random'},result:tag(row.result),
+        invocation:frameId(row.invocation)},event,'random');
+      writes(row,owner,event);handled=true;
     }else if(row?.op==='value'&&row.arithmetic){
       const operands=row.operands.map(value=>tag(Array.isArray(value)?value:value.value));
       if(operands.length!==2)refuse('binary computation lacks evaluated operands');
@@ -549,7 +569,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       // removed primitive must be the consecutive, source-contained producer
       // of this very decision; its journal receipt stays on the choice.
       let folded=[];
-      if(representation==='compact'&&explained&&testNode&&pendingComputations.length&&
+      if(explained&&testNode&&pendingComputations.length&&
          isDeepStrictEqual(pendingComputations.at(-1).fields.result,decision)&&
          pendingComputations.at(-1).node?.start===testNode.start&&
          pendingComputations.at(-1).node?.end===testNode.end&&
@@ -660,10 +680,10 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   exported.sidecar.selectionOrigin='owned-interpreter-teacher';
   exported.sidecar.referenceStatus='unverified';
   exported.sidecar.admission='projected';
-  exported.sidecar.representation=representation;
+  exported.sidecar.representation='compact';
   exported.sidecar.compiler={schema:'semantic-effectful-compiler/4',certificates,elided,checkpoints,
     sourceDigest:hash(source),archiveDigest:hash(bundle),capabilities,
-    representation,compaction:{maxOperators,maxNodes:32,removedComputations:fusedComputations,
+    representation:'compact',compaction:{maxOperators,maxNodes:32,removedComputations:fusedComputations,
       foldedConditions:foldedComputations,fusedBindings},
     generatedRecords:generated,publicDigest:hash(exported.public)};
   const replayed=SelectedExecutionHarness.replay(exported);

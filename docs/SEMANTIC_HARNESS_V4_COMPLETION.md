@@ -1,6 +1,13 @@
+> **Immutable historical engineering evidence.** This document and its hash-pinned
+> evidence describe the specific frozen M0–M8 experiment revisions, including
+> comparisons that are **no longer executable as current training modes**.
+> The sole active trace is [source-grounded semantic-trace/5](SEMANTIC_REASONING_TRACE.md).
+> Historical artifacts here are retained only to substantiate the published
+> engineering receipt; do not import them as today's training data.
+
 # Semantic execution v4: engineering completion ledger
 
-The M0–M8 implementation in the [roadmap](LLM_SEMANTIC_EXECUTION_HARNESS_ROADMAP.md)
+The M0–M8 implementation in the [current execution scope](STATUS.md)
 is complete across tracing-js-self, Megatoken and Natlang. This ledger records
 engineering evidence for the declared execution and capability profile. No semantic
 training, fine-tuning or optimizer-driven capability experiment was run. M9 learned
@@ -21,7 +28,7 @@ receipts keep the revisions that actually produced and consumed them; they are
 never relabeled to a newer branch head. Natlang's package and lockfile install the
 listed tracer revision directly.
 
-The active contracts are `semantic-execution/4`, `semantic-trace/4`,
+The contracts at these pinned revisions were `semantic-execution/4`, `semantic-trace/4`,
 `semantic-context/4`, `semantic-continuation/4` and `selected-harness/2`.
 The shared schema digest is
 `83036b29b7c117e6d947b1b5e5b8b30acb773efeeb538f33c8862966bb086206`;
@@ -42,7 +49,7 @@ and codec identity
 | Milestone | Delivered behavior | Executable evidence |
 | --- | --- | --- |
 | M0: profile and examples | Operation inventory, authority boundaries, chronological and per-owner reading views; source once, two invocations; real coordinator and child transcript. | [Counter example](examples/selected-counter-v4.txt), [native child example](examples/selected-child-v4.txt), [implementation guide](SEMANTIC_HARNESS_V4_IMPLEMENTATION.md). |
-| M1: paired protocol | Versioned source, invocation, effects, events and dynamic owners; independent JavaScript/Python validators; old artifacts reject; future observations remain inaccessible. | Shared [contract](../contracts/semantic-harness-v4.json); tracer harness/continuity tests and Megatoken contract/bridge tests. |
+| M1: paired protocol | Versioned source, invocation, effects, events and dynamic owners; independent JavaScript/Python validators; old artifacts reject; future observations remain inaccessible. | Shared [contract](https://github.com/werg/tracing-js-self/blob/b238fb48e6dc2b3a97e8c1280d4b961c0593466c/contracts/semantic-harness-v4.json); tracer harness/continuity tests and Megatoken contract/bridge tests. |
 | M2: complete tool interaction | Source-certified teacher and independent reference; selected request validation; one committed request derives one native action; observed result resumes the same invocation. | [Admitted counter](evidence/semantic-v4/admitted-counter.json), source/reference/replay admission, actual process-selector and selected-driver regressions. |
 | M3: execution tracks | Native coordinator allocates and bootstraps children, joins typed completion dependencies, receives return/throw, publishes progress and closes. Capacity, cancellation, revision and lifetime ownership are enforced. | [Native orchestration receipt](evidence/semantic-v4/native-orchestration.json); native lifecycle and coordinator tests include more than eight lifetime tracks. |
 | M4: events and async ownership | Persistent listeners, outside triggers, live captures, Promise adoption/reactions/finally, microtasks, reversed settlements and shared-realm turn ownership. | [Admitted persistent listener](evidence/semantic-v4/admitted-persistent-listener.json); subscription, callback, continuation and Promise regressions. |

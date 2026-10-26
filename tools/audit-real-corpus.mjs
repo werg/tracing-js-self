@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Read-only quality audit of pinned real-source V8 diagnostic traces.
-// This is NOT an owned semantic-execution/3 admission or proof of intermediate correctness.
+// This is NOT an owned semantic-execution/5 admission or proof of intermediate correctness.
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 const argv=process.argv.slice(2);
@@ -78,7 +78,7 @@ const output={schema:'real-source-quality/1',admitted:false,
   warnings:[
     'Verified means agreement with a separate uninstrumented V8 observable outcome, not independent intermediate-event verification.',
     'Candidate flags do not imply incorrect execution or authorize removal of no-op writes.',
-    'The native V8 corpus is not an owned-interpreter semantic-execution/3 training dataset.'
+    'The native V8 corpus is not an owned-interpreter semantic-execution/5 training dataset.'
   ],totals,kinds,byFunction,examples:scored.slice(0,count)};
 mkdirSync(dirname(report),{recursive:true});mkdirSync(dirname(review),{recursive:true});
 writeFileSync(report,JSON.stringify(output,null,2)+'\n');

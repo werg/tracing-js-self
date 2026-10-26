@@ -26,16 +26,9 @@ const recipe=flags.get('--recipe')??'engineering';
 if(!['engineering',SEMANTIC_RECIPE_NAME,BENCHMARK_RECIPE_NAME].includes(recipe))throw new Error('Unknown source recipe');
 const jobs=Number(flags.get('--jobs')??1);
 if(!Number.isSafeInteger(jobs)||jobs<1||jobs>8)throw new Error('--jobs must be between 1 and 8');
-const requestedRepresentation=flags.get('--representation')??'compact';
-// Only explicit corpus comparisons and paired native admission collect both
-// arms. Ordinary generation has one canonical compact reasoning target.
-const representation=requestedRepresentation==='comparison'?null:requestedRepresentation;
-if(!['explicit','compact','comparison'].includes(requestedRepresentation))
-  throw new Error('--representation must be compact, explicit or comparison');
-const fixtures=representation?EFFECTFUL_ENGINEERING_FIXTURES
-  .filter(fixture=>!fixture.projectionOptions?.representation||fixture.projectionOptions.representation===representation)
-  .map(fixture=>({...fixture,projectionOptions:{...fixture.projectionOptions,representation}})):
-  EFFECTFUL_ENGINEERING_FIXTURES;
+if(flags.has('--representation'))throw new Error('Trace representation switches have been removed');
+const representation='compact';
+const fixtures=EFFECTFUL_ENGINEERING_FIXTURES;
 if(flags.has('--require-native')&&(!megatoken||!tokenizer))
   throw new Error('--require-native requires --megatoken and --tokenizer');
 const producerRevision=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
@@ -143,7 +136,7 @@ const recipeMetadata=recipe==='engineering'?{name:recipe}:recipe===BENCHMARK_REC
   splitSeed:17,retainEveryAuthoredFamily:true,lifecycleInputs};
 const manifest={schema:'semantic-corpus-manifest/4',execution:EXECUTION_VERSION,trace:WITNESS_VERSION,
   context:CONTEXT_VERSION,profile:HARNESS_PROFILE,producerRevision,
-  representation:representation??'mixed',
+  representation:'compact',
   recipe:recipeMetadata,
   catalogDigest:hash(JSON.stringify(hostOperationContract(),null,2)+'\n'),
   counts,cases,counterfactuals,selectionOrigin:nativeConsumer?'certified_teacher':'owned-interpreter-teacher',

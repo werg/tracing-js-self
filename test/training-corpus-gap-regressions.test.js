@@ -1,16 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase,recheckIndependentTrainingEvidence,
-  validateTrainingExport} from '../src/training/diagnostic.js';
+import {verifyOwnedSourceCase,recheckOwnedSourceEvidence} from '../src/training/source-check.js';
+import {SelectedExecutionHarness} from '../src/training/harness-v4.js';
 import {validateBundle,replayExact} from '../src/index.js';
 
 function verified(body,args=[]){
-  const check=verifyTrainingCase({source:'"use strict";\n'+body,
+  const check=verifyOwnedSourceCase({source:'"use strict";\n'+body,
     entry:'f',args,maxGenerated:1024,maxSteps:10000});
   assert.equal(check.status,'locally_verified',JSON.stringify(check));
   const result=JSON.parse(JSON.stringify(check.exported));
-  assert.equal(validateTrainingExport(result).valid,true);
-  assert.equal(recheckIndependentTrainingEvidence(result).valid,true);
+  assert.doesNotThrow(()=>SelectedExecutionHarness.replay(result));
+  assert.equal(recheckOwnedSourceEvidence(result).valid,true);
   assert.equal(validateBundle(result.sidecar.archive).valid,true);
   assert.equal(replayExact(result.sidecar.archive).valid,true);
   return result;
@@ -26,7 +26,7 @@ test('static top-level source constants and Math function aliases match independ
   verified('var LIMIT=11,round=Math.floor;function f(n){return round(n)+LIMIT;}',[3.8]);
   for(const initializer of ['fetch("https://example.com")','Date.now()',
     '(globalThis.flag=1)','Math.random()']){
-    const check=verifyTrainingCase({source:'"use strict";\nconst x='+initializer+';function f(){return x;}',entry:'f'});
+    const check=verifyOwnedSourceCase({source:'"use strict";\nconst x='+initializer+';function f(){return x;}',entry:'f'});
     assert.equal(check.status,'unsupported',initializer);
   }
 });

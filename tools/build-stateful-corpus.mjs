@@ -207,7 +207,7 @@ examples.push('## Interpretation','',
   '- When reading this trace, check callback entry/completion, environment-visible logs, aliases, cache/state mutations and rejected/fulfilled promise order.',
   '- A `call` record can arrive after the callee `return` in the native observer: it denotes completion of a calling expression, not invocation start.',
   '- Object graph snapshots cover known Map/Set data but may miss internal protocol effects. Never delete writes merely because the diff is empty.',
-  '- This corpus stresses non-pure business flows; it must not be silently promoted to `semantic-execution/3` training without an owned trace or separately justified observation contract.');
+  '- This corpus stresses non-pure business flows; it must not be silently promoted to `semantic-execution/5` training without an owned trace or separately justified observation contract.');
 for(const [path,content] of [
  [output,records.map(x=>JSON.stringify(x)).join('\n')+'\n'],
  [reportFile,JSON.stringify(report,null,2)+'\n'],

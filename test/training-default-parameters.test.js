@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyTrainingCase} from 'tracing-js-self/training/diagnostic';
+import {verifyOwnedSourceCase} from 'tracing-js-self/training';
 function verify(code,args=[]){
- const checked=verifyTrainingCase({source:'"use strict";\n'+code,
+ const checked=verifyOwnedSourceCase({source:'"use strict";\n'+code,
    entry:'f',args,maxGenerated:1024});
  assert.equal(checked.status,'locally_verified',JSON.stringify(checked));
 }
@@ -23,7 +23,7 @@ test('unsafe later/self/body parameter initialization dependencies fail closed',
    'function f(x=x){return x;}',
    'function f(cb=()=>y){var y=4;return cb();}'
  ]) {
-   const r=verifyTrainingCase({source:'"use strict";\n'+code,entry:'f',args:[]});
+   const r=verifyOwnedSourceCase({source:'"use strict";\n'+code,entry:'f',args:[]});
    assert.notEqual(r.status,'locally_verified');
  }
 });
