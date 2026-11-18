@@ -5,11 +5,11 @@ import { readFileSync } from 'node:fs';
 import { createRuntime } from '../src/runtime.js';
 import { validateBundle } from '../src/validation.js';
 import { replayExact } from '../src/replay.js';
-import { createSpecOracle } from '../src/spec-oracle.js';
+import { createSpecOracle, specOraclePackage } from '../src/spec-oracle.js';
 
 const profile = JSON.parse(readFileSync(new URL('../profiles/targets.lock.json', import.meta.url), 'utf8'));
 const suite = JSON.parse(readFileSync(new URL('../coverage/spec-probes.json', import.meta.url), 'utf8'));
-const pkg = JSON.parse(readFileSync(new URL('../node_modules/@engine262/engine262/package.json', import.meta.url), 'utf8'));
+const pkg = specOraclePackage();
 assert.equal(pkg.version, profile.referenceEngine.npmVersion, 'Unpinned engine262');
 assert.equal(suite.schema, 'bounded-spec-differential-probes/1');
 const oracle = await createSpecOracle();

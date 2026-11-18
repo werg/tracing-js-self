@@ -32,7 +32,7 @@ function requireDataOnly(value,path='state',seen=new WeakSet()){
 const tableNames = ['counters','envs','heap','promises','frames','effects','inputs','control','operations'];
 const opNames = {
   CONST:'literal.materialize', GET:'binding.read',
-  DEFAULT_GUARD:'binding.default.guard', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
+  DEFAULT_GUARD:'binding.default.guard', PARAM_INIT:'binding.initialize', ENTER_BODY_ENV:'environment.enter', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
   CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
   GET_PROP:'property.read', GET_METHOD:'property.read', PUT_PROP:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
@@ -125,6 +125,8 @@ function proxyRoute(heap,receiver,operation) {
   return {kind:'ordinary',target:['ref',obj.id],receiver};
 }
 function putOwn(obj,key,value,eventId) {
+  if(obj.declaredError)
+    throw new TypeError('Declared error mutation is outside the bounded error profile');
   if (key === '__proto__') throw new TypeError('Prototype mutation is not implemented by the bounded profile');
   if (obj.kind === 'array' && key === 'length') {
     if (value[0] !== 'num') throw new TypeError('Array length coercion is outside the profile');
@@ -214,9 +216,10 @@ export class Runtime {
         for(let k=0;k<extras.length;k++)putOwn(array,String(k),extras[k].value,null);
         binding=token(['ref',id]);
       }
-      draft.envs[envId].bindings[name]={kind:'parameter',initialized:true,token:binding,version:0};
+      draft.envs[envId].bindings[name]={kind:'parameter',
+        initialized:!this.programs[codeId].parameterExpressions,token:binding,version:0};
     });
-    for(const name of this.programs[codeId].varNames??[])
+    for(const name of this.programs[codeId].parameterExpressions?[]:(this.programs[codeId].varNames??[]))
       if(!Object.hasOwn(draft.envs[envId].bindings,name))
         draft.envs[envId].bindings[name]={kind:'var',initialized:true,
           token:token(U),version:0};
@@ -313,7 +316,7 @@ export class Runtime {
     for(const def of definitions){
       const id=this.next(state,'obj');
       state.heap[id]={id,kind:'function',codeId:def.arg.codeId,
-        closureEnvId:global,async:false,version:0};
+        closureEnvId:global,async:!!def.arg.async,version:0};
       state.envs[global].bindings[def.arg.name]={kind:'function',initialized:true,token:token(['ref',id]),version:0};
     }
     const imported=importGraph(state,args,kind=>this.next(state,kind));
@@ -344,6 +347,7 @@ export class Runtime {
   stackPush(frame,value,origin){frame.stack.push(token(value,origin));}
   completeFrame(draft,frame,value,origin) {
     frame.status='completed';
+    frame.completion={type:'return',value:token(value,origin)};
     if(frame.asyncPromiseId){this.resolvePromise(draft,frame.asyncPromiseId,value,origin);value=['promise',frame.asyncPromiseId];}
     if(frame.reactionPromiseId)this.resolvePromise(draft,frame.reactionPromiseId,value,origin);
     if(frame.callerFrameId){
@@ -772,6 +776,22 @@ export class Runtime {
           return result(f.thisValue);
         case 'DECLARE':{const e=s.envs[f.envId];if(Object.hasOwn(e.bindings,arg.name))throw new SyntaxError(`Duplicate declaration ${arg.name}`);e.bindings[arg.name]={kind:arg.kind,initialized:false,token:null,version:0};return {};}
         case 'INIT':{const v=pop(),b=lookup(s,f.envId,arg);if(b.cell.initialized)throw new Error('Already initialized');b.cell.initialized=true;b.cell.token=v;b.cell.version++;return {...operands(v),result:v.value};}
+        case 'PARAM_INIT':{
+          const b=lookup(s,f.envId,arg);
+          if(b.cell.kind!=='parameter'||b.cell.initialized)
+            throw new Error('Invalid parameter initialization');
+          b.cell.initialized=true;b.cell.version++;
+          return {...operands(b.cell.token),result:b.cell.token.value};
+        }
+        case 'ENTER_BODY_ENV':{
+          const parameters=s.envs[f.envId],body=this.newEnv(s,f.envId);
+          for(const name of this.programs[f.codeId].varNames??[]){
+            const parameter=parameters.bindings[name];
+            s.envs[body].bindings[name]={kind:'var',initialized:true,
+              token:parameter?copy(parameter.token):token(U),version:0};
+          }
+          f.envId=body;return {};
+        }
         case 'GET':{const b=lookup(s,f.envId,arg);if(!b.cell.initialized)guestFault('ReferenceError',`Cannot access '${arg}' before initialization`);this.stackPush(f,b.cell.token.value,eventId);return {result:b.cell.token.value,reads:[{kind:'binding',envId:b.env.id,name:arg,version:b.cell.version??0,
             value:b.cell.token.value,supplyingEvent:b.cell.token.origin??null}],origins:[b.cell.token.origin]};}
         case 'TYPEOF_BINDING':{
@@ -796,8 +816,8 @@ export class Runtime {
         }
         case 'DEFAULT_GUARD':{
           const b=lookup(s,f.envId,arg.name);
-          if(!b.cell.initialized)
-            guestFault('ReferenceError','Default parameter is not initialized');
+          if(b.cell.kind!=='parameter'||b.cell.initialized)
+            throw new Error('Default guard requires an uninitialized parameter');
           const needsDefault=b.cell.token.value[0]==='undefined';
           if(!needsDefault)f.pc=arg.skipPc;
           return {result:['bool',needsDefault],
@@ -954,6 +974,9 @@ export class Runtime {
           const b=pop(),a=pop();
           if(!isOwnedArithmetic(arg))return {...operands(a,b),...result(primitiveBinary(arg,a.value,b.value))};
           const id=this.next(s,'operation');
+          if([a,b].some(item=>item.value[0]==='ref'&&s.heap[item.value[1]]?.declaredError)&&
+             !['===','!==','==','!='].includes(arg))
+            throw new TypeError('Declared error coercion is outside the bounded error profile');
           s.operations[id]=createArithmetic({id,frameId:f.id,operator:arg,left:a,right:b,
             siteId:inst.siteId,sourceId:frame.codeId.split(':')[0],codeId:frame.codeId});
           f.operationId=id;
@@ -1004,6 +1027,18 @@ export class Runtime {
         case 'CONSTRUCT':{
           const args=[];for(let i=0;i<arg;i++)args.unshift(pop());
           const fn=pop();
+          if(fn.value[0]==='intrinsic'&&['Error','TypeError'].includes(fn.value[1])){
+            if(args.length>1)throw new TypeError('Error options are outside the bounded error profile');
+            const value=args[0]?.value??U;
+            if(!['undefined','null','bool','str','num','bigint'].includes(value[0]))
+              throw new TypeError('Error message requires owned scalar coercion');
+            const id=this.next(s,'obj');
+            s.heap[id]={id,kind:'object',declaredError:fn.value[1],properties:{
+              name:token(['str',fn.value[1]],eventId),
+              message:token(['str',value[0]==='undefined'?'':String(decode(value))],eventId)
+            },propertyVersions:{name:1,message:1},shapeVersion:2,version:0};
+            return {...operands(fn,...args),...result(['ref',id])};
+          }
           if(fn.value[0]==='intrinsic'&&fn.value[1]==='Promise'){
              if(args.length!==1||!this.callableGuest(s,args[0]?.value))
                guestFault('TypeError','Promise executor must be callable');
@@ -1163,6 +1198,8 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
            else if(base.value[0]==='ref'){
              const obj=s.heap[base.value[1]];
              if(!obj)throw new ReferenceError('Unknown guest identity');
+             if(obj.declaredError&&!['name','message'].includes(property))
+               throw new TypeError('Declared error exposes only name and message');
              if(obj.kind==='regexp'){
                if(property==='test'){
                  const method=['builtinfn','RegExp.prototype.test'];
@@ -1355,6 +1392,9 @@ if(object.kind==='regexp'){
           const fn=pop();let callable=fn.value;
           const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
+          if(callable[0]==='builtinfn'&&callable[1].startsWith('Object.')&&
+             callable[1]!=='Object.is'&&args.some(item=>item.value[0]==='ref'&&s.heap[item.value[1]]?.declaredError))
+            throw new TypeError('Object descriptor and prototype operations on declared errors are outside the bounded error profile');
           if(callable[0]==='intrinsic'&&callable[1]==='Promise')
              guestFault('TypeError','Promise must be constructed with new');
            if(callable[0]==='builtinfn' &&
@@ -1827,8 +1867,8 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                slots.push(slot.value);
              }
              const method=callable[1].slice('Array.prototype.'.length);
-             const numberAt=(i,missing)=>{
-               if(i>=args.length)return missing;
+             const numberAt=(i,missing,{undefinedDefault=false}={})=>{
+               if(i>=args.length || (undefinedDefault && args[i].value[0]==='undefined'))return missing;
                const tag=args[i].value;
                if(!['undefined','null','bool','str','num'].includes(tag[0]))
                  throw new TypeError('Array index requires owned scalar coercion');
@@ -1870,7 +1910,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                }
                out=['num',found];
              }else if(method==='slice'){
-               const start=clamp(numberAt(0,0)),end=clamp(numberAt(1,length));
+               const start=clamp(numberAt(0,0)),end=clamp(numberAt(1,length,{undefinedDefault:true}));
                out=makeArray(slots.slice(start,Math.max(start,end)));
              }else if(method==='concat'){
                const all=slots.slice();
@@ -1914,12 +1954,12 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                }
              }else if(method==='fill'){
                const value=args[0]?.value??U,
-                 start=clamp(numberAt(1,0)),end=clamp(numberAt(2,length));
+                 start=clamp(numberAt(1,0)),end=clamp(numberAt(2,length,{undefinedDefault:true}));
                for(let i=start;i<end;i++)putOwn(obj,String(i),value,eventId);
                out=receiver;
              }else if(method==='copyWithin'){
                const target=clamp(numberAt(0,0)),start=clamp(numberAt(1,0)),
-                 end=clamp(numberAt(2,length));
+                 end=clamp(numberAt(2,length,{undefinedDefault:true}));
                const count=Math.min(Math.max(end-start,0),length-target);
                const copied=slots.slice();
                for(let i=0;i<count;i++)copied[target+i]=slots[start+i];
@@ -2033,6 +2073,8 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                  Object.keys(descriptor.accessors??{}).length)
                 guestFault('TypeError','Accessor descriptor must be an owned data object');
               const d=descriptor.properties;
+              if(![null,'Object.prototype','Array.prototype'].includes(objectPrototype(descriptor)))
+                throw new TypeError('Inherited descriptor fields are outside the bounded profile');
               if(!Object.hasOwn(d,'get')&&!Object.hasOwn(d,'set'))
                 throw new TypeError('Only accessor descriptors are modeled');
               if(Object.hasOwn(d,'value')||Object.hasOwn(d,'writable'))
@@ -2041,6 +2083,11 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               for(const method of [getter,setter])
                 if(method.value[0]!=='undefined'&&!this.callableGuest(s,method.value))
                   guestFault('TypeError','Accessor must be a guest function or undefined');
+              // Indexed accessors need ArraySetLength's non-configurable
+              // deletion and ordered array-method continuations. Refuse the
+              // combination until those invariants are modeled together.
+              if(obj.kind==='array'&&arrayIndex(name))
+                throw new TypeError('Array index accessor descriptors are outside the bounded profile');
               if((Object.hasOwn(obj.accessors??{},name)&&!obj.accessors[name].configurable)||
                  name==='__proto__'||(obj.kind==='array'&&name==='length'))
                 guestFault('TypeError','Cannot redefine a non-configurable or reserved property');
@@ -2054,6 +2101,11 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               return {...operands(fn,...args),...result(v)};
             }
             if(callable[1]==='Object.create'){
+              // Never silently ignore the optional Properties argument.
+              // General data descriptors (including their default flags)
+              // are not part of the owned object model yet.
+              if(args.length>1&&args[1].value[0]!=='undefined')
+                throw new TypeError('Object.create property descriptors are outside the bounded profile');
               const proto=primitiveProto(v),id=this.next(s,'obj');
               s.heap[id]={id,kind:'object',prototype:proto,properties:{},propertyVersions:{},
                 shapeVersion:0,version:0};

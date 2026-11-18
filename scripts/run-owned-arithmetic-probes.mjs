@@ -4,12 +4,12 @@
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createRuntime } from '../src/runtime.js';
-import { createSpecOracle } from '../src/spec-oracle.js';
+import { createSpecOracle, specOraclePackage } from '../src/spec-oracle.js';
 import { validateBundle } from '../src/validation.js';
 import { replayExact } from '../src/replay.js';
 
 const profile=JSON.parse(readFileSync(new URL('../profiles/targets.lock.json',import.meta.url),'utf8'));
-const pkg=JSON.parse(readFileSync(new URL('../node_modules/@engine262/engine262/package.json',import.meta.url),'utf8'));
+const pkg=specOraclePackage();
 assert.equal(pkg.version,profile.referenceEngine.npmVersion,'Unpinned engine262');
 const oracle=await createSpecOracle();
 const args=process.argv.slice(2);

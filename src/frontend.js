@@ -622,20 +622,27 @@ export function compile(ast) {
         default:throw new SyntaxError(`Unsupported statement: ${n.type}`);
       }
     }
-    // Default parameters evaluate in left-to-right order, only when the
-    // argument value is undefined. The profile rejects references to later
-    // parameter bindings and body locals requiring an unmodeled TDZ.
-    defaults.forEach((initializer,i)=>{
-      if(!initializer)return;
-      const guard=emit('DEFAULT_GUARD',{name:params[i],skipPc:null},initializer);
-      expr(initializer);
-      emit('SET',params[i],initializer);
-      emit('POP',null,initializer);
-      instructions[guard].arg.skipPc=instructions.length;
-    });
+    // A parameter expression has its own environment. All parameter names
+    // exist in TDZ before initialization, then initialize left to right;
+    // body var/function declarations are introduced only afterwards.
+    const parameterExpressions=defaults.some(Boolean);
+    if(parameterExpressions){
+      params.forEach((name,i)=>{
+        const initializer=defaults[i];
+        if(!initializer){emit('PARAM_INIT',name,body[0]);return;}
+        const guard=emit('DEFAULT_GUARD',{name,skipPc:null},initializer);
+        expr(initializer);
+        emit('INIT',name,initializer);
+        const done=emit('JUMP',null,initializer);
+        instructions[guard].arg.skipPc=instructions.length;
+        emit('PARAM_INIT',name,initializer);
+        instructions[done].arg=instructions.length;
+      });
+      emit('ENTER_BODY_ENV',null,body[0]);
+    }
     statements(body);
     emit('CONST',{value:['undefined']},ast);emit('RETURN',null,ast);
-    programs[id]={id,params,restIndex,async,varNames:collectVarBindings(body),instructions};return id;
+    programs[id]={id,params,restIndex,async,parameterExpressions,varNames:collectVarBindings(body),instructions};return id;
   }
   const entry=bodyProgram(ast.body);
   return {entry,programs,sites:Object.values(programs).flatMap(x=>x.instructions.map(({siteId,start,end,op})=>({siteId,start,end,op,codeId:x.id})))};

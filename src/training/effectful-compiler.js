@@ -14,6 +14,7 @@ import {encodeWitness,decodeWitness,validateExpression} from './format.js';
 import {hostOperation,SUBSCRIPTION_CLOSERS} from '../host/operations.js';
 import {analyzeSemanticProgram} from './semantic-program.js';
 import {sourceLinkedComputation,sourceLinkedDecision} from './semantic-source.js';
+import {DECLARED_EXCEPTION_PROFILE} from './exception-profile.js';
 
 const copy=value=>structuredClone(value);
 const hash=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
@@ -70,7 +71,9 @@ export function ownedEffectfulOutcome(bundle){
   if(entry?.asyncPromiseId&&(frame?.asyncPromiseId!==entry.asyncPromiseId||
     !['completed','thrown'].includes(frame.status)))refuse('async root body has not completed');
   const root=entry?.asyncPromiseId?{kind:'return',value:['promise',entry.asyncPromiseId]}:
-    bundle.finalState.control.a0.completion;
+    ['completed','thrown'].includes(frame?.status)&&frame.completion?.value?
+      {kind:frame.completion.type,value:frame.completion.value.value}:
+      bundle.finalState.control.a0.completion;
   if(!root)refuse('missing completed root outcome');
   let kind=root.kind,value=root.value;
   if(value?.[0]==='promise'){
@@ -114,7 +117,9 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   const entryEnvironment=bundle.initialState.envs[
     bundle.initialState.frames[semantic.rootInvocation]?.envId];
   const entryData=Object.values(entryEnvironment?.bindings??{}).flatMap(binding=>{
-    const value=binding.initialized?binding.token?.value:null;
+    // Uninitialized parameter cells retain their incoming argument privately;
+    // those argument/rest identities are observed input, not a future value.
+    const value=(binding.initialized||binding.kind==='parameter')?binding.token?.value:null;
     return value?.[0]==='ref'&&['array','object'].includes(
       bundle.initialState.heap[value[1]]?.kind)?[value]:[];
   });
@@ -319,9 +324,17 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
         const capturedNames=new Set();
         for(let env=allocation.capture;env;env=state.envs[env]?.parent)
           for(const [name,binding] of Object.entries(state.envs[env]?.bindings??{}))
-            if(functionReferences.get(allocation.codeId)?.has(name)&&!capturedNames.has(name)&&
-              binding.initialized&&graphValue(binding.token?.value)){
+            if(functionReferences.get(allocation.codeId)?.has(name)&&!capturedNames.has(name)){
               capturedNames.add(name);
+              // An inner TDZ binding shadows every outer binding. Parameter
+              // TDZ captures require an explicit v5 representation; preserve
+              // the existing delayed lexical-write path for body bindings.
+              // In both cases never fall through to an outer namesake.
+              if(!binding.initialized){
+                if(binding.kind==='parameter')refuse('closure captures an uninitialized binding: '+name);
+                continue;
+              }
+              if(!graphValue(binding.token?.value))continue;
               const id=cell(env,name);
               if(!controller(owner).locals.has(id))emit(owner,'bind',{name:id,value:tag(binding.token.value)},event,'capture-binding');
               fields.captures.push({binding:name,cell:id});
@@ -644,14 +657,16 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
         invocation:frameId(fact.invocation)},event,'completion-transfer');handled=true;
     }else if(['return','throw','unhandled-throw'].includes(fact?.operation)){
       if(row)writes(row,owner,event);
-      const frame=state.frames[fact.invocation],asyncResult=frame?.asyncPromiseId;
-      const value=asyncResult?['ref',asyncResult]:tag(fact.value??event.operands?.[0]);
-      const kind=asyncResult?'return':fact.operation==='return'?'return':'throw';
-      emit(owner,kind,{value,invocation:frameId(fact.invocation)},event,'completion');
-      if(reactionFrames.has(fact.invocation)){
-        const job=reactionFrames.get(fact.invocation);
-        emit(owner,'job',{action:'complete',job:job.job,owner},event,'job-complete');
-      }else if(frames.get(fact.invocation)===owner)awaitingCompletion.set(owner,kind);
+      for(const exit of [fact,...(fact.unwound??[])]){
+        const frame=state.frames[exit.invocation],asyncResult=frame?.asyncPromiseId;
+        const value=asyncResult?['ref',asyncResult]:tag(exit.value??event.operands?.[0]);
+        const kind=asyncResult?'return':exit.operation==='return'?'return':'throw';
+        emit(owner,kind,{value,invocation:frameId(exit.invocation)},event,'completion');
+        if(reactionFrames.has(exit.invocation)){
+          const job=reactionFrames.get(exit.invocation);
+          emit(owner,'job',{action:'complete',job:job.job,owner},event,'job-complete');
+        }else if(frames.get(exit.invocation)===owner)awaitingCompletion.set(owner,kind);
+      }
       handled=true;
     }
     if(!handled&&row?.op!=='loop'){
@@ -682,6 +697,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   exported.sidecar.admission='projected';
   exported.sidecar.representation='compact';
   exported.sidecar.compiler={schema:'semantic-effectful-compiler/4',certificates,elided,checkpoints,
+    exceptionProfile:DECLARED_EXCEPTION_PROFILE,
     sourceDigest:hash(source),archiveDigest:hash(bundle),capabilities,
     representation:'compact',compaction:{maxOperators,maxNodes:32,removedComputations:fusedComputations,
       foldedConditions:foldedComputations,fusedBindings},

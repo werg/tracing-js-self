@@ -4,6 +4,7 @@
 // cases and a separate process/container for untrusted corpus submissions.
 import vm from 'node:vm';
 import {realizeGraph,describeGraph} from './graph.js';
+import {describeCompletionGraph} from './exception-profile.js';
 
 export function referenceOutcome({source,entry,args,initialHeap,timeout=1000,observeOperations=false,observeBranches=false,randomSeed=null}) {
   if(!/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(entry))
@@ -53,6 +54,7 @@ export function referenceOutcome({source,entry,args,initialHeap,timeout=1000,obs
   })`,context,{timeout});
   context.__trainingArgs=buildArgs(JSON.stringify({heap:initialHeap,roots:args}));
   context.__trainingResult=undefined;
+  context.__trainingKind='return';
   if(randomSeed!==null){
     if(!Number.isInteger(randomSeed)||randomSeed<0||randomSeed>0xffffffff)
       throw new TypeError('Untrusted reference random fixture seed');
@@ -63,6 +65,7 @@ export function referenceOutcome({source,entry,args,initialHeap,timeout=1000,obs
   }
   if(observeOperations||observeBranches)vm.runInContext(`globalThis.__tracingOperations=[];
     globalThis.__tracingDecisions=[];
+    globalThis.__tracingFailure=null;
     globalThis.__tracingBranch=(site,value)=>{
       globalThis.__tracingDecisions.push({site,decision:['bool',!Boolean(value)]});
       return value;
@@ -86,24 +89,30 @@ export function referenceOutcome({source,entry,args,initialHeap,timeout=1000,obs
           value===-Infinity?'-Infinity':value];break;
         default:tagged=['unverified',typeof value];
       }
-      if(globalThis.__tracingOperations.length>=10000)
+      if(globalThis.__tracingOperations.length>=10000){
+        globalThis.__tracingFailure='Reference operation observation limit';
         throw new RangeError('Reference operation observation limit');
+      }
       globalThis.__tracingOperations.push({site,value:tagged});
       return value;
     };`,context,{timeout});
-  const script=new vm.Script(source+'\n__trainingResult = '+entry+'.apply(undefined,__trainingArgs);',
+  const script=new vm.Script(source+'\ntry { __trainingResult = '+entry+
+    '.apply(undefined,__trainingArgs); } catch (__guestThrown) { __trainingKind="throw"; __trainingResult=__guestThrown; }',
     {filename:'training-reference.js'});
   try{
     script.runInContext(context,{timeout});
   }catch(error){
     return {kind:'reference.error',name:error?.name??'Error',message:String(error?.message??error)};
   }
+  if(context.__tracingFailure)
+    return {kind:'reference.error',name:'RangeError',message:context.__tracingFailure};
   try {
-    const graph=describeGraph([...context.__trainingArgs,context.__trainingResult]);
-    if(!observeOperations&&!observeBranches)return {kind:'return',graph};
+    const kind=context.__trainingKind;
+    const graph=describeCompletionGraph(context.__trainingArgs,context.__trainingResult,kind);
+    if(!observeOperations&&!observeBranches)return {kind,graph};
     const json=vm.runInContext('JSON.stringify({operations:globalThis.__tracingOperations,decisions:globalThis.__tracingDecisions})',context,{timeout});
     const observations=JSON.parse(json);
-    return {kind:'return',graph,
+    return {kind,graph,
       ...(observeOperations?{operations:observations.operations}:{}),
       ...(observeBranches?{decisions:observations.decisions}:{})};
   } catch(error) {
@@ -112,9 +121,11 @@ export function referenceOutcome({source,entry,args,initialHeap,timeout=1000,obs
 }
 export function ownedOutcome(runtime) {
   const spec=runtime.entrySpec;
-  const completion=runtime.state.control.a0.completion;
+  const root=runtime.state.frames[runtime.initialState.control.a0.activeFrameId];
+  const completion=root?.completion?.value?
+    {kind:root.completion.type,value:root.completion.value.value}:runtime.state.control.a0.completion;
   if(!spec || !completion)return {kind:'pending'};
-  if(completion.kind!=='return')return {kind:completion.kind};
-  return {kind:'return',graph:describeGraph(realizeGraph(runtime.state.heap,
+  if(!['return','throw'].includes(completion.kind))return {kind:completion.kind};
+  return {kind:completion.kind,graph:describeGraph(realizeGraph(runtime.state.heap,
     [...spec.arguments,completion.value]))};
 }

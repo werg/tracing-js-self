@@ -1,0 +1,1174 @@
+{
+  "schema": "optimization-smoke/1",
+  "status": "completed",
+  "evidenceKind": "newly-initialized-cpu-optimization-diagnostic",
+  "stage": "P1",
+  "purpose": "diagnostic",
+  "split": "train",
+  "generalizationClaim": false,
+  "injectedSelections": false,
+  "requestedSteps": 2,
+  "seed": 17,
+  "optimizerSteps": 2,
+  "phase": "complete",
+  "producerRevision": "3a2178252a370c3d91c85d42751b2a4f82376bd4",
+  "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+  "runnerRevision": "06b2a5acc56c5cceb9cfccc96e3ab2b23a3d01ee",
+  "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+  "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+  "examples": 2,
+  "families": [
+    "async-counter"
+  ],
+  "inputIdentities": [
+    {
+      "path": "/workspace/scratch/23f61543c052/native-check-corpus/counter-0.json",
+      "sha256": "5a8fe9ac4b39c459fb6f2438bca9f177d8af50e2012e38a32f449f4a0f4c9111"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/native-check-corpus/counter-1.json",
+      "sha256": "e72256533946ed12482a784e82a43b00a1a29c1480a4df52b69a3edce1124dd7"
+    }
+  ],
+  "preparedFingerprint": "0ac006e4479b326737d9005d6abe6f052fcb463e1f27c8b441779aa75fa4b046",
+  "preparation": {
+    "schema": "semantic-preparation/4",
+    "producerRevision": "3a2178252a370c3d91c85d42751b2a4f82376bd4",
+    "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+    "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+    "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+    "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "representation": "compact",
+    "splitSeed": "semantic-family/4",
+    "maxPositions": 1024,
+    "maxHistory": 1024,
+    "counts": {
+      "attempted": 2,
+      "accepted_candidate": 2,
+      "admitted": 2
+    },
+    "accepted": 2,
+    "familySplits": {
+      "async-counter": "train"
+    },
+    "refusals": [],
+    "optimizerSteps": 0
+  },
+  "lossMaskCounts": {
+    "observedRecords": 14,
+    "observedTokens": 2654,
+    "observedScoredTokens": 0,
+    "maxGeneratedTokens": 57,
+    "generatedRecords": 22,
+    "generatedTokens": 606,
+    "generatedScoredTokens": 606
+  },
+  "initialCheckpoint": "/workspace/scratch/23f61543c052/optimization-smoke-check/initialization/initialized-untrained",
+  "baseBundle": {
+    "bundle": "/workspace/scratch/23f61543c052/optimization-smoke-check/served-base",
+    "format_version": 16,
+    "control_schema_version": 2,
+    "model_sha256": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+    "transducer_sha256": "d2223e2baead7b76f063d21ee2a5ddd7f1049d74d6d79277bcf8871c82848faf",
+    "config_sha256": "56a76a8694c212a3f0b5c87e51f377e142eb84a971cf0e736f7f55ed891620c3",
+    "codec_file": "tokenizer.json",
+    "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "chunking": {
+      "config": {
+        "target_tokens": 512,
+        "soft_max_tokens": 768,
+        "hard_max_tokens": 1024,
+        "max_bytes": 16384,
+        "version": "recursive-parser-v2",
+        "parser_backend": "tree_sitter",
+        "chat_template": "auto",
+        "use_icu": false,
+        "limits": {
+          "max_depth": 12,
+          "max_nodes": 100000,
+          "max_parse_bytes": 1048576,
+          "max_regions": 20000,
+          "max_injections": 2048,
+          "max_tree_depth": 128,
+          "max_parse_milliseconds": 0,
+          "isolate_native": true,
+          "worker_timeout_ms": 5000
+        },
+        "planner_max_edges": 64,
+        "tree_distance_budget": 4.0,
+        "tree_distance_weight": 0.15,
+        "code_tree_scale": 1.5
+      },
+      "config_fingerprint": "a27349660d498c535e0a8af5bd6c6e126a69c67a1a4e0398193e1dc832933277",
+      "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "parsers": {
+        "implementation": "37d0fe140981a40d4dffe07c77f0e3030e0e463e7af7c67b7c86fe29080a10c8",
+        "syntax": {
+          "registry": "offline-grammar-registry-v1",
+          "backend": "tree_sitter",
+          "network": "disabled",
+          "tree_sitter": "0.25.2",
+          "tree_sitter_language_pack": "0.13.0",
+          "grammar_dependencies": {
+            "tree-sitter-c-sharp": "0.23.5",
+            "tree-sitter-yaml": "0.7.2",
+            "tree-sitter-embedded-template": "0.25.0"
+          },
+          "markdown_it_py": "4.0.0",
+          "providers": []
+        },
+        "prose": {
+          "rules": "unicode-prose-v1",
+          "uniseg": "0.10.1",
+          "unicode": "16.0.0",
+          "icu": null
+        },
+        "chat": {
+          "version": "chat-framing-v1",
+          "templates": {
+            "chatml": {
+              "name": "chatml",
+              "start": "3c7c696d5f73746172747c3e",
+              "separator": "0a",
+              "ends": [
+                "3c7c696d5f656e647c3e"
+              ],
+              "prefixes": [],
+              "aliases": [
+                "qwen"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 0,
+              "allow_named_tools": false,
+              "mode": "delimited"
+            },
+            "deepseek": {
+              "name": "deepseek",
+              "start": "3cefbd9c55736572efbd9c3e",
+              "separator": "3cefbd9c417373697374616e74efbd9c3e",
+              "ends": [
+                "3cefbd9c656e64e296816f66e2968173656e74656e6365efbd9c3e"
+              ],
+              "prefixes": [
+                "3cefbd9c626567696ee296816f66e2968173656e74656e6365efbd9c3e"
+              ],
+              "aliases": [
+                "deepseek-v3",
+                "deepseek-r1"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 0,
+              "allow_named_tools": false,
+              "mode": "deepseek"
+            },
+            "gemma": {
+              "name": "gemma",
+              "start": "3c73746172745f6f665f7475726e3e",
+              "separator": "0a",
+              "ends": [
+                "3c656e645f6f665f7475726e3e"
+              ],
+              "prefixes": [
+                "3c626f733e"
+              ],
+              "aliases": [
+                "gemma2",
+                "gemma3"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 0,
+              "allow_named_tools": false,
+              "mode": "delimited"
+            },
+            "harmony": {
+              "name": "harmony",
+              "start": "3c7c73746172747c3e",
+              "separator": "3c7c6d6573736167657c3e",
+              "ends": [
+                "3c7c656e647c3e",
+                "3c7c72657475726e7c3e",
+                "3c7c63616c6c7c3e"
+              ],
+              "prefixes": [],
+              "aliases": [],
+              "channel_markers": [
+                "3c7c6368616e6e656c7c3e"
+              ],
+              "format_markers": [
+                "3c7c636f6e73747261696e7c3e"
+              ],
+              "body_newlines": 0,
+              "allow_named_tools": true,
+              "mode": "delimited"
+            },
+            "harmony_legacy": {
+              "name": "harmony_legacy",
+              "start": "3c7c696d5f73746172747c3e",
+              "separator": "3c7c696d5f7365707c3e",
+              "ends": [
+                "3c7c696d5f656e647c3e",
+                "3c7c66696d5f7375666669787c3e",
+                "3c7c676869737375657c3e"
+              ],
+              "prefixes": [
+                "3c7c656e646f66746578747c3e"
+              ],
+              "aliases": [],
+              "channel_markers": [
+                "3c7c6d6574615f7365707c3e"
+              ],
+              "format_markers": [
+                "3c7c6d6574615f73746172747c3e"
+              ],
+              "body_newlines": 0,
+              "allow_named_tools": true,
+              "mode": "delimited"
+            },
+            "inst": {
+              "name": "inst",
+              "start": "5b494e53545d",
+              "separator": "5b2f494e53545d",
+              "ends": [
+                "3c2f733e"
+              ],
+              "prefixes": [
+                "3c733e"
+              ],
+              "aliases": [
+                "llama2",
+                "llama-2",
+                "mistral"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 0,
+              "allow_named_tools": false,
+              "mode": "inst"
+            },
+            "llama3": {
+              "name": "llama3",
+              "start": "3c7c73746172745f6865616465725f69647c3e",
+              "separator": "3c7c656e645f6865616465725f69647c3e",
+              "ends": [
+                "3c7c656f745f69647c3e",
+                "3c7c656f6d5f69647c3e",
+                "3c7c656e645f6f665f746578747c3e"
+              ],
+              "prefixes": [
+                "3c7c626567696e5f6f665f746578747c3e"
+              ],
+              "aliases": [
+                "llama-3",
+                "llama3.1",
+                "llama3.2",
+                "llama3.3"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 2,
+              "allow_named_tools": true,
+              "mode": "delimited"
+            },
+            "phi3": {
+              "name": "phi3",
+              "start": "3c7c",
+              "separator": "7c3e",
+              "ends": [
+                "3c7c656e647c3e",
+                "3c7c656e646f66746578747c3e"
+              ],
+              "prefixes": [],
+              "aliases": [
+                "phi-3",
+                "phi4"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 1,
+              "allow_named_tools": false,
+              "mode": "delimited"
+            }
+          }
+        }
+      },
+      "fingerprint": "7cebc47329c000282659ce2f7498e5528a636e79a0d6d6e62ef36c79588a1f87"
+    },
+    "policy_likelihood": "modality_categorical_plus_canonical_facet_gaussian_density",
+    "precision": "fp32",
+    "model_version": 0,
+    "routing_version": 4,
+    "tape_version": "fmt-multitrack-facets-v19",
+    "lifecycle_version": 2,
+    "output_modalities": [
+      "text"
+    ],
+    "event_addressing": "independent_peer_events",
+    "checkpoint_sha256": "7c32acfe25f51dd1164b44b1bd9818fcfc201fdb7c890aa1ebd91b3887db0dfa",
+    "parameters": 4068312,
+    "training_heads": false,
+    "retrospective_writes": true,
+    "packs_fingerprint": null,
+    "tokenizer_sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "servedReloadExact": true
+  },
+  "trainedBundle": {
+    "bundle": "/workspace/scratch/23f61543c052/optimization-smoke-check/served-trained",
+    "format_version": 16,
+    "control_schema_version": 2,
+    "model_sha256": "aaa23e4894d33735777117d3332d827656cb18b2f8ece1706e1b2b4f30253882",
+    "transducer_sha256": "57377ebdc38ccb68e210a1ef40bb053a299c8f8ceaf37578690c3400df07607b",
+    "config_sha256": "56a76a8694c212a3f0b5c87e51f377e142eb84a971cf0e736f7f55ed891620c3",
+    "codec_file": "tokenizer.json",
+    "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "chunking": {
+      "config": {
+        "target_tokens": 512,
+        "soft_max_tokens": 768,
+        "hard_max_tokens": 1024,
+        "max_bytes": 16384,
+        "version": "recursive-parser-v2",
+        "parser_backend": "tree_sitter",
+        "chat_template": "auto",
+        "use_icu": false,
+        "limits": {
+          "max_depth": 12,
+          "max_nodes": 100000,
+          "max_parse_bytes": 1048576,
+          "max_regions": 20000,
+          "max_injections": 2048,
+          "max_tree_depth": 128,
+          "max_parse_milliseconds": 0,
+          "isolate_native": true,
+          "worker_timeout_ms": 5000
+        },
+        "planner_max_edges": 64,
+        "tree_distance_budget": 4.0,
+        "tree_distance_weight": 0.15,
+        "code_tree_scale": 1.5
+      },
+      "config_fingerprint": "a27349660d498c535e0a8af5bd6c6e126a69c67a1a4e0398193e1dc832933277",
+      "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "parsers": {
+        "implementation": "37d0fe140981a40d4dffe07c77f0e3030e0e463e7af7c67b7c86fe29080a10c8",
+        "syntax": {
+          "registry": "offline-grammar-registry-v1",
+          "backend": "tree_sitter",
+          "network": "disabled",
+          "tree_sitter": "0.25.2",
+          "tree_sitter_language_pack": "0.13.0",
+          "grammar_dependencies": {
+            "tree-sitter-c-sharp": "0.23.5",
+            "tree-sitter-yaml": "0.7.2",
+            "tree-sitter-embedded-template": "0.25.0"
+          },
+          "markdown_it_py": "4.0.0",
+          "providers": []
+        },
+        "prose": {
+          "rules": "unicode-prose-v1",
+          "uniseg": "0.10.1",
+          "unicode": "16.0.0",
+          "icu": null
+        },
+        "chat": {
+          "version": "chat-framing-v1",
+          "templates": {
+            "chatml": {
+              "name": "chatml",
+              "start": "3c7c696d5f73746172747c3e",
+              "separator": "0a",
+              "ends": [
+                "3c7c696d5f656e647c3e"
+              ],
+              "prefixes": [],
+              "aliases": [
+                "qwen"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 0,
+              "allow_named_tools": false,
+              "mode": "delimited"
+            },
+            "deepseek": {
+              "name": "deepseek",
+              "start": "3cefbd9c55736572efbd9c3e",
+              "separator": "3cefbd9c417373697374616e74efbd9c3e",
+              "ends": [
+                "3cefbd9c656e64e296816f66e2968173656e74656e6365efbd9c3e"
+              ],
+              "prefixes": [
+                "3cefbd9c626567696ee296816f66e2968173656e74656e6365efbd9c3e"
+              ],
+              "aliases": [
+                "deepseek-v3",
+                "deepseek-r1"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 0,
+              "allow_named_tools": false,
+              "mode": "deepseek"
+            },
+            "gemma": {
+              "name": "gemma",
+              "start": "3c73746172745f6f665f7475726e3e",
+              "separator": "0a",
+              "ends": [
+                "3c656e645f6f665f7475726e3e"
+              ],
+              "prefixes": [
+                "3c626f733e"
+              ],
+              "aliases": [
+                "gemma2",
+                "gemma3"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 0,
+              "allow_named_tools": false,
+              "mode": "delimited"
+            },
+            "harmony": {
+              "name": "harmony",
+              "start": "3c7c73746172747c3e",
+              "separator": "3c7c6d6573736167657c3e",
+              "ends": [
+                "3c7c656e647c3e",
+                "3c7c72657475726e7c3e",
+                "3c7c63616c6c7c3e"
+              ],
+              "prefixes": [],
+              "aliases": [],
+              "channel_markers": [
+                "3c7c6368616e6e656c7c3e"
+              ],
+              "format_markers": [
+                "3c7c636f6e73747261696e7c3e"
+              ],
+              "body_newlines": 0,
+              "allow_named_tools": true,
+              "mode": "delimited"
+            },
+            "harmony_legacy": {
+              "name": "harmony_legacy",
+              "start": "3c7c696d5f73746172747c3e",
+              "separator": "3c7c696d5f7365707c3e",
+              "ends": [
+                "3c7c696d5f656e647c3e",
+                "3c7c66696d5f7375666669787c3e",
+                "3c7c676869737375657c3e"
+              ],
+              "prefixes": [
+                "3c7c656e646f66746578747c3e"
+              ],
+              "aliases": [],
+              "channel_markers": [
+                "3c7c6d6574615f7365707c3e"
+              ],
+              "format_markers": [
+                "3c7c6d6574615f73746172747c3e"
+              ],
+              "body_newlines": 0,
+              "allow_named_tools": true,
+              "mode": "delimited"
+            },
+            "inst": {
+              "name": "inst",
+              "start": "5b494e53545d",
+              "separator": "5b2f494e53545d",
+              "ends": [
+                "3c2f733e"
+              ],
+              "prefixes": [
+                "3c733e"
+              ],
+              "aliases": [
+                "llama2",
+                "llama-2",
+                "mistral"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 0,
+              "allow_named_tools": false,
+              "mode": "inst"
+            },
+            "llama3": {
+              "name": "llama3",
+              "start": "3c7c73746172745f6865616465725f69647c3e",
+              "separator": "3c7c656e645f6865616465725f69647c3e",
+              "ends": [
+                "3c7c656f745f69647c3e",
+                "3c7c656f6d5f69647c3e",
+                "3c7c656e645f6f665f746578747c3e"
+              ],
+              "prefixes": [
+                "3c7c626567696e5f6f665f746578747c3e"
+              ],
+              "aliases": [
+                "llama-3",
+                "llama3.1",
+                "llama3.2",
+                "llama3.3"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 2,
+              "allow_named_tools": true,
+              "mode": "delimited"
+            },
+            "phi3": {
+              "name": "phi3",
+              "start": "3c7c",
+              "separator": "7c3e",
+              "ends": [
+                "3c7c656e647c3e",
+                "3c7c656e646f66746578747c3e"
+              ],
+              "prefixes": [],
+              "aliases": [
+                "phi-3",
+                "phi4"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 1,
+              "allow_named_tools": false,
+              "mode": "delimited"
+            }
+          }
+        }
+      },
+      "fingerprint": "7cebc47329c000282659ce2f7498e5528a636e79a0d6d6e62ef36c79588a1f87"
+    },
+    "policy_likelihood": "modality_categorical_plus_canonical_facet_gaussian_density",
+    "precision": "fp32",
+    "model_version": 2,
+    "routing_version": 4,
+    "tape_version": "fmt-multitrack-facets-v19",
+    "lifecycle_version": 2,
+    "output_modalities": [
+      "text"
+    ],
+    "event_addressing": "independent_peer_events",
+    "checkpoint_sha256": "ab9f734e8d10ba24e56742cb9b6254edd72472cf9019dd2c4b91711dca244cbe",
+    "parameters": 4068312,
+    "training_heads": false,
+    "retrospective_writes": true,
+    "packs_fingerprint": null,
+    "tokenizer_sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "servedReloadExact": true
+  },
+  "checkpointVerification": {
+    "checkpoint": "/workspace/scratch/23f61543c052/optimization-smoke-check/training/checkpoints/P1-000000002-periodic",
+    "stateSha256": "ab9f734e8d10ba24e56742cb9b6254edd72472cf9019dd2c4b91711dca244cbe",
+    "modelTensorIdentity": "e91dbf3dace1ac5f234e6e8b712b4a9c512d0104a7645d66b451f076eeec7039",
+    "globalStep": 2,
+    "reloadExact": true,
+    "allParametersFinite": true,
+    "counters": {
+      "D": 25,
+      "I": 2066,
+      "P": 50,
+      "G": 2,
+      "Q": 2,
+      "audio_samples": 0,
+      "video_frames": 0,
+      "image_events": 0,
+      "media_events": 0,
+      "source_bytes": 5877,
+      "record_ingestions": 9,
+      "reconstruction_tokens": 2041,
+      "reconstruction_records": 7,
+      "facet_encodes": 2,
+      "raw_facet_replays": 0,
+      "control_encodes": 0,
+      "scored_windows": 2,
+      "writer_reader_windows": 0
+    }
+  },
+  "changedParameterCount": 307,
+  "updatedOptimizerOwnerCount": 311,
+  "trainingSummary": [
+    {
+      "step": 1,
+      "gradientNorm": 4.939844131469727,
+      "loss": {
+        "lexical": 12.11727489124645,
+        "modality": 0.0,
+        "reconstruction": 12.04914717240767,
+        "router_balance": 4.101354598999023,
+        "router_z": 23.545024871826172,
+        "structure": 6.8640336990356445,
+        "terminal": 0.5961465239524841
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 11,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 11,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 11,
+        "G": 1,
+        "I": 1026,
+        "P": 22,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 3,
+        "reconstruction_tokens": 1015,
+        "record_ingestions": 4,
+        "scored_windows": 1,
+        "source_bytes": 2916,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 2,
+      "gradientNorm": 20.962812423706055,
+      "loss": {
+        "lexical": 12.081219264439174,
+        "modality": 0.0,
+        "reconstruction": 12.145309448242188,
+        "router_balance": 4.174712181091309,
+        "router_z": 23.55766487121582,
+        "structure": 7.066852569580078,
+        "terminal": 0.6768069267272949
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 14,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 14,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 14,
+        "G": 1,
+        "I": 1040,
+        "P": 28,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 4,
+        "reconstruction_tokens": 1026,
+        "record_ingestions": 5,
+        "scored_windows": 1,
+        "source_bytes": 2961,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    }
+  ],
+  "rollouts": [
+    {
+      "id": "counter-0",
+      "origin": "fixed-weights",
+      "wholeTaskSuccess": false,
+      "checkpointIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+      "failure": {
+        "category": "SemanticSelectionError",
+        "message": "Selected Megatoken inference refused: SemanticSelectionError: Model did not render one complete valid text action",
+        "evidence": {
+          "reason": "Model did not render one complete valid text action",
+          "meridian": 14,
+          "eventIds": [
+            "selected:14:track:0"
+          ],
+          "valid": [
+            false
+          ],
+          "payloadHex": [
+            "96d7a8d74973742067c3a96e20d790d799506f6c79676f6e207261696c776179e2809c466f72"
+          ],
+          "fragments": [
+            {
+              "selectedEventId": "selected:14:track:0",
+              "meridian": 14,
+              "modelTrack": "track:0",
+              "payloadHex": "96d7a8d74973742067c3a96e20d790d799506f6c79676f6e207261696c776179e2809c466f72",
+              "emittedTokenIds": [
+                138829,
+                147121,
+                127809,
+                155840,
+                56672,
+                37996,
+                70979
+              ]
+            }
+          ]
+        }
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "costs": {
+        "computeSeconds": 1.1885604239999998,
+        "peakMemoryBytes": 1399660544,
+        "dispatches": 0,
+        "queueDepth": 0,
+        "leakedResources": 0
+      },
+      "cleanup": {
+        "pendingEffects": 0,
+        "pendingJobs": 0,
+        "openHandlers": 0
+      },
+      "servingProfile": {
+        "schema": "semantic-serving-profile/1",
+        "declaredOrigin": "fixed",
+        "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+        "device": "cpu",
+        "identity": {
+          "modelSha256": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+          "manifestSha256": "6b99d40195b56cce4cd7518c4db624c62d5d25b46c381e5f7a132aa97cac091b",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "initialization": {
+          "schema": "semantic-inference-identity/4",
+          "seed": 17,
+          "checkpointIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "coldLoadSeconds": 1.7604506589996163,
+        "operations": {
+          "cancel": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 7.331999950110912e-05,
+            "p50Seconds": 7.331999950110912e-05,
+            "p95Seconds": 7.331999950110912e-05,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 7.331999950110912e-05
+          },
+          "initialize": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 0.005290024000714766,
+            "p50Seconds": 0.005290024000714766,
+            "p95Seconds": 0.005290024000714766,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 0.005290024000714766
+          },
+          "select": {
+            "count": 1,
+            "successfulRpcCalls": 0,
+            "firstSeconds": 1.1718982080001297,
+            "p50Seconds": 1.1718982080001297,
+            "p95Seconds": 1.1718982080001297,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 1.1718982080001297
+          }
+        },
+        "records": [
+          {
+            "id": "s1",
+            "operation": "initialize",
+            "ok": true,
+            "wallSeconds": 0.005290024000714766,
+            "state": {
+              "retainedSessions": 0,
+              "retainedInvocations": 0,
+              "activeInvocations": 0,
+              "trackStatuses": {},
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          },
+          {
+            "id": "s2",
+            "operation": "select",
+            "ok": false,
+            "wallSeconds": 1.1718982080001297,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 0,
+              "trackStatuses": {
+                "cancelled": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": {
+              "category": "SemanticSelectionError",
+              "message": "Model did not render one complete valid text action",
+              "evidence": {
+                "reason": "Model did not render one complete valid text action",
+                "meridian": 14,
+                "eventIds": [
+                  "selected:14:track:0"
+                ],
+                "valid": [
+                  false
+                ],
+                "payloadHex": [
+                  "96d7a8d74973742067c3a96e20d790d799506f6c79676f6e207261696c776179e2809c466f72"
+                ],
+                "fragments": [
+                  {
+                    "selectedEventId": "selected:14:track:0",
+                    "meridian": 14,
+                    "modelTrack": "track:0",
+                    "payloadHex": "96d7a8d74973742067c3a96e20d790d799506f6c79676f6e207261696c776179e2809c466f72",
+                    "emittedTokenIds": [
+                      138829,
+                      147121,
+                      127809,
+                      155840,
+                      56672,
+                      37996,
+                      70979
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "s3",
+            "operation": "cancel",
+            "ok": true,
+            "wallSeconds": 7.331999950110912e-05,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 0,
+              "trackStatuses": {
+                "cancelled": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          }
+        ],
+        "droppedRecords": 0,
+        "complete": true,
+        "memory": {
+          "hostLifetimePeakRssBytes": 534654976,
+          "cudaPeakAllocatedBytes": null,
+          "cudaPeakReservedBytes": null,
+          "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+        },
+        "peakActiveInvocationsAtRpcBoundaries": 0,
+        "stateBeforeRuntimeClose": {
+          "retainedSessions": 1,
+          "retainedInvocations": 1,
+          "activeInvocations": 0,
+          "trackStatuses": {
+            "cancelled": 1
+          },
+          "rendering": 0,
+          "selectedGroups": 0,
+          "reservedOutputBytes": 0
+        },
+        "runtimeClosed": true,
+        "optimizerSteps": 0,
+        "learnedSuccess": null,
+        "trainingMemoryFit": "unmeasured",
+        "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+        "warmDefinition": "All calls after the first call of the same operation in this process",
+        "digest": "824739bf359a3b95830f0259d7117e4fe65228b958fcecc711b43f4150752597"
+      },
+      "artifacts": "/workspace/scratch/23f61543c052/optimization-smoke-check/rollouts/fixed-weights/0000",
+      "wallSeconds": 4.641582460999416
+    },
+    {
+      "id": "counter-0",
+      "origin": "trained",
+      "wholeTaskSuccess": false,
+      "checkpointIdentity": "aaa23e4894d33735777117d3332d827656cb18b2f8ece1706e1b2b4f30253882",
+      "failure": {
+        "category": "SemanticSelectionError",
+        "message": "Selected Megatoken inference refused: SemanticSelectionError: Model did not render one complete valid text action",
+        "evidence": {
+          "reason": "Model did not render one complete valid text action",
+          "meridian": 14,
+          "eventIds": [
+            "selected:14:track:0"
+          ],
+          "valid": [
+            false
+          ],
+          "payloadHex": [
+            "2057617463686573e69c89e4babae69da520d79ed7a1d795d7"
+          ],
+          "fragments": [
+            {
+              "selectedEventId": "selected:14:track:0",
+              "meridian": 14,
+              "modelTrack": "track:0",
+              "payloadHex": "2057617463686573e69c89e4babae69da520d79ed7a1d795d7",
+              "emittedTokenIds": [
+                53016,
+                109705,
+                145775
+              ]
+            }
+          ]
+        }
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "costs": {
+        "computeSeconds": 1.028783915,
+        "peakMemoryBytes": 1399205888,
+        "dispatches": 0,
+        "queueDepth": 0,
+        "leakedResources": 0
+      },
+      "cleanup": {
+        "pendingEffects": 0,
+        "pendingJobs": 0,
+        "openHandlers": 0
+      },
+      "servingProfile": {
+        "schema": "semantic-serving-profile/1",
+        "declaredOrigin": "trained",
+        "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+        "device": "cpu",
+        "identity": {
+          "modelSha256": "aaa23e4894d33735777117d3332d827656cb18b2f8ece1706e1b2b4f30253882",
+          "manifestSha256": "0e290c4a69d18cda27d4b18d7e575df87f85cf72b1ad74e1fbf9e78eb2588155",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "initialization": {
+          "schema": "semantic-inference-identity/4",
+          "seed": 17,
+          "checkpointIdentity": "aaa23e4894d33735777117d3332d827656cb18b2f8ece1706e1b2b4f30253882",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "coldLoadSeconds": 1.657694714000172,
+        "operations": {
+          "cancel": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 3.45920016115997e-05,
+            "p50Seconds": 3.45920016115997e-05,
+            "p95Seconds": 3.45920016115997e-05,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 3.45920016115997e-05
+          },
+          "initialize": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 0.005216692999965744,
+            "p50Seconds": 0.005216692999965744,
+            "p95Seconds": 0.005216692999965744,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 0.005216692999965744
+          },
+          "select": {
+            "count": 1,
+            "successfulRpcCalls": 0,
+            "firstSeconds": 1.0157166239987419,
+            "p50Seconds": 1.0157166239987419,
+            "p95Seconds": 1.0157166239987419,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 1.0157166239987419
+          }
+        },
+        "records": [
+          {
+            "id": "s1",
+            "operation": "initialize",
+            "ok": true,
+            "wallSeconds": 0.005216692999965744,
+            "state": {
+              "retainedSessions": 0,
+              "retainedInvocations": 0,
+              "activeInvocations": 0,
+              "trackStatuses": {},
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          },
+          {
+            "id": "s2",
+            "operation": "select",
+            "ok": false,
+            "wallSeconds": 1.0157166239987419,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 0,
+              "trackStatuses": {
+                "cancelled": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": {
+              "category": "SemanticSelectionError",
+              "message": "Model did not render one complete valid text action",
+              "evidence": {
+                "reason": "Model did not render one complete valid text action",
+                "meridian": 14,
+                "eventIds": [
+                  "selected:14:track:0"
+                ],
+                "valid": [
+                  false
+                ],
+                "payloadHex": [
+                  "2057617463686573e69c89e4babae69da520d79ed7a1d795d7"
+                ],
+                "fragments": [
+                  {
+                    "selectedEventId": "selected:14:track:0",
+                    "meridian": 14,
+                    "modelTrack": "track:0",
+                    "payloadHex": "2057617463686573e69c89e4babae69da520d79ed7a1d795d7",
+                    "emittedTokenIds": [
+                      53016,
+                      109705,
+                      145775
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "s3",
+            "operation": "cancel",
+            "ok": true,
+            "wallSeconds": 3.45920016115997e-05,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 0,
+              "trackStatuses": {
+                "cancelled": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          }
+        ],
+        "droppedRecords": 0,
+        "complete": true,
+        "memory": {
+          "hostLifetimePeakRssBytes": 534200320,
+          "cudaPeakAllocatedBytes": null,
+          "cudaPeakReservedBytes": null,
+          "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+        },
+        "peakActiveInvocationsAtRpcBoundaries": 0,
+        "stateBeforeRuntimeClose": {
+          "retainedSessions": 1,
+          "retainedInvocations": 1,
+          "activeInvocations": 0,
+          "trackStatuses": {
+            "cancelled": 1
+          },
+          "rendering": 0,
+          "selectedGroups": 0,
+          "reservedOutputBytes": 0
+        },
+        "runtimeClosed": true,
+        "optimizerSteps": 0,
+        "learnedSuccess": null,
+        "trainingMemoryFit": "unmeasured",
+        "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+        "warmDefinition": "All calls after the first call of the same operation in this process",
+        "digest": "5cd75b19eeb0bb2deb9667628030b10fe5bcbcebb14e510060d3d11ab2ed9536"
+      },
+      "artifacts": "/workspace/scratch/23f61543c052/optimization-smoke-check/rollouts/trained/0000",
+      "wallSeconds": 4.436665582999922
+    }
+  ],
+  "requirements": {
+    "optimizerUpdated": true,
+    "observedMasked": true,
+    "generatedSupervised": true,
+    "checkpointReloadExact": true,
+    "servedReloadExact": true,
+    "completeHeldInExecutions": false,
+    "approximately32Examples": false
+  },
+  "optimizationSmokePassed": false,
+  "remaining": [
+    "completeHeldInExecutions",
+    "approximately32Examples"
+  ]
+}

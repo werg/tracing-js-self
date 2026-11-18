@@ -6,7 +6,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { verifySuiteFile } from '../src/test262-baseline.js';
-import { createSpecOracle } from '../src/spec-oracle.js';
+import { createSpecOracle, specOraclePackage } from '../src/spec-oracle.js';
 import { TEST262_RUNTIME_PROFILE, executeRuntimeTest262, prepareRuntimeTest262Source,
   summarizeRuntimeTest262 } from '../src/test262-runtime.js';
 
@@ -33,7 +33,7 @@ for (let index = 0; index < args.length; index++) {
 
 let oracle = null, oracleInfo = null;
 if (options.oracle) {
-  const pkg = JSON.parse(readFileSync(new URL('../node_modules/@engine262/engine262/package.json', import.meta.url), 'utf8'));
+  const pkg = specOraclePackage();
   assert.equal(pkg.version, profile.referenceEngine.npmVersion, 'Unpinned engine262 package');
   oracle = await createSpecOracle();
   oracleInfo = { name: 'engine262', revision: profile.referenceEngine.upstreamCommit,

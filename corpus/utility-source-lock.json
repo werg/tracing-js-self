@@ -1,0 +1,33 @@
+{
+  "schema": "pinned-utility-source-lock/1",
+  "basis": "vendored source bytes at tracing-js-self 55a53c4b884b7d536cfc06220d8838d8cead9236",
+  "files": {
+    "lodash/LICENSE": "f71e8ed126b46346494aad5486874cd8f0aafe95092ed67d2e3cb6110f939abc",
+    "lodash/_arrayEach.js": "6fd506ed7d2e0a3b216ec2969f391e7b8d2c7c123a0bb49bbeccea55da740cb5",
+    "lodash/_arrayEachRight.js": "3410df94969c310f7e3146d694e40d7d2ea20ed85f508057a8398bb870906f7d",
+    "lodash/_arrayEvery.js": "c9de9f02349af14ef1c23f0579c1b24f0756c0776260a3942f9705eec284960c",
+    "lodash/_arrayFilter.js": "12fd6cb97760b1bcb96425c29119ac39c747c6c6b24a4e2398cdc8d859a3e574",
+    "lodash/_arrayIncludesWith.js": "a1310b2b3abe1a6733791f803bad85ea25147bf84512cfe4380ef8afc738b81b",
+    "lodash/_arrayMap.js": "5917472b5772ba66ed65019e35da11c7a2a45737e25bc0d7e5635e3af73383bd",
+    "lodash/_arrayPush.js": "fc4429d7cd9b2b241877d0f28c746a7475341126077c4c165cfe78806a266d2f",
+    "lodash/_arrayReduce.js": "3b8b443455becd548f91970799bb8dd0942284cb6b131464075076cd6c3911c3",
+    "lodash/_arrayReduceRight.js": "0978dabc488477a5a3e79624d403c85308df229c688048d5b440483f08e9b019",
+    "lodash/_arraySome.js": "e8cc6994df67b7f02600d1f58674da807ec59db9964aaba2d9834f04b6f0baf1",
+    "lodash/_baseClamp.js": "cf85272f27502a0c808e3d5b79713214018b893e7ddd02a4bc55fd137c0546c7",
+    "lodash/_baseFindIndex.js": "07e9942a47eeb723eb9fa1bc0f7240f93ad9f52d702c0f37d7163670000350c1",
+    "lodash/_baseGt.js": "99beb83e23bf1aff5a1bbbf8fd03f5b3cb4a9be6c21b8b659d601c0af364ea5b",
+    "lodash/_baseLt.js": "66854d33e10ee86969f206173cb0d37f2c67f2f8566c7d48dce17f400c53ec90",
+    "lodash/_baseProperty.js": "9168de234c552d79a2fd00fdb8c49a4050b47e28fe89886cbbb57d4753ee3b3f",
+    "lodash/_baseRange.js": "134600a369e098c5f6a5892d2020ce6ad7c51da158b4fec85b80926edee48372",
+    "lodash/_baseRepeat.js": "81f68d89a4e906997ed62b210341999c6e2f61c4aaf6e1404e661a87ba79d61a",
+    "lodash/_baseSum.js": "7f39b622a6b544cc9619752799b2db854d67c0b77a3f34a9162fa69ffc9228b8",
+    "lodash/_baseTimes.js": "bd054701039e1090817e5d8f6fb4871966cd3abdc2c283efd98a0c1683707886",
+    "lodash/_strictIndexOf.js": "394592bfc902ec6451478cee5e466052e8358d0ffbee50d31419d26d8d14ff00",
+    "lodash/_strictLastIndexOf.js": "5b153f6bcf9bdfce038bbab5253ff345a1383386d8aa296a96f4dfe1edb52f77",
+    "vscode/LICENSE.txt": "9480271317925265e806a9a196aaa33410a962fa9d4d1e248a4a5187bc8c9df9",
+    "vscode/arrays.ts": "e9a08190d445f28485a24c8b2701b5d91fda0702f3999f96d53f0cfebc032c0a",
+    "vscode/charCode.ts": "ddb45e08c0f66a253a52ca5eaafc705687ceda45229ce5c9a1aa64d0fb34e510",
+    "vscode/numbers.ts": "2598d701b60fe02af4e6c9b44c2d71cd084ebcf3a2097b4ce7e30b56daef7fe7",
+    "vscode/strings.ts": "8419f80b407c97e88e5c7ebd73732737c364b360050740bb0ab4cab52680f811"
+  }
+}

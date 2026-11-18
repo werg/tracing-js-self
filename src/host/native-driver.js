@@ -14,7 +14,7 @@ const errorMessage=error=>error instanceof Error?error.message:String(error);
 
 /** Execute bounded script code with real asynchronous, separately owned host I/O.
  * All service invocations are one-shot and replay never reinvokes a service. */
-export async function executeWithNativeServices({text,entry=null,services={},maxSteps=100000,signal}={}) {
+export async function executeWithNativeServices({text,entry=null,services={},maxSteps=100000,randomSeed=null,signal}={}) {
   if(entry!==null) {
     if(text!==undefined||!entry||typeof entry!=='object'||
        typeof entry.text!=='string'||typeof entry.functionName!=='string'||
@@ -97,7 +97,7 @@ export async function executeWithNativeServices({text,entry=null,services={},max
       return {kind:'pending'};
     };
   }
-  const runtime=createRuntime({adapters,maxSteps});
+  const runtime=createRuntime({adapters,maxSteps,randomSeed});
   if(entry){
     const source=runtime.registerSource({text:entry.text,
       url:entry.url??'<native-entry>',trainingProfile:true});
@@ -131,6 +131,12 @@ export async function executeWithNativeServices({text,entry=null,services={},max
       }
       const progress=runtime.drive();
       if(progress.kind!=='waiting'){
+        if(progress.kind==='unsupported'){
+          const error=new Error('Unsupported owned execution: '+
+            (progress.failure?.completion?.feature??progress.failure?.kind??'undeclared feature'));
+          error.category='unsupported.runtime';error.details=progress.failure;
+          throw error;
+        }
         // Never seal an archive that omits a still-outstanding native effect.
         // A detached effect may already have started, so this is fail-closed,
         // not rollback or guest-visible host cancellation.

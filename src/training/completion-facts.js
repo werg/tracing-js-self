@@ -67,6 +67,27 @@ export function normalizeCompletionFacts(bundle) {
           kind:'throw',value:input,handler:routed==='thrown'?null:'catch-or-finally',
           invocation:event.invocationId,journalEvent:event.eventId});
     }
+    const fact=facts.get(event.eventId);
+    if(fact&&['throw','unhandled-throw'].includes(fact.operation)){
+      // A single owned throw can unwind several synchronous callers. Each
+      // completed public frame needs its own exit; emitting only the leaf
+      // would leave the selected root permanently open.
+      const unwound=event.stateChanges.filter(change=>change.table==='frames'&&
+        change.id!==fact.invocation&&change.before?.status!=='thrown'&&
+        change.after?.status==='thrown'&&Array.isArray(change.after.completion?.value?.value));
+      const byId=new Map(unwound.map(change=>[change.id,change]));
+      fact.unwound=[];
+      let caller=frame.after?.callerFrameId;
+      while(byId.has(caller)){
+        const change=byId.get(caller);
+        fact.unwound.push({operation:'throw',kind:'throw',
+          value:change.after.completion.value.value,invocation:change.id,
+          journalEvent:event.eventId});
+        caller=change.after.callerFrameId;
+      }
+      if(fact.unwound.length!==unwound.length)
+        throw new Error('Throw unwind frames do not follow the owned caller chain');
+    }
   }
   return facts;
 }

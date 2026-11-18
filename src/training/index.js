@@ -1,6 +1,6 @@
 // Sole production semantic-execution/5 witness and independent source checks.
 export {verifyOwnedSourceCase,recheckOwnedSourceEvidence} from './source-check.js';
-export {verifyEffectfulTrainingCase,recheckEffectfulAdmission,requireNativeAdmission,
+export {verifyEffectfulTrainingCase,recheckEffectfulAdmission,requireNativeAdmission,bindNativeAdmission,validateNativePolicy,
   effectfulFamilySplit,effectfulMetrics,checkCounterfactualPrefixes} from './effectful-admit.js';
 export {compileEffectfulWitness,verifyEffectfulProjection,ownedEffectfulOutcome} from './effectful-compiler.js';
 export {verifyEffectfulSession,recheckEffectfulSession} from './effectful-session.js';

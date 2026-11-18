@@ -1,0 +1,163 @@
+{
+  "schema": "semantic-serving-profile/1",
+  "declaredOrigin": "trained",
+  "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+  "device": "cpu",
+  "identity": {
+    "modelSha256": "aaa23e4894d33735777117d3332d827656cb18b2f8ece1706e1b2b4f30253882",
+    "manifestSha256": "0e290c4a69d18cda27d4b18d7e575df87f85cf72b1ad74e1fbf9e78eb2588155",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "initialization": {
+    "schema": "semantic-inference-identity/4",
+    "seed": 17,
+    "checkpointIdentity": "aaa23e4894d33735777117d3332d827656cb18b2f8ece1706e1b2b4f30253882",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "coldLoadSeconds": 1.657694714000172,
+  "operations": {
+    "cancel": {
+      "count": 1,
+      "successfulRpcCalls": 1,
+      "firstSeconds": 3.45920016115997e-05,
+      "p50Seconds": 3.45920016115997e-05,
+      "p95Seconds": 3.45920016115997e-05,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 3.45920016115997e-05
+    },
+    "initialize": {
+      "count": 1,
+      "successfulRpcCalls": 1,
+      "firstSeconds": 0.005216692999965744,
+      "p50Seconds": 0.005216692999965744,
+      "p95Seconds": 0.005216692999965744,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 0.005216692999965744
+    },
+    "select": {
+      "count": 1,
+      "successfulRpcCalls": 0,
+      "firstSeconds": 1.0157166239987419,
+      "p50Seconds": 1.0157166239987419,
+      "p95Seconds": 1.0157166239987419,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 1.0157166239987419
+    }
+  },
+  "records": [
+    {
+      "id": "s1",
+      "operation": "initialize",
+      "ok": true,
+      "wallSeconds": 0.005216692999965744,
+      "state": {
+        "retainedSessions": 0,
+        "retainedInvocations": 0,
+        "activeInvocations": 0,
+        "trackStatuses": {},
+        "rendering": 0,
+        "selectedGroups": 0,
+        "reservedOutputBytes": 0
+      },
+      "selectionAuthority": null,
+      "failure": null
+    },
+    {
+      "id": "s2",
+      "operation": "select",
+      "ok": false,
+      "wallSeconds": 1.0157166239987419,
+      "state": {
+        "retainedSessions": 1,
+        "retainedInvocations": 1,
+        "activeInvocations": 0,
+        "trackStatuses": {
+          "cancelled": 1
+        },
+        "rendering": 0,
+        "selectedGroups": 0,
+        "reservedOutputBytes": 0
+      },
+      "selectionAuthority": null,
+      "failure": {
+        "category": "SemanticSelectionError",
+        "message": "Model did not render one complete valid text action",
+        "evidence": {
+          "reason": "Model did not render one complete valid text action",
+          "meridian": 14,
+          "eventIds": [
+            "selected:14:track:0"
+          ],
+          "valid": [
+            false
+          ],
+          "payloadHex": [
+            "2057617463686573e69c89e4babae69da520d79ed7a1d795d7"
+          ],
+          "fragments": [
+            {
+              "selectedEventId": "selected:14:track:0",
+              "meridian": 14,
+              "modelTrack": "track:0",
+              "payloadHex": "2057617463686573e69c89e4babae69da520d79ed7a1d795d7",
+              "emittedTokenIds": [
+                53016,
+                109705,
+                145775
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "s3",
+      "operation": "cancel",
+      "ok": true,
+      "wallSeconds": 3.45920016115997e-05,
+      "state": {
+        "retainedSessions": 1,
+        "retainedInvocations": 1,
+        "activeInvocations": 0,
+        "trackStatuses": {
+          "cancelled": 1
+        },
+        "rendering": 0,
+        "selectedGroups": 0,
+        "reservedOutputBytes": 0
+      },
+      "selectionAuthority": null,
+      "failure": null
+    }
+  ],
+  "droppedRecords": 0,
+  "complete": true,
+  "memory": {
+    "hostLifetimePeakRssBytes": 534200320,
+    "cudaPeakAllocatedBytes": null,
+    "cudaPeakReservedBytes": null,
+    "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+  },
+  "peakActiveInvocationsAtRpcBoundaries": 0,
+  "stateBeforeRuntimeClose": {
+    "retainedSessions": 1,
+    "retainedInvocations": 1,
+    "activeInvocations": 0,
+    "trackStatuses": {
+      "cancelled": 1
+    },
+    "rendering": 0,
+    "selectedGroups": 0,
+    "reservedOutputBytes": 0
+  },
+  "runtimeClosed": true,
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "trainingMemoryFit": "unmeasured",
+  "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+  "warmDefinition": "All calls after the first call of the same operation in this process",
+  "digest": "5cd75b19eeb0bb2deb9667628030b10fe5bcbcebb14e510060d3d11ab2ed9536"
+}

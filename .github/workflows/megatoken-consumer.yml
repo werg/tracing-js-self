@@ -17,6 +17,16 @@ jobs:
   independent-native-import:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        recipe: [engineering, training-v4, benchmark-v1]
+    env:
+      TZ: UTC
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,16 +39,15 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version-file: .nvmrc
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.12.14'
       - name: Install paired producer and native consumer
         run: |
-          npm ci
-          python -m pip install 'torch==2.10.0' --index-url https://download.pytorch.org/whl/cpu
-          python -m pip install 'safetensors>=0.5,<1'
-          python -m pip install -e ./megatoken pytest tokenizers huggingface-hub
+          npm ci --ignore-scripts --no-audit --no-fund
+          python -m pip install --require-hashes -r tools/native-consumer/requirements.lock
+          python -m pip install --no-deps --no-build-isolation -e ./megatoken
       - name: Acquire and verify immutable production tokenizer
         run: |
           python - <<'PY'
@@ -51,13 +60,22 @@ jobs:
           shutil.copyfile(source, target)
           assert hashlib.sha256(target.read_bytes()).hexdigest() == LING_TOKENIZER_SHA256
           PY
+      - name: Bind actual native runtime and all dependency identities
+        run: |
+          python tools/native-consumer/check_environment.py --megatoken megatoken \
+            --tokenizer "$RUNNER_TEMP/tokenizer.json" --out "$RUNNER_TEMP/native-environment.json"
+          python -m unittest discover -s tools/native-consumer -p 'test_*.py'
       - name: Validate shared schemas and independently source-check every corpus family
         run: |
           npm run contracts:check
           cmp contracts/host-operations-v4.json megatoken/src/megatoken/data/contracts/host-operations-v4.json
           cmp contracts/semantic-harness-v5.json megatoken/src/megatoken/data/contracts/semantic-harness-v5.json
-          node tools/generate-effectful-training.mjs --jobs 4 --out "$RUNNER_TEMP/corpus" \
-            --megatoken megatoken --python python --tokenizer "$RUNNER_TEMP/tokenizer.json" --require-native
+          node tools/freeze-source-registry.mjs --out "$RUNNER_TEMP/source-registry.json" \
+            --holdout-projects exercism/javascript --holdout-compositions square/even/maximum/alias/return
+          node tools/generate-effectful-training.mjs --recipe '${{ matrix.recipe }}' --jobs 4 --out "$RUNNER_TEMP/corpus" \
+            --registry "$RUNNER_TEMP/source-registry.json" \
+            --megatoken megatoken --python python --tokenizer "$RUNNER_TEMP/tokenizer.json" \
+            --native-policy contracts/native-admission-policy-v5.json --require-native
           node tools/generate-selected-harness-v4.mjs "$RUNNER_TEMP/two-invocations.json"
           node tools/generate-selected-continuity-v4.mjs "$RUNNER_TEMP/continuity"
       - name: Recheck admitted evidence and export real native training data without optimizing
@@ -87,6 +105,7 @@ jobs:
               assert episode.records and episode.supervision.outcome == 'unknown'
           PY
       - name: Freeze and evaluate held-out engineering cohort through real selected driver
+        if: matrix.recipe == 'engineering'
         run: |
           python megatoken/scripts/check_semantic_inference.py \
             --tokenizer-json "$RUNNER_TEMP/tokenizer.json" --output "$RUNNER_TEMP/native-inference"
@@ -119,12 +138,26 @@ jobs:
           report = json.loads((root/'evaluation.json').read_text())
           assert all(row['wholeTaskSuccess'] and row['traceValid'] for row in report['cases'])
           PY
-      - name: Retain auditable receipts
+      - name: Package complete rechecked native release and rejection evidence
+        run: |
+          python tools/package-semantic-release.py --corpus "$RUNNER_TEMP/corpus" \
+            --tracer-root . --megatoken megatoken --tokenizer "$RUNNER_TEMP/tokenizer.json" \
+            --environment-receipt "$RUNNER_TEMP/native-environment.json" --out "$RUNNER_TEMP/release"
+          python tools/package-semantic-release.py --verify "$RUNNER_TEMP/release/semantic-v5-release.tar.gz"
+      - name: Retain complete corpus, prepared shards and actionable refusals
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: semantic-v5-admission-and-evaluation
+          name: semantic-v5-${{ matrix.recipe }}-admission-and-evaluation
+          retention-days: 90
+          compression-level: 6
+          include-hidden-files: true
           path: |
-            ${{ runner.temp }}/corpus/manifest.json
+            ${{ runner.temp }}/corpus/
+            ${{ runner.temp }}/prepared-semantic/
+            ${{ runner.temp }}/release/
+            ${{ runner.temp }}/native-environment.json
+            ${{ runner.temp }}/source-registry.json
             ${{ runner.temp }}/evaluation.json
             ${{ runner.temp }}/continuity/*.txt
             ${{ runner.temp }}/native-inference/inference-check.json
