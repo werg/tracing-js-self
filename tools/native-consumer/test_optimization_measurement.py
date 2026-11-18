@@ -43,6 +43,17 @@ class OptimizationMeasurementTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'reconstruct original'):
             SMOKE.generated_token_cost(profile, actual, codec)
 
+    def test_failed_select_without_original_emissions_is_not_exact_zero(self):
+        profile = {'complete': True, 'droppedRecords': 0, 'records': [{
+            'operation': 'select', 'ok': False, 'failure': {'category': 'RuntimeError', 'evidence': None}}]}
+        receipt = SMOKE.generated_token_cost(profile)
+        self.assertEqual(receipt['generatedTokens'], 0)
+        self.assertFalse(receipt['complete'])
+        self.assertEqual(receipt['scope'], 'retained-native-token-lower-bound')
+        profile['records'][0]['failure'] = {'category': 'SemanticSelectionError', 'evidence': {
+            'fragments': [{'selectedEventId': 'failed', 'emittedTokenIds': [7], 'payloadHex': '07'}]}}
+        self.assertTrue(SMOKE.generated_token_cost(profile)['complete'])
+
     def run_rollout(self, root, *, rejected=False, timed_out=False, invalid_result=False):
         identity = 'a' * 64
         outcome = {'cleanup': {'pendingEffects': 0, 'pendingJobs': 0, 'openHandlers': 0},

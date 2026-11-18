@@ -23,6 +23,7 @@ def measured(identifier, success, identity='trained'):
 def experiment():
     return {'schema': learning.SCHEMA, 'mode': 'confirmatory', 'optimizerSeeds': [17, 29, 43],
             'decoderSeed': 17, 'initializationSeed': 17, 'baseOrigin': 'newly-initialized', 'checkpointSteps': [2, 4],
+            'rolloutBudget': {'tokensPerDecision': 32, 'secondsPerCase': 120},
             'policy': {'minimumUsefulImprovement': 0.1, 'maximumCriticalSliceRegression': 0.05,
                        'confidence': 0.95, 'bootstrapReplicates': 200, 'bootstrapSeed': 89,
                        'minimumConfirmatoryTestComponents': 2},
@@ -133,6 +134,31 @@ class FrozenLearningTests(unittest.TestCase):
         self.assertEqual(result['slices']['valid-errors']['status'], 'untested')
         self.assertIsNone(result['seeds'][0]['trained']['generatedTokens'])
         self.assertEqual(result['seeds'][0]['trained']['retainedGeneratedTokensLowerBound'], 20)
+
+    def test_auxiliary_known_source_score_is_separate_and_keeps_all_reserved_cases(self):
+        expt = experiment()
+        expt['training'][0]['scenario'] = {'sourceKey': 'source', 'inputKey': 'old',
+            'observationKey': 'observed', 'scheduleKey': 'ordered'}
+        auxiliary = case('auxiliary', 'train', 'train', ['new-inputs-known-source'])
+        auxiliary.update(evaluationRole='auxiliary-known-source', matchedTrainingId='train',
+            auxiliarySlices=['new-inputs-known-source'], scenario={**expt['training'][0]['scenario'], 'inputKey': 'new'})
+        expt['auxiliary'] = [auxiliary]
+        runs = [run(expt, seed) for seed in expt['optimizerSeeds']]
+        for item in runs:
+            item['auxiliary'] = {'base': [measured('auxiliary', True, item['baseIdentity'])],
+                'trained': [measured('auxiliary', False, item['trainedIdentity'])]}
+        result = learning.summarize_learning(expt, runs)
+        self.assertEqual(result['meanImprovement'], 1)
+        extra = result['auxiliarySlices']['new-inputs-known-source']
+        self.assertEqual(extra['meanImprovement'], -1)
+        self.assertFalse(extra['includedInPrimaryHeldOutScore'])
+        self.assertEqual(result['auxiliarySlices']['different-schedules']['status'], 'untested')
+        runs[0]['auxiliary']['trained'] = []
+        with self.assertRaisesRegex(ValueError, 'Missing evaluation'):
+            learning.summarize_learning(expt, runs)
+        expt['auxiliary'][0]['scenario']['inputKey'] = 'old'
+        with self.assertRaisesRegex(ValueError, 'duplicates an optimized'):
+            learning.require_frozen_experiment(expt)
 
     def test_timeout_without_complete_gate_receipt_blocks_integrity_claim(self):
         expt = experiment()

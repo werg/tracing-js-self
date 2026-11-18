@@ -9,11 +9,29 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {controlledEvaluationCase} from '../src/training/selected-evaluation.js';
 import {measureExecutionDifficulty} from '../src/corpus/execution-difficulty.mjs';
 import {verifyFrozenSplitIdentity} from '../src/corpus/source-registry.mjs';
+import {canonicalFixturePlan} from '../src/training/fixture-broker.js';
+import {hostOperation} from '../src/host/operations.js';
 
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const inside=(root,path)=>{const rel=relative(root,path);return rel!==''&&!rel.startsWith('..'+(process.platform==='win32'?'\\':'/'))&&rel!=='..'&&!isAbsolute(rel);};
 
-export function learningCase(exported,{path,fileSha256,sourceReceipt,decoderSeed=17}={}){
+export function scenarioIdentity(request){
+  const programs=request.programs??[request.program],invocations=request.invocations??[request.invocation];
+  const sourceFor=invocation=>programs.find(program=>program.programId===invocation.programId)??
+    (programs.length===1?programs[0]:null);
+  const shape=invocations.map(invocation=>{const program=sourceFor(invocation);
+    if(!program)throw new TypeError('Invocation source absent while freezing auxiliary cohort');
+    return {source:program.source,entry:program.entry,realmPolicy:invocation.realmPolicy,
+      completionPolicy:invocation.completionPolicy};});
+  const plan=canonicalFixturePlan(request.fixture);
+  const order=plan.settlementOrder??plan.calls.flatMap((call,index)=>hostOperation(call.operation).kind==='promise'?[index]:[]);
+  return {sourceKey:sha(JSON.stringify(shape)),
+    inputKey:sha(JSON.stringify(invocations.map(invocation=>({graph:invocation.inputGraph,
+      receiver:invocation.receiverValue,randomSeed:sourceFor(invocation).randomSeed??null})))),
+    observationKey:sha(JSON.stringify(plan.calls)),scheduleKey:sha(JSON.stringify(order))};
+}
+
+export function learningCase(exported,{path,fileSha256,sourceReceipt,decoderSeed=17,includeTrainingEnvelope=false}={}){
   const side=exported?.sidecar;
   if(side?.admission!=='admitted'||side.nativeAdmission?.admitted!==true||
     side.referenceStatus!=='agreed'||side.splitIdentity?.policy!=='source-components/1')
@@ -46,13 +64,13 @@ export function learningCase(exported,{path,fileSha256,sourceReceipt,decoderSeed
     sourceCluster:side.splitIdentity.componentId,ancestorIds:side.ancestorIds,
     registryDigest:side.splitIdentity.registryDigest,identityDigest:side.identityDigest,
     episodeDigest:sourceReceipt.episodeDigest,producerRevision:side.producerRevision,
-    generatedTokens:tokens,path,fileSha256,sourceReceipt,slices:[...slices].sort(),
+    generatedTokens:tokens,path,fileSha256,sourceReceipt,scenario:scenarioIdentity(request),slices:[...slices].sort(),
     difficulty:{activations:difficulty.activations,maxCallDepth:difficulty.maxCallDepth,
       loopTrips:difficulty.loopTrips,peakHeapObjects:difficulty.peakHeapObjects,
       finalAliasEdges:difficulty.finalAliasEdges,mutationEvents:difficulty.mutationEvents,
       exceptionOutcomes:difficulty.exceptionOutcomes,asyncDependencyDepth:difficulty.asyncDependencyDepth,
       peakPendingEffects:difficulty.peakPendingEffects,learnerGeneratedTokens:tokens}};
-  if(side.split!=='train')Object.assign(row,{expected:fixture.expected,
+  if(side.split!=='train'||includeTrainingEnvelope)Object.assign(row,{expected:fixture.expected,
     envelope:{schema:'semantic-evaluation-request/4',caseId:id,request,
       seed:decoderSeed,representation:'compact'}});
   return row;
@@ -72,6 +90,29 @@ export function diverseSubset(rows,maximum){
   return selected;
 }
 
+export function selectAuxiliaryCases(candidates,training,maximum=32){
+  const selectedIds=new Set(training.map(row=>row.id)),eligible=[];
+  for(const candidate of candidates){
+    if(candidate.split!=='train'||selectedIds.has(candidate.id))continue;
+    const sameSource=training.filter(row=>row.sourceCluster===candidate.sourceCluster&&
+      row.scenario.sourceKey===candidate.scenario.sourceKey).sort((a,b)=>a.id.localeCompare(b.id));
+    if(!sameSource.length)continue;
+    if(sameSource.some(row=>['inputKey','observationKey','scheduleKey'].every(key=>row.scenario[key]===candidate.scenario[key])))continue;
+    const sameInput=sameSource.filter(row=>row.scenario.inputKey===candidate.scenario.inputKey);
+    let match,slices;
+    if(!sameInput.length){match=sameSource[0];slices=['new-inputs-known-source'];}
+    else{
+      match=sameInput.find(row=>row.scenario.observationKey===candidate.scenario.observationKey)??sameInput[0];
+      slices=[];
+      if(match.scenario.observationKey!==candidate.scenario.observationKey)slices.push('different-observations');
+      if(match.scenario.scheduleKey!==candidate.scenario.scheduleKey)slices.push('different-schedules');
+    }
+    eligible.push({...candidate,evaluationRole:'auxiliary-known-source',matchedTrainingId:match.id,
+      auxiliarySlices:slices,slices:[...new Set([...candidate.slices.filter(slice=>slice!=='new-source'),...slices])].sort()});
+  }
+  return {available:eligible.length,selected:diverseSubset(eligible,maximum)};
+}
+
 async function main(){
   const corpora=[],flags=new Map();
   for(let i=2;i<process.argv.length;i+=2){
@@ -82,8 +123,8 @@ async function main(){
     else flags.set(flag,value);
   }
   const allowed=new Set(['--out','--tracer-root','--name','--mode','--optimizer-seeds','--decoder-seed',
-    '--initialization-seed','--checkpoint-steps','--minimum-improvement','--maximum-slice-regression','--bootstrap-replicates',
-    '--bootstrap-seed','--minimum-test-components','--train-examples','--validation-cases','--test-cases']);
+    '--rollout-tokens','--rollout-timeout','--initialization-seed','--checkpoint-steps','--minimum-improvement','--maximum-slice-regression','--bootstrap-replicates',
+    '--bootstrap-seed','--minimum-test-components','--train-examples','--validation-cases','--test-cases','--auxiliary-cases']);
   for(const key of flags.keys())if(!allowed.has(key))throw new TypeError('Unknown option '+key);
   if(!corpora.length||!flags.has('--out')||!flags.has('--minimum-improvement'))
     throw new TypeError('Usage: freeze-learning-experiment.mjs --corpus DIR [--corpus DIR] --out PRIVATE.json --minimum-improvement 0.05 [--checkpoint-steps 8,16 --train-examples 32 --validation-cases 16 --test-cases 32]');
@@ -124,7 +165,7 @@ async function main(){
         side.nativePolicy.tokenizerIdentity!==nativePolicy.tokenizerIdentity||
         side.nativePolicy.tokenizerSha256!==nativePolicy.tokenizerSha256)
         throw new TypeError('Native consumer/tokenizer release policy changed');
-      candidates.push(learningCase(exported,{path,fileSha256:sha(bytes),sourceReceipt:receipt,decoderSeed}));
+      candidates.push(learningCase(exported,{path,fileSha256:sha(bytes),sourceReceipt:receipt,decoderSeed,includeTrainingEnvelope:true}));
       seen.add(side.identityDigest);
       process.stderr.write(item.id+': frozen verified '+side.split+'\n');
     }
@@ -133,13 +174,17 @@ async function main(){
   const selected=Object.fromEntries(['train','validation','test'].map(split=>[split,
     diverseSubset(candidates.filter(row=>row.split===split),integer(split==='train'?'--train-examples':`--${split}-cases`,split==='train'?32:split==='validation'?16:32,1,100000))]));
   if(Object.values(selected).some(rows=>!rows.length))throw new TypeError('Need independently admitted training, validation and test components');
+  const auxiliary=selectAuxiliaryCases(candidates,selected.train,integer('--auxiliary-cases',32,1,100000));
+  const training=selected.train.map(({envelope,expected,...row})=>row);
   const count=rows=>({episodes:rows.length,sourceFamilies:new Set(rows.map(row=>row.family)).size,
     independentComponents:new Set(rows.map(row=>row.sourceCluster)).size,
     learnerGeneratedTokens:rows.reduce((n,row)=>n+row.generatedTokens,0)});
   const payload={schema:'semantic-learning-experiment/1',name:flags.get('--name')??'bounded-v5-transfer',
     frozenAt:new Date().toISOString(),mode,baseOrigin:'newly-initialized',optimizerSeeds:seeds,decoderSeed,initializationSeed,checkpointSteps:steps,
     producerRevision:revision,nativePolicy,sourceRegistryDigest:candidates[0].registryDigest,
-    corpusManifests:manifests,training:selected.train,validation:selected.validation,test:selected.test,
+    corpusManifests:manifests,training,validation:selected.validation,test:selected.test,auxiliary:auxiliary.selected,
+    rolloutBudget:{tokensPerDecision:integer('--rollout-tokens',32,1,1024),
+      secondsPerCase:integer('--rollout-timeout',120,1,300)},
     policy:{minimumUsefulImprovement:numeric('--minimum-improvement',null,Number.EPSILON,1),
       maximumCriticalSliceRegression:numeric('--maximum-slice-regression',0.05,0,1),
       confidence:0.95,bootstrapReplicates:integer('--bootstrap-replicates',2000,100,100000),
@@ -147,6 +192,7 @@ async function main(){
       minimumConfirmatoryTestComponents:integer('--minimum-test-components',100,2,100000)},
     population:Object.fromEntries(['train','validation','test'].map(split=>[split,{
       available:count(candidates.filter(row=>row.split===split)),selected:count(selected[split])}])),
+    auxiliaryPopulation:{available:auxiliary.available,selected:count(auxiliary.selected)},
     selection:'deterministic-round-robin-by-authenticated-source-component',
     privateExpectedOutcomes:true,injectedSelections:false,optimizerSteps:0,learnedSuccess:null,
     limits:['Selected continuation execution is measured separately from pure output transfer.',

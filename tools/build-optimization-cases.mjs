@@ -11,7 +11,10 @@ export function optimizationCase(exported,{seed=17}={}){
     exported.sidecar.nativeAdmission?.admitted!==true)
     throw new TypeError('Optimization smoke requires natively admitted training examples');
   if(![17,29,43].includes(seed))throw new TypeError('Use a declared evaluation seed');
-  const fixture=controlledEvaluationCase(exported);
+  if(!/^[0-9a-f]{64}$/.test(exported.sidecar.identityDigest??''))
+    throw new TypeError('Optimization evaluation requires immutable candidate identity');
+  const id=exported.sidecar.sourceFamily+'/'+exported.sidecar.taskId+'@'+exported.sidecar.identityDigest.slice(0,16);
+  const fixture=controlledEvaluationCase(exported,{id});
   const request=structuredClone(fixture.request);
   delete request.controlledSelectionsByRepresentation;
   return {id:fixture.id,family:fixture.family,split:'train',expected:fixture.expected,

@@ -55,10 +55,11 @@ def main():
     parser.add_argument('--smoke-report', type=Path, action='append', required=True)
     parser.add_argument('--consumer-root', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--rollout-tokens', type=int, default=128)
-    parser.add_argument('--rollout-timeout', type=int, default=120)
+    parser.add_argument('--rollout-tokens', type=int)
+    parser.add_argument('--rollout-timeout', type=int)
     args = parser.parse_args()
-    if not 1 <= args.rollout_tokens <= 1024 or not 1 <= args.rollout_timeout <= 300:
+    if (args.rollout_tokens is not None and not 1 <= args.rollout_tokens <= 1024 or
+            args.rollout_timeout is not None and not 1 <= args.rollout_timeout <= 300):
         parser.error('Rollout tokens must be 1..1024 and timeout 1..300 seconds')
     root = args.output.resolve()
     root.mkdir(parents=True, exist_ok=False)
@@ -76,6 +77,12 @@ def main():
     record()
     try:
         experiment = require_frozen_experiment(json.loads(args.experiment.read_text()))
+        budget = experiment.get('rolloutBudget') or {'tokensPerDecision': 32, 'secondsPerCase': 120}
+        args.rollout_tokens = args.rollout_tokens if args.rollout_tokens is not None else budget['tokensPerDecision']
+        args.rollout_timeout = args.rollout_timeout if args.rollout_timeout is not None else budget['secondsPerCase']
+        if experiment.get('rolloutBudget') is not None and (args.rollout_tokens != budget['tokensPerDecision'] or
+                args.rollout_timeout != budget['secondsPerCase']):
+            raise ValueError('Actual inference caps differ from the frozen budget')
         consumer = args.consumer_root.resolve()
         SMOKE.require_clean_checkout(consumer)
         if SMOKE.git_head(consumer) != experiment['nativePolicy']['consumerRevision']:
@@ -114,12 +121,21 @@ def main():
         for smoke_path, smoke in smoke_runs:
             seed = smoke['optimizerSeed']
             destination = root / f'seed-{seed}'
-            candidates, bundles = [], {}
+            candidates, bundles, checkpoint_receipts = [], {}, {}
             for step in experiment['checkpointSteps']:
                 checkpoint = locate_checkpoint(smoke_path, step)
                 bundle = SMOKE.export_checked(checkpoint, destination / f'served-step-{step}')
                 if bundle['codec_fingerprint'] != experiment['nativePolicy']['tokenizerIdentity']:
                     raise ValueError('Actual checkpoint tokenizer differs from the frozen policy')
+                from megatoken.training.checkpoint import load_checkpoint
+                payload, metadata = load_checkpoint(checkpoint)
+                if (payload['global_step'] != step or payload['train_config']['seed'] != seed or
+                        payload['train_config']['datasets'] != [str(smoke_path.parent / 'prepared')] or
+                        payload['codec_fingerprint'] != experiment['nativePolicy']['tokenizerIdentity']):
+                    raise ValueError('Checkpoint is not from this declared optimizer/data run')
+                checkpoint_receipts[step] = {'checkpointStateSha256': metadata['state_sha256'],
+                    'globalStep': step, 'sourceSampling': metadata['source_sampling']}
+                del payload
                 bundles[step] = bundle
                 gc.collect()
                 measurements = []
@@ -129,16 +145,17 @@ def main():
                                             destination / 'validation' / f'step-{step}', args, env)
                     measurements.append(measured)
                     record(completedRollouts=report['completedRollouts'] + 1)
-                candidates.append({'step': step, 'checkpointIdentity': bundle['model_sha256'], 'cases': measurements})
+                candidates.append({'step': step, 'checkpointIdentity': bundle['model_sha256'],
+                                   'checkpointReceipt': checkpoint_receipts[step], 'cases': measurements})
                 SMOKE.write_json(destination / 'validation-results.json', candidates)
             choice = choose_validation_checkpoint(experiment, candidates)
             SMOKE.write_json(destination / 'selection.json', choice)
-            selected.append((smoke, candidates, choice, bundles[choice['step']]))
+            selected.append((smoke, candidates, choice, bundles[choice['step']], checkpoint_receipts[choice['step']]))
         SMOKE.write_json(root / 'sealed-selections.json', {'experimentSha256': report['experimentSha256'],
             'testUsedForSelection': False, 'selections': [{'optimizerSeed': smoke['optimizerSeed'],
-                'selection': choice} for smoke, _, choice, _ in selected]})
+                'selection': choice} for smoke, _, choice, _, _ in selected]})
         record(phase='test', sealedSelectionsSha256=SMOKE.sha256(root / 'sealed-selections.json'))
-        for smoke, candidates, choice, trained in selected:
+        for smoke, candidates, choice, trained, selected_receipt in selected:
             seed = smoke['optimizerSeed']
             base = exact_bundle(smoke['baseBundle'])
             if base['model_sha256'] == trained['model_sha256']:
@@ -146,14 +163,25 @@ def main():
             run = {'optimizerSeed': seed, 'optimizerSteps': smoke['optimizerSteps'],
                    'baseIdentity': base['model_sha256'], 'trainedIdentity': trained['model_sha256'],
                    'selection': choice, 'validation': candidates, 'base': [], 'trained': [],
+                   'auxiliary': {'base': [], 'trained': []},
                    'trainingExposure': smoke['checkpointVerification']['sourceSampling'],
-                   'trainingSupervisedTokens': smoke['supervisedLexicalTokens']}
+                   'trainingSupervisedTokens': smoke['supervisedLexicalTokens'],
+                   'selectedCheckpointReceipt': selected_receipt,
+                   'selectedCheckpointSupervisedTokens': sum(row['denominators']['lexical'] for row in
+                       smoke['trainingSummary'] if row['step'] <= choice['step'])}
             runs.append(run)
             for index, frozen_case in enumerate(experiment['test']):
                 case = {**frozen_case, 'index': index}
                 for arm, origin, bundle in [('base', 'fixed-weights', base), ('trained', 'trained', trained)]:
                     run[arm].append(SMOKE.rollout(case, origin, bundle, consumer,
                         root / f'seed-{seed}' / 'test', args, env))
+                    SMOKE.write_json(root / 'measured-runs.json', runs)
+                    record(completedRollouts=report['completedRollouts'] + 1)
+            for index, frozen_case in enumerate(experiment.get('auxiliary', [])):
+                case = {**frozen_case, 'index': index}
+                for arm, origin, bundle in [('base', 'fixed-weights', base), ('trained', 'trained', trained)]:
+                    run['auxiliary'][arm].append(SMOKE.rollout(case, origin, bundle, consumer,
+                        root / f'seed-{seed}' / 'auxiliary', args, env))
                     SMOKE.write_json(root / 'measured-runs.json', runs)
                     record(completedRollouts=report['completedRollouts'] + 1)
         comparison = summarize_learning(experiment, runs)

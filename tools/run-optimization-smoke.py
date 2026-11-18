@@ -289,8 +289,19 @@ def generated_token_cost(profile, actual=None, codec=None):
     successful_calls = sum(row.get('operation') == 'select' and row.get('ok') is True and
                            row.get('selectionAuthority') is not None for row in profile.get('records', []))
     recorded_selections = len(actual.get('selections', [])) if actual is not None else 0
+    failed_calls = [row for row in profile.get('records', []) if row.get('operation') == 'select' and row.get('ok') is False]
+    # complete=True in the serving profile only means RPC rows were retained.
+    # A runtime/OOM exception may interrupt decoding before original token IDs
+    # become a reply. Only the pinned adapter's explicit SemanticSelectionError
+    # with complete original fragments closes that failed decoder stream.
+    failed_emissions_complete = all(
+        (row.get('failure') or {}).get('category') == 'SemanticSelectionError' and
+        isinstance(((row.get('failure') or {}).get('evidence') or {}).get('fragments'), list) and
+        bool(row['failure']['evidence']['fragments']) and
+        all(isinstance(fragment.get('emittedTokenIds'), list) for fragment in row['failure']['evidence']['fragments'])
+        for row in failed_calls)
     complete = (profile.get('complete') is True and profile.get('droppedRecords') == 0 and
-                recorded_selections >= successful_calls)
+                recorded_selections >= successful_calls and failed_emissions_complete)
     return {'generatedTokens': sum(len(tokens) for tokens, _ in events.values()),
             'decoderEvents': len(events), 'complete': complete,
             'scope': 'original-native-emitted-token-ids' if complete else 'retained-native-token-lower-bound'}
@@ -429,6 +440,10 @@ def main():
                     args.initialization_seed != experiment['initializationSeed'] or
                     producer_revision != experiment['producerRevision']):
                 raise ValueError('Actual training inputs differ from the frozen experiment')
+            if experiment.get('rolloutBudget') is not None and (
+                    args.rollout_tokens != experiment['rolloutBudget']['tokensPerDecision'] or
+                    args.rollout_timeout != experiment['rolloutBudget']['secondsPerCase']):
+                raise ValueError('Actual inference caps differ from the frozen budget')
             record(experimentSha256=sha256(args.experiment), experimentPath=str(args.experiment.resolve()))
         manifest, selected = choose_candidates(corpus, args.examples, experiment)
         record(initializationSeed=args.initialization_seed, optimizerSeed=args.seed,

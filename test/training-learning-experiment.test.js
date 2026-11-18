@@ -41,3 +41,31 @@ test('frozen admission selection covers components before repeated variants',()=
   assert.deepEqual(diverseSubset(rows,4).map(row=>row.id),['a0','b0','c0','a1']);
   assert.deepEqual(diverseSubset([...rows].reverse(),3),diverseSubset(rows,3));
 });
+
+test('reserved known-source inputs and fixtures retain train components and separate slice labels',async()=>{
+  const {scenarioIdentity,selectAuxiliaryCases}=await import('../tools/freeze-learning-experiment.mjs');
+  const request={program:{source:'"use strict";async function run(x){return await host.readAsync(x);}',entry:'run'},
+    invocation:{inputGraph:{roots:[['str','key']],objects:[]},receiverValue:['undefined'],
+      completionPolicy:'await-returned-promise',realmPolicy:'fresh'},
+    fixture:{calls:[{operation:'demo.readAsync',arguments:['key'],result:7},
+      {operation:'demo.readAsync',arguments:['other'],result:8}],settlementOrder:[0,1]}};
+  const base={id:'optimized',family:'family',sourceCluster:'component:source',split:'train',
+    scenario:scenarioIdentity(request),slices:['new-source','effects']};
+  const candidate=(id,change)=>{const modified=structuredClone(request);change(modified);
+    return {...base,id,scenario:scenarioIdentity(modified),envelope:{request:modified}};};
+  const duplicate=candidate('duplicate',()=>{});
+  const input=candidate('new-input',r=>{r.invocation.inputGraph.roots=[['str','new-key']];});
+  const observation=candidate('new-observation',r=>{r.fixture.calls[0].result=99;});
+  const schedule=candidate('new-schedule',r=>{r.fixture.settlementOrder=[1,0];});
+  const wrapper=candidate('new-wrapper',r=>{r.program.source='"use strict";function run(x){return x+1;}';});
+  const heldout={...input,id:'heldout',split:'test'};
+  const result=selectAuxiliaryCases([duplicate,input,observation,schedule,wrapper,heldout],[base],10);
+  assert.equal(result.available,3);
+  assert.deepEqual(result.selected.map(row=>row.auxiliarySlices),[
+    ['new-inputs-known-source'],['different-observations'],['different-schedules']]);
+  for(const row of result.selected){
+    assert.equal(row.split,'train');assert.equal(row.sourceCluster,base.sourceCluster);
+    assert.equal(row.matchedTrainingId,'optimized');assert(!row.slices.includes('new-source'));
+  }
+  assert.equal(selectAuxiliaryCases([input],[base,input],10).available,0);
+});
