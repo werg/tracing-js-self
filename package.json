@@ -94,7 +94,10 @@
     "training:inspect": "node tools/inspect-selected-harness.mjs",
     "training:session-campaign": "node tools/semantic-session-campaign.mjs",
     "contracts:check": "node tools/generate-host-contract.mjs --check && node tools/generate-semantic-contract.mjs --check",
-    "test:browser": "node --test test/browser/selected-dom.test.mjs"
+    "test:browser": "node --test test/browser/selected-dom.test.mjs",
+    "baseline:v5": "node tools/current-v5-baseline.mjs",
+    "coverage:current": "node tools/generate-capability-ledger.mjs",
+    "oracle:install": "npm ci --prefix tools/spec-oracle --ignore-scripts --no-audit --no-fund"
   },
   "bin": {
     "tracing-js-self": "./bin/tracing.js"
