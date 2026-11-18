@@ -1,0 +1,227 @@
+{
+  "schema": "semantic-frozen-qualification/2",
+  "status": "passed-with-explicit-profile-refusals",
+  "completedAt": "2026-11-18T16:00:44.196350+00:00",
+  "producerRevision": "c2a64424d052f9b90a340a59a8d74cf5564e47aa",
+  "producerTree": "8a862717d8f3ba17a1c2c904947abb86a6b4c198",
+  "consumerRevision": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+  "consumerTree": "9c0a5e5a61e8b79d3fd03f461a84abec49ea72e8",
+  "unitTests": {
+    "cancelled": 0,
+    "fail": 0,
+    "pass": 945,
+    "skipped": 0,
+    "tests": 945,
+    "todo": 0
+  },
+  "unitWallSeconds": 159.8845245770026,
+  "unitPeakChildRssBytes": 536412160,
+  "referenceFixture": {
+    "passed": [
+      "getterReadOnce",
+      "bufferCoherenceAcrossCallback",
+      "synchronousThrowPreserved",
+      "reverseCompletionOrder",
+      "internalAwaitSuspends",
+      "permittedBatchingEquivalent",
+      "transcriptStoreDoesNotRepeatMockEffect",
+      "duplicateConversionDetected"
+    ],
+    "result": {
+      "answer": 47,
+      "caught": "fixture boom",
+      "memory": 7,
+      "optionReads": 1
+    }
+  },
+  "actualOsIsolationTests": {
+    "names": [
+      "OS confinement survives direct access to Node filesystem, networking and process APIs",
+      "isolated original and instrumented references pass the source gate and bind the executed policy"
+    ],
+    "passed": 2
+  },
+  "nativeCoordinator": {
+    "testsPassed": 5,
+    "independentValidationPassed": true,
+    "controlledCompletions": 2,
+    "expectedRefusals": 3,
+    "includesActualInitializedModelRefusal": true,
+    "reusedModelSourceProducer": "881664b98ec9d484f9f4775d0b40a3a2b1b81174",
+    "reusedModelSourceConsumer": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+    "reusedModelIdentity": "c7d9040ec72553cf84d1030bd8481b0f03dcfaeb989b2e347239aee135aa0943",
+    "modelPayloadsUnchanged": true
+  },
+  "pythonNativeConsumerTools": {
+    "failed": 0,
+    "passed": 56,
+    "skipped": 0
+  },
+  "pythonReleaseRegressions": {
+    "errors": 0,
+    "failed": 0,
+    "passed": 85,
+    "skipped": 6,
+    "skippedCases": [
+      "test.test_diagnostic_evidence.ActualBundleTampering.test_actual_original_bundle_passes",
+      "test.test_diagnostic_evidence.ActualBundleTampering.test_declared_input_subset_cannot_omit_an_actual_training_member",
+      "test.test_diagnostic_evidence.ActualBundleTampering.test_model_version_cannot_be_relabelled",
+      "test.test_diagnostic_evidence.ActualBundleTampering.test_rehashed_model_config_cannot_replace_checkpoint_config",
+      "test.test_diagnostic_evidence.ActualBundleTampering.test_rehashed_served_tokenizer_cannot_replace_frozen_codec",
+      "test.test_diagnostic_evidence.ActualBundleTampering.test_rehashed_transducer_bank_cannot_replace_checkpoint_bank"
+    ],
+    "total": 91
+  },
+  "originalArtifactRegressions": {
+    "passed": 14,
+    "skipped": 0,
+    "toolProducerRevision": "c2a64424d052f9b90a340a59a8d74cf5564e47aa",
+    "originalModelProducerRevision": "c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39",
+    "originalConsumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+    "originalModelPayloadsUnchanged": true
+  },
+  "capabilityProbeCount": 49,
+  "capabilityStages": {
+    "frontend": {
+      "total": 49,
+      "attempted": 49,
+      "passed": 43,
+      "failed": 0,
+      "unsupported": 6,
+      "resource_limited": 0,
+      "untested": 0
+    },
+    "ownedEvaluation": {
+      "total": 49,
+      "attempted": 43,
+      "passed": 41,
+      "failed": 0,
+      "unsupported": 2,
+      "resource_limited": 0,
+      "untested": 6
+    },
+    "independentOutcome": {
+      "total": 49,
+      "attempted": 41,
+      "passed": 40,
+      "failed": 1,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 8
+    },
+    "independentIntermediate": {
+      "total": 49,
+      "attempted": 40,
+      "passed": 40,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 9
+    },
+    "v5ProjectionAndPublicReplay": {
+      "total": 49,
+      "attempted": 41,
+      "passed": 41,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 8
+    },
+    "nativeAdmission": {
+      "total": 49,
+      "attempted": 40,
+      "passed": 40,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 9
+    },
+    "modelEvaluation": {
+      "total": 49,
+      "attempted": 0,
+      "passed": 0,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 49
+    }
+  },
+  "nativeReferenceMode": "trusted-process",
+  "capabilityReportSha256": "b63dbbdf053e099a9408cd451991bf7bd69113308e1c0806bf2f9271c0e36918",
+  "retainedNativeFiles": 120,
+  "retainedNativeBytes": 14132251,
+  "nativeLadderWallSeconds": 147.36243778800053,
+  "nativeLadderPeakChildRssBytes": 383029248,
+  "temporaryPythonRegressionFixture": {
+    "aggregateCountScope": "Not instrumented; two updates are established per synthetic fixture, not asserted as a process-wide aggregate.",
+    "aggregateInitializationCount": null,
+    "aggregateOptimizerUpdateCount": null,
+    "loss": "sum of the first model parameter tensor",
+    "modelExperimentEvidence": false,
+    "optimizerUpdatesPerFixture": 2,
+    "passedTestsUsingFixture": 20,
+    "purpose": "Validate real checkpoint/served/budget bindings and reject copied or rehashed artifact tampering",
+    "retainedReleaseModelsChanged": false,
+    "scope": "module",
+    "source": "test/test_learning_artifacts.py",
+    "sourceSha256": "8414c3de50b14a97a75d050c6b7ec2a4db2143c883c7af062d63080d8f718d95",
+    "temporaryModelInitialization": true,
+    "tokenizer": "synthetic 256-token byte-alphabet fixture"
+  },
+  "newSemanticLearningExperiment": false,
+  "historicalDatasetsRequalified": false,
+  "learnedSuccess": null,
+  "scope": "Fresh integrated I unit/fixture/coordinator/Python and finite native gates. Feature-level model stages remain untested. Temporary synthetic unit-fixture optimizer work is recorded separately; no new semantic-learning experiment or historical dataset/model requalification is claimed. Resource maxima are per reported child scope, not aggregate process-tree quotas.",
+  "sourceReceipts": [
+    {
+      "path": "frozen-producer.json",
+      "bytes": 772,
+      "sha256": "2d55fc21d607f6c1ab96c7219c2e6e4a0e62c0d7a6d9121f29b1c63bae2f1683"
+    },
+    {
+      "path": "native-environment.json",
+      "bytes": 2318,
+      "sha256": "13bc5598adf1ec87e691fa6ed5596ae5e4d7fbb6de550c36747de900f1bcd75a"
+    },
+    {
+      "path": "environment-process.json",
+      "bytes": 1214,
+      "sha256": "6e878c6a9fee1809d52a3e7c2a12024bc035e320efc53f00be6be7345550f745"
+    },
+    {
+      "path": "integration-qualification-v2.json",
+      "bytes": 10116,
+      "sha256": "658cda766d75aec907b3b4ae3f5a9521499623d90fd53fb9fe087806528f070c"
+    },
+    {
+      "path": "integration-file-index-v2.json",
+      "bytes": 5266,
+      "sha256": "a79821543a8b12ae3789d1dc3693d6b472ffcad56c45056f0792c2b1532cc1d2"
+    },
+    {
+      "path": "integration-scope-clarification.json",
+      "bytes": 2802,
+      "sha256": "19521b4186dc86a800a2dc0f70313db03f15f6761c6b2a5364531cc175dd40bd"
+    },
+    {
+      "path": "native-qualification.json",
+      "bytes": 3485,
+      "sha256": "40524cfa657c791e74183e681d46768548cae24ddcb9a936f57855ce4df81b23"
+    },
+    {
+      "path": "capabilities.json",
+      "bytes": 98284,
+      "sha256": "b63dbbdf053e099a9408cd451991bf7bd69113308e1c0806bf2f9271c0e36918"
+    },
+    {
+      "path": "capabilities-process.json",
+      "bytes": 932,
+      "sha256": "2b2a005b46dcf01cf812e0b5e60e57fdced1ab1458ddff2ffa85046c11896c3d"
+    },
+    {
+      "path": "capability-retention.json",
+      "bytes": 49509,
+      "sha256": "a1506fbe02ab282b4c484ab2f11df918508a236dd60083202a97efb34ef82950"
+    }
+  ]
+}
