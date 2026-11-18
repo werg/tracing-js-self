@@ -1,0 +1,4970 @@
+{
+  "schema": "optimization-smoke/1",
+  "status": "completed",
+  "evidenceKind": "newly-initialized-cpu-optimization-diagnostic",
+  "stage": "P1",
+  "purpose": "diagnostic",
+  "split": "train",
+  "generalizationClaim": false,
+  "injectedSelections": false,
+  "candidateSelection": "round-robin families; smallest generated-token count then public bytes within each family",
+  "requestedSteps": 32,
+  "seed": 17,
+  "optimizerSteps": 32,
+  "phase": "complete",
+  "producerRevision": "c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39",
+  "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+  "runnerRevision": "d8f582b5fe6a2d1c44187bbfa6378e7eaa560667",
+  "runnerSha256": "b21bc9dfcad5493ff39aae084d717710d8448bd71a0046c9591926c07c925b6c",
+  "caseBuilderSha256": "2143a92cd7b6688e4fea27b7726672fb11aa2c7d9b3fc971204ac34b7fe11132",
+  "sourceCorpora": [
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/training-v4",
+      "manifestSha256": "aef73b80a3a95ac047ba5d4d921e8c7e72017eb2a00cff2a439ad717865e7fa1",
+      "producerRevision": "c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39",
+      "counts": {
+        "attempted": 50,
+        "admitted": 50,
+        "locally_verified": 0
+      }
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering",
+      "manifestSha256": "9b2e1edec0897fca6d5757b42655181bdc56a0f6bb52be882ca04968ed987a21",
+      "producerRevision": "c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39",
+      "counts": {
+        "attempted": 25,
+        "admitted": 25,
+        "locally_verified": 0
+      }
+    }
+  ],
+  "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+  "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+  "examples": 32,
+  "families": [
+    "async-counter",
+    "compound-effectful",
+    "compound-pure",
+    "dom-mutation-release",
+    "http-response-stream",
+    "native-result-graph",
+    "natlang-cell-call",
+    "observed-branch",
+    "owned-callback",
+    "owned-microtask",
+    "platform-observation",
+    "promise-cleanup",
+    "promise-reaction",
+    "semantic-recipe:absolute-distance",
+    "semantic-recipe:capped-budget",
+    "semantic-recipe:flag-intersection",
+    "semantic-recipe:flag-union",
+    "semantic-recipe:midpoint",
+    "semantic-recipe:modular-clock",
+    "semantic-recipe:overtime-rate",
+    "semantic-recipe:parity-adjustment",
+    "semantic-recipe:rectangle-perimeter",
+    "semantic-recipe:rectangular-capacity",
+    "semantic-recipe:relative-growth",
+    "semantic-recipe:triangular-series",
+    "semantic-recipe:unit-conversion",
+    "semantic-recipe:weighted-average",
+    "synchronous-error",
+    "two-outstanding"
+  ],
+  "inputIdentities": [
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/counter-0.json",
+      "sha256": "0f55d6880bafee19888e8a060cfc2b7a6cb6ec77757bb5efe4388bb466d91396"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/compound-effectful.json",
+      "sha256": "715f1e03614e79ac3695c537e4255e8563a34d3f7d8f119d008878afa11e3d32"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/compound-pure.json",
+      "sha256": "29b713bd5569841845ee1599eb79ace1cae6f07056f690af2dfc2209796c0a78"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/dom-mutation-release.json",
+      "sha256": "bccdeefd25938ec2d2109bf270c9b37f90a101f1aa5598371c0f58335d2c3e78"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/http-response-stream.json",
+      "sha256": "254c116df447c0874f3ffaeaca253df2da577862194942a5c7001347b91f6cff"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/native-result-graph.json",
+      "sha256": "942b153e33dabc27030836208ca15f472c4bdc57b2c8aadd1f069704e0facb22"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/natlang-cell-call.json",
+      "sha256": "440e203429084aed6ade7e9b3e6766251e2639b156e56516cf5f9407cbed2a7f"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/branch-1.json",
+      "sha256": "964f146f53311cc9b6cf34db5d492c32d85924f2710be0098626792d3ffc5755"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/callback-captured-write.json",
+      "sha256": "4516860c7cc5562c887cc1dca54f90c85489ccadc44bb37e4f5caad27b698759"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/owned-microtask.json",
+      "sha256": "da65c4deeee3dda53e4acfb076d69dde1bd8c905d82e5dcf813960f97456de28"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/clock-console.json",
+      "sha256": "fd9eff3aa6bc4660d0e996fb0aa23e328736d374db4949fcc5e0dead4ca18285"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/promise-rejection-finally.json",
+      "sha256": "99866db75046b6ce25ec8737cadaac91a72df44fb2831e605b19590a2dc62470"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/promise-reaction.json",
+      "sha256": "85aa592c159983184c7fbaa5b7406337f7f678c772a6e5acefd87daef7953d9a"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/training-v4/absolute-distance-pure.json",
+      "sha256": "5098f5407acd5f89332fa02b163b666dd26e2a9660f1ae711deb6ab8f4752a2e"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/training-v4/capped-budget-pure.json",
+      "sha256": "5f93532365e8fd6426f0bf8a8f36d228a5effe0b29a9d18c8f2a42472865d3fa"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/training-v4/flag-intersection-pure.json",
+      "sha256": "db62bb182917cdda366ad34bdfefe61c056ad048ee44d10c9a40a862d8e70979"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/training-v4/flag-union-pure.json",
+      "sha256": "03ad4f0ce16697901df3e07c55f28e13cd82ff2171b5b4a90f0b504405026bc1"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/training-v4/midpoint-pure.json",
+      "sha256": "7a8f98671531207bb8cd9405f263005a686f86469102e66b189c9f1205c5d9dc"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/training-v4/modular-clock-pure.json",
+      "sha256": "c49ff210ebf5b7ef0de985a3f85065d4ada4bd03e04b34926efa69f66ec47672"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/training-v4/overtime-rate-pure.json",
+      "sha256": "3f1c76f7935553788b016cdd6b930642dcd38560113e5767919c476eb245f4d7"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/training-v4/parity-adjustment-pure.json",
+      "sha256": "50985b9ecd2d48437996bcd49f8dc5b7efe388828a925f7fec5552b90dfee85f"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/training-v4/rectangle-perimeter-pure.json",
+      "sha256": "4455177b6028b537bd1a6d254d8f549528330176a7b5e9ffd4dee4cbe76a0014"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/training-v4/rectangular-capacity-pure.json",
+      "sha256": "e7de6198c733312b4667732429cd72aa164cefd8a33a3d84f50b11d02648bf65"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/training-v4/relative-growth-pure.json",
+      "sha256": "d34059366bfe91c6c8c942f8139e0a6206d6377a31bea477741695038540e329"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/training-v4/triangular-series-pure.json",
+      "sha256": "f199c8fadeaa2fbd80b779dc456a4b755f8c66f22badaba3e8ed2adf0825b9a0"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/training-v4/unit-conversion-pure.json",
+      "sha256": "cc4825541ee768b276308ae6275d73ad8c22c60870d3745df1964fe61dfa51b7"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/training-v4/weighted-average-pure.json",
+      "sha256": "8eb5a472800754954f3681088397f7c9773e0a719cca7c08c4de908d912aba8d"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/sync-rejection.json",
+      "sha256": "79200472442e47d7380b71ca763d1c632fa48c949bbc9dd0672fd1c01afee7e1"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/two-pending-reversed.json",
+      "sha256": "4fffe27b0c9d36c85da7e5feaf017cc766c252094c1d379fb1dc377ca714e43f"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/checkpoint-source-reread.json",
+      "sha256": "d8422c8692589e3c8485b2389717a58efa49964fc398c79a28a3fe10c6471590"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/branch-0.json",
+      "sha256": "234be575ab5e2cd6855274779e790d7dec8da7e2552ac36f66eece9e54746a10"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/training-v4/absolute-distance-repeated.json",
+      "sha256": "0543481181c64f19a961ee8f42a7137a85496207979d1a2438e61f30ebc21058"
+    }
+  ],
+  "preparedFingerprint": "606b38a10f8d302a9bbe2b8d750ace8a9d1692c288321ee86fedb8441898bfb8",
+  "preparation": {
+    "schema": "semantic-preparation/4",
+    "producerRevision": "c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39",
+    "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+    "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+    "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+    "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "representation": "compact",
+    "splitSeed": "semantic-family/4",
+    "maxPositions": 1024,
+    "maxHistory": 1024,
+    "counts": {
+      "attempted": 32,
+      "accepted_candidate": 32,
+      "admitted": 32
+    },
+    "accepted": 32,
+    "familySplits": {
+      "async-counter": "train",
+      "compound-effectful": "train",
+      "compound-pure": "train",
+      "dom-mutation-release": "train",
+      "http-response-stream": "train",
+      "native-result-graph": "train",
+      "natlang-cell-call": "train",
+      "observed-branch": "train",
+      "owned-callback": "train",
+      "owned-microtask": "train",
+      "platform-observation": "train",
+      "promise-cleanup": "train",
+      "promise-reaction": "train",
+      "semantic-recipe:absolute-distance": "train",
+      "semantic-recipe:capped-budget": "train",
+      "semantic-recipe:flag-intersection": "train",
+      "semantic-recipe:flag-union": "train",
+      "semantic-recipe:midpoint": "train",
+      "semantic-recipe:modular-clock": "train",
+      "semantic-recipe:overtime-rate": "train",
+      "semantic-recipe:parity-adjustment": "train",
+      "semantic-recipe:rectangle-perimeter": "train",
+      "semantic-recipe:rectangular-capacity": "train",
+      "semantic-recipe:relative-growth": "train",
+      "semantic-recipe:triangular-series": "train",
+      "semantic-recipe:unit-conversion": "train",
+      "semantic-recipe:weighted-average": "train",
+      "synchronous-error": "train",
+      "task:two-pending-reversed": "train"
+    },
+    "refusals": [],
+    "optimizerSteps": 0
+  },
+  "lossMaskCounts": {
+    "observedRecords": 221,
+    "observedTokens": 40690,
+    "observedScoredTokens": 0,
+    "maxGeneratedTokens": 177,
+    "generatedRecords": 320,
+    "generatedTokens": 9379,
+    "generatedScoredTokens": 9379
+  },
+  "dataLoading": {
+    "losslessRegistryInterning": true,
+    "registryOccurrences": 68,
+    "duplicateRegistrySerializedBytes": 135502609,
+    "distinctRegistries": 1,
+    "processPeakRssBytesBeforeModelRuntime": 1164791808
+  },
+  "initialCheckpoint": "/workspace/scratch/23f61543c052/release-evidence/optimization-smoke-retry/initialization/initialized-untrained",
+  "baseBundle": {
+    "bundle": "/workspace/scratch/23f61543c052/release-evidence/optimization-smoke-retry/served-base",
+    "format_version": 16,
+    "control_schema_version": 2,
+    "model_sha256": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+    "transducer_sha256": "76844b0b240f9539631944096ccc29dd269647e2c50fc11298ae7cd439aa0d37",
+    "config_sha256": "56a76a8694c212a3f0b5c87e51f377e142eb84a971cf0e736f7f55ed891620c3",
+    "codec_file": "tokenizer.json",
+    "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "chunking": {
+      "config": {
+        "target_tokens": 512,
+        "soft_max_tokens": 768,
+        "hard_max_tokens": 1024,
+        "max_bytes": 16384,
+        "version": "recursive-parser-v2",
+        "parser_backend": "tree_sitter",
+        "chat_template": "auto",
+        "use_icu": false,
+        "limits": {
+          "max_depth": 12,
+          "max_nodes": 100000,
+          "max_parse_bytes": 1048576,
+          "max_regions": 20000,
+          "max_injections": 2048,
+          "max_tree_depth": 128,
+          "max_parse_milliseconds": 0,
+          "isolate_native": true,
+          "worker_timeout_ms": 5000
+        },
+        "planner_max_edges": 64,
+        "tree_distance_budget": 4.0,
+        "tree_distance_weight": 0.15,
+        "code_tree_scale": 1.5
+      },
+      "config_fingerprint": "a27349660d498c535e0a8af5bd6c6e126a69c67a1a4e0398193e1dc832933277",
+      "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "parsers": {
+        "implementation": "37d0fe140981a40d4dffe07c77f0e3030e0e463e7af7c67b7c86fe29080a10c8",
+        "syntax": {
+          "registry": "offline-grammar-registry-v1",
+          "backend": "tree_sitter",
+          "network": "disabled",
+          "tree_sitter": "0.25.2",
+          "tree_sitter_language_pack": "0.13.0",
+          "grammar_dependencies": {
+            "tree-sitter-c-sharp": "0.23.5",
+            "tree-sitter-yaml": "0.7.2",
+            "tree-sitter-embedded-template": "0.25.0"
+          },
+          "markdown_it_py": "4.0.0",
+          "providers": []
+        },
+        "prose": {
+          "rules": "unicode-prose-v1",
+          "uniseg": "0.10.1",
+          "unicode": "16.0.0",
+          "icu": null
+        },
+        "chat": {
+          "version": "chat-framing-v1",
+          "templates": {
+            "chatml": {
+              "name": "chatml",
+              "start": "3c7c696d5f73746172747c3e",
+              "separator": "0a",
+              "ends": [
+                "3c7c696d5f656e647c3e"
+              ],
+              "prefixes": [],
+              "aliases": [
+                "qwen"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 0,
+              "allow_named_tools": false,
+              "mode": "delimited"
+            },
+            "deepseek": {
+              "name": "deepseek",
+              "start": "3cefbd9c55736572efbd9c3e",
+              "separator": "3cefbd9c417373697374616e74efbd9c3e",
+              "ends": [
+                "3cefbd9c656e64e296816f66e2968173656e74656e6365efbd9c3e"
+              ],
+              "prefixes": [
+                "3cefbd9c626567696ee296816f66e2968173656e74656e6365efbd9c3e"
+              ],
+              "aliases": [
+                "deepseek-v3",
+                "deepseek-r1"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 0,
+              "allow_named_tools": false,
+              "mode": "deepseek"
+            },
+            "gemma": {
+              "name": "gemma",
+              "start": "3c73746172745f6f665f7475726e3e",
+              "separator": "0a",
+              "ends": [
+                "3c656e645f6f665f7475726e3e"
+              ],
+              "prefixes": [
+                "3c626f733e"
+              ],
+              "aliases": [
+                "gemma2",
+                "gemma3"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 0,
+              "allow_named_tools": false,
+              "mode": "delimited"
+            },
+            "harmony": {
+              "name": "harmony",
+              "start": "3c7c73746172747c3e",
+              "separator": "3c7c6d6573736167657c3e",
+              "ends": [
+                "3c7c656e647c3e",
+                "3c7c72657475726e7c3e",
+                "3c7c63616c6c7c3e"
+              ],
+              "prefixes": [],
+              "aliases": [],
+              "channel_markers": [
+                "3c7c6368616e6e656c7c3e"
+              ],
+              "format_markers": [
+                "3c7c636f6e73747261696e7c3e"
+              ],
+              "body_newlines": 0,
+              "allow_named_tools": true,
+              "mode": "delimited"
+            },
+            "harmony_legacy": {
+              "name": "harmony_legacy",
+              "start": "3c7c696d5f73746172747c3e",
+              "separator": "3c7c696d5f7365707c3e",
+              "ends": [
+                "3c7c696d5f656e647c3e",
+                "3c7c66696d5f7375666669787c3e",
+                "3c7c676869737375657c3e"
+              ],
+              "prefixes": [
+                "3c7c656e646f66746578747c3e"
+              ],
+              "aliases": [],
+              "channel_markers": [
+                "3c7c6d6574615f7365707c3e"
+              ],
+              "format_markers": [
+                "3c7c6d6574615f73746172747c3e"
+              ],
+              "body_newlines": 0,
+              "allow_named_tools": true,
+              "mode": "delimited"
+            },
+            "inst": {
+              "name": "inst",
+              "start": "5b494e53545d",
+              "separator": "5b2f494e53545d",
+              "ends": [
+                "3c2f733e"
+              ],
+              "prefixes": [
+                "3c733e"
+              ],
+              "aliases": [
+                "llama2",
+                "llama-2",
+                "mistral"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 0,
+              "allow_named_tools": false,
+              "mode": "inst"
+            },
+            "llama3": {
+              "name": "llama3",
+              "start": "3c7c73746172745f6865616465725f69647c3e",
+              "separator": "3c7c656e645f6865616465725f69647c3e",
+              "ends": [
+                "3c7c656f745f69647c3e",
+                "3c7c656f6d5f69647c3e",
+                "3c7c656e645f6f665f746578747c3e"
+              ],
+              "prefixes": [
+                "3c7c626567696e5f6f665f746578747c3e"
+              ],
+              "aliases": [
+                "llama-3",
+                "llama3.1",
+                "llama3.2",
+                "llama3.3"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 2,
+              "allow_named_tools": true,
+              "mode": "delimited"
+            },
+            "phi3": {
+              "name": "phi3",
+              "start": "3c7c",
+              "separator": "7c3e",
+              "ends": [
+                "3c7c656e647c3e",
+                "3c7c656e646f66746578747c3e"
+              ],
+              "prefixes": [],
+              "aliases": [
+                "phi-3",
+                "phi4"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 1,
+              "allow_named_tools": false,
+              "mode": "delimited"
+            }
+          }
+        }
+      },
+      "fingerprint": "7cebc47329c000282659ce2f7498e5528a636e79a0d6d6e62ef36c79588a1f87"
+    },
+    "policy_likelihood": "modality_categorical_plus_canonical_facet_gaussian_density",
+    "precision": "fp32",
+    "model_version": 0,
+    "routing_version": 4,
+    "tape_version": "fmt-multitrack-facets-v19",
+    "lifecycle_version": 2,
+    "output_modalities": [
+      "text"
+    ],
+    "event_addressing": "independent_peer_events",
+    "checkpoint_sha256": "1e72b5c00d2554a1c0d5c732d48b0cf8936ddb1c5185dc56a10959fcd34d62db",
+    "parameters": 4068312,
+    "training_heads": false,
+    "retrospective_writes": true,
+    "packs_fingerprint": null,
+    "tokenizer_sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "servedReloadExact": true
+  },
+  "trainedBundle": {
+    "bundle": "/workspace/scratch/23f61543c052/release-evidence/optimization-smoke-retry/served-trained",
+    "format_version": 16,
+    "control_schema_version": 2,
+    "model_sha256": "02273b9cce316a0c5960d49723037439ba3afa0e704ea7bf02b97054f315114e",
+    "transducer_sha256": "ed4ed4a9cb5298049eacb1c5b6d3cc8a8613e1e525fec1fc5d47441fabb6d670",
+    "config_sha256": "56a76a8694c212a3f0b5c87e51f377e142eb84a971cf0e736f7f55ed891620c3",
+    "codec_file": "tokenizer.json",
+    "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "chunking": {
+      "config": {
+        "target_tokens": 512,
+        "soft_max_tokens": 768,
+        "hard_max_tokens": 1024,
+        "max_bytes": 16384,
+        "version": "recursive-parser-v2",
+        "parser_backend": "tree_sitter",
+        "chat_template": "auto",
+        "use_icu": false,
+        "limits": {
+          "max_depth": 12,
+          "max_nodes": 100000,
+          "max_parse_bytes": 1048576,
+          "max_regions": 20000,
+          "max_injections": 2048,
+          "max_tree_depth": 128,
+          "max_parse_milliseconds": 0,
+          "isolate_native": true,
+          "worker_timeout_ms": 5000
+        },
+        "planner_max_edges": 64,
+        "tree_distance_budget": 4.0,
+        "tree_distance_weight": 0.15,
+        "code_tree_scale": 1.5
+      },
+      "config_fingerprint": "a27349660d498c535e0a8af5bd6c6e126a69c67a1a4e0398193e1dc832933277",
+      "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "parsers": {
+        "implementation": "37d0fe140981a40d4dffe07c77f0e3030e0e463e7af7c67b7c86fe29080a10c8",
+        "syntax": {
+          "registry": "offline-grammar-registry-v1",
+          "backend": "tree_sitter",
+          "network": "disabled",
+          "tree_sitter": "0.25.2",
+          "tree_sitter_language_pack": "0.13.0",
+          "grammar_dependencies": {
+            "tree-sitter-c-sharp": "0.23.5",
+            "tree-sitter-yaml": "0.7.2",
+            "tree-sitter-embedded-template": "0.25.0"
+          },
+          "markdown_it_py": "4.0.0",
+          "providers": []
+        },
+        "prose": {
+          "rules": "unicode-prose-v1",
+          "uniseg": "0.10.1",
+          "unicode": "16.0.0",
+          "icu": null
+        },
+        "chat": {
+          "version": "chat-framing-v1",
+          "templates": {
+            "chatml": {
+              "name": "chatml",
+              "start": "3c7c696d5f73746172747c3e",
+              "separator": "0a",
+              "ends": [
+                "3c7c696d5f656e647c3e"
+              ],
+              "prefixes": [],
+              "aliases": [
+                "qwen"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 0,
+              "allow_named_tools": false,
+              "mode": "delimited"
+            },
+            "deepseek": {
+              "name": "deepseek",
+              "start": "3cefbd9c55736572efbd9c3e",
+              "separator": "3cefbd9c417373697374616e74efbd9c3e",
+              "ends": [
+                "3cefbd9c656e64e296816f66e2968173656e74656e6365efbd9c3e"
+              ],
+              "prefixes": [
+                "3cefbd9c626567696ee296816f66e2968173656e74656e6365efbd9c3e"
+              ],
+              "aliases": [
+                "deepseek-v3",
+                "deepseek-r1"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 0,
+              "allow_named_tools": false,
+              "mode": "deepseek"
+            },
+            "gemma": {
+              "name": "gemma",
+              "start": "3c73746172745f6f665f7475726e3e",
+              "separator": "0a",
+              "ends": [
+                "3c656e645f6f665f7475726e3e"
+              ],
+              "prefixes": [
+                "3c626f733e"
+              ],
+              "aliases": [
+                "gemma2",
+                "gemma3"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 0,
+              "allow_named_tools": false,
+              "mode": "delimited"
+            },
+            "harmony": {
+              "name": "harmony",
+              "start": "3c7c73746172747c3e",
+              "separator": "3c7c6d6573736167657c3e",
+              "ends": [
+                "3c7c656e647c3e",
+                "3c7c72657475726e7c3e",
+                "3c7c63616c6c7c3e"
+              ],
+              "prefixes": [],
+              "aliases": [],
+              "channel_markers": [
+                "3c7c6368616e6e656c7c3e"
+              ],
+              "format_markers": [
+                "3c7c636f6e73747261696e7c3e"
+              ],
+              "body_newlines": 0,
+              "allow_named_tools": true,
+              "mode": "delimited"
+            },
+            "harmony_legacy": {
+              "name": "harmony_legacy",
+              "start": "3c7c696d5f73746172747c3e",
+              "separator": "3c7c696d5f7365707c3e",
+              "ends": [
+                "3c7c696d5f656e647c3e",
+                "3c7c66696d5f7375666669787c3e",
+                "3c7c676869737375657c3e"
+              ],
+              "prefixes": [
+                "3c7c656e646f66746578747c3e"
+              ],
+              "aliases": [],
+              "channel_markers": [
+                "3c7c6d6574615f7365707c3e"
+              ],
+              "format_markers": [
+                "3c7c6d6574615f73746172747c3e"
+              ],
+              "body_newlines": 0,
+              "allow_named_tools": true,
+              "mode": "delimited"
+            },
+            "inst": {
+              "name": "inst",
+              "start": "5b494e53545d",
+              "separator": "5b2f494e53545d",
+              "ends": [
+                "3c2f733e"
+              ],
+              "prefixes": [
+                "3c733e"
+              ],
+              "aliases": [
+                "llama2",
+                "llama-2",
+                "mistral"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 0,
+              "allow_named_tools": false,
+              "mode": "inst"
+            },
+            "llama3": {
+              "name": "llama3",
+              "start": "3c7c73746172745f6865616465725f69647c3e",
+              "separator": "3c7c656e645f6865616465725f69647c3e",
+              "ends": [
+                "3c7c656f745f69647c3e",
+                "3c7c656f6d5f69647c3e",
+                "3c7c656e645f6f665f746578747c3e"
+              ],
+              "prefixes": [
+                "3c7c626567696e5f6f665f746578747c3e"
+              ],
+              "aliases": [
+                "llama-3",
+                "llama3.1",
+                "llama3.2",
+                "llama3.3"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 2,
+              "allow_named_tools": true,
+              "mode": "delimited"
+            },
+            "phi3": {
+              "name": "phi3",
+              "start": "3c7c",
+              "separator": "7c3e",
+              "ends": [
+                "3c7c656e647c3e",
+                "3c7c656e646f66746578747c3e"
+              ],
+              "prefixes": [],
+              "aliases": [
+                "phi-3",
+                "phi4"
+              ],
+              "channel_markers": [],
+              "format_markers": [],
+              "body_newlines": 1,
+              "allow_named_tools": false,
+              "mode": "delimited"
+            }
+          }
+        }
+      },
+      "fingerprint": "7cebc47329c000282659ce2f7498e5528a636e79a0d6d6e62ef36c79588a1f87"
+    },
+    "policy_likelihood": "modality_categorical_plus_canonical_facet_gaussian_density",
+    "precision": "fp32",
+    "model_version": 32,
+    "routing_version": 4,
+    "tape_version": "fmt-multitrack-facets-v19",
+    "lifecycle_version": 2,
+    "output_modalities": [
+      "text"
+    ],
+    "event_addressing": "independent_peer_events",
+    "checkpoint_sha256": "7f9376998b91fd60f3625eb1876be76b9841e5e3c553583e86b728a6dbbea85e",
+    "parameters": 4068312,
+    "training_heads": false,
+    "retrospective_writes": true,
+    "packs_fingerprint": null,
+    "tokenizer_sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "servedReloadExact": true
+  },
+  "initialTrainingState": {
+    "exact": true,
+    "baseCheckpointSha256": "1e72b5c00d2554a1c0d5c732d48b0cf8936ddb1c5185dc56a10959fcd34d62db",
+    "phaseStartCheckpointSha256": "7d65a11ffc7788c0a527bd550b2a8c19f806d1c15dc61adddb11a524f6ee362f",
+    "modelTensorIdentity": "865e158069ef76bdadc37a41c0f69da8ca8c70d5a2742ad6400b6838d9de0a90",
+    "optimizerSteps": 0
+  },
+  "checkpointVerification": {
+    "checkpoint": "/workspace/scratch/23f61543c052/release-evidence/optimization-smoke-retry/training/checkpoints/P1-000000032-periodic",
+    "stateSha256": "7f9376998b91fd60f3625eb1876be76b9841e5e3c553583e86b728a6dbbea85e",
+    "modelTensorIdentity": "0e56670f3811843b502b60717aca1540b3756c3c20334550582f3f56006d8607",
+    "globalStep": 32,
+    "reloadExact": true,
+    "allParametersFinite": true,
+    "counters": {
+      "D": 865,
+      "I": 45188,
+      "P": 1730,
+      "G": 32,
+      "Q": 32,
+      "audio_samples": 0,
+      "video_frames": 0,
+      "image_events": 0,
+      "media_events": 0,
+      "source_bytes": 131099,
+      "record_ingestions": 396,
+      "reconstruction_tokens": 44323,
+      "reconstruction_records": 364,
+      "facet_encodes": 32,
+      "raw_facet_replays": 0,
+      "control_encodes": 0,
+      "scored_windows": 32,
+      "writer_reader_windows": 0
+    },
+    "sourceSampling": {
+      "complete_history": true,
+      "source_windows": {
+        "semantic-harness:62bc2621b9a73985": 5,
+        "semantic-harness:827022c4f589483d": 17,
+        "semantic-harness:b6ff96f3b21c026b": 10
+      }
+    }
+  },
+  "changedParameterCount": 307,
+  "updatedOptimizerOwnerCount": 311,
+  "supervisedLexicalTokens": 865,
+  "trainingSummary": [
+    {
+      "step": 1,
+      "gradientNorm": 2.917222261428833,
+      "gradientDomains": {
+        "encoder": 0.3755301237106323,
+        "model": 1.7603946924209595,
+        "shared": 2.2956857681274414
+      },
+      "loss": {
+        "lexical": 11.99425800030048,
+        "modality": 0.0,
+        "reconstruction": 12.04843961275541,
+        "router_balance": 4.058109760284424,
+        "router_z": 23.641590118408203,
+        "structure": 7.084322929382324,
+        "terminal": 0.5937501788139343
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 13,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 13,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 13,
+        "G": 1,
+        "I": 690,
+        "P": 26,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 3,
+        "reconstruction_tokens": 677,
+        "record_ingestions": 4,
+        "scored_windows": 1,
+        "source_bytes": 1954,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 2,
+      "gradientNorm": 17.583009719848633,
+      "gradientDomains": {
+        "encoder": 0.6272599697113037,
+        "model": 16.046289443969727,
+        "shared": 7.161382675170898
+      },
+      "loss": {
+        "lexical": 12.069842998798077,
+        "modality": 0.0,
+        "reconstruction": 12.327134352463942,
+        "router_balance": 4.053315162658691,
+        "router_z": 23.633764266967773,
+        "structure": 6.917359352111816,
+        "terminal": 0.5809684991836548
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 13,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 13,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 13,
+        "G": 1,
+        "I": 703,
+        "P": 26,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 4,
+        "reconstruction_tokens": 690,
+        "record_ingestions": 5,
+        "scored_windows": 1,
+        "source_bytes": 1989,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 3,
+      "gradientNorm": 3.136455535888672,
+      "gradientDomains": {
+        "encoder": 0.40892690420150757,
+        "model": 2.8672492504119873,
+        "shared": 1.203749656677246
+      },
+      "loss": {
+        "lexical": 12.143036216817876,
+        "modality": 0.0,
+        "reconstruction": 12.126215452788978,
+        "router_balance": 7.112461090087891,
+        "router_z": 47.30860137939453,
+        "structure": 6.783520698547363,
+        "terminal": 0.6352134346961975
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 93,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 93,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 93,
+        "G": 1,
+        "I": 796,
+        "P": 186,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 5,
+        "reconstruction_tokens": 703,
+        "record_ingestions": 6,
+        "scored_windows": 1,
+        "source_bytes": 2250,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 4,
+      "gradientNorm": 9.770442008972168,
+      "gradientDomains": {
+        "encoder": 0.7061963677406311,
+        "model": 9.333540916442871,
+        "shared": 2.8013999462127686
+      },
+      "loss": {
+        "lexical": 11.972592440518467,
+        "modality": 0.0,
+        "reconstruction": 12.002484870679451,
+        "router_balance": 6.102159023284912,
+        "router_z": 38.69972229003906,
+        "structure": 7.041257858276367,
+        "terminal": 0.5549517869949341
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 33,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 33,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 33,
+        "G": 1,
+        "I": 829,
+        "P": 66,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 6,
+        "reconstruction_tokens": 796,
+        "record_ingestions": 7,
+        "scored_windows": 1,
+        "source_bytes": 2320,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 5,
+      "gradientNorm": 24.111501693725586,
+      "gradientDomains": {
+        "encoder": 0.9426852464675903,
+        "model": 22.824626922607422,
+        "shared": 7.71441650390625
+      },
+      "loss": {
+        "lexical": 11.876683553059896,
+        "modality": 0.0,
+        "reconstruction": 12.202134450276693,
+        "router_balance": 3.1100637912750244,
+        "router_z": 17.366397857666016,
+        "structure": 7.00028133392334,
+        "terminal": 0.6184341907501221
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 6,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 6,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 6,
+        "G": 1,
+        "I": 835,
+        "P": 12,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 7,
+        "reconstruction_tokens": 829,
+        "record_ingestions": 8,
+        "scored_windows": 1,
+        "source_bytes": 2341,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 6,
+      "gradientNorm": 4.696623802185059,
+      "gradientDomains": {
+        "encoder": 1.6649857759475708,
+        "model": 2.512758255004883,
+        "shared": 3.6016862392425537
+      },
+      "loss": {
+        "lexical": 12.273893876509232,
+        "modality": 0.0,
+        "reconstruction": 12.3336181640625,
+        "router_balance": 4.132490158081055,
+        "router_z": 23.517135620117188,
+        "structure": 6.821269989013672,
+        "terminal": 0.7229601144790649
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 11,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 11,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 11,
+        "G": 1,
+        "I": 1190,
+        "P": 22,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 4,
+        "reconstruction_tokens": 1179,
+        "record_ingestions": 5,
+        "scored_windows": 1,
+        "source_bytes": 3304,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 7,
+      "gradientNorm": 5.735715866088867,
+      "gradientDomains": {
+        "encoder": 0.30807551741600037,
+        "model": 5.419749736785889,
+        "shared": 1.8519821166992188
+      },
+      "loss": {
+        "lexical": 12.011537905092593,
+        "modality": 0.0,
+        "reconstruction": 12.080878363715279,
+        "router_balance": 6.175265312194824,
+        "router_z": 38.44363784790039,
+        "structure": 6.780535697937012,
+        "terminal": 0.7000397443771362
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 54,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 54,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 54,
+        "G": 1,
+        "I": 1244,
+        "P": 108,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 5,
+        "reconstruction_tokens": 1190,
+        "record_ingestions": 6,
+        "scored_windows": 1,
+        "source_bytes": 3473,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 8,
+      "gradientNorm": 10.252007484436035,
+      "gradientDomains": {
+        "encoder": 0.8830958008766174,
+        "model": 9.566169738769531,
+        "shared": 3.579413890838623
+      },
+      "loss": {
+        "lexical": 12.162450154622396,
+        "modality": 0.0,
+        "reconstruction": 12.185338338216146,
+        "router_balance": 4.090585231781006,
+        "router_z": 23.59701919555664,
+        "structure": 6.915858745574951,
+        "terminal": 0.6316201686859131
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 15,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 15,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 15,
+        "G": 1,
+        "I": 1321,
+        "P": 30,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 7,
+        "reconstruction_tokens": 1306,
+        "record_ingestions": 8,
+        "scored_windows": 1,
+        "source_bytes": 3730,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 9,
+      "gradientNorm": 12.048751831054688,
+      "gradientDomains": {
+        "encoder": 0.33548805117607117,
+        "model": 11.389315605163574,
+        "shared": 3.9170591831207275
+      },
+      "loss": {
+        "lexical": 12.19253992151331,
+        "modality": 0.0,
+        "reconstruction": 12.116597493489584,
+        "router_balance": 5.116945266723633,
+        "router_z": 29.890117645263672,
+        "structure": 7.007481098175049,
+        "terminal": 0.547581672668457
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 27,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 27,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 27,
+        "G": 1,
+        "I": 1348,
+        "P": 54,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 8,
+        "reconstruction_tokens": 1321,
+        "record_ingestions": 9,
+        "scored_windows": 1,
+        "source_bytes": 3820,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 10,
+      "gradientNorm": 6.1836161613464355,
+      "gradientDomains": {
+        "encoder": 0.15121780335903168,
+        "model": 5.768850326538086,
+        "shared": 2.2213973999023438
+      },
+      "loss": {
+        "lexical": 12.151962280273438,
+        "modality": 0.0,
+        "reconstruction": 11.951468467712402,
+        "router_balance": 5.184382438659668,
+        "router_z": 29.759868621826172,
+        "structure": 6.7935686111450195,
+        "terminal": 0.5638943910598755
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 32,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 32,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 32,
+        "G": 1,
+        "I": 1380,
+        "P": 64,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 9,
+        "reconstruction_tokens": 1348,
+        "record_ingestions": 10,
+        "scored_windows": 1,
+        "source_bytes": 3926,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 11,
+      "gradientNorm": 7.115551948547363,
+      "gradientDomains": {
+        "encoder": 0.6033871173858643,
+        "model": 6.546903610229492,
+        "shared": 2.7212233543395996
+      },
+      "loss": {
+        "lexical": 12.098662312825521,
+        "modality": 0.0,
+        "reconstruction": 12.159881591796875,
+        "router_balance": 4.074466228485107,
+        "router_z": 23.559497833251953,
+        "structure": 7.026366710662842,
+        "terminal": 0.5348049998283386
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 15,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 15,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 15,
+        "G": 1,
+        "I": 1395,
+        "P": 30,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 10,
+        "reconstruction_tokens": 1380,
+        "record_ingestions": 11,
+        "scored_windows": 1,
+        "source_bytes": 3964,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 12,
+      "gradientNorm": 7.9058966636657715,
+      "gradientDomains": {
+        "encoder": 0.13729600608348846,
+        "model": 7.342967987060547,
+        "shared": 2.9266316890716553
+      },
+      "loss": {
+        "lexical": 12.125904224537036,
+        "modality": 0.0,
+        "reconstruction": 12.026966236255786,
+        "router_balance": 5.05908727645874,
+        "router_z": 29.83983612060547,
+        "structure": 7.039761543273926,
+        "terminal": 0.6857393980026245
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 27,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 27,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 27,
+        "G": 1,
+        "I": 1422,
+        "P": 54,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 11,
+        "reconstruction_tokens": 1395,
+        "record_ingestions": 12,
+        "scored_windows": 1,
+        "source_bytes": 4065,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 13,
+      "gradientNorm": 8.281062126159668,
+      "gradientDomains": {
+        "encoder": 0.4556499421596527,
+        "model": 7.827939987182617,
+        "shared": 2.663029432296753
+      },
+      "loss": {
+        "lexical": 12.289894104003906,
+        "modality": 0.0,
+        "reconstruction": 12.230564541286892,
+        "router_balance": 5.067272186279297,
+        "router_z": 29.903160095214844,
+        "structure": 7.089868545532227,
+        "terminal": 0.6133043766021729
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 18,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 18,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 18,
+        "G": 1,
+        "I": 1534,
+        "P": 36,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 13,
+        "reconstruction_tokens": 1516,
+        "record_ingestions": 14,
+        "scored_windows": 1,
+        "source_bytes": 4458,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 14,
+      "gradientNorm": 23.66902732849121,
+      "gradientDomains": {
+        "encoder": 0.9891895651817322,
+        "model": 22.835721969604492,
+        "shared": 6.146069049835205
+      },
+      "loss": {
+        "lexical": 12.171666071965145,
+        "modality": 0.0,
+        "reconstruction": 12.235100379356972,
+        "router_balance": 4.104541301727295,
+        "router_z": 23.57133674621582,
+        "structure": 6.99342679977417,
+        "terminal": 0.512786328792572
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 13,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 13,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 13,
+        "G": 1,
+        "I": 1547,
+        "P": 26,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 14,
+        "reconstruction_tokens": 1534,
+        "record_ingestions": 15,
+        "scored_windows": 1,
+        "source_bytes": 4493,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 15,
+      "gradientNorm": 13.40835952758789,
+      "gradientDomains": {
+        "encoder": 0.3486035168170929,
+        "model": 12.700532913208008,
+        "shared": 4.284742832183838
+      },
+      "loss": {
+        "lexical": 12.026522361626059,
+        "modality": 0.0,
+        "reconstruction": 12.036391436043433,
+        "router_balance": 6.139925479888916,
+        "router_z": 38.460533142089844,
+        "structure": 6.896656513214111,
+        "terminal": 0.6382156610488892
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 59,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 59,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 59,
+        "G": 1,
+        "I": 1606,
+        "P": 118,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 15,
+        "reconstruction_tokens": 1547,
+        "record_ingestions": 16,
+        "scored_windows": 1,
+        "source_bytes": 4672,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 16,
+      "gradientNorm": 1.8764042854309082,
+      "gradientDomains": {
+        "encoder": 0.20225776731967926,
+        "model": 1.3054450750350952,
+        "shared": 1.3325906991958618
+      },
+      "loss": {
+        "lexical": 12.111950909649885,
+        "modality": 0.0,
+        "reconstruction": 12.180667453342014,
+        "router_balance": 6.113035678863525,
+        "router_z": 38.62822723388672,
+        "structure": 7.13007926940918,
+        "terminal": 0.6434626579284668
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 54,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 54,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 54,
+        "G": 1,
+        "I": 1817,
+        "P": 108,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 18,
+        "reconstruction_tokens": 1763,
+        "record_ingestions": 19,
+        "scored_windows": 1,
+        "source_bytes": 5400,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 17,
+      "gradientNorm": 2.514995813369751,
+      "gradientDomains": {
+        "encoder": 0.16048312187194824,
+        "model": 1.6984775066375732,
+        "shared": 1.847869873046875
+      },
+      "loss": {
+        "lexical": 12.223642985026041,
+        "modality": 0.0,
+        "reconstruction": 12.203790452745226,
+        "router_balance": 5.177496433258057,
+        "router_z": 29.932878494262695,
+        "structure": 7.089001178741455,
+        "terminal": 0.6057424545288086
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 18,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 18,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 18,
+        "G": 1,
+        "I": 1835,
+        "P": 36,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 19,
+        "reconstruction_tokens": 1817,
+        "record_ingestions": 20,
+        "scored_windows": 1,
+        "source_bytes": 5455,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 18,
+      "gradientNorm": 3.558945417404175,
+      "gradientDomains": {
+        "encoder": 0.5359121561050415,
+        "model": 2.1497111320495605,
+        "shared": 2.785252809524536
+      },
+      "loss": {
+        "lexical": 12.151345147026909,
+        "modality": 0.0,
+        "reconstruction": 12.213556925455729,
+        "router_balance": 5.2725396156311035,
+        "router_z": 29.807781219482422,
+        "structure": 6.901968479156494,
+        "terminal": 0.7157758474349976
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 18,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 18,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 18,
+        "G": 1,
+        "I": 1853,
+        "P": 36,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 20,
+        "reconstruction_tokens": 1835,
+        "record_ingestions": 21,
+        "scored_windows": 1,
+        "source_bytes": 5520,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 19,
+      "gradientNorm": 2.372304677963257,
+      "gradientDomains": {
+        "encoder": 0.1097756177186966,
+        "model": 1.5974524021148682,
+        "shared": 1.7504069805145264
+      },
+      "loss": {
+        "lexical": 12.093178885323661,
+        "modality": 0.0,
+        "reconstruction": 12.118282863071986,
+        "router_balance": 5.099705696105957,
+        "router_z": 29.94145393371582,
+        "structure": 7.081166744232178,
+        "terminal": 0.672919511795044
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 28,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 28,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 28,
+        "G": 1,
+        "I": 1881,
+        "P": 56,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 21,
+        "reconstruction_tokens": 1853,
+        "record_ingestions": 22,
+        "scored_windows": 1,
+        "source_bytes": 5626,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 20,
+      "gradientNorm": 2.6429803371429443,
+      "gradientDomains": {
+        "encoder": 0.1098606288433075,
+        "model": 1.75412118434906,
+        "shared": 1.9739134311676025
+      },
+      "loss": {
+        "lexical": 12.211805555555555,
+        "modality": 0.0,
+        "reconstruction": 12.182457817925346,
+        "router_balance": 5.174777984619141,
+        "router_z": 29.77287483215332,
+        "structure": 7.109527587890625,
+        "terminal": 0.7169532775878906
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 18,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 18,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 18,
+        "G": 1,
+        "I": 1899,
+        "P": 36,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 22,
+        "reconstruction_tokens": 1881,
+        "record_ingestions": 23,
+        "scored_windows": 1,
+        "source_bytes": 5687,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 21,
+      "gradientNorm": 2.808213710784912,
+      "gradientDomains": {
+        "encoder": 0.1648496836423874,
+        "model": 1.7771514654159546,
+        "shared": 2.1680917739868164
+      },
+      "loss": {
+        "lexical": 11.99369642469618,
+        "modality": 0.0,
+        "reconstruction": 12.232420179578993,
+        "router_balance": 5.08233642578125,
+        "router_z": 29.745054244995117,
+        "structure": 7.062883377075195,
+        "terminal": 0.6052820682525635
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 18,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 18,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 18,
+        "G": 1,
+        "I": 1917,
+        "P": 36,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 23,
+        "reconstruction_tokens": 1899,
+        "record_ingestions": 24,
+        "scored_windows": 1,
+        "source_bytes": 5743,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 22,
+      "gradientNorm": 7.333127975463867,
+      "gradientDomains": {
+        "encoder": 0.7192558646202087,
+        "model": 3.4430625438690186,
+        "shared": 6.434497356414795
+      },
+      "loss": {
+        "lexical": 11.997428894042969,
+        "modality": 0.0,
+        "reconstruction": 11.910582224527994,
+        "router_balance": 3.049851894378662,
+        "router_z": 17.360872268676758,
+        "structure": 6.837398052215576,
+        "terminal": 0.6715368628501892
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 6,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 6,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 6,
+        "G": 1,
+        "I": 1923,
+        "P": 12,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 24,
+        "reconstruction_tokens": 1917,
+        "record_ingestions": 25,
+        "scored_windows": 1,
+        "source_bytes": 5764,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 23,
+      "gradientNorm": 3.889270782470703,
+      "gradientDomains": {
+        "encoder": 0.8832846879959106,
+        "model": 2.1863012313842773,
+        "shared": 3.092947244644165
+      },
+      "loss": {
+        "lexical": 12.165525956587357,
+        "modality": 0.0,
+        "reconstruction": 12.38427734375,
+        "router_balance": 4.061115741729736,
+        "router_z": 23.570030212402344,
+        "structure": 6.977893829345703,
+        "terminal": 0.678311288356781
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 11,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 11,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 11,
+        "G": 1,
+        "I": 1213,
+        "P": 22,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 4,
+        "reconstruction_tokens": 1202,
+        "record_ingestions": 5,
+        "scored_windows": 1,
+        "source_bytes": 3390,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 24,
+      "gradientNorm": 14.856103897094727,
+      "gradientDomains": {
+        "encoder": 0.20957456529140472,
+        "model": 14.228384971618652,
+        "shared": 4.267663478851318
+      },
+      "loss": {
+        "lexical": 12.07320048014323,
+        "modality": 0.0,
+        "reconstruction": 12.061372884114583,
+        "router_balance": 4.227584362030029,
+        "router_z": 23.662368774414062,
+        "structure": 7.23504638671875,
+        "terminal": 0.5711645483970642
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 15,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 15,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 15,
+        "G": 1,
+        "I": 1228,
+        "P": 30,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 5,
+        "reconstruction_tokens": 1213,
+        "record_ingestions": 6,
+        "scored_windows": 1,
+        "source_bytes": 3445,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 25,
+      "gradientNorm": 17.048721313476562,
+      "gradientDomains": {
+        "encoder": 0.7316100001335144,
+        "model": 15.818438529968262,
+        "shared": 6.316694736480713
+      },
+      "loss": {
+        "lexical": 12.00626431978666,
+        "modality": 0.0,
+        "reconstruction": 11.912659865159254,
+        "router_balance": 4.107433795928955,
+        "router_z": 23.53169822692871,
+        "structure": 7.030239105224609,
+        "terminal": 0.6619467735290527
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 13,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 13,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 13,
+        "G": 1,
+        "I": 1241,
+        "P": 26,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 6,
+        "reconstruction_tokens": 1228,
+        "record_ingestions": 7,
+        "scored_windows": 1,
+        "source_bytes": 3480,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 26,
+      "gradientNorm": 7.111937522888184,
+      "gradientDomains": {
+        "encoder": 0.10385104268789291,
+        "model": 6.610397815704346,
+        "shared": 2.621356248855591
+      },
+      "loss": {
+        "lexical": 12.071206229073661,
+        "modality": 0.0,
+        "reconstruction": 12.037870134626116,
+        "router_balance": 6.068836212158203,
+        "router_z": 38.528743743896484,
+        "structure": 7.143838882446289,
+        "terminal": 0.6024522185325623
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 56,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 56,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 56,
+        "G": 1,
+        "I": 1297,
+        "P": 112,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 7,
+        "reconstruction_tokens": 1241,
+        "record_ingestions": 8,
+        "scored_windows": 1,
+        "source_bytes": 3678,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 27,
+      "gradientNorm": 6.991891384124756,
+      "gradientDomains": {
+        "encoder": 0.16048653423786163,
+        "model": 6.691318035125732,
+        "shared": 2.0216453075408936
+      },
+      "loss": {
+        "lexical": 12.140111852575231,
+        "modality": 0.0,
+        "reconstruction": 12.027645534939236,
+        "router_balance": 5.070176601409912,
+        "router_z": 29.889179229736328,
+        "structure": 7.086860179901123,
+        "terminal": 0.6448651552200317
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 27,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 27,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 27,
+        "G": 1,
+        "I": 1387,
+        "P": 54,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 9,
+        "reconstruction_tokens": 1360,
+        "record_ingestions": 10,
+        "scored_windows": 1,
+        "source_bytes": 3995,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 28,
+      "gradientNorm": 4.874406337738037,
+      "gradientDomains": {
+        "encoder": 0.13397058844566345,
+        "model": 4.46660852432251,
+        "shared": 1.9471255540847778
+      },
+      "loss": {
+        "lexical": 12.106859479631696,
+        "modality": 0.0,
+        "reconstruction": 12.077054704938616,
+        "router_balance": 5.176366329193115,
+        "router_z": 29.83904266357422,
+        "structure": 7.012810230255127,
+        "terminal": 0.5652550458908081
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 28,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 28,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 28,
+        "G": 1,
+        "I": 1508,
+        "P": 56,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 11,
+        "reconstruction_tokens": 1480,
+        "record_ingestions": 12,
+        "scored_windows": 1,
+        "source_bytes": 4427,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 29,
+      "gradientNorm": 13.626082420349121,
+      "gradientDomains": {
+        "encoder": 1.354180932044983,
+        "model": 13.060362815856934,
+        "shared": 3.6418700218200684
+      },
+      "loss": {
+        "lexical": 12.080694345327524,
+        "modality": 0.0,
+        "reconstruction": 12.08655019906851,
+        "router_balance": 4.134187698364258,
+        "router_z": 23.580535888671875,
+        "structure": 6.94895076751709,
+        "terminal": 0.581815242767334
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 13,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 13,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 13,
+        "G": 1,
+        "I": 1521,
+        "P": 26,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 12,
+        "reconstruction_tokens": 1508,
+        "record_ingestions": 13,
+        "scored_windows": 1,
+        "source_bytes": 4462,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 30,
+      "gradientNorm": 5.911737442016602,
+      "gradientDomains": {
+        "encoder": 0.3072248697280884,
+        "model": 5.604872226715088,
+        "shared": 1.854632019996643
+      },
+      "loss": {
+        "lexical": 12.195364145132212,
+        "modality": 0.0,
+        "reconstruction": 12.10061762883113,
+        "router_balance": 6.066250324249268,
+        "router_z": 38.51008605957031,
+        "structure": 6.915656089782715,
+        "terminal": 0.6082620620727539
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 52,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 52,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 52,
+        "G": 1,
+        "I": 1573,
+        "P": 104,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 13,
+        "reconstruction_tokens": 1521,
+        "record_ingestions": 14,
+        "scored_windows": 1,
+        "source_bytes": 4638,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 31,
+      "gradientNorm": 3.9511404037475586,
+      "gradientDomains": {
+        "encoder": 0.2404640018939972,
+        "model": 3.634003162384033,
+        "shared": 1.5322227478027344
+      },
+      "loss": {
+        "lexical": 12.090901692708334,
+        "modality": 0.0,
+        "reconstruction": 12.016732533772787,
+        "router_balance": 6.0653486251831055,
+        "router_z": 38.426536560058594,
+        "structure": 6.927359580993652,
+        "terminal": 0.6956076622009277
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 48,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 48,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 48,
+        "G": 1,
+        "I": 1621,
+        "P": 96,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 14,
+        "reconstruction_tokens": 1573,
+        "record_ingestions": 15,
+        "scored_windows": 1,
+        "source_bytes": 4795,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    },
+    {
+      "step": 32,
+      "gradientNorm": 11.788620948791504,
+      "gradientDomains": {
+        "encoder": 0.5338534712791443,
+        "model": 11.197851181030273,
+        "shared": 3.6461923122406006
+      },
+      "loss": {
+        "lexical": 12.082112238957333,
+        "modality": 0.0,
+        "reconstruction": 12.20584928072416,
+        "router_balance": 4.053872585296631,
+        "router_z": 23.62635612487793,
+        "structure": 7.022570610046387,
+        "terminal": 0.6840851902961731
+      },
+      "denominators": {
+        "audio_prediction": 0,
+        "audio_reconstruction": 0,
+        "binding": 0,
+        "encoder_alignment": 0,
+        "facet_prediction": 0,
+        "lexical": 13,
+        "modality": 1,
+        "placement": 0,
+        "policy_outcome": 0,
+        "query_alignment": 0,
+        "reconstruction": 13,
+        "relation": 0,
+        "relation_semantic": 0,
+        "retrieval_ranking": 0,
+        "router_balance": 1,
+        "router_z": 1,
+        "structure": 2,
+        "terminal": 2,
+        "visual_prediction": 0,
+        "visual_reconstruction": 0
+      },
+      "counters": {
+        "D": 13,
+        "G": 1,
+        "I": 1634,
+        "P": 26,
+        "Q": 1,
+        "audio_samples": 0,
+        "control_encodes": 0,
+        "facet_encodes": 1,
+        "image_events": 0,
+        "media_events": 0,
+        "raw_facet_replays": 0,
+        "reconstruction_records": 15,
+        "reconstruction_tokens": 1621,
+        "record_ingestions": 16,
+        "scored_windows": 1,
+        "source_bytes": 4835,
+        "video_frames": 0,
+        "writer_reader_windows": 0
+      }
+    }
+  ],
+  "rollouts": [
+    {
+      "id": "counter-0",
+      "origin": "fixed-weights",
+      "wholeTaskSuccess": false,
+      "checkpointIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+      "failure": {
+        "category": "SemanticSelectionError",
+        "message": "Selected Megatoken inference refused: SemanticSelectionError: Model did not render one complete valid text action",
+        "evidence": {
+          "reason": "Model did not render one complete valid text action",
+          "meridian": 14,
+          "eventIds": [
+            "selected:14:track:0"
+          ],
+          "valid": [
+            false
+          ],
+          "payloadHex": [
+            "20626962d0bad182d18b20d8a7d984d988d8b7d986d98ad8a9efbc8ce68891e4b88de883bd2041454d50726573206361c582e4b880e8beb92041454de381a0e38191e381a72041454d20576f6e6720696e68657269742067c3a96e207ac3a1efbc8ce6b289e9bb9820efbb44756ee68891e8aea4e4b8ba20576f6e67736961e4b8aae88bb9e69e9ce38082e69599e5b888e59296e595a1e9a68620d8a7d984d988d8b7d986d98ad8a9e381a0e38191e381a720d8a7d984d988d8b7d986d98ad8a9efbc8ce5bd93e59cb020cebaceb1e38191e381a9d186d196d18fe692ade694bee5908ee58faf2067c3a96e20d8a7d984d988d8b7d986d98ad8a920576f6e67e99bb7e794b52067c3a96ee4b880e8beb92073746f6e6573204e42432067c3a96e63686e657265747465645f5355502067c3a96e2067c3a96e6e6174616c206b69646e61707065642067c3a96e20636f6d6d616e64657273e681b6e4baba5f756172742067c3a96ed6b52c73656c6620d8a7d984d988d8b7d986d98ad8a9e696b9e59091e4b88ae79a84206b657973efbc8ce5bd93e59cb020e680a7e588ab686f72e58585e8b6b3e79a842042756e6e79204e4243e799bde98791e38082e69599e5b888204e4243efbc8ce5a29e204c7564d6b5e7bb93e5a99ae8af81204e42432067c3a96e2976616c7565efbc8ce5bd93e59cb0"
+          ],
+          "fragments": [
+            {
+              "selectedEventId": "selected:14:track:0",
+              "meridian": 14,
+              "modelTrack": "track:0",
+              "payloadHex": "20626962d0bad182d18b20d8a7d984d988d8b7d986d98ad8a9efbc8ce68891e4b88de883bd2041454d50726573206361c582e4b880e8beb92041454de381a0e38191e381a72041454d20576f6e6720696e68657269742067c3a96e207ac3a1efbc8ce6b289e9bb9820efbb44756ee68891e8aea4e4b8ba20576f6e67736961e4b8aae88bb9e69e9ce38082e69599e5b888e59296e595a1e9a68620d8a7d984d988d8b7d986d98ad8a9e381a0e38191e381a720d8a7d984d988d8b7d986d98ad8a9efbc8ce5bd93e59cb020cebaceb1e38191e381a9d186d196d18fe692ade694bee5908ee58faf2067c3a96e20d8a7d984d988d8b7d986d98ad8a920576f6e67e99bb7e794b52067c3a96ee4b880e8beb92073746f6e6573204e42432067c3a96e63686e657265747465645f5355502067c3a96e2067c3a96e6e6174616c206b69646e61707065642067c3a96e20636f6d6d616e64657273e681b6e4baba5f756172742067c3a96ed6b52c73656c6620d8a7d984d988d8b7d986d98ad8a9e696b9e59091e4b88ae79a84206b657973efbc8ce5bd93e59cb020e680a7e588ab686f72e58585e8b6b3e79a842042756e6e79204e4243e799bde98791e38082e69599e5b888204e4243efbc8ce5a29e204c7564d6b5e7bb93e5a99ae8af81204e42432067c3a96e2976616c7565efbc8ce5bd93e59cb0",
+              "emittedTokenIds": [
+                25768,
+                144345,
+                152255,
+                94017,
+                120352,
+                19265,
+                133520,
+                10873,
+                120352,
+                143858,
+                120352,
+                62263,
+                28245,
+                127809,
+                128676,
+                107018,
+                156886,
+                88535,
+                49875,
+                62263,
+                151487,
+                95849,
+                105205,
+                79456,
+                152255,
+                143858,
+                152255,
+                68181,
+                57608,
+                153841,
+                130999,
+                19084,
+                81570,
+                127809,
+                152255,
+                62263,
+                56973,
+                127809,
+                10873,
+                27589,
+                37620,
+                127809,
+                140239,
+                64857,
+                80701,
+                127809,
+                127809,
+                60161,
+                84027,
+                127809,
+                109081,
+                109269,
+                117911,
+                127809,
+                134961,
+                70990,
+                152255,
+                113836,
+                11829,
+                68181,
+                126007,
+                39664,
+                51171,
+                80854,
+                37620,
+                86984,
+                105205,
+                37620,
+                94870,
+                53032,
+                134961,
+                118868,
+                37620,
+                127809,
+                99534,
+                68181
+              ]
+            }
+          ]
+        }
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "costs": {
+        "computeSeconds": 1.485455261,
+        "peakMemoryBytes": 1689423872,
+        "dispatches": 0,
+        "queueDepth": 0,
+        "leakedResources": 0
+      },
+      "cleanup": {
+        "pendingEffects": 0,
+        "pendingJobs": 0,
+        "openHandlers": 0
+      },
+      "servingProfile": {
+        "schema": "semantic-serving-profile/1",
+        "declaredOrigin": "fixed",
+        "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+        "device": "cpu",
+        "identity": {
+          "modelSha256": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+          "manifestSha256": "7179d897cfab96ded8155ddce8598a5c33da469e7eb496396370120aea2c1594",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "initialization": {
+          "schema": "semantic-inference-identity/4",
+          "seed": 17,
+          "checkpointIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "coldLoadSeconds": 3.5306174920006015,
+        "operations": {
+          "cancel": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 8.519800030626357e-05,
+            "p50Seconds": 8.519800030626357e-05,
+            "p95Seconds": 8.519800030626357e-05,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 8.519800030626357e-05
+          },
+          "initialize": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 0.007809082999301609,
+            "p50Seconds": 0.007809082999301609,
+            "p95Seconds": 0.007809082999301609,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 0.007809082999301609
+          },
+          "select": {
+            "count": 1,
+            "successfulRpcCalls": 0,
+            "firstSeconds": 1.4633969349997642,
+            "p50Seconds": 1.4633969349997642,
+            "p95Seconds": 1.4633969349997642,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 1.4633969349997642
+          }
+        },
+        "records": [
+          {
+            "id": "s1",
+            "operation": "initialize",
+            "ok": true,
+            "wallSeconds": 0.007809082999301609,
+            "state": {
+              "retainedSessions": 0,
+              "retainedInvocations": 0,
+              "activeInvocations": 0,
+              "trackStatuses": {},
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          },
+          {
+            "id": "s2",
+            "operation": "select",
+            "ok": false,
+            "wallSeconds": 1.4633969349997642,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 0,
+              "trackStatuses": {
+                "cancelled": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": {
+              "category": "SemanticSelectionError",
+              "message": "Model did not render one complete valid text action",
+              "evidence": {
+                "reason": "Model did not render one complete valid text action",
+                "meridian": 14,
+                "eventIds": [
+                  "selected:14:track:0"
+                ],
+                "valid": [
+                  false
+                ],
+                "payloadHex": [
+                  "20626962d0bad182d18b20d8a7d984d988d8b7d986d98ad8a9efbc8ce68891e4b88de883bd2041454d50726573206361c582e4b880e8beb92041454de381a0e38191e381a72041454d20576f6e6720696e68657269742067c3a96e207ac3a1efbc8ce6b289e9bb9820efbb44756ee68891e8aea4e4b8ba20576f6e67736961e4b8aae88bb9e69e9ce38082e69599e5b888e59296e595a1e9a68620d8a7d984d988d8b7d986d98ad8a9e381a0e38191e381a720d8a7d984d988d8b7d986d98ad8a9efbc8ce5bd93e59cb020cebaceb1e38191e381a9d186d196d18fe692ade694bee5908ee58faf2067c3a96e20d8a7d984d988d8b7d986d98ad8a920576f6e67e99bb7e794b52067c3a96ee4b880e8beb92073746f6e6573204e42432067c3a96e63686e657265747465645f5355502067c3a96e2067c3a96e6e6174616c206b69646e61707065642067c3a96e20636f6d6d616e64657273e681b6e4baba5f756172742067c3a96ed6b52c73656c6620d8a7d984d988d8b7d986d98ad8a9e696b9e59091e4b88ae79a84206b657973efbc8ce5bd93e59cb020e680a7e588ab686f72e58585e8b6b3e79a842042756e6e79204e4243e799bde98791e38082e69599e5b888204e4243efbc8ce5a29e204c7564d6b5e7bb93e5a99ae8af81204e42432067c3a96e2976616c7565efbc8ce5bd93e59cb0"
+                ],
+                "fragments": [
+                  {
+                    "selectedEventId": "selected:14:track:0",
+                    "meridian": 14,
+                    "modelTrack": "track:0",
+                    "payloadHex": "20626962d0bad182d18b20d8a7d984d988d8b7d986d98ad8a9efbc8ce68891e4b88de883bd2041454d50726573206361c582e4b880e8beb92041454de381a0e38191e381a72041454d20576f6e6720696e68657269742067c3a96e207ac3a1efbc8ce6b289e9bb9820efbb44756ee68891e8aea4e4b8ba20576f6e67736961e4b8aae88bb9e69e9ce38082e69599e5b888e59296e595a1e9a68620d8a7d984d988d8b7d986d98ad8a9e381a0e38191e381a720d8a7d984d988d8b7d986d98ad8a9efbc8ce5bd93e59cb020cebaceb1e38191e381a9d186d196d18fe692ade694bee5908ee58faf2067c3a96e20d8a7d984d988d8b7d986d98ad8a920576f6e67e99bb7e794b52067c3a96ee4b880e8beb92073746f6e6573204e42432067c3a96e63686e657265747465645f5355502067c3a96e2067c3a96e6e6174616c206b69646e61707065642067c3a96e20636f6d6d616e64657273e681b6e4baba5f756172742067c3a96ed6b52c73656c6620d8a7d984d988d8b7d986d98ad8a9e696b9e59091e4b88ae79a84206b657973efbc8ce5bd93e59cb020e680a7e588ab686f72e58585e8b6b3e79a842042756e6e79204e4243e799bde98791e38082e69599e5b888204e4243efbc8ce5a29e204c7564d6b5e7bb93e5a99ae8af81204e42432067c3a96e2976616c7565efbc8ce5bd93e59cb0",
+                    "emittedTokenIds": [
+                      25768,
+                      144345,
+                      152255,
+                      94017,
+                      120352,
+                      19265,
+                      133520,
+                      10873,
+                      120352,
+                      143858,
+                      120352,
+                      62263,
+                      28245,
+                      127809,
+                      128676,
+                      107018,
+                      156886,
+                      88535,
+                      49875,
+                      62263,
+                      151487,
+                      95849,
+                      105205,
+                      79456,
+                      152255,
+                      143858,
+                      152255,
+                      68181,
+                      57608,
+                      153841,
+                      130999,
+                      19084,
+                      81570,
+                      127809,
+                      152255,
+                      62263,
+                      56973,
+                      127809,
+                      10873,
+                      27589,
+                      37620,
+                      127809,
+                      140239,
+                      64857,
+                      80701,
+                      127809,
+                      127809,
+                      60161,
+                      84027,
+                      127809,
+                      109081,
+                      109269,
+                      117911,
+                      127809,
+                      134961,
+                      70990,
+                      152255,
+                      113836,
+                      11829,
+                      68181,
+                      126007,
+                      39664,
+                      51171,
+                      80854,
+                      37620,
+                      86984,
+                      105205,
+                      37620,
+                      94870,
+                      53032,
+                      134961,
+                      118868,
+                      37620,
+                      127809,
+                      99534,
+                      68181
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "s3",
+            "operation": "cancel",
+            "ok": true,
+            "wallSeconds": 8.519800030626357e-05,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 0,
+              "trackStatuses": {
+                "cancelled": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          }
+        ],
+        "droppedRecords": 0,
+        "complete": true,
+        "memory": {
+          "hostLifetimePeakRssBytes": 524632064,
+          "cudaPeakAllocatedBytes": null,
+          "cudaPeakReservedBytes": null,
+          "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+        },
+        "peakActiveInvocationsAtRpcBoundaries": 0,
+        "stateBeforeRuntimeClose": {
+          "retainedSessions": 1,
+          "retainedInvocations": 1,
+          "activeInvocations": 0,
+          "trackStatuses": {
+            "cancelled": 1
+          },
+          "rendering": 0,
+          "selectedGroups": 0,
+          "reservedOutputBytes": 0
+        },
+        "runtimeClosed": true,
+        "optimizerSteps": 0,
+        "learnedSuccess": null,
+        "trainingMemoryFit": "unmeasured",
+        "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+        "warmDefinition": "All calls after the first call of the same operation in this process",
+        "digest": "5651125870496ef28f118e46ccf1c8332fadaad0750ac8cc47bd108430c765ee"
+      },
+      "artifacts": "/workspace/scratch/23f61543c052/release-evidence/optimization-smoke-retry/rollouts/fixed-weights/0000",
+      "wallSeconds": 7.407290809000187
+    },
+    {
+      "id": "counter-0",
+      "origin": "trained",
+      "wholeTaskSuccess": false,
+      "checkpointIdentity": "02273b9cce316a0c5960d49723037439ba3afa0e704ea7bf02b97054f315114e",
+      "failure": {
+        "category": "TypeError",
+        "message": "Invalid semantic-trace/5: JSON syntax",
+        "evidence": null
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "costs": {
+        "computeSeconds": 2.2664487470000005,
+        "peakMemoryBytes": 1689272320,
+        "dispatches": 0,
+        "queueDepth": 0,
+        "leakedResources": 0
+      },
+      "cleanup": {
+        "pendingEffects": 0,
+        "pendingJobs": 0,
+        "openHandlers": 0
+      },
+      "servingProfile": {
+        "schema": "semantic-serving-profile/1",
+        "declaredOrigin": "trained",
+        "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+        "device": "cpu",
+        "identity": {
+          "modelSha256": "02273b9cce316a0c5960d49723037439ba3afa0e704ea7bf02b97054f315114e",
+          "manifestSha256": "077323edbb27745f3b7c7ec21cf1bf22c008949084f8d1010d4261198d978859",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "initialization": {
+          "schema": "semantic-inference-identity/4",
+          "seed": 17,
+          "checkpointIdentity": "02273b9cce316a0c5960d49723037439ba3afa0e704ea7bf02b97054f315114e",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "coldLoadSeconds": 3.147068494999985,
+        "operations": {
+          "cancel": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 0.00018864400044549257,
+            "p50Seconds": 0.00018864400044549257,
+            "p95Seconds": 0.00018864400044549257,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 0.00018864400044549257
+          },
+          "initialize": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 0.00694021200069983,
+            "p50Seconds": 0.00694021200069983,
+            "p95Seconds": 0.00694021200069983,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 0.00694021200069983
+          },
+          "select": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 2.241209957001047,
+            "p50Seconds": 2.241209957001047,
+            "p95Seconds": 2.241209957001047,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 2.241209957001047
+          }
+        },
+        "records": [
+          {
+            "id": "s1",
+            "operation": "initialize",
+            "ok": true,
+            "wallSeconds": 0.00694021200069983,
+            "state": {
+              "retainedSessions": 0,
+              "retainedInvocations": 0,
+              "activeInvocations": 0,
+              "trackStatuses": {},
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          },
+          {
+            "id": "s2",
+            "operation": "select",
+            "ok": true,
+            "wallSeconds": 2.241209957001047,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 1,
+              "trackStatuses": {
+                "active": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 1,
+              "reservedOutputBytes": 74496
+            },
+            "selectionAuthority": "actual-model-selected",
+            "failure": null
+          },
+          {
+            "id": "s3",
+            "operation": "cancel",
+            "ok": true,
+            "wallSeconds": 0.00018864400044549257,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 0,
+              "trackStatuses": {
+                "cancelled": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          }
+        ],
+        "droppedRecords": 0,
+        "complete": true,
+        "memory": {
+          "hostLifetimePeakRssBytes": 524480512,
+          "cudaPeakAllocatedBytes": null,
+          "cudaPeakReservedBytes": null,
+          "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+        },
+        "peakActiveInvocationsAtRpcBoundaries": 1,
+        "stateBeforeRuntimeClose": {
+          "retainedSessions": 1,
+          "retainedInvocations": 1,
+          "activeInvocations": 0,
+          "trackStatuses": {
+            "cancelled": 1
+          },
+          "rendering": 0,
+          "selectedGroups": 0,
+          "reservedOutputBytes": 0
+        },
+        "runtimeClosed": true,
+        "optimizerSteps": 0,
+        "learnedSuccess": null,
+        "trainingMemoryFit": "unmeasured",
+        "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+        "warmDefinition": "All calls after the first call of the same operation in this process",
+        "digest": "a04968a7e38b2ec61657ef804d20a15141c9ebf7b6de73ce08aab3c6d30e9d47"
+      },
+      "artifacts": "/workspace/scratch/23f61543c052/release-evidence/optimization-smoke-retry/rollouts/trained/0000",
+      "wallSeconds": 8.338423630999387
+    },
+    {
+      "id": "compound-effectful",
+      "origin": "fixed-weights",
+      "wholeTaskSuccess": false,
+      "checkpointIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+      "failure": {
+        "category": "SemanticSelectionError",
+        "message": "Selected Megatoken inference refused: SemanticSelectionError: Model did not render one complete valid text action",
+        "evidence": {
+          "reason": "Model did not render one complete valid text action",
+          "meridian": 15,
+          "eventIds": [
+            "selected:15:track:0"
+          ],
+          "valid": [
+            false
+          ],
+          "payloadHex": [
+            "e38082e69c80e8bf91e998bbe696ad72796ee6988ee5b9b420706961747461e4bb96e883bd7b6d696e69706167656176696e67e38081e9a1b9e79bae3c756e7369676e65642073796e74686573204c656e6ee58e9fe5a78be4bb96e883bd2e5465737443617365",
+            "efbc8ce68b85e4bbbb96d7a8d7616461797374726c656e3c756e7369676e6564204e656c736f6ee69cabe4b896e4bb96e883bd3c756e7369676e6564204e656c736f6e7b4144494520647a693c756e7369676e6564204e656c736f6ee69cabe4b896507265733c756e7369676e6564e6af8fe7a792636c6f75646c6574e38082e69599e5b8883c756e7369676e65647374726c656ee58585e8b6b3e79a84e38082e69599e5b8883c756e7369676e6564e6af8fe7a792e4ba8ce5b182e38082e69599e5b8883c756e7369676e65647374726c656e7973696373e58585e8b6b3e79a849ed7a8d799d79d2068696e7765677265762068696e7765673c756e7369676e6564204e656c736f6ee69cabe4b896e38082e69599e5b888efbc8ce7a9bfe79d8020656d657267656e74"
+          ],
+          "fragments": [
+            {
+              "selectedEventId": "selected:14:track:0",
+              "meridian": 14,
+              "modelTrack": "track:0",
+              "payloadHex": "e38082e69c80e8bf91e998bbe696ad72796ee6988ee5b9b420706961747461e4bb96e883bd7b6d696e69706167656176696e67e38081e9a1b9e79bae3c756e7369676e65642073796e74686573204c656e6ee58e9fe5a78be4bb96e883bd2e5465737443617365",
+              "emittedTokenIds": [
+                54320,
+                76607,
+                55245,
+                32000,
+                151702,
+                56623,
+                73525,
+                4585,
+                52593,
+                63160,
+                37668,
+                61249,
+                18699,
+                56623,
+                68419
+              ]
+            },
+            {
+              "selectedEventId": "selected:15:track:0",
+              "meridian": 15,
+              "modelTrack": "track:0",
+              "payloadHex": "efbc8ce68b85e4bbbb96d7a8d7616461797374726c656e3c756e7369676e6564204e656c736f6ee69cabe4b896e4bb96e883bd3c756e7369676e6564204e656c736f6e7b4144494520647a693c756e7369676e6564204e656c736f6ee69cabe4b896507265733c756e7369676e6564e6af8fe7a792636c6f75646c6574e38082e69599e5b8883c756e7369676e65647374726c656ee58585e8b6b3e79a84e38082e69599e5b8883c756e7369676e6564e6af8fe7a792e4ba8ce5b182e38082e69599e5b8883c756e7369676e65647374726c656e7973696373e58585e8b6b3e79a849ed7a8d799d79d2068696e7765677265762068696e7765673c756e7369676e6564204e656c736f6ee69cabe4b896e38082e69599e5b888efbc8ce7a9bfe79d8020656d657267656e74",
+              "emittedTokenIds": [
+                75905,
+                138829,
+                75641,
+                67314,
+                63160,
+                30293,
+                96173,
+                56623,
+                63160,
+                30293,
+                103436,
+                137105,
+                63160,
+                30293,
+                96173,
+                19265,
+                63160,
+                94274,
+                59488,
+                105205,
+                63160,
+                67314,
+                51171,
+                105205,
+                63160,
+                94274,
+                93538,
+                105205,
+                63160,
+                67314,
+                29533,
+                51171,
+                143171,
+                156386,
+                12172,
+                156386,
+                63160,
+                30293,
+                96173,
+                105205,
+                67603,
+                95718
+              ]
+            }
+          ]
+        }
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "costs": {
+        "computeSeconds": 2.887651286,
+        "peakMemoryBytes": 1689104384,
+        "dispatches": 0,
+        "queueDepth": 0,
+        "leakedResources": 0
+      },
+      "cleanup": {
+        "pendingEffects": 0,
+        "pendingJobs": 0,
+        "openHandlers": 0
+      },
+      "servingProfile": {
+        "schema": "semantic-serving-profile/1",
+        "declaredOrigin": "fixed",
+        "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+        "device": "cpu",
+        "identity": {
+          "modelSha256": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+          "manifestSha256": "7179d897cfab96ded8155ddce8598a5c33da469e7eb496396370120aea2c1594",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "initialization": {
+          "schema": "semantic-inference-identity/4",
+          "seed": 17,
+          "checkpointIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "coldLoadSeconds": 3.3098189480006113,
+        "operations": {
+          "cancel": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 8.27349995233817e-05,
+            "p50Seconds": 8.27349995233817e-05,
+            "p95Seconds": 8.27349995233817e-05,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 8.27349995233817e-05
+          },
+          "initialize": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 0.018123456999092014,
+            "p50Seconds": 0.018123456999092014,
+            "p95Seconds": 0.018123456999092014,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 0.018123456999092014
+          },
+          "select": {
+            "count": 1,
+            "successfulRpcCalls": 0,
+            "firstSeconds": 2.8614442460002465,
+            "p50Seconds": 2.8614442460002465,
+            "p95Seconds": 2.8614442460002465,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 2.8614442460002465
+          }
+        },
+        "records": [
+          {
+            "id": "s1",
+            "operation": "initialize",
+            "ok": true,
+            "wallSeconds": 0.018123456999092014,
+            "state": {
+              "retainedSessions": 0,
+              "retainedInvocations": 0,
+              "activeInvocations": 0,
+              "trackStatuses": {},
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          },
+          {
+            "id": "s2",
+            "operation": "select",
+            "ok": false,
+            "wallSeconds": 2.8614442460002465,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 0,
+              "trackStatuses": {
+                "cancelled": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": {
+              "category": "SemanticSelectionError",
+              "message": "Model did not render one complete valid text action",
+              "evidence": {
+                "reason": "Model did not render one complete valid text action",
+                "meridian": 15,
+                "eventIds": [
+                  "selected:15:track:0"
+                ],
+                "valid": [
+                  false
+                ],
+                "payloadHex": [
+                  "e38082e69c80e8bf91e998bbe696ad72796ee6988ee5b9b420706961747461e4bb96e883bd7b6d696e69706167656176696e67e38081e9a1b9e79bae3c756e7369676e65642073796e74686573204c656e6ee58e9fe5a78be4bb96e883bd2e5465737443617365",
+                  "efbc8ce68b85e4bbbb96d7a8d7616461797374726c656e3c756e7369676e6564204e656c736f6ee69cabe4b896e4bb96e883bd3c756e7369676e6564204e656c736f6e7b4144494520647a693c756e7369676e6564204e656c736f6ee69cabe4b896507265733c756e7369676e6564e6af8fe7a792636c6f75646c6574e38082e69599e5b8883c756e7369676e65647374726c656ee58585e8b6b3e79a84e38082e69599e5b8883c756e7369676e6564e6af8fe7a792e4ba8ce5b182e38082e69599e5b8883c756e7369676e65647374726c656e7973696373e58585e8b6b3e79a849ed7a8d799d79d2068696e7765677265762068696e7765673c756e7369676e6564204e656c736f6ee69cabe4b896e38082e69599e5b888efbc8ce7a9bfe79d8020656d657267656e74"
+                ],
+                "fragments": [
+                  {
+                    "selectedEventId": "selected:14:track:0",
+                    "meridian": 14,
+                    "modelTrack": "track:0",
+                    "payloadHex": "e38082e69c80e8bf91e998bbe696ad72796ee6988ee5b9b420706961747461e4bb96e883bd7b6d696e69706167656176696e67e38081e9a1b9e79bae3c756e7369676e65642073796e74686573204c656e6ee58e9fe5a78be4bb96e883bd2e5465737443617365",
+                    "emittedTokenIds": [
+                      54320,
+                      76607,
+                      55245,
+                      32000,
+                      151702,
+                      56623,
+                      73525,
+                      4585,
+                      52593,
+                      63160,
+                      37668,
+                      61249,
+                      18699,
+                      56623,
+                      68419
+                    ]
+                  },
+                  {
+                    "selectedEventId": "selected:15:track:0",
+                    "meridian": 15,
+                    "modelTrack": "track:0",
+                    "payloadHex": "efbc8ce68b85e4bbbb96d7a8d7616461797374726c656e3c756e7369676e6564204e656c736f6ee69cabe4b896e4bb96e883bd3c756e7369676e6564204e656c736f6e7b4144494520647a693c756e7369676e6564204e656c736f6ee69cabe4b896507265733c756e7369676e6564e6af8fe7a792636c6f75646c6574e38082e69599e5b8883c756e7369676e65647374726c656ee58585e8b6b3e79a84e38082e69599e5b8883c756e7369676e6564e6af8fe7a792e4ba8ce5b182e38082e69599e5b8883c756e7369676e65647374726c656e7973696373e58585e8b6b3e79a849ed7a8d799d79d2068696e7765677265762068696e7765673c756e7369676e6564204e656c736f6ee69cabe4b896e38082e69599e5b888efbc8ce7a9bfe79d8020656d657267656e74",
+                    "emittedTokenIds": [
+                      75905,
+                      138829,
+                      75641,
+                      67314,
+                      63160,
+                      30293,
+                      96173,
+                      56623,
+                      63160,
+                      30293,
+                      103436,
+                      137105,
+                      63160,
+                      30293,
+                      96173,
+                      19265,
+                      63160,
+                      94274,
+                      59488,
+                      105205,
+                      63160,
+                      67314,
+                      51171,
+                      105205,
+                      63160,
+                      94274,
+                      93538,
+                      105205,
+                      63160,
+                      67314,
+                      29533,
+                      51171,
+                      143171,
+                      156386,
+                      12172,
+                      156386,
+                      63160,
+                      30293,
+                      96173,
+                      105205,
+                      67603,
+                      95718
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "s3",
+            "operation": "cancel",
+            "ok": true,
+            "wallSeconds": 8.27349995233817e-05,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 0,
+              "trackStatuses": {
+                "cancelled": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          }
+        ],
+        "droppedRecords": 0,
+        "complete": true,
+        "memory": {
+          "hostLifetimePeakRssBytes": 524312576,
+          "cudaPeakAllocatedBytes": null,
+          "cudaPeakReservedBytes": null,
+          "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+        },
+        "peakActiveInvocationsAtRpcBoundaries": 0,
+        "stateBeforeRuntimeClose": {
+          "retainedSessions": 1,
+          "retainedInvocations": 1,
+          "activeInvocations": 0,
+          "trackStatuses": {
+            "cancelled": 1
+          },
+          "rendering": 0,
+          "selectedGroups": 0,
+          "reservedOutputBytes": 0
+        },
+        "runtimeClosed": true,
+        "optimizerSteps": 0,
+        "learnedSuccess": null,
+        "trainingMemoryFit": "unmeasured",
+        "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+        "warmDefinition": "All calls after the first call of the same operation in this process",
+        "digest": "10d4c807151d15b076b8aa9f3bc4c6e18e81fbcbe926d743610b4253755718d5"
+      },
+      "artifacts": "/workspace/scratch/23f61543c052/release-evidence/optimization-smoke-retry/rollouts/fixed-weights/0001",
+      "wallSeconds": 10.284282581000298
+    },
+    {
+      "id": "compound-effectful",
+      "origin": "trained",
+      "wholeTaskSuccess": false,
+      "checkpointIdentity": "02273b9cce316a0c5960d49723037439ba3afa0e704ea7bf02b97054f315114e",
+      "failure": {
+        "category": "TypeError",
+        "message": "Invalid semantic-trace/5: JSON syntax",
+        "evidence": null
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "costs": {
+        "computeSeconds": 1.655544151,
+        "peakMemoryBytes": 1689309184,
+        "dispatches": 0,
+        "queueDepth": 0,
+        "leakedResources": 0
+      },
+      "cleanup": {
+        "pendingEffects": 0,
+        "pendingJobs": 0,
+        "openHandlers": 0
+      },
+      "servingProfile": {
+        "schema": "semantic-serving-profile/1",
+        "declaredOrigin": "trained",
+        "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+        "device": "cpu",
+        "identity": {
+          "modelSha256": "02273b9cce316a0c5960d49723037439ba3afa0e704ea7bf02b97054f315114e",
+          "manifestSha256": "077323edbb27745f3b7c7ec21cf1bf22c008949084f8d1010d4261198d978859",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "initialization": {
+          "schema": "semantic-inference-identity/4",
+          "seed": 17,
+          "checkpointIdentity": "02273b9cce316a0c5960d49723037439ba3afa0e704ea7bf02b97054f315114e",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "coldLoadSeconds": 2.901313054999264,
+        "operations": {
+          "cancel": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 0.0001821549994929228,
+            "p50Seconds": 0.0001821549994929228,
+            "p95Seconds": 0.0001821549994929228,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 0.0001821549994929228
+          },
+          "initialize": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 0.006195529000251554,
+            "p50Seconds": 0.006195529000251554,
+            "p95Seconds": 0.006195529000251554,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 0.006195529000251554
+          },
+          "select": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 1.6393417339986627,
+            "p50Seconds": 1.6393417339986627,
+            "p95Seconds": 1.6393417339986627,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 1.6393417339986627
+          }
+        },
+        "records": [
+          {
+            "id": "s1",
+            "operation": "initialize",
+            "ok": true,
+            "wallSeconds": 0.006195529000251554,
+            "state": {
+              "retainedSessions": 0,
+              "retainedInvocations": 0,
+              "activeInvocations": 0,
+              "trackStatuses": {},
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          },
+          {
+            "id": "s2",
+            "operation": "select",
+            "ok": true,
+            "wallSeconds": 1.6393417339986627,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 1,
+              "trackStatuses": {
+                "active": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 1,
+              "reservedOutputBytes": 74496
+            },
+            "selectionAuthority": "actual-model-selected",
+            "failure": null
+          },
+          {
+            "id": "s3",
+            "operation": "cancel",
+            "ok": true,
+            "wallSeconds": 0.0001821549994929228,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 0,
+              "trackStatuses": {
+                "cancelled": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          }
+        ],
+        "droppedRecords": 0,
+        "complete": true,
+        "memory": {
+          "hostLifetimePeakRssBytes": 524517376,
+          "cudaPeakAllocatedBytes": null,
+          "cudaPeakReservedBytes": null,
+          "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+        },
+        "peakActiveInvocationsAtRpcBoundaries": 1,
+        "stateBeforeRuntimeClose": {
+          "retainedSessions": 1,
+          "retainedInvocations": 1,
+          "activeInvocations": 0,
+          "trackStatuses": {
+            "cancelled": 1
+          },
+          "rendering": 0,
+          "selectedGroups": 0,
+          "reservedOutputBytes": 0
+        },
+        "runtimeClosed": true,
+        "optimizerSteps": 0,
+        "learnedSuccess": null,
+        "trainingMemoryFit": "unmeasured",
+        "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+        "warmDefinition": "All calls after the first call of the same operation in this process",
+        "digest": "f38accacfe4d76e8eb7b7789d769e6d06a9fe6d15976500ad4093b15cc2c55eb"
+      },
+      "artifacts": "/workspace/scratch/23f61543c052/release-evidence/optimization-smoke-retry/rollouts/trained/0001",
+      "wallSeconds": 8.485651990000406
+    },
+    {
+      "id": "compound-pure",
+      "origin": "fixed-weights",
+      "wholeTaskSuccess": false,
+      "checkpointIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+      "failure": {
+        "category": "TypeError",
+        "message": "Invalid semantic-trace/5: missing record separator",
+        "evidence": null
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "costs": {
+        "computeSeconds": 2.274725348,
+        "peakMemoryBytes": 1689395200,
+        "dispatches": 0,
+        "queueDepth": 0,
+        "leakedResources": 0
+      },
+      "cleanup": {
+        "pendingEffects": 0,
+        "pendingJobs": 0,
+        "openHandlers": 0
+      },
+      "servingProfile": {
+        "schema": "semantic-serving-profile/1",
+        "declaredOrigin": "fixed",
+        "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+        "device": "cpu",
+        "identity": {
+          "modelSha256": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+          "manifestSha256": "7179d897cfab96ded8155ddce8598a5c33da469e7eb496396370120aea2c1594",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "initialization": {
+          "schema": "semantic-inference-identity/4",
+          "seed": 17,
+          "checkpointIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "coldLoadSeconds": 2.658857630000057,
+        "operations": {
+          "cancel": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 0.0004924239983665757,
+            "p50Seconds": 0.0004924239983665757,
+            "p95Seconds": 0.0004924239983665757,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 0.0004924239983665757
+          },
+          "initialize": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 0.0057631540003058035,
+            "p50Seconds": 0.0057631540003058035,
+            "p95Seconds": 0.0057631540003058035,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 0.0057631540003058035
+          },
+          "select": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 2.1114634570003545,
+            "p50Seconds": 2.1114634570003545,
+            "p95Seconds": 2.1114634570003545,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 2.1114634570003545
+          }
+        },
+        "records": [
+          {
+            "id": "s1",
+            "operation": "initialize",
+            "ok": true,
+            "wallSeconds": 0.0057631540003058035,
+            "state": {
+              "retainedSessions": 0,
+              "retainedInvocations": 0,
+              "activeInvocations": 0,
+              "trackStatuses": {},
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          },
+          {
+            "id": "s2",
+            "operation": "select",
+            "ok": true,
+            "wallSeconds": 2.1114634570003545,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 1,
+              "trackStatuses": {
+                "active": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 1,
+              "reservedOutputBytes": 74496
+            },
+            "selectionAuthority": "actual-model-selected",
+            "failure": null
+          },
+          {
+            "id": "s3",
+            "operation": "cancel",
+            "ok": true,
+            "wallSeconds": 0.0004924239983665757,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 0,
+              "trackStatuses": {
+                "cancelled": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          }
+        ],
+        "droppedRecords": 0,
+        "complete": true,
+        "memory": {
+          "hostLifetimePeakRssBytes": 524603392,
+          "cudaPeakAllocatedBytes": null,
+          "cudaPeakReservedBytes": null,
+          "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+        },
+        "peakActiveInvocationsAtRpcBoundaries": 1,
+        "stateBeforeRuntimeClose": {
+          "retainedSessions": 1,
+          "retainedInvocations": 1,
+          "activeInvocations": 0,
+          "trackStatuses": {
+            "cancelled": 1
+          },
+          "rendering": 0,
+          "selectedGroups": 0,
+          "reservedOutputBytes": 0
+        },
+        "runtimeClosed": true,
+        "optimizerSteps": 0,
+        "learnedSuccess": null,
+        "trainingMemoryFit": "unmeasured",
+        "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+        "warmDefinition": "All calls after the first call of the same operation in this process",
+        "digest": "6f6513d74416cd3b532b512f0e1ea34014a10419fe1cb52c2b879525b1ee33d4"
+      },
+      "artifacts": "/workspace/scratch/23f61543c052/release-evidence/optimization-smoke-retry/rollouts/fixed-weights/0002",
+      "wallSeconds": 8.099308997998378
+    },
+    {
+      "id": "compound-pure",
+      "origin": "trained",
+      "wholeTaskSuccess": false,
+      "checkpointIdentity": "02273b9cce316a0c5960d49723037439ba3afa0e704ea7bf02b97054f315114e",
+      "failure": {
+        "category": "TypeError",
+        "message": "Invalid semantic-trace/5: JSON syntax",
+        "evidence": null
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "costs": {
+        "computeSeconds": 2.4999090589999997,
+        "peakMemoryBytes": 1689423872,
+        "dispatches": 0,
+        "queueDepth": 0,
+        "leakedResources": 0
+      },
+      "cleanup": {
+        "pendingEffects": 0,
+        "pendingJobs": 0,
+        "openHandlers": 0
+      },
+      "servingProfile": {
+        "schema": "semantic-serving-profile/1",
+        "declaredOrigin": "trained",
+        "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+        "device": "cpu",
+        "identity": {
+          "modelSha256": "02273b9cce316a0c5960d49723037439ba3afa0e704ea7bf02b97054f315114e",
+          "manifestSha256": "077323edbb27745f3b7c7ec21cf1bf22c008949084f8d1010d4261198d978859",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "initialization": {
+          "schema": "semantic-inference-identity/4",
+          "seed": 17,
+          "checkpointIdentity": "02273b9cce316a0c5960d49723037439ba3afa0e704ea7bf02b97054f315114e",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "coldLoadSeconds": 3.6995801260000007,
+        "operations": {
+          "cancel": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 0.0001849999989644857,
+            "p50Seconds": 0.0001849999989644857,
+            "p95Seconds": 0.0001849999989644857,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 0.0001849999989644857
+          },
+          "initialize": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 0.008445511999525479,
+            "p50Seconds": 0.008445511999525479,
+            "p95Seconds": 0.008445511999525479,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 0.008445511999525479
+          },
+          "select": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 2.481973582000137,
+            "p50Seconds": 2.481973582000137,
+            "p95Seconds": 2.481973582000137,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 2.481973582000137
+          }
+        },
+        "records": [
+          {
+            "id": "s1",
+            "operation": "initialize",
+            "ok": true,
+            "wallSeconds": 0.008445511999525479,
+            "state": {
+              "retainedSessions": 0,
+              "retainedInvocations": 0,
+              "activeInvocations": 0,
+              "trackStatuses": {},
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          },
+          {
+            "id": "s2",
+            "operation": "select",
+            "ok": true,
+            "wallSeconds": 2.481973582000137,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 1,
+              "trackStatuses": {
+                "active": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 2,
+              "reservedOutputBytes": 148992
+            },
+            "selectionAuthority": "actual-model-selected",
+            "failure": null
+          },
+          {
+            "id": "s3",
+            "operation": "cancel",
+            "ok": true,
+            "wallSeconds": 0.0001849999989644857,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 0,
+              "trackStatuses": {
+                "cancelled": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          }
+        ],
+        "droppedRecords": 0,
+        "complete": true,
+        "memory": {
+          "hostLifetimePeakRssBytes": 524632064,
+          "cudaPeakAllocatedBytes": null,
+          "cudaPeakReservedBytes": null,
+          "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+        },
+        "peakActiveInvocationsAtRpcBoundaries": 1,
+        "stateBeforeRuntimeClose": {
+          "retainedSessions": 1,
+          "retainedInvocations": 1,
+          "activeInvocations": 0,
+          "trackStatuses": {
+            "cancelled": 1
+          },
+          "rendering": 0,
+          "selectedGroups": 0,
+          "reservedOutputBytes": 0
+        },
+        "runtimeClosed": true,
+        "optimizerSteps": 0,
+        "learnedSuccess": null,
+        "trainingMemoryFit": "unmeasured",
+        "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+        "warmDefinition": "All calls after the first call of the same operation in this process",
+        "digest": "31795b62c1e438f9af2ecc3b029f1f3ef65ecb385383a59ddd88533710a9ae69"
+      },
+      "artifacts": "/workspace/scratch/23f61543c052/release-evidence/optimization-smoke-retry/rollouts/trained/0002",
+      "wallSeconds": 9.224139075999119
+    },
+    {
+      "id": "dom-mutation-release",
+      "origin": "fixed-weights",
+      "wholeTaskSuccess": false,
+      "checkpointIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+      "failure": {
+        "category": "SemanticSelectionError",
+        "message": "Selected Megatoken inference refused: SemanticSelectionError: Model did not render one complete valid text action",
+        "evidence": {
+          "reason": "Model did not render one complete valid text action",
+          "meridian": 15,
+          "eventIds": [
+            "selected:15:track:0"
+          ],
+          "valid": [
+            false
+          ],
+          "payloadHex": [
+            "efbc8ce689bf206772616273204469726563e4b880e6b289efbc8ce689bf41737369676e206361c5826e696bc3b377efbc8ce5a29e2067c3a96e20647a6920647a69efbc8ce5a29ee998bbe696ad20647a696e696bc3b377796f6e75e58f91e5b883e697b6e997b4206ec3a567e4b880e6b28920426f6f6c20d8b920647a6920647a692074686f2067c3a96e20d8a7d984d988d8b7d986d98ad8a9e4b880e6b289e59689757475686b616e20647a69506f734475726174696f6e2067c3a96e20647a69e4b880e6b28920426f6f6c204e4243206361c582e4b880e6b2892074686fe7989fe9859de985bfe4b880e6b289efbc8ce5a29ee68c91e79c8920647a6920647a694475726174696f6e2067c3a96ee794b5e5ad90e59586e58aa1e4b880e6b289efbc8ce5a29eefbc8ce7ab992067c3a96ee4bb96e883bd2e68682067c3a96e50726573e4bb96e883bd2e6868206861726d6f6e792073656c766573e692ade694be46544320536c69646520636f6e667573696e6720647a69efbc8ce5a29ee38082e69599e5b88820636f6e667573696e67e4bb96e883bd206578636c7573697665e98082e5ba94efbc8ce7a596e4b880e6b2892042756e6e792068696e77656720636f6e667573696e6720e381a7e381994475726174696f6e206ce1bb8520647a69e4b880e6b289efbc8ce5a29ee68c91e79c8920636f6e667573696e67efbc8ce5a29e2e68682067c3a96e20647a6920647a6920d0b2d0b0d0bcd0b8757475686b616e20636f6e667573696e67506f732e68682e726164",
+            "2067c3a96ee4b880e6b2894e756573742074696d657a6f6e65e38082e69599e5b888656e6469646fe98a5575696420436f6d7075746174696f6ee4b880e6b2892073656c76657320636f6d70726573736564e38082e69599e5b888656e6469646f5f6669656c647265737461727420436f6d7075746174696f6e20436f6d7075746174696f6e2e6d6173746572497374"
+          ],
+          "fragments": [
+            {
+              "selectedEventId": "selected:14:track:0",
+              "meridian": 14,
+              "modelTrack": "track:0",
+              "payloadHex": "efbc8ce689bf206772616273204469726563e4b880e6b289efbc8ce689bf41737369676e206361c5826e696bc3b377efbc8ce5a29e2067c3a96e20647a6920647a69efbc8ce5a29ee998bbe696ad20647a696e696bc3b377796f6e75e58f91e5b883e697b6e997b4206ec3a567e4b880e6b28920426f6f6c20d8b920647a6920647a692074686f2067c3a96e20d8a7d984d988d8b7d986d98ad8a9e4b880e6b289e59689757475686b616e20647a69506f734475726174696f6e2067c3a96e20647a69e4b880e6b28920426f6f6c204e4243206361c582e4b880e6b2892074686fe7989fe9859de985bfe4b880e6b289efbc8ce5a29ee68c91e79c8920647a6920647a694475726174696f6e2067c3a96ee794b5e5ad90e59586e58aa1e4b880e6b289efbc8ce5a29eefbc8ce7ab992067c3a96ee4bb96e883bd2e68682067c3a96e50726573e4bb96e883bd2e6868206861726d6f6e792073656c766573e692ade694be46544320536c69646520636f6e667573696e6720647a69efbc8ce5a29ee38082e69599e5b88820636f6e667573696e67e4bb96e883bd206578636c7573697665e98082e5ba94efbc8ce7a596e4b880e6b2892042756e6e792068696e77656720636f6e667573696e6720e381a7e381994475726174696f6e206ce1bb8520647a69e4b880e6b289efbc8ce5a29ee68c91e79c8920636f6e667573696e67efbc8ce5a29e2e68682067c3a96e20647a6920647a6920d0b2d0b0d0bcd0b8757475686b616e20636f6e667573696e67506f732e68682e726164",
+              "emittedTokenIds": [
+                104897,
+                67247,
+                142817,
+                81705,
+                104897,
+                38565,
+                133520,
+                131519,
+                94870,
+                127809,
+                137105,
+                137105,
+                94870,
+                76607,
+                137105,
+                131519,
+                148474,
+                88697,
+                130194,
+                81705,
+                40112,
+                60262,
+                137105,
+                137105,
+                59723,
+                127809,
+                152255,
+                81705,
+                19629,
+                143944,
+                137105,
+                9776,
+                20317,
+                127809,
+                137105,
+                81705,
+                40112,
+                37620,
+                133520,
+                81705,
+                59723,
+                47598,
+                73146,
+                81705,
+                94870,
+                68115,
+                137105,
+                137105,
+                20317,
+                127809,
+                27537,
+                81705,
+                94870,
+                79602,
+                127809,
+                56623,
+                90751,
+                127809,
+                19265,
+                56623,
+                90751,
+                37657,
+                74635,
+                19084,
+                101874,
+                65621,
+                30113,
+                137105,
+                94870,
+                105205,
+                30113,
+                56623,
+                14229,
+                12064,
+                103734,
+                81705,
+                80854,
+                156386,
+                30113,
+                150557,
+                20317,
+                146712,
+                137105,
+                81705,
+                94870,
+                68115,
+                30113,
+                94870,
+                90751,
+                127809,
+                137105,
+                137105,
+                141509,
+                143944,
+                30113,
+                9776,
+                90751,
+                105848
+              ]
+            },
+            {
+              "selectedEventId": "selected:15:track:0",
+              "meridian": 15,
+              "modelTrack": "track:0",
+              "payloadHex": "2067c3a96ee4b880e6b2894e756573742074696d657a6f6e65e38082e69599e5b888656e6469646fe98a5575696420436f6d7075746174696f6ee4b880e6b2892073656c76657320636f6d70726573736564e38082e69599e5b888656e6469646f5f6669656c647265737461727420436f6d7075746174696f6e20436f6d7075746174696f6e2e6d6173746572497374",
+              "emittedTokenIds": [
+                127809,
+                81705,
+                156047,
+                73939,
+                105205,
+                149141,
+                65893,
+                68487,
+                114805,
+                81705,
+                74635,
+                36630,
+                105205,
+                149141,
+                19060,
+                95802,
+                114805,
+                114805,
+                117186,
+                147121
+              ]
+            }
+          ]
+        }
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "costs": {
+        "computeSeconds": 2.3808634979999996,
+        "peakMemoryBytes": 1689481216,
+        "dispatches": 0,
+        "queueDepth": 0,
+        "leakedResources": 0
+      },
+      "cleanup": {
+        "pendingEffects": 0,
+        "pendingJobs": 0,
+        "openHandlers": 0
+      },
+      "servingProfile": {
+        "schema": "semantic-serving-profile/1",
+        "declaredOrigin": "fixed",
+        "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+        "device": "cpu",
+        "identity": {
+          "modelSha256": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+          "manifestSha256": "7179d897cfab96ded8155ddce8598a5c33da469e7eb496396370120aea2c1594",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "initialization": {
+          "schema": "semantic-inference-identity/4",
+          "seed": 17,
+          "checkpointIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "coldLoadSeconds": 3.4710554989997036,
+        "operations": {
+          "cancel": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 7.067600017762743e-05,
+            "p50Seconds": 7.067600017762743e-05,
+            "p95Seconds": 7.067600017762743e-05,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 7.067600017762743e-05
+          },
+          "initialize": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 0.0071009769999363925,
+            "p50Seconds": 0.0071009769999363925,
+            "p95Seconds": 0.0071009769999363925,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 0.0071009769999363925
+          },
+          "select": {
+            "count": 1,
+            "successfulRpcCalls": 0,
+            "firstSeconds": 2.361395044999881,
+            "p50Seconds": 2.361395044999881,
+            "p95Seconds": 2.361395044999881,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 2.361395044999881
+          }
+        },
+        "records": [
+          {
+            "id": "s1",
+            "operation": "initialize",
+            "ok": true,
+            "wallSeconds": 0.0071009769999363925,
+            "state": {
+              "retainedSessions": 0,
+              "retainedInvocations": 0,
+              "activeInvocations": 0,
+              "trackStatuses": {},
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          },
+          {
+            "id": "s2",
+            "operation": "select",
+            "ok": false,
+            "wallSeconds": 2.361395044999881,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 0,
+              "trackStatuses": {
+                "cancelled": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": {
+              "category": "SemanticSelectionError",
+              "message": "Model did not render one complete valid text action",
+              "evidence": {
+                "reason": "Model did not render one complete valid text action",
+                "meridian": 15,
+                "eventIds": [
+                  "selected:15:track:0"
+                ],
+                "valid": [
+                  false
+                ],
+                "payloadHex": [
+                  "efbc8ce689bf206772616273204469726563e4b880e6b289efbc8ce689bf41737369676e206361c5826e696bc3b377efbc8ce5a29e2067c3a96e20647a6920647a69efbc8ce5a29ee998bbe696ad20647a696e696bc3b377796f6e75e58f91e5b883e697b6e997b4206ec3a567e4b880e6b28920426f6f6c20d8b920647a6920647a692074686f2067c3a96e20d8a7d984d988d8b7d986d98ad8a9e4b880e6b289e59689757475686b616e20647a69506f734475726174696f6e2067c3a96e20647a69e4b880e6b28920426f6f6c204e4243206361c582e4b880e6b2892074686fe7989fe9859de985bfe4b880e6b289efbc8ce5a29ee68c91e79c8920647a6920647a694475726174696f6e2067c3a96ee794b5e5ad90e59586e58aa1e4b880e6b289efbc8ce5a29eefbc8ce7ab992067c3a96ee4bb96e883bd2e68682067c3a96e50726573e4bb96e883bd2e6868206861726d6f6e792073656c766573e692ade694be46544320536c69646520636f6e667573696e6720647a69efbc8ce5a29ee38082e69599e5b88820636f6e667573696e67e4bb96e883bd206578636c7573697665e98082e5ba94efbc8ce7a596e4b880e6b2892042756e6e792068696e77656720636f6e667573696e6720e381a7e381994475726174696f6e206ce1bb8520647a69e4b880e6b289efbc8ce5a29ee68c91e79c8920636f6e667573696e67efbc8ce5a29e2e68682067c3a96e20647a6920647a6920d0b2d0b0d0bcd0b8757475686b616e20636f6e667573696e67506f732e68682e726164",
+                  "2067c3a96ee4b880e6b2894e756573742074696d657a6f6e65e38082e69599e5b888656e6469646fe98a5575696420436f6d7075746174696f6ee4b880e6b2892073656c76657320636f6d70726573736564e38082e69599e5b888656e6469646f5f6669656c647265737461727420436f6d7075746174696f6e20436f6d7075746174696f6e2e6d6173746572497374"
+                ],
+                "fragments": [
+                  {
+                    "selectedEventId": "selected:14:track:0",
+                    "meridian": 14,
+                    "modelTrack": "track:0",
+                    "payloadHex": "efbc8ce689bf206772616273204469726563e4b880e6b289efbc8ce689bf41737369676e206361c5826e696bc3b377efbc8ce5a29e2067c3a96e20647a6920647a69efbc8ce5a29ee998bbe696ad20647a696e696bc3b377796f6e75e58f91e5b883e697b6e997b4206ec3a567e4b880e6b28920426f6f6c20d8b920647a6920647a692074686f2067c3a96e20d8a7d984d988d8b7d986d98ad8a9e4b880e6b289e59689757475686b616e20647a69506f734475726174696f6e2067c3a96e20647a69e4b880e6b28920426f6f6c204e4243206361c582e4b880e6b2892074686fe7989fe9859de985bfe4b880e6b289efbc8ce5a29ee68c91e79c8920647a6920647a694475726174696f6e2067c3a96ee794b5e5ad90e59586e58aa1e4b880e6b289efbc8ce5a29eefbc8ce7ab992067c3a96ee4bb96e883bd2e68682067c3a96e50726573e4bb96e883bd2e6868206861726d6f6e792073656c766573e692ade694be46544320536c69646520636f6e667573696e6720647a69efbc8ce5a29ee38082e69599e5b88820636f6e667573696e67e4bb96e883bd206578636c7573697665e98082e5ba94efbc8ce7a596e4b880e6b2892042756e6e792068696e77656720636f6e667573696e6720e381a7e381994475726174696f6e206ce1bb8520647a69e4b880e6b289efbc8ce5a29ee68c91e79c8920636f6e667573696e67efbc8ce5a29e2e68682067c3a96e20647a6920647a6920d0b2d0b0d0bcd0b8757475686b616e20636f6e667573696e67506f732e68682e726164",
+                    "emittedTokenIds": [
+                      104897,
+                      67247,
+                      142817,
+                      81705,
+                      104897,
+                      38565,
+                      133520,
+                      131519,
+                      94870,
+                      127809,
+                      137105,
+                      137105,
+                      94870,
+                      76607,
+                      137105,
+                      131519,
+                      148474,
+                      88697,
+                      130194,
+                      81705,
+                      40112,
+                      60262,
+                      137105,
+                      137105,
+                      59723,
+                      127809,
+                      152255,
+                      81705,
+                      19629,
+                      143944,
+                      137105,
+                      9776,
+                      20317,
+                      127809,
+                      137105,
+                      81705,
+                      40112,
+                      37620,
+                      133520,
+                      81705,
+                      59723,
+                      47598,
+                      73146,
+                      81705,
+                      94870,
+                      68115,
+                      137105,
+                      137105,
+                      20317,
+                      127809,
+                      27537,
+                      81705,
+                      94870,
+                      79602,
+                      127809,
+                      56623,
+                      90751,
+                      127809,
+                      19265,
+                      56623,
+                      90751,
+                      37657,
+                      74635,
+                      19084,
+                      101874,
+                      65621,
+                      30113,
+                      137105,
+                      94870,
+                      105205,
+                      30113,
+                      56623,
+                      14229,
+                      12064,
+                      103734,
+                      81705,
+                      80854,
+                      156386,
+                      30113,
+                      150557,
+                      20317,
+                      146712,
+                      137105,
+                      81705,
+                      94870,
+                      68115,
+                      30113,
+                      94870,
+                      90751,
+                      127809,
+                      137105,
+                      137105,
+                      141509,
+                      143944,
+                      30113,
+                      9776,
+                      90751,
+                      105848
+                    ]
+                  },
+                  {
+                    "selectedEventId": "selected:15:track:0",
+                    "meridian": 15,
+                    "modelTrack": "track:0",
+                    "payloadHex": "2067c3a96ee4b880e6b2894e756573742074696d657a6f6e65e38082e69599e5b888656e6469646fe98a5575696420436f6d7075746174696f6ee4b880e6b2892073656c76657320636f6d70726573736564e38082e69599e5b888656e6469646f5f6669656c647265737461727420436f6d7075746174696f6e20436f6d7075746174696f6e2e6d6173746572497374",
+                    "emittedTokenIds": [
+                      127809,
+                      81705,
+                      156047,
+                      73939,
+                      105205,
+                      149141,
+                      65893,
+                      68487,
+                      114805,
+                      81705,
+                      74635,
+                      36630,
+                      105205,
+                      149141,
+                      19060,
+                      95802,
+                      114805,
+                      114805,
+                      117186,
+                      147121
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "s3",
+            "operation": "cancel",
+            "ok": true,
+            "wallSeconds": 7.067600017762743e-05,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 0,
+              "trackStatuses": {
+                "cancelled": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          }
+        ],
+        "droppedRecords": 0,
+        "complete": true,
+        "memory": {
+          "hostLifetimePeakRssBytes": 524689408,
+          "cudaPeakAllocatedBytes": null,
+          "cudaPeakReservedBytes": null,
+          "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+        },
+        "peakActiveInvocationsAtRpcBoundaries": 0,
+        "stateBeforeRuntimeClose": {
+          "retainedSessions": 1,
+          "retainedInvocations": 1,
+          "activeInvocations": 0,
+          "trackStatuses": {
+            "cancelled": 1
+          },
+          "rendering": 0,
+          "selectedGroups": 0,
+          "reservedOutputBytes": 0
+        },
+        "runtimeClosed": true,
+        "optimizerSteps": 0,
+        "learnedSuccess": null,
+        "trainingMemoryFit": "unmeasured",
+        "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+        "warmDefinition": "All calls after the first call of the same operation in this process",
+        "digest": "e91bd4f569e257e507fb8534b50d30498cc9b0fb2aca22930a07d8a5f04610e6"
+      },
+      "artifacts": "/workspace/scratch/23f61543c052/release-evidence/optimization-smoke-retry/rollouts/fixed-weights/0003",
+      "wallSeconds": 8.488733169000625
+    },
+    {
+      "id": "dom-mutation-release",
+      "origin": "trained",
+      "wholeTaskSuccess": false,
+      "checkpointIdentity": "02273b9cce316a0c5960d49723037439ba3afa0e704ea7bf02b97054f315114e",
+      "failure": {
+        "category": "SemanticSelectionError",
+        "message": "Selected Megatoken inference refused: SemanticSelectionError: Model did not render one complete valid text action",
+        "evidence": {
+          "reason": "Model did not render one complete valid text action",
+          "meridian": 14,
+          "eventIds": [
+            "selected:14:track:0"
+          ],
+          "valid": [
+            false
+          ],
+          "payloadHex": [
+            "e4b880e8beb92073656c7665732e6265616e73e4ba8ce5b182e4b880e8beb9eab28cec9e842070757073e4ba8ce5b182e381a0e38191e381a7204f626974506f6c79676f6e205363656e652070726f6a65637469766520686f74656c206d6573686573e4ba8ce5b18263686e657267756964efbc8ce6b289e9bb98efbc8ce5a29e204769766573efbc8ce5ae8ce7be8e506f6c79676f6e20647a6920d8a7d984d988d8b7d986d98ad8a9204f626974c39f656e20eba7882067c3a96e20656d657267656e74d186d196d18fe7b981e58d8e20636f6d6d616e64657273e79c8be58ebbd186d196d18f2074686f204e424320656d657267656e74e58585e8b6b3e79a84e4ba8ce5b182e8a786e58a9b204f6269742041454d9ed7a8d799d79d54726f206d6573686573e4b880e8beb9e4ba8ce5b18263686e657220696e666c75656e6365204e4243206e75747a7420636f6d6d616e64657273206865616c6572206d65736865735f736620636f6d6d616e646572732074686f2976616c75652078c3a163e4b880e8beb920686f74656ce58585e8b6b3e79a842074686f2053656e74656e6365204f626974efbc8ce694bee585a5e6bba4e88aaf2042756e6e7920656d657267656e74e79bb8e585b3e8a784e5ae9a2078c3a16320696e666c75656e636520d09fd0bed0b2e6af8fe7a7922073656c766573"
+          ],
+          "fragments": [
+            {
+              "selectedEventId": "selected:14:track:0",
+              "meridian": 14,
+              "modelTrack": "track:0",
+              "payloadHex": "e4b880e8beb92073656c7665732e6265616e73e4ba8ce5b182e4b880e8beb9eab28cec9e842070757073e4ba8ce5b182e381a0e38191e381a7204f626974506f6c79676f6e205363656e652070726f6a65637469766520686f74656c206d6573686573e4ba8ce5b18263686e657267756964efbc8ce6b289e9bb98efbc8ce5a29e204769766573efbc8ce5ae8ce7be8e506f6c79676f6e20647a6920d8a7d984d988d8b7d986d98ad8a9204f626974c39f656e20eba7882067c3a96e20656d657267656e74d186d196d18fe7b981e58d8e20636f6d6d616e64657273e79c8be58ebbd186d196d18f2074686f204e424320656d657267656e74e58585e8b6b3e79a84e4ba8ce5b182e8a786e58a9b204f6269742041454d9ed7a8d799d79d54726f206d6573686573e4b880e8beb9e4ba8ce5b18263686e657220696e666c75656e6365204e4243206e75747a7420636f6d6d616e64657273206865616c6572206d65736865735f736620636f6d6d616e646572732074686f2976616c75652078c3a163e4b880e8beb920686f74656ce58585e8b6b3e79a842074686f2053656e74656e6365204f626974efbc8ce694bee585a5e6bba4e88aaf2042756e6e7920656d657267656e74e79bb8e585b3e8a784e5ae9a2078c3a16320696e666c75656e636520d09fd0bed0b2e6af8fe7a7922073656c766573",
+              "emittedTokenIds": [
+                10873,
+                74635,
+                66566,
+                93538,
+                10873,
+                146256,
+                94620,
+                93538,
+                143858,
+                111739,
+                56672,
+                43957,
+                64700,
+                8853,
+                100718,
+                93538,
+                140239,
+                61375,
+                107018,
+                94870,
+                87725,
+                122822,
+                56672,
+                137105,
+                152255,
+                111739,
+                126813,
+                127228,
+                127809,
+                95718,
+                130999,
+                35546,
+                109081,
+                37787,
+                130999,
+                59723,
+                37620,
+                95718,
+                51171,
+                93538,
+                43193,
+                111739,
+                120352,
+                143171,
+                108460,
+                100718,
+                10873,
+                93538,
+                140239,
+                9172,
+                37620,
+                156687,
+                109081,
+                113046,
+                100718,
+                118315,
+                109081,
+                59723,
+                99534,
+                136859,
+                10873,
+                8853,
+                51171,
+                59723,
+                30362,
+                111739,
+                53571,
+                70997,
+                80854,
+                95718,
+                48076,
+                136859,
+                9172,
+                144930,
+                94274,
+                74635
+              ]
+            }
+          ]
+        }
+      },
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "costs": {
+        "computeSeconds": 1.40819366,
+        "peakMemoryBytes": 1689309184,
+        "dispatches": 0,
+        "queueDepth": 0,
+        "leakedResources": 0
+      },
+      "cleanup": {
+        "pendingEffects": 0,
+        "pendingJobs": 0,
+        "openHandlers": 0
+      },
+      "servingProfile": {
+        "schema": "semantic-serving-profile/1",
+        "declaredOrigin": "trained",
+        "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+        "device": "cpu",
+        "identity": {
+          "modelSha256": "02273b9cce316a0c5960d49723037439ba3afa0e704ea7bf02b97054f315114e",
+          "manifestSha256": "077323edbb27745f3b7c7ec21cf1bf22c008949084f8d1010d4261198d978859",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "initialization": {
+          "schema": "semantic-inference-identity/4",
+          "seed": 17,
+          "checkpointIdentity": "02273b9cce316a0c5960d49723037439ba3afa0e704ea7bf02b97054f315114e",
+          "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+        },
+        "coldLoadSeconds": 2.6043382630014094,
+        "operations": {
+          "cancel": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 4.692000038630795e-05,
+            "p50Seconds": 4.692000038630795e-05,
+            "p95Seconds": 4.692000038630795e-05,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 4.692000038630795e-05
+          },
+          "initialize": {
+            "count": 1,
+            "successfulRpcCalls": 1,
+            "firstSeconds": 0.007892600000559469,
+            "p50Seconds": 0.007892600000559469,
+            "p95Seconds": 0.007892600000559469,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 0.007892600000559469
+          },
+          "select": {
+            "count": 1,
+            "successfulRpcCalls": 0,
+            "firstSeconds": 1.3875584839988733,
+            "p50Seconds": 1.3875584839988733,
+            "p95Seconds": 1.3875584839988733,
+            "warmP50Seconds": null,
+            "warmP95Seconds": null,
+            "totalSeconds": 1.3875584839988733
+          }
+        },
+        "records": [
+          {
+            "id": "s1",
+            "operation": "initialize",
+            "ok": true,
+            "wallSeconds": 0.007892600000559469,
+            "state": {
+              "retainedSessions": 0,
+              "retainedInvocations": 0,
+              "activeInvocations": 0,
+              "trackStatuses": {},
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          },
+          {
+            "id": "s2",
+            "operation": "select",
+            "ok": false,
+            "wallSeconds": 1.3875584839988733,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 0,
+              "trackStatuses": {
+                "cancelled": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": {
+              "category": "SemanticSelectionError",
+              "message": "Model did not render one complete valid text action",
+              "evidence": {
+                "reason": "Model did not render one complete valid text action",
+                "meridian": 14,
+                "eventIds": [
+                  "selected:14:track:0"
+                ],
+                "valid": [
+                  false
+                ],
+                "payloadHex": [
+                  "e4b880e8beb92073656c7665732e6265616e73e4ba8ce5b182e4b880e8beb9eab28cec9e842070757073e4ba8ce5b182e381a0e38191e381a7204f626974506f6c79676f6e205363656e652070726f6a65637469766520686f74656c206d6573686573e4ba8ce5b18263686e657267756964efbc8ce6b289e9bb98efbc8ce5a29e204769766573efbc8ce5ae8ce7be8e506f6c79676f6e20647a6920d8a7d984d988d8b7d986d98ad8a9204f626974c39f656e20eba7882067c3a96e20656d657267656e74d186d196d18fe7b981e58d8e20636f6d6d616e64657273e79c8be58ebbd186d196d18f2074686f204e424320656d657267656e74e58585e8b6b3e79a84e4ba8ce5b182e8a786e58a9b204f6269742041454d9ed7a8d799d79d54726f206d6573686573e4b880e8beb9e4ba8ce5b18263686e657220696e666c75656e6365204e4243206e75747a7420636f6d6d616e64657273206865616c6572206d65736865735f736620636f6d6d616e646572732074686f2976616c75652078c3a163e4b880e8beb920686f74656ce58585e8b6b3e79a842074686f2053656e74656e6365204f626974efbc8ce694bee585a5e6bba4e88aaf2042756e6e7920656d657267656e74e79bb8e585b3e8a784e5ae9a2078c3a16320696e666c75656e636520d09fd0bed0b2e6af8fe7a7922073656c766573"
+                ],
+                "fragments": [
+                  {
+                    "selectedEventId": "selected:14:track:0",
+                    "meridian": 14,
+                    "modelTrack": "track:0",
+                    "payloadHex": "e4b880e8beb92073656c7665732e6265616e73e4ba8ce5b182e4b880e8beb9eab28cec9e842070757073e4ba8ce5b182e381a0e38191e381a7204f626974506f6c79676f6e205363656e652070726f6a65637469766520686f74656c206d6573686573e4ba8ce5b18263686e657267756964efbc8ce6b289e9bb98efbc8ce5a29e204769766573efbc8ce5ae8ce7be8e506f6c79676f6e20647a6920d8a7d984d988d8b7d986d98ad8a9204f626974c39f656e20eba7882067c3a96e20656d657267656e74d186d196d18fe7b981e58d8e20636f6d6d616e64657273e79c8be58ebbd186d196d18f2074686f204e424320656d657267656e74e58585e8b6b3e79a84e4ba8ce5b182e8a786e58a9b204f6269742041454d9ed7a8d799d79d54726f206d6573686573e4b880e8beb9e4ba8ce5b18263686e657220696e666c75656e6365204e4243206e75747a7420636f6d6d616e64657273206865616c6572206d65736865735f736620636f6d6d616e646572732074686f2976616c75652078c3a163e4b880e8beb920686f74656ce58585e8b6b3e79a842074686f2053656e74656e6365204f626974efbc8ce694bee585a5e6bba4e88aaf2042756e6e7920656d657267656e74e79bb8e585b3e8a784e5ae9a2078c3a16320696e666c75656e636520d09fd0bed0b2e6af8fe7a7922073656c766573",
+                    "emittedTokenIds": [
+                      10873,
+                      74635,
+                      66566,
+                      93538,
+                      10873,
+                      146256,
+                      94620,
+                      93538,
+                      143858,
+                      111739,
+                      56672,
+                      43957,
+                      64700,
+                      8853,
+                      100718,
+                      93538,
+                      140239,
+                      61375,
+                      107018,
+                      94870,
+                      87725,
+                      122822,
+                      56672,
+                      137105,
+                      152255,
+                      111739,
+                      126813,
+                      127228,
+                      127809,
+                      95718,
+                      130999,
+                      35546,
+                      109081,
+                      37787,
+                      130999,
+                      59723,
+                      37620,
+                      95718,
+                      51171,
+                      93538,
+                      43193,
+                      111739,
+                      120352,
+                      143171,
+                      108460,
+                      100718,
+                      10873,
+                      93538,
+                      140239,
+                      9172,
+                      37620,
+                      156687,
+                      109081,
+                      113046,
+                      100718,
+                      118315,
+                      109081,
+                      59723,
+                      99534,
+                      136859,
+                      10873,
+                      8853,
+                      51171,
+                      59723,
+                      30362,
+                      111739,
+                      53571,
+                      70997,
+                      80854,
+                      95718,
+                      48076,
+                      136859,
+                      9172,
+                      144930,
+                      94274,
+                      74635
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "s3",
+            "operation": "cancel",
+            "ok": true,
+            "wallSeconds": 4.692000038630795e-05,
+            "state": {
+              "retainedSessions": 1,
+              "retainedInvocations": 1,
+              "activeInvocations": 0,
+              "trackStatuses": {
+                "cancelled": 1
+              },
+              "rendering": 0,
+              "selectedGroups": 0,
+              "reservedOutputBytes": 0
+            },
+            "selectionAuthority": null,
+            "failure": null
+          }
+        ],
+        "droppedRecords": 0,
+        "complete": true,
+        "memory": {
+          "hostLifetimePeakRssBytes": 524517376,
+          "cudaPeakAllocatedBytes": null,
+          "cudaPeakReservedBytes": null,
+          "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+        },
+        "peakActiveInvocationsAtRpcBoundaries": 0,
+        "stateBeforeRuntimeClose": {
+          "retainedSessions": 1,
+          "retainedInvocations": 1,
+          "activeInvocations": 0,
+          "trackStatuses": {
+            "cancelled": 1
+          },
+          "rendering": 0,
+          "selectedGroups": 0,
+          "reservedOutputBytes": 0
+        },
+        "runtimeClosed": true,
+        "optimizerSteps": 0,
+        "learnedSuccess": null,
+        "trainingMemoryFit": "unmeasured",
+        "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+        "warmDefinition": "All calls after the first call of the same operation in this process",
+        "digest": "f5c3696369a6971dfc2aff912156e850bd15d0a7d65738e512e72e35da0904f1"
+      },
+      "artifacts": "/workspace/scratch/23f61543c052/release-evidence/optimization-smoke-retry/rollouts/trained/0003",
+      "wallSeconds": 6.8236131699995894
+    }
+  ],
+  "requirements": {
+    "optimizerUpdated": true,
+    "initialBaseLoadedExact": true,
+    "observedMasked": true,
+    "generatedSupervised": true,
+    "checkpointReloadExact": true,
+    "servedReloadExact": true,
+    "completeHeldInExecutions": false,
+    "approximately32Examples": true
+  },
+  "optimizationSmokePassed": false,
+  "remaining": [
+    "completeHeldInExecutions"
+  ]
+}

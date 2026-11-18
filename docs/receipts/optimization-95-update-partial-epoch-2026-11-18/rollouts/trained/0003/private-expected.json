@@ -1,0 +1,148 @@
+{
+  "completion": {
+    "kind": "return",
+    "value": [
+      "str",
+      "updated"
+    ]
+  },
+  "state": {
+    "roots": [
+      [
+        "str",
+        "updated"
+      ]
+    ],
+    "objects": []
+  },
+  "effects": [
+    {
+      "kind": "dispatch",
+      "call": 0,
+      "operation": "dom.query",
+      "arguments": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "#message"
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "settlement",
+      "call": 0,
+      "status": "fulfilled",
+      "result": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "dom:fixture:1"
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "dispatch",
+      "call": 1,
+      "operation": "dom.setText",
+      "arguments": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "dom:fixture:1"
+          ],
+          [
+            "str",
+            "updated"
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "settlement",
+      "call": 1,
+      "status": "fulfilled",
+      "result": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "undefined"
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "dispatch",
+      "call": 2,
+      "operation": "dom.getText",
+      "arguments": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "dom:fixture:1"
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "settlement",
+      "call": 2,
+      "status": "fulfilled",
+      "result": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "updated"
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "dispatch",
+      "call": 3,
+      "operation": "dom.release",
+      "arguments": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "dom:fixture:1"
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "settlement",
+      "call": 3,
+      "status": "fulfilled",
+      "result": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "undefined"
+          ]
+        ],
+        "objects": []
+      }
+    }
+  ],
+  "callbacks": [],
+  "cleanup": {
+    "pendingEffects": 0,
+    "pendingJobs": 0,
+    "openHandlers": 0
+  }
+}

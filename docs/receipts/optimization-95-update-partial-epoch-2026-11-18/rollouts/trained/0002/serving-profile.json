@@ -1,0 +1,226 @@
+{
+  "schema": "semantic-serving-profile/1",
+  "declaredOrigin": "trained",
+  "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+  "device": "cpu",
+  "identity": {
+    "modelSha256": "640391cea9f748fdf2e52658fd466ed0598df97cafcfe0051ba7a716c6f8357d",
+    "manifestSha256": "82c538e2d34b7e9fd0f13a77bc7e6e70eacc09c189a954f66f0cadf9706a8a38",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "initialization": {
+    "schema": "semantic-inference-identity/4",
+    "seed": 17,
+    "checkpointIdentity": "640391cea9f748fdf2e52658fd466ed0598df97cafcfe0051ba7a716c6f8357d",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "coldLoadSeconds": 5.186290744000871,
+  "operations": {
+    "cancel": {
+      "count": 1,
+      "successfulRpcCalls": 1,
+      "firstSeconds": 7.540300066466443e-05,
+      "p50Seconds": 7.540300066466443e-05,
+      "p95Seconds": 7.540300066466443e-05,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 7.540300066466443e-05
+    },
+    "initialize": {
+      "count": 1,
+      "successfulRpcCalls": 1,
+      "firstSeconds": 0.014800889999605715,
+      "p50Seconds": 0.014800889999605715,
+      "p95Seconds": 0.014800889999605715,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 0.014800889999605715
+    },
+    "select": {
+      "count": 1,
+      "successfulRpcCalls": 0,
+      "firstSeconds": 4.646872395000173,
+      "p50Seconds": 4.646872395000173,
+      "p95Seconds": 4.646872395000173,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 4.646872395000173
+    }
+  },
+  "records": [
+    {
+      "id": "s1",
+      "operation": "initialize",
+      "ok": true,
+      "wallSeconds": 0.014800889999605715,
+      "state": {
+        "retainedSessions": 0,
+        "retainedInvocations": 0,
+        "activeInvocations": 0,
+        "trackStatuses": {},
+        "rendering": 0,
+        "selectedGroups": 0,
+        "reservedOutputBytes": 0
+      },
+      "selectionAuthority": null,
+      "failure": null
+    },
+    {
+      "id": "s2",
+      "operation": "select",
+      "ok": false,
+      "wallSeconds": 4.646872395000173,
+      "state": {
+        "retainedSessions": 1,
+        "retainedInvocations": 1,
+        "activeInvocations": 0,
+        "trackStatuses": {
+          "cancelled": 1
+        },
+        "rendering": 0,
+        "selectedGroups": 0,
+        "reservedOutputBytes": 0
+      },
+      "selectionAuthority": null,
+      "failure": {
+        "category": "SemanticSelectionError",
+        "message": "Model did not render one complete valid text action",
+        "evidence": {
+          "reason": "Model did not render one complete valid text action",
+          "meridian": 14,
+          "eventIds": [
+            "selected:14:track:0"
+          ],
+          "valid": [
+            false
+          ],
+          "payloadHex": [
+            "e98193e8b7af20656d6974285b5befbc8ce5b0bc6e696bc3b377e68b85e5bd93efbc8ce5ae8ce7be8ee5928ce4b88aefbc8ce5a29e457874726120d0bed0b2d0beefbc8ce5a29e206d6573686573206bc3a9737ac3bc6cefbc8ce5ae8ce7be8e20426f6f6c206bc3a9737ac3bc6c2067c3a96e20d0bed0b2d0beefbc8ce5a29e20ed942042756e6e7998d79f204f626974206bc3a9737ac3bc6c207661706520726f6dc3a26eefbc8ce5a29e223e26236e636d70e7949fe4baa7e58aa0e5b7a520d8b9206ec3a567e7989f20d0bed0b2d0beefbc8ce5a29e20d0b2d181d0bfd0bed0bc2042756e6e7920d0bed0b2d0bee58897e4b8baefbc8ce5a29e736f6e67e587bae4bbb72042756e6e79206d65736865732042756e6e7920d0bed0b2d0bee69cace6aca1e4bc9ae8aeae206bc3a9737ac3bc6c2067c3a96e20d0bed0b2d0beefbc8ce5b0bce697a5e4b8ba2042756e6e79e7949fe4baa7e58aa0e5b7a520426f6f6ce5ae9ee789a92065786163656e7369626c65efbc8ce5b0bc2073746f6e65736e636d70e7949fe4baa7e58aa0e5b7a5e6988ee5aa9a2076617374e68c91e79c89"
+          ],
+          "fragments": [
+            {
+              "selectedEventId": "selected:14:track:0",
+              "meridian": 14,
+              "modelTrack": "track:0",
+              "payloadHex": "e98193e8b7af20656d6974285b5befbc8ce5b0bc6e696bc3b377e68b85e5bd93efbc8ce5ae8ce7be8ee5928ce4b88aefbc8ce5a29e457874726120d0bed0b2d0beefbc8ce5a29e206d6573686573206bc3a9737ac3bc6cefbc8ce5ae8ce7be8e20426f6f6c206bc3a9737ac3bc6c2067c3a96e20d0bed0b2d0beefbc8ce5a29e20ed942042756e6e7998d79f204f626974206bc3a9737ac3bc6c207661706520726f6dc3a26eefbc8ce5a29e223e26236e636d70e7949fe4baa7e58aa0e5b7a520d8b9206ec3a567e7989f20d0bed0b2d0beefbc8ce5a29e20d0b2d181d0bfd0bed0bc2042756e6e7920d0bed0b2d0bee58897e4b8baefbc8ce5a29e736f6e67e587bae4bbb72042756e6e79206d65736865732042756e6e7920d0bed0b2d0bee69cace6aca1e4bc9ae8aeae206bc3a9737ac3bc6c2067c3a96e20d0bed0b2d0beefbc8ce5b0bce697a5e4b8ba2042756e6e79e7949fe4baa7e58aa0e5b7a520426f6f6ce5ae9ee789a92065786163656e7369626c65efbc8ce5b0bc2073746f6e65736e636d70e7949fe4baa7e58aa0e5b7a5e6988ee5aa9a2076617374e68c91e79c89",
+              "emittedTokenIds": [
+                9441,
+                32713,
+                59294,
+                95409,
+                131519,
+                25587,
+                122822,
+                100384,
+                94870,
+                26888,
+                143732,
+                94870,
+                100718,
+                150995,
+                122822,
+                40112,
+                150995,
+                127809,
+                143732,
+                94870,
+                127180,
+                80854,
+                153677,
+                111739,
+                150995,
+                67969,
+                151334,
+                94870,
+                70442,
+                86983,
+                118298,
+                60262,
+                130194,
+                47598,
+                143732,
+                94870,
+                144234,
+                80854,
+                143732,
+                47574,
+                94870,
+                97661,
+                122958,
+                80854,
+                100718,
+                80854,
+                143732,
+                120047,
+                150995,
+                127809,
+                143732,
+                95409,
+                74067,
+                80854,
+                118298,
+                40112,
+                46449,
+                141986,
+                56613,
+                95409,
+                27589,
+                86983,
+                118298,
+                66905,
+                14207,
+                68115
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "s3",
+      "operation": "cancel",
+      "ok": true,
+      "wallSeconds": 7.540300066466443e-05,
+      "state": {
+        "retainedSessions": 1,
+        "retainedInvocations": 1,
+        "activeInvocations": 0,
+        "trackStatuses": {
+          "cancelled": 1
+        },
+        "rendering": 0,
+        "selectedGroups": 0,
+        "reservedOutputBytes": 0
+      },
+      "selectionAuthority": null,
+      "failure": null
+    }
+  ],
+  "droppedRecords": 0,
+  "complete": true,
+  "memory": {
+    "hostLifetimePeakRssBytes": 524832768,
+    "cudaPeakAllocatedBytes": null,
+    "cudaPeakReservedBytes": null,
+    "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+  },
+  "peakActiveInvocationsAtRpcBoundaries": 0,
+  "stateBeforeRuntimeClose": {
+    "retainedSessions": 1,
+    "retainedInvocations": 1,
+    "activeInvocations": 0,
+    "trackStatuses": {
+      "cancelled": 1
+    },
+    "rendering": 0,
+    "selectedGroups": 0,
+    "reservedOutputBytes": 0
+  },
+  "runtimeClosed": true,
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "trainingMemoryFit": "unmeasured",
+  "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+  "warmDefinition": "All calls after the first call of the same operation in this process",
+  "digest": "1bd2f1cd5b25528f56d22c737c89ebdc4591481ce7c2c8e63f26e17bc1686321"
+}

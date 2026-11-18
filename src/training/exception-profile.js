@@ -16,14 +16,17 @@ export function describeCompletionGraph(args,value,kind){
       throw new TypeError('Unsupported exception boundary: custom Error constructor');
     if(!Object.isExtensible(value))throw new TypeError('Unsupported exception boundary: frozen Error');
     for(const key of Reflect.ownKeys(value)){
-      if(key!=='stack'&&key!=='message')
+      // Older V8 versions materialize a lazy stack even when its descriptor
+      // is requested. That can invoke a guest message/name getter. The stack
+      // is outside this observation profile, so do not inspect it at all.
+      if(key==='stack')continue;
+      if(key!=='message')
         throw new TypeError('Unsupported exception boundary: Error extensions');
       const descriptor=Object.getOwnPropertyDescriptor(value,key);
-      // V8 may implement stack with an accessor. It is deliberately ignored
-      // and never invoked; every observed message must be an own data field.
-      if(key==='message'&&(!Object.hasOwn(descriptor,'value')||
+      // Every observed message must be an own data field.
+      if(!Object.hasOwn(descriptor,'value')||
         typeof descriptor.value!=='string'||descriptor.enumerable||
-        !descriptor.writable||!descriptor.configurable))
+        !descriptor.writable||!descriptor.configurable)
         throw new TypeError('Unsupported exception boundary: Error message descriptor');
     }
     const message=Object.getOwnPropertyDescriptor(value,'message')?.value??'';

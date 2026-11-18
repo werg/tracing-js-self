@@ -1,0 +1,167 @@
+{
+  "schema": "optimization-diagnostic-summary/1",
+  "interpretation": "actual95-update partial epoch; forecast corrected before further diversity attempt",
+  "examplesPrepared": 32,
+  "familiesPrepared": 29,
+  "actualSourceExposure": {
+    "completeHistory": true,
+    "examplesSampled": 16,
+    "familiesSampled": 16,
+    "windowsSampled": 95,
+    "sources": [
+      {
+        "sourceId": "semantic-harness:3a29c5a9aa613b2a",
+        "episodeId": "semantic:harness:3a29c5a9aa613b2ac7dc6bbc171064b94f398cc3ae5b04e92ec232c3a5e4c700",
+        "family": "platform-observation",
+        "taskId": "clock-console",
+        "windows": 3
+      },
+      {
+        "sourceId": "semantic-harness:44bf4be458d27f62",
+        "episodeId": "semantic:harness:44bf4be458d27f62d27430206b7657eb02efa12ec76ec2eff7d098e4c1414f94",
+        "family": "semantic-recipe:rectangular-capacity",
+        "taskId": "rectangular-capacity-pure",
+        "windows": 2
+      },
+      {
+        "sourceId": "semantic-harness:50ccd8fac330f92f",
+        "episodeId": "semantic:harness:50ccd8fac330f92f264fd92a60df97a4dc61a673eed7a7c25dedfc8e5656a099",
+        "family": "semantic-recipe:midpoint",
+        "taskId": "midpoint-pure",
+        "windows": 3
+      },
+      {
+        "sourceId": "semantic-harness:62bc2621b9a73985",
+        "episodeId": "semantic:harness:62bc2621b9a7398516190d23c80fa58d857f49e2ba13a0d7734272309eef4cf5",
+        "family": "semantic-recipe:unit-conversion",
+        "taskId": "unit-conversion-pure",
+        "windows": 3
+      },
+      {
+        "sourceId": "semantic-harness:7c05614d5a35833c",
+        "episodeId": "semantic:harness:7c05614d5a35833c18302d24a82b5d93cd16d609ce7487af51fc47ffe158b0ab",
+        "family": "semantic-recipe:relative-growth",
+        "taskId": "relative-growth-pure",
+        "windows": 3
+      },
+      {
+        "sourceId": "semantic-harness:827022c4f589483d",
+        "episodeId": "semantic:harness:827022c4f589483d1c07fa7dc027677b0fc2f8ab614d200b1db94683d440367a",
+        "family": "promise-reaction",
+        "taskId": "promise-reaction",
+        "windows": 9
+      },
+      {
+        "sourceId": "semantic-harness:8d2e43bb4c5a0e67",
+        "episodeId": "semantic:harness:8d2e43bb4c5a0e67ac9d109a2dabcbff60f53538ae6c437e9cfe04c2fe3363cb",
+        "family": "semantic-recipe:triangular-series",
+        "taskId": "triangular-series-pure",
+        "windows": 3
+      },
+      {
+        "sourceId": "semantic-harness:9251f92f0cc9dd71",
+        "episodeId": "semantic:harness:9251f92f0cc9dd713b888b40009c7cb66a6b1b4d0c70b5089caea601d342a3d4",
+        "family": "dom-mutation-release",
+        "taskId": "dom-mutation-release",
+        "windows": 9
+      },
+      {
+        "sourceId": "semantic-harness:b6ff96f3b21c026b",
+        "episodeId": "semantic:harness:b6ff96f3b21c026bbf4812c4caae38415bce66fa62a807996c14a2b319903071",
+        "family": "semantic-recipe:absolute-distance",
+        "taskId": "semantic-recipe:absolute-distance",
+        "windows": 14
+      },
+      {
+        "sourceId": "semantic-harness:ce24b3d371c9d028",
+        "episodeId": "semantic:harness:ce24b3d371c9d0285b50204562302416ac6b77eb158eb605eb65ee2b15b350b6",
+        "family": "semantic-recipe:flag-union",
+        "taskId": "flag-union-pure",
+        "windows": 2
+      },
+      {
+        "sourceId": "semantic-harness:cf566a052cac3ebb",
+        "episodeId": "semantic:harness:cf566a052cac3ebb33719723204aa3ae598a064953781af09bee500edfc82298",
+        "family": "semantic-recipe:modular-clock",
+        "taskId": "modular-clock-pure",
+        "windows": 3
+      },
+      {
+        "sourceId": "semantic-harness:cfa903d36c296f2d",
+        "episodeId": "semantic:harness:cfa903d36c296f2d5d90cd23c85a3bef2dfdddd151155d137352d1736d43f14a",
+        "family": "native-result-graph",
+        "taskId": "native-result-graph",
+        "windows": 9
+      },
+      {
+        "sourceId": "semantic-harness:e04aca8c0cc66eca",
+        "episodeId": "semantic:harness:e04aca8c0cc66eca6f997a766fff6d2a396cd9049b97ae9e9a95589c38efd6c0",
+        "family": "promise-cleanup",
+        "taskId": "promise-rejection-finally",
+        "windows": 11
+      },
+      {
+        "sourceId": "semantic-harness:e5c1a5415539754f",
+        "episodeId": "semantic:harness:e5c1a5415539754fdf7194b581d4a5e756a6c3bebe2fe37441aca1b3b9c954fa",
+        "family": "observed-branch",
+        "taskId": "branch-0",
+        "windows": 5
+      },
+      {
+        "sourceId": "semantic-harness:f0f289f7bc556737",
+        "episodeId": "semantic:harness:f0f289f7bc5567375f3da592f708c6df827f6d456a6daa09ed4c4b1cfdb565bb",
+        "family": "http-response-stream",
+        "taskId": "http-response-stream",
+        "windows": 10
+      },
+      {
+        "sourceId": "semantic-harness:fb87996a2ed8294c",
+        "episodeId": "semantic:harness:fb87996a2ed8294c2969a8ffca90ab42a9fcd3eb5132053183770fffd7531a33",
+        "family": "async-counter",
+        "taskId": "checkpoint-source-reread",
+        "windows": 6
+      }
+    ]
+  },
+  "optimizerSteps": 95,
+  "supervisedLexicalTokens": 5238,
+  "requirements": {
+    "optimizerUpdated": true,
+    "initialBaseLoadedExact": true,
+    "observedMasked": true,
+    "generatedSupervised": true,
+    "checkpointReloadExact": true,
+    "servedReloadExact": true,
+    "completeHeldInExecutions": false,
+    "approximately32Examples": true,
+    "approximately32ExamplesSampled": false
+  },
+  "baseModelSha256": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+  "baseModelTensorIdentity": "865e158069ef76bdadc37a41c0f69da8ca8c70d5a2742ad6400b6838d9de0a90",
+  "trainingWallSeconds": 636.1965100229991,
+  "stepMedianSeconds": 6.644619289001639,
+  "arms": {
+    "fixed-weights": {
+      "episodes": 4,
+      "wholeTaskSuccesses": 0,
+      "failureCategories": {
+        "SemanticSelectionError": 3,
+        "TypeError": 1
+      },
+      "allHardGatesZero": true,
+      "allCleanupZero": true
+    },
+    "trained": {
+      "episodes": 4,
+      "wholeTaskSuccesses": 0,
+      "failureCategories": {
+        "SemanticSelectionError": 1,
+        "TypeError": 3
+      },
+      "allHardGatesZero": true,
+      "allCleanupZero": true
+    }
+  },
+  "generalizationClaim": false,
+  "productionQualification": false
+}

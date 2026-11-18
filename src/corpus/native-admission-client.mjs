@@ -17,6 +17,12 @@ export function loadNativeSettings({megatoken,tokenizer,python='python3',policyF
   const revision=execFileSync('git',['-C',resolve(megatoken),'rev-parse','HEAD'],{encoding:'utf8'}).trim();
   const changes=execFileSync('git',['-C',resolve(megatoken),'status','--porcelain','--untracked-files=no'],{encoding:'utf8'}).trim();
   if(changes)throw new Error('Native consumer checkout has uncommitted tracked changes');
+  // An untracked package can shadow a tracked module without changing HEAD or
+  // megatoken.__file__. Include ignored paths; normal __pycache__ bytecode is
+  // not independently importable when its corresponding source is absent.
+  const untracked=execFileSync('git',['-C',resolve(megatoken),'ls-files','--others','-z','--','src','scripts'],{encoding:'utf8'})
+    .split('\0').filter(path=>path&&/\.(?:py|pyc|pyo|so|pyd)$/.test(path)&&!/(?:^|\/)__pycache__\/[^/]+\.pyc$/.test(path));
+  if(untracked.length)throw new Error('Native consumer contains untracked importable code: '+untracked.join(', '));
   const tokenizerHash=createHash('sha256').update(readFileSync(resolve(tokenizer))).digest('hex');
   if(policy.consumerRevision!==revision||policy.tokenizerSha256!==tokenizerHash)
     throw new Error('Native checkout or tokenizer bytes disagree with release policy');

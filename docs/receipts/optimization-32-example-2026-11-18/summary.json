@@ -1,0 +1,82 @@
+{
+  "schema": "optimization-diagnostic-summary/1",
+  "interpretation": "actual optimizer pipeline completed; complete-execution smoke failed",
+  "examplesPrepared": 32,
+  "familiesPrepared": 29,
+  "examplesActuallySampled": 3,
+  "familiesActuallySampled": 3,
+  "optimizerSteps": 32,
+  "supervisedLexicalTokens": 865,
+  "sampledSources": [
+    {
+      "sourceId": "semantic-harness:827022c4f589483d",
+      "family": "promise-reaction",
+      "taskId": "promise-reaction",
+      "windows": 17
+    },
+    {
+      "sourceId": "semantic-harness:62bc2621b9a73985",
+      "family": "semantic-recipe:unit-conversion",
+      "taskId": "unit-conversion-pure",
+      "windows": 5
+    },
+    {
+      "sourceId": "semantic-harness:b6ff96f3b21c026b",
+      "family": "semantic-recipe:absolute-distance",
+      "taskId": "semantic-recipe:absolute-distance",
+      "windows": 10
+    }
+  ],
+  "requirements": {
+    "optimizerUpdated": true,
+    "initialBaseLoadedExact": true,
+    "observedMasked": true,
+    "generatedSupervised": true,
+    "checkpointReloadExact": true,
+    "servedReloadExact": true,
+    "completeHeldInExecutions": false,
+    "approximately32Examples": true
+  },
+  "timing": {
+    "trainerWallSeconds": 137.37828076699952,
+    "optimizerKernelSeconds": 0.7410614469954453,
+    "stepMinSeconds": 1.4303889490001893,
+    "stepMedianSeconds": 3.998409474500477,
+    "stepMaxSeconds": 7.070788803999676
+  },
+  "gradientMinima": {
+    "gradient_norm": 1.8764042854309082,
+    "gradient_norm_encoder": 0.10385104268789291,
+    "gradient_norm_model": 1.3054450750350952,
+    "gradient_norm_shared": 1.203749656677246
+  },
+  "arms": {
+    "fixed-weights": {
+      "episodes": 4,
+      "wholeTaskSuccesses": 0,
+      "failureCategories": {
+        "SemanticSelectionError": 3,
+        "TypeError": 1
+      },
+      "allHardGatesZero": true,
+      "allCleanupZero": true,
+      "wallSeconds": 34.27961555699949
+    },
+    "trained": {
+      "episodes": 4,
+      "wholeTaskSuccesses": 0,
+      "failureCategories": {
+        "SemanticSelectionError": 1,
+        "TypeError": 3
+      },
+      "allHardGatesZero": true,
+      "allCleanupZero": true,
+      "wallSeconds": 32.8718278669985
+    }
+  },
+  "sourceProducerRevision": "c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39",
+  "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+  "runnerRevision": "d8f582b5fe6a2d1c44187bbfa6378e7eaa560667",
+  "generalizationClaim": false,
+  "nativeProductionQualification": false
+}

@@ -2,12 +2,29 @@
 import {writeFileSync,mkdirSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {buildCapabilityLedger} from '../src/training/capability-ledger.js';
+import {fileURLToPath} from 'node:url';
+import {buildCapabilityLedger,CAPABILITY_CASES} from '../src/training/capability-ledger.js';
+import {loadNativeSettings,createNativeConsumer} from '../src/corpus/native-admission-client.mjs';
 
-const args=process.argv.slice(2);
-if(args.length!==2||args[0]!=='--out')throw new Error('Usage: node tools/generate-capability-ledger.mjs --out report.json');
-const output=resolve(args[1]);
-const producerRevision=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
-const report=await buildCapabilityLedger({producerRevision});
+const flags=new Map(),valued=new Set(['--out','--cases','--megatoken','--tokenizer','--python','--native-policy']);
+for(let i=2;i<process.argv.length;i++){
+  const key=process.argv[i];
+  if(flags.has(key)||!valued.has(key)&&key!=='--require-native')throw new Error('Unknown or repeated option '+key);
+  if(key==='--require-native')flags.set(key,true);
+  else {const value=process.argv[++i];if(!value||value.startsWith('--'))throw new Error('Missing value for '+key);flags.set(key,value);}
+}
+if(!flags.has('--out'))throw new Error('Usage: node tools/generate-capability-ledger.mjs --out report.json [--cases id,id] [--megatoken DIR --tokenizer FILE --python PYTHON --native-policy FILE] [--require-native]');
+const output=resolve(flags.get('--out')),root=fileURLToPath(new URL('..',import.meta.url));
+const producerRevision=execFileSync('git',['-C',root,'rev-parse','HEAD'],{encoding:'utf8'}).trim();
+const selected=flags.has('--cases')?flags.get('--cases').split(','):CAPABILITY_CASES.map(row=>row.id);
+if(new Set(selected).size!==selected.length||selected.some(id=>!CAPABILITY_CASES.some(row=>row.id===id)))
+  throw new Error('Capability case IDs must be known and unique');
+const requested=['--megatoken','--tokenizer','--native-policy'].some(key=>flags.has(key));
+const native=loadNativeSettings({megatoken:flags.get('--megatoken'),tokenizer:flags.get('--tokenizer'),
+  python:flags.get('--python')??'python3',temporaryDirectory:output+'.native',
+  policyFile:requested?(flags.get('--native-policy')??resolve(root,'contracts/native-admission-policy-v5.json')):undefined});
+if(flags.has('--require-native')&&!native)throw new Error('--require-native needs a pinned native consumer');
+const report=await buildCapabilityLedger({producerRevision,cases:CAPABILITY_CASES.filter(row=>selected.includes(row.id)),nativeConsumer:createNativeConsumer(native),nativePolicy:native?.policy??null});
 mkdirSync(dirname(output),{recursive:true});writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify({output,totals:report.totals,optimizerSteps:0,learnedSuccess:null}));
+if(report.totals.nativeAdmission.failed)process.exitCode=1;

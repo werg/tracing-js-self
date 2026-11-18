@@ -54,11 +54,19 @@ def main():
     from megatoken.data.semantic_corpus import prepare_semantic_corpus, source_verifier_for_checkout
     from megatoken.generation.codec import ByteCodec, LING_TOKENIZER_SHA256
 
-    documents = [read(options.corpus / case["path"]) for case in manifest["cases"] if case["status"] == "admitted"]
-    if options.session:
-        documents.append(read(options.session))
-    single = next((doc for doc in documents if not doc["sidecar"].get("collection")), None)
-    session = next((doc for doc in documents if doc["sidecar"].get("collection", {}).get("schema") == "semantic-teacher-session/4"), None)
+    single, session = None, read(options.session) if options.session else None
+    # Large release corpora carry full private journals. Retain only the two
+    # needed controls rather than loading the entire release into host memory.
+    for case in manifest["cases"]:
+        if case["status"] != "admitted":
+            continue
+        document = read(options.corpus / case["path"])
+        if single is None and not document["sidecar"].get("collection"):
+            single = document
+        if session is None and document["sidecar"].get("collection", {}).get("schema") == "semantic-teacher-session/4":
+            session = document
+        if single is not None and session is not None:
+            break
     if single is None or session is None:
         raise ValueError("A real admitted single episode and repeated session are both required")
     controls = [("single", single), ("session", session)]
@@ -73,7 +81,7 @@ def main():
     options.output.mkdir(parents=True, exist_ok=True)
     inputs = options.output / "inputs"
     inputs.mkdir()
-    candidates = [single, session]
+    candidate_specs = [(single, None, None), (session, None, None)]
     labels = ["control-single", "control-session"]
     mutations = []
     for name, document in controls:
@@ -103,21 +111,25 @@ def main():
                  [*component["ancestorIds"], "forged-component-ancestor"]),
             ])
         for label, path, value in fields:
-            altered = copy.deepcopy(document)
-            replace_path(altered, path, value)
-            if altered["public"] != document["public"]:
-                raise AssertionError("Provenance test accidentally changed public execution bytes")
-            mutations.append({"candidate": len(candidates), "case": f"{name}-{label}", "path": path})
+            mutations.append({"candidate": len(candidate_specs), "case": f"{name}-{label}", "path": path})
             labels.append(f"{name}-{label}")
-            candidates.append(altered)
+            candidate_specs.append((document, path, value))
     input_receipts = []
-    for label, document in zip(labels, candidates):
+    input_paths = []
+    for label, (original, changed_path, value) in zip(labels, candidate_specs):
+        document = original if changed_path is None else copy.deepcopy(original)
+        if changed_path is not None:
+            replace_path(document, changed_path, value)
+            if document["public"] != original["public"]:
+                raise AssertionError("Provenance test accidentally changed public execution bytes")
         raw = json.dumps(document, ensure_ascii=False, separators=(",", ":")).encode()
         path = inputs / f"{label}.json.gz"
         path.write_bytes(gzip.compress(raw, mtime=0))
+        input_paths.append(path)
         input_receipts.append({"case": label, "path": str(path.relative_to(options.output)),
                                "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
     codec = ByteCodec.from_tokenizer_json(options.tokenizer_json, expected_sha256=LING_TOKENIZER_SHA256)
+    candidates = (json.loads(gzip.decompress(path.read_bytes())) for path in input_paths)
     native, report = prepare_semantic_corpus(candidates, options.output / "prepared", codec=codec,
         producer_revision=producer, consumer_revision=consumer,
         source_verifier=source_verifier_for_checkout(options.tracer_root, producer))

@@ -132,7 +132,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
              !eq(e.result,p.value.value))
             fail('Awaited rejection reason/provenance mismatch',e.eventId);
         }else if(e.operation!=='spec.operation.complete'){
-          if(!['ReferenceError','TypeError','RangeError'].includes(c.errorType) ||
+          if(!['ReferenceError','TypeError','RangeError','SyntaxError'].includes(c.errorType) ||
              typeof c.message!=='string'||c.origin!==e.eventId)
             fail('Invalid classified guest exception',e.eventId);
         }

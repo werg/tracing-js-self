@@ -27,9 +27,20 @@ PYTHONPATH=/path/to/megatoken/src /path/to/python tools/run-optimization-smoke.p
 
 The output directory must be new. Candidate selection cycles through source
 families, uses only the training split, and never relabels held-out examples.
+Within each family it selects the smallest measured generated-token example
+first, breaking ties by public bytes and identity. This is a deliberately bounded
+feasibility sample, not an estimate of the full training distribution.
+Repeat `--corpus` to combine materialized authored, generated, and real-source
+campaigns at the same producer revision. Identical public episodes are selected
+only once; a repeated candidate identity with different bytes is rejected.
 Every candidate undergoes fresh source, journal, replay, and native-consumer
 checks before preparation. The report pins both repositories, the tokenizer,
 the actual runner files, input files, and the resulting prepared corpus.
+During streaming input reads, byte-identical decoded frozen-registry subtrees
+share memory; all original fields and serialized evidence are preserved and
+checked for mutation. The model runtime loads after preparation. This avoids
+holding its memory alongside repeated large private registries. The report
+records registry counts and the preparation process's measured peak RSS.
 
 Training is capped by `--steps` and `--train-timeout` (900 seconds by default).
 The runner reserves up to 30 seconds **inside** that cap for the native engine's
@@ -37,6 +48,32 @@ SIGTERM handler to finish its current atomic update and save a paused checkpoint
 If graceful checkpointing cannot finish by the cap, the process group is killed.
 Interrupted logged updates and the last durable checkpoint are reported
 separately. A paused run that did not reach its declared step count does not pass.
+
+`--training-window-records` (alias `--max-window-records`) controls the supported
+native atomic-window record cap (default 1). `--training-window-decisions`
+(alias `--scored-decisions`) controls its decision cap (default 2). Both accept
+explicit bounds up to 1,024; the resolved native plan and actual resource budget
+remain authoritative. The native sampler finishes all causal windows of one
+permuted episode before advancing to the next. With a one-record cap, a short
+run can repeatedly train a few sources. A larger record cap groups records
+and complete atomic meridians, preserving the same records, targets, and causal
+boundaries. It does not interleave episodes or rewrite the training format.
+For the recorded 32-example release-C corpus, one epoch takes 320 updates at
+record cap 1 and decision cap 2; 170 at caps 16 and 2; 95 at caps 16 and 4; and
+49 at caps 16 and 32. An early manual profile used the packing helper's default
+decision cap 4 instead of the resolved diagnostic cap 2; it incorrectly forecast
+95 updates for the cap-16 run. That run and correction remain separate evidence.
+The runner now profiles the **fully resolved** native configuration before
+launch. `native-window-plan.json` retains the complete episode inventory, and
+`native-schedule-plan.json` retains expected window indices, record IDs, source
+membership, scored targets, and final cursor. After training it requires exact native cursor,
+source-count, and scored-target agreement. Native per-window order is derived
+from its deterministic cursor contract; the engine does not independently log
+each window ID. `--require-full-epoch` refuses before launch unless every prepared
+target will be consumed once. These counts are specific to that exact prepared
+corpus. Do not assume 32 updates visit 32
+examples. `sourceExposure` maps actual checkpoint window counts to prepared
+source identities and families and refuses unknown or incomplete histories.
 Rollouts are independently capped by `--rollout-timeout` (120 seconds by
 default) and `--rollout-tokens` **per native fragment**. The pinned selected
 adapter may emit up to 64 fragments for one logical decision; this flag is not
@@ -60,6 +97,11 @@ partial runs retain checkpoints, logs, and the last completed phase.
    loads that checkpoint through its supported phase-transition API. This
    binds the base weights directly; it does not infer their identity from a
    seed alone. The trainer also saves its phase-start checkpoint.
+   `--base-checkpoint` instead copies and loads the exact existing zero-update
+   base, allowing later diagnostic configurations to share identical checkpoint
+   bytes. A stepped checkpoint is refused for this option. With `--experiment`,
+   the declaration must additionally bind those exact state bytes in
+   `baseCheckpointSha256` before training.
 3. **Real optimization.** The configured native training engine performs the
    requested updates. Committed weights must be finite, parameter ownership
    must match initialization, changed parameters must have optimizer moments,
@@ -136,6 +178,16 @@ The diagnostic uses the companion's P1 recurrent training engine over verified
 v5 records. Production SE/SC launch gates, frozen experiment receipts,
 donor/hindsight assets, and coordinator requirements remain intact. A larger
 production experiment still needs those assets and its own explicit budget.
+The diagnostic report is not itself a held-out evaluation report or a native
+semantic experiment budget receipt. The production comparator
+`compare-learning-runs.py` requires configured SE/SC experiment receipts and a
+separately frozen evaluation cohort. The distinct `run-learning-pilot.py`
+workflow supports an explicitly scoped P1 exploratory comparison when its exact
+experiment was frozen before optimization. These evidence classes remain separate.
 The current companion corpus preparer requires a physical capacity of at least
 768 because its default soft chunk limit is 768; this runner uses the supported
 1024-token capacity and 1024-event history without modifying that consumer.
+The CPU trainer currently records zero for its GPU allocator peak-memory
+counter. That counter does not measure CPU training memory. The native serving
+profiles separately retain observed process memory; neither quantity is a
+claim that a larger training configuration fits in memory.

@@ -12,7 +12,9 @@ function verified(body,args=[]){
 }
 test('multiple lexical declarations evaluate left-to-right and preserve TDZ',()=>{
   verified('function f(x){let a=x+1,b=a*2,c=b-2;const data={a,b,c};return [data.a,data.b,data.c];}',[4]);
-  assert.notEqual(verifyOwnedSourceCase({source:strict('function f(){let x=y,y=2;return x;}'),entry:'f'}).status,'locally_verified');
+  const thrown=verified('function f(){let x=y,y=2;return x;}');
+  assert.equal(thrown.sidecar.reference.outcome.kind,'throw');
+  assert.equal(thrown.sidecar.reference.outcome.graph.objects[0].properties[0][1][1],'ReferenceError');
 });
 test('object shorthand supports lexical inputs and identical named values',()=>{
   verified('function f(a,b){const c=3;const obj={a,b,c};return [obj.a,obj.b,obj.c];}',[4,5]);

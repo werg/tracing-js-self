@@ -27,8 +27,21 @@ and oracle process failures remain distinct from guest outcomes. Callback
 failures and unhandled rejections are reported separately; positive admission
 requires the explicit lifecycle gate, rather than silently discarding them.
 
-Implicit engine errors (for example an uncaught parameter TDZ ReferenceError)
-can already execute correctly in the owned runtime, but some still lack the
-complete source-grounded v5 completion projection. They remain refusals until
-that projection and exact reference comparison qualify them. No native
-admission or learned accuracy is inferred from these local checks.
+Implicit guest faults, including parameter and body TDZ ReferenceErrors, now
+allocate one owned error identity at the faulting source operation. The same
+value follows synchronous caller unwinding, catches, rethrows, finally, and
+async rejection; the compiler emits its allocation before any public use.
+Synchronous host rejection remains an observed delivery. Its blocked source
+caller supplies the completion owner, and the witness records any subsequent
+unwinding or enclosing async rejection without converting the host result into
+a generated value.
+Primitive-only `BigInt(...)` conversion also retains its actual TypeError,
+RangeError, or SyntaxError name/message. `Number(...)`, `BigInt(...)`, and
+`String(...)` support bounded primitive conversion and preserve argument evaluation order. Object
+conversion remains an uncaught profile refusal; it never invokes native
+ToPrimitive or substitutes a catchable language error for unsupported behavior.
+An expression that throws contributes no successful-value instrumentation
+receipt. Independent original and instrumented source checks still require
+exact observable name/message agreement. Unsupported error messages or richer
+Error behavior remain refusals; no broad engine-error compatibility, native
+admission, or learned accuracy is inferred from these local checks.
