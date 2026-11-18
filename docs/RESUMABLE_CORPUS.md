@@ -133,6 +133,31 @@ candidates under the same identity. Earlier attempts remain in the chained log.
 Increasing an input limit is possible only when existing candidate identities
 remain identical and every new source belongs to the frozen inventory.
 
+For fresh requalification of specific ordinary real-source cases after a
+producer or consumer repair, pass `--case-ids FILE` with a nonempty JSON array
+of unique registered IDs. Keep the original `--source-stream`, `--per-family`,
+and other recipe options so that they build the same candidate catalog. For
+example, a selection file can contain:
+
+```json
+["real-utilities-9f613b92f1e790e1aa06e539", "real-utilities-4dd52bb7e01ee8083fe45cd2"]
+```
+
+Add `--case-ids ../corpus-run/case-ids.json` to the collection command and choose
+a fresh output directory when the producer or native policy changed. The
+collector validates every ID before creating the campaign or writing a frozen
+registry. Unknown IDs, duplicate IDs, an empty selection, and a `--limit` below
+the requested count are errors. The filter supports only `--recipe real-source`;
+it does not split sessions or lifecycle candidates.
+
+Selection retains catalog order, original case and candidate identities, the
+complete recipe source inventory, and the complete frozen registry. Every
+selected case passes through the normal independent-source, owned execution,
+replay, projection, and requested native gates. The manifest records the input
+file hash, selected IDs, and full inventory counts/digest. It is a new measured
+attempt, and does not replace the original campaign's refusals. Selecting a
+subset does not make the remaining cases qualified under the new policy.
+
 Each completed result is written before the collector proceeds. Public and
 private objects are checksummed, atomically renamed, and recorded in a chained,
 append-only log. A partially written final log line can be preserved and
