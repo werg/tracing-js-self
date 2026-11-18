@@ -3,20 +3,24 @@
 from __future__ import annotations
 
 import argparse
+import fcntl
 import gzip
 import hashlib
 import io
 import json
 import os
 import re
+import sqlite3
 import stat
 import subprocess
+import sys
 import tarfile
-from collections import Counter
+from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
 
 CHUNK_BYTES = 1024 * 1024
 MAX_MANIFEST_BYTES = 64 * 1024 * 1024
+MAX_OBJECT_BYTES = 256 * 1024 * 1024
 SHA256 = re.compile(r"^[a-f0-9]{64}$")
 
 
@@ -209,6 +213,369 @@ def verify_archive(path: Path) -> dict:
             "identityDigest": identity, "archiveSha256": archive_receipt["sha256"]}
 
 
+def read_bounded(stream, maximum: int) -> bytes:
+    data = bytearray()
+    while block := stream.read(min(CHUNK_BYTES, maximum - len(data) + 1)):
+        data.extend(block)
+        if len(data) > maximum:
+            raise ValueError("Release JSON exceeds its bounded object limit")
+    return bytes(data)
+
+
+def read_json(path: Path, maximum: int = MAX_MANIFEST_BYTES):
+    with path.open("rb") as stream:
+        return json.loads(read_bounded(stream, maximum))
+
+
+def write_json(path: Path, value):
+    with path.open("x") as stream:
+        json.dump(value, stream, indent=2, sort_keys=True, allow_nan=False)
+        stream.write("\n")
+
+
+@contextmanager
+def locked_campaign(corpus: Path):
+    """Keep the producer's shared OS lock throughout rechecking and archiving."""
+    with inside(corpus, ".campaign.lock").open("rb") as lock:
+        try:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_SH | fcntl.LOCK_NB)
+        except BlockingIOError as error:
+            raise ValueError("Campaign is still open by a writer; finish collection before packaging") from error
+        try:
+            yield
+        finally:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+
+def verify_campaign(corpus: Path, destination: Path) -> dict:
+    verifier = Path(__file__).with_name("verify-release-campaign.mjs")
+    with destination.open("x") as stream:
+        result = subprocess.run(["node", str(verifier), str(corpus)], stdout=stream, stderr=subprocess.PIPE,
+                                text=True, timeout=3600, check=False)
+    if result.returncode:
+        raise ValueError("Complete campaign verification failed: " + result.stderr[-4000:])
+    receipt = read_json(destination)
+    if receipt.get("status") != "verified" or receipt.get("schema") != "semantic-release-campaign-receipt/1":
+        raise ValueError("Malformed campaign verification receipt")
+    return receipt
+
+
+def check_environment_receipt(environment: dict, policy: dict, tracer: Path):
+    if (environment.get("schema") != "semantic-native-environment-receipt/1"
+            or environment.get("status") != "verified"
+            or any(environment.get(key) != value for key, value in policy.items())):
+        raise ValueError("Native environment receipt differs from the release policy")
+    if environment.get("requirementsLockSha256") != file_receipt(tracer / "tools/native-consumer/requirements.lock")["sha256"]:
+        raise ValueError("Native environment receipt uses a different dependency lock")
+    if environment.get("nativePolicySha256") != file_receipt(tracer / "contracts/native-admission-policy-v5.json")["sha256"]:
+        raise ValueError("Native environment receipt uses different policy bytes")
+
+
+def recheck_environment(tracer: Path, consumer: Path, tokenizer: Path, supplied: Path,
+                        destination: Path, policy: dict) -> dict:
+    previous = read_json(supplied)
+    check_environment_receipt(previous, policy, tracer)
+    # Use the original producing checkout's checker, not this packager's current
+    # policy. A supplied receipt is evidence to compare, never an execution gate.
+    checker = tracer / "tools/native-consumer/check_environment.py"
+    result = subprocess.run([sys.executable, str(checker), "--megatoken", str(consumer),
+                             "--tokenizer", str(tokenizer), "--out", str(destination)],
+                            capture_output=True, text=True, timeout=600, check=False)
+    if result.returncode:
+        raise ValueError("Fresh native environment verification failed: " + result.stderr[-4000:])
+    actual = read_json(destination)
+    check_environment_receipt(actual, policy, tracer)
+    if actual != previous:
+        raise ValueError("Supplied native environment receipt is stale; actual fresh receipt was retained")
+    return actual
+
+
+def read_campaign_object(corpus: Path, reference: dict):
+    path = inside(corpus, reference["path"])
+    if (type(reference.get("uncompressedBytes")) is not int or reference["uncompressedBytes"] < 0
+            or reference["uncompressedBytes"] > MAX_OBJECT_BYTES
+            or reference.get("bytes", MAX_OBJECT_BYTES + 1) > MAX_OBJECT_BYTES
+            or reference.get("encoding") not in {"json", "gzip"}):
+        raise ValueError("Campaign object exceeds its bounded size or uses an unknown encoding")
+    if file_receipt(path) != {"bytes": reference["bytes"], "sha256": reference["sha256"]}:
+        raise ValueError("Campaign object bytes changed after verification")
+    opener = gzip.open if reference["encoding"] == "gzip" else Path.open
+    with opener(path, "rb") as stream:
+        raw = read_bounded(stream, reference["uncompressedBytes"])
+    if len(raw) != reference["uncompressedBytes"] or digest(raw) != reference["contentSha256"]:
+        raise ValueError("Campaign object content changed after verification")
+    return json.loads(raw)
+
+
+def load_document(corpus: Path, row: dict) -> dict:
+    # Compact collections need no large compatibility export. The campaign
+    # verifier binds these exact references to the complete committed attempt.
+    return {"public": read_campaign_object(corpus, row["publicShard"]),
+            "sidecar": read_campaign_object(corpus, row["privateEvidence"])}
+
+
+def check_document_identity(row: dict, document: dict, producer_revision: str, public_digest) -> dict:
+    side = document["sidecar"]
+    if (side.get("producerRevision") != producer_revision or side.get("identityDigest") != row.get("identityDigest")
+            or side.get("sourceFamily") != row.get("family") or side.get("split") != row.get("split")
+            or side.get("admission") != "admitted" or public_digest(document) != row.get("episodeDigest")):
+        raise ValueError("Candidate identity or actual public digest differs from the campaign manifest: " + row["id"])
+    return {"id": row["id"], "family": side["sourceFamily"], "split": side["split"],
+            "identityDigest": side["identityDigest"], "episodeDigest": row["episodeDigest"]}
+
+
+def document_digest(document: dict) -> str:
+    """Bind cached source verification to every private/public byte semantically."""
+    checksum = hashlib.sha256()
+    for piece in json.JSONEncoder(sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+                                  allow_nan=False).iterencode(document):
+        checksum.update(piece.encode())
+    return checksum.hexdigest()
+
+
+def qualify_candidates(corpus, admitted, receipt_path, *, codec, producer_revision, consumer_revision,
+                       source_verifier, native_admission, verify_admission, adapt_selected, public_digest):
+    qualified, sources, identities, notices = [], {}, [], {}
+    with receipt_path.open("x") as evidence:
+        for row in admitted:
+            try:
+                document = load_document(corpus, row)
+                identity = check_document_identity(row, document, producer_revision, public_digest)
+                exact = document_digest(document)
+                source = source_verifier(document)
+                native = native_admission(document, codec=codec, consumer_revision=consumer_revision)
+                verify_admission(document, source, native, producer_revision=producer_revision,
+                                 consumer_revision=consumer_revision, codec=codec)
+                episode, _ = adapt_selected(document, codec=codec, max_positions=1024, max_history=1024,
+                                            admission_verifier=lambda _: True)
+                if document_digest(document) != exact:
+                    raise ValueError("A qualification gate mutated candidate evidence")
+                tokens = native.get("generatedTokens")
+                if type(tokens) is not int or not 0 < tokens <= 2**53 - 1:
+                    raise ValueError("Native admission did not measure a positive safe generated-token count")
+                side = document["sidecar"]
+                split_identity = side.get("splitIdentity", {})
+                measured = {**identity, "status": "admitted", "episodeId": episode.episode_id,
+                            "generatedTokens": tokens, "documentDigest": exact,
+                            "sourceCluster": split_identity.get("componentId", side["sourceFamily"]),
+                            "splitPolicy": split_identity.get("policy"), "registryDigest": split_identity.get("registryDigest")}
+                qualified.append(measured)
+                sources[exact] = source
+                identities.append(identity)
+                notice = {"family": side["sourceFamily"], "license": side["license"], "provenance": side["sourceProvenance"]}
+                notices.setdefault(digest(canonical(notice)), {**notice, "candidateIds": []})["candidateIds"].append(row["id"])
+                evidence.write(json.dumps({**measured, "source": source, "native": native}, sort_keys=True, allow_nan=False) + "\n")
+            except Exception as error:
+                evidence.write(json.dumps({"id": row["id"], "status": "qualification_rejected", "reason": str(error)}) + "\n")
+                evidence.flush()
+                os.fsync(evidence.fileno())
+                raise ValueError("Fresh release qualification rejected " + row["id"] + "; evidence was retained") from error
+            evidence.flush()
+            os.fsync(evidence.fileno())
+    return qualified, sources, identities, list(notices.values())
+
+
+def select_training(qualified: list[dict], output: Path, *, max_family_tokens=None, max_family_share=None) -> dict:
+    request = output / "training-selection-input.json"
+    destination = output / "training-selection.json"
+    write_json(request, {"rows": qualified, "maxFamilyTokens": max_family_tokens, "maxFamilyShare": max_family_share})
+    selector = Path(__file__).with_name("select-release-training.mjs")
+    result = subprocess.run(["node", str(selector), str(request), str(destination)],
+                            capture_output=True, text=True, timeout=600, check=False)
+    if result.returncode:
+        raise ValueError("Training selection failed: " + result.stderr[-4000:])
+    selection = read_json(destination)
+    if selection.get("status") != "selected":
+        raise ValueError("Training token caps excluded every training candidate; selection evidence was retained")
+    return selection
+
+
+def cached_source_verifier(receipts: dict):
+    def verify(document):
+        receipt = receipts.get(document_digest(document))
+        if receipt is None:
+            raise ValueError("Prepared candidate changed after fresh source qualification")
+        return receipt
+    return verify
+
+
+def check_prepared_selection(prepared: Path, qualified: list[dict], selection: dict) -> dict:
+    """Check actual native rows: dedup must not silently invalidate a token cap."""
+    selected = set(selection["preparedCandidateIds"])
+    by_episode = {}
+    for row in qualified:
+        if row["id"] in selected:
+            by_episode.setdefault(row["episodeId"], []).append(row)
+    accepted, dispositions, violations, components, native_families = [], [], [], {}, {}
+    connection = sqlite3.connect((prepared / "semantic-dedup.sqlite").as_uri() + "?mode=ro", uri=True)
+    connection.row_factory = sqlite3.Row
+    try:
+        observed = set()
+        for native in connection.execute("SELECT episode_id,split,resolved_family,assistant_tokens,duplicate_of,quarantine_reason "
+                                         "FROM episodes ORDER BY ordinal"):
+            matches = by_episode.get(native["episode_id"])
+            if not matches:
+                raise ValueError("Native prepared data contains an unselected episode")
+            row = matches[0]
+            if any((match["sourceCluster"], match["split"], match["generatedTokens"]) !=
+                   (row["sourceCluster"], row["split"], row["generatedTokens"]) for match in matches):
+                raise ValueError("Repeated native episode ID has conflicting qualification identities")
+            observed.update(match["id"] for match in matches)
+            excluded = native["duplicate_of"] or native["quarantine_reason"]
+            for index, match in enumerate(matches):
+                dispositions.append({"id": match["id"], "episodeId": match["episodeId"],
+                    "status": "native_excluded" if excluded else "native_same_episode" if index else "native_prepared",
+                    "duplicateOf": native["duplicate_of"], "quarantineReason": native["quarantine_reason"]})
+            if excluded:
+                continue
+            if native["split"] != row["split"]:
+                raise ValueError("Native preparation moved a frozen split")
+            if native["assistant_tokens"] != row["generatedTokens"]:
+                raise ValueError("Native prepared token count differs from fresh qualification")
+            accepted.append({"id": row["id"], "episodeId": row["episodeId"], "split": row["split"],
+                             "sourceCluster": row["sourceCluster"], "generatedTokens": row["generatedTokens"]})
+            if row["split"] == "train":
+                components[row["sourceCluster"]] = components.get(row["sourceCluster"], 0) + row["generatedTokens"]
+                native_families.setdefault(native["resolved_family"], set()).add(row["sourceCluster"])
+    finally:
+        connection.close()
+    if observed != selected:
+        raise ValueError("Native preparation omitted selected candidates")
+    total = sum(components.values())
+    policy = selection["policy"]
+    if policy["enabled"]:
+        if not total:
+            violations.append("Native deduplication left no selected training tokens")
+        if any(len(clusters) > 1 for clusters in native_families.values()):
+            violations.append("Native deduplication joined distinct frozen components; rebuild the global source registry")
+        for cluster, tokens in components.items():
+            if policy["maxFamilyTokens"] is not None and tokens > policy["maxFamilyTokens"]:
+                violations.append("Prepared component exceeds its token budget: " + cluster)
+            if policy["maxFamilyShare"] is not None and tokens / total > policy["maxFamilyShare"] + 2**-52:
+                violations.append("Native deduplication invalidated the component token share: " + cluster)
+    return {"schema": "semantic-prepared-training-selection/1", "status": "violated" if violations else "verified",
+            "policy": policy, "nativeAccepted": len(accepted), "generatedTrainTokens": total,
+            "components": [{"sourceCluster": cluster, "generatedTokens": tokens, "tokenShare": tokens / total}
+                           for cluster, tokens in sorted(components.items())],
+            "accepted": accepted, "nativeDispositions": dispositions, "violations": violations,
+            "heldOutInputIds": selection["heldOutIds"], "optimizerSteps": 0, "learnedSuccess": None}
+
+
+def package_release(args) -> dict:
+    corpus, tracer, consumer, output = (path.resolve() for path in
+                                      (args.corpus, args.tracer_root, args.megatoken, args.out))
+    manifest = read_json(inside(corpus, "manifest.json"))
+    policy = read_json(tracer / "contracts/native-admission-policy-v5.json")
+    git = lambda path, *argv: subprocess.check_output(["git", "-C", str(path), *argv], text=True).strip()
+    if git(tracer, "rev-parse", "HEAD") != manifest["producerRevision"]:
+        raise ValueError("Use the exact producing checkout to recheck and release this corpus")
+    if git(tracer, "status", "--porcelain", "--untracked-files=no"):
+        raise ValueError("Producing checkout has modified tracked files")
+    if git(consumer, "rev-parse", "HEAD") != policy["consumerRevision"]:
+        raise ValueError("Consumer differs from the producer release policy")
+    packager_root = Path(__file__).resolve().parents[1]
+    packaging_tool = {"revision": git(packager_root, "rev-parse", "HEAD"),
+        "trackedWorktreeClean": not bool(git(packager_root, "status", "--porcelain", "--untracked-files=no")),
+        "files": [{"path": name, **file_receipt(packager_root / name)} for name in
+                  ("tools/package-semantic-release.py", "tools/verify-release-campaign.mjs",
+                   "tools/select-release-training.mjs", "src/corpus/campaign-store.mjs", "src/corpus/source-registry.mjs")]}
+    output.mkdir(parents=True)
+    campaign_path = output / "campaign-verification.json"
+    campaign = verify_campaign(corpus, campaign_path)
+    if campaign["manifestSha256"] != file_receipt(corpus / "manifest.json")["sha256"]:
+        raise ValueError("Campaign manifest changed during verification")
+    actual_environment = output / "native-environment.json"
+    recheck_environment(tracer, consumer, args.tokenizer.resolve(), args.environment_receipt.resolve(),
+                        actual_environment, policy)
+    from megatoken.data.semantic_admission import native_admission
+    from megatoken.data.semantic_corpus import prepare_semantic_corpus, public_digest, source_verifier_for_checkout, verify_admission
+    from megatoken.data.semantic_harness_v5 import adapt_selected_harness_v5
+    from megatoken.generation.codec import ByteCodec
+    codec = ByteCodec.from_tokenizer_json(args.tokenizer, expected_sha256=policy["tokenizerSha256"])
+    if codec.fingerprint != policy["tokenizerIdentity"]:
+        raise ValueError("Actual native tokenizer identity changed")
+    admitted = [row for row in manifest["cases"] if row["status"] == "admitted"]
+    if not admitted:
+        raise ValueError("A release needs actual admitted examples")
+    qualification_path = output / "native-qualification.jsonl"
+    qualified, source_receipts, identities, source_notices = qualify_candidates(corpus, admitted, qualification_path,
+        codec=codec, producer_revision=manifest["producerRevision"], consumer_revision=policy["consumerRevision"],
+        source_verifier=source_verifier_for_checkout(tracer, manifest["producerRevision"]),
+        native_admission=native_admission, verify_admission=verify_admission,
+        adapt_selected=adapt_selected_harness_v5, public_digest=public_digest)
+    qualification_summary = output / "native-qualification-summary.json"
+    write_json(qualification_summary, {"schema": "semantic-release-native-qualification/1", "status": "verified",
+        "producerRevision": manifest["producerRevision"], "consumerRevision": policy["consumerRevision"],
+        "tokenizerIdentity": codec.fingerprint, "admitted": len(qualified),
+        "generatedTokens": sum(row["generatedTokens"] for row in qualified),
+        "evidenceSha256": file_receipt(qualification_path)["sha256"], "optimizerSteps": 0, "learnedSuccess": None})
+    selection = select_training(qualified, output, max_family_tokens=args.max_family_tokens,
+                                max_family_share=args.max_family_share)
+    selected = set(selection["preparedCandidateIds"])
+
+    def documents():
+        for row in admitted:
+            if row["id"] in selected:
+                yield load_document(corpus, row)
+
+    prepared, report = prepare_semantic_corpus(documents(), output / "prepared", codec=codec,
+        producer_revision=manifest["producerRevision"], consumer_revision=policy["consumerRevision"],
+        source_verifier=cached_source_verifier(source_receipts))
+    if report["counts"].get("admitted") != len(selected) or report["refusals"]:
+        raise ValueError("Production rechecking rejected release rows; refusal evidence was retained")
+    prepared_selection = check_prepared_selection(output / "prepared", qualified, selection)
+    write_json(output / "prepared-training-selection.json", prepared_selection)
+    if prepared_selection["status"] != "verified":
+        raise ValueError("Final native preparation violated training token caps; selection evidence was retained")
+    notices = output / "source-notices.json"
+    write_json(notices, {"schema": "semantic-source-notices/1", "notices": source_notices})
+    roots = {"corpus": corpus, "prepared": output / "prepared", "source-notices.json": notices,
+             "campaign-verification.json": campaign_path, "native-environment.json": actual_environment,
+             "native-qualification.jsonl": qualification_path, "native-qualification-summary.json": qualification_summary,
+             "training-selection-input.json": output / "training-selection-input.json",
+             "training-selection.json": output / "training-selection.json",
+             "prepared-training-selection.json": output / "prepared-training-selection.json",
+             "supplied-native-environment.json": args.environment_receipt.resolve(),
+             "locks/environment.json": tracer / "profiles/release-environment.lock.json",
+             "locks/native-policy.json": tracer / "contracts/native-admission-policy-v5.json",
+             "locks/requirements.lock": tracer / "tools/native-consumer/requirements.lock",
+             "locks/producer-package-lock.json": tracer / "package-lock.json",
+             "locks/oracle-package-lock.json": tracer / "tools/spec-oracle/package-lock.json"}
+    files, sources = inventory(roots)
+    # The shared lock excludes generator resumes. Match the archived metadata
+    # again so changes made outside that lock cannot silently rebind the release.
+    by_path = {row["path"]: row for row in files}
+    for name, key in (("manifest.json", "manifestSha256"), ("campaign.json", "headerSha256"), ("campaign.jsonl", "logSha256")):
+        if by_path["corpus/" + name]["sha256"] != campaign[key]:
+            raise ValueError("Campaign metadata changed after qualification")
+    for reference in [*campaign["objects"], *campaign["compatibilityExports"]]:
+        archived = by_path.get("corpus/" + reference["path"], {})
+        if any(archived.get(key) != reference[key] for key in ("bytes", "sha256")):
+            raise ValueError("Qualified campaign bytes changed before archiving: " + reference["path"])
+    payload = {"schema": "semantic-private-release/1", "distribution": "private-audit-only",
+        "packagingTool": packaging_tool,
+        "producerRevision": manifest["producerRevision"], "consumerRevision": policy["consumerRevision"],
+        "tokenizer": policy, "campaignManifestSha256": campaign["manifestSha256"],
+        "campaignVerificationSha256": by_path["campaign-verification.json"]["sha256"],
+        "nativeEnvironmentSha256": by_path["native-environment.json"]["sha256"],
+        "trainingSelectionSha256": by_path["training-selection.json"]["sha256"],
+        "preparedTrainingSelectionSha256": by_path["prepared-training-selection.json"]["sha256"],
+        "nativeQualified": len(qualified), "trainingSelected": len(selection["selectedTrainIds"]),
+        "trainingExcluded": len(selection["excludedTrain"]), "heldOutSupplied": len(selection["heldOutIds"]),
+        "counts": campaign["counts"], "attempted": campaign["attempted"], "nativePrepared": report["accepted"],
+        "preparedFingerprint": prepared["fingerprint"], "identities": identities,
+        "publicRedistributionApproved": False,
+        "licensePolicy": "Retain exact upstream notices; repository-fixture is provenance, not an SPDX license. Owner approval is needed for public corpus distribution.",
+        "optimizerSteps": 0, "learnedSuccess": None, "files": files}
+    archive = output / "semantic-v5-release.tar.gz"
+    write_archive(archive, payload, sources)
+    verified = verify_archive(archive)
+    write_json(output / "archive-receipt.json", verified)
+    return {**verified, "archive": str(archive), "counts": campaign["counts"], "nativePrepared": report["accepted"],
+            "nativeQualified": len(qualified), "trainingSelected": len(selection["selectedTrainIds"]),
+            "trainingExcluded": len(selection["excludedTrain"]), "heldOutSupplied": len(selection["heldOutIds"])}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--verify", type=Path)
@@ -217,85 +584,29 @@ def main() -> int:
     parser.add_argument("--megatoken", type=Path)
     parser.add_argument("--tokenizer", type=Path)
     parser.add_argument("--environment-receipt", type=Path)
+    parser.add_argument("--max-family-tokens", type=int,
+                        help="Maximum fresh native generated tokens per frozen source component in training")
+    parser.add_argument("--max-family-share", type=float,
+                        help="Maximum source-component share of selected training generated tokens, in (0, 1]")
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
+    if args.max_family_tokens is not None and not 0 < args.max_family_tokens <= 2**53 - 1:
+        parser.error("--max-family-tokens must be a positive safe integer")
+    if args.max_family_share is not None and not 0 < args.max_family_share <= 1:
+        parser.error("--max-family-share must be in (0, 1]")
     if args.verify:
         print(json.dumps(verify_archive(args.verify), sort_keys=True))
         return 0
     if any(getattr(args, field) is None for field in
            ("corpus", "tracer_root", "megatoken", "tokenizer", "environment_receipt", "out")):
         parser.error("Packaging requires --corpus --tracer-root --megatoken --tokenizer --environment-receipt --out")
-    corpus, tracer, consumer, output = (path.resolve() for path in
-                                      (args.corpus, args.tracer_root, args.megatoken, args.out))
+    corpus, output = args.corpus.resolve(), args.out.resolve()
     if output.exists():
         raise ValueError("Release directories are immutable; choose a new destination")
     if output.is_relative_to(corpus):
         raise ValueError("Release destination must be outside its input corpus")
-    manifest = json.loads((corpus / "manifest.json").read_text())
-    policy = json.loads((tracer / "contracts/native-admission-policy-v5.json").read_text())
-    environment = json.loads(args.environment_receipt.read_text())
-    git = lambda path, *argv: subprocess.check_output(["git", "-C", str(path), *argv], text=True).strip()
-    if git(tracer, "rev-parse", "HEAD") != manifest["producerRevision"]:
-        raise ValueError("Use the exact producing checkout to recheck and release this corpus")
-    if git(tracer, "status", "--porcelain", "--untracked-files=no"):
-        raise ValueError("Producing checkout has modified tracked files")
-    if git(consumer, "rev-parse", "HEAD") != policy["consumerRevision"]:
-        raise ValueError("Consumer differs from the producer release policy")
-    if environment["status"] != "verified" or any(environment[key] != policy[key] for key in policy):
-        raise ValueError("Native environment receipt differs from the release policy")
-    if environment["requirementsLockSha256"] != digest((tracer / "tools/native-consumer/requirements.lock").read_bytes()):
-        raise ValueError("Native environment receipt uses a different dependency lock")
-    counts = Counter(row["status"] for row in manifest["cases"])
-    if manifest["counts"]["attempted"] != len(manifest["cases"]) or any(manifest["counts"].get(key) != value for key, value in counts.items()):
-        raise ValueError("Candidate dispositions do not reconcile with the manifest")
-    documents, identities, source_notices = [], [], {}
-    for row in manifest["cases"]:
-        if row["status"] != "admitted":
-            continue
-        document = json.loads(inside(corpus, row["path"]).read_text())
-        side = document["sidecar"]
-        if side["producerRevision"] != manifest["producerRevision"] or side.get("identityDigest") != row.get("identityDigest"):
-            raise ValueError("Candidate identity differs from the campaign manifest")
-        documents.append(document)
-        identities.append({"id": row["id"], "family": side["sourceFamily"], "split": side["split"],
-                           "identityDigest": side["identityDigest"], "episodeDigest": row["episodeDigest"]})
-        source_notices[side["sourceFamily"]] = {"license": side["license"], "provenance": side["sourceProvenance"]}
-    if not documents:
-        raise ValueError("A release needs actual admitted examples")
-    from megatoken.data.semantic_corpus import prepare_semantic_corpus, source_verifier_for_checkout
-    from megatoken.generation.codec import ByteCodec
-    codec = ByteCodec.from_tokenizer_json(args.tokenizer, expected_sha256=policy["tokenizerSha256"])
-    if codec.fingerprint != policy["tokenizerIdentity"]:
-        raise ValueError("Actual native tokenizer identity changed")
-    output.mkdir(parents=True)
-    prepared, report = prepare_semantic_corpus(documents, output / "prepared", codec=codec,
-        producer_revision=manifest["producerRevision"], consumer_revision=policy["consumerRevision"],
-        source_verifier=source_verifier_for_checkout(tracer, manifest["producerRevision"]))
-    if report["counts"].get("admitted") != len(documents) or report["refusals"]:
-        raise ValueError("Production rechecking rejected release rows; refusal evidence was retained")
-    notices = output / "source-notices.json"
-    notices.write_text(json.dumps(source_notices, indent=2, sort_keys=True) + "\n")
-    roots = {"corpus": corpus, "prepared": output / "prepared", "source-notices.json": notices,
-             "native-environment.json": args.environment_receipt.resolve(),
-             "locks/environment.json": tracer / "profiles/release-environment.lock.json",
-             "locks/native-policy.json": tracer / "contracts/native-admission-policy-v5.json",
-             "locks/requirements.lock": tracer / "tools/native-consumer/requirements.lock",
-             "locks/producer-package-lock.json": tracer / "package-lock.json",
-             "locks/oracle-package-lock.json": tracer / "tools/spec-oracle/package-lock.json"}
-    files, sources = inventory(roots)
-    payload = {"schema": "semantic-private-release/1", "distribution": "private-audit-only",
-        "producerRevision": manifest["producerRevision"], "consumerRevision": policy["consumerRevision"],
-        "tokenizer": policy, "campaignManifestSha256": digest((corpus / "manifest.json").read_bytes()),
-        "counts": dict(counts), "attempted": len(manifest["cases"]), "nativePrepared": report["accepted"],
-        "preparedFingerprint": prepared["fingerprint"], "identities": identities,
-        "publicRedistributionApproved": False,
-        "licensePolicy": "Retain exact upstream notices; repository-fixture is provenance, not an SPDX license. Owner approval is needed for public corpus distribution.",
-        "optimizerSteps": 0, "learnedSuccess": None, "files": files}
-    archive = output / "semantic-v5-release.tar.gz"
-    write_archive(archive, payload, sources)
-    verified = verify_archive(archive)
-    (output / "archive-receipt.json").write_text(json.dumps(verified, indent=2, sort_keys=True) + "\n")
-    print(json.dumps({**verified, "archive": str(archive), "counts": dict(counts), "nativePrepared": report["accepted"]}))
+    with locked_campaign(corpus):
+        print(json.dumps(package_release(args)))
     return 0
 
 
