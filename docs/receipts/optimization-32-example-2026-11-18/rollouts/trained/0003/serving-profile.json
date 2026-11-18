@@ -1,0 +1,236 @@
+{
+  "schema": "semantic-serving-profile/1",
+  "declaredOrigin": "trained",
+  "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+  "device": "cpu",
+  "identity": {
+    "modelSha256": "02273b9cce316a0c5960d49723037439ba3afa0e704ea7bf02b97054f315114e",
+    "manifestSha256": "077323edbb27745f3b7c7ec21cf1bf22c008949084f8d1010d4261198d978859",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "initialization": {
+    "schema": "semantic-inference-identity/4",
+    "seed": 17,
+    "checkpointIdentity": "02273b9cce316a0c5960d49723037439ba3afa0e704ea7bf02b97054f315114e",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "coldLoadSeconds": 2.6043382630014094,
+  "operations": {
+    "cancel": {
+      "count": 1,
+      "successfulRpcCalls": 1,
+      "firstSeconds": 4.692000038630795e-05,
+      "p50Seconds": 4.692000038630795e-05,
+      "p95Seconds": 4.692000038630795e-05,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 4.692000038630795e-05
+    },
+    "initialize": {
+      "count": 1,
+      "successfulRpcCalls": 1,
+      "firstSeconds": 0.007892600000559469,
+      "p50Seconds": 0.007892600000559469,
+      "p95Seconds": 0.007892600000559469,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 0.007892600000559469
+    },
+    "select": {
+      "count": 1,
+      "successfulRpcCalls": 0,
+      "firstSeconds": 1.3875584839988733,
+      "p50Seconds": 1.3875584839988733,
+      "p95Seconds": 1.3875584839988733,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 1.3875584839988733
+    }
+  },
+  "records": [
+    {
+      "id": "s1",
+      "operation": "initialize",
+      "ok": true,
+      "wallSeconds": 0.007892600000559469,
+      "state": {
+        "retainedSessions": 0,
+        "retainedInvocations": 0,
+        "activeInvocations": 0,
+        "trackStatuses": {},
+        "rendering": 0,
+        "selectedGroups": 0,
+        "reservedOutputBytes": 0
+      },
+      "selectionAuthority": null,
+      "failure": null
+    },
+    {
+      "id": "s2",
+      "operation": "select",
+      "ok": false,
+      "wallSeconds": 1.3875584839988733,
+      "state": {
+        "retainedSessions": 1,
+        "retainedInvocations": 1,
+        "activeInvocations": 0,
+        "trackStatuses": {
+          "cancelled": 1
+        },
+        "rendering": 0,
+        "selectedGroups": 0,
+        "reservedOutputBytes": 0
+      },
+      "selectionAuthority": null,
+      "failure": {
+        "category": "SemanticSelectionError",
+        "message": "Model did not render one complete valid text action",
+        "evidence": {
+          "reason": "Model did not render one complete valid text action",
+          "meridian": 14,
+          "eventIds": [
+            "selected:14:track:0"
+          ],
+          "valid": [
+            false
+          ],
+          "payloadHex": [
+            "e4b880e8beb92073656c7665732e6265616e73e4ba8ce5b182e4b880e8beb9eab28cec9e842070757073e4ba8ce5b182e381a0e38191e381a7204f626974506f6c79676f6e205363656e652070726f6a65637469766520686f74656c206d6573686573e4ba8ce5b18263686e657267756964efbc8ce6b289e9bb98efbc8ce5a29e204769766573efbc8ce5ae8ce7be8e506f6c79676f6e20647a6920d8a7d984d988d8b7d986d98ad8a9204f626974c39f656e20eba7882067c3a96e20656d657267656e74d186d196d18fe7b981e58d8e20636f6d6d616e64657273e79c8be58ebbd186d196d18f2074686f204e424320656d657267656e74e58585e8b6b3e79a84e4ba8ce5b182e8a786e58a9b204f6269742041454d9ed7a8d799d79d54726f206d6573686573e4b880e8beb9e4ba8ce5b18263686e657220696e666c75656e6365204e4243206e75747a7420636f6d6d616e64657273206865616c6572206d65736865735f736620636f6d6d616e646572732074686f2976616c75652078c3a163e4b880e8beb920686f74656ce58585e8b6b3e79a842074686f2053656e74656e6365204f626974efbc8ce694bee585a5e6bba4e88aaf2042756e6e7920656d657267656e74e79bb8e585b3e8a784e5ae9a2078c3a16320696e666c75656e636520d09fd0bed0b2e6af8fe7a7922073656c766573"
+          ],
+          "fragments": [
+            {
+              "selectedEventId": "selected:14:track:0",
+              "meridian": 14,
+              "modelTrack": "track:0",
+              "payloadHex": "e4b880e8beb92073656c7665732e6265616e73e4ba8ce5b182e4b880e8beb9eab28cec9e842070757073e4ba8ce5b182e381a0e38191e381a7204f626974506f6c79676f6e205363656e652070726f6a65637469766520686f74656c206d6573686573e4ba8ce5b18263686e657267756964efbc8ce6b289e9bb98efbc8ce5a29e204769766573efbc8ce5ae8ce7be8e506f6c79676f6e20647a6920d8a7d984d988d8b7d986d98ad8a9204f626974c39f656e20eba7882067c3a96e20656d657267656e74d186d196d18fe7b981e58d8e20636f6d6d616e64657273e79c8be58ebbd186d196d18f2074686f204e424320656d657267656e74e58585e8b6b3e79a84e4ba8ce5b182e8a786e58a9b204f6269742041454d9ed7a8d799d79d54726f206d6573686573e4b880e8beb9e4ba8ce5b18263686e657220696e666c75656e6365204e4243206e75747a7420636f6d6d616e64657273206865616c6572206d65736865735f736620636f6d6d616e646572732074686f2976616c75652078c3a163e4b880e8beb920686f74656ce58585e8b6b3e79a842074686f2053656e74656e6365204f626974efbc8ce694bee585a5e6bba4e88aaf2042756e6e7920656d657267656e74e79bb8e585b3e8a784e5ae9a2078c3a16320696e666c75656e636520d09fd0bed0b2e6af8fe7a7922073656c766573",
+              "emittedTokenIds": [
+                10873,
+                74635,
+                66566,
+                93538,
+                10873,
+                146256,
+                94620,
+                93538,
+                143858,
+                111739,
+                56672,
+                43957,
+                64700,
+                8853,
+                100718,
+                93538,
+                140239,
+                61375,
+                107018,
+                94870,
+                87725,
+                122822,
+                56672,
+                137105,
+                152255,
+                111739,
+                126813,
+                127228,
+                127809,
+                95718,
+                130999,
+                35546,
+                109081,
+                37787,
+                130999,
+                59723,
+                37620,
+                95718,
+                51171,
+                93538,
+                43193,
+                111739,
+                120352,
+                143171,
+                108460,
+                100718,
+                10873,
+                93538,
+                140239,
+                9172,
+                37620,
+                156687,
+                109081,
+                113046,
+                100718,
+                118315,
+                109081,
+                59723,
+                99534,
+                136859,
+                10873,
+                8853,
+                51171,
+                59723,
+                30362,
+                111739,
+                53571,
+                70997,
+                80854,
+                95718,
+                48076,
+                136859,
+                9172,
+                144930,
+                94274,
+                74635
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "s3",
+      "operation": "cancel",
+      "ok": true,
+      "wallSeconds": 4.692000038630795e-05,
+      "state": {
+        "retainedSessions": 1,
+        "retainedInvocations": 1,
+        "activeInvocations": 0,
+        "trackStatuses": {
+          "cancelled": 1
+        },
+        "rendering": 0,
+        "selectedGroups": 0,
+        "reservedOutputBytes": 0
+      },
+      "selectionAuthority": null,
+      "failure": null
+    }
+  ],
+  "droppedRecords": 0,
+  "complete": true,
+  "memory": {
+    "hostLifetimePeakRssBytes": 524517376,
+    "cudaPeakAllocatedBytes": null,
+    "cudaPeakReservedBytes": null,
+    "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+  },
+  "peakActiveInvocationsAtRpcBoundaries": 0,
+  "stateBeforeRuntimeClose": {
+    "retainedSessions": 1,
+    "retainedInvocations": 1,
+    "activeInvocations": 0,
+    "trackStatuses": {
+      "cancelled": 1
+    },
+    "rendering": 0,
+    "selectedGroups": 0,
+    "reservedOutputBytes": 0
+  },
+  "runtimeClosed": true,
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "trainingMemoryFit": "unmeasured",
+  "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+  "warmDefinition": "All calls after the first call of the same operation in this process",
+  "digest": "f5c3696369a6971dfc2aff912156e850bd15d0a7d65738e512e72e35da0904f1"
+}

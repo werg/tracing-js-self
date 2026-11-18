@@ -1,0 +1,93 @@
+{
+  "completion": {
+    "kind": "return",
+    "value": [
+      "num",
+      8
+    ]
+  },
+  "state": {
+    "roots": [
+      [
+        "str",
+        "counter"
+      ],
+      [
+        "num",
+        8
+      ]
+    ],
+    "objects": []
+  },
+  "effects": [
+    {
+      "kind": "dispatch",
+      "call": 0,
+      "operation": "demo.readAsync",
+      "arguments": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "counter"
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "settlement",
+      "call": 0,
+      "status": "fulfilled",
+      "result": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "num",
+            7
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "dispatch",
+      "call": 1,
+      "operation": "demo.store",
+      "arguments": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "counter"
+          ],
+          [
+            "num",
+            8
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "settlement",
+      "call": 1,
+      "status": "fulfilled",
+      "result": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "undefined"
+          ]
+        ],
+        "objects": []
+      }
+    }
+  ],
+  "callbacks": [],
+  "cleanup": {
+    "pendingEffects": 0,
+    "pendingJobs": 0,
+    "openHandlers": 0
+  }
+}
