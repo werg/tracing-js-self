@@ -1,0 +1,975 @@
+{
+  "accepted": [
+    {
+      "episodeId": "semantic:harness:3b44d41b18fcdabfe402b47e155d870e6ea5ac8477e15bdd2d5e693c31b480a3",
+      "generatedTokens": 405,
+      "id": "generated-e1e4f2b56b6447ff1215-0",
+      "sourceCluster": "component:006e7a06b7bca349dc5f8b52e42efd00bba1a748210af9aacac932811d5d1467",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:219c495d08254e3b07275f72e8deaeaa6cc351e9b3463a70dd5d65a65c739a16",
+      "generatedTokens": 794,
+      "id": "generated-e1e4f2b56b6447ff1215-1",
+      "sourceCluster": "component:006e7a06b7bca349dc5f8b52e42efd00bba1a748210af9aacac932811d5d1467",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:da4750202fc21e9ebaad308ac080dfea2dcdc1e0e63849a8767e4c4da8909694",
+      "generatedTokens": 1650,
+      "id": "generated-e1e4f2b56b6447ff1215-2",
+      "sourceCluster": "component:006e7a06b7bca349dc5f8b52e42efd00bba1a748210af9aacac932811d5d1467",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:85f35a5f532344317e75c33afe84429b7166c72794c2888b18a818e56fb4710a",
+      "generatedTokens": 2523,
+      "id": "generated-e1e4f2b56b6447ff1215-3",
+      "sourceCluster": "component:006e7a06b7bca349dc5f8b52e42efd00bba1a748210af9aacac932811d5d1467",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:7743fb791c7de936721a93017e0fb27a4b07dbf8ab0a0abb5a8ba215bd7820dd",
+      "generatedTokens": 457,
+      "id": "generated-37d82be30acc634bd639-0",
+      "sourceCluster": "component:7e97149f852f75150f43ef80243528f68e43fd5af586b77b24b5017d80738e84",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:ab1805ec841a8906d98dd943f3b507c7cb8447cd6b92bfcddb9ccd1bb0086ce6",
+      "generatedTokens": 620,
+      "id": "generated-37d82be30acc634bd639-1",
+      "sourceCluster": "component:7e97149f852f75150f43ef80243528f68e43fd5af586b77b24b5017d80738e84",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:e1255ff9b959d8af287f07e9e372adeda3e5985ef66d155955850a18782f3bfe",
+      "generatedTokens": 1374,
+      "id": "generated-37d82be30acc634bd639-2",
+      "sourceCluster": "component:7e97149f852f75150f43ef80243528f68e43fd5af586b77b24b5017d80738e84",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:d5a789cf7b312f707a8fa2cbcdfea58b5e41796e8314f0ad6e106da44fab85ac",
+      "generatedTokens": 189,
+      "id": "generated-16676a89ce7afd1e5aa0-0",
+      "sourceCluster": "component:e9752b427b3f42a5506f6d6329af1badaf315c849078e1bce5aa8d3cb72a23fe",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:5883d2823ecf6cffd1cbb1565ee9c261bebdf2b6c3a0a267b8f44e839e2160a5",
+      "generatedTokens": 608,
+      "id": "generated-16676a89ce7afd1e5aa0-1",
+      "sourceCluster": "component:e9752b427b3f42a5506f6d6329af1badaf315c849078e1bce5aa8d3cb72a23fe",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:230ef9f0425a2bc7f966d4ea3343c7226aac03c558a2192fe2c0885937635b97",
+      "generatedTokens": 1472,
+      "id": "generated-16676a89ce7afd1e5aa0-2",
+      "sourceCluster": "component:e9752b427b3f42a5506f6d6329af1badaf315c849078e1bce5aa8d3cb72a23fe",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:5bd199d77402a467935cb748ba284ee85e0f4e0691a7d77b3fc67f02839df023",
+      "generatedTokens": 3233,
+      "id": "generated-16676a89ce7afd1e5aa0-3",
+      "sourceCluster": "component:e9752b427b3f42a5506f6d6329af1badaf315c849078e1bce5aa8d3cb72a23fe",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:f8d89da29135e1b94ac5c4fccea0d36869d5c0f466dc2ceaab523e78e092fadb",
+      "generatedTokens": 241,
+      "id": "generated-3011613fcf46de149162-0",
+      "sourceCluster": "component:c942ae4e2171975be5f32a125c7eef2e326b413c72dc9eb038010131d0841a04",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:0799c0584e0bf30db6237ba74e91c35f306d763be982874cbc1ae31978f70a15",
+      "generatedTokens": 519,
+      "id": "generated-3011613fcf46de149162-1",
+      "sourceCluster": "component:c942ae4e2171975be5f32a125c7eef2e326b413c72dc9eb038010131d0841a04",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:9789d62d7cad259d3eb730303b102b7ef81e0b9421682eddf3a80173255210a3",
+      "generatedTokens": 1209,
+      "id": "generated-3011613fcf46de149162-2",
+      "sourceCluster": "component:c942ae4e2171975be5f32a125c7eef2e326b413c72dc9eb038010131d0841a04",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:fe4779f71007dc46899418a06277d939fc16b7aa67b55da3ab5c8f0599cc4bdc",
+      "generatedTokens": 405,
+      "id": "generated-1de0d2838f7e94ff352d-0",
+      "sourceCluster": "component:c0e5ac044f7e4ec1533bb3a15ad5e602c88c0c42c73a713a8f90dd6d16283dc0",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:464ddb1129ff6b5a4b4b1f916eeb48cd084ef2a49d8795837ca187ed8fa01f35",
+      "generatedTokens": 924,
+      "id": "generated-1de0d2838f7e94ff352d-1",
+      "sourceCluster": "component:c0e5ac044f7e4ec1533bb3a15ad5e602c88c0c42c73a713a8f90dd6d16283dc0",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:74f4c1abb26278a863dbb062ee07f7179d9e9f8e938848af6f198aa8a88cbda3",
+      "generatedTokens": 1764,
+      "id": "generated-1de0d2838f7e94ff352d-2",
+      "sourceCluster": "component:c0e5ac044f7e4ec1533bb3a15ad5e602c88c0c42c73a713a8f90dd6d16283dc0",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:ff5860a2d2c3c5fc945cdcc1f915aef9c8c8aa8bbac572b5f1fc23e0aa7cd958",
+      "generatedTokens": 2894,
+      "id": "generated-1de0d2838f7e94ff352d-3",
+      "sourceCluster": "component:c0e5ac044f7e4ec1533bb3a15ad5e602c88c0c42c73a713a8f90dd6d16283dc0",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:8b1580e4ea87cd01c768b40a600ec71f64cf325600132e06b1bbaab74ddf8a8b",
+      "generatedTokens": 241,
+      "id": "generated-7083d531fdfc1289532d-0",
+      "sourceCluster": "component:c86ee5717aacde0c029c1ab352c91b17bbf65681bdde59f3343be17263385b81",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:1751166d0c62faa0f05609de2b14c037856ceed31b5836b5b6044934cb931461",
+      "generatedTokens": 682,
+      "id": "generated-7083d531fdfc1289532d-1",
+      "sourceCluster": "component:c86ee5717aacde0c029c1ab352c91b17bbf65681bdde59f3343be17263385b81",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:588472166e256006596efd6abd860c394e70a41580033f70808c4547f1671cc9",
+      "generatedTokens": 1564,
+      "id": "generated-7083d531fdfc1289532d-2",
+      "sourceCluster": "component:c86ee5717aacde0c029c1ab352c91b17bbf65681bdde59f3343be17263385b81",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:840c196dc7584489dc6fbd290e12607f8b9340b826bc08c229cf811a29745bdd",
+      "generatedTokens": 241,
+      "id": "generated-56070b0c432bb43f1a27-0",
+      "sourceCluster": "component:21c40b9f489201717427e36a75c1bd735d1df552cf287180c9b11d177632dd25",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:23294d0fc80e10de5187d92dad4d2178f053b0d6afea5f965e1b013619fb0098",
+      "generatedTokens": 574,
+      "id": "generated-56070b0c432bb43f1a27-1",
+      "sourceCluster": "component:21c40b9f489201717427e36a75c1bd735d1df552cf287180c9b11d177632dd25",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:fc9c1b8c93fa0eca35178ddba56365bf7e69810a7a3a3d28008231063e2500a4",
+      "generatedTokens": 1484,
+      "id": "generated-56070b0c432bb43f1a27-2",
+      "sourceCluster": "component:21c40b9f489201717427e36a75c1bd735d1df552cf287180c9b11d177632dd25",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:dee8db881fdc00ac740abe828d568990f1aac08136a9f7f2b1116ff01930c1d3",
+      "generatedTokens": 2057,
+      "id": "generated-56070b0c432bb43f1a27-3",
+      "sourceCluster": "component:21c40b9f489201717427e36a75c1bd735d1df552cf287180c9b11d177632dd25",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:ec617fce2cafe208a049c758e62574b89bba77c4b963edb0eb1c2a9b2dea6c4b",
+      "generatedTokens": 189,
+      "id": "generated-18f9c826ee8389d4b113-0",
+      "sourceCluster": "component:1c3e463a82ea32a0f1fdecc551d85dcc22e4da78b0582d89ad5f3c791f488179",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:f139539fcf2827200f3afdef3778afafa900f77309025e50b152bd41a982a1c5",
+      "generatedTokens": 622,
+      "id": "generated-18f9c826ee8389d4b113-1",
+      "sourceCluster": "component:1c3e463a82ea32a0f1fdecc551d85dcc22e4da78b0582d89ad5f3c791f488179",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:e3d12acc1481bc78d7a01abd334836d2c097931fd6a363ddb6aae08bd1a8eaaf",
+      "generatedTokens": 1416,
+      "id": "generated-18f9c826ee8389d4b113-2",
+      "sourceCluster": "component:1c3e463a82ea32a0f1fdecc551d85dcc22e4da78b0582d89ad5f3c791f488179",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:a7ae20e012f84802bb0bc1f2306e63e8418789e2c672c1a9d29451ae46f47dca",
+      "generatedTokens": 2595,
+      "id": "generated-18f9c826ee8389d4b113-3",
+      "sourceCluster": "component:1c3e463a82ea32a0f1fdecc551d85dcc22e4da78b0582d89ad5f3c791f488179",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:17342d63b5d0c926baadc4bdbcf2da390d5d012290c9a638d1a6df487857a015",
+      "generatedTokens": 241,
+      "id": "generated-cd1dad873b9995b0801a-0",
+      "sourceCluster": "component:61199931723471afa276c1f731fdb58432fd82962827e456b82832d2383f371d",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:a217f4dc4f2b4cccb9c143141a4877a0a5b676120ba0377b3f70121630de04e6",
+      "generatedTokens": 782,
+      "id": "generated-cd1dad873b9995b0801a-1",
+      "sourceCluster": "component:61199931723471afa276c1f731fdb58432fd82962827e456b82832d2383f371d",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:36cf8d31eddc68ce89bb9684680ab86d0af8bac9f581317a944530768602245f",
+      "generatedTokens": 1622,
+      "id": "generated-cd1dad873b9995b0801a-2",
+      "sourceCluster": "component:61199931723471afa276c1f731fdb58432fd82962827e456b82832d2383f371d",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:241e5266f0d43f7f4974708fad1a4a1271949fca9a2964521829d02377dc4471",
+      "generatedTokens": 3623,
+      "id": "generated-cd1dad873b9995b0801a-3",
+      "sourceCluster": "component:61199931723471afa276c1f731fdb58432fd82962827e456b82832d2383f371d",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:9816721dc7a7546c4e7e08ef33b4f2451af0456194fdefdc2a76a41a7d2ec167",
+      "generatedTokens": 241,
+      "id": "generated-f37ddea2adca6b372e6a-0",
+      "sourceCluster": "component:be1ca5f0fd78dfca7ed82cee25c0c412d094d00b2230270ce4b7b80771357942",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:650a16fc946fc47a5d060109aaa96fe51171b79f5d575abd77c58a4344b0c696",
+      "generatedTokens": 519,
+      "id": "generated-f37ddea2adca6b372e6a-1",
+      "sourceCluster": "component:be1ca5f0fd78dfca7ed82cee25c0c412d094d00b2230270ce4b7b80771357942",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:bdf6e58f4682ce8011f457904eb63f306fb657505aebb623c5dcdb78b9830dd8",
+      "generatedTokens": 1209,
+      "id": "generated-f37ddea2adca6b372e6a-2",
+      "sourceCluster": "component:be1ca5f0fd78dfca7ed82cee25c0c412d094d00b2230270ce4b7b80771357942",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:9a81b865ec41c3396123fe3ba4d97cb84352d43895a926f98956f1f29fee4326",
+      "generatedTokens": 2324,
+      "id": "generated-f37ddea2adca6b372e6a-3",
+      "sourceCluster": "component:be1ca5f0fd78dfca7ed82cee25c0c412d094d00b2230270ce4b7b80771357942",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:295dd9fbbc4e033a63550bed4e06ede62e20017dac3681bed2979a0bac6d1445",
+      "generatedTokens": 241,
+      "id": "generated-7c79ad8b055501600f2f-0",
+      "sourceCluster": "component:e76ff985c337da6665aa206250de888116869b8bf818f400c7105b790474398d",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:a8eaa628ec2df0e3b5d7f2c77017eae67da6ff197f17f98cc97ffd8c3328b215",
+      "generatedTokens": 752,
+      "id": "generated-7c79ad8b055501600f2f-1",
+      "sourceCluster": "component:e76ff985c337da6665aa206250de888116869b8bf818f400c7105b790474398d",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:766a1e87f9789a3010d5b70d01fe4ef30d72bcd28cfdc5db2257561c1565f3f0",
+      "generatedTokens": 1594,
+      "id": "generated-7c79ad8b055501600f2f-2",
+      "sourceCluster": "component:e76ff985c337da6665aa206250de888116869b8bf818f400c7105b790474398d",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:8297daf335d20467b6c244f29ffeb79c9c10555194c55d8b0e23eae925cc8508",
+      "generatedTokens": 1711,
+      "id": "generated-7c79ad8b055501600f2f-3",
+      "sourceCluster": "component:e76ff985c337da6665aa206250de888116869b8bf818f400c7105b790474398d",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:d909a11e30fc0924f2cd1a0c7a45483b9c77d5dacbbff8ae652d081608a9531b",
+      "generatedTokens": 189,
+      "id": "generated-c27cefd49666819b7b82-0",
+      "sourceCluster": "component:5add44136bb6825a0487e568dd220417cf95ab0cef4c5d4285a1e5ce309caa40",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:9005eb6ef1b76deb4298311426bd9b22c590ad58e30855ca649a9411ecde6c3e",
+      "generatedTokens": 600,
+      "id": "generated-c27cefd49666819b7b82-1",
+      "sourceCluster": "component:5add44136bb6825a0487e568dd220417cf95ab0cef4c5d4285a1e5ce309caa40",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:83653b10922ed023f97c7dac71b2df5c1efcb826a95aa566f38a32c5c5d848b5",
+      "generatedTokens": 1454,
+      "id": "generated-c27cefd49666819b7b82-2",
+      "sourceCluster": "component:5add44136bb6825a0487e568dd220417cf95ab0cef4c5d4285a1e5ce309caa40",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:9cb809cd1179b85aa53617b32cca2e057f1906b3d2e33787a172d5ce63e1f75f",
+      "generatedTokens": 1037,
+      "id": "generated-c27cefd49666819b7b82-3",
+      "sourceCluster": "component:5add44136bb6825a0487e568dd220417cf95ab0cef4c5d4285a1e5ce309caa40",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:5ac6c584f5abf6b138afcbfa6aa5bbe25b6f3ffabafff600f9b1bcafcb4407b4",
+      "generatedTokens": 241,
+      "id": "generated-c463c20543c011d6508f-0",
+      "sourceCluster": "component:efad542769612c0500e34fb18fac88fe80516de8b0ac9338a3c945750233c146",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:6207027e67b9d24ea69588e7ee5cfa235fa31adbfa9b93a443080416736e2b0f",
+      "generatedTokens": 605,
+      "id": "generated-c463c20543c011d6508f-1",
+      "sourceCluster": "component:efad542769612c0500e34fb18fac88fe80516de8b0ac9338a3c945750233c146",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:d16a57520303b6d5f31ba2580423139b9b9159daed5aea5caad3887f9682eca9",
+      "generatedTokens": 1359,
+      "id": "generated-c463c20543c011d6508f-2",
+      "sourceCluster": "component:efad542769612c0500e34fb18fac88fe80516de8b0ac9338a3c945750233c146",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:8d876aa79402c639de28d6aae7036e7df131825f5fd628df3f84fe1d9790ad2a",
+      "generatedTokens": 2884,
+      "id": "generated-c463c20543c011d6508f-3",
+      "sourceCluster": "component:efad542769612c0500e34fb18fac88fe80516de8b0ac9338a3c945750233c146",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:2d9f7ca752423229b3cc1a37b914ea935d1c83c891de50a270e896bae9f65d1b",
+      "generatedTokens": 241,
+      "id": "generated-ae3e58f163acb8a56796-0",
+      "sourceCluster": "component:449e679e41940789aa7cadf5d3fbcb61be1da8e17b6333c98cea89888d54437a",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:911989c10f1acde9cf63bf5cc21adfb98c4ab28f63f937cd058cb3b7880f3cec",
+      "generatedTokens": 644,
+      "id": "generated-ae3e58f163acb8a56796-1",
+      "sourceCluster": "component:449e679e41940789aa7cadf5d3fbcb61be1da8e17b6333c98cea89888d54437a",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:c7ab3ae64613999fa4b3d2bf7466288eb3b23d1217a51b6aae26ee783ec15388",
+      "generatedTokens": 1709,
+      "id": "generated-ae3e58f163acb8a56796-2",
+      "sourceCluster": "component:449e679e41940789aa7cadf5d3fbcb61be1da8e17b6333c98cea89888d54437a",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:cc5679004fb7b79ff227dedf9c9f32df41880001a8a393965e18a607dc8cbed9",
+      "generatedTokens": 3432,
+      "id": "generated-ae3e58f163acb8a56796-3",
+      "sourceCluster": "component:449e679e41940789aa7cadf5d3fbcb61be1da8e17b6333c98cea89888d54437a",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:ba1352c6a62328b13e633c7e328e6e3710f10357ad32aba510cce03a437afbbe",
+      "generatedTokens": 405,
+      "id": "generated-a79adfbbe5c55d19b361-0",
+      "sourceCluster": "component:4fd9b8d62abc949d5208af8eafe003dffd334afc043de840802b1d4b4e770272",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:e1ddeef2439b978174b326166e37b4406ded9b6ccc405e1e156b82fd2540d5dc",
+      "generatedTokens": 902,
+      "id": "generated-a79adfbbe5c55d19b361-1",
+      "sourceCluster": "component:4fd9b8d62abc949d5208af8eafe003dffd334afc043de840802b1d4b4e770272",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:c716889e4fcaa28cc371e614d16b5e3b712cad438af1fd06b4187f665bcf4d72",
+      "generatedTokens": 1756,
+      "id": "generated-a79adfbbe5c55d19b361-2",
+      "sourceCluster": "component:4fd9b8d62abc949d5208af8eafe003dffd334afc043de840802b1d4b4e770272",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:965db69925f983b2571272ab0f386b9891437d5bb33968633a9ac32207fb9f17",
+      "generatedTokens": 2848,
+      "id": "generated-a79adfbbe5c55d19b361-3",
+      "sourceCluster": "component:4fd9b8d62abc949d5208af8eafe003dffd334afc043de840802b1d4b4e770272",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:06ee1ad58439658d05fc73fe5714bfb6749ca864266bc0eadb3e19bf02bc25f8",
+      "generatedTokens": 241,
+      "id": "generated-669b15ff4d2d77b507aa-0",
+      "sourceCluster": "component:a7d1530dfcd08cb180c5ab00349baa75bcfbaa3cd1bb995ee41dff3eb514b38c",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:69a297b820fc1998836927154dca07d7a98344eca623d5215f55e5fd136cb5eb",
+      "generatedTokens": 705,
+      "id": "generated-669b15ff4d2d77b507aa-1",
+      "sourceCluster": "component:a7d1530dfcd08cb180c5ab00349baa75bcfbaa3cd1bb995ee41dff3eb514b38c",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:9d28fc6af94e063df926b2764c910cfc21f437cc3dc69794de020605a2a47074",
+      "generatedTokens": 1448,
+      "id": "generated-669b15ff4d2d77b507aa-2",
+      "sourceCluster": "component:a7d1530dfcd08cb180c5ab00349baa75bcfbaa3cd1bb995ee41dff3eb514b38c",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:b6aa7ce24ebe635dfe82fa45d4c7ad6da8418b17f7c7d790004e5d8f70c828d6",
+      "generatedTokens": 3189,
+      "id": "generated-669b15ff4d2d77b507aa-3",
+      "sourceCluster": "component:a7d1530dfcd08cb180c5ab00349baa75bcfbaa3cd1bb995ee41dff3eb514b38c",
+      "split": "train"
+    }
+  ],
+  "components": [
+    {
+      "generatedTokens": 4822,
+      "sourceCluster": "component:1c3e463a82ea32a0f1fdecc551d85dcc22e4da78b0582d89ad5f3c791f488179",
+      "tokenShare": 0.08910323927786093
+    },
+    {
+      "generatedTokens": 4356,
+      "sourceCluster": "component:21c40b9f489201717427e36a75c1bd735d1df552cf287180c9b11d177632dd25",
+      "tokenShare": 0.08049226675536338
+    },
+    {
+      "generatedTokens": 6026,
+      "sourceCluster": "component:449e679e41940789aa7cadf5d3fbcb61be1da8e17b6333c98cea89888d54437a",
+      "tokenShare": 0.11135133137461427
+    },
+    {
+      "generatedTokens": 5911,
+      "sourceCluster": "component:4fd9b8d62abc949d5208af8eafe003dffd334afc043de840802b1d4b4e770272",
+      "tokenShare": 0.10922630596670177
+    },
+    {
+      "generatedTokens": 6268,
+      "sourceCluster": "component:61199931723471afa276c1f731fdb58432fd82962827e456b82832d2383f371d",
+      "tokenShare": 0.11582312397213446
+    },
+    {
+      "generatedTokens": 5583,
+      "sourceCluster": "component:a7d1530dfcd08cb180c5ab00349baa75bcfbaa3cd1bb995ee41dff3eb514b38c",
+      "tokenShare": 0.10316536393369921
+    },
+    {
+      "generatedTokens": 4293,
+      "sourceCluster": "component:be1ca5f0fd78dfca7ed82cee25c0c412d094d00b2230270ce4b7b80771357942",
+      "tokenShare": 0.0793281224014635
+    },
+    {
+      "generatedTokens": 1969,
+      "sourceCluster": "component:c942ae4e2171975be5f32a125c7eef2e326b413c72dc9eb038010131d0841a04",
+      "tokenShare": 0.036384130679823344
+    },
+    {
+      "generatedTokens": 4298,
+      "sourceCluster": "component:e76ff985c337da6665aa206250de888116869b8bf818f400c7105b790474398d",
+      "tokenShare": 0.07942051481050316
+    },
+    {
+      "generatedTokens": 5502,
+      "sourceCluster": "component:e9752b427b3f42a5506f6d6329af1badaf315c849078e1bce5aa8d3cb72a23fe",
+      "tokenShare": 0.1016686069072565
+    },
+    {
+      "generatedTokens": 5089,
+      "sourceCluster": "component:efad542769612c0500e34fb18fac88fe80516de8b0ac9338a3c945750233c146",
+      "tokenShare": 0.09403699392057949
+    }
+  ],
+  "generatedTrainTokens": 54117,
+  "heldOutInputIds": [
+    "generated-e1e4f2b56b6447ff1215-0",
+    "generated-e1e4f2b56b6447ff1215-1",
+    "generated-e1e4f2b56b6447ff1215-2",
+    "generated-e1e4f2b56b6447ff1215-3",
+    "generated-37d82be30acc634bd639-0",
+    "generated-37d82be30acc634bd639-1",
+    "generated-37d82be30acc634bd639-2",
+    "generated-37d82be30acc634bd639-3",
+    "generated-1de0d2838f7e94ff352d-0",
+    "generated-1de0d2838f7e94ff352d-1",
+    "generated-1de0d2838f7e94ff352d-2",
+    "generated-1de0d2838f7e94ff352d-3",
+    "generated-7083d531fdfc1289532d-0",
+    "generated-7083d531fdfc1289532d-1",
+    "generated-7083d531fdfc1289532d-2",
+    "generated-7083d531fdfc1289532d-3",
+    "generated-c27cefd49666819b7b82-0",
+    "generated-c27cefd49666819b7b82-1",
+    "generated-c27cefd49666819b7b82-2",
+    "generated-c27cefd49666819b7b82-3"
+  ],
+  "learnedSuccess": null,
+  "nativeAccepted": 61,
+  "nativeDispositions": [
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:3b44d41b18fcdabfe402b47e155d870e6ea5ac8477e15bdd2d5e693c31b480a3",
+      "id": "generated-e1e4f2b56b6447ff1215-0",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:219c495d08254e3b07275f72e8deaeaa6cc351e9b3463a70dd5d65a65c739a16",
+      "id": "generated-e1e4f2b56b6447ff1215-1",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:da4750202fc21e9ebaad308ac080dfea2dcdc1e0e63849a8767e4c4da8909694",
+      "id": "generated-e1e4f2b56b6447ff1215-2",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:85f35a5f532344317e75c33afe84429b7166c72794c2888b18a818e56fb4710a",
+      "id": "generated-e1e4f2b56b6447ff1215-3",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:7743fb791c7de936721a93017e0fb27a4b07dbf8ab0a0abb5a8ba215bd7820dd",
+      "id": "generated-37d82be30acc634bd639-0",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:ab1805ec841a8906d98dd943f3b507c7cb8447cd6b92bfcddb9ccd1bb0086ce6",
+      "id": "generated-37d82be30acc634bd639-1",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:e1255ff9b959d8af287f07e9e372adeda3e5985ef66d155955850a18782f3bfe",
+      "id": "generated-37d82be30acc634bd639-2",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": "semantic:harness:e1255ff9b959d8af287f07e9e372adeda3e5985ef66d155955850a18782f3bfe",
+      "episodeId": "semantic:harness:1adac514d61baaee993fe07af3d7b354731d667d60d3c89b2e0c1134d4c66ef2",
+      "id": "generated-37d82be30acc634bd639-3",
+      "quarantineReason": null,
+      "status": "native_excluded"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:d5a789cf7b312f707a8fa2cbcdfea58b5e41796e8314f0ad6e106da44fab85ac",
+      "id": "generated-16676a89ce7afd1e5aa0-0",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:5883d2823ecf6cffd1cbb1565ee9c261bebdf2b6c3a0a267b8f44e839e2160a5",
+      "id": "generated-16676a89ce7afd1e5aa0-1",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:230ef9f0425a2bc7f966d4ea3343c7226aac03c558a2192fe2c0885937635b97",
+      "id": "generated-16676a89ce7afd1e5aa0-2",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:5bd199d77402a467935cb748ba284ee85e0f4e0691a7d77b3fc67f02839df023",
+      "id": "generated-16676a89ce7afd1e5aa0-3",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:f8d89da29135e1b94ac5c4fccea0d36869d5c0f466dc2ceaab523e78e092fadb",
+      "id": "generated-3011613fcf46de149162-0",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:0799c0584e0bf30db6237ba74e91c35f306d763be982874cbc1ae31978f70a15",
+      "id": "generated-3011613fcf46de149162-1",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:9789d62d7cad259d3eb730303b102b7ef81e0b9421682eddf3a80173255210a3",
+      "id": "generated-3011613fcf46de149162-2",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": "semantic:harness:9789d62d7cad259d3eb730303b102b7ef81e0b9421682eddf3a80173255210a3",
+      "episodeId": "semantic:harness:ad597995f2251690a1bf0c3e2cb9d6534876f95d76570327cc82ccf305293494",
+      "id": "generated-3011613fcf46de149162-3",
+      "quarantineReason": null,
+      "status": "native_excluded"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:fe4779f71007dc46899418a06277d939fc16b7aa67b55da3ab5c8f0599cc4bdc",
+      "id": "generated-1de0d2838f7e94ff352d-0",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:464ddb1129ff6b5a4b4b1f916eeb48cd084ef2a49d8795837ca187ed8fa01f35",
+      "id": "generated-1de0d2838f7e94ff352d-1",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:74f4c1abb26278a863dbb062ee07f7179d9e9f8e938848af6f198aa8a88cbda3",
+      "id": "generated-1de0d2838f7e94ff352d-2",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:ff5860a2d2c3c5fc945cdcc1f915aef9c8c8aa8bbac572b5f1fc23e0aa7cd958",
+      "id": "generated-1de0d2838f7e94ff352d-3",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:8b1580e4ea87cd01c768b40a600ec71f64cf325600132e06b1bbaab74ddf8a8b",
+      "id": "generated-7083d531fdfc1289532d-0",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:1751166d0c62faa0f05609de2b14c037856ceed31b5836b5b6044934cb931461",
+      "id": "generated-7083d531fdfc1289532d-1",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:588472166e256006596efd6abd860c394e70a41580033f70808c4547f1671cc9",
+      "id": "generated-7083d531fdfc1289532d-2",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": "semantic:harness:588472166e256006596efd6abd860c394e70a41580033f70808c4547f1671cc9",
+      "episodeId": "semantic:harness:8120c3a9d26dad42a3999e5ff44dcc213c475d3dd10453581d9aeb737acfb86e",
+      "id": "generated-7083d531fdfc1289532d-3",
+      "quarantineReason": null,
+      "status": "native_excluded"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:840c196dc7584489dc6fbd290e12607f8b9340b826bc08c229cf811a29745bdd",
+      "id": "generated-56070b0c432bb43f1a27-0",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:23294d0fc80e10de5187d92dad4d2178f053b0d6afea5f965e1b013619fb0098",
+      "id": "generated-56070b0c432bb43f1a27-1",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:fc9c1b8c93fa0eca35178ddba56365bf7e69810a7a3a3d28008231063e2500a4",
+      "id": "generated-56070b0c432bb43f1a27-2",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:dee8db881fdc00ac740abe828d568990f1aac08136a9f7f2b1116ff01930c1d3",
+      "id": "generated-56070b0c432bb43f1a27-3",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:ec617fce2cafe208a049c758e62574b89bba77c4b963edb0eb1c2a9b2dea6c4b",
+      "id": "generated-18f9c826ee8389d4b113-0",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:f139539fcf2827200f3afdef3778afafa900f77309025e50b152bd41a982a1c5",
+      "id": "generated-18f9c826ee8389d4b113-1",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:e3d12acc1481bc78d7a01abd334836d2c097931fd6a363ddb6aae08bd1a8eaaf",
+      "id": "generated-18f9c826ee8389d4b113-2",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:a7ae20e012f84802bb0bc1f2306e63e8418789e2c672c1a9d29451ae46f47dca",
+      "id": "generated-18f9c826ee8389d4b113-3",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:17342d63b5d0c926baadc4bdbcf2da390d5d012290c9a638d1a6df487857a015",
+      "id": "generated-cd1dad873b9995b0801a-0",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:a217f4dc4f2b4cccb9c143141a4877a0a5b676120ba0377b3f70121630de04e6",
+      "id": "generated-cd1dad873b9995b0801a-1",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:36cf8d31eddc68ce89bb9684680ab86d0af8bac9f581317a944530768602245f",
+      "id": "generated-cd1dad873b9995b0801a-2",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:241e5266f0d43f7f4974708fad1a4a1271949fca9a2964521829d02377dc4471",
+      "id": "generated-cd1dad873b9995b0801a-3",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:9816721dc7a7546c4e7e08ef33b4f2451af0456194fdefdc2a76a41a7d2ec167",
+      "id": "generated-f37ddea2adca6b372e6a-0",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:650a16fc946fc47a5d060109aaa96fe51171b79f5d575abd77c58a4344b0c696",
+      "id": "generated-f37ddea2adca6b372e6a-1",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:bdf6e58f4682ce8011f457904eb63f306fb657505aebb623c5dcdb78b9830dd8",
+      "id": "generated-f37ddea2adca6b372e6a-2",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:9a81b865ec41c3396123fe3ba4d97cb84352d43895a926f98956f1f29fee4326",
+      "id": "generated-f37ddea2adca6b372e6a-3",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:295dd9fbbc4e033a63550bed4e06ede62e20017dac3681bed2979a0bac6d1445",
+      "id": "generated-7c79ad8b055501600f2f-0",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:a8eaa628ec2df0e3b5d7f2c77017eae67da6ff197f17f98cc97ffd8c3328b215",
+      "id": "generated-7c79ad8b055501600f2f-1",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:766a1e87f9789a3010d5b70d01fe4ef30d72bcd28cfdc5db2257561c1565f3f0",
+      "id": "generated-7c79ad8b055501600f2f-2",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:8297daf335d20467b6c244f29ffeb79c9c10555194c55d8b0e23eae925cc8508",
+      "id": "generated-7c79ad8b055501600f2f-3",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:d909a11e30fc0924f2cd1a0c7a45483b9c77d5dacbbff8ae652d081608a9531b",
+      "id": "generated-c27cefd49666819b7b82-0",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:9005eb6ef1b76deb4298311426bd9b22c590ad58e30855ca649a9411ecde6c3e",
+      "id": "generated-c27cefd49666819b7b82-1",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:83653b10922ed023f97c7dac71b2df5c1efcb826a95aa566f38a32c5c5d848b5",
+      "id": "generated-c27cefd49666819b7b82-2",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:9cb809cd1179b85aa53617b32cca2e057f1906b3d2e33787a172d5ce63e1f75f",
+      "id": "generated-c27cefd49666819b7b82-3",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:5ac6c584f5abf6b138afcbfa6aa5bbe25b6f3ffabafff600f9b1bcafcb4407b4",
+      "id": "generated-c463c20543c011d6508f-0",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:6207027e67b9d24ea69588e7ee5cfa235fa31adbfa9b93a443080416736e2b0f",
+      "id": "generated-c463c20543c011d6508f-1",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:d16a57520303b6d5f31ba2580423139b9b9159daed5aea5caad3887f9682eca9",
+      "id": "generated-c463c20543c011d6508f-2",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:8d876aa79402c639de28d6aae7036e7df131825f5fd628df3f84fe1d9790ad2a",
+      "id": "generated-c463c20543c011d6508f-3",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:2d9f7ca752423229b3cc1a37b914ea935d1c83c891de50a270e896bae9f65d1b",
+      "id": "generated-ae3e58f163acb8a56796-0",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:911989c10f1acde9cf63bf5cc21adfb98c4ab28f63f937cd058cb3b7880f3cec",
+      "id": "generated-ae3e58f163acb8a56796-1",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:c7ab3ae64613999fa4b3d2bf7466288eb3b23d1217a51b6aae26ee783ec15388",
+      "id": "generated-ae3e58f163acb8a56796-2",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:cc5679004fb7b79ff227dedf9c9f32df41880001a8a393965e18a607dc8cbed9",
+      "id": "generated-ae3e58f163acb8a56796-3",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:ba1352c6a62328b13e633c7e328e6e3710f10357ad32aba510cce03a437afbbe",
+      "id": "generated-a79adfbbe5c55d19b361-0",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:e1ddeef2439b978174b326166e37b4406ded9b6ccc405e1e156b82fd2540d5dc",
+      "id": "generated-a79adfbbe5c55d19b361-1",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:c716889e4fcaa28cc371e614d16b5e3b712cad438af1fd06b4187f665bcf4d72",
+      "id": "generated-a79adfbbe5c55d19b361-2",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:965db69925f983b2571272ab0f386b9891437d5bb33968633a9ac32207fb9f17",
+      "id": "generated-a79adfbbe5c55d19b361-3",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:06ee1ad58439658d05fc73fe5714bfb6749ca864266bc0eadb3e19bf02bc25f8",
+      "id": "generated-669b15ff4d2d77b507aa-0",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:69a297b820fc1998836927154dca07d7a98344eca623d5215f55e5fd136cb5eb",
+      "id": "generated-669b15ff4d2d77b507aa-1",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:9d28fc6af94e063df926b2764c910cfc21f437cc3dc69794de020605a2a47074",
+      "id": "generated-669b15ff4d2d77b507aa-2",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:b6aa7ce24ebe635dfe82fa45d4c7ad6da8418b17f7c7d790004e5d8f70c828d6",
+      "id": "generated-669b15ff4d2d77b507aa-3",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    }
+  ],
+  "optimizerSteps": 0,
+  "policy": {
+    "componentIdentity": "authenticated-frozen-source-components",
+    "enabled": true,
+    "maxFamilyShare": 0.2,
+    "maxFamilyTokens": 10000,
+    "scope": "training-only",
+    "tokenMeasurement": "fresh-native-generatedTokens"
+  },
+  "schema": "semantic-prepared-training-selection/1",
+  "status": "verified",
+  "violations": []
+}

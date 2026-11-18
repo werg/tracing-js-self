@@ -1,0 +1,279 @@
+{
+  "schema": "semantic-training-selection/1",
+  "status": "selected",
+  "policy": {
+    "enabled": false,
+    "maxFamilyTokens": null,
+    "maxFamilyShare": null,
+    "scope": "training-only",
+    "tokenMeasurement": "fresh-native-generatedTokens",
+    "componentIdentity": "authenticated-frozen-source-components"
+  },
+  "availableTrainIds": [
+    "counter-0",
+    "counter-1",
+    "checkpoint-source-reread",
+    "two-pending-reversed",
+    "branch-0",
+    "branch-1",
+    "callback-captured-write",
+    "sync-rejection",
+    "promise-reaction",
+    "promise-rejection-finally",
+    "owned-microtask",
+    "clock-console",
+    "http-response-stream",
+    "dom-mutation-release",
+    "natlang-cell-call",
+    "native-result-graph",
+    "compound-pure",
+    "compound-effectful",
+    "repeated-ingress"
+  ],
+  "selectedTrainIds": [
+    "counter-0",
+    "counter-1",
+    "checkpoint-source-reread",
+    "two-pending-reversed",
+    "branch-0",
+    "branch-1",
+    "callback-captured-write",
+    "sync-rejection",
+    "promise-reaction",
+    "promise-rejection-finally",
+    "owned-microtask",
+    "clock-console",
+    "http-response-stream",
+    "dom-mutation-release",
+    "natlang-cell-call",
+    "native-result-graph",
+    "compound-pure",
+    "compound-effectful",
+    "repeated-ingress"
+  ],
+  "excludedTrain": [],
+  "heldOutIds": [
+    "rejection-finally",
+    "uncaught-rejection-finally",
+    "long-callback-retained-tail",
+    "filesystem-stream-copy",
+    "socket-round-trip",
+    "persistent-external-trigger"
+  ],
+  "heldOutBySplit": {
+    "validation": [
+      "long-callback-retained-tail",
+      "socket-round-trip"
+    ],
+    "test": [
+      "rejection-finally",
+      "uncaught-rejection-finally",
+      "filesystem-stream-copy",
+      "persistent-external-trigger"
+    ]
+  },
+  "preparedCandidateIds": [
+    "counter-0",
+    "counter-1",
+    "checkpoint-source-reread",
+    "two-pending-reversed",
+    "branch-0",
+    "branch-1",
+    "rejection-finally",
+    "uncaught-rejection-finally",
+    "callback-captured-write",
+    "long-callback-retained-tail",
+    "sync-rejection",
+    "promise-reaction",
+    "promise-rejection-finally",
+    "owned-microtask",
+    "clock-console",
+    "http-response-stream",
+    "filesystem-stream-copy",
+    "socket-round-trip",
+    "dom-mutation-release",
+    "natlang-cell-call",
+    "native-result-graph",
+    "compound-pure",
+    "compound-effectful",
+    "persistent-external-trigger",
+    "repeated-ingress"
+  ],
+  "generatedTokens": {
+    "availableTrain": 7524,
+    "selectedTrain": 7524,
+    "excludedTrain": 0,
+    "heldOut": 9548
+  },
+  "components": [
+    {
+      "sourceCluster": "component:026c2d4f8a128c8d356896f32bd63f8ddbf591f6d3da47694fe819c8caa4cf3c",
+      "families": [
+        "owned-callback"
+      ],
+      "availableGeneratedTokens": 562,
+      "selectedGeneratedTokens": 562,
+      "availableCandidates": 1,
+      "selectedCandidates": 1,
+      "selectedTokenShare": 0.0746943115364168
+    },
+    {
+      "sourceCluster": "component:0748d252232434bb0fa3790cb81f4fdfa7c4f3a5d4a43cab16e8344726a7156f",
+      "families": [
+        "compound-effectful"
+      ],
+      "availableGeneratedTokens": 381,
+      "selectedGeneratedTokens": 381,
+      "availableCandidates": 1,
+      "selectedCandidates": 1,
+      "selectedTokenShare": 0.05063795853269538
+    },
+    {
+      "sourceCluster": "component:12e7dfd8463597ad7e736d84afe6b15fc72c41dcce788d56e78e5a603116f3e1",
+      "families": [
+        "native-result-graph"
+      ],
+      "availableGeneratedTokens": 700,
+      "selectedGeneratedTokens": 700,
+      "availableCandidates": 1,
+      "selectedCandidates": 1,
+      "selectedTokenShare": 0.09303561935140882
+    },
+    {
+      "sourceCluster": "component:1bb7b22b6c162147409575668945d1de13fbb81109765a4210f89ae3d7a0d7c3",
+      "families": [
+        "http-response-stream"
+      ],
+      "availableGeneratedTokens": 602,
+      "selectedGeneratedTokens": 602,
+      "availableCandidates": 1,
+      "selectedCandidates": 1,
+      "selectedTokenShare": 0.08001063264221159
+    },
+    {
+      "sourceCluster": "component:2acb7229c847f2f9770b05295de4bb95b419c43cb5f66122e9c449342fc06d3d",
+      "families": [
+        "synchronous-error"
+      ],
+      "availableGeneratedTokens": 169,
+      "selectedGeneratedTokens": 169,
+      "availableCandidates": 1,
+      "selectedCandidates": 1,
+      "selectedTokenShare": 0.022461456671982988
+    },
+    {
+      "sourceCluster": "component:3119c1b837d02134acaccc9062edaa45456498c24db7137e7770cbaf44fd6c3b",
+      "families": [
+        "async-counter"
+      ],
+      "availableGeneratedTokens": 1512,
+      "selectedGeneratedTokens": 1512,
+      "availableCandidates": 4,
+      "selectedCandidates": 4,
+      "selectedTokenShare": 0.20095693779904306
+    },
+    {
+      "sourceCluster": "component:4455e0880e021f857963b390d5cab3a3553375f135f87fe9679f4c8efb9d4158",
+      "families": [
+        "owned-microtask"
+      ],
+      "availableGeneratedTokens": 184,
+      "selectedGeneratedTokens": 184,
+      "availableCandidates": 1,
+      "selectedCandidates": 1,
+      "selectedTokenShare": 0.024455077086656035
+    },
+    {
+      "sourceCluster": "component:6bf3fa94d521eb9cf94f6b20bba89031b9abf55f2c3d63666d644c6cbe36c8f9",
+      "families": [
+        "promise-reaction"
+      ],
+      "availableGeneratedTokens": 431,
+      "selectedGeneratedTokens": 431,
+      "availableCandidates": 1,
+      "selectedCandidates": 1,
+      "selectedTokenShare": 0.05728335991493886
+    },
+    {
+      "sourceCluster": "component:7ae6ed9a9d6b79049846439215d807d5bbc7958202cc0159959f2bb50b3fea19",
+      "families": [
+        "compound-pure"
+      ],
+      "availableGeneratedTokens": 192,
+      "selectedGeneratedTokens": 192,
+      "availableCandidates": 1,
+      "selectedCandidates": 1,
+      "selectedTokenShare": 0.025518341307814992
+    },
+    {
+      "sourceCluster": "component:aea268c42c7bda31e3043a92a90284c5c68163a21ec961652a403d2511d2cdca",
+      "families": [
+        "natlang-cell-call"
+      ],
+      "availableGeneratedTokens": 590,
+      "selectedGeneratedTokens": 590,
+      "availableCandidates": 1,
+      "selectedCandidates": 1,
+      "selectedTokenShare": 0.07841573631047315
+    },
+    {
+      "sourceCluster": "component:bddb07b64c8188deec3c579939e54d1476ece57a4f96337a08b7e0fd351c2ab6",
+      "families": [
+        "dom-mutation-release"
+      ],
+      "availableGeneratedTokens": 550,
+      "selectedGeneratedTokens": 550,
+      "availableCandidates": 1,
+      "selectedCandidates": 1,
+      "selectedTokenShare": 0.07309941520467836
+    },
+    {
+      "sourceCluster": "component:c7a095b760d104b46573e3142193a1b5573c2c61f4481bec88019ecf998fa86e",
+      "families": [
+        "platform-observation"
+      ],
+      "availableGeneratedTokens": 171,
+      "selectedGeneratedTokens": 171,
+      "availableCandidates": 1,
+      "selectedCandidates": 1,
+      "selectedTokenShare": 0.022727272727272728
+    },
+    {
+      "sourceCluster": "component:e076559170391c4f51ee1c7e9b119c092d0d61e28266f5dcd5004fd993ec944b",
+      "families": [
+        "promise-cleanup"
+      ],
+      "availableGeneratedTokens": 553,
+      "selectedGeneratedTokens": 553,
+      "availableCandidates": 1,
+      "selectedCandidates": 1,
+      "selectedTokenShare": 0.07349813928761297
+    },
+    {
+      "sourceCluster": "component:e18671d68dff02cc0b6d3a543c776baf7be06832593ec7a2acad558fdcba9347",
+      "families": [
+        "two-outstanding"
+      ],
+      "availableGeneratedTokens": 350,
+      "selectedGeneratedTokens": 350,
+      "availableCandidates": 1,
+      "selectedCandidates": 1,
+      "selectedTokenShare": 0.04651780967570441
+    },
+    {
+      "sourceCluster": "component:e41477e46dde44ee660078efa0bc365bb844c82a31efa01ec570ed01f100529b",
+      "families": [
+        "observed-branch"
+      ],
+      "availableGeneratedTokens": 577,
+      "selectedGeneratedTokens": 577,
+      "availableCandidates": 2,
+      "selectedCandidates": 2,
+      "selectedTokenShare": 0.07668793195108985
+    }
+  ],
+  "originalAdmissionsPreserved": true,
+  "heldOutMembershipsPreserved": true,
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}

@@ -28,7 +28,12 @@ from GitHub's 90-day CI artifact lifetime and outside public Git.
 | training-v4 | Pending | Pending | Pending | Pending | Successful lane artifact not yet preserved |
 | benchmark-v1 | Pending | Pending | Pending | Pending | Successful lane artifact not yet preserved |
 | real-source | Pending | Pending | Pending | Pending | Successful lane artifact not yet preserved |
-| generated-v1 | Pending | Pending | Pending | Pending | Successful lane artifact not yet preserved |
+| [generated-v1](generated-v1/verification.json) | 257,934,132 | 394 | 64 / 64 | 16 | Original ZIP |
+
+Each available `training-selection-summary.json` independently recomputes the
+post-deduplication native split counts, training-token denominator, maximum
+component token share, cap policy, violations, and retained duplicate aliases.
+The original selection JSON files remain unchanged beside that derived summary.
 
 [index.json](index.json) binds every preserved archive to its original API
 digest, checked-out revisions, exact member inventory, and source dispositions.

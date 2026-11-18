@@ -12,17 +12,17 @@
     "generated-v1"
   ],
   "preservedRecipes": [
-    "engineering"
+    "engineering",
+    "generated-v1"
   ],
   "pendingRecipes": [
     "training-v4",
     "benchmark-v1",
-    "real-source",
-    "generated-v1"
+    "real-source"
   ],
   "allRecipesPreserved": false,
-  "totalOriginalZipBytes": 106834065,
-  "totalUncompressedMemberBytes": 552224318,
+  "totalOriginalZipBytes": 364768197,
+  "totalUncompressedMemberBytes": 1898553697,
   "artifacts": [
     {
       "recipe": "engineering",
@@ -55,7 +55,167 @@
         "learnedSuccess": null
       },
       "verificationFile": "engineering/verification.json",
-      "memberIndexFile": "engineering/member-index.json"
+      "memberIndexFile": "engineering/member-index.json",
+      "preparedTraining": {
+        "schema": "derived-native-prepared-selection-summary/1",
+        "scope": "Independently recomputed from unchanged original ZIP training-selection and prepared-training-selection receipts; no episode shard rewrite or optimization.",
+        "recipe": "engineering",
+        "zipSha256": "2a7996fccf119eb28ba943d2ae1c78c6cc425d7dab6f302f1b4f97680b7cea57",
+        "originalReceiptHashes": {
+          "release/training-selection.json": "dd80a93289807dde35270926d70d4a88093cec8bb075628e42d19357b6be4214",
+          "release/prepared-training-selection.json": "72f0237cba243ad44f2eba3c3fc76e5602549b656442845840ad0d5814a992a3"
+        },
+        "policy": {
+          "componentIdentity": "authenticated-frozen-source-components",
+          "enabled": false,
+          "maxFamilyShare": null,
+          "maxFamilyTokens": null,
+          "scope": "training-only",
+          "tokenMeasurement": "fresh-native-generatedTokens"
+        },
+        "originalAvailableTrainInputs": 19,
+        "originalSelectedTrainInputs": 19,
+        "originalExcludedTrainInputs": 0,
+        "originalHeldOutInputs": 6,
+        "heldOutInputMembershipsPreserved": true,
+        "suppliedPreparationInputs": 25,
+        "distinctNativePreparedExamples": 25,
+        "nativePreparedSplitCounts": {
+          "train": 19,
+          "test": 4,
+          "validation": 2
+        },
+        "nativePreparedGeneratedTokensBySplit": {
+          "train": 7524,
+          "test": 2084,
+          "validation": 7464
+        },
+        "finalGeneratedTrainTokens": 7524,
+        "finalTrainComponents": 15,
+        "maximumPreparedComponentTokenShare": 0.20095693779904306,
+        "maximumPreparedComponentGeneratedTokens": 1512,
+        "capPolicyApplicable": false,
+        "capPolicySatisfiedAfterDeduplication": null,
+        "violations": [],
+        "nativeDispositionCounts": {
+          "native_prepared": 25
+        },
+        "retainedDuplicateAliasCount": 0,
+        "retainedDuplicateAliases": [],
+        "optimizerSteps": 0,
+        "learnedSuccess": null
+      }
+    },
+    {
+      "recipe": "generated-v1",
+      "jobConclusion": "success",
+      "originalZip": "semantic-v5-generated-v1-admission-and-evaluation.zip",
+      "zipBytes": 257934132,
+      "zipSha256": "eb017730a106b4e440ad5355958c93f1ea360647c7ddf24df0a2b1875a4f9a5c",
+      "apiDigest": "sha256:eb017730a106b4e440ad5355958c93f1ea360647c7ddf24df0a2b1875a4f9a5c",
+      "apiSizeAndDigestVerified": true,
+      "zipCrcVerifiedForEveryMember": true,
+      "zipMembers": 394,
+      "zipUncompressedBytes": 1346329379,
+      "preservationMode": "completeOriginalZip",
+      "parts": [],
+      "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+      "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+      "sourceDispositions": {
+        "schema": "semantic-source-dispositions/1",
+        "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+        "recipe": {
+          "name": "generated-v1",
+          "schema": "bounded-program-grammar/1",
+          "generatedFamilies": 16,
+          "generationSeed": 73,
+          "inputSeed": 89,
+          "perFamily": 4,
+          "labels": "independent-execution-only"
+        },
+        "attempted": 64,
+        "dispositions": {
+          "admitted": 64
+        },
+        "admittedFamilies": 16,
+        "admittedComponents": 16,
+        "optimizerSteps": 0,
+        "learnedSuccess": null
+      },
+      "verificationFile": "generated-v1/verification.json",
+      "memberIndexFile": "generated-v1/member-index.json",
+      "preparedTraining": {
+        "schema": "derived-native-prepared-selection-summary/1",
+        "scope": "Independently recomputed from unchanged original ZIP training-selection and prepared-training-selection receipts; no episode shard rewrite or optimization.",
+        "recipe": "generated-v1",
+        "zipSha256": "eb017730a106b4e440ad5355958c93f1ea360647c7ddf24df0a2b1875a4f9a5c",
+        "originalReceiptHashes": {
+          "release/training-selection.json": "d6f95d23caa8ea53faa58788db61bd8e0bcc6ec01f52564bdb0a09da9879d966",
+          "release/prepared-training-selection.json": "df06a37faf1b78b42b8d5caa41b0ad182d6e0ad57934d6b23eab53e3a8a27621"
+        },
+        "policy": {
+          "componentIdentity": "authenticated-frozen-source-components",
+          "enabled": true,
+          "maxFamilyShare": 0.2,
+          "maxFamilyTokens": 10000,
+          "scope": "training-only",
+          "tokenMeasurement": "fresh-native-generatedTokens"
+        },
+        "originalAvailableTrainInputs": 44,
+        "originalSelectedTrainInputs": 44,
+        "originalExcludedTrainInputs": 0,
+        "originalHeldOutInputs": 20,
+        "heldOutInputMembershipsPreserved": true,
+        "suppliedPreparationInputs": 64,
+        "distinctNativePreparedExamples": 61,
+        "nativePreparedSplitCounts": {
+          "test": 11,
+          "train": 43,
+          "validation": 7
+        },
+        "nativePreparedGeneratedTokensBySplit": {
+          "test": 13810,
+          "train": 54117,
+          "validation": 5767
+        },
+        "finalGeneratedTrainTokens": 54117,
+        "finalTrainComponents": 11,
+        "maximumPreparedComponentTokenShare": 0.11582312397213446,
+        "maximumPreparedComponentGeneratedTokens": 6268,
+        "capPolicyApplicable": true,
+        "capPolicySatisfiedAfterDeduplication": true,
+        "violations": [],
+        "nativeDispositionCounts": {
+          "native_prepared": 61,
+          "native_excluded": 3
+        },
+        "retainedDuplicateAliasCount": 3,
+        "retainedDuplicateAliases": [
+          {
+            "duplicateOf": "semantic:harness:e1255ff9b959d8af287f07e9e372adeda3e5985ef66d155955850a18782f3bfe",
+            "episodeId": "semantic:harness:1adac514d61baaee993fe07af3d7b354731d667d60d3c89b2e0c1134d4c66ef2",
+            "id": "generated-37d82be30acc634bd639-3",
+            "quarantineReason": null,
+            "status": "native_excluded"
+          },
+          {
+            "duplicateOf": "semantic:harness:9789d62d7cad259d3eb730303b102b7ef81e0b9421682eddf3a80173255210a3",
+            "episodeId": "semantic:harness:ad597995f2251690a1bf0c3e2cb9d6534876f95d76570327cc82ccf305293494",
+            "id": "generated-3011613fcf46de149162-3",
+            "quarantineReason": null,
+            "status": "native_excluded"
+          },
+          {
+            "duplicateOf": "semantic:harness:588472166e256006596efd6abd860c394e70a41580033f70808c4547f1671cc9",
+            "episodeId": "semantic:harness:8120c3a9d26dad42a3999e5ff44dcc213c475d3dd10453581d9aeb737acfb86e",
+            "id": "generated-7083d531fdfc1289532d-3",
+            "quarantineReason": null,
+            "status": "native_excluded"
+          }
+        ],
+        "optimizerSteps": 0,
+        "learnedSuccess": null
+      }
     }
   ],
   "archiveExtractionPerformed": false,
