@@ -221,7 +221,9 @@ const manifest={schema:'semantic-corpus-manifest/4',execution:EXECUTION_VERSION,
   catalogDigest:hash(JSON.stringify(hostOperationContract(),null,2)+'\n'),
   counts,cases,counterfactuals,selectionOrigin:nativeConsumer?'certified_teacher':'owned-interpreter-teacher',
   evidenceKind:recipe==='real-source'?'pinned-real-source':recipe==='generated-v1'?'bounded-generated-programs':'deterministic-engineering',optimizerSteps:0,learnedSuccess:null};
-const elapsedMs=performance.now()-start;
+// performance.now() is monotonic time since this CLI process started. Include
+// dependency inspection, source construction and registry freezing in throughput.
+const elapsedMs=performance.now();
 const generatedTokens=cases.reduce((sum,row)=>sum+(row.metrics?.generatedTokens??0),0);
 const fresh=cases.filter(row=>freshlyRun.has(row.id));
 const freshTokens=fresh.filter(row=>row.status==='admitted').reduce((sum,row)=>sum+(row.metrics?.generatedTokens??0),0);
@@ -232,7 +234,8 @@ Object.assign(manifest,{campaign:{schema:'semantic-generation-summary/1',identit
   privateEvidence:'objects/private',compatibilityExports:!flags.has('--compact-storage'),
   limits:bounds,workers:jobs,receiptCache:'full-source-profile-runtime-verifier-identity'},
   sourceRegistry:registry?{digest:canonicalHash(registry),...registry.diagnostics}:null,
-  throughput:{elapsedMs,totalVerificationMs:cases.reduce((n,row)=>n+row.durationMs,0),
+  throughput:{elapsedMs,preparationMs:start,collectionMs:elapsedMs-start,
+    timingScope:'process-start-through-final-manifest-measurement',totalVerificationMs:cases.reduce((n,row)=>n+row.durationMs,0),
     peakCoordinatorRssBytes:process.resourceUsage().maxRSS*1024,
     peakWorkerRssBytes:Math.max(0,...cases.map(row=>row.peakRssBytes??0)),
     admittedGeneratedTokens:native?generatedTokens:null,
