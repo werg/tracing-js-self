@@ -56,7 +56,14 @@ def main():
     spec = importlib.util.spec_from_file_location("audit_release_helpers", args.packager.resolve())
     helpers = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(helpers)
-    require(helpers.file_fingerprint(args.packager)[1] == selection["packagerSha256"],
+    def file_sha256(path):
+        # Newer helpers include regular-file and concurrent-change checks in
+        # file_receipt; frozen releases used the equivalent tuple interface.
+        if hasattr(helpers, "file_receipt"):
+            return helpers.file_receipt(path)["sha256"]
+        return helpers.file_fingerprint(path)[1]
+
+    require(file_sha256(args.packager) == selection["packagerSha256"],
             "Pinned archive implementation changed")
     expected, groups, roots = {}, {}, {}
     for row in selection["files"]:
@@ -88,7 +95,7 @@ def main():
         "schema": "semantic-verification-audit-bundle/1",
         "scope": "Historical failures, recovery proofs, focused regressions and completed fresh qualification evidence. This bundle is not a prepared training dataset and does not grant training admission.",
         "isPreparedTrainingDataset": False,
-        "selectionSha256": helpers.file_fingerprint(args.selection)[1],
+        "selectionSha256": file_sha256(args.selection),
         "packagerSha256": selection["packagerSha256"],
         "qualifications": qualifications,
         "currentQualification": selection["currentQualification"],
