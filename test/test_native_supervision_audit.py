@@ -10,10 +10,52 @@ sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(COMPANION / "src"))
 
 from native_supervision_audit import (capture_native_supervision_audit,
-                                      _episode_decoder_continuation)  # noqa: E402
+                                      _episode_decoder_continuation,
+                                      _mutate_canonical_numeric_result)  # noqa: E402
 
 
 class NativeSupervisionAuditTests(unittest.TestCase):
+    def test_future_canary_mutates_only_canonical_numeric_result_and_line(self):
+        envelope = {
+            "effectId": "e1",
+            "errorOrigin": None,
+            "invocationId": "invocation1",
+            "kind": "result",
+            "line": "observe @e1 fulfilled 7",
+            "mode": "observed",
+            "ownerSequence": 7,
+            "result": ["num", 7],
+            "schema": "semantic-execution/6",
+            "sequence": 8,
+            "session": "teacher1",
+            "status": "fulfilled",
+            "track": "worker1",
+        }
+        before = json.dumps(envelope, sort_keys=True, separators=(",", ":"),
+                            ensure_ascii=False, allow_nan=False).encode("utf-8")
+        mutation = _mutate_canonical_numeric_result(before)
+        self.assertIsNotNone(mutation)
+        after, details = mutation
+        changed = json.loads(after.decode("utf-8"))
+        self.assertEqual(changed["result"], ["num", 8])
+        self.assertEqual(changed["line"], "observe @e1 fulfilled 8")
+        self.assertEqual(details["mutationType"], "semantic-numeric-result-value")
+        self.assertTrue(details["semanticValueChanged"])
+        self.assertEqual(details["changedPayloadFields"], ["line", "result"])
+        self.assertEqual(details["valueBefore"], 7)
+        self.assertEqual(details["valueAfter"], 8)
+        self.assertEqual(
+            {key: value for key, value in envelope.items()
+             if key not in {"line", "result"}},
+            {key: value for key, value in changed.items()
+             if key not in {"line", "result"}},
+        )
+        self.assertEqual(
+            after,
+            json.dumps(changed, sort_keys=True, separators=(",", ":"),
+                       ensure_ascii=False, allow_nan=False).encode("utf-8"),
+        )
+
     def test_teacher_conditioned_semantic_episode_uses_encoded_text_continuation(self):
         from types import SimpleNamespace
 
@@ -130,6 +172,9 @@ class NativeSupervisionAuditTests(unittest.TestCase):
         self.assertTrue(decision["gradients"]["structure"]["structureHeads"]["rawGradientNorm"] > 0)
         self.assertTrue(decision["gradients"]["terminal"]["terminalHead"]["rawGradientNorm"] > 0)
         self.assertEqual(report["futureObservationCanary"]["status"], "passed")
+        self.assertEqual(report["futureObservationCanary"]["mutation"]["mutationType"],
+                         "raw-observed-byte")
+        self.assertFalse(report["futureObservationCanary"]["mutation"]["semanticValueChanged"])
         canary_check = report["futureObservationCanary"]["comparisons"][0]
         self.assertTrue(canary_check["conditionalDistributionsEqual"])
         self.assertTrue(canary_check["selectedLogProbabilitiesEqual"])

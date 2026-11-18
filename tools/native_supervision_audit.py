@@ -618,6 +618,70 @@ def _one_native_capture(model, batch, *, codec, config, device, model_version,
     }
 
 
+def _mutate_canonical_numeric_result(payload):
+    """Change a canonical v6 numeric result value and its matching observation line.
+
+    Return None for payloads outside this deliberately narrow semantic shape;
+    callers may then use a separately labeled raw-byte canary.
+    """
+    import re
+
+    try:
+        decoded = payload.decode("utf-8")
+        envelope = json.loads(decoded)
+        canonical = json.dumps(
+            envelope, sort_keys=True, separators=(",", ":"),
+            ensure_ascii=False, allow_nan=False,
+        ).encode("utf-8")
+    except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError):
+        return None
+    if canonical != payload or not isinstance(envelope, dict):
+        return None
+    if (envelope.get("schema") != "semantic-execution/6" or
+            envelope.get("kind") != "result" or
+            envelope.get("mode") != "observed"):
+        return None
+    result = envelope.get("result")
+    if (not isinstance(result, list) or len(result) != 2 or
+            result[0] != "num" or type(result[1]) is not int):
+        return None
+    line = envelope.get("line")
+    if not isinstance(line, str):
+        return None
+    match = re.fullmatch(r"(observe @\S+ fulfilled )(-?(?:0|[1-9][0-9]*))", line)
+    if match is None or match.group(2) != str(result[1]):
+        return None
+
+    old_value = result[1]
+    new_value = old_value + 1
+    changed = dict(envelope)
+    changed["result"] = [result[0], new_value]
+    changed["line"] = match.group(1) + str(new_value)
+    if (set(changed) != set(envelope) or
+            any(changed[key] != envelope[key] for key in envelope
+                if key not in {"line", "result"})):
+        return None
+    try:
+        new_payload = json.dumps(
+            changed, sort_keys=True, separators=(",", ":"),
+            ensure_ascii=False, allow_nan=False,
+        ).encode("utf-8")
+    except (TypeError, ValueError):
+        return None
+    if json.loads(new_payload.decode("utf-8")) != changed:
+        return None
+    return new_payload, {
+        "mutationType": "semantic-numeric-result-value",
+        "semanticValueChanged": True,
+        "field": "result",
+        "valueBefore": old_value,
+        "valueAfter": new_value,
+        "lineBefore": line,
+        "lineAfter": changed["line"],
+        "changedPayloadFields": ["line", "result"],
+    }
+
+
 def future_observation_canary_batch(batch, codec):
     """Change one later observed payload while preserving the target plan/masks."""
     from megatoken.data.schema import encode_record
@@ -634,23 +698,39 @@ def future_observation_canary_batch(batch, codec):
                   if record_offsets[entry.record.record_id] > earliest and
                   not entry.record.policy_mask and entry.record.media_type == "text/plain; charset=utf-8"]
     require(candidates, "No later observed text record is available for a numerical canary")
-    # Prefer a genuine environmental/tool result: changing a dispatch receipt
-    # tests chronology, while changing the later observed result directly tests
-    # that the answer cannot leak into decisions made before the response.
+    # Prefer a genuine environmental/tool result and change its numeric result
+    # value plus the matching observation line. This tests future-value
+    # isolation without corrupting the record's canonical semantic envelope.
     result_candidates = [candidate for candidate in candidates if candidate[3].record.result_of]
     if result_candidates:
         candidates = result_candidates
     offset, step_index, entry_index, original_entry = candidates[0]
     payload = original_entry.record.payload
-    changed = bytearray(payload)
-    position = next((index for index, byte in enumerate(changed)
-                     if 48 <= byte <= 57 or 65 <= byte <= 90 or 97 <= byte <= 122), None)
-    if position is None:
-        require(changed, "Cannot perturb an empty future observation")
-        position = 0
-    old = changed[position]
-    changed[position] = old + 1 if old < 255 else old - 1
-    new_payload = bytes(changed)
+    semantic_mutation = _mutate_canonical_numeric_result(payload)
+    if semantic_mutation is not None:
+        new_payload, mutation_details = semantic_mutation
+        changed_byte_offset = next(
+            index for index, (before, after) in enumerate(zip(payload, new_payload))
+            if before != after
+        )
+    else:
+        # Explicitly weaker fallback: perturb an observed byte only. This does
+        # not claim a valid semantic result mutation.
+        changed = bytearray(payload)
+        position = next((index for index, byte in enumerate(changed)
+                         if 48 <= byte <= 57 or 65 <= byte <= 90 or 97 <= byte <= 122), None)
+        if position is None:
+            require(changed, "Cannot perturb an empty future observation")
+            position = 0
+        old = changed[position]
+        changed[position] = old + 1 if old < 255 else old - 1
+        new_payload = bytes(changed)
+        changed_byte_offset = position
+        mutation_details = {
+            "mutationType": "raw-observed-byte",
+            "semanticValueChanged": False,
+            "changedPayloadFields": None,
+        }
     # Keep UTF-8 valid when the original row was valid text.
     try:
         payload.decode("utf-8")
@@ -697,17 +777,17 @@ def future_observation_canary_batch(batch, codec):
                                         window_item.assets, window_item.episode_end)
     mutated_batch = replace(batch, windows=[mutated_window_item], steps=tuple(steps))
     return mutated_batch, {
+        **mutation_details,
         "recordId": original_entry.record.record_id,
         "recordOffset": offset,
         "payloadBeforeSha256": _digest(payload),
         "payloadAfterSha256": _digest(new_payload),
-        "changedByteOffset": position,
+        "changedByteOffset": changed_byte_offset,
         "tokenCountBefore": len(original_entry.token_ids),
         "tokenCountAfter": len(mutated_encoded.token_ids),
         "observedMaskRemainsEmpty": not any(mutated_encoded.free_mask),
         "changedBytesOnlyInFutureObservation": True,
     }
-
 
 def _compare_canary(original, changed, mutation, *, atol=1e-6, rtol=1e-5):
     def close(left, right):
