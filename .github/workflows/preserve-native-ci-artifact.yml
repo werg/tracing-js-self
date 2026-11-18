@@ -1,0 +1,59 @@
+name: Preserve original native benchmark artifact
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/preserve-native-ci-artifact.yml
+      - tools/preserve_ci_benchmark_artifact.py
+      - tools/test_preserve_ci_benchmark_artifact.py
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  preserve-original-benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Test frozen identity, credential isolation and exact reconstruction
+        run: python3 -m unittest discover -s tools -p test_preserve_ci_benchmark_artifact.py
+      - name: Verify and split only original run 44321402524 benchmark ZIP
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 tools/preserve_ci_benchmark_artifact.py --output-dir "$RUNNER_TEMP/original-native-benchmark"
+      - name: Preserve exact part 001
+        uses: actions/upload-artifact@v4
+        with:
+          name: preserved-original-benchmark-44321402524-part001
+          path: ${{ runner.temp }}/original-native-benchmark/benchmark-original.zip.part001
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 90
+      - name: Preserve exact part 002
+        uses: actions/upload-artifact@v4
+        with:
+          name: preserved-original-benchmark-44321402524-part002
+          path: ${{ runner.temp }}/original-native-benchmark/benchmark-original.zip.part002
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 90
+      - name: Preserve exact part 003
+        uses: actions/upload-artifact@v4
+        with:
+          name: preserved-original-benchmark-44321402524-part003
+          path: ${{ runner.temp }}/original-native-benchmark/benchmark-original.zip.part003
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 90
+      - name: Preserve original-byte reconstruction index
+        uses: actions/upload-artifact@v4
+        with:
+          name: preserved-original-benchmark-44321402524-reconstruction
+          path: ${{ runner.temp }}/original-native-benchmark/reconstruction.json
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 90

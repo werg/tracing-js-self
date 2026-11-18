@@ -1,0 +1,170 @@
+{
+  "schema": "semantic-native-ci-job-summary/1",
+  "runId": 44321402524,
+  "jobId": 134861001473,
+  "recipe": "generated-v1",
+  "status": "completed",
+  "conclusion": "success",
+  "records": [
+    {
+      "schema": "semantic-native-ci-identity/1",
+      "workflowRunId": "44321402524",
+      "workflowRunAttempt": "1",
+      "workflowTriggerRevision": "3497ee3454ea75715db1bc50c3e7cfc35ecc0fc2",
+      "workflowHeadRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+      "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+      "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b"
+    },
+    {
+      "status": "verified",
+      "receipt": "/home/runner/work/_temp/native-environment.json",
+      "packages": 47,
+      "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+      "cudaAvailable": false
+    },
+    {
+      "schema": "semantic-harness-contract/5",
+      "digest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+      "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e"
+    },
+    {
+      "digest": "27f3b0e8b276a64d648b4cc56e8f069ea3194c46c32fd7d532db2e53b2979ba7",
+      "recipes": [
+        "engineering",
+        "training-v4",
+        "benchmark-v1",
+        "real-source",
+        "generated-v1"
+      ],
+      "sourceVariants": 508,
+      "sourceFamilies": 199,
+      "independentComponents": 135,
+      "nearPairs": 5,
+      "splitComponents": {
+        "train": 89,
+        "validation": 13,
+        "test": 33
+      },
+      "holdoutProjects": [
+        "exercism/javascript"
+      ],
+      "holdoutCompositions": [
+        "square/even/maximum/alias/return"
+      ]
+    },
+    {
+      "directory": "/home/runner/work/_temp/continuity",
+      "fixtures": [
+        {
+          "name": "async-pair",
+          "records": 17,
+          "selectionOrigin": "controlled-test-injected"
+        },
+        {
+          "name": "promise-finally",
+          "records": 14,
+          "selectionOrigin": "controlled-test-injected"
+        },
+        {
+          "name": "retained-events",
+          "records": 33,
+          "selectionOrigin": "controlled-test-injected"
+        },
+        {
+          "name": "checkpoint-recovery",
+          "records": 12,
+          "selectionOrigin": "controlled-test-injected"
+        }
+      ]
+    },
+    {
+      "cases": 64,
+      "manifestFingerprint": "dc40c071740cf87d0d79c567501301ac89c5d23088a105df39c140c41bd3b2a7",
+      "optimizerSteps": 0,
+      "report": {
+        "schema": "semantic-preparation/4",
+        "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "representation": "compact",
+        "splitSeed": "semantic-family/4",
+        "maxPositions": 1024,
+        "maxHistory": 1024,
+        "counts": {
+          "attempted": 64,
+          "accepted_candidate": 61,
+          "admitted": 64,
+          "duplicate": 3
+        },
+        "accepted": 61,
+        "familySplits": {
+          "generated-grammar:e1e4f2b56b6447ff1215265b": "test",
+          "generated-grammar:37d82be30acc634bd6393143": "test",
+          "generated-grammar:16676a89ce7afd1e5aa0effe": "train",
+          "generated-grammar:3011613fcf46de149162e15a": "train",
+          "generated-grammar:1de0d2838f7e94ff352dd6a0": "test",
+          "generated-grammar:7083d531fdfc1289532dbcc4": "validation",
+          "generated-grammar:56070b0c432bb43f1a275006": "train",
+          "generated-grammar:18f9c826ee8389d4b113a786": "train",
+          "generated-grammar:cd1dad873b9995b0801ad356": "train",
+          "generated-grammar:f37ddea2adca6b372e6a45dc": "train",
+          "generated-grammar:7c79ad8b055501600f2f43a4": "train",
+          "generated-grammar:c27cefd49666819b7b822323": "validation",
+          "generated-grammar:c463c20543c011d6508ffff4": "train",
+          "generated-grammar:ae3e58f163acb8a56796be20": "train",
+          "generated-grammar:a79adfbbe5c55d19b361a954": "train",
+          "generated-grammar:669b15ff4d2d77b507aa79b4": "train"
+        },
+        "refusals": [],
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "schema": "semantic-release-verification/1",
+      "status": "verified",
+      "files": 383,
+      "identityDigest": "581f28a9b3edad26c70d8290aadd14e80e9e89f4e49ded3f19c758c50f79d32f",
+      "archiveSha256": "ae09729d81656993f103245e72ac0c3767f2a7ceda1062cc21463d3e0fba7525",
+      "archive": "/home/runner/work/_temp/release/semantic-v5-release.tar.gz",
+      "counts": {
+        "admitted": 64
+      },
+      "nativePrepared": 61,
+      "nativeQualified": 64,
+      "trainingSelected": 44,
+      "trainingExcluded": 0,
+      "heldOutSupplied": 20
+    },
+    {
+      "archiveSha256": "ae09729d81656993f103245e72ac0c3767f2a7ceda1062cc21463d3e0fba7525",
+      "files": 383,
+      "identityDigest": "581f28a9b3edad26c70d8290aadd14e80e9e89f4e49ded3f19c758c50f79d32f",
+      "schema": "semantic-release-verification/1",
+      "status": "verified"
+    },
+    {
+      "schema": "semantic-source-dispositions/1",
+      "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+      "recipe": {
+        "name": "generated-v1",
+        "schema": "bounded-program-grammar/1",
+        "generatedFamilies": 16,
+        "generationSeed": 73,
+        "inputSeed": 89,
+        "perFamily": 4,
+        "labels": "independent-execution-only"
+      },
+      "attempted": 64,
+      "dispositions": {
+        "admitted": 64
+      },
+      "admittedFamilies": 16,
+      "admittedComponents": 16,
+      "optimizerSteps": 0,
+      "learnedSuccess": null
+    }
+  ]
+}

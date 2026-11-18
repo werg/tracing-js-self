@@ -1,0 +1,394 @@
+﻿2026-11-18T14:11:01.4533281Z Current runner version: '2.338.2'
+2026-11-18T14:11:01.4560901Z ##[group]Runner Image Provisioner
+2026-11-18T14:11:01.4561861Z Hosted Compute Agent
+2026-11-18T14:11:01.4562535Z Version: 20261111.635
+2026-11-18T14:11:01.4563220Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-18T14:11:01.4564008Z Build Date: 2026-11-11T01:49:01Z
+2026-11-18T14:11:01.4564757Z Worker ID: {b7b24849-021d-4ed4-be47-a4943eca80dd}
+2026-11-18T14:11:01.4565478Z Region: westcentralus
+2026-11-18T14:11:01.4566040Z Cloud: Azure
+2026-11-18T14:11:01.4566651Z ##[endgroup]
+2026-11-18T14:11:01.4568576Z ##[group]Operating System
+2026-11-18T14:11:01.4569306Z Ubuntu
+2026-11-18T14:11:01.4569910Z 24.04.5
+2026-11-18T14:11:01.4570674Z LTS
+2026-11-18T14:11:01.4571308Z ##[endgroup]
+2026-11-18T14:11:01.4571921Z ##[group]Runner Image
+2026-11-18T14:11:01.4572608Z Image: ubuntu-24.04
+2026-11-18T14:11:01.4573200Z Version: 20261116.376.1
+2026-11-18T14:11:01.4574538Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261116.376/images/ubuntu/Ubuntu2404-Readme.md
+2026-11-18T14:11:01.4576227Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261116.376
+2026-11-18T14:11:01.4577243Z ##[endgroup]
+2026-11-18T14:11:01.4578405Z ##[group]GITHUB_TOKEN Permissions
+2026-11-18T14:11:01.4580710Z Contents: read
+2026-11-18T14:11:01.4581436Z Metadata: read
+2026-11-18T14:11:01.4582015Z ##[endgroup]
+2026-11-18T14:11:01.4584213Z Secret source: Actions
+2026-11-18T14:11:01.4585206Z Cache mode: write
+2026-11-18T14:11:01.4586048Z Prepare workflow directory
+2026-11-18T14:11:01.4941911Z Prepare all required actions
+2026-11-18T14:11:01.4992011Z Getting action download info
+2026-11-18T14:11:01.8142262Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-18T14:11:01.9557583Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-18T14:11:02.0540540Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-18T14:11:02.2645362Z Complete job name: verify
+2026-11-18T14:11:02.3585370Z ##[group]Run actions/checkout@v4
+2026-11-18T14:11:02.3586270Z with:
+2026-11-18T14:11:02.3586721Z   persist-credentials: false
+2026-11-18T14:11:02.3587265Z   repository: werg/tracing-js-self
+2026-11-18T14:11:02.3591273Z   token: ***
+2026-11-18T14:11:02.3591730Z   ssh-strict: true
+2026-11-18T14:11:02.3592170Z   ssh-user: git
+2026-11-18T14:11:02.3592683Z   clean: true
+2026-11-18T14:11:02.3593143Z   sparse-checkout-cone-mode: true
+2026-11-18T14:11:02.3593671Z   fetch-depth: 1
+2026-11-18T14:11:02.3594100Z   fetch-tags: false
+2026-11-18T14:11:02.3594550Z   show-progress: true
+2026-11-18T14:11:02.3594998Z   lfs: false
+2026-11-18T14:11:02.3595416Z   submodules: false
+2026-11-18T14:11:02.3595867Z   set-safe-directory: true
+2026-11-18T14:11:02.3596369Z   allow-unsafe-pr-checkout: false
+2026-11-18T14:11:02.3597163Z ##[endgroup]
+2026-11-18T14:11:02.6479472Z Syncing repository: werg/tracing-js-self
+2026-11-18T14:11:02.6482802Z ##[group]Getting Git version info
+2026-11-18T14:11:02.6483950Z Working directory is '/home/runner/work/tracing-js-self/tracing-js-self'
+2026-11-18T14:11:02.6485161Z [command]/usr/bin/git version
+2026-11-18T14:11:02.6579571Z git version 2.56.1
+2026-11-18T14:11:02.6603950Z ##[endgroup]
+2026-11-18T14:11:02.6619906Z Temporarily overriding HOME='/home/runner/work/_temp/c8ebf3b3-1369-44de-816e-3864e4c17e8e' before making global git config changes
+2026-11-18T14:11:02.6622556Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-18T14:11:02.6625445Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self
+2026-11-18T14:11:02.6681813Z Deleting the contents of '/home/runner/work/tracing-js-self/tracing-js-self'
+2026-11-18T14:11:02.6697902Z ##[group]Initializing the repository
+2026-11-18T14:11:02.6706494Z [command]/usr/bin/git init /home/runner/work/tracing-js-self/tracing-js-self
+2026-11-18T14:11:02.6832591Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-18T14:11:02.6835045Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-18T14:11:02.6836624Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-18T14:11:02.6838147Z hint: call:
+2026-11-18T14:11:02.6838890Z hint:
+2026-11-18T14:11:02.6839769Z hint: 	git config --global init.defaultBranch <name>
+2026-11-18T14:11:02.6841117Z hint:
+2026-11-18T14:11:02.6842080Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-18T14:11:02.6843628Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-18T14:11:02.6844865Z hint:
+2026-11-18T14:11:02.6845604Z hint: 	git branch -m <name>
+2026-11-18T14:11:02.6846228Z hint:
+2026-11-18T14:11:02.6846913Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-18T14:11:02.6849341Z Initialized empty Git repository in /home/runner/work/tracing-js-self/tracing-js-self/.git/
+2026-11-18T14:11:02.6865162Z [command]/usr/bin/git remote add origin https://github.com/werg/tracing-js-self
+2026-11-18T14:11:02.6930594Z ##[endgroup]
+2026-11-18T14:11:02.6932457Z ##[group]Disabling automatic garbage collection
+2026-11-18T14:11:02.6937730Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-18T14:11:02.6990751Z ##[endgroup]
+2026-11-18T14:11:02.6992420Z ##[group]Setting up auth
+2026-11-18T14:11:02.6999756Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-18T14:11:02.7052926Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-18T14:11:02.7489286Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-18T14:11:02.7542780Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-18T14:11:02.7819670Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-18T14:11:02.7866916Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-18T14:11:02.8118138Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-18T14:11:02.8168757Z ##[endgroup]
+2026-11-18T14:11:02.8169657Z ##[group]Fetching the repository
+2026-11-18T14:11:02.8182323Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +3497ee3454ea75715db1bc50c3e7cfc35ecc0fc2:refs/remotes/pull/38/merge
+2026-11-18T14:11:03.6752836Z From https://github.com/werg/tracing-js-self
+2026-11-18T14:11:03.6754632Z  * [new ref]         3497ee3454ea75715db1bc50c3e7cfc35ecc0fc2 -> pull/38/merge
+2026-11-18T14:11:03.6768503Z ##[endgroup]
+2026-11-18T14:11:03.6769744Z ##[group]Determining the checkout info
+2026-11-18T14:11:03.6781699Z ##[endgroup]
+2026-11-18T14:11:03.6783126Z [command]/usr/bin/git sparse-checkout disable
+2026-11-18T14:11:03.6881423Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-18T14:11:03.6932001Z ##[group]Checking out the ref
+2026-11-18T14:11:03.6935150Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/38/merge
+2026-11-18T14:11:03.7801897Z Note: switching to 'refs/remotes/pull/38/merge'.
+2026-11-18T14:11:03.7802852Z 
+2026-11-18T14:11:03.7803464Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-18T14:11:03.7804833Z changes and commit them, and you can discard any commits you make in this
+2026-11-18T14:11:03.7806209Z state without impacting any branches by switching back to a branch.
+2026-11-18T14:11:03.7806994Z 
+2026-11-18T14:11:03.7807575Z If you want to create a new branch to retain commits you create, you may
+2026-11-18T14:11:03.7809260Z do so (now or later) by using -c with the switch command. Example:
+2026-11-18T14:11:03.7810104Z 
+2026-11-18T14:11:03.7810975Z   git switch -c <new-branch-name>
+2026-11-18T14:11:03.7811939Z 
+2026-11-18T14:11:03.7812503Z Or undo this operation with:
+2026-11-18T14:11:03.7813333Z 
+2026-11-18T14:11:03.7813838Z   git switch -
+2026-11-18T14:11:03.7814508Z 
+2026-11-18T14:11:03.7815682Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-18T14:11:03.7817311Z 
+2026-11-18T14:11:03.7818656Z HEAD is now at 3497ee3 Merge 1e2e6a0de8952c4349edbeef46ab70c4a06f8157 into 2aa694be86a6cda3b9d63fde739957d08f568961
+2026-11-18T14:11:03.7822701Z ##[endgroup]
+2026-11-18T14:11:03.7872911Z [command]/usr/bin/git log -1 --format=%H
+2026-11-18T14:11:03.7972871Z 3497ee3454ea75715db1bc50c3e7cfc35ecc0fc2
+2026-11-18T14:11:03.7978871Z ##[group]Removing auth
+2026-11-18T14:11:03.7981267Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-18T14:11:03.7988454Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-18T14:11:03.8239827Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-18T14:11:03.8277297Z http.https://github.com/.extraheader
+2026-11-18T14:11:03.8287814Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-18T14:11:03.8339051Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-18T14:11:03.8589037Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-18T14:11:03.8637512Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-18T14:11:03.8887150Z ##[endgroup]
+2026-11-18T14:11:03.9328076Z ##[group]Run actions/setup-node@v4
+2026-11-18T14:11:03.9329233Z with:
+2026-11-18T14:11:03.9330094Z   node-version: 22
+2026-11-18T14:11:03.9331301Z   always-auth: false
+2026-11-18T14:11:03.9332276Z   check-latest: false
+2026-11-18T14:11:03.9340940Z   token: ***
+2026-11-18T14:11:03.9341847Z ##[endgroup]
+2026-11-18T14:11:04.0966908Z (node:2587) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-18T14:11:04.0969959Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-18T14:11:04.0973349Z Found in cache @ /opt/hostedtoolcache/node/22.23.5/x64
+2026-11-18T14:11:04.0975933Z ##[group]Environment details
+2026-11-18T14:11:09.1769672Z node: v22.23.5
+2026-11-18T14:11:09.1770555Z npm: 10.9.9
+2026-11-18T14:11:09.1771004Z yarn: 1.22.22
+2026-11-18T14:11:09.1773671Z ##[endgroup]
+2026-11-18T14:11:09.1934104Z ##[group]Run npm ci
+2026-11-18T14:11:09.1934489Z [36;1mnpm ci[0m
+2026-11-18T14:11:09.2043717Z shell: /usr/bin/bash -e {0}
+2026-11-18T14:11:09.2044053Z ##[endgroup]
+2026-11-18T14:11:12.5431278Z 
+2026-11-18T14:11:12.5437035Z added 4 packages, and audited 5 packages in 3s
+2026-11-18T14:11:12.5440929Z 
+2026-11-18T14:11:12.5441636Z found 0 vulnerabilities
+2026-11-18T14:11:12.5883724Z ##[group]Run node --test test/owned-exercism.test.js test/coverage-selection.test.js test/source-clusters.test.js test/trace-quality.test.js test/reference-shrinker.test.js
+2026-11-18T14:11:12.5885050Z [36;1mnode --test test/owned-exercism.test.js test/coverage-selection.test.js test/source-clusters.test.js test/trace-quality.test.js test/reference-shrinker.test.js[0m
+2026-11-18T14:11:12.5906759Z shell: /usr/bin/bash -e {0}
+2026-11-18T14:11:12.5907045Z ##[endgroup]
+2026-11-18T14:11:12.7099118Z TAP version 13
+2026-11-18T14:11:14.1001374Z # Subtest: only independently rechecked owned execution can contribute novelty
+2026-11-18T14:11:14.1011833Z ok 1 - only independently rechecked owned execution can contribute novelty
+2026-11-18T14:11:14.1013964Z   ---
+2026-11-18T14:11:14.1014969Z   duration_ms: 360.004617
+2026-11-18T14:11:14.1015934Z   type: 'test'
+2026-11-18T14:11:14.1016686Z   ...
+2026-11-18T14:11:14.1017929Z # Subtest: novel branch paths and operation types beat repeated seed counts
+2026-11-18T14:11:14.1019595Z ok 2 - novel branch paths and operation types beat repeated seed counts
+2026-11-18T14:11:14.1021000Z   ---
+2026-11-18T14:11:14.1021766Z   duration_ms: 532.836626
+2026-11-18T14:11:14.1022595Z   type: 'test'
+2026-11-18T14:11:14.1023307Z   ...
+2026-11-18T14:11:14.1024645Z # Subtest: offline selected subset contains no fabricated admission and refuses forged rows
+2026-11-18T14:11:14.1026464Z ok 3 - offline selected subset contains no fabricated admission and refuses forged rows
+2026-11-18T14:11:14.1027716Z   ---
+2026-11-18T14:11:14.1028485Z   duration_ms: 380.730028
+2026-11-18T14:11:14.1029292Z   type: 'test'
+2026-11-18T14:11:14.1030090Z   ...
+2026-11-18T14:11:14.1152036Z # Subtest: 20 independently pinned real JS proof implementations pair with canonical inputs
+2026-11-18T14:11:14.1153344Z ok 4 - 20 independently pinned real JS proof implementations pair with canonical inputs
+2026-11-18T14:11:14.1153986Z   ---
+2026-11-18T14:11:14.1154307Z   duration_ms: 92.484007
+2026-11-18T14:11:14.1154700Z   type: 'test'
+2026-11-18T14:11:14.1154972Z   ...
+2026-11-18T14:11:14.1155663Z # Subtest: function-only ESM lowerer preserves computation and rejects top-level effects
+2026-11-18T14:11:14.1156425Z ok 5 - function-only ESM lowerer preserves computation and rejects top-level effects
+2026-11-18T14:11:14.1156913Z   ---
+2026-11-18T14:11:14.1157136Z   duration_ms: 34.497444
+2026-11-18T14:11:14.1157396Z   type: 'test'
+2026-11-18T14:11:14.1157688Z   ...
+2026-11-18T14:11:14.1158172Z # Subtest: original leap proof and canonical input pass owned independent recheck
+2026-11-18T14:11:14.1158867Z ok 6 - original leap proof and canonical input pass owned independent recheck
+2026-11-18T14:11:14.1159321Z   ---
+2026-11-18T14:11:14.1159552Z   duration_ms: 230.713793
+2026-11-18T14:11:14.1159821Z   type: 'test'
+2026-11-18T14:11:14.1160034Z   ...
+2026-11-18T14:11:14.1160881Z # Subtest: canonical identity and split are stable by exercise, not input
+2026-11-18T14:11:14.1161592Z ok 7 - canonical identity and split are stable by exercise, not input
+2026-11-18T14:11:14.1162030Z   ---
+2026-11-18T14:11:14.1162260Z   duration_ms: 13.617908
+2026-11-18T14:11:14.1162534Z   type: 'test'
+2026-11-18T14:11:14.1162746Z   ...
+2026-11-18T14:11:14.1163370Z # Subtest: explicit JavaScript canonical bindings preserve original inputs and exact BigInt integer tokens
+2026-11-18T14:11:14.1164628Z ok 8 - explicit JavaScript canonical bindings preserve original inputs and exact BigInt integer tokens
+2026-11-18T14:11:14.1165561Z   ---
+2026-11-18T14:11:14.1165927Z   duration_ms: 11.458051
+2026-11-18T14:11:14.1166347Z   type: 'test'
+2026-11-18T14:11:14.1166731Z   ...
+2026-11-18T14:11:14.1167610Z # Subtest: active canonical replacements retain the superseded identity without replaying obsolete inputs
+2026-11-18T14:11:14.1168724Z ok 9 - active canonical replacements retain the superseded identity without replaying obsolete inputs
+2026-11-18T14:11:14.1169284Z   ---
+2026-11-18T14:11:14.1169508Z   duration_ms: 13.261008
+2026-11-18T14:11:14.1171133Z   type: 'test'
+2026-11-18T14:11:14.1171770Z   ...
+2026-11-18T14:11:14.1172644Z # Subtest: the two-fer JavaScript binding records omission while retaining the neutral null input
+2026-11-18T14:11:14.1173939Z ok 10 - the two-fer JavaScript binding records omission while retaining the neutral null input
+2026-11-18T14:11:14.1174698Z   ---
+2026-11-18T14:11:14.1175022Z   duration_ms: 7.878014
+2026-11-18T14:11:14.1175390Z   type: 'test'
+2026-11-18T14:11:14.1175711Z   ...
+2026-11-18T14:11:14.1176568Z # Subtest: grains expectations retain exact pinned decimal bytes and require actual BigInt results
+2026-11-18T14:11:14.1177890Z ok 11 - grains expectations retain exact pinned decimal bytes and require actual BigInt results
+2026-11-18T14:11:14.1179015Z   ---
+2026-11-18T14:11:14.1179351Z   duration_ms: 8.064594
+2026-11-18T14:11:14.1179722Z   type: 'test'
+2026-11-18T14:11:14.1180082Z   ...
+2026-11-18T14:11:14.1181028Z # Subtest: deterministic generated variants stay distinct from canonical provenance
+2026-11-18T14:11:14.1182250Z ok 12 - deterministic generated variants stay distinct from canonical provenance
+2026-11-18T14:11:14.1182963Z   ---
+2026-11-18T14:11:14.1183292Z   duration_ms: 8.614555
+2026-11-18T14:11:14.1183675Z   type: 'test'
+2026-11-18T14:11:14.1183998Z   ...
+2026-11-18T14:11:14.1184816Z # Subtest: source-site audit maps original function bodies without guessing synthetic keywords
+2026-11-18T14:11:14.1186069Z ok 13 - source-site audit maps original function bodies without guessing synthetic keywords
+2026-11-18T14:11:14.1186801Z   ---
+2026-11-18T14:11:14.1187127Z   duration_ms: 68.298884
+2026-11-18T14:11:14.1187508Z   type: 'test'
+2026-11-18T14:11:14.1187833Z   ...
+2026-11-18T14:11:14.1188548Z # Subtest: deterministic mismatch shrinking preserves an independent predicate
+2026-11-18T14:11:14.1189668Z ok 14 - deterministic mismatch shrinking preserves an independent predicate
+2026-11-18T14:11:14.1190744Z   ---
+2026-11-18T14:11:14.1191086Z   duration_ms: 3.234706
+2026-11-18T14:11:14.1191461Z   type: 'test'
+2026-11-18T14:11:14.1191794Z   ...
+2026-11-18T14:11:14.1192414Z # Subtest: array and string reductions keep the demonstrated mismatch
+2026-11-18T14:11:14.1193315Z ok 15 - array and string reductions keep the demonstrated mismatch
+2026-11-18T14:11:14.1193890Z   ---
+2026-11-18T14:11:14.1194215Z   duration_ms: 0.787547
+2026-11-18T14:11:14.1194581Z   type: 'test'
+2026-11-18T14:11:14.1194900Z   ...
+2026-11-18T14:11:14.1195518Z # Subtest: nonreproducible, throwing and bounded oracles fail closed
+2026-11-18T14:11:14.1196417Z ok 16 - nonreproducible, throwing and bounded oracles fail closed
+2026-11-18T14:11:14.1197075Z   ---
+2026-11-18T14:11:14.1197396Z   duration_ms: 1.112058
+2026-11-18T14:11:14.1197767Z   type: 'test'
+2026-11-18T14:11:14.1198096Z   ...
+2026-11-18T14:11:14.1198827Z # Subtest: token fingerprints ignore formatting but preserve executable operators
+2026-11-18T14:11:14.1199920Z ok 17 - token fingerprints ignore formatting but preserve executable operators
+2026-11-18T14:11:14.1200814Z   ---
+2026-11-18T14:11:14.1201129Z   duration_ms: 8.007738
+2026-11-18T14:11:14.1201366Z   type: 'test'
+2026-11-18T14:11:14.1201563Z   ...
+2026-11-18T14:11:14.1201935Z # Subtest: cross-fork alpha-equivalent owned source shares a cluster
+2026-11-18T14:11:14.1202467Z ok 18 - cross-fork alpha-equivalent owned source shares a cluster
+2026-11-18T14:11:14.1202809Z   ---
+2026-11-18T14:11:14.1203015Z   duration_ms: 14.952879
+2026-11-18T14:11:14.1203246Z   type: 'test'
+2026-11-18T14:11:14.1203434Z   ...
+2026-11-18T14:11:14.1203834Z # Subtest: cross-split clones reject a selection even when source paths differ
+2026-11-18T14:11:14.1204419Z ok 19 - cross-split clones reject a selection even when source paths differ
+2026-11-18T14:11:14.1204969Z   ---
+2026-11-18T14:11:14.1205327Z   duration_ms: 1.998668
+2026-11-18T14:11:14.1205696Z   type: 'test'
+2026-11-18T14:11:14.1206051Z   ...
+2026-11-18T14:11:14.1206591Z # Subtest: near-identical long programs cluster by overlapping token shingles
+2026-11-18T14:11:14.1207693Z ok 20 - near-identical long programs cluster by overlapping token shingles
+2026-11-18T14:11:14.1208356Z   ---
+2026-11-18T14:11:14.1208571Z   duration_ms: 6.983732
+2026-11-18T14:11:14.1208809Z   type: 'test'
+2026-11-18T14:11:14.1209004Z   ...
+2026-11-18T14:11:14.1209432Z # Subtest: rechecked owned source profiles carry quantitative trace review metrics
+2026-11-18T14:11:14.1210069Z ok 21 - rechecked owned source profiles carry quantitative trace review metrics
+2026-11-18T14:11:14.1210941Z   ---
+2026-11-18T14:11:14.1211149Z   duration_ms: 278.918388
+2026-11-18T14:11:14.1211380Z   type: 'test'
+2026-11-18T14:11:14.1211577Z   ...
+2026-11-18T14:11:14.1211990Z # Subtest: malformed or unverified source receipts cannot enter quality metrics
+2026-11-18T14:11:14.1212588Z ok 22 - malformed or unverified source receipts cannot enter quality metrics
+2026-11-18T14:11:14.1213156Z   ---
+2026-11-18T14:11:14.1213351Z   duration_ms: 123.853615
+2026-11-18T14:11:14.1213579Z   type: 'test'
+2026-11-18T14:11:14.1213774Z   ...
+2026-11-18T14:11:14.1213950Z 1..22
+2026-11-18T14:11:14.1214135Z # tests 22
+2026-11-18T14:11:14.1214322Z # suites 0
+2026-11-18T14:11:14.1214512Z # pass 22
+2026-11-18T14:11:14.1214693Z # fail 0
+2026-11-18T14:11:14.1214876Z # cancelled 0
+2026-11-18T14:11:14.1215071Z # skipped 0
+2026-11-18T14:11:14.1215256Z # todo 0
+2026-11-18T14:11:14.1215464Z # duration_ms 1454.95027
+2026-11-18T14:11:14.1297314Z ##[group]Run mkdir -p corpus/out
+2026-11-18T14:11:14.1297661Z [36;1mmkdir -p corpus/out[0m
+2026-11-18T14:11:14.1297963Z [36;1mnode tools/verify-exercism-owned.mjs \[0m
+2026-11-18T14:11:14.1298531Z [36;1m  --per-family 12 --mutations-per-family 8 --max-cases 420 --min-owned 71 --shrink-reference-mismatches \[0m
+2026-11-18T14:11:14.1299140Z [36;1m  --output corpus/out/exercism-owned-report.json \[0m
+2026-11-18T14:11:14.1299548Z [36;1m  --review corpus/out/exercism-owned-review.md \[0m
+2026-11-18T14:11:14.1299994Z [36;1m  --local-episodes corpus/out/exercism-owned-locally-verified.jsonl[0m
+2026-11-18T14:11:14.1321842Z shell: /usr/bin/bash -e {0}
+2026-11-18T14:11:14.1322114Z ##[endgroup]
+2026-11-18T14:27:33.9072372Z {"totals":{"attempted":361,"locallyVerified":132,"refused":229,"newAdmitted":0,"distinctExercises":20,"exercisedProofs":20,"distinctVerifiedExercises":10},"quality":{"records":5863,"generatedRecords":5363,"generatedBytes":483101,"originalJournalEvents":22138,"avgGeneratedBytes":3660,"avgGeneratedRecords":40.63,"avgJournalEvents":167.71},"byExercise":{"anagram":{"split":"train","candidates":20,"locallyVerified":0,"unsupported":20,"referenceMismatch":0,"projectionFailure":0,"status":"attempted"},"armstrong-numbers":{"split":"validation","candidates":19,"locallyVerified":0,"unsupported":17,"referenceMismatch":2,"projectionFailure":0,"status":"attempted"},"binary-search":{"split":"test","candidates":19,"locallyVerified":7,"unsupported":0,"referenceMismatch":7,"projectionFailure":0,"status":"attempted"},"collatz-conjecture":{"split":"train","candidates":14,"locallyVerified":11,"unsupported":1,"referenceMismatch":0,"projectionFailure":0,"status":"attempted"},"darts":{"split":"train","candidates":20,"locallyVerified":20,"unsupported":0,"referenceMismatch":0,"projectionFailure":0,"status":"attempted"},"grains":{"split":"train","candidates":19,"locallyVerified":0,"unsupported":0,"referenceMismatch":16,"projectionFailure":0,"status":"attempted"},"hamming":{"split":"train","candidates":17,"locallyVerified":0,"unsupported":5,"referenceMismatch":8,"projectionFailure":0,"status":"attempted"},"isogram":{"split":"train","candidates":20,"locallyVerified":0,"unsupported":20,"referenceMismatch":0,"projectionFailure":0,"status":"attempted"},"knapsack":{"split":"train","candidates":15,"locallyVerified":10,"unsupported":5,"referenceMismatch":0,"projectionFailure":0,"status":"attempted"},"largest-series-product":{"split":"train","candidates":20,"locallyVerified":3,"unsupported":9,"referenceMismatch":7,"projectionFailure":0,"status":"attempted"},"leap":{"split":"train","candidates":17,"locallyVerified":17,"unsupported":0,"referenceMismatch":0,"projectionFailure":0,"status":"attempted"},"luhn":{"split":"train","candidates":20,"locallyVerified":0,"unsupported":20,"referenceMismatch":0,"projectionFailure":0,"status":"attempted"},"matching-brackets":{"split":"train","candidates":20,"locallyVerified":0,"unsupported":20,"referenceMismatch":0,"projectionFailure":0,"status":"attempted"},"raindrops":{"split":"train","candidates":20,"locallyVerified":20,"unsupported":0,"referenceMismatch":0,"projectionFailure":0,"status":"attempted"},"roman-numerals":{"split":"train","candidates":20,"locallyVerified":20,"unsupported":0,"referenceMismatch":0,"projectionFailure":0,"status":"attempted"},"run-length-encoding":{"split":"train","candidates":20,"locallyVerified":0,"unsupported":20,"referenceMismatch":0,"projectionFailure":0,"status":"attempted"},"sieve":{"split":"train","candidates":13,"locallyVerified":0,"unsupported":13,"referenceMismatch":0,"projectionFailure":0,"status":"attempted"},"space-age":{"split":"test","candidates":17,"locallyVerified":0,"unsupported":0,"referenceMismatch":0,"projectionFailure":0,"status":"source_unsupported","sourceReason":"Top-level non-function initialization is not owned"},"sum-of-multiples":{"split":"train","candidates":20,"locallyVerified":13,"unsupported":7,"referenceMismatch":0,"projectionFailure":0,"status":"attempted"},"two-fer":{"split":"train","candidates":11,"locallyVerified":11,"unsupported":0,"referenceMismatch":0,"projectionFailure":0,"status":"attempted"}},"output":"/home/runner/work/tracing-js-self/tracing-js-self/corpus/out/exercism-owned-report.json","episodes":"/home/runner/work/tracing-js-self/tracing-js-self/corpus/out/exercism-owned-locally-verified.jsonl","refusals":{"unsupported: Unsupported training-js/1 sparse/spread array at 390:405":20,"unsupported: Unsupported training-js/1 sparse/spread array at 102:123":17,"canonical_mismatch: Original pinned JS solution disagrees with declared exercise expected result":2,"expected_throw_unsupported: Cannot admit abrupt guest completions":15,"reference_failure: Value not in array":7,"profile_limit: Effectful teacher record budget":9,"reference_failure: Non-JSON canonical result refused":14,"reference_failure: square must be between 1 and 64":2,"unsupported: Unsupported training-js/1 sparse/spread array at 164:176":5,"reference_failure: strands must be of equal length":8,"unsupported: Only completed synchronous effect-free entries qualify":49,"runtime_failure: Driver safety limit (12000 steps); no chunk has been misreported as complete":4,"reference_failure: digits input must only contain digits":5,"reference_failure: span must not exceed string length":2,"unsupported: Unsupported training-js/1 sparse/spread array at 101:113":20,"unsupported: Unsupported training-js/1 NewExpression at 353:383":20,"unsupported: Unsupported training-js/1 ThisExpression at 215:219":13,"source_unsupported: Top-level non-function initialization is not owned":17}}
+2026-11-18T14:27:33.9382547Z ##[group]Run node --input-type=module -e '
+2026-11-18T14:27:33.9382930Z [36;1mnode --input-type=module -e '[0m
+2026-11-18T14:27:33.9383241Z [36;1m  import {readFileSync} from "node:fs";[0m
+2026-11-18T14:27:33.9383691Z [36;1m  const r=JSON.parse(readFileSync("corpus/out/exercism-owned-report.json"));[0m
+2026-11-18T14:27:33.9384175Z [36;1m  if(r.admitted!==false||r.totals.newAdmitted!==0||[0m
+2026-11-18T14:27:33.9384573Z [36;1m    r.totals.locallyVerified<71||r.totals.attempted<20||[0m
+2026-11-18T14:27:33.9385032Z [36;1m    r.totals.attempted!==r.totals.locallyVerified+r.totals.refused)[0m
+2026-11-18T14:27:33.9385569Z [36;1m    throw Error("Incorrect verifier evidence ledger "+JSON.stringify(r.totals));[0m
+2026-11-18T14:27:33.9386165Z [36;1m  const rows=readFileSync("corpus/out/exercism-owned-locally-verified.jsonl","utf8")[0m
+2026-11-18T14:27:33.9386643Z [36;1m    .trim().split("\n").map(JSON.parse);[0m
+2026-11-18T14:27:33.9387021Z [36;1m  if(rows.length!==r.totals.locallyVerified||[0m
+2026-11-18T14:27:33.9387520Z [36;1m    rows.some(x=>x.admitted!==false||x.exported?.public?.schema!=="semantic-execution/5"))[0m
+2026-11-18T14:27:33.9388082Z [36;1m    throw Error("Mismatch in rechecked owned episode manifest");[0m
+2026-11-18T14:27:33.9388591Z [36;1m  console.log("Locally verified owned traces",r.totals.locallyVerified,[0m
+2026-11-18T14:27:33.9389087Z [36;1m    "out of",r.totals.attempted,"explicitly audited candidates");[0m
+2026-11-18T14:27:33.9389437Z [36;1m'[0m
+2026-11-18T14:27:33.9409463Z shell: /usr/bin/bash -e {0}
+2026-11-18T14:27:33.9409712Z ##[endgroup]
+2026-11-18T14:27:34.5011142Z Locally verified owned traces 132 out of 361 explicitly audited candidates
+2026-11-18T14:27:34.5326974Z ##[group]Run node tools/select-owned-episodes.mjs \
+2026-11-18T14:27:34.5327430Z [36;1mnode tools/select-owned-episodes.mjs \[0m
+2026-11-18T14:27:34.5327888Z [36;1m  --input corpus/out/exercism-owned-locally-verified.jsonl \[0m
+2026-11-18T14:27:34.5328522Z [36;1m  --output corpus/out/exercism-owned-novelty.json --limit 64[0m
+2026-11-18T14:27:34.5328909Z [36;1mnode --input-type=module -e '[0m
+2026-11-18T14:27:34.5329209Z [36;1m  import {readFileSync} from "node:fs";[0m
+2026-11-18T14:27:34.5329669Z [36;1m  const r=JSON.parse(readFileSync("corpus/out/exercism-owned-novelty.json"));[0m
+2026-11-18T14:27:34.5330457Z [36;1m  if(r.admitted!==0||r.selectedCount<1||r.distinctFamilies<1||[0m
+2026-11-18T14:27:34.5330893Z [36;1m    r.inputRows<71||r.selectedCount>r.candidateCount||[0m
+2026-11-18T14:27:34.5331302Z [36;1m    r.distinctSourceClusters<1||r.traceQuality?.episodes<71||[0m
+2026-11-18T14:27:34.5331673Z [36;1m    r.traceQuality?.admitted!==0)[0m
+2026-11-18T14:27:34.5332023Z [36;1m    throw Error("Invalid owned novelty report");[0m
+2026-11-18T14:27:34.5332322Z [36;1m'[0m
+2026-11-18T14:27:34.5352196Z shell: /usr/bin/bash -e {0}
+2026-11-18T14:27:34.5352454Z ##[endgroup]
+2026-11-18T14:28:05.1827025Z {"inputRows":132,"verified":132,"selected":61,"distinctPaths":61,"distinctFamilies":10,"refusals":{}}
+2026-11-18T14:28:05.2502381Z ##[group]Run actions/upload-artifact@v4
+2026-11-18T14:28:05.2502923Z with:
+2026-11-18T14:28:05.2503434Z   name: exercism-js-owned-local-verification-not-admitted
+2026-11-18T14:28:05.2505012Z   path: corpus/out/exercism-owned-report.json
+corpus/out/exercism-owned-review.md
+corpus/out/exercism-owned-locally-verified.jsonl
+corpus/out/exercism-owned-novelty.json
+
+2026-11-18T14:28:05.2506456Z   if-no-files-found: error
+2026-11-18T14:28:05.2506873Z   compression-level: 6
+2026-11-18T14:28:05.2507239Z   overwrite: false
+2026-11-18T14:28:05.2507601Z   include-hidden-files: false
+2026-11-18T14:28:05.2508017Z ##[endgroup]
+2026-11-18T14:28:05.4325306Z (node:7867) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-18T14:28:05.4326410Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-18T14:28:05.4374136Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-11-18T14:28:05.4380095Z The least common ancestor is /home/runner/work/tracing-js-self/tracing-js-self/corpus/out. This will be the root directory of the artifact
+2026-11-18T14:28:05.4381985Z With the provided path, there will be 4 files uploaded
+2026-11-18T14:28:05.4385628Z Artifact name is valid!
+2026-11-18T14:28:05.4386560Z Root directory input is valid!
+2026-11-18T14:28:05.7908358Z Beginning upload of artifact content to blob storage
+2026-11-18T14:28:06.3620651Z (node:7867) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-18T14:28:06.9384249Z Uploaded bytes 3447372
+2026-11-18T14:28:06.9985666Z Finished uploading artifact content to blob storage!
+2026-11-18T14:28:06.9987131Z SHA256 digest of uploaded artifact zip is e1521143468114b678bd631e0fd2dbf5722f3eee0db96826e657a842784a87ad
+2026-11-18T14:28:06.9988060Z Finalizing artifact upload
+2026-11-18T14:28:07.4389152Z Artifact exercism-js-owned-local-verification-not-admitted.zip successfully finalized. Artifact ID 14436930667
+2026-11-18T14:28:07.4390875Z Artifact exercism-js-owned-local-verification-not-admitted has been successfully uploaded! Final size is 3447372 bytes. Artifact ID is 14436930667
+2026-11-18T14:28:07.4396094Z Artifact download URL: https://github.com/werg/tracing-js-self/actions/runs/44321402501/artifacts/14436930667
+2026-11-18T14:28:07.4644603Z Post job cleanup.
+2026-11-18T14:28:07.5976440Z (node:7880) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-18T14:28:07.5977442Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-18T14:28:07.6140589Z Post job cleanup.
+2026-11-18T14:28:07.7085559Z [command]/usr/bin/git version
+2026-11-18T14:28:07.7137147Z git version 2.56.1
+2026-11-18T14:28:07.7179233Z Temporarily overriding HOME='/home/runner/work/_temp/fba522b0-46b2-492d-a08d-8268a95b0d16' before making global git config changes
+2026-11-18T14:28:07.7181047Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-18T14:28:07.7185303Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self
+2026-11-18T14:28:07.7236705Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-18T14:28:07.7293190Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-18T14:28:07.7576067Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-18T14:28:07.7637162Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-18T14:28:07.8014731Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-18T14:28:07.8083243Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-18T14:28:07.8612740Z Cleaning up orphan processes
+2026-11-18T14:28:07.9082531Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+

@@ -1,0 +1,43 @@
+{
+  "schema": "native-ci-archive-transport-workaround/1",
+  "originalWorkflowRunId": 44321402524,
+  "artifactName": "semantic-v5-benchmark-v1-admission-and-evaluation",
+  "originalZipBytes": 874061909,
+  "originalZipSha256": "8aea8598302d2e675ac7be4003e3f185e87106f2c4010ed1c2ebde54056b8a7e",
+  "observedFailure": {
+    "tool": "github_download_workflow_artifact",
+    "error": "InvalidInputException: Artifact exceeds max size of 536870912 bytes: 874061909 bytes.",
+    "reproduced": true,
+    "connectorMaximumBytes": 536870912,
+    "originalBytesReceived": 0
+  },
+  "workaround": {
+    "status": "completed-original-bytes-preserved",
+    "workflow": ".github/workflows/preserve-native-ci-artifact.yml",
+    "script": "tools/preserve_ci_benchmark_artifact.py",
+    "commit": "a2b74d47989a5354c87a950ebbc9d08ea0be00ba",
+    "scope": "Download the original artifact with read-only GitHub Actions authorization, check frozen source/API identity and whole SHA, and transport the identical bytes as exact400MiB parts under the connector limit.",
+    "partBytes": 419430400,
+    "expectedPartSizes": [
+      419430400,
+      419430400,
+      35201109
+    ],
+    "nativeRerun": false,
+    "originalArtifactModified": false,
+    "learnedSuccessClaim": false,
+    "transportWorkflowRunId": 44326698336,
+    "transportWorkflowRunUrl": "https://github.com/werg/tracing-js-self/actions/runs/44326698336",
+    "transportWorkflowHead": "2c12e3d45d94c2413120da912ba883d9f43ddbea",
+    "transportJobConclusion": "success",
+    "originalReconstructionIndex": "benchmark-v1/transport/original-reconstruction.json",
+    "originalReconstructionIndexSha256": "f99bc4967d7809fed15428e2a8fb6b95bedd6e8054ce170ea42dbc8f47499d49",
+    "allTransportWrapperApiDigestsVerified": true,
+    "allEmbeddedPartCrcsVerified": true,
+    "allPartHashesVerified": true,
+    "reconstructedOriginalZipApiDigestVerified": true,
+    "allOriginalZipMemberCrcsAndHashesVerified": true,
+    "completeNativeVerification": "benchmark-v1/verification.json"
+  },
+  "privateConnectorIdentifiersOrSignedUrlsIncluded": false
+}

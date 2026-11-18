@@ -1,0 +1,23 @@
+{
+  "bytes": 2780064,
+  "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+  "counts": {
+    "activeRepairedRealSources": 15,
+    "bigintErrorBoundaries": 3,
+    "currentDistinctRealSourceIds": 18,
+    "currentFullProofs": 35,
+    "historicalRetiredKnapsackProofsPreserved": 1,
+    "nativeCapabilities": 17
+  },
+  "historicalArchive": {
+    "bytes": 1351531,
+    "path": "historical/semantic-real-source-private-proofs-2026-11-18.tar.gz",
+    "sha256": "76e47cb62d89b80d98aeb87173f95e57cc3e009fb068d8ce448f0b6d93500580"
+  },
+  "members": 47,
+  "path": "/workspace/scratch/0c59f3502a6d/evidence/semantic-reconciled-private-proofs-2026-11-18.tar.gz",
+  "producerRevision": "f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1",
+  "schema": "semantic-combined-private-proof-archive-receipt/1",
+  "sha256": "35a4c5af381ec0decc20a07b3e1abbc7e32ec37d194b920ff7cc207e3a8ae29e",
+  "status": "verified"
+}

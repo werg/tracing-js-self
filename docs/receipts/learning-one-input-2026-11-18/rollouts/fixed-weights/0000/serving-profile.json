@@ -1,0 +1,134 @@
+{
+  "schema": "semantic-serving-profile/1",
+  "declaredOrigin": "fixed",
+  "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+  "device": "cpu",
+  "identity": {
+    "modelSha256": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+    "manifestSha256": "9234be1759ee64835f32f8effcc99ed01241a3f11ce3e8705dd02f5ed44824a1",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "initialization": {
+    "schema": "semantic-inference-identity/4",
+    "seed": 17,
+    "checkpointIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "coldLoadSeconds": 4.85684327099807,
+  "operations": {
+    "cancel": {
+      "count": 1,
+      "successfulRpcCalls": 1,
+      "firstSeconds": 0.00019433299894444644,
+      "p50Seconds": 0.00019433299894444644,
+      "p95Seconds": 0.00019433299894444644,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 0.00019433299894444644
+    },
+    "initialize": {
+      "count": 1,
+      "successfulRpcCalls": 1,
+      "firstSeconds": 0.13225804200192215,
+      "p50Seconds": 0.13225804200192215,
+      "p95Seconds": 0.13225804200192215,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 0.13225804200192215
+    },
+    "select": {
+      "count": 1,
+      "successfulRpcCalls": 1,
+      "firstSeconds": 2.1096541160004563,
+      "p50Seconds": 2.1096541160004563,
+      "p95Seconds": 2.1096541160004563,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 2.1096541160004563
+    }
+  },
+  "records": [
+    {
+      "id": "s1",
+      "operation": "initialize",
+      "ok": true,
+      "wallSeconds": 0.13225804200192215,
+      "state": {
+        "retainedSessions": 0,
+        "retainedInvocations": 0,
+        "activeInvocations": 0,
+        "trackStatuses": {},
+        "rendering": 0,
+        "selectedGroups": 0,
+        "reservedOutputBytes": 0
+      },
+      "selectionAuthority": null,
+      "failure": null
+    },
+    {
+      "id": "s2",
+      "operation": "select",
+      "ok": true,
+      "wallSeconds": 2.1096541160004563,
+      "state": {
+        "retainedSessions": 1,
+        "retainedInvocations": 1,
+        "activeInvocations": 1,
+        "trackStatuses": {
+          "active": 1
+        },
+        "rendering": 0,
+        "selectedGroups": 2,
+        "reservedOutputBytes": 148992
+      },
+      "selectionAuthority": "actual-model-selected",
+      "failure": null
+    },
+    {
+      "id": "s3",
+      "operation": "cancel",
+      "ok": true,
+      "wallSeconds": 0.00019433299894444644,
+      "state": {
+        "retainedSessions": 1,
+        "retainedInvocations": 1,
+        "activeInvocations": 0,
+        "trackStatuses": {
+          "cancelled": 1
+        },
+        "rendering": 0,
+        "selectedGroups": 0,
+        "reservedOutputBytes": 0
+      },
+      "selectionAuthority": null,
+      "failure": null
+    }
+  ],
+  "droppedRecords": 0,
+  "complete": true,
+  "memory": {
+    "hostLifetimePeakRssBytes": 524836864,
+    "cudaPeakAllocatedBytes": null,
+    "cudaPeakReservedBytes": null,
+    "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+  },
+  "peakActiveInvocationsAtRpcBoundaries": 1,
+  "stateBeforeRuntimeClose": {
+    "retainedSessions": 1,
+    "retainedInvocations": 1,
+    "activeInvocations": 0,
+    "trackStatuses": {
+      "cancelled": 1
+    },
+    "rendering": 0,
+    "selectedGroups": 0,
+    "reservedOutputBytes": 0
+  },
+  "runtimeClosed": true,
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "trainingMemoryFit": "unmeasured",
+  "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+  "warmDefinition": "All calls after the first call of the same operation in this process",
+  "digest": "a48d33ce0be68198fc24813a25b1015d244bfe4e2ac51f43196518b350cea5c9"
+}

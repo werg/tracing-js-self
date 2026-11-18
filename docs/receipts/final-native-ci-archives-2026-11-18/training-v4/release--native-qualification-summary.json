@@ -1,0 +1,12 @@
+{
+  "admitted": 50,
+  "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+  "evidenceSha256": "c36059432a1a28db2d49d73cb84f30395e62406cf08006aa162a144cc41ffa85",
+  "generatedTokens": 27807,
+  "learnedSuccess": null,
+  "optimizerSteps": 0,
+  "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+  "schema": "semantic-release-native-qualification/1",
+  "status": "verified",
+  "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+}

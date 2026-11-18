@@ -1,0 +1,253 @@
+{
+  "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+  "counts": {
+    "activeRepairedRealSources": 15,
+    "bigintErrorBoundaries": 3,
+    "currentDistinctRealSourceIds": 18,
+    "currentFullProofs": 35,
+    "historicalRetiredKnapsackProofsPreserved": 1,
+    "nativeCapabilities": 17
+  },
+  "files": [
+    {
+      "bytes": 2169,
+      "path": "README.md",
+      "sha256": "956046fcf9e8c7397d32d2425e0cc8301a1be4f69ea2b84cfc0e9c8f192d515e"
+    },
+    {
+      "bytes": 8859,
+      "path": "current/capability-ledger-source.js",
+      "sha256": "54f1d280788f862581f92e44b5553f5dd47765e7acbd0d35683fb779bb887ecb"
+    },
+    {
+      "bytes": 3745,
+      "path": "current/capture-native-capabilities.mjs",
+      "sha256": "9c3e6e9ce0e3608f04567bb2575b8931ce8d3dd7631191337de6db41bd03db31"
+    },
+    {
+      "bytes": 6789,
+      "path": "current/check-real-source-cases.mjs",
+      "sha256": "9472c1d336eed93b498a8f843e59a5cb376d023ac51b1dc46e74f6794188db64"
+    },
+    {
+      "bytes": 249,
+      "path": "current/native-policy.json",
+      "sha256": "fffc644104a823891eadf058facbd62cfd308fdeb139b6fa6f7215e0ab862246"
+    },
+    {
+      "bytes": 19109,
+      "path": "current/reconciled-bigint-boundaries3/cases/real-exercism-6d8b08c82c127ea5d6ab9269.json.gz",
+      "sha256": "cde1e22ab66b2910f5251e6438021822c386c722e16a076c851b344851d092aa"
+    },
+    {
+      "bytes": 22826,
+      "path": "current/reconciled-bigint-boundaries3/cases/real-exercism-76f193de010b69142cda36e9.json.gz",
+      "sha256": "6ee132e670ccb0cb7ef891e8419495856a96ae3dbc02becfa21bc69675f60f61"
+    },
+    {
+      "bytes": 651039,
+      "path": "current/reconciled-bigint-boundaries3/cases/real-exercism-a56b1d631c41b895f5490973.json.gz",
+      "sha256": "eb4b1d5136c57f13e6d3294b196f6906c3eb932c68eef5fc2732273d472144e1"
+    },
+    {
+      "bytes": 16541,
+      "path": "current/reconciled-bigint-boundaries3/report.json",
+      "sha256": "fcd3d3208fdb1aeef70beb9671dcbfd0157e3c7d64c75599b3d2736fa9f0234b"
+    },
+    {
+      "bytes": 11084,
+      "path": "current/reconciled-capabilities17/cases/alias-preserving-mutation.json.gz",
+      "sha256": "f8a1fe4b65d5e4f5d7c47dbf742586780155087413942c71f1eef86ee10ccc8a"
+    },
+    {
+      "bytes": 19430,
+      "path": "current/reconciled-capabilities17/cases/array-for-each-owned-callback.json.gz",
+      "sha256": "69fb953936b5fa042a8d25e24b76643fa63985db471db31cfc02f6943e9903d0"
+    },
+    {
+      "bytes": 14648,
+      "path": "current/reconciled-capabilities17/cases/array-some-short-circuit.json.gz",
+      "sha256": "3ed0962ce9cf160670651d382cab4af534eec6439b2d76a0d7df83390d714419"
+    },
+    {
+      "bytes": 9223,
+      "path": "current/reconciled-capabilities17/cases/input-array-mutation.json.gz",
+      "sha256": "e9e8a7686734c7b5e2f27c3ed68dfc6bb22bf17b665b50eaa4bd682665500d64"
+    },
+    {
+      "bytes": 10623,
+      "path": "current/reconciled-capabilities17/cases/input-graph-mutation.json.gz",
+      "sha256": "c0b04a719da2be415fbe815d584b566ba481dffdcb113e8ca88056822f423c2f"
+    },
+    {
+      "bytes": 9791,
+      "path": "current/reconciled-capabilities17/cases/invalid-bigint-catch-and-throw.json.gz",
+      "sha256": "12bacbf7c5446eb0055b5396d2c101d8fd8100021069622ecb3dfeb52ccd22d9"
+    },
+    {
+      "bytes": 7773,
+      "path": "current/reconciled-capabilities17/cases/later-parameter-tdz.json.gz",
+      "sha256": "651792c3601988de75f742b275a47a81e512f6f6dba41627558cc5dbc2dc05c7"
+    },
+    {
+      "bytes": 8298,
+      "path": "current/reconciled-capabilities17/cases/parameter-body-scope.json.gz",
+      "sha256": "487abbc65a4405325e2b2e949fdbef1ee557a8c15bff3d7ad7910b8530c510cb"
+    },
+    {
+      "bytes": 9889,
+      "path": "current/reconciled-capabilities17/cases/parameter-camelcase-default-capture.json.gz",
+      "sha256": "949e275f2eca00691d397ea46025610a55683ec4e0a49193b28d2475d16eedda"
+    },
+    {
+      "bytes": 11189,
+      "path": "current/reconciled-capabilities17/cases/primitive-bigint-conversion.json.gz",
+      "sha256": "a84faf1d2022011f754ec111959f56f25d23c55d1bd92dccd0f70b6084804437"
+    },
+    {
+      "bytes": 15132,
+      "path": "current/reconciled-capabilities17/cases/primitive-number-conversion.json.gz",
+      "sha256": "4bce710aa253ec9ebf57f8d5a00dc8da9901dbe7cf6ba5a70bc25d7297f8ed32"
+    },
+    {
+      "bytes": 13454,
+      "path": "current/reconciled-capabilities17/cases/primitive-string-conversion.json.gz",
+      "sha256": "c6ef0616555175d80d350551b29314264f6a17976bc21502f766696e2cbfec6d"
+    },
+    {
+      "bytes": 11595,
+      "path": "current/reconciled-capabilities17/cases/scalar-arithmetic.json.gz",
+      "sha256": "4bb414941fe419b6a0c77b47d3f94b6b34ea75e02751ca24e20d03af04007de5"
+    },
+    {
+      "bytes": 10297,
+      "path": "current/reconciled-capabilities17/cases/slice-undefined-end.json.gz",
+      "sha256": "3908f35c509f8db776246e148e5c28abc5138646caf5c154eedc196a3e8f95b8"
+    },
+    {
+      "bytes": 8218,
+      "path": "current/reconciled-capabilities17/cases/sparse-array-fill.json.gz",
+      "sha256": "03f1e6133f293dbe853e292643c533361028b5b993ed8799fbf06572b8dc4841"
+    },
+    {
+      "bytes": 7475,
+      "path": "current/reconciled-capabilities17/cases/synchronous-declared-error.json.gz",
+      "sha256": "173726280cf8cff978c04ec38591f1263d724511373cee454d181d79254c569b"
+    },
+    {
+      "bytes": 5987,
+      "path": "current/reconciled-capabilities17/cases/synchronous-primitive-throw.json.gz",
+      "sha256": "7dfa91d84d55d50fec5f5ebaa4a8429f0005333de427853fcee2856aa2d05bf0"
+    },
+    {
+      "bytes": 46527,
+      "path": "current/reconciled-capabilities17/report.json",
+      "sha256": "9649e2569ad385a5ccfc952dc835391cf5c37d8995086a51cc477877902f39f7"
+    },
+    {
+      "bytes": 2318,
+      "path": "current/reconciled-native-environment.json",
+      "sha256": "9c27072f1c8f24d0209918c466f8352f546613a3f94b669dc455ad3809c0a9c0"
+    },
+    {
+      "bytes": 22696,
+      "path": "current/reconciled-real-repaired15/cases/real-exercism-29ccb6b486929ee5f224879a.json.gz",
+      "sha256": "a5ec58587cc64917f30bed613013611e18c5eb1266b496b9c3bdb6aebdfea3e8"
+    },
+    {
+      "bytes": 15246,
+      "path": "current/reconciled-real-repaired15/cases/real-exercism-3b5b8e376886f63ffb9ed970.json.gz",
+      "sha256": "b1da973f7a71e58ca3a531f15a56c59dcfb897757243c8e8920fbb4ad7b9c238"
+    },
+    {
+      "bytes": 105211,
+      "path": "current/reconciled-real-repaired15/cases/real-exercism-45e8b0dde758d58d893cf67a.json.gz",
+      "sha256": "e7cc542575844d80dc80489c817bc9fb9b9b28ec9123197eea91e563286f780c"
+    },
+    {
+      "bytes": 22692,
+      "path": "current/reconciled-real-repaired15/cases/real-exercism-688679ef67ecbfe90b63b569.json.gz",
+      "sha256": "754f2ac073a31859920d16ea9a63278269a64f52700f5e867cba50e9e312c5d6"
+    },
+    {
+      "bytes": 46976,
+      "path": "current/reconciled-real-repaired15/cases/real-exercism-7b3c16ff7bff18d54d705695.json.gz",
+      "sha256": "5a659e35aef319660c0702365d7e24a0021840869ab3642b91bff5c49f53e6c0"
+    },
+    {
+      "bytes": 98289,
+      "path": "current/reconciled-real-repaired15/cases/real-exercism-86949e51e08871ad40636a8d.json.gz",
+      "sha256": "be0933b0632a47639635578ad78c0c302df23fab8f018a0a4b3eba6b7e3326c1"
+    },
+    {
+      "bytes": 28035,
+      "path": "current/reconciled-real-repaired15/cases/real-exercism-943a3cef2a9e1d9715771263.json.gz",
+      "sha256": "62dd67eafe3d6926c7956c90c520b79dd142e8399855100ffa112ec66e16a36d"
+    },
+    {
+      "bytes": 50891,
+      "path": "current/reconciled-real-repaired15/cases/real-exercism-d53806291f5d5df9dc20dba8.json.gz",
+      "sha256": "badcc82754bd0d345efc88e176210b0fc67e32794a8338ab76b45162fd3f2a98"
+    },
+    {
+      "bytes": 28544,
+      "path": "current/reconciled-real-repaired15/cases/real-exercism-ef5f7bf36763b0ae5e979d72.json.gz",
+      "sha256": "9ea7d2503df771e1c808c9a2d8793405a306fd9d4c08205f3f76eaf77a3b2cb7"
+    },
+    {
+      "bytes": 16119,
+      "path": "current/reconciled-real-repaired15/cases/real-production-081d1f0cb42af8f08a495250.json.gz",
+      "sha256": "6aab1ce2c10611b3fc41f0176e7dde1be1c76813c3216d78fd876c5c0ff59273"
+    },
+    {
+      "bytes": 15650,
+      "path": "current/reconciled-real-repaired15/cases/real-production-5a35ed6e7981d3e561bb435e.json.gz",
+      "sha256": "1102a34aa82ef96376377c7044b3183d0e605b103c3b7bb671abfa8ac04d6a89"
+    },
+    {
+      "bytes": 17670,
+      "path": "current/reconciled-real-repaired15/cases/real-production-66fdbe957c5128bdd4e7dd0b.json.gz",
+      "sha256": "7a051110b2aab3e2416ed19012aaa0ce5d21159db2c73f4b196373a4820bd1ff"
+    },
+    {
+      "bytes": 17635,
+      "path": "current/reconciled-real-repaired15/cases/real-production-ac6390737eac5e949058fcd8.json.gz",
+      "sha256": "89ee01d8d8e9acdaad79b7d42893c4eb3d47fe0075dc5ec1b6233d5a356635af"
+    },
+    {
+      "bytes": 71114,
+      "path": "current/reconciled-real-repaired15/cases/real-utilities-5a1fde95b4daab8314e03d36.json.gz",
+      "sha256": "45a63dfd7996ca9cd45c2afd5f95968524e18749ac50ac8ca4c7cb5fe3826c19"
+    },
+    {
+      "bytes": 70061,
+      "path": "current/reconciled-real-repaired15/cases/real-utilities-76c442299b70a90a72a85bcb.json.gz",
+      "sha256": "e80b39a1bb920e13bb1031ce5439515db5d083fd3f1ec8c6da2c6bbfc748f205"
+    },
+    {
+      "bytes": 73833,
+      "path": "current/reconciled-real-repaired15/report.json",
+      "sha256": "5aef7cc391fd73f684133a45df3a031184754bc81959942e618c9d1d82f928c2"
+    },
+    {
+      "bytes": 1135,
+      "path": "current/reconciled-real-selection.json",
+      "sha256": "f8b56fabe20eb86e8f8037f44ed1af4d49cde34562a9a533981dd785d8f2042e"
+    },
+    {
+      "bytes": 1351531,
+      "path": "historical/semantic-real-source-private-proofs-2026-11-18.tar.gz",
+      "sha256": "76e47cb62d89b80d98aeb87173f95e57cc3e009fb068d8ce448f0b6d93500580"
+    }
+  ],
+  "historicalArchive": {
+    "bytes": 1351531,
+    "path": "historical/semantic-real-source-private-proofs-2026-11-18.tar.gz",
+    "sha256": "76e47cb62d89b80d98aeb87173f95e57cc3e009fb068d8ce448f0b6d93500580"
+  },
+  "learnedSuccess": null,
+  "optimizerSteps": 0,
+  "producerRevision": "f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1",
+  "schema": "semantic-combined-private-proof-bundle/1",
+  "status": "verified"
+}

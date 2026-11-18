@@ -1,8 +1,8 @@
 # Branch and maintenance triage — 18 November 2026
 
-This is a read-only snapshot, not a branch deletion or a blanket merge recommendation. The comparison base is public `main` at **`dac57b163f277085f1ee42f5d1fa0085eeecb556`**, the merge of PR36. GitHub branch enumeration returned 30 branches; a second page was empty. Of these, 23 pre-November branches were examined below, six `codex/` branches remain active, and one is `main`.
+This is a read-only snapshot, not a branch deletion or a blanket merge recommendation. The comparison base is public `main` at **`dac57b163f277085f1ee42f5d1fa0085eeecb556`**, the merge of PR36. GitHub branch enumeration returned 30 branches; a second page was empty. Of these, 23 pre-November branches were examined below, six `codex/` branches were active at that snapshot, and one is `main`.
 
-**Later same-day integration update:** PR37 subsequently merged into main at `2aa694be86a6cda3b9d63fde739957d08f568961`, confirmed from the remote before integration. The original inventory and patch comparisons below remain a snapshot at `dac57b1`; they are not rewritten as a new branch audit. PR38 now incorporates that exact main revision alongside its own `58dd347f3f29c044bd2fd4b872c8f1c727fe2899` head, preserving both branches' useful features and all original receipts. No branch was deleted or overwritten. Repeat the final section's read-only checks before any later cleanup.
+**Later same-day integration update:** PR37 subsequently merged into main at `2aa694be86a6cda3b9d63fde739957d08f568961`, confirmed from the remote before integration. The original inventory and patch comparisons below remain a snapshot at `dac57b1`; they are not rewritten as a new branch audit. PR38 incorporates that exact main revision alongside its own `58dd347f3f29c044bd2fd4b872c8f1c727fe2899` head in published two-parent merge `aafcd199489659c92e78c73237150aeb41b5025d`. Its tree is `fd63d7c5c9f6669c421813df216a87c137a2d924`; both branches' useful features and all original receipts were preserved. Implementation head `1e2e6a0de8952c4349edbeef46ab70c4a06f8157` additionally receives explicit artifact/repair receipts, authenticated learning guards, the reconciled native consumer policy, and the hosted registry-persistence/shutdown repair. Final documentation/evidence is consolidated in `278337e317ebc51ab7f196146dceb64a0d4d5b71`. Evidence-only merge `8f99dd6436cb517fa31be246ed945efe997a0b29` then retains temporary CI producer `3850539e1038f3cd19c19c446403444b96281797` as a reachable parent. Its source tree exactly equals the recorded `aa7b843` tree; that retention merge changed no file bytes. PR38 then merged at 14:23:55 UTC into main `0c307781fea0fa3fca58f1dec037c8653cc921e0`; a fresh remote fetch confirmed its tree exactly equals implementation head `1e2e6a0`. The final-docs branch received that main commit, preserving all evidence additions with no non-documentation delta against main. No branch was deleted or overwritten. Repeat the final section's read-only checks before any later cleanup.
 
 ## Method and decision rule
 
@@ -60,15 +60,52 @@ The six active branches at this snapshot are `codex/resumption-20261118`, `codex
 
 [PR37](https://github.com/werg/tracing-js-self/pull/37), `codex/resumption-20261118`, had advanced after PR36 to `83e0d5742e63dc4439b68d6296f323cb7a3aafdc`, with 27 commits beyond the original public main snapshot. It was active work, not stale, at that audit. Its useful semantic commit `a22666041312e128820e37cd5fbfddebd75f6ded` adds bounded `Array.some`/`forEach` guest continuations, callback-throw cleanup, sparse `Array.fill`, and explicit refusal of async callbacks. `83e0d57` adds capability cases. These self-contained changes were integrated into [PR38](https://github.com/werg/tracing-js-self/pull/38) with attribution before the later full main reconciliation; the original branch was left untouched.
 
-PR37 also supplied overlapping campaign/release selection changes, exploratory holdout tooling, exact JavaScript track-API binding, and separate 32-update and partial-epoch optimization/failure receipts. Their producing revisions and evidence remain distinct. The subsequent merge preserves those additions together with PR38's hardened campaign store, isolated reference runner, release verifier and learning experiment. PR37 is now merged; PR38's resulting integration still requires its own fresh hosted qualification.
+PR37 also supplied overlapping campaign/release selection changes, exploratory holdout tooling, exact JavaScript track-API binding, and separate 32-update and partial-epoch optimization/failure receipts. Their producing revisions and evidence remain distinct. The subsequent merge preserves those additions together with PR38's hardened campaign store, isolated reference runner, release verifier and learning experiment. PR37 and PR38 are now merged. Their original branches were not overwritten. Fresh native/source checks and exact hosted results are recorded in the [final handover](RESUMPTION_HANDOVER_2026-11-18.md), separately from the original historical branch audit.
+
+## Later active work and evidence follow-up
+
+After PR37 merged, its original `codex/resumption-20261118` branch continued in
+[PR39](https://github.com/werg/tracing-js-self/pull/39). The read-only GitHub
+snapshot on 18 November initially observed head
+`54d3e68a6f3a3c71cd29fe98805e05d0dd64fccb`, recorded base `2aa694b`,
+open/draft/unmerged and mergeable false at 14:28:41 UTC. A later snapshot
+records head `a994f90eb7559e154421a25f381e94065d54c5c9`, open/unmerged,
+`draft: false` and `mergeable: false`, with metadata updated at 14:41:25 UTC. The final 14:56:41 UTC read-only snapshot records a further head
+`7c80a564e81c04248df54ac82bb9ec31c4cfa288` (metadata updated at 14:48:54 UTC),
+still open/unmerged, no longer draft and mergeable false. Its description
+reports further qualification and separate experiment/corpus evidence still
+being assembled. This is active
+independent work, not a stale branch, and its additional code/results have not
+been silently incorporated into the qualified `1e2e6a0` tree. Recheck its exact
+head, content and completed qualification before any later integration; do not
+overwrite or wholesale merge the ongoing branch as part of this historical
+cleanup audit.
+
+[PR40](https://github.com/werg/tracing-js-self/pull/40) is the separate final
+handover/evidence follow-up to merged PR38. It receives main `0c30778`, all
+published repair/learning receipts and the retained original failed CI producer.
+Its runtime and consumer implementation matches merged main; the follow-up
+also adds an archive-preservation workflow for an original CI artifact larger
+than the download connector limit. This branch preserves evidence and current
+status without treating the separate PR39
+as already merged. PR40 was open, ready for review and mergeable in the
+final 14:56:41 UTC snapshot. PR descriptions and review readiness are
+maintained by the coordinating owner.
+
+The companion [Megatoken PR31](https://github.com/werg/megatoken/pull/31)
+was merged by the user at 14:31:06 UTC on 18 November, with merge commit
+`9bf32c3fc794c532444d6a84629bfa29599eb49c`. The native qualification remains
+bound to its exact pre-merge head `6b4382b9af3bef120ca3a95ae24d35154d4cd66b`.
+This is a separately observed repository event, not a relabeling of earlier
+experiments or a merge performed during this read-only branch audit.
 
 ## Issue13, actual CI failures, and repository rules
 
 [Issue13](https://github.com/werg/tracing-js-self/issues/13) is an **open issue, not a PR**. It asks for a reproducible oracle dependency lock and passing oracle/selected-Test262 CI. Public main already contains `tools/spec-oracle/package.json`, its SHA-512 integrity lock, and `npm ci --prefix tools/spec-oracle --ignore-scripts --no-audit --no-fund` in the oracle workflow. The isolated lock includes the installed engine; its optional WebSocket peer is not installed.
 
-The 18 November CI investigation found an actual remaining selected-Test262 failure: the CLI still read the obsolete root `node_modules/@engine262/engine262/package.json`. PR38 commit `9f415a02a4f3c44bd9701886e8f0285039bd8df9` switches it to `specOraclePackage()`, which checks the isolated package against both locks. The actual command then reported 11 selected, nine executed, four passed, five known failures, two explicit skips, and zero unexpected results. Node20 CI separately exposed lazy native Error-stack materialization while merely reading a descriptor; commits `b0bcaca63cb6353f9949056093a9aadb804a2417` and test correction `fe3ee051179110a3ca9a334904576e53f8d76b19` avoid that operation. The declared/implicit exception tests pass 7/7 on the exact CI Node20.20.2 and Node24. These local checks do not substitute for the new hosted runs. Close issue13 after the selected-Test262 fix is merged and the intended hosted gates are green.
+The 18 November CI investigation found an actual remaining selected-Test262 failure: the CLI still read the obsolete root `node_modules/@engine262/engine262/package.json`. PR38 commit `9f415a02a4f3c44bd9701886e8f0285039bd8df9` switches it to `specOraclePackage()`, which checks the isolated package against both locks. The actual command then reported 11 selected, nine executed, four passed, five known failures, two explicit skips, and zero unexpected results. Node 20 CI separately exposed lazy native Error-stack materialization while merely reading a descriptor; commits `b0bcaca63cb6353f9949056093a9aadb804a2417` and test correction `fe3ee051179110a3ca9a334904576e53f8d76b19` avoid that operation. The declared/implicit exception tests pass 7/7 on the exact CI Node 20.20.2 and Node 24. Those local checks are independent of the hosted results recorded in the final handover. The selected-Test262 fix reached main through PR38, and the intended spec workflow for head `1e2e6a0` passed. Issue13 is ready for maintainer closure; this triage does not close it or change PR review state.
 
-Read-only GitHub REST inspection by the coordinating agent on 18 November returned `protected: false` for `branches/main`, `protection.enabled: false`, required-status-check enforcement `off` with empty contexts/checks, and an empty `rulesets?includes_parents=true` list. Thus this observation covers both branch metadata and inherited repository rulesets. No branch protection, ruleset, PR state, branch, or repository setting was changed by this triage. The intended gates should be reviewed and configured separately if the maintainer wants enforced merge protection.
+Read-only GitHub REST inspection by the coordinating agent on 18 November, during the audit of main at `dac57b163f277085f1ee42f5d1fa0085eeecb556`, returned `protected: false` for `branches/main`, `protection.enabled: false`, required-status-check enforcement `off` with empty contexts/checks, and an empty `rulesets?includes_parents=true` list. Thus this observation covers both branch metadata and inherited repository rulesets. No branch protection, ruleset, PR state, branch, or repository setting was changed by this triage. The intended gates should be reviewed and configured separately if the maintainer wants enforced merge protection.
 
 ## Reproducing the distinctions
 
@@ -83,3 +120,15 @@ git diff "$incorporating_commit^" "$incorporating_commit" | git patch-id --stabl
 ```
 
 For the four content cases, also compare the exact paths and PR disposition described above. Retain historical format and corpus receipts at their original revisions; do not relabel them as current admission evidence. No tests were rerun solely for this documentation audit: the claims are history, patch identity, inspected content, current API metadata, and the separately reported CI-fix checks.
+
+## Subsequent main advance received during final synchronization
+
+A later remote check observed main `53180e0b0dfbf6c9544b680f854a442db53bb0ab`,
+a direct child of `0c30778`, titled “Validate captured aliases with the source
+identifier grammar” ([PR41](https://github.com/werg/tracing-js-self/pull/41)).
+Only `src/training/format.js` and its new three-case regression file changed.
+This was not PR39 and introduced no new optimizer/corpus receipt population.
+PR40 received it through a clean merge; its old receipts retain their original
+producing revisions. Relative to this new main, the only non-documentation
+changes remain the three reviewed artifact-preservation files. No independent
+active branch was overwritten.

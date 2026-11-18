@@ -1,0 +1,114 @@
+{
+  "schema": "received-main-capture-name-smoke/1",
+  "producerRevision": "53180e0b0dfbf6c9544b680f854a442db53bb0ab",
+  "node": "v24.22.3",
+  "attempted": 8,
+  "locallyVerified": 8,
+  "nativeAdmissionClaim": false,
+  "rows": [
+    {
+      "name": "keyFn",
+      "source": "\"use strict\";function run(keyFn){const read=()=>keyFn;keyFn=keyFn+1;return read();}",
+      "sourceSha256": "5213e9bc27d5bbc614dd2e3ab8fa6a5eefa15ae22b63c545b38738385eca97c7",
+      "status": "locally_verified",
+      "sourceValidated": true,
+      "captures": [
+        {
+          "binding": "keyFn",
+          "cell": "keyFn"
+        }
+      ]
+    },
+    {
+      "name": "_key",
+      "source": "\"use strict\";function run(_key){const read=()=>_key;_key=_key+1;return read();}",
+      "sourceSha256": "c6e3693af9823c03514bd3079dddecc27a27f6a8a7456d9c6e7a419cf02ba718",
+      "status": "locally_verified",
+      "sourceValidated": true,
+      "captures": [
+        {
+          "binding": "_key",
+          "cell": "_key"
+        }
+      ]
+    },
+    {
+      "name": "key_fn",
+      "source": "\"use strict\";function run(key_fn){const read=()=>key_fn;key_fn=key_fn+1;return read();}",
+      "sourceSha256": "51972b44c4cb2a24eecbf98e836f0627d39867c32551e16ea1163e0240293fd4",
+      "status": "locally_verified",
+      "sourceValidated": true,
+      "captures": [
+        {
+          "binding": "key_fn",
+          "cell": "key_fn"
+        }
+      ]
+    },
+    {
+      "name": "keyFn_2",
+      "source": "\"use strict\";function run(keyFn_2){const read=()=>keyFn_2;keyFn_2=keyFn_2+1;return read();}",
+      "sourceSha256": "e75eb27141cf9e77dec2fb1554effb82cee939a8f58ad8856e854732726520c5",
+      "status": "locally_verified",
+      "sourceValidated": true,
+      "captures": [
+        {
+          "binding": "keyFn_2",
+          "cell": "keyFn_2"
+        }
+      ]
+    },
+    {
+      "name": "$key",
+      "source": "\"use strict\";function run($key){const read=()=>$key;$key=$key+1;return read();}",
+      "sourceSha256": "7782cd5e946b5bfa39c0757486d8d4f3599623b84a2a62060592c5032f7b9569",
+      "status": "locally_verified",
+      "sourceValidated": true,
+      "captures": [
+        {
+          "binding": "$key",
+          "cell": "$key"
+        }
+      ]
+    },
+    {
+      "name": "key$Fn",
+      "source": "\"use strict\";function run(key$Fn){const read=()=>key$Fn;key$Fn=key$Fn+1;return read();}",
+      "sourceSha256": "f8f67ddd932dc9438aa38d493b9079cb1698433bb1f5f994d3e2aecabed848f0",
+      "status": "locally_verified",
+      "sourceValidated": true,
+      "captures": [
+        {
+          "binding": "key$Fn",
+          "cell": "key$Fn"
+        }
+      ]
+    },
+    {
+      "name": "$",
+      "source": "\"use strict\";function run($){const read=()=>$;$=$+1;return read();}",
+      "sourceSha256": "66974ea15bfea1c3a30706b1c352f8c0b7c149a2c2bb0ff1440c7219e4332bdb",
+      "status": "locally_verified",
+      "sourceValidated": true,
+      "captures": [
+        {
+          "binding": "$",
+          "cell": "$"
+        }
+      ]
+    },
+    {
+      "name": "éclair",
+      "source": "\"use strict\";function run(éclair){const read=()=>éclair;éclair=éclair+1;return read();}",
+      "sourceSha256": "e73aee460837ea30aba5cde7a921be0a3a244322397e5b9b35a3adc3c86c01c8",
+      "status": "locally_verified",
+      "sourceValidated": true,
+      "captures": [
+        {
+          "binding": "éclair",
+          "cell": "éclair"
+        }
+      ]
+    }
+  ]
+}

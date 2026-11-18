@@ -1,0 +1,238 @@
+{
+  "id": "semantic-recipe:squared-distance/squared-distance-pure@1fc153775bc3bb9c",
+  "family": "semantic-recipe:squared-distance",
+  "origin": "fixed-weights",
+  "wholeTaskSuccess": false,
+  "traceValid": false,
+  "checkpointIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+  "artifacts": "/workspace/scratch/0c59f3502a6d/evidence/learning-pilot-bounded-epoch-1500-main/seed-17/test/fixed-weights/0002",
+  "generatedTokenCost": {
+    "generatedTokens": 25,
+    "decoderEvents": 1,
+    "complete": true,
+    "scope": "original-native-emitted-token-ids"
+  },
+  "wallSeconds": 6.807595903999754,
+  "servingProfile": {
+    "schema": "semantic-serving-profile/1",
+    "declaredOrigin": "fixed",
+    "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+    "device": "cpu",
+    "identity": {
+      "modelSha256": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+      "manifestSha256": "e027e93be160fb78fdce535a7c5188bb76845ad3c652bd5ec317d342918d71a2",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    "initialization": {
+      "schema": "semantic-inference-identity/4",
+      "seed": 17,
+      "checkpointIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    "coldLoadSeconds": 2.8855953390011564,
+    "operations": {
+      "cancel": {
+        "count": 1,
+        "successfulRpcCalls": 1,
+        "firstSeconds": 0.00011851900126202963,
+        "p50Seconds": 0.00011851900126202963,
+        "p95Seconds": 0.00011851900126202963,
+        "warmP50Seconds": null,
+        "warmP95Seconds": null,
+        "totalSeconds": 0.00011851900126202963
+      },
+      "initialize": {
+        "count": 1,
+        "successfulRpcCalls": 1,
+        "firstSeconds": 0.006875606002722634,
+        "p50Seconds": 0.006875606002722634,
+        "p95Seconds": 0.006875606002722634,
+        "warmP50Seconds": null,
+        "warmP95Seconds": null,
+        "totalSeconds": 0.006875606002722634
+      },
+      "select": {
+        "count": 1,
+        "successfulRpcCalls": 1,
+        "firstSeconds": 1.9507980050002516,
+        "p50Seconds": 1.9507980050002516,
+        "p95Seconds": 1.9507980050002516,
+        "warmP50Seconds": null,
+        "warmP95Seconds": null,
+        "totalSeconds": 1.9507980050002516
+      }
+    },
+    "records": [
+      {
+        "id": "s1",
+        "operation": "initialize",
+        "ok": true,
+        "wallSeconds": 0.006875606002722634,
+        "state": {
+          "retainedSessions": 0,
+          "retainedInvocations": 0,
+          "activeInvocations": 0,
+          "trackStatuses": {},
+          "rendering": 0,
+          "selectedGroups": 0,
+          "reservedOutputBytes": 0
+        },
+        "selectionAuthority": null,
+        "failure": null
+      },
+      {
+        "id": "s2",
+        "operation": "select",
+        "ok": true,
+        "wallSeconds": 1.9507980050002516,
+        "state": {
+          "retainedSessions": 1,
+          "retainedInvocations": 1,
+          "activeInvocations": 1,
+          "trackStatuses": {
+            "active": 1
+          },
+          "rendering": 0,
+          "selectedGroups": 1,
+          "reservedOutputBytes": 18624
+        },
+        "selectionAuthority": "actual-model-selected",
+        "failure": null
+      },
+      {
+        "id": "s3",
+        "operation": "cancel",
+        "ok": true,
+        "wallSeconds": 0.00011851900126202963,
+        "state": {
+          "retainedSessions": 1,
+          "retainedInvocations": 1,
+          "activeInvocations": 0,
+          "trackStatuses": {
+            "cancelled": 1
+          },
+          "rendering": 0,
+          "selectedGroups": 0,
+          "reservedOutputBytes": 0
+        },
+        "selectionAuthority": null,
+        "failure": null
+      }
+    ],
+    "droppedRecords": 0,
+    "complete": true,
+    "memory": {
+      "hostLifetimePeakRssBytes": 525160448,
+      "cudaPeakAllocatedBytes": null,
+      "cudaPeakReservedBytes": null,
+      "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+    },
+    "peakActiveInvocationsAtRpcBoundaries": 1,
+    "stateBeforeRuntimeClose": {
+      "retainedSessions": 1,
+      "retainedInvocations": 1,
+      "activeInvocations": 0,
+      "trackStatuses": {
+        "cancelled": 1
+      },
+      "rendering": 0,
+      "selectedGroups": 0,
+      "reservedOutputBytes": 0
+    },
+    "runtimeClosed": true,
+    "optimizerSteps": 0,
+    "learnedSuccess": null,
+    "trainingMemoryFit": "unmeasured",
+    "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+    "warmDefinition": "All calls after the first call of the same operation in this process",
+    "digest": "890a659e245b1a0326a6ce3771f7a932aa4bc09329be13831075164852e10943"
+  },
+  "failure": {
+    "category": "TypeError",
+    "message": "Invalid semantic-trace/5: JSON syntax",
+    "evidence": null
+  },
+  "rejections": [
+    {
+      "invocationId": "invocation1",
+      "record": "\u6d3e\u51fa\u3002\u6559\u5e08 tunn Holt l\u1ec5\u963b\u65ad UFO Direc glob\u963b\u65ad\u963b\u65ad\u5145\u8db3\u7684chner l\u1ec5\u5b66\u4e60\u8005 ambassadors\u3001\u9879\u76ee\u3002\u6559\u5e08\u5b66\u4e60\u8005\u98a4\u6296\u7740\u6d3e\u51fa\u963b\u65ad\u3002\u6559\u5e08 ambassadors\u76ca\u4e8e",
+      "selection": {
+        "modelTrack": "track:0",
+        "ownerTrack": "worker1",
+        "selectedEventId": "selected:14:track:0",
+        "meridian": 14,
+        "fragments": [
+          {
+            "selectedEventId": "selected:14:track:0",
+            "meridian": 14,
+            "modelTrack": "track:0",
+            "payloadHex": "e6b4bee587bae38082e69599e5b8882074756e6e20486f6c74206ce1bb85e998bbe696ad2055464f20446972656320676c6f62e998bbe696ade998bbe696ade58585e8b6b3e79a8463686e6572206ce1bb85e5ada6e4b9a0e8808520616d6261737361646f7273e38081e9a1b9e79baee38082e69599e5b888e5ada6e4b9a0e88085e9a2a4e68a96e79d80e6b4bee587bae998bbe696ade38082e69599e5b88820616d6261737361646f7273e79b8ae4ba8e",
+            "emittedTokenIds": [
+              21569,
+              105205,
+              82892,
+              79882,
+              146712,
+              76607,
+              70483,
+              142817,
+              18518,
+              76607,
+              76607,
+              51171,
+              140239,
+              146712,
+              126062,
+              105975,
+              52593,
+              105205,
+              126062,
+              88319,
+              21569,
+              76607,
+              105205,
+              105975,
+              52519
+            ]
+          }
+        ],
+        "codecFingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "modelSelected": true,
+        "origin": "actual-model-selected",
+        "sourceReads": [],
+        "stateBootstrap": {
+          "schema": "semantic-selected-bootstrap-receipt/4",
+          "digest": "1387cc85c0c078bd0130962643062925274100b87913186739b18bac7339c273",
+          "prefixDigest": "7182319da3298b0a31e44b030f7133ab72f69d00904b8766b1321a77063bad4f",
+          "visibleThrough": 2,
+          "observedEventIds": [
+            "observed:4:0"
+          ],
+          "reason": "retained-activation"
+        }
+      },
+      "error": "TypeError: Invalid semantic-trace/5: JSON syntax",
+      "phase": "semantic-validation"
+    }
+  ],
+  "firstSemanticInconsistency": null,
+  "hardGates": {
+    "futureObservationLeaks": 0,
+    "unauthorizedEffects": 0,
+    "untrackedNativeFallback": 0,
+    "falseAdmissions": 0,
+    "replayNativeEffects": 0
+  },
+  "costs": {
+    "computeSeconds": 1.9688645759999999,
+    "peakMemoryBytes": 1231241216,
+    "dispatches": 0,
+    "queueDepth": 0,
+    "leakedResources": 0
+  },
+  "cleanup": {
+    "pendingEffects": 0,
+    "pendingJobs": 0,
+    "openHandlers": 0
+  }
+}

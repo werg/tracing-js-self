@@ -1,0 +1,72 @@
+{
+  "schema": "derived-native-prepared-selection-summary/1",
+  "scope": "Independently recomputed from unchanged original ZIP training-selection and prepared-training-selection receipts; no episode shard rewrite or optimization.",
+  "recipe": "generated-v1",
+  "zipSha256": "eb017730a106b4e440ad5355958c93f1ea360647c7ddf24df0a2b1875a4f9a5c",
+  "originalReceiptHashes": {
+    "release/training-selection.json": "d6f95d23caa8ea53faa58788db61bd8e0bcc6ec01f52564bdb0a09da9879d966",
+    "release/prepared-training-selection.json": "df06a37faf1b78b42b8d5caa41b0ad182d6e0ad57934d6b23eab53e3a8a27621"
+  },
+  "policy": {
+    "componentIdentity": "authenticated-frozen-source-components",
+    "enabled": true,
+    "maxFamilyShare": 0.2,
+    "maxFamilyTokens": 10000,
+    "scope": "training-only",
+    "tokenMeasurement": "fresh-native-generatedTokens"
+  },
+  "originalAvailableTrainInputs": 44,
+  "originalSelectedTrainInputs": 44,
+  "originalExcludedTrainInputs": 0,
+  "originalHeldOutInputs": 20,
+  "heldOutInputMembershipsPreserved": true,
+  "suppliedPreparationInputs": 64,
+  "distinctNativePreparedExamples": 61,
+  "nativePreparedSplitCounts": {
+    "test": 11,
+    "train": 43,
+    "validation": 7
+  },
+  "nativePreparedGeneratedTokensBySplit": {
+    "test": 13810,
+    "train": 54117,
+    "validation": 5767
+  },
+  "finalGeneratedTrainTokens": 54117,
+  "finalTrainComponents": 11,
+  "maximumPreparedComponentTokenShare": 0.11582312397213446,
+  "maximumPreparedComponentGeneratedTokens": 6268,
+  "capPolicyApplicable": true,
+  "capPolicySatisfiedAfterDeduplication": true,
+  "violations": [],
+  "nativeDispositionCounts": {
+    "native_prepared": 61,
+    "native_excluded": 3
+  },
+  "retainedDuplicateAliasCount": 3,
+  "retainedDuplicateAliases": [
+    {
+      "duplicateOf": "semantic:harness:e1255ff9b959d8af287f07e9e372adeda3e5985ef66d155955850a18782f3bfe",
+      "episodeId": "semantic:harness:1adac514d61baaee993fe07af3d7b354731d667d60d3c89b2e0c1134d4c66ef2",
+      "id": "generated-37d82be30acc634bd639-3",
+      "quarantineReason": null,
+      "status": "native_excluded"
+    },
+    {
+      "duplicateOf": "semantic:harness:9789d62d7cad259d3eb730303b102b7ef81e0b9421682eddf3a80173255210a3",
+      "episodeId": "semantic:harness:ad597995f2251690a1bf0c3e2cb9d6534876f95d76570327cc82ccf305293494",
+      "id": "generated-3011613fcf46de149162-3",
+      "quarantineReason": null,
+      "status": "native_excluded"
+    },
+    {
+      "duplicateOf": "semantic:harness:588472166e256006596efd6abd860c394e70a41580033f70808c4547f1671cc9",
+      "episodeId": "semantic:harness:8120c3a9d26dad42a3999e5ff44dcc213c475d3dd10453581d9aeb737acfb86e",
+      "id": "generated-7083d531fdfc1289532d-3",
+      "quarantineReason": null,
+      "status": "native_excluded"
+    }
+  ],
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}
