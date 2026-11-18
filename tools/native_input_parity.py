@@ -120,13 +120,24 @@ def inspect_inputs(packet, *, max_capacity=1024, max_tokens=128):
                       'servingSha256': b['sha256'] if b else None})
     equal_control = control.hex() == boundary.generation['controls'][0]['hex']
     equal_observed = all(row['sameBytes'] for row in pairs)
+    # A worker's declared purpose is also supplied to the native model. Equal
+    # record bytes and control bytes alone do not establish the same conditions.
+    selected_track = next(track for track in episode.tracks if track.track_id == event.track_id)
+    serving_purposes = [
+        row['purpose'] for row in boundary.generation['trackDescriptions']
+    ]
+    equal_purpose = (len(serving_purposes) == 1 and
+                     selected_track.description == serving_purposes[0])
     return {'schema': 'semantic-native-input-parity/1',
-        'status': 'passed' if equal_control and equal_observed else 'failed',
+        'status': 'passed' if equal_control and equal_observed and equal_purpose else 'failed',
         'scope': 'Actual data and serving adapter call arguments before neural execution',
         'sourceIdentityDigest': receipt['identityDigest'], 'sourceAdmission': receipt,
         'sourceCandidateAdmission': exported['sidecar']['admission'],
         'nativeAdmissionClaim': False, 'freshDirectCall': True,
         'controlBytesMatch': equal_control, 'observedRecordBytesMatch': equal_observed,
+        'trackPurposeMatch': equal_purpose,
+        'trainingTrackPurpose': selected_track.description,
+        'servingTrackPurpose': serving_purposes[0] if len(serving_purposes) == 1 else None,
         'observedRecordComparisons': pairs,
         'training': {'control': {'hex': control.hex(), 'text': control.decode('utf-8'),
                                 'sha256': sha(control), 'bytes': len(control)},
@@ -172,7 +183,7 @@ def main():
         output.write('\n')
     print(json.dumps({'status': result['status'], 'controlBytesMatch': result['controlBytesMatch'],
                       'observedRecordBytesMatch': result['observedRecordBytesMatch'],
-                      'modelSelections': 0, 'output': str(args.out)}))
+                      'trackPurposeMatch': result['trackPurposeMatch'], 'modelSelections': 0, 'output': str(args.out)}))
     if result['status'] != 'passed': raise SystemExit(1)
 
 

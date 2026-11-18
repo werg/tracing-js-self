@@ -26,6 +26,10 @@ class RetainedBoundaryReceiptTests(unittest.TestCase):
         self.assertEqual(receipt['status'], 'failed')
         self.assertFalse(receipt['controlBytesMatch'])
         self.assertEqual(receipt['training']['control']['bytes'], 0)
+        self.assertEqual(receipt['training']['tracks'][1]['description'], '')
+        self.assertEqual(
+            receipt['serving']['generation']['trackDescriptions'][0]['purpose'],
+            'Execute program1.run')
         self.assertEqual(receipt['serving']['generation']['controls'][0]['bytes'], 553)
         for path in ('training', 'serving'):
             for row in receipt[path]['observedRecords']:
@@ -82,6 +86,9 @@ writeFileSync(process.argv[1],JSON.stringify(result.exported)+'\\n');
         self.assertEqual(report['status'], 'failed')
         self.assertEqual(report['training']['control']['text'], '')
         self.assertEqual(report['serving']['generation']['controls'][0]['bytes'], 553)
+        self.assertFalse(report['trackPurposeMatch'])
+        self.assertEqual(report['trainingTrackPurpose'], '')
+        self.assertEqual(report['servingTrackPurpose'], 'Execute program1.run')
         self.assertEqual(len(report['training']['observedRecords']), 2)
         self.assertEqual(len(report['serving']['observedRecords']), 3)
         bootstrap = json.loads(report['serving']['observedRecords'][-1]['payloadText'])
