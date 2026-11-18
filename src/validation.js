@@ -16,6 +16,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
   const state=clone(bundle.initialState);
   const sites=new Set(bundle.sites.map(s=>s.siteId));
   const seen=new Set();
+  const parameterTdzOrigins=new Map();
   for(let i=0;i<bundle.events.length;i++) {
     const e=bundle.events[i];
     if(e.eventId!==`a0:e${i+1}`||e.sequence!==i+1)fail('Event ordering/identity violation',e.eventId);
@@ -27,7 +28,17 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     }
     const job=e.operation==='job.enter'?state.control.a0.queue[0]:null;
     const queuedBefore=job?state.control.a0.queue.slice(1):null;
-    if(e.completion?.parameterTdz){
+    if(e.completion?.parameterTdz&&e.completion.origin!==e.eventId){
+      const c=e.completion,frame=state.frames[e.invocationId];
+      const operation=state.operations[frame?.operationId];
+      // Coercion first commits the original fault into its owned operation,
+      // then propagates that identical completion at a later spec boundary.
+      // The original read remains the error's identity and allocation origin.
+      if(e.operation!=='spec.operation.complete'||operation?.frameId!==frame?.id||
+         operation?.phase!=='complete'||!eq(operation.completion,c)||
+         !eq(parameterTdzOrigins.get(c.origin),c))
+        fail('Invalid propagated parameter TDZ exception',e.eventId);
+    }else if(e.completion?.parameterTdz){
       const c=e.completion,frame=state.frames[e.invocationId];
       const instruction=bundle.programs[frame?.codeId]?.instructions[frame?.pc];
       const name=typeof instruction?.arg==='string'?instruction.arg:instruction?.arg?.name;
@@ -47,6 +58,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
          !eq(allocation.after.properties,{name:{value:['str','ReferenceError'],origin:e.eventId},
            message:{value:['str',c.message],origin:e.eventId}}))
         fail('Invalid committed parameter TDZ exception',e.eventId);
+      parameterTdzOrigins.set(e.eventId,clone(c));
     }
     if(e.operation==='external.callback.enqueue'){
       const effect=e.causes.filter(c=>c.kind==='effect');

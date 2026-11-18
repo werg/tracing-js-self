@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {createRuntime,validateBundle,replayExact} from 'tracing-js-self';
 import {verifyEffectfulTrainingCase,recheckEffectfulAdmission} from '../src/training/effectful-admit.js';
 import {controlledEvaluationCase,evaluateSelectedCase} from '../src/training/selected-evaluation.js';
+import {ownedEffectfulOutcome} from '../src/training/effectful-compiler.js';
+import {describeCompletionGraph} from '../src/training/exception-profile.js';
 
 const checked=code=>verifyEffectfulTrainingCase({source:'"use strict";'+code,
   entry:'run',family:'parameter-projection',fixture:{calls:[]}});
@@ -70,4 +72,37 @@ test('interpreter errors and resource exhaustion remain failures outside the par
     entry:'run',family:'parameter-resource-boundary',maxSteps:2,fixture:{calls:[]}});
   assert(!['admitted','locally_verified'].includes(limited.status));
   assert.equal(limited.exported,undefined);
+});
+
+test('coercion propagates the original authenticated parameter error without allocating a second error',async()=>{
+  for(const body of [
+    'return {valueOf:fail}+1;',
+    'try{return {valueOf:fail}+1;}catch(e){return [e.name,e.message,e===e];}',
+    'try{return {valueOf:fail}+1;}finally{return 8;}'
+  ]){
+    const source='"use strict";function fail(a=b,b=3){}function run(){'+body+'}';
+    const runtime=createRuntime().startEntry({text:source,functionName:'run',args:[]});
+    runtime.drive();const archive=runtime.exportRun();
+    assert.equal(validateBundle(archive).valid,true);
+    assert.equal(replayExact(archive).valid,true);
+    let kind='return',value;
+    try{value=Function(source+';return run;')()();}catch(error){kind='throw';value=error;}
+    assert.deepEqual(ownedEffectfulOutcome(archive),{kind,graph:describeCompletionGraph([],value,kind)});
+    // Function references installed as object coercion hooks remain outside
+    // the public projection profile, just as they do for explicit throws.
+    const result=await checked(source.slice('"use strict";'.length));
+    assert.equal(result.status,'projection_refused',body+': '+result.reason);
+    assert.match(result.reason,/unallocated owned identity/);
+  }
+  const runtime=createRuntime().startEntry({text:'"use strict";function fail(a=b,b=3){}function run(){return {valueOf:fail}+1;}',functionName:'run',args:[]});
+  runtime.drive();const archive=runtime.exportRun();
+  assert.equal(validateBundle(archive).valid,true);
+  assert.equal(replayExact(archive).valid,true);
+  const [origin,propagation]=archive.events.filter(event=>event.completion?.parameterTdz);
+  assert.equal(propagation.operation,'spec.operation.complete');
+  assert.deepEqual(propagation.completion,origin.completion);
+  assert(!propagation.stateChanges.some(change=>change.table==='heap'&&change.before===null));
+  const forged=structuredClone(archive);
+  forged.events.find(event=>event.eventId===propagation.eventId).completion.origin='a0:e1';
+  assert.throws(()=>validateBundle(forged),/Invalid propagated parameter TDZ exception/);
 });
