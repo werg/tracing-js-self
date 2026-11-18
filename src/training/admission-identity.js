@@ -7,6 +7,7 @@ import {createRequire} from 'node:module';
 import {isDeepStrictEqual} from 'node:util';
 import {TRAINING_PROFILE,TRAINING_PARSER} from './profile.js';
 import {EXECUTION_VERSION,WITNESS_VERSION,CONTEXT_VERSION,HARNESS_PROFILE} from './format.js';
+import {verifyFrozenSplitIdentity} from '../corpus/source-registry.mjs';
 
 const require=createRequire(import.meta.url);
 const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -44,9 +45,10 @@ export function validateSplitIdentity(value,{family,seed}={}){
     if(heldOut&&(!['upstream-project','composition'].includes(value.holdout.kind)||
       typeof value.holdout.key!=='string'||!value.holdout.key))fail('holdout declaration');
     if(value.split!==(heldOut?'test':effectfulFamilySplit(value.componentId,{seed})))fail('component split policy');
-    const component=value.registry.components?.find(item=>item.componentId===value.componentId);
+    const component=value.registry.components?.find(item=>item.id===value.componentId);
     if(!component||!isDeepStrictEqual(component.members,value.members)||component.split!==value.split||
       !isDeepStrictEqual(component.holdout??null,value.holdout??null))fail('frozen component membership');
+    try{verifyFrozenSplitIdentity(value,{family,seed});}catch(error){fail('frozen source registry: '+error.message);}
   }else fail('unknown split policy');
   return true;
 }
@@ -90,6 +92,12 @@ function identityPayload(exported){
     fail('source family, lineage, license or ancestors');
   validateSplitIdentity(side.splitIdentity,{family:side.sourceFamily,seed:side.sourceProvenance.seed});
   if(side.split!==side.splitIdentity.split||side.seeds?.split!==side.splitIdentity.seed)fail('split assignment');
+  if(side.splitIdentity.policy==='source-components/1'){
+    if(side.ancestorIds.some(id=>!side.splitIdentity.members.includes(id)))fail('ancestor outside frozen component');
+    if(side.referenceInput.source!==undefined&&!side.splitIdentity.registry.sources.some(row=>
+      row.family===side.sourceFamily&&row.sourceSha256===exactHash(side.referenceInput.source)))
+      fail('source bytes absent from frozen family');
+  }
   if(!isDeepStrictEqual(side.environment,admissionEnvironment()))fail('runtime, dependency or verifier environment');
   const contract=JSON.parse(readFileSync(new URL('../../contracts/semantic-harness-v5.json',import.meta.url),'utf8'));
   return {schema:'semantic-candidate-identity/1',episodeDigest:exactHash(exported.public),

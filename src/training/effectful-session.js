@@ -24,7 +24,8 @@ function composeEffectfulSession(components,{family,seed=17,producerRevision=nul
       component.sidecar.sourceFamily!==family||component.sidecar.sourceProvenance.seed!==seed||
       component.sidecar.representation!==first.sidecar.representation||
       component.sidecar.license!==first.sidecar.license||component.sidecar.trustTier!==first.sidecar.trustTier||
-      !isDeepStrictEqual(component.sidecar.splitIdentity,splitIdentity))
+      !isDeepStrictEqual(component.sidecar.splitIdentity,splitIdentity)||
+      !isDeepStrictEqual(component.sidecar.nativePolicy,first.sidecar.nativePolicy))
       throw new Error('Every session component needs the same pinned source authority');
     const activations=component.public.timeline.filter(item=>item.kind==='invocation');
     const roots=activations.filter(item=>item.parentInvocationId===null);
@@ -100,7 +101,7 @@ function composeEffectfulSession(components,{family,seed=17,producerRevision=nul
     representation:first.sidecar.representation,
     referenceStatus:'agreed',selectionOrigin:'owned-interpreter-teacher',sourceLineage:family,
     sourceFamily:family,fixtureFamily:family,ancestorIds:ancestors,split,splitIdentity,taskId:family,
-    producerRevision,license:first.sidecar.license,trustTier:first.sidecar.trustTier,
+    producerRevision,license:first.sidecar.license,trustTier:first.sidecar.trustTier,nativePolicy:copy(first.sidecar.nativePolicy),
     sourceProvenance:{family,license:first.sidecar.license,trustTier:first.sidecar.trustTier,seed,
       sourceDigest:hash([...programs]),fixtureDigest:hash(calls),
       upstream:components.map(component=>copy(component.sidecar.sourceProvenance.upstream))},
@@ -117,15 +118,16 @@ function composeEffectfulSession(components,{family,seed=17,producerRevision=nul
 }
 
 export async function verifyEffectfulSession({cases,family,nativeConsumer=null,seed=17,
-    producerRevision=null,sessionId='teachersession',splitIdentity=null,seeds={},provenance={}}={}){
+    producerRevision=null,sessionId='teachersession',splitIdentity=null,seeds={},provenance={},nativePolicy=null}={}){
   if(!Array.isArray(cases)||cases.length<2)throw new TypeError('At least two source invocations are required');
-  const {verifyEffectfulTrainingCase,requireNativeAdmission,effectfulFamilySplit}=await import('./effectful-admit.js');
+  const {verifyEffectfulTrainingCase,bindNativeAdmission,validateNativePolicy}=await import('./effectful-admit.js');
+  if(nativeConsumer||nativePolicy!==null)nativePolicy=validateNativePolicy(nativePolicy);
   splitIdentity=structuredClone(splitIdentity??defaultSplitIdentity(family,{seed}));
   const components=[],programs=new Map();let nextProgram=0;
   for(const [index,fixture] of cases.entries()){
     const digest=hash(fixture.source);
     if(!programs.has(digest))programs.set(digest,'program'+(++nextProgram));
-    const result=await verifyEffectfulTrainingCase({...fixture,family,seed,producerRevision,splitIdentity,
+    const result=await verifyEffectfulTrainingCase({...fixture,family,seed,producerRevision,splitIdentity,nativePolicy,
       seeds:{...seeds,...fixture.seeds},provenance:{...provenance,...fixture.provenance},
       projectionOptions:{...fixture.projectionOptions,sessionId,programId:programs.get(digest),invocationId:'ingress'+(index+1),
         trackId:'worker'+(index+1),realmId:'realm'+(index+1),realmPolicy:'fresh',triggerId:'outside'+(index+1)}});
@@ -134,15 +136,13 @@ export async function verifyEffectfulSession({cases,family,nativeConsumer=null,s
   }
   const exported=composeEffectfulSession(components,{family,seed,producerRevision,split:splitIdentity.split,splitIdentity});
   if(nativeConsumer){
-    const receipt=await nativeConsumer(exported);requireNativeAdmission(exported,receipt);
-    exported.sidecar.nativeAdmission=receipt;exported.sidecar.admission='admitted';
-    exported.sidecar.selectionOrigin='certified_teacher';
+    const receipt=await nativeConsumer(exported);bindNativeAdmission(exported,receipt,nativePolicy);
   }
   return {status:exported.sidecar.admission,exported};
 }
 
-export async function recheckEffectfulSession(exported,{requireAdmitted=true,timeoutMs=10000,expectedIdentityDigest=null}={}){
-  const {recheckEffectfulAdmission,requireNativeAdmission,effectfulFamilySplit}=await import('./effectful-admit.js');
+export async function recheckEffectfulSession(exported,{requireAdmitted=true,timeoutMs=10000,expectedIdentityDigest=null,nativePolicy=null}={}){
+  const {recheckEffectfulAdmission,verifyNativeBinding}=await import('./effectful-admit.js');
   const side=exported.sidecar,collection=side.collection;
   verifyAdmissionIdentity(exported,{expectedIdentityDigest});
   for(const component of collection.components)
@@ -159,7 +159,7 @@ export async function recheckEffectfulSession(exported,{requireAdmitted=true,tim
     throw new Error('Repeated-ingress source certificates or public bytes changed');
   if(requireAdmitted){
     if(side.admission!=='admitted'||side.selectionOrigin!=='certified_teacher')throw new Error('Session not fully admitted');
-    requireNativeAdmission(exported,side.nativeAdmission);
+    verifyNativeBinding(exported,nativePolicy);
   }
   return {schema:'semantic-source-admission/4',episodeDigest:hash(exported.public),
     identityDigest:side.identityDigest,identityValidated:true,

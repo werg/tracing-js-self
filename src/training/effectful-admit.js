@@ -19,7 +19,7 @@ import {normalizeJournal} from '../semantic/normalize.js';
 import {decodeWitness} from './format.js';
 import {recheckEffectfulSession} from './effectful-session.js';
 import {effectfulFamilySplit,defaultSplitIdentity,validateSplitIdentity,normalizeSeeds,
-  admissionEnvironment,bindAdmissionIdentity,verifyAdmissionIdentity} from './admission-identity.js';
+  admissionEnvironment,bindAdmissionIdentity,verifyAdmissionIdentity,identityDigest} from './admission-identity.js';
 export {effectfulFamilySplit} from './admission-identity.js';
 
 const hash=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
@@ -81,7 +81,19 @@ function independentSemanticChecks(bundle,source,operations,decisions){
   return {schema:'effectful-source-checks/4',status:'agreed',
     computations:operations.length,branches:decisions.length};
 }
-export function requireNativeAdmission(exported,receipt,{consumerRevision=null,tokenizerIdentity=null}={}){
+export function validateNativePolicy(policy){
+  if(!policy||!/^[0-9a-f]{40}$/.test(policy.consumerRevision??'')||
+    typeof policy.tokenizerIdentity!=='string'||!policy.tokenizerIdentity||
+    !/^[0-9a-f]{64}$/.test(policy.tokenizerSha256??''))
+    throw new TypeError('Native admission policy is incompatible or incomplete: exact consumer revision, tokenizer identity and SHA-256 are required');
+  return {consumerRevision:policy.consumerRevision,tokenizerIdentity:policy.tokenizerIdentity,
+    tokenizerSha256:policy.tokenizerSha256};
+}
+export function requireNativeAdmission(exported,receipt,policy=null){
+  const expected=validateNativePolicy(policy??exported?.sidecar?.nativePolicy);
+  if(!isDeepStrictEqual(expected,exported?.sidecar?.nativePolicy))
+    throw new Error('Native admission policy differs from the immutable candidate identity');
+  verifyAdmissionIdentity(exported);
   const catalog=JSON.stringify(hostOperationContract(),null,2)+'\n';
   const contract=JSON.parse(readFileSync(new URL('../../contracts/semantic-harness-v5.json',import.meta.url),'utf8'));
   if(receipt?.schema!=='semantic-native-admission/4'||receipt.componentGate!=='native-consumer-only'||
@@ -94,18 +106,38 @@ export function requireNativeAdmission(exported,receipt,{consumerRevision=null,t
     typeof receipt.tokenizerIdentity!=='string'||!receipt.tokenizerIdentity||
     !Number.isSafeInteger(receipt.generatedTokens)||receipt.generatedTokens<1||
     !Number.isSafeInteger(receipt.observedTokens)||receipt.observedTokens<1||
-    consumerRevision!==null&&receipt.consumerRevision!==consumerRevision||
-    tokenizerIdentity!==null&&receipt.tokenizerIdentity!==tokenizerIdentity)
+    receipt.consumerRevision!==expected.consumerRevision||
+    receipt.tokenizerIdentity!==expected.tokenizerIdentity||receipt.tokenizerSha256!==expected.tokenizerSha256)
     throw new Error('Native admission receipt is incompatible, stale or incomplete');
+  return true;
+}
+export function bindNativeAdmission(exported,receipt,policy=null){
+  requireNativeAdmission(exported,receipt,policy);
+  exported.sidecar.nativeAdmission=structuredClone(receipt);
+  exported.sidecar.nativeBinding={schema:'semantic-native-receipt-binding/1',
+    episodeDigest:hash(exported.public),identityDigest:exported.sidecar.identityDigest,
+    receiptDigest:identityDigest(receipt),policyDigest:identityDigest(exported.sidecar.nativePolicy)};
+  exported.sidecar.selectionOrigin='certified_teacher';
+  exported.sidecar.admission='admitted';
+  return exported.sidecar.nativeBinding;
+}
+export function verifyNativeBinding(exported,policy=null){
+  const side=exported.sidecar;
+  requireNativeAdmission(exported,side.nativeAdmission,policy);
+  if(!isDeepStrictEqual(side.nativeBinding,{schema:'semantic-native-receipt-binding/1',
+    episodeDigest:hash(exported.public),identityDigest:side.identityDigest,
+    receiptDigest:identityDigest(side.nativeAdmission),policyDigest:identityDigest(side.nativePolicy)}))
+    throw new Error('Native receipt does not bind the immutable candidate identity');
   return true;
 }
 export async function verifyEffectfulTrainingCase({source,entry,args=[],fixture,
     family,license='repository-fixture',trustTier='repository-fixture',maxSteps=100000,
     timeoutMs=10000,nativeConsumer=null,seed=17,projectionOptions={},producerRevision=null,
-    ancestorIds=[],taskId=null,fixtureFamily=null,provenance={},seeds={},splitIdentity=null}={}){
+    ancestorIds=[],taskId=null,fixtureFamily=null,provenance={},seeds={},splitIdentity=null,nativePolicy=null}={}){
   if(typeof family!=='string'||!family||typeof license!=='string'||!license||
     !['repository-fixture','trusted-owned-source'].includes(trustTier))
     throw new TypeError('Effectful admission requires source family, license and declared trusted source tier');
+  if(nativeConsumer||nativePolicy!==null)nativePolicy=validateNativePolicy(nativePolicy);
   splitIdentity=structuredClone(splitIdentity??defaultSplitIdentity(family,{seed}));
   validateSplitIdentity(splitIdentity,{family,seed});
   fixture=canonicalFixturePlan(fixture);
@@ -133,7 +165,7 @@ export async function verifyEffectfulTrainingCase({source,entry,args=[],fixture,
     Object.assign(exported.sidecar,{admission:'locally_verified',referenceStatus:'agreed',
       split:splitIdentity.split,splitIdentity,sourceLineage:family,
       sourceFamily:family,fixtureFamily:fixtureFamily??family,ancestorIds:[...new Set([family,...ancestorIds])],
-      taskId:taskId??family,producerRevision,license,trustTier,
+      taskId:taskId??family,producerRevision,license,trustTier,nativePolicy,
       capabilityProfile:compiled.exported.sidecar.compiler.capabilities,
       sourceProvenance:{family,license,trustTier,sourceDigest:hash(source),fixtureDigest:hash(fixture),seed,
         upstream:structuredClone(provenance)},
@@ -150,10 +182,7 @@ export async function verifyEffectfulTrainingCase({source,entry,args=[],fixture,
     bindAdmissionIdentity(exported);
     if(nativeConsumer){
       phase='native-consumer';
-      const receipt=await nativeConsumer(exported);requireNativeAdmission(exported,receipt);
-      exported.sidecar.nativeAdmission=receipt;
-      exported.sidecar.selectionOrigin='certified_teacher';
-      exported.sidecar.admission='admitted';
+      const receipt=await nativeConsumer(exported);bindNativeAdmission(exported,receipt,nativePolicy);
     }
     return {status:exported.sidecar.admission,exported};
   }catch(error){
@@ -163,10 +192,10 @@ export async function verifyEffectfulTrainingCase({source,entry,args=[],fixture,
   }finally{clearTimeout(timer);broker.abort();}
 }
 
-export async function recheckEffectfulAdmission(exported,{requireAdmitted=true,timeoutMs=10000,expectedIdentityDigest=null}={}){
+export async function recheckEffectfulAdmission(exported,{requireAdmitted=true,timeoutMs=10000,expectedIdentityDigest=null,nativePolicy=null}={}){
   const side=exported?.sidecar;
   if(side?.collection?.schema==='semantic-teacher-session/4')
-    return recheckEffectfulSession(exported,{requireAdmitted,timeoutMs,expectedIdentityDigest});
+    return recheckEffectfulSession(exported,{requireAdmitted,timeoutMs,expectedIdentityDigest,nativePolicy});
   if(!side?.archive||!side.referenceInput||side.referenceStatus!=='agreed'||
     requireAdmitted&&(side.admission!=='admitted'||side.selectionOrigin!=='certified_teacher'))
     throw new Error('Missing complete independent effectful admission evidence');
@@ -203,7 +232,7 @@ export async function recheckEffectfulAdmission(exported,{requireAdmitted=true,t
       !isDeepStrictEqual(input.graph??encodeNativeGraph(realizeGraph(side.archive.finalState.heap,[input.value])),outcome.result))
       throw new Error('Native settlement receipt differs from owned delivery');
   }
-  if(requireAdmitted)requireNativeAdmission(exported,side.nativeAdmission);
+  if(requireAdmitted)verifyNativeBinding(exported,nativePolicy);
   return {schema:'semantic-source-admission/4',episodeDigest:projection.publicDigest,
     identityDigest:side.identityDigest,identityValidated:true,
     producerRevision:side.producerRevision,catalogDigest:hash(JSON.stringify(hostOperationContract(),null,2)+'\n'),

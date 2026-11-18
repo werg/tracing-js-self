@@ -1,8 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyEffectfulTrainingCase,recheckEffectfulAdmission,effectfulFamilySplit} from '../src/training/effectful-admit.js';
+import {createHash} from 'node:crypto';
+import {readFileSync} from 'node:fs';
+import {hostOperationContract} from '../src/host/operations.js';
+import {verifyEffectfulTrainingCase,recheckEffectfulAdmission,effectfulFamilySplit,requireNativeAdmission,
+  bindNativeAdmission} from '../src/training/effectful-admit.js';
 import {verifyEffectfulSession,recheckEffectfulSession} from '../src/training/effectful-session.js';
 import {identityDigest,bindAdmissionIdentity} from '../src/training/admission-identity.js';
+import {buildSourceRegistry,frozenSplitIdentity} from '../src/corpus/source-registry.mjs';
 
 const fixture={source:'"use strict"; function run(x){return x+1;}',entry:'run',args:[7],
   fixture:{calls:[]},family:'identity-regression',ancestorIds:['algorithm:increment'],
@@ -74,4 +79,65 @@ test('session and component identities use the same lineage invariant',async()=>
   const altered=structuredClone(session);
   altered.sidecar.collection.components[0].sidecar.ancestorIds.push('forged');
   await assert.rejects(recheckEffectfulSession(altered,{requireAdmitted:false}),/identity evidence changed/);
+});
+
+test('frozen global source registry is rechecked with its exact source and holdout assignment',async()=>{
+  const registry=buildSourceRegistry([{id:'source-1',family:fixture.family,source:fixture.source,
+    ancestorIds:fixture.ancestorIds,project:'held-out-project'}],{holdoutProjects:['held-out-project']});
+  const splitIdentity=frozenSplitIdentity(registry,fixture.family);
+  const result=await verifyEffectfulTrainingCase({...fixture,splitIdentity});
+  assert.equal(result.status,'locally_verified',result.reason);
+  assert.equal(result.exported.sidecar.split,'test');
+  await recheckEffectfulAdmission(result.exported,{requireAdmitted:false});
+  const altered=structuredClone(result.exported);
+  altered.sidecar.splitIdentity.registry.sources[0].source='"use strict"; function run(){return 99;}';
+  altered.sidecar.splitIdentity.registryDigest=identityDigest(altered.sidecar.splitIdentity.registry);
+  assert.throws(()=>bindAdmissionIdentity(altered),/frozen source registry/);
+  const wrongSource=await verifyEffectfulTrainingCase({...fixture,splitIdentity,
+    source:'"use strict"; function run(x){return x+2;}'});
+  assert.notEqual(wrongSource.status,'locally_verified');
+  assert.match(wrongSource.reason,/source bytes absent/);
+});
+
+const policy={consumerRevision:'c'.repeat(40),tokenizerIdentity:'synthetic-test-tokenizer',tokenizerSha256:'d'.repeat(64)};
+const sha=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
+// Shape-only fixture. It tests the producer boundary, not actual native admission.
+function syntheticReceipt(exported){
+  const contract=JSON.parse(readFileSync(new URL('../contracts/semantic-harness-v5.json',import.meta.url),'utf8'));
+  return {schema:'semantic-native-admission/4',componentGate:'native-consumer-only',admitted:true,
+    episodeDigest:sha(exported.public),contractDigest:sha(JSON.stringify(hostOperationContract(),null,2)+'\n'),
+    schemaDigest:contract.digest,fixtureDigest:contract.fixtureDigest,
+    lossMaskValidated:true,visibilityValidated:true,fragmentationValidated:true,optimizerSteps:0,
+    generatedTokens:10,observedTokens:10,...policy};
+}
+test('native API requires exact consumer and tokenizer policy before calling a consumer',async()=>{
+  let calls=0;
+  const nativeConsumer=async exported=>{calls++;return syntheticReceipt(exported);};
+  await assert.rejects(verifyEffectfulTrainingCase({...fixture,nativeConsumer}),/policy is incompatible/);
+  await assert.rejects(verifyEffectfulTrainingCase({...fixture,nativeConsumer,
+    nativePolicy:{consumerRevision:policy.consumerRevision,tokenizerIdentity:policy.tokenizerIdentity}}),/SHA-256/);
+  assert.equal(calls,0);
+  const result=await verifyEffectfulTrainingCase({...fixture,nativeConsumer,nativePolicy:policy});
+  assert.equal(result.status,'admitted',result.reason);
+  assert.equal(calls,1);
+  assert.equal(result.exported.sidecar.nativeBinding.identityDigest,result.exported.sidecar.identityDigest);
+  const receipt=await recheckEffectfulAdmission(result.exported,{nativePolicy:policy});
+  assert.equal(receipt.identityValidated,true);
+  for(const field of ['consumerRevision','tokenizerIdentity','tokenizerSha256']){
+    const changed={...syntheticReceipt(result.exported),[field]:'a'.repeat(field==='consumerRevision'?40:64)};
+    assert.throws(()=>requireNativeAdmission(result.exported,changed,policy),/incompatible/);
+  }
+  const altered=structuredClone(result.exported);altered.sidecar.nativeBinding.identityDigest='0'.repeat(64);
+  await assert.rejects(recheckEffectfulAdmission(altered),/does not bind/);
+  const forged=structuredClone(result.exported);forged.sidecar.split='forged';
+  assert.throws(()=>bindNativeAdmission(forged,syntheticReceipt(forged),policy),/identity evidence changed/);
+});
+
+test('native session policy binds each component and whole-session receipt',async()=>{
+  const result=await verifyEffectfulSession({cases:[fixture,{...fixture,args:[8]}],family:fixture.family,
+    nativePolicy:policy,nativeConsumer:async exported=>syntheticReceipt(exported)});
+  assert.equal(result.status,'admitted',result.reason);
+  assert(result.exported.sidecar.collection.components.every(item=>
+    item.sidecar.identity.certification.nativePolicy.consumerRevision===policy.consumerRevision));
+  assert.equal((await recheckEffectfulSession(result.exported,{nativePolicy:policy})).identityValidated,true);
 });
