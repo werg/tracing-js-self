@@ -110,6 +110,12 @@
       "sourcePath": "native-environment-current.json",
       "bytes": 2318,
       "sha256": "4f0c75810d9b5bcc4e9fce49707ecf41d395797103bd37950ac820741b844597"
+    },
+    {
+      "path": "tracing-js-original-corpus-evidence-2026-11-18-zstd.json",
+      "sourcePath": "artifacts/tracing-js-original-corpus-evidence-2026-11-18-zstd.json",
+      "bytes": 1318,
+      "sha256": "40d24e634096537f91f7b0618ac04787bac300a8973b759e94c9d4538a6f242c"
     }
   ],
   "derivedFiles": [
