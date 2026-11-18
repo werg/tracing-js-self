@@ -11,11 +11,10 @@ import {SEMANTIC_TASK_TEMPLATES,SEMANTIC_RECIPE_VERSION,SEMANTIC_RECIPE_NAME,
   BENCHMARK_ALGORITHMS,BENCHMARK_RECIPE_NAME,BENCHMARK_RECIPE_VERSION}
   from '../src/training/recipe-fixtures.js';
 import {hostOperationContract} from '../src/host/operations.js';
-import {encodeNativeGraph} from '../src/host/graph-codec.js';
 import {EXECUTION_VERSION,WITNESS_VERSION,CONTEXT_VERSION,HARNESS_PROFILE} from '../src/training/format.js';
 import {CampaignStore,atomicWrite,identityHash} from '../src/corpus/campaign-store.mjs';
 import {generationIdentity} from '../src/corpus/campaign-identity.mjs';
-import {runGenerationProcess,encodeGenerationTask} from '../src/corpus/generation-process.mjs';
+import {runGenerationProcess,persistGenerationCandidate} from '../src/corpus/generation-process.mjs';
 import {loadNativeSettings,createNativeConsumer} from '../src/corpus/native-admission-client.mjs';
 import {buildSourceRegistry,verifySourceRegistry,immutableSourceRegistry,frozenSplitIdentity,canonicalHash}
   from '../src/corpus/source-registry.mjs';
@@ -87,16 +86,6 @@ const start=performance.now(),cases=[],exportEntries=new Map(),summaryById=new M
 let resumed=0,next=0;const freshlyRun=new Set();
 const abort=new AbortController();
 const cancel=()=>abort.abort();process.once('SIGINT',cancel);process.once('SIGTERM',cancel);
-const persistCandidate=task=>{
-  const inputs=(task.kind==='source'?[task.fixture]:task.fixture.cases??[]).map(fixture=>({
-    source:campaign.putObject('sources',fixture.source),
-    input:campaign.putObject('inputs',encodeNativeGraph(fixture.args??[])),
-    fixture:campaign.putObject('fixtures',fixture.fixture??{calls:[]})}));
-  return {kind:task.kind,id:task.fixture.id,family:task.fixture.family,
-    // Canonical graphs retain null prototypes, aliases, undefined and special
-    // numbers while leaving registry subtrees visible to private CAS storage.
-    fixtureEncoding:'canonical-generation-fixture/1',fixture:encodeGenerationTask(task).fixture,inputs};
-};
 function record(fixture,entry){
   const summary=campaign.readObject(entry.result),details=summary.campaignSummary;
   let path=null;
@@ -126,7 +115,7 @@ const workers=Array.from({length:Math.min(jobs,selectedTasks.length)},async()=>{
   for(;;){
     if(abort.signal.aborted)return;
     const index=next++;if(index>=selectedTasks.length)return;
-    const task=selectedTasks[index],candidate=persistCandidate(task);
+    const task=selectedTasks[index],candidate=persistGenerationCandidate(campaign,task);
     let entry=campaign.cached(task.fixture.id,candidate,{retryFailures:flags.has('--retry-failures')});
     if(entry)resumed++;
     else{

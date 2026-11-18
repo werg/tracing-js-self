@@ -131,6 +131,7 @@ export function immutableSourceRegistry(registry){
     byFamily:new Map(snapshot.components.flatMap(component=>component.members.map(family=>[family,component])))});
   return snapshot;
 }
+export const isImmutableSourceRegistry=registry=>immutableRegistries.has(registry);
 export function frozenSplitIdentity(registry,family){
   const receipt=verifySourceRegistry(registry);
   const component=immutableRegistries.get(registry)?.byFamily.get(family)??

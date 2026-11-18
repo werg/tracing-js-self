@@ -4,7 +4,9 @@ import {mkdtempSync,rmSync,readFileSync} from 'node:fs';
 import {join,resolve} from 'node:path';
 import {tmpdir} from 'node:os';
 import {spawnSync} from 'node:child_process';
-import {runGenerationProcess,generationEnvironment,encodeGenerationTask,decodeGenerationTask} from '../src/corpus/generation-process.mjs';
+import {runGenerationProcess,generationEnvironment,encodeGenerationTask,decodeGenerationTask,
+  persistGenerationCandidate} from '../src/corpus/generation-process.mjs';
+import {decodeOwnedGraph} from '../src/host/graph-codec.js';
 import {verifyEffectfulTrainingCase} from '../src/training/effectful-admit.js';
 import {materializeCampaign} from '../tools/materialize-campaign.mjs';
 import {CampaignStore,identityHash} from '../src/corpus/campaign-store.mjs';
@@ -70,6 +72,38 @@ test('encoded fixtures separate structural metadata aliases from exact guest gra
     assert.throws(()=>encodeGenerationTask({...task,fixture:{...task.fixture,optional}}),/metadata/);
   const circular={};circular.self=circular;
   assert.throws(()=>encodeGenerationTask({...task,fixture:{...task.fixture,circular}}),/acyclic JSON/);
+});
+test('durable fixture references use the same canonical host and input graphs',t=>{
+  const value={n:3n},sparse=[undefined,,NaN,-0,Infinity];
+  const request={...task,fixture:{...task.fixture,args:[value,value],fixture:{calls:[{
+    operation:'demo.effect',arguments:[value,value],result:sparse}]}}};
+  const store=new CampaignStore(directory(t),{purpose:'canonical-host-fixture'});t.after(()=>store.close());
+  const candidate=persistGenerationCandidate(store,request);
+  const entry=store.record('special',candidate,{status:'unsupported',reason:'storage regression only'});
+  const restored=store.readObject(entry.candidate),input=restored.inputs[0];
+  assert.deepEqual(store.readObject(input.input),restored.fixture.argsGraph);
+  const fixture=store.readObject(input.fixture);assert.deepEqual(fixture,restored.fixture.fixture);
+  const args=decodeOwnedGraph(JSON.stringify(fixture.calls[0].argumentGraph));
+  assert.equal(args[0],args[1]);assert.equal(args[0].n,3n);
+  const [result]=decodeOwnedGraph(JSON.stringify(fixture.calls[0].resultGraph));
+  assert.equal(result[0],undefined);assert.ok(Object.hasOwn(result,0));assert.ok(!Object.hasOwn(result,1));
+  assert.ok(Number.isNaN(result[2]));assert.ok(Object.is(result[3],-0));assert.equal(result[4],Infinity);
+});
+test('verified registry trees are reused across candidates and distinct within each stored session',()=>{
+  const registry=immutableSourceRegistry(buildSourceRegistry(candidateSourceInventory([task])));
+  const splitIdentity=frozenSplitIdentity(registry,task.fixture.family);
+  const request={...task,fixture:{...task.fixture,splitIdentity}};
+  const first=encodeGenerationTask(request),second=encodeGenerationTask(request);
+  assert.equal(first.fixture.splitIdentity.registry,second.fixture.splitIdentity.registry);
+  assert.ok(Object.isFrozen(first.fixture.splitIdentity.registry.sources));
+  assert.throws(()=>{first.fixture.splitIdentity.registry.sources[0].source='changed';},TypeError);
+  const session={kind:'session',fixture:{id:'session',family:task.fixture.family,splitIdentity,
+    cases:[request.fixture,request.fixture]}};
+  const stored=encodeGenerationTask(session),transport=encodeGenerationTask(session,{jsonStorage:false});
+  assert.notEqual(stored.fixture.splitIdentity.registry,stored.fixture.cases[0].splitIdentity.registry);
+  assert.notEqual(stored.fixture.cases[0].splitIdentity.registry,stored.fixture.cases[1].splitIdentity.registry);
+  assert.equal(transport.fixture.splitIdentity.registry,transport.fixture.cases[0].splitIdentity.registry);
+  assert.equal(identityHash(stored),identityHash(JSON.parse(JSON.stringify(stored))));
 });
 test('all five recipe fixture inventories survive frozen-registry campaign storage',t=>{
   const inventory=SOURCE_RECIPES.flatMap(recipe=>trainingCandidateTasks(recipe,{perFamily:12}));
