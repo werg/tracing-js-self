@@ -1,0 +1,31 @@
+{
+  "schema": "native-ci-archive-transport-workaround/1",
+  "originalWorkflowRunId": 44321402524,
+  "artifactName": "semantic-v5-benchmark-v1-admission-and-evaluation",
+  "originalZipBytes": 874061909,
+  "originalZipSha256": "8aea8598302d2e675ac7be4003e3f185e87106f2c4010ed1c2ebde54056b8a7e",
+  "observedFailure": {
+    "tool": "github_download_workflow_artifact",
+    "error": "InvalidInputException: Artifact exceeds max size of 536870912 bytes: 874061909 bytes.",
+    "reproduced": true,
+    "connectorMaximumBytes": 536870912,
+    "originalBytesReceived": 0
+  },
+  "workaround": {
+    "status": "published-awaiting-execution",
+    "workflow": ".github/workflows/preserve-native-ci-artifact.yml",
+    "script": "tools/preserve_ci_benchmark_artifact.py",
+    "commit": "a2b74d47989a5354c87a950ebbc9d08ea0be00ba",
+    "scope": "Download the original artifact with read-only GitHub Actions authorization, check frozen source/API identity and whole SHA, and transport the identical bytes as exact400MiB parts under the connector limit.",
+    "partBytes": 419430400,
+    "expectedPartSizes": [
+      419430400,
+      419430400,
+      35201109
+    ],
+    "nativeRerun": false,
+    "originalArtifactModified": false,
+    "learnedSuccessClaim": false
+  },
+  "privateConnectorIdentifiersOrSignedUrlsIncluded": false
+}
