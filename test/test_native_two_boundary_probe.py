@@ -164,5 +164,45 @@ class ActualSampleTests(unittest.TestCase):
         self.assertEqual(PROBE.compare_actual_samples(left, right, 1)["status"], "failed")
 
 
+
+class ProbabilityToleranceTests(unittest.TestCase):
+    def comparison(self, structural_delta):
+        import torch
+        from types import SimpleNamespace
+        valid = torch.tensor([True, True])
+        weights = torch.eye(2)
+        model = SimpleNamespace(decoder=SimpleNamespace(
+            valid_utf8=valid,
+            vocabulary=SimpleNamespace(embedding=SimpleNamespace(weight=weights))))
+        import hashlib
+        alphabet_sha = hashlib.sha256(valid.numpy().tobytes()).hexdigest()
+        lexical = {
+            "alphabetSha256": alphabet_sha, "positions": 1,
+            "fullConditionalProbabilitiesSha256": "same",
+            "projectedStates": {"shape": [1, 2], "values": [1.0, 0.0]},
+            "tokens": [{"tokenId": 0}],
+        }
+        teacher = {"categoricals": [
+            {"name": "length", "support": [1, 2], "selected": 1, "probabilities": [0.5, 0.5]},
+            {"name": "terminal", "support": [0, 1], "selected": 1, "probabilities": [0.5, 0.5]},
+        ], "lexical": [lexical]}
+        renderer = copy.deepcopy(teacher)
+        renderer["categoricals"][0]["probabilities"] = [0.5 + structural_delta, 0.5 - structural_delta]
+        return PROBE.numeric_decoder_comparison(model, teacher, renderer, [0])
+
+    def test_native_float32_unit_scale_roundoff_has_an_explicit_bound(self):
+        import torch
+        row = self.comparison(1.1e-7)
+        self.assertEqual(row["status"], "passed")
+        self.assertEqual(row["absoluteProbabilityTolerance"], torch.finfo(torch.float32).eps)
+        self.assertEqual(row["totalVariationTolerance"], 1e-5)
+        self.assertEqual(row["selectedLogProbabilityTolerance"], 1e-4)
+
+    def test_changed_conditional_fails_even_below_the_aggregate_tv_limit(self):
+        row = self.comparison(1e-6)
+        self.assertLess(row["maximumTotalVariation"], row["totalVariationTolerance"])
+        self.assertEqual(row["status"], "failed")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -292,11 +292,16 @@ def numeric_decoder_comparison(model, teacher, renderer, emitted_ids):
                 compared += p.numel()
                 differences.append({"head": "lexical", "call": call, "position": position,
                                     "maximumAbsoluteDifference": error, "totalVariation": tv})
+    # Probabilities live on [0, 1]. Use the native dtype's spacing at unit scale,
+    # not a decimal threshold slightly below float32 epsilon. Independent total
+    # variation and selected log-probability bounds still constrain aggregate drift.
+    probability_atol = torch.finfo(torch.float32).eps
     return {
-        "status": "passed" if (max_error <= 1e-7 and max_tv <= 1e-5
+        "status": "passed" if (max_error <= probability_atol and max_tv <= 1e-5
                                  and abs(teacher_log_prob - serving_log_prob) <= 1e-4) else "failed",
         "comparedProbabilities": compared, "maximumAbsoluteDifference": max_error,
-        "maximumTotalVariation": max_tv, "absoluteProbabilityTolerance": 1e-7,
+        "maximumTotalVariation": max_tv, "absoluteProbabilityTolerance": probability_atol,
+        "probabilityToleranceBasis": "torch.finfo(torch.float32).eps at unit probability scale",
         "totalVariationTolerance": 1e-5, "exactLexicalProbabilityHashesMatch": exact_lexical,
         "sameOriginalEmittedIds": True,
         "teacherSelectedLogProbability": teacher_log_prob,

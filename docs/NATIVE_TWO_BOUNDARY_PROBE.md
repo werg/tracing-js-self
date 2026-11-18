@@ -32,6 +32,12 @@ with zero optimizer updates. It preserves the original emitted token IDs and
 structural choices, making their conditional distributions comparable even when
 the second emission differs from the demonstration's next target.
 
+Full probability comparison uses the native float32 epsilon at unit probability
+scale (1.1920928955078125e-7), maximum total variation 1e-5 per conditional,
+and selected joint log-probability difference 1e-4. Original tensor and full
+probability hashes are retained even when these numeric bounds pass. A numeric
+pass does not imply bitwise equality.
+
 The Gaussian draws are coupled by seeding the genuine sampler at each boundary.
 No draw, Gaussian parameter, state tensor or decoded output is replaced. This
 removes unrelated differences in earlier random-number consumption without
