@@ -14,7 +14,8 @@ identity and do not qualify current artifacts.
 | Source-grounded trace inspection | `node tools/inspect-semantic-reasoning.mjs` | Actual generated examples pass independent source checks. |
 | Current capability ladder | `npm run coverage:current -- --out PATH` | Publish stage-specific denominators; untested remains untested. |
 | Independent spec oracle | `.github/workflows/spec-baseline.yml` | Integrity-locked engine262 plus narrowly declared Test262 variants. Native diagnostics and inventories have separate denominators. |
-| All authored native recipes | `.github/workflows/megatoken-consumer.yml` | Engineering, training-v4 and benchmark-v1 pass fresh producer, consumer, tokenizer, visibility, loss and provenance checks. |
+| Authored and generated native recipes | `.github/workflows/megatoken-consumer.yml` | Engineering, training-v4, benchmark-v1 and generated-v1 pass fresh producer, consumer, tokenizer, visibility, loss and provenance checks. |
+| Real-source native bridge | Same workflow's real-source lane | Reviewed utilities, Exercism and production helpers enter the same native gates. Every refusal remains accounted for; only actual admissions enter the prepared data. |
 | Browser adapter, when included | `npm run test:browser` | Execute real Chromium at the release revision; retain failure if the host cannot launch it. |
 | Complete dataset release | `tools/package-semantic-release.py` | Recheck actual admitted rows; retain all refusals, private evidence, source notices, prepared data, lock hashes and archive inventory. |
 | Model learning claim | Frozen base-versus-trained evaluation | Real optimization, exact checkpoint identity, uninjected model bytes and whole-task results; infrastructure success alone is insufficient. |

@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        recipe: [engineering, training-v4, benchmark-v1]
+        recipe: [engineering, training-v4, benchmark-v1, real-source, generated-v1]
     env:
       TZ: UTC
       LANG: C.UTF-8
@@ -79,13 +79,20 @@ jobs:
           cmp contracts/semantic-harness-v5.json megatoken/src/megatoken/data/contracts/semantic-harness-v5.json
           node tools/freeze-source-registry.mjs --out "$RUNNER_TEMP/source-registry.json" \
             --holdout-projects exercism/javascript --holdout-compositions square/even/maximum/alias/return
-          node tools/generate-effectful-training.mjs --recipe '${{ matrix.recipe }}' --jobs 4 --out "$RUNNER_TEMP/corpus" \
+          require_native=(--require-native)
+          if [[ '${{ matrix.recipe }}' == 'real-source' ]]; then
+            # Real upstream candidates retain every unsupported/refused row;
+            # the release step rechecks and prepares only actual admissions.
+            require_native=()
+          fi
+          node tools/generate-effectful-training.mjs --recipe '${{ matrix.recipe }}' --jobs 3 --out "$RUNNER_TEMP/corpus" \
             --registry "$RUNNER_TEMP/source-registry.json" \
             --megatoken megatoken --python python --tokenizer "$RUNNER_TEMP/tokenizer.json" \
-            --native-policy contracts/native-admission-policy-v5.json --require-native
+            --native-policy contracts/native-admission-policy-v5.json "${require_native[@]}"
           node tools/generate-selected-harness-v4.mjs "$RUNNER_TEMP/two-invocations.json"
           node tools/generate-selected-continuity-v4.mjs "$RUNNER_TEMP/continuity"
       - name: Recheck admitted evidence and export real native training data without optimizing
+        if: matrix.recipe != 'real-source'
         run: |
           python - <<'PY'
           import json, os, subprocess, sys
@@ -151,6 +158,25 @@ jobs:
             --tracer-root . --megatoken megatoken --tokenizer "$RUNNER_TEMP/tokenizer.json" \
             --environment-receipt "$RUNNER_TEMP/native-environment.json" --out "$RUNNER_TEMP/release"
           python tools/package-semantic-release.py --verify "$RUNNER_TEMP/release/semantic-v5-release.tar.gz"
+      - name: Reconcile all source dispositions and independent family counts
+        run: |
+          python - <<'PY'
+          import collections, json, os
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          manifest = json.loads((root / 'corpus/manifest.json').read_text())
+          counts = collections.Counter(row['status'] for row in manifest['cases'])
+          assert sum(counts.values()) == manifest['counts']['attempted']
+          assert counts['admitted'] > 0, 'A native qualification lane must yield actual admitted examples'
+          assert all(manifest['counts'].get(key) == value for key, value in counts.items())
+          summary = {'schema':'semantic-source-dispositions/1', 'producerRevision':manifest['producerRevision'],
+            'recipe':manifest['recipe'], 'attempted':len(manifest['cases']), 'dispositions':dict(counts),
+            'admittedFamilies':len({row['family'] for row in manifest['cases'] if row['status']=='admitted'}),
+            'admittedComponents':len({row['sourceCluster'] for row in manifest['cases'] if row['status']=='admitted'}),
+            'optimizerSteps':0, 'learnedSuccess':None}
+          (root / 'source-dispositions.json').write_text(json.dumps(summary,indent=2)+'\n')
+          print(json.dumps(summary))
+          PY
       - name: Retain complete corpus, prepared shards and actionable refusals
         if: always()
         uses: actions/upload-artifact@v4
@@ -166,6 +192,7 @@ jobs:
             ${{ runner.temp }}/native-environment.json
             ${{ runner.temp }}/native-capabilities.json
             ${{ runner.temp }}/source-registry.json
+            ${{ runner.temp }}/source-dispositions.json
             ${{ runner.temp }}/evaluation.json
             ${{ runner.temp }}/continuity/*.txt
             ${{ runner.temp }}/native-inference/inference-check.json
