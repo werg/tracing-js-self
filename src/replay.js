@@ -130,8 +130,13 @@ export function replayExact(bundle) {
     if(bundle.entrySpec?.kind==='function') {
       const {functionName,arguments:roots,sourceId}=bundle.entrySpec;
       if(sourceId!==entry.sourceId)fail('Entry source mismatch');
+      // startEntry gates every top-level async declaration, not just the
+      // selected root. Infer the required syntax profile from freshly compiled
+      // source after the full bytecode comparison; never trust an archive flag.
+      const allowAsync=runtime.programs[entry.entry].instructions.some(instruction=>
+        instruction.op==='DEF_FN'&&instruction.arg?.async===true);
       runtime.startEntry({source:entry,functionName,args:realizeGraph(initial.heap,roots),
-        allowAsync:initial.frames?.[activeId]?.asyncPromiseId != null,
+        allowAsync,
         allowHost:initial.envs?.[initial.control.a0.globalEnvId]?.bindings?.host?.token?.value?.[0]==='host'});
     } else runtime.start(entry);
     expectSame(runtime.exportRun().manifest,bundle.manifest,'runtime profile manifest');

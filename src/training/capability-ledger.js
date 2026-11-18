@@ -23,6 +23,7 @@ export const CAPABILITY_CASES=Object.freeze([
   pure('parameter-closure-capture','const x=7;function run(a=()=>x){var x=3;return a();}'),
   pure('later-parameter-tdz','const b=9;function run(a=b,b=3){return a;}'),
   pure('async-helper-declaration','async function helper(){return 7;}async function run(){return typeof helper();}'),
+  pure('sync-root-async-helper-rejection','async function fail(){throw 7;}function run(){return fail().catch(e=>e);}'),
   pure('slice-undefined-end','function run(){return [1,2,3].slice(0,undefined);}'),
   pure('fill-undefined-end','function run(){return [1,2,3].fill(7,1,undefined);}'),
   pure('copy-within-undefined-end','function run(){return [1,2,3].copyWithin(0,1,undefined);}'),

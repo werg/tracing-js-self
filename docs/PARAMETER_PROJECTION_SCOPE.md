@@ -87,3 +87,17 @@ The following remain explicit projection refusals:
 Supporting those cases generally requires a separately specified public TDZ-cell
 contract or a broader proven projection. They are not silently converted into
 positive examples. These changes run no optimizer or model evaluation.
+
+## Synchronous roots with async helper declarations
+
+Exact replay now derives the required async syntax option from freshly compiled
+top-level declarations after comparing all reconstructed source descriptors,
+sites, and bytecode to the archive. A synchronous entry may call an async helper
+or catch its primitive rejection without requiring the root itself to be async.
+No archive-provided enablement flag is trusted. Direct `startEntry` calls with
+the async profile disabled still reject async top-level declarations, and replay
+does not add host bindings or adapters.
+
+The finite `sync-root-async-helper-rejection` capability probe exercises this
+path in the next freshly pinned native capability run. This is independent of
+the parameter ReferenceError leaf and introduces no additional host capability.
