@@ -18,6 +18,11 @@ A retained [feature-level capability ladder](coverage/current-v5.json) names its
 The [18 November resumption implementation](docs/RESUMPTION_IMPLEMENTATION.md)
 tracks semantic repairs, immutable provenance, global split isolation,
 resumable source campaigns, native releases, and actual optimization diagnostics.
+The subsequent [execution-training roadmap implementation](docs/EXECUTION_TRAINING_IMPLEMENTATION.md)
+adds independent checks for overwritten intermediate errors, a reproduced
+native training/serving input mismatch, a causal-LM diagnostic bridge, checked
+trace-abstraction experiments and coverage-aware sampling. Its ledger separates
+implemented tools from the learning and release gates still awaiting evidence.
 See [owned arithmetic and evidence](docs/OWNED_ARITHMETIC.md) for the earlier
 spec-operation milestone.
 
