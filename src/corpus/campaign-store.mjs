@@ -12,6 +12,9 @@ export const sha256=value=>createHash('sha256').update(value).digest('hex');
 const json=value=>JSON.stringify(value)+'\n';
 const digest=/^[a-f0-9]{64}$/;
 const safeId=/^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,199}$/;
+const validStatus=value=>typeof value==='string'&&/^[a-z][a-z0-9_-]{0,127}$/.test(value);
+const validCosts=({durationMs,peakRssBytes})=>Number.isFinite(durationMs)&&durationMs>=0&&
+  (peakRssBytes===null||Number.isSafeInteger(peakRssBytes)&&peakRssBytes>=0);
 export function canonicalJSON(value){
   const encode=(item,seen)=>{
     if(item===undefined)return ['undefined'];
@@ -108,7 +111,7 @@ export class CampaignStore{
     }
     for(const line of bytes.subarray(0,end).toString('utf8').split('\n').filter(Boolean)){
       const entry=JSON.parse(line),{entryDigest,...payload}=entry;
-      if(entry.schema!=='semantic-generation-entry/1'||
+      if(entry.schema!=='semantic-generation-entry/1'||!validStatus(entry.status)||!validCosts(entry)||
         entry.campaignDigest!==this.identityDigest||entry.previous!==this.previous||
         identityHash(payload)!==entryDigest||!safeId.test(entry.id??'')||
         !digest.test(entry.candidateDigest??''))throw new Error('Corrupt or reordered campaign log');
@@ -148,11 +151,12 @@ export class CampaignStore{
       uncompressedBytes:raw.length,encoding:compress?'gzip':'json'};
   }
   readObject(ref){
-    if(!ref||!Number.isSafeInteger(ref.bytes)||ref.bytes<0||
+    if(!ref||typeof ref.path!=='string'||!Number.isSafeInteger(ref.bytes)||ref.bytes<0||
       !Number.isSafeInteger(ref.uncompressedBytes)||ref.uncompressedBytes<0||
       !['json','gzip'].includes(ref.encoding)||
       ref.path?.endsWith('.gz')!==(ref.encoding==='gzip')||
       !digest.test(ref.sha256??'')||!digest.test(ref.contentSha256??'')||
+      ref.path.split('/').at(-1)!==ref.contentSha256+(ref.encoding==='gzip'?'.json.gz':'.json')||
       !/^objects\/(candidates|sources|inputs|fixtures|results|public|private)\/[a-f0-9]{64}\.json(?:\.gz)?$/.test(ref.path??''))
       throw new Error('Invalid campaign object reference');
     const path=join(this.directory,ref.path);
@@ -184,7 +188,8 @@ export class CampaignStore{
     this.assertWritable();this.verifyCandidateObjects(candidate);
     if(identityHash(JSON.parse(json(candidate)))!==identityHash(candidate))
       throw new TypeError('Campaign candidate must encode non-JSON values before storage');
-    if(!safeId.test(id)||typeof result?.status!=='string')throw new TypeError('Invalid campaign result');
+    if(!safeId.test(id)||!validStatus(result?.status)||!validCosts({durationMs,peakRssBytes}))
+      throw new TypeError('Invalid campaign result status or measured costs');
     const {exported,...summary}=result;
     const previousAttempt=this.latest.get(id);
     if(previousAttempt&&previousAttempt.candidateDigest!==this.candidateDigest(candidate))

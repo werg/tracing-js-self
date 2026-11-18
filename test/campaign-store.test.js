@@ -104,3 +104,22 @@ test('release readers share a nonmutating lock and reject unrecovered log tails'
   assert.throws(()=>new CampaignStore(dir,identity,{readOnly:true}),/incomplete log tail/);
   assert.deepEqual(readFileSync(path),before);
 });
+
+
+test('binds content-addressed filenames and rejects forged status or cost measurements',t=>{
+  const dir=temporary(t),store=new CampaignStore(dir,identity);
+  const original=store.putObject('inputs',{value:1}),renamed={...original,
+    path:original.path.replace(original.contentSha256,'0'.repeat(64))};
+  writeFileSync(join(dir,renamed.path),readFileSync(join(dir,original.path)));
+  assert.throws(()=>store.readObject(renamed),/Invalid campaign object reference/);
+  for(const costs of [{durationMs:-1},{durationMs:Infinity},{peakRssBytes:-1},{peakRssBytes:1.5}])
+    assert.throws(()=>store.record('bad',candidate,{status:'unsupported'},costs),/status or measured costs/);
+  assert.throws(()=>store.record('bad',candidate,{status:''}),/status or measured costs/);
+  const entry=store.record('one',candidate,{status:'unsupported'},{durationMs:1,peakRssBytes:1024});
+  store.close();
+  for(const update of [{durationMs:-1},{peakRssBytes:1.5},{status:''}]){
+    const {entryDigest,...payload}={...entry,...update};
+    writeFileSync(join(dir,'campaign.jsonl'),JSON.stringify({...payload,entryDigest:identityHash(payload)})+'\n');
+    assert.throws(()=>new CampaignStore(dir,identity,{readOnly:true}),/Corrupt or reordered/);
+  }
+});
