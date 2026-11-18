@@ -56,7 +56,7 @@ export class SemanticController {
     for(const node of this.input.graph.objects){
       if(this.heap.has(node.id))fail('identity','Input overwrites a retained identity');
       this.heap.set(node.id,{
-      kind:node.kind,prototype:node.prototype??'ordinary',
+      kind:node.kind,prototype:node.prototype===undefined?'ordinary':node.prototype,
       properties:new Map(node.properties.map(p=>[p.key,structuredClone(p.value)]))
       });
     }
@@ -388,7 +388,7 @@ export class SemanticController {
           fail('observation','External delivery differs from committed fixture');
         if(f.graph)for(const node of f.graph.objects){
           if(this.heap.has(node.id))fail('identity','Observed graph overwrites an owned identity');
-          this.heap.set(node.id,{kind:node.kind,prototype:node.prototype??'ordinary',
+          this.heap.set(node.id,{kind:node.kind,prototype:node.prototype===undefined?'ordinary':node.prototype,
             properties:new Map(node.properties.map(property=>[property.key,
               structuredClone(property.value)]))});
         }
