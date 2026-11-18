@@ -192,6 +192,20 @@ def checkpoint_receipt(checkpoint, initial_parameters):
             'sourceSampling': metadata['source_sampling']}
 
 
+def verify_training_start(initial, phase_start):
+    from megatoken.training.checkpoint import load_checkpoint
+
+    base, base_metadata = load_checkpoint(initial)
+    actual, actual_metadata = load_checkpoint(phase_start)
+    if (hashes(base['model']) != hashes(actual['model']) or
+            hashes(base['optimizer']['master_weights']) != hashes(actual['optimizer']['master_weights']) or
+            actual['optimizer']['moments'] or actual['global_step'] != 0):
+        raise ValueError('Trainer phase-start state differs from the declared initialized base')
+    return {'exact': True, 'baseCheckpointSha256': base_metadata['state_sha256'],
+            'phaseStartCheckpointSha256': actual_metadata['state_sha256'],
+            'modelTensorIdentity': state_identity(actual['model']), 'optimizerSteps': 0}
+
+
 def export_checked(checkpoint, destination):
     from megatoken.loading import load_trained
     from megatoken.served import ServedBundle, export_served
@@ -330,6 +344,7 @@ def main():
         run_logged([sys.executable, '-m', 'megatoken', 'train', '--config', str(config_path),
                     '--resume', str(initial), '--phase-transition'], root / 'training.log',
                    env=env, timeout=args.train_timeout)
+        start_check = verify_training_start(initial, root / 'training/checkpoints/P1-000000000-phase-start')
         pointer = json.loads((root / 'training/checkpoints/latest.json').read_text())
         checkpoint = root / 'training/checkpoints' / pointer['checkpoint']
         checkpoint_check = checkpoint_receipt(checkpoint, initial_parameters)
@@ -348,6 +363,7 @@ def main():
         if base_bundle['model_sha256'] == trained_bundle['model_sha256']:
             raise ValueError('Training did not change the actual served model')
         record(phase='evaluating', optimizerSteps=args.steps, trainedBundle=trained_bundle,
+               initialTrainingState=start_check,
                checkpointVerification={key: value for key, value in checkpoint_check.items()
                                        if key not in {'changedParameters', 'updatedOptimizerOwners'}},
                changedParameterCount=len(checkpoint_check['changedParameters']),
@@ -370,7 +386,8 @@ def main():
                 rollouts.append(rollout(case, origin, bundle, consumer, root / 'rollouts', args, env))
                 record(rollouts=rollouts)
         trained = [row for row in rollouts if row['origin'] == 'trained']
-        requirements = {'optimizerUpdated': True, 'observedMasked': True, 'generatedSupervised': True,
+        requirements = {'optimizerUpdated': True, 'initialBaseLoadedExact': True,
+                        'observedMasked': True, 'generatedSupervised': True,
                         'checkpointReloadExact': True, 'servedReloadExact': True,
                         'completeHeldInExecutions': all(row['wholeTaskSuccess'] for row in trained),
                         'approximately32Examples': len(selected) >= 32}
