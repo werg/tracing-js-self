@@ -199,6 +199,8 @@ jobs:
           include-hidden-files: true
           path: |
             ${{ runner.temp }}/corpus/
+            !${{ runner.temp }}/corpus/.native/**
+            !${{ runner.temp }}/corpus/.workers/**
             ${{ runner.temp }}/prepared-semantic/
             ${{ runner.temp }}/release/
             ${{ runner.temp }}/native-environment.json

@@ -73,11 +73,18 @@ export async function runGenerationProcess(task,{outputDirectory,timeoutMs=12000
     const start=performance.now(),child=spawn(process.execPath,
       ['--max-old-space-size='+memoryMb,worker],{stdio:['pipe','pipe','pipe'],
         detached:process.platform!=='win32',env:generationEnvironment(),shell:false});
-    let stdout='',stderr='',finished=false;
+    let stdout='',stderr='',finished=false,closed=false,pending=null;
     const stop=()=>{try{if(process.platform!=='win32')process.kill(-child.pid,'SIGKILL');else child.kill('SIGKILL');}catch{}};
+    const settle=()=>{
+      if(!closed||!pending)return;
+      rmSync(output,{force:true});
+      resolveRun({...pending,durationMs:performance.now()-start});
+    };
     const finish=(result,peakRssBytes=null)=>{
       if(finished)return;finished=true;clearTimeout(timer);signal?.removeEventListener('abort',cancel);
-      stop();rmSync(output,{force:true});resolveRun({result,durationMs:performance.now()-start,peakRssBytes});
+      pending={result,peakRssBytes};
+      if(!closed)stop();
+      settle();
     };
     const cancel=()=>finish({status:'cancelled',reason:'Campaign cancelled during generation'});
     const timer=setTimeout(()=>finish({status:'worker_timeout',reason:'Generation process exceeded '+timeoutMs+' ms'}),timeoutMs);
@@ -88,7 +95,8 @@ export async function runGenerationProcess(task,{outputDirectory,timeoutMs=12000
       finish({status:'worker_output_limit',reason:'Worker protocol exceeded 8192 bytes'});});
     child.stderr.on('data',bytes=>{stderr=(stderr+bytes.toString()).slice(-8192);});
     child.once('close',(code,exitSignal)=>{
-      if(finished)return;
+      closed=true;
+      if(finished){settle();return;}
       try{
         if(code!==0)throw new Error('Worker exited '+(exitSignal??code)+(stderr?': '+stderr:''));
         if(statSync(output).size>maxOutputBytes)
