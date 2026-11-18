@@ -121,3 +121,29 @@ records the distinct native deduplication and component-cap denominators.
 Neither document claims optimizer updates or learned success. The trusted-source restriction and
 the need for operating-system isolation before accepting arbitrary untrusted
 programs remain unchanged.
+
+## Completed native preparation and archive
+
+The later [prepared-release receipt](evidence/semantic-v5/real-source-prepared-release-D-2026-11-18.json)
+records a successful full batch under the same frozen D producer and `b88073d`
+consumer. All 965 representatives were independently source-rechecked and
+natively re-admitted. Native deduplication retained 541 examples and recorded
+424 duplicates, with zero new refusals or quarantines. The accepted splits are
+462 training, 27 validation and 52 test examples, containing 546,670 native
+generated/scored tokens in total.
+
+The private archive includes every original candidate and refusal, selected
+representatives, prepared data, exact locks, native environment receipt and
+source notices. Verification read and hashed all 6,474 inventoried files. The
+archive is 1,688,252,285 bytes with SHA-256
+`ac4e88a3fba5f046ad44501e5751560806b1cdeaf701deb46fd6eea80aff9558`.
+Its release identity is
+`113e8faec41e9455c755860c6e32b74c16da7d01bf603f5467aaf1aad2fec030`.
+
+Full preparation, packaging and verification took 2,055.309 seconds. Peak
+packager Python RSS was 446,980,096 bytes. The separate waited-child peak is
+reported with its Linux resource-accounting scope; neither value measures
+simultaneous memory across the entire process tree. The unchanged native audit
+schema expands to 6,874,306,358 bytes, while the original compressed campaign
+CAS remains 83,629,653 bytes. These artifacts serve different purposes and
+their storage sizes must not be presented as the same denominator.
