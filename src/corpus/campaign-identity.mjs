@@ -1,7 +1,8 @@
-import {readFileSync,readdirSync} from 'node:fs';
+import {readFileSync,readdirSync,existsSync} from 'node:fs';
 import {join,relative} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {sha256,identityHash} from './campaign-store.mjs';
+import {referenceIsolationIdentity} from './reference-isolation.mjs';
 
 export function generationIdentity(root,{producerRevision,recipe,native=null,bounds={},registryDigest=null}={}){
   const files=[];
@@ -9,13 +10,15 @@ export function generationIdentity(root,{producerRevision,recipe,native=null,bou
     for(const entry of readdirSync(directory,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name))){
       const path=join(directory,entry.name);
       if(entry.isDirectory())walk(path);
-      else if(entry.isFile()&&/\.(?:mjs|js|json)$/.test(entry.name))
+      else if(entry.isFile()&&/\.(?:mjs|js|json|py)$/.test(entry.name))
         files.push([relative(root,path),sha256(readFileSync(path))]);
     }
   }
-  for(const directory of ['src','tools','contracts','profiles'])walk(join(root,directory));
+  for(const directory of ['src','tools','contracts','profiles','catalog'])walk(join(root,directory));
   for(const entry of readdirSync(join(root,'corpus'),{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name)))
     if(entry.isFile()&&/\.(?:mjs|json)$/.test(entry.name))files.push(['corpus/'+entry.name,sha256(readFileSync(join(root,'corpus',entry.name)))]);
+  for(const path of ['tools/native-consumer/requirements.lock','tools/native-consumer/requirements.in'])
+    if(existsSync(join(root,path)))files.push([path,sha256(readFileSync(join(root,path)))]);
   const dependencies=Object.fromEntries(['acorn','typescript'].map(name=>[name,
     JSON.parse(readFileSync(join(root,'node_modules',name,'package.json'),'utf8')).version]));
   let consumerEnvironment=null;
@@ -33,5 +36,6 @@ export function generationIdentity(root,{producerRevision,recipe,native=null,bou
       dependencies,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,
       locale:Intl.DateTimeFormat().resolvedOptions().locale},
     nativePolicy:native?.policy??null,consumerEnvironment,bounds,registryDigest,
+    referenceIsolation:referenceIsolationIdentity(),
     trace:'semantic-trace/5',profile:'training-js/1',trust:'authored-or-pinned-reviewed-source-only'};
 }

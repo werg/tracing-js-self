@@ -87,3 +87,20 @@ test('plain resume retries cancelled work and validates referenced source/input/
   const path=join(dir,input.path),bytes=readFileSync(path);bytes[0]^=1;writeFileSync(path,bytes);
   assert.throws(()=>new CampaignStore(dir,identity,{resume:true}),/checksum/);
 });
+
+
+test('release readers share a nonmutating lock and reject unrecovered log tails',t=>{
+  const dir=temporary(t),store=new CampaignStore(dir,identity);
+  store.record('one',candidate,{status:'unsupported'});store.close();
+  const reader=new CampaignStore(dir,identity,{readOnly:true});
+  const second=new CampaignStore(dir,identity,{readOnly:true});
+  assert.equal(reader.cached('one',candidate).status,'unsupported');
+  assert.throws(()=>new CampaignStore(dir,identity,{resume:true}),/another writer/);
+  assert.throws(()=>reader.record('two',candidate,{status:'unsupported'}),/read only/);
+  assert.throws(()=>reader.putObject('inputs',[]),/read only/);
+  reader.close();second.close();
+  const path=join(dir,'campaign.jsonl');appendFileSync(path,'{"unfinished":');
+  const before=readFileSync(path);
+  assert.throws(()=>new CampaignStore(dir,identity,{readOnly:true}),/incomplete log tail/);
+  assert.deepEqual(readFileSync(path),before);
+});

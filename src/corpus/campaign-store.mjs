@@ -47,10 +47,11 @@ export function atomicWrite(path,bytes){
 }
 
 export class CampaignStore{
-  constructor(directory,identity,{resume=false,maxObjectBytes=268435456}={}){
+  constructor(directory,identity,{resume=false,readOnly=false,maxObjectBytes=268435456}={}){
     this.directory=resolve(directory);this.identity=identity;
-    this.identityDigest=identityHash(identity);this.maxObjectBytes=maxObjectBytes;
+    this.identityDigest=identityHash(identity);this.maxObjectBytes=maxObjectBytes;this.readOnly=readOnly;
     this.latest=new Map();this.entries=[];this.previous=null;
+    if(readOnly&&!existsSync(join(this.directory,'campaign.json')))throw new Error('Cannot read an absent campaign');
     mkdirSync(this.directory,{recursive:true});
     // flock locks the inherited open-file description, which remains open in
     // this process after the short helper exits. The kernel releases the lock
@@ -58,7 +59,7 @@ export class CampaignStore{
     // Never unlink this stable inode: that would let another writer bypass it.
     this.lockDescriptor=openSync(join(this.directory,'.campaign.lock'),'a',0o600);
     try{
-      execFileSync('flock',['--exclusive','--nonblock','3'],
+      execFileSync('flock',[readOnly?'--shared':'--exclusive','--nonblock','3'],
         {stdio:['ignore','pipe','pipe',this.lockDescriptor]});
     }catch(error){
       closeSync(this.lockDescriptor);this.lockDescriptor=null;
@@ -69,7 +70,7 @@ export class CampaignStore{
       this.headerPath=join(this.directory,'campaign.json');
       this.logPath=join(this.directory,'campaign.jsonl');
       if(existsSync(this.headerPath)){
-        if(!resume)throw new Error('Campaign already exists; use --resume or a new output directory');
+        if(!resume&&!readOnly)throw new Error('Campaign already exists; use --resume or a new output directory');
         const header=JSON.parse(readFileSync(this.headerPath,'utf8'));
         if(header.schema!=='semantic-generation-campaign/1'||
           header.identityDigest!==this.identityDigest||
@@ -90,12 +91,17 @@ export class CampaignStore{
   assertOpen(){
     if(this.lockDescriptor===null)throw new Error('Campaign store is closed');
   }
+  assertWritable(){
+    this.assertOpen();
+    if(this.readOnly)throw new Error('Campaign store is read only');
+  }
   readLog(){
     this.assertOpen();
     const bytes=readFileSync(this.logPath),end=bytes.lastIndexOf(10)+1;
     // A process can die during append. Complete records remain authoritative;
     // preserve the partial bytes as forensic evidence before trimming them.
     if(end!==bytes.length){
+      if(this.readOnly)throw new Error('Campaign has an incomplete log tail; resume recovery before release verification');
       atomicWrite(join(this.directory,'recovery','torn-log-'+sha256(bytes.subarray(end))+'.bin'),bytes.subarray(end));
       const descriptor=openSync(this.logPath,'r+');
       try{ftruncateSync(descriptor,end);fsyncSync(descriptor);}finally{closeSync(descriptor);}
@@ -127,7 +133,7 @@ export class CampaignStore{
     }
   }
   putObject(kind,value,{compress=false}={}){
-    this.assertOpen();
+    this.assertWritable();
     if(!['candidates','sources','inputs','fixtures','results','public','private'].includes(kind))
       throw new TypeError('Unknown campaign object kind');
     const raw=Buffer.from(json(value));
@@ -175,7 +181,7 @@ export class CampaignStore{
     return {public:this.readObject(entry.public),sidecar:this.readObject(entry.private)};
   }
   record(id,candidate,result,{durationMs=0,peakRssBytes=null}={}){
-    this.assertOpen();this.verifyCandidateObjects(candidate);
+    this.assertWritable();this.verifyCandidateObjects(candidate);
     if(identityHash(JSON.parse(json(candidate)))!==identityHash(candidate))
       throw new TypeError('Campaign candidate must encode non-JSON values before storage');
     if(!safeId.test(id)||typeof result?.status!=='string')throw new TypeError('Invalid campaign result');
@@ -199,7 +205,7 @@ export class CampaignStore{
     return entry;
   }
   materialize(entry,filename=entry.id+'.json'){
-    this.assertOpen();
+    this.assertWritable();
     if(!safeId.test(filename))throw new TypeError('Unsafe compatibility export path');
     const exported=this.exported(entry);
     if(exported)atomicWrite(join(this.directory,filename),json(exported));
