@@ -88,6 +88,30 @@
       "bytes": 78584,
       "sha256": "cf650b4c79c6050fca6b688966efcf4442ba9af386a9cd0a1227a1598f7ab031",
       "kind": "unchanged-original-job-log"
+    },
+    {
+      "path": "real-corpus-observation-job.log",
+      "bytes": 20663,
+      "sha256": "9476287c932fded5d611c926a6a006b75e0b597bdda2d6ff64ad0e123745e01a",
+      "kind": "unchanged-original-job-log"
+    },
+    {
+      "path": "real-corpus-audit-job.log",
+      "bytes": 23843,
+      "sha256": "b9134392a2f5d803a3d7e4095ee33e9593aa7dcbe99d81b35fd4db2f84292718",
+      "kind": "unchanged-original-job-log"
+    },
+    {
+      "path": "real-corpus-observation-summary.json",
+      "bytes": 886,
+      "sha256": "b6bc48ab27791550f8ff54645b231f3ffaa67d2fb8741d86eafea3785aa22fff",
+      "kind": "parsed-job-log-summary"
+    },
+    {
+      "path": "real-corpus-audit-summary.json",
+      "bytes": 500,
+      "sha256": "fe2b6fd45b41aa9c25dbb40ca6db1db6bc2f9bdd033f02b359e00f80ae086d52",
+      "kind": "parsed-job-log-summary"
     }
   ],
   "scope": "Unchanged complete logs and parsed summaries copied from the named hosted jobs. Native jobs explicitly check out the producer head. Ordinary unit and Exercism workflows use their default synthetic-merge checkout; their summaries do not relabel those as exact head checkouts."

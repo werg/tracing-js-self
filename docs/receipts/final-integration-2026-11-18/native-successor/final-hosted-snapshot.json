@@ -1,0 +1,777 @@
+{
+  "schema": "resumption-final-hosted-and-pr-snapshot/1",
+  "observedAtUtc": "2026-11-18 14:44:48 UTC",
+  "queriedProducerHead": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+  "source": "GitHub connector workflow-run/job and pull-request metadata",
+  "workflowRuns": [
+    {
+      "id": 44321402535,
+      "name": "Inspect source-grounded semantic traces",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 136,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402535/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402535/logs",
+      "workflow_id": 396203051
+    },
+    {
+      "id": 44321402509,
+      "name": "Pinned spec oracle, owned arithmetic and Test262 evidence",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 1043,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402509/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402509/logs",
+      "workflow_id": 393046610
+    },
+    {
+      "id": 44321402567,
+      "name": "Selected semantic v5 runtime and real browser",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 155,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402567/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402567/logs",
+      "workflow_id": 395845233
+    },
+    {
+      "id": 44321402701,
+      "name": "Prototype tests and deterministic replay",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 1053,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402701/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402701/logs",
+      "workflow_id": 392971404
+    },
+    {
+      "id": 44321402501,
+      "name": "Pinned Exercism JS owned trace verification",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 164,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402501/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402501/logs",
+      "workflow_id": 394299871
+    },
+    {
+      "id": 44321402524,
+      "name": "Pinned semantic v5 source and native admission",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 858,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402524/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402524/logs",
+      "workflow_id": 393799826
+    },
+    {
+      "id": 44321402482,
+      "name": "Pinned real-world JS and TS trace corpus",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 587,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402482/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402482/logs",
+      "workflow_id": 393862174
+    }
+  ],
+  "realWorldJobs": [
+    {
+      "id": 134861008094,
+      "name": "observe-real-code",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 44321402482,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Generate real-source V8 observation corpus and readable review",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Audit understanding, noise, effects and source coverage",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Compare with independently verified owned interpreter",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Validate provenance and explicit diagnostic status",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ]
+    },
+    {
+      "id": 134879256011,
+      "name": "verify-entire-owned-corpus (0)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 44321402482,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify every input in this complete source partition",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        }
+      ]
+    },
+    {
+      "id": 134879256018,
+      "name": "verify-entire-owned-corpus (8)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 44321402482,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify every input in this complete source partition",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        }
+      ]
+    },
+    {
+      "id": 134879256121,
+      "name": "verify-entire-owned-corpus (4)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 44321402482,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify every input in this complete source partition",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        }
+      ]
+    },
+    {
+      "id": 134879256220,
+      "name": "verify-entire-owned-corpus (10)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 44321402482,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify every input in this complete source partition",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        }
+      ]
+    },
+    {
+      "id": 134879256236,
+      "name": "verify-entire-owned-corpus (6)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 44321402482,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify every input in this complete source partition",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        }
+      ]
+    },
+    {
+      "id": 134879256615,
+      "name": "verify-entire-owned-corpus (2)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 44321402482,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify every input in this complete source partition",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        }
+      ]
+    },
+    {
+      "id": 134882052684,
+      "name": "audit-entire-owned-corpus",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 44321402482,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Require 936 complete owned checks and classify all refusals",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        }
+      ]
+    }
+  ],
+  "benchmarkPreservation": {
+    "sourceRun": 44321402524,
+    "preservationRun": 44326698336,
+    "preservationHead": "2c12e3d45d94c2413120da912ba883d9f43ddbea",
+    "jobs": [
+      {
+        "id": 134879796961,
+        "name": "preserve-original-benchmark",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 44326698336,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Test frozen identity, credential isolation and exact reconstruction",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Verify and split only original run 44321402524 benchmark ZIP",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Preserve exact part 001",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Preserve exact part 002",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Preserve exact part 003",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Preserve original-byte reconstruction index",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          }
+        ]
+      }
+    ]
+  },
+  "pullRequests": {
+    "companion31": {
+      "url": "https://github.com/werg/megatoken/pull/31",
+      "number": 31,
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "mergeable": false,
+      "head": "codex/semantic-input-isolation-20261118",
+      "headSha": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+      "base": "main",
+      "baseSha": "d22264430258f578cccfe95b0a3189ab09fba10f",
+      "mergeCommitSha": "9bf32c3fc794c532444d6a84629bfa29599eb49c",
+      "updatedAt": "2026-11-18T14:31:06Z",
+      "mergedAt": "2026-11-18T14:31:06Z"
+    },
+    "parallel39": {
+      "url": "https://github.com/werg/tracing-js-self/pull/39",
+      "number": 39,
+      "state": "open",
+      "merged": false,
+      "draft": false,
+      "mergeable": false,
+      "head": "codex/resumption-20261118",
+      "headSha": "a994f90eb7559e154421a25f381e94065d54c5c9",
+      "base": "main",
+      "baseSha": "2aa694be86a6cda3b9d63fde739957d08f568961",
+      "mergeCommitSha": null,
+      "updatedAt": "2026-11-18T14:41:25Z",
+      "mergedAt": null
+    },
+    "handover40": {
+      "url": "https://github.com/werg/tracing-js-self/pull/40",
+      "number": 40,
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "mergeable": true,
+      "head": "codex/resumption-final-handover-20261118",
+      "headSha": "2c12e3d45d94c2413120da912ba883d9f43ddbea",
+      "base": "main",
+      "baseSha": "0c307781fea0fa3fca58f1dec037c8653cc921e0",
+      "mergeCommitSha": "a849d3690db70b6f7e68b52a93fbdd52ab9ac25b",
+      "updatedAt": "2026-11-18T14:44:14Z",
+      "mergedAt": null
+    }
+  },
+  "scope": "All seven original producer-head workflows completed successfully. Native jobs explicitly check out 1e2e6a0; ordinary PR workflows may check out synthetic3497ee3 and retain that distinction in their logs. Preservation copies the exact original benchmark artifact, without rerunning data generation or optimization. PR metadata is a dated observation, not a claim about later repository state."
+}

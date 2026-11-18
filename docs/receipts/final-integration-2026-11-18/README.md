@@ -70,6 +70,18 @@ the triggering head and actual checkout are distinct from this exact local run. 
 registry persistence path. The passing local results above do not replace the
 failed hosted result.
 
+## Completed exact-head hosted successor
+
+All five lanes of [native run 44321402524](https://github.com/werg/tracing-js-self/actions/runs/44321402524)
+subsequently passed at actual producer `1e2e6a0` and consumer `6b4382b`.
+The [separate successor receipt](native-successor/README.md) retains all five
+complete successful logs, exact identity records, the Node24 integration log,
+and the distinct Exercism diagnostic. It records 477 attempts, 457 native
+admissions and fresh qualifications, and a sum of 364 within-release distinct
+prepared rows; a cross-recipe deduplicated union was not measured. This is a
+new successful run after the storage/shutdown repairs and does not relabel the
+original local `aa7b843` checks or the failed hosted attempt.
+
 ## Integrity and scope
 
 [index.json](index.json) binds every unchanged original file copied here. The

@@ -34,10 +34,10 @@ failed free-running trained-model experiments.
 
 ## Original logs and separate diagnostic workflows
 
-[index.json](index.json) binds all 14 unchanged copied files by size and
+[index.json](index.json) binds all 18 unchanged copied files by size and
 SHA-256: the five complete native job logs and parsed summaries, the complete
 Node24 unit log and summary, and the complete Exercism diagnostic log and
-summary. The logs preserve the original command lines, installation/runtime
+summary, plus the complete real-world observation/audit logs and summaries. The logs preserve the original command lines, installation/runtime
 output, per-step results, source identities and release verification output.
 The GitHub artifact ZIPs and their member-level receipts are preserved
 separately; a copied successful log is not a replacement for its artifact.
@@ -57,8 +57,19 @@ families. Its older diagnostic profile still refuses JSON BigInt outcomes and
 abrupt completions. Those categories do not override the separately proven
 native Grains/valid-error capability or become native admissions.
 
-The initial workflow snapshot retains the then-queued real-world corpus job;
-its eventual outcome requires a separate final snapshot. The original failed
+The real-world corpus workflow subsequently passed its observation job, all
+six verification partitions and final audit. It accepted **936 invocations
+across 78 functions**, with zero mismatches/throws/errors, 27,039 observation
+events and 3,656 mutation events. The initial owned subset verified 156/156
+invocations; the final audit verified **936/936 locally** with no refusal rows.
+These remain diagnostic local results, not native admissions or model outcomes.
+The original observation and audit logs and parsed summaries are included here.
+
+The [final hosted snapshot](final-hosted-snapshot.json) records all seven
+producer-head workflows completed successfully at 14:44:48 UTC, together with
+the separate successful benchmark byte-preservation workflow and dated PR
+metadata. The initial snapshot's queued state remains historical evidence of
+when it was taken. The original failed
 `aa7b843` native matrix and exact temporary producer remain in the
 [failure receipt](../native-aa7b-failure/README.md). This successful successor
 does not overwrite those failures or attribute its repaired implementation to

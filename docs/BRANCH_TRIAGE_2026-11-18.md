@@ -62,14 +62,15 @@ The six active branches at this snapshot are `codex/resumption-20261118`, `codex
 
 PR37 also supplied overlapping campaign/release selection changes, exploratory holdout tooling, exact JavaScript track-API binding, and separate 32-update and partial-epoch optimization/failure receipts. Their producing revisions and evidence remain distinct. The subsequent merge preserves those additions together with PR38's hardened campaign store, isolated reference runner, release verifier and learning experiment. PR37 and PR38 are now merged. Their original branches were not overwritten. Fresh native/source checks and exact hosted results are recorded in the [final handover](RESUMPTION_HANDOVER_2026-11-18.md), separately from the original historical branch audit.
 
-## Later active draft and evidence follow-up
+## Later active work and evidence follow-up
 
 After PR37 merged, its original `codex/resumption-20261118` branch continued in
 [PR39](https://github.com/werg/tracing-js-self/pull/39). The read-only GitHub
-snapshot on 18 November observed head
+snapshot on 18 November initially observed head
 `54d3e68a6f3a3c71cd29fe98805e05d0dd64fccb`, recorded base `2aa694b`,
-`open`, `draft: true`, `merged: false` and `mergeable: false`; its metadata
-was updated at 14:28:41 UTC. Its description reports further qualification
+open/draft/unmerged and mergeable false at 14:28:41 UTC. A later snapshot
+records head `a994f90eb7559e154421a25f381e94065d54c5c9`, open/unmerged,
+`draft: false` and `mergeable: false`, with metadata updated at 14:41:25 UTC. Its description reports further qualification
 and separate experiment/corpus evidence still being assembled. This is active
 independent work, not a stale branch, and its additional code/results have not
 been silently incorporated into the qualified `1e2e6a0` tree. Recheck its exact
@@ -83,9 +84,16 @@ published repair/learning receipts and the retained original failed CI producer.
 Its runtime and consumer implementation matches merged main; the follow-up
 also adds an archive-preservation workflow for an original CI artifact larger
 than the download connector limit. This branch preserves evidence and current
-status without treating the separate draft PR39
+status without treating the separate PR39
 as already merged. PR descriptions and review readiness are maintained by the
 coordinating owner.
+
+The companion [Megatoken PR31](https://github.com/werg/megatoken/pull/31)
+was merged by the user at 14:31:06 UTC on 18 November, with merge commit
+`9bf32c3fc794c532444d6a84629bfa29599eb49c`. The native qualification remains
+bound to its exact pre-merge head `6b4382b9af3bef120ca3a95ae24d35154d4cd66b`.
+This is a separately observed repository event, not a relabeling of earlier
+experiments or a merge performed during this read-only branch audit.
 
 ## Issue13, actual CI failures, and repository rules
 
