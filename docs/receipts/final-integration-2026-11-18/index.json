@@ -1,0 +1,64 @@
+{
+  "schema": "resumption-final-local-receipt-index/1",
+  "producerRevision": "aa7b8432761df110df53fc95664b7d767b2eeba0",
+  "producerTree": "ef8a36f0da31bd2b20032a27c3fb4cfded6f6a02",
+  "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+  "measuredAtUtc": "2026-11-18T13:49:44.417858+00:00",
+  "scope": "Final local qualification only. Native admission and hosted CI retain separate exact receipts. Earlier failed attempt is preserved without changing its disposition.",
+  "files": [
+    {
+      "path": "local-qualification.json",
+      "bytes": 13113,
+      "sha256": "ceac314693f115a9b96327c3c4eaa3345521b8b6f28db414d5de385e2dc1dd95",
+      "kind": "unchanged-original"
+    },
+    {
+      "path": "python-regressions-final.log",
+      "bytes": 180,
+      "sha256": "5cfa5304420ad75fdf1cdb6a8588ca4f2e30eccf615da3d7bdec104e4f257ee6",
+      "kind": "unchanged-original"
+    },
+    {
+      "path": "host-contracts-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "unchanged-original"
+    },
+    {
+      "path": "semantic-contracts-final.log",
+      "bytes": 200,
+      "sha256": "d3f706018476a2d58b77a840ef3a8c6562d2e5e1b1b74da67fb2931fc16de57d",
+      "kind": "unchanged-original"
+    },
+    {
+      "path": "semantic-inspection-final.log",
+      "bytes": 10245,
+      "sha256": "3b90f9e407e60f74d8730e038b6418bfe2066b1e0c1cbf59c3043d986e143a17",
+      "kind": "unchanged-original"
+    },
+    {
+      "path": "unit-node24-final.log",
+      "bytes": 84010,
+      "sha256": "b6d0d0845990816f8f8f009750bf686f2606f3158f7c1d11daddd81486f3d096",
+      "kind": "unchanged-original"
+    },
+    {
+      "path": "reference-fixture-final.log",
+      "bytes": 393,
+      "sha256": "fc53ef9d327aa46a3968f073e1c35d1ca05af8710d42c3cfc903c8db54d9e560",
+      "kind": "unchanged-original"
+    },
+    {
+      "path": "earlier-attempt-5769938/unit-node24.log",
+      "bytes": 103064,
+      "sha256": "b49e988b4f95b909222369f38cd9f32c2ee6167f6f93c41ab68d3df9198a74ef",
+      "kind": "unchanged-original-failed-attempt"
+    },
+    {
+      "path": "earlier-attempt-5769938/unit-node24.exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "kind": "unchanged-original-failed-attempt"
+    }
+  ]
+}
