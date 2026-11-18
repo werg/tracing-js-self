@@ -7,6 +7,7 @@ import ts from 'typescript';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
+import {inspectCanonicalInputPrecision} from './canonical-input-precision.mjs';
 
 export const JS_REVISION='ff04f35158cdf61eebfdf18a774010495a1fd6d9';
 export const INPUT_REVISION='650bebeb39ad40439175288042aece982b0a90a9';
@@ -76,6 +77,7 @@ export function loadPinnedPairs(base=process.cwd()){
    // large grains expectations. The JavaScript track returns BigInt exactly.
    const canonicalIntegerExpectations={};
    const document=JSON.parse(canonical);
+   const canonicalInputPrecision=inspectCanonicalInputPrecision(canonical,{slug});
    if(slug==='grains'){
      // Node 20 has no JSON.parse reviver context.source. The already-pinned
      // TypeScript JSON parser supplies source spans without rounding the text.
@@ -101,7 +103,7 @@ export function loadPinnedPairs(base=process.cwd()){
      };
      visit(syntax);
    }
-   return {slug,source,canonical:document,canonicalIntegerExpectations,
+   return {slug,source,canonical:document,canonicalIntegerExpectations,canonicalInputPrecision,
      provenance:{solution:{repository:JS_REPO,revision:JS_REVISION,
        path:solutionPath,sha256:sha256(source),license:'MIT'},
        canonical:{repository:INPUT_REPO,revision:INPUT_REVISION,
@@ -145,6 +147,15 @@ export function extractCanonicalCases(record,{includeSuperseded=false}={}){
        output.push({caseId,property,status:'unsupported_input_shape',description:path});return;
      }
      let args=keys.map(k=>value.input[k]),inputBinding=null,expectedBinding=null;
+     const inputPrecision=record.canonicalInputPrecision?.[caseId];
+     if(inputPrecision){
+       output.push({caseId,property,entry,args,canonicalInput:value.input,
+         inputBinding,expectedBinding,reimplements:value.reimplements??null,
+         inputPrecision,expected:value.expected,description:path,
+         scenarios:value.scenarios??[],canonicalComments:value.comments??[],
+         status:'unsupported_input_precision'});
+       return;
+     }
      // The neutral two-fer null denotes an omitted name. JavaScript's default
      // parameter is activated by omission; passing null changes the API call.
      if(record.slug==='two-fer'&&property==='twoFer'&&value.input.name===null){
