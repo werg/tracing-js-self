@@ -1,0 +1,198 @@
+{
+  "schema": "semantic-serving-profile/1",
+  "declaredOrigin": "fixed",
+  "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+  "device": "cpu",
+  "identity": {
+    "modelSha256": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+    "manifestSha256": "01779668be5bcc106fd754c6341f3c609dc42d021e0227f0dd1090dbc50dedaf",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "initialization": {
+    "schema": "semantic-inference-identity/4",
+    "seed": 17,
+    "checkpointIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "coldLoadSeconds": 2.380994445000397,
+  "operations": {
+    "cancel": {
+      "count": 1,
+      "successfulRpcCalls": 1,
+      "firstSeconds": 5.8729001466417685e-05,
+      "p50Seconds": 5.8729001466417685e-05,
+      "p95Seconds": 5.8729001466417685e-05,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 5.8729001466417685e-05
+    },
+    "initialize": {
+      "count": 1,
+      "successfulRpcCalls": 1,
+      "firstSeconds": 0.005953013000180363,
+      "p50Seconds": 0.005953013000180363,
+      "p95Seconds": 0.005953013000180363,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 0.005953013000180363
+    },
+    "select": {
+      "count": 1,
+      "successfulRpcCalls": 0,
+      "firstSeconds": 5.0651922920005745,
+      "p50Seconds": 5.0651922920005745,
+      "p95Seconds": 5.0651922920005745,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 5.0651922920005745
+    }
+  },
+  "records": [
+    {
+      "id": "s1",
+      "operation": "initialize",
+      "ok": true,
+      "wallSeconds": 0.005953013000180363,
+      "state": {
+        "retainedSessions": 0,
+        "retainedInvocations": 0,
+        "activeInvocations": 0,
+        "trackStatuses": {},
+        "rendering": 0,
+        "selectedGroups": 0,
+        "reservedOutputBytes": 0
+      },
+      "selectionAuthority": null,
+      "failure": null
+    },
+    {
+      "id": "s2",
+      "operation": "select",
+      "ok": false,
+      "wallSeconds": 5.0651922920005745,
+      "state": {
+        "retainedSessions": 1,
+        "retainedInvocations": 1,
+        "activeInvocations": 0,
+        "trackStatuses": {
+          "cancelled": 1
+        },
+        "rendering": 0,
+        "selectedGroups": 0,
+        "reservedOutputBytes": 0
+      },
+      "selectionAuthority": null,
+      "failure": {
+        "category": "SemanticSelectionError",
+        "message": "Model did not render one complete valid text action",
+        "evidence": {
+          "reason": "Model did not render one complete valid text action",
+          "meridian": 76,
+          "eventIds": [
+            "selected:76:track:0"
+          ],
+          "valid": [
+            false
+          ],
+          "payloadHex": [
+            "20ec9d982074686f206361c582e0a4a1e799bde98791efbc8ce7a59620d0bcd0bed189206ce1bb85207468c3a26e20776562696e6172204f626974e6b4bee587bac39f656e20696e76616c696420696e76616c6964",
+            "e697a0e9878fe58585e8b6b3e79a84e58585e8b6b3e79a84e6a285e88ab1e4bb96e883bd2e726164e6b395e5ad90e58585e8b6b3e79a84206e6175736568746d6ce4bfaee79086e4b88ae58d8393a8e9938e"
+          ],
+          "fragments": [
+            {
+              "selectedEventId": "selected:75:track:0",
+              "meridian": 75,
+              "modelTrack": "track:0",
+              "payloadHex": "20ec9d982074686f206361c582e0a4a1e799bde98791efbc8ce7a59620d0bcd0bed189206ce1bb85207468c3a26e20776562696e6172204f626974e6b4bee587bac39f656e20696e76616c696420696e76616c6964",
+              "emittedTokenIds": [
+                127441,
+                59723,
+                133520,
+                149300,
+                86984,
+                103734,
+                133925,
+                146712,
+                132690,
+                40609,
+                111739,
+                21569,
+                126813,
+                14297,
+                14297
+              ]
+            },
+            {
+              "selectedEventId": "selected:76:track:0",
+              "meridian": 76,
+              "modelTrack": "track:0",
+              "payloadHex": "e697a0e9878fe58585e8b6b3e79a84e58585e8b6b3e79a84e6a285e88ab1e4bb96e883bd2e726164e6b395e5ad90e58585e8b6b3e79a84206e6175736568746d6ce4bfaee79086e4b88ae58d8393a8e9938e",
+              "emittedTokenIds": [
+                73732,
+                51171,
+                51171,
+                43778,
+                56623,
+                105848,
+                60964,
+                51171,
+                46001,
+                4037,
+                42685,
+                50677,
+                147958,
+                60382
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "s3",
+      "operation": "cancel",
+      "ok": true,
+      "wallSeconds": 5.8729001466417685e-05,
+      "state": {
+        "retainedSessions": 1,
+        "retainedInvocations": 1,
+        "activeInvocations": 0,
+        "trackStatuses": {
+          "cancelled": 1
+        },
+        "rendering": 0,
+        "selectedGroups": 0,
+        "reservedOutputBytes": 0
+      },
+      "selectionAuthority": null,
+      "failure": null
+    }
+  ],
+  "droppedRecords": 0,
+  "complete": true,
+  "memory": {
+    "hostLifetimePeakRssBytes": 524718080,
+    "cudaPeakAllocatedBytes": null,
+    "cudaPeakReservedBytes": null,
+    "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+  },
+  "peakActiveInvocationsAtRpcBoundaries": 0,
+  "stateBeforeRuntimeClose": {
+    "retainedSessions": 1,
+    "retainedInvocations": 1,
+    "activeInvocations": 0,
+    "trackStatuses": {
+      "cancelled": 1
+    },
+    "rendering": 0,
+    "selectedGroups": 0,
+    "reservedOutputBytes": 0
+  },
+  "runtimeClosed": true,
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "trainingMemoryFit": "unmeasured",
+  "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+  "warmDefinition": "All calls after the first call of the same operation in this process",
+  "digest": "df8858ce340cfd77722ddfa3d50a7a24f3e77604502b5a67879840d05da22ebf"
+}

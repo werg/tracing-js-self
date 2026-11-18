@@ -1,0 +1,244 @@
+{
+  "schema": "semantic-learning-comparison/1",
+  "mode": "exploratory",
+  "primaryMetric": "family-weighted-whole-task-observable-correctness",
+  "familyUnit": "connected-source-ancestor-component",
+  "meanImprovement": 0.0,
+  "baseFamilyWeightedSuccess": 0.0,
+  "trainedFamilyWeightedSuccess": 0.0,
+  "uncertainty": {
+    "unit": "connected-source-ancestor-component",
+    "confidence": 0.95,
+    "method": "paired-percentile-bootstrap",
+    "replicates": 2000,
+    "seed": 101,
+    "components": 1,
+    "lower": 0.0,
+    "upper": 0.0,
+    "scope": "family-resampling-with-all-seeds-and-input-variants-kept-paired",
+    "smallSampleWarning": true
+  },
+  "seeds": [
+    {
+      "optimizerSeed": 17,
+      "optimizerSteps": 64,
+      "baseIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+      "trainedIdentity": "dd969f909f23feb82a651c03fe3d1fa4911642502fd6b7f8c0bbb0c271d4be29",
+      "selectedCheckpointStep": 16,
+      "base": {
+        "episodes": 3,
+        "sourceFamilies": 1,
+        "independentComponents": 1,
+        "successes": 0,
+        "familyWeightedWholeTaskSuccess": 0.0,
+        "episodeWeightedWholeTaskSuccess": 0.0,
+        "familyWeightedTraceValidity": 0.0,
+        "components": {
+          "component:a1aca22a005b30bee347b92eb12ac5df8fe0cd43e6193d281902118660f96548": 0.0
+        },
+        "failures": {
+          "TypeError": 3
+        },
+        "integrityFailures": {
+          "falseAdmissions": 0,
+          "futureObservationLeaks": 0,
+          "replayNativeEffects": 0,
+          "unauthorizedEffects": 0,
+          "untrackedNativeFallback": 0
+        },
+        "completeIntegrityGateReceipts": 3,
+        "wallSeconds": 20.051388693998888,
+        "wallSecondsPerCorrectTask": null,
+        "generatedTokens": 89,
+        "retainedGeneratedTokensLowerBound": 89,
+        "generatedTokenCostComplete": true,
+        "generatedTokensPerCorrectTask": null
+      },
+      "trained": {
+        "episodes": 3,
+        "sourceFamilies": 1,
+        "independentComponents": 1,
+        "successes": 0,
+        "familyWeightedWholeTaskSuccess": 0.0,
+        "episodeWeightedWholeTaskSuccess": 0.0,
+        "familyWeightedTraceValidity": 0.0,
+        "components": {
+          "component:a1aca22a005b30bee347b92eb12ac5df8fe0cd43e6193d281902118660f96548": 0.0
+        },
+        "failures": {
+          "TypeError": 3
+        },
+        "integrityFailures": {
+          "falseAdmissions": 0,
+          "futureObservationLeaks": 0,
+          "replayNativeEffects": 0,
+          "unauthorizedEffects": 0,
+          "untrackedNativeFallback": 0
+        },
+        "completeIntegrityGateReceipts": 3,
+        "wallSeconds": 20.643899178001448,
+        "wallSecondsPerCorrectTask": null,
+        "generatedTokens": 70,
+        "retainedGeneratedTokensLowerBound": 70,
+        "generatedTokenCostComplete": true,
+        "generatedTokensPerCorrectTask": null
+      },
+      "improvement": 0.0
+    }
+  ],
+  "slices": {
+    "cleanup": {
+      "status": "untested",
+      "episodes": 0,
+      "independentComponents": 0
+    },
+    "effects": {
+      "status": "measured",
+      "episodes": 2,
+      "independentComponents": 1,
+      "meanImprovement": 0.0,
+      "perSeed": [
+        {
+          "optimizerSeed": 17,
+          "base": 0.0,
+          "trained": 0.0,
+          "improvement": 0.0
+        }
+      ]
+    },
+    "heap-small": {
+      "status": "measured",
+      "episodes": 3,
+      "independentComponents": 1,
+      "meanImprovement": 0.0,
+      "perSeed": [
+        {
+          "optimizerSeed": 17,
+          "base": 0.0,
+          "trained": 0.0,
+          "improvement": 0.0
+        }
+      ]
+    },
+    "length-medium": {
+      "status": "measured",
+      "episodes": 2,
+      "independentComponents": 1,
+      "meanImprovement": 0.0,
+      "perSeed": [
+        {
+          "optimizerSeed": 17,
+          "base": 0.0,
+          "trained": 0.0,
+          "improvement": 0.0
+        }
+      ]
+    },
+    "length-short": {
+      "status": "measured",
+      "episodes": 1,
+      "independentComponents": 1,
+      "meanImprovement": 0.0,
+      "perSeed": [
+        {
+          "optimizerSeed": 17,
+          "base": 0.0,
+          "trained": 0.0,
+          "improvement": 0.0
+        }
+      ]
+    },
+    "mutation": {
+      "status": "measured",
+      "episodes": 1,
+      "independentComponents": 1,
+      "meanImprovement": 0.0,
+      "perSeed": [
+        {
+          "optimizerSeed": 17,
+          "base": 0.0,
+          "trained": 0.0,
+          "improvement": 0.0
+        }
+      ]
+    },
+    "new-source": {
+      "status": "measured",
+      "episodes": 3,
+      "independentComponents": 1,
+      "meanImprovement": 0.0,
+      "perSeed": [
+        {
+          "optimizerSeed": 17,
+          "base": 0.0,
+          "trained": 0.0,
+          "improvement": 0.0
+        }
+      ]
+    },
+    "pure-selected": {
+      "status": "measured",
+      "episodes": 1,
+      "independentComponents": 1,
+      "meanImprovement": 0.0,
+      "perSeed": [
+        {
+          "optimizerSeed": 17,
+          "base": 0.0,
+          "trained": 0.0,
+          "improvement": 0.0
+        }
+      ]
+    },
+    "retained-state": {
+      "status": "measured",
+      "episodes": 1,
+      "independentComponents": 1,
+      "meanImprovement": 0.0,
+      "perSeed": [
+        {
+          "optimizerSeed": 17,
+          "base": 0.0,
+          "trained": 0.0,
+          "improvement": 0.0
+        }
+      ]
+    },
+    "valid-errors": {
+      "status": "untested",
+      "episodes": 0,
+      "independentComponents": 0
+    }
+  },
+  "requirements": {
+    "declaredConfirmatoryExperiment": false,
+    "frozenInferenceBudget": true,
+    "atLeastThreeOptimizerSeeds": false,
+    "sameActualBaseCheckpointAcrossSeeds": true,
+    "declaredTestComponentMinimum": false,
+    "usefulMeanImprovement": false,
+    "pairedFamilyIntervalAboveZero": false,
+    "improvementInEveryOptimizerSeed": false,
+    "criticalSlicesMeasured": false,
+    "noMaterialCriticalSliceRegression": false,
+    "noIntegrityGateFailures": true
+  },
+  "confirmatoryGatePassed": false,
+  "generalizationClaim": false,
+  "unmetRequirements": [
+    "declaredConfirmatoryExperiment",
+    "atLeastThreeOptimizerSeeds",
+    "declaredTestComponentMinimum",
+    "usefulMeanImprovement",
+    "pairedFamilyIntervalAboveZero",
+    "improvementInEveryOptimizerSeed",
+    "criticalSlicesMeasured",
+    "noMaterialCriticalSliceRegression"
+  ],
+  "pureOutcomeTransfer": {
+    "status": "untested",
+    "reason": "Selected execution uses semantic continuations; pure code/input-to-outcome transfer needs its own declared adapter."
+  },
+  "teacherForcedLossIsExecutionAccuracy": false,
+  "seedScope": "Optimizer seeds are reported individually; the family bootstrap does not manufacture independent optimizer runs."
+}
