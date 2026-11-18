@@ -20,6 +20,7 @@ def load(name, filename):
 
 smoke = load('optimization_diagnostic', 'run-optimization-smoke.py')
 holdout = load('heldout_diagnostic', 'run-exploratory-holdout.py')
+inventory = load('diagnostic_inventory', 'diagnostic_training_inventory.py')
 
 
 class RolloutEvidence(unittest.TestCase):
@@ -106,6 +107,17 @@ class RolloutEvidence(unittest.TestCase):
         self.assertFalse(self.score())
 
 
+class InventoryEvidence(unittest.TestCase):
+    def test_omitted_extra_duplicate_or_changed_native_episode_is_not_authenticated(self):
+        prepared = {'episode-a': {'episodeSha256': 'a'}, 'episode-b': {'episodeSha256': 'b'}}
+        inventory.require_inventory_match(prepared, copy.deepcopy(prepared))
+        for declared in [{'episode-a': prepared['episode-a']},
+                         {**prepared, 'episode-c': {'episodeSha256': 'c'}},
+                         {**prepared, 'episode-b': {'episodeSha256': 'altered'}}]:
+            with self.subTest(declared=declared), self.assertRaises(ValueError):
+                inventory.require_inventory_match(prepared, declared)
+
+
 @unittest.skipUnless(os.environ.get('TRACING_DIAGNOSTIC_RUN'),
                      'Requires an actual retained diagnostic checkpoint via TRACING_DIAGNOSTIC_RUN')
 class ActualBundleTampering(unittest.TestCase):
@@ -167,6 +179,19 @@ class ActualBundleTampering(unittest.TestCase):
         self.update_manifest(model_version=0)
         with self.assertRaisesRegex(ValueError, 'checkpoint version'):
             self.verify()
+
+    @unittest.skipUnless(os.environ.get('TRACING_DIAGNOSTIC_CONSUMER'), 'Requires the exact companion checkout')
+    def test_declared_input_subset_cannot_omit_an_actual_training_member(self):
+        training_root = Path(os.environ['TRACING_DIAGNOSTIC_RUN'])
+        report = copy.deepcopy(self.training); report['inputIdentities'].pop()
+        (self.directory / 'report.json').write_text(json.dumps(report))
+        (self.directory / 'train-config.json').symlink_to(training_root / 'train-config.json')
+        # The source revision has already been pinned by the genuine run. The
+        # companion checkout is explicitly supplied for this optional integration test.
+        consumer = Path(os.environ['TRACING_DIAGNOSTIC_CONSUMER'])
+        tokenizer = Path(json.loads((training_root / 'train-config.json').read_text())['codec'])
+        with self.assertRaisesRegex(ValueError, 'actual prepared native inventory'):
+            inventory.inspect_training_inventory(self.directory, consumer, tokenizer)
 
 
 if __name__ == '__main__':

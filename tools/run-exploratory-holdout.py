@@ -156,7 +156,7 @@ def main():
     record(phase='authenticating')
     try:
         cohort = json.loads(args.cohort.read_text())
-        if (cohort.get('schema') != 'exploratory-heldout-diagnostic-cohort/1' or
+        if (cohort.get('schema') != 'exploratory-heldout-diagnostic-cohort/2' or
                 cohort.get('confirmatory') is not False or cohort.get('productionQualification') is not False):
             raise ValueError('Only a frozen exploratory diagnostic cohort is accepted')
         smoke.require_clean_checkout(consumer)
@@ -174,11 +174,13 @@ def main():
         rebuilt = root / 'rechecked-cohort.json'
         command = ['node', str(Path(__file__).with_name('build-exploratory-holdout.mjs')),
                    '--training-run', str(training_path.parent), '--tracer-root', str(tracer),
+                   '--consumer-root', str(consumer), '--tokenizer-json', str(args.tokenizer_json.resolve()),
+                   '--python', sys.executable,
                    '--registry', cohort['registry']['path'], '--output', str(rebuilt),
                    '--maximum', str(len(cohort['cases'])), '--seed', str(cohort['seed'])]
         for source in cohort['sourceCorpora']:
             command.extend(['--corpus', source['path']])
-        smoke.run_logged(command, root / 'cohort-recheck.log', env=env, timeout=120)
+        smoke.run_logged(command, root / 'cohort-recheck.log', env=env, timeout=240)
         rebuilt_value = json.loads(rebuilt.read_text())
         if ({key: value for key, value in cohort.items() if key != 'createdAt'} !=
                 {key: value for key, value in rebuilt_value.items() if key != 'createdAt'}):

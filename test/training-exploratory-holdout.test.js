@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {holdoutCase,requireDisjointComponent} from '../tools/build-exploratory-holdout.mjs';
+import {actualTrainingComponents,holdoutCase,requireDisjointComponent} from '../tools/build-exploratory-holdout.mjs';
 import {verifyEffectfulTrainingCase} from '../src/training/effectful-admit.js';
 
 test('diagnostic holdout never passes teacher or expectation to the selected model',async()=>{
@@ -31,4 +31,24 @@ test('diagnostic holdout refuses overlapping, renamed, or differently frozen com
   assert.throws(()=>requireDisjointComponent({...split,registryDigest:'different'},trained,'registry'),/registry/);
   assert.throws(()=>requireDisjointComponent({...split,split:'train'},trained,'registry'),/test-component/);
   assert.throws(()=>requireDisjointComponent({...split,policy:'caller-family-label'},trained,'registry'),/test-component/);
+});
+
+test('holdout exclusion uses all actual native families and ancestors, not a declared subset',()=>{
+  const registry={components:[{id:'train-component',split:'train',members:['alpha','ancestor']},
+    {id:'test-component',split:'test',members:['beta']}]};
+  const inputs=new Map([['/source/a.json',{sourceFamily:'alpha',split:'train',
+    splitIdentity:{registryDigest:'digest',componentId:'train-component'}}]]);
+  const inventory={schema:'optimization-actual-training-inventory/1',exactDeclaredInventory:true,
+    rows:[{inputPath:'/source/a.json',family:'alpha',ancestorIds:['ancestor'],split:'train'}]};
+  const result=actualTrainingComponents(inventory,inputs,registry,'digest');
+  assert.deepEqual([...result.components],['train-component']);
+  assert.deepEqual([...result.families],['alpha']);
+  assert.throws(()=>actualTrainingComponents({...inventory,rows:[]},inputs,registry,'digest'),/incomplete/);
+  assert.throws(()=>actualTrainingComponents(inventory,new Map(),registry,'digest'),/incomplete/);
+  assert.throws(()=>actualTrainingComponents({...inventory,rows:[{...inventory.rows[0],ancestorIds:['beta']}]},
+    inputs,registry,'digest'),/ancestry/);
+  assert.throws(()=>actualTrainingComponents({...inventory,rows:[{...inventory.rows[0],ancestorIds:['missing']}]},
+    inputs,registry,'digest'),/ancestry/);
+  assert.throws(()=>actualTrainingComponents({...inventory,rows:[{...inventory.rows[0],family:'renamed'}]},
+    inputs,registry,'digest'),/lineage/);
 });

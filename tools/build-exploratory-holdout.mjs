@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {resolve,relative,isAbsolute} from 'node:path';
-import {pathToFileURL} from 'node:url';
+import {fileURLToPath,pathToFileURL} from 'node:url';
 import {controlledEvaluationCase} from '../src/training/selected-evaluation.js';
 
 const sha=value=>createHash('sha256').update(value).digest('hex');
@@ -32,8 +32,30 @@ export function requireDisjointComponent(split,trainingComponents,registryDigest
     throw new TypeError('Holdout component occurs in the prepared training corpus');
 }
 
+export function actualTrainingComponents(inventory,inputs,registry,registryDigest){
+  if(inventory?.schema!=='optimization-actual-training-inventory/1'||inventory.exactDeclaredInventory!==true||
+    !Array.isArray(inventory.rows)||!inventory.rows.length||inventory.rows.length!==inputs.size)
+    throw new Error('Actual checkpoint training inventory is incomplete');
+  const byMember=new Map(registry.components.flatMap(component=>component.members.map(member=>[member,component])));
+  const components=new Set(),families=new Set(),seen=new Set();
+  for(const row of inventory.rows){
+    const side=inputs.get(row.inputPath);
+    if(!side||seen.has(row.inputPath)||row.split!=='train'||row.family!==side.sourceFamily||
+      side.split!=='train'||side.splitIdentity?.registryDigest!==registryDigest)
+      throw new Error('Actual prepared training lineage differs from its authenticated source export');
+    seen.add(row.inputPath);
+    const identities=[row.family,...row.ancestorIds];
+    const bound=identities.map(identity=>byMember.get(identity));
+    if(bound.some(component=>!component||component.split!=='train'||
+      component.id!==side.splitIdentity.componentId))
+      throw new Error('Actual prepared training ancestry differs from the frozen source registry');
+    components.add(bound[0].id);families.add(row.family);
+  }
+  return {components,families};
+}
+
 export async function freezeExploratoryHoldout({trainingRun,corpora,tracerRoot,registryPath,output,
-    maximum=32,seed=17}){
+    consumerRoot,tokenizerJson,python='python3',maximum=32,seed=17}){
   trainingRun=resolve(trainingRun);tracerRoot=resolve(tracerRoot);
   registryPath=resolve(registryPath);corpora=corpora.map(path=>resolve(path));
   const reportPath=resolve(trainingRun,'report.json'),training=read(reportPath);
@@ -51,7 +73,13 @@ export async function freezeExploratoryHoldout({trainingRun,corpora,tracerRoot,r
     load('src/corpus/source-registry.mjs'),load('src/training/admission-identity.js'),
     load('src/training/selected-evaluation.js')]);
   const registry=read(registryPath),registryCheck=verifySourceRegistry(registry);
-  const trainingComponents=new Set(),trainingFamilies=new Set();
+  const inventoryHelper=fileURLToPath(new URL('./diagnostic_training_inventory.py',import.meta.url));
+  const inventory=JSON.parse(execFileSync(python,[inventoryHelper,'--training-run',trainingRun,
+    '--consumer-root',resolve(consumerRoot),'--tokenizer-json',resolve(tokenizerJson)],
+    {encoding:'utf8',timeout:180000,maxBuffer:32*1024*1024}));
+  if(inventory.trainingReportSha256!==sha(readFileSync(reportPath)))
+    throw new Error('Optimization report changed during actual native inventory verification');
+  const trainingInputs=new Map();
   for(const item of training.inputIdentities){
     const bytes=readFileSync(item.path);
     if(sha(bytes)!==item.sha256)throw new Error('Prepared training input bytes changed');
@@ -59,8 +87,11 @@ export async function freezeExploratoryHoldout({trainingRun,corpora,tracerRoot,r
     verifyAdmissionIdentity(exported);
     if(side.split!=='train'||side.splitIdentity?.registryDigest!==registryCheck.digest)
       throw new Error('Training member does not belong to the same frozen training registry');
-    trainingComponents.add(side.splitIdentity.componentId);trainingFamilies.add(side.sourceFamily);
+    trainingInputs.set(resolve(item.path),{sourceFamily:side.sourceFamily,split:side.split,
+      splitIdentity:{registryDigest:side.splitIdentity.registryDigest,componentId:side.splitIdentity.componentId}});
   }
+  const {components:trainingComponents,families:trainingFamilies}=actualTrainingComponents(
+    inventory,trainingInputs,registry,registryCheck.digest);
   if(!trainingComponents.size)throw new Error('No authenticated training components');
   const sources=[],groups=new Map(),seen=new Map();
   for(const corpus of corpora){
@@ -97,13 +128,14 @@ export async function freezeExploratoryHoldout({trainingRun,corpora,tracerRoot,r
   const cases=[...groups.values()].map(rows=>rows.sort(order)[0])
     .sort((a,b)=>a.family.localeCompare(b.family)||a.id.localeCompare(b.id)).slice(0,maximum);
   if(!cases.length)throw new Error('No independent native-admitted test components');
-  const cohort={schema:'exploratory-heldout-diagnostic-cohort/1',createdAt:new Date().toISOString(),
+  const cohort={schema:'exploratory-heldout-diagnostic-cohort/2',createdAt:new Date().toISOString(),
     builderSha256:sha(readFileSync(new URL(import.meta.url))),
     purpose:'diagnostic',confirmatory:false,productionQualification:false,
     selectionPolicy:'One smallest generated-token example per frozen test component; then public bytes and ID. Alphabetical family order if capped.',
     seed,representation:'compact',producerRevision:revision,consumerRevision:training.consumerRevision,
     tokenizerIdentity:training.tokenizerIdentity,tokenizerSha256:training.tokenizerSha256,
     trainingReport:{path:reportPath,sha256:sha(readFileSync(reportPath)),optimizerSteps:training.optimizerSteps},
+    trainingInventory:{...inventory,helperSha256:sha(readFileSync(inventoryHelper))},
     registry:{path:registryPath,fileSha256:sha(readFileSync(registryPath)),digest:registryCheck.digest},
     sourceCorpora:sources,trainingComponents:[...trainingComponents].sort(),
     trainingFamilies:[...trainingFamilies].sort(),availableTestComponents:groups.size,
@@ -124,10 +156,11 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).hr
     if(process.argv[i]==='--corpus')corpora.push(process.argv[i+1]);
     else flags.set(process.argv[i],process.argv[i+1]);
   }
-  for(const flag of ['--training-run','--tracer-root','--registry','--output'])
+  for(const flag of ['--training-run','--tracer-root','--consumer-root','--tokenizer-json','--registry','--output'])
     if(!flags.get(flag))throw new TypeError('Missing '+flag);
   if(!corpora.length)throw new TypeError('At least one --corpus is required');
   console.log(JSON.stringify(await freezeExploratoryHoldout({trainingRun:flags.get('--training-run'),corpora,
     tracerRoot:flags.get('--tracer-root'),registryPath:flags.get('--registry'),output:flags.get('--output'),
+    consumerRoot:flags.get('--consumer-root'),tokenizerJson:flags.get('--tokenizer-json'),python:flags.get('--python')??'python3',
     maximum:Number(flags.get('--maximum')??32),seed:Number(flags.get('--seed')??17)})));
 }
