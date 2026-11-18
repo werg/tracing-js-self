@@ -43,3 +43,36 @@ test('retains independently specified Exercism expected outcome as a separate ga
     {outputDirectory:directory(t),timeoutMs:30000});
   assert.equal(run.result.status,'canonical_mismatch',run.result.reason);
 });
+
+test('fresh original/transformed/owned gates agree on real numeric and optional-argument bindings',async t=>{
+  const fixtures=trustedRealSourceCases({streams:['exercism'],perFamily:2}),outputDirectory=directory(t);
+  for(const family of ['darts','grains','two-fer']){
+    const fixture=fixtures.find(row=>row.family==='exercism/javascript:'+family);
+    const run=await runGenerationProcess({kind:'source',fixture,producerRevision:'a'.repeat(40)},
+      {outputDirectory,timeoutMs:30000});
+    assert.equal(run.result.status,'locally_verified',family+': '+run.result.reason);
+    const provenance=run.result.exported.sidecar.sourceProvenance.upstream;
+    assert.equal(provenance.originalSourceCheck.status,'agreed');
+    if(family==='two-fer'){
+      assert.deepEqual(fixture.args,[]);assert.deepEqual(provenance.canonicalInput,{name:null});
+    }
+    if(family==='grains')assert.equal(provenance.canonicalExpectedBinding.decimal,'1');
+  }
+});
+
+test('canonical error expectations require a throw and retain exact source error evidence',async t=>{
+  const fixtures=trustedRealSourceCases({streams:['exercism'],perFamily:100}),outputDirectory=directory(t);
+  const returnFixture=fixtures.find(row=>row.family==='exercism/javascript:leap');
+  const changed={...returnFixture,provenance:{...returnFixture.provenance,canonicalExpected:{error:'error required'}}};
+  const wrong=await runGenerationProcess({kind:'source',fixture:changed,producerRevision:'a'.repeat(40)},
+    {outputDirectory,timeoutMs:30000});
+  assert.equal(wrong.result.status,'canonical_mismatch');
+  const fixture=fixtures.find(row=>row.family==='exercism/javascript:grains'&&row.provenance.canonicalExpected?.error);
+  assert(fixture);
+  const correct=await runGenerationProcess({kind:'source',fixture,producerRevision:'a'.repeat(40)},
+    {outputDirectory,timeoutMs:30000});
+  assert.equal(correct.result.status,'locally_verified',correct.result.reason);
+  const check=correct.result.exported.sidecar.sourceProvenance.upstream.originalSourceCheck.canonicalExpectation;
+  assert.equal(check.outcomeKind,'throw');assert.equal(check.canonicalErrorMessageCompared,false);
+  assert.equal(correct.result.exported.sidecar.referenceStatus,'agreed');
+});

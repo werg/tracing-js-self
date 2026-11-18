@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {loadPinnedPairs,lowerPinnedProof,extractCanonicalCases,stableSplit,bindings}
+import {loadPinnedPairs,lowerPinnedProof,extractCanonicalCases,stableSplit,bindings,canonicalJavaScriptExpected}
   from '../src/corpus/owned-exercism.mjs';
 import {generateInputVariations} from '../src/corpus/variation-exercism.mjs';
 import {buildOwnedSourceMap,mapSourceSite,auditSourceSites} from '../src/corpus/original-sites.mjs';
@@ -54,6 +54,30 @@ test('canonical identity and split are stable by exercise, not input',()=>{
   assert.equal(ids.size,samples.length,pair.slug);
   assert.equal(pair.split,stableSplit(pair.slug));
  }
+});
+
+test('explicit JavaScript canonical bindings preserve original inputs and exact BigInt integer tokens',()=>{
+ const pairs=loadPinnedPairs();
+ const first=slug=>extractCanonicalCases(pairs.find(pair=>pair.slug===slug))[0];
+ const absent=first('two-fer');
+ assert.deepEqual(absent.args,[]);assert.deepEqual(absent.canonicalInput,{name:null});
+ assert.equal(absent.argumentBinding,'two-fer-null-name-as-omitted-argument/1');
+ const items=first('knapsack');
+ assert.deepEqual(items.args,[100,[]]);assert.deepEqual(items.canonicalInput,{maximumWeight:100,items:{}});
+ assert.equal(items.argumentBinding,'knapsack-empty-record-as-empty-items/1');
+ const grains=extractCanonicalCases(pairs.find(pair=>pair.slug==='grains'));
+ const square=grains.find(row=>row.args?.[0]===64),total=grains.find(row=>row.property==='total');
+ assert.equal(square.expectedBinding.decimal,'9223372036854775808');
+ assert.equal(total.expectedBinding.decimal,'18446744073709551615');
+ for(const row of [square,total]){
+   const retained=JSON.parse(JSON.stringify(row));
+   assert.equal(canonicalJavaScriptExpected(retained.expected,retained.expectedBinding),BigInt(row.expectedBinding.decimal));
+ }
+ assert.equal(canonicalJavaScriptExpected(1,grains[0].expectedBinding),1n);
+ assert.throws(()=>canonicalJavaScriptExpected(2,grains[0].expectedBinding),/expected-value binding/);
+ const imprecise=extractCanonicalCases({slug:'grains',canonical:{cases:[{
+   uuid:'unbound',property:'square',input:{square:64},expected:9223372036854775808}]}});
+ assert.equal(imprecise[0].status,'unsupported_expected_precision');
 });
 
 test('deterministic generated variants stay distinct from canonical provenance',()=>{

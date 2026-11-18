@@ -94,7 +94,10 @@ function exercismCandidates(root,perFamily,mutationsPerFamily){
           license:'MIT',notice,noticePath,originalFile:pair.source,
           transform:{schema:'pinned-exercism-projection/1',lowering:lowered?.lowering??null},
           inputOrigin:fixture.generator??'upstream-canonical',derivedFrom:fixture.derivedFrom??null,
-          canonicalExpected:fixture.generator?null:fixture.expected,canonicalProperty:fixture.property}}));
+          canonicalExpected:fixture.generator?null:fixture.expected,
+          canonicalExpectedBinding:fixture.expectedBinding??null,
+          canonicalInput:fixture.canonicalInput??null,canonicalArgumentBinding:fixture.argumentBinding??null,
+          canonicalProperty:fixture.property}}));
     }
   }
   return output;

@@ -50,6 +50,36 @@ export const stableSplit=slug=>{
  return h===0?'test':h<=2?'validation':'train';
 };
 
+function integerExpectedLexemes(text){
+ // JSON.parse rounds large JSON integers. Read the expected-value token from
+ // TypeScript's JSON syntax tree before interpreting the language-track type.
+ // This works on the pinned Node 20 lane too; it needs no JSON reviver context.
+ const tree=ts.parseJsonText('canonical-data.json',text),integers={};
+ function visit(node){
+  if(ts.isObjectLiteralExpression(node)){
+   const fields=new Map(node.properties.filter(ts.isPropertyAssignment).map(property=>
+     [property.name.text,property.initializer]));
+   const id=fields.get('uuid'),expected=fields.get('expected');
+   if(id&&ts.isStringLiteral(id)&&expected){
+    const raw=expected.getText(tree);
+    if(/^-?(?:0|[1-9][0-9]*)$/.test(raw))integers[id.text]=raw;
+   }
+  }
+  ts.forEachChild(node,visit);
+ }
+ visit(tree);return integers;
+}
+
+export function canonicalJavaScriptExpected(expected,binding=null){
+ if(binding===null||binding===undefined)return expected;
+ if(binding.schema!=='exercism-javascript-expected/1'||binding.kind!=='bigint'||
+    typeof binding.decimal!=='string'||binding.decimal.length>10000||
+    !/^-?(?:0|[1-9][0-9]*)$/.test(binding.decimal)||typeof expected!=='number'||
+    !Number.isInteger(expected)||Number(binding.decimal)!==expected)
+   throw new TypeError('Invalid exact canonical JavaScript expected-value binding');
+ return BigInt(binding.decimal);
+}
+
 export function loadPinnedPairs(base=process.cwd()){
  const root=resolve(base),jsRoot=resolve(root,PROOF_ROOT),inRoot=resolve(root,INPUT_ROOT);
  const jsLock=JSON.parse(readFileSync(resolve(jsRoot,'snapshot.lock.json'),'utf8'));
@@ -72,7 +102,7 @@ export function loadPinnedPairs(base=process.cwd()){
    };
    const source=check(jsRoot,jsLock,solutionPath),
      canonical=check(inRoot,inputLock,canonicalPath);
-   return {slug,source,canonical:JSON.parse(canonical),
+   return {slug,source,canonical:JSON.parse(canonical),expectedIntegerLexemes:integerExpectedLexemes(canonical),
      provenance:{solution:{repository:JS_REPO,revision:JS_REVISION,
        path:solutionPath,sha256:sha256(source),license:'MIT'},
        canonical:{repository:INPUT_REPO,revision:INPUT_REVISION,
@@ -100,8 +130,27 @@ export function extractCanonicalCases(record){
         keys.some(k=>!Object.hasOwn(value.input,k))){
        output.push({caseId,property,status:'unsupported_input_shape',description:path});return;
      }
-     output.push({caseId,property,entry,args:keys.map(k=>value.input[k]),
-       expected:value.expected,description:path,status:'candidate'});
+     let args=keys.map(k=>value.input[k]),argumentBinding=null,expectedBinding=null;
+     // Problem specifications are language-neutral. These two explicit track
+     // bindings preserve the original canonical input alongside the JS call.
+     // No expected outcome is used to choose or alter an argument.
+     if(record.slug==='two-fer'&&property==='twoFer'&&value.input.name===null){
+       args=[];argumentBinding='two-fer-null-name-as-omitted-argument/1';
+     }
+     if(record.slug==='knapsack'&&property==='maximumValue'&&value.input.items&&
+        !Array.isArray(value.input.items)&&typeof value.input.items==='object'&&
+        Object.keys(value.input.items).length===0){
+       args=[value.input.maximumWeight,[]];argumentBinding='knapsack-empty-record-as-empty-items/1';
+     }
+     if(record.slug==='grains'&&typeof value.expected==='number'){
+       const decimal=record.expectedIntegerLexemes?.[value.uuid]??
+         (Number.isSafeInteger(value.expected)?String(value.expected):null);
+       if(decimal===null){output.push({caseId,property,status:'unsupported_expected_precision',description:path});return;}
+       expectedBinding={schema:'exercism-javascript-expected/1',kind:'bigint',decimal};
+       canonicalJavaScriptExpected(value.expected,expectedBinding);
+     }
+     output.push({caseId,property,entry,args,canonicalInput:structuredClone(value.input),argumentBinding,
+       expected:value.expected,expectedBinding,description:path,status:'candidate'});
    }
    if(Array.isArray(value.cases))walk(value.cases,path);
  }
