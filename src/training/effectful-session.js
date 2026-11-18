@@ -7,7 +7,7 @@ import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {SelectedExecutionHarness} from './harness-v4.js';
 import {hostOperationContract,hostOperation} from '../host/operations.js';
-import {defaultSplitIdentity,bindAdmissionIdentity,verifyAdmissionIdentity,admissionEnvironment}
+import {defaultSplitIdentity,cloneSplitIdentity,bindAdmissionIdentity,verifyAdmissionIdentity,admissionEnvironment}
   from './admission-identity.js';
 const hash=x=>createHash('sha256').update(typeof x==='string'?x:JSON.stringify(x)).digest('hex');
 const copy=x=>structuredClone(x);
@@ -123,7 +123,7 @@ export async function verifyEffectfulSession({cases,family,nativeConsumer=null,s
   const {verifyEffectfulTrainingCase,bindNativeAdmission,validateNativePolicy,validateNativeProducer}=await import('./effectful-admit.js');
   if(nativeConsumer||nativePolicy!==null)nativePolicy=validateNativePolicy(nativePolicy);
   if(nativeConsumer)validateNativeProducer(producerRevision);
-  splitIdentity=structuredClone(splitIdentity??defaultSplitIdentity(family,{seed}));
+  splitIdentity=cloneSplitIdentity(splitIdentity??defaultSplitIdentity(family,{seed}));
   const components=[],programs=new Map();let nextProgram=0;
   for(const [index,fixture] of cases.entries()){
     const componentSeeds={...seeds,...fixture.seeds};

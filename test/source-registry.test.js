@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildSourceRegistry,frozenSplitIdentity,verifyFrozenSplitIdentity,
-  verifySourceRegistry,balanceFamilyTokens,canonicalHash} from '../src/corpus/source-registry.mjs';
+  verifySourceRegistry,immutableSourceRegistry,balanceFamilyTokens,canonicalHash} from '../src/corpus/source-registry.mjs';
 
 const row=(id,source,extra={})=>({id,family:id,source,...extra});
 test('freezes ancestry, renamed/literal variants and upstream revisions before expansion',()=>{
@@ -44,4 +44,22 @@ test('enforces family token share using actual native counts with explicit refus
   assert.deepEqual(result.refused,[{id:'long',reason:'family-token-share'}]);
   assert.equal(result.generatedTokens,40);assert.equal(result.independentComponents,4);
   assert.throws(()=>balanceFamilyTokens([{...rows[0],status:'locally_verified'}],{maxFamilyTokens:100}),/native-admitted/);
+});
+
+
+test('only verified deeply immutable registry snapshots can reuse authenticated identity',()=>{
+  const original=buildSourceRegistry([row('a','function f(x){return x+1;}'),
+    row('b','function first(a){return a[0];}')]);
+  const immutable=immutableSourceRegistry(original);
+  assert.notEqual(immutable,original);assert.equal(immutableSourceRegistry(immutable),immutable);
+  assert.equal(verifySourceRegistry(immutable).digest,canonicalHash(original));
+  for(const family of ['a','b'])assert.deepEqual(frozenSplitIdentity(immutable,family),frozenSplitIdentity(original,family));
+  assert.throws(()=>{immutable.sources[0].source='changed';},TypeError);
+  assert.throws(()=>{immutable.components[0].members.push('forged');},TypeError);
+  original.sources[0].source='changed';
+  assert.throws(()=>verifySourceRegistry(original),/changed/);
+  // Neither a shallow frozen object nor a forged content digest gets the fast path.
+  const forged=structuredClone(immutable);forged.components[0].split='forged';Object.freeze(forged);
+  assert.throws(()=>verifySourceRegistry(forged),/changed/);
+  assert.equal(verifySourceRegistry(immutable).valid,true);
 });

@@ -18,7 +18,7 @@ import {CampaignStore,atomicWrite,identityHash} from '../src/corpus/campaign-sto
 import {generationIdentity} from '../src/corpus/campaign-identity.mjs';
 import {runGenerationProcess} from '../src/corpus/generation-process.mjs';
 import {loadNativeSettings,createNativeConsumer} from '../src/corpus/native-admission-client.mjs';
-import {buildSourceRegistry,verifySourceRegistry,frozenSplitIdentity,canonicalHash}
+import {buildSourceRegistry,verifySourceRegistry,immutableSourceRegistry,frozenSplitIdentity,canonicalHash}
   from '../src/corpus/source-registry.mjs';
 import {trainingCandidateTasks,candidateSourceInventory,SOURCE_RECIPES} from '../src/corpus/training-candidates.mjs';
 import {measureExecutionDifficulty} from '../src/corpus/execution-difficulty.mjs';
@@ -70,6 +70,7 @@ if(flags.has('--registry')){registry=JSON.parse(readFileSync(resolve(flags.get('
 if(flags.has('--freeze-registry')){
   registry=buildSourceRegistry(sourceInventory);atomicWrite(resolve(flags.get('--freeze-registry')),JSON.stringify(registry,null,2)+'\n');
 }
+if(registry)registry=immutableSourceRegistry(registry);
 if(registry)for(const task of tasks){
   const splitIdentity=frozenSplitIdentity(registry,task.fixture.family);
   task.fixture={...task.fixture,splitIdentity,seed:registry.seed};
@@ -227,6 +228,7 @@ Object.assign(manifest,{campaign:{schema:'semantic-generation-summary/1',identit
   limits:bounds,workers:jobs,receiptCache:'full-source-profile-runtime-verifier-identity'},
   sourceRegistry:registry?{digest:canonicalHash(registry),...registry.diagnostics}:null,
   throughput:{elapsedMs,totalVerificationMs:cases.reduce((n,row)=>n+row.durationMs,0),
+    peakCoordinatorRssBytes:process.resourceUsage().maxRSS*1024,
     peakWorkerRssBytes:Math.max(0,...cases.map(row=>row.peakRssBytes??0)),
     admittedGeneratedTokens:native?generatedTokens:null,
     admittedLearnerTokensPerHour:native&&elapsedMs>0?freshTokens*3600000/elapsedMs:null,
@@ -247,6 +249,7 @@ Object.assign(manifest,{campaign:{schema:'semantic-generation-summary/1',identit
     'Worker heap limits are V8 heap limits, not whole-process cgroup memory limits.',
     'Executed path signatures describe source-site branch and throw sequences; lexical families without a registry are not independent clusters.']});
 atomicWrite(join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
+campaign.close();
 process.removeListener('SIGINT',cancel);process.removeListener('SIGTERM',cancel);
 if(abort.signal.aborted)process.exitCode=130;
 else if(cases.some(item=>item.status!==(nativeConsumer?'admitted':'locally_verified')))
