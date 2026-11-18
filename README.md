@@ -4,10 +4,13 @@ An **experimental, owned-machine JavaScript semantic tracing runtime**, bootstra
 
 This is a working **bounded prototype**, **not** a complete JavaScript interpreter or complete Node/browser runtime. Unsupported language features fail explicitly rather than running guest JavaScript outside the tracer. See [current semantic-execution scope](docs/SEMANTIC_REASONING_TRACE.md) and [coverage ledger](coverage/required.json).
 
-Version 0.2.0 adds the first serializable spec-operation path for primitive
-arithmetic, typed operation commands, a pinned upstream source inventory, and a
-small executed Test262 slice. It preserves the strict synchronous training
-foundation and its source-anchored trace format. See
+The current v5 pipeline includes bounded synchronous and asynchronous
+execution, explicit guest throws, independent source verification, immutable
+candidate identities, frozen source components, resumable generation and
+pinned native admission. See [current status](docs/STATUS.md),
+[measured capability evidence](coverage/README.md), and
+[release gates](docs/RELEASE_GATES.md). The original arithmetic and narrow
+Test262 evidence remain documented in
 [owned arithmetic and evidence](docs/OWNED_ARITHMETIC.md).
 
 ## Model-facing semantic execution traces
@@ -49,6 +52,7 @@ npm ci
 npm test
 node tools/inspect-semantic-reasoning.mjs
 npm run training:generate -- --out /tmp/semantic-v5
+npm run baseline:v5 -- --out /tmp/semantic-v5-baseline --jobs 4
 ```
 
 The inspection tool executes real pinned counter, choice, compound
