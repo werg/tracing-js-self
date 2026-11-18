@@ -65,6 +65,13 @@ jobs:
           python tools/native-consumer/check_environment.py --megatoken megatoken \
             --tokenizer "$RUNNER_TEMP/tokenizer.json" --out "$RUNNER_TEMP/native-environment.json"
           python -m unittest discover -s tools/native-consumer -p 'test_*.py'
+      - name: Check merged learning artifact, comparison and source selection regressions
+        if: matrix.recipe == 'engineering'
+        env:
+          MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
+        run: |
+          python -m pytest -q test/test_learning_artifacts.py \
+            test/test_learning_comparison.py test/test_optimization_smoke_selection.py
       - name: Qualify native semantic boundary and input-mutation probes
         if: matrix.recipe == 'engineering'
         run: |
