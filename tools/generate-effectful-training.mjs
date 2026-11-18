@@ -22,6 +22,7 @@ import {loadNativeSettings,createNativeConsumer} from '../src/corpus/native-admi
 import {buildSourceRegistry,verifySourceRegistry,frozenSplitIdentity,canonicalHash}
   from '../src/corpus/source-registry.mjs';
 import {trustedRealSourceCases} from '../src/corpus/trusted-source-candidates.mjs';
+import {measureExecutionDifficulty} from '../src/corpus/execution-difficulty.mjs';
 
 const booleanFlags=new Set(['--require-native','--resume','--retry-failures','--compact-storage']);
 const valueFlags=new Set(['--out','--megatoken','--tokenizer','--python','--recipe','--jobs','--native-policy',
@@ -119,7 +120,7 @@ function record(fixture,entry){
     ...(fixture.role?{role:fixture.role}:{}),...(path?{path}:{}),
     ...(entry.public?{publicShard:entry.public,privateEvidence:entry.private,
       representation:'compact',split:details.split,episodeDigest:details.episodeDigest,
-      identityDigest:details.identityDigest,metrics:details.metrics}:{}),
+      identityDigest:details.identityDigest,metrics:details.metrics,difficulty:details.difficulty,sourceCluster:details.sourceCluster}:{}),
     ...(!entry.public?{reason:summary.reason??null}:{}),candidateDigest:entry.candidateDigest,
     durationMs:entry.durationMs,peakRssBytes:entry.peakRssBytes};
   summaryById.set(fixture.id,row);
@@ -128,7 +129,8 @@ function record(fixture,entry){
 const prepareResult=result=>{
   if(result.exported)result.campaignSummary={split:result.exported.sidecar.split,
     episodeDigest:hash(result.exported.public),identityDigest:result.exported.sidecar.identityDigest??null,
-    metrics:effectfulMetrics(result.exported)};
+    metrics:effectfulMetrics(result.exported),difficulty:measureExecutionDifficulty(result.exported),
+    sourceCluster:result.exported.sidecar.splitIdentity?.componentId??result.exported.sidecar.sourceFamily};
   return result;
 };
 await Promise.all(Array.from({length:Math.min(jobs,selectedTasks.length)},async()=>{
@@ -239,14 +241,18 @@ Object.assign(manifest,{campaign:{schema:'semantic-generation-summary/1',identit
     freshVerificationMs:fresh.reduce((n,row)=>n+row.durationMs,0),
     verifiedFamiliesPerHour:elapsedMs>0?new Set(fresh.filter(row=>['admitted','locally_verified'].includes(row.status)).map(row=>row.family)).size*3600000/elapsedMs:0,
     completedFamilies:new Set(cases.filter(row=>['admitted','locally_verified'].includes(row.status)).map(row=>row.family)).size,
-    uniquePathsPerHour:null,
+    uniquePathsPerHour:elapsedMs>0?new Set(fresh.flatMap(row=>(row.difficulty?.episodes??[]).map(episode=>
+      (row.sourceCluster??row.family)+':'+episode.pathDigest))).size*3600000/elapsedMs:0,
+    completedSourceClusters:new Set(cases.filter(row=>row.difficulty).map(row=>row.sourceCluster)).size,
+    uniqueExecutedPaths:new Set(cases.flatMap(row=>(row.difficulty?.episodes??[]).map(episode=>
+      (row.sourceCluster??row.family)+':'+episode.pathDigest))).size,
     publicBytes:cases.reduce((n,row)=>n+(row.publicShard?.bytes??0),0),
     compressedPrivateBytes:cases.reduce((n,row)=>n+(row.privateEvidence?.bytes??0),0),
     bytesPerAdmission:counts.admitted?cases.filter(row=>row.status==='admitted').reduce((n,row)=>n+
       (row.publicShard?.bytes??0)+(row.privateEvidence?.bytes??0),0)/counts.admitted:null},
   limitations:['Workers are bounded trusted-source processes; OS-level isolation for untrusted programs remains required.',
     'Worker heap limits are V8 heap limits, not whole-process cgroup memory limits.',
-    'Unique executed-path throughput is unmeasured; episode/family counts do not substitute for it.']});
+    'Executed path signatures describe source-site branch and throw sequences; lexical families without a registry are not independent clusters.']});
 atomicWrite(join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
 process.removeListener('SIGINT',cancel);process.removeListener('SIGTERM',cancel);
 if(abort.signal.aborted)process.exitCode=130;

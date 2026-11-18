@@ -64,8 +64,6 @@ function utilityCandidates(root,perFamily){
           source+='\n'+wrapper.source;originalSource+='\n'+wrapper.source;entry=wrapper.entry;args=[];}
         catch(error){refusal={status:'guest_fixture_not_portable',reason:String(error.message)};}
       }
-      if(spec.entry==='quickSelect')refusal={status:'guest_rng_unbound',
-        reason:'The v5 effectful bridge does not yet bind the original quickSelect guest RNG seed'};
       output.push(candidate({stream:'utilities',family,index,source,entry,args,originalSource,refusal,
         provenance:{upstream:{repository,revision:pin.revision,path:pin.sourcePrefix+spec.file,
           sha256:sha(pinned.sourceFile)},license:pin.license,notice,noticePath,
@@ -73,6 +71,7 @@ function utilityCandidates(root,perFamily){
           transform:{schema:'pinned-utility-projection/1',packaging:'remove-export-and-commonjs-assignment',
             typescript:spec.project==='vscode'?ts.version:null,lowering:lowered.lowering,
             ownedCallbackWrapper:!!spec.setup},inputOrigin:'pinned-deterministic-invocation'}}));
+      if(spec.entry==='quickSelect')output.at(-1).seeds={guestRng:42};
     }
   }
   return output;
