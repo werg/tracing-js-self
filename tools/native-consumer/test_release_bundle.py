@@ -221,5 +221,106 @@ class ReleaseQualificationTests(unittest.TestCase):
                         self.fail("Writer exclusion was bypassed")
 
 
+class ReleaseTrainingSelectionTests(unittest.TestCase):
+    def candidate(self, identity="one", tokens=50, split="train", cluster=None):
+        return {"id": identity, "status": "admitted", "family": cluster or identity,
+                "sourceCluster": cluster or identity, "generatedTokens": tokens, "split": split,
+                "splitPolicy": "source-components/1", "registryDigest": "a" * 64, "episodeId": "native:" + identity}
+
+    def native_database(self, root, rows, excluded=()):
+        with release.sqlite3.connect(root / "semantic-dedup.sqlite") as database:
+            database.execute("CREATE TABLE episodes(ordinal INTEGER PRIMARY KEY,episode_id TEXT,split TEXT,"
+                             "resolved_family TEXT,assistant_tokens INTEGER,duplicate_of TEXT,quarantine_reason TEXT)")
+            for index, row in enumerate(rows):
+                database.execute("INSERT INTO episodes VALUES(?,?,?,?,?,?,?)", (index, row["episodeId"], row["split"],
+                    row["sourceCluster"], row["generatedTokens"], "other" if row["id"] in excluded else None, None))
+
+    def test_native_qualification_measures_tokens_and_binds_cached_source_receipts_to_full_evidence(self):
+        document = {"public": {"value": 1}, "sidecar": {"producerRevision": "producer", "identityDigest": "identity",
+                    "sourceFamily": "family", "split": "train", "admission": "admitted", "license": "MIT",
+                    "sourceProvenance": {"license": "MIT"}, "splitIdentity": {"componentId": "component",
+                    "policy": "source-components/1", "registryDigest": "a" * 64}}}
+        row = {"id": "one", "family": "family", "split": "train", "identityDigest": "identity", "episodeDigest": "public",
+               "metrics": {"generatedTokens": 99999}}
+        native_gate = mock.Mock(return_value={"generatedTokens": 7})
+        verify_gate = mock.Mock(return_value=True)
+        with tempfile.TemporaryDirectory() as directory, mock.patch.object(release, "load_document", return_value=document):
+            receipt_path = Path(directory) / "native.jsonl"
+            qualified, sources, identities, notices = release.qualify_candidates(Path(directory), [row], receipt_path,
+                codec="actual-codec", producer_revision="producer", consumer_revision="consumer",
+                source_verifier=lambda _: {"sourceValidated": True}, native_admission=native_gate,
+                verify_admission=verify_gate, adapt_selected=lambda *args, **kwargs: (SimpleNamespace(episode_id="native:one"), None),
+                public_digest=lambda _: "public")
+            self.assertEqual(qualified[0]["generatedTokens"], 7)
+            self.assertEqual(qualified[0]["episodeId"], "native:one")
+            native_gate.assert_called_once_with(document, codec="actual-codec", consumer_revision="consumer")
+            verify_gate.assert_called_once()
+            self.assertEqual(json.loads(receipt_path.read_text())["native"]["generatedTokens"], 7)
+            cached = release.cached_source_verifier(sources)
+            self.assertTrue(cached(document)["sourceValidated"])
+            document["sidecar"]["sourceProvenance"]["license"] = "changed"
+            with self.assertRaisesRegex(ValueError, "changed after fresh source"):
+                cached(document)
+            self.assertEqual(identities[0]["id"], "one")
+            self.assertEqual(notices[0]["candidateIds"], ["one"])
+
+    def test_impossible_training_caps_keep_an_explicit_selection_receipt_and_fail(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            rows = [self.candidate(), self.candidate("held", 10000, "test")]
+            with self.assertRaisesRegex(ValueError, "excluded every training candidate"):
+                release.select_training(rows, root, max_family_share=.2)
+            receipt = release.read_json(root / "training-selection.json")
+            self.assertEqual(receipt["status"], "empty-training-selection")
+            self.assertEqual(receipt["heldOutIds"], ["held"])
+            self.assertEqual(receipt["preparedCandidateIds"], ["held"])
+
+    def test_prepared_shares_use_the_final_native_denominator_and_never_include_held_out_tokens(self):
+        rows = [self.candidate("a"), self.candidate("b"), self.candidate("held", 10000, "validation")]
+        for excluded in ([], ["b"]):
+            with self.subTest(excluded=excluded), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                selection = release.select_training(rows, root, max_family_tokens=100, max_family_share=.5)
+                self.native_database(root, rows, excluded)
+                receipt = release.check_prepared_selection(root, rows, selection)
+                self.assertEqual(receipt["heldOutInputIds"], ["held"])
+                self.assertEqual(receipt["generatedTrainTokens"], 50 if excluded else 100)
+                self.assertEqual(receipt["status"], "violated" if excluded else "verified")
+                if excluded:
+                    self.assertIn("token share", receipt["violations"][0])
+                    self.assertEqual(receipt["components"][0]["tokenShare"], 1)
+                else:
+                    self.assertTrue(all(component["tokenShare"] == .5 for component in receipt["components"]))
+
+    def test_prepared_data_cannot_add_candidates_move_splits_or_change_measured_tokens(self):
+        changes = [
+            ("UPDATE episodes SET assistant_tokens=51", "token count"),
+            ("UPDATE episodes SET split='test'", "frozen split"),
+            ("UPDATE episodes SET episode_id='unexpected'", "unselected episode"),
+        ]
+        for query, error in changes:
+            with self.subTest(query=query), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                rows = [self.candidate()]
+                selection = release.select_training(rows, root)
+                self.native_database(root, rows)
+                with release.sqlite3.connect(root / "semantic-dedup.sqlite") as database:
+                    database.execute(query)
+                with self.assertRaisesRegex(ValueError, error):
+                    release.check_prepared_selection(root, rows, selection)
+
+    def test_new_native_ancestry_joins_require_a_rebuilt_global_registry_before_a_capped_release(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            rows = [self.candidate("a"), self.candidate("b")]
+            selection = release.select_training(rows, root, max_family_share=.5)
+            self.native_database(root, rows)
+            with release.sqlite3.connect(root / "semantic-dedup.sqlite") as database:
+                database.execute("UPDATE episodes SET resolved_family='same-native-ancestor'")
+            receipt = release.check_prepared_selection(root, rows, selection)
+            self.assertEqual(receipt["status"], "violated")
+            self.assertIn("rebuild the global source registry", receipt["violations"][0])
+
+
 if __name__ == "__main__":
     unittest.main()
