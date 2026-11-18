@@ -1,0 +1,39 @@
+{
+  "schema": "semantic-receipt-file-index/1",
+  "files": [
+    {
+      "path": "D-native-equivalence.json",
+      "originalPath": "/workspace/scratch/23f61543c052/release-evidence-D/exact-public-native-equivalence/native-equivalence.json",
+      "bytes": 40771,
+      "sha256": "d54d7e92a003547e1c29279583d97a65d6f3589fc0186ef802b277f7e45c63c3"
+    },
+    {
+      "path": "D-native-equivalence.log",
+      "originalPath": "/workspace/scratch/23f61543c052/release-evidence-D/exact-public-native-equivalence.log",
+      "bytes": 47,
+      "sha256": "2c070ba2f0c0eb8edc8138059a861954f3a9a0a3eebdead3c69160613556eb00"
+    },
+    {
+      "path": "E-native-equivalence.json",
+      "originalPath": "/workspace/scratch/23f61543c052/release-evidence-E/exact-public-native-equivalence/native-equivalence.json",
+      "bytes": 13657,
+      "sha256": "884b43ee3c278ea28b613cec01df9b9d0ab865589f46aa3437a66875a1955891"
+    },
+    {
+      "path": "E-native-equivalence.log",
+      "originalPath": "/workspace/scratch/23f61543c052/release-evidence-E/exact-public-native-equivalence.log",
+      "bytes": 45,
+      "sha256": "da9a3776920dd3ed6b87bf796dc44d798af2d0b7c924f55474116115158fd7cd"
+    },
+    {
+      "path": "D-verifier-routing-probe.json",
+      "originalPath": "/workspace/scratch/23f61543c052/release-evidence-D/selector-verifier-routing-probe.json",
+      "bytes": 486,
+      "sha256": "25f45118006f351c6379e73fb949b0db7894b55c295196aa7e184e627064c677"
+    }
+  ],
+  "originalDSelection": "/workspace/scratch/23f61543c052/deliverables/release-D-real-source/selected",
+  "correctedDSelection": "/workspace/scratch/23f61543c052/deliverables/release-D-real-source/selected-v2",
+  "originalSelectionPreserved": true,
+  "originalCampaignsPreserved": true
+}

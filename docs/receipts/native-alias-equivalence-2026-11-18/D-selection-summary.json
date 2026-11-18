@@ -1,0 +1,331 @@
+{
+  "schema": "semantic-admitted-selection/1",
+  "sourceCampaignDigest": "9feebefdd391b9d6aabb62cb5a4dafb921c48cee2ae9f90f70f89a983243fcb6",
+  "producerVerifier": {
+    "root": "/workspace/scratch/23f61543c052/tracing-release-D",
+    "revision": "83e0d5742e63dc4439b68d6296f323cb7a3aafdc",
+    "trackedFilesClean": true,
+    "sourceEnvironmentChecksUnchanged": true
+  },
+  "sourceManifestSha256": "dc630eb7d08d09fd4020b74b437efc997c35efa094adae05ab4f724a9f09310f",
+  "sourceCounts": {
+    "attempted": 1171,
+    "admitted": 987,
+    "locally_verified": 0,
+    "native_rejected": 48,
+    "unsupported": 107,
+    "canonical_mismatch": 2,
+    "worker_timeout": 6,
+    "projection_refused": 12,
+    "source_unsupported": 9
+  },
+  "sourceCandidates": 1171,
+  "selected": 965,
+  "excluded": 206,
+  "split": "all",
+  "budgetScope": "train-only; evaluation tokens do not subsidize a training-family cap",
+  "exactPublicSelection": {
+    "enabled": true,
+    "policy": "exact-public-within-frozen-component/2",
+    "nativeEpisodeDifferenceAllowed": [
+      "lineage.task_id"
+    ],
+    "representativeOrder": "lexicographic candidate ID; selected export bytes remain unchanged",
+    "excludedAliases": 22,
+    "groups": [
+      {
+        "episodeDigest": "7ad69751de6f5d5201348147aed8359dc38ee7895bff2cdd27dcedd8b845ee75",
+        "representativeId": "real-utilities-00c850827df86da560245a5c",
+        "representativeIdentityDigest": "c8a2ef7b969ede59247cc8791243123228ce66dbe7ffa9e532c868c55561c60f",
+        "componentId": "component:00c29ea794d8eedd0eb1282d361db202212b4aa25792ce18723a17ee837f2ca6",
+        "registryDigest": "3518d930f2d486f81e6d914c5233b5475450b149d0036d1bee50364bf43e1498",
+        "split": "train",
+        "nativeContractDigest": "17809f3109d0d4a0e5f2ff0bb5911e007307d6087c79755b402a51b8438038e1",
+        "nativeEpisodeMetadataDigest": "a91fb3973f9ae5fbe5d8cea49c7ef52b4bdae08301752f6a618456eb916b53ae",
+        "declaredFamilies": [
+          "utility:vscode/arrays.ts/isFalsyOrEmpty"
+        ],
+        "aliases": [
+          "real-utilities-abde143109fe519461ecc310",
+          "real-utilities-d61cb13dcd1defc33f9afe6e"
+        ]
+      },
+      {
+        "episodeDigest": "d36bfd5f4afc276e1599e8ad05cfa3296c7414f9bf6a8ddba5615970f88df318",
+        "representativeId": "real-utilities-03ac2c8d71309d4f4f5d75e6",
+        "representativeIdentityDigest": "df6cebb07d60a5577b44f2fd4e3492f4bf9ea38f73dbefb89a1328ce3d489311",
+        "componentId": "component:00c29ea794d8eedd0eb1282d361db202212b4aa25792ce18723a17ee837f2ca6",
+        "registryDigest": "3518d930f2d486f81e6d914c5233b5475450b149d0036d1bee50364bf43e1498",
+        "split": "train",
+        "nativeContractDigest": "289a727ca50a38ee6a1353f01c3ba1297cd0e1538880a4c1e2533b0a77250021",
+        "nativeEpisodeMetadataDigest": "6e1f3be990aa45633be2085481d4d9e83d225dc95820d2903f4aad662ad2e56b",
+        "declaredFamilies": [
+          "utility:vscode/arrays.ts/binarySearch"
+        ],
+        "aliases": [
+          "real-utilities-e41c0edd66d9c57267427ac7"
+        ]
+      },
+      {
+        "episodeDigest": "0e5b878a7c1a693a7286e0e201c937cee32e599559ed3c6b66f7cc4a8eb83523",
+        "representativeId": "real-utilities-096a5315b1ac3b5e5afefa95",
+        "representativeIdentityDigest": "b74ac73793711ae857667bcae27aa1955b0a9467ac8a61e99a28188365d5e1c8",
+        "componentId": "component:aad2f20cc0e1c12560657a0507cde7b65cfc4ee3c7dee1d514fd7b5d2e618d18",
+        "registryDigest": "3518d930f2d486f81e6d914c5233b5475450b149d0036d1bee50364bf43e1498",
+        "split": "train",
+        "nativeContractDigest": "68a720bb8f54622cb895678591586dc120b9647082abb7e4c6995eba64c289c4",
+        "nativeEpisodeMetadataDigest": "3e33ffb2182f90e0001b409b54c9c24f32de95f058efb4b84ec22b1d454148b0",
+        "declaredFamilies": [
+          "utility:lodash/_baseTimes.js/baseTimes"
+        ],
+        "aliases": [
+          "real-utilities-e2378543c7dcb1913cd0551a"
+        ]
+      },
+      {
+        "episodeDigest": "a29fdf7d97e877cd5e636e5821382836714afb9b679606b399dc80215403e20b",
+        "representativeId": "real-utilities-0bcc74e290c267ea580be331",
+        "representativeIdentityDigest": "3dabf06024a937d9f6043f5cef08c529e025d9e72c950d70dccd8fea87c52019",
+        "componentId": "component:00c29ea794d8eedd0eb1282d361db202212b4aa25792ce18723a17ee837f2ca6",
+        "registryDigest": "3518d930f2d486f81e6d914c5233b5475450b149d0036d1bee50364bf43e1498",
+        "split": "train",
+        "nativeContractDigest": "06b6544c56ac317851f5f173544e99b33f41000e1ab22fb1037f74fcbcaab035",
+        "nativeEpisodeMetadataDigest": "9a030baecd70974c98b383a03913c056068495bd8a46480cb8ccbdac9aeddf76",
+        "declaredFamilies": [
+          "utility:vscode/arrays.ts/range"
+        ],
+        "aliases": [
+          "real-utilities-6a7de11c49b16882aa03dfdd"
+        ]
+      },
+      {
+        "episodeDigest": "d9c1e36914dbb92df8251bdf93d31e4b5039f237e86398d664b0284d541c00e3",
+        "representativeId": "real-utilities-0bd7d96956affe815cd7f6f5",
+        "representativeIdentityDigest": "7d0edc57288c839771feb18eec910369f9119a9b0b8ab530701b407475524d1d",
+        "componentId": "component:00c29ea794d8eedd0eb1282d361db202212b4aa25792ce18723a17ee837f2ca6",
+        "registryDigest": "3518d930f2d486f81e6d914c5233b5475450b149d0036d1bee50364bf43e1498",
+        "split": "train",
+        "nativeContractDigest": "5d42d2551d04d7c6976f441e9aa14a2c2be185a26b43ddfab05144f439771042",
+        "nativeEpisodeMetadataDigest": "d54cf22d566a31fa9d092c519ce0e24a43106bce108f12f2f575c41da94b3f8b",
+        "declaredFamilies": [
+          "utility:vscode/arrays.ts/withoutDuplicates"
+        ],
+        "aliases": [
+          "real-utilities-3b76539a2009d59de1785e70",
+          "real-utilities-c8b698cf4aa69be05d88a91e"
+        ]
+      },
+      {
+        "episodeDigest": "3a3eacb2ab36bfd63d91332ee33caf369c4212d5ba41ca8c51f5f4aeb5410a6f",
+        "representativeId": "real-utilities-10fca60f6d553840f613a93b",
+        "representativeIdentityDigest": "3b54c4f3a4870e03f3043f362dc1a4500b2cfc2f3699540a6bf26ce41d2d2a96",
+        "componentId": "component:aad2f20cc0e1c12560657a0507cde7b65cfc4ee3c7dee1d514fd7b5d2e618d18",
+        "registryDigest": "3518d930f2d486f81e6d914c5233b5475450b149d0036d1bee50364bf43e1498",
+        "split": "train",
+        "nativeContractDigest": "b6b651ca1fa1a7f20888203581aca63aae3e199c7abc050177bf5351a9d68df1",
+        "nativeEpisodeMetadataDigest": "3e33ffb2182f90e0001b409b54c9c24f32de95f058efb4b84ec22b1d454148b0",
+        "declaredFamilies": [
+          "utility:lodash/_baseTimes.js/baseTimes"
+        ],
+        "aliases": [
+          "real-utilities-4c83220230d59e03d443bd1b"
+        ]
+      },
+      {
+        "episodeDigest": "e98e04bc39adec124e18d1c423cad3b72bf81c173b49ee9189f3a4afb790d6b6",
+        "representativeId": "real-utilities-1ab93fa6088ca22d62e7f3da",
+        "representativeIdentityDigest": "414a4c5fb45e66d67af2684374704c0c2b19d32784cc156f4bd456e91d5c4f88",
+        "componentId": "component:00c29ea794d8eedd0eb1282d361db202212b4aa25792ce18723a17ee837f2ca6",
+        "registryDigest": "3518d930f2d486f81e6d914c5233b5475450b149d0036d1bee50364bf43e1498",
+        "split": "train",
+        "nativeContractDigest": "18db497c9a43c81dbad257250e3096750911891c33ffa6965f09115d9e5ae5c9",
+        "nativeEpisodeMetadataDigest": "9a030baecd70974c98b383a03913c056068495bd8a46480cb8ccbdac9aeddf76",
+        "declaredFamilies": [
+          "utility:vscode/arrays.ts/range"
+        ],
+        "aliases": [
+          "real-utilities-8eed1242f0edee133cf8816c"
+        ]
+      },
+      {
+        "episodeDigest": "b3b258f723c7aa8c847ac31bd1460f680c1245bb60e28d9b358096420986d36b",
+        "representativeId": "real-utilities-220384b57509f4044d6e05d2",
+        "representativeIdentityDigest": "bdb71641fdf489da2611a79d8492f0e2394d47150fca0109672d9ba342959516",
+        "componentId": "component:aad2f20cc0e1c12560657a0507cde7b65cfc4ee3c7dee1d514fd7b5d2e618d18",
+        "registryDigest": "3518d930f2d486f81e6d914c5233b5475450b149d0036d1bee50364bf43e1498",
+        "split": "train",
+        "nativeContractDigest": "93516684128d3e912563808f9f09350d487174888559926b1e3a9096809e7ea0",
+        "nativeEpisodeMetadataDigest": "3e33ffb2182f90e0001b409b54c9c24f32de95f058efb4b84ec22b1d454148b0",
+        "declaredFamilies": [
+          "utility:lodash/_baseTimes.js/baseTimes"
+        ],
+        "aliases": [
+          "real-utilities-4d248a0237b19503f26826a0"
+        ]
+      },
+      {
+        "episodeDigest": "cf10484e1eba26bf4381484259c0662ec3cde403248ebca18b3d966d1c34035c",
+        "representativeId": "real-utilities-319f11b0c89ca451df878ff1",
+        "representativeIdentityDigest": "da7b5ab428c7abb790dd1024d9d69a749ea56e134a8abf9e9514d19342ceb1e5",
+        "componentId": "component:00c29ea794d8eedd0eb1282d361db202212b4aa25792ce18723a17ee837f2ca6",
+        "registryDigest": "3518d930f2d486f81e6d914c5233b5475450b149d0036d1bee50364bf43e1498",
+        "split": "train",
+        "nativeContractDigest": "7c0a5e1a59ebc0cca984552e09d2ed90da6f8211473d7b44d454fb50e86611b5",
+        "nativeEpisodeMetadataDigest": "d54cf22d566a31fa9d092c519ce0e24a43106bce108f12f2f575c41da94b3f8b",
+        "declaredFamilies": [
+          "utility:vscode/arrays.ts/withoutDuplicates"
+        ],
+        "aliases": [
+          "real-utilities-725f3b12410d4c90e10203e1",
+          "real-utilities-dabe3432d45476b7ab8a3bcc"
+        ]
+      },
+      {
+        "episodeDigest": "c4cf2786d5a5b4cfb3dd890b282ad926201a4c6a3557641a2e3880d2b6c9cb63",
+        "representativeId": "real-utilities-342378320c64ca09e22d63ac",
+        "representativeIdentityDigest": "8ba8e9813793868e0da1b2309d58f0a3ad0809ed796421449897e19a57924f91",
+        "componentId": "component:00c29ea794d8eedd0eb1282d361db202212b4aa25792ce18723a17ee837f2ca6",
+        "registryDigest": "3518d930f2d486f81e6d914c5233b5475450b149d0036d1bee50364bf43e1498",
+        "split": "train",
+        "nativeContractDigest": "5d42d2551d04d7c6976f441e9aa14a2c2be185a26b43ddfab05144f439771042",
+        "nativeEpisodeMetadataDigest": "d54cf22d566a31fa9d092c519ce0e24a43106bce108f12f2f575c41da94b3f8b",
+        "declaredFamilies": [
+          "utility:vscode/arrays.ts/withoutDuplicates"
+        ],
+        "aliases": [
+          "real-utilities-550589f3329dbe17ea374077",
+          "real-utilities-dd467d0e2fd925c0c6cdf5af"
+        ]
+      },
+      {
+        "episodeDigest": "f70b621e0d4a92b39a92b59abf262668784980a4da92370ace836b59d8fcf716",
+        "representativeId": "real-utilities-3fc317a0b759a9fcb9ddfeca",
+        "representativeIdentityDigest": "905d1b859d33cbd520504f0326849f7d1f635d075fb1628396e150c2edaa2e29",
+        "componentId": "component:00c29ea794d8eedd0eb1282d361db202212b4aa25792ce18723a17ee837f2ca6",
+        "registryDigest": "3518d930f2d486f81e6d914c5233b5475450b149d0036d1bee50364bf43e1498",
+        "split": "train",
+        "nativeContractDigest": "5d42d2551d04d7c6976f441e9aa14a2c2be185a26b43ddfab05144f439771042",
+        "nativeEpisodeMetadataDigest": "d54cf22d566a31fa9d092c519ce0e24a43106bce108f12f2f575c41da94b3f8b",
+        "declaredFamilies": [
+          "utility:vscode/arrays.ts/withoutDuplicates"
+        ],
+        "aliases": [
+          "real-utilities-d08b16995e2b607a4ad89a5a",
+          "real-utilities-d4911d912546daa97dc4b3b0"
+        ]
+      },
+      {
+        "episodeDigest": "0614af3a7cc63733d8cd676ae94d7a82c3f7375e44128d1a1f5b558854e32a66",
+        "representativeId": "real-utilities-539b4cfecd263be380f8fc49",
+        "representativeIdentityDigest": "62d48e3212a441d1d1b4a24894a55bb60b43e6693901d00c5a549f63f0a6957b",
+        "componentId": "component:00c29ea794d8eedd0eb1282d361db202212b4aa25792ce18723a17ee837f2ca6",
+        "registryDigest": "3518d930f2d486f81e6d914c5233b5475450b149d0036d1bee50364bf43e1498",
+        "split": "train",
+        "nativeContractDigest": "ebcf907240ec308b08039dfb438bd7959315465bc6710abe5539dca3a702c1cf",
+        "nativeEpisodeMetadataDigest": "a91fb3973f9ae5fbe5d8cea49c7ef52b4bdae08301752f6a618456eb916b53ae",
+        "declaredFamilies": [
+          "utility:vscode/arrays.ts/isFalsyOrEmpty"
+        ],
+        "aliases": [
+          "real-utilities-5bcb60880c943659b55911e3",
+          "real-utilities-de4219a30c54efcfd1752427"
+        ]
+      },
+      {
+        "episodeDigest": "d294d7369ec8884210a65dfae515e26aca5edc58325be8c6f6e89f5416f73fe8",
+        "representativeId": "real-utilities-59600fa665b7bea62ecb2111",
+        "representativeIdentityDigest": "db6b5e532b73604ead4770b5ddb74ea5a432cbb947ff8112a45b4e50bc4de905",
+        "componentId": "component:00c29ea794d8eedd0eb1282d361db202212b4aa25792ce18723a17ee837f2ca6",
+        "registryDigest": "3518d930f2d486f81e6d914c5233b5475450b149d0036d1bee50364bf43e1498",
+        "split": "train",
+        "nativeContractDigest": "3ce667bc171dfe7233f4fc51f48a3f2c510787e0619dc4093a2d4951b3fb9cc7",
+        "nativeEpisodeMetadataDigest": "6e1f3be990aa45633be2085481d4d9e83d225dc95820d2903f4aad662ad2e56b",
+        "declaredFamilies": [
+          "utility:vscode/arrays.ts/binarySearch"
+        ],
+        "aliases": [
+          "real-utilities-eab39c6aa38bde361d0a3658"
+        ]
+      },
+      {
+        "episodeDigest": "faafd6e03120ee52bfa176b3e6bc00bf342939a627692082fad6944f637f6dff",
+        "representativeId": "real-utilities-5ae7ad789bc4e2993fa06a85",
+        "representativeIdentityDigest": "3dd52ff608e67b96994b34fcb074349a5216227bd714406adb7cfe5208bed5b4",
+        "componentId": "component:00c29ea794d8eedd0eb1282d361db202212b4aa25792ce18723a17ee837f2ca6",
+        "registryDigest": "3518d930f2d486f81e6d914c5233b5475450b149d0036d1bee50364bf43e1498",
+        "split": "train",
+        "nativeContractDigest": "d4587faf9bf5985bef27140bb6fce3d7c56730b2263fc0653eb5971935cac2f9",
+        "nativeEpisodeMetadataDigest": "9a030baecd70974c98b383a03913c056068495bd8a46480cb8ccbdac9aeddf76",
+        "declaredFamilies": [
+          "utility:vscode/arrays.ts/range"
+        ],
+        "aliases": [
+          "real-utilities-7c518663fe8dbf3ba0a9f17a"
+        ]
+      },
+      {
+        "episodeDigest": "1456f807f46f68dff7755a4603819ddfa46b018ec59c510a1b94ea2fbc984ddd",
+        "representativeId": "real-utilities-6249f3dc1b4988be6343834c",
+        "representativeIdentityDigest": "ecfcc149cc4935e9030859cac9d1857b250f3c6f5a03bf71a21cb9dcaf1f22d1",
+        "componentId": "component:00c29ea794d8eedd0eb1282d361db202212b4aa25792ce18723a17ee837f2ca6",
+        "registryDigest": "3518d930f2d486f81e6d914c5233b5475450b149d0036d1bee50364bf43e1498",
+        "split": "train",
+        "nativeContractDigest": "8c9eaf2e7aab4542eea36d3fb4c4c65e154581cf631307ad1d3d025e0e132cff",
+        "nativeEpisodeMetadataDigest": "9a030baecd70974c98b383a03913c056068495bd8a46480cb8ccbdac9aeddf76",
+        "declaredFamilies": [
+          "utility:vscode/arrays.ts/range"
+        ],
+        "aliases": [
+          "real-utilities-79e0e52bdb97aad77c8635ff"
+        ]
+      },
+      {
+        "episodeDigest": "041179e759e7d86029b0cbe8368914b4ef309db3a7ebbbe37fa3fabaa39914ad",
+        "representativeId": "real-utilities-85d0bb9450e8d5199f42a4c1",
+        "representativeIdentityDigest": "22ee93aac0a2b0e4a5e88636afdca7faf1000796ed9572be32a04cf914bcf347",
+        "componentId": "component:aad2f20cc0e1c12560657a0507cde7b65cfc4ee3c7dee1d514fd7b5d2e618d18",
+        "registryDigest": "3518d930f2d486f81e6d914c5233b5475450b149d0036d1bee50364bf43e1498",
+        "split": "train",
+        "nativeContractDigest": "5a100bd3f20357727420219874056aa7a72c4116b7a3170aef08583528717a68",
+        "nativeEpisodeMetadataDigest": "3e33ffb2182f90e0001b409b54c9c24f32de95f058efb4b84ec22b1d454148b0",
+        "declaredFamilies": [
+          "utility:lodash/_baseTimes.js/baseTimes"
+        ],
+        "aliases": [
+          "real-utilities-a6b13bfc62513f00cd84f908"
+        ]
+      }
+    ],
+    "nativeDedupUnchanged": true,
+    "rawAdmissionsUnchanged": true
+  },
+  "maxFamilyTokens": 9007199254740991,
+  "maxFamilyShare": 1,
+  "groupingPolicies": [
+    "source-components/1"
+  ],
+  "maximumTrainingComponentShare": 0.4368969031286447,
+  "splits": {
+    "train": {
+      "episodes": 848,
+      "declaredFamilies": 74,
+      "sourceComponents": 21,
+      "generatedTokens": 774233
+    },
+    "validation": {
+      "episodes": 48,
+      "declaredFamilies": 4,
+      "sourceComponents": 2,
+      "generatedTokens": 9644
+    },
+    "test": {
+      "episodes": 69,
+      "declaredFamilies": 11,
+      "sourceComponents": 9,
+      "generatedTokens": 45435
+    }
+  },
+  "originalCampaignRequiredForAudit": true,
+  "admission": "retained-existing-receipts; independent consumer preparation must rerun source/native gates",
+  "optimizerSteps": 0
+}

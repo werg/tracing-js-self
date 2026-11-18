@@ -1,0 +1,17 @@
+{
+  "schema": "semantic-historical-verifier-routing-probe/1",
+  "caseId": "real-utilities-9f613b92f1e790e1aa06e539",
+  "identityDigest": "b26d581d19a85910743bcfb79323e314bae9dd8bba58b73b6723d336e46f3764",
+  "timezone": "UTC",
+  "checks": [
+    {
+      "name": "exact-frozen-D",
+      "status": "verified"
+    },
+    {
+      "name": "current-root",
+      "status": "refused",
+      "reason": "Candidate identity evidence changed: runtime, dependency or verifier environment"
+    }
+  ]
+}

@@ -1,0 +1,602 @@
+{
+  "schema": "semantic-exact-public-native-equivalence/1",
+  "status": "verified",
+  "retrospective": true,
+  "sourceCampaignDigest": "9feebefdd391b9d6aabb62cb5a4dafb921c48cee2ae9f90f70f89a983243fcb6",
+  "sourceManifestSha256": "dc630eb7d08d09fd4020b74b437efc997c35efa094adae05ab4f724a9f09310f",
+  "selectionReportSha256": "d07dbafba5e5cba3c7adeb6d3661c3c0d8dcd63776bf00f296a6cf53f4b1c100",
+  "originalSelectionPolicy": "exact-public-within-frozen-component/2",
+  "strengthenedSelectionPolicy": "exact-public-within-frozen-component/2",
+  "producerRevision": "83e0d5742e63dc4439b68d6296f323cb7a3aafdc",
+  "producerVerifierEnvironmentUnchanged": true,
+  "originalCampaignModified": false,
+  "originalSelectionModified": false,
+  "newAdmissionClaims": false,
+  "optimizerSteps": 0,
+  "modelInferenceCalls": 0,
+  "allowedNativeDifference": [
+    "lineage.task_id"
+  ],
+  "verifierSha256": "e5fe162acd82d4973768dcce6b99f8ab8658ba62f6e266733a0e734b30f3171c",
+  "nativeVerifierSha256": "0e141713864634a5e743d67badd9794e99919d59e324615b311c131d683a8d02",
+  "metadataHelperSha256": "4f2873a72414af4a667e3e622d47d5c458b489fabc2a5da657a84913e6b79e95",
+  "native": {
+    "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "maxPositions": 1024,
+    "maxHistory": 1024,
+    "comparedGroups": 16,
+    "comparedAliases": 22,
+    "groups": [
+      {
+        "episodeDigest": "7ad69751de6f5d5201348147aed8359dc38ee7895bff2cdd27dcedd8b845ee75",
+        "representativeId": "real-utilities-00c850827df86da560245a5c",
+        "members": [
+          {
+            "id": "real-utilities-00c850827df86da560245a5c",
+            "exportSha256": "b8de5f295546ed1a330efd77db3469ccc421c943b4ef64959b8f4b331dbfe3b3",
+            "identityDigest": "c8a2ef7b969ede59247cc8791243123228ce66dbe7ffa9e532c868c55561c60f",
+            "candidateDigest": "80888cde1007ec8efbb93fffe25c5093d9f1a69d33a4ee5151bcf457502b788c",
+            "sourceEntryDigest": "4cd44c55ccef1aee692414e5d003a1e02f26064d702ba5f7f39e55df02cd7d80",
+            "nativeEpisodeMetadataDigest": "a91fb3973f9ae5fbe5d8cea49c7ef52b4bdae08301752f6a618456eb916b53ae",
+            "nativeEpisodeId": "semantic:harness:facca62e981f612edf8788d4ea9efe400cd6ccad97052a86e074f3432317ca6f",
+            "nativeTaskId": "real-utilities-00c850827df86da560245a5c",
+            "normalizedNativeEpisodeSha256": "ec869f1b8f1901a347c6f21e891b309ca2e871811db5740eeb672750e78ccfe8",
+            "nativeRecords": 7
+          },
+          {
+            "id": "real-utilities-abde143109fe519461ecc310",
+            "exportSha256": "5582809ed82be21ef63074bc18db27f6553431ba839e8557fd8bcd8286830426",
+            "identityDigest": "db0752ca754882ea37c1ea049ac695251b5f9ee2ac3b230d558b18cba660091d",
+            "candidateDigest": "cc9232b67962164c68fb92a32f062c3015485c48ecab6ce41b87a36e7855534d",
+            "sourceEntryDigest": "cdd2c2bd8f550859f921facedf19ecea3547b032c6b56b4175b5fa17385eda92",
+            "nativeEpisodeMetadataDigest": "a91fb3973f9ae5fbe5d8cea49c7ef52b4bdae08301752f6a618456eb916b53ae",
+            "nativeEpisodeId": "semantic:harness:facca62e981f612edf8788d4ea9efe400cd6ccad97052a86e074f3432317ca6f",
+            "nativeTaskId": "real-utilities-abde143109fe519461ecc310",
+            "normalizedNativeEpisodeSha256": "ec869f1b8f1901a347c6f21e891b309ca2e871811db5740eeb672750e78ccfe8",
+            "nativeRecords": 7
+          },
+          {
+            "id": "real-utilities-d61cb13dcd1defc33f9afe6e",
+            "exportSha256": "7ccc32e4ae1289a08b5fd51266cc01c359caa3ffd2ed49be0c60b75c833eacce",
+            "identityDigest": "566ef776e694a0bd8148ad9c38991979cf45fe8144e24cea1e8d8a8a245adb65",
+            "candidateDigest": "2243054a469ff4da8296736fd827a6835a3409803488e54fb54d6695658f8948",
+            "sourceEntryDigest": "5365dc0d9bb2181124b2f72f57f55d65f77314ec586071bea2ff98f97ef35dc9",
+            "nativeEpisodeMetadataDigest": "a91fb3973f9ae5fbe5d8cea49c7ef52b4bdae08301752f6a618456eb916b53ae",
+            "nativeEpisodeId": "semantic:harness:facca62e981f612edf8788d4ea9efe400cd6ccad97052a86e074f3432317ca6f",
+            "nativeTaskId": "real-utilities-d61cb13dcd1defc33f9afe6e",
+            "normalizedNativeEpisodeSha256": "ec869f1b8f1901a347c6f21e891b309ca2e871811db5740eeb672750e78ccfe8",
+            "nativeRecords": 7
+          }
+        ],
+        "allNativeFieldsExceptTaskIdEqual": true
+      },
+      {
+        "episodeDigest": "d36bfd5f4afc276e1599e8ad05cfa3296c7414f9bf6a8ddba5615970f88df318",
+        "representativeId": "real-utilities-03ac2c8d71309d4f4f5d75e6",
+        "members": [
+          {
+            "id": "real-utilities-03ac2c8d71309d4f4f5d75e6",
+            "exportSha256": "67470468d70a201eba168d273c7af8196683172d724f5ac1e2920a848132b9d6",
+            "identityDigest": "df6cebb07d60a5577b44f2fd4e3492f4bf9ea38f73dbefb89a1328ce3d489311",
+            "candidateDigest": "0e739bb7ca648fd22574ca58e0eb367977bac041e77f6a6360b1820600c1cfec",
+            "sourceEntryDigest": "94732b1b5ef8f8d5777822625def24b5ef52b745f462e61fc2ff99071c97dd21",
+            "nativeEpisodeMetadataDigest": "6e1f3be990aa45633be2085481d4d9e83d225dc95820d2903f4aad662ad2e56b",
+            "nativeEpisodeId": "semantic:harness:ac3272df2beeebd310e6789f47fb535d01450e98a04393143a7790eb4735cd04",
+            "nativeTaskId": "real-utilities-03ac2c8d71309d4f4f5d75e6",
+            "normalizedNativeEpisodeSha256": "e3f47e223f6b82c3b1ee557bb15b5f3bbdfb6d13b43424df2c0eed24ec9f5572",
+            "nativeRecords": 75
+          },
+          {
+            "id": "real-utilities-e41c0edd66d9c57267427ac7",
+            "exportSha256": "64b4bd0d87364811ad8c23b0a595f42c46b6f7771112d556f4b9cf082b8ead7a",
+            "identityDigest": "6e01505080ec3a53a42b1acfcafc84ca7c66bb5371a40c056a92266f454fba2f",
+            "candidateDigest": "9b11da94fae5c17c2207bf3647fa110087c430c1577c01c77bc5819d7cf8f388",
+            "sourceEntryDigest": "901f52c2c362ee2e4a67c6f6760e5c4b1754816c2065cdfdba0ad96d33e471c0",
+            "nativeEpisodeMetadataDigest": "6e1f3be990aa45633be2085481d4d9e83d225dc95820d2903f4aad662ad2e56b",
+            "nativeEpisodeId": "semantic:harness:ac3272df2beeebd310e6789f47fb535d01450e98a04393143a7790eb4735cd04",
+            "nativeTaskId": "real-utilities-e41c0edd66d9c57267427ac7",
+            "normalizedNativeEpisodeSha256": "e3f47e223f6b82c3b1ee557bb15b5f3bbdfb6d13b43424df2c0eed24ec9f5572",
+            "nativeRecords": 75
+          }
+        ],
+        "allNativeFieldsExceptTaskIdEqual": true
+      },
+      {
+        "episodeDigest": "0e5b878a7c1a693a7286e0e201c937cee32e599559ed3c6b66f7cc4a8eb83523",
+        "representativeId": "real-utilities-096a5315b1ac3b5e5afefa95",
+        "members": [
+          {
+            "id": "real-utilities-096a5315b1ac3b5e5afefa95",
+            "exportSha256": "83e2fb3365cfb7be3a8fe7cec32a40dcf06fba03f460e657703eb0f4cc97aa4e",
+            "identityDigest": "b74ac73793711ae857667bcae27aa1955b0a9467ac8a61e99a28188365d5e1c8",
+            "candidateDigest": "aa83841f3f1be8ce9bed3312ff43f6a9e4036c87894e65befbd8c95af15312e0",
+            "sourceEntryDigest": "18c7169e0f52964e8cd0b0af7e701b5e9e37017629bcdfd0d596f7520addc0c0",
+            "nativeEpisodeMetadataDigest": "3e33ffb2182f90e0001b409b54c9c24f32de95f058efb4b84ec22b1d454148b0",
+            "nativeEpisodeId": "semantic:harness:57656e83fa11576572dd2c860b1d25558f806b1dc78851eee71777437a05f1f4",
+            "nativeTaskId": "real-utilities-096a5315b1ac3b5e5afefa95",
+            "normalizedNativeEpisodeSha256": "f39f5bbae08a9718848ecbd3b6b0d19534cd816d3b0f0fe0372c75dd5fa3dfb6",
+            "nativeRecords": 51
+          },
+          {
+            "id": "real-utilities-e2378543c7dcb1913cd0551a",
+            "exportSha256": "56f296db89d63fefbabab37faf0b9dab3712e237863fc8adea9a4f40ae57704a",
+            "identityDigest": "a8af8f22ac40925d6f2cdf98e4980e993fd15d6d6ee31b715436f54a7c698cf6",
+            "candidateDigest": "e5e95f57be4ba72bc2c1bcfd8b6c4fc5271593e65cbb4955635793be5e5bb279",
+            "sourceEntryDigest": "230ec3e4092f4ba9836454827f648152b124dd5af9fa00436fd79079a5570fc4",
+            "nativeEpisodeMetadataDigest": "3e33ffb2182f90e0001b409b54c9c24f32de95f058efb4b84ec22b1d454148b0",
+            "nativeEpisodeId": "semantic:harness:57656e83fa11576572dd2c860b1d25558f806b1dc78851eee71777437a05f1f4",
+            "nativeTaskId": "real-utilities-e2378543c7dcb1913cd0551a",
+            "normalizedNativeEpisodeSha256": "f39f5bbae08a9718848ecbd3b6b0d19534cd816d3b0f0fe0372c75dd5fa3dfb6",
+            "nativeRecords": 51
+          }
+        ],
+        "allNativeFieldsExceptTaskIdEqual": true
+      },
+      {
+        "episodeDigest": "a29fdf7d97e877cd5e636e5821382836714afb9b679606b399dc80215403e20b",
+        "representativeId": "real-utilities-0bcc74e290c267ea580be331",
+        "members": [
+          {
+            "id": "real-utilities-0bcc74e290c267ea580be331",
+            "exportSha256": "f0d899e428e95d1ac33a0eff33b5f2f9875b6bc547ec70b040b97602d7dfe359",
+            "identityDigest": "3dabf06024a937d9f6043f5cef08c529e025d9e72c950d70dccd8fea87c52019",
+            "candidateDigest": "505edbbea8d477305296e3da4c0a447c080550e383cbb35cbbe0a6f247f7578c",
+            "sourceEntryDigest": "e63741171f2bdd9911c3b82df347765565b99188d9bd5847929466ce3fa69d3c",
+            "nativeEpisodeMetadataDigest": "9a030baecd70974c98b383a03913c056068495bd8a46480cb8ccbdac9aeddf76",
+            "nativeEpisodeId": "semantic:harness:f2462b01b4f9487d1d21e10931c44efa9c78fcf1edf327a1010f9e570e5acb16",
+            "nativeTaskId": "real-utilities-0bcc74e290c267ea580be331",
+            "normalizedNativeEpisodeSha256": "ecd1bc6d05a0281f2da0a8180a87b94cbf290bcd92911c5ab437bec6c2cfa31b",
+            "nativeRecords": 35
+          },
+          {
+            "id": "real-utilities-6a7de11c49b16882aa03dfdd",
+            "exportSha256": "3deacf45908deec90675aa04e679f9a8e477c10be064da3317507b77a730c422",
+            "identityDigest": "8e08e724d16f1a6970d95ecec439d362c122935e27582831f005f7bf1cc0a709",
+            "candidateDigest": "364b7ebef441ce4286989e56f9461081ede461fc82fba99b5dd3835c6e9c42e7",
+            "sourceEntryDigest": "eec755508c95728de2c6c143a1e84fff9c78986d10e159acde9d06e751f0f0ab",
+            "nativeEpisodeMetadataDigest": "9a030baecd70974c98b383a03913c056068495bd8a46480cb8ccbdac9aeddf76",
+            "nativeEpisodeId": "semantic:harness:f2462b01b4f9487d1d21e10931c44efa9c78fcf1edf327a1010f9e570e5acb16",
+            "nativeTaskId": "real-utilities-6a7de11c49b16882aa03dfdd",
+            "normalizedNativeEpisodeSha256": "ecd1bc6d05a0281f2da0a8180a87b94cbf290bcd92911c5ab437bec6c2cfa31b",
+            "nativeRecords": 35
+          }
+        ],
+        "allNativeFieldsExceptTaskIdEqual": true
+      },
+      {
+        "episodeDigest": "d9c1e36914dbb92df8251bdf93d31e4b5039f237e86398d664b0284d541c00e3",
+        "representativeId": "real-utilities-0bd7d96956affe815cd7f6f5",
+        "members": [
+          {
+            "id": "real-utilities-0bd7d96956affe815cd7f6f5",
+            "exportSha256": "1ff49437d210b310cf04bbd229104d2b36dc231187ff8b628d335461d6083044",
+            "identityDigest": "7d0edc57288c839771feb18eec910369f9119a9b0b8ab530701b407475524d1d",
+            "candidateDigest": "e6b7e515a3ea9cdd8dbb529845c914f79f4eff564e47256d88f0a13f0637ce1e",
+            "sourceEntryDigest": "bc9e89c83b63cc3b8a2359f41823653a99bd67f04e8c8ba53d5e24946cf17069",
+            "nativeEpisodeMetadataDigest": "d54cf22d566a31fa9d092c519ce0e24a43106bce108f12f2f575c41da94b3f8b",
+            "nativeEpisodeId": "semantic:harness:a3421e141d001ceadf0aa13d699a34bad68e023ff2bbe076fecd855aebeb0959",
+            "nativeTaskId": "real-utilities-0bd7d96956affe815cd7f6f5",
+            "normalizedNativeEpisodeSha256": "7ea4422403457d83af6786a54cf6706ce56135f69545a04bbb58f0bb05c77bac",
+            "nativeRecords": 9
+          },
+          {
+            "id": "real-utilities-3b76539a2009d59de1785e70",
+            "exportSha256": "2d342db6753c5cc2c5a49f68f3505844af8320cfdb5f6af2a458f1bd0d1c9656",
+            "identityDigest": "ae634b0e6bb8eccb02d677c486c640bac1cf989cb803804554c04a893cc831be",
+            "candidateDigest": "c6ad3546f53e17aabfaa82b1abeb8f05653a3c6ec082d41a50d2ec6bbab7f693",
+            "sourceEntryDigest": "c9862e634f0df9cb2e545781ae83b0ce371f16feb192da27cf7856fd2ccd2d93",
+            "nativeEpisodeMetadataDigest": "d54cf22d566a31fa9d092c519ce0e24a43106bce108f12f2f575c41da94b3f8b",
+            "nativeEpisodeId": "semantic:harness:a3421e141d001ceadf0aa13d699a34bad68e023ff2bbe076fecd855aebeb0959",
+            "nativeTaskId": "real-utilities-3b76539a2009d59de1785e70",
+            "normalizedNativeEpisodeSha256": "7ea4422403457d83af6786a54cf6706ce56135f69545a04bbb58f0bb05c77bac",
+            "nativeRecords": 9
+          },
+          {
+            "id": "real-utilities-c8b698cf4aa69be05d88a91e",
+            "exportSha256": "fafea2ea42451827bca31788c49be1a97f3f9c26e836840196eeddfefac8bd06",
+            "identityDigest": "6a8dd6f8524d3c723d2c0e100c1fef450efb248c9f224229ac24940547f575b1",
+            "candidateDigest": "c9e1135f876178ada8b46e760399294959bca6ab9c54453bddabaa2804a8abf8",
+            "sourceEntryDigest": "721eae00296c71b957f1f05e5701aa84eca4812610834bc6674f39892681676d",
+            "nativeEpisodeMetadataDigest": "d54cf22d566a31fa9d092c519ce0e24a43106bce108f12f2f575c41da94b3f8b",
+            "nativeEpisodeId": "semantic:harness:a3421e141d001ceadf0aa13d699a34bad68e023ff2bbe076fecd855aebeb0959",
+            "nativeTaskId": "real-utilities-c8b698cf4aa69be05d88a91e",
+            "normalizedNativeEpisodeSha256": "7ea4422403457d83af6786a54cf6706ce56135f69545a04bbb58f0bb05c77bac",
+            "nativeRecords": 9
+          }
+        ],
+        "allNativeFieldsExceptTaskIdEqual": true
+      },
+      {
+        "episodeDigest": "3a3eacb2ab36bfd63d91332ee33caf369c4212d5ba41ca8c51f5f4aeb5410a6f",
+        "representativeId": "real-utilities-10fca60f6d553840f613a93b",
+        "members": [
+          {
+            "id": "real-utilities-10fca60f6d553840f613a93b",
+            "exportSha256": "5d9909f360e88ff1d9566745dae842d20d8a1c6114d7e52e46b8f8a17c1ea65a",
+            "identityDigest": "3b54c4f3a4870e03f3043f362dc1a4500b2cfc2f3699540a6bf26ce41d2d2a96",
+            "candidateDigest": "faed8d0b901d33eb0186aee79a32be192680ea5bf854b81bdcc491460c73903c",
+            "sourceEntryDigest": "7e48c097779077050b378482fb16f61e651e4eb0345bf06072024b9961906116",
+            "nativeEpisodeMetadataDigest": "3e33ffb2182f90e0001b409b54c9c24f32de95f058efb4b84ec22b1d454148b0",
+            "nativeEpisodeId": "semantic:harness:b7e0c94f335109ab2a1fadf52320a656a600dee8fd3d818b83de0242c0a1dbc7",
+            "nativeTaskId": "real-utilities-10fca60f6d553840f613a93b",
+            "normalizedNativeEpisodeSha256": "b42a7e15b5db297a2dfbc97d4a5ec107f863b6c6e4e0e1f6644ed816d1eb4681",
+            "nativeRecords": 29
+          },
+          {
+            "id": "real-utilities-4c83220230d59e03d443bd1b",
+            "exportSha256": "609774c6e9872ede86fbb3b55903d681c18709f7f84c7c04f363ae779c7ff641",
+            "identityDigest": "f93393760b107fe4a18ce29921f96ade2207b785d28a1ac8dff2f2b35b7c6629",
+            "candidateDigest": "c2f5356df519128bd5450706fea814e6f94dddd01c71ad34a4b370479cf25b67",
+            "sourceEntryDigest": "bd301d71415095b730e009039fc0444351458dced14ed79ad7f68fa2bc9a9430",
+            "nativeEpisodeMetadataDigest": "3e33ffb2182f90e0001b409b54c9c24f32de95f058efb4b84ec22b1d454148b0",
+            "nativeEpisodeId": "semantic:harness:b7e0c94f335109ab2a1fadf52320a656a600dee8fd3d818b83de0242c0a1dbc7",
+            "nativeTaskId": "real-utilities-4c83220230d59e03d443bd1b",
+            "normalizedNativeEpisodeSha256": "b42a7e15b5db297a2dfbc97d4a5ec107f863b6c6e4e0e1f6644ed816d1eb4681",
+            "nativeRecords": 29
+          }
+        ],
+        "allNativeFieldsExceptTaskIdEqual": true
+      },
+      {
+        "episodeDigest": "e98e04bc39adec124e18d1c423cad3b72bf81c173b49ee9189f3a4afb790d6b6",
+        "representativeId": "real-utilities-1ab93fa6088ca22d62e7f3da",
+        "members": [
+          {
+            "id": "real-utilities-1ab93fa6088ca22d62e7f3da",
+            "exportSha256": "78a246531e996181a8ebb385bc48fc902790601f9b0a190f7a87e5d92c0b435b",
+            "identityDigest": "414a4c5fb45e66d67af2684374704c0c2b19d32784cc156f4bd456e91d5c4f88",
+            "candidateDigest": "24611900202c2e4a77d54b290f4aea7028440ab3be1bbcef1fb2ac171f80ec1c",
+            "sourceEntryDigest": "42c60807ffd5122cb2be47b7f6f73ee0be564c340358d18ee4206f94afbcb865",
+            "nativeEpisodeMetadataDigest": "9a030baecd70974c98b383a03913c056068495bd8a46480cb8ccbdac9aeddf76",
+            "nativeEpisodeId": "semantic:harness:51d5f42815954d7880f34a2314e5ce4cd67bfabba113f6eded1e71a72352d0ff",
+            "nativeTaskId": "real-utilities-1ab93fa6088ca22d62e7f3da",
+            "normalizedNativeEpisodeSha256": "52400362ac6348b0ce0a883af7515c3512fbf2bec705b68769808e1fba1def61",
+            "nativeRecords": 44
+          },
+          {
+            "id": "real-utilities-8eed1242f0edee133cf8816c",
+            "exportSha256": "d4a2d5bc448f57a8e62b582ecdeeb304f5ff631fe315c7d6d49897e02fa5b9f4",
+            "identityDigest": "8f7fae284b479e3bdebd7d1c3bbd3c11284b5648a528af69e738bcf58aafac55",
+            "candidateDigest": "928fa9f5e40b989137164a16ab025266f7cdb8d86ee3b95511a02f1f51af8a73",
+            "sourceEntryDigest": "6650958e3bf8793e8d2e2b8c369119ce628658a8ecbf700fde9402fb6491d9c3",
+            "nativeEpisodeMetadataDigest": "9a030baecd70974c98b383a03913c056068495bd8a46480cb8ccbdac9aeddf76",
+            "nativeEpisodeId": "semantic:harness:51d5f42815954d7880f34a2314e5ce4cd67bfabba113f6eded1e71a72352d0ff",
+            "nativeTaskId": "real-utilities-8eed1242f0edee133cf8816c",
+            "normalizedNativeEpisodeSha256": "52400362ac6348b0ce0a883af7515c3512fbf2bec705b68769808e1fba1def61",
+            "nativeRecords": 44
+          }
+        ],
+        "allNativeFieldsExceptTaskIdEqual": true
+      },
+      {
+        "episodeDigest": "b3b258f723c7aa8c847ac31bd1460f680c1245bb60e28d9b358096420986d36b",
+        "representativeId": "real-utilities-220384b57509f4044d6e05d2",
+        "members": [
+          {
+            "id": "real-utilities-220384b57509f4044d6e05d2",
+            "exportSha256": "08323384b53b4f4c4460bc71b7d751052d9f4c8faf4a1f3dbfb6d1318e0d0616",
+            "identityDigest": "bdb71641fdf489da2611a79d8492f0e2394d47150fca0109672d9ba342959516",
+            "candidateDigest": "0c710a96ef3f800f1a28f15e8a632009bc221f9505aae9f5a68bd63a0de027d6",
+            "sourceEntryDigest": "b1286c10f53cb902722bd5d353ef6d43708b94f58a3952d19d0efe5f85e4d2ff",
+            "nativeEpisodeMetadataDigest": "3e33ffb2182f90e0001b409b54c9c24f32de95f058efb4b84ec22b1d454148b0",
+            "nativeEpisodeId": "semantic:harness:291f05cf6aee30dbf7db2fb34674b478b611d66a6c2ca5691782030615419a7c",
+            "nativeTaskId": "real-utilities-220384b57509f4044d6e05d2",
+            "normalizedNativeEpisodeSha256": "05ed78ccfc7af371d0a9094fd15cc53d6bf65e700f293aa65cee300cfcecc30c",
+            "nativeRecords": 35
+          },
+          {
+            "id": "real-utilities-4d248a0237b19503f26826a0",
+            "exportSha256": "751e3ea2eea086c1e83578cb01c9573531701705bc38987c88bfc12e1024f9ec",
+            "identityDigest": "3fdc5c706211ae32bdbc9caf5bd5001d1bb0e07c917c61ebcf135702889518db",
+            "candidateDigest": "fc470c768800c41d705c389e8e941a8b96fea27742af5bb9b9cc59555308e646",
+            "sourceEntryDigest": "88637308b28a44aadb7082c8d6964c9f081c8a2a96119deeec58cf0ada833f84",
+            "nativeEpisodeMetadataDigest": "3e33ffb2182f90e0001b409b54c9c24f32de95f058efb4b84ec22b1d454148b0",
+            "nativeEpisodeId": "semantic:harness:291f05cf6aee30dbf7db2fb34674b478b611d66a6c2ca5691782030615419a7c",
+            "nativeTaskId": "real-utilities-4d248a0237b19503f26826a0",
+            "normalizedNativeEpisodeSha256": "05ed78ccfc7af371d0a9094fd15cc53d6bf65e700f293aa65cee300cfcecc30c",
+            "nativeRecords": 35
+          }
+        ],
+        "allNativeFieldsExceptTaskIdEqual": true
+      },
+      {
+        "episodeDigest": "cf10484e1eba26bf4381484259c0662ec3cde403248ebca18b3d966d1c34035c",
+        "representativeId": "real-utilities-319f11b0c89ca451df878ff1",
+        "members": [
+          {
+            "id": "real-utilities-319f11b0c89ca451df878ff1",
+            "exportSha256": "16dcc877098b6f3382bd4d808559d92253a42aa1de1d6586ac5a40109c2b2007",
+            "identityDigest": "da7b5ab428c7abb790dd1024d9d69a749ea56e134a8abf9e9514d19342ceb1e5",
+            "candidateDigest": "57042dcdb15bd158d0da6244637469d3daa751c8f98a7a9bea549d9755dd9fde",
+            "sourceEntryDigest": "bfc3ff995e1e355429d1e0682351142211ab6942cf939e1efff90cb3df7cbe5c",
+            "nativeEpisodeMetadataDigest": "d54cf22d566a31fa9d092c519ce0e24a43106bce108f12f2f575c41da94b3f8b",
+            "nativeEpisodeId": "semantic:harness:9dfa196d676e10de345bb308cf3a15b84cc1565576ea898d577907dcb5e156ce",
+            "nativeTaskId": "real-utilities-319f11b0c89ca451df878ff1",
+            "normalizedNativeEpisodeSha256": "283f350746e5581bdd3cde8a2ac202df93bcf6df9a536ea127ef5f2ebfc7296f",
+            "nativeRecords": 9
+          },
+          {
+            "id": "real-utilities-725f3b12410d4c90e10203e1",
+            "exportSha256": "23a5fb90b5463ae4d69e3ab68c14afa412dd068ac0bcb071c208c58efa23a7aa",
+            "identityDigest": "c88e6b02d79758fa19aa2625927163f98ac1820c30966321199ce701adb33159",
+            "candidateDigest": "d826568194c8cc9821ac169cc4c21231a16d9998cfb8f1232301e4d9678b6b11",
+            "sourceEntryDigest": "15386e1594f4e3491cc9b31b0db7843857c0d709b850886fe7063153190acbfb",
+            "nativeEpisodeMetadataDigest": "d54cf22d566a31fa9d092c519ce0e24a43106bce108f12f2f575c41da94b3f8b",
+            "nativeEpisodeId": "semantic:harness:9dfa196d676e10de345bb308cf3a15b84cc1565576ea898d577907dcb5e156ce",
+            "nativeTaskId": "real-utilities-725f3b12410d4c90e10203e1",
+            "normalizedNativeEpisodeSha256": "283f350746e5581bdd3cde8a2ac202df93bcf6df9a536ea127ef5f2ebfc7296f",
+            "nativeRecords": 9
+          },
+          {
+            "id": "real-utilities-dabe3432d45476b7ab8a3bcc",
+            "exportSha256": "c2949d128bf7d16fb60e9fb54bfd0ff4b7dbbb5bd2e5b923de8591e68f07f672",
+            "identityDigest": "ae25bc762f6409b8caeb8a94889fdfa27706ca978fa9a54819738bc961e2505f",
+            "candidateDigest": "3890110de0209ad36323755bc52aae4cd1e0c47e126540ca314418a46524e85d",
+            "sourceEntryDigest": "fd77b605f8aa55adce883a078385eafe7642b5f09d0e8d883c241fe3591fc3ef",
+            "nativeEpisodeMetadataDigest": "d54cf22d566a31fa9d092c519ce0e24a43106bce108f12f2f575c41da94b3f8b",
+            "nativeEpisodeId": "semantic:harness:9dfa196d676e10de345bb308cf3a15b84cc1565576ea898d577907dcb5e156ce",
+            "nativeTaskId": "real-utilities-dabe3432d45476b7ab8a3bcc",
+            "normalizedNativeEpisodeSha256": "283f350746e5581bdd3cde8a2ac202df93bcf6df9a536ea127ef5f2ebfc7296f",
+            "nativeRecords": 9
+          }
+        ],
+        "allNativeFieldsExceptTaskIdEqual": true
+      },
+      {
+        "episodeDigest": "c4cf2786d5a5b4cfb3dd890b282ad926201a4c6a3557641a2e3880d2b6c9cb63",
+        "representativeId": "real-utilities-342378320c64ca09e22d63ac",
+        "members": [
+          {
+            "id": "real-utilities-342378320c64ca09e22d63ac",
+            "exportSha256": "1f557a97fc8453c188c126dfcd36ed7ba5a54913927d0e95c609b4e69021ef45",
+            "identityDigest": "8ba8e9813793868e0da1b2309d58f0a3ad0809ed796421449897e19a57924f91",
+            "candidateDigest": "5ffd4f8893d5d8b7270983f1f33505cd71ed94cd1e61506fec825c4a7fb5130b",
+            "sourceEntryDigest": "235a0c306b5a906fdf0abec7ba6ee7bcb5ffcf73966d447702dffb471f287e14",
+            "nativeEpisodeMetadataDigest": "d54cf22d566a31fa9d092c519ce0e24a43106bce108f12f2f575c41da94b3f8b",
+            "nativeEpisodeId": "semantic:harness:5d4cd329705eb20b4b59d01b7c0c27f936351565989cbb5a5f76963b2ee2aa7b",
+            "nativeTaskId": "real-utilities-342378320c64ca09e22d63ac",
+            "normalizedNativeEpisodeSha256": "f453c3c40856a2bb25435a5ffa8c3c1d7c3ae4d21d72264f54de7da58eb38d94",
+            "nativeRecords": 9
+          },
+          {
+            "id": "real-utilities-550589f3329dbe17ea374077",
+            "exportSha256": "954b79b804d54d1e87064744b8088ed80da79cd1843ba577420cd668ad3f71cb",
+            "identityDigest": "6849d5c135d881fd1fb54388c7478c472bc91a006ef29f1986806d10c123b22b",
+            "candidateDigest": "b8259b2ad99a16c738f425ae309baff6df3dfb64066d0176172a09331ff63957",
+            "sourceEntryDigest": "e97dfc7ea629706bf582143cde4ad4a7712eea3cb149238c5113c3f115de0c0b",
+            "nativeEpisodeMetadataDigest": "d54cf22d566a31fa9d092c519ce0e24a43106bce108f12f2f575c41da94b3f8b",
+            "nativeEpisodeId": "semantic:harness:5d4cd329705eb20b4b59d01b7c0c27f936351565989cbb5a5f76963b2ee2aa7b",
+            "nativeTaskId": "real-utilities-550589f3329dbe17ea374077",
+            "normalizedNativeEpisodeSha256": "f453c3c40856a2bb25435a5ffa8c3c1d7c3ae4d21d72264f54de7da58eb38d94",
+            "nativeRecords": 9
+          },
+          {
+            "id": "real-utilities-dd467d0e2fd925c0c6cdf5af",
+            "exportSha256": "85e24e3e46709f7f1daa65df4d7188a0ea87113239d9166629ca70d7863f5eaf",
+            "identityDigest": "7bdcb0bd175c538e4ba6dc667ff8cd530fc688f0b98a3754210304351791cc3c",
+            "candidateDigest": "81100d068660e114bb3e26a5cbf20416107b57f952abfbde0786f002be72bbc5",
+            "sourceEntryDigest": "90afceb574bfe97099cafdf699673c20d5461c9d845980dd196ac94362ad14e1",
+            "nativeEpisodeMetadataDigest": "d54cf22d566a31fa9d092c519ce0e24a43106bce108f12f2f575c41da94b3f8b",
+            "nativeEpisodeId": "semantic:harness:5d4cd329705eb20b4b59d01b7c0c27f936351565989cbb5a5f76963b2ee2aa7b",
+            "nativeTaskId": "real-utilities-dd467d0e2fd925c0c6cdf5af",
+            "normalizedNativeEpisodeSha256": "f453c3c40856a2bb25435a5ffa8c3c1d7c3ae4d21d72264f54de7da58eb38d94",
+            "nativeRecords": 9
+          }
+        ],
+        "allNativeFieldsExceptTaskIdEqual": true
+      },
+      {
+        "episodeDigest": "f70b621e0d4a92b39a92b59abf262668784980a4da92370ace836b59d8fcf716",
+        "representativeId": "real-utilities-3fc317a0b759a9fcb9ddfeca",
+        "members": [
+          {
+            "id": "real-utilities-3fc317a0b759a9fcb9ddfeca",
+            "exportSha256": "8ad2990aecc7cad57ec70b7f4eabe27c22dfb15244ffc2c61b15941423761849",
+            "identityDigest": "905d1b859d33cbd520504f0326849f7d1f635d075fb1628396e150c2edaa2e29",
+            "candidateDigest": "d64f9880845fc82003479921c39eb7202a8e1dfe40be943592cb39125f2699c6",
+            "sourceEntryDigest": "54f15e567f231d3c06def09e17762b4b2f716f02daa875bd4211bc3e07a2f52a",
+            "nativeEpisodeMetadataDigest": "d54cf22d566a31fa9d092c519ce0e24a43106bce108f12f2f575c41da94b3f8b",
+            "nativeEpisodeId": "semantic:harness:86edd29768920e050d573094fb59b869bc127f5eb2eb7c29cf71c681090056af",
+            "nativeTaskId": "real-utilities-3fc317a0b759a9fcb9ddfeca",
+            "normalizedNativeEpisodeSha256": "6bc683fd9f3540b5d7d07618fe9a5cadfd36bc9f7dc776712ebcecd15e6a5942",
+            "nativeRecords": 9
+          },
+          {
+            "id": "real-utilities-d08b16995e2b607a4ad89a5a",
+            "exportSha256": "d4ba66d5a38b54338864eb32da68b9db59846d69af9b518a8a1d301b95479b53",
+            "identityDigest": "60c155f5a9da42ca24f5addd51eba461b62e4becccd9c5de168a2884d74ec8f0",
+            "candidateDigest": "8a6dee939c467c675cf91624bf676ead70aaf1e2bdaadd0a10af6a3649351499",
+            "sourceEntryDigest": "7966d2d45ae8b962da82fdfb4e70106f537b0f1c9ac94ca6d9abaad8b460ec0c",
+            "nativeEpisodeMetadataDigest": "d54cf22d566a31fa9d092c519ce0e24a43106bce108f12f2f575c41da94b3f8b",
+            "nativeEpisodeId": "semantic:harness:86edd29768920e050d573094fb59b869bc127f5eb2eb7c29cf71c681090056af",
+            "nativeTaskId": "real-utilities-d08b16995e2b607a4ad89a5a",
+            "normalizedNativeEpisodeSha256": "6bc683fd9f3540b5d7d07618fe9a5cadfd36bc9f7dc776712ebcecd15e6a5942",
+            "nativeRecords": 9
+          },
+          {
+            "id": "real-utilities-d4911d912546daa97dc4b3b0",
+            "exportSha256": "b0fda0e4ca92e748ae726483d71e2c781d3ba1a2a7e789365314704ce2b850ea",
+            "identityDigest": "7afd7a16754d140b6a4f1beb14b73a894afe7d7ab12c23b4de5fffcaf4715b6a",
+            "candidateDigest": "c5ae47f942bdec84300be9ad4753e0db781c5daaf6d79f8c20a623887da48db7",
+            "sourceEntryDigest": "7869964328ce0e988e4b29710b52bebb657b1c08af67368ffee09a5d7f926156",
+            "nativeEpisodeMetadataDigest": "d54cf22d566a31fa9d092c519ce0e24a43106bce108f12f2f575c41da94b3f8b",
+            "nativeEpisodeId": "semantic:harness:86edd29768920e050d573094fb59b869bc127f5eb2eb7c29cf71c681090056af",
+            "nativeTaskId": "real-utilities-d4911d912546daa97dc4b3b0",
+            "normalizedNativeEpisodeSha256": "6bc683fd9f3540b5d7d07618fe9a5cadfd36bc9f7dc776712ebcecd15e6a5942",
+            "nativeRecords": 9
+          }
+        ],
+        "allNativeFieldsExceptTaskIdEqual": true
+      },
+      {
+        "episodeDigest": "0614af3a7cc63733d8cd676ae94d7a82c3f7375e44128d1a1f5b558854e32a66",
+        "representativeId": "real-utilities-539b4cfecd263be380f8fc49",
+        "members": [
+          {
+            "id": "real-utilities-539b4cfecd263be380f8fc49",
+            "exportSha256": "e8966b4ebe0ff356629f4c350eb4a63e41fd93ed92787b60c2c39c1992fc6282",
+            "identityDigest": "62d48e3212a441d1d1b4a24894a55bb60b43e6693901d00c5a549f63f0a6957b",
+            "candidateDigest": "5a9ac9f0276707bf49fd5211fde370c6853f6eb94a4da09d76cb8ca3486c499f",
+            "sourceEntryDigest": "999f04c3f020da2c2440699695e45a1d19a04695931a5562850177337975b465",
+            "nativeEpisodeMetadataDigest": "a91fb3973f9ae5fbe5d8cea49c7ef52b4bdae08301752f6a618456eb916b53ae",
+            "nativeEpisodeId": "semantic:harness:c92e66b140a65a98e4b50eeae380855e11bbbcd0d9a1fdca589d908513182b1e",
+            "nativeTaskId": "real-utilities-539b4cfecd263be380f8fc49",
+            "normalizedNativeEpisodeSha256": "24e7f9d8a4a572e266d103e3a277fe83199e37b97d8f327fbbbf0d8db281a97a",
+            "nativeRecords": 8
+          },
+          {
+            "id": "real-utilities-5bcb60880c943659b55911e3",
+            "exportSha256": "c21e6c0ee8555b69fdb8db3840ffb913f1a419579f3e54713e3e7ac367bd42de",
+            "identityDigest": "f5cd01a158301e3381cc7db381e4ac17c5651780a4ee0e474991cbcfd46b16e6",
+            "candidateDigest": "8fbdc9b85ffdfe2d52ed7a2299a537658870ea308b95c556132da429006bd18f",
+            "sourceEntryDigest": "7604b59fb101881eb6936f05e079347ba676e0dec40edbef1963b65dae689d5d",
+            "nativeEpisodeMetadataDigest": "a91fb3973f9ae5fbe5d8cea49c7ef52b4bdae08301752f6a618456eb916b53ae",
+            "nativeEpisodeId": "semantic:harness:c92e66b140a65a98e4b50eeae380855e11bbbcd0d9a1fdca589d908513182b1e",
+            "nativeTaskId": "real-utilities-5bcb60880c943659b55911e3",
+            "normalizedNativeEpisodeSha256": "24e7f9d8a4a572e266d103e3a277fe83199e37b97d8f327fbbbf0d8db281a97a",
+            "nativeRecords": 8
+          },
+          {
+            "id": "real-utilities-de4219a30c54efcfd1752427",
+            "exportSha256": "f6e6f7231cc6d3e429fa63d54f54e06b3c3c488c43cf1e01685f8b840f0b0cf3",
+            "identityDigest": "f57b63b47cec35d4ea80d95befa891a1af482ddc6f8f91754306ffa04b555d03",
+            "candidateDigest": "4888775024c1098edabd7247b4f5791178f9c6a70b761f0746a747cbf60c9f96",
+            "sourceEntryDigest": "021711dcee620cae2cf79ceae2b953bf9a16abf3fccb12271e681333a5eb32e7",
+            "nativeEpisodeMetadataDigest": "a91fb3973f9ae5fbe5d8cea49c7ef52b4bdae08301752f6a618456eb916b53ae",
+            "nativeEpisodeId": "semantic:harness:c92e66b140a65a98e4b50eeae380855e11bbbcd0d9a1fdca589d908513182b1e",
+            "nativeTaskId": "real-utilities-de4219a30c54efcfd1752427",
+            "normalizedNativeEpisodeSha256": "24e7f9d8a4a572e266d103e3a277fe83199e37b97d8f327fbbbf0d8db281a97a",
+            "nativeRecords": 8
+          }
+        ],
+        "allNativeFieldsExceptTaskIdEqual": true
+      },
+      {
+        "episodeDigest": "d294d7369ec8884210a65dfae515e26aca5edc58325be8c6f6e89f5416f73fe8",
+        "representativeId": "real-utilities-59600fa665b7bea62ecb2111",
+        "members": [
+          {
+            "id": "real-utilities-59600fa665b7bea62ecb2111",
+            "exportSha256": "adcb2dcd765895e07da16bbecac61d74f943d89ed12825e70c31b6693d20475c",
+            "identityDigest": "db6b5e532b73604ead4770b5ddb74ea5a432cbb947ff8112a45b4e50bc4de905",
+            "candidateDigest": "d3497c453e0e17eb3750b2c03efe3fd56144282ab2d9573bdc942ce57fdcaf58",
+            "sourceEntryDigest": "e050e3a7ff0b48425b447289bd435e73a60f25e38589985b6746adf287744e57",
+            "nativeEpisodeMetadataDigest": "6e1f3be990aa45633be2085481d4d9e83d225dc95820d2903f4aad662ad2e56b",
+            "nativeEpisodeId": "semantic:harness:6b76876d7a23748bb8953cdf17fc8ec1f7c8a0c863c5fffd8c060e88ba10c1c7",
+            "nativeTaskId": "real-utilities-59600fa665b7bea62ecb2111",
+            "normalizedNativeEpisodeSha256": "0fef9dc076c9d076d1140cac99477f237e62d5c1cb1c30b0457c7c1f483632d9",
+            "nativeRecords": 72
+          },
+          {
+            "id": "real-utilities-eab39c6aa38bde361d0a3658",
+            "exportSha256": "7e664936bbe1024549c8eb78b116d29b693d807aa52e0c592b6e83eaccb564bd",
+            "identityDigest": "0d1a4bb4aab1fcf7d4b3e5d39b84fb3f0efef883621854a014e0fcd30167f159",
+            "candidateDigest": "b856b2c553f6083dd0524bc2df9422e78aa0638b0932b76656300494fc788121",
+            "sourceEntryDigest": "b91d48b0fac5525089c554c47260347e19161292a523515f1122c99934ddf1e4",
+            "nativeEpisodeMetadataDigest": "6e1f3be990aa45633be2085481d4d9e83d225dc95820d2903f4aad662ad2e56b",
+            "nativeEpisodeId": "semantic:harness:6b76876d7a23748bb8953cdf17fc8ec1f7c8a0c863c5fffd8c060e88ba10c1c7",
+            "nativeTaskId": "real-utilities-eab39c6aa38bde361d0a3658",
+            "normalizedNativeEpisodeSha256": "0fef9dc076c9d076d1140cac99477f237e62d5c1cb1c30b0457c7c1f483632d9",
+            "nativeRecords": 72
+          }
+        ],
+        "allNativeFieldsExceptTaskIdEqual": true
+      },
+      {
+        "episodeDigest": "faafd6e03120ee52bfa176b3e6bc00bf342939a627692082fad6944f637f6dff",
+        "representativeId": "real-utilities-5ae7ad789bc4e2993fa06a85",
+        "members": [
+          {
+            "id": "real-utilities-5ae7ad789bc4e2993fa06a85",
+            "exportSha256": "66f5429bf4ddb3177a9eeaafbb37a289eae654000393afda20b65ac2b4e9f003",
+            "identityDigest": "3dd52ff608e67b96994b34fcb074349a5216227bd714406adb7cfe5208bed5b4",
+            "candidateDigest": "a7732ea5bc00ede4740f8c2549b74614694ac1b6b0967316105e90ab2f59ecb5",
+            "sourceEntryDigest": "eca2634d5dfec66c1b300589bb8c8e15ad19963565be2557bdcf91308416e5fe",
+            "nativeEpisodeMetadataDigest": "9a030baecd70974c98b383a03913c056068495bd8a46480cb8ccbdac9aeddf76",
+            "nativeEpisodeId": "semantic:harness:c535e53ad23a5aed351c303a2341ede9fd176aee98947b8900783f4606cd9b2e",
+            "nativeTaskId": "real-utilities-5ae7ad789bc4e2993fa06a85",
+            "normalizedNativeEpisodeSha256": "6c607cacc47e302aa1fbdbe3f8e812d139df2263df02b9799199590bfeb5ec31",
+            "nativeRecords": 30
+          },
+          {
+            "id": "real-utilities-7c518663fe8dbf3ba0a9f17a",
+            "exportSha256": "f2df616b2cd1dd110527d8109c5de355aaf6808020e65ee2295a2b1abd6e730c",
+            "identityDigest": "db1110b2130c1eed2e6c536a5e437a54b4ce2a9affb4c89c3de991acd57aa8c6",
+            "candidateDigest": "c32cce70592bcaba34f340f0578135b51fc82d1b8457b1d089e62c60d6fd3e5e",
+            "sourceEntryDigest": "5a9425583e1cba959ce938ae17215c45e6e5cd997b39853c7f7c0058b4cd9ee3",
+            "nativeEpisodeMetadataDigest": "9a030baecd70974c98b383a03913c056068495bd8a46480cb8ccbdac9aeddf76",
+            "nativeEpisodeId": "semantic:harness:c535e53ad23a5aed351c303a2341ede9fd176aee98947b8900783f4606cd9b2e",
+            "nativeTaskId": "real-utilities-7c518663fe8dbf3ba0a9f17a",
+            "normalizedNativeEpisodeSha256": "6c607cacc47e302aa1fbdbe3f8e812d139df2263df02b9799199590bfeb5ec31",
+            "nativeRecords": 30
+          }
+        ],
+        "allNativeFieldsExceptTaskIdEqual": true
+      },
+      {
+        "episodeDigest": "1456f807f46f68dff7755a4603819ddfa46b018ec59c510a1b94ea2fbc984ddd",
+        "representativeId": "real-utilities-6249f3dc1b4988be6343834c",
+        "members": [
+          {
+            "id": "real-utilities-6249f3dc1b4988be6343834c",
+            "exportSha256": "ffaf6302e743a1d30afe555793a76056730f4efce6f35c1b9fff7d5fe5b53ad7",
+            "identityDigest": "ecfcc149cc4935e9030859cac9d1857b250f3c6f5a03bf71a21cb9dcaf1f22d1",
+            "candidateDigest": "bb7c606b18db85626894db5b0b200986c21abd49ba73f7806351622d6e0bb8b4",
+            "sourceEntryDigest": "d422f1c62516531f53f0b593627ed34303fa1043dec12e3769c026d3d28d27b5",
+            "nativeEpisodeMetadataDigest": "9a030baecd70974c98b383a03913c056068495bd8a46480cb8ccbdac9aeddf76",
+            "nativeEpisodeId": "semantic:harness:cc2a9c7d6507c7bc61a3eb9efa9101ed81dbc5507c000ecd5df9522e28acd25c",
+            "nativeTaskId": "real-utilities-6249f3dc1b4988be6343834c",
+            "normalizedNativeEpisodeSha256": "90d523c854afa7fce593e88e1b6e107e45cb5eed8554e3401c97c7cc060efdac",
+            "nativeRecords": 49
+          },
+          {
+            "id": "real-utilities-79e0e52bdb97aad77c8635ff",
+            "exportSha256": "8528261557d6313fd28f37fcafd728b62242dceaefac6173dd67557ce014abed",
+            "identityDigest": "4e4176c293b4e28ade2a7aa243124496d053ac0498ba05ca55ec8009dcbe0721",
+            "candidateDigest": "70468c60b8cee71d65281635d397857ce45b10d7c45a2601857f59b8b5fbd861",
+            "sourceEntryDigest": "24953465406474bb6aadac22e1726e085485134affed9abfd362e398d2c88fe8",
+            "nativeEpisodeMetadataDigest": "9a030baecd70974c98b383a03913c056068495bd8a46480cb8ccbdac9aeddf76",
+            "nativeEpisodeId": "semantic:harness:cc2a9c7d6507c7bc61a3eb9efa9101ed81dbc5507c000ecd5df9522e28acd25c",
+            "nativeTaskId": "real-utilities-79e0e52bdb97aad77c8635ff",
+            "normalizedNativeEpisodeSha256": "90d523c854afa7fce593e88e1b6e107e45cb5eed8554e3401c97c7cc060efdac",
+            "nativeRecords": 49
+          }
+        ],
+        "allNativeFieldsExceptTaskIdEqual": true
+      },
+      {
+        "episodeDigest": "041179e759e7d86029b0cbe8368914b4ef309db3a7ebbbe37fa3fabaa39914ad",
+        "representativeId": "real-utilities-85d0bb9450e8d5199f42a4c1",
+        "members": [
+          {
+            "id": "real-utilities-85d0bb9450e8d5199f42a4c1",
+            "exportSha256": "90f7f30aa702130f43d5272c023c95b40bbbf46ec80ffbc7a9c49734c6300f02",
+            "identityDigest": "22ee93aac0a2b0e4a5e88636afdca7faf1000796ed9572be32a04cf914bcf347",
+            "candidateDigest": "38c5b9fb063cfec9e5e1771b6b6be236fc307d661ec3ce544f3caa59957530fd",
+            "sourceEntryDigest": "2f93501652f61a13844f5e539144057d8141fd1e35fa6971cd6fc93154bb848f",
+            "nativeEpisodeMetadataDigest": "3e33ffb2182f90e0001b409b54c9c24f32de95f058efb4b84ec22b1d454148b0",
+            "nativeEpisodeId": "semantic:harness:6e4563e2aeca441fd3a37527febe0479c041df6367c50c023450cdb043a3e064",
+            "nativeTaskId": "real-utilities-85d0bb9450e8d5199f42a4c1",
+            "normalizedNativeEpisodeSha256": "c26720e071d56d19b9fd57088dac5684babc49af191f7ea332e3d133ae377f03",
+            "nativeRecords": 45
+          },
+          {
+            "id": "real-utilities-a6b13bfc62513f00cd84f908",
+            "exportSha256": "431931227c1c9b6b720748d6c1425a404471ca2c85cd19875b9b7f4d57c3c965",
+            "identityDigest": "2ed1130250f90b391c1ab32502a26f19905d72866d1a888b2fad72eb3344f261",
+            "candidateDigest": "00c72004ae936fb125146a81c8c732a26bcf62fc598e54061a3bbb404f82ba66",
+            "sourceEntryDigest": "9a2b1031a8cd1a16b5c5522a32b4b0973a44ff44fd0b8c4ff215b55e34f40803",
+            "nativeEpisodeMetadataDigest": "3e33ffb2182f90e0001b409b54c9c24f32de95f058efb4b84ec22b1d454148b0",
+            "nativeEpisodeId": "semantic:harness:6e4563e2aeca441fd3a37527febe0479c041df6367c50c023450cdb043a3e064",
+            "nativeTaskId": "real-utilities-a6b13bfc62513f00cd84f908",
+            "normalizedNativeEpisodeSha256": "c26720e071d56d19b9fd57088dac5684babc49af191f7ea332e3d133ae377f03",
+            "nativeRecords": 45
+          }
+        ],
+        "allNativeFieldsExceptTaskIdEqual": true
+      }
+    ]
+  }
+}
