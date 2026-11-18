@@ -102,3 +102,15 @@ claim follows. This result does not establish that longer training or a
 suitable pretrained base cannot work; it establishes the outcome of this one
 specified bounded attempt. The previous full-coverage 32-source experiment and
 its held-out and pure-output results remain unchanged.
+
+The complete original attempt is retained as
+`learning-native-one-input-2026-11-18.tar.gz` (92,669,819 bytes), SHA-256
+`ea1d4c9416586cc4d40982bb1b8cbfc77792a4dc8b0a79e1d57e1abcce6ab43c`.
+[Independent archive verification](private-archive-verification.json) checked
+all 59 original files, totaling 140,398,478 uncompressed bytes, against the
+[embedded index](private-archive-index.json). It includes every checkpoint,
+optimizer state, transducer state, served bundle, prepared training file, full
+native metric/log stream, frozen declaration, and original paired outcome.
+The unchanged admitted source export is also retained in the original-run
+archive named as an explicit dependency. This archive is separate from the
+32-source follow-up archive; neither rewrites earlier results.
