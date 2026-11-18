@@ -1,0 +1,510 @@
+{
+  "schema": "semantic-learning-pilot/1",
+  "status": "completed",
+  "phase": "complete",
+  "generalizationClaim": false,
+  "injectedSelections": false,
+  "experimentSha256": "550f7d516d4f177067cd2c3d0d7324cd4ad1c8545f34d5d47515c54ed2960530",
+  "completedRollouts": 10,
+  "runnerSha256": "d090a7551529653472426930d22f2eda5d838149a0b17acc3169f5eb55233783",
+  "runnerRevision": "1cdf23cb0ab90a16748ec1370e8244145355684d",
+  "scoringSha256": "b424e52028f575b93048bf93e4f102f6da9b14431ce05aaddd58e807eacaf86b",
+  "rolloutImplementationSha256": "0f7dbd52e4d0a7bd08b141396931df95ca62737cd03dc4d3c3d507af233902c5",
+  "smokeReports": [
+    {
+      "path": "/workspace/scratch/0c59f3502a6d/evidence/optimization-bounded-epoch-56-1500-main/report.json",
+      "sha256": "2b128989631da24521bd2fa3d97fe06e5495b756df568462cde6102312f9b079"
+    }
+  ],
+  "population": {
+    "train": {
+      "available": {
+        "episodes": 43,
+        "sourceFamilies": 14,
+        "independentComponents": 14,
+        "learnerGeneratedTokens": 24065
+      },
+      "selected": {
+        "episodes": 32,
+        "sourceFamilies": 14,
+        "independentComponents": 14,
+        "learnerGeneratedTokens": 17574
+      }
+    },
+    "validation": {
+      "available": {
+        "episodes": 4,
+        "sourceFamilies": 1,
+        "independentComponents": 1,
+        "learnerGeneratedTokens": 2086
+      },
+      "selected": {
+        "episodes": 4,
+        "sourceFamilies": 1,
+        "independentComponents": 1,
+        "learnerGeneratedTokens": 2086
+      }
+    },
+    "test": {
+      "available": {
+        "episodes": 3,
+        "sourceFamilies": 1,
+        "independentComponents": 1,
+        "learnerGeneratedTokens": 1656
+      },
+      "selected": {
+        "episodes": 3,
+        "sourceFamilies": 1,
+        "independentComponents": 1,
+        "learnerGeneratedTokens": 1656
+      }
+    }
+  },
+  "baseOrigin": "newly-initialized",
+  "decoderSeed": 17,
+  "optimizerSeeds": [
+    17
+  ],
+  "rolloutBudget": {
+    "nativeMaxTokensPerFragment": 32,
+    "maximumFragmentsPerDecision": 64,
+    "secondsPerCase": 120,
+    "declaration": "explicit-per-fragment"
+  },
+  "sealedSelectionsSha256": "c33775e5eabc3ae9eb18583d25fe20cf91899b6be27d90f96cc29c79f0ff6011",
+  "comparisonSha256": "dc97f60a783433e49119375828a20732e4b1c50ee87ca08a0e6c935026120c70",
+  "comparison": {
+    "schema": "semantic-learning-comparison/1",
+    "mode": "exploratory",
+    "primaryMetric": "family-weighted-whole-task-observable-correctness",
+    "familyUnit": "connected-source-ancestor-component",
+    "meanImprovement": 0.0,
+    "baseFamilyWeightedSuccess": 0.0,
+    "trainedFamilyWeightedSuccess": 0.0,
+    "uncertainty": {
+      "unit": "connected-source-ancestor-component",
+      "confidence": 0.95,
+      "method": "paired-percentile-bootstrap",
+      "replicates": 2000,
+      "seed": 101,
+      "components": 1,
+      "lower": 0.0,
+      "upper": 0.0,
+      "scope": "family-resampling-with-all-seeds-and-input-variants-kept-paired",
+      "smallSampleWarning": true
+    },
+    "seeds": [
+      {
+        "optimizerSeed": 17,
+        "optimizerSteps": 56,
+        "baseIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+        "trainedIdentity": "eb8233dc60c56531acb2a6ba59e1a2aff50899ca65061d0d7243c7604f33a8bb",
+        "selectedCheckpointStep": 56,
+        "base": {
+          "episodes": 3,
+          "sourceFamilies": 1,
+          "independentComponents": 1,
+          "successes": 0,
+          "familyWeightedWholeTaskSuccess": 0.0,
+          "episodeWeightedWholeTaskSuccess": 0.0,
+          "familyWeightedTraceValidity": 0.0,
+          "components": {
+            "component:a1aca22a005b30bee347b92eb12ac5df8fe0cd43e6193d281902118660f96548": 0.0
+          },
+          "failures": {
+            "TypeError": 3
+          },
+          "integrityFailures": {
+            "falseAdmissions": 0,
+            "futureObservationLeaks": 0,
+            "replayNativeEffects": 0,
+            "unauthorizedEffects": 0,
+            "untrackedNativeFallback": 0
+          },
+          "completeIntegrityGateReceipts": 3,
+          "wallSeconds": 21.122791865996987,
+          "wallSecondsPerCorrectTask": null,
+          "generatedTokens": 89,
+          "retainedGeneratedTokensLowerBound": 89,
+          "generatedTokenCostComplete": true,
+          "generatedTokensPerCorrectTask": null
+        },
+        "trained": {
+          "episodes": 3,
+          "sourceFamilies": 1,
+          "independentComponents": 1,
+          "successes": 0,
+          "familyWeightedWholeTaskSuccess": 0.0,
+          "episodeWeightedWholeTaskSuccess": 0.0,
+          "familyWeightedTraceValidity": 0.0,
+          "components": {
+            "component:a1aca22a005b30bee347b92eb12ac5df8fe0cd43e6193d281902118660f96548": 0.0
+          },
+          "failures": {
+            "TypeError": 3
+          },
+          "integrityFailures": {
+            "falseAdmissions": 0,
+            "futureObservationLeaks": 0,
+            "replayNativeEffects": 0,
+            "unauthorizedEffects": 0,
+            "untrackedNativeFallback": 0
+          },
+          "completeIntegrityGateReceipts": 3,
+          "wallSeconds": 19.621435424000083,
+          "wallSecondsPerCorrectTask": null,
+          "generatedTokens": 35,
+          "retainedGeneratedTokensLowerBound": 35,
+          "generatedTokenCostComplete": true,
+          "generatedTokensPerCorrectTask": null
+        },
+        "selectedCheckpointExposureAssessment": {
+          "selectedSources": 32,
+          "exposedSources": 32,
+          "completeHistory": true,
+          "sampledWindows": 56,
+          "expectedFirstEpochWindows": 56,
+          "unexposedSourceIds": [],
+          "incompleteEpisodeSourceIds": [],
+          "everySelectedSourceExposed": true,
+          "everySelectedEpisodeVisitedAllWindows": true,
+          "sourceWindowCounts": {
+            "semantic-harness:0ba8737e12b29d73": 2,
+            "semantic-harness:10ebe707cce4a980": 2,
+            "semantic-harness:1a859ac0bafa5f06": 2,
+            "semantic-harness:203bfbcdd321bd17": 2,
+            "semantic-harness:2ec6688d67a231ce": 1,
+            "semantic-harness:313b828a039f10c4": 2,
+            "semantic-harness:32db05b865768c4f": 1,
+            "semantic-harness:34cd45445206c0fc": 1,
+            "semantic-harness:3e3e8e2b86b43d22": 2,
+            "semantic-harness:4047539d339502e9": 2,
+            "semantic-harness:41f1fd06c48f0bf1": 2,
+            "semantic-harness:445f84d885b19938": 2,
+            "semantic-harness:44bf4be458d27f62": 1,
+            "semantic-harness:4984c044ecb1641a": 2,
+            "semantic-harness:4add10c4504caaca": 2,
+            "semantic-harness:50ccd8fac330f92f": 1,
+            "semantic-harness:71473c5dc12133c5": 2,
+            "semantic-harness:7c05614d5a35833c": 1,
+            "semantic-harness:83f671ba94880a84": 2,
+            "semantic-harness:8898dcaba1a4d2db": 2,
+            "semantic-harness:9193bd760d71e4e1": 1,
+            "semantic-harness:93dc65677d122f37": 1,
+            "semantic-harness:9e0492917da5cc02": 3,
+            "semantic-harness:a41afcc81e031951": 1,
+            "semantic-harness:a75a8e6185270302": 3,
+            "semantic-harness:c8dfb9a67ef6f126": 3,
+            "semantic-harness:ce0d444b78aca1af": 2,
+            "semantic-harness:ce24b3d371c9d028": 1,
+            "semantic-harness:cf566a052cac3ebb": 1,
+            "semantic-harness:d2488b66f4b3be4b": 1,
+            "semantic-harness:e962b4971427c398": 2,
+            "semantic-harness:feca5c1e10cc6404": 3
+          }
+        },
+        "trainingExposure": {
+          "complete_history": true,
+          "source_windows": {
+            "semantic-harness:0ba8737e12b29d73": 2,
+            "semantic-harness:10ebe707cce4a980": 2,
+            "semantic-harness:1a859ac0bafa5f06": 2,
+            "semantic-harness:203bfbcdd321bd17": 2,
+            "semantic-harness:2ec6688d67a231ce": 1,
+            "semantic-harness:313b828a039f10c4": 2,
+            "semantic-harness:32db05b865768c4f": 1,
+            "semantic-harness:34cd45445206c0fc": 1,
+            "semantic-harness:3e3e8e2b86b43d22": 2,
+            "semantic-harness:4047539d339502e9": 2,
+            "semantic-harness:41f1fd06c48f0bf1": 2,
+            "semantic-harness:445f84d885b19938": 2,
+            "semantic-harness:44bf4be458d27f62": 1,
+            "semantic-harness:4984c044ecb1641a": 2,
+            "semantic-harness:4add10c4504caaca": 2,
+            "semantic-harness:50ccd8fac330f92f": 1,
+            "semantic-harness:71473c5dc12133c5": 2,
+            "semantic-harness:7c05614d5a35833c": 1,
+            "semantic-harness:83f671ba94880a84": 2,
+            "semantic-harness:8898dcaba1a4d2db": 2,
+            "semantic-harness:9193bd760d71e4e1": 1,
+            "semantic-harness:93dc65677d122f37": 1,
+            "semantic-harness:9e0492917da5cc02": 3,
+            "semantic-harness:a41afcc81e031951": 1,
+            "semantic-harness:a75a8e6185270302": 3,
+            "semantic-harness:c8dfb9a67ef6f126": 3,
+            "semantic-harness:ce0d444b78aca1af": 2,
+            "semantic-harness:ce24b3d371c9d028": 1,
+            "semantic-harness:cf566a052cac3ebb": 1,
+            "semantic-harness:d2488b66f4b3be4b": 1,
+            "semantic-harness:e962b4971427c398": 2,
+            "semantic-harness:feca5c1e10cc6404": 3
+          }
+        },
+        "trainingSupervisedTokens": 17574,
+        "selectedCheckpointReceipt": {
+          "checkpointStateSha256": "34102e9f654ac99268e5c6271d202942303818392e9fbd97b48fa00ac8f7637d",
+          "globalStep": 56,
+          "sourceSampling": {
+            "source_windows": {
+              "semantic-harness:0ba8737e12b29d73": 2,
+              "semantic-harness:10ebe707cce4a980": 2,
+              "semantic-harness:1a859ac0bafa5f06": 2,
+              "semantic-harness:203bfbcdd321bd17": 2,
+              "semantic-harness:2ec6688d67a231ce": 1,
+              "semantic-harness:313b828a039f10c4": 2,
+              "semantic-harness:32db05b865768c4f": 1,
+              "semantic-harness:34cd45445206c0fc": 1,
+              "semantic-harness:3e3e8e2b86b43d22": 2,
+              "semantic-harness:4047539d339502e9": 2,
+              "semantic-harness:41f1fd06c48f0bf1": 2,
+              "semantic-harness:445f84d885b19938": 2,
+              "semantic-harness:44bf4be458d27f62": 1,
+              "semantic-harness:4984c044ecb1641a": 2,
+              "semantic-harness:4add10c4504caaca": 2,
+              "semantic-harness:50ccd8fac330f92f": 1,
+              "semantic-harness:71473c5dc12133c5": 2,
+              "semantic-harness:7c05614d5a35833c": 1,
+              "semantic-harness:83f671ba94880a84": 2,
+              "semantic-harness:8898dcaba1a4d2db": 2,
+              "semantic-harness:9193bd760d71e4e1": 1,
+              "semantic-harness:93dc65677d122f37": 1,
+              "semantic-harness:9e0492917da5cc02": 3,
+              "semantic-harness:a41afcc81e031951": 1,
+              "semantic-harness:a75a8e6185270302": 3,
+              "semantic-harness:c8dfb9a67ef6f126": 3,
+              "semantic-harness:ce0d444b78aca1af": 2,
+              "semantic-harness:ce24b3d371c9d028": 1,
+              "semantic-harness:cf566a052cac3ebb": 1,
+              "semantic-harness:d2488b66f4b3be4b": 1,
+              "semantic-harness:e962b4971427c398": 2,
+              "semantic-harness:feca5c1e10cc6404": 3
+            },
+            "complete_history": true
+          },
+          "samplingBoundToAuthenticatedPayload": true,
+          "verifiedStreamFingerprint": "dc10e03ec04c98872401cc6af208b9139737b24790eff4cacdf75c7f73ddb793",
+          "exposureAssessment": {
+            "selectedSources": 32,
+            "exposedSources": 32,
+            "completeHistory": true,
+            "sampledWindows": 56,
+            "expectedFirstEpochWindows": 56,
+            "unexposedSourceIds": [],
+            "incompleteEpisodeSourceIds": [],
+            "everySelectedSourceExposed": true,
+            "everySelectedEpisodeVisitedAllWindows": true,
+            "sourceWindowCounts": {
+              "semantic-harness:0ba8737e12b29d73": 2,
+              "semantic-harness:10ebe707cce4a980": 2,
+              "semantic-harness:1a859ac0bafa5f06": 2,
+              "semantic-harness:203bfbcdd321bd17": 2,
+              "semantic-harness:2ec6688d67a231ce": 1,
+              "semantic-harness:313b828a039f10c4": 2,
+              "semantic-harness:32db05b865768c4f": 1,
+              "semantic-harness:34cd45445206c0fc": 1,
+              "semantic-harness:3e3e8e2b86b43d22": 2,
+              "semantic-harness:4047539d339502e9": 2,
+              "semantic-harness:41f1fd06c48f0bf1": 2,
+              "semantic-harness:445f84d885b19938": 2,
+              "semantic-harness:44bf4be458d27f62": 1,
+              "semantic-harness:4984c044ecb1641a": 2,
+              "semantic-harness:4add10c4504caaca": 2,
+              "semantic-harness:50ccd8fac330f92f": 1,
+              "semantic-harness:71473c5dc12133c5": 2,
+              "semantic-harness:7c05614d5a35833c": 1,
+              "semantic-harness:83f671ba94880a84": 2,
+              "semantic-harness:8898dcaba1a4d2db": 2,
+              "semantic-harness:9193bd760d71e4e1": 1,
+              "semantic-harness:93dc65677d122f37": 1,
+              "semantic-harness:9e0492917da5cc02": 3,
+              "semantic-harness:a41afcc81e031951": 1,
+              "semantic-harness:a75a8e6185270302": 3,
+              "semantic-harness:c8dfb9a67ef6f126": 3,
+              "semantic-harness:ce0d444b78aca1af": 2,
+              "semantic-harness:ce24b3d371c9d028": 1,
+              "semantic-harness:cf566a052cac3ebb": 1,
+              "semantic-harness:d2488b66f4b3be4b": 1,
+              "semantic-harness:e962b4971427c398": 2,
+              "semantic-harness:feca5c1e10cc6404": 3
+            }
+          }
+        },
+        "selectedCheckpointSupervisedTokens": 17574,
+        "improvement": 0.0
+      }
+    ],
+    "slices": {
+      "cleanup": {
+        "status": "untested",
+        "episodes": 0,
+        "independentComponents": 0
+      },
+      "effects": {
+        "status": "measured",
+        "episodes": 2,
+        "independentComponents": 1,
+        "meanImprovement": 0.0,
+        "perSeed": [
+          {
+            "optimizerSeed": 17,
+            "base": 0.0,
+            "trained": 0.0,
+            "improvement": 0.0
+          }
+        ]
+      },
+      "heap-small": {
+        "status": "measured",
+        "episodes": 3,
+        "independentComponents": 1,
+        "meanImprovement": 0.0,
+        "perSeed": [
+          {
+            "optimizerSeed": 17,
+            "base": 0.0,
+            "trained": 0.0,
+            "improvement": 0.0
+          }
+        ]
+      },
+      "length-medium": {
+        "status": "measured",
+        "episodes": 2,
+        "independentComponents": 1,
+        "meanImprovement": 0.0,
+        "perSeed": [
+          {
+            "optimizerSeed": 17,
+            "base": 0.0,
+            "trained": 0.0,
+            "improvement": 0.0
+          }
+        ]
+      },
+      "length-short": {
+        "status": "measured",
+        "episodes": 1,
+        "independentComponents": 1,
+        "meanImprovement": 0.0,
+        "perSeed": [
+          {
+            "optimizerSeed": 17,
+            "base": 0.0,
+            "trained": 0.0,
+            "improvement": 0.0
+          }
+        ]
+      },
+      "mutation": {
+        "status": "measured",
+        "episodes": 1,
+        "independentComponents": 1,
+        "meanImprovement": 0.0,
+        "perSeed": [
+          {
+            "optimizerSeed": 17,
+            "base": 0.0,
+            "trained": 0.0,
+            "improvement": 0.0
+          }
+        ]
+      },
+      "new-source": {
+        "status": "measured",
+        "episodes": 3,
+        "independentComponents": 1,
+        "meanImprovement": 0.0,
+        "perSeed": [
+          {
+            "optimizerSeed": 17,
+            "base": 0.0,
+            "trained": 0.0,
+            "improvement": 0.0
+          }
+        ]
+      },
+      "pure-selected": {
+        "status": "measured",
+        "episodes": 1,
+        "independentComponents": 1,
+        "meanImprovement": 0.0,
+        "perSeed": [
+          {
+            "optimizerSeed": 17,
+            "base": 0.0,
+            "trained": 0.0,
+            "improvement": 0.0
+          }
+        ]
+      },
+      "retained-state": {
+        "status": "measured",
+        "episodes": 1,
+        "independentComponents": 1,
+        "meanImprovement": 0.0,
+        "perSeed": [
+          {
+            "optimizerSeed": 17,
+            "base": 0.0,
+            "trained": 0.0,
+            "improvement": 0.0
+          }
+        ]
+      },
+      "valid-errors": {
+        "status": "untested",
+        "episodes": 0,
+        "independentComponents": 0
+      }
+    },
+    "auxiliarySlices": {
+      "new-inputs-known-source": {
+        "status": "untested",
+        "episodes": 0,
+        "independentComponents": 0
+      },
+      "different-observations": {
+        "status": "untested",
+        "episodes": 0,
+        "independentComponents": 0
+      },
+      "different-schedules": {
+        "status": "untested",
+        "episodes": 0,
+        "independentComponents": 0
+      }
+    },
+    "requirements": {
+      "declaredConfirmatoryExperiment": false,
+      "frozenInferenceBudget": true,
+      "atLeastThreeOptimizerSeeds": false,
+      "sameActualBaseCheckpointAcrossSeeds": true,
+      "completeSelectedCheckpointTrainingExposure": true,
+      "declaredTestComponentMinimum": false,
+      "usefulMeanImprovement": false,
+      "pairedFamilyIntervalAboveZero": false,
+      "improvementInEveryOptimizerSeed": false,
+      "criticalSlicesMeasured": false,
+      "noMaterialCriticalSliceRegression": false,
+      "noIntegrityGateFailures": true
+    },
+    "confirmatoryGatePassed": false,
+    "generalizationClaim": false,
+    "unmetRequirements": [
+      "declaredConfirmatoryExperiment",
+      "atLeastThreeOptimizerSeeds",
+      "declaredTestComponentMinimum",
+      "usefulMeanImprovement",
+      "pairedFamilyIntervalAboveZero",
+      "improvementInEveryOptimizerSeed",
+      "criticalSlicesMeasured",
+      "noMaterialCriticalSliceRegression"
+    ],
+    "pureOutcomeTransfer": {
+      "status": "untested",
+      "reason": "Run the separate pure-output-transfer adapter and compare its own frozen report; selected execution cannot establish that score."
+    },
+    "teacherForcedLossIsExecutionAccuracy": false,
+    "seedScope": "Optimizer seeds are reported individually; the family bootstrap does not manufacture independent optimizer runs."
+  }
+}

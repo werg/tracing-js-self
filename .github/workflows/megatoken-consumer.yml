@@ -27,9 +27,11 @@ jobs:
       LC_ALL: C.UTF-8
       OMP_NUM_THREADS: '1'
       MKL_NUM_THREADS: '1'
+      NATIVE_WORKFLOW_HEAD_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
@@ -43,6 +45,24 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12.14'
+      - name: Record durable producer and workflow trigger identities
+        run: |
+          python - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          receipt = {
+            'schema': 'semantic-native-ci-identity/1',
+            'workflowRunId': os.environ['GITHUB_RUN_ID'],
+            'workflowRunAttempt': os.environ['GITHUB_RUN_ATTEMPT'],
+            'workflowTriggerRevision': os.environ['GITHUB_SHA'],
+            'workflowHeadRevision': os.environ['NATIVE_WORKFLOW_HEAD_REVISION'],
+            'producerRevision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+            'consumerRevision': subprocess.check_output(['git', '-C', 'megatoken', 'rev-parse', 'HEAD'], text=True).strip(),
+          }
+          assert receipt['producerRevision'] == receipt['workflowHeadRevision']
+          (Path(os.environ['RUNNER_TEMP']) / 'native-run-identity.json').write_text(json.dumps(receipt, indent=2) + '\n')
+          print(json.dumps(receipt))
+          PY
       - name: Install paired producer and native consumer
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
@@ -90,7 +110,7 @@ jobs:
           if [[ '${{ matrix.recipe }}' == 'real-source' ]]; then
             # Real upstream candidates retain every unsupported/refused row;
             # the release step rechecks and prepares only actual admissions.
-            require_native=()
+            require_native+=(--allow-refusals)
           fi
           node tools/generate-effectful-training.mjs --recipe '${{ matrix.recipe }}' --jobs 3 --out "$RUNNER_TEMP/corpus" \
             --registry "$RUNNER_TEMP/source-registry.json" \
@@ -199,9 +219,12 @@ jobs:
           include-hidden-files: true
           path: |
             ${{ runner.temp }}/corpus/
+            !${{ runner.temp }}/corpus/.native/**
+            !${{ runner.temp }}/corpus/.workers/**
             ${{ runner.temp }}/prepared-semantic/
             ${{ runner.temp }}/release/
             ${{ runner.temp }}/native-environment.json
+            ${{ runner.temp }}/native-run-identity.json
             ${{ runner.temp }}/native-capabilities.json
             ${{ runner.temp }}/source-registry.json
             ${{ runner.temp }}/source-dispositions.json

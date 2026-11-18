@@ -1,0 +1,275 @@
+{
+  "id": "semantic-recipe:squared-distance/squared-distance-callbacks-recovery@d84b68982053b747",
+  "family": "semantic-recipe:squared-distance",
+  "origin": "fixed-weights",
+  "wholeTaskSuccess": false,
+  "traceValid": false,
+  "checkpointIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+  "artifacts": "/workspace/scratch/0c59f3502a6d/evidence/learning-pilot-bounded-epoch-1500-main/seed-17/test/fixed-weights/0001",
+  "generatedTokenCost": {
+    "generatedTokens": 38,
+    "decoderEvents": 4,
+    "complete": true,
+    "scope": "original-native-emitted-token-ids"
+  },
+  "wallSeconds": 7.086311709997972,
+  "servingProfile": {
+    "schema": "semantic-serving-profile/1",
+    "declaredOrigin": "fixed",
+    "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+    "device": "cpu",
+    "identity": {
+      "modelSha256": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+      "manifestSha256": "e027e93be160fb78fdce535a7c5188bb76845ad3c652bd5ec317d342918d71a2",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    "initialization": {
+      "schema": "semantic-inference-identity/4",
+      "seed": 17,
+      "checkpointIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    "coldLoadSeconds": 2.217178655999305,
+    "operations": {
+      "cancel": {
+        "count": 1,
+        "successfulRpcCalls": 1,
+        "firstSeconds": 0.00029821899806847796,
+        "p50Seconds": 0.00029821899806847796,
+        "p95Seconds": 0.00029821899806847796,
+        "warmP50Seconds": null,
+        "warmP95Seconds": null,
+        "totalSeconds": 0.00029821899806847796
+      },
+      "initialize": {
+        "count": 1,
+        "successfulRpcCalls": 1,
+        "firstSeconds": 0.005998422002448933,
+        "p50Seconds": 0.005998422002448933,
+        "p95Seconds": 0.005998422002448933,
+        "warmP50Seconds": null,
+        "warmP95Seconds": null,
+        "totalSeconds": 0.005998422002448933
+      },
+      "select": {
+        "count": 1,
+        "successfulRpcCalls": 1,
+        "firstSeconds": 2.1219150659999286,
+        "p50Seconds": 2.1219150659999286,
+        "p95Seconds": 2.1219150659999286,
+        "warmP50Seconds": null,
+        "warmP95Seconds": null,
+        "totalSeconds": 2.1219150659999286
+      }
+    },
+    "records": [
+      {
+        "id": "s1",
+        "operation": "initialize",
+        "ok": true,
+        "wallSeconds": 0.005998422002448933,
+        "state": {
+          "retainedSessions": 0,
+          "retainedInvocations": 0,
+          "activeInvocations": 0,
+          "trackStatuses": {},
+          "rendering": 0,
+          "selectedGroups": 0,
+          "reservedOutputBytes": 0
+        },
+        "selectionAuthority": null,
+        "failure": null
+      },
+      {
+        "id": "s2",
+        "operation": "select",
+        "ok": true,
+        "wallSeconds": 2.1219150659999286,
+        "state": {
+          "retainedSessions": 1,
+          "retainedInvocations": 1,
+          "activeInvocations": 1,
+          "trackStatuses": {
+            "active": 1
+          },
+          "rendering": 0,
+          "selectedGroups": 4,
+          "reservedOutputBytes": 74496
+        },
+        "selectionAuthority": "actual-model-selected",
+        "failure": null
+      },
+      {
+        "id": "s3",
+        "operation": "cancel",
+        "ok": true,
+        "wallSeconds": 0.00029821899806847796,
+        "state": {
+          "retainedSessions": 1,
+          "retainedInvocations": 1,
+          "activeInvocations": 0,
+          "trackStatuses": {
+            "cancelled": 1
+          },
+          "rendering": 0,
+          "selectedGroups": 0,
+          "reservedOutputBytes": 0
+        },
+        "selectionAuthority": null,
+        "failure": null
+      }
+    ],
+    "droppedRecords": 0,
+    "complete": true,
+    "memory": {
+      "hostLifetimePeakRssBytes": 525115392,
+      "cudaPeakAllocatedBytes": null,
+      "cudaPeakReservedBytes": null,
+      "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+    },
+    "peakActiveInvocationsAtRpcBoundaries": 1,
+    "stateBeforeRuntimeClose": {
+      "retainedSessions": 1,
+      "retainedInvocations": 1,
+      "activeInvocations": 0,
+      "trackStatuses": {
+        "cancelled": 1
+      },
+      "rendering": 0,
+      "selectedGroups": 0,
+      "reservedOutputBytes": 0
+    },
+    "runtimeClosed": true,
+    "optimizerSteps": 0,
+    "learnedSuccess": null,
+    "trainingMemoryFit": "unmeasured",
+    "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+    "warmDefinition": "All calls after the first call of the same operation in this process",
+    "digest": "f0cc3239f851ec344820f573db2e6f95fb7c4c057666d7dfe8f1c6bbf7828c4b"
+  },
+  "failure": {
+    "category": "TypeError",
+    "message": "Invalid semantic-trace/5: missing record separator",
+    "evidence": null
+  },
+  "rejections": [
+    {
+      "invocationId": "invocation1",
+      "record": " v\u00e1llal\u6d53\u6d53\u7684\uff0c\u673a\u5668 tower Trang ocas-Cl\u6781\u9ad8\u0435\u0441\u043f\u201cFor\u6781\u9ad8                                        datos\u4ed6\u80fd\u53d1\u9001\u5230 th\u00edch_MACHINE tho\u3001\u9879\u76ee\u98df\u7528\u6cb9\u3001\u9879\u76ee Lenn\u8212\u9002\u7a7f\u4e86 adaptsysics superar vape \uc5c6\u820d\u4e0d\u5f97 paths th\u00edch nause yap\u0131lan schematic\u642d\u914d \uc5c6\u820d\u4e0d\u5f97",
+      "selection": {
+        "modelTrack": "track:0",
+        "ownerTrack": "worker1",
+        "selectedEventId": "selected:21:track:0",
+        "meridian": 21,
+        "fragments": [
+          {
+            "selectedEventId": "selected:18:track:0",
+            "meridian": 18,
+            "modelTrack": "track:0",
+            "payloadHex": "2076c3a16c6c616ce6b593e6b593e79a84",
+            "emittedTokenIds": [
+              145677,
+              64676
+            ]
+          },
+          {
+            "selectedEventId": "selected:19:track:0",
+            "meridian": 19,
+            "modelTrack": "track:0",
+            "payloadHex": "efbc8ce69cbae599a820746f776572205472616e67206f6361732d436ce69e81e9ab98d0b5d181d0bfe2809c466f72",
+            "emittedTokenIds": [
+              125030,
+              26551,
+              150428,
+              136019,
+              78262,
+              55398,
+              126718,
+              70979
+            ]
+          },
+          {
+            "selectedEventId": "selected:20:track:0",
+            "meridian": 20,
+            "modelTrack": "track:0",
+            "payloadHex": "e69e81e9ab98202020202020202020202020202020202020202020202020202020202020202020202020202020206461746f73e4bb96e883bde58f91e98081e588b0207468c3ad63685f4d414348494e452074686fe38081e9a1b9e79baee9a39fe794a8e6b2b9e38081e9a1b9e79bae204c656e6ee88892e98082e7a9bfe4ba8620616461707473",
+            "emittedTokenIds": [
+              55398,
+              17396,
+              129439,
+              56623,
+              87152,
+              133380,
+              114812,
+              59723,
+              52593,
+              85029,
+              52593,
+              61249,
+              14709,
+              53995,
+              122094
+            ]
+          },
+          {
+            "selectedEventId": "selected:21:track:0",
+            "meridian": 21,
+            "modelTrack": "track:0",
+            "payloadHex": "79736963732073757065726172207661706520ec9786e8888de4b88de5be97207061746873207468c3ad6368206e6175736520796170c4b16c616e20736368656d61746963e690ade9858d20ec9786e8888de4b88de5be97",
+            "emittedTokenIds": [
+              29533,
+              148237,
+              67969,
+              127356,
+              42314,
+              16969,
+              133380,
+              46001,
+              136713,
+              69195,
+              12448,
+              127356,
+              42314
+            ]
+          }
+        ],
+        "codecFingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "modelSelected": true,
+        "origin": "actual-model-selected",
+        "sourceReads": [],
+        "stateBootstrap": {
+          "schema": "semantic-selected-bootstrap-receipt/4",
+          "digest": "672c1090b7889cb58f5ecbd6ceebbd4b19beeb34343727d064b35fb31c8ab939",
+          "prefixDigest": "f152fb360e6aa9f92be6c28ba18bca0dcacd77ed53b40f0414af9fe1cfcd5edf",
+          "visibleThrough": 2,
+          "observedEventIds": [
+            "observed:8:0"
+          ],
+          "reason": "retained-activation"
+        }
+      },
+      "error": "TypeError: Invalid semantic-trace/5: missing record separator",
+      "phase": "semantic-validation"
+    }
+  ],
+  "firstSemanticInconsistency": null,
+  "hardGates": {
+    "futureObservationLeaks": 0,
+    "unauthorizedEffects": 0,
+    "untrackedNativeFallback": 0,
+    "falseAdmissions": 0,
+    "replayNativeEffects": 0
+  },
+  "costs": {
+    "computeSeconds": 2.1372890639999995,
+    "peakMemoryBytes": 1231196160,
+    "dispatches": 0,
+    "queueDepth": 0,
+    "leakedResources": 0
+  },
+  "cleanup": {
+    "pendingEffects": 0,
+    "pendingJobs": 0,
+    "openHandlers": 0
+  }
+}

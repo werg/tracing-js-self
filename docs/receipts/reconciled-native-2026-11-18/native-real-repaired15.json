@@ -1,0 +1,1907 @@
+{
+  "schema": "selected-real-source-qualification/1",
+  "status": "passed",
+  "producerRevision": "f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1",
+  "trackedProducerClean": true,
+  "runnerSha256": "9472c1d336eed93b498a8f843e59a5cb376d023ac51b1dc46e74f6794188db64",
+  "environment": {
+    "schema": "semantic-execution-environment/1",
+    "node": "24.22.3",
+    "v8": "13.6.233.17-node.63",
+    "platform": "linux",
+    "arch": "x64",
+    "timezone": "UTC",
+    "parser": "8.15.0",
+    "typescript": "5.9.3",
+    "packageLockDigest": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88",
+    "implementationDigest": "1c9219a512a49a13dec919f1c4a2d59f862ee6593999143afdc3a6147484f9fb",
+    "locale": "en-US",
+    "referenceIsolation": {
+      "schema": "semantic-reference-isolation/1",
+      "mode": "linux-namespace",
+      "launcherSha256": "b9d3bd23d092083173508fd570c3d5b6dc4e0e98fc9814e3df543e634351ea24",
+      "profile": "linux-namespace/1",
+      "network": "new-network-namespace-and-denied-socket-syscalls",
+      "filesystem": "read-only-code-and-runtime-with-private-tmpfs",
+      "capabilities": "none",
+      "childProcesses": "denied",
+      "addressSpaceBytes": 1073741824,
+      "heapMb": 256,
+      "temporaryBytes": 67108864,
+      "openFiles": 64,
+      "jit": "disabled"
+    }
+  },
+  "nativePolicy": {
+    "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+  },
+  "selection": {
+    "kind": "explicit-regression-ids",
+    "perFamily": 2,
+    "ids": [
+      "real-utilities-5a1fde95b4daab8314e03d36",
+      "real-utilities-76c442299b70a90a72a85bcb",
+      "real-exercism-943a3cef2a9e1d9715771263",
+      "real-exercism-ef5f7bf36763b0ae5e979d72",
+      "real-exercism-29ccb6b486929ee5f224879a",
+      "real-exercism-688679ef67ecbfe90b63b569",
+      "real-exercism-7b3c16ff7bff18d54d705695",
+      "real-exercism-86949e51e08871ad40636a8d",
+      "real-exercism-45e8b0dde758d58d893cf67a",
+      "real-exercism-d53806291f5d5df9dc20dba8",
+      "real-exercism-3b5b8e376886f63ffb9ed970",
+      "real-production-081d1f0cb42af8f08a495250",
+      "real-production-5a35ed6e7981d3e561bb435e",
+      "real-production-ac6390737eac5e949058fcd8",
+      "real-production-66fdbe957c5128bdd4e7dd0b"
+    ],
+    "selected": 15,
+    "available": 210,
+    "wholeCorpus": false
+  },
+  "counts": {
+    "attempted": 15,
+    "admitted": 15,
+    "locallyVerified": 0,
+    "failed": 0
+  },
+  "cases": [
+    {
+      "id": "real-utilities-5a1fde95b4daab8314e03d36",
+      "family": "utility:vscode/arrays.ts/distinct",
+      "status": "admitted",
+      "passed": true,
+      "reason": null,
+      "durationMs": 5828.690533999999,
+      "peakRssBytes": 125325312,
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "ref",
+            "o0"
+          ]
+        ],
+        "objects": [
+          {
+            "id": "o0",
+            "kind": "array",
+            "properties": [
+              {
+                "key": "0",
+                "value": [
+                  "num",
+                  1
+                ]
+              },
+              {
+                "key": "1",
+                "value": [
+                  "num",
+                  2
+                ]
+              },
+              {
+                "key": "2",
+                "value": [
+                  "num",
+                  1
+                ]
+              },
+              {
+                "key": "3",
+                "value": [
+                  "num",
+                  0
+                ]
+              },
+              {
+                "key": "4",
+                "value": [
+                  "num",
+                  2
+                ]
+              },
+              {
+                "key": "5",
+                "value": [
+                  "num",
+                  5
+                ]
+              },
+              {
+                "key": "length",
+                "value": [
+                  "num",
+                  6
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "upstream": {
+        "repository": "microsoft/vscode",
+        "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+        "path": "src/vs/base/common/arrays.ts",
+        "sha256": "e9a08190d445f28485a24c8b2701b5d91fda0702f3999f96d53f0cfebc032c0a"
+      },
+      "canonical": null,
+      "canonicalInput": null,
+      "canonicalArgumentBinding": null,
+      "canonicalExpected": null,
+      "canonicalExpectedBinding": null,
+      "originalSourceSha256": "5a5113346fe90df717036cf65ae0af66ba35dbd4d51feb1778f82570d5c34cc8",
+      "transformedSourceSha256": "5a5113346fe90df717036cf65ae0af66ba35dbd4d51feb1778f82570d5c34cc8",
+      "license": "MIT",
+      "noticePath": "corpus/upstream/vscode/LICENSE.txt",
+      "noticeSha256": "9480271317925265e806a9a196aaa33410a962fa9d4d1e248a4a5187bc8c9df9",
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "c116e16d25bd0827e2a6ed4d1aac0020c38c0cae9f92b0b6e6fbe84af03a82ca",
+        "identityDigest": "ffbf63bafa372ae9af655d7c89fc44fb9a7a254119a09e436fe57535740c6605",
+        "identityValidated": true,
+        "producerRevision": "f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "originalSourceCheck": {
+        "status": "agreed",
+        "originalReferenceDigest": "f0725ac8c11e1dc97250aa39edc6bedfa4f61b5c6f7de10f3f5238ad77374f0b",
+        "transformedReferenceDigest": "f0725ac8c11e1dc97250aa39edc6bedfa4f61b5c6f7de10f3f5238ad77374f0b"
+      },
+      "identityDigest": "ffbf63bafa372ae9af655d7c89fc44fb9a7a254119a09e436fe57535740c6605",
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 3,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "c116e16d25bd0827e2a6ed4d1aac0020c38c0cae9f92b0b6e6fbe84af03a82ca",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 1379,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "ref",
+                "o6"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 4,
+          "records": 69,
+          "tracks": 2
+        },
+        "logicalRecords": 65,
+        "lossMaskValidated": true,
+        "observedTokens": 2320,
+        "optimizerSteps": 0,
+        "physicalRecords": 69,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "evidence": {
+        "path": "cases/real-utilities-5a1fde95b4daab8314e03d36.json.gz",
+        "bytes": 71114,
+        "sha256": "45a63dfd7996ca9cd45c2afd5f95968524e18749ac50ac8ca4c7cb5fe3826c19"
+      }
+    },
+    {
+      "id": "real-utilities-76c442299b70a90a72a85bcb",
+      "family": "utility:vscode/arrays.ts/distinct",
+      "status": "admitted",
+      "passed": true,
+      "reason": null,
+      "durationMs": 5417.9868289999995,
+      "peakRssBytes": 127324160,
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "ref",
+            "o0"
+          ]
+        ],
+        "objects": [
+          {
+            "id": "o0",
+            "kind": "array",
+            "properties": [
+              {
+                "key": "0",
+                "value": [
+                  "num",
+                  1
+                ]
+              },
+              {
+                "key": "1",
+                "value": [
+                  "num",
+                  2
+                ]
+              },
+              {
+                "key": "2",
+                "value": [
+                  "num",
+                  1
+                ]
+              },
+              {
+                "key": "3",
+                "value": [
+                  "num",
+                  1
+                ]
+              },
+              {
+                "key": "4",
+                "value": [
+                  "num",
+                  2
+                ]
+              },
+              {
+                "key": "5",
+                "value": [
+                  "num",
+                  5
+                ]
+              },
+              {
+                "key": "length",
+                "value": [
+                  "num",
+                  6
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "upstream": {
+        "repository": "microsoft/vscode",
+        "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+        "path": "src/vs/base/common/arrays.ts",
+        "sha256": "e9a08190d445f28485a24c8b2701b5d91fda0702f3999f96d53f0cfebc032c0a"
+      },
+      "canonical": null,
+      "canonicalInput": null,
+      "canonicalArgumentBinding": null,
+      "canonicalExpected": null,
+      "canonicalExpectedBinding": null,
+      "originalSourceSha256": "5a5113346fe90df717036cf65ae0af66ba35dbd4d51feb1778f82570d5c34cc8",
+      "transformedSourceSha256": "5a5113346fe90df717036cf65ae0af66ba35dbd4d51feb1778f82570d5c34cc8",
+      "license": "MIT",
+      "noticePath": "corpus/upstream/vscode/LICENSE.txt",
+      "noticeSha256": "9480271317925265e806a9a196aaa33410a962fa9d4d1e248a4a5187bc8c9df9",
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "3dd7cd2adc26cb9063da83b65a8c04a98fbdd18c593b37ee6751a87804e88518",
+        "identityDigest": "d6ae74dbe2020c4f45029acdded21cca4834d23643f0966323af946a64b646a1",
+        "identityValidated": true,
+        "producerRevision": "f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "originalSourceCheck": {
+        "status": "agreed",
+        "originalReferenceDigest": "6043cbccaeddb4412f6926acf026594b7c498e1f51bad73c2d8e7830b63e8b0b",
+        "transformedReferenceDigest": "6043cbccaeddb4412f6926acf026594b7c498e1f51bad73c2d8e7830b63e8b0b"
+      },
+      "identityDigest": "d6ae74dbe2020c4f45029acdded21cca4834d23643f0966323af946a64b646a1",
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 3,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "3dd7cd2adc26cb9063da83b65a8c04a98fbdd18c593b37ee6751a87804e88518",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 1289,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "ref",
+                "o6"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 4,
+          "records": 65,
+          "tracks": 2
+        },
+        "logicalRecords": 61,
+        "lossMaskValidated": true,
+        "observedTokens": 2323,
+        "optimizerSteps": 0,
+        "physicalRecords": 65,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "evidence": {
+        "path": "cases/real-utilities-76c442299b70a90a72a85bcb.json.gz",
+        "bytes": 70061,
+        "sha256": "e80b39a1bb920e13bb1031ce5439515db5d083fd3f1ec8c6da2c6bbfc748f205"
+      }
+    },
+    {
+      "id": "real-exercism-943a3cef2a9e1d9715771263",
+      "family": "exercism/javascript:darts",
+      "status": "admitted",
+      "passed": true,
+      "reason": null,
+      "durationMs": 5356.116474,
+      "peakRssBytes": 124280832,
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "num",
+            -9
+          ],
+          [
+            "num",
+            9
+          ]
+        ],
+        "objects": []
+      },
+      "upstream": {
+        "repository": "exercism/javascript",
+        "revision": "ff04f35158cdf61eebfdf18a774010495a1fd6d9",
+        "path": "exercises/practice/darts/.meta/proof.ci.js",
+        "sha256": "9ac26c6996e19c22910faeba9f769e7a1716e09ebb8ea9d6491a8157dc77b66d",
+        "license": "MIT"
+      },
+      "canonical": {
+        "repository": "exercism/problem-specifications",
+        "revision": "650bebeb39ad40439175288042aece982b0a90a9",
+        "path": "exercises/darts/canonical-data.json",
+        "sha256": "bc815b29fafe311db9de8bc752ec42045bb10c081b6082ded22744ccfbb031c9",
+        "license": "MIT"
+      },
+      "canonicalInput": {
+        "x": -9,
+        "y": 9
+      },
+      "canonicalArgumentBinding": null,
+      "canonicalExpected": 0,
+      "canonicalExpectedBinding": null,
+      "originalSourceSha256": "7e6765c45dfc7d31fd3c80b132d955a3b2006139be5e232cb2f56771439ebe9b",
+      "transformedSourceSha256": "818922c0c8bf1f39ac0b16690bc55c179498d82d605eec745abf0d84f584a806",
+      "license": "MIT",
+      "noticePath": "corpus/extension/snapshots/exercism-js/LICENSE",
+      "noticeSha256": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "26188babf7a080a426e9e935fa73c6b1a7d5139c57e826c8d94b90d066361642",
+        "identityDigest": "dc2c9b137b29a33196a846ffce9150285c9dab2f6758eb6bf0dfac87bff03e29",
+        "identityValidated": true,
+        "producerRevision": "f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "originalSourceCheck": {
+        "status": "agreed",
+        "originalReferenceDigest": "873603a567d2343f85d24f33bef0ef87b6024e070d1269a78355adad1dd9bb14",
+        "transformedReferenceDigest": "873603a567d2343f85d24f33bef0ef87b6024e070d1269a78355adad1dd9bb14",
+        "canonicalExpectation": {
+          "status": "agreed",
+          "outcomeKind": "return",
+          "expectedValueBinding": null
+        }
+      },
+      "identityDigest": "dc2c9b137b29a33196a846ffce9150285c9dab2f6758eb6bf0dfac87bff03e29",
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "26188babf7a080a426e9e935fa73c6b1a7d5139c57e826c8d94b90d066361642",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 304,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                0
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 14,
+          "tracks": 2
+        },
+        "logicalRecords": 11,
+        "lossMaskValidated": true,
+        "observedTokens": 1848,
+        "optimizerSteps": 0,
+        "physicalRecords": 14,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "evidence": {
+        "path": "cases/real-exercism-943a3cef2a9e1d9715771263.json.gz",
+        "bytes": 28035,
+        "sha256": "62dd67eafe3d6926c7956c90c520b79dd142e8399855100ffa112ec66e16a36d"
+      }
+    },
+    {
+      "id": "real-exercism-ef5f7bf36763b0ae5e979d72",
+      "family": "exercism/javascript:darts",
+      "status": "admitted",
+      "passed": true,
+      "reason": null,
+      "durationMs": 6159.734182,
+      "peakRssBytes": 123351040,
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "num",
+            0
+          ],
+          [
+            "num",
+            10
+          ]
+        ],
+        "objects": []
+      },
+      "upstream": {
+        "repository": "exercism/javascript",
+        "revision": "ff04f35158cdf61eebfdf18a774010495a1fd6d9",
+        "path": "exercises/practice/darts/.meta/proof.ci.js",
+        "sha256": "9ac26c6996e19c22910faeba9f769e7a1716e09ebb8ea9d6491a8157dc77b66d",
+        "license": "MIT"
+      },
+      "canonical": {
+        "repository": "exercism/problem-specifications",
+        "revision": "650bebeb39ad40439175288042aece982b0a90a9",
+        "path": "exercises/darts/canonical-data.json",
+        "sha256": "bc815b29fafe311db9de8bc752ec42045bb10c081b6082ded22744ccfbb031c9",
+        "license": "MIT"
+      },
+      "canonicalInput": {
+        "x": 0,
+        "y": 10
+      },
+      "canonicalArgumentBinding": null,
+      "canonicalExpected": 1,
+      "canonicalExpectedBinding": null,
+      "originalSourceSha256": "7e6765c45dfc7d31fd3c80b132d955a3b2006139be5e232cb2f56771439ebe9b",
+      "transformedSourceSha256": "818922c0c8bf1f39ac0b16690bc55c179498d82d605eec745abf0d84f584a806",
+      "license": "MIT",
+      "noticePath": "corpus/extension/snapshots/exercism-js/LICENSE",
+      "noticeSha256": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "3c97420c814a28fb53f0b0006c4ef9e9a23bddb814f14f0961a1ad8abb5dce06",
+        "identityDigest": "dd8bbc85d27fc2bc1f30ee1ab9f0d392506143cec9d2b2d46157c82bd93f68a5",
+        "identityValidated": true,
+        "producerRevision": "f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "originalSourceCheck": {
+        "status": "agreed",
+        "originalReferenceDigest": "539a8b24afce8d8beacddcee20c56dcac14e70292ea51c59774414369097c355",
+        "transformedReferenceDigest": "539a8b24afce8d8beacddcee20c56dcac14e70292ea51c59774414369097c355",
+        "canonicalExpectation": {
+          "status": "agreed",
+          "outcomeKind": "return",
+          "expectedValueBinding": null
+        }
+      },
+      "identityDigest": "dd8bbc85d27fc2bc1f30ee1ab9f0d392506143cec9d2b2d46157c82bd93f68a5",
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "3c97420c814a28fb53f0b0006c4ef9e9a23bddb814f14f0961a1ad8abb5dce06",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 347,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                1
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 15,
+          "tracks": 2
+        },
+        "logicalRecords": 12,
+        "lossMaskValidated": true,
+        "observedTokens": 1848,
+        "optimizerSteps": 0,
+        "physicalRecords": 15,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "evidence": {
+        "path": "cases/real-exercism-ef5f7bf36763b0ae5e979d72.json.gz",
+        "bytes": 28544,
+        "sha256": "9ea7d2503df771e1c808c9a2d8793405a306fd9d4c08205f3f76eaf77a3b2cb7"
+      }
+    },
+    {
+      "id": "real-exercism-29ccb6b486929ee5f224879a",
+      "family": "exercism/javascript:grains",
+      "status": "admitted",
+      "passed": true,
+      "reason": null,
+      "durationMs": 6769.210548000003,
+      "peakRssBytes": 120987648,
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "num",
+            1
+          ]
+        ],
+        "objects": []
+      },
+      "upstream": {
+        "repository": "exercism/javascript",
+        "revision": "ff04f35158cdf61eebfdf18a774010495a1fd6d9",
+        "path": "exercises/practice/grains/.meta/proof.ci.js",
+        "sha256": "7d7f99ebfc0a2b5324f71eeb599e2bfb59845b30ca8b48693f072e010aa63536",
+        "license": "MIT"
+      },
+      "canonical": {
+        "repository": "exercism/problem-specifications",
+        "revision": "650bebeb39ad40439175288042aece982b0a90a9",
+        "path": "exercises/grains/canonical-data.json",
+        "sha256": "b5c2c1a38ed4527681f0f4dcc09b91fe26f87162188146d919fb478f23d3e473",
+        "license": "MIT"
+      },
+      "canonicalInput": {
+        "square": 1
+      },
+      "canonicalArgumentBinding": null,
+      "canonicalExpected": 1,
+      "canonicalExpectedBinding": {
+        "schema": "exercism-grains-bigint/1",
+        "decimal": "1"
+      },
+      "originalSourceSha256": "cea6cb211b124e27bf69e0587b1712f25dcc905b48bf60d3477a3f00d8978196",
+      "transformedSourceSha256": "ddf956e9587ea556a842414e07e7665ac6f0f135d70ded2fead751d97a59492e",
+      "license": "MIT",
+      "noticePath": "corpus/extension/snapshots/exercism-js/LICENSE",
+      "noticeSha256": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "0b2cf2884bf443dc744248057bc363f6b9538cf138555ffde92b45e37d14a19f",
+        "identityDigest": "6a127543ba5463c73f319b68da02d8efd22a6dd85b951644eaa88370c02a7b1f",
+        "identityValidated": true,
+        "producerRevision": "f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "originalSourceCheck": {
+        "status": "agreed",
+        "originalReferenceDigest": "19fb760075d24e456e3e29491a1d06bcf4a7883de5edcb7df3343825f312d827",
+        "transformedReferenceDigest": "19fb760075d24e456e3e29491a1d06bcf4a7883de5edcb7df3343825f312d827",
+        "canonicalExpectation": {
+          "status": "agreed",
+          "outcomeKind": "return",
+          "expectedValueBinding": {
+            "schema": "exercism-grains-bigint/1",
+            "decimal": "1"
+          }
+        }
+      },
+      "identityDigest": "6a127543ba5463c73f319b68da02d8efd22a6dd85b951644eaa88370c02a7b1f",
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "0b2cf2884bf443dc744248057bc363f6b9538cf138555ffde92b45e37d14a19f",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 218,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "bigint",
+                "1"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 11,
+          "tracks": 2
+        },
+        "logicalRecords": 9,
+        "lossMaskValidated": true,
+        "observedTokens": 1684,
+        "optimizerSteps": 0,
+        "physicalRecords": 11,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "evidence": {
+        "path": "cases/real-exercism-29ccb6b486929ee5f224879a.json.gz",
+        "bytes": 22696,
+        "sha256": "a5ec58587cc64917f30bed613013611e18c5eb1266b496b9c3bdb6aebdfea3e8"
+      }
+    },
+    {
+      "id": "real-exercism-688679ef67ecbfe90b63b569",
+      "family": "exercism/javascript:grains",
+      "status": "admitted",
+      "passed": true,
+      "reason": null,
+      "durationMs": 6528.469871000001,
+      "peakRssBytes": 121856000,
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "num",
+            2
+          ]
+        ],
+        "objects": []
+      },
+      "upstream": {
+        "repository": "exercism/javascript",
+        "revision": "ff04f35158cdf61eebfdf18a774010495a1fd6d9",
+        "path": "exercises/practice/grains/.meta/proof.ci.js",
+        "sha256": "7d7f99ebfc0a2b5324f71eeb599e2bfb59845b30ca8b48693f072e010aa63536",
+        "license": "MIT"
+      },
+      "canonical": {
+        "repository": "exercism/problem-specifications",
+        "revision": "650bebeb39ad40439175288042aece982b0a90a9",
+        "path": "exercises/grains/canonical-data.json",
+        "sha256": "b5c2c1a38ed4527681f0f4dcc09b91fe26f87162188146d919fb478f23d3e473",
+        "license": "MIT"
+      },
+      "canonicalInput": {
+        "square": 2
+      },
+      "canonicalArgumentBinding": null,
+      "canonicalExpected": 2,
+      "canonicalExpectedBinding": {
+        "schema": "exercism-grains-bigint/1",
+        "decimal": "2"
+      },
+      "originalSourceSha256": "cea6cb211b124e27bf69e0587b1712f25dcc905b48bf60d3477a3f00d8978196",
+      "transformedSourceSha256": "ddf956e9587ea556a842414e07e7665ac6f0f135d70ded2fead751d97a59492e",
+      "license": "MIT",
+      "noticePath": "corpus/extension/snapshots/exercism-js/LICENSE",
+      "noticeSha256": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "e85b1dda8f621228f003b2bb25d0a26456fce06b0a827a741a82813d7c9c7d88",
+        "identityDigest": "e9b91ee804bc6aebad8e5df485466edc9e353ebb5ce8b2d5c92853df1ef16894",
+        "identityValidated": true,
+        "producerRevision": "f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "originalSourceCheck": {
+        "status": "agreed",
+        "originalReferenceDigest": "4094369d3637d9b70a7a5019f8e5dd6e6f4be9a2eac0e770c56074d39a278513",
+        "transformedReferenceDigest": "4094369d3637d9b70a7a5019f8e5dd6e6f4be9a2eac0e770c56074d39a278513",
+        "canonicalExpectation": {
+          "status": "agreed",
+          "outcomeKind": "return",
+          "expectedValueBinding": {
+            "schema": "exercism-grains-bigint/1",
+            "decimal": "2"
+          }
+        }
+      },
+      "identityDigest": "e9b91ee804bc6aebad8e5df485466edc9e353ebb5ce8b2d5c92853df1ef16894",
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "e85b1dda8f621228f003b2bb25d0a26456fce06b0a827a741a82813d7c9c7d88",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 218,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "bigint",
+                "2"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 11,
+          "tracks": 2
+        },
+        "logicalRecords": 9,
+        "lossMaskValidated": true,
+        "observedTokens": 1684,
+        "optimizerSteps": 0,
+        "physicalRecords": 11,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "evidence": {
+        "path": "cases/real-exercism-688679ef67ecbfe90b63b569.json.gz",
+        "bytes": 22692,
+        "sha256": "754f2ac073a31859920d16ea9a63278269a64f52700f5e867cba50e9e312c5d6"
+      }
+    },
+    {
+      "id": "real-exercism-7b3c16ff7bff18d54d705695",
+      "family": "exercism/javascript:knapsack",
+      "status": "admitted",
+      "passed": true,
+      "reason": null,
+      "durationMs": 7495.421892999999,
+      "peakRssBytes": 123535360,
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "num",
+            100
+          ],
+          [
+            "ref",
+            "o0"
+          ]
+        ],
+        "objects": [
+          {
+            "id": "o0",
+            "kind": "array",
+            "properties": [
+              {
+                "key": "length",
+                "value": [
+                  "num",
+                  0
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "upstream": {
+        "repository": "exercism/javascript",
+        "revision": "ff04f35158cdf61eebfdf18a774010495a1fd6d9",
+        "path": "exercises/practice/knapsack/.meta/proof.ci.js",
+        "sha256": "350f51468678ec48c8d0488a714ffd0888fd4a11dbde928900a8d7b18de5592c",
+        "license": "MIT"
+      },
+      "canonical": {
+        "repository": "exercism/problem-specifications",
+        "revision": "650bebeb39ad40439175288042aece982b0a90a9",
+        "path": "exercises/knapsack/canonical-data.json",
+        "sha256": "e31ce5a2d0d25f533ce61852ad1ca71a7b3987c7a6ceec177ae6671f0fda46d4",
+        "license": "MIT"
+      },
+      "canonicalInput": {
+        "maximumWeight": 100,
+        "items": []
+      },
+      "canonicalArgumentBinding": null,
+      "canonicalExpected": 0,
+      "canonicalExpectedBinding": null,
+      "originalSourceSha256": "759abef541e9726deea6d21095c77c8fcc4d6fbf3a049b7593c17109f0c7dfc7",
+      "transformedSourceSha256": "cdaabd81b0aa5e3c7aabb9cbb2dc0308974397af14fbf324a2862226a680ede3",
+      "license": "MIT",
+      "noticePath": "corpus/extension/snapshots/exercism-js/LICENSE",
+      "noticeSha256": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "c33a16cb93540f19bce6dc44cee4c2facbd0810eac11dfd068f6801b4718538d",
+        "identityDigest": "55116b684cc75cdb52bc9ba747b206071fc38f5889df9411df12b28057b2223f",
+        "identityValidated": true,
+        "producerRevision": "f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "originalSourceCheck": {
+        "status": "agreed",
+        "originalReferenceDigest": "0da206901b829d041e0da02944fb327fa2ed2f49fac34bc51609e63a6a2665a7",
+        "transformedReferenceDigest": "0da206901b829d041e0da02944fb327fa2ed2f49fac34bc51609e63a6a2665a7",
+        "canonicalExpectation": {
+          "status": "agreed",
+          "outcomeKind": "return",
+          "expectedValueBinding": null
+        }
+      },
+      "identityDigest": "55116b684cc75cdb52bc9ba747b206071fc38f5889df9411df12b28057b2223f",
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 7,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "c33a16cb93540f19bce6dc44cee4c2facbd0810eac11dfd068f6801b4718538d",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 2899,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                0
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 8,
+          "records": 145,
+          "tracks": 2
+        },
+        "logicalRecords": 133,
+        "lossMaskValidated": true,
+        "observedTokens": 7012,
+        "optimizerSteps": 0,
+        "physicalRecords": 145,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "evidence": {
+        "path": "cases/real-exercism-7b3c16ff7bff18d54d705695.json.gz",
+        "bytes": 46976,
+        "sha256": "5a659e35aef319660c0702365d7e24a0021840869ab3642b91bff5c49f53e6c0"
+      }
+    },
+    {
+      "id": "real-exercism-86949e51e08871ad40636a8d",
+      "family": "exercism/javascript:roman-numerals",
+      "status": "admitted",
+      "passed": true,
+      "reason": null,
+      "durationMs": 9294.352505000003,
+      "peakRssBytes": 157167616,
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "num",
+            1
+          ]
+        ],
+        "objects": []
+      },
+      "upstream": {
+        "repository": "exercism/javascript",
+        "revision": "ff04f35158cdf61eebfdf18a774010495a1fd6d9",
+        "path": "exercises/practice/roman-numerals/.meta/proof.ci.js",
+        "sha256": "9e50340bc481a5934050b487cb364e790d78ede33216c36e4ee9a208234c05c0",
+        "license": "MIT"
+      },
+      "canonical": {
+        "repository": "exercism/problem-specifications",
+        "revision": "650bebeb39ad40439175288042aece982b0a90a9",
+        "path": "exercises/roman-numerals/canonical-data.json",
+        "sha256": "c375f7c41c7ba353fcbeb8fa1f68e90cfce0d4cf4a444df5f74ceeff6bc22ef8",
+        "license": "MIT"
+      },
+      "canonicalInput": {
+        "number": 1
+      },
+      "canonicalArgumentBinding": null,
+      "canonicalExpected": "I",
+      "canonicalExpectedBinding": null,
+      "originalSourceSha256": "a1994cdf7311869cb6eb78da7ab42fbae706171b59d276ac30df22fd3d0f14ff",
+      "transformedSourceSha256": "1a2d2bdceb4141e6a5a7b72449c014c391d625ef87fef8beb46b26a78d71b025",
+      "license": "MIT",
+      "noticePath": "corpus/extension/snapshots/exercism-js/LICENSE",
+      "noticeSha256": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "72cc3af681503d5241c98140c88c7c715ca3082b4292ac9b8512757bbfca1496",
+        "identityDigest": "91939709f1e1aac1f99811875e527fcc664ed10ef2a902e9c8791f6151c9ca49",
+        "identityValidated": true,
+        "producerRevision": "f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "originalSourceCheck": {
+        "status": "agreed",
+        "originalReferenceDigest": "a84c172f449857d461f95a6e4af1cd8a65ce00c118f03334bf1d879e32c89f8d",
+        "transformedReferenceDigest": "a84c172f449857d461f95a6e4af1cd8a65ce00c118f03334bf1d879e32c89f8d",
+        "canonicalExpectation": {
+          "status": "agreed",
+          "outcomeKind": "return",
+          "expectedValueBinding": null
+        }
+      },
+      "identityDigest": "91939709f1e1aac1f99811875e527fcc664ed10ef2a902e9c8791f6151c9ca49",
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 9,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "72cc3af681503d5241c98140c88c7c715ca3082b4292ac9b8512757bbfca1496",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 3189,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "str",
+                "I"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 10,
+          "records": 159,
+          "tracks": 2
+        },
+        "logicalRecords": 143,
+        "lossMaskValidated": true,
+        "observedTokens": 8883,
+        "optimizerSteps": 0,
+        "physicalRecords": 159,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "evidence": {
+        "path": "cases/real-exercism-86949e51e08871ad40636a8d.json.gz",
+        "bytes": 98289,
+        "sha256": "be0933b0632a47639635578ad78c0c302df23fab8f018a0a4b3eba6b7e3326c1"
+      }
+    },
+    {
+      "id": "real-exercism-45e8b0dde758d58d893cf67a",
+      "family": "exercism/javascript:roman-numerals",
+      "status": "admitted",
+      "passed": true,
+      "reason": null,
+      "durationMs": 10790.607945999996,
+      "peakRssBytes": 159580160,
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "num",
+            2
+          ]
+        ],
+        "objects": []
+      },
+      "upstream": {
+        "repository": "exercism/javascript",
+        "revision": "ff04f35158cdf61eebfdf18a774010495a1fd6d9",
+        "path": "exercises/practice/roman-numerals/.meta/proof.ci.js",
+        "sha256": "9e50340bc481a5934050b487cb364e790d78ede33216c36e4ee9a208234c05c0",
+        "license": "MIT"
+      },
+      "canonical": {
+        "repository": "exercism/problem-specifications",
+        "revision": "650bebeb39ad40439175288042aece982b0a90a9",
+        "path": "exercises/roman-numerals/canonical-data.json",
+        "sha256": "c375f7c41c7ba353fcbeb8fa1f68e90cfce0d4cf4a444df5f74ceeff6bc22ef8",
+        "license": "MIT"
+      },
+      "canonicalInput": {
+        "number": 2
+      },
+      "canonicalArgumentBinding": null,
+      "canonicalExpected": "II",
+      "canonicalExpectedBinding": null,
+      "originalSourceSha256": "a1994cdf7311869cb6eb78da7ab42fbae706171b59d276ac30df22fd3d0f14ff",
+      "transformedSourceSha256": "1a2d2bdceb4141e6a5a7b72449c014c391d625ef87fef8beb46b26a78d71b025",
+      "license": "MIT",
+      "noticePath": "corpus/extension/snapshots/exercism-js/LICENSE",
+      "noticeSha256": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "9be23d37cc756a0d596ea7c39e7a373ab6d55d922889640961a96eb0ead018a5",
+        "identityDigest": "06b597ee558f0074fe17f39c4a06f35daaf31ae628dcd9718319a08bda192ac6",
+        "identityValidated": true,
+        "producerRevision": "f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "originalSourceCheck": {
+        "status": "agreed",
+        "originalReferenceDigest": "338e3d5b261e3c78f3fcc612001d782ed2a58125b8fbf2790755cfd9de76c81e",
+        "transformedReferenceDigest": "338e3d5b261e3c78f3fcc612001d782ed2a58125b8fbf2790755cfd9de76c81e",
+        "canonicalExpectation": {
+          "status": "agreed",
+          "outcomeKind": "return",
+          "expectedValueBinding": null
+        }
+      },
+      "identityDigest": "06b597ee558f0074fe17f39c4a06f35daaf31ae628dcd9718319a08bda192ac6",
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 9,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "9be23d37cc756a0d596ea7c39e7a373ab6d55d922889640961a96eb0ead018a5",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 3430,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "str",
+                "II"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 10,
+          "records": 167,
+          "tracks": 2
+        },
+        "logicalRecords": 151,
+        "lossMaskValidated": true,
+        "observedTokens": 8886,
+        "optimizerSteps": 0,
+        "physicalRecords": 167,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "evidence": {
+        "path": "cases/real-exercism-45e8b0dde758d58d893cf67a.json.gz",
+        "bytes": 105211,
+        "sha256": "e7cc542575844d80dc80489c817bc9fb9b9b28ec9123197eea91e563286f780c"
+      }
+    },
+    {
+      "id": "real-exercism-d53806291f5d5df9dc20dba8",
+      "family": "exercism/javascript:sum-of-multiples",
+      "status": "admitted",
+      "passed": true,
+      "reason": null,
+      "durationMs": 8368.696263999998,
+      "peakRssBytes": 128262144,
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "ref",
+            "o0"
+          ],
+          [
+            "num",
+            4
+          ]
+        ],
+        "objects": [
+          {
+            "id": "o0",
+            "kind": "array",
+            "properties": [
+              {
+                "key": "0",
+                "value": [
+                  "num",
+                  3
+                ]
+              },
+              {
+                "key": "1",
+                "value": [
+                  "num",
+                  5
+                ]
+              },
+              {
+                "key": "length",
+                "value": [
+                  "num",
+                  2
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "upstream": {
+        "repository": "exercism/javascript",
+        "revision": "ff04f35158cdf61eebfdf18a774010495a1fd6d9",
+        "path": "exercises/practice/sum-of-multiples/.meta/proof.ci.js",
+        "sha256": "fc0c6ce982bf86086a90e446c8b2d1a5f067617f7eb19f363df61d3a37ff2b6c",
+        "license": "MIT"
+      },
+      "canonical": {
+        "repository": "exercism/problem-specifications",
+        "revision": "650bebeb39ad40439175288042aece982b0a90a9",
+        "path": "exercises/sum-of-multiples/canonical-data.json",
+        "sha256": "937d208704d20a6caee9c6151ce14d8f7b7e0d10b594f863fcb72adbdbb61347",
+        "license": "MIT"
+      },
+      "canonicalInput": {
+        "factors": [
+          3,
+          5
+        ],
+        "limit": 4
+      },
+      "canonicalArgumentBinding": null,
+      "canonicalExpected": 3,
+      "canonicalExpectedBinding": null,
+      "originalSourceSha256": "d22ec93883e9a4eb804cedfc316c3eff7b01ea2860f93365c9dfbfbf163205c7",
+      "transformedSourceSha256": "043ebf82c949f02852da7923a3f4819ec6d78ab90112a079b72a2f71a6ea7775",
+      "license": "MIT",
+      "noticePath": "corpus/extension/snapshots/exercism-js/LICENSE",
+      "noticeSha256": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "2689b958a33f287dbfdf667882eca801ee9a212dcdea3e9d2de9d343560724b0",
+        "identityDigest": "9671e70742e1681203f1ea6d0f251aa8ff4383f2a4f30869c87e0bb641d7e647",
+        "identityValidated": true,
+        "producerRevision": "f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "originalSourceCheck": {
+        "status": "agreed",
+        "originalReferenceDigest": "09bd595f9ec3a0981b230086799ce3ef311f16b536cffd90b6f19d6a24e0a606",
+        "transformedReferenceDigest": "09bd595f9ec3a0981b230086799ce3ef311f16b536cffd90b6f19d6a24e0a606",
+        "canonicalExpectation": {
+          "status": "agreed",
+          "outcomeKind": "return",
+          "expectedValueBinding": null
+        }
+      },
+      "identityDigest": "9671e70742e1681203f1ea6d0f251aa8ff4383f2a4f30869c87e0bb641d7e647",
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 3,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "2689b958a33f287dbfdf667882eca801ee9a212dcdea3e9d2de9d343560724b0",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 1189,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                3
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 4,
+          "records": 48,
+          "tracks": 2
+        },
+        "logicalRecords": 44,
+        "lossMaskValidated": true,
+        "observedTokens": 2059,
+        "optimizerSteps": 0,
+        "physicalRecords": 48,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "evidence": {
+        "path": "cases/real-exercism-d53806291f5d5df9dc20dba8.json.gz",
+        "bytes": 50891,
+        "sha256": "badcc82754bd0d345efc88e176210b0fc67e32794a8338ab76b45162fd3f2a98"
+      }
+    },
+    {
+      "id": "real-exercism-3b5b8e376886f63ffb9ed970",
+      "family": "exercism/javascript:two-fer",
+      "status": "admitted",
+      "passed": true,
+      "reason": null,
+      "durationMs": 7019.301409000007,
+      "peakRssBytes": 110260224,
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [],
+        "objects": []
+      },
+      "upstream": {
+        "repository": "exercism/javascript",
+        "revision": "ff04f35158cdf61eebfdf18a774010495a1fd6d9",
+        "path": "exercises/practice/two-fer/.meta/proof.ci.js",
+        "sha256": "d42ade00b8116ffaf856214f1434e9187a865d9c8452a675552ec7a41d9a4e1f",
+        "license": "MIT"
+      },
+      "canonical": {
+        "repository": "exercism/problem-specifications",
+        "revision": "650bebeb39ad40439175288042aece982b0a90a9",
+        "path": "exercises/two-fer/canonical-data.json",
+        "sha256": "40cb4dd318315f75eb11c3a7bbd5f31dec4eafb43709f46d3626766324c20f43",
+        "license": "MIT"
+      },
+      "canonicalInput": {
+        "name": null
+      },
+      "canonicalArgumentBinding": "two-fer-null-name-as-omitted-argument/1",
+      "canonicalExpected": "One for you, one for me.",
+      "canonicalExpectedBinding": null,
+      "originalSourceSha256": "55864e11968b352f9110b7e6d5ec4fa5e6a0840fd8edc7490725ab3c542adf02",
+      "transformedSourceSha256": "f35cf03ef9db8bdcbaebe3577787e7a4d3129f72dba168a312456eca2de620c3",
+      "license": "MIT",
+      "noticePath": "corpus/extension/snapshots/exercism-js/LICENSE",
+      "noticeSha256": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "d2c396cd311bff9c693c9e32bc43698bbbb2f32d9fbc0efc9503e69b0aabf55b",
+        "identityDigest": "40cd2b19044c5c8a4fbe122a6bf4da8d1263df903a770ec98765be4dc6248d2a",
+        "identityValidated": true,
+        "producerRevision": "f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "originalSourceCheck": {
+        "status": "agreed",
+        "originalReferenceDigest": "7f00e7df0005f74ad5b155afe00b9818dd0cdc3aade63e39389381058a9564d4",
+        "transformedReferenceDigest": "7f00e7df0005f74ad5b155afe00b9818dd0cdc3aade63e39389381058a9564d4",
+        "canonicalExpectation": {
+          "status": "agreed",
+          "outcomeKind": "return",
+          "expectedValueBinding": null
+        }
+      },
+      "identityDigest": "40cd2b19044c5c8a4fbe122a6bf4da8d1263df903a770ec98765be4dc6248d2a",
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "d2c396cd311bff9c693c9e32bc43698bbbb2f32d9fbc0efc9503e69b0aabf55b",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 43,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "str",
+                "One for you, one for me."
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 6,
+          "tracks": 2
+        },
+        "logicalRecords": 5,
+        "lossMaskValidated": true,
+        "observedTokens": 584,
+        "optimizerSteps": 0,
+        "physicalRecords": 6,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "evidence": {
+        "path": "cases/real-exercism-3b5b8e376886f63ffb9ed970.json.gz",
+        "bytes": 15246,
+        "sha256": "b1da973f7a71e58ca3a531f15a56c59dcfb897757243c8e8920fbb4ad7b9c238"
+      }
+    },
+    {
+      "id": "real-production-081d1f0cb42af8f08a495250",
+      "family": "production:axios/axios:axios/lib/core/InterceptorManager.js:normalizeHandlerId",
+      "status": "admitted",
+      "passed": true,
+      "reason": null,
+      "durationMs": 6994.8194169999915,
+      "peakRssBytes": 116047872,
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "3"
+          ]
+        ],
+        "objects": []
+      },
+      "upstream": {
+        "repository": "axios/axios",
+        "revision": "aa54a5e1e0e50cd1a2561b854ae5490ff589d065",
+        "path": "axios/lib/core/InterceptorManager.js",
+        "sha256": "9ca5252ef1c4e979c037c46330cdee428a93846696ef72ab2e5f714d91dd321f"
+      },
+      "canonical": null,
+      "canonicalInput": null,
+      "canonicalArgumentBinding": null,
+      "canonicalExpected": null,
+      "canonicalExpectedBinding": null,
+      "originalSourceSha256": "2d5d137ca5aff58b4896d2653b46b10e567ff9a2da267ca527b6be3625e85a30",
+      "transformedSourceSha256": "2d5d137ca5aff58b4896d2653b46b10e567ff9a2da267ca527b6be3625e85a30",
+      "license": "MIT",
+      "noticePath": "corpus/stateful/upstream/axios/LICENSE",
+      "noticeSha256": "82761059eaedacb3356803aea8a170d8298609f91b14fc32ee1bfb40d690183c",
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "662caadf0c098a0461d53c987fd42546538eeda0f19cd3764777473f7b3bab5f",
+        "identityDigest": "6a3d5709e1c3aeedcf9f8f9735983b86c589e1c78db7b0cf9f7124d13c9bc138",
+        "identityValidated": true,
+        "producerRevision": "f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "originalSourceCheck": {
+        "status": "agreed",
+        "originalReferenceDigest": "79090ab18bad759ad54139919aa1d678431b957b9390d1f11cd680221783b741",
+        "transformedReferenceDigest": "79090ab18bad759ad54139919aa1d678431b957b9390d1f11cd680221783b741"
+      },
+      "identityDigest": "6a3d5709e1c3aeedcf9f8f9735983b86c589e1c78db7b0cf9f7124d13c9bc138",
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "662caadf0c098a0461d53c987fd42546538eeda0f19cd3764777473f7b3bab5f",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 140,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                3
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 9,
+          "tracks": 2
+        },
+        "logicalRecords": 8,
+        "lossMaskValidated": true,
+        "observedTokens": 1079,
+        "optimizerSteps": 0,
+        "physicalRecords": 9,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "evidence": {
+        "path": "cases/real-production-081d1f0cb42af8f08a495250.json.gz",
+        "bytes": 16119,
+        "sha256": "6aab1ce2c10611b3fc41f0176e7dde1be1c76813c3216d78fd876c5c0ff59273"
+      }
+    },
+    {
+      "id": "real-production-5a35ed6e7981d3e561bb435e",
+      "family": "production:axios/axios:axios/lib/core/InterceptorManager.js:normalizeHandlerId",
+      "status": "admitted",
+      "passed": true,
+      "reason": null,
+      "durationMs": 7305.058724999995,
+      "peakRssBytes": 114683904,
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "03"
+          ]
+        ],
+        "objects": []
+      },
+      "upstream": {
+        "repository": "axios/axios",
+        "revision": "aa54a5e1e0e50cd1a2561b854ae5490ff589d065",
+        "path": "axios/lib/core/InterceptorManager.js",
+        "sha256": "9ca5252ef1c4e979c037c46330cdee428a93846696ef72ab2e5f714d91dd321f"
+      },
+      "canonical": null,
+      "canonicalInput": null,
+      "canonicalArgumentBinding": null,
+      "canonicalExpected": null,
+      "canonicalExpectedBinding": null,
+      "originalSourceSha256": "2d5d137ca5aff58b4896d2653b46b10e567ff9a2da267ca527b6be3625e85a30",
+      "transformedSourceSha256": "2d5d137ca5aff58b4896d2653b46b10e567ff9a2da267ca527b6be3625e85a30",
+      "license": "MIT",
+      "noticePath": "corpus/stateful/upstream/axios/LICENSE",
+      "noticeSha256": "82761059eaedacb3356803aea8a170d8298609f91b14fc32ee1bfb40d690183c",
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "9c39cd98505e10b0adffdfe7264f42a30fec9bd879aaa85bcf1c0033d694f94d",
+        "identityDigest": "1a9fb5b2ace783aee33212a812c4332801114577ebe33cdc3a87394756a5761a",
+        "identityValidated": true,
+        "producerRevision": "f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "originalSourceCheck": {
+        "status": "agreed",
+        "originalReferenceDigest": "f7fb73c980786d0c2d0fa6e92beb5e6de5dcac534a2ab5bd43eef5e6a57b2ad5",
+        "transformedReferenceDigest": "f7fb73c980786d0c2d0fa6e92beb5e6de5dcac534a2ab5bd43eef5e6a57b2ad5"
+      },
+      "identityDigest": "1a9fb5b2ace783aee33212a812c4332801114577ebe33cdc3a87394756a5761a",
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "9c39cd98505e10b0adffdfe7264f42a30fec9bd879aaa85bcf1c0033d694f94d",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 143,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "str",
+                "03"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 9,
+          "tracks": 2
+        },
+        "logicalRecords": 8,
+        "lossMaskValidated": true,
+        "observedTokens": 1080,
+        "optimizerSteps": 0,
+        "physicalRecords": 9,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "evidence": {
+        "path": "cases/real-production-5a35ed6e7981d3e561bb435e.json.gz",
+        "bytes": 15650,
+        "sha256": "1102a34aa82ef96376377c7044b3183d0e605b103c3b7bb671abfa8ac04d6a89"
+      }
+    },
+    {
+      "id": "real-production-ac6390737eac5e949058fcd8",
+      "family": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "status": "admitted",
+      "passed": true,
+      "reason": null,
+      "durationMs": 6888.275619000007,
+      "peakRssBytes": 115789824,
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "string"
+          ],
+          [
+            "str",
+            "abc"
+          ]
+        ],
+        "objects": []
+      },
+      "upstream": {
+        "repository": "axios/axios",
+        "revision": "aa54a5e1e0e50cd1a2561b854ae5490ff589d065",
+        "path": "axios/lib/utils.js",
+        "sha256": "0f87e8f47823414ce6cb1412c409981305950e87a154701017e244e59568346d"
+      },
+      "canonical": null,
+      "canonicalInput": null,
+      "canonicalArgumentBinding": null,
+      "canonicalExpected": null,
+      "canonicalExpectedBinding": null,
+      "originalSourceSha256": "d1ecb9d399680e1d5efc32da6984b09aaf1d3ea5a1cf57e958c18a171c31aecf",
+      "transformedSourceSha256": "d1ecb9d399680e1d5efc32da6984b09aaf1d3ea5a1cf57e958c18a171c31aecf",
+      "license": "MIT",
+      "noticePath": "corpus/stateful/upstream/axios/LICENSE",
+      "noticeSha256": "82761059eaedacb3356803aea8a170d8298609f91b14fc32ee1bfb40d690183c",
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "653afc8bc99f9ebb666519e4ef8be9aa5b8df0200ca84a6542f194372ca777e0",
+        "identityDigest": "92650ca1bfba4d3213dce86bd927b79d80fcf6444c8e79a5a4ca1dec13b14983",
+        "identityValidated": true,
+        "producerRevision": "f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "originalSourceCheck": {
+        "status": "agreed",
+        "originalReferenceDigest": "ce0ab3871f26b92d21e69ce924f467754977ce20036490d8a1f28df013330c52",
+        "transformedReferenceDigest": "ce0ab3871f26b92d21e69ce924f467754977ce20036490d8a1f28df013330c52"
+      },
+      "identityDigest": "92650ca1bfba4d3213dce86bd927b79d80fcf6444c8e79a5a4ca1dec13b14983",
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "653afc8bc99f9ebb666519e4ef8be9aa5b8df0200ca84a6542f194372ca777e0",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 320,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "bool",
+                true
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 19,
+          "tracks": 2
+        },
+        "logicalRecords": 18,
+        "lossMaskValidated": true,
+        "observedTokens": 1075,
+        "optimizerSteps": 0,
+        "physicalRecords": 19,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "evidence": {
+        "path": "cases/real-production-ac6390737eac5e949058fcd8.json.gz",
+        "bytes": 17635,
+        "sha256": "89ee01d8d8e9acdaad79b7d42893c4eb3d47fe0075dc5ec1b6233d5a356635af"
+      }
+    },
+    {
+      "id": "real-production-66fdbe957c5128bdd4e7dd0b",
+      "family": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "status": "admitted",
+      "passed": true,
+      "reason": null,
+      "durationMs": 7080.155971,
+      "peakRssBytes": 115515392,
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "string"
+          ],
+          [
+            "num",
+            4
+          ]
+        ],
+        "objects": []
+      },
+      "upstream": {
+        "repository": "axios/axios",
+        "revision": "aa54a5e1e0e50cd1a2561b854ae5490ff589d065",
+        "path": "axios/lib/utils.js",
+        "sha256": "0f87e8f47823414ce6cb1412c409981305950e87a154701017e244e59568346d"
+      },
+      "canonical": null,
+      "canonicalInput": null,
+      "canonicalArgumentBinding": null,
+      "canonicalExpected": null,
+      "canonicalExpectedBinding": null,
+      "originalSourceSha256": "d1ecb9d399680e1d5efc32da6984b09aaf1d3ea5a1cf57e958c18a171c31aecf",
+      "transformedSourceSha256": "d1ecb9d399680e1d5efc32da6984b09aaf1d3ea5a1cf57e958c18a171c31aecf",
+      "license": "MIT",
+      "noticePath": "corpus/stateful/upstream/axios/LICENSE",
+      "noticeSha256": "82761059eaedacb3356803aea8a170d8298609f91b14fc32ee1bfb40d690183c",
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "cb21d4609c71aea352acef5bf6159a1867aea6ce857e7a360ee39e61dbdb4fe4",
+        "identityDigest": "0a564ee50625ddbe35030287b19b8afe69ea24ac4311a4620236d46794625194",
+        "identityValidated": true,
+        "producerRevision": "f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "originalSourceCheck": {
+        "status": "agreed",
+        "originalReferenceDigest": "43650fee4fd8fd9f0ff597826fe85c3f15f58c673f2aad896515e3e690b643e7",
+        "transformedReferenceDigest": "43650fee4fd8fd9f0ff597826fe85c3f15f58c673f2aad896515e3e690b643e7"
+      },
+      "identityDigest": "0a564ee50625ddbe35030287b19b8afe69ea24ac4311a4620236d46794625194",
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "cb21d4609c71aea352acef5bf6159a1867aea6ce857e7a360ee39e61dbdb4fe4",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 317,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "bool",
+                false
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 19,
+          "tracks": 2
+        },
+        "logicalRecords": 18,
+        "lossMaskValidated": true,
+        "observedTokens": 1075,
+        "optimizerSteps": 0,
+        "physicalRecords": 19,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "evidence": {
+        "path": "cases/real-production-66fdbe957c5128bdd4e7dd0b.json.gz",
+        "bytes": 17670,
+        "sha256": "7a051110b2aab3e2416ed19012aaa0ce5d21159db2c73f4b196373a4820bd1ff"
+      }
+    }
+  ],
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}

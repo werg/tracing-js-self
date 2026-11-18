@@ -1,0 +1,16 @@
+{
+  "schema": "private-one-input-native-archive-verification/1",
+  "archive": "/workspace/scratch/0c59f3502a6d/evidence/learning-native-one-input-2026-11-18.tar.gz",
+  "archiveBytes": 92669819,
+  "archiveSha256": "ea1d4c9416586cc4d40982bb1b8cbfc77792a4dc8b0a79e1d57e1abcce6ab43c",
+  "indexPath": "/workspace/scratch/0c59f3502a6d/evidence/learning-one-input-artifact-index.json",
+  "indexSha256": "242b7782b4e1f3d59c1d47b8ce151086f2b487e7a0fc0703c93a62681d3b122a",
+  "verifiedOriginalFiles": 59,
+  "uncompressedOriginalBytes": 140398478,
+  "everyArchivedOriginalMatches": true,
+  "originalCorpusArchiveDependency": {
+    "file": "learning-native-original-run-2026-11-18.tar.gz",
+    "sha256": "bf83e1df8144ba821a14806e4fc8b35e98970466a82579b19d6de686f18a1252",
+    "contains": "Original admitted native-training-main input corpus including flag-intersection-pure; prepared actual training artifacts and checkpoint files are included here."
+  }
+}

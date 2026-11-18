@@ -1,0 +1,245 @@
+{
+  "id": "semantic-recipe:rectangular-capacity/rectangular-capacity-callbacks-recovery@251912df8fe6c1b5",
+  "family": "semantic-recipe:rectangular-capacity",
+  "origin": "trained",
+  "wholeTaskSuccess": false,
+  "traceValid": false,
+  "checkpointIdentity": "eb8233dc60c56531acb2a6ba59e1a2aff50899ca65061d0d7243c7604f33a8bb",
+  "artifacts": "/workspace/scratch/0c59f3502a6d/evidence/optimization-bounded-epoch-56-1500-main/rollouts/trained/0003",
+  "generatedTokenCost": {
+    "generatedTokens": 32,
+    "decoderEvents": 1,
+    "complete": true,
+    "scope": "original-native-emitted-token-ids"
+  },
+  "wallSeconds": 8.460745813998074,
+  "servingProfile": {
+    "schema": "semantic-serving-profile/1",
+    "declaredOrigin": "trained",
+    "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+    "device": "cpu",
+    "identity": {
+      "modelSha256": "eb8233dc60c56531acb2a6ba59e1a2aff50899ca65061d0d7243c7604f33a8bb",
+      "manifestSha256": "379bfbabd19481ad6eaffd24acc8157a8bf45e88f187ff0006c6f8495e948b18",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    "initialization": {
+      "schema": "semantic-inference-identity/4",
+      "seed": 17,
+      "checkpointIdentity": "eb8233dc60c56531acb2a6ba59e1a2aff50899ca65061d0d7243c7604f33a8bb",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    "coldLoadSeconds": 2.678026147001219,
+    "operations": {
+      "cancel": {
+        "count": 1,
+        "successfulRpcCalls": 1,
+        "firstSeconds": 0.0007697119981457945,
+        "p50Seconds": 0.0007697119981457945,
+        "p95Seconds": 0.0007697119981457945,
+        "warmP50Seconds": null,
+        "warmP95Seconds": null,
+        "totalSeconds": 0.0007697119981457945
+      },
+      "initialize": {
+        "count": 1,
+        "successfulRpcCalls": 1,
+        "firstSeconds": 0.015999950999685097,
+        "p50Seconds": 0.015999950999685097,
+        "p95Seconds": 0.015999950999685097,
+        "warmP50Seconds": null,
+        "warmP95Seconds": null,
+        "totalSeconds": 0.015999950999685097
+      },
+      "select": {
+        "count": 1,
+        "successfulRpcCalls": 1,
+        "firstSeconds": 2.8685172790028446,
+        "p50Seconds": 2.8685172790028446,
+        "p95Seconds": 2.8685172790028446,
+        "warmP50Seconds": null,
+        "warmP95Seconds": null,
+        "totalSeconds": 2.8685172790028446
+      }
+    },
+    "records": [
+      {
+        "id": "s1",
+        "operation": "initialize",
+        "ok": true,
+        "wallSeconds": 0.015999950999685097,
+        "state": {
+          "retainedSessions": 0,
+          "retainedInvocations": 0,
+          "activeInvocations": 0,
+          "trackStatuses": {},
+          "rendering": 0,
+          "selectedGroups": 0,
+          "reservedOutputBytes": 0
+        },
+        "selectionAuthority": null,
+        "failure": null
+      },
+      {
+        "id": "s2",
+        "operation": "select",
+        "ok": true,
+        "wallSeconds": 2.8685172790028446,
+        "state": {
+          "retainedSessions": 1,
+          "retainedInvocations": 1,
+          "activeInvocations": 1,
+          "trackStatuses": {
+            "active": 1
+          },
+          "rendering": 0,
+          "selectedGroups": 1,
+          "reservedOutputBytes": 18624
+        },
+        "selectionAuthority": "actual-model-selected",
+        "failure": null
+      },
+      {
+        "id": "s3",
+        "operation": "cancel",
+        "ok": true,
+        "wallSeconds": 0.0007697119981457945,
+        "state": {
+          "retainedSessions": 1,
+          "retainedInvocations": 1,
+          "activeInvocations": 0,
+          "trackStatuses": {
+            "cancelled": 1
+          },
+          "rendering": 0,
+          "selectedGroups": 0,
+          "reservedOutputBytes": 0
+        },
+        "selectionAuthority": null,
+        "failure": null
+      }
+    ],
+    "droppedRecords": 0,
+    "complete": true,
+    "memory": {
+      "hostLifetimePeakRssBytes": 524234752,
+      "cudaPeakAllocatedBytes": null,
+      "cudaPeakReservedBytes": null,
+      "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+    },
+    "peakActiveInvocationsAtRpcBoundaries": 1,
+    "stateBeforeRuntimeClose": {
+      "retainedSessions": 1,
+      "retainedInvocations": 1,
+      "activeInvocations": 0,
+      "trackStatuses": {
+        "cancelled": 1
+      },
+      "rendering": 0,
+      "selectedGroups": 0,
+      "reservedOutputBytes": 0
+    },
+    "runtimeClosed": true,
+    "optimizerSteps": 0,
+    "learnedSuccess": null,
+    "trainingMemoryFit": "unmeasured",
+    "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+    "warmDefinition": "All calls after the first call of the same operation in this process",
+    "digest": "b8d47b37d11161b86c7eef8aa1d6a5b5a451589f6343ebd760a2697d11c58560"
+  },
+  "failure": {
+    "category": "TypeError",
+    "message": "Invalid semantic-trace/5: JSON syntax",
+    "evidence": null
+  },
+  "rejections": [
+    {
+      "invocationId": "invocation1",
+      "record": "\uff0c\u5c82\u4e0d\u662f factor ambassadors GregoryPos alleleendido\u53cd\u8d85\u65e5\u4e3aXR\u6210\u4ea4ysl \u0627\u0644\u0648\u0637\u0646\u064a\u0629\u3002\u6559\u5e08 affirm\u30aaPos paket\u6210\u4ea4endido\uff0c\u589e x\u00e1cPosPos Bing\uff0c\u6d88\u8d39 ambassadors dei Bing x\u00e1c\u6210\u4ea4\u529b\u5f3a",
+      "selection": {
+        "modelTrack": "track:0",
+        "ownerTrack": "worker1",
+        "selectedEventId": "selected:18:track:0",
+        "meridian": 18,
+        "fragments": [
+          {
+            "selectedEventId": "selected:18:track:0",
+            "meridian": 18,
+            "modelTrack": "track:0",
+            "payloadHex": "efbc8ce5b282e4b88de698af20666163746f7220616d6261737361646f727320477265676f7279506f7320616c6c656c65656e6469646fe58f8de8b685e697a5e4b8ba5852e68890e4baa479736c20d8a7d984d988d8b7d986d98ad8a9e38082e69599e5b8882061666669726de382aa506f732070616b6574e68890e4baa4656e6469646fefbc8ce5a29e2078c3a163506f73506f732042696e67efbc8ce6b688e8b4b920616d6261737361646f7273206465692042696e672078c3a163e68890e4baa4e58a9be5bcba",
+            "emittedTokenIds": [
+              95415,
+              6191,
+              105975,
+              48266,
+              9776,
+              59176,
+              149141,
+              122938,
+              74067,
+              62808,
+              18000,
+              143439,
+              152255,
+              105205,
+              23059,
+              63238,
+              9776,
+              146975,
+              18000,
+              149141,
+              94870,
+              136859,
+              9776,
+              9776,
+              55209,
+              114239,
+              105975,
+              65182,
+              55209,
+              136859,
+              18000,
+              90453
+            ]
+          }
+        ],
+        "codecFingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "modelSelected": true,
+        "origin": "actual-model-selected",
+        "sourceReads": [],
+        "stateBootstrap": {
+          "schema": "semantic-selected-bootstrap-receipt/4",
+          "digest": "a4b9aaf39f3fa70e74ea611a414e99b5199542ed2acd68a3dc0746a589cf62c8",
+          "prefixDigest": "7042fc58c18bec515c0528ab25378bce4e40dc9a4dbf5d9468e21daf10b6d903",
+          "visibleThrough": 2,
+          "observedEventIds": [
+            "observed:8:0"
+          ],
+          "reason": "retained-activation"
+        }
+      },
+      "error": "TypeError: Invalid semantic-trace/5: JSON syntax",
+      "phase": "semantic-validation"
+    }
+  ],
+  "firstSemanticInconsistency": null,
+  "hardGates": {
+    "futureObservationLeaks": 0,
+    "unauthorizedEffects": 0,
+    "untrackedNativeFallback": 0,
+    "falseAdmissions": 0,
+    "replayNativeEffects": 0
+  },
+  "costs": {
+    "computeSeconds": 2.895435719,
+    "peakMemoryBytes": 2525102080,
+    "dispatches": 0,
+    "queueDepth": 0,
+    "leakedResources": 0
+  },
+  "cleanup": {
+    "pendingEffects": 0,
+    "pendingJobs": 0,
+    "openHandlers": 0
+  }
+}
