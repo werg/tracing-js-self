@@ -1,0 +1,215 @@
+{
+  "schema": "semantic-native-ci-job-summary/1",
+  "runId": 44321402524,
+  "jobId": 134861001656,
+  "recipe": "training",
+  "status": "completed",
+  "conclusion": "success",
+  "records": [
+    {
+      "schema": "semantic-native-ci-identity/1",
+      "workflowRunId": "44321402524",
+      "workflowRunAttempt": "1",
+      "workflowTriggerRevision": "3497ee3454ea75715db1bc50c3e7cfc35ecc0fc2",
+      "workflowHeadRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+      "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+      "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b"
+    },
+    {
+      "status": "verified",
+      "receipt": "/home/runner/work/_temp/native-environment.json",
+      "packages": 47,
+      "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+      "cudaAvailable": false
+    },
+    {
+      "schema": "semantic-harness-contract/5",
+      "digest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+      "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e"
+    },
+    {
+      "digest": "27f3b0e8b276a64d648b4cc56e8f069ea3194c46c32fd7d532db2e53b2979ba7",
+      "recipes": [
+        "engineering",
+        "training-v4",
+        "benchmark-v1",
+        "real-source",
+        "generated-v1"
+      ],
+      "sourceVariants": 508,
+      "sourceFamilies": 199,
+      "independentComponents": 135,
+      "nearPairs": 5,
+      "splitComponents": {
+        "train": 89,
+        "validation": 13,
+        "test": 33
+      },
+      "holdoutProjects": [
+        "exercism/javascript"
+      ],
+      "holdoutCompositions": [
+        "square/even/maximum/alias/return"
+      ]
+    },
+    {
+      "directory": "/home/runner/work/_temp/continuity",
+      "fixtures": [
+        {
+          "name": "async-pair",
+          "records": 17,
+          "selectionOrigin": "controlled-test-injected"
+        },
+        {
+          "name": "promise-finally",
+          "records": 14,
+          "selectionOrigin": "controlled-test-injected"
+        },
+        {
+          "name": "retained-events",
+          "records": 33,
+          "selectionOrigin": "controlled-test-injected"
+        },
+        {
+          "name": "checkpoint-recovery",
+          "records": 12,
+          "selectionOrigin": "controlled-test-injected"
+        }
+      ]
+    },
+    {
+      "cases": 50,
+      "manifestFingerprint": "5fab3f10623c8aee1744f098658eadaea089987b40f34386d26d20fe822987e4",
+      "optimizerSteps": 0,
+      "report": {
+        "schema": "semantic-preparation/4",
+        "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "representation": "compact",
+        "splitSeed": "semantic-family/4",
+        "maxPositions": 1024,
+        "maxHistory": 1024,
+        "counts": {
+          "attempted": 50,
+          "accepted_candidate": 50,
+          "admitted": 50
+        },
+        "accepted": 50,
+        "familySplits": {
+          "semantic-recipe:rectangle-perimeter": "train",
+          "semantic-recipe:rectangular-capacity": "train",
+          "semantic-recipe:squared-distance": "test",
+          "semantic-recipe:absolute-distance": "train",
+          "semantic-recipe:weighted-average": "train",
+          "semantic-recipe:unit-conversion": "train",
+          "semantic-recipe:triangular-series": "train",
+          "semantic-recipe:modular-clock": "train",
+          "semantic-recipe:flag-intersection": "train",
+          "semantic-recipe:flag-union": "train",
+          "semantic-recipe:inventory-shortfall": "validation",
+          "semantic-recipe:capped-budget": "train",
+          "semantic-recipe:overtime-rate": "train",
+          "semantic-recipe:midpoint": "train",
+          "semantic-recipe:relative-growth": "train",
+          "semantic-recipe:parity-adjustment": "train"
+        },
+        "refusals": [],
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "schema": "semantic-release-verification/1",
+      "status": "verified",
+      "files": 407,
+      "identityDigest": "ec4911022ef2f1379fca8cbe3f15804adb2efa25300c444ef8454f7ba9a24f7c",
+      "archiveSha256": "f796cbe2ab85793eeee52a88258c6d714af44ec00072b8dbb9f6e292feae3d6c",
+      "archive": "/home/runner/work/_temp/release/semantic-v5-release.tar.gz",
+      "counts": {
+        "admitted": 50
+      },
+      "nativePrepared": 50,
+      "nativeQualified": 50,
+      "trainingSelected": 43,
+      "trainingExcluded": 0,
+      "heldOutSupplied": 7
+    },
+    {
+      "archiveSha256": "f796cbe2ab85793eeee52a88258c6d714af44ec00072b8dbb9f6e292feae3d6c",
+      "files": 407,
+      "identityDigest": "ec4911022ef2f1379fca8cbe3f15804adb2efa25300c444ef8454f7ba9a24f7c",
+      "schema": "semantic-release-verification/1",
+      "status": "verified"
+    },
+    {
+      "schema": "semantic-source-dispositions/1",
+      "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+      "recipe": {
+        "schema": "semantic-source-recipe/4",
+        "name": "training-v4",
+        "templateDigest": "ccef64126613701d0bf4058ecc2af28738096b5fd7b553cf8e1a3464586f4998",
+        "families": [
+          "semantic-recipe:rectangle-perimeter",
+          "semantic-recipe:rectangular-capacity",
+          "semantic-recipe:squared-distance",
+          "semantic-recipe:absolute-distance",
+          "semantic-recipe:weighted-average",
+          "semantic-recipe:unit-conversion",
+          "semantic-recipe:triangular-series",
+          "semantic-recipe:modular-clock",
+          "semantic-recipe:flag-intersection",
+          "semantic-recipe:flag-union",
+          "semantic-recipe:inventory-shortfall",
+          "semantic-recipe:capped-budget",
+          "semantic-recipe:overtime-rate",
+          "semantic-recipe:midpoint",
+          "semantic-recipe:relative-growth",
+          "semantic-recipe:parity-adjustment"
+        ],
+        "splitSeed": 17,
+        "retainEveryAuthoredFamily": true,
+        "lifecycleInputs": [
+          {
+            "id": "rectangle-perimeter-child",
+            "path": "rectangle-perimeter-child.json",
+            "family": "semantic-recipe:rectangle-perimeter",
+            "split": "train",
+            "representation": "compact"
+          },
+          {
+            "id": "inventory-shortfall-child",
+            "path": "inventory-shortfall-child.json",
+            "family": "semantic-recipe:inventory-shortfall",
+            "split": "validation",
+            "representation": "compact"
+          }
+        ],
+        "lifecycleDispositions": [
+          {
+            "id": "rectangle-perimeter-child",
+            "family": "semantic-recipe:rectangle-perimeter",
+            "split": "train",
+            "status": "admitted"
+          },
+          {
+            "id": "inventory-shortfall-child",
+            "family": "semantic-recipe:inventory-shortfall",
+            "split": "validation",
+            "status": "admitted"
+          }
+        ]
+      },
+      "attempted": 50,
+      "dispositions": {
+        "admitted": 50
+      },
+      "admittedFamilies": 16,
+      "admittedComponents": 16,
+      "optimizerSteps": 0,
+      "learnedSuccess": null
+    }
+  ]
+}

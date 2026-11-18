@@ -1,0 +1,77 @@
+{
+  "schema": "resumption-hosted-workflow-snapshot/1",
+  "queriedCommit": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+  "scope": "Pull-request-triggered workflow runs returned by the GitHub connector; snapshot includes an unfinished real-world corpus workflow and must not be read as all-workflow success.",
+  "workflow_runs": [
+    {
+      "id": 44321402482,
+      "name": "Pinned real-world JS and TS trace corpus",
+      "status": "queued",
+      "conclusion": null,
+      "run_number": 587,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402482/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402482/logs",
+      "workflow_id": 393862174
+    },
+    {
+      "id": 44321402535,
+      "name": "Inspect source-grounded semantic traces",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 136,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402535/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402535/logs",
+      "workflow_id": 396203051
+    },
+    {
+      "id": 44321402509,
+      "name": "Pinned spec oracle, owned arithmetic and Test262 evidence",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 1043,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402509/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402509/logs",
+      "workflow_id": 393046610
+    },
+    {
+      "id": 44321402567,
+      "name": "Selected semantic v5 runtime and real browser",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 155,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402567/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402567/logs",
+      "workflow_id": 395845233
+    },
+    {
+      "id": 44321402701,
+      "name": "Prototype tests and deterministic replay",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 1053,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402701/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402701/logs",
+      "workflow_id": 392971404
+    },
+    {
+      "id": 44321402501,
+      "name": "Pinned Exercism JS owned trace verification",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 164,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402501/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402501/logs",
+      "workflow_id": 394299871
+    },
+    {
+      "id": 44321402524,
+      "name": "Pinned semantic v5 source and native admission",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 858,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402524/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44321402524/logs",
+      "workflow_id": 393799826
+    }
+  ]
+}

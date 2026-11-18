@@ -1,0 +1,868 @@
+﻿2026-11-18T14:22:39.3930514Z Current runner version: '2.338.2'
+2026-11-18T14:22:39.3961173Z ##[group]Runner Image Provisioner
+2026-11-18T14:22:39.3961926Z Hosted Compute Agent
+2026-11-18T14:22:39.3962422Z Version: 20261103.629
+2026-11-18T14:22:39.3963043Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+2026-11-18T14:22:39.3963669Z Build Date: 2026-11-03T17:26:59Z
+2026-11-18T14:22:39.3964368Z Worker ID: {344c870f-0417-4abf-9057-5a8bb4976eac}
+2026-11-18T14:22:39.3964983Z Region: westus2
+2026-11-18T14:22:39.3965461Z Cloud: Azure
+2026-11-18T14:22:39.3965985Z ##[endgroup]
+2026-11-18T14:22:39.3967046Z ##[group]Operating System
+2026-11-18T14:22:39.3967645Z Ubuntu
+2026-11-18T14:22:39.3968115Z 24.04.5
+2026-11-18T14:22:39.3968566Z LTS
+2026-11-18T14:22:39.3969054Z ##[endgroup]
+2026-11-18T14:22:39.3969676Z ##[group]Runner Image
+2026-11-18T14:22:39.3970275Z Image: ubuntu-24.04
+2026-11-18T14:22:39.3970780Z Version: 20261111.370.1
+2026-11-18T14:22:39.3971870Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261111.370/images/ubuntu/Ubuntu2404-Readme.md
+2026-11-18T14:22:39.3973646Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261111.370
+2026-11-18T14:22:39.3974512Z ##[endgroup]
+2026-11-18T14:22:39.3975463Z ##[group]GITHUB_TOKEN Permissions
+2026-11-18T14:22:39.3977104Z Contents: read
+2026-11-18T14:22:39.3977635Z Metadata: read
+2026-11-18T14:22:39.3978156Z ##[endgroup]
+2026-11-18T14:22:39.3980259Z Secret source: Actions
+2026-11-18T14:22:39.3981092Z Cache mode: write
+2026-11-18T14:22:39.3981725Z Prepare workflow directory
+2026-11-18T14:22:39.5119026Z Prepare all required actions
+2026-11-18T14:22:39.5178486Z Getting action download info
+2026-11-18T14:22:39.8486635Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-18T14:22:40.1323783Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-18T14:22:40.2883664Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2026-11-18T14:22:40.3920274Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-18T14:22:40.6985642Z Complete job name: independent-native-import (training-v4)
+2026-11-18T14:22:40.7845895Z ##[group]Run actions/checkout@v4
+2026-11-18T14:22:40.7846695Z with:
+2026-11-18T14:22:40.7847162Z   ref: 1e2e6a0de8952c4349edbeef46ab70c4a06f8157
+2026-11-18T14:22:40.7847861Z   persist-credentials: false
+2026-11-18T14:22:40.7848419Z   repository: werg/tracing-js-self
+2026-11-18T14:22:40.7856114Z   token: ***
+2026-11-18T14:22:40.7856531Z   ssh-strict: true
+2026-11-18T14:22:40.7856952Z   ssh-user: git
+2026-11-18T14:22:40.7857345Z   clean: true
+2026-11-18T14:22:40.7857780Z   sparse-checkout-cone-mode: true
+2026-11-18T14:22:40.7858343Z   fetch-depth: 1
+2026-11-18T14:22:40.7858772Z   fetch-tags: false
+2026-11-18T14:22:40.7859222Z   show-progress: true
+2026-11-18T14:22:40.7859757Z   lfs: false
+2026-11-18T14:22:40.7860145Z   submodules: false
+2026-11-18T14:22:40.7860633Z   set-safe-directory: true
+2026-11-18T14:22:40.7861161Z   allow-unsafe-pr-checkout: false
+2026-11-18T14:22:40.7861904Z env:
+2026-11-18T14:22:40.7862256Z   TZ: UTC
+2026-11-18T14:22:40.7862620Z   LANG: C.UTF-8
+2026-11-18T14:22:40.7863065Z   LC_ALL: C.UTF-8
+2026-11-18T14:22:40.7863481Z   OMP_NUM_THREADS: 1
+2026-11-18T14:22:40.7863910Z   MKL_NUM_THREADS: 1
+2026-11-18T14:22:40.7864630Z   NATIVE_WORKFLOW_HEAD_REVISION: 1e2e6a0de8952c4349edbeef46ab70c4a06f8157
+2026-11-18T14:22:40.7865511Z ##[endgroup]
+2026-11-18T14:22:40.9904337Z Syncing repository: werg/tracing-js-self
+2026-11-18T14:22:40.9907056Z ##[group]Getting Git version info
+2026-11-18T14:22:40.9908714Z Working directory is '/home/runner/work/tracing-js-self/tracing-js-self'
+2026-11-18T14:22:40.9911443Z [command]/usr/bin/git version
+2026-11-18T14:22:40.9976534Z git version 2.56.1
+2026-11-18T14:22:40.9993428Z ##[endgroup]
+2026-11-18T14:22:41.0011659Z Temporarily overriding HOME='/home/runner/work/_temp/af274f69-df9c-411d-b4b2-7a8b0e30fd41' before making global git config changes
+2026-11-18T14:22:41.0015150Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-18T14:22:41.0017968Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self
+2026-11-18T14:22:41.0061140Z Deleting the contents of '/home/runner/work/tracing-js-self/tracing-js-self'
+2026-11-18T14:22:41.0064931Z ##[group]Initializing the repository
+2026-11-18T14:22:41.0069439Z [command]/usr/bin/git init /home/runner/work/tracing-js-self/tracing-js-self
+2026-11-18T14:22:41.0146491Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-18T14:22:41.0148398Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-18T14:22:41.0150150Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-18T14:22:41.0151457Z hint: call:
+2026-11-18T14:22:41.0152180Z hint:
+2026-11-18T14:22:41.0153067Z hint: 	git config --global init.defaultBranch <name>
+2026-11-18T14:22:41.0154169Z hint:
+2026-11-18T14:22:41.0155185Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-18T14:22:41.0156788Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-18T14:22:41.0158073Z hint:
+2026-11-18T14:22:41.0158825Z hint: 	git branch -m <name>
+2026-11-18T14:22:41.0159835Z hint:
+2026-11-18T14:22:41.0160922Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-18T14:22:41.0167668Z Initialized empty Git repository in /home/runner/work/tracing-js-self/tracing-js-self/.git/
+2026-11-18T14:22:41.0177651Z [command]/usr/bin/git remote add origin https://github.com/werg/tracing-js-self
+2026-11-18T14:22:41.0218831Z ##[endgroup]
+2026-11-18T14:22:41.0220890Z ##[group]Disabling automatic garbage collection
+2026-11-18T14:22:41.0222695Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-18T14:22:41.0256525Z ##[endgroup]
+2026-11-18T14:22:41.0258297Z ##[group]Setting up auth
+2026-11-18T14:22:41.0264103Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-18T14:22:41.0298054Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-18T14:22:41.0618742Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-18T14:22:41.0656780Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-18T14:22:41.0865862Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-18T14:22:41.0905284Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-18T14:22:41.1107884Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-18T14:22:41.1148424Z ##[endgroup]
+2026-11-18T14:22:41.1149967Z ##[group]Fetching the repository
+2026-11-18T14:22:41.1159096Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin 1e2e6a0de8952c4349edbeef46ab70c4a06f8157
+2026-11-18T14:22:41.6594698Z From https://github.com/werg/tracing-js-self
+2026-11-18T14:22:41.6596401Z  * branch            1e2e6a0de8952c4349edbeef46ab70c4a06f8157 -> FETCH_HEAD
+2026-11-18T14:22:41.6602485Z ##[endgroup]
+2026-11-18T14:22:41.6604276Z ##[group]Determining the checkout info
+2026-11-18T14:22:41.6606357Z ##[endgroup]
+2026-11-18T14:22:41.6619128Z [command]/usr/bin/git sparse-checkout disable
+2026-11-18T14:22:41.6682986Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-18T14:22:41.6727922Z ##[group]Checking out the ref
+2026-11-18T14:22:41.6731584Z [command]/usr/bin/git checkout --progress --force 1e2e6a0de8952c4349edbeef46ab70c4a06f8157
+2026-11-18T14:22:41.7435621Z Note: switching to '1e2e6a0de8952c4349edbeef46ab70c4a06f8157'.
+2026-11-18T14:22:41.7437363Z 
+2026-11-18T14:22:41.7438030Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-18T14:22:41.7439704Z changes and commit them, and you can discard any commits you make in this
+2026-11-18T14:22:41.7441203Z state without impacting any branches by switching back to a branch.
+2026-11-18T14:22:41.7442055Z 
+2026-11-18T14:22:41.7442614Z If you want to create a new branch to retain commits you create, you may
+2026-11-18T14:22:41.7443966Z do so (now or later) by using -c with the switch command. Example:
+2026-11-18T14:22:41.7444726Z 
+2026-11-18T14:22:41.7445144Z   git switch -c <new-branch-name>
+2026-11-18T14:22:41.7445895Z 
+2026-11-18T14:22:41.7446327Z Or undo this operation with:
+2026-11-18T14:22:41.7446961Z 
+2026-11-18T14:22:41.7447254Z   git switch -
+2026-11-18T14:22:41.7447651Z 
+2026-11-18T14:22:41.7448296Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-18T14:22:41.7449220Z 
+2026-11-18T14:22:41.7450079Z HEAD is now at 1e2e6a0 Pin native CI receipts to the durable producer head
+2026-11-18T14:22:41.7452906Z ##[endgroup]
+2026-11-18T14:22:41.7492007Z [command]/usr/bin/git log -1 --format=%H
+2026-11-18T14:22:41.7521535Z 1e2e6a0de8952c4349edbeef46ab70c4a06f8157
+2026-11-18T14:22:41.7530305Z ##[group]Removing auth
+2026-11-18T14:22:41.7533176Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-18T14:22:41.7568276Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-18T14:22:41.7773133Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-18T14:22:41.7801232Z http.https://github.com/.extraheader
+2026-11-18T14:22:41.7808840Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-18T14:22:41.7846856Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-18T14:22:41.8053882Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-18T14:22:41.8090344Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-18T14:22:41.8289009Z ##[endgroup]
+2026-11-18T14:22:41.8598024Z ##[group]Run actions/checkout@v4
+2026-11-18T14:22:41.8598902Z with:
+2026-11-18T14:22:41.8599777Z   repository: werg/megatoken
+2026-11-18T14:22:41.8600694Z   ref: 6b4382b9af3bef120ca3a95ae24d35154d4cd66b
+2026-11-18T14:22:41.8601666Z   path: megatoken
+2026-11-18T14:22:41.8602426Z   persist-credentials: false
+2026-11-18T14:22:41.8609916Z   token: ***
+2026-11-18T14:22:41.8610635Z   ssh-strict: true
+2026-11-18T14:22:41.8611384Z   ssh-user: git
+2026-11-18T14:22:41.8612091Z   clean: true
+2026-11-18T14:22:41.8612839Z   sparse-checkout-cone-mode: true
+2026-11-18T14:22:41.8613722Z   fetch-depth: 1
+2026-11-18T14:22:41.8614455Z   fetch-tags: false
+2026-11-18T14:22:41.8615200Z   show-progress: true
+2026-11-18T14:22:41.8615954Z   lfs: false
+2026-11-18T14:22:41.8616656Z   submodules: false
+2026-11-18T14:22:41.8617409Z   set-safe-directory: true
+2026-11-18T14:22:41.8618257Z   allow-unsafe-pr-checkout: false
+2026-11-18T14:22:41.8619115Z env:
+2026-11-18T14:22:41.8619862Z   TZ: UTC
+2026-11-18T14:22:41.8620575Z   LANG: C.UTF-8
+2026-11-18T14:22:41.8621285Z   LC_ALL: C.UTF-8
+2026-11-18T14:22:41.8622010Z   OMP_NUM_THREADS: 1
+2026-11-18T14:22:41.8622753Z   MKL_NUM_THREADS: 1
+2026-11-18T14:22:41.8623796Z   NATIVE_WORKFLOW_HEAD_REVISION: 1e2e6a0de8952c4349edbeef46ab70c4a06f8157
+2026-11-18T14:22:41.8625027Z ##[endgroup]
+2026-11-18T14:22:41.9357672Z Syncing repository: werg/megatoken
+2026-11-18T14:22:41.9364955Z ##[group]Getting Git version info
+2026-11-18T14:22:41.9367020Z Working directory is '/home/runner/work/tracing-js-self/tracing-js-self/megatoken'
+2026-11-18T14:22:41.9393718Z [command]/usr/bin/git version
+2026-11-18T14:22:41.9430254Z git version 2.56.1
+2026-11-18T14:22:41.9451786Z ##[endgroup]
+2026-11-18T14:22:41.9461477Z Temporarily overriding HOME='/home/runner/work/_temp/60a398a3-5539-44de-823a-e2ad7d7331e9' before making global git config changes
+2026-11-18T14:22:41.9464156Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-18T14:22:41.9468372Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-18T14:22:41.9496230Z ##[group]Initializing the repository
+2026-11-18T14:22:41.9500600Z [command]/usr/bin/git init /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-18T14:22:41.9542062Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-18T14:22:41.9544672Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-18T14:22:41.9546883Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-18T14:22:41.9548320Z hint: call:
+2026-11-18T14:22:41.9549206Z hint:
+2026-11-18T14:22:41.9550736Z hint: 	git config --global init.defaultBranch <name>
+2026-11-18T14:22:41.9551931Z hint:
+2026-11-18T14:22:41.9552882Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-18T14:22:41.9554394Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-18T14:22:41.9555634Z hint:
+2026-11-18T14:22:41.9556331Z hint: 	git branch -m <name>
+2026-11-18T14:22:41.9557116Z hint:
+2026-11-18T14:22:41.9558177Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-18T14:22:41.9560498Z Initialized empty Git repository in /home/runner/work/tracing-js-self/tracing-js-self/megatoken/.git/
+2026-11-18T14:22:41.9564646Z [command]/usr/bin/git remote add origin https://github.com/werg/megatoken
+2026-11-18T14:22:41.9600229Z ##[endgroup]
+2026-11-18T14:22:41.9601849Z ##[group]Disabling automatic garbage collection
+2026-11-18T14:22:41.9603393Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-18T14:22:41.9633459Z ##[endgroup]
+2026-11-18T14:22:41.9634633Z ##[group]Setting up auth
+2026-11-18T14:22:41.9639784Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-18T14:22:41.9670530Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-18T14:22:41.9891136Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-18T14:22:41.9934507Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-18T14:22:42.0152449Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-18T14:22:42.0191886Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-18T14:22:42.0395955Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-18T14:22:42.0558760Z ##[endgroup]
+2026-11-18T14:22:42.0561013Z ##[group]Fetching the repository
+2026-11-18T14:22:42.0567212Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin 6b4382b9af3bef120ca3a95ae24d35154d4cd66b
+2026-11-18T14:22:44.6439817Z From https://github.com/werg/megatoken
+2026-11-18T14:22:44.6440570Z  * branch            6b4382b9af3bef120ca3a95ae24d35154d4cd66b -> FETCH_HEAD
+2026-11-18T14:22:44.6450754Z ##[endgroup]
+2026-11-18T14:22:44.6451421Z ##[group]Determining the checkout info
+2026-11-18T14:22:44.6458658Z ##[endgroup]
+2026-11-18T14:22:44.6460306Z [command]/usr/bin/git sparse-checkout disable
+2026-11-18T14:22:44.6512421Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-18T14:22:44.6544822Z ##[group]Checking out the ref
+2026-11-18T14:22:44.6548266Z [command]/usr/bin/git checkout --progress --force 6b4382b9af3bef120ca3a95ae24d35154d4cd66b
+2026-11-18T14:22:44.7557470Z Note: switching to '6b4382b9af3bef120ca3a95ae24d35154d4cd66b'.
+2026-11-18T14:22:44.7557887Z 
+2026-11-18T14:22:44.7558126Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-18T14:22:44.7558716Z changes and commit them, and you can discard any commits you make in this
+2026-11-18T14:22:44.7559254Z state without impacting any branches by switching back to a branch.
+2026-11-18T14:22:44.7559784Z 
+2026-11-18T14:22:44.7560032Z If you want to create a new branch to retain commits you create, you may
+2026-11-18T14:22:44.7560559Z do so (now or later) by using -c with the switch command. Example:
+2026-11-18T14:22:44.7560860Z 
+2026-11-18T14:22:44.7561011Z   git switch -c <new-branch-name>
+2026-11-18T14:22:44.7561223Z 
+2026-11-18T14:22:44.7561349Z Or undo this operation with:
+2026-11-18T14:22:44.7561551Z 
+2026-11-18T14:22:44.7561651Z   git switch -
+2026-11-18T14:22:44.7561847Z 
+2026-11-18T14:22:44.7562097Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-18T14:22:44.7562465Z 
+2026-11-18T14:22:44.7562797Z HEAD is now at 6b4382b Merge parallel consumer fixes for immutable observations and bounded audits
+2026-11-18T14:22:44.7573072Z ##[endgroup]
+2026-11-18T14:22:44.7618092Z [command]/usr/bin/git log -1 --format=%H
+2026-11-18T14:22:44.7648036Z 6b4382b9af3bef120ca3a95ae24d35154d4cd66b
+2026-11-18T14:22:44.7658561Z ##[group]Removing auth
+2026-11-18T14:22:44.7669467Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-18T14:22:44.7696396Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-18T14:22:44.7905497Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-18T14:22:44.7932125Z http.https://github.com/.extraheader
+2026-11-18T14:22:44.7940764Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-18T14:22:44.7979713Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-18T14:22:44.8182156Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-18T14:22:44.8216984Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-18T14:22:44.8413295Z ##[endgroup]
+2026-11-18T14:22:44.8578890Z ##[group]Run actions/setup-node@v4
+2026-11-18T14:22:44.8579116Z with:
+2026-11-18T14:22:44.8579491Z   node-version-file: .nvmrc
+2026-11-18T14:22:44.8579740Z   always-auth: false
+2026-11-18T14:22:44.8579923Z   check-latest: false
+2026-11-18T14:22:44.8582094Z   token: ***
+2026-11-18T14:22:44.8603343Z env:
+2026-11-18T14:22:44.8603552Z   TZ: UTC
+2026-11-18T14:22:44.8603760Z   LANG: C.UTF-8
+2026-11-18T14:22:44.8603982Z   LC_ALL: C.UTF-8
+2026-11-18T14:22:44.8604224Z   OMP_NUM_THREADS: 1
+2026-11-18T14:22:44.8604469Z   MKL_NUM_THREADS: 1
+2026-11-18T14:22:44.8604844Z   NATIVE_WORKFLOW_HEAD_REVISION: 1e2e6a0de8952c4349edbeef46ab70c4a06f8157
+2026-11-18T14:22:44.8605304Z ##[endgroup]
+2026-11-18T14:22:44.9811540Z Node version file is not JSON file
+2026-11-18T14:22:44.9813298Z Resolved .nvmrc as 24.22.3
+2026-11-18T14:22:44.9826116Z Attempting to download 24.22.3...
+2026-11-18T14:22:44.9935667Z (node:2407) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-18T14:22:44.9936447Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-18T14:22:45.7652394Z Acquiring 24.22.3 - x64 from https://github.com/actions/node-versions/releases/download/24.22.3-43134179821/node-24.22.3-linux-x64.tar.gz
+2026-11-18T14:22:46.1153182Z Extracting ...
+2026-11-18T14:22:46.1254736Z [command]/usr/bin/tar xz --strip 1 --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/7b3ba8fb-2aca-4b7a-9093-4f6aa483013f -f /home/runner/work/_temp/2895bfb4-0cd2-4781-acea-dc19154631e7
+2026-11-18T14:22:47.1960669Z Adding to the cache ...
+2026-11-18T14:22:49.5261580Z ##[group]Environment details
+2026-11-18T14:22:49.7147147Z node: v24.22.3
+2026-11-18T14:22:49.7147462Z npm: 11.19.1
+2026-11-18T14:22:49.7147696Z yarn: 1.22.22
+2026-11-18T14:22:49.7148234Z ##[endgroup]
+2026-11-18T14:22:49.7341477Z ##[group]Run actions/setup-python@v5
+2026-11-18T14:22:49.7341715Z with:
+2026-11-18T14:22:49.7341888Z   python-version: 3.12.14
+2026-11-18T14:22:49.7342085Z   check-latest: false
+2026-11-18T14:22:49.7344111Z   token: ***
+2026-11-18T14:22:49.7344319Z   update-environment: true
+2026-11-18T14:22:49.7344522Z   allow-prereleases: false
+2026-11-18T14:22:49.7344708Z   freethreaded: false
+2026-11-18T14:22:49.7344880Z env:
+2026-11-18T14:22:49.7345026Z   TZ: UTC
+2026-11-18T14:22:49.7345181Z   LANG: C.UTF-8
+2026-11-18T14:22:49.7345341Z   LC_ALL: C.UTF-8
+2026-11-18T14:22:49.7345510Z   OMP_NUM_THREADS: 1
+2026-11-18T14:22:49.7345679Z   MKL_NUM_THREADS: 1
+2026-11-18T14:22:49.7345939Z   NATIVE_WORKFLOW_HEAD_REVISION: 1e2e6a0de8952c4349edbeef46ab70c4a06f8157
+2026-11-18T14:22:49.7346230Z ##[endgroup]
+2026-11-18T14:22:49.8436870Z ##[group]Installed versions
+2026-11-18T14:22:49.8456533Z Version 3.12.14 was not found in the local cache
+2026-11-18T14:22:49.8549470Z (node:2444) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-18T14:22:49.8550152Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-18T14:22:50.4451298Z Version 3.12.14 is available for downloading
+2026-11-18T14:22:50.4452276Z Download from "https://github.com/actions/python-versions/releases/download/3.12.14-31661455385/python-3.12.14-linux-24.04-x64.tar.gz"
+2026-11-18T14:22:53.0686405Z Extract downloaded archive
+2026-11-18T14:22:53.0805420Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/875ecbbf-fa07-46b9-88db-aa645850e5bc -f /home/runner/work/_temp/81059506-7ae9-486d-a743-547508909dfd
+2026-11-18T14:22:54.7467230Z Execute installation script
+2026-11-18T14:22:54.7567400Z Check if Python hostedtoolcache folder exist...
+2026-11-18T14:22:54.7568019Z Create Python 3.12.14 folder
+2026-11-18T14:22:54.7580393Z Copy Python binaries to hostedtoolcache folder
+2026-11-18T14:22:55.1202430Z Create additional symlinks (Required for the UsePythonVersion Azure Pipelines task and the setup-python GitHub Action)
+2026-11-18T14:22:55.1237911Z Upgrading pip...
+2026-11-18T14:22:57.1252982Z Collecting pip
+2026-11-18T14:22:57.1674745Z Downloading pip-26.3-py3-none-any.whl.metadata (4.6 kB)
+2026-11-18T14:22:57.1785794Z Downloading pip-26.3-py3-none-any.whl (2.0 MB)
+2026-11-18T14:22:57.2270067Z ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 59.3 MB/s eta 0:00:00
+2026-11-18T14:22:57.2270336Z 
+2026-11-18T14:22:57.2432306Z Installing collected packages: pip
+2026-11-18T14:22:57.2432724Z Attempting uninstall: pip
+2026-11-18T14:22:57.2449796Z Found existing installation: pip 25.0.1
+2026-11-18T14:22:57.2702777Z Uninstalling pip-25.0.1:
+2026-11-18T14:22:57.2746305Z Successfully uninstalled pip-25.0.1
+2026-11-18T14:22:58.1384935Z Successfully installed pip-26.3
+2026-11-18T14:22:58.1828236Z Create complete file
+2026-11-18T14:22:58.1861864Z Successfully set up CPython (3.12.14)
+2026-11-18T14:22:58.1862427Z ##[endgroup]
+2026-11-18T14:22:58.2036556Z ##[group]Run python - <<'PY'
+2026-11-18T14:22:58.2036839Z [36;1mpython - <<'PY'[0m
+2026-11-18T14:22:58.2037069Z [36;1mimport json, os, subprocess[0m
+2026-11-18T14:22:58.2037297Z [36;1mfrom pathlib import Path[0m
+2026-11-18T14:22:58.2037503Z [36;1mreceipt = {[0m
+2026-11-18T14:22:58.2037907Z [36;1m  'schema': 'semantic-native-ci-identity/1',[0m
+2026-11-18T14:22:58.2038211Z [36;1m  'workflowRunId': os.environ['GITHUB_RUN_ID'],[0m
+2026-11-18T14:22:58.2038524Z [36;1m  'workflowRunAttempt': os.environ['GITHUB_RUN_ATTEMPT'],[0m
+2026-11-18T14:22:58.2038853Z [36;1m  'workflowTriggerRevision': os.environ['GITHUB_SHA'],[0m
+2026-11-18T14:22:58.2039208Z [36;1m  'workflowHeadRevision': os.environ['NATIVE_WORKFLOW_HEAD_REVISION'],[0m
+2026-11-18T14:22:58.2039910Z [36;1m  'producerRevision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),[0m
+2026-11-18T14:22:58.2040487Z [36;1m  'consumerRevision': subprocess.check_output(['git', '-C', 'megatoken', 'rev-parse', 'HEAD'], text=True).strip(),[0m
+2026-11-18T14:22:58.2040880Z [36;1m}[0m
+2026-11-18T14:22:58.2041140Z [36;1massert receipt['producerRevision'] == receipt['workflowHeadRevision'][0m
+2026-11-18T14:22:58.2041628Z [36;1m(Path(os.environ['RUNNER_TEMP']) / 'native-run-identity.json').write_text(json.dumps(receipt, indent=2) + '\n')[0m
+2026-11-18T14:22:58.2042044Z [36;1mprint(json.dumps(receipt))[0m
+2026-11-18T14:22:58.2042254Z [36;1mPY[0m
+2026-11-18T14:22:58.2063081Z shell: /usr/bin/bash -e {0}
+2026-11-18T14:22:58.2063293Z env:
+2026-11-18T14:22:58.2063450Z   TZ: UTC
+2026-11-18T14:22:58.2063608Z   LANG: C.UTF-8
+2026-11-18T14:22:58.2063774Z   LC_ALL: C.UTF-8
+2026-11-18T14:22:58.2063937Z   OMP_NUM_THREADS: 1
+2026-11-18T14:22:58.2064118Z   MKL_NUM_THREADS: 1
+2026-11-18T14:22:58.2064366Z   NATIVE_WORKFLOW_HEAD_REVISION: 1e2e6a0de8952c4349edbeef46ab70c4a06f8157
+2026-11-18T14:22:58.2064711Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:22:58.2065057Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-18T14:22:58.2065383Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:22:58.2065773Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:22:58.2066075Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:22:58.2066376Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-18T14:22:58.2066630Z ##[endgroup]
+2026-11-18T14:22:58.2386967Z {"schema": "semantic-native-ci-identity/1", "workflowRunId": "44321402524", "workflowRunAttempt": "1", "workflowTriggerRevision": "3497ee3454ea75715db1bc50c3e7cfc35ecc0fc2", "workflowHeadRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157", "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157", "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b"}
+2026-11-18T14:22:58.2455505Z ##[group]Run npm ci --ignore-scripts --no-audit --no-fund
+2026-11-18T14:22:58.2455851Z [36;1mnpm ci --ignore-scripts --no-audit --no-fund[0m
+2026-11-18T14:22:58.2456220Z [36;1mpython -m pip install --require-hashes -r tools/native-consumer/requirements.lock[0m
+2026-11-18T14:22:58.2456639Z [36;1mpython -m pip install --no-deps --no-build-isolation -e ./megatoken[0m
+2026-11-18T14:22:58.2474627Z shell: /usr/bin/bash -e {0}
+2026-11-18T14:22:58.2474850Z env:
+2026-11-18T14:22:58.2475005Z   TZ: UTC
+2026-11-18T14:22:58.2475164Z   LANG: C.UTF-8
+2026-11-18T14:22:58.2475328Z   LC_ALL: C.UTF-8
+2026-11-18T14:22:58.2475496Z   OMP_NUM_THREADS: 1
+2026-11-18T14:22:58.2475670Z   MKL_NUM_THREADS: 1
+2026-11-18T14:22:58.2475921Z   NATIVE_WORKFLOW_HEAD_REVISION: 1e2e6a0de8952c4349edbeef46ab70c4a06f8157
+2026-11-18T14:22:58.2476282Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:22:58.2476617Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-18T14:22:58.2476972Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:22:58.2477274Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:22:58.2477570Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:22:58.2477875Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-18T14:22:58.2478146Z ##[endgroup]
+2026-11-18T14:22:58.8850692Z 
+2026-11-18T14:22:58.8851115Z added 4 packages in 590ms
+2026-11-18T14:22:59.2637335Z Looking in indexes: https://pypi.org/simple, https://download.pytorch.org/whl/cpu
+2026-11-18T14:22:59.6597035Z Collecting anyio==4.16.0 (from -r tools/native-consumer/requirements.lock (line 9))
+2026-11-18T14:22:59.7133852Z   Downloading anyio-4.16.0-py3-none-any.whl (134 kB)
+2026-11-18T14:22:59.8470298Z Collecting attrs==26.1.0 (from -r tools/native-consumer/requirements.lock (line 13))
+2026-11-18T14:22:59.8540938Z   Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+2026-11-18T14:22:59.8861861Z Collecting certifi==2026.10.23 (from -r tools/native-consumer/requirements.lock (line 19))
+2026-11-18T14:22:59.8965179Z   Downloading certifi-2026.10.23-py3-none-any.whl (135 kB)
+2026-11-18T14:23:00.1605538Z Collecting click==8.5.1 (from -r tools/native-consumer/requirements.lock (line 25))
+2026-11-18T14:23:00.1674081Z   Downloading click-8.5.1-py3-none-any.whl (126 kB)
+2026-11-18T14:23:00.3128161Z Collecting editables==0.6 (from -r tools/native-consumer/requirements.lock (line 29))
+2026-11-18T14:23:00.3196363Z   Downloading editables-0.6-py3-none-any.whl (5.4 kB)
+2026-11-18T14:23:00.3753046Z Collecting filelock==4.2.12 (from -r tools/native-consumer/requirements.lock (line 33))
+2026-11-18T14:23:00.3822716Z   Downloading filelock-4.2.12-py3-none-any.whl (222 kB)
+2026-11-18T14:23:00.4560520Z Collecting fsspec==2026.9.0 (from -r tools/native-consumer/requirements.lock (line 39))
+2026-11-18T14:23:00.4634174Z   Downloading fsspec-2026.9.0-py3-none-any.whl (221 kB)
+2026-11-18T14:23:00.5875698Z Collecting h11==0.16.0 (from -r tools/native-consumer/requirements.lock (line 45))
+2026-11-18T14:23:00.5943472Z   Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+2026-11-18T14:23:00.7106552Z Collecting hatchling==1.33.0 (from -r tools/native-consumer/requirements.lock (line 49))
+2026-11-18T14:23:00.7182597Z   Downloading hatchling-1.33.0-py3-none-any.whl (78 kB)
+2026-11-18T14:23:00.8521726Z Collecting hf-xet==1.8.0 (from -r tools/native-consumer/requirements.lock (line 53))
+2026-11-18T14:23:00.8592447Z   Downloading hf_xet-1.8.0-cp38-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (4.3 MB)
+2026-11-18T14:23:01.0015326Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.3/4.3 MB 31.6 MB/s  0:00:00
+2026-11-18T14:23:01.1118748Z Collecting httpcore==1.0.9 (from -r tools/native-consumer/requirements.lock (line 72))
+2026-11-18T14:23:01.1188132Z   Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+2026-11-18T14:23:01.3570007Z Collecting httpx==0.28.1 (from -r tools/native-consumer/requirements.lock (line 76))
+2026-11-18T14:23:01.3638490Z   Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+2026-11-18T14:23:01.5140498Z Collecting huggingface-hub==1.33.0 (from -r tools/native-consumer/requirements.lock (line 80))
+2026-11-18T14:23:01.5207885Z   Downloading huggingface_hub-1.33.0-py3-none-any.whl (846 kB)
+2026-11-18T14:23:01.5370658Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 846.4/846.4 kB 47.5 MB/s  0:00:00
+2026-11-18T14:23:01.5686528Z Collecting idna==3.20 (from -r tools/native-consumer/requirements.lock (line 86))
+2026-11-18T14:23:01.5756072Z   Downloading idna-3.20-py3-none-any.whl (69 kB)
+2026-11-18T14:23:01.6802184Z Collecting iniconfig==2.3.1 (from -r tools/native-consumer/requirements.lock (line 92))
+2026-11-18T14:23:01.6869599Z   Downloading iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+2026-11-18T14:23:01.7214644Z Collecting jinja2==3.1.6 (from -r tools/native-consumer/requirements.lock (line 96))
+2026-11-18T14:23:01.7284452Z   Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+2026-11-18T14:23:01.8460976Z Collecting jsonschema==4.26.0 (from -r tools/native-consumer/requirements.lock (line 100))
+2026-11-18T14:23:01.8533657Z   Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+2026-11-18T14:23:01.9543060Z Collecting jsonschema-specifications==2025.9.1 (from -r tools/native-consumer/requirements.lock (line 104))
+2026-11-18T14:23:01.9613274Z   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+2026-11-18T14:23:02.2512615Z Collecting markdown-it-py==4.0.0 (from -r tools/native-consumer/requirements.lock (line 108))
+2026-11-18T14:23:02.2582088Z   Downloading markdown_it_py-4.0.0-py3-none-any.whl (87 kB)
+2026-11-18T14:23:02.4598365Z Collecting markupsafe==3.0.4 (from -r tools/native-consumer/requirements.lock (line 112))
+2026-11-18T14:23:02.4667595Z   Downloading markupsafe-3.0.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+2026-11-18T14:23:02.7159929Z Collecting mdurl==0.1.2 (from -r tools/native-consumer/requirements.lock (line 265))
+2026-11-18T14:23:02.7228051Z   Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+2026-11-18T14:23:02.8733790Z Collecting mpmath==1.3.0 (from -r tools/native-consumer/requirements.lock (line 269))
+2026-11-18T14:23:02.8800743Z   Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
+2026-11-18T14:23:03.0231796Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 2.0 MB/s  0:00:00
+2026-11-18T14:23:03.6070045Z Collecting networkx==3.7 (from -r tools/native-consumer/requirements.lock (line 273))
+2026-11-18T14:23:03.6140014Z   Downloading networkx-3.7-py3-none-any.whl (2.1 MB)
+2026-11-18T14:23:03.7955670Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 10.6 MB/s  0:00:00
+2026-11-18T14:23:04.4958211Z Collecting numpy==2.5.5 (from -r tools/native-consumer/requirements.lock (line 277))
+2026-11-18T14:23:04.5032295Z   Downloading numpy-2.5.5-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (15.7 MB)
+2026-11-18T14:23:04.8427260Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15.7/15.7 MB 46.0 MB/s  0:00:00
+2026-11-18T14:23:05.1353450Z Collecting packaging==26.3 (from -r tools/native-consumer/requirements.lock (line 345))
+2026-11-18T14:23:05.1421895Z   Downloading packaging-26.3-py3-none-any.whl (129 kB)
+2026-11-18T14:23:05.3111812Z Collecting pathspec==1.1.1 (from -r tools/native-consumer/requirements.lock (line 352))
+2026-11-18T14:23:05.3190115Z   Downloading pathspec-1.1.1-py3-none-any.whl (57 kB)
+2026-11-18T14:23:05.4668673Z Collecting pluggy==1.7.0 (from -r tools/native-consumer/requirements.lock (line 356))
+2026-11-18T14:23:05.4746157Z   Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
+2026-11-18T14:23:05.8220383Z Collecting pygments==2.21.0 (from -r tools/native-consumer/requirements.lock (line 362))
+2026-11-18T14:23:05.8287773Z   Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+2026-11-18T14:23:05.8668873Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 27.7 MB/s  0:00:00
+2026-11-18T14:23:06.1383276Z Collecting pytest==8.4.2 (from -r tools/native-consumer/requirements.lock (line 366))
+2026-11-18T14:23:06.1452313Z   Downloading pytest-8.4.2-py3-none-any.whl (365 kB)
+2026-11-18T14:23:06.3208925Z Collecting pyyaml==6.0.3 (from -r tools/native-consumer/requirements.lock (line 370))
+2026-11-18T14:23:06.3277496Z   Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (807 kB)
+2026-11-18T14:23:06.4129514Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 807.9/807.9 kB 6.6 MB/s  0:00:00
+2026-11-18T14:23:06.5587081Z Collecting referencing==0.37.0 (from -r tools/native-consumer/requirements.lock (line 447))
+2026-11-18T14:23:06.5655881Z   Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+2026-11-18T14:23:07.0165470Z Collecting rpds-py==2026.9.1 (from -r tools/native-consumer/requirements.lock (line 453))
+2026-11-18T14:23:07.0233931Z   Downloading rpds_py-2026.9.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (371 kB)
+2026-11-18T14:23:07.5072748Z Collecting safetensors==0.8.0 (from -r tools/native-consumer/requirements.lock (line 585))
+2026-11-18T14:23:07.5139768Z   Downloading safetensors-0.8.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (516 kB)
+2026-11-18T14:23:07.5506081Z Collecting sympy==1.14.0 (from -r tools/native-consumer/requirements.lock (line 604))
+2026-11-18T14:23:07.5573064Z   Downloading sympy-1.14.0-py3-none-any.whl (6.3 MB)
+2026-11-18T14:23:07.6422250Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.3/6.3 MB 72.8 MB/s  0:00:00
+2026-11-18T14:23:07.8689621Z Collecting tokenizers==0.23.3 (from -r tools/native-consumer/requirements.lock (line 608))
+2026-11-18T14:23:07.8759555Z   Downloading tokenizers-0.23.3-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.4 MB)
+2026-11-18T14:23:07.9014490Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.4/3.4 MB 133.9 MB/s  0:00:00
+2026-11-18T14:23:08.0000359Z Collecting tomlkit==0.15.2 (from -r tools/native-consumer/requirements.lock (line 634))
+2026-11-18T14:23:08.0070619Z   Downloading tomlkit-0.15.2-py3-none-any.whl (52 kB)
+2026-11-18T14:23:08.1158464Z Collecting torch==2.10.0+cpu (from -r tools/native-consumer/requirements.lock (line 638))
+2026-11-18T14:23:08.1738124Z   Downloading torch-2.10.0%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl (188.9 MB)
+2026-11-18T14:23:09.6046639Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 188.9/188.9 MB 133.2 MB/s  0:00:01
+2026-11-18T14:23:09.8077070Z Collecting tqdm==4.70.1 (from -r tools/native-consumer/requirements.lock (line 678))
+2026-11-18T14:23:09.8148508Z   Downloading tqdm-4.70.1-py3-none-any.whl (80 kB)
+2026-11-18T14:23:09.9461642Z Collecting tree-sitter==0.25.2 (from -r tools/native-consumer/requirements.lock (line 682))
+2026-11-18T14:23:09.9529887Z   Downloading tree_sitter-0.25.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (635 kB)
+2026-11-18T14:23:10.1595468Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 635.4/635.4 kB 1.8 MB/s  0:00:00
+2026-11-18T14:23:10.2714106Z Collecting tree-sitter-c-sharp==0.23.5 (from -r tools/native-consumer/requirements.lock (line 722))
+2026-11-18T14:23:10.2785306Z   Downloading tree_sitter_c_sharp-0.23.5-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (358 kB)
+2026-11-18T14:23:10.3953106Z Collecting tree-sitter-embedded-template==0.25.0 (from -r tools/native-consumer/requirements.lock (line 735))
+2026-11-18T14:23:10.4024665Z   Downloading tree_sitter_embedded_template-0.25.0-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (18 kB)
+2026-11-18T14:23:10.5916751Z Collecting tree-sitter-language-pack==0.13.0 (from -r tools/native-consumer/requirements.lock (line 748))
+2026-11-18T14:23:10.5998972Z   Downloading tree_sitter_language_pack-0.13.0-cp310-abi3-manylinux2014_x86_64.whl (20.0 MB)
+2026-11-18T14:23:10.8363266Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 20.0/20.0 MB 85.0 MB/s  0:00:00
+2026-11-18T14:23:11.1045595Z Collecting tree-sitter-yaml==0.7.2 (from -r tools/native-consumer/requirements.lock (line 756))
+2026-11-18T14:23:11.1125969Z   Downloading tree_sitter_yaml-0.7.2-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (91 kB)
+2026-11-18T14:23:11.2309091Z Collecting trove-classifiers==2026.9.21.13 (from -r tools/native-consumer/requirements.lock (line 769))
+2026-11-18T14:23:11.2378130Z   Downloading trove_classifiers-2026.9.21.13-py3-none-any.whl (14 kB)
+2026-11-18T14:23:11.3761068Z Collecting typing-extensions==4.16.0 (from -r tools/native-consumer/requirements.lock (line 773))
+2026-11-18T14:23:11.3831309Z   Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+2026-11-18T14:23:11.4947123Z Collecting uniseg==0.10.1 (from -r tools/native-consumer/requirements.lock (line 781))
+2026-11-18T14:23:11.5055086Z   Downloading uniseg-0.10.1-py3-none-any.whl (8.2 MB)
+2026-11-18T14:23:11.6263640Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.2/8.2 MB 66.8 MB/s  0:00:00
+2026-11-18T14:23:11.6953607Z Collecting setuptools==84.2.1 (from -r tools/native-consumer/requirements.lock (line 787))
+2026-11-18T14:23:11.7039937Z   Downloading setuptools-84.2.1-py3-none-any.whl (876 kB)
+2026-11-18T14:23:11.7130379Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 876.3/876.3 kB 92.6 MB/s  0:00:00
+2026-11-18T14:23:11.9220221Z Installing collected packages: trove-classifiers, mpmath, uniseg, typing-extensions, tree-sitter-yaml, tree-sitter-embedded-template, tree-sitter-c-sharp, tree-sitter, tqdm, tomlkit, sympy, setuptools, safetensors, rpds-py, pyyaml, pygments, pluggy, pathspec, packaging, numpy, networkx, mdurl, markupsafe, iniconfig, idna, hf-xet, h11, fsspec, filelock, editables, click, certifi, attrs, tree-sitter-language-pack, referencing, pytest, markdown-it-py, jinja2, httpcore, hatchling, anyio, torch, jsonschema-specifications, httpx, jsonschema, huggingface-hub, tokenizers
+2026-11-18T14:23:31.8521710Z 
+2026-11-18T14:23:31.8555107Z Successfully installed anyio-4.16.0 attrs-26.1.0 certifi-2026.10.23 click-8.5.1 editables-0.6 filelock-4.2.12 fsspec-2026.9.0 h11-0.16.0 hatchling-1.33.0 hf-xet-1.8.0 httpcore-1.0.9 httpx-0.28.1 huggingface-hub-1.33.0 idna-3.20 iniconfig-2.3.1 jinja2-3.1.6 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 markdown-it-py-4.0.0 markupsafe-3.0.4 mdurl-0.1.2 mpmath-1.3.0 networkx-3.7 numpy-2.5.5 packaging-26.3 pathspec-1.1.1 pluggy-1.7.0 pygments-2.21.0 pytest-8.4.2 pyyaml-6.0.3 referencing-0.37.0 rpds-py-2026.9.1 safetensors-0.8.0 setuptools-84.2.1 sympy-1.14.0 tokenizers-0.23.3 tomlkit-0.15.2 torch-2.10.0+cpu tqdm-4.70.1 tree-sitter-0.25.2 tree-sitter-c-sharp-0.23.5 tree-sitter-embedded-template-0.25.0 tree-sitter-language-pack-0.13.0 tree-sitter-yaml-0.7.2 trove-classifiers-2026.9.21.13 typing-extensions-4.16.0 uniseg-0.10.1
+2026-11-18T14:23:32.2898996Z Obtaining file:///home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-18T14:23:32.2909565Z   Checking if build backend supports build_editable: started
+2026-11-18T14:23:32.3232490Z   Checking if build backend supports build_editable: finished with status 'done'
+2026-11-18T14:23:32.3238947Z   Preparing editable metadata (pyproject.toml): started
+2026-11-18T14:23:32.4545195Z   Preparing editable metadata (pyproject.toml): finished with status 'done'
+2026-11-18T14:23:32.4601304Z Building wheels for collected packages: megatoken
+2026-11-18T14:23:32.4607734Z   Building editable for megatoken (pyproject.toml): started
+2026-11-18T14:23:32.4930279Z   Building editable for megatoken (pyproject.toml): finished with status 'done'
+2026-11-18T14:23:32.4935233Z   Created wheel for megatoken: filename=megatoken-0.1.0-py3-none-any.whl size=5257 sha256=e1e43773096f7c193ae52e1ce56a4c5877a49d851d94209f46f9c385146d7502
+2026-11-18T14:23:32.4937787Z   Stored in directory: /tmp/pip-ephem-wheel-cache-ywc8odat/wheels/0b/ed/7b/b8468944e64c9e6abb5bf5ba9ba8cb86d84dbb9c76e21fd64a
+2026-11-18T14:23:32.4956770Z Successfully built megatoken
+2026-11-18T14:23:32.5098509Z Installing collected packages: megatoken
+2026-11-18T14:23:32.5179041Z Successfully installed megatoken-0.1.0
+2026-11-18T14:23:32.5646672Z ##[group]Run python - <<'PY'
+2026-11-18T14:23:32.5646931Z [36;1mpython - <<'PY'[0m
+2026-11-18T14:23:32.5647139Z [36;1mimport hashlib, os, shutil[0m
+2026-11-18T14:23:32.5647374Z [36;1mfrom pathlib import Path[0m
+2026-11-18T14:23:32.5647615Z [36;1mfrom huggingface_hub import hf_hub_download[0m
+2026-11-18T14:23:32.5648020Z [36;1mfrom megatoken.generation.codec import LING_REPOSITORY, LING_REVISION, LING_TOKENIZER_SHA256[0m
+2026-11-18T14:23:32.5648575Z [36;1msource = hf_hub_download(LING_REPOSITORY, 'tokenizer.json', revision=LING_REVISION)[0m
+2026-11-18T14:23:32.5648975Z [36;1mtarget = Path(os.environ['RUNNER_TEMP']) / 'tokenizer.json'[0m
+2026-11-18T14:23:32.5649556Z [36;1mshutil.copyfile(source, target)[0m
+2026-11-18T14:23:32.5649889Z [36;1massert hashlib.sha256(target.read_bytes()).hexdigest() == LING_TOKENIZER_SHA256[0m
+2026-11-18T14:23:32.5650218Z [36;1mPY[0m
+2026-11-18T14:23:32.5668498Z shell: /usr/bin/bash -e {0}
+2026-11-18T14:23:32.5668707Z env:
+2026-11-18T14:23:32.5668895Z   TZ: UTC
+2026-11-18T14:23:32.5669052Z   LANG: C.UTF-8
+2026-11-18T14:23:32.5669216Z   LC_ALL: C.UTF-8
+2026-11-18T14:23:32.5669632Z   OMP_NUM_THREADS: 1
+2026-11-18T14:23:32.5669816Z   MKL_NUM_THREADS: 1
+2026-11-18T14:23:32.5670070Z   NATIVE_WORKFLOW_HEAD_REVISION: 1e2e6a0de8952c4349edbeef46ab70c4a06f8157
+2026-11-18T14:23:32.5670422Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:23:32.5670755Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-18T14:23:32.5671085Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:23:32.5671378Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:23:32.5671677Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:23:32.5671972Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-18T14:23:32.5672228Z ##[endgroup]
+2026-11-18T14:23:33.0275689Z Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-11-18T14:23:34.0407755Z ##[group]Run python tools/native-consumer/check_environment.py --megatoken megatoken \
+2026-11-18T14:23:34.0408519Z [36;1mpython tools/native-consumer/check_environment.py --megatoken megatoken \[0m
+2026-11-18T14:23:34.0409390Z [36;1m  --tokenizer "$RUNNER_TEMP/tokenizer.json" --out "$RUNNER_TEMP/native-environment.json"[0m
+2026-11-18T14:23:34.0410078Z [36;1mpython -m unittest discover -s tools/native-consumer -p 'test_*.py'[0m
+2026-11-18T14:23:34.0429105Z shell: /usr/bin/bash -e {0}
+2026-11-18T14:23:34.0429489Z env:
+2026-11-18T14:23:34.0429670Z   TZ: UTC
+2026-11-18T14:23:34.0429827Z   LANG: C.UTF-8
+2026-11-18T14:23:34.0430008Z   LC_ALL: C.UTF-8
+2026-11-18T14:23:34.0430175Z   OMP_NUM_THREADS: 1
+2026-11-18T14:23:34.0430346Z   MKL_NUM_THREADS: 1
+2026-11-18T14:23:34.0430597Z   NATIVE_WORKFLOW_HEAD_REVISION: 1e2e6a0de8952c4349edbeef46ab70c4a06f8157
+2026-11-18T14:23:34.0430953Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:23:34.0431337Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-18T14:23:34.0431669Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:23:34.0431971Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:23:34.0432259Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:23:34.0432554Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-18T14:23:34.0432808Z ##[endgroup]
+2026-11-18T14:23:37.1809525Z {"status": "verified", "receipt": "/home/runner/work/_temp/native-environment.json", "packages": 47, "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b", "cudaAvailable": false}
+2026-11-18T14:23:38.4958482Z .....................................................
+2026-11-18T14:23:38.4959108Z ----------------------------------------------------------------------
+2026-11-18T14:23:38.4959739Z Ran 53 tests in 0.940s
+2026-11-18T14:23:38.4959905Z 
+2026-11-18T14:23:38.4960004Z OK
+2026-11-18T14:23:38.5184580Z ##[group]Run npm run contracts:check
+2026-11-18T14:23:38.5184867Z [36;1mnpm run contracts:check[0m
+2026-11-18T14:23:38.5185273Z [36;1mcmp contracts/host-operations-v4.json megatoken/src/megatoken/data/contracts/host-operations-v4.json[0m
+2026-11-18T14:23:38.5185860Z [36;1mcmp contracts/semantic-harness-v5.json megatoken/src/megatoken/data/contracts/semantic-harness-v5.json[0m
+2026-11-18T14:23:38.5186385Z [36;1mnode tools/freeze-source-registry.mjs --out "$RUNNER_TEMP/source-registry.json" \[0m
+2026-11-18T14:23:38.5186909Z [36;1m  --holdout-projects exercism/javascript --holdout-compositions square/even/maximum/alias/return[0m
+2026-11-18T14:23:38.5187484Z [36;1mrequire_native=(--require-native)[0m
+2026-11-18T14:23:38.5187742Z [36;1mif [[ 'training-v4' == 'real-source' ]]; then[0m
+2026-11-18T14:23:38.5188059Z [36;1m  # Real upstream candidates retain every unsupported/refused row;[0m
+2026-11-18T14:23:38.5188454Z [36;1m  # the release step rechecks and prepares only actual admissions.[0m
+2026-11-18T14:23:38.5188761Z [36;1m  require_native+=(--allow-refusals)[0m
+2026-11-18T14:23:38.5188984Z [36;1mfi[0m
+2026-11-18T14:23:38.5189555Z [36;1mnode tools/generate-effectful-training.mjs --recipe 'training-v4' --jobs 3 --out "$RUNNER_TEMP/corpus" \[0m
+2026-11-18T14:23:38.5190007Z [36;1m  --registry "$RUNNER_TEMP/source-registry.json" \[0m
+2026-11-18T14:23:38.5190381Z [36;1m  --megatoken megatoken --python python --tokenizer "$RUNNER_TEMP/tokenizer.json" \[0m
+2026-11-18T14:23:38.5190872Z [36;1m  --native-policy contracts/native-admission-policy-v5.json "${require_native[@]}"[0m
+2026-11-18T14:23:38.5191345Z [36;1mnode tools/generate-selected-harness-v4.mjs "$RUNNER_TEMP/two-invocations.json"[0m
+2026-11-18T14:23:38.5191798Z [36;1mnode tools/generate-selected-continuity-v4.mjs "$RUNNER_TEMP/continuity"[0m
+2026-11-18T14:23:38.5210029Z shell: /usr/bin/bash -e {0}
+2026-11-18T14:23:38.5210236Z env:
+2026-11-18T14:23:38.5210388Z   TZ: UTC
+2026-11-18T14:23:38.5210550Z   LANG: C.UTF-8
+2026-11-18T14:23:38.5210711Z   LC_ALL: C.UTF-8
+2026-11-18T14:23:38.5210889Z   OMP_NUM_THREADS: 1
+2026-11-18T14:23:38.5211059Z   MKL_NUM_THREADS: 1
+2026-11-18T14:23:38.5211313Z   NATIVE_WORKFLOW_HEAD_REVISION: 1e2e6a0de8952c4349edbeef46ab70c4a06f8157
+2026-11-18T14:23:38.5211658Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:23:38.5211991Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-18T14:23:38.5212310Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:23:38.5212609Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:23:38.5212904Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:23:38.5213208Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-18T14:23:38.5213463Z ##[endgroup]
+2026-11-18T14:23:38.5981449Z 
+2026-11-18T14:23:38.5982084Z > tracing-js-self@0.3.0 contracts:check
+2026-11-18T14:23:38.5982722Z > node tools/generate-host-contract.mjs --check && node tools/generate-semantic-contract.mjs --check
+2026-11-18T14:23:38.5983045Z 
+2026-11-18T14:23:38.7093488Z {"schema":"semantic-harness-contract/5","digest":"79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba","fixtureDigest":"78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e"}
+2026-11-18T14:23:39.9938415Z {"digest":"27f3b0e8b276a64d648b4cc56e8f069ea3194c46c32fd7d532db2e53b2979ba7","recipes":["engineering","training-v4","benchmark-v1","real-source","generated-v1"],"sourceVariants":508,"sourceFamilies":199,"independentComponents":135,"nearPairs":5,"splitComponents":{"train":89,"validation":13,"test":33},"holdoutProjects":["exercism/javascript"],"holdoutCompositions":["square/even/maximum/alias/return"]}
+2026-11-18T14:23:46.2885567Z rectangle-perimeter-pure: admitted
+2026-11-18T14:23:46.7303973Z rectangle-perimeter-callbacks-recovery: admitted
+2026-11-18T14:23:48.2280113Z rectangle-perimeter-repeated: admitted
+2026-11-18T14:23:51.6062626Z rectangular-capacity-pure: admitted
+2026-11-18T14:23:52.1964107Z rectangular-capacity-callbacks-recovery: admitted
+2026-11-18T14:23:54.6430382Z rectangular-capacity-repeated: admitted
+2026-11-18T14:23:57.5041114Z squared-distance-pure: admitted
+2026-11-18T14:23:58.3044484Z squared-distance-callbacks-recovery: admitted
+2026-11-18T14:24:01.4579575Z squared-distance-repeated: admitted
+2026-11-18T14:24:03.5962139Z absolute-distance-pure: admitted
+2026-11-18T14:24:04.3279493Z absolute-distance-callbacks-recovery: admitted
+2026-11-18T14:24:08.2397815Z absolute-distance-repeated: admitted
+2026-11-18T14:24:08.8083619Z weighted-average-pure: admitted
+2026-11-18T14:24:11.8091286Z weighted-average-callbacks-recovery: admitted
+2026-11-18T14:24:14.0142023Z unit-conversion-pure: admitted
+2026-11-18T14:24:14.9623168Z weighted-average-repeated: admitted
+2026-11-18T14:24:17.4559873Z unit-conversion-callbacks-recovery: admitted
+2026-11-18T14:24:19.8126317Z triangular-series-pure: admitted
+2026-11-18T14:24:21.3063606Z unit-conversion-repeated: admitted
+2026-11-18T14:24:23.1949580Z triangular-series-callbacks-recovery: admitted
+2026-11-18T14:24:26.5208250Z modular-clock-pure: admitted
+2026-11-18T14:24:27.4182148Z triangular-series-repeated: admitted
+2026-11-18T14:24:28.7114718Z modular-clock-callbacks-recovery: admitted
+2026-11-18T14:24:32.5221826Z flag-intersection-pure: admitted
+2026-11-18T14:24:34.0161854Z modular-clock-repeated: admitted
+2026-11-18T14:24:34.4197762Z flag-intersection-callbacks-recovery: admitted
+2026-11-18T14:24:38.9705732Z flag-intersection-repeated: admitted
+2026-11-18T14:24:39.3321944Z flag-union-pure: admitted
+2026-11-18T14:24:39.6103521Z flag-union-callbacks-recovery: admitted
+2026-11-18T14:24:43.9424762Z inventory-shortfall-pure: admitted
+2026-11-18T14:24:45.6829207Z flag-union-repeated: admitted
+2026-11-18T14:24:46.0003602Z inventory-shortfall-callbacks-recovery: admitted
+2026-11-18T14:24:50.6183357Z inventory-shortfall-repeated: admitted
+2026-11-18T14:24:50.9283502Z capped-budget-pure: admitted
+2026-11-18T14:24:51.4286396Z capped-budget-callbacks-recovery: admitted
+2026-11-18T14:24:56.7946425Z capped-budget-repeated: admitted
+2026-11-18T14:24:57.0918001Z overtime-rate-callbacks-recovery: admitted
+2026-11-18T14:24:57.3342910Z overtime-rate-pure: admitted
+2026-11-18T14:25:02.8445974Z midpoint-pure: admitted
+2026-11-18T14:25:03.6844840Z overtime-rate-repeated: admitted
+2026-11-18T14:25:03.9742124Z midpoint-callbacks-recovery: admitted
+2026-11-18T14:25:08.8264326Z relative-growth-pure: admitted
+2026-11-18T14:25:09.3581661Z relative-growth-callbacks-recovery: admitted
+2026-11-18T14:25:11.2965556Z midpoint-repeated: admitted
+2026-11-18T14:25:14.3144680Z parity-adjustment-pure: admitted
+2026-11-18T14:25:15.7724200Z relative-growth-repeated: admitted
+2026-11-18T14:25:16.8598949Z parity-adjustment-callbacks-recovery: admitted
+2026-11-18T14:25:19.7722342Z parity-adjustment-repeated: admitted
+2026-11-18T14:25:22.6823631Z rectangle-perimeter-child: admitted
+2026-11-18T14:25:25.5823805Z inventory-shortfall-child: admitted
+2026-11-18T14:25:25.8451550Z {"directory":"/home/runner/work/_temp/continuity","fixtures":[{"name":"async-pair","records":17,"selectionOrigin":"controlled-test-injected"},{"name":"promise-finally","records":14,"selectionOrigin":"controlled-test-injected"},{"name":"retained-events","records":33,"selectionOrigin":"controlled-test-injected"},{"name":"checkpoint-recovery","records":12,"selectionOrigin":"controlled-test-injected"}]}
+2026-11-18T14:25:25.8523267Z ##[group]Run python - <<'PY'
+2026-11-18T14:25:25.8523541Z [36;1mpython - <<'PY'[0m
+2026-11-18T14:25:25.8523745Z [36;1mimport json, os, subprocess, sys[0m
+2026-11-18T14:25:25.8523982Z [36;1mfrom pathlib import Path[0m
+2026-11-18T14:25:25.8524297Z [36;1mfrom megatoken.data.semantic_harness_v5 import adapt_selected_harness_v5[0m
+2026-11-18T14:25:25.8524750Z [36;1mfrom megatoken.generation.codec import ByteCodec, LING_TOKENIZER_SHA256[0m
+2026-11-18T14:25:25.8525168Z [36;1mroot = Path(os.environ['RUNNER_TEMP'])[0m
+2026-11-18T14:25:25.8525532Z [36;1mcorpus = root / 'corpus'[0m
+2026-11-18T14:25:25.8525887Z [36;1mmanifest = json.loads((corpus / 'manifest.json').read_text())[0m
+2026-11-18T14:25:25.8526514Z [36;1massert manifest['counts']['admitted'] == manifest['counts']['attempted'][0m
+2026-11-18T14:25:25.8527032Z [36;1massert manifest['optimizerSteps'] == 0 and manifest['learnedSuccess'] is None[0m
+2026-11-18T14:25:25.8527769Z [36;1mproducer = subprocess.check_output(['git','rev-parse','HEAD'], text=True).strip()[0m
+2026-11-18T14:25:25.8528370Z [36;1mconsumer = subprocess.check_output(['git','-C','megatoken','rev-parse','HEAD'], text=True).strip()[0m
+2026-11-18T14:25:25.8529011Z [36;1msubprocess.run([sys.executable,'megatoken/scripts/validate_semantic_corpus.py',[0m
+2026-11-18T14:25:25.8543383Z [36;1m  '--corpus',str(corpus),'--output',str(root/'prepared-semantic'),[0m
+2026-11-18T14:25:25.8543805Z [36;1m  '--tracer-root','.',[0m
+2026-11-18T14:25:25.8544168Z [36;1m  '--tokenizer-json',str(root/'tokenizer.json')], check=True)[0m
+2026-11-18T14:25:25.8544795Z [36;1mcodec = ByteCodec.from_tokenizer_json(root/'tokenizer.json', expected_sha256=LING_TOKENIZER_SHA256)[0m
+2026-11-18T14:25:25.8545508Z [36;1mpaths = [root/'two-invocations.json', *sorted((root/'continuity').glob('*.json'))][0m
+2026-11-18T14:25:25.8545855Z [36;1mfor path in paths:[0m
+2026-11-18T14:25:25.8546092Z [36;1m    if path.name == 'manifest.json': continue[0m
+2026-11-18T14:25:25.8546476Z [36;1m    episode, receipt = adapt_selected_harness_v5(json.loads(path.read_text()), codec=codec,[0m
+2026-11-18T14:25:25.8546876Z [36;1m      allow_local=True, max_positions=1024, max_history=1024)[0m
+2026-11-18T14:25:25.8547236Z [36;1m    assert episode.records and episode.supervision.outcome == 'unknown'[0m
+2026-11-18T14:25:25.8547544Z [36;1mPY[0m
+2026-11-18T14:25:25.8565801Z shell: /usr/bin/bash -e {0}
+2026-11-18T14:25:25.8566003Z env:
+2026-11-18T14:25:25.8566157Z   TZ: UTC
+2026-11-18T14:25:25.8566310Z   LANG: C.UTF-8
+2026-11-18T14:25:25.8566472Z   LC_ALL: C.UTF-8
+2026-11-18T14:25:25.8566635Z   OMP_NUM_THREADS: 1
+2026-11-18T14:25:25.8566804Z   MKL_NUM_THREADS: 1
+2026-11-18T14:25:25.8567049Z   NATIVE_WORKFLOW_HEAD_REVISION: 1e2e6a0de8952c4349edbeef46ab70c4a06f8157
+2026-11-18T14:25:25.8567402Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:25:25.8567739Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-18T14:25:25.8568070Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:25:25.8568367Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:25:25.8568662Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:25:25.8568953Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-18T14:25:25.8569214Z ##[endgroup]
+2026-11-18T14:26:24.7383177Z {"cases":50,"manifestFingerprint":"5fab3f10623c8aee1744f098658eadaea089987b40f34386d26d20fe822987e4","optimizerSteps":0,"report":{"schema":"semantic-preparation/4","producerRevision":"1e2e6a0de8952c4349edbeef46ab70c4a06f8157","consumerRevision":"6b4382b9af3bef120ca3a95ae24d35154d4cd66b","catalogDigest":"a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d","schemaDigest":"79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba","fixtureDigest":"78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e","tokenizerIdentity":"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2","representation":"compact","splitSeed":"semantic-family/4","maxPositions":1024,"maxHistory":1024,"counts":{"attempted":50,"accepted_candidate":50,"admitted":50},"accepted":50,"familySplits":{"semantic-recipe:rectangle-perimeter":"train","semantic-recipe:rectangular-capacity":"train","semantic-recipe:squared-distance":"test","semantic-recipe:absolute-distance":"train","semantic-recipe:weighted-average":"train","semantic-recipe:unit-conversion":"train","semantic-recipe:triangular-series":"train","semantic-recipe:modular-clock":"train","semantic-recipe:flag-intersection":"train","semantic-recipe:flag-union":"train","semantic-recipe:inventory-shortfall":"validation","semantic-recipe:capped-budget":"train","semantic-recipe:overtime-rate":"train","semantic-recipe:midpoint":"train","semantic-recipe:relative-growth":"train","semantic-recipe:parity-adjustment":"train"},"refusals":[],"optimizerSteps":0}}
+2026-11-18T14:26:26.4276443Z ##[group]Run training_caps=()
+2026-11-18T14:26:26.4276698Z [36;1mtraining_caps=()[0m
+2026-11-18T14:26:26.4277000Z [36;1mif [[ 'training-v4' == 'real-source' || 'training-v4' == 'generated-v1' ]]; then[0m
+2026-11-18T14:26:26.4277409Z [36;1m  training_caps=(--max-family-tokens 10000 --max-family-share 0.2)[0m
+2026-11-18T14:26:26.4277697Z [36;1mfi[0m
+2026-11-18T14:26:26.4277992Z [36;1mpython tools/package-semantic-release.py --corpus "$RUNNER_TEMP/corpus" \[0m
+2026-11-18T14:26:26.4278634Z [36;1m  --tracer-root . --megatoken megatoken --tokenizer "$RUNNER_TEMP/tokenizer.json" \[0m
+2026-11-18T14:26:26.4279118Z [36;1m  --environment-receipt "$RUNNER_TEMP/native-environment.json" --out "$RUNNER_TEMP/release" \[0m
+2026-11-18T14:26:26.4279761Z [36;1m  "${training_caps[@]}"[0m
+2026-11-18T14:26:26.4280202Z [36;1mpython tools/package-semantic-release.py --verify "$RUNNER_TEMP/release/semantic-v5-release.tar.gz"[0m
+2026-11-18T14:26:26.4298191Z shell: /usr/bin/bash -e {0}
+2026-11-18T14:26:26.4298421Z env:
+2026-11-18T14:26:26.4298576Z   TZ: UTC
+2026-11-18T14:26:26.4298732Z   LANG: C.UTF-8
+2026-11-18T14:26:26.4298900Z   LC_ALL: C.UTF-8
+2026-11-18T14:26:26.4299069Z   OMP_NUM_THREADS: 1
+2026-11-18T14:26:26.4299240Z   MKL_NUM_THREADS: 1
+2026-11-18T14:26:26.4299693Z   NATIVE_WORKFLOW_HEAD_REVISION: 1e2e6a0de8952c4349edbeef46ab70c4a06f8157
+2026-11-18T14:26:26.4300052Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:26:26.4300398Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-18T14:26:26.4300739Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:26:26.4301027Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:26:26.4301332Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:26:26.4301630Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-18T14:26:26.4301905Z ##[endgroup]
+2026-11-18T14:28:25.8424101Z {"schema": "semantic-release-verification/1", "status": "verified", "files": 407, "identityDigest": "ec4911022ef2f1379fca8cbe3f15804adb2efa25300c444ef8454f7ba9a24f7c", "archiveSha256": "f796cbe2ab85793eeee52a88258c6d714af44ec00072b8dbb9f6e292feae3d6c", "archive": "/home/runner/work/_temp/release/semantic-v5-release.tar.gz", "counts": {"admitted": 50}, "nativePrepared": 50, "nativeQualified": 50, "trainingSelected": 43, "trainingExcluded": 0, "heldOutSupplied": 7}
+2026-11-18T14:28:28.8527028Z {"archiveSha256": "f796cbe2ab85793eeee52a88258c6d714af44ec00072b8dbb9f6e292feae3d6c", "files": 407, "identityDigest": "ec4911022ef2f1379fca8cbe3f15804adb2efa25300c444ef8454f7ba9a24f7c", "schema": "semantic-release-verification/1", "status": "verified"}
+2026-11-18T14:28:28.8636755Z ##[group]Run python - <<'PY'
+2026-11-18T14:28:28.8637045Z [36;1mpython - <<'PY'[0m
+2026-11-18T14:28:28.8637240Z [36;1mimport collections, json, os[0m
+2026-11-18T14:28:28.8637471Z [36;1mfrom pathlib import Path[0m
+2026-11-18T14:28:28.8637712Z [36;1mroot = Path(os.environ['RUNNER_TEMP'])[0m
+2026-11-18T14:28:28.8638029Z [36;1mmanifest = json.loads((root / 'corpus/manifest.json').read_text())[0m
+2026-11-18T14:28:28.8638419Z [36;1mcounts = collections.Counter(row['status'] for row in manifest['cases'])[0m
+2026-11-18T14:28:28.8638793Z [36;1massert sum(counts.values()) == manifest['counts']['attempted'][0m
+2026-11-18T14:28:28.8639225Z [36;1massert counts['admitted'] > 0, 'A native qualification lane must yield actual admitted examples'[0m
+2026-11-18T14:28:28.8639897Z [36;1massert all(manifest['counts'].get(key) == value for key, value in counts.items())[0m
+2026-11-18T14:28:28.8640422Z [36;1msummary = {'schema':'semantic-source-dispositions/1', 'producerRevision':manifest['producerRevision'],[0m
+2026-11-18T14:28:28.8640947Z [36;1m  'recipe':manifest['recipe'], 'attempted':len(manifest['cases']), 'dispositions':dict(counts),[0m
+2026-11-18T14:28:28.8641437Z [36;1m  'admittedFamilies':len({row['family'] for row in manifest['cases'] if row['status']=='admitted'}),[0m
+2026-11-18T14:28:28.8641965Z [36;1m  'admittedComponents':len({row['sourceCluster'] for row in manifest['cases'] if row['status']=='admitted'}),[0m
+2026-11-18T14:28:28.8642373Z [36;1m  'optimizerSteps':0, 'learnedSuccess':None}[0m
+2026-11-18T14:28:28.8642743Z [36;1m(root / 'source-dispositions.json').write_text(json.dumps(summary,indent=2)+'\n')[0m
+2026-11-18T14:28:28.8643079Z [36;1mprint(json.dumps(summary))[0m
+2026-11-18T14:28:28.8643465Z [36;1mPY[0m
+2026-11-18T14:28:28.8661535Z shell: /usr/bin/bash -e {0}
+2026-11-18T14:28:28.8661733Z env:
+2026-11-18T14:28:28.8661889Z   TZ: UTC
+2026-11-18T14:28:28.8662046Z   LANG: C.UTF-8
+2026-11-18T14:28:28.8662213Z   LC_ALL: C.UTF-8
+2026-11-18T14:28:28.8662390Z   OMP_NUM_THREADS: 1
+2026-11-18T14:28:28.8662578Z   MKL_NUM_THREADS: 1
+2026-11-18T14:28:28.8662832Z   NATIVE_WORKFLOW_HEAD_REVISION: 1e2e6a0de8952c4349edbeef46ab70c4a06f8157
+2026-11-18T14:28:28.8663177Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:28:28.8663505Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-18T14:28:28.8663823Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:28:28.8664137Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:28:28.8664434Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:28:28.8664727Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-18T14:28:28.8664992Z ##[endgroup]
+2026-11-18T14:28:28.8934720Z {"schema": "semantic-source-dispositions/1", "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157", "recipe": {"schema": "semantic-source-recipe/4", "name": "training-v4", "templateDigest": "ccef64126613701d0bf4058ecc2af28738096b5fd7b553cf8e1a3464586f4998", "families": ["semantic-recipe:rectangle-perimeter", "semantic-recipe:rectangular-capacity", "semantic-recipe:squared-distance", "semantic-recipe:absolute-distance", "semantic-recipe:weighted-average", "semantic-recipe:unit-conversion", "semantic-recipe:triangular-series", "semantic-recipe:modular-clock", "semantic-recipe:flag-intersection", "semantic-recipe:flag-union", "semantic-recipe:inventory-shortfall", "semantic-recipe:capped-budget", "semantic-recipe:overtime-rate", "semantic-recipe:midpoint", "semantic-recipe:relative-growth", "semantic-recipe:parity-adjustment"], "splitSeed": 17, "retainEveryAuthoredFamily": true, "lifecycleInputs": [{"id": "rectangle-perimeter-child", "path": "rectangle-perimeter-child.json", "family": "semantic-recipe:rectangle-perimeter", "split": "train", "representation": "compact"}, {"id": "inventory-shortfall-child", "path": "inventory-shortfall-child.json", "family": "semantic-recipe:inventory-shortfall", "split": "validation", "representation": "compact"}], "lifecycleDispositions": [{"id": "rectangle-perimeter-child", "family": "semantic-recipe:rectangle-perimeter", "split": "train", "status": "admitted"}, {"id": "inventory-shortfall-child", "family": "semantic-recipe:inventory-shortfall", "split": "validation", "status": "admitted"}]}, "attempted": 50, "dispositions": {"admitted": 50}, "admittedFamilies": 16, "admittedComponents": 16, "optimizerSteps": 0, "learnedSuccess": null}
+2026-11-18T14:28:28.9003131Z ##[group]Run actions/upload-artifact@v4
+2026-11-18T14:28:28.9003368Z with:
+2026-11-18T14:28:28.9003587Z   name: semantic-v5-training-v4-admission-and-evaluation
+2026-11-18T14:28:28.9003847Z   retention-days: 90
+2026-11-18T14:28:28.9004021Z   compression-level: 6
+2026-11-18T14:28:28.9004227Z   include-hidden-files: true
+2026-11-18T14:28:28.9005940Z   path: /home/runner/work/_temp/corpus/
+!/home/runner/work/_temp/corpus/.native/**
+!/home/runner/work/_temp/corpus/.workers/**
+/home/runner/work/_temp/prepared-semantic/
+/home/runner/work/_temp/release/
+/home/runner/work/_temp/native-environment.json
+/home/runner/work/_temp/native-run-identity.json
+/home/runner/work/_temp/native-capabilities.json
+/home/runner/work/_temp/source-registry.json
+/home/runner/work/_temp/source-dispositions.json
+/home/runner/work/_temp/evaluation.json
+/home/runner/work/_temp/continuity/*.txt
+/home/runner/work/_temp/native-inference/inference-check.json
+/home/runner/work/_temp/native-orchestration-validation.json
+
+2026-11-18T14:28:28.9007606Z   if-no-files-found: error
+2026-11-18T14:28:28.9007791Z   overwrite: false
+2026-11-18T14:28:28.9007954Z env:
+2026-11-18T14:28:28.9008101Z   TZ: UTC
+2026-11-18T14:28:28.9008255Z   LANG: C.UTF-8
+2026-11-18T14:28:28.9008422Z   LC_ALL: C.UTF-8
+2026-11-18T14:28:28.9008753Z   OMP_NUM_THREADS: 1
+2026-11-18T14:28:28.9008917Z   MKL_NUM_THREADS: 1
+2026-11-18T14:28:28.9009164Z   NATIVE_WORKFLOW_HEAD_REVISION: 1e2e6a0de8952c4349edbeef46ab70c4a06f8157
+2026-11-18T14:28:28.9009718Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:28:28.9010056Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-18T14:28:28.9010380Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:28:28.9010676Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:28:28.9010983Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-18T14:28:28.9011277Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-18T14:28:28.9011536Z ##[endgroup]
+2026-11-18T14:28:29.0459998Z (node:8752) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-18T14:28:29.0460654Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-18T14:28:29.1522508Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-11-18T14:28:29.1528041Z The least common ancestor is /home/runner/work/_temp. This will be the root directory of the artifact
+2026-11-18T14:28:29.1529819Z With the provided path, there will be 418 files uploaded
+2026-11-18T14:28:29.1530633Z Artifact name is valid!
+2026-11-18T14:28:29.1531484Z Root directory input is valid!
+2026-11-18T14:28:29.5281685Z Beginning upload of artifact content to blob storage
+2026-11-18T14:28:30.1931605Z (node:8752) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-18T14:28:31.1562100Z Uploaded bytes 8388608
+2026-11-18T14:28:31.8011798Z Uploaded bytes 16777216
+2026-11-18T14:28:31.8850893Z Uploaded bytes 25165824
+2026-11-18T14:28:32.4636391Z Uploaded bytes 33554432
+2026-11-18T14:28:33.1010482Z Uploaded bytes 41943040
+2026-11-18T14:28:33.7271260Z Uploaded bytes 50331648
+2026-11-18T14:28:34.3393862Z Uploaded bytes 58720256
+2026-11-18T14:28:35.0305653Z Uploaded bytes 67108864
+2026-11-18T14:28:35.5860505Z Uploaded bytes 75497472
+2026-11-18T14:28:36.2885371Z Uploaded bytes 83886080
+2026-11-18T14:28:37.0064292Z Uploaded bytes 92274688
+2026-11-18T14:28:37.5971809Z Uploaded bytes 100663296
+2026-11-18T14:28:38.2723084Z Uploaded bytes 109051904
+2026-11-18T14:28:38.9117087Z Uploaded bytes 117440512
+2026-11-18T14:28:39.6308478Z Uploaded bytes 125829120
+2026-11-18T14:28:40.3161567Z Uploaded bytes 134217728
+2026-11-18T14:28:41.1624589Z Uploaded bytes 142606336
+2026-11-18T14:28:41.9217289Z Uploaded bytes 150994944
+2026-11-18T14:28:42.7530780Z Uploaded bytes 159383552
+2026-11-18T14:28:42.9196661Z Uploaded bytes 167772160
+2026-11-18T14:28:43.5872923Z Uploaded bytes 176160768
+2026-11-18T14:28:44.1536430Z Uploaded bytes 184549376
+2026-11-18T14:28:44.6772501Z Uploaded bytes 192937984
+2026-11-18T14:28:45.0919836Z Uploaded bytes 201326592
+2026-11-18T14:28:45.4787826Z Uploaded bytes 209715200
+2026-11-18T14:28:45.6426254Z Uploaded bytes 218103808
+2026-11-18T14:28:45.8874478Z Uploaded bytes 226492416
+2026-11-18T14:28:45.9633704Z Uploaded bytes 234881024
+2026-11-18T14:28:46.3204782Z Uploaded bytes 243269632
+2026-11-18T14:28:46.3736117Z Uploaded bytes 251658240
+2026-11-18T14:28:46.4934061Z Uploaded bytes 260046848
+2026-11-18T14:28:46.5045779Z Uploaded bytes 268435456
+2026-11-18T14:28:46.8109566Z Uploaded bytes 276824064
+2026-11-18T14:28:46.9173709Z Uploaded bytes 285212672
+2026-11-18T14:28:47.1216610Z Uploaded bytes 293601280
+2026-11-18T14:28:47.3611676Z Uploaded bytes 301989888
+2026-11-18T14:28:47.5706684Z Uploaded bytes 310378496
+2026-11-18T14:28:47.7684283Z Uploaded bytes 318767104
+2026-11-18T14:28:47.8709868Z Uploaded bytes 319752944
+2026-11-18T14:28:47.9518514Z Finished uploading artifact content to blob storage!
+2026-11-18T14:28:47.9520464Z SHA256 digest of uploaded artifact zip is 375ad315a10b1c9336350756867ab6b12ee092e2ba5c1a5bc3c56469615291a7
+2026-11-18T14:28:47.9522428Z Finalizing artifact upload
+2026-11-18T14:28:48.5124327Z Artifact semantic-v5-training-v4-admission-and-evaluation.zip successfully finalized. Artifact ID 14436930815
+2026-11-18T14:28:48.5125726Z Artifact semantic-v5-training-v4-admission-and-evaluation has been successfully uploaded! Final size is 319752944 bytes. Artifact ID is 14436930815
+2026-11-18T14:28:48.5132316Z Artifact download URL: https://github.com/werg/tracing-js-self/actions/runs/44321402524/artifacts/14436930815
+2026-11-18T14:28:48.5372109Z Post job cleanup.
+2026-11-18T14:28:48.6379908Z (node:8767) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-18T14:28:48.6380578Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-18T14:28:48.6530022Z Post job cleanup.
+2026-11-18T14:28:48.7648144Z (node:8775) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-18T14:28:48.7649176Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-18T14:28:48.7843451Z Post job cleanup.
+2026-11-18T14:28:48.8630494Z [command]/usr/bin/git version
+2026-11-18T14:28:48.8670380Z git version 2.56.1
+2026-11-18T14:28:48.8703081Z Temporarily overriding HOME='/home/runner/work/_temp/a6c525a1-6bc8-487b-8a07-7faf8188555e' before making global git config changes
+2026-11-18T14:28:48.8704289Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-18T14:28:48.8741397Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-18T14:28:48.8793123Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-18T14:28:48.8828321Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-18T14:28:48.9091854Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-18T14:28:48.9129076Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-18T14:28:48.9373239Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-18T14:28:48.9416645Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-18T14:28:48.9790908Z Post job cleanup.
+2026-11-18T14:28:49.0502188Z [command]/usr/bin/git version
+2026-11-18T14:28:49.0542530Z git version 2.56.1
+2026-11-18T14:28:49.0579417Z Temporarily overriding HOME='/home/runner/work/_temp/f0bb47d3-b275-4686-8b4f-047cdcc7c1f6' before making global git config changes
+2026-11-18T14:28:49.0580588Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-18T14:28:49.0585115Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self
+2026-11-18T14:28:49.0628911Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-18T14:28:49.0695211Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-18T14:28:49.0931189Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-18T14:28:49.0973217Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-18T14:28:49.1215007Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-18T14:28:49.1266793Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-18T14:28:49.1628009Z Cleaning up orphan processes
+2026-11-18T14:28:49.1953064Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/setup-python@v5, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+

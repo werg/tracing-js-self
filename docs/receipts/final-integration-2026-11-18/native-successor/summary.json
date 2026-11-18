@@ -1,0 +1,134 @@
+{
+  "schema": "resumption-hosted-native-completion/1",
+  "runId": 44321402524,
+  "runAttempt": 1,
+  "status": "completed",
+  "conclusion": "success",
+  "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+  "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+  "workflowTriggerRevision": "3497ee3454ea75715db1bc50c3e7cfc35ecc0fc2",
+  "mergedMainRevision": "0c307781fea0fa3fca58f1dec037c8653cc921e0",
+  "mergedMainTreeEqualsProducer": true,
+  "lanes": [
+    {
+      "recipe": "engineering",
+      "jobId": 134861001313,
+      "conclusion": "success",
+      "attempted": 25,
+      "dispositions": {
+        "admitted": 25
+      },
+      "admittedFamilyLabels": 20,
+      "admittedComponents": 20,
+      "freshNativeQualified": 25,
+      "trainingSelected": 19,
+      "trainingExcluded": 0,
+      "heldOutSupplied": 6,
+      "suppliedForPreparation": 25,
+      "distinctPreparedWithinLane": 25,
+      "duplicateAliases": 0,
+      "releaseFiles": 200,
+      "releaseArchiveSha256": "0ebdeac9799f39f5df97fa3388f6bd604cbb024b2a78672f7772f7fe27bf720e",
+      "optimizerSteps": 0,
+      "learnedSuccess": null
+    },
+    {
+      "recipe": "generated-v1",
+      "jobId": 134861001473,
+      "conclusion": "success",
+      "attempted": 64,
+      "dispositions": {
+        "admitted": 64
+      },
+      "admittedFamilyLabels": 16,
+      "admittedComponents": 16,
+      "freshNativeQualified": 64,
+      "trainingSelected": 44,
+      "trainingExcluded": 0,
+      "heldOutSupplied": 20,
+      "suppliedForPreparation": 64,
+      "distinctPreparedWithinLane": 61,
+      "duplicateAliases": 3,
+      "releaseFiles": 383,
+      "releaseArchiveSha256": "ae09729d81656993f103245e72ac0c3767f2a7ceda1062cc21463d3e0fba7525",
+      "optimizerSteps": 0,
+      "learnedSuccess": null
+    },
+    {
+      "recipe": "training-v4",
+      "jobId": 134861001656,
+      "conclusion": "success",
+      "attempted": 50,
+      "dispositions": {
+        "admitted": 50
+      },
+      "admittedFamilyLabels": 16,
+      "admittedComponents": 16,
+      "freshNativeQualified": 50,
+      "trainingSelected": 43,
+      "trainingExcluded": 0,
+      "heldOutSupplied": 7,
+      "suppliedForPreparation": 50,
+      "distinctPreparedWithinLane": 50,
+      "duplicateAliases": 0,
+      "releaseFiles": 407,
+      "releaseArchiveSha256": "f796cbe2ab85793eeee52a88258c6d714af44ec00072b8dbb9f6e292feae3d6c",
+      "optimizerSteps": 0,
+      "learnedSuccess": null
+    },
+    {
+      "recipe": "benchmark-v1",
+      "jobId": 134861001660,
+      "conclusion": "success",
+      "attempted": 128,
+      "dispositions": {
+        "admitted": 128
+      },
+      "admittedFamilyLabels": 42,
+      "admittedComponents": 38,
+      "freshNativeQualified": 128,
+      "trainingSelected": 94,
+      "trainingExcluded": 0,
+      "heldOutSupplied": 34,
+      "suppliedForPreparation": 128,
+      "distinctPreparedWithinLane": 128,
+      "duplicateAliases": 0,
+      "releaseFiles": 1034,
+      "releaseArchiveSha256": "01e033e94f279e896ffc1385a64b54b2aa40019d402b92c0e2f04e5c544d4b57",
+      "optimizerSteps": 0,
+      "learnedSuccess": null
+    },
+    {
+      "recipe": "real-source",
+      "jobId": 134861001667,
+      "conclusion": "success",
+      "attempted": 210,
+      "dispositions": {
+        "admitted": 190,
+        "unsupported": 18,
+        "source_unsupported": 2
+      },
+      "admittedFamilyLabels": 95,
+      "admittedComponents": 35,
+      "freshNativeQualified": 190,
+      "trainingSelected": 71,
+      "trainingExcluded": 81,
+      "heldOutSupplied": 38,
+      "suppliedForPreparation": 109,
+      "distinctPreparedWithinLane": 100,
+      "duplicateAliases": 9,
+      "releaseFiles": 1275,
+      "releaseArchiveSha256": "7f5f2b03ca4b725fc5b40e3b18201986b4721c16cbaaeced1770d6282a36ab4c",
+      "optimizerSteps": 0,
+      "learnedSuccess": null
+    }
+  ],
+  "totals": {
+    "attemptedAcrossLanes": 477,
+    "admittedAcrossLanes": 457,
+    "freshQualifiedAcrossLanes": 457,
+    "sumOfWithinLaneDistinctPrepared": 364,
+    "crossRecipeDistinctUnion": null
+  },
+  "scope": "Each lane has its own source and preparation population. Family/component counts overlap and are not summed. Controlled engineering evaluations are not trained-model success. Original failed aa7b jobs remain separate."
+}

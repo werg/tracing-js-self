@@ -1,0 +1,283 @@
+{
+  "schema": "semantic-native-ci-job-summary/1",
+  "runId": 44321402524,
+  "jobId": 134861001313,
+  "recipe": "engineering",
+  "status": "completed",
+  "conclusion": "success",
+  "records": [
+    {
+      "schema": "semantic-native-ci-identity/1",
+      "workflowRunId": "44321402524",
+      "workflowRunAttempt": "1",
+      "workflowTriggerRevision": "3497ee3454ea75715db1bc50c3e7cfc35ecc0fc2",
+      "workflowHeadRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+      "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+      "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b"
+    },
+    {
+      "status": "verified",
+      "receipt": "/home/runner/work/_temp/native-environment.json",
+      "packages": 47,
+      "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+      "cudaAvailable": false
+    },
+    {
+      "output": "/home/runner/work/_temp/native-capabilities.json",
+      "totals": {
+        "frontend": {
+          "total": 17,
+          "attempted": 17,
+          "passed": 17,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "untested": 0
+        },
+        "ownedEvaluation": {
+          "total": 17,
+          "attempted": 17,
+          "passed": 17,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "untested": 0
+        },
+        "independentOutcome": {
+          "total": 17,
+          "attempted": 17,
+          "passed": 17,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "untested": 0
+        },
+        "independentIntermediate": {
+          "total": 17,
+          "attempted": 17,
+          "passed": 17,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "untested": 0
+        },
+        "v5ProjectionAndPublicReplay": {
+          "total": 17,
+          "attempted": 17,
+          "passed": 17,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "untested": 0
+        },
+        "nativeAdmission": {
+          "total": 17,
+          "attempted": 17,
+          "passed": 17,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "untested": 0
+        },
+        "modelEvaluation": {
+          "total": 17,
+          "attempted": 0,
+          "passed": 0,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "untested": 17
+        }
+      },
+      "optimizerSteps": 0,
+      "learnedSuccess": null
+    },
+    {
+      "schema": "semantic-harness-contract/5",
+      "digest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+      "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e"
+    },
+    {
+      "digest": "27f3b0e8b276a64d648b4cc56e8f069ea3194c46c32fd7d532db2e53b2979ba7",
+      "recipes": [
+        "engineering",
+        "training-v4",
+        "benchmark-v1",
+        "real-source",
+        "generated-v1"
+      ],
+      "sourceVariants": 508,
+      "sourceFamilies": 199,
+      "independentComponents": 135,
+      "nearPairs": 5,
+      "splitComponents": {
+        "train": 89,
+        "validation": 13,
+        "test": 33
+      },
+      "holdoutProjects": [
+        "exercism/javascript"
+      ],
+      "holdoutCompositions": [
+        "square/even/maximum/alias/return"
+      ]
+    },
+    {
+      "directory": "/home/runner/work/_temp/continuity",
+      "fixtures": [
+        {
+          "name": "async-pair",
+          "records": 17,
+          "selectionOrigin": "controlled-test-injected"
+        },
+        {
+          "name": "promise-finally",
+          "records": 14,
+          "selectionOrigin": "controlled-test-injected"
+        },
+        {
+          "name": "retained-events",
+          "records": 33,
+          "selectionOrigin": "controlled-test-injected"
+        },
+        {
+          "name": "checkpoint-recovery",
+          "records": 12,
+          "selectionOrigin": "controlled-test-injected"
+        }
+      ]
+    },
+    {
+      "cases": 25,
+      "manifestFingerprint": "9d82bc9e93524074a8107e1af9701e5f0a2a3e420b85043d7adee29ad8675494",
+      "optimizerSteps": 0,
+      "report": {
+        "schema": "semantic-preparation/4",
+        "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "representation": "compact",
+        "splitSeed": "semantic-family/4",
+        "maxPositions": 1024,
+        "maxHistory": 1024,
+        "counts": {
+          "attempted": 25,
+          "accepted_candidate": 25,
+          "admitted": 25
+        },
+        "accepted": 25,
+        "familySplits": {
+          "async-counter": "train",
+          "task:two-pending-reversed": "train",
+          "observed-branch": "train",
+          "async-cleanup": "test",
+          "owned-callback": "train",
+          "long-callback-retained-tail": "validation",
+          "synchronous-error": "train",
+          "promise-reaction": "train",
+          "promise-cleanup": "train",
+          "owned-microtask": "train",
+          "platform-observation": "train",
+          "http-response-stream": "train",
+          "filesystem-stream-copy": "test",
+          "socket-round-trip": "validation",
+          "dom-mutation-release": "train",
+          "natlang-cell-call": "train",
+          "native-result-graph": "train",
+          "compound-pure": "train",
+          "compound-effectful": "train",
+          "persistent-external-trigger": "test"
+        },
+        "refusals": [],
+        "optimizerSteps": 0
+      }
+    },
+    {
+      "receipt": "/home/runner/work/_temp/native-inference/inference-check.json",
+      "checkpointIdentity": "2a7eefffb21e8901150e6932ccd3d7f048fa2efb0ed4d9ebc9072feab43f0452",
+      "actualModelSelection": true,
+      "validOutcome": true,
+      "optimizerSteps": 0,
+      "learnedSuccess": null
+    },
+    {
+      "schema": "semantic-orchestration-engineering/4",
+      "passed": true,
+      "cases": 5,
+      "optimizerSteps": 0
+    },
+    {
+      "cases": 8,
+      "families": [
+        "async-cleanup",
+        "filesystem-stream-copy",
+        "persistent-external-trigger"
+      ]
+    },
+    {
+      "schema": "semantic-evaluation-cohort/4",
+      "digest": "eb2d86ef137280163a28697f06f745cf0af101ee4e8b91ebe76861d1c8508aec"
+    },
+    {
+      "tasks": 8,
+      "wholeTaskSuccess": 1,
+      "traceValid": 1,
+      "correctTasks": 8,
+      "generatedTokens": 5626,
+      "canonicalGeneratedTokens": 5626,
+      "observedTokens": 42156,
+      "computeSeconds": 29.849358155,
+      "hardGates": {
+        "futureObservationLeaks": 0,
+        "unauthorizedEffects": 0,
+        "untrackedNativeFallback": 0,
+        "falseAdmissions": 0,
+        "replayNativeEffects": 0
+      },
+      "failureCounts": {},
+      "generatedTokensPerCorrectTask": 703.25,
+      "computeSecondsPerCorrectTask": 3.731169769375
+    },
+    {
+      "schema": "semantic-release-verification/1",
+      "status": "verified",
+      "files": 200,
+      "identityDigest": "a2352856a3d9d24a3fac4a26e5fabf972a5eb1c5a94661fd2aec454137469688",
+      "archiveSha256": "0ebdeac9799f39f5df97fa3388f6bd604cbb024b2a78672f7772f7fe27bf720e",
+      "archive": "/home/runner/work/_temp/release/semantic-v5-release.tar.gz",
+      "counts": {
+        "admitted": 25
+      },
+      "nativePrepared": 25,
+      "nativeQualified": 25,
+      "trainingSelected": 19,
+      "trainingExcluded": 0,
+      "heldOutSupplied": 6
+    },
+    {
+      "archiveSha256": "0ebdeac9799f39f5df97fa3388f6bd604cbb024b2a78672f7772f7fe27bf720e",
+      "files": 200,
+      "identityDigest": "a2352856a3d9d24a3fac4a26e5fabf972a5eb1c5a94661fd2aec454137469688",
+      "schema": "semantic-release-verification/1",
+      "status": "verified"
+    },
+    {
+      "schema": "semantic-source-dispositions/1",
+      "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+      "recipe": {
+        "name": "engineering"
+      },
+      "attempted": 25,
+      "dispositions": {
+        "admitted": 25
+      },
+      "admittedFamilies": 20,
+      "admittedComponents": 20,
+      "optimizerSteps": 0,
+      "learnedSuccess": null
+    }
+  ]
+}

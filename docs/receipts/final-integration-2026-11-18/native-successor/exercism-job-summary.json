@@ -1,0 +1,243 @@
+{
+  "schema": "semantic-native-ci-job-summary/1",
+  "runId": 44321402501,
+  "jobId": 134860999799,
+  "recipe": "exercism",
+  "status": "completed",
+  "conclusion": "success",
+  "records": [
+    {
+      "totals": {
+        "attempted": 361,
+        "locallyVerified": 132,
+        "refused": 229,
+        "newAdmitted": 0,
+        "distinctExercises": 20,
+        "exercisedProofs": 20,
+        "distinctVerifiedExercises": 10
+      },
+      "quality": {
+        "records": 5863,
+        "generatedRecords": 5363,
+        "generatedBytes": 483101,
+        "originalJournalEvents": 22138,
+        "avgGeneratedBytes": 3660,
+        "avgGeneratedRecords": 40.63,
+        "avgJournalEvents": 167.71
+      },
+      "byExercise": {
+        "anagram": {
+          "split": "train",
+          "candidates": 20,
+          "locallyVerified": 0,
+          "unsupported": 20,
+          "referenceMismatch": 0,
+          "projectionFailure": 0,
+          "status": "attempted"
+        },
+        "armstrong-numbers": {
+          "split": "validation",
+          "candidates": 19,
+          "locallyVerified": 0,
+          "unsupported": 17,
+          "referenceMismatch": 2,
+          "projectionFailure": 0,
+          "status": "attempted"
+        },
+        "binary-search": {
+          "split": "test",
+          "candidates": 19,
+          "locallyVerified": 7,
+          "unsupported": 0,
+          "referenceMismatch": 7,
+          "projectionFailure": 0,
+          "status": "attempted"
+        },
+        "collatz-conjecture": {
+          "split": "train",
+          "candidates": 14,
+          "locallyVerified": 11,
+          "unsupported": 1,
+          "referenceMismatch": 0,
+          "projectionFailure": 0,
+          "status": "attempted"
+        },
+        "darts": {
+          "split": "train",
+          "candidates": 20,
+          "locallyVerified": 20,
+          "unsupported": 0,
+          "referenceMismatch": 0,
+          "projectionFailure": 0,
+          "status": "attempted"
+        },
+        "grains": {
+          "split": "train",
+          "candidates": 19,
+          "locallyVerified": 0,
+          "unsupported": 0,
+          "referenceMismatch": 16,
+          "projectionFailure": 0,
+          "status": "attempted"
+        },
+        "hamming": {
+          "split": "train",
+          "candidates": 17,
+          "locallyVerified": 0,
+          "unsupported": 5,
+          "referenceMismatch": 8,
+          "projectionFailure": 0,
+          "status": "attempted"
+        },
+        "isogram": {
+          "split": "train",
+          "candidates": 20,
+          "locallyVerified": 0,
+          "unsupported": 20,
+          "referenceMismatch": 0,
+          "projectionFailure": 0,
+          "status": "attempted"
+        },
+        "knapsack": {
+          "split": "train",
+          "candidates": 15,
+          "locallyVerified": 10,
+          "unsupported": 5,
+          "referenceMismatch": 0,
+          "projectionFailure": 0,
+          "status": "attempted"
+        },
+        "largest-series-product": {
+          "split": "train",
+          "candidates": 20,
+          "locallyVerified": 3,
+          "unsupported": 9,
+          "referenceMismatch": 7,
+          "projectionFailure": 0,
+          "status": "attempted"
+        },
+        "leap": {
+          "split": "train",
+          "candidates": 17,
+          "locallyVerified": 17,
+          "unsupported": 0,
+          "referenceMismatch": 0,
+          "projectionFailure": 0,
+          "status": "attempted"
+        },
+        "luhn": {
+          "split": "train",
+          "candidates": 20,
+          "locallyVerified": 0,
+          "unsupported": 20,
+          "referenceMismatch": 0,
+          "projectionFailure": 0,
+          "status": "attempted"
+        },
+        "matching-brackets": {
+          "split": "train",
+          "candidates": 20,
+          "locallyVerified": 0,
+          "unsupported": 20,
+          "referenceMismatch": 0,
+          "projectionFailure": 0,
+          "status": "attempted"
+        },
+        "raindrops": {
+          "split": "train",
+          "candidates": 20,
+          "locallyVerified": 20,
+          "unsupported": 0,
+          "referenceMismatch": 0,
+          "projectionFailure": 0,
+          "status": "attempted"
+        },
+        "roman-numerals": {
+          "split": "train",
+          "candidates": 20,
+          "locallyVerified": 20,
+          "unsupported": 0,
+          "referenceMismatch": 0,
+          "projectionFailure": 0,
+          "status": "attempted"
+        },
+        "run-length-encoding": {
+          "split": "train",
+          "candidates": 20,
+          "locallyVerified": 0,
+          "unsupported": 20,
+          "referenceMismatch": 0,
+          "projectionFailure": 0,
+          "status": "attempted"
+        },
+        "sieve": {
+          "split": "train",
+          "candidates": 13,
+          "locallyVerified": 0,
+          "unsupported": 13,
+          "referenceMismatch": 0,
+          "projectionFailure": 0,
+          "status": "attempted"
+        },
+        "space-age": {
+          "split": "test",
+          "candidates": 17,
+          "locallyVerified": 0,
+          "unsupported": 0,
+          "referenceMismatch": 0,
+          "projectionFailure": 0,
+          "status": "source_unsupported",
+          "sourceReason": "Top-level non-function initialization is not owned"
+        },
+        "sum-of-multiples": {
+          "split": "train",
+          "candidates": 20,
+          "locallyVerified": 13,
+          "unsupported": 7,
+          "referenceMismatch": 0,
+          "projectionFailure": 0,
+          "status": "attempted"
+        },
+        "two-fer": {
+          "split": "train",
+          "candidates": 11,
+          "locallyVerified": 11,
+          "unsupported": 0,
+          "referenceMismatch": 0,
+          "projectionFailure": 0,
+          "status": "attempted"
+        }
+      },
+      "output": "/home/runner/work/tracing-js-self/tracing-js-self/corpus/out/exercism-owned-report.json",
+      "episodes": "/home/runner/work/tracing-js-self/tracing-js-self/corpus/out/exercism-owned-locally-verified.jsonl",
+      "refusals": {
+        "unsupported: Unsupported training-js/1 sparse/spread array at 390:405": 20,
+        "unsupported: Unsupported training-js/1 sparse/spread array at 102:123": 17,
+        "canonical_mismatch: Original pinned JS solution disagrees with declared exercise expected result": 2,
+        "expected_throw_unsupported: Cannot admit abrupt guest completions": 15,
+        "reference_failure: Value not in array": 7,
+        "profile_limit: Effectful teacher record budget": 9,
+        "reference_failure: Non-JSON canonical result refused": 14,
+        "reference_failure: square must be between 1 and 64": 2,
+        "unsupported: Unsupported training-js/1 sparse/spread array at 164:176": 5,
+        "reference_failure: strands must be of equal length": 8,
+        "unsupported: Only completed synchronous effect-free entries qualify": 49,
+        "runtime_failure: Driver safety limit (12000 steps); no chunk has been misreported as complete": 4,
+        "reference_failure: digits input must only contain digits": 5,
+        "reference_failure: span must not exceed string length": 2,
+        "unsupported: Unsupported training-js/1 sparse/spread array at 101:113": 20,
+        "unsupported: Unsupported training-js/1 NewExpression at 353:383": 20,
+        "unsupported: Unsupported training-js/1 ThisExpression at 215:219": 13,
+        "source_unsupported: Top-level non-function initialization is not owned": 17
+      }
+    },
+    {
+      "inputRows": 132,
+      "verified": 132,
+      "selected": 61,
+      "distinctPaths": 61,
+      "distinctFamilies": 10,
+      "refusals": {}
+    }
+  ]
+}
