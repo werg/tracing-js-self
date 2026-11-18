@@ -14,6 +14,7 @@ The optional selector mode resolves these aliases before preparation:
 TZ=UTC LC_ALL=C.UTF-8 node tools/select-admitted-campaign.mjs \
   --input /path/to/complete-campaign \
   --out /path/to/new-selected-corpus \
+  --tracer-root /path/to/exact-producing-checkout \
   --deduplicate-exact-public true
 ```
 
@@ -23,6 +24,14 @@ private task ID. The representative is the lexicographically smallest candidate
 ID among compatible aliases, regardless of source manifest iteration order.
 Exact equality uses the existing SHA-256 over the exact serialized public
 document; this is not a source-similarity or near-duplicate heuristic.
+
+For a historical campaign, `--tracer-root` loads its exact immutable producer's
+CAS reader and native-admission identity verifier. The current selection tool
+can then apply its stronger selection rule without substituting newer runtime
+implementation bytes into the original verifier environment. The producing Git
+revision must match the manifest and tracked files must be clean. Original
+environment checks, including the recorded timezone, remain mandatory; this
+option does not relax them. Without the option the selector uses its own checkout.
 
 ## Required compatibility and audit evidence
 

@@ -2,11 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync,readFileSync} from 'node:fs';
 import {join} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {tmpdir} from 'node:os';
 import {CampaignStore,atomicWrite,sha256} from '../src/corpus/campaign-store.mjs';
 import {exactPublicRepresentatives,nativeEpisodeMetadata,selectAdmittedCampaign} from '../tools/select-admitted-campaign.mjs';
 
-test('admitted selection retains refusals and never promotes local or forged admitted flags',t=>{
+test('admitted selection retains refusals and never promotes local or forged admitted flags',async t=>{
   const root=mkdtempSync(join(tmpdir(),'campaign-selection-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
   const input=join(root,'input'),store=new CampaignStore(input,{nativePolicy:null});
   const first=store.record('local',{source:'reviewed'}, {status:'locally_verified'});
@@ -16,11 +17,13 @@ test('admitted selection retains refusals and never promotes local or forged adm
     campaign:{identityDigest:store.identityDigest},counts:{attempted:2,locally_verified:1,admitted:1},
     cases:[first,forged].map(entry=>({id:entry.id,status:entry.status,candidateDigest:entry.candidateDigest}))}));
   const output=join(root,'selection');
-  assert.throws(()=>selectAdmittedCampaign({input,output}),/No native-admitted/);
+  await assert.rejects(selectAdmittedCampaign({input,output}),/No native-admitted/);
   const report=JSON.parse(readFileSync(join(output,'selection-report.json'),'utf8'));
   assert.equal(report.selected,0);assert.equal(report.excluded,2);
   assert.deepEqual(report.exclusions.map(row=>row.status),['not_admitted','admission_invalid']);
   assert.equal(report.exactPublicSelection.enabled,false);
+  await assert.rejects(selectAdmittedCampaign({input,output:join(root,'historical-selection'),
+    tracerRoot:fileURLToPath(new URL('../',import.meta.url))}),/exact immutable producing checkout/);
 });
 
 // These rows exercise selection only; they are not fabricated admission receipts.

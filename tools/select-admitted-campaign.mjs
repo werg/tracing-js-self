@@ -2,6 +2,7 @@
 // Select already admitted bytes for the native consumer without rewriting an
 // identity, a frozen split, or a receipt. Keep the full campaign for audit.
 import {readFileSync,existsSync,readdirSync,mkdirSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
 import {resolve,join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {gzipSync} from 'node:zlib';
@@ -65,18 +66,32 @@ export function exactPublicRepresentatives(rows){
   return {selected,aliases,representatives};
 }
 
-export function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_SAFE_INTEGER,
-    maxFamilyShare=1,split='all',deduplicateExactPublic=false}={}){
+export async function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_SAFE_INTEGER,
+    maxFamilyShare=1,split='all',deduplicateExactPublic=false,tracerRoot=null}={}){
   input=resolve(input);output=resolve(output);
   if(input===output||existsSync(output)&&readdirSync(output).length)
     throw new Error('Selection requires a new output directory distinct from the complete campaign');
   if(!['all','train','validation','test'].includes(split))throw new Error('Invalid requested split');
   if(typeof deduplicateExactPublic!=='boolean')throw new Error('Exact-public representative selection must be explicitly boolean');
   const header=JSON.parse(readFileSync(join(input,'campaign.json'),'utf8'));
-  const campaign=new CampaignStore(input,header.identity,{resume:true,recoverTornLog:false,
-    maxObjectBytes:header.identity.bounds?.maxOutputBytes??268435456});
   const sourceBytes=readFileSync(join(input,'manifest.json')),
     sourceManifest=JSON.parse(sourceBytes.toString('utf8'));
+  let Store=CampaignStore,verifyBinding=verifyNativeBinding,producerVerifier=null;
+  if(tracerRoot!==null){
+    tracerRoot=resolve(tracerRoot);
+    const revision=execFileSync('git',['rev-parse','HEAD'],{cwd:tracerRoot,encoding:'utf8'}).trim();
+    if(revision!==sourceManifest.producerRevision)
+      throw new Error('Historical selection requires the exact immutable producing checkout');
+    execFileSync('git',['diff','--quiet','HEAD','--'],{cwd:tracerRoot});
+    const [storage,admission]=await Promise.all([
+      import(pathToFileURL(join(tracerRoot,'src/corpus/campaign-store.mjs')).href),
+      import(pathToFileURL(join(tracerRoot,'src/training/effectful-admit.js')).href)]);
+    Store=storage.CampaignStore;verifyBinding=admission.verifyNativeBinding;
+    producerVerifier={root:tracerRoot,revision,trackedFilesClean:true,
+      sourceEnvironmentChecksUnchanged:true};
+  }
+  const campaign=new Store(input,header.identity,{resume:true,recoverTornLog:false,
+    maxObjectBytes:header.identity.bounds?.maxOutputBytes??268435456});
   if(sourceManifest.campaign?.identityDigest!==campaign.identityDigest)
     throw new Error('Manifest and campaign identity disagree');
   mkdirSync(output,{recursive:true});
@@ -101,7 +116,7 @@ export function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_
       if(side?.admission!=='admitted'||side.selectionOrigin!=='certified_teacher'||
         row.episodeDigest!==sha256(JSON.stringify(exported.public))||row.identityDigest!==side.identityDigest)
         throw new Error('Manifest/public/private admission binding changed');
-      verifyNativeBinding(exported,header.identity.nativePolicy);
+      verifyBinding(exported,header.identity.nativePolicy);
       const native=side.nativeAdmission,episodeMetadata=nativeEpisodeMetadata(side),
         metadataDigest=sha256(JSON.stringify(episodeMetadata));
       eligible.push({id:entry.id,status:'admitted',sourceCluster:side.splitIdentity.componentId,
@@ -159,6 +174,7 @@ export function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_
       return {componentId,episodes:rows.length,declaredFamilies:[...new Set(rows.map(row=>row.family))].sort(),
         generatedTokens,shareOfTrainingTokens:generatedTokens/balanced.generatedTokens};});
   const report={schema:'semantic-admitted-selection/1',sourceCampaignDigest:campaign.identityDigest,
+    producerVerifier,
     sourceManifestSha256:sha256(sourceBytes),sourceCounts:sourceManifest.counts,
     sourceCandidates:sourceManifest.cases.length,selected:selected.length,excluded:exclusions.length,
     split,budgetScope:'train-only; evaluation tokens do not subsidize a training-family cap',
@@ -208,7 +224,7 @@ export function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
   const flags=new Map(),allowed=new Set(['--input','--out','--max-family-tokens','--max-family-share','--split',
-    '--deduplicate-exact-public']);
+    '--deduplicate-exact-public','--tracer-root']);
   for(let index=2;index<process.argv.length;index++){
     const key=process.argv[index],value=process.argv[++index];
     if(!allowed.has(key)||flags.has(key)||!value||value.startsWith('--'))throw new Error('Invalid option '+key);
@@ -217,9 +233,10 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).hr
   if(!flags.has('--input')||!flags.has('--out'))throw new Error('--input and --out are required');
   if(flags.has('--deduplicate-exact-public')&&!['true','false'].includes(flags.get('--deduplicate-exact-public')))
     throw new Error('--deduplicate-exact-public must be true or false');
-  const result=selectAdmittedCampaign({input:flags.get('--input'),output:flags.get('--out'),
+  const result=await selectAdmittedCampaign({input:flags.get('--input'),output:flags.get('--out'),
     maxFamilyTokens:Number(flags.get('--max-family-tokens')??Number.MAX_SAFE_INTEGER),
     maxFamilyShare:Number(flags.get('--max-family-share')??1),split:flags.get('--split')??'all',
-    deduplicateExactPublic:flags.get('--deduplicate-exact-public')==='true'});
+    deduplicateExactPublic:flags.get('--deduplicate-exact-public')==='true',
+    tracerRoot:flags.get('--tracer-root')??null});
   console.log(JSON.stringify({selected:result.selected,excluded:result.excluded,splits:result.splits}));
 }
