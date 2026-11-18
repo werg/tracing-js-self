@@ -1,0 +1,26 @@
+{
+  "schema": "semantic-consumer-review-process/1",
+  "group": "diloco",
+  "consumerRevision": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+  "argv": [
+    "/workspace/scratch/23f61543c052/native-venv-capture-grammar/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_diloco.py",
+    "-k",
+    "finish or stale or quorum or global_install or lease",
+    "--junitxml=/workspace/scratch/23f61543c052/release-evidence-capture-grammar-2026-11-18/diloco-tests.xml",
+    "--basetemp=/workspace/scratch/23f61543c052/release-evidence-capture-grammar-2026-11-18/tmp/diloco"
+  ],
+  "cwd": "/workspace/scratch/23f61543c052/megatoken-capture-grammar",
+  "startedAt": "2026-11-18T15:40:13.334170+00:00",
+  "scope": "Focused consumer unit/native-contract review; not a distributed training qualification.",
+  "status": "passed",
+  "exitCode": 0,
+  "completedAt": "2026-11-18T15:40:33.557850+00:00",
+  "wallSeconds": 20.223690486000123,
+  "peakRssBytes": 317071360,
+  "logSha256": "f8e661b02bdbe73502ab2f98fad984cfdfa479ba9bf85366ac87f2f2ddc9e834",
+  "consumerTrackedFilesClean": true
+}
