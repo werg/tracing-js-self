@@ -26,13 +26,18 @@ import {measureExecutionDifficulty} from '../src/corpus/execution-difficulty.mjs
 const booleanFlags=new Set(['--require-native','--resume','--retry-failures','--compact-storage']);
 const valueFlags=new Set(['--out','--megatoken','--tokenizer','--python','--recipe','--jobs','--native-policy',
   '--worker-memory-mb','--worker-timeout-ms','--max-output-bytes','--limit','--registry','--freeze-registry',
-  '--source-stream','--per-family','--mutations-per-family','--generated-families','--generation-seed','--input-seed']);
+  '--reference-isolation','--source-stream','--per-family','--mutations-per-family','--generated-families','--generation-seed','--input-seed']);
 const flags=new Map();
 for(let i=2;i<process.argv.length;i++){
   const name=process.argv[i];
   if(flags.has(name)||!booleanFlags.has(name)&&!valueFlags.has(name))throw new Error('Unknown or repeated option '+name);
   if(booleanFlags.has(name))flags.set(name,true);
   else {const value=process.argv[++i];if(value==null||value.startsWith('--'))throw new Error('Missing value for '+name);flags.set(name,value);}
+}
+if(flags.has('--reference-isolation')){
+  const mode=flags.get('--reference-isolation');
+  if(!['trusted-process','linux-namespace'].includes(mode))throw new Error('Unknown reference isolation mode');
+  process.env.TRACING_REFERENCE_ISOLATION=mode;
 }
 const root=fileURLToPath(new URL('..',import.meta.url));
 const output=resolve(flags.get('--out')??'corpus/out/semantic-v5');mkdirSync(output,{recursive:true});
@@ -245,7 +250,9 @@ Object.assign(manifest,{campaign:{schema:'semantic-generation-summary/1',identit
     compressedPrivateBytes:cases.reduce((n,row)=>n+(row.privateEvidence?.bytes??0),0),
     bytesPerAdmission:counts.admitted?cases.filter(row=>row.status==='admitted').reduce((n,row)=>n+
       (row.publicShard?.bytes??0)+(row.privateEvidence?.bytes??0),0)/counts.admitted:null},
-  limitations:['Workers are bounded trusted-source processes; OS-level isolation for untrusted programs remains required.',
+  limitations:[process.env.TRACING_REFERENCE_ISOLATION==='linux-namespace'?
+    'References use qualified Linux namespace/seccomp confinement; the owned teacher and native consumer still accept only reviewed candidates.':
+    'References use trusted-source processes; choose --reference-isolation linux-namespace for OS confinement.',
     'Worker heap limits are V8 heap limits, not whole-process cgroup memory limits.',
     'Executed path signatures describe source-site branch and throw sequences; lexical families without a registry are not independent clusters.']});
 atomicWrite(join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
