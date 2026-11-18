@@ -9,6 +9,32 @@ they are historical comparisons, not a current production contract. Fresh
 episodes must be generated and admitted under v6. Byte savings alone are not
 described as token or learning gains.
 
+## Current v6 target gallery
+
+The current paired gallery is
+[`evidence/semantic-target-gallery-v2/gallery.md`](evidence/semantic-target-gallery-v2/gallery.md).
+It retains every actual v6 target line unchanged and records the source claim,
+public-prefix digest, exact UTF-8 byte count, and production-token count. The
+archived v5 records are compared as stored raw lines; no v5 record is decoded
+with the v6 grammar.
+
+```sh
+node tools/semantic-trace-gallery.mjs \
+  --out /tmp/semantic-gallery-v6 \
+  --tokenizer-json <tokenizer.json> \
+  --consumer-root <megatoken> \
+  --python <python>
+node --test test/semantic-trace-gallery.test.js
+```
+
+Across the eleven verified fixtures, v6 emits **107 records, 3,861 UTF-8
+bytes, and 1,307 production-token IDs**, compared with **145 records, 12,345
+bytes, and 3,784 tokens** for archived v5. The same pinned tokenizer is applied
+to both raw target sets, with byte-exact round-trip checks. Counts encode each
+target line independently and exclude native transport, recurrent context, and
+training masks. This is teacher-target and tokenizer evidence; it does not
+measure model-selected output quality, learning, or native admission.
+
 ## Reproduce the paired gallery
 
 ```sh

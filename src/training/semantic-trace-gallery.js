@@ -1,8 +1,7 @@
 // Audit the bytes a learner actually predicts, alongside their readable view.
 // This is an inspection report, not a new admission authority or trace format.
 import {createHash} from 'node:crypto';
-import {isDeepStrictEqual} from 'node:util';
-import {decodeWitness} from './format.js';
+import {decodeWitness,WITNESS_VERSION} from './format.js';
 import {renderWitness} from './render.js';
 import {EFFECTFUL_ENGINEERING_FIXTURES} from './engineering-fixtures.js';
 import {verifyEffectfulTrainingCase} from './effectful-admit.js';
@@ -25,7 +24,8 @@ const claims={
   job:'The stated owned job transition occurs.',
   await:'The invocation suspends on this Promise with this continuation.',
   resume:'The invocation resumes with the already observed settlement.',
-  end:'The invocation has the stated completion and no blocking pending work.'
+  end:'The invocation has the stated completion and no blocking pending work.',
+  summarize:'The bounded source region has the stated result and executed path.'
 };
 
 const engineering=(id,categories)=>({
@@ -53,26 +53,11 @@ export const SEMANTIC_GALLERY_FIXTURES=Object.freeze([
     '"use strict";function run(n){let value=n;value=n;value=n;return value;}',[3])
 ]);
 
-// Exact top-level byte accounting. Nested expressions remain inside their
-// field value; these categories do not pretend to measure semantic quality.
+// Exact wire-byte accounting for the canonical v6 source-shaped target.
+// The old kind/JSON field partition no longer describes the learned string.
 export function auditWitnessBytes(line){
-  const {kind,fields}=decodeWitness(line);
-  const entries=Object.entries(fields);
-  const fieldBytes=entries.map(([name,value])=>({name,
-    keyBytes:bytes(JSON.stringify(name))+1,valueBytes:bytes(JSON.stringify(value))}));
-  const recordKindBytes=bytes(kind)+1;
-  const punctuationBytes=2+Math.max(0,entries.length-1);
-  const keyBytes=fieldBytes.reduce((n,field)=>n+field.keyBytes,0);
-  const valueBytes=fieldBytes.reduce((n,field)=>n+field.valueBytes,0);
-  const total=bytes(line);
-  if(recordKindBytes+punctuationBytes+keyBytes+valueBytes!==total)
-    throw new TypeError('Gallery requires canonical witness bytes');
-  return {total,recordKindBytes,punctuationBytes,keyBytes,valueBytes,fields:fieldBytes};
-}
-
-function sourceNames(program){
-  return new Set((program?.sites??[]).filter(site=>site.role==='Identifier')
-    .map(site=>program.source.slice(site.start,site.end)));
+  const {kind}=decodeWitness(line);
+  return {kind,total:bytes(line)};
 }
 
 export async function inspectSemanticEpisode(exported,{id,categories=[],tokenizer=null}={}){
@@ -84,12 +69,10 @@ export async function inspectSemanticEpisode(exported,{id,categories=[],tokenize
       typeof tokenizer.identity.digest==='string'&&tokenizer.identity.digest)||typeof tokenizer.encode!=='function'||
       typeof tokenizer.decode!=='function'))
     throw new TypeError('Tokenizer audit requires pinned identity, encode and decode');
-  const names=sourceNames(program),certificateBySequence=new Map(
+  const certificateBySequence=new Map(
     (exported.sidecar?.compiler?.certificates??[]).map(row=>[row.sequence,row]));
-  const records=[],prefix=[],kinds={},fields={},keyFrequency={};
-  const declaredNames=new Set(),lastWrites=new Map();
-  let generatedBytes=0,keyBytes=0,recordKindBytes=0,punctuationBytes=0,valueBytes=0;
-  let observations=0,duplicateCellWrites=0,sourceNamedCells=0,generatedTokens=tokenizer?0:null;
+  const records=[],prefix=[],kinds={};
+  let generatedBytes=0,observations=0,generatedTokens=tokenizer?0:null;
   for(const row of timeline){
     if(row.kind==='semantic'){
       if(row.mode!=='generated')throw new TypeError('A semantic target is not marked generated');
@@ -106,22 +89,9 @@ export async function inspectSemanticEpisode(exported,{id,categories=[],tokenize
         if(await tokenizer.decode(ids)!==row.line)throw new Error('Tokenizer changes actual target bytes');
         record.tokenIds=ids;generatedTokens+=ids.length;
       }
+      record.bytes={total:audit.total};
       records.push(record);kinds[decoded.kind]=(kinds[decoded.kind]??0)+1;
-      generatedBytes+=audit.total;keyBytes+=audit.keyBytes;valueBytes+=audit.valueBytes;
-      recordKindBytes+=audit.recordKindBytes;punctuationBytes+=audit.punctuationBytes;
-      for(const field of audit.fields){
-        fields[field.name]=(fields[field.name]??0)+field.valueBytes;
-        keyFrequency[field.name]=(keyFrequency[field.name]??0)+1;
-      }
-      const cell=decoded.kind==='bind'?decoded.fields.name:
-        decoded.kind==='compute'?decoded.fields.bind:null;
-      if(cell){
-        declaredNames.add(cell);if(names.has(cell))sourceNamedCells++;
-        const value=decoded.kind==='bind'?decoded.fields.value:decoded.fields.result;
-        if(decoded.kind==='bind'&&lastWrites.has(cell)&&isDeepStrictEqual(lastWrites.get(cell),value))
-          duplicateCellWrites++;
-        lastWrites.set(cell,value);
-      }
+      generatedBytes+=audit.total;
     }else if(row.mode==='observed'){
       observations++;
       records.push({sequence:row.sequence,kind:row.kind,targetMask:'observed',
@@ -138,15 +108,11 @@ export async function inspectSemanticEpisode(exported,{id,categories=[],tokenize
       nativeAdmission:exported.sidecar?.admission==='admitted',
       boundary:'Private certificates, source checks and native admission are separate authorities; this gallery grants none.'},
     tokenization:tokenizer?{status:'measured',identity:structuredClone(tokenizer.identity),
-      scope:'Each semantic line encoded independently; excludes native transport and recurrent context.'}:
+      scope:'Each exact generated line encoded independently; excludes native transport and recurrent context.'}:
       {status:'unavailable',reason:'No qualified tokenizer adapter supplied; bytes are not token estimates.'},
-    metrics:{generatedRecords:generatedBytes?Object.values(kinds).reduce((a,b)=>a+b,0):0,
-      generatedBytes,recordKindBytes,punctuationBytes,keyBytes,valueBytes,
-      generatedTokens,transportFragments:null,observedRows:observations,kinds,
-      topLevelValueBytes:fields,topLevelKeyOccurrences:keyFrequency,
-      distinctCells:declaredNames.size,exactSourceNamedBindingRecords:sourceNamedCells,
-      repeatedEqualCellBindingRecords:duplicateCellWrites,
-      overheadDefinition:'Record kind, top-level keys and punctuation are byte accounting, not dispensable semantic overhead.'},
+    metrics:{generatedRecords:Object.values(kinds).reduce((a,b)=>a+b,0),
+      generatedBytes,generatedTokens,transportFragments:null,observedRows:observations,kinds,
+      byteDefinition:'Sum of the exact generated UTF-8 target lines; excludes transport framing and observed context.'},
     records};
 }
 
@@ -161,7 +127,7 @@ export async function buildSemanticTraceGallery({fixtures=SEMANTIC_GALLERY_FIXTU
     cases.push(await inspectSemanticEpisode(checked.exported,{id:fixture.id,
       categories:fixture.categories,tokenizer}));
   }
-  return {schema:'semantic-target-gallery/1',representation:'semantic-trace/5',
+  return {schema:'semantic-target-gallery/2',representation:WITNESS_VERSION,
     purpose:'Actual target inspection; no model-learning or native-qualification claim.',
     projectionOptions:structuredClone(projectionOptions),
     categories:[...new Set(cases.flatMap(row=>row.categories))].sort(),
@@ -170,13 +136,72 @@ export async function buildSemanticTraceGallery({fixtures=SEMANTIC_GALLERY_FIXTU
       generatedTokens:tokenizer?cases.reduce((n,row)=>n+row.metrics.generatedTokens,0):null},cases};
 }
 
+function targetLines(row){
+  if(!Array.isArray(row?.records))throw new TypeError('Gallery case must retain its exact target lines');
+  return row.records.filter(record=>record.targetMask==='generated').map(record=>{
+    if(typeof record.raw!=='string')throw new TypeError('Generated target raw text is missing');
+    return record.raw;
+  });
+}
+
+export function compareSemanticGalleryToV5(gallery,archivedV5,{v5TokenCounts=null}={}){
+  if(gallery?.representation!==WITNESS_VERSION||archivedV5?.representation!=='semantic-trace/5'||
+     !Array.isArray(gallery.cases)||!Array.isArray(archivedV5.cases))
+    throw new TypeError('The comparison requires current v6 targets and archived raw v5 targets');
+  const oldById=new Map(archivedV5.cases.map(row=>[row.id,row]));
+  const cases=gallery.cases.map(current=>{
+    const old=oldById.get(current.id);
+    if(!old)throw new TypeError('The archived v5 gallery is missing case '+current.id);
+    const oldLines=targetLines(old),currentLines=targetLines(current);
+    const oldBytes=oldLines.reduce((total,line)=>total+bytes(line),0);
+    const currentBytes=currentLines.reduce((total,line)=>total+bytes(line),0);
+    if(oldBytes!==old.metrics.generatedBytes||currentBytes!==current.metrics.generatedBytes)
+      throw new TypeError('Stored raw target bytes disagree with gallery metrics for '+current.id);
+    const v5Tokens=v5TokenCounts?.[current.id]??old.metrics.generatedTokens??null;
+    const v6Tokens=current.metrics.generatedTokens??null;
+    return {id:current.id,
+      v5:{generatedRecords:oldLines.length,generatedBytes:oldBytes,generatedTokens:v5Tokens},
+      v6:{generatedRecords:currentLines.length,generatedBytes:currentBytes,generatedTokens:v6Tokens},
+      delta:{generatedRecords:currentLines.length-oldLines.length,
+        generatedBytes:currentBytes-oldBytes,
+        generatedTokens:v5Tokens===null||v6Tokens===null?null:v6Tokens-v5Tokens}};
+  });
+  const totalTokens=key=>cases.every(row=>row[key].generatedTokens!==null)?
+    cases.reduce((total,row)=>total+row[key].generatedTokens,0):null;
+  const v5Records=cases.reduce((total,row)=>total+row.v5.generatedRecords,0);
+  const v6Records=cases.reduce((total,row)=>total+row.v6.generatedRecords,0);
+  const v5Bytes=cases.reduce((total,row)=>total+row.v5.generatedBytes,0);
+  const v6Bytes=cases.reduce((total,row)=>total+row.v6.generatedBytes,0);
+  const v5Tokens=totalTokens('v5'),v6Tokens=totalTokens('v6');
+  return {schema:'semantic-target-gallery-baseline-comparison/1',
+    baselineRepresentation:'semantic-trace/5',currentRepresentation:WITNESS_VERSION,
+    decodeArchivedV5Records:false,
+    interpretation:'V5 records contribute only their stored raw-line bytes and optional same-tokenizer counts; the v6 decoder is never applied to them.',
+    cases,totals:{v5:{generatedRecords:v5Records,generatedBytes:v5Bytes,generatedTokens:v5Tokens},
+      v6:{generatedRecords:v6Records,generatedBytes:v6Bytes,generatedTokens:v6Tokens},
+      delta:{generatedRecords:v6Records-v5Records,generatedBytes:v6Bytes-v5Bytes,
+        generatedTokens:v5Tokens===null||v6Tokens===null?null:v6Tokens-v5Tokens}}};
+}
+
 export function renderSemanticTraceGallery(gallery){
   const output=['# Actual semantic target gallery','',gallery.purpose,'',
     '| Case | Categories | Generated records | Target UTF-8 bytes | Token count |',
     '| --- | --- | ---: | ---: | ---: |'];
   for(const row of gallery.cases)output.push('| '+[row.id,row.categories.join(', '),
     row.metrics.generatedRecords,row.metrics.generatedBytes,row.metrics.generatedTokens??'unavailable'].join(' | ')+' |');
-  output.push('','Byte counts exclude transport framing and observed context. Token counts, when available, encode each line independently; they do not measure native recurrent context or transport fragments.','');
+  output.push('','Byte counts sum the exact generated UTF-8 target lines and exclude transport framing. Token counts, when available, encode each line independently; they do not measure native recurrent context or transport fragments.','');
+  if(gallery.v5BaselineComparison){
+    output.push('## Archived v5 comparison','','The archived v5 targets are compared as raw stored lines. They are not decoded or reinterpreted under the v6 grammar.','','| Case | v5 records | v6 records | Record change | v5 bytes | v6 bytes | Byte change | v5 tokens | v6 tokens | Token change |','| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |');
+    for(const row of gallery.v5BaselineComparison.cases){
+      const show=value=>value===null||value===undefined?'unavailable':String(value);
+      output.push('| '+[row.id,row.v5.generatedRecords,row.v6.generatedRecords,
+        row.delta.generatedRecords,row.v5.generatedBytes,row.v6.generatedBytes,
+        row.delta.generatedBytes,show(row.v5.generatedTokens),show(row.v6.generatedTokens),
+        show(row.delta.generatedTokens)].join(' | ')+' |');
+    }
+    const total=gallery.v5BaselineComparison.totals;
+    output.push('',`Overall: ${total.v5.generatedRecords} → ${total.v6.generatedRecords} generated records; ${total.v5.generatedBytes} → ${total.v6.generatedBytes} UTF-8 bytes; ${total.v5.generatedTokens??'token count unavailable'} → ${total.v6.generatedTokens??'token count unavailable'} tokens.`,'');
+  }
   for(const row of gallery.cases){
     output.push('## '+row.id,'','```js',row.source,'```','',
       'Qualification: `'+row.qualification.status+'`. '+row.qualification.boundary,'',
@@ -184,7 +209,7 @@ export function renderSemanticTraceGallery(gallery){
       '### Readable execution and observation boundaries','');
     for(const record of row.records)output.push('- '+record.sequence+' '+record.targetMask+': '+
       (record.readable??record.kind)+' '+(record.claim?'— '+record.claim:''));
-    output.push('','### Byte and field accounting','','```json',JSON.stringify(row.metrics,null,2),'```','');
+    output.push('','### Exact target measurements','','```json',JSON.stringify(row.metrics,null,2),'```','');
   }
-  return output.join('\n')+'\n';
+  return output.map(line=>line.trimEnd()).join('\n').trimEnd()+'\n';
 }
