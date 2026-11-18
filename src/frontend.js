@@ -182,7 +182,7 @@ export function parse(source) {
 let site=0;
 export function compile(ast) {
   site=0;const programs={};let next=0;
-  function bodyProgram(body,params=[],async=false,defaults=[],restIndex=-1,inheritedStrict=false) {
+  function bodyProgram(body,params=[],async=false,defaults=[],restIndex=-1,inheritedStrict=false,parameterSites=[]) {
     // Strictness belongs to the lexical code, not to the caller. Only an
     // unescaped, unparenthesized string in the directive prologue enables it;
     // nested functions (including arrows/default initializers) inherit it.
@@ -207,7 +207,7 @@ export function compile(ast) {
         for(const d of declarations)if(d.kind!=='var')emit('DECLARE',{name:d.id,kind:d.kind},d);
       }
       for(const n of nodes)if(n.type==='Function'){
-        const fid=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict);
+        const fid=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites);
         emit('DEF_FN',{name:n.id,codeId:fid,params:n.params,async:n.async},n);
       }
       for(const n of nodes)if(n.type!=='Function')stmt(n);
@@ -225,7 +225,7 @@ export function compile(ast) {
           for(const a of n.args)expr(a);
           emit('CONSTRUCT',n.args.length,n);break;
         case 'FunctionExpr':{
-          const codeId=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict);
+          const codeId=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites);
           emit('MAKE_FUNCTION',{codeId,arrow:n.arrow,async:n.async},n);
           break;
         }
@@ -661,13 +661,18 @@ export function compile(ast) {
     if(parameterExpressions){
       params.forEach((name,i)=>{
         const initializer=defaults[i];
-        if(!initializer){emit('PARAM_INIT',name,body[0]);return;}
+        const parameter=parameterSites[i];
+        if(!parameter)throw new TypeError('Missing source location for parameter initialization');
+        // Supplied arguments initialize at their parameter, never at the first
+        // body declaration. A shared body span would invent a second source
+        // declaration receipt for this implicit binding operation.
+        if(!initializer){emit('PARAM_INIT',name,parameter);return;}
         const guard=emit('DEFAULT_GUARD',{name,skipPc:null},initializer);
         expr(initializer);
         emit('INIT',name,initializer);
         const done=emit('JUMP',null,initializer);
         instructions[guard].arg.skipPc=instructions.length;
-        emit('PARAM_INIT',name,initializer);
+        emit('PARAM_INIT',name,parameter);
         instructions[done].arg=instructions.length;
       });
       emit('ENTER_BODY_ENV',null,body[0]);

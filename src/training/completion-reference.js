@@ -168,6 +168,9 @@ export function ownedCompletionObservations(bundle,source){
     const instruction=instructions?.find(x=>x.siteId===event.siteId);
     const abrupt=event.completion?.type==='throw';
     if(!abrupt&&['binding.initialize','binding.write'].includes(event.operation)&&plan.sites.has('initialize:'+key)){
+      const declaration=plan.sites.get('initialize:'+key);
+      if(instruction?.arg!==declaration.id.name)
+        throw new TypeError('Source initialization site names a different committed binding');
       emit(key,'initialize',storedCell(previousFrame?.envId,instruction?.arg));
     }
     if(!abrupt&&['binding.write','property.write'].includes(event.operation)&&plan.sites.has('assign:'+key)){

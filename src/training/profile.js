@@ -62,10 +62,10 @@ export function parseTraining(source) {
   function parameters(n){
     return n.params.map((p,i)=>{
       if(p.type==='RestElement' && p.argument?.type==='Identifier' && i===n.params.length-1)
-        return {name:p.argument.name,default:null,rest:true};
-      if(p.type==='Identifier')return {name:p.name,default:null};
+        return {...span(p),name:p.argument.name,default:null,rest:true};
+      if(p.type==='Identifier')return {...span(p),name:p.name,default:null};
       if(p.type==='AssignmentPattern'&&p.left.type==='Identifier')
-        return {name:p.left.name,default:expr(p.right)};
+        return {...span(p),name:p.left.name,default:expr(p.right)};
       reject(p,'parameter pattern (identifier or scalar default required)');
     });
   }
@@ -96,6 +96,7 @@ export function parseTraining(source) {
         return {...loc,type:'FunctionExpr',
           arrow:n.type==='ArrowFunctionExpression',async:n.async,
           params:parsedParams.map(p=>p.name),defaults:parsedParams.map(p=>p.default),
+          parameterSites:parsedParams.map(span),
           restIndex:parsedParams.findIndex(p=>p.rest),body};
       }
       case 'TemplateLiteral':
@@ -260,6 +261,7 @@ export function parseTraining(source) {
         const parsedParams=parameters(n);
         return {...loc,type:'Function',id:n.id.name,
           params:parsedParams.map(x=>x.name),defaults:parsedParams.map(x=>x.default),
+          parameterSites:parsedParams.map(span),
           restIndex:parsedParams.findIndex(p=>p.rest),async:n.async,body:stmt(n.body)};
       }
       case 'ReturnStatement':return {...loc,type:'Return',argument:n.argument?expr(n.argument):null};
