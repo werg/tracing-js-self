@@ -6,11 +6,10 @@ import {fileURLToPath} from 'node:url';
 import {serialize} from 'node:v8';
 import {createHash} from 'node:crypto';
 import {parse} from 'acorn';
-import {EFFECTFUL_ENGINEERING_FIXTURES} from '../src/training/engineering-fixtures.js';
 import * as admission from '../src/training/effectful-admit.js';
 import {effectfulMetrics,checkCounterfactualPrefixes,effectfulFamilySplit} from '../src/training/effectful-admit.js';
-import {semanticRecipeFamilies,SEMANTIC_TASK_TEMPLATES,SEMANTIC_RECIPE_VERSION,SEMANTIC_RECIPE_NAME,
-  benchmarkFamiliesV1,BENCHMARK_ALGORITHMS,BENCHMARK_RECIPE_NAME,BENCHMARK_RECIPE_VERSION}
+import {SEMANTIC_TASK_TEMPLATES,SEMANTIC_RECIPE_VERSION,SEMANTIC_RECIPE_NAME,
+  BENCHMARK_ALGORITHMS,BENCHMARK_RECIPE_NAME,BENCHMARK_RECIPE_VERSION}
   from '../src/training/recipe-fixtures.js';
 import {hostOperationContract} from '../src/host/operations.js';
 import {encodeNativeGraph} from '../src/host/graph-codec.js';
@@ -21,13 +20,13 @@ import {runGenerationProcess} from '../src/corpus/generation-process.mjs';
 import {loadNativeSettings,createNativeConsumer} from '../src/corpus/native-admission-client.mjs';
 import {buildSourceRegistry,verifySourceRegistry,frozenSplitIdentity,canonicalHash}
   from '../src/corpus/source-registry.mjs';
-import {trustedRealSourceCases} from '../src/corpus/trusted-source-candidates.mjs';
+import {trainingCandidateTasks,candidateSourceInventory,SOURCE_RECIPES} from '../src/corpus/training-candidates.mjs';
 import {measureExecutionDifficulty} from '../src/corpus/execution-difficulty.mjs';
 
 const booleanFlags=new Set(['--require-native','--resume','--retry-failures','--compact-storage']);
 const valueFlags=new Set(['--out','--megatoken','--tokenizer','--python','--recipe','--jobs','--native-policy',
   '--worker-memory-mb','--worker-timeout-ms','--max-output-bytes','--limit','--registry','--freeze-registry',
-  '--source-stream','--per-family','--mutations-per-family']);
+  '--source-stream','--per-family','--mutations-per-family','--generated-families','--generation-seed','--input-seed']);
 const flags=new Map();
 for(let i=2;i<process.argv.length;i++){
   const name=process.argv[i];
@@ -38,7 +37,7 @@ for(let i=2;i<process.argv.length;i++){
 const root=fileURLToPath(new URL('..',import.meta.url));
 const output=resolve(flags.get('--out')??'corpus/out/semantic-v5');mkdirSync(output,{recursive:true});
 const recipe=flags.get('--recipe')??'engineering';
-if(!['engineering','real-source',SEMANTIC_RECIPE_NAME,BENCHMARK_RECIPE_NAME].includes(recipe))throw new Error('Unknown source recipe');
+if(!SOURCE_RECIPES.includes(recipe))throw new Error('Unknown source recipe');
 const bounded=(flag,fallback,min,max)=>{const n=Number(flags.get(flag)??fallback);
   if(!Number.isSafeInteger(n)||n<min||n>max)throw new Error(flag+' must be '+min+'..'+max);return n;};
 const jobs=bounded('--jobs',1,1,8),limit=bounded('--limit',10000,1,10000);
@@ -58,29 +57,13 @@ const normalizedSourceAst=source=>{
       .map(([key,item])=>[key,visit(item)])):value;
   return visit(parse(source,{ecmaVersion:'latest'}));
 };
-const tasks=[];
-const sourceTask=fixture=>tasks.push({kind:'source',fixture});
-if(recipe==='engineering'){
-  for(const fixture of EFFECTFUL_ENGINEERING_FIXTURES)sourceTask(fixture);
-  tasks.push({kind:'session',fixture:{id:'repeated-ingress',family:'async-counter',
-    cases:EFFECTFUL_ENGINEERING_FIXTURES.slice(0,2)}});
-}else if(recipe==='real-source'){
-  for(const fixture of trustedRealSourceCases({root,
-    streams:(flags.get('--source-stream')??'utilities,exercism,production').split(','),
-    perFamily:bounded('--per-family',2,1,100),
-    mutationsPerFamily:bounded('--mutations-per-family',0,0,512)}))sourceTask(fixture);
-}else{
-  const authoredFamilies=recipe===BENCHMARK_RECIPE_NAME?benchmarkFamiliesV1({representation}):semanticRecipeFamilies({representation});
-  for(const family of authoredFamilies){
-    sourceTask({...family.pure,role:'common-support'});sourceTask({...family.callbacks,role:'effectful'});
-    tasks.push({kind:'session',fixture:{...family.repeated,role:'effectful'}});
-  }
-}
-const sourceInventory=tasks.flatMap(task=>(task.kind==='source'?[task.fixture]:task.fixture.cases).map((fixture,index)=>({
-  id:task.fixture.id+'-source-'+index,family:task.fixture.family,source:fixture.source,
-  ancestorIds:fixture.ancestorIds??[],project:fixture.provenance?.upstream?.repository??'repository-authored',
-  upstreamPath:fixture.provenance?.upstream?.path??null,
-  upstreamRevision:fixture.provenance?.upstream?.revision??producerRevision})));
+const tasks=trainingCandidateTasks(recipe,{root,
+  streams:(flags.get('--source-stream')??'utilities,exercism,production').split(','),
+  perFamily:bounded('--per-family',recipe==='generated-v1'?4:2,1,100),
+  mutationsPerFamily:bounded('--mutations-per-family',0,0,512),
+  generatedFamilies:bounded('--generated-families',16,1,144),
+  generationSeed:bounded('--generation-seed',73,0,0xffffffff),inputSeed:bounded('--input-seed',89,0,0xffffffff)});
+const sourceInventory=candidateSourceInventory(tasks,{producerRevision});
 let registry=null;
 if(flags.has('--registry')&&flags.has('--freeze-registry'))throw new Error('Choose an existing registry or freeze a new one');
 if(flags.has('--registry')){registry=JSON.parse(readFileSync(resolve(flags.get('--registry')),'utf8'));verifySourceRegistry(registry);}
@@ -150,8 +133,8 @@ await Promise.all(Array.from({length:Math.min(jobs,selectedTasks.length)},async(
   }
 }));
 for(const task of selectedTasks)if(summaryById.has(task.fixture.id))cases.push(summaryById.get(task.fixture.id));
-const lifecycleInputs=[];
-if(!['engineering','real-source'].includes(recipe)&&!abort.signal.aborted&&selectedTasks.length===tasks.length){
+const lifecycleInputs=[],lifecycleDispositions=[];
+if(['training-v4','benchmark-v1'].includes(recipe)&&!abort.signal.aborted&&selectedTasks.length===tasks.length){
   for(const split of ['train','validation']){
     let parent,exported;
     for(const item of cases){
@@ -159,7 +142,8 @@ if(!['engineering','real-source'].includes(recipe)&&!abort.signal.aborted&&selec
       const value=campaign.exported(exportEntries.get(item.id));
       if(value.sidecar.collection){parent=item;exported=value;break;}
     }
-    if(!parent)throw new Error('Authored recipe has no verified repeated source family in '+split);
+    if(!parent){lifecycleDispositions.push({split,status:'untested',
+      reason:'No certified repeated parent exists in this recipe and frozen split'});continue;}
     const child=structuredClone(exported.sidecar.collection.components[0]);
     const fixture={id:parent.id.replace(/-repeated$/,'-child'),family:parent.family,role:'lifecycle-child'};
     const candidate={kind:'certified-lifecycle-child',parent:parent.candidateDigest,
@@ -178,17 +162,25 @@ if(!['engineering','real-source'].includes(recipe)&&!abort.signal.aborted&&selec
       freshlyRun.add(fixture.id);
     }
     record(fixture,entry);cases.push(summaryById.get(fixture.id));
-    lifecycleInputs.push({id:fixture.id,...(flags.has('--compact-storage')?{}:{path:fixture.id+'.json'}),
+    lifecycleDispositions.push({id:fixture.id,family:fixture.family,split,status:entry.status});
+    if(entry.public)lifecycleInputs.push({id:fixture.id,...(flags.has('--compact-storage')?{}:{path:fixture.id+'.json'}),
       family:fixture.family,split,representation});
   }
 }
+if(['training-v4','benchmark-v1'].includes(recipe)&&(abort.signal.aborted||selectedTasks.length!==tasks.length))
+  for(const split of ['train','validation'])lifecycleDispositions.push({split,status:'untested',
+    reason:abort.signal.aborted?'Campaign cancelled before lifecycle collection':'Candidate limit excludes complete authored collection'});
 const counterfactuals=[];
 for(const pair of [['counter-0','counter-1'],['branch-0','branch-1']])
   if(pair.every(id=>exportEntries.has(id)))counterfactuals.push({pair,
     ...checkCounterfactualPrefixes(...pair.map(id=>campaign.exported(exportEntries.get(id))))});
 const counts={attempted:cases.length,admitted:0,locally_verified:0};
 for(const item of cases)counts[item.status]=(counts[item.status]??0)+1;
-const recipeMetadata=['engineering','real-source'].includes(recipe)?{name:recipe,
+const splitOf=family=>registry?frozenSplitIdentity(registry,family).split:effectfulFamilySplit(family);
+const recipeMetadata=['engineering','real-source','generated-v1'].includes(recipe)?{name:recipe,
+  ...(recipe==='generated-v1'?{schema:'bounded-program-grammar/1',generatedFamilies:Number(flags.get('--generated-families')??16),
+    generationSeed:Number(flags.get('--generation-seed')??73),inputSeed:Number(flags.get('--input-seed')??89),
+    perFamily:Number(flags.get('--per-family')??4),labels:'independent-execution-only'}:{}),
   ...(recipe==='real-source'?{sourceStreams:(flags.get('--source-stream')??'utilities,exercism,production').split(','),
     perFamily:Number(flags.get('--per-family')??2),mutationsPerFamily:Number(flags.get('--mutations-per-family')??0),
     authority:'fresh-original-transformed-owned-reference-native-gates',
@@ -196,39 +188,40 @@ const recipeMetadata=['engineering','real-source'].includes(recipe)?{name:recipe
   schema:BENCHMARK_RECIPE_VERSION,name:recipe,
   algorithms:BENCHMARK_ALGORITHMS.map(({name,body})=>({name,body,
     family:'semantic-benchmark-v1:'+name,ancestor:'source-algorithm-v1:'+name,
-    split:effectfulFamilySplit('semantic-benchmark-v1:'+name),
+    split:splitOf('semantic-benchmark-v1:'+name),
     normalizedAstDigest:hash(normalizedSourceAst('function run(a,b){'+body+'}'))})),
   families:BENCHMARK_ALGORITHMS.map(({name})=>'semantic-benchmark-v1:'+name),
   splitCounts:Object.fromEntries(['train','validation','test'].map(split=>[split,
-    BENCHMARK_ALGORITHMS.filter(({name})=>effectfulFamilySplit('semantic-benchmark-v1:'+name)===split).length])),
+    BENCHMARK_ALGORITHMS.filter(({name})=>splitOf('semantic-benchmark-v1:'+name)===split).length])),
   normalizedAstDuplicateCount:BENCHMARK_ALGORITHMS.length-new Set(BENCHMARK_ALGORITHMS.map(({body})=>
     hash(normalizedSourceAst('function run(a,b){'+body+'}')))).size,
   normalizedAstAncestorDuplicateCount:BENCHMARK_ALGORITHMS.filter(({body})=>
     SEMANTIC_TASK_TEMPLATES.some(template=>hash(normalizedSourceAst('function run(a,b){return '+template.expression+';}'))===
       hash(normalizedSourceAst('function run(a,b){'+body+'}')))).length,
-  retainEveryAuthoredFamily:true,lifecycleInputs,
+  retainEveryAuthoredFamily:limit>=tasks.length,lifecycleInputs,lifecycleDispositions,
   coverage:{familyCount:BENCHMARK_ALGORITHMS.length,
     splitCounts:Object.fromEntries(['train','validation','test'].map(split=>[split,
-      BENCHMARK_ALGORITHMS.filter(({name})=>effectfulFamilySplit('semantic-benchmark-v1:'+name)===split).length])),
+      BENCHMARK_ALGORITHMS.filter(({name})=>splitOf('semantic-benchmark-v1:'+name)===split).length])),
     sourceKinds:['pure','retained-callback-recovery','repeated-invocation','lifecycle-child'],
     familyRoles:Object.fromEntries(['common-support','effectful','lifecycle-child'].map(role=>[role,
       [...new Set(cases.filter(item=>item.role===role).map(item=>item.family))].length]))}
 }:{schema:SEMANTIC_RECIPE_VERSION,name:recipe,
   templateDigest:hash(SEMANTIC_TASK_TEMPLATES),families:SEMANTIC_TASK_TEMPLATES.map(t=>'semantic-recipe:'+t.name),
-  splitSeed:17,retainEveryAuthoredFamily:true,lifecycleInputs};
+  splitSeed:registry?.seed??17,retainEveryAuthoredFamily:limit>=tasks.length,lifecycleInputs,lifecycleDispositions};
 const manifest={schema:'semantic-corpus-manifest/4',execution:EXECUTION_VERSION,trace:WITNESS_VERSION,
   context:CONTEXT_VERSION,profile:HARNESS_PROFILE,producerRevision,
   representation:'compact',
   recipe:recipeMetadata,
   catalogDigest:hash(JSON.stringify(hostOperationContract(),null,2)+'\n'),
   counts,cases,counterfactuals,selectionOrigin:nativeConsumer?'certified_teacher':'owned-interpreter-teacher',
-  evidenceKind:recipe==='real-source'?'pinned-real-source':'deterministic-engineering',optimizerSteps:0,learnedSuccess:null};
+  evidenceKind:recipe==='real-source'?'pinned-real-source':recipe==='generated-v1'?'bounded-generated-programs':'deterministic-engineering',optimizerSteps:0,learnedSuccess:null};
 const elapsedMs=performance.now()-start;
 const generatedTokens=cases.reduce((sum,row)=>sum+(row.metrics?.generatedTokens??0),0);
 const fresh=cases.filter(row=>freshlyRun.has(row.id));
 const freshTokens=fresh.filter(row=>row.status==='admitted').reduce((sum,row)=>sum+(row.metrics?.generatedTokens??0),0);
 Object.assign(manifest,{campaign:{schema:'semantic-generation-summary/1',identityDigest:campaign.identityDigest,
-  completed:cases.length,planned:selectedTasks.length+(!['engineering','real-source'].includes(recipe)&&selectedTasks.length===tasks.length?2:0),
+  completed:cases.length,planned:selectedTasks.length+(['training-v4','benchmark-v1'].includes(recipe)?2:0),
+  untestedLifecycle:lifecycleDispositions.filter(row=>row.status==='untested').length,
   resumed,cancelled:abort.signal.aborted,log:'campaign.jsonl',publicRecords:'objects/public',
   privateEvidence:'objects/private',compatibilityExports:!flags.has('--compact-storage'),
   limits:bounds,workers:jobs,receiptCache:'full-source-profile-runtime-verifier-identity'},

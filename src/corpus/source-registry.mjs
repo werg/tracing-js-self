@@ -12,6 +12,7 @@ const sha=text=>createHash('sha256').update(text).digest('hex');
 const text=x=>typeof x==='string'&&x.length>0&&x.length<=2000;
 const list=x=>Array.isArray(x)&&x.every(text)&&new Set(x).size===x.length;
 const sort=x=>[...new Set(x)].sort();
+const verifiedRegistries=new Map();
 const splitFor=(id,seed)=>{
   const bucket=parseInt(sha(seed+':'+id).slice(0,8),16)%100;
   return bucket<80?'train':bucket<90?'validation':'test';
@@ -62,10 +63,13 @@ export function buildSourceRegistry(input,{seed=17,nearThreshold=0.92,
     if(row.project&&row.upstreamPath)keys.push('upstream:'+row.project+':'+row.upstreamPath);
     for(const key of keys){if(lineage.has(key))union(index,lineage.get(key));else lineage.set(key,index);}
   }
-  const cloneAudit=clusterOwnedSources(sources.map(row=>({family:row.id,split:'train',
+  // Literal variants are already connected above. Compare one representative
+  // per literal-insensitive shape to keep input expansion out of clone budgets.
+  const representatives=[...new Map(sources.map(row=>[row.literalInsensitiveHash,row])).values()];
+  const cloneAudit=clusterOwnedSources(representatives.map(row=>({family:row.id,split:'train',
     sourceFingerprint:row.sourceFingerprint})),{nearThreshold});
   const clones=new Map();
-  for(const row of sources){
+  for(const row of representatives){
     const key=cloneAudit.keyByFamily[row.id],index=byId.get(row.id);
     if(clones.has(key))union(index,clones.get(key));else clones.set(key,index);
   }
@@ -99,9 +103,16 @@ export function buildSourceRegistry(input,{seed=17,nearThreshold=0.92,
 export function verifySourceRegistry(registry){
   if(registry?.schema!=='semantic-source-registry/1'||registry.policy!=='source-components/1')
     throw new Error('Unsupported frozen source registry');
+  // Rehash the complete caller-supplied payload on every call. Only an exact
+  // previously rebuilt registry can skip repeated parser/clone work; object
+  // identity or a caller's claimed digest never authorizes reuse.
+  const digest=canonicalHash(registry);
+  if(verifiedRegistries.has(digest))return {valid:true,digest,components:verifiedRegistries.get(digest)};
   const rebuilt=buildSourceRegistry(registry.sources,registry);
   if(!isDeepStrictEqual(rebuilt,registry))throw new Error('Frozen source registry changed');
-  return {valid:true,digest:canonicalHash(registry),components:registry.components.length};
+  if(verifiedRegistries.size>=16)verifiedRegistries.delete(verifiedRegistries.keys().next().value);
+  verifiedRegistries.set(digest,registry.components.length);
+  return {valid:true,digest,components:registry.components.length};
 }
 export function frozenSplitIdentity(registry,family){
   verifySourceRegistry(registry);
