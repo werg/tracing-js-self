@@ -15,6 +15,13 @@ test('rebuilds original/transform/source/license identity for each pinned real-s
   assert.ok(rows.every(row=>row.trustTier==='trusted-owned-source'&&row.license&&row.provenance.notice));
   assert.ok(rows.every(row=>row.provenance.transformedSource===row.source&&row.originalReferenceSource));
   assert.ok(rows.every(row=>row.provenance.upstream.revision&&row.ancestorIds.length));
+  for(const row of rows.filter(row=>row.provenance.sourceStream==='exercism')){
+    const notice=row.provenance.canonicalNotice;
+    assert.equal(notice.repository,row.provenance.canonical.repository);
+    assert.equal(notice.revision,row.provenance.canonical.revision);
+    assert.equal(notice.text,readFileSync(notice.path,'utf8'));
+    assert.match(notice.sha256,/^[a-f0-9]{64}$/);
+  }
 });
 test('refuses changed pinned utility bytes before executing any source',t=>{
   const root=directory(t),lock=JSON.parse(readFileSync('corpus/utility-source-lock.json','utf8'));

@@ -76,6 +76,7 @@ try{
       reason:result.reason??null,durationMs:run.durationMs,peakRssBytes:run.peakRssBytes,
       inputGraph:encodeNativeGraph(fixture.args),upstream:provenance.upstream,
       canonical:provenance.canonical??null,canonicalInput:provenance.canonicalInput??null,
+      canonicalNotice:provenance.canonicalNotice?{...provenance.canonicalNotice,text:undefined}:null,
       canonicalArgumentBinding:provenance.canonicalArgumentBinding??null,
       canonicalExpected:provenance.canonicalExpected??null,canonicalExpectedBinding:provenance.canonicalExpectedBinding??null,
       originalSourceSha256:provenance.originalSourceSha256,transformedSourceSha256:provenance.transformedSourceSha256,
