@@ -6,14 +6,14 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { createSpecOracle } from '../src/spec-oracle.js';
+import { createSpecOracle, specOraclePackage } from '../src/spec-oracle.js';
 import { validateSelection,checkExecutionFixture,classifyExecutionCase,summarizeExecutionCases } from '../src/test262-execution.js';
 
 const profile = JSON.parse(readFileSync(new URL('../profiles/targets.lock.json',import.meta.url),'utf8'));
 const selection = JSON.parse(readFileSync(new URL('../conformance/test262-cases.json',import.meta.url),'utf8'));
 validateSelection(selection,profile);
 
-const installed = JSON.parse(readFileSync(new URL('../node_modules/@engine262/engine262/package.json',import.meta.url),'utf8'));
+const installed = specOraclePackage();
 assert.equal(installed.version,profile.referenceEngine.npmVersion,'Engine262 reference version differs from profile lock');
 
 function options(argv) {
