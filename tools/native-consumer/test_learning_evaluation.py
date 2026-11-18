@@ -37,12 +37,35 @@ def run(expt, seed):
                    'cases': [measured('validation', step == 4, f'trained-{seed}-{step}')]} for step in (2, 4)]
     chosen = learning.choose_validation_checkpoint(expt, candidates)
     return {'optimizerSeed': seed, 'optimizerSteps': 4, 'baseIdentity': 'base',
+            'selectedCheckpointExposureAssessment': {'everySelectedEpisodeVisitedAllWindows': True},
             'trainedIdentity': chosen['checkpointIdentity'], 'validation': candidates,
             'selection': chosen, 'base': [measured(row['id'], False, 'base') for row in expt['test']],
             'trained': [measured(row['id'], True, chosen['checkpointIdentity']) for row in expt['test']]}
 
 
 class FrozenLearningTests(unittest.TestCase):
+    def test_native_fragment_budget_is_not_a_whole_decision_cap(self):
+        expt = experiment()
+        budget = learning.selected_rollout_budget(expt)
+        self.assertEqual(budget['nativeMaxTokensPerFragment'], 32)
+        self.assertEqual(budget['maximumFragmentsPerDecision'], 64)
+        self.assertEqual(budget['declaration'], 'legacy-tokensPerDecision-meant-per-fragment')
+        expt['rolloutBudget'] = {'nativeMaxTokensPerFragment': 16, 'maximumFragmentsPerDecision': 64,
+                                 'secondsPerCase': 30}
+        self.assertEqual(learning.selected_rollout_budget(expt)['declaration'], 'explicit-per-fragment')
+        expt['rolloutBudget']['maximumFragmentsPerDecision'] = 1
+        with self.assertRaisesRegex(ValueError, 'inference budget'):
+            learning.require_frozen_experiment(expt)
+
+    def test_training_window_policy_is_frozen_and_bounded(self):
+        expt = experiment()
+        expt['trainingBudget'] = {'sampler': 'native-sequential-permuted-episodes',
+            'maxWindowRecords': 256, 'maxScoredDecisions': 256, 'maxWindowTokens': 16384, 'seconds': 900}
+        learning.require_frozen_experiment(expt)
+        expt['trainingBudget']['sampler'] = 'undeclared-resampling'
+        with self.assertRaisesRegex(ValueError, 'sampling policy'):
+            learning.require_frozen_experiment(expt)
+
     def test_family_weighting_keeps_variants_from_dominating(self):
         cases = [case(f'variant-{index}', 'many') for index in range(100)] + [case('single', 'other')]
         rows = [measured(item['id'], item['family'] == 'many') for item in cases]
@@ -106,6 +129,9 @@ class FrozenLearningTests(unittest.TestCase):
         self.assertEqual(result['uncertainty']['lower'], 1)
         self.assertEqual(result['pureOutcomeTransfer']['status'], 'untested')
         self.assertFalse(result['teacherForcedLossIsExecutionAccuracy'])
+        runs[0]['selectedCheckpointExposureAssessment'] = None
+        self.assertFalse(learning.summarize_learning(expt, runs)['requirements']['completeSelectedCheckpointTrainingExposure'])
+        runs[0]['selectedCheckpointExposureAssessment'] = {'everySelectedEpisodeVisitedAllWindows': True}
         runs[1]['baseIdentity'] = 'different-base'
         for row in runs[1]['base']:
             row['checkpointIdentity'] = 'different-base'

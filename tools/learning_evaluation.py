@@ -22,6 +22,43 @@ def mean(values):
     return sum(values) / len(values) if values else None
 
 
+def selected_rollout_budget(experiment):
+    """Normalize old declarations without changing their signed bytes.
+
+    The pinned native selector applies --max-tokens to each fragment, with up
+    to 64 fragments in one logical decision. It is not a whole-decision cap.
+    """
+    budget = experiment.get('rolloutBudget')
+    if budget is None:
+        return {'nativeMaxTokensPerFragment': 32, 'maximumFragmentsPerDecision': 64,
+                'secondsPerCase': 120, 'declaration': 'legacy-unfrozen-default'}
+    legacy = 'tokensPerDecision' in budget
+    if legacy and 'nativeMaxTokensPerFragment' in budget:
+        raise ValueError('Ambiguous frozen inference budget')
+    tokens = budget.get('tokensPerDecision' if legacy else 'nativeMaxTokensPerFragment')
+    if (type(tokens) is not int or not 1 <= tokens <= 1024 or
+            type(budget.get('secondsPerCase')) is not int or not 1 <= budget['secondsPerCase'] <= 300 or
+            (not legacy and budget.get('maximumFragmentsPerDecision') != 64)):
+        raise ValueError('Invalid frozen inference budget')
+    return {'nativeMaxTokensPerFragment': tokens, 'maximumFragmentsPerDecision': 64,
+            'secondsPerCase': budget['secondsPerCase'],
+            'declaration': 'legacy-tokensPerDecision-meant-per-fragment' if legacy else 'explicit-per-fragment'}
+
+
+def frozen_training_budget(experiment):
+    budget = experiment.get('trainingBudget')
+    if budget is None:
+        return None
+    limits = {'maxWindowRecords': (1, 1024), 'maxScoredDecisions': (1, 1024),
+              'maxWindowTokens': (16384, 16384), 'seconds': (1, 86400)}
+    if any(type(budget.get(key)) is not int or not low <= budget[key] <= high
+           for key, (low, high) in limits.items()):
+        raise ValueError('Invalid frozen native training window or time budget')
+    if budget.get('sampler') != 'native-sequential-permuted-episodes':
+        raise ValueError('Unsupported frozen native source sampling policy')
+    return budget
+
+
 def require_frozen_experiment(experiment):
     if experiment.get('schema') != SCHEMA:
         raise ValueError('Unsupported frozen learning experiment')
@@ -35,10 +72,8 @@ def require_frozen_experiment(experiment):
             experiment.get('initializationSeed') not in (17, 29, 43) or experiment.get('decoderSeed') not in (17, 29, 43)):
         raise ValueError('Declare supported initialization and decoder identities')
     budget = experiment.get('rolloutBudget')
-    if budget is not None and (type(budget.get('tokensPerDecision')) is not int or
-            not 1 <= budget['tokensPerDecision'] <= 1024 or type(budget.get('secondsPerCase')) is not int or
-            not 1 <= budget['secondsPerCase'] <= 300):
-        raise ValueError('Invalid frozen inference budget')
+    selected_rollout_budget(experiment)
+    frozen_training_budget(experiment)
     if experiment['mode'] == 'confirmatory' and budget is None:
         raise ValueError('Confirmatory inference budget must be frozen before training')
     policy = experiment['policy']
@@ -252,6 +287,11 @@ def summarize_learning(experiment, runs):
         by_seed[seed] = {'optimizerSeed': seed, 'optimizerSteps': run['optimizerSteps'],
                          'baseIdentity': run['baseIdentity'], 'trainedIdentity': run['trainedIdentity'],
                          'selectedCheckpointStep': selection['step'], 'base': base, 'trained': trained,
+                         'selectedCheckpointExposureAssessment': run.get('selectedCheckpointExposureAssessment'),
+                         'trainingExposure': run.get('trainingExposure'),
+                         'trainingSupervisedTokens': run.get('trainingSupervisedTokens'),
+                         'selectedCheckpointReceipt': run.get('selectedCheckpointReceipt'),
+                         'selectedCheckpointSupervisedTokens': run.get('selectedCheckpointSupervisedTokens'),
                          'improvement': trained['familyWeightedWholeTaskSuccess'] - base['familyWeightedWholeTaskSuccess']}
     if set(by_seed) != set(experiment['optimizerSeeds']):
         raise ValueError('Missing optimizer seeds cannot leave the experiment denominator')
@@ -299,6 +339,9 @@ def summarize_learning(experiment, runs):
         'frozenInferenceBudget': experiment.get('rolloutBudget') is not None,
         'atLeastThreeOptimizerSeeds': len(by_seed) >= 3,
         'sameActualBaseCheckpointAcrossSeeds': len({row['baseIdentity'] for row in by_seed.values()}) == 1,
+        'completeSelectedCheckpointTrainingExposure': all(
+            (row['selectedCheckpointExposureAssessment'] or {}).get('everySelectedEpisodeVisitedAllWindows') is True
+            for row in by_seed.values()),
         'declaredTestComponentMinimum': len(component_deltas) >= policy['minimumConfirmatoryTestComponents'],
         'usefulMeanImprovement': improvement >= policy['minimumUsefulImprovement'],
         'pairedFamilyIntervalAboveZero': uncertainty['lower'] > 0,

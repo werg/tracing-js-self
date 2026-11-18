@@ -16,7 +16,7 @@ from pathlib import Path
 import sys
 import traceback
 
-from learning_evaluation import require_frozen_experiment, choose_validation_checkpoint, summarize_learning
+from learning_evaluation import require_frozen_experiment, choose_validation_checkpoint, summarize_learning, selected_rollout_budget
 
 SPEC = importlib.util.spec_from_file_location('optimization_smoke', Path(__file__).with_name('run-optimization-smoke.py'))
 SMOKE = importlib.util.module_from_spec(SPEC)
@@ -77,10 +77,10 @@ def main():
     record()
     try:
         experiment = require_frozen_experiment(json.loads(args.experiment.read_text()))
-        budget = experiment.get('rolloutBudget') or {'tokensPerDecision': 32, 'secondsPerCase': 120}
-        args.rollout_tokens = args.rollout_tokens if args.rollout_tokens is not None else budget['tokensPerDecision']
+        budget = selected_rollout_budget(experiment)
+        args.rollout_tokens = args.rollout_tokens if args.rollout_tokens is not None else budget['nativeMaxTokensPerFragment']
         args.rollout_timeout = args.rollout_timeout if args.rollout_timeout is not None else budget['secondsPerCase']
-        if experiment.get('rolloutBudget') is not None and (args.rollout_tokens != budget['tokensPerDecision'] or
+        if experiment.get('rolloutBudget') is not None and (args.rollout_tokens != budget['nativeMaxTokensPerFragment'] or
                 args.rollout_timeout != budget['secondsPerCase']):
             raise ValueError('Actual inference caps differ from the frozen budget')
         consumer = args.consumer_root.resolve()
@@ -114,7 +114,7 @@ def main():
         record(phase='validation', smokeReports=[{'path': str(path), 'sha256': SMOKE.sha256(path)} for path, _ in smoke_runs],
                population=experiment['population'], baseOrigin=experiment['baseOrigin'],
                decoderSeed=experiment['decoderSeed'], optimizerSeeds=experiment['optimizerSeeds'],
-               rolloutBudget={'tokensPerDecision': args.rollout_tokens, 'secondsPerCase': args.rollout_timeout})
+               rolloutBudget=budget)
         selected = []
         # Finish every validation decision and durably seal selections before
         # running ANY test case. Test outcomes cannot influence checkpoint choice.
@@ -122,6 +122,14 @@ def main():
             seed = smoke['optimizerSeed']
             destination = root / f'seed-{seed}'
             candidates, bundles, checkpoint_receipts = [], {}, {}
+            plan = None
+            if smoke.get('nativeWindowPlan') is not None:
+                plan_path = smoke_path.parent / 'native-window-plan.json'
+                if SMOKE.sha256(plan_path) != smoke['nativeWindowPlan']['sha256']:
+                    raise ValueError('Pre-update native window plan changed')
+                plan = json.loads(plan_path.read_text())
+                if len(plan['sources']) != len(experiment['training']):
+                    raise ValueError('Native window plan does not cover the declared training members')
             for step in experiment['checkpointSteps']:
                 checkpoint = locate_checkpoint(smoke_path, step)
                 bundle = SMOKE.export_checked(checkpoint, destination / f'served-step-{step}')
@@ -135,6 +143,8 @@ def main():
                     raise ValueError('Checkpoint is not from this declared optimizer/data run')
                 checkpoint_receipts[step] = {'checkpointStateSha256': metadata['state_sha256'],
                     'globalStep': step, 'sourceSampling': metadata['source_sampling']}
+                if plan is not None:
+                    checkpoint_receipts[step]['exposureAssessment'] = SMOKE.training_exposure(plan, metadata['source_sampling'])
                 del payload
                 bundles[step] = bundle
                 gc.collect()
@@ -167,6 +177,7 @@ def main():
                    'trainingExposure': smoke['checkpointVerification']['sourceSampling'],
                    'trainingSupervisedTokens': smoke['supervisedLexicalTokens'],
                    'selectedCheckpointReceipt': selected_receipt,
+                   'selectedCheckpointExposureAssessment': selected_receipt.get('exposureAssessment'),
                    'selectedCheckpointSupervisedTokens': sum(row['denominators']['lexical'] for row in
                        smoke['trainingSummary'] if row['step'] <= choice['step'])}
             runs.append(run)

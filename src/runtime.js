@@ -386,13 +386,15 @@ export class Runtime {
           putOwn(out,String(decode(out.properties.length.value)),
             pending.currentValue,origin);
         else if(pending.method==='reduce')pending.accumulator=value;
+        const someMatched=pending.method==='some'&&truthy(value);
         pending.index++;
         pending.waitingFrameId=null;
-        if(pending.index<pending.length){
+        if(!someMatched&&pending.index<pending.length){
           draft.control.a0.activeFrameId=caller.id;
           return;
         }
-        value=pending.method==='reduce'?pending.accumulator:['ref',pending.outputId];
+        value=pending.method==='reduce'?pending.accumulator:
+          pending.method==='forEach'?U:pending.method==='some'?['bool',someMatched]:['ref',pending.outputId];
         delete caller.pendingArrayMethod;
         }
       }
@@ -698,6 +700,7 @@ export class Runtime {
            draft.control.a0.activeFrameId=caller.id;return;
          }
          if(caller.pendingProperty?.waitingFrameId===frame.id)caller.pendingProperty=null;
+         if(caller.pendingArrayMethod?.waitingFrameId===frame.id)delete caller.pendingArrayMethod;
         draft.control.a0.activeFrameId=caller.id;
         const waiting=caller.operationId&&draft.operations[caller.operationId]?.coercion?.waitingFrameId;
         if(waiting===frame.id)caller.pendingCoercionThrow=copy(completion);
@@ -1593,7 +1596,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             return {...operands(fn,...args),result:['ref',callable[1]],causes:[{kind:'invocation',frameId:id}]};
           }
           if(callable[0]==='builtinfn' &&
-             ['filter','map','reduce','sort'].some(m=>callable[1]==='Array.prototype.'+m)){
+             ['filter','map','reduce','sort','some','forEach'].some(m=>callable[1]==='Array.prototype.'+m)){
             const array=receiver[0]==='ref'?s.heap[receiver[1]]:null;
             if(!array||array.kind!=='array'||Object.keys(array.accessors??{}).length)
               throw new TypeError('Array callback needs owned array data');
@@ -1601,8 +1604,10 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             if(!Number.isSafeInteger(length)||length<0||length>10000)
               throw new RangeError('Array callback iteration limit');
             const callback=args[0]?.value??U;
-            if(!this.callableGuest(s,callback)||s.heap[callback[1]].async)
-              guestFault('TypeError','Array callback must be a synchronous guest function');
+            if(!this.callableGuest(s,callback))
+              guestFault('TypeError','Array callback must be a guest function');
+            if(s.heap[callback[1]].async)
+              throw new TypeError('Async array callback is outside the bounded profile');
             const method=callable[1].slice('Array.prototype.'.length);
             if(method!=='reduce'&&args.length>1)
               throw new TypeError('Unsupported callback thisArg');
@@ -1610,7 +1615,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               throw new RangeError('Sort comparator budget exceeded');
             if(method==='reduce' && args.length>2)
               throw new TypeError('Unsupported reduce options');
-            const outputId=['reduce','sort'].includes(method)?null:this.next(s,'obj');
+            const outputId=['filter','map'].includes(method)?this.next(s,'obj'):null;
             if(outputId){s.heap[outputId]={id:outputId,kind:'array',properties:{
               length:token(['num',method==='map'?length:0],eventId)},
               propertyVersions:{length:0},shapeVersion:0,version:0};}
@@ -1643,7 +1648,8 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             if(this.advanceArrayCallback(s,f,eventId))
               return {...operands(fn,...args),causes:[{kind:'invocation',frameId:f.pendingArrayMethod.waitingFrameId}]};
             delete f.pendingArrayMethod;
-            return {...operands(fn,...args),...result(method==='reduce'?accumulator:['ref',outputId])};
+            return {...operands(fn,...args),...result(method==='reduce'?accumulator:
+              method==='forEach'?U:method==='some'?['bool',false]:['ref',outputId])};
           }
           if(callable[0]==='builtinfn' && callable[1].startsWith('Number.prototype.')){
             const method=callable[1].slice('Number.prototype.'.length);
@@ -1878,14 +1884,20 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
              if(!Number.isSafeInteger(length)||length<0||length>10000||
                 Object.keys(obj.accessors??{}).length)
                throw new TypeError('Array method needs bounded dense own slots');
+             const method=callable[1].slice('Array.prototype.'.length);
              const slots=[];
-             for(let i=0;i<length;i++){
+             // fill writes each selected index; it does not read the previous
+             // element. Holes elsewhere remain holes. Custom prototypes can
+             // supply inherited setters, which this leaf cannot bypass.
+             if(method==='fill'){
+               if(![null,'Array.prototype','Object.prototype'].includes(objectPrototype(obj)))
+                 throw new TypeError('Array.fill inherited setters are outside the bounded profile');
+             }else for(let i=0;i<length;i++){
                const slot=obj.properties[String(i)];
                if(!slot||!Array.isArray(slot.value))
                  throw new TypeError('Sparse array operation not modeled');
                slots.push(slot.value);
              }
-             const method=callable[1].slice('Array.prototype.'.length);
              const numberAt=(i,missing,{undefinedDefault=false}={})=>{
                if(i>=args.length || (undefinedDefault && args[i].value[0]==='undefined'))return missing;
                const tag=args[i].value;

@@ -1,0 +1,57 @@
+{
+  "accepted": [
+    {
+      "episodeId": "semantic:harness:dcaeefc92cff1a63ad6e9ba476065b387327a190c08628fdf8a700abba17b9c9",
+      "generatedTokens": 300,
+      "id": "counter-0",
+      "sourceCluster": "component:3119c1b837d02134acaccc9062edaa45456498c24db7137e7770cbaf44fd6c3b",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:fb87996a2ed8294c2969a8ffca90ab42a9fcd3eb5132053183770fffd7531a33",
+      "generatedTokens": 300,
+      "id": "checkpoint-source-reread",
+      "sourceCluster": "component:3119c1b837d02134acaccc9062edaa45456498c24db7137e7770cbaf44fd6c3b",
+      "split": "train"
+    }
+  ],
+  "components": [
+    {
+      "generatedTokens": 600,
+      "sourceCluster": "component:3119c1b837d02134acaccc9062edaa45456498c24db7137e7770cbaf44fd6c3b",
+      "tokenShare": 1.0
+    }
+  ],
+  "generatedTrainTokens": 600,
+  "heldOutInputIds": [],
+  "learnedSuccess": null,
+  "nativeAccepted": 2,
+  "nativeDispositions": [
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:dcaeefc92cff1a63ad6e9ba476065b387327a190c08628fdf8a700abba17b9c9",
+      "id": "counter-0",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:fb87996a2ed8294c2969a8ffca90ab42a9fcd3eb5132053183770fffd7531a33",
+      "id": "checkpoint-source-reread",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    }
+  ],
+  "optimizerSteps": 0,
+  "policy": {
+    "componentIdentity": "authenticated-frozen-source-components",
+    "enabled": true,
+    "maxFamilyShare": 1,
+    "maxFamilyTokens": 600,
+    "scope": "training-only",
+    "tokenMeasurement": "fresh-native-generatedTokens"
+  },
+  "schema": "semantic-prepared-training-selection/1",
+  "status": "verified",
+  "violations": []
+}

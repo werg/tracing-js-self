@@ -214,6 +214,91 @@ def checkpoint_receipt(checkpoint, initial_parameters):
             'sourceSampling': metadata['source_sampling']}
 
 
+def native_window_plan(prepared, codec, config):
+    """Inspect the actual pinned native packing and sampler before any update."""
+    from megatoken.data import PreparedCorpus
+    from megatoken.training.engine import window_config
+    from megatoken.training.stream import _WindowPlan, WindowStream
+
+    dataset = PreparedCorpus([str(prepared)])
+    try:
+        window = window_config(config)
+        sources = []
+        for index in range(len(dataset)):
+            episode, _ = dataset.fetch(index)
+            plan = _WindowPlan(episode, codec, window)
+            sources.append({'sourceId': episode.lineage.source_id, 'episodeId': episode.episode_id,
+                            'windows': len(plan), 'scoredTokens': sum(plan[k].P for k in range(len(plan))),
+                            'transcriptTokens': sum(plan[k].D for k in range(len(plan)))})
+        if len({row['sourceId'] for row in sources}) != len(sources) or any(not row['windows'] for row in sources):
+            raise ValueError('Selected prepared episodes need distinct source IDs and scored native windows')
+        stream = WindowStream(dataset, codec, window, seed=config.seed)
+        order, counts = [], Counter()
+        for _ in range(sum(row['windows'] for row in sources)):
+            item = stream.next()
+            if item is None:
+                raise ValueError('Single-worker scored native window plan unexpectedly contains padding')
+            source = item.episode.lineage.source_id
+            if source not in counts:
+                order.append(source)
+            counts[source] += 1
+        if dict(counts) != {row['sourceId']: row['windows'] for row in sources}:
+            raise ValueError('Native first-epoch sampler differs from the inspected packing plan')
+        return {'schema': 'native-training-window-plan/1', 'sampler': 'native-sequential-permuted-episodes',
+                'seed': config.seed, 'windowConfig': asdict(window), 'preparedIdentity': dataset.identity,
+                'sources': sources, 'firstEpochSourceOrder': order,
+                'firstEpochWindows': sum(counts.values()),
+                'eachEpisodeIsOneWindow': all(row['windows'] == 1 for row in sources)}
+    finally:
+        dataset.close()
+
+
+def training_exposure(plan, sampling):
+    expected = {row['sourceId']: row['windows'] for row in plan['sources']}
+    actual = sampling.get('source_windows', {})
+    if (set(actual) - set(expected) or any(type(count) is not int or count < 1 for count in actual.values())):
+        raise ValueError('Checkpoint source exposure contains a foreign source or invalid window count')
+    complete = sampling.get('complete_history') is True
+    missing = sorted(set(expected) - set(actual))
+    unfinished = sorted(key for key, count in expected.items() if actual.get(key, 0) < count)
+    return {'selectedSources': len(expected), 'exposedSources': len(actual), 'completeHistory': complete,
+            'sampledWindows': sum(actual.values()), 'expectedFirstEpochWindows': sum(expected.values()),
+            'unexposedSourceIds': missing, 'incompleteEpisodeSourceIds': unfinished,
+            'everySelectedSourceExposed': complete and not missing,
+            'everySelectedEpisodeVisitedAllWindows': complete and not unfinished,
+            'sourceWindowCounts': dict(sorted(actual.items()))}
+
+
+def partial_training_receipt(root):
+    """Retain observed updates after timeout/SIGKILL without inventing a checkpoint."""
+    root = Path(root)
+    metrics = root / 'training/metrics.jsonl'
+    if not metrics.exists():
+        return None
+    rows, malformed = [], 0
+    for line in metrics.read_text().splitlines():
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            malformed += 1
+            continue
+        if row.get('event') == 'train':
+            rows.append(row)
+    pointer = root / 'training/checkpoints/latest.json'
+    checkpoint = None
+    if pointer.exists():
+        name = json.loads(pointer.read_text())['checkpoint']
+        metadata = root / 'training/checkpoints' / name / 'metadata.json'
+        if metadata.exists():
+            checkpoint = {'path': str(metadata.parent), 'metadataSha256': sha256(metadata),
+                          'metadata': json.loads(metadata.read_text())}
+    return {'schema': 'partial-native-optimization/1', 'metricsSha256': sha256(metrics),
+            'observedOptimizerSteps': max((row['global_step'] for row in rows), default=0),
+            'supervisedLexicalTokens': sum(row['denominators']['lexical'] for row in rows),
+            'malformedMetricLines': malformed, 'lastDurableCheckpoint': checkpoint,
+            'updatesAreNotDurableCheckpointEvidence': True}
+
+
 def verify_training_start(initial, phase_start):
     from megatoken.training.checkpoint import load_checkpoint
 
@@ -410,12 +495,16 @@ def main():
     parser.add_argument('--rollout-tokens', type=int, default=128)
     parser.add_argument('--rollout-timeout', type=int, default=120)
     parser.add_argument('--train-timeout', type=int, default=900)
+    parser.add_argument('--training-window-records', type=int, default=1)
+    parser.add_argument('--training-window-decisions', type=int, default=2)
     parser.add_argument('--seed', type=int, choices=[17, 29, 43], default=17)
     args = parser.parse_args()
     if min(args.examples, args.steps, args.rollout_cases, args.rollout_tokens, args.train_timeout) < 1:
         parser.error('All caps must be positive')
     if not 1 <= args.rollout_timeout <= 300 or args.rollout_tokens > 1024:
         parser.error('Rollout timeout must be <=300 seconds and token cap <=1024')
+    if not all(1 <= value <= 1024 for value in (args.training_window_records, args.training_window_decisions)):
+        parser.error('Training window record and decision caps must be 1..1024')
     root = args.output.resolve()
     root.mkdir(parents=True, exist_ok=False)
     report = {'schema': 'optimization-smoke/1', 'status': 'running',
@@ -435,16 +524,25 @@ def main():
         require_clean_checkout(consumer)
         producer_revision, consumer_revision = git_head(tracer), git_head(consumer)
         experiment = json.loads(args.experiment.read_text()) if args.experiment else None
+        from learning_evaluation import selected_rollout_budget, frozen_training_budget
+        budget = selected_rollout_budget(experiment or {})
         if experiment is not None:
             if (args.seed not in experiment['optimizerSeeds'] or args.steps != max(experiment['checkpointSteps']) or
                     args.initialization_seed != experiment['initializationSeed'] or
                     producer_revision != experiment['producerRevision']):
                 raise ValueError('Actual training inputs differ from the frozen experiment')
             if experiment.get('rolloutBudget') is not None and (
-                    args.rollout_tokens != experiment['rolloutBudget']['tokensPerDecision'] or
-                    args.rollout_timeout != experiment['rolloutBudget']['secondsPerCase']):
+                    args.rollout_tokens != budget['nativeMaxTokensPerFragment'] or
+                    args.rollout_timeout != budget['secondsPerCase']):
                 raise ValueError('Actual inference caps differ from the frozen budget')
+            training_budget = frozen_training_budget(experiment)
+            if training_budget is not None and (args.training_window_records != training_budget['maxWindowRecords'] or
+                    args.training_window_decisions != training_budget['maxScoredDecisions'] or
+                    args.train_timeout != training_budget['seconds']):
+                raise ValueError('Actual native training windows or time cap differ from the frozen budget')
             record(experimentSha256=sha256(args.experiment), experimentPath=str(args.experiment.resolve()))
+        record(rolloutBudget={**budget, 'nativeMaxTokensPerFragment': args.rollout_tokens,
+                              'secondsPerCase': args.rollout_timeout})
         manifest, selected = choose_candidates(corpus, args.examples, experiment)
         record(initializationSeed=args.initialization_seed, optimizerSeed=args.seed,
                baseOrigin='newly-initialized', trainingCandidateIdentities=[item.get('identityDigest') for item, _ in selected])
@@ -490,7 +588,8 @@ def main():
                              output=str(root / 'training'), device='cpu', precision='fp32', seed=args.seed,
                              max_steps=args.steps, microbatch_episodes=1, max_accumulation_windows=1,
                              accumulate_scored=1, accumulate_ingested=16384, max_history_tokens=16384,
-                             max_window_records=1, max_record_bytes=16384, generated_capacity=1024,
+                             max_window_records=args.training_window_records, scored_decisions=args.training_window_decisions,
+                             max_record_bytes=16384, generated_capacity=1024,
                              model_overrides={'vocab_size': codec.vocab_size, 'max_capacity': 1024,
                                               'max_history_chunks': 1024},
                              effort=1, gradient_checkpointing=False, checkpoint_every=checkpoint_interval,
@@ -498,6 +597,12 @@ def main():
                              deterministic=True, use_stage_mixture=False, use_effort_mixture=False)
         config_path = root / 'train-config.json'
         write_json(config_path, asdict(config))
+        plan = native_window_plan(prepared, codec, config)
+        write_json(root / 'native-window-plan.json', plan)
+        record(nativeWindowPlan={'path': str(root / 'native-window-plan.json'),
+                                'sha256': sha256(root / 'native-window-plan.json'),
+                                'firstEpochWindows': plan['firstEpochWindows'],
+                                'eachEpisodeIsOneWindow': plan['eachEpisodeIsOneWindow']})
         initial, initial_parameters = create_initial_checkpoint(root, config, codec, masks['chunking'],
                                                                initialization_seed=args.initialization_seed)
         write_json(root / 'initial-parameter-identities.json', initial_parameters)
@@ -512,6 +617,7 @@ def main():
         pointer = json.loads((root / 'training/checkpoints/latest.json').read_text())
         checkpoint = root / 'training/checkpoints' / pointer['checkpoint']
         checkpoint_check = checkpoint_receipt(checkpoint, initial_parameters)
+        exposure = training_exposure(plan, checkpoint_check['sourceSampling'])
         if checkpoint_check['globalStep'] != args.steps:
             raise ValueError('Actual optimizer step count differs from the requested cap')
         metrics = [json.loads(line) for line in (root / 'training/metrics.jsonl').read_text().splitlines()]
@@ -527,6 +633,7 @@ def main():
         if base_bundle['model_sha256'] == trained_bundle['model_sha256']:
             raise ValueError('Training did not change the actual served model')
         record(phase='evaluating', optimizerSteps=args.steps, trainedBundle=trained_bundle,
+               trainingExposure=exposure,
                initialTrainingState=start_check,
                checkpointVerification={key: value for key, value in checkpoint_check.items()
                                        if key not in {'changedParameters', 'updatedOptimizerOwners'}},
@@ -554,7 +661,9 @@ def main():
                         'observedMasked': True, 'generatedSupervised': True,
                         'checkpointReloadExact': True, 'servedReloadExact': True,
                         'completeHeldInExecutions': all(row['wholeTaskSuccess'] for row in trained),
-                        'approximately32Examples': len(selected) >= 32}
+                        'approximately32Examples': len(selected) >= 32,
+                        'everySelectedSourceExposed': exposure['everySelectedSourceExposed'],
+                        'everySelectedEpisodeVisitedAllWindows': exposure['everySelectedEpisodeVisitedAllWindows']}
         record(status='completed', phase='complete', requirements=requirements,
                optimizationSmokePassed=all(requirements.values()),
                remaining=[] if all(requirements.values()) else [
@@ -563,6 +672,14 @@ def main():
                           'optimizerSteps': args.steps}))
         return 0
     except BaseException as error:
+        try:
+            partial = partial_training_receipt(root)
+            if partial is not None:
+                write_json(root / 'partial-training-receipt.json', partial)
+                record(partialTraining=partial, optimizerSteps=partial['observedOptimizerSteps'],
+                       supervisedLexicalTokens=partial['supervisedLexicalTokens'])
+        except Exception as evidence_error:
+            record(partialEvidenceError={'type': type(evidence_error).__name__, 'message': str(evidence_error)})
         record(status='failed', error={'type': type(error).__name__, 'message': str(error)},
                traceback=traceback.format_exc())
         print(f'Optimization smoke stopped; durable report: {root / "report.json"}', file=sys.stderr)

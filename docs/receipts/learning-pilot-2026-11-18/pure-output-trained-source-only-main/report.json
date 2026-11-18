@@ -1,0 +1,88 @@
+{
+  "schema": "semantic-pure-output-run/1",
+  "status": "completed",
+  "origin": "trained",
+  "checkpointIdentity": "dd969f909f23feb82a651c03fe3d1fa4911642502fd6b7f8c0bbb0c271d4be29",
+  "cohortSha256": "69eb288023895c40fe4895e3725bdbd28280c960b4d3086247001ba032e4d505",
+  "modelCommand": "/workspace/scratch/0c59f3502a6d/native-venv/bin/python",
+  "modelArgs": [
+    "/workspace/scratch/0c59f3502a6d/learning-worktree/tools/native-pure-output-model.py",
+    "--consumer-root",
+    "/workspace/scratch/0c59f3502a6d/megatoken",
+    "--served",
+    "/workspace/scratch/0c59f3502a6d/evidence/learning-pilot-main/seed-17/served-step-16",
+    "--max-tokens",
+    "128"
+  ],
+  "runnerSha256": "fa5c08504fa2231126abb3e93d865dc4904019207c2d0b974a9190284d308a35",
+  "graphScorerSha256": "276cc3f2bb5aea02d8b66f27c5f371dcb81e11d4fe707ca95df5113359f6d00b",
+  "modelArgumentFileHashes": {
+    "/workspace/scratch/0c59f3502a6d/learning-worktree/tools/native-pure-output-model.py": "da65f96c3344377cb90636abc52845cc320e8e0f0caaca3ba0b3f3b99cee661f"
+  },
+  "budget": {
+    "maxTokens": 128,
+    "secondsPerCase": 120
+  },
+  "endpoint": "source-and-input-to-observable-outcome",
+  "cases": [
+    {
+      "id": "semantic-recipe:squared-distance/squared-distance-pure@1fc153775bc3bb9c",
+      "family": "semantic-recipe:squared-distance",
+      "sourceCluster": "component:a1aca22a005b30bee347b92eb12ac5df8fe0cd43e6193d281902118660f96548",
+      "checkpointIdentity": "dd969f909f23feb82a651c03fe3d1fa4911642502fd6b7f8c0bbb0c271d4be29",
+      "wholeTaskSuccess": false,
+      "validOutput": false,
+      "generatedTokens": 126,
+      "retainedGeneratedTokensLowerBound": 126,
+      "artifacts": "/workspace/scratch/0c59f3502a6d/evidence/pure-output-trained-source-only-main/0000",
+      "wallSeconds": 10.046616739000456,
+      "originalPayloadSha256": "a535441baf6cfa864cf9db93d2572e247e1fabb9e1a924588266c9118ebfdb31",
+      "nativeFailure": null,
+      "generation": {
+        "terminal": true,
+        "valid": true,
+        "maxTokens": 128,
+        "started": true,
+        "emissionsComplete": true
+      },
+      "emissionIdentity": "83e0924e2d82c7527870c3e6b99f851d5ee029e6d475823254429fcc06a269ba",
+      "modelIdentityAuthority": "actual-native-model",
+      "firstDivergence": {
+        "path": "outcome",
+        "reason": "invalid-original-model-json",
+        "message": "Expecting value: line 1 column 1 (char 0)"
+      },
+      "artifactsSha256": {
+        "generated.bin": "a535441baf6cfa864cf9db93d2572e247e1fabb9e1a924588266c9118ebfdb31",
+        "model-response.bin": "52d15772657f7f7a511768d2d14c9d8c7207ed1e7cae3279b02d41e92a0c1a3a",
+        "model-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "private-expected.json": "faa38c9bbf52501ce408164c498a5524dbfde2e1b3d3f43040d0b7e307baa0c0",
+        "request.json": "4ce73da52b3e1936fd4659139ab89f5314bce2b5497865380303a275a90f6013"
+      }
+    }
+  ],
+  "generalizationClaim": false,
+  "decoderSeed": 17,
+  "nativePolicy": {
+    "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+  },
+  "independentExpectationSource": "previously-frozen-source/reference/replay/native-qualified-episode",
+  "metrics": {
+    "episodes": 1,
+    "independentComponents": 1,
+    "successes": 0,
+    "familyWeightedWholeTaskSuccess": 0.0,
+    "episodeWeightedWholeTaskSuccess": 0.0,
+    "components": {
+      "component:a1aca22a005b30bee347b92eb12ac5df8fe0cd43e6193d281902118660f96548": 0.0
+    },
+    "validOutputRate": 0.0,
+    "wallSeconds": 10.046616739000456,
+    "wallSecondsPerCorrectTask": null,
+    "generatedTokens": 126,
+    "retainedGeneratedTokensLowerBound": 126,
+    "generatedTokensPerCorrectTask": null
+  }
+}
