@@ -29,6 +29,15 @@ def require(condition, message):
     if not condition: raise ValueError(message)
 
 
+def require_checkpoint_hash(actual, expected, *, origin):
+    """Bind every actual load/export to the first authenticated checkpoint state."""
+    require(all(isinstance(value, str) and len(value) == 64 and
+                all(char in '0123456789abcdef' for char in value)
+                for value in (actual, expected)),
+            f'{origin} requires exact checkpoint SHA-256 identities')
+    require(actual == expected, f'{origin} checkpoint identity differs from pinned checkpoint')
+
+
 class NativeConditionalCaptured(BaseException):
     """Stop before the native policy draw; deliberately not an ordinary model error."""
 

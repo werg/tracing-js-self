@@ -305,6 +305,9 @@ jobs:
 
   restore-engineering-release:
     needs: independent-native-import
+    # The restore verifies its own engineering archive and every original
+    # positive attempt even if another corpus recipe reports a refusal.
+    if: ${{ always() && !cancelled() }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:

@@ -20,7 +20,8 @@ import sys
 import time
 import traceback
 
-from native_conditional_probe import capture_prior, compare_priors, decoder_support_comparison, digest
+from native_conditional_probe import (capture_prior, compare_priors, decoder_support_comparison,
+                                      digest, require_checkpoint_hash)
 
 SPEC = importlib.util.spec_from_file_location('optimization_smoke', Path(__file__).with_name('run-optimization-smoke.py'))
 SMOKE = importlib.util.module_from_spec(SPEC)
@@ -47,10 +48,13 @@ def source_bindings(consumer):
 
 
 def training_capture(checkpoint, prepared, packet, *, identity, seed):
+    from megatoken.loading import load_trained
+    trained = load_trained(checkpoint, device='cpu')
+    require_checkpoint_hash(trained.metadata.get('state_sha256'), identity['checkpointStateSha256'],
+                            origin='Actual training reload')
     import torch
     from megatoken.data.storage import PreparedCorpus
     from megatoken.data.semantic_harness_v5 import adapt_selected_harness_v5
-    from megatoken.loading import load_trained
     from megatoken.runtime import seed_everything
     from megatoken.training.config import TrainConfig
     from megatoken.training.engine import prepare_batches, window_config
@@ -58,7 +62,6 @@ def training_capture(checkpoint, prepared, packet, *, identity, seed):
     from megatoken.training.meridians import forward_meridian_batch
     from megatoken.training.stream import EpisodeWindow, _WindowPlan
     from megatoken.training.transducer import TransducerTrainer
-    trained = load_trained(checkpoint, device='cpu')
     model, codec = trained.model, trained.codec
     model.eval()
     config = TrainConfig.from_dict(trained.payload['train_config'], expand_data=False)
@@ -114,11 +117,13 @@ def training_capture(checkpoint, prepared, packet, *, identity, seed):
 
 
 def serving_capture(bundle_path, packet, *, identity, seed, max_tokens):
+    from megatoken.served import ServedBundle
+    served = ServedBundle(bundle_path, device='cpu')
+    require_checkpoint_hash(served.manifest.get('checkpoint_sha256'), identity['checkpointStateSha256'],
+                            origin='Actual served reload')
     from megatoken.model.multitrack import MultiTrackGenerator
     from megatoken.multitrack_runtime import MultiTrackRuntime
     from megatoken.semantic_model_adapter import SelectedSemanticInference
-    from megatoken.served import ServedBundle
-    served = ServedBundle(bundle_path, device='cpu')
     model = served.model
     before = SMOKE.state_identity(model.state_dict())
     runtime = MultiTrackRuntime(MultiTrackGenerator.of(model), chunking=served.chunking)
@@ -236,10 +241,18 @@ def main():
         else:
             checkpoint, prepared = args.checkpoint.resolve(), args.prepared.resolve()
             record(checkpointOrigin='existing-exact-checkpoint')
-        from megatoken.training.checkpoint import load_checkpoint
+        from megatoken.training.checkpoint import load_checkpoint, resolve_checkpoint
+        # A root/latest.json reference can advance while a diagnostic runs.
+        # Resolve it once, then bind every read/export to this physical snapshot.
+        checkpoint_request = str(checkpoint)
+        checkpoint = resolve_checkpoint(checkpoint).resolve(strict=True)
+        record(phase='checkpoint-verification', checkpointRequest=checkpoint_request,
+               checkpoint=str(checkpoint))
         payload, metadata = load_checkpoint(checkpoint)
         checkpoint_step = payload['global_step']; del payload
         bundle = SMOKE.export_checked(checkpoint, root/'served-exact')
+        require_checkpoint_hash(bundle.get('checkpoint_sha256'), metadata.get('state_sha256'),
+                                origin='Exported served bundle')
         identity = {'checkpointStateSha256': metadata['state_sha256'], 'servedModelSha256': bundle['model_sha256'],
                     'tokenizerIdentity': bundle['codec_fingerprint'], 'publicPrefixSha256': digest(packet['prefix']),
                     'firstTargetSha256': hashlib.sha256(packet['firstTarget']['record'].encode()).hexdigest()}

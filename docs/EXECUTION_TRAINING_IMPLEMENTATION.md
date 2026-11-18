@@ -27,7 +27,7 @@ retain their original producer, consumer and verification identities.
 | C1: coverage after preparation | The capped selector authenticates actual prepared inputs, keeps source/admitted/prepared/planned/consumed inventories separate, and balances rare supported features under token/component caps. Evaluation membership is preserved. | Actually consumed coverage requires optimizer-window receipts. The historical D availability report explicitly lacks raw per-row and consumed-target evidence. See [native prepared coverage](NATIVE_PREPARED_COVERAGE.md). |
 | C3: split stress audit | The audit probes renamed/wrapped/literal/dead-code relatives, verifies explicit ancestry and holdouts, reports heuristic misses and giant components, and checks benchmark-family exclusion. | A heuristic miss requires review; the audit cannot certify semantic equivalence or unknown pretraining contamination. See [split stress](SOURCE_SPLIT_STRESS.md). |
 | E2: bounded execution and shards | The runner checks effective cgroup CPU/memory/PID limits and bounded output/tmp storage before work starts. Deterministic generation shards reuse the global registry, preserve retries/refusals and verify complete merging and resume. | This host cannot qualify the requested aggregate isolation. The retained preflight is `unavailable`, no workload was launched, and no container digest is claimed. See [runner and sharding](AGGREGATE_RUNNER_AND_SHARDING.md). |
-| E3: current navigation | This ledger, current status and the expanded baseline command distinguish current code, exact executed evidence and historical receipts. | Required repository checks depend on a selected release policy; a public dataset additionally needs its distribution decision and source-rights review. |
+| E3: restoration and current navigation | The bounded restore tool authenticates the original archive, locks and producer, then replays every positive attempt with that producer while preserving all other dispositions. CI runs an engineering restore in a separate hosted job. This ledger and the expanded baseline distinguish code, executed evidence and historical receipts. | Local release/restore checks passed: 32 Python and 18 Node tests. A completed hosted restore requires its separate job receipt; original-policy native requalification remains explicit. See [restore drill](RELEASE_RESTORE_DRILL.md). Public distribution still requires its own decision and source-rights review. |
 
 ## What the native input diagnosis established
 
@@ -46,6 +46,17 @@ prepared data/checkpoints. A byte-level repair alone does not establish
 recurrent state equality, categorical action support, conditional logits,
 gradient correctness or convergence. Each must have its own measured result.
 The original failed receipt and candidate are preserved as a fixed control.
+
+The [first hosted repaired comparison](evidence/native-input-parity-6b7d895/README.md)
+passed for producer checkout `6b7d895…` and companion `548ab7e…`: two identical
+observations, a matching 580-byte framed instruction and equal declared
+execution purpose. The original artifact bytes and CI identity are retained.
+Subsequent companion changes also unify physical context announcements. The
+[actual conditional probe](NATIVE_CONDITIONAL_PROBE.md) compares a freshly
+compatible checkpoint through the real training and serving paths; it retains
+failed or incomplete measurements and never infers full parity from input-byte
+agreement. Hosted numerical execution and source/native qualification are
+separate checks.
 
 ## Reproduce the bounded evidence
 
