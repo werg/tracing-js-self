@@ -76,7 +76,9 @@ export function admissionEnvironment(){
 }
 
 export function normalizeSeeds(seeds={},split=17,guestRng=null){
-  const result={generation:null,input:null,guestRng,schedule:null,optimizer:null,...seeds,split};
+  if(seeds.guestRng!==undefined&&seeds.guestRng!==guestRng)
+    throw new TypeError('The declared guest RNG seed must match the executed fixture');
+  const result={generation:null,input:null,schedule:null,optimizer:null,...seeds,guestRng,split};
   if(Object.values(result).some(value=>value!==null&&!Number.isSafeInteger(value)))
     throw new TypeError('Candidate seeds must be safe integers or explicit null');
   return result;
@@ -92,6 +94,8 @@ function identityPayload(exported){
     fail('source family, lineage, license or ancestors');
   validateSplitIdentity(side.splitIdentity,{family:side.sourceFamily,seed:side.sourceProvenance.seed});
   if(side.split!==side.splitIdentity.split||side.seeds?.split!==side.splitIdentity.seed)fail('split assignment');
+  if(side.archive&&side.seeds?.guestRng!==(side.archive.initialState.control.a0.randomSeed??null))
+    fail('guest RNG seed differs from executed fixture');
   if(side.splitIdentity.policy==='source-components/1'){
     if(side.ancestorIds.some(id=>!side.splitIdentity.members.includes(id)))fail('ancestor outside frozen component');
     if(side.referenceInput.source!==undefined&&!side.splitIdentity.registry.sources.some(row=>

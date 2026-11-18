@@ -42,7 +42,7 @@ export function createFailureRecord({candidate,error,phase,archive=null,observat
       maxGenerated:candidate.projectionOptions?.maxGenerated??16384,
       maxOperators:candidate.projectionOptions?.maxOperators??8},
     projectionOptions:candidate.projectionOptions??{},splitIdentity:candidate.splitIdentity,
-    seeds:normalizeSeeds(candidate.seeds??{},candidate.seed??17,archive?.initialState.control.a0.randomSeed??null),
+    seeds:normalizeSeeds(candidate.seeds??{},candidate.seed??17,archive?.initialState.control.a0.randomSeed??candidate.randomSeed??null),
     environment:admissionEnvironment(),producerRevision:candidate.producerRevision??null,
     nativePolicy:candidate.nativePolicy??null,archiveDigest:archive===null?null:exactHash(archive),
     observations:structuredClone(observations)};

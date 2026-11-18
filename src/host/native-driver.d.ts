@@ -17,6 +17,8 @@ export declare function executeWithNativeServices(options:{
   entry?:{text:string;url?:string;functionName:string;args?:unknown[]};
   services?:Record<string,NativeHostService>;
   maxSteps?:number;
+  /** Declared deterministic Math.random fixture, separate from dataset split seeds. */
+  randomSeed?:number|null;
   signal?:AbortSignal;
 }):Promise<{
   progress:{kind:string;[key:string]:unknown};

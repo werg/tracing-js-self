@@ -125,10 +125,14 @@ export async function verifyEffectfulSession({cases,family,nativeConsumer=null,s
   splitIdentity=structuredClone(splitIdentity??defaultSplitIdentity(family,{seed}));
   const components=[],programs=new Map();let nextProgram=0;
   for(const [index,fixture] of cases.entries()){
-    const digest=hash(fixture.source);
+    const componentSeeds={...seeds,...fixture.seeds};
+    const randomSeed=fixture.randomSeed===undefined?(componentSeeds.guestRng??null):fixture.randomSeed;
+    // A program declaration publishes its deterministic RNG fixture. Distinct
+    // seeds require distinct declarations while preserving one source family.
+    const digest=hash({source:fixture.source,randomSeed});
     if(!programs.has(digest))programs.set(digest,'program'+(++nextProgram));
     const result=await verifyEffectfulTrainingCase({...fixture,family,seed,producerRevision,splitIdentity,nativePolicy,
-      seeds:{...seeds,...fixture.seeds},provenance:{...provenance,...fixture.provenance},
+      seeds:componentSeeds,randomSeed,provenance:{...provenance,...fixture.provenance},
       projectionOptions:{...fixture.projectionOptions,sessionId,programId:programs.get(digest),invocationId:'ingress'+(index+1),
         trackId:'worker'+(index+1),realmId:'realm'+(index+1),realmPolicy:'fresh',triggerId:'outside'+(index+1)}});
     if(!result.exported)return result;

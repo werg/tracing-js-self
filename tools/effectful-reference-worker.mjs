@@ -79,6 +79,16 @@ try{
     queueMicrotask:callback=>queueMicrotask(()=>{try{callback();}catch(error){failure(error);}}),
     console:Object.fromEntries(['log','info','warn','error'].map(method=>[method,(...args)=>
       invoke('platform.console.'+method,args)]))},{codeGeneration:{strings:false,wasm:false}});
+  if(input.randomSeed!==undefined&&input.randomSeed!==null){
+    if(!Number.isInteger(input.randomSeed)||input.randomSeed<0||input.randomSeed>0xffffffff)
+      throw new TypeError('Invalid deterministic guest RNG fixture seed');
+    context.__trainingRandomSeed=input.randomSeed;
+    // Declared deterministic fixture, identical to the existing pure-source
+    // profile. No unseeded host randomness participates in qualification.
+    new vm.Script(`(function(){let state=__trainingRandomSeed>>>0;
+      Math.random=function(){state=(Math.imul(state,1664525)+1013904223)>>>0;
+        return state/4294967296;};})()`).runInContext(context,{timeout:input.timeoutMs??5000});
+  }
   if(input.fixture.calls.some(call=>call.operation==='platform.dateNow'))
     context.Date={now:()=>invoke('platform.dateNow',[])};
   phase='instrumentation';

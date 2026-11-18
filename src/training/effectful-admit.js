@@ -153,11 +153,14 @@ export function verifyNativeBinding(exported,policy=null){
 export async function verifyEffectfulTrainingCase({source,entry,args=[],fixture,
     family,license='repository-fixture',trustTier='repository-fixture',maxSteps=100000,
     timeoutMs=10000,nativeConsumer=null,seed=17,projectionOptions={},producerRevision=null,
-    ancestorIds=[],taskId=null,fixtureFamily=null,provenance={},seeds={},splitIdentity=null,nativePolicy=null}={}){
+    ancestorIds=[],taskId=null,fixtureFamily=null,provenance={},seeds={},splitIdentity=null,nativePolicy=null,randomSeed=seeds.guestRng??null}={}){
   if(typeof source!=='string'||typeof entry!=='string'||!entry||
     typeof family!=='string'||!family||typeof license!=='string'||!license||
     !['repository-fixture','trusted-owned-source'].includes(trustTier))
     throw new TypeError('Effectful admission requires source family, license and declared trusted source tier');
+  if(randomSeed!==null&&(!Number.isInteger(randomSeed)||randomSeed<0||randomSeed>0xffffffff))
+    throw new TypeError('The guest RNG fixture seed must be a uint32 or null');
+  normalizeSeeds(seeds,seed,randomSeed);
   if(nativeConsumer||nativePolicy!==null)nativePolicy=validateNativePolicy(nativePolicy);
   splitIdentity=structuredClone(splitIdentity??defaultSplitIdentity(family,{seed}));
   validateSplitIdentity(splitIdentity,{family,seed});
@@ -167,15 +170,15 @@ export async function verifyEffectfulTrainingCase({source,entry,args=[],fixture,
     broker.abort(error);abort.abort(error);},timeoutMs);
   let phase='teacher',bundle;const observations={};
   const candidate={source,entry,args,fixture,family,license,trustTier,maxSteps,timeoutMs,seed,
-    projectionOptions,producerRevision,ancestorIds,taskId,fixtureFamily,provenance,seeds,splitIdentity,nativePolicy};
+    projectionOptions,producerRevision,ancestorIds,taskId,fixtureFamily,provenance,seeds,splitIdentity,nativePolicy,randomSeed};
   try{
     const run=await executeWithNativeServices({entry:{text:source,functionName:entry,args},
-      services:broker.services,maxSteps,signal:abort.signal});bundle=run.bundle;
+      services:broker.services,maxSteps,randomSeed,signal:abort.signal});bundle=run.bundle;
     const effects=broker.finish();phase='projection';
     const compiled=compileEffectfulWitness(bundle,{sourceLineage:family,...projectionOptions});
     observations.owned={outcome:compiled.outcome,effects};
     phase='reference';
-    const input={source,entry,inputGraph:encodeNativeGraph(args),fixture};
+    const input={source,entry,inputGraph:encodeNativeGraph(args),fixture,randomSeed};
     const reference=observations.original=await independentEffectfulReference(input,{timeoutMs});
     const operationReference=observations.operations=await independentEffectfulReference({...input,mode:'operations'},{timeoutMs});
     const branchReference=observations.branches=await independentEffectfulReference({...input,mode:'branches'},{timeoutMs});
@@ -233,7 +236,8 @@ export async function recheckEffectfulAdmission(exported,{requireAdmitted=true,t
   const {sourceId,functionName,arguments:args}=side.archive.entrySpec;
   const source=side.archive.sources.find(s=>s.sourceId===sourceId)?.text;
   const inputGraph=encodeNativeGraph(realizeGraph(side.archive.initialState.heap,args));
-  const input={source,entry:functionName,inputGraph,fixture:side.referenceInput.fixture};
+  const input={source,entry:functionName,inputGraph,fixture:side.referenceInput.fixture,
+    randomSeed:side.archive.initialState.control.a0.randomSeed??null};
   if(!isDeepStrictEqual(input,side.referenceInput)||hash(source)!==side.sourceProvenance?.sourceDigest||
     hash(input.fixture)!==side.sourceProvenance?.fixtureDigest)
     throw new Error('Source/reference inputs differ from the owned initial context');
