@@ -8,6 +8,29 @@ import {encodeNativeGraph,decodeOwnedGraph} from '../host/graph-codec.js';
 import {canonicalFixturePlan} from '../training/fixture-broker.js';
 
 const worker=fileURLToPath(new URL('../../tools/generation-worker.mjs',import.meta.url));
+// Guest aliases are explicit graph IDs by this point. Shared registry metadata
+// and reused scalar tags instead have structural JSON identity: copying those
+// references must not change a durable candidate's authenticated digest.
+function fixtureJsonTree(value,ancestors=new Set()){
+  if(value===null||['string','boolean'].includes(typeof value))return value;
+  if(typeof value==='number'&&Number.isFinite(value)&&!Object.is(value,-0))return value;
+  if(typeof value!=='object'||ancestors.has(value)||
+    !Array.isArray(value)&&![Object.prototype,null].includes(Object.getPrototypeOf(value)))
+    throw new TypeError('Generation fixture metadata must be acyclic JSON data; encode guest values as graphs');
+  ancestors.add(value);
+  try{
+    const keys=Object.keys(value);
+    if(Array.isArray(value)&&(keys.length!==value.length||keys.some((key,index)=>key!==String(index))))
+      throw new TypeError('Generation fixture metadata arrays must be dense JSON data');
+    const entries=keys.map(key=>{
+      const descriptor=Object.getOwnPropertyDescriptor(value,key);
+      if(!descriptor||!Object.hasOwn(descriptor,'value'))
+        throw new TypeError('Generation fixture metadata cannot contain accessors');
+      return [key,fixtureJsonTree(descriptor.value,ancestors)];
+    });
+    return Array.isArray(value)?entries.map(([,item])=>item):Object.fromEntries(entries);
+  }finally{ancestors.delete(value);}
+}
 // V8 serialization retains aliases and special numbers but discards null
 // prototypes. Use the canonical graph boundary for every semantic value.
 export function encodeGenerationTask(task){
@@ -17,7 +40,7 @@ export function encodeGenerationTask(task){
       ...(data.fixture?{fixture:canonicalFixturePlan(data.fixture)}:{}),
       ...(cases?{cases:cases.map(encodeFixture)}:{})};
   };
-  return {...task,fixture:encodeFixture(task.fixture)};
+  return {...task,fixture:fixtureJsonTree(encodeFixture(task.fixture))};
 }
 export function decodeGenerationTask(task){
   const decodeFixture=fixture=>{
