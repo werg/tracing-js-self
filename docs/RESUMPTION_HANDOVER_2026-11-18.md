@@ -1,6 +1,6 @@
 # Resumption implementation and evidence handover — 18 November 2026
 
-**Qualification complete.** All seven hosted workflows for the qualified implementation head passed, including all five exact-head native lanes and the complete real-world corpus audit. The executed optimizer attempts have final recorded outcomes, including interrupted attempts; the completed runs’ negative results and the separate untrained prospective declaration are retained. Original archive preservation has separate byte-level verification and delivery receipts.
+**Completed qualification at `1e2e6a0`.** All seven hosted workflows for that exact implementation head passed, including all five exact-head native lanes and the complete real-world corpus audit. The executed optimizer attempts have final recorded outcomes, including interrupted attempts; the completed runs’ negative results and the separate untrained prospective declaration are retained. Original archive preservation has separate byte-level verification and delivery receipts.
 
 **Implementation and evidence report.** Results below identify the actual producing revisions, populations and gates. Original failed attempts are preserved alongside successful workarounds. Infrastructure completion, native admission, prepared training data and learned execution are separate outcomes.
 
@@ -19,11 +19,29 @@ new focused regression tests passed on Node 24.22.3 in the reconciled worktree.
 
 PR40 receives this new main source without overwriting it. The seven full
 hosted workflow results below remain qualified at their exact original head
-`1e2e6a0`; they are **not reattributed to `53180e0`**. No optimizer experiment,
-source campaign or new broad qualification was introduced by PR41. The original
-receipt populations and all 15 saved archive groups remain unchanged. Relative
-to the new main, PR40 still changes only documentation and the three reviewed
-artifact-preservation workflow/script/test files outside documentation.
+`1e2e6a0`; they are **not reattributed to `53180e0`**.
+
+The [independent new-main review](receipts/final-integration-2026-11-18/main-53180e0-review/README.md)
+subsequently passed **17/17 focused source/projection/parameter tests** and
+**8/8 complete closure-name source/reference/projection/JSON-roundtrip/recheck
+probes**. The latter are local verification, not native admissions. The complete
+[hosted Node 20/22/24 matrix](https://github.com/werg/tracing-js-self/actions/runs/44330593327)
+passed; its retained Node 24 job checked out exact `53180e0` and reported
+**912 tests: 905 passed, seven skipped, zero failed**. The
+[coverage](https://github.com/werg/tracing-js-self/actions/runs/44330593873) and
+[oracle](https://github.com/werg/tracing-js-self/actions/runs/44330593333)
+workflows also passed. No source repair was required by that review.
+
+At the retained snapshot, the automatically launched
+[native run 44330593504](https://github.com/werg/tracing-js-self/actions/runs/44330593504)
+was in progress across its five-recipe matrix and
+[real-world run 44330593597](https://github.com/werg/tracing-js-self/actions/runs/44330593597)
+was queued. Their completion is not claimed, and neither contributes a new
+complete native release or corpus measurement to this report. No optimizer
+experiment was added. The original receipt populations and all 15 saved archive
+groups remain unchanged. Relative to the new main, PR40 still changes only
+documentation and the three reviewed artifact-preservation workflow/script/test
+files outside documentation.
 
 ## Outcome and repository state
 
@@ -66,6 +84,7 @@ These changes preserve the independent roles of owned journal reconstruction, de
 
 | Measurement | Result | Scope |
 | --- | --- | --- |
+| Newly received main `53180e0`, hosted Node 24 | **905 passed, seven skipped, zero failed** | 912 tests; actual checkout `53180e0`; all Node 20/22/24 jobs passed; new automatic native/corpus runs are separately unfinished at the retained snapshot |
 | Final integrated Node 24 suite at `aa7b843` | **897 passed, five skipped, zero failed** | 902 test cases; clean producer and consumer before/after; complete argv/runtime/log hashes retained |
 | Final merged Python regressions at `aa7b843` | **108 passed** | Optimization, evaluation, pure output, release, learning artifact/comparison and selection tests with exact consumer `6b4382b` |
 | Final fixture, contracts and inspection at `aa7b843` | All four checks passed | Deterministic reference, host contract, semantic contract and source-grounded inspection |

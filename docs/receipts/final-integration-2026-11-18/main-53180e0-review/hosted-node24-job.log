@@ -1,0 +1,1311 @@
+﻿2026-11-18T15:02:44.1385870Z Current runner version: '2.338.2'
+2026-11-18T15:02:44.1405080Z ##[group]Runner Image Provisioner
+2026-11-18T15:02:44.1405647Z Hosted Compute Agent
+2026-11-18T15:02:44.1406033Z Version: 20261103.629
+2026-11-18T15:02:44.1406467Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+2026-11-18T15:02:44.1406906Z Build Date: 2026-11-03T17:26:59Z
+2026-11-18T15:02:44.1407381Z Worker ID: {11fdfccf-570c-4e1e-948c-e5d0d6f45db7}
+2026-11-18T15:02:44.1407806Z Region: southcentralus
+2026-11-18T15:02:44.1408185Z Cloud: Azure
+2026-11-18T15:02:44.1408562Z ##[endgroup]
+2026-11-18T15:02:44.1409587Z ##[group]Operating System
+2026-11-18T15:02:44.1409990Z Ubuntu
+2026-11-18T15:02:44.1410322Z 26.04.1
+2026-11-18T15:02:44.1410673Z LTS
+2026-11-18T15:02:44.1411042Z ##[endgroup]
+2026-11-18T15:02:44.1411381Z ##[group]Runner Image
+2026-11-18T15:02:44.1411811Z Image: ubuntu-26.04
+2026-11-18T15:02:44.1412198Z Version: 20261111.196.1
+2026-11-18T15:02:44.1413000Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261111.196/images/ubuntu/Ubuntu2604-Readme.md
+2026-11-18T15:02:44.1413879Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261111.196
+2026-11-18T15:02:44.1414756Z ##[endgroup]
+2026-11-18T15:02:44.1415618Z ##[group]GITHUB_TOKEN Permissions
+2026-11-18T15:02:44.1417137Z Contents: read
+2026-11-18T15:02:44.1417505Z Metadata: read
+2026-11-18T15:02:44.1417850Z Packages: read
+2026-11-18T15:02:44.1418224Z ##[endgroup]
+2026-11-18T15:02:44.1419717Z Secret source: Actions
+2026-11-18T15:02:44.1420329Z Cache mode: write
+2026-11-18T15:02:44.1420760Z Prepare workflow directory
+2026-11-18T15:02:44.1642493Z Prepare all required actions
+2026-11-18T15:02:44.1676673Z Getting action download info
+2026-11-18T15:02:44.4070850Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-18T15:02:44.5439342Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-18T15:02:44.7416507Z Complete job name: test (24)
+2026-11-18T15:02:44.8017092Z ##[group]Run actions/checkout@v4
+2026-11-18T15:02:44.8017536Z with:
+2026-11-18T15:02:44.8017795Z   repository: werg/tracing-js-self
+2026-11-18T15:02:44.8020077Z   token: ***
+2026-11-18T15:02:44.8020323Z   ssh-strict: true
+2026-11-18T15:02:44.8020573Z   ssh-user: git
+2026-11-18T15:02:44.8020825Z   persist-credentials: true
+2026-11-18T15:02:44.8021099Z   clean: true
+2026-11-18T15:02:44.8021354Z   sparse-checkout-cone-mode: true
+2026-11-18T15:02:44.8021649Z   fetch-depth: 1
+2026-11-18T15:02:44.8021894Z   fetch-tags: false
+2026-11-18T15:02:44.8022148Z   show-progress: true
+2026-11-18T15:02:44.8022403Z   lfs: false
+2026-11-18T15:02:44.8022638Z   submodules: false
+2026-11-18T15:02:44.8022895Z   set-safe-directory: true
+2026-11-18T15:02:44.8023182Z   allow-unsafe-pr-checkout: false
+2026-11-18T15:02:44.8023548Z ##[endgroup]
+2026-11-18T15:02:44.9899804Z Syncing repository: werg/tracing-js-self
+2026-11-18T15:02:44.9901587Z ##[group]Getting Git version info
+2026-11-18T15:02:44.9902339Z Working directory is '/home/runner/work/tracing-js-self/tracing-js-self'
+2026-11-18T15:02:44.9903258Z [command]/usr/bin/git version
+2026-11-18T15:02:44.9910566Z git version 2.56.1
+2026-11-18T15:02:44.9943893Z ##[endgroup]
+2026-11-18T15:02:44.9949759Z Temporarily overriding HOME='/home/runner/work/_temp/e25a6e11-23a2-4169-bda3-b39aef2b187c' before making global git config changes
+2026-11-18T15:02:44.9951353Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-18T15:02:44.9952438Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self
+2026-11-18T15:02:45.0000471Z Deleting the contents of '/home/runner/work/tracing-js-self/tracing-js-self'
+2026-11-18T15:02:45.0003583Z ##[group]Initializing the repository
+2026-11-18T15:02:45.0007995Z [command]/usr/bin/git init /home/runner/work/tracing-js-self/tracing-js-self
+2026-11-18T15:02:45.0100200Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-18T15:02:45.0101207Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-18T15:02:45.0101730Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-18T15:02:45.0102138Z hint: call:
+2026-11-18T15:02:45.0102374Z hint:
+2026-11-18T15:02:45.0102730Z hint: 	git config --global init.defaultBranch <name>
+2026-11-18T15:02:45.0103078Z hint:
+2026-11-18T15:02:45.0103406Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-18T15:02:45.0103923Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-18T15:02:45.0104393Z hint:
+2026-11-18T15:02:45.0104741Z hint: 	git branch -m <name>
+2026-11-18T15:02:45.0105303Z hint:
+2026-11-18T15:02:45.0105833Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-18T15:02:45.0106749Z Initialized empty Git repository in /home/runner/work/tracing-js-self/tracing-js-self/.git/
+2026-11-18T15:02:45.0118372Z [command]/usr/bin/git remote add origin https://github.com/werg/tracing-js-self
+2026-11-18T15:02:45.0170824Z ##[endgroup]
+2026-11-18T15:02:45.0171327Z ##[group]Disabling automatic garbage collection
+2026-11-18T15:02:45.0175094Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-18T15:02:45.0210304Z ##[endgroup]
+2026-11-18T15:02:45.0210863Z ##[group]Setting up auth
+2026-11-18T15:02:45.0217515Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-18T15:02:45.0279042Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-18T15:02:45.0708295Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-18T15:02:45.0739282Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-18T15:02:45.0986747Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-18T15:02:45.1023181Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-18T15:02:45.1461210Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-18T15:02:45.1497810Z ##[endgroup]
+2026-11-18T15:02:45.1498316Z ##[group]Fetching the repository
+2026-11-18T15:02:45.1504117Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +53180e0b0dfbf6c9544b680f854a442db53bb0ab:refs/remotes/origin/main
+2026-11-18T15:02:45.7934484Z From https://github.com/werg/tracing-js-self
+2026-11-18T15:02:45.7935559Z  * [new ref]         53180e0b0dfbf6c9544b680f854a442db53bb0ab -> origin/main
+2026-11-18T15:02:45.7937444Z ##[endgroup]
+2026-11-18T15:02:45.7937974Z ##[group]Determining the checkout info
+2026-11-18T15:02:45.7946056Z ##[endgroup]
+2026-11-18T15:02:45.7956797Z [command]/usr/bin/git sparse-checkout disable
+2026-11-18T15:02:45.8009490Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-18T15:02:45.8042947Z ##[group]Checking out the ref
+2026-11-18T15:02:45.8047007Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-11-18T15:02:45.8701408Z Switched to a new branch 'main'
+2026-11-18T15:02:45.8702852Z branch 'main' set up to track 'origin/main'.
+2026-11-18T15:02:45.8712187Z ##[endgroup]
+2026-11-18T15:02:45.8756551Z [command]/usr/bin/git log -1 --format=%H
+2026-11-18T15:02:45.8781530Z 53180e0b0dfbf6c9544b680f854a442db53bb0ab
+2026-11-18T15:02:45.9071862Z ##[group]Run actions/setup-node@v4
+2026-11-18T15:02:45.9072654Z with:
+2026-11-18T15:02:45.9073242Z   node-version: 24
+2026-11-18T15:02:45.9073870Z   always-auth: false
+2026-11-18T15:02:45.9074506Z   check-latest: false
+2026-11-18T15:02:45.9080017Z   token: ***
+2026-11-18T15:02:45.9080597Z ##[endgroup]
+2026-11-18T15:02:46.0119346Z (node:2192) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-18T15:02:46.0121057Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-18T15:02:46.0126923Z Found in cache @ /opt/hostedtoolcache/node/24.22.2/x64
+2026-11-18T15:02:46.0128229Z ##[group]Environment details
+2026-11-18T15:02:46.2956099Z node: v24.22.2
+2026-11-18T15:02:46.2956799Z npm: 11.19.1
+2026-11-18T15:02:46.2957014Z yarn: 1.22.22
+2026-11-18T15:02:46.2957737Z ##[endgroup]
+2026-11-18T15:02:46.3151299Z ##[group]Run npm ci
+2026-11-18T15:02:46.3151643Z [36;1mnpm ci[0m
+2026-11-18T15:02:46.3204648Z shell: /usr/bin/bash -e {0}
+2026-11-18T15:02:46.3205035Z ##[endgroup]
+2026-11-18T15:02:47.0514442Z 
+2026-11-18T15:02:47.0520803Z added 4 packages, and audited 5 packages in 680ms
+2026-11-18T15:02:47.0521106Z 
+2026-11-18T15:02:47.0521227Z found 0 vulnerabilities
+2026-11-18T15:02:47.0883378Z ##[group]Run npm test
+2026-11-18T15:02:47.0883587Z [36;1mnpm test[0m
+2026-11-18T15:02:47.0928018Z shell: /usr/bin/bash -e {0}
+2026-11-18T15:02:47.0928188Z ##[endgroup]
+2026-11-18T15:02:47.1646172Z 
+2026-11-18T15:02:47.1646826Z > tracing-js-self@0.3.0 test
+2026-11-18T15:02:47.1647318Z > node --test test/*.test.js && node fixtures/reference/reference-fixture.mjs
+2026-11-18T15:02:47.1647514Z 
+2026-11-18T15:02:47.2607749Z ✔ two virtual agents increment shared Int32 cells in round-robin order (3.095766ms)
+2026-11-18T15:02:47.2636667Z ✔ wait and notify wake a blocked agent in FIFO order (0.862783ms)
+2026-11-18T15:02:47.2668268Z ✔ virtual timer releases a suspended wait on quiescence (1.706749ms)
+2026-11-18T15:02:47.2669479Z ✔ indefinite virtual wait remains explicitly blocked (0.343889ms)
+2026-11-18T15:02:47.2698091Z ✔ Int32 overflow and compareExchange retain old atomic values (1.523ms)
+2026-11-18T15:02:47.2726236Z ✔ bad location, blocked forced turn and forged transcript fail closed (0.501277ms)
+2026-11-18T15:02:47.5730351Z ✔ generated validator requires owned V8/operation/branch/replay evidence (158.519653ms)
+2026-11-18T15:02:47.5755614Z ✔ native Ajv output disagreement never becomes owned verification (1.015565ms)
+2026-11-18T15:02:47.5763943Z ✔ captured Ajv scope and mismatched generated function names refuse (30.556608ms)
+2026-11-18T15:02:47.5765895Z ✔ malformed or multi-definition generated code is rejected before execution (1.078359ms)
+2026-11-18T15:02:47.5772667Z ✔ Ajv omitted optional context is lowered only with audited pure defaults (82.309963ms)
+2026-11-18T15:02:47.5898424Z ✔ mocked bounded validator reference distinguishes agreement, disagreement, and unsupported (1.534157ms)
+2026-11-18T15:02:47.5899688Z ✔ baseline identity refuses a different commit even when code tree is unchanged (1.239502ms)
+2026-11-18T15:02:47.5900610Z ✔ release baseline cannot pass with a different runtime or locale (0.404121ms)
+2026-11-18T15:02:47.5901586Z ✔ benchmark sidecar binds selected known families and role lineage without changing declaration (2.253614ms)
+2026-11-18T15:02:47.5902417Z ✔ benchmark sidecar refuses duplicate, unknown, or malformed ancestry (0.553446ms)
+2026-11-18T15:02:47.5902994Z ✔ browser options never invoke getters (1.042004ms)
+2026-11-18T15:02:47.5903604Z ✔ browser options refuse inherited configuration and unknown keys (0.207844ms)
+2026-11-18T15:02:47.5904315Z ✔ browser options accept plain and null-prototype own data records (0.31754ms)
+2026-11-18T15:02:47.5917093Z ✔ browser condition provides a no-Node-import bounded runtime and rejects host objects (73.286253ms)
+2026-11-18T15:02:47.5918885Z ✔ receipt cache identity binds Python verifier code, operation catalog, locks and isolation policy (39.539836ms)
+2026-11-18T15:02:47.5991586Z ✔ admitted selection retains refusals and never promotes local or forged admitted flags (34.293503ms)
+2026-11-18T15:02:47.6437172Z ✔ resumes completed receipts and preserves rejected attempts without private learner data (34.238639ms)
+2026-11-18T15:02:47.6456282Z ✔ recovers a torn final log append but refuses committed corruption (24.460339ms)
+2026-11-18T15:02:47.6467653Z ✔ log order is authenticated and candidate identity preserves special numbers and aliases (17.213082ms)
+2026-11-18T15:02:47.8933456Z ✔ excludes concurrent writers and releases the OS lock when a process crashes (57.355609ms)
+2026-11-18T15:02:47.8934541Z ✔ plain resume retries cancelled work and validates referenced source/input/fixture bytes (18.159411ms)
+2026-11-18T15:02:47.8966856Z ✔ release readers share a nonmutating lock and reject unrecovered log tails (20.918419ms)
+2026-11-18T15:02:47.8968026Z ✔ binds content-addressed filenames and rejects forged status or cost measurements (21.51506ms)
+2026-11-18T15:02:47.8969464Z ✔ shared registries are stored once and materialize byte-identical evidence including sessions (117.987707ms)
+2026-11-18T15:02:47.8970436Z ✔ rehydration refuses changed or missing registry bytes and mismatched logical evidence (29.076402ms)
+2026-11-18T15:02:48.0678163Z ✔ capability ladder preserves untested stages and exact attempted denominators (327.862065ms)
+2026-11-18T15:02:48.3977319Z ✔ capability ladder executes a configured native gate and retains its failure separately (297.746783ms)
+2026-11-18T15:02:49.3313566Z ✔ primitive numeric conversions and caught BigInt errors have independent positive probes (1023.119209ms)
+2026-11-18T15:02:49.3467595Z ✔ explicit primitive throw is caught without terminating; catch binding stays lexical (42.848055ms)
+2026-11-18T15:02:49.3468452Z ✔ unwind through a synchronous call and retain identity of thrown guest object (22.206714ms)
+2026-11-18T15:02:49.3469571Z ✔ normal, exceptional and return completions execute finally exactly once (80.373859ms)
+2026-11-18T15:02:49.3470353Z ✔ finally completion overrides pending return; outer handler catches throws (18.942364ms)
+2026-11-18T15:02:49.3471029Z ✔ rethrow from catch executes finally before the outer catch (38.976055ms)
+2026-11-18T15:02:49.3471815Z ✔ break and continue restore lexical scopes and respect nested finally boundaries (199.645766ms)
+2026-11-18T15:02:49.3472576Z ✔ owned arithmetic TypeError/RangeError are catchable guest data errors (38.33678ms)
+2026-11-18T15:02:49.3473252Z ✔ synchronous host failures become catchable only on input delivery (10.901206ms)
+2026-11-18T15:02:49.3474476Z ✔ unhandled throws and unsupported coercions keep distinct terminal outcomes (12.397298ms)
+2026-11-18T15:02:49.3477518Z ✔ failed binding and property updates remain reconstructible and replayable (15.269595ms)
+2026-11-18T15:02:49.3481293Z ✔ structural checks and same-interpreter replay reject forged caught completions (5.954965ms)
+2026-11-18T15:02:49.3482511Z ✔ bounded synchronous control completions agree with independent V8 final scalars (1304.064873ms)
+2026-11-18T15:02:51.1866880Z ✔ pinned TypeScript const enum is lowered to only verified compile-time constants (2716.752725ms)
+2026-11-18T15:02:51.1987487Z ✔ changed or unmodeled enum dependencies fail closed (11.003462ms)
+2026-11-18T15:02:51.6898019Z ✔ full corpus merge rejects missing indices, duplicate partitions and fabricated counts (1161.686595ms)
+2026-11-18T15:02:51.6916624Z ✔ owned verifier refuses incomplete indexed partitions (331.057283ms)
+2026-11-18T15:02:51.6937680Z ✔ stateful auditor refuses an incomplete pinned scenario inventory (55.845629ms)
+2026-11-18T15:02:51.6956427Z ✔ stateful auditor checks pinned observations, observable effects and vendor hashes (602.01545ms)
+2026-11-18T15:02:51.7072439Z ✔ pinned source bundles and family split match original corpus extraction (26.300399ms)
+2026-11-18T15:02:51.7113219Z ✔ owned corpus bridge emits only independently rechecked, provenance-tagged local traces (592.32998ms)
+2026-11-18T15:02:51.7156084Z ✔ owned corpus bridge refuses tampered pinned source bytes and split (1077.410358ms)
+2026-11-18T15:02:52.1717641Z ✔ real-source catalog has pinned distinct production functions and inputs (610.815012ms)
+2026-11-18T15:02:52.5967475Z ✔ only independently rechecked owned execution can contribute novelty (328.36101ms)
+2026-11-18T15:02:52.5986048Z ✔ novel branch paths and operation types beat repeated seed counts (406.366664ms)
+2026-11-18T15:02:52.6049873Z ✔ offline selected subset contains no fabricated admission and refuses forged rows (366.587745ms)
+2026-11-18T15:02:53.3761945Z ✔ durable retained checkpoint replays module cells in a fresh session (1315.958126ms)
+2026-11-18T15:02:54.2408036Z ✔ checkpoint replays committed module history in a separate Node process (864.85239ms)
+2026-11-18T15:02:54.3188044Z ✔ corrupt or symlink checkpoint is rejected without guest execution (77.901629ms)
+2026-11-18T15:02:54.4439952Z ✔ checkpoint admission is replay-checked and limited to owned sessions (125.602234ms)
+2026-11-18T15:02:54.4761596Z ✔ archive survives store re-instantiation with digest and full replay verification (103.75359ms)
+2026-11-18T15:02:54.4762873Z ✔ concurrent duplicate writes publish one complete immutable object (144.146267ms)
+2026-11-18T15:02:54.4764470Z ✔ stored bytes are authenticated before parsing or running a guest replay (23.349892ms)
+2026-11-18T15:02:54.4765569Z ✔ an unreplayable archive cannot be admitted or published (18.735692ms)
+2026-11-18T15:02:54.4770304Z ✔ IDs are strict, byte limits are enforced, and staged files are never listed (15.439612ms)
+2026-11-18T15:02:54.4771138Z ✔ refuse an attacker-substituted symlink for the final archive file (7.867885ms)
+2026-11-18T15:02:54.4771917Z ✔ compiled external JS replays dispatch order and materialized snapshots (28.631982ms)
+2026-11-18T15:02:54.4773011Z ✔ missing handler fails before any external replay (11.931744ms)
+2026-11-18T15:02:54.4773812Z ✔ live generated effect JavaScript resolves an async native result into owned VM (7.356452ms)
+2026-11-18T15:02:54.4774666Z ✔ live generated effect JavaScript sends rejection back through owned input (3.639307ms)
+2026-11-18T15:02:54.4776091Z ✔ inventory records exact source objects, overloads, proposals and intrinsic occurrences (4.9716ms)
+2026-11-18T15:02:54.4777031Z ✔ source audit rejects altered bytes, files, revision pins and omitted discoveries (1.728752ms)
+2026-11-18T15:02:54.4777897Z ✔ new or changed discovery candidates require explicit reclassification (1.278932ms)
+2026-11-18T15:02:54.4778785Z ✔ partial ownership needs an explicit bounded mapping and cannot manufacture test passes (0.672155ms)
+2026-11-18T15:02:54.4779683Z ✔ classification audit rejects duplicate entries and unknown extractor rules (0.479684ms)
+2026-11-18T15:02:54.4780528Z ✔ checked-in inventory is classified against the authoritative engine pin (15.699095ms)
+2026-11-18T15:02:54.4781420Z ✔ host JS facade calls real owned exports with shared replay-backed module cells (434.980608ms)
+2026-11-18T15:02:54.4782330Z ✔ facade refuses unowned argument callbacks and hostile export-name metadata (3.681231ms)
+2026-11-18T15:02:54.8538163Z ✔ replay-backed retained module session carries mutable exports across JS invocations (319.101192ms)
+2026-11-18T15:02:54.8555915Z ✔ retained returned objects keep host identity and reflect subsequent module writes (164.399731ms)
+2026-11-18T15:02:54.8566376Z ✔ retained module sessions serialize concurrent calls and retain independent state (218.564481ms)
+2026-11-18T15:02:54.8567385Z ✔ retained module session rejects native effects and rolls back unsuccessful calls (105.518565ms)
+2026-11-18T15:02:54.8568406Z ✔ retained module sessions reject callbacks and data getters in invocation arguments (0.449869ms)
+2026-11-18T15:02:54.8569343Z ✔ closed retained realm rejects future calls and does not publish partial history (19.059331ms)
+2026-11-18T15:02:54.8570364Z ✔ retained module history can cross JSON/process boundaries by replaying committed invocations (514.585078ms)
+2026-11-18T15:02:54.8571272Z ✔ session snapshots preserve the complete primitive scalar wire format (360.812661ms)
+2026-11-18T15:02:54.8572129Z ✔ retained snapshot restore rejects accessor metadata and noncanonical tokens (23.835966ms)
+2026-11-18T15:02:54.8810664Z ✔ effect-free ESM exports run synchronously entirely through owned trace (167.163746ms)
+2026-11-18T15:02:54.8811656Z ✔ synchronous retained ESM cells and host result identities preserve invocation order (186.244349ms)
+2026-11-18T15:02:54.8813834Z ✔ synchronous retained API refuses concurrent async replay and rolls back errors (106.201126ms)
+2026-11-18T15:02:54.8814654Z ✔ owned ESM linker invokes const arrow/function-expression exports (95.279859ms)
+2026-11-18T15:02:55.3387487Z ✔ evaluated modules run dependency initialization once and share mutable live bindings (188.409841ms)
+2026-11-18T15:02:55.3408016Z ✔ module side effects use dependency ordering even with import elision (44.811112ms)
+2026-11-18T15:02:55.3416196Z ✔ explicit reexports and aliased live reads retain original lexical cell (65.084797ms)
+2026-11-18T15:02:55.3416953Z ✔ top-level await settles an owned guest Promise prior to dependent evaluation (50.318351ms)
+2026-11-18T15:02:55.3417663Z ✔ top-level native host service is journaled and replay does not invoke it (56.021105ms)
+2026-11-18T15:02:55.3418818Z ✔ result of pure JS ESM graph agrees with independent native module loader (61.821547ms)
+2026-11-18T15:02:55.3419506Z ✔ expression default exports and value exports evaluate once (29.157866ms)
+2026-11-18T15:02:55.3420171Z ✔ module linker rejects cycles, unknown dependencies, and native packages (6.907775ms)
+2026-11-18T15:02:55.3420830Z ✔ imports are read-only and unknown named exports fail at link time (5.424714ms)
+2026-11-18T15:02:55.3421500Z ✔ module namespace objects and exotic syntax do not silently delegate to Node (3.012531ms)
+2026-11-18T15:02:55.3422214Z ✔ diamond dependencies initialize once, with two distinct module side effects (65.388755ms)
+2026-11-18T15:02:55.8926962Z ✔ native input arrival can be out of await order during ESM evaluation (108.85113ms)
+2026-11-18T15:02:55.8928234Z ✔ linker preflights unsupported guest syntax even when its function is never invoked (3.042296ms)
+2026-11-18T15:02:55.8929061Z ✔ unreferenced invalid forwarding exports still fail module instantiation (3.48209ms)
+2026-11-18T15:02:55.8929881Z ✔ module graph excludes unreachable private code and requires all runtime imports (3.207094ms)
+2026-11-18T15:02:55.8930624Z ✔ module source collection never invokes host getters or proxy traps (0.21173ms)
+2026-11-18T15:02:55.8931347Z ✔ star re-exports resolve live bindings through same-origin diamonds (41.183132ms)
+2026-11-18T15:02:55.8932081Z ✔ ambiguous distinct star binding origins fail without executing module effects (5.624406ms)
+2026-11-18T15:02:55.8932876Z ✔ top-level module throw rejects the owned entry and prevents dependent initialization (12.318528ms)
+2026-11-18T15:02:55.8933665Z ✔ top-level block await and synchronous native service preserve module completion (70.24426ms)
+2026-11-18T15:02:55.8934375Z ✔ TypeScript mutable imports update through owned lexical cells (31.173941ms)
+2026-11-18T15:02:55.8935231Z ✔ one evaluated module episode retains mutable binding state across exported calls (101.188413ms)
+2026-11-18T15:02:55.8936890Z ✔ module batch keeps exported object aliases and awaited call order (114.10039ms)
+2026-11-18T15:02:55.8937551Z ✔ invalid module batch entries fail closed at link time (3.405414ms)
+2026-11-18T15:02:55.8938851Z ✔ module batch arguments never execute host getters or Proxy traps (0.298211ms)
+2026-11-18T15:02:55.8939687Z ✔ synchronous cyclic functions and mutable live bindings follow ESM dependency order (50.322477ms)
+2026-11-18T15:02:55.8940452Z ✔ cycles that observe an uninitialized lexical binding throw like native ESM (10.838643ms)
+2026-11-18T15:02:55.8941166Z ✔ cycles with top-level await fail link before native effects dispatch (3.044078ms)
+2026-11-18T15:02:56.3518717Z ✔ same-origin cyclic ESM function behavior agrees with independent native Node ESM (156.079833ms)
+2026-11-18T15:02:56.3526059Z ✔ statically named namespace property reads use the original live export cell (70.017758ms)
+2026-11-18T15:02:56.3526918Z ✔ namespace reads agree with independent Node ESM loader for mutable exports (39.175258ms)
+2026-11-18T15:02:56.3527815Z ✔ namespace mutation and unsupported first-class/dynamic namespace exotics fail closed (11.358178ms)
+2026-11-18T15:02:56.3528762Z ✔ ESM production-style initialization creates one owned shared closure with live state (125.656646ms)
+2026-11-18T15:02:56.3529940Z ✔ ESM owned top-level Promise reaction runs after initialization and before import read (58.321751ms)
+2026-11-18T15:02:56.3927660Z ✔ difficulty measures executed loops, nested calls, aliases and mutations across distinct inputs (915.675623ms)
+2026-11-18T15:02:56.3928820Z ✔ difficulty records actual pending concurrency and thrown outcomes (469.739394ms)
+2026-11-18T15:02:56.3929728Z ✔ native callback goes back into owned closure before external Promise resolves (70.755523ms)
+2026-11-18T15:02:56.3930497Z ✔ multiple callbacks preserve FIFO and never execute guest function natively (114.607235ms)
+2026-11-18T15:02:56.3930941Z ✔ native callback objects are refused rather than crossing owned data boundary (37.975575ms)
+2026-11-18T15:02:56.3931762Z ✔ manual generated effect bridge routes callback and promise result through owned state (10.334771ms)
+2026-11-18T15:02:56.3932262Z ✔ invalid or stale callback capability cannot forge an owned invocation (3.943898ms)
+2026-11-18T15:02:56.3933146Z ✔ Test262 metadata, strict variants and negative tests preserve source hashes (45.925615ms)
+2026-11-18T15:02:56.3934060Z ✔ Exercism nested canonical records are not confused with executable solutions (4.376291ms)
+2026-11-18T15:02:56.3934810Z ✔ JSON Schema contracts preserve data vs expected labels (1.884486ms)
+2026-11-18T15:02:56.3935717Z ✔ CommonMark JSON examples remain contracts pending real parser execution (3.813361ms)
+2026-11-18T15:02:56.3936586Z ✔ Jest/Vitest .each importer extracts only literal rows without evaluation (8.616536ms)
+2026-11-18T15:02:56.3937337Z ✔ Hardness prioritizes difficult cases without claiming verification (2.155025ms)
+2026-11-18T15:02:56.3938123Z ✔ Snapshot CLI refuses modified bytes, accepts pinned acquisition-only catalog (505.910253ms)
+2026-11-18T15:02:56.3938932Z ✔ Adversarial suite uses pinned vendor module IDs and distinct identities (0.363048ms)
+2026-11-18T15:02:56.3939601Z ✔ Offline test catalog inventories JS/TS declarations but never executes them (7.412046ms)
+2026-11-18T15:02:56.3940296Z ✔ Dynamic test tables and empty tables are recorded without fabricating rows (2.202887ms)
+2026-11-18T15:02:56.3941009Z ✔ Deno, Mocha and QUnit test naming conventions are mined without executing source (3.061916ms)
+2026-11-18T15:02:56.9970820Z ✔ three pinned upstream snapshots import without executing third-party source (998.868373ms)
+2026-11-18T15:02:57.0104535Z ✔ full-corpus classifier refuses unsupported language and metadata rather than inventing traces (1.600828ms)
+2026-11-18T15:02:57.0133095Z ✔ claimed owned conversions require exact canonical SHA/revision and independent evidence (0.40365ms)
+2026-11-18T15:02:57.0166673Z ✔ generated input oracle is valid but never asserted to be official canonical data (1.212061ms)
+2026-11-18T15:02:57.0185799Z ✔ Test262 training joins only exact source-hash matched and rechecked modes (0.446515ms)
+2026-11-18T15:02:57.8797367Z ✔ bounded grammar uses separate seeds and keeps input/literal expansion in stable families (19.573367ms)
+2026-11-18T15:02:57.8801822Z ✔ cross-stream registry joins a renamed authored source with a generated variant (29.568707ms)
+2026-11-18T15:02:57.8803911Z ✔ generated boundary, alias and planned exception programs pass independent v5 gates (1501.713408ms)
+2026-11-18T15:02:59.3108885Z ✔ explicit refusal collection retains exact failed candidates without relabeling or hiding them (1465.757428ms)
+2026-11-18T15:02:59.3112074Z ✔ allowing refusals never removes an explicit native-consumer requirement (301.217509ms)
+2026-11-18T15:02:59.3126219Z ✔ a fatal campaign write aborts and drains detached workers before closing evidence (1109.106857ms)
+2026-11-18T15:04:40.3477235Z ✔ bounded generation process keeps the source gate and reports measured RSS (633.078666ms)
+2026-11-18T15:04:40.3477893Z ✔ times out or cancels workers and refuses oversized evidence with explicit statuses (651.870189ms)
+2026-11-18T15:04:40.3478718Z ✔ worker transport preserves null prototypes and shared input identities (872.818845ms)
+2026-11-18T15:04:40.3479925Z ✔ encoded fixtures separate structural metadata aliases from exact guest graphs (2.21665ms)
+2026-11-18T15:04:40.3480552Z ✔ durable fixture references use the same canonical host and input graphs (456.422095ms)
+2026-11-18T15:04:40.3481058Z ✔ verified registry trees are reused across candidates and distinct within each stored session (3.588634ms)
+2026-11-18T15:04:40.3481733Z ✔ all five recipe fixture inventories survive frozen-registry campaign storage (96602.698535ms)
+2026-11-18T15:04:40.3488016Z ℹ {"recipeFixtureCounts":{"engineering":25,"training-v4":48,"benchmark-v1":126,"real-source":210,"generated-v1":64},"total":473}
+2026-11-18T15:04:40.3488629Z ✔ collector resumes exact successful receipts without launching new attempts (3766.333625ms)
+2026-11-18T15:04:40.4122827Z ✔ host request is JSON materialized before dispatch, immutable, and never re-executed in replay (50.989159ms)
+2026-11-18T15:04:40.4123810Z ✔ independent host journal verifier detects altered materialization despite valid effect metadata (6.558292ms)
+2026-11-18T15:04:40.4124532Z ✔ unregistered external argument forms fail before creating or dispatching any effect (12.460073ms)
+2026-11-18T15:04:40.4125246Z ✔ external method contracts prevent extra or mistyped arguments (4.607864ms)
+2026-11-18T15:04:40.4125756Z ✔ unknown global NaN is a guest ReferenceError without dispatch (6.063275ms)
+2026-11-18T15:04:40.4126278Z ✔ effect request is bound to its actual JS call operands and activation (8.60087ms)
+2026-11-18T15:04:40.4126828Z ✔ owned graph preserves aliases, cycles, sparse arrays and special scalars (1.487759ms)
+2026-11-18T15:04:40.4127392Z ✔ graph snapshot is immutable and has checked owned version provenance (0.429609ms)
+2026-11-18T15:04:40.4127802Z ✔ graph codecs refuse getters, proxies, forged identities and quota violations (0.500376ms)
+2026-11-18T15:04:40.4128186Z ✔ callback slots stay opaque and cannot become graph data functions (0.58858ms)
+2026-11-18T15:04:40.4128585Z ✔ nested declared callbacks are branded and ordinary lookalike data cannot forge them (0.338812ms)
+2026-11-18T15:04:40.4129042Z ✔ external JSON materializer preserves data, property order and frozen version provenance (17.517516ms)
+2026-11-18T15:04:40.4129485Z ✔ external JSON materializer rejects all unimplemented coercions and unsupported graphs (10.996761ms)
+2026-11-18T15:04:40.4129862Z ✔ external JSON materializer enforces byte and graph-size bounds (3.992555ms)
+2026-11-18T15:04:40.4130183Z ✔ outbound host codec refuses malformed scalar tagged values (1.115115ms)
+2026-11-18T15:04:40.4130569Z ✔ valid scalar host requests retain canonical byte accounting and independent verification (0.845408ms)
+2026-11-18T15:04:40.4131002Z ✔ legitimate host histories reconstruct and replay with generated and transport input IDs (36.587321ms)
+2026-11-18T15:04:40.4131473Z ✔ runtime rejects multiple input arrivals for one single-outcome effect without changing the journal (7.042875ms)
+2026-11-18T15:04:40.4131894Z ✔ runtime rejects non-boolean abrupt flags before recording host input (10.978644ms)
+2026-11-18T15:04:40.4132264Z ✔ host inputs are canonical scalar tuples, including NaN across JSON replay (7.379934ms)
+2026-11-18T15:04:40.4132597Z ✔ archived host payloads must use canonical scalar tags (4.314171ms)
+2026-11-18T15:04:40.4132966Z ✔ transport input IDs cannot shadow object prototypes or use non-string identifiers (1.370982ms)
+2026-11-18T15:04:40.4133383Z ✔ non-reserved inherited object names are valid transport IDs and stay reconstructible (7.13921ms)
+2026-11-18T15:04:40.4133794Z ✔ generated input IDs skip earlier transport-supplied IDs in the same namespace (8.008534ms)
+2026-11-18T15:04:40.4134225Z ✔ initial checkpoint and exported host-table copies are authenticated against reconstruction (12.627356ms)
+2026-11-18T15:04:40.4134623Z ✔ host dispatch, arrival and delivery causes must match their mutations (15.464894ms)
+2026-11-18T15:04:40.4135190Z ✔ host delivery results and lifecycle transitions are checked independently of replay (14.760391ms)
+2026-11-18T15:04:40.4135909Z ✔ chunk identities, cause indexes and pending summaries cannot be forged (16.848957ms)
+2026-11-18T15:04:40.4136294Z ✔ synchronous host throw lifecycle remains structurally valid and replayable (8.594991ms)
+2026-11-18T15:04:40.4136688Z ✔ reserved mutation entity IDs are rejected before object property assignment (5.655438ms)
+2026-11-18T15:04:40.4147860Z ✔ native async service B arrives before A; the guest awaits its own order (115.271638ms)
+2026-11-18T15:04:40.4152193Z ✔ native synchronous return stays blocked until journaled input delivery (39.807838ms)
+2026-11-18T15:04:40.4153099Z ✔ native rejection reaches guest async catch and is not replayed natively (39.155843ms)
+2026-11-18T15:04:40.4153909Z ✔ native service driver refuses unknown operations and orphaned waits (1.785118ms)
+2026-11-18T15:04:40.4155037Z ✔ aborting a native wait does not fabricate a guest input (1.280766ms)
+2026-11-18T15:04:40.4156148Z ✔ abort before a queued native service starts prevents the side effect (1.154435ms)
+2026-11-18T15:04:40.4156850Z ✔ native service registry rejects getters and proxies before running guest code (0.266643ms)
+2026-11-18T15:04:40.4157563Z ✔ native driver records every completed detached effect or refuses an incomplete run (26.348796ms)
+2026-11-18T15:04:40.4158352Z ✔ native settings reject modified tracked consumers and an interpreter importing another checkout (204.273983ms)
+2026-11-18T15:04:40.4159061Z ✔ only pinned acquired source identities can be assigned to native shards (1.253194ms)
+2026-11-18T15:04:40.4159710Z ✔ native reference aggregator refuses gaps, duplicates and forged evidence (1.908975ms)
+2026-11-18T15:04:40.4160385Z ✔ two exact-source native shards and offline aggregate provide complete evidence (735.224066ms)
+2026-11-18T15:04:40.4161133Z ✔ declared native result graphs enter only at delivery and preserve cycles and mutable aliases (73.091906ms)
+2026-11-18T15:04:40.4161889Z ✔ native graph rejection retains its reason identity through synchronous guest catch (34.638535ms)
+2026-11-18T15:04:40.4162691Z ✔ graph snapshots refuse accessors and undeclared result codecs before native data enters owned state (23.332386ms)
+2026-11-18T15:04:40.4163563Z ✔ graph-result teacher survives independent source admission and serialized evidence checks (576.924641ms)
+2026-11-18T15:04:40.4164379Z ✔ source-certified checkpoint recovery changes observations without changing semantic selections (709.594769ms)
+2026-11-18T15:04:40.4165368Z ✔ source-certified persistent callbacks occur after registration and close through actual selected serving (1148.937779ms)
+2026-11-18T15:04:40.4166203Z ✔ root return preserves a native listener until a later owned callback closes its registration (102.384691ms)
+2026-11-18T15:04:40.4166987Z ✔ one closure reused by two subscriptions retains the exact registration and close ownership (208.826484ms)
+2026-11-18T15:04:40.4167807Z ✔ unsubscribe cancels queued arrivals, refuses stale callbacks and independently checks exact ownership (46.968391ms)
+2026-11-18T15:04:40.4168626Z ✔ rejected unsubscribe retains the callback lifetime and rejected registration never opens it (60.962503ms)
+2026-11-18T15:04:40.4169372Z ✔ cancellation and abnormal collection failure release the native subscription owner (39.503869ms)
+2026-11-18T15:04:40.4169947Z ✔ real worker threads share the same Int32 memory (41.058719ms)
+2026-11-18T15:04:40.4170446Z ✔ native Atomics.wait/notify wake an independent worker (46.340953ms)
+2026-11-18T15:04:40.4170940Z ✔ native shared buffers work with BigInt64 atomics (32.022561ms)
+2026-11-18T15:04:40.4171424Z ✔ native worker API refuses malformed agent inputs (1.68785ms)
+2026-11-18T15:04:40.4172114Z ✔ real independent workers can rendezvous without serial scheduling (33.171578ms)
+2026-11-18T15:04:40.4172721Z ✔ atomic publication exposes ordinary byte writes to a second worker (29.789336ms)
+2026-11-18T15:04:40.4173364Z ✔ actual workers notify native Atomics.waitAsync without serializing agents (35.996017ms)
+2026-11-18T15:04:40.4174040Z ✔ native concurrent agents observe grown shared byte storage after atomic publication (54.045358ms)
+2026-11-18T15:04:40.4175337Z ✔ native growable-worker arguments reject malformed maximum lengths (1.332123ms)
+2026-11-18T15:04:40.4175981Z ✔ natlang-shaped bounded scalar expression returns an independently replayable trace (100.363555ms)
+2026-11-18T15:04:40.4176639Z ✔ natlang body and portable nested scope execute through owned guest code (50.378015ms)
+2026-11-18T15:04:40.4177319Z ✔ object result is materialized from owned heap without returning guest handles (32.615978ms)
+2026-11-18T15:04:40.4177997Z ✔ natlang executeAsync fulfills for supported synchronous guest code (20.43691ms)
+2026-11-18T15:04:40.4178665Z ✔ TypeScript annotations and assertions lower to replayed owned JS with a source map (32.834218ms)
+2026-11-18T15:04:40.4179426Z ✔ natlang EvalFailure identity is retained for unsupported TS-emitted JavaScript (9.994016ms)
+2026-11-18T15:04:40.4180347Z ✔ live functions/capture cells cannot silently execute or serialize (2.699129ms)
+2026-11-18T15:04:40.4180905Z ✔ fresh module seam and native timeouts fail closed (0.498684ms)
+2026-11-18T15:04:40.4181405Z ✔ close and fork preserve independent environment lifecycle (8.065281ms)
+2026-11-18T15:04:40.4181968Z ✔ step budget fails closed and never publishes a training trace (8.391353ms)
+2026-11-18T15:04:40.4182567Z ✔ source imports reject unsafe prototype/host identities, without fallback (2.738008ms)
+2026-11-18T15:04:40.4183282Z ✔ retained natlang module seam installs pure CJS export functions with owned execution (253.080432ms)
+2026-11-18T15:04:40.4184020Z ✔ retained CJS seam refuses require/native guest execution with no successful trace (6.910474ms)
+2026-11-18T15:04:40.4184674Z ✔ rejected trace sink rolls back callable module invocation history (39.907699ms)
+2026-11-18T15:04:40.4185440Z ✔ pinned TypeScript-emitted CommonJS module retains real lexical cells (319.29342ms)
+2026-11-18T15:04:40.4186147Z ✔ failed trace hook leaves retained TypeScript CommonJS lexical state unchanged (131.440748ms)
+2026-11-18T15:04:40.4186880Z ✔ pinned TypeScript const-function exports with chained initialization markers (715.375656ms)
+2026-11-18T15:04:40.4187494Z ✔ CommonJS empty markers and unowned exports fail closed (1.199183ms)
+2026-11-18T15:04:40.4188075Z ✔ module admission rejects host accessors and proxies without invoking them (15.476903ms)
+2026-11-18T15:04:40.4188762Z ✔ conservative CommonJS-to-owned-ESM lowering retains exported pure functions (275.012993ms)
+2026-11-18T15:04:40.4189431Z ✔ CJS bridge rejects source-time arbitrary host calls and suspicious exports (8.652427ms)
+2026-11-18T15:04:40.4190060Z ✔ failing retained trace hook does not commit module invocation (23.893044ms)
+2026-11-18T15:04:40.4190613Z ✔ natlang async strict guest awaits out-of-order native inputs with replay (193.287908ms)
+2026-11-18T15:04:40.4191333Z ✔ native async guest mutation is committed only after replay-verified completion (57.524706ms)
+2026-11-18T15:04:40.4192012Z ✔ failed native service completion can be caught entirely inside the owned guest (23.324144ms)
+2026-11-18T15:04:40.4192675Z ✔ unregistered native helper calls fail closed and do not emit success (5.833427ms)
+2026-11-18T15:04:40.4193336Z ✔ closing the evaluator aborts outstanding native waits without a success archive (6.102694ms)
+2026-11-18T15:04:40.4194027Z ✔ nested owned async lexical block keeps its await capability and replay (44.042348ms)
+2026-11-18T15:04:40.4194634Z ✔ owned native async deadline aborts the native signal and does not publish a trace (33.002082ms)
+2026-11-18T15:04:40.4195199Z ✔ bounded native deadline allows success and refuses malformed deadlines (41.836445ms)
+2026-11-18T15:04:40.4195608Z ✔ natlang V8 differential: simple scalar expression (82.045169ms)
+2026-11-18T15:04:40.4196077Z ✔ natlang V8 differential: typed shorthand and compound assignments (73.468474ms)
+2026-11-18T15:04:40.4196648Z ✔ natlang V8 differential: owned typed arrow closures (48.392714ms)
+2026-11-18T15:04:40.4196978Z ✔ natlang V8 differential: template substitutions (22.664647ms)
+2026-11-18T15:04:40.4197494Z ✔ natlang V8 differential: bitwise number operators (40.2523ms)
+2026-11-18T15:04:40.4198041Z ✔ natlang V8 differential: captured for-let iteration values (108.406423ms)
+2026-11-18T15:04:40.4198675Z ✔ natlang V8 differential: owned object update and returned alias (54.759197ms)
+2026-11-18T15:04:40.4199196Z ✔ natlang V8 differential: strict while loop (146.051721ms)
+2026-11-18T15:04:40.4199665Z ✔ natlang V8 differential: caught TS guest exception (29.987856ms)
+2026-11-18T15:04:40.4200176Z ✔ natlang V8 differential: unbound typeof and lexical unary (36.131091ms)
+2026-11-18T15:04:40.4200805Z ✔ natlang V8 differential: TS optional property chains and nullish fallback (38.687545ms)
+2026-11-18T15:04:40.4201527Z ✔ natlang V8 differential: TS optional computed property skips unneeded key evaluation (49.232242ms)
+2026-11-18T15:04:40.4202449Z ✔ unsupported generated TypeScript cannot be accepted via the differential reference (2.721734ms)
+2026-11-18T15:04:40.4203164Z ✔ an async natlang entry awaits owned fulfilled promises and replays exactly (119.066725ms)
+2026-11-18T15:04:40.4203690Z ✔ owned async rejection reaches natlang EvalFailure, never a successful trace (13.162505ms)
+2026-11-18T15:04:40.4204083Z ✔ live data mutations retain host aliases and the identity of returned values (60.483469ms)
+2026-11-18T15:04:40.4204465Z ✔ mutating live data is rolled back on failed execution and invalid callbacks (27.268565ms)
+2026-11-18T15:04:40.4204845Z ✔ retained data-only CommonJS module commits exports without losing aliases (95.26487ms)
+2026-11-18T15:04:40.4205410Z ✔ retained module boundary refuses host callables and preserves state (0.792248ms)
+2026-11-18T15:04:40.4205989Z ✔ null-prototype data objects retain their prototype at guest and host boundaries (41.030106ms)
+2026-11-18T15:04:40.4206672Z ✔ synchronous onTrace closure blocks live-data commit and success (121.959067ms)
+2026-11-18T15:04:40.4207295Z ✔ asynchronous native onTrace closure blocks live-data commit and success (39.845756ms)
+2026-11-18T15:04:40.4208016Z ✔ synchronous callback cannot reenter owned execution, outer run still commits (53.057514ms)
+2026-11-18T15:04:40.4208706Z ✔ pending native service blocks another call and releases on completion (18.916022ms)
+2026-11-18T15:04:40.4209384Z ✔ retained CommonJS export callbacks cannot reenter the same module realm (216.41952ms)
+2026-11-18T15:04:40.4210031Z ✔ failing synchronous trace callback rolls back a live mutation (23.28189ms)
+2026-11-18T15:04:40.4210701Z ✔ direct CommonJS installation is retained-only and cannot reenter a trace callback (22.550804ms)
+2026-11-18T15:04:40.4211493Z ✔ Natlang uses selected execution for real compiled JS and TypeScript expressions (51.806143ms)
+2026-11-18T15:04:40.4212287Z ✔ selected module initializer exports an owned function trampoline with retained calls (103.967943ms)
+2026-11-18T15:04:40.4213120Z ✔ declared native callable receives the actual selected graph once through the shared broker (44.111222ms)
+2026-11-18T15:04:40.4213950Z ✔ a native asynchronous binding calls an owned guest closure through selected reentry (64.205995ms)
+2026-11-18T15:04:40.4214772Z ✔ live cell publication invokes no getter and only a committed request reads its value (28.695302ms)
+2026-11-18T15:04:40.4215302Z ✔ timeouts and close abort selection without subsequent native dispatch (10.98909ms)
+2026-11-18T15:04:40.4215727Z ✔ retained native callbacks run in their source realm after the registering invocation completes (91.921877ms)
+2026-11-18T15:04:40.4216167Z ✔ native callback resource inputs use declared envelopes and selected wrapper reentry (108.409728ms)
+2026-11-18T15:04:40.4216609Z ✔ exported functions retain one live captured cell and one owned namespace across repeated calls (68.995865ms)
+2026-11-18T15:04:40.4217015Z ✔ TS generated-site anchors refer to exact source bytes and remain private (91.207051ms)
+2026-11-18T15:04:40.4217414Z ✔ mapping refuses forged source text instead of claiming original site provenance (4.201427ms)
+2026-11-18T15:04:40.4217814Z ✔ native instrumentation preserves delete target and records actual mutation (43.209949ms)
+2026-11-18T15:04:40.4218321Z ✔ delete through Proxy executes the guest trap once and is nonperturbing (14.015223ms)
+2026-11-18T15:04:40.4218740Z ✔ native observation captures executed expressions, branch and return (49.044615ms)
+2026-11-18T15:04:40.4219270Z ✔ TypeScript exports can be traced with unchanged source (15.771127ms)
+2026-11-18T15:04:40.4219612Z ✔ array mutations and returned aliases survive the observed state diff (8.326509ms)
+2026-11-18T15:04:40.4219998Z ✔ class methods, constructor and lexical iteration report effective operations (17.616825ms)
+2026-11-18T15:04:40.4220398Z ✔ Map, Set, Date, RegExp content participates in real-world end-state comparison (12.458341ms)
+2026-11-18T15:04:40.4220822Z ✔ getters, setters and proxy traps are executed without a snapshot-induced getter call (13.952879ms)
+2026-11-18T15:04:40.4221272Z ✔ await and resume follow the actual async computation (10.586093ms)
+2026-11-18T15:04:40.4221622Z ✔ guest callbacks have exact visible source spans and stable object identity (16.377352ms)
+2026-11-18T15:04:40.4221994Z ✔ native console output is an independently compared side-effect record (6.439398ms)
+2026-11-18T15:04:40.4222385Z ✔ arithmetic is an owned phase continuation with typed commands and source identities (24.748489ms)
+2026-11-18T15:04:40.4222788Z ✔ primitive conversions preserve special numeric/string results and ordering (160.891168ms)
+2026-11-18T15:04:40.4223180Z ✔ primitive abrupt completions are journaled, replayed and stop later effects (46.139245ms)
+2026-11-18T15:04:40.4223578Z ✔ owned valueOf is an observable guest call with this and arithmetic continuation (63.957254ms)
+2026-11-18T15:04:40.4223981Z ✔ unmodeled function object coercion stays unsupported and calls no host code (6.273057ms)
+2026-11-18T15:04:40.4224363Z ✔ terminal guest throw or arithmetic failure cannot drain already queued jobs (21.99588ms)
+2026-11-18T15:04:40.4224784Z ✔ JSON round trips at every phase preserve the continuation without native generator state (84.490245ms)
+2026-11-18T15:04:40.4225366Z ✔ typed spec commands reject missing writes, wrong versions, malformed phases and provenance (11.576849ms)
+2026-11-18T15:04:40.4225786Z ✔ a structurally coherent arithmetic lie is rejected by deterministic replay (17.334319ms)
+2026-11-18T15:04:40.4226168Z ✔ noncanonical external scalar tags are refused before arrival commits (17.694182ms)
+2026-11-18T15:04:40.4226589Z ✔ update expressions and unparenthesized unary or await exponentiation fail before execution (24.518101ms)
+2026-11-18T15:04:40.4227020Z ✔ private host arrival cannot change arithmetic-visible prefixes before delivery (3.261047ms)
+2026-11-18T15:04:40.4227449Z ✔ host abruptness stays private until delivery then differs from the same normal payload (10.0942ms)
+2026-11-18T15:04:40.4228095Z ✔ dense array reverse/fill/copyWithin and immutable copy variants match V8 (74.440881ms)
+2026-11-18T15:04:40.4228781Z ✔ copyWithin overlapping and negative-relative indexes preserve native semantics (28.026983ms)
+2026-11-18T15:04:40.4229455Z ✔ fill preserves identical owned object aliases without host object coercion (26.269887ms)
+2026-11-18T15:04:40.4230092Z ✔ Array.with validates out-of-bounds indices as owned guest RangeError (11.298339ms)
+2026-11-18T15:04:40.4230780Z ✔ Array.copyWithin and fill reject unsupported index coercion without native fallback (5.125103ms)
+2026-11-18T15:04:40.4231477Z ✔ async Promise constructor executor resumes after await without adoption (54.326794ms)
+2026-11-18T15:04:40.4232140Z ✔ async executor throw rejects its ignored returned promise, not constructed Promise (11.323927ms)
+2026-11-18T15:04:40.4232781Z ✔ async executor return alone does not settle the constructed promise (7.540912ms)
+2026-11-18T15:04:40.4233447Z ✔ pinned callback executes in an owned guest closure, with independently verified data (271.262973ms)
+2026-11-18T15:04:40.4234079Z ✔ pinned comparator fixture extension preserves data arguments (0.501688ms)
+2026-11-18T15:04:40.4234559Z ✔ unrecognized fixture scripts fail closed (0.338812ms)
+2026-11-18T15:04:40.4235257Z ✔ Object.keys, values and entries agree with V8 for owned ordinary data (104.925697ms)
+2026-11-18T15:04:40.4235616Z ✔ Array.at relative indexing agrees with V8, including NaN and bounds (54.850556ms)
+2026-11-18T15:04:40.4235976Z ✔ unmodeled exotic enumeration fails without invoking native functions (3.556312ms)
+2026-11-18T15:04:40.4236370Z ✔ 20 independently pinned real JS proof implementations pair with canonical inputs (22.572001ms)
+2026-11-18T15:04:40.4236779Z ✔ function-only ESM lowerer preserves computation and rejects top-level effects (13.419994ms)
+2026-11-18T15:04:40.4237167Z ✔ original leap proof and canonical input pass owned independent recheck (118.067712ms)
+2026-11-18T15:04:40.4237515Z ✔ canonical identity and split are stable by exercise, not input (7.189913ms)
+2026-11-18T15:04:40.4238069Z ✔ explicit JavaScript canonical bindings preserve original inputs and exact BigInt integer tokens (8.400331ms)
+2026-11-18T15:04:40.4238596Z ✔ active canonical replacements retain the superseded identity without replaying obsolete inputs (5.13016ms)
+2026-11-18T15:04:40.4239045Z ✔ the two-fer JavaScript binding records omission while retaining the neutral null input (6.47311ms)
+2026-11-18T15:04:40.4239614Z ✔ grains expectations retain exact pinned decimal bytes and require actual BigInt results (6.226988ms)
+2026-11-18T15:04:40.4240037Z ✔ deterministic generated variants stay distinct from canonical provenance (5.791299ms)
+2026-11-18T15:04:40.4240462Z ✔ source-site audit maps original function bodies without guessing synthetic keywords (39.981102ms)
+2026-11-18T15:04:40.4240867Z ✔ ordinary own vs inherited data respects a linked prototype (43.17054ms)
+2026-11-18T15:04:40.4241228Z ✔ Object.setPrototypeOf changes subsequent inherited reads (17.544756ms)
+2026-11-18T15:04:40.4241581Z ✔ Object.create(null) does not inherit Object.prototype methods (10.373212ms)
+2026-11-18T15:04:40.4241973Z ✔ cyclic prototype assignment is a guest TypeError, not an interpreter error (20.807355ms)
+2026-11-18T15:04:40.4242385Z ✔ owned getter and setter observe receiver and trace their nested calls (49.415835ms)
+2026-11-18T15:04:40.4242788Z ✔ inherited getter executes with child receiver instead of prototype (28.291471ms)
+2026-11-18T15:04:40.4243220Z ✔ getters that return methods preserve the receiver during calls (22.771853ms)
+2026-11-18T15:04:40.4243593Z ✔ throw from an owned getter reaches a guest catch block (21.94267ms)
+2026-11-18T15:04:40.4243906Z ✔ non-configurable accessor cannot be redefined (32.471867ms)
+2026-11-18T15:04:40.4244269Z ✔ Proxy get trap receives target, key and receiver with guest identity (28.13806ms)
+2026-11-18T15:04:40.4244632Z ✔ Proxy set trap mutates the target and assignment returns its RHS (39.495459ms)
+2026-11-18T15:04:40.4245138Z ✔ a transparent Proxy forwards data gets and sets to the owned target (23.746845ms)
+2026-11-18T15:04:40.4245520Z ✔ Proxy method interception retains proxy as this receiver (26.785697ms)
+2026-11-18T15:04:40.4245890Z ✔ Proxy get trap exception propagates as an owned guest completion (18.087276ms)
+2026-11-18T15:04:40.4246279Z ✔ invalid Proxy constructor arguments are catchable guest TypeErrors (11.465622ms)
+2026-11-18T15:04:40.4246718Z ✔ accessor-based numeric coercion fails closed with a reconstructible unsupported trace (11.432232ms)
+2026-11-18T15:04:40.4247139Z ✔ growable SAB expands zero-filled byte heap and tracking Int16 views (1.953772ms)
+2026-11-18T15:04:40.4247501Z ✔ guest grow and length-tracking view agree with independent V8 (120.377201ms)
+2026-11-18T15:04:40.4247896Z ✔ unbounded view subarray tracks subsequent growth and fixed view does not (61.209123ms)
+2026-11-18T15:04:40.4248297Z ✔ SAB growable, maxByteLength and invalid growth are observable (57.793432ms)
+2026-11-18T15:04:40.4248656Z ✔ ordinary fixed SAB refuses grow with catchable TypeError (15.413486ms)
+2026-11-18T15:04:40.4249045Z ✔ separate Date.now requests are journaled and replay never reads clock (102.170425ms)
+2026-11-18T15:04:40.4249518Z ✔ typed natlang guest clock uses only explicit native service (73.75727ms)
+2026-11-18T15:04:40.4249833Z ✔ ungranted Date.now cannot read ambient V8 time (2.677546ms)
+2026-11-18T15:04:40.4250219Z ✔ journaled console effects preserve call order and never replay native writers (73.742738ms)
+2026-11-18T15:04:40.4250605Z ✔ natlang console text reaches its logs and stays traceable (67.649892ms)
+2026-11-18T15:04:40.4250957Z ✔ owned queueMicrotask shares FIFO jobs with Promise reactions (92.917346ms)
+2026-11-18T15:04:40.4251343Z ✔ nested guest microtask preserves end-of-turn order and exact replay (41.406926ms)
+2026-11-18T15:04:40.4251718Z ✔ non-callable microtask callback is an owned guest TypeError (4.100425ms)
+2026-11-18T15:04:40.4252069Z ✔ forged microtask queue order fails independent reconstruction (3.43501ms)
+2026-11-18T15:04:40.4252474Z ✔ owned Object.assign merges only own data and preserves nested reference aliases (61.779033ms)
+2026-11-18T15:04:40.4252991Z ✔ Object.assign copies owned dense array enumerable indices but not length (15.52211ms)
+2026-11-18T15:04:40.4253420Z ✔ Object.assign writes the same target object identity and avoids native fallback (24.398821ms)
+2026-11-18T15:04:40.4253881Z ✔ Object.assign admits simple scalar-free candidate traces through independent V8 gate (31.836728ms)
+2026-11-18T15:04:40.4254328Z ✔ Object.assign rejects unsafe exotic sources without returning successful guest values (0.853018ms)
+2026-11-18T15:04:40.4254786Z ✔ ordinary object and dense primitive-array default conversion agree with Node scalar values (90.743581ms)
+2026-11-18T15:04:40.4255261Z ✔ guest valueOf, fallback to toString, and this are observable and ordered (29.324853ms)
+2026-11-18T15:04:40.4255651Z ✔ non-callable own conversion properties are skipped, then throw TypeError (14.841733ms)
+2026-11-18T15:04:40.4256102Z ✔ a guest method throw propagates through the pending coercion operation (14.882834ms)
+2026-11-18T15:04:40.4256692Z ✔ complex arrays fail closed rather than invoking host coercion (7.216042ms)
+2026-11-18T15:04:40.4257289Z ✔ forged own-property [[Get]] value and producer are rejected by validator (10.038917ms)
+2026-11-18T15:04:40.4257934Z ✔ prototype-dangerous own keys still have deterministic property history (9.422725ms)
+2026-11-18T15:04:40.4258563Z ✔ async conversion methods are refused before starting an unowned continuation (8.920267ms)
+2026-11-18T15:04:40.4259216Z ✔ structural validator rejects conversion child with a forged this receiver (19.129781ms)
+2026-11-18T15:04:40.4259875Z ✔ Promise executor is synchronous and first resolution wins (69.626859ms)
+2026-11-18T15:04:40.4260199Z ✔ executor throw causes owned rejection (22.475996ms)
+2026-11-18T15:04:40.4260590Z ✔ executor throw after resolve does not supersede earlier completion (24.004004ms)
+2026-11-18T15:04:40.4260903Z ✔ constructor bad executor is catchable TypeError (11.47777ms)
+2026-11-18T15:04:40.4261242Z ✔ Promise executor and thenable adoption preserve guest microtask FIFO (109.774943ms)
+2026-11-18T15:04:40.4261598Z ✔ thenable throw rejects only once and can be caught in owned handlers (68.504725ms)
+2026-11-18T15:04:40.4261953Z ✔ nested thenable and Promise adoption also works for Promise.all (67.950457ms)
+2026-11-18T15:04:40.4262300Z ✔ allSettled returns per-input outcomes and does not short circuit (40.473145ms)
+2026-11-18T15:04:40.4262659Z ✔ Promise.any takes first fulfillment and aggregates all rejected reasons (67.262106ms)
+2026-11-18T15:04:40.4263001Z ✔ allSettled empty and any empty settle with expected shape (39.687098ms)
+2026-11-18T15:04:40.4263330Z ✔ attempt to forge queued thenable function identity is rejected (10.725133ms)
+2026-11-18T15:04:40.4263709Z ✔ Promise.withResolvers first settlement wins after synchronous code (57.18414ms)
+2026-11-18T15:04:40.4264045Z ✔ Promise.withResolvers assimilates thenables on FIFO jobs (35.095311ms)
+2026-11-18T15:04:40.4264392Z ✔ Promise.withResolvers resolution can be deferred to virtual timer (18.265986ms)
+2026-11-18T15:04:40.4264772Z ✔ Promise.withResolvers returns own callable resolve and reject properties (25.074222ms)
+2026-11-18T15:04:40.4265379Z ✔ Object.create walks inherited data and preserves own shadowing (37.414575ms)
+2026-11-18T15:04:40.4265741Z ✔ inherited methods receive child receiver and are replayed as guest calls (33.612691ms)
+2026-11-18T15:04:40.4266112Z ✔ Object.setPrototypeOf and getPrototypeOf operate on owned identities (23.254262ms)
+2026-11-18T15:04:40.4266422Z ✔ null prototype has no default Object methods (10.21969ms)
+2026-11-18T15:04:40.4266759Z ✔ inherited valueOf executes owned coercion with the original this receiver (24.908891ms)
+2026-11-18T15:04:40.4267115Z ✔ cyclic prototype mutation throws a catchable guest TypeError (17.936848ms)
+2026-11-18T15:04:40.4267434Z ✔ a forged inherited method producer/version is rejected (25.502699ms)
+2026-11-18T15:04:40.4267782Z ✔ Object.is has SameValue signed-zero, NaN and reference identity semantics (193.380541ms)
+2026-11-18T15:04:40.4268238Z ✔ dense Array.includes uses SameValueZero, fromIndex and owned identity (248.061463ms)
+2026-11-18T15:04:40.4268620Z ✔ Array.isArray sees nested Proxy array targets without invoking get traps (48.590308ms)
+2026-11-18T15:04:40.4268945Z ✔ DataView aliases shared bytes in both endian modes (2.448729ms)
+2026-11-18T15:04:40.4269227Z ✔ DataView BigInt, float and byte-range checks (0.617002ms)
+2026-11-18T15:04:40.4269479Z ✔ DataView growable byte length tracking (0.176136ms)
+2026-11-18T15:04:40.4269770Z ✔ DataView mixed endian accesses alias native typed array bytes (79.644414ms)
+2026-11-18T15:04:40.4270077Z ✔ DataView float and signed view reads match native V8 (33.9695ms)
+2026-11-18T15:04:40.4270399Z ✔ DataView signed and unsigned BigInt reads preserve byte identity (17.237001ms)
+2026-11-18T15:04:40.4270721Z ✔ length-tracking DataView follows shared buffer growth (58.017251ms)
+2026-11-18T15:04:40.4271033Z ✔ DataView out-of-bounds read is a catchable owned RangeError (18.99718ms)
+2026-11-18T15:04:40.4271343Z ✔ two owned Int32Array views alias one shared buffer (87.074319ms)
+2026-11-18T15:04:40.4271651Z ✔ Int32 wrap and compare-exchange agree with independent V8 (48.302253ms)
+2026-11-18T15:04:40.4271948Z ✔ single-agent wait with timeout zero and notify (28.492916ms)
+2026-11-18T15:04:40.4272261Z ✔ direct shared typed array stores alias indexed and atomic reads (14.156016ms)
+2026-11-18T15:04:40.4290986Z ✔ different owned typed array widths alias the same SAB byte storage (31.773432ms)
+2026-11-18T15:04:40.4291490Z ✔ offset subarrays and shared buffer slice preserve byte-level semantics (47.488615ms)
+2026-11-18T15:04:40.4291862Z ✔ owned bytes alias across integer, unsigned, floating and BigInt views (3.085802ms)
+2026-11-18T15:04:40.4292160Z ✔ owned byte offsets and subarray bounds (0.42988ms)
+2026-11-18T15:04:40.4292431Z ✔ atomic coercion, return values and mixed aliases (0.416449ms)
+2026-11-18T15:04:40.4292783Z ✔ typed-array semantics reject noninteger atomics and invalid element widths (0.172911ms)
+2026-11-18T15:04:40.4293168Z ✔ Atomics.store returns untruncated integer, unlike the stored lane (0.380415ms)
+2026-11-18T15:04:40.4293511Z ✔ thenable runs after synchronous code with original receiver (78.048042ms)
+2026-11-18T15:04:40.4293848Z ✔ executor resolver assimilates thenable adopting another promise (37.732425ms)
+2026-11-18T15:04:40.4294138Z ✔ thenable callback throw rejects promise (35.51226ms)
+2026-11-18T15:04:40.4294425Z ✔ forged queued thenable fails independent reconstruction (13.750674ms)
+2026-11-18T15:04:40.4294738Z ✔ bounded timers run after microtasks in deadline order (88.760807ms)
+2026-11-18T15:04:40.4295185Z ✔ interval callback can cancel itself (40.179492ms)
+2026-11-18T15:04:40.4295425Z ✔ clearTimeout removes a pending task (7.195551ms)
+2026-11-18T15:04:40.4295715Z ✔ Promise.all awaits values and preserves input positions (34.398618ms)
+2026-11-18T15:04:40.4296029Z ✔ Promise.race and Promise.all(empty) settle on owned jobs (50.178056ms)
+2026-11-18T15:04:40.4296334Z ✔ forged task clock fails independent reconstruction (8.708567ms)
+2026-11-18T15:04:40.4296667Z ✔ pinned original Axios helper body has unchanged exact-source span (12.0997ms)
+2026-11-18T15:04:40.4297300Z ✔ actual pinned production functions produce independently checked owned candidates or refusals (1232.164505ms)
+2026-11-18T15:04:40.4297727Z ✔ tampered real vendor source refuses execution before any V8/owned check (1.203808ms)
+2026-11-18T15:04:40.4298117Z ✔ pinned production arrow-body projection preserves original expression bytes (7.186967ms)
+2026-11-18T15:04:40.4298514Z ✔ pinned Axios closure factory runs as a real owned nested closure or refuses (623.681333ms)
+2026-11-18T15:04:40.4298851Z ✔ modified vendor bytes refuse original factory extraction (1.46301ms)
+2026-11-18T15:04:40.4299175Z ✔ then reactions and await resume in FIFO subscription order (88.844963ms)
+2026-11-18T15:04:40.4299529Z ✔ a thrown then handler rejects and finally preserves the original reason (34.754936ms)
+2026-11-18T15:04:40.4299882Z ✔ non-callable handlers pass through and callable catch recovers (31.180045ms)
+2026-11-18T15:04:40.4300323Z ✔ async then callback resolves through its owned inner guest promise (34.647714ms)
+2026-11-18T15:04:40.4300702Z ✔ finally defers fulfillment until returned host-backed guest promise settles (21.83664ms)
+2026-11-18T15:04:40.4301084Z ✔ returned self-reference rejects the derived promise with guest TypeError (17.751058ms)
+2026-11-18T15:04:40.4301442Z ✔ pending host promise queues callback only after public delivery (20.977452ms)
+2026-11-18T15:04:40.4301762Z ✔ forged reaction job order fails structural validation (15.916707ms)
+2026-11-18T15:04:40.4302129Z ✔ package entry embeds a scalar program with source identity and replayable state (42.883026ms)
+2026-11-18T15:04:40.4302540Z ✔ public scalar codec preserves special numbers, BigInt and UTF-16 strings (0.586646ms)
+2026-11-18T15:04:40.4302943Z ✔ embedded synchronous host calls wait for delivery even when their result is unused (15.093723ms)
+2026-11-18T15:04:40.4303387Z ✔ embedded async delivery stays private until supplied and replay never repeats a host write (40.638636ms)
+2026-11-18T15:04:40.4303812Z ✔ package exports the validation and replay error constructors thrown by its APIs (5.056519ms)
+2026-11-18T15:04:40.4304196Z ✔ package uses one source-certified v4 witness without group transport (82.001244ms)
+2026-11-18T15:04:40.4304611Z ✔ production training subpath emits explicit harness invocations and exact source evidence (250.735611ms)
+2026-11-18T15:04:40.4305233Z ✔ diagnostic quality report retains nonadmission and highlights suspect records (29.959212ms)
+2026-11-18T15:04:40.4305654Z ✔ reference environments remove credentials, injection flags and network proxy settings (0.901832ms)
+2026-11-18T15:04:40.4306462Z ﹣ OS confinement survives direct access to Node filesystem, networking and process APIs (11.211798ms) # Unprivileged namespaces unavailable: unshare: write failed /proc/self/uid_map: Operation not permitted
+2026-11-18T15:04:40.4307344Z ﹣ isolated original and instrumented references pass the source gate and bind the executed policy (9.464989ms) # Unprivileged namespaces unavailable: unshare: write failed /proc/self/uid_map: Operation not permitted
+2026-11-18T15:04:40.4307915Z ✔ deterministic mismatch shrinking preserves an independent predicate (1.74739ms)
+2026-11-18T15:04:40.4308252Z ✔ array and string reductions keep the demonstrated mismatch (0.420325ms)
+2026-11-18T15:04:40.4308574Z ✔ nonreproducible, throwing and bounded oracles fail closed (0.600307ms)
+2026-11-18T15:04:40.4308920Z ✔ await of explicitly rejected promise routes into catch then finally (54.282968ms)
+2026-11-18T15:04:40.4309297Z ✔ async throw before first await is rejected, not thrown into synchronous caller (23.938806ms)
+2026-11-18T15:04:40.4309669Z ✔ adopting a rejected promise delivers its original rejection reason (23.415846ms)
+2026-11-18T15:04:40.4310030Z ✔ host asynchronous rejection becomes guest-visible at delivery only (20.503356ms)
+2026-11-18T15:04:40.4310412Z ✔ implicit binding, invocation, property and array-length errors reach catch (89.62347ms)
+2026-11-18T15:04:40.4310815Z ✔ uncaught async rejection without awaiting is not a synchronous agent crash (5.129109ms)
+2026-11-18T15:04:40.4311257Z ✔ forged awaited rejection metadata is independently rejected (9.523908ms)
+2026-11-18T15:04:40.4311570Z ✔ unary plus BigInt is routed through an owned TypeError (10.062963ms)
+2026-11-18T15:04:40.4311958Z ✔ release campaign receipt retains exact admissions, refusals and compact object identities (60.384317ms)
+2026-11-18T15:04:40.4312420Z ✔ release inventory includes shared registry objects required to rehydrate all original evidence (30.641081ms)
+2026-11-18T15:04:40.4312952Z ▶ release verification rejects altered IDs, dispositions, summaries, digests and omitted refusals
+2026-11-18T15:04:40.4313247Z   ✔ duplicate ID (29.285484ms)
+2026-11-18T15:04:40.4313443Z   ✔ changed disposition (37.676941ms)
+2026-11-18T15:04:40.4313631Z   ✔ public digest (27.263228ms)
+2026-11-18T15:04:40.4313809Z   ✔ candidate digest (24.915811ms)
+2026-11-18T15:04:40.4314087Z   ✔ summary tokens (32.009169ms)
+2026-11-18T15:04:40.4314263Z   ✔ omitted refusal (25.890704ms)
+2026-11-18T15:04:40.4314441Z   ✔ surplus count (52.04041ms)
+2026-11-18T15:04:40.4314611Z   ✔ refusal reason (33.121099ms)
+2026-11-18T15:04:40.4314783Z   ✔ duplicated path (25.093851ms)
+2026-11-18T15:04:40.4315086Z   ✔ path alias (28.409971ms)
+2026-11-18T15:04:40.4315480Z ✔ release verification rejects altered IDs, dispositions, summaries, digests and omitted refusals (318.523603ms)
+2026-11-18T15:04:40.4315909Z ✔ release verification detects materialized bytes and hardlink path aliases (54.531634ms)
+2026-11-18T15:04:40.4316348Z ✔ release caps use native tokens on whole frozen training components and retain every held-out ID (6.366889ms)
+2026-11-18T15:04:40.4316770Z ✔ release defaults preserve the entire native-admitted membership and order (0.213894ms)
+2026-11-18T15:04:40.4317210Z ✔ family shares use the final training denominator without silently relaxing an impossible cap (0.244219ms)
+2026-11-18T15:04:40.4317684Z ✔ caps reject unmeasured counts, duplicate IDs and unauthenticated or inconsistent registries (0.375137ms)
+2026-11-18T15:04:40.4318144Z ✔ dry replay reproduces all events, chunks, checkpoints and inputs without external writes (95.787462ms)
+2026-11-18T15:04:40.4318589Z ✔ replay preserves transport-supplied IDs and runs with multiple registered sources (10.991024ms)
+2026-11-18T15:04:40.4319013Z ✔ structurally valid corruption of a semantic result is rejected by execution replay (37.43847ms)
+2026-11-18T15:04:40.4319375Z ✔ replay detects forged read observations and producer links (41.492666ms)
+2026-11-18T15:04:40.4319730Z ✔ replay compiles source afresh rather than executing archived bytecode (47.673063ms)
+2026-11-18T15:04:40.4320107Z ✔ replay rejects fabricated chunk exits even when state patches reconstruct (40.656082ms)
+2026-11-18T15:04:40.4320472Z ✔ a live synchronous failure can be reproduced without a host adapter (9.19413ms)
+2026-11-18T15:04:40.4320879Z ✔ replay rejects a manually reordered internal event even when the archive reconstructs (8.212667ms)
+2026-11-18T15:04:40.4321265Z ✔ replay handles a terminated pure program with no external inputs (32.117802ms)
+2026-11-18T15:04:40.4321659Z ✔ retained history and replay configuration cannot be rewritten by host consumers (217.29389ms)
+2026-11-18T15:04:40.4322099Z ✔ a non-writable retained array length refuses the next call before any host graph mutation (101.278558ms)
+2026-11-18T15:04:40.4322482Z ✔ retained maxSteps is bounded before any snapshot is admitted (0.289808ms)
+2026-11-18T15:04:40.4322799Z ✔ closed flag cannot be reset to reopen a retained session (15.674685ms)
+2026-11-18T15:04:40.4323174Z ✔ trace hooks cannot reenter synchronous calls or rewrite retained archive evidence (197.408782ms)
+2026-11-18T15:04:40.4323568Z ✔ closing an environment inside a trace hook aborts a retained commit (20.964469ms)
+2026-11-18T15:04:40.4323926Z ✔ scalar codec is exact for special numbers, bigint and lone surrogates (3.939132ms)
+2026-11-18T15:04:40.4324382Z ✔ machine executes arithmetic, loops and repeated chronological writes (68.924208ms)
+2026-11-18T15:04:40.4324810Z ✔ function activation and lexical closure state are owned records (14.466315ms)
+2026-11-18T15:04:40.4325289Z ✔ object identity, array lengths and history are preserved (13.391261ms)
+2026-11-18T15:04:40.4325672Z ✔ classified implicit guest faults terminate by owned completion, not by native throw (6.86398ms)
+2026-11-18T15:04:40.4326064Z ✔ synchronous host return stays blocked until an explicitly delivered input (7.210313ms)
+2026-11-18T15:04:40.4326434Z ✔ async host input B precedes A while awaits preserve A then B consumption (32.230447ms)
+2026-11-18T15:04:40.4326816Z ✔ causal prefixes are identical for different withheld future input payloads (14.620873ms)
+2026-11-18T15:04:40.4327216Z ✔ independent reconstruction rejects corrupted patch and missing catalog identity (6.662328ms)
+2026-11-18T15:04:40.4327628Z ✔ native host effects dispatch exactly once and are not replayed by reconstruction (13.872713ms)
+2026-11-18T15:04:40.4328052Z ✔ async adapter native promises are rejected rather than delivering guest work opaquely (8.860459ms)
+2026-11-18T15:04:40.4328503Z ✔ browser operations use scope-owned opaque handles and bounded mutation grants (2.065932ms)
+2026-11-18T15:04:40.4329096Z ✔ DOM listener emits only asynchronous owned notifications after registration (3.241197ms)
+2026-11-18T15:04:40.4329764Z ✔ one-shot timer can be cancelled after firing without fabricating another event (10.715311ms)
+2026-11-18T15:04:40.4330456Z ✔ real HTTP request, status, redirects and streaming retain one response without refetch (43.116723ms)
+2026-11-18T15:04:40.4331181Z ✔ HTTP caller cancellation aborts an in-flight request before a response handle exists (3.461851ms)
+2026-11-18T15:04:40.4331929Z ✔ HTTP quota, concurrent consumption and cross-origin redirects fail before hidden work (1.814131ms)
+2026-11-18T15:04:40.4332678Z ✔ bounded write streams flush and close, reject concurrent/foreign writes and retain exact bytes (24.219247ms)
+2026-11-18T15:04:40.4333390Z ✔ socket idle timeout rejects a pending read instead of hanging or reporting EOF (32.811982ms)
+2026-11-18T15:04:40.4334099Z ✔ registry cleanup continues after a failed resource close and records each disposition (0.622211ms)
+2026-11-18T15:04:40.4334772Z ✔ file capabilities confine filesystem, preserve stream pull and close lifecycle (29.044219ms)
+2026-11-18T15:04:40.4335509Z ✔ HTTP capability checks origins and redirects without ambient refetch (26.401886ms)
+2026-11-18T15:04:40.4336120Z ✔ scoped socket read/write observes a bounded network effect through its handle (10.549331ms)
+2026-11-18T15:04:40.4336794Z ✔ selected official suite is pinned to the same engine and revision as syntax baseline (1.833641ms)
+2026-11-18T15:04:40.4337411Z ✔ the exact official source bytes must match a pinned Git blob SHA (0.902594ms)
+2026-11-18T15:04:40.4337987Z ✔ metadata recognizes only explicitly supported modes and negative phases (1.742103ms)
+2026-11-18T15:04:40.4338651Z ✔ bounded execution distinguishes parse and compiler refusal from runtime failures (42.855739ms)
+2026-11-18T15:04:40.4339535Z ✔ recorded arithmetic exceptions retain exact Error types and verified completion evidence (24.424037ms)
+2026-11-18T15:04:40.4340204Z ✔ unsupported operations and scalar throws cannot impersonate an owned Error (7.662239ms)
+2026-11-18T15:04:40.4340790Z ✔ terminal-outcome validation errors remain harness failures (5.695957ms)
+2026-11-18T15:04:40.4341303Z ✔ terminal-outcome replay errors remain harness failures (8.80144ms)
+2026-11-18T15:04:40.4341883Z ✔ selected Test262 pass, XFAIL, XPASS and reference regressions are distinct (0.647719ms)
+2026-11-18T15:04:40.4342493Z ✔ unavailable harness coverage is never silently credited as passing (0.388307ms)
+2026-11-18T15:04:40.4343066Z ✔ report counts never present known failures or skips as passes (0.155354ms)
+2026-11-18T15:04:40.4343691Z ✔ diagnostic HTML is self-contained and escapes hostile source and identifiers (14.736447ms)
+2026-11-18T15:04:40.4344532Z ✔ invalid partial traces remain visible and expected comparison reports first divergence (5.343404ms)
+2026-11-18T15:04:40.4345449Z ✔ bounded campaign verifies repeated ingress, checkpoint safety, cancellation and reverse settlement (2151.240126ms)
+2026-11-18T15:04:40.4346166Z ✔ token fingerprints ignore formatting but preserve executable operators (3.723406ms)
+2026-11-18T15:04:40.4346741Z ✔ cross-fork alpha-equivalent owned source shares a cluster (5.494002ms)
+2026-11-18T15:04:40.4347312Z ✔ cross-split clones reject a selection even when source paths differ (0.892028ms)
+2026-11-18T15:04:40.4347917Z ✔ near-identical long programs cluster by overlapping token shingles (4.575845ms)
+2026-11-18T15:04:40.4348594Z ✔ freezes ancestry, renamed/literal variants and upstream revisions before expansion (13.695604ms)
+2026-11-18T15:04:40.4349356Z ✔ holds out whole connected project/composition components and detects split/source tampering (4.166826ms)
+2026-11-18T15:04:40.4350079Z ✔ enforces family token share using actual native counts with explicit refusals (0.634789ms)
+2026-11-18T15:04:40.4350768Z ✔ only verified deeply immutable registry snapshots can reuse authenticated identity (1.70744ms)
+2026-11-18T15:04:40.4351537Z ✔ 60 adversarial production scenarios have unique names, pinned module sources and full licenses (2.915165ms)
+2026-11-18T15:04:40.4352359Z ✔ real event listeners generate explicitly unadmitted, independently matching stateful observations (524.163426ms)
+2026-11-18T15:04:40.4353096Z ✔ bounded pinned queue sequences reproduce across an independent state model (61.37983ms)
+2026-11-18T15:04:40.4353776Z ✔ strict command validation rejects dangerous, non-data and unsupported inputs (0.827781ms)
+2026-11-18T15:04:40.4354426Z ✔ delta debugging removes irrelevant commands and reduces JSON payloads (1.89935ms)
+2026-11-18T15:04:40.4355177Z ✔ shrinker refuses flaky, exception, nonmatching signatures, and bounded budgets (0.765737ms)
+2026-11-18T15:04:40.4355862Z ✔ side-effect-only import of pure function graph links without executing host JS (97.575685ms)
+2026-11-18T15:04:40.4356583Z ✔ TypeScript-elided unused value imports and empty source reexports remain validated (38.895534ms)
+2026-11-18T15:04:40.4357240Z ✔ a TS-elided value import cannot hide an unsupported side-effect module (8.46401ms)
+2026-11-18T15:04:40.4357867Z ✔ type-only TypeScript dependencies do not turn into guest runtime imports (1.757185ms)
+2026-11-18T15:04:40.4358480Z ✔ TypeScript static imports and aliased exports link as owned JS (164.502507ms)
+2026-11-18T15:04:40.4359072Z ✔ linked pure ESM function calls agree with the native V8 module loader (22.86369ms)
+2026-11-18T15:04:40.4359669Z ✔ function-only cycles and export aliases resolve by lexical identity (158.242568ms)
+2026-11-18T15:04:40.4360327Z ✔ dynamic imports, side effects and unknown packages fail before guest execution (12.343723ms)
+2026-11-18T15:04:40.4360955Z ✔ unreachable module source never enters the executable guest bundle (1.269959ms)
+2026-11-18T15:04:40.4361617Z ✔ function-only named re-exports link through multiple TS modules and match native ESM (33.983081ms)
+2026-11-18T15:04:40.4362290Z ✔ star re-exports resolve same-origin diamonds and cycles but not default (34.529877ms)
+2026-11-18T15:04:40.4363022Z ✔ ambiguous and invalid source re-exports fail closed before execution (9.435548ms)
+2026-11-18T15:04:40.4363699Z ✔ linked imported function shorthand retains the original property key (23.558209ms)
+2026-11-18T15:04:40.4364342Z ✔ structured bindings reject unsupported dialects, paths and fake evidence (1.886382ms)
+2026-11-18T15:04:40.4365151Z ✔ pinned JSON Schema and CommonMark modules produce strictly non-owned reference checks (445.107635ms)
+2026-11-18T15:04:40.4365813Z ✔ dynamic async or hostile workers are refused by a process deadline (172.227691ms)
+2026-11-18T15:04:40.4366408Z ✔ pinned async harness observes Promise microtasks and non-admission (7.290907ms)
+2026-11-18T15:04:40.4366970Z ✔ async completion errors are real cross-realm constructors (13.907085ms)
+2026-11-18T15:04:40.4367619Z ✔ missing, duplicate and thrown completions do not pass (21.259195ms)
+2026-11-18T15:04:40.4368161Z ✔ parse error, strictness, metadata and harness restrictions (4.501923ms)
+2026-11-18T15:04:40.4368763Z ✔ unhandled rejection after $DONE is a failed diagnostic (isolated child) (32.285776ms)
+2026-11-18T15:04:40.4369362Z ✔ opt-in virtual host turns support bounded async timer completion (5.063422ms)
+2026-11-18T15:04:40.4369983Z ✔ virtual host timers refuse endless intervals and detect late errors (18.375167ms)
+2026-11-18T15:04:40.4370601Z ✔ virtual timers cannot spoof a declared native negative constructor (4.693993ms)
+2026-11-18T15:04:40.4371228Z ✔ Test262 metadata is explicitly restricted to single-goal script parsing (2.126964ms)
+2026-11-18T15:04:40.4371861Z ✔ pinned Test262 bytes are verified using Git blob IDs, not just filenames (0.66201ms)
+2026-11-18T15:04:40.4372520Z ✔ bounded parser acceptance and compiler feasibility are separate observations (2.697726ms)
+2026-11-18T15:04:40.4373220Z ✔ syntax summary retains nonconformant cases rather than counting them as passes (0.131759ms)
+2026-11-18T15:04:40.4373797Z ✔ pinned Test262 native module reference regressions (202.594088ms)
+2026-11-18T15:04:40.4374394Z ✔ sloppy/strict variants use pinned harness and do not produce owned training data (4.784139ms)
+2026-11-18T15:04:40.4375179Z ✔ negative parse and runtime are distinguished by actual phase and constructor (6.031204ms)
+2026-11-18T15:04:40.4375824Z ✔ strict-only parsing, harness errors and safety refusals fail closed (17.784194ms)
+2026-11-18T15:04:40.4376426Z ✔ raw Test262 script variants run verbatim without implicit harness (3.696897ms)
+2026-11-18T15:04:40.4377038Z ✔ runtime metadata admits only the explicit non-strict scalar profile (1.973562ms)
+2026-11-18T15:04:40.4377704Z ✔ SameValue assertions execute as guest code and preserve special scalar values (480.467117ms)
+2026-11-18T15:04:40.4378459Z ✔ intentionally wrong assertions fail rather than turning execution into a parse-only pass (246.300311ms)
+2026-11-18T15:04:40.4379174Z ✔ each test gets a fresh machine and unsupported source does not run a prefix (52.661726ms)
+2026-11-18T15:04:40.4379899Z ✔ runtime report keeps failures, omitted strict variants and known gaps in its denominator (0.351611ms)
+2026-11-18T15:04:40.4380574Z ✔ same scalar semantics require both V8 reference and owned replay (118.559553ms)
+2026-11-18T15:04:40.4381236Z ✔ false positive assertions and unsupported metadata never become owned agreement (2.410613ms)
+2026-11-18T15:04:40.4381946Z ✔ bounded pure Test262 source is retained verbatim with original-body site receipts (1.730394ms)
+2026-11-18T15:04:40.4382623Z ✔ rechecked owned source profiles carry quantitative trace review metrics (152.225947ms)
+2026-11-18T15:04:40.4383260Z ✔ malformed or unverified source receipts cannot enter quality metrics (67.32194ms)
+2026-11-18T15:04:40.4383988Z ✔ private immutable identity survives serialization and is bound by source receipt (880.500812ms)
+2026-11-18T15:04:40.4384634Z ✔ single-episode metadata tampering cannot pass source recheck (238.836061ms)
+2026-11-18T15:04:40.4385358Z ✔ rehashing an incorrect split is rejected by the deterministic split policy (1.206212ms)
+2026-11-18T15:04:40.4386089Z ✔ session and component identities use the same lineage invariant (444.643834ms)
+2026-11-18T15:04:40.4386773Z ✔ rebuilding a session independently rejects coherently rehashed top-level metadata (1494.777998ms)
+2026-11-18T15:04:40.4387539Z ✔ frozen global source registry is rechecked with its exact source and holdout assignment (658.484506ms)
+2026-11-18T15:04:40.4388273Z ✔ native API requires exact consumer and tokenizer policy before calling a consumer (794.166686ms)
+2026-11-18T15:04:40.4388939Z ✔ native session policy binds each component and whole-session receipt (772.975321ms)
+2026-11-18T15:04:40.4389581Z ✔ typed array binding preserves slots and aliases with V8 and exact replay (243.227838ms)
+2026-11-18T15:04:40.4390240Z ✔ array binding initializer runs once and lexical slots follow binding order (169.301178ms)
+2026-11-18T15:04:40.4391010Z ✔ TS for-of destructured pairs and lexical closure captures match native V8 (166.21839ms)
+2026-11-18T15:04:40.4391649Z ✔ nested TypeScript object and array patterns have owned lazy defaults (223.774843ms)
+2026-11-18T15:04:40.4392323Z ✔ TypeScript for-of defaults preserve order and distinguish null from undefined (255.693766ms)
+2026-11-18T15:04:40.4392931Z ✔ nested binding failures never publish successful traces (27.910595ms)
+2026-11-18T15:04:40.4393509Z ✔ var array destructuring hoists and reuses function-scoped names (124.038402ms)
+2026-11-18T15:04:40.4394187Z ✔ unsupported array patterns and non-array iterators fail before trace publication (22.216661ms)
+2026-11-18T15:04:40.4395023Z ✔ some stops at the first truthy return and reads later elements from the current owned heap (139.624254ms)
+2026-11-18T15:04:40.4395794Z ✔ forEach ignores callback return values, returns undefined, and snapshots the initial length (77.568592ms)
+2026-11-18T15:04:40.4396521Z ✔ nested some and forEach callbacks remain independently owned and replayable (75.202127ms)
+2026-11-18T15:04:40.4397247Z ✔ callback throws unwind the array continuation before catch/finally and later callbacks (224.683195ms)
+2026-11-18T15:04:40.4398025Z ✔ fill writes holes without reading them and preserves holes outside the selected interval (79.574775ms)
+2026-11-18T15:04:40.4398774Z ✔ dense callback and sparse-fill source cases pass the independent v5 admission checks (1058.065637ms)
+2026-11-18T15:04:40.4399553Z ✔ unmodeled sparse callbacks, async callbacks, thisArg, and inherited fill setters fail closed (11.482651ms)
+2026-11-18T15:04:40.4400276Z ✔ array end defaults distinguish omitted and undefined from scalar coercion (477.583104ms)
+2026-11-18T15:04:40.4400988Z ✔ method-specific undefined defaults leave lastIndexOf and splice semantics intact (40.335662ms)
+2026-11-18T15:04:40.4401682Z ✔ array default repairs pass independent source and canonical v5 projection (712.811918ms)
+2026-11-18T15:04:40.4402345Z ✔ top-level async helpers retain Promise-returning declaration semantics (602.198715ms)
+2026-11-18T15:04:40.4402969Z ✔ async arrows create owned promises and capture lexical variables (242.777306ms)
+2026-11-18T15:04:40.4403579Z ✔ anonymous async function expression adopts returned owned promise (46.764382ms)
+2026-11-18T15:04:40.4404169Z ✔ owned async expression rejection passes through await catch (45.553259ms)
+2026-11-18T15:04:40.4404786Z ✔ benchmark-v1 retains distinct canonical algorithms, ancestry and split (27.163274ms)
+2026-11-18T15:04:40.4405661Z ✔ benchmark-v1 generates executable pure, callback, repeated-input and recovery source paths (3367.995911ms)
+2026-11-18T15:04:40.4406383Z ✔ named bit and rotation algorithms retain their declared mathematical meaning (0.54153ms)
+2026-11-18T15:04:40.4407006Z ✔ array-result references agree with canonical selected execution (543.505827ms)
+2026-11-18T15:04:40.4407682Z ✔ an unobservable completed graph retains the evaluation episode and effect receipts (1158.414706ms)
+2026-11-18T15:04:40.4408401Z ✔ bitwise Number ToInt32/ToUint32 and BigInt operations have V8 operation receipts (792.227371ms)
+2026-11-18T15:04:40.4409228Z ✔ typeof unbound identifiers returns undefined and declared values retain their types (444.992688ms)
+2026-11-18T15:04:40.4409863Z ✔ void evaluates operand exactly once, including object mutation (111.321236ms)
+2026-11-18T15:04:40.4410440Z ✔ typeof uninitialized lexical binding is a guest throw, not undefined (34.19062ms)
+2026-11-18T15:04:40.4411062Z ✔ unresolved assignment and value reads remain unbound, no ambient fallback (0.601491ms)
+2026-11-18T15:04:40.4411769Z ✔ bounded array for-of matches V8, observes elements and supports nested break/continue (853.099288ms)
+2026-11-18T15:04:40.4412491Z ✔ for-of evaluates iterable once and retains per-iteration captured lexical cells (421.757159ms)
+2026-11-18T15:04:40.4413167Z ✔ for-of reads live array length during mutation as a V8 array iterator does (237.594732ms)
+2026-11-18T15:04:40.4413740Z ✔ for-of owns destructured pairs and captured per-iteration cells (573.675021ms)
+2026-11-18T15:04:40.4414456Z ✔ array pair default expressions execute only for undefined per iteration (993.050026ms)
+2026-11-18T15:04:40.4415208Z ✔ for-of refuses non-array iterables, nested patterns and for-await (12.905159ms)
+2026-11-18T15:04:40.4415801Z ✔ independent V8 observes if/for/while/do-while/ternary decisions (166.447404ms)
+2026-11-18T15:04:40.4416420Z ✔ short-circuit tests retain original values and skip unevaluated RHS (315.764274ms)
+2026-11-18T15:04:40.4417045Z ✔ nested logical operators and conditional test keep source identities (20.25843ms)
+2026-11-18T15:04:40.4417646Z ✔ missing, reordered, excess or different decisions are rejected (0.406825ms)
+2026-11-18T15:04:40.4418246Z ✔ instrumentation leaves strict directive and literal source intact (0.359292ms)
+2026-11-18T15:04:40.4418855Z ✔ capture aliases and captured cells use the source identifier grammar (3.085061ms)
+2026-11-18T15:04:40.4419419Z ✔ malformed captured aliases and cells are rejected alike (0.692427ms)
+2026-11-18T15:04:40.4420025Z ✔ different capture aliases may share one cell but aliases cannot duplicate (0.315947ms)
+2026-11-18T15:04:40.4420694Z ✔ multiple lexical declarations evaluate left-to-right and preserve TDZ (258.551118ms)
+2026-11-18T15:04:40.4421330Z ✔ object shorthand supports lexical inputs and identical named values (120.162469ms)
+2026-11-18T15:04:40.4421922Z ✔ sequence expressions execute each side effect exactly once (114.093079ms)
+2026-11-18T15:04:40.4422528Z ✔ arithmetic and bitwise compound assignments preserve source results (290.454532ms)
+2026-11-18T15:04:40.4423210Z ✔ typescript natlang body supports shorthand, declarations and compound operators (86.601902ms)
+2026-11-18T15:04:40.4424011Z ✔ nested destructuring is owned and independently checked; unsupported spread still fails closed (56.195753ms)
+2026-11-18T15:04:40.4424762Z ✔ current public artifacts reject version four even when no random seed is used (10.857625ms)
+2026-11-18T15:04:40.4425657Z ✔ unseeded selected state explicitly carries null and rejects missing or malformed random state (4.701714ms)
+2026-11-18T15:04:40.4426491Z ✔ resumed parent publishes the current realm random state after the child draw leaves bounded history (137.702762ms)
+2026-11-18T15:04:40.4427216Z ✔ Array(length) preserves absent slots and nested aliases before writes (458.951734ms)
+2026-11-18T15:04:40.4427914Z ✔ static top-level source constants and Math function aliases match independent V8 (101.434332ms)
+2026-11-18T15:04:40.4428635Z ✔ owned array filter/map/reduce invoke guest callback frames and commit heap effects (385.674357ms)
+2026-11-18T15:04:40.4429318Z ✔ callback reads live mutated indexed slots, not an ahead-of-time snapshot (92.403827ms)
+2026-11-18T15:04:40.4429962Z ✔ array growth preserves hole absence and allows subsequent sparse writes (78.971217ms)
+2026-11-18T15:04:40.4430570Z ✔ owned UTF-16 string property reads and scalar leaves match V8 (295.700603ms)
+2026-11-18T15:04:40.4431176Z ✔ owned bounded string substr preserves V8 index and length semantics (120.345504ms)
+2026-11-18T15:04:40.4431744Z ✔ owned dense array search, copy and mutation match V8 (265.011884ms)
+2026-11-18T15:04:40.4432384Z ✔ unmodeled callbacks and coercions never silently pass (6.754177ms)
+2026-11-18T15:04:40.4432975Z ✔ holes, present undefined, aliases, cycles and null prototypes round-trip (2.178122ms)
+2026-11-18T15:04:40.4433660Z ✔ unsupported descriptors and rich boundary objects never get silently flattened (0.719397ms)
+2026-11-18T15:04:40.4434340Z ✔ boundary-reachable guest accessors and custom prototypes are rejected (0.268876ms)
+2026-11-18T15:04:40.4435213Z ✔ declared Error and TypeError throws qualify under explicit name/message observation profile (2917.765433ms)
+2026-11-18T15:04:40.4435943Z ✔ catch reads and identity comparisons on declared errors are source checked (57.7652ms)
+2026-11-18T15:04:40.4436617Z ✔ error extensions, prototypes, mutation and coercion remain explicit refusals (11.59931ms)
+2026-11-18T15:04:40.4437405Z ✔ exception observations never format lazy stacks or invoke error accessors (0.345312ms)
+2026-11-18T15:04:40.4438037Z ✔ default parameters are owned and conditional on undefined only (214.434688ms)
+2026-11-18T15:04:40.4438658Z ✔ default callback is created inside guest code and uses earlier bindings (92.262924ms)
+2026-11-18T15:04:40.4439306Z ✔ later and self parameter dependencies qualify as ReferenceError outcomes (35.521572ms)
+2026-11-18T15:04:40.4439993Z ✔ a default closure cannot acquire bindings from the separate body var environment (0.66216ms)
+2026-11-18T15:04:40.4440720Z ✔ Object.create explicitly refuses property descriptor arguments before allocation (17.800181ms)
+2026-11-18T15:04:40.4441473Z ✔ Object.create omitted and undefined descriptors preserve supported prototype behavior (34.265934ms)
+2026-11-18T15:04:40.4442187Z ✔ array index accessors refuse without exposing an inconsistent array length (10.498016ms)
+2026-11-18T15:04:40.4442891Z ✔ unsupported descriptors are not admitted even when guest code catches TypeError (34.286956ms)
+2026-11-18T15:04:40.4443671Z ✔ accessor updates preserve absent fields and allow unchanged non-configurable descriptors (1811.484777ms)
+2026-11-18T15:04:40.4444494Z ✔ non-configurable accessor invariants reject actual changes but retain the original property (115.04165ms)
+2026-11-18T15:04:40.4445360Z ✔ unowned descriptor getters cannot be replaced by a catchable guest TypeError (32.499846ms)
+2026-11-18T15:04:40.4446090Z ✔ rejected-await-finally preserves the root Promise outcome and ordered finally effects (543.025566ms)
+2026-11-18T15:04:40.4446857Z ✔ rejected-await-direct preserves the root Promise outcome and ordered finally effects (447.122282ms)
+2026-11-18T15:04:40.4447641Z ✔ finally-replaces-rejection preserves the root Promise outcome and ordered finally effects (405.309982ms)
+2026-11-18T15:04:40.4448415Z ✔ finally-returns-after-rejection preserves the root Promise outcome and ordered finally effects (495.268343ms)
+2026-11-18T15:04:40.4449304Z ✔ source session preserves retained callback-captured-write ownership and executes its exact certified bytes (1339.247171ms)
+2026-11-18T15:04:40.4450215Z ✔ source session preserves retained persistent-external-trigger ownership and executes its exact certified bytes (1309.752095ms)
+2026-11-18T15:04:40.4451087Z ✔ independent components with colliding certified callback identities are refused without relabeling (818.628747ms)
+2026-11-18T15:04:40.4451853Z ✔ session source recheck rejects a callback moved under another independently collected owner (1011.515319ms)
+2026-11-18T15:04:40.4452637Z ✔ effectful teachers pass independent source, effects, selected replay and computation checks (11003.789464ms)
+2026-11-18T15:04:40.4453449Z ✔ all source-checked cases execute through the actual selected serving driver with exact independent outcomes (541.704136ms)
+2026-11-18T15:04:40.4454191Z ✔ Promise reactions, rejection cleanup and microtasks execute their source closures (0.575469ms)
+2026-11-18T15:04:40.4455073Z ✔ two asynchronous requests dispatch before reversed settlement without changing source continuation (0.264981ms)
+2026-11-18T15:04:40.4455888Z ✔ queued callbacks preserve captured cells and callback-caused effects after registration settlement (0.17868ms)
+2026-11-18T15:04:40.4456846Z ✔ future fixture values cannot alter earlier code, invocation or request prefixes (0.319203ms)
+2026-11-18T15:04:40.4457592Z ✔ serialized admission independently rechecks journals and rejects forged source/reference evidence (336.293002ms)
+2026-11-18T15:04:40.4458289Z ✔ request mismatch never receives the answer intended for another effect (14.253ms)
+2026-11-18T15:04:40.4459034Z ✔ source-certified repeated ingress publishes one immutable program and keeps complete family lineage (985.93257ms)
+2026-11-18T15:04:40.4459759Z ✔ diagnostic holdout never passes teacher or expectation to the selected model (258.374561ms)
+2026-11-18T15:04:40.4460441Z ✔ diagnostic holdout refuses overlapping, renamed, or differently frozen components (0.40923ms)
+2026-11-18T15:04:40.4461334Z ✔ native refusal retains original source, inputs, oracle modes, environment and reproducible hashes (273.353471ms)
+2026-11-18T15:04:40.4462082Z ✔ unsupported source is retained separately from oracle, projection and resource failures (1.636078ms)
+2026-11-18T15:04:40.4462890Z ✔ reference timeout, output cap and unsupported instrumentation have distinct machine-readable failures (88.545829ms)
+2026-11-18T15:04:40.4463712Z ✔ the actual runtime step safety budget is a resource refusal, not an interpreter failure (2.313593ms)
+2026-11-18T15:04:40.4464444Z ✔ callback failures cannot be silently discarded by otherwise-correct root qualification (167.19233ms)
+2026-11-18T15:04:40.4465375Z ✔ failure reducer preserves original evidence and independently verifies a smaller counterexample (584.7148ms)
+2026-11-18T15:04:40.4466059Z ✔ minimization budgets and non-reproducing cases remain explicit (3.253876ms)
+2026-11-18T15:04:40.4466645Z ✔ arrows and anonymous function expressions execute in owned frames (160.878629ms)
+2026-11-18T15:04:40.4467288Z ✔ arrow expression body can return objects with nested callable captures (83.783198ms)
+2026-11-18T15:04:40.4467914Z ✔ per-iteration arrow captures retain distinct loop binding identities (187.944542ms)
+2026-11-18T15:04:40.4468572Z ✔ arrow property-call ignores method receiver and still closes over bound variables (63.765408ms)
+2026-11-18T15:04:40.4469193Z ✔ named expressions still fail closed; rest arrows remain owned (59.691991ms)
+2026-11-18T15:04:40.4469751Z ✔ natlang TS annotations on synchronous arrows lower to guest frames (45.192477ms)
+2026-11-18T15:04:40.4470332Z ✔ canonical witness seed is exact, bounded, and cannot alias another seed (1.663599ms)
+2026-11-18T15:04:40.4471019Z ✔ source projection publishes the seed and checks every owned random transition (256.691122ms)
+2026-11-18T15:04:40.4471684Z ✔ seeded retained invocations and checkpoint restoration keep one realm stream (13.690439ms)
+2026-11-18T15:04:40.4472303Z ✔ random transitions cannot hide inside a pure expression or lack their seed (2.038377ms)
+2026-11-18T15:04:40.4472948Z ✔ the selected model driver forwards and preserves the observed program seed (20.403674ms)
+2026-11-18T15:04:40.4473727Z ✔ await releases only its legal turn; retained controllers share cells, graphs and actual Promise state (26.524181ms)
+2026-11-18T15:04:40.4474432Z ✔ an inner async suspension does not release its still-running caller (1.436314ms)
+2026-11-18T15:04:40.4475177Z ✔ source eviction rejects generation until an exact checked reread (2.671355ms)
+2026-11-18T15:04:40.4475859Z ✔ module loading is inert and initialization is explicit, exactly once across JSON restore (3.037029ms)
+2026-11-18T15:04:40.4476473Z ✔ receiver aliases and idempotent ingress remain explicit (1.090971ms)
+2026-11-18T15:04:40.4477197Z ✔ durable intent acknowledgment precedes native action; JSON recovery never reexecutes an uncertain write (5.595052ms)
+2026-11-18T15:04:40.4477993Z ✔ native cancellation is propagated and late observations retain their original owner (3.025701ms)
+2026-11-18T15:04:40.4478723Z ✔ same result redelivery is harmless while contradictory result bytes are rejected (3.561072ms)
+2026-11-18T15:04:40.4479636Z ✔ Promise reactions execute owned closure frames and finally rejection overrides fulfillment (1.124323ms)
+2026-11-18T15:04:40.4480394Z ✔ owned Promise adoption cycles and model settlement of external Promises fail atomically (1.76398ms)
+2026-11-18T15:04:40.4481117Z ✔ actual model action requires committed-action receipt before native dispatch (3.874106ms)
+2026-11-18T15:04:40.4481860Z ✔ call-return exposes the owned Promise immediately while selected task execution continues (4.598823ms)
+2026-11-18T15:04:40.4482604Z ✔ a restored persistent listener requires reattachment and never reruns registration (6.654395ms)
+2026-11-18T15:04:40.4483296Z ✔ Promise readiness across two retained tracks uses one legal delivery order (4.334723ms)
+2026-11-18T15:04:40.4484067Z ✔ private queued arrivals survive closing registration and deliver only at an authorized checkpoint (1.075829ms)
+2026-11-18T15:04:40.4485087Z ✔ two-handler then selects its rejection closure only after observed settlement (1.081658ms)
+2026-11-18T15:04:40.4485830Z ✔ queueMicrotask has an owned callback frame and quiescence reports uncaught job failure (1.012513ms)
+2026-11-18T15:04:40.4486602Z ✔ actual model driver finishes reaction jobs after the closure return without clobbering cells (4.974972ms)
+2026-11-18T15:04:40.4487378Z ✔ actual model driver completes queued call callbacks and closes drained registrations (9.578293ms)
+2026-11-18T15:04:40.4488155Z ✔ callback input hooks admit explicit resource data graphs and preserve retained references (2.894222ms)
+2026-11-18T15:04:40.4488870Z ✔ synchronous native callback reentry is refused before queueing guest work (1.369253ms)
+2026-11-18T15:04:40.4489531Z ✔ source is published once, two explicit outside calls dispatch one action each (26.033237ms)
+2026-11-18T15:04:40.4490211Z ✔ partial or ungrounded selection does not dispatch or corrupt selected state (3.999787ms)
+2026-11-18T15:04:40.4490797Z ✔ two pending async tools may settle in opposite order (3.134455ms)
+2026-11-18T15:04:40.4491419Z ✔ restoration preserves uncertain intent and does not replay native side effects (5.268838ms)
+2026-11-18T15:04:40.4492162Z ✔ exact replay verifies public causal selected records without invoking any native adapter (9.018184ms)
+2026-11-18T15:04:40.4492919Z ✔ retained invocation reuses committed heap cells without source reload or native effects (2.449299ms)
+2026-11-18T15:04:40.4493630Z ✔ independent events queue behind one retained JS turn and activate separately (2.374956ms)
+2026-11-18T15:04:40.4494345Z ✔ selected closure listener survives registration, handles repeated events and revokes (7.331831ms)
+2026-11-18T15:04:40.4495313Z ✔ implicit guest faults retain their committed exception through both source verification paths (4484.94577ms)
+2026-11-18T15:04:40.4496135Z ✔ implicit parameter errors complete selected execution with finally cleanup and exact identity (527.941188ms)
+2026-11-18T15:04:40.4496905Z ✔ exact error messages and unsupported Error features still gate implicit faults (218.355927ms)
+2026-11-18T15:04:40.4497628Z ✔ bounded source verification preserves order and cannot drop a rejected candidate (3.57358ms)
+2026-11-18T15:04:40.4498378Z ✔ frozen learning requests exclude teacher selections and keep expected outcomes private (331.30866ms)
+2026-11-18T15:04:40.4499080Z ✔ frozen admission selection covers components before repeated variants (0.536451ms)
+2026-11-18T15:04:40.4499825Z ✔ reserved known-source inputs and fixtures retain train components and separate slice labels (1.287256ms)
+2026-11-18T15:04:40.4500557Z ✔ logical identifier writes short-circuit with V8-equivalent return and update (146.57839ms)
+2026-11-18T15:04:40.4501236Z ✔ computed logical member reference is evaluated only once; RHS is lazy (162.025416ms)
+2026-11-18T15:04:40.4501896Z ✔ typed natlang logical assignment executes entirely in owned interpreter (76.10782ms)
+2026-11-18T15:04:40.4502646Z ✔ logical assignments cannot be admitted before independent operation/branch audit support (14.083795ms)
+2026-11-18T15:04:40.4503310Z ✔ graceful model shutdown waits for EOF evidence and is idempotent (48.129377ms)
+2026-11-18T15:04:40.4504118Z ✔ graceful shutdown reports failure instead of inventing a successful flush (246.318716ms)
+2026-11-18T15:04:40.4504805Z ✔ model initialization attests checkpoint and seed before semantic selection (39.763364ms)
+2026-11-18T15:04:40.4505690Z ✔ model process bridge uses stable JSONL action identities and terminal acknowledgement (29.188021ms)
+2026-11-18T15:04:40.4506429Z ✔ model result with forged owner or uncommitted provenance never reaches controller (40.531244ms)
+2026-11-18T15:04:40.4507105Z ✔ native model error is surfaced without synthesizing a reference selection (29.730601ms)
+2026-11-18T15:04:40.4507766Z ✔ compact inference sends its declared representation to the actual process (30.447484ms)
+2026-11-18T15:04:40.4508379Z ✔ UTF-8 response fragments preserve original selected witness bytes (43.26093ms)
+2026-11-18T15:04:40.4509297Z ✔ native request commitment binds original selected bytes and fragments without a second model selection (42.957109ms)
+2026-11-18T15:04:40.4510043Z ✔ a nonresponsive inference process times out and clears all pending RPCs (57.019112ms)
+2026-11-18T15:04:40.4510761Z ✔ orchestration transport preserves explicit fixture authority within one native process (34.625158ms)
+2026-11-18T15:04:40.4511478Z ✔ actual-model orchestration refuses fixture injection before any native RPC (32.333305ms)
+2026-11-18T15:04:40.4512191Z ✔ orchestration rejects replaced lifecycle bytes and relabeled controlled child actions (59.622898ms)
+2026-11-18T15:04:40.4512993Z ✔ long callback tail publishes bounded observed code and exact publicly replayed selected state (3670.054438ms)
+2026-11-18T15:04:40.4513799Z ✔ source-certified long callback tail executes with the same pre-inference state refresh path (344.730543ms)
+2026-11-18T15:04:40.4514616Z ✔ forged selected snapshots and future cutoffs fail exact public replay and checkpoint restoration (97.838641ms)
+2026-11-18T15:04:40.4515492Z ✔ state refresh cannot omit its observed immutable source reread (0.968434ms)
+2026-11-18T15:04:40.4516178Z ✔ selected supplier issues two effects before waiting and observes reverse settlement (16.657425ms)
+2026-11-18T15:04:40.4516845Z ✔ invalid model output is audited before committing any native effect (2.387198ms)
+2026-11-18T15:04:40.4517472Z ✔ model group bridge reads one committed owner from its actual selected tape (0.388277ms)
+2026-11-18T15:04:40.4518250Z ✔ retained model prefixes expose earlier public realm history without unrelated realms or private broker data (7.448677ms)
+2026-11-18T15:04:40.4519194Z ✔ back-to-back callbacks wait for the previous native completion acknowledgement without blocking suspended parents (9.447719ms)
+2026-11-18T15:04:40.4520102Z ✔ selected input import preserves explicit null prototypes with alias, cycle and mutation evidence (622.495404ms)
+2026-11-18T15:04:40.4520977Z ✔ selected external observation preserves null prototypes through delivery and checkpoint replay (649.762142ms)
+2026-11-18T15:04:40.4521719Z ✔ owned number formatting matches V8 decimal, radix, -0 and fixed rounding (322.653059ms)
+2026-11-18T15:04:40.4522340Z ✔ number methods reject nonnumeric receiver and unknown methods (10.985482ms)
+2026-11-18T15:04:40.4523074Z ✔ Number primitive conversion retains missing arguments, special numbers and BigInt boundaries (844.425212ms)
+2026-11-18T15:04:40.4523894Z ✔ String primitive conversion preserves missing arguments, signed zero and exact BigInts (1338.737957ms)
+2026-11-18T15:04:40.4524690Z ✔ numeric calls evaluate ignored arguments once before conversion without coercing them (782.432173ms)
+2026-11-18T15:04:40.4525647Z ✔ BigInt converts exact primitive integers and preserves real catchable conversion errors (3681.012657ms)
+2026-11-18T15:04:40.4526430Z ✔ uncaught numeric conversion errors complete selected execution after finally cleanup (274.270088ms)
+2026-11-18T15:04:40.4527139Z ✔ owned object conversion remains an explicit uncaught profile refusal (10.772876ms)
+2026-11-18T15:04:40.4527812Z ✔ typed object binding shorthand and property rename match independent V8 (107.908183ms)
+2026-11-18T15:04:40.4528674Z ✔ object binding preserves one initializer and source-order property reads (67.581359ms)
+2026-11-18T15:04:40.4529286Z ✔ object binding keeps referenced aliases across later writes (84.144218ms)
+2026-11-18T15:04:40.4529819Z ✔ object binding lexical slots honor block scope (73.351131ms)
+2026-11-18T15:04:40.4530402Z ✔ object defaults and nested patterns execute through owned lexical cells (84.677404ms)
+2026-11-18T15:04:40.4531086Z ✔ var object destructuring uses hoisted function cells with owned V8 replay (51.272392ms)
+2026-11-18T15:04:40.4531703Z ✔ computed destructuring keys run once in owned source order (105.166899ms)
+2026-11-18T15:04:40.4532295Z ✔ unowned object-pattern variants reject before trace publication (7.531846ms)
+2026-11-18T15:04:40.4533140Z ✔ V8 independently observes nested, repeated, overwritten and compound intermediate results (228.096062ms)
+2026-11-18T15:04:40.4533927Z ✔ independent source observations preserve BigInt, -0, equality and reference typeof (61.271368ms)
+2026-11-18T15:04:40.4534677Z ✔ comparison rejects an incorrect dead scalar, missing/reordered or extra operation (0.347075ms)
+2026-11-18T15:04:40.4535555Z ✔ source instrumentation never rewrites directive text or introduces untraced fallback (0.526877ms)
+2026-11-18T15:04:40.4536315Z ✔ optimization evaluation strips teacher selections and keeps oracle outside the model envelope (235.2324ms)
+2026-11-18T15:04:40.4537112Z ✔ parent and child collections with the same source task retain distinct optimization identities (174.003715ms)
+2026-11-18T15:04:40.4537817Z ✔ owned optional chains skip the entire later suffix and computed keys (175.632729ms)
+2026-11-18T15:04:40.4538464Z ✔ optional receiver method calls keep this and skip absent arguments (85.090018ms)
+2026-11-18T15:04:40.4539095Z ✔ optional function calls skip arguments while preserving guest calls (55.563409ms)
+2026-11-18T15:04:40.4539722Z ✔ optional property access distinguishes nullish and falsy receivers (44.452983ms)
+2026-11-18T15:04:40.4540337Z ✔ receiver-aware optional method calls skip arguments when nullish (81.911923ms)
+2026-11-18T15:04:40.4540934Z ✔ dynamic optional calls remain prohibited without native escape (0.743494ms)
+2026-11-18T15:04:40.4541576Z ✔ orchestration fixture references bind only to already observed own fields (1.372465ms)
+2026-11-18T15:04:40.4542413Z ✔ orchestration fixture freezing retains separately checked identities and rejects tampered reference inputs (173.878467ms)
+2026-11-18T15:04:40.4543275Z ✔ unit scheduler creates source-only proposals and waits for native capacity before child selection (9.592743ms)
+2026-11-18T15:04:40.4544052Z ✔ bounded coordinator failure cancels native tracks before any child can become public (1.536944ms)
+2026-11-18T15:04:40.4544832Z ✔ whole-task graph scoring normalizes child identity while retaining exact native progress bytes (234.45876ms)
+2026-11-18T15:04:40.4545806Z ✔ a rejected selected child preserves original evidence and cancels the joined coordinator (3.632512ms)
+2026-11-18T15:04:40.4546490Z ✔ orchestration deadlines cancel an unresponsive selection without polling (31.347761ms)
+2026-11-18T15:04:40.4547161Z ✔ actual-model orchestration never forwards controlled lifecycle or child plans (2.157281ms)
+2026-11-18T15:04:40.4548510Z ﹣ native compact coordinator runs async, callback and throwing children in one process with exact whole-task receipts (0.151158ms) # Set MEGATOKEN_ORCHESTRATION_SERVED, MEGATOKEN_PYTHON and MEGATOKEN_REPOSITORY for native runtime gates
+2026-11-18T15:04:40.4550369Z ﹣ native bounded context resumes the exact captured cell despite compact callback history (0.163127ms) # Set MEGATOKEN_ORCHESTRATION_SERVED, MEGATOKEN_PYTHON and MEGATOKEN_REPOSITORY for native runtime gates
+2026-11-18T15:04:40.4551895Z ﹣ native coordinator budget cancellation leaves no selected guest, effect, or live track (0.066671ms) # Set MEGATOKEN_ORCHESTRATION_SERVED, MEGATOKEN_PYTHON and MEGATOKEN_REPOSITORY for native runtime gates
+2026-11-18T15:04:40.4553511Z ﹣ native rejected semantic child preserves its committed bytes and cancels its waiting parent (0.042324ms) # Set MEGATOKEN_ORCHESTRATION_SERVED, MEGATOKEN_PYTHON and MEGATOKEN_REPOSITORY for native runtime gates
+2026-11-18T15:04:40.4555214Z ﹣ actual initialized-weight native coordinator preserves rejected bytes and token costs with no fixture fallback (0.057327ms) # Set MEGATOKEN_ORCHESTRATION_SERVED, MEGATOKEN_PYTHON and MEGATOKEN_REPOSITORY for native runtime gates
+2026-11-18T15:04:40.4556234Z ✔ regex escape executes each guest switch callback and its return (165.217423ms)
+2026-11-18T15:04:40.4556779Z ✔ capture groups and unknown names follow the guest callback (85.483172ms)
+2026-11-18T15:04:40.4557342Z ✔ positional format invokes owned decimal parseInt and rest reads (158.218271ms)
+2026-11-18T15:04:40.4557876Z ✔ pinned Unicode RTL includes BMP and surrogate ranges (212.247092ms)
+2026-11-18T15:04:40.4558524Z ✔ unmodeled patterns and fallthrough switches fail closed (2.280307ms)
+2026-11-18T15:04:40.4559107Z ✔ real pinned groupBy comparator with representative original inputs (6363.629526ms)
+2026-11-18T15:04:40.4559753Z ✔ array-mutating comparators are not promoted to locally verified sort traces (8.411166ms)
+2026-11-18T15:04:40.4560522Z ✔ parameter expressions isolate body vars while preserving copies, aliases and recursive initialization (205.025223ms)
+2026-11-18T15:04:40.4561270Z ✔ all parameters shadow outer names before their left-to-right initialization (18.385635ms)
+2026-11-18T15:04:40.4561963Z ✔ default closures capture the parameter environment including later initialization (14.428633ms)
+2026-11-18T15:04:40.4562656Z ✔ abrupt parameter initialization prevents later initializers and body execution (13.991112ms)
+2026-11-18T15:04:40.4563374Z ✔ successful parameter environment repairs pass independent current-v5 admission checks (2249.407557ms)
+2026-11-18T15:04:40.4564180Z ✔ v5 explicitly refuses a closure capturing a later TDZ cell instead of capturing an outer name (22.276878ms)
+2026-11-18T15:04:40.4565050Z ✔ pure transfer gives the model exact source and initial input without expected state or traces (2.622785ms)
+2026-11-18T15:04:40.4565723Z ✔ pure outcome comparison accepts identity renaming while preserving mutation, aliases and cycles (0.581329ms)
+2026-11-18T15:04:40.4566534Z ✔ pure outcome comparison refuses replacing aliases with copies or collapsing distinct identities (0.367816ms)
+2026-11-18T15:04:40.4567271Z ✔ pure outcomes distinguish throws, signed zero, sparse holes, null prototypes and property order (0.548489ms)
+2026-11-18T15:04:40.4567928Z ✔ malformed or extra pure graph state is never treated as an observable success (0.275978ms)
+2026-11-18T15:04:40.4568555Z ✔ async returns adopt a fulfilled promise rather than returning its identity (51.203939ms)
+2026-11-18T15:04:40.4569167Z ✔ async returns correctly adopt an externally settling pending promise (22.305391ms)
+2026-11-18T15:04:40.4569858Z ✔ historical property reads retain observed values and per-property versions (15.995812ms)
+2026-11-18T15:04:40.4570503Z ✔ unstarted registered sources are not published as predictor-visible code (3.022199ms)
+2026-11-18T15:04:40.4571176Z ✔ bounded array length expansion creates genuine absent slots and verifies against V8 (46.425745ms)
+2026-11-18T15:04:40.4571795Z ✔ rest allocation and ordered spread are independently verifiable (227.226126ms)
+2026-11-18T15:04:40.4572344Z ✔ rest arrays are not fabricated from sparse or exotic spread input (1.669684ms)
+2026-11-18T15:04:40.4573022Z ✔ pinned real-source concatArrays preserves source and independently verifies all fixtures (705.450735ms)
+2026-11-18T15:04:40.4573771Z ✔ declared guest RNG fixture reaches owned, original/instrumented oracle and selected replay (1061.251211ms)
+2026-11-18T15:04:40.4574526Z ✔ missing and inconsistent guest seeds fail explicitly and unsupported cases retain the chosen seed (3.61532ms)
+2026-11-18T15:04:40.4575308Z ✔ each repeated invocation retains its own explicit guest RNG seed (722.128647ms)
+2026-11-18T15:04:40.4576081Z ✔ real fsynced intent and JSON checkpoint survive new journal and harness instances (32.831042ms)
+2026-11-18T15:04:40.4576740Z ✔ source-certified expressions execute through the canonical serving model (1247.181801ms)
+2026-11-18T15:04:40.4577378Z ✔ unrelated equal-valued computations never fuse; bound cells retain identity (82.786103ms)
+2026-11-18T15:04:40.4577974Z ✔ bounded source expressions respect eight operators and 32 nodes (173.380922ms)
+2026-11-18T15:04:40.4578597Z ✔ mutations, requests, observations and cleanup do not become pure calculations (459.558296ms)
+2026-11-18T15:04:40.4579253Z ✔ source-linked arithmetic needs a matching committed binding, not a name guess (1.572998ms)
+2026-11-18T15:04:40.4579823Z ✔ source-linked choice lowers only checked, pure conditions (0.394626ms)
+2026-11-18T15:04:40.4580387Z ✔ teacher traces retain source variable names, correct effects and outcome (372.61564ms)
+2026-11-18T15:04:40.4581083Z ✔ the branch choice is semantically grounded without erasing an effect (289.609733ms)
+2026-11-18T15:04:40.4581697Z ✔ grounded property values are temporal and require a committed own data slot (0.612917ms)
+2026-11-18T15:04:40.4582337Z ✔ repeated callback parameters are separate source cells; captures stay shared (423.051745ms)
+2026-11-18T15:04:40.4582998Z ✔ actual property choices follow prior writes and helper calls retain source names (86.704567ms)
+2026-11-18T15:04:40.4583670Z ✔ owned Set constructor, insertion order, SameValueZero and synchronous callback (403.012702ms)
+2026-11-18T15:04:40.4584259Z ✔ Set constructor is only a bounded ordinary owned array iterable (1.334588ms)
+2026-11-18T15:04:40.4584977Z ✔ unreached Error constructor and RegExp literal remain fail-closed when executed (132.588393ms)
+2026-11-18T15:04:40.4585590Z ✔ bounded CR/LF RegExp split is an owned deterministic source-level leaf (126.594592ms)
+2026-11-18T15:04:40.4586166Z ✔ pinned regexp-escape replacement is a bounded visible scalar leaf (51.080702ms)
+2026-11-18T15:04:40.4586754Z ✔ authored source families use the canonical trace with stable lineage (2.675214ms)
+2026-11-18T15:04:40.4587494Z ✔ actual train and validation source collections contain pure, callback, recovery and repeated behavior (3720.610602ms)
+2026-11-18T15:04:40.4588285Z ✔ synchronous guest throws are positive v5 outcomes with independent source and replay evidence (3270.69242ms)
+2026-11-18T15:04:40.4589014Z ✔ synchronous throw runs through the selected driver with exact error and cleanup outcome (258.036919ms)
+2026-11-18T15:04:40.4589794Z ✔ synchronous host rejections retain observation authority through root and caller completion (3742.972796ms)
+2026-11-18T15:04:40.4590554Z ✔ oracle deadlines, invalid syntax and caught broker errors never become guest throw labels (199.781671ms)
+2026-11-18T15:04:40.4591370Z ✔ reference callback failures and detached rejections retain original thrown values separately from root result (119.914636ms)
+2026-11-18T15:04:40.4592128Z ✔ interpolated primitive templates have independent executed expression receipts (104.5563ms)
+2026-11-18T15:04:40.4592752Z ✔ template ToString handles special numeric and other scalar values (137.257966ms)
+2026-11-18T15:04:40.4593278Z ✔ substitutions execute exactly once in source order (137.140468ms)
+2026-11-18T15:04:40.4593777Z ✔ object substitution fails closed without native guest ToString (1.388242ms)
+2026-11-18T15:04:40.4594294Z ✔ natlang TS frontend lowers templates via owned JS runtime (51.051322ms)
+2026-11-18T15:04:40.4594646Z ✔ strict explicit primitive throw is caught in owned lexical environment (34.468182ms)
+2026-11-18T15:04:40.4595145Z ✔ finally executes after return and supports normal fallthrough (22.17621ms)
+2026-11-18T15:04:40.4595558Z ✔ caught throw has one v4 semantic return after handler binding (42.264748ms)
+2026-11-18T15:04:40.4596047Z ✔ natlang TS catch/finally guest values execute and exactly replay (47.477501ms)
+2026-11-18T15:04:40.4596614Z ✔ destructured catch and exotic thrown values remain outside profile (0.903489ms)
+2026-11-18T15:04:40.4597096Z ✔ var hoisting and initialized undefined (104.918147ms)
+2026-11-18T15:04:40.4597738Z ✔ var function scope through nested blocks, duplicate and for headers (154.347483ms)
+2026-11-18T15:04:40.4598238Z ✔ var loop closures capture one mutable binding (91.403042ms)
+2026-11-18T15:04:40.4598840Z ✔ rebuilds original/transform/source/license identity for each pinned real-source stream (800.188859ms)
+2026-11-18T15:04:40.4599503Z ✔ refuses changed pinned utility bytes before executing any source (6.186999ms)
+2026-11-18T15:04:40.4600214Z ✔ fresh source gate validates an original utility and rejects changed transformation behavior (1629.376008ms)
+2026-11-18T15:04:40.4600922Z ✔ retains independently specified Exercism expected outcome as a separate gate (368.389687ms)
+2026-11-18T15:04:40.4601655Z ✔ fresh original/transformed/owned gates agree on real numeric and optional-argument bindings (1950.544739ms)
+2026-11-18T15:04:40.4602572Z ✔ canonical error expectations require a throw and retain exact source error evidence (1030.417945ms)
+2026-11-18T15:04:40.4603374Z ✔ canonical error expectations require thrown completion and declare message comparison scope (905.661862ms)
+2026-11-18T15:04:40.4604204Z ✔ the pinned two-fer omission passes original, canonical and owned checks with exact span provenance (587.09152ms)
+2026-11-18T15:04:40.4605142Z ✔ grains type binding passes the original and owned gates without coercing a wrong Number result (969.995067ms)
+2026-11-18T15:04:40.4605852Z ✔ all canonical refusals remain JSON-safe when encoded for durable campaigns (52.230352ms)
+2026-11-18T15:04:40.4606260Z ℹ tests 912
+2026-11-18T15:04:40.4606458Z ℹ suites 0
+2026-11-18T15:04:40.4606644Z ℹ pass 905
+2026-11-18T15:04:40.4606833Z ℹ fail 0
+2026-11-18T15:04:40.4607019Z ℹ cancelled 0
+2026-11-18T15:04:40.4607216Z ℹ skipped 7
+2026-11-18T15:04:40.4607397Z ℹ todo 0
+2026-11-18T15:04:40.4607601Z ℹ duration_ms 113230.158399
+2026-11-18T15:04:40.4607869Z {
+2026-11-18T15:04:40.4608035Z   "passed": [
+2026-11-18T15:04:40.4608224Z     "getterReadOnce",
+2026-11-18T15:04:40.4608459Z     "bufferCoherenceAcrossCallback",
+2026-11-18T15:04:40.4608720Z     "synchronousThrowPreserved",
+2026-11-18T15:04:40.4608949Z     "reverseCompletionOrder",
+2026-11-18T15:04:40.4609189Z     "internalAwaitSuspends",
+2026-11-18T15:04:40.4609442Z     "permittedBatchingEquivalent",
+2026-11-18T15:04:40.4609746Z     "transcriptStoreDoesNotRepeatMockEffect",
+2026-11-18T15:04:40.4610055Z     "duplicateConversionDetected"
+2026-11-18T15:04:40.4610283Z   ],
+2026-11-18T15:04:40.4610453Z   "result": {
+2026-11-18T15:04:40.4610644Z     "answer": 47,
+2026-11-18T15:04:40.4610835Z     "optionReads": 1,
+2026-11-18T15:04:40.4611030Z     "memory": 7,
+2026-11-18T15:04:40.4611230Z     "caught": "fixture boom"
+2026-11-18T15:04:40.4611437Z   }
+2026-11-18T15:04:40.4611602Z }
+2026-11-18T15:04:40.4687060Z ##[group]Run node tools/inspect-semantic-reasoning.mjs
+2026-11-18T15:04:40.4687315Z [36;1mnode tools/inspect-semantic-reasoning.mjs[0m
+2026-11-18T15:04:40.4728386Z shell: /usr/bin/bash -e {0}
+2026-11-18T15:04:40.4728538Z ##[endgroup]
+2026-11-18T15:04:40.7831195Z 
+2026-11-18T15:04:40.7831902Z === counter-0 (actual verified source execution) ===
+2026-11-18T15:04:40.7832720Z "use strict";async function run(key){const current=await host.readAsync(key);const next=current+1;host.store(key,next);return next;}
+2026-11-18T15:04:40.7833277Z    2 observed: invoke run (call)
+2026-11-18T15:04:40.7833577Z    3 compute: create owned Promise &p1
+2026-11-18T15:04:40.7833827Z    4 compute: bind key = "counter"
+2026-11-18T15:04:40.7834098Z    5 compute: request e1 demo.readAsync("counter") in invocation1 @57:76 -> Promise &p2
+2026-11-18T15:04:40.7834483Z    7 compute: await Promise &p2; suspend invocation1 as continuation1; call returns owned Promise &p1
+2026-11-18T15:04:40.7834857Z    8 observed: observe e1 fulfilled 7
+2026-11-18T15:04:40.7835255Z    9 compute: resume invocation1 via continuation1 with fulfilled 7
+2026-11-18T15:04:40.7835477Z   10 compute: bind current = 7
+2026-11-18T15:04:40.7835676Z   11 compute: next = (current + 1) -> 8
+2026-11-18T15:04:40.7836314Z   12 compute: request e2 demo.store("counter", 8) in invocation1 @98:118
+2026-11-18T15:04:40.7836559Z   14 observed: observe e2 fulfilled undefined
+2026-11-18T15:04:40.7836755Z   15 compute: resolve Promise &p1 8
+2026-11-18T15:04:40.7836917Z   16 compute: return &p1
+2026-11-18T15:04:40.7837059Z   17 compute: end return
+2026-11-18T15:04:40.7837594Z CHECKS {"records":11,"computations":1,"bindings":2,"choices":0,"writes":0,"requests":2,"observations":2,"events":0,"foldedConditions":0,"fusedBindings":1,"generatedRecords":11,"witnessBytes":1018}
+2026-11-18T15:04:41.0231923Z 
+2026-11-18T15:04:41.0232688Z === branch-1 (actual verified source execution) ===
+2026-11-18T15:04:41.0233609Z "use strict";async function run(){const n=await host.readAsync("value");if(n>3){host.store("chosen",n);return n;}host.store("chosen",0);return 0;}
+2026-11-18T15:04:41.0234219Z    2 observed: invoke run (call)
+2026-11-18T15:04:41.0234490Z    3 compute: create owned Promise &p1
+2026-11-18T15:04:41.0235060Z    4 compute: request e1 demo.readAsync("value") in invocation1 @48:71 -> Promise &p2
+2026-11-18T15:04:41.0235838Z    6 compute: await Promise &p2; suspend invocation1 as continuation1; call returns owned Promise &p1
+2026-11-18T15:04:41.0236466Z    7 observed: observe e1 fulfilled 8
+2026-11-18T15:04:41.0236903Z    8 compute: resume invocation1 via continuation1 with fulfilled 8
+2026-11-18T15:04:41.0237473Z    9 compute: bind n = 8
+2026-11-18T15:04:41.0237821Z   10 compute: choose (n > 3) = true -> then
+2026-11-18T15:04:41.0238277Z   11 compute: request e2 demo.store("chosen", 8) in invocation1 @80:102
+2026-11-18T15:04:41.0238904Z   13 observed: observe e2 fulfilled undefined
+2026-11-18T15:04:41.0239300Z   14 compute: resolve Promise &p1 8
+2026-11-18T15:04:41.0239703Z   15 compute: return &p1
+2026-11-18T15:04:41.0240008Z   16 compute: end return
+2026-11-18T15:04:41.0240944Z CHECKS {"records":10,"computations":0,"bindings":1,"choices":1,"writes":0,"requests":2,"observations":2,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":10,"witnessBytes":960}
+2026-11-18T15:04:41.2086567Z 
+2026-11-18T15:04:41.2087468Z === compound-pure (actual verified source execution) ===
+2026-11-18T15:04:41.2088250Z "use strict";function run(a,b,c,d){return (a+b)*(c+d)+1;}
+2026-11-18T15:04:41.2088674Z    2 observed: invoke run (call)
+2026-11-18T15:04:41.2102751Z    3 compute: bind a = 1
+2026-11-18T15:04:41.2103026Z    4 compute: bind b = 2
+2026-11-18T15:04:41.2103270Z    5 compute: bind c = 3
+2026-11-18T15:04:41.2103494Z    6 compute: bind d = 4
+2026-11-18T15:04:41.2103796Z    7 compute: compute (((a + b) * (c + d)) + 1) -> 22
+2026-11-18T15:04:41.2104109Z    8 compute: return 22
+2026-11-18T15:04:41.2104328Z    9 compute: end return
+2026-11-18T15:04:41.2106104Z CHECKS {"records":7,"computations":1,"bindings":4,"choices":0,"writes":0,"requests":0,"observations":0,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":7,"witnessBytes":601}
+2026-11-18T15:04:41.4454309Z 
+2026-11-18T15:04:41.4455020Z === compound-effectful (actual verified source execution) ===
+2026-11-18T15:04:41.4455929Z "use strict";async function run(key){const value=await host.readAsync(key);const next=(value+2)*(value-1)+3;host.store(key,next);return next;}
+2026-11-18T15:04:41.4456546Z    2 observed: invoke run (call)
+2026-11-18T15:04:41.4456845Z    3 compute: create owned Promise &p1
+2026-11-18T15:04:41.4457149Z    4 compute: bind key = "compound"
+2026-11-18T15:04:41.4457604Z    5 compute: request e1 demo.readAsync("compound") in invocation1 @55:74 -> Promise &p2
+2026-11-18T15:04:41.4458253Z    7 compute: await Promise &p2; suspend invocation1 as continuation1; call returns owned Promise &p1
+2026-11-18T15:04:41.4458736Z    8 observed: observe e1 fulfilled 5
+2026-11-18T15:04:41.4459123Z    9 compute: resume invocation1 via continuation1 with fulfilled 5
+2026-11-18T15:04:41.4459475Z   10 compute: bind value = 5
+2026-11-18T15:04:41.4459804Z   11 compute: next = (((value + 2) * (value - 1)) + 3) -> 31
+2026-11-18T15:04:41.4460255Z   12 compute: request e2 demo.store("compound", 31) in invocation1 @108:128
+2026-11-18T15:04:41.4461092Z   14 observed: observe e2 fulfilled undefined
+2026-11-18T15:04:41.4461406Z   15 compute: resolve Promise &p1 31
+2026-11-18T15:04:41.4461662Z   16 compute: return &p1
+2026-11-18T15:04:41.4461893Z   17 compute: end return
+2026-11-18T15:04:41.4462781Z CHECKS {"records":11,"computations":1,"bindings":2,"choices":0,"writes":0,"requests":2,"observations":2,"events":0,"foldedConditions":0,"fusedBindings":1,"generatedRecords":11,"witnessBytes":1262}
+2026-11-18T15:04:41.7475370Z 
+2026-11-18T15:04:41.7476136Z === callback-captured-write (actual verified source execution) ===
+2026-11-18T15:04:41.7477151Z "use strict";async function run(){let seen=0;await host.withCallback("value",function(n){seen=seen+n;host.store("callback",seen);});host.store("result",seen);return seen;}
+2026-11-18T15:04:41.7477791Z    2 observed: invoke run (call)
+2026-11-18T15:04:41.7478070Z    3 compute: create owned Promise &p1
+2026-11-18T15:04:41.7478331Z    4 compute: bind seen = 0
+2026-11-18T15:04:41.7478598Z    5 compute: allocate &o2 closure {}
+2026-11-18T15:04:41.7479026Z    6 compute: request e1 demo.withCallback("value", &o2) in invocation1 @51:131 -> Promise &p2
+2026-11-18T15:04:41.7479612Z    9 compute: await Promise &p2; suspend invocation1 as continuation1; call returns owned Promise &p1
+2026-11-18T15:04:41.7480047Z   10 observed: event teacherevent1 -> event1
+2026-11-18T15:04:41.7480349Z   11 observed: invoke function:77 (callback)
+2026-11-18T15:04:41.7480612Z   14 compute: bind n = 3
+2026-11-18T15:04:41.7480870Z   15 compute: seen = (seen + n) -> 3
+2026-11-18T15:04:41.7481225Z   16 compute: request e2 demo.store("callback", 3) in event1 @101:128
+2026-11-18T15:04:41.7481609Z   18 observed: observe e1 fulfilled undefined
+2026-11-18T15:04:41.7481924Z   19 observed: observe e2 fulfilled undefined
+2026-11-18T15:04:41.7482224Z   20 compute: return undefined
+2026-11-18T15:04:41.7482464Z   21 compute: end return
+2026-11-18T15:04:41.7482712Z   22 observed: event teacherevent2 -> event2
+2026-11-18T15:04:41.7483012Z   23 observed: invoke function:77 (callback)
+2026-11-18T15:04:41.7483571Z   26 compute: bind n_1 = 4
+2026-11-18T15:04:41.7485475Z   27 compute: seen = (seen + n_1) -> 7
+2026-11-18T15:04:41.7495713Z   28 compute: request e3 demo.store("callback", 7) in event2 @101:128
+2026-11-18T15:04:41.7496424Z   30 observed: observe e3 fulfilled undefined
+2026-11-18T15:04:41.7496752Z   31 compute: return undefined
+2026-11-18T15:04:41.7497020Z   32 compute: end return
+2026-11-18T15:04:41.7497401Z   36 compute: resume invocation1 via continuation1 with fulfilled undefined
+2026-11-18T15:04:41.7497910Z   37 compute: request e4 demo.store("result", 7) in invocation1 @132:157
+2026-11-18T15:04:41.7498847Z   39 observed: observe e4 fulfilled undefined
+2026-11-18T15:04:41.7499166Z   40 compute: resolve Promise &p1 7
+2026-11-18T15:04:41.7499402Z   41 compute: return &p1
+2026-11-18T15:04:41.7499621Z   42 compute: end return
+2026-11-18T15:04:41.7500426Z CHECKS {"records":20,"computations":2,"bindings":3,"choices":0,"writes":0,"requests":4,"observations":4,"events":2,"foldedConditions":0,"fusedBindings":2,"generatedRecords":20,"witnessBytes":1857}
+2026-11-18T15:04:41.9515256Z 
+2026-11-18T15:04:41.9516153Z === rejection-finally (actual verified source execution) ===
+2026-11-18T15:04:41.9516998Z "use strict";async function run(){try{return await host.readAsync("bad");}catch(error){host.store("error",error);return 11;}finally{host.store("cleanup",1);}}
+2026-11-18T15:04:41.9517620Z    2 observed: invoke run (call)
+2026-11-18T15:04:41.9517898Z    3 compute: create owned Promise &p1
+2026-11-18T15:04:41.9518303Z    4 compute: request e1 demo.readAsync("bad") in invocation1 @51:72 -> Promise &p2
+2026-11-18T15:04:41.9518918Z    6 compute: await Promise &p2; suspend invocation1 as continuation1; call returns owned Promise &p1
+2026-11-18T15:04:41.9519376Z    7 observed: observe e1 rejected "missing"
+2026-11-18T15:04:41.9519756Z    8 compute: resume invocation1 via continuation1 with rejected "missing"
+2026-11-18T15:04:41.9520631Z    9 compute: bind error = "missing"
+2026-11-18T15:04:41.9521027Z   10 compute: request e2 demo.store("error", "missing") in invocation1 @87:112
+2026-11-18T15:04:41.9521426Z   12 observed: observe e2 fulfilled undefined
+2026-11-18T15:04:41.9521728Z   13 compute: transfer return 11 via finally
+2026-11-18T15:04:41.9522098Z   14 compute: request e3 demo.store("cleanup", 1) in invocation1 @132:155
+2026-11-18T15:04:41.9522479Z   16 observed: observe e3 fulfilled undefined
+2026-11-18T15:04:41.9522778Z   17 compute: resolve Promise &p1 11
+2026-11-18T15:04:41.9523030Z   18 compute: return &p1
+2026-11-18T15:04:41.9523258Z   19 compute: end return
+2026-11-18T15:04:41.9524140Z CHECKS {"records":11,"computations":0,"bindings":1,"choices":0,"writes":0,"requests":3,"observations":3,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":11,"witnessBytes":1072}
+2026-11-18T15:04:41.9820802Z 
+2026-11-18T15:04:41.9821780Z === property-helper (actual verified source execution) ===
+2026-11-18T15:04:41.9822958Z "use strict"; function helper(value){return value+1;} function run(box){if(box.count>3){box.count=2;} if(box.count>3){return 0;} return helper(box.count);}
+2026-11-18T15:04:41.9823684Z    2 observed: invoke run (call)
+2026-11-18T15:04:41.9824061Z    3 compute: bind box = &o3
+2026-11-18T15:04:41.9824426Z    4 compute: read &o3["count"] -> 4
+2026-11-18T15:04:41.9824845Z    5 compute: choose (&o3["count"] > 3) = true -> then
+2026-11-18T15:04:41.9825602Z    6 compute: write &o3["count"] = 2
+2026-11-18T15:04:41.9825911Z    7 compute: read &o3["count"] -> 2
+2026-11-18T15:04:41.9826235Z    8 compute: choose (&o3["count"] > 3) = false -> else
+2026-11-18T15:04:41.9826548Z    9 compute: read &o3["count"] -> 2
+2026-11-18T15:04:41.9826847Z   10 compute: call helper(2) -> guest1
+2026-11-18T15:04:41.9827137Z   11 compute: compute (2 + 1) -> 3
+2026-11-18T15:04:41.9827388Z   12 compute: return 3
+2026-11-18T15:04:41.9827594Z   13 compute: return 3
+2026-11-18T15:04:41.9827804Z   14 compute: end return
+2026-11-18T15:04:41.9828720Z CHECKS {"records":12,"computations":1,"bindings":1,"choices":2,"writes":1,"requests":0,"observations":0,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":12,"witnessBytes":1103}
+2026-11-18T15:04:42.0043267Z 
+2026-11-18T15:04:42.0043943Z === seeded-random (actual verified source execution) ===
+2026-11-18T15:04:42.0044397Z "use strict"; function sample(){return Math.random();} function run(){Math.random();const a=sample();return a+Math.random();}
+2026-11-18T15:04:42.0044719Z    1 observed: deterministic random seed 0
+2026-11-18T15:04:42.0045040Z    2 observed: invoke run (call)
+2026-11-18T15:04:42.0045323Z    3 compute: compute declared random() -> 0.23606797284446657
+2026-11-18T15:04:42.0045934Z    4 compute: call sample() -> guest1
+2026-11-18T15:04:42.0046138Z    5 compute: compute declared random() -> 0.278566908556968
+2026-11-18T15:04:42.0046340Z    6 compute: return 0.278566908556968
+2026-11-18T15:04:42.0046502Z    7 compute: bind a = 0.278566908556968
+2026-11-18T15:04:42.0046711Z    8 compute: compute declared random() -> 0.8195337599609047
+2026-11-18T15:04:42.0046950Z    9 compute: compute (a + 0.8195337599609047) -> 1.0981006685178727
+2026-11-18T15:04:42.0047181Z   10 compute: return 1.0981006685178727
+2026-11-18T15:04:42.0047354Z   11 compute: end return
+2026-11-18T15:04:42.0047844Z CHECKS {"records":9,"computations":4,"bindings":1,"choices":0,"writes":0,"requests":0,"observations":0,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":9,"witnessBytes":770}
+2026-11-18T15:04:42.0048187Z 
+2026-11-18T15:04:42.0051898Z SEMANTIC_TRACE_INSPECTION [{"fixture":"counter-0","records":11,"computations":1,"bindings":2,"choices":0,"writes":0,"requests":2,"observations":2,"events":0,"foldedConditions":0,"fusedBindings":1,"generatedRecords":11,"witnessBytes":1018},{"fixture":"branch-1","records":10,"computations":0,"bindings":1,"choices":1,"writes":0,"requests":2,"observations":2,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":10,"witnessBytes":960},{"fixture":"compound-pure","records":7,"computations":1,"bindings":4,"choices":0,"writes":0,"requests":0,"observations":0,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":7,"witnessBytes":601},{"fixture":"compound-effectful","records":11,"computations":1,"bindings":2,"choices":0,"writes":0,"requests":2,"observations":2,"events":0,"foldedConditions":0,"fusedBindings":1,"generatedRecords":11,"witnessBytes":1262},{"fixture":"callback-captured-write","records":20,"computations":2,"bindings":3,"choices":0,"writes":0,"requests":4,"observations":4,"events":2,"foldedConditions":0,"fusedBindings":2,"generatedRecords":20,"witnessBytes":1857},{"fixture":"rejection-finally","records":11,"computations":0,"bindings":1,"choices":0,"writes":0,"requests":3,"observations":3,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":11,"witnessBytes":1072},{"fixture":"property-helper","records":12,"computations":1,"bindings":1,"choices":2,"writes":1,"requests":0,"observations":0,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":12,"witnessBytes":1103},{"fixture":"seeded-random","records":9,"computations":4,"bindings":1,"choices":0,"writes":0,"requests":0,"observations":0,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":9,"witnessBytes":770}]
+2026-11-18T15:04:42.0191007Z ##[group]Run node bin/tracing.js demo --output "${RUNNER_TEMP}/demo.trace.json"
+2026-11-18T15:04:42.0191338Z [36;1mnode bin/tracing.js demo --output "${RUNNER_TEMP}/demo.trace.json"[0m
+2026-11-18T15:04:42.0232787Z shell: /usr/bin/bash -e {0}
+2026-11-18T15:04:42.0232943Z ##[endgroup]
+2026-11-18T15:04:42.1036904Z {
+2026-11-18T15:04:42.1037193Z   "progress": {
+2026-11-18T15:04:42.1037406Z     "chunks": [
+2026-11-18T15:04:42.1037592Z       "waiting",
+2026-11-18T15:04:42.1037774Z       "waiting",
+2026-11-18T15:04:42.1037959Z       "terminated"
+2026-11-18T15:04:42.1038129Z     ],
+2026-11-18T15:04:42.1038292Z     "stored": [
+2026-11-18T15:04:42.1038455Z       [
+2026-11-18T15:04:42.1038611Z         "sum",
+2026-11-18T15:04:42.1038813Z         35
+2026-11-18T15:04:42.1038968Z       ]
+2026-11-18T15:04:42.1039128Z     ],
+2026-11-18T15:04:42.1039308Z     "causalPrefixEvents": 86
+2026-11-18T15:04:42.1039518Z   },
+2026-11-18T15:04:42.1039667Z   "chunks": 3,
+2026-11-18T15:04:42.1039893Z   "events": 89,
+2026-11-18T15:04:42.1040061Z   "effects": [
+2026-11-18T15:04:42.1040232Z     {
+2026-11-18T15:04:42.1040390Z       "id": "e1",
+2026-11-18T15:04:42.1040645Z       "operation": "demo.readAsync",
+2026-11-18T15:04:42.1040892Z       "external": "completed"
+2026-11-18T15:04:42.1041115Z     },
+2026-11-18T15:04:42.1041266Z     {
+2026-11-18T15:04:42.1041445Z       "id": "e2",
+2026-11-18T15:04:42.1041651Z       "operation": "demo.readAsync",
+2026-11-18T15:04:42.1041891Z       "external": "completed"
+2026-11-18T15:04:42.1042107Z     },
+2026-11-18T15:04:42.1042267Z     {
+2026-11-18T15:04:42.1042436Z       "id": "e3",
+2026-11-18T15:04:42.1042663Z       "operation": "demo.store",
+2026-11-18T15:04:42.1042897Z       "external": "completed"
+2026-11-18T15:04:42.1043110Z     }
+2026-11-18T15:04:42.1043275Z   ],
+2026-11-18T15:04:42.1043442Z   "verification": {
+2026-11-18T15:04:42.1043645Z     "valid": true,
+2026-11-18T15:04:42.1043829Z     "eventCount": 89,
+2026-11-18T15:04:42.1044039Z     "chunkCount": 3,
+2026-11-18T15:04:42.1044255Z     "effectCount": 3,
+2026-11-18T15:04:42.1044778Z     "evidence": "state reconstruction, referential and lifecycle structure only; not executable or native reference replay"
+2026-11-18T15:04:42.1045448Z   },
+2026-11-18T15:04:42.1095267Z   "output": "/home/runner/work/_temp/demo.trace.json"
+2026-11-18T15:04:42.1095479Z }
+2026-11-18T15:04:42.1118683Z ##[group]Run node bin/tracing.js replay "${RUNNER_TEMP}/demo.trace.json"
+2026-11-18T15:04:42.1118983Z [36;1mnode bin/tracing.js replay "${RUNNER_TEMP}/demo.trace.json"[0m
+2026-11-18T15:04:42.1159882Z shell: /usr/bin/bash -e {0}
+2026-11-18T15:04:42.1160029Z ##[endgroup]
+2026-11-18T15:04:42.1954016Z {
+2026-11-18T15:04:42.1954299Z   "valid": true,
+2026-11-18T15:04:42.1955183Z   "mode": "bounded-deterministic-reexecution/2",
+2026-11-18T15:04:42.1955498Z   "eventCount": 89,
+2026-11-18T15:04:42.1955706Z   "chunkCount": 3,
+2026-11-18T15:04:42.1955907Z   "externalAdapterCalls": 0,
+2026-11-18T15:04:42.1956420Z   "evidence": "exact interpreter event/state reproduction under recorded inputs; not independent spec or native replay"
+2026-11-18T15:04:42.1956870Z }
+2026-11-18T15:04:42.2080906Z Post job cleanup.
+2026-11-18T15:04:42.2929244Z (node:16653) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-18T15:04:42.2929967Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-18T15:04:42.3057368Z Post job cleanup.
+2026-11-18T15:04:42.3659442Z [command]/usr/bin/git version
+2026-11-18T15:04:42.3694992Z git version 2.56.1
+2026-11-18T15:04:42.3718596Z Temporarily overriding HOME='/home/runner/work/_temp/adaf09dd-62db-4cf5-9418-cd2448521c77' before making global git config changes
+2026-11-18T15:04:42.3719429Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-18T15:04:42.3722535Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self
+2026-11-18T15:04:42.3761337Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-18T15:04:42.3804685Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-18T15:04:42.4084573Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-18T15:04:42.4104570Z http.https://github.com/.extraheader
+2026-11-18T15:04:42.4115369Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-18T15:04:42.4152532Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-18T15:04:42.4394003Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-18T15:04:42.4423366Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-18T15:04:42.4770403Z Cleaning up orphan processes
+2026-11-18T15:04:42.5232065Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

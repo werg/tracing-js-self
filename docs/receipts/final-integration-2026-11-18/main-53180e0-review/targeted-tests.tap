@@ -1,0 +1,25 @@
+✔ parameter expressions isolate body vars while preserving copies, aliases and recursive initialization (307.20116ms)
+✔ all parameters shadow outer names before their left-to-right initialization (37.395786ms)
+✔ default closures capture the parameter environment including later initialization (20.070154ms)
+✔ abrupt parameter initialization prevents later initializers and body execution (15.105208ms)
+✔ successful parameter environment repairs pass independent current-v5 admission checks (2522.582131ms)
+✔ v5 explicitly refuses a closure capturing a later TDZ cell instead of capturing an outer name (19.80861ms)
+✔ source-certified expressions execute through the canonical serving model (1499.84867ms)
+✔ unrelated equal-valued computations never fuse; bound cells retain identity (84.60634ms)
+✔ bounded source expressions respect eight operators and 32 nodes (205.838213ms)
+✔ mutations, requests, observations and cleanup do not become pure calculations (771.847758ms)
+✔ source-linked arithmetic needs a matching committed binding, not a name guess (2.076065ms)
+✔ source-linked choice lowers only checked, pure conditions (0.583552ms)
+✔ teacher traces retain source variable names, correct effects and outcome (360.14353ms)
+✔ the branch choice is semantically grounded without erasing an effect (278.709374ms)
+✔ grounded property values are temporal and require a committed own data slot (0.638734ms)
+✔ repeated callback parameters are separate source cells; captures stay shared (416.113366ms)
+✔ actual property choices follow prior writes and helper calls retain source names (81.112285ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4265.031364

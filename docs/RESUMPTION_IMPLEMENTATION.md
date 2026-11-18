@@ -14,10 +14,16 @@ Main `53180e0b0dfbf6c9544b680f854a442db53bb0ab` subsequently arrived through
 [PR41](https://github.com/werg/tracing-js-self/pull/41), directly after `0c30778`.
 The final evidence branch receives its two-file change: producer capture aliases
 now use the existing source-identifier validator, with three focused passing
-regressions. It introduces no learning/campaign population. The completed
-seven-workflow qualification remains bound to `1e2e6a0`, and the earlier full
-local suite remains bound to `aa7b843`; neither is claimed as a new broad test
-of `53180e0`. All original receipts remain unchanged.
+regressions. The subsequent [independent review](receipts/final-integration-2026-11-18/main-53180e0-review/README.md)
+passed 17/17 focused source/projection/parameter tests and eight complete local
+closure-name reference/projection/roundtrip/recheck probes. Its full hosted
+Node 20/22/24 matrix passed; actual Node 24 checkout `53180e0` recorded 912 tests,
+905 passes, seven skips and zero failures. Coverage and oracle workflows passed.
+At the retained snapshot, new native run 44330593504 was in progress and new
+real-world run 44330593597 was queued; no completion or new release is claimed.
+It introduces no learning/campaign population. The completed full native
+qualification remains bound to `1e2e6a0`, and the earlier full local suite remains
+bound to `aa7b843`. All original receipts remain unchanged.
 
 ## W01–W14 status
 
