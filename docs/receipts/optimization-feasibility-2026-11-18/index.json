@@ -1,0 +1,73 @@
+{
+  "schema": "optimization-feasibility-evidence/1",
+  "run": "preliminary-two-example-two-update-probe",
+  "runnerImplementationCommit": "ebfdcf4",
+  "runnerSourceAtExecution": "working-tree implementation preceding ebfdcf4; the report runnerRevision points to its parent",
+  "laterRunnerAdditions": [
+    "require tracked-clean source and consumer checkouts",
+    "record script file digests",
+    "record source-window exposure and gradient-domain summaries",
+    "assert measured nonzero gradient domains"
+  ],
+  "sourceSampling": {
+    "complete_history": true,
+    "source_windows": {
+      "semantic-harness:d7a465233eb7ba85": 2
+    }
+  },
+  "stepWallSeconds": [
+    1.0524776689999271,
+    1.3814873949995672
+  ],
+  "nativeTrainerWallSeconds": 6.253093433000686,
+  "trainingCheckpointBytes": 95622840,
+  "initialCheckpointBytes": 16492604,
+  "binaryCheckpointsCommitted": false,
+  "files": [
+    {
+      "path": "report.json",
+      "sha256": "2da23eb5af43537f80df4987b4adab278779fd98ffaeb92e514a6e1c37a414e4",
+      "bytes": 39373
+    },
+    {
+      "path": "train-config.json",
+      "sha256": "fdc1dbc09b15a942e82a32a9eda97702453b0f58b69a9b2f7046c1df1f94aefe",
+      "bytes": 2285
+    },
+    {
+      "path": "optimizer-verification.json",
+      "sha256": "15804f83b4b99c3a37206caf5ca1b44ced7b1bf0752a62cc6d29185fc0dbc339",
+      "bytes": 29859
+    },
+    {
+      "path": "loss-masks.json",
+      "sha256": "0d138d4d2d24dd7fcb405fb8bbbe004a190a05e5113aecd0a310fe5edea2649f",
+      "bytes": 16612
+    },
+    {
+      "path": "training/metrics.jsonl",
+      "sha256": "59decf3797d94c604689fc156ec7858a66f5571b8b76fc13b7e4ff9bce50d977",
+      "bytes": 12909
+    },
+    {
+      "path": "rollouts/fixed-weights/0000/result.json",
+      "sha256": "5c3aacad0520323da90e0e2e19692daaaa0b23fed92a682c0814edb825d334cf",
+      "bytes": 6674
+    },
+    {
+      "path": "rollouts/fixed-weights/0000/serving-profile.json",
+      "sha256": "500c80fe548035afac6643515a03597c89e17fedae0314a914697a4f69945889",
+      "bytes": 5037
+    },
+    {
+      "path": "rollouts/trained/0000/result.json",
+      "sha256": "0ae480c5701b15e032885607099eff6dce40f8ad7abbc54e0f44972832340f05",
+      "bytes": 6419
+    },
+    {
+      "path": "rollouts/trained/0000/serving-profile.json",
+      "sha256": "2def5c9e548aa29343fbbc46191793b2c0c910a8bd19fbee617e0fe3f0ec154f",
+      "bytes": 4887
+    }
+  ]
+}
