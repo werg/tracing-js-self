@@ -1,0 +1,88 @@
+name: Paired native training and serving input parity
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: paired-native-conditioning-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  adapter-input-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      TZ: UTC
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: werg/megatoken
+          # A distinct, unmerged diagnostic contract; never silently substitute
+          # the current production consumer or reinterpret historical receipts.
+          ref: 0345564cdff83f3c8c799d70822c71e58689ad71
+          path: megatoken
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.14'
+      - name: Install immutable producer and companion prerequisites
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          python -m pip install --require-hashes -r tools/native-consumer/requirements.lock
+          python -m pip install --no-deps --no-build-isolation -e ./megatoken
+      - name: Freshly verify one direct execution and save its original candidate
+        run: |
+          node --input-type=module <<'JS'
+          import {writeFileSync} from 'node:fs';
+          import {join} from 'node:path';
+          import {verifyEffectfulTrainingCase} from './src/training/effectful-admit.js';
+          const result=await verifyEffectfulTrainingCase({
+            source:'"use strict";function run(a,b){return a&b;}',
+            entry:'run',args:[6,3],family:'paired-native-input-parity',
+            taskId:'flag-intersection-pure',license:'repository-fixture',
+            trustTier:'repository-fixture',fixture:{calls:[ ]}});
+          if(result.status!=='locally_verified')throw new Error('Source was not independently verified: '+result.status);
+          writeFileSync(join(process.env.RUNNER_TEMP,'candidate.json'),JSON.stringify(result.exported)+'\n');
+          JS
+      - name: Compare real data and serving adapter call arguments before neural execution
+        run: |
+          python tools/native_input_parity.py \
+            --consumer-root megatoken \
+            --episode "$RUNNER_TEMP/candidate.json" \
+            --out "$RUNNER_TEMP/native-input-parity.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          row=json.loads((Path(os.environ['RUNNER_TEMP'])/'native-input-parity.json').read_text())
+          assert row['status']=='passed'
+          assert row['controlBytesMatch'] and row['observedRecordBytesMatch']
+          assert row['trackPurposeMatch']
+          assert row['modelSelections']==0 and row['optimizerSteps']==0
+          assert not row['nativeAdmissionClaim']
+          print('Repaired first-decision byte/control/track-purpose parity passed; model conditionals remain unmeasured.')
+          PY
+      - name: Preserve original candidate and both actual adapter inputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paired-native-input-parity
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/candidate.json
+            ${{ runner.temp }}/native-input-parity.json
