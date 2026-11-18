@@ -282,3 +282,27 @@ Arbitrary untrusted native programs still need operating-system isolation with
 controlled network, files, credentials, and process resources. The current
 trusted-source restriction remains in force. Source-component holdouts also do
 not establish that public code was absent from a model's pretraining data.
+
+## Baseline command budgets and recovery
+
+The baseline wrapper applies a wall-time budget to each complete check, in
+addition to the collector's per-case limits. For a serial native baseline or a
+busy runner, declare a larger bounded budget explicitly:
+
+```sh
+npm run baseline:v5 -- --out ../baseline-new --jobs 1 \
+  --check-timeout-ms 3600000 \
+  --megatoken ../megatoken --python ../native-venv/bin/python \
+  --tokenizer ../tokenizer.json
+```
+
+The default remains 900,000 ms. Accepted values are integer milliseconds from
+1,000 through 3,600,000; invalid values fail before output creation. The baseline
+report retains the declared budget and each check's applied timeout.
+
+If the wrapper times out, keep its original failed baseline report and snapshot
+the interrupted recipe manifest. Resume that recipe directly from the same
+producer, consumer, registry, and environment using `--resume --retry-failures`.
+The retry appends evidence, reuses completed admissions, and reruns cancelled
+cases. Record a separate recovery receipt joining the original and final hashes;
+do not overwrite the failed baseline to make the original attempt appear to pass.
