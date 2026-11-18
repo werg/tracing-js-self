@@ -30,7 +30,7 @@ jobs:
         with:
           repository: werg/megatoken
           # Exact paired consumer; old checkpoint and prepared formats are rejected.
-          ref: 57ac4ef0e01c77957ca05fc89628edf71303a813
+          ref: d644e3dfc01a22a14f039a9c063d7b65937d8e8f
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -66,6 +66,7 @@ jobs:
           python -m py_compile tools/fit-native-semantic-record.py tools/native_two_boundary_probe.py tools/native_supervision_audit.py
           python -m unittest discover -s test -p 'test_native_input_parity.py' -v
           python -m unittest discover -s test -p 'test_native_conditional_probe.py' -v
+          python -m unittest discover -s test -p 'test_native_decoder_fit.py' -v
           python -m unittest discover -s test -p 'test_native_supervision_audit.py' -v
           node --test test/semantic-v6-emission-validator.test.js
       - name: Freshly verify one direct execution and save its original candidate

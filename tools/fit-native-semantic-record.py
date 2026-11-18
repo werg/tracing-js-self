@@ -55,7 +55,7 @@ def tensor_identity(state_dict) -> str:
         digest.update(b"\0")
         digest.update(str(tensor.dtype).encode("ascii"))
         digest.update(json.dumps(list(tensor.shape), separators=(",", ":")).encode("ascii"))
-        digest.update(tensor.view(torch.uint8).numpy().tobytes())
+        digest.update(tensor.reshape(-1).view(torch.uint8).numpy().tobytes())
     return digest.hexdigest()
 
 
