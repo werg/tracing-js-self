@@ -45,11 +45,12 @@ new measurement; it does not overwrite or relabel the first attempt.
 
 ## Separate hosted native failure
 
-The same producer's hosted native matrix later failed in all five registry-bound
+The hosted native matrix for PR head `aa7b843` later failed in all five registry-bound
 recipe lanes, despite successful environment checks and 17 capability probes.
 The [complete original job logs and diagnosis](native-aa7b-failure/README.md)
 record the shared metadata alias/JSON identity defect and the sibling-worker
-shutdown race. Local tests and selected native probes did not cover that full
+shutdown race. Those jobs checked out synthetic merge `3850539e1038f3cd19c19c446403444b96281797`;
+the triggering head and actual checkout are distinct from this exact local run. Local tests and selected native probes did not cover that full
 registry persistence path. The passing local results above do not replace the
 failed hosted result.
 

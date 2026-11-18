@@ -1,8 +1,11 @@
 # Hosted registry persistence regression at aa7b843
 
 [Native workflow 44317350987](https://github.com/werg/tracing-js-self/actions/runs/44317350987)
-failed at exact producer `aa7b8432761df110df53fc95664b7d767b2eeba0` and consumer
-`6b4382b9af3bef120ca3a95ae24d35154d4cd66b`. All five recipe lanes reached the
+was triggered for PR head `aa7b8432761df110df53fc95664b7d767b2eeba0`.
+All five job logs confirm actual producer checkout
+`3850539e1038f3cd19c19c446403444b96281797`, GitHub's synthetic merge of that
+head into base `2aa694be86a6cda3b9d63fde739957d08f568961`. The explicitly pinned
+consumer checkout was `6b4382b9af3bef120ca3a95ae24d35154d4cd66b`. All five recipe lanes reached the
 source/native generation step and failed while persisting a registry-bound
 candidate. The native environment setup passed in every lane. The engineering
 lane's merged learning tests and all 17 native capability probes passed before
@@ -18,6 +21,10 @@ collection hit this separate integration defect.
 
 Every original job log reports `Campaign candidate must encode non-JSON values
 before storage` at `CampaignStore.record`, called by the generation coordinator.
+The first compact receipt used the triggering head as the producer label; the
+checkout fields now distinguish those identities using each original log's
+`git log -1 --format=%H` output. No original log bytes changed.
+
 The full log files here are the exact UTF-8 encoding of GitHub's decoded log
 responses, including their original timestamps. [index.json](index.json) binds
 all five complete logs and the [job/step metadata](jobs.json). This receipt does

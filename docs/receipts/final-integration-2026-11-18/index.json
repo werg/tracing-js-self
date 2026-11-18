@@ -4,7 +4,7 @@
   "producerTree": "ef8a36f0da31bd2b20032a27c3fb4cfded6f6a02",
   "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
   "measuredAtUtc": "2026-11-18T13:49:44.417858+00:00",
-  "scope": "Final local qualification at aa7b plus separately retained earlier local and hosted native failures. The final local checks passed; hosted registry generation at the same producer failed. Later fixes and workflows require their own receipts.",
+  "scope": "Exact aa7b local qualification plus separately retained earlier local and hosted native failures. Hosted native workflow for head aa7b checked out synthetic merge3850539; its nested receipt distinguishes trigger and actual producer identities. Later fixes/workflows require their own receipts.",
   "files": [
     {
       "path": "local-qualification.json",
@@ -80,14 +80,14 @@
     },
     {
       "path": "native-aa7b-failure/index.json",
-      "bytes": 2179,
-      "sha256": "9a7e860422674a3551742d1f234c7ece9c25457e1a986afc3c3316130262e8b0",
+      "bytes": 2676,
+      "sha256": "0fa48c9b73d2d51c4a8da2625255332aa4ab41e224636c1466965d0d2e810956",
       "kind": "hosted-native-failure-receipt"
     },
     {
       "path": "native-aa7b-failure/jobs.json",
-      "bytes": 20148,
-      "sha256": "072032883f08fde0cbed1d39cb60672f6f68ef1cd8017c9a98392d848b0cdc19",
+      "bytes": 20645,
+      "sha256": "8c398b0e36bafc0513493c923bfa118d6b79e5700f5324cff4aa21f0b57c644e",
       "kind": "hosted-native-failure-receipt"
     },
     {

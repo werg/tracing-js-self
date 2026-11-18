@@ -1,7 +1,7 @@
 {
   "schema": "resumption-hosted-failure-receipt/1",
   "runId": 44317350987,
-  "producerRevision": "aa7b8432761df110df53fc95664b7d767b2eeba0",
+  "producerRevision": "3850539e1038f3cd19c19c446403444b96281797",
   "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
   "retrievedAtUtc": "2026-11-18 13:57:56 UTC",
   "files": [
@@ -47,9 +47,14 @@
     },
     {
       "path": "jobs.json",
-      "bytes": 20148,
-      "sha256": "072032883f08fde0cbed1d39cb60672f6f68ef1cd8017c9a98392d848b0cdc19",
+      "bytes": 20645,
+      "sha256": "8c398b0e36bafc0513493c923bfa118d6b79e5700f5324cff4aa21f0b57c644e",
       "kind": "GitHub-jobs-response-with-query-identity"
     }
-  ]
+  ],
+  "triggeringHeadRevision": "aa7b8432761df110df53fc95664b7d767b2eeba0",
+  "baseRevision": "2aa694be86a6cda3b9d63fde739957d08f568961",
+  "producerCheckoutKind": "GitHub synthetic pull-request merge",
+  "checkoutEvidence": "All five complete logs retain the producer and consumer git log -1 --format=%H outputs.",
+  "identityCorrection": "The first compact receipt labeled the workflow head as producerRevision. These log-confirmed checkout fields correct that label; original logs are unchanged."
 }
