@@ -36,6 +36,12 @@ The experiment file is private evidence. Test and validation expectations stay
 outside the model; only each case's `envelope` enters the selected evaluator.
 Controlled teacher selections are removed. Source, inputs and broker fixtures
 retain their normal selected-driver visibility rules.
+For a larger admitted corpus, `--verification-concurrency 4` runs independent
+source rechecks concurrently (supported range 1–8; default 1). Every admitted
+candidate still receives the same immutable producer verification. Output
+ordering remains deterministic; any rejection aborts the declaration, and a
+file changing during verification is rejected. Concurrency does not discard
+failed candidates or change selection membership.
 
 The file fixes optimizer seeds, a separate initialization seed, a separate decoder
 seed, checkpoint steps, native training window and wall-time budgets, inference

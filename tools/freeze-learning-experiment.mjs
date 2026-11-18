@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Freeze source membership, checkpoint schedule and decision rules BEFORE any
 // optimizer launch. This file is PRIVATE: only each envelope enters the runner.
-import {execFileSync} from 'node:child_process';
+import {execFile,execFileSync} from 'node:child_process';
+import {promisify} from 'node:util';
 import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync,mkdirSync,realpathSync} from 'node:fs';
 import {resolve,dirname,join,relative,isAbsolute} from 'node:path';
@@ -13,7 +14,21 @@ import {canonicalFixturePlan} from '../src/training/fixture-broker.js';
 import {hostOperation} from '../src/host/operations.js';
 
 const sha=value=>createHash('sha256').update(value).digest('hex');
+const executeFile=promisify(execFile);
 const inside=(root,path)=>{const rel=relative(root,path);return rel!==''&&!rel.startsWith('..'+(process.platform==='win32'?'\\':'/'))&&rel!=='..'&&!isAbsolute(rel);};
+
+export async function mapConcurrent(items,concurrency,operation){
+  if(!Number.isSafeInteger(concurrency)||concurrency<1||concurrency>8)throw new TypeError('Verification concurrency must be 1..8');
+  const results=new Array(items.length);let next=0,failure;
+  await Promise.all(Array.from({length:Math.min(concurrency,items.length)},async()=>{
+    while(!failure&&next<items.length){
+      const index=next++;
+      try{results[index]=await operation(items[index],index);}catch(error){failure??=error;}
+    }
+  }));
+  if(failure)throw failure;
+  return results;
+}
 
 export function scenarioIdentity(request){
   const programs=request.programs??[request.program],invocations=request.invocations??[request.invocation];
@@ -125,7 +140,7 @@ async function main(){
   const allowed=new Set(['--out','--tracer-root','--name','--mode','--optimizer-seeds','--decoder-seed',
     '--rollout-tokens','--rollout-timeout','--initialization-seed','--checkpoint-steps','--minimum-improvement','--maximum-slice-regression','--bootstrap-replicates',
     '--bootstrap-seed','--minimum-test-components','--train-examples','--validation-cases','--test-cases','--auxiliary-cases',
-    '--training-window-records','--training-window-decisions','--train-timeout']);
+    '--training-window-records','--training-window-decisions','--train-timeout','--verification-concurrency']);
   for(const key of flags.keys())if(!allowed.has(key))throw new TypeError('Unknown option '+key);
   if(!corpora.length||!flags.has('--out')||!flags.has('--minimum-improvement'))
     throw new TypeError('Usage: freeze-learning-experiment.mjs --corpus DIR [--corpus DIR] --out PRIVATE.json --minimum-improvement 0.05 [--checkpoint-steps 8,16 --train-examples 32 --validation-cases 16 --test-cases 32]');
@@ -148,7 +163,7 @@ async function main(){
   const decoderSeed=integer('--decoder-seed',17,17,43),initializationSeed=integer('--initialization-seed',17,17,43);
   if(![17,29,43].includes(decoderSeed)||![17,29,43].includes(initializationSeed))throw new TypeError('Unsupported decoder seed');
   const nativePolicy=JSON.parse(readFileSync(join(tracer,'contracts/native-admission-policy-v5.json'),'utf8'));
-  const candidates=[],seen=new Set(),manifests=[];
+  const pending=[],seen=new Set(),manifests=[];
   for(const directory of corpora){
     const bytes=readFileSync(join(directory,'manifest.json')),manifest=JSON.parse(bytes);
     if(manifest.producerRevision!==revision)throw new TypeError('Corpus differs from the clean producer revision');
@@ -160,17 +175,26 @@ async function main(){
       if(!inside(directory,path))throw new TypeError('Candidate path escapes corpus');
       const bytes=readFileSync(path),exported=JSON.parse(bytes),side=exported.sidecar;
       if(seen.has(side.identityDigest))continue;
-      const receipt=JSON.parse(execFileSync('node',[join(tracer,'tools/verify-effectful-admission.mjs'),path],
-        {encoding:'utf8',timeout:120000,maxBuffer:16*1024*1024}));
       if(side.nativePolicy.consumerRevision!==nativePolicy.consumerRevision||
         side.nativePolicy.tokenizerIdentity!==nativePolicy.tokenizerIdentity||
         side.nativePolicy.tokenizerSha256!==nativePolicy.tokenizerSha256)
         throw new TypeError('Native consumer/tokenizer release policy changed');
-      candidates.push(learningCase(exported,{path,fileSha256:sha(bytes),sourceReceipt:receipt,decoderSeed,includeTrainingEnvelope:true}));
+      pending.push({id:item.id,exported,path,fileSha256:sha(bytes)});
       seen.add(side.identityDigest);
-      process.stderr.write(item.id+': frozen verified '+side.split+'\n');
     }
   }
+  const verificationConcurrency=integer('--verification-concurrency',1,1,8);
+  const candidates=await mapConcurrent(pending,verificationConcurrency,async item=>{
+    const receipt=JSON.parse((await executeFile('node',[join(tracer,'tools/verify-effectful-admission.mjs'),item.path],
+      {encoding:'utf8',timeout:120000,maxBuffer:16*1024*1024})).stdout);
+    // Detect any concurrent corpus edit between membership enumeration and
+    // the source recheck. A rejected candidate aborts the entire declaration.
+    if(sha(readFileSync(item.path))!==item.fileSha256)throw new TypeError('Candidate changed while freezing');
+    const candidate=learningCase(item.exported,{path:item.path,fileSha256:item.fileSha256,
+      sourceReceipt:receipt,decoderSeed,includeTrainingEnvelope:true});
+    process.stderr.write(item.id+': frozen verified '+candidate.split+'\n');
+    return candidate;
+  });
   if(new Set(candidates.map(row=>row.registryDigest)).size!==1)throw new TypeError('All streams must share one frozen global source registry');
   const selected=Object.fromEntries(['train','validation','test'].map(split=>[split,
     diverseSubset(candidates.filter(row=>row.split===split),integer(split==='train'?'--train-examples':`--${split}-cases`,split==='train'?32:split==='validation'?16:32,1,100000))]));
@@ -183,7 +207,8 @@ async function main(){
   const payload={schema:'semantic-learning-experiment/1',name:flags.get('--name')??'bounded-v5-transfer',
     frozenAt:new Date().toISOString(),mode,baseOrigin:'newly-initialized',optimizerSeeds:seeds,decoderSeed,initializationSeed,checkpointSteps:steps,
     producerRevision:revision,nativePolicy,sourceRegistryDigest:candidates[0].registryDigest,
-    corpusManifests:manifests,training,validation:selected.validation,test:selected.test,auxiliary:auxiliary.selected,
+    corpusManifests:manifests,sourceVerification:{scope:'every-admitted-candidate',concurrency:verificationConcurrency},
+    training,validation:selected.validation,test:selected.test,auxiliary:auxiliary.selected,
     rolloutBudget:{nativeMaxTokensPerFragment:integer('--rollout-tokens',32,1,1024),
       maximumFragmentsPerDecision:64,secondsPerCase:integer('--rollout-timeout',120,1,300)},
     trainingBudget:{sampler:'native-sequential-permuted-episodes',
