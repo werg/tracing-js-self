@@ -868,6 +868,14 @@ def main():
             raise ValueError('Smoke preparation refused/deduplicated candidates; inspect semantic-report.json')
         masks = mask_receipt(prepared, codec)
         write_json(root / 'loss-masks.json', masks)
+        from learning_diagnostics import native_target_audit
+        targets = native_target_audit(prepared, codec)
+        write_json(root / 'target-audit.json', targets)
+        record(targetAudit={'path': 'target-audit.json', 'sha256': sha256(root / 'target-audit.json'),
+                            'episodeIds': [row['episodeId'] for row in targets['episodes']],
+                            'tokenizerIdentity': codec.fingerprint,
+                            'trainingServingParity': 'unmeasured',
+                            'nonlexicalMasks': 'unmeasured', 'perHeadObjectiveGradients': 'unmeasured'})
         record(phase='initializing-checkpoint', preparedFingerprint=prepared_manifest['fingerprint'],
                preparation=preparation, lossMaskCounts=masks['counts'],
                dataLoading={'losslessRegistryInterning': True, **dict(loading_counts)})
