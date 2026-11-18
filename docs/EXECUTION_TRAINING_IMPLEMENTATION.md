@@ -49,6 +49,26 @@ The original failed receipt and candidate are preserved as a fixed control.
 
 ## Reproduce the bounded evidence
 
+The [frozen baseline receipt](evidence/execution-baseline-7b5ef54/STATUS.md)
+applies to producer `7b5ef549c711b9937ab8721ec607f55354047b97`, not later
+commits containing it. All fourteen command-level checks passed: 1,004 of
+1,009 unit tests passed with zero failures and five explicit native-serving
+skips; eight reference fixtures passed; thirteen teacher mutants were caught.
+The engineering, training-v4 and benchmark-v1 recipes locally verified
+25, 50 and 128 examples respectively (203 total). Native admission and model
+optimization were not executed in that run. The capability ledger retains
+40 independent-outcome passes, one expected out-of-profile callback refusal
+and eight untested probes; a successful ledger command does not convert the
+refusal into a supported capability.
+
+The committed evidence includes complete command logs, corpus manifests and
+their original identities. It is a compact baseline record, not a complete
+private native release. The separate
+[historical affected-path inventory](evidence/affected-original-episodes-7b5ef54.json)
+scanned two available original archives and found no property-write events.
+The unavailable D private archives remain unaudited; no corpus-wide clean or
+contamination claim follows from the two available examples.
+
 Use the exact Node version in `.nvmrc` and a clean, immutable checkout:
 
 ```sh

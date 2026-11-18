@@ -1,0 +1,151 @@
+
+=== counter-0 (actual verified source execution) ===
+"use strict";async function run(key){const current=await host.readAsync(key);const next=current+1;host.store(key,next);return next;}
+   2 observed: invoke run (call)
+   3 compute: create owned Promise &p1
+   4 compute: bind key = "counter"
+   5 compute: request e1 demo.readAsync("counter") in invocation1 @57:76 -> Promise &p2
+   7 compute: await Promise &p2; suspend invocation1 as continuation1; call returns owned Promise &p1
+   8 observed: observe e1 fulfilled 7
+   9 compute: resume invocation1 via continuation1 with fulfilled 7
+  10 compute: bind current = 7
+  11 compute: next = (current + 1) -> 8
+  12 compute: request e2 demo.store("counter", 8) in invocation1 @98:118
+  14 observed: observe e2 fulfilled undefined
+  15 compute: resolve Promise &p1 8
+  16 compute: return &p1
+  17 compute: end return
+CHECKS {"records":11,"computations":1,"bindings":2,"choices":0,"writes":0,"requests":2,"observations":2,"events":0,"foldedConditions":0,"fusedBindings":1,"generatedRecords":11,"witnessBytes":1018}
+
+=== branch-1 (actual verified source execution) ===
+"use strict";async function run(){const n=await host.readAsync("value");if(n>3){host.store("chosen",n);return n;}host.store("chosen",0);return 0;}
+   2 observed: invoke run (call)
+   3 compute: create owned Promise &p1
+   4 compute: request e1 demo.readAsync("value") in invocation1 @48:71 -> Promise &p2
+   6 compute: await Promise &p2; suspend invocation1 as continuation1; call returns owned Promise &p1
+   7 observed: observe e1 fulfilled 8
+   8 compute: resume invocation1 via continuation1 with fulfilled 8
+   9 compute: bind n = 8
+  10 compute: choose (n > 3) = true -> then
+  11 compute: request e2 demo.store("chosen", 8) in invocation1 @80:102
+  13 observed: observe e2 fulfilled undefined
+  14 compute: resolve Promise &p1 8
+  15 compute: return &p1
+  16 compute: end return
+CHECKS {"records":10,"computations":0,"bindings":1,"choices":1,"writes":0,"requests":2,"observations":2,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":10,"witnessBytes":960}
+
+=== compound-pure (actual verified source execution) ===
+"use strict";function run(a,b,c,d){return (a+b)*(c+d)+1;}
+   2 observed: invoke run (call)
+   3 compute: bind a = 1
+   4 compute: bind b = 2
+   5 compute: bind c = 3
+   6 compute: bind d = 4
+   7 compute: compute (((a + b) * (c + d)) + 1) -> 22
+   8 compute: return 22
+   9 compute: end return
+CHECKS {"records":7,"computations":1,"bindings":4,"choices":0,"writes":0,"requests":0,"observations":0,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":7,"witnessBytes":601}
+
+=== compound-effectful (actual verified source execution) ===
+"use strict";async function run(key){const value=await host.readAsync(key);const next=(value+2)*(value-1)+3;host.store(key,next);return next;}
+   2 observed: invoke run (call)
+   3 compute: create owned Promise &p1
+   4 compute: bind key = "compound"
+   5 compute: request e1 demo.readAsync("compound") in invocation1 @55:74 -> Promise &p2
+   7 compute: await Promise &p2; suspend invocation1 as continuation1; call returns owned Promise &p1
+   8 observed: observe e1 fulfilled 5
+   9 compute: resume invocation1 via continuation1 with fulfilled 5
+  10 compute: bind value = 5
+  11 compute: next = (((value + 2) * (value - 1)) + 3) -> 31
+  12 compute: request e2 demo.store("compound", 31) in invocation1 @108:128
+  14 observed: observe e2 fulfilled undefined
+  15 compute: resolve Promise &p1 31
+  16 compute: return &p1
+  17 compute: end return
+CHECKS {"records":11,"computations":1,"bindings":2,"choices":0,"writes":0,"requests":2,"observations":2,"events":0,"foldedConditions":0,"fusedBindings":1,"generatedRecords":11,"witnessBytes":1262}
+
+=== callback-captured-write (actual verified source execution) ===
+"use strict";async function run(){let seen=0;await host.withCallback("value",function(n){seen=seen+n;host.store("callback",seen);});host.store("result",seen);return seen;}
+   2 observed: invoke run (call)
+   3 compute: create owned Promise &p1
+   4 compute: bind seen = 0
+   5 compute: allocate &o2 closure {}
+   6 compute: request e1 demo.withCallback("value", &o2) in invocation1 @51:131 -> Promise &p2
+   9 compute: await Promise &p2; suspend invocation1 as continuation1; call returns owned Promise &p1
+  10 observed: event teacherevent1 -> event1
+  11 observed: invoke function:77 (callback)
+  14 compute: bind n = 3
+  15 compute: seen = (seen + n) -> 3
+  16 compute: request e2 demo.store("callback", 3) in event1 @101:128
+  18 observed: observe e1 fulfilled undefined
+  19 observed: observe e2 fulfilled undefined
+  20 compute: return undefined
+  21 compute: end return
+  22 observed: event teacherevent2 -> event2
+  23 observed: invoke function:77 (callback)
+  26 compute: bind n_1 = 4
+  27 compute: seen = (seen + n_1) -> 7
+  28 compute: request e3 demo.store("callback", 7) in event2 @101:128
+  30 observed: observe e3 fulfilled undefined
+  31 compute: return undefined
+  32 compute: end return
+  36 compute: resume invocation1 via continuation1 with fulfilled undefined
+  37 compute: request e4 demo.store("result", 7) in invocation1 @132:157
+  39 observed: observe e4 fulfilled undefined
+  40 compute: resolve Promise &p1 7
+  41 compute: return &p1
+  42 compute: end return
+CHECKS {"records":20,"computations":2,"bindings":3,"choices":0,"writes":0,"requests":4,"observations":4,"events":2,"foldedConditions":0,"fusedBindings":2,"generatedRecords":20,"witnessBytes":1857}
+
+=== rejection-finally (actual verified source execution) ===
+"use strict";async function run(){try{return await host.readAsync("bad");}catch(error){host.store("error",error);return 11;}finally{host.store("cleanup",1);}}
+   2 observed: invoke run (call)
+   3 compute: create owned Promise &p1
+   4 compute: request e1 demo.readAsync("bad") in invocation1 @51:72 -> Promise &p2
+   6 compute: await Promise &p2; suspend invocation1 as continuation1; call returns owned Promise &p1
+   7 observed: observe e1 rejected "missing"
+   8 compute: resume invocation1 via continuation1 with rejected "missing"
+   9 compute: bind error = "missing"
+  10 compute: request e2 demo.store("error", "missing") in invocation1 @87:112
+  12 observed: observe e2 fulfilled undefined
+  13 compute: transfer return 11 via finally
+  14 compute: request e3 demo.store("cleanup", 1) in invocation1 @132:155
+  16 observed: observe e3 fulfilled undefined
+  17 compute: resolve Promise &p1 11
+  18 compute: return &p1
+  19 compute: end return
+CHECKS {"records":11,"computations":0,"bindings":1,"choices":0,"writes":0,"requests":3,"observations":3,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":11,"witnessBytes":1072}
+
+=== property-helper (actual verified source execution) ===
+"use strict"; function helper(value){return value+1;} function run(box){if(box.count>3){box.count=2;} if(box.count>3){return 0;} return helper(box.count);}
+   2 observed: invoke run (call)
+   3 compute: bind box = &o3
+   4 compute: read &o3["count"] -> 4
+   5 compute: choose (&o3["count"] > 3) = true -> then
+   6 compute: write &o3["count"] = 2
+   7 compute: read &o3["count"] -> 2
+   8 compute: choose (&o3["count"] > 3) = false -> else
+   9 compute: read &o3["count"] -> 2
+  10 compute: call helper(2) -> guest1
+  11 compute: compute (2 + 1) -> 3
+  12 compute: return 3
+  13 compute: return 3
+  14 compute: end return
+CHECKS {"records":12,"computations":1,"bindings":1,"choices":2,"writes":1,"requests":0,"observations":0,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":12,"witnessBytes":1103}
+
+=== seeded-random (actual verified source execution) ===
+"use strict"; function sample(){return Math.random();} function run(){Math.random();const a=sample();return a+Math.random();}
+   1 observed: deterministic random seed 0
+   2 observed: invoke run (call)
+   3 compute: compute declared random() -> 0.23606797284446657
+   4 compute: call sample() -> guest1
+   5 compute: compute declared random() -> 0.278566908556968
+   6 compute: return 0.278566908556968
+   7 compute: bind a = 0.278566908556968
+   8 compute: compute declared random() -> 0.8195337599609047
+   9 compute: compute (a + 0.8195337599609047) -> 1.0981006685178727
+  10 compute: return 1.0981006685178727
+  11 compute: end return
+CHECKS {"records":9,"computations":4,"bindings":1,"choices":0,"writes":0,"requests":0,"observations":0,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":9,"witnessBytes":770}
+
+SEMANTIC_TRACE_INSPECTION [{"fixture":"counter-0","records":11,"computations":1,"bindings":2,"choices":0,"writes":0,"requests":2,"observations":2,"events":0,"foldedConditions":0,"fusedBindings":1,"generatedRecords":11,"witnessBytes":1018},{"fixture":"branch-1","records":10,"computations":0,"bindings":1,"choices":1,"writes":0,"requests":2,"observations":2,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":10,"witnessBytes":960},{"fixture":"compound-pure","records":7,"computations":1,"bindings":4,"choices":0,"writes":0,"requests":0,"observations":0,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":7,"witnessBytes":601},{"fixture":"compound-effectful","records":11,"computations":1,"bindings":2,"choices":0,"writes":0,"requests":2,"observations":2,"events":0,"foldedConditions":0,"fusedBindings":1,"generatedRecords":11,"witnessBytes":1262},{"fixture":"callback-captured-write","records":20,"computations":2,"bindings":3,"choices":0,"writes":0,"requests":4,"observations":4,"events":2,"foldedConditions":0,"fusedBindings":2,"generatedRecords":20,"witnessBytes":1857},{"fixture":"rejection-finally","records":11,"computations":0,"bindings":1,"choices":0,"writes":0,"requests":3,"observations":3,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":11,"witnessBytes":1072},{"fixture":"property-helper","records":12,"computations":1,"bindings":1,"choices":2,"writes":1,"requests":0,"observations":0,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":12,"witnessBytes":1103},{"fixture":"seeded-random","records":9,"computations":4,"bindings":1,"choices":0,"writes":0,"requests":0,"observations":0,"events":0,"foldedConditions":0,"fusedBindings":0,"generatedRecords":9,"witnessBytes":770}]

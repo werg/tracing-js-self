@@ -1,0 +1,948 @@
+{
+  "schema": "semantic-capability-ledger/1",
+  "producerRevision": "7b5ef549c711b9937ab8721ec607f55354047b97",
+  "contracts": {
+    "execution": "semantic-execution/5",
+    "trace": "semantic-trace/5",
+    "context": "semantic-context/5",
+    "continuation": "semantic-continuation/5",
+    "harness": "selected-harness/2"
+  },
+  "environment": {
+    "schema": "semantic-execution-environment/1",
+    "node": "24.22.3",
+    "v8": "13.6.233.17-node.63",
+    "platform": "linux",
+    "arch": "x64",
+    "timezone": "UTC",
+    "parser": "8.15.0",
+    "typescript": "5.9.3",
+    "packageLockDigest": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88",
+    "implementationDigest": "81aa299f8c357794ad5915315ec3c560eccbdd7b020de86bf19330dd0b107ca8",
+    "locale": "en-US",
+    "referenceIsolation": {
+      "schema": "semantic-reference-isolation/1",
+      "mode": "trusted-process",
+      "launcherSha256": "b9d3bd23d092083173508fd570c3d5b6dc4e0e98fc9814e3df543e634351ea24"
+    }
+  },
+  "nativePolicy": null,
+  "unit": "declared source/input/fixture probe",
+  "rows": [
+    {
+      "id": "scalar-arithmetic",
+      "feature": "scalar-arithmetic",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "9972d71f2f973e7dc95a7499be7f80aaedc1ae035c66965f90cd72ebdfd5ad36"
+    },
+    {
+      "id": "coercion-and-signed-zero",
+      "feature": "coercion-and-signed-zero",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "b539d0ff0a7c38c0c2ed3017ed4409ac3de0c394fc66557ab842f7e0fe3bd4b1"
+    },
+    {
+      "id": "primitive-number-conversion",
+      "feature": "primitive-number-conversion",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "222eada3580daca4e9b93a6183b3aa90ddd17fdb21ca4ed905db8f970069a8f3"
+    },
+    {
+      "id": "primitive-bigint-conversion",
+      "feature": "primitive-bigint-conversion",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "866d1c8f62e91c96059444ebbf4be9e01c17cb82e4649127a146cd5195a2a0e6"
+    },
+    {
+      "id": "primitive-string-conversion",
+      "feature": "primitive-string-conversion",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "32a3a061d915305875db9aa238a68b1cfe5a0376f2481f8a96399aae979f200f"
+    },
+    {
+      "id": "invalid-bigint-catch-and-throw",
+      "feature": "invalid-bigint-catch-and-throw",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "315bacead7076cea12b2302e45d8baf0cf29cd365fddd1be4cbfb661bbb8ad29"
+    },
+    {
+      "id": "both-branch-outcomes",
+      "feature": "both-branch-outcomes",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "6dbb631228fc3165a386dd25a50cdc8ade1a98b3ded2cd717d843fcc71859a12"
+    },
+    {
+      "id": "zero-loop-trips",
+      "feature": "zero-loop-trips",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "1a323ef473f145fc184ae5bf207c932907836def33df0946b2fc074b47e083e1"
+    },
+    {
+      "id": "short-circuit-mutation",
+      "feature": "short-circuit-mutation",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "e7c222a5a3b0e8ad08931ec1cd581167432b3af45ecfd0f00ed1bb477e54ae0b"
+    },
+    {
+      "id": "nested-calls-and-recursion",
+      "feature": "nested-calls-and-recursion",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "58eb6997960b75f9a254054f7a9d8ac7a6f42935e71ec1ed8a6a3570846e43df"
+    },
+    {
+      "id": "parameter-body-scope",
+      "feature": "parameter-body-scope",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "2a18bf7f996e5a194a2849a7ff08fdb4f83f0b4b9e35e9d9907060041afca81c"
+    },
+    {
+      "id": "parameter-closure-capture",
+      "feature": "parameter-closure-capture",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "3e8274f23b323208ab475c3407e089dcdca48c34fe0cf487924a763cfb591e00"
+    },
+    {
+      "id": "parameter-camelcase-default-capture",
+      "feature": "parameter-camelcase-default-capture",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "81c1be7de3b22fb696251284bd12a894f80efa0b32bd671f4a4e6b4fbfc5bd10"
+    },
+    {
+      "id": "later-parameter-tdz",
+      "feature": "later-parameter-tdz",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "31acd95dbd45e55840aa972f6490c7489fe701a8f61e2103aa44feca605014d3"
+    },
+    {
+      "id": "async-helper-declaration",
+      "feature": "async-helper-declaration",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "5e9212d8da3d64fba4cfc562981003670e2a96d26771e065e505eafe4940d541"
+    },
+    {
+      "id": "sync-root-async-helper-rejection",
+      "feature": "sync-root-async-helper-rejection",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "fdbca51e726e8c166c12fdd648e4e8893813d2ac7ccb18667f540704e70ac6aa"
+    },
+    {
+      "id": "slice-undefined-end",
+      "feature": "slice-undefined-end",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "d32d8d795d7b7dd1e9a2e43bcb46bda89c4ab9a68601f75b9eb187db0570ce86"
+    },
+    {
+      "id": "fill-undefined-end",
+      "feature": "fill-undefined-end",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "abed3f64a8161e1cd746946bfe5f61bbef04b8bbe8391736d8f829a1af2edf06"
+    },
+    {
+      "id": "copy-within-undefined-end",
+      "feature": "copy-within-undefined-end",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "1d153bab3e4a213070b940d68dd9dac8f95234f0a0f6bbf0c3a99d5c2c768789"
+    },
+    {
+      "id": "array-some-short-circuit",
+      "feature": "array-some-short-circuit",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "fd6a8e3cbeac48691e2ee3abe608ff592e893350e5a2c5b5e8eae71ef7d7984f"
+    },
+    {
+      "id": "array-for-each-owned-callback",
+      "feature": "array-for-each-owned-callback",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "cca7fa259e12c3aacb317686845a2d3f2822d066859ae0e0de8d1f04e3818b64"
+    },
+    {
+      "id": "sparse-array-fill",
+      "feature": "sparse-array-fill",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "d7b933d2cf83f41b12e00c9a2cc786f19027b40bf35e28c8c02dc1deab520e0d"
+    },
+    {
+      "id": "input-graph-mutation",
+      "feature": "input-graph-mutation",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "e17fc5e2db7b44bc1b8521ff606bceaec9761de74b6356b17318ed49d4cf37f3"
+    },
+    {
+      "id": "alias-preserving-mutation",
+      "feature": "alias-preserving-mutation",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "1d507a98dc0542aa8df0ed4291a387b9458d7f37906bc4687689302f20c701f9"
+    },
+    {
+      "id": "input-array-mutation",
+      "feature": "input-array-mutation",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "e19990c3e56398dd7c93369a60c52471d718c6cf8043eec83b0b38ae1b79afa0"
+    },
+    {
+      "id": "synchronous-primitive-throw",
+      "feature": "synchronous-primitive-throw",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "5a0afef3d3192c95e042e71dae10a2520a6e08a07f700865e03869bf4b8dfea7"
+    },
+    {
+      "id": "synchronous-declared-error",
+      "feature": "synchronous-declared-error",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "a823ee03ed85d33c5df780dc7d901ed8994670d89452920ad6f08d1dcd219ff7"
+    },
+    {
+      "id": "finally-overrides-return",
+      "feature": "finally-overrides-return",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "73d9c7cdfd0069d1ed4d116548ae1f96d0846720b1ebd1dbf65975c554caaaa1"
+    },
+    {
+      "id": "finally-overrides-throw",
+      "feature": "finally-overrides-throw",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "33074830983294b93368b60debf135f84accf63e527eea2a6e2e0a835250e499"
+    },
+    {
+      "id": "object-create-descriptors",
+      "feature": "object-create-descriptors",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "unsupported",
+        "independentOutcome": "untested",
+        "independentIntermediate": "untested",
+        "v5ProjectionAndPublicReplay": "untested",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "unsupported",
+      "reason": "Object.create property descriptors are outside the bounded profile"
+    },
+    {
+      "id": "array-index-accessor",
+      "feature": "array-index-accessor",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "unsupported",
+        "independentOutcome": "untested",
+        "independentIntermediate": "untested",
+        "v5ProjectionAndPublicReplay": "untested",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "unsupported",
+      "reason": "Array index accessor descriptors are outside the bounded profile"
+    },
+    {
+      "id": "forward-parameter-closure",
+      "feature": "forward-parameter-closure",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "1a16b8198d48bdbdb9ea65e17da7b2f9b9e393cc0129faa6886bbfa746d3e8e4"
+    },
+    {
+      "id": "receiver-this",
+      "feature": "receiver-this",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "unsupported",
+        "ownedEvaluation": "untested",
+        "independentOutcome": "untested",
+        "independentIntermediate": "untested",
+        "v5ProjectionAndPublicReplay": "untested",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "reason": "Unsupported training-js/1 ThisExpression at 35:39"
+    },
+    {
+      "id": "named-function-expression",
+      "feature": "named-function-expression",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "unsupported",
+        "ownedEvaluation": "untested",
+        "independentOutcome": "untested",
+        "independentIntermediate": "untested",
+        "v5ProjectionAndPublicReplay": "untested",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "reason": "Unsupported training-js/1 function expression parameters or mode at 36:81"
+    },
+    {
+      "id": "sparse-array-literal",
+      "feature": "sparse-array-literal",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "unsupported",
+        "ownedEvaluation": "untested",
+        "independentOutcome": "untested",
+        "independentIntermediate": "untested",
+        "v5ProjectionAndPublicReplay": "untested",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "reason": "Unsupported training-js/1 sparse/spread array at 35:41"
+    },
+    {
+      "id": "object-spread",
+      "feature": "object-spread",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "unsupported",
+        "ownedEvaluation": "untested",
+        "independentOutcome": "untested",
+        "independentIntermediate": "untested",
+        "v5ProjectionAndPublicReplay": "untested",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "reason": "Unsupported training-js/1 object property form at 50:54"
+    },
+    {
+      "id": "class-declaration",
+      "feature": "class-declaration",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "unsupported",
+        "ownedEvaluation": "untested",
+        "independentOutcome": "untested",
+        "independentIntermediate": "untested",
+        "v5ProjectionAndPublicReplay": "untested",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "reason": "Unsupported training-js/1 ClassDeclaration at 28:37"
+    },
+    {
+      "id": "generator-function",
+      "feature": "generator-function",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "unsupported",
+        "ownedEvaluation": "untested",
+        "independentOutcome": "untested",
+        "independentIntermediate": "untested",
+        "v5ProjectionAndPublicReplay": "untested",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "reason": "Unsupported training-js/1 function form at 13:38"
+    },
+    {
+      "id": "callback-abrupt-obligation",
+      "feature": "callback-abrupt-obligation",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "failed",
+        "independentIntermediate": "untested",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "reference_callback_failure",
+      "reason": "Callback failures are outside the qualified observable completion profile"
+    },
+    {
+      "id": "counter-0",
+      "feature": "counter-0",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "84d17f9dd2ed7b603d9a08808319a97455caafc08910f2fda40625e07a7fc7b5"
+    },
+    {
+      "id": "two-pending-reversed",
+      "feature": "two-pending-reversed",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "4b11db2816ece8c4b582a71564ea1921de9faf05d6d4af29c81e0efb05188ed0"
+    },
+    {
+      "id": "rejection-finally",
+      "feature": "rejection-finally",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "c6abae1d43cbb830a977948f65e9b6097ed19c10ef9e247e4c1240e191b42f0b"
+    },
+    {
+      "id": "callback-captured-write",
+      "feature": "callback-captured-write",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "d89397842e63582c0a39f38fc0813cbdf57176811d27299da119abb3462b8cec"
+    },
+    {
+      "id": "promise-reaction",
+      "feature": "promise-reaction",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "bb9d06941fdf4f09b655f5fc66c23e748ed1d446235af0b029382d6bb5fad500"
+    },
+    {
+      "id": "promise-rejection-finally",
+      "feature": "promise-rejection-finally",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "d42d656d59dcf2124a6b99bd823f9b445d6627168c4856d9069c4c4adac3fdab"
+    },
+    {
+      "id": "owned-microtask",
+      "feature": "owned-microtask",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "d16188d7ca9ca8d8f8351105cfbf1b01d4a3d49dcd25459e5e2c093aec610475"
+    },
+    {
+      "id": "http-response-stream",
+      "feature": "http-response-stream",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "6d29c7be50907c3c8e6ed0341d1d26c4e120259703fc0ec25b7e2e16b79fb48d"
+    },
+    {
+      "id": "filesystem-stream-copy",
+      "feature": "filesystem-stream-copy",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "193e7b9b68b620b00c46c84233ac38137df786858ce657323a5aca33c5d1b892"
+    },
+    {
+      "id": "dom-mutation-release",
+      "feature": "dom-mutation-release",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "a60cd5d2e303a68831b4d9ca40dcb748cf0be053aab99ee99ad8947d6711ef24"
+    }
+  ],
+  "totals": {
+    "frontend": {
+      "total": 49,
+      "attempted": 49,
+      "passed": 43,
+      "failed": 0,
+      "unsupported": 6,
+      "resource_limited": 0,
+      "untested": 0
+    },
+    "ownedEvaluation": {
+      "total": 49,
+      "attempted": 43,
+      "passed": 41,
+      "failed": 0,
+      "unsupported": 2,
+      "resource_limited": 0,
+      "untested": 6
+    },
+    "independentOutcome": {
+      "total": 49,
+      "attempted": 41,
+      "passed": 40,
+      "failed": 1,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 8
+    },
+    "independentIntermediate": {
+      "total": 49,
+      "attempted": 40,
+      "passed": 40,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 9
+    },
+    "v5ProjectionAndPublicReplay": {
+      "total": 49,
+      "attempted": 41,
+      "passed": 41,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 8
+    },
+    "nativeAdmission": {
+      "total": 49,
+      "attempted": 0,
+      "passed": 0,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 49
+    },
+    "modelEvaluation": {
+      "total": 49,
+      "attempted": 0,
+      "passed": 0,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 49
+    }
+  },
+  "otherProfiles": [
+    {
+      "profile": "bounded-js-subset/2",
+      "status": "untested",
+      "reason": "This command measures the strict training path only; separate profile tests are not promoted to this ladder."
+    },
+    {
+      "profile": "static-module/1",
+      "status": "untested",
+      "reason": "This command measures the strict training path only; separate profile tests are not promoted to this ladder."
+    },
+    {
+      "profile": "evaluated-module/1",
+      "status": "untested",
+      "reason": "This command measures the strict training path only; separate profile tests are not promoted to this ladder."
+    }
+  ],
+  "otherAdapters": [
+    {
+      "adapter": "typescript/5.9.3",
+      "targetProfile": "training-js/1",
+      "status": "untested",
+      "reason": "Syntax lowering and source-map preservation require their separate adapter tests."
+    }
+  ],
+  "claims": {
+    "fullEcmaScript": false,
+    "fullTest262": false,
+    "optimizerSteps": 0,
+    "learnedSuccess": null
+  },
+  "limitation": "Finite probes measure distinctions, not exhaustive feature conformance. Native admission is measured only when configured; model evaluation remains untested by this command."
+}

@@ -27,6 +27,12 @@ trace abstractions, coverage selection and bounded generation tools. Use
 Code availability, a locally verified sample, native admission and successful
 model learning are separate evidence levels.
 
+The [executed roadmap baseline](evidence/execution-baseline-7b5ef54/STATUS.md)
+records fourteen passed command checks at `7b5ef54…`: 1,004 unit passes,
+five explicit native-serving skips, zero failures, all thirteen teacher
+mutants detected, and 203 locally verified recipe examples. That source-only
+run does not assert native admission or model learning.
+
 The retained [I qualification](evidence/qualification-I-2026-11-18.json)
 is **historical evidence at its recorded producer and consumer**: 945 unit
 passes, eight reference fixtures and forty attempted native probes. Its
