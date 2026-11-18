@@ -1,0 +1,9 @@
+{
+  "schema": "semantic-native-ci-identity/1",
+  "workflowRunId": "44384520028",
+  "workflowRunAttempt": "1",
+  "workflowTriggerRevision": "d742c1f8d45da999ccb0449c93bfc83bebd10f95",
+  "workflowHeadRevision": "cb67ed15750760267d1bb6edd53b4190d349885c",
+  "producerRevision": "cb67ed15750760267d1bb6edd53b4190d349885c",
+  "consumerRevision": "272584270a00409cee6c7c49078c775faf24d16b"
+}

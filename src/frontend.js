@@ -182,7 +182,17 @@ export function parse(source) {
 let site=0;
 export function compile(ast) {
   site=0;const programs={};let next=0;
-  function bodyProgram(body,params=[],async=false,defaults=[],restIndex=-1) {
+  function bodyProgram(body,params=[],async=false,defaults=[],restIndex=-1,inheritedStrict=false) {
+    // Strictness belongs to the lexical code, not to the caller. Only an
+    // unescaped, unparenthesized string in the directive prologue enables it;
+    // nested functions (including arrows/default initializers) inherit it.
+    let strict=inheritedStrict;
+    for(const node of body){
+      if(node.type!=='Expression'||node.expr.type!=='Literal'||
+         node.expr.value[0]!=='str'||node.expr.parenthesized||
+         node.start!==node.expr.start)break;
+      if(node.expr.raw==='"use strict"'||node.expr.raw==="'use strict'")strict=true;
+    }
     const id=`code${++next}`, instructions=[];let loopDepth=0,forOfIndex=0;
     const emit=(op,arg,node)=>{const inst={op,arg,siteId:`s${++site}`,start:node?.start??0,end:node?.end??0};instructions.push(inst);return instructions.length-1;};
     // Declarations are created before execution for a block's scope.
@@ -197,7 +207,7 @@ export function compile(ast) {
         for(const d of declarations)if(d.kind!=='var')emit('DECLARE',{name:d.id,kind:d.kind},d);
       }
       for(const n of nodes)if(n.type==='Function'){
-        const fid=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex);
+        const fid=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict);
         emit('DEF_FN',{name:n.id,codeId:fid,params:n.params,async:n.async},n);
       }
       for(const n of nodes)if(n.type!=='Function')stmt(n);
@@ -215,7 +225,7 @@ export function compile(ast) {
           for(const a of n.args)expr(a);
           emit('CONSTRUCT',n.args.length,n);break;
         case 'FunctionExpr':{
-          const codeId=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex);
+          const codeId=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict);
           emit('MAKE_FUNCTION',{codeId,arrow:n.arrow,async:n.async},n);
           break;
         }
@@ -642,7 +652,7 @@ export function compile(ast) {
     }
     statements(body);
     emit('CONST',{value:['undefined']},ast);emit('RETURN',null,ast);
-    programs[id]={id,params,restIndex,async,parameterExpressions,varNames:collectVarBindings(body),instructions};return id;
+    programs[id]={id,params,restIndex,async,strict,parameterExpressions,varNames:collectVarBindings(body),instructions};return id;
   }
   const entry=bodyProgram(ast.body);
   return {entry,programs,sites:Object.values(programs).flatMap(x=>x.instructions.map(({siteId,start,end,op})=>({siteId,start,end,op,codeId:x.id})))};

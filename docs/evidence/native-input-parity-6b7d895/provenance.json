@@ -1,0 +1,28 @@
+{
+  "schema": "semantic-hosted-input-parity-evidence/1",
+  "status": "passed",
+  "repository": "werg/tracing-js-self",
+  "workflowRunId": 44381362527,
+  "workflowJobId": 135074150829,
+  "workflowHeadRevision": "6b7d895e79469a9ea0e4d9dfb1c850f957c918f5",
+  "consumerRevision": "548ab7eb32a1a4bbc9071f429c49ef5f1b778188",
+  "artifactId": 14464810404,
+  "artifactSha256": "1e1d7114c1e037cb4c8297126144df52f64fcf0f5b0b97e3ed0dc474a846c621",
+  "files": {
+    "candidate.json": {
+      "bytes": 40067,
+      "sha256": "14827b58de074842fc515ffd8b94f92cd6fdc8422f63f9d6a6df8416ff47faf1"
+    },
+    "native-input-parity.json": {
+      "bytes": 29494,
+      "sha256": "f3f772087fe87972273c4332082873229b31462a4572424d428205a62c825053"
+    }
+  },
+  "producerBinding": "Exact producer checkout is established by the hosted workflow reference; the original local-only candidate and source receipt retain producerRevision=null.",
+  "scope": "Actual first direct-call observation bytes, framed instruction bytes and declared execution purpose before neural execution",
+  "modelSelections": 0,
+  "optimizerSteps": 0,
+  "nativeAdmissionClaim": false,
+  "conditionalParityClaim": false,
+  "learnedSuccess": null
+}

@@ -10,12 +10,13 @@ import {describeCompletionGraph,DECLARED_EXCEPTION_PROFILE} from '../src/trainin
 import {encode} from '../src/values.js';
 import {instrumentOperationSource} from '../src/training/operation-reference.js';
 import {instrumentBranchSource} from '../src/training/branch-reference.js';
+import {instrumentCompletionSource,createCompletionCapture,COMPLETION_HOOK} from '../src/training/completion-reference.js';
 
 let mode='original',phase='input';
 try{
   const input=JSON.parse(readFileSync(0,'utf8'));
   mode=input.mode??'original';
-  if(!['original','operations','branches'].includes(mode)||
+  if(!['original','operations','branches','completions'].includes(mode)||
     !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(input.entry??''))
     throw new TypeError('Invalid reference mode or entry identifier');
   const broker=createFixtureBroker(input.fixture),operations=[],decisions=[];
@@ -60,6 +61,7 @@ try{
   for(const call of input.fixture.calls)if(call.operation.startsWith('demo.'))
     host[call.operation.slice(5)]=(...args)=>invoke(call.operation,args);
   const args=decodeOwnedGraph(JSON.stringify(input.inputGraph));
+  const completionCapture=createCompletionCapture({initialValues:args});
   const capture=(site,value)=>{
     if(operations.length>=16384)fail(new RangeError('Reference operation cap'),'reference_resource_limit');
     try{operations.push({site,value:encode(value)});}catch(error){fail(error,'reference_instrumentation_unsupported');}
@@ -76,6 +78,8 @@ try{
   };
   const context=vm.createContext({host,__args:args,__result:undefined,__kind:'return',
     __tracingCapture:capture,__tracingBranch:branch,__tracingLogical:logical,
+    [COMPLETION_HOOK]:(...args)=>{try{return completionCapture.capture(...args);}
+      catch(error){return fail(error,'reference_instrumentation_unsupported');}},
     queueMicrotask:callback=>queueMicrotask(()=>{try{callback();}catch(error){failure(error);}}),
     console:Object.fromEntries(['log','info','warn','error'].map(method=>[method,(...args)=>
       invoke('platform.console.'+method,args)]))},{codeGeneration:{strings:false,wasm:false}});
@@ -93,7 +97,8 @@ try{
     context.Date={now:()=>invoke('platform.dateNow',[])};
   phase='instrumentation';
   const source=mode==='operations'?instrumentOperationSource(input.source):
-    mode==='branches'?instrumentBranchSource(input.source):input.source;
+    mode==='branches'?instrumentBranchSource(input.source):
+    mode==='completions'?instrumentCompletionSource(input.source):input.source;
   phase='compile';
   // Catch only guest invocation throws *inside* the reference realm. Script
   // compilation and vm deadline failures still escape as verifier failures.
@@ -113,7 +118,8 @@ try{
   phase='observe';
   const outcome={kind,graph:describeCompletionGraph(args,value,kind)};
   process.stdout.write(JSON.stringify({schema:'effectful-reference/4',exceptionProfile:DECLARED_EXCEPTION_PROFILE,outcome,
-    effects:broker.finish(),operations,decisions,callbackFailures,unhandledRejections})+'\n');
+    effects:broker.finish(),operations,decisions,completions:completionCapture.observations,
+    callbackFailures,unhandledRejections})+'\n');
 }catch(error){
   const category=error.category??(error.code==='ERR_SCRIPT_EXECUTION_TIMEOUT'?
     'reference_resource_limit':['instrumentation','compile','observe'].includes(phase)?

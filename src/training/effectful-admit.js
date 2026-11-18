@@ -23,6 +23,7 @@ import {effectfulFamilySplit,defaultSplitIdentity,validateSplitIdentity,cloneSpl
 export {effectfulFamilySplit} from './admission-identity.js';
 import {AdmissionFailure,createFailureRecord} from './failure-record.js';
 import {referenceCommand,referenceIsolationMode} from '../corpus/reference-isolation.mjs';
+import {ownedCompletionObservations,compareCompletionObservations} from './completion-reference.js';
 
 const hash=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
 const referenceWorker=fileURLToPath(new URL('../../tools/effectful-reference-worker.mjs',import.meta.url));
@@ -95,7 +96,7 @@ function staticSites(source){
   }
   visit(parse(source,{ecmaVersion:'latest'}));return {operation,branch};
 }
-function independentSemanticChecks(bundle,source,operations,decisions){
+function independentSemanticChecks(bundle,source,operations,decisions,completions){
   const sites=staticSites(source),semantic=normalizeJournal(bundle);
   const events=new Map(bundle.events.map(event=>[event.eventId,event]));
   const types=new Set(['primitive.binary','primitive.unary','template.substitute',
@@ -114,8 +115,13 @@ function independentSemanticChecks(bundle,source,operations,decisions){
   if(!isDeepStrictEqual(expectedBranches,decisions))
     throw new AdmissionFailure('reference_branch_mismatch','Independent executed branch receipts disagree',
       {expectedBranches,decisions});
-  return {schema:'effectful-source-checks/4',status:'agreed',
-    computations:operations.length,branches:decisions.length};
+  let completionChecks;
+  try{completionChecks=compareCompletionObservations(ownedCompletionObservations(bundle,source),completions);}
+  catch(error){throw new AdmissionFailure('reference_completion_unsupported',error.message);}
+  if(completionChecks.status!=='agreed')throw new AdmissionFailure('reference_completion_mismatch',
+    'Independent assignment, statement, call or abrupt-completion receipts disagree',completionChecks);
+  return {schema:'effectful-source-checks/5',status:'agreed',
+    computations:operations.length,branches:decisions.length,completions:completionChecks};
 }
 export function validateNativePolicy(policy){
   if(!policy||!/^[0-9a-f]{40}$/.test(policy.consumerRevision??'')||
@@ -207,7 +213,8 @@ export async function verifyEffectfulTrainingCase({source,entry,args=[],fixture,
     const reference=observations.original=await independentEffectfulReference(input,{timeoutMs});
     const operationReference=observations.operations=await independentEffectfulReference({...input,mode:'operations'},{timeoutMs});
     const branchReference=observations.branches=await independentEffectfulReference({...input,mode:'branches'},{timeoutMs});
-    for(const result of [reference,operationReference,branchReference]){
+    const completionReference=observations.completions=await independentEffectfulReference({...input,mode:'completions'},{timeoutMs});
+    for(const result of [reference,operationReference,branchReference,completionReference]){
       if(result.callbackFailures.length)throw new AdmissionFailure('reference_callback_failure',
         'Callback failures are outside the qualified observable completion profile',result.callbackFailures);
       if(result.unhandledRejections?.length)throw new AdmissionFailure('reference_unhandled_rejection',
@@ -218,7 +225,7 @@ export async function verifyEffectfulTrainingCase({source,entry,args=[],fixture,
           {expected:observations.owned,actual:{outcome:result.outcome,effects:result.effects}});
     }
     const sourceChecks=independentSemanticChecks(bundle,source,operationReference.operations,
-      branchReference.decisions);
+      branchReference.decisions,completionReference.completions);
     const exported=compiled.exported;
     Object.assign(exported.sidecar,{admission:'locally_verified',referenceStatus:'agreed',
       split:splitIdentity.split,splitIdentity,sourceLineage:family,
@@ -268,7 +275,7 @@ export async function recheckEffectfulAdmission(exported,{requireAdmitted=true,t
     throw new Error('Source/reference inputs differ from the owned initial context');
   verifyAdmissionIdentity(exported,{expectedIdentityDigest});
   const references=[];
-  for(const mode of [null,'operations','branches'])references.push(await independentEffectfulReference(
+  for(const mode of [null,'operations','branches','completions'])references.push(await independentEffectfulReference(
     mode?{...input,mode}:input,{timeoutMs}));
   for(const result of references){
     if(result.callbackFailures.length)throw new AdmissionFailure('reference_callback_failure',
@@ -281,7 +288,7 @@ export async function recheckEffectfulAdmission(exported,{requireAdmitted=true,t
       !isDeepStrictEqual(result.unhandledRejections??[],side.reference.unhandledRejections??[]))
       throw new Error('Independent effectful source evidence changed');
   }
-  const sourceChecks=independentSemanticChecks(side.archive,source,references[1].operations,references[2].decisions);
+  const sourceChecks=independentSemanticChecks(side.archive,source,references[1].operations,references[2].decisions,references[3].completions);
   if(!isDeepStrictEqual(sourceChecks,side.reference.sourceChecks))throw new Error('Source computation evidence changed');
   const dispatches=side.archive.events.filter(event=>event.operation==='effect.dispatch');
   const recorded=side.effects.filter(receipt=>receipt.kind==='dispatch');

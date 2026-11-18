@@ -1,0 +1,33 @@
+{
+  "schema": "aggregate-runner-preflight/1",
+  "status": "unavailable",
+  "observedAt": "2026-11-18T18:48:30.976Z",
+  "runtime": {
+    "node": "v24.22.3",
+    "v8": "13.6.233.17-node.63",
+    "kernel": "6.18.57"
+  },
+  "budget": {
+    "cpus": 2,
+    "memoryBytes": 2147483648,
+    "pids": 128,
+    "workspaceBytes": 536870912,
+    "temporaryBytes": 67108864,
+    "wallTimeMs": 3600000
+  },
+  "checks": {
+    "platform": "linux",
+    "systemdManager": "user",
+    "cgroupV2": false,
+    "workspace": null
+  },
+  "blockers": [
+    "No cgroup-v2 filesystem is exposed to this runner",
+    "Writable workspace must be an existing dedicated, canonical tmpfs mount",
+    "Systemd manager unavailable: Failed to connect to user scope bus via local transport: Operation not permitted (consider using --machine=<user>@.host --user to connect to bus of other user)"
+  ],
+  "workloadStarted": false,
+  "containerDigest": null,
+  "qualification": "unqualified-until-in-unit-kernel-boundary-check",
+  "boundary": "Per-worker V8 limits and RSS polling never substitute for aggregate kernel enforcement."
+}

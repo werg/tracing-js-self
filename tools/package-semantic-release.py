@@ -174,11 +174,11 @@ def write_archive(destination: Path, payload: dict, sources: dict[str, Path]) ->
     return manifest
 
 
-def verify_archive(path: Path) -> dict:
+def verify_archive(path: Path, *, opener=None) -> dict:
     """Read and hash every archive member without extracting any paths."""
     observed, seen, manifest = {}, set(), None
     before = path.stat()
-    with tarfile.open(path, "r|gz") as archive:
+    with (opener(path) if opener else tarfile.open(path, "r|gz")) as archive:
         for member in archive:
             name = archive_name(member.name)
             if name in seen or not member.isfile() or member.issparse():

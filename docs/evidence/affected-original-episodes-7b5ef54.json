@@ -1,0 +1,105 @@
+{
+  "schema": "strict-assignment-affected-inventory/1",
+  "evidenceKind": "historical-recorded-state-susceptibility-inventory",
+  "claim": "Narrow executed-path inventory; no corpus contamination or renewed admission is inferred",
+  "inventory": {
+    "kind": "available-committed-historical-episodes",
+    "auditRevision": "7b5ef549c711b9937ab8721ec607f55354047b97",
+    "files": [
+      {
+        "path": "docs/evidence/semantic-v4/admitted-counter.json",
+        "fileSha256": "f8ee7b6572df28d2dca8c45600a0623fc8d2e2ebf4c4049ccecc411bf1d4a7cb",
+        "suppliedRows": 1
+      },
+      {
+        "path": "docs/evidence/semantic-v4/admitted-persistent-listener.json",
+        "fileSha256": "4f3eeb7b0a9270bbe29a63314a341d942d83bdddd4fd37ce20f2fd67a032e7be",
+        "suppliedRows": 1
+      }
+    ],
+    "suppliedRows": 2,
+    "historicalCampaignPopulation": null,
+    "excludedUnavailablePopulation": {
+      "id": "D",
+      "status": "not_audited",
+      "reason": "Original per-episode private execution archives are unavailable in this checkout",
+      "summaryPath": "docs/evidence/semantic-v5/coverage-availability-D-2026-11-18.json",
+      "summarySha256": "dc2280bedc948920499447a81f61d381d13ed67e3f4122e84262e8b498a8b2dc",
+      "producerRevision": "83e0d5742e63dc4439b68d6296f323cb7a3aafdc",
+      "summaryOnlyCounts": {
+        "candidates": 1171,
+        "admitted": 987,
+        "nativePrepared": 541,
+        "selected": 211
+      },
+      "archivedRowsScanned": 0,
+      "affectedRows": null,
+      "contamination": null
+    }
+  },
+  "counts": {
+    "rows": 2,
+    "archivesAvailable": 2,
+    "structurallyValidated": 2,
+    "affectedRows": 0,
+    "suspectedSilentFailureRows": 0,
+    "affectedEvents": 0,
+    "notAudited": 0,
+    "incompleteAudits": 0,
+    "noAffectedPathObserved": 2
+  },
+  "requalificationList": [],
+  "quarantineList": [],
+  "historicalArtifactsModified": false,
+  "nativeAdmission": false,
+  "rows": [
+    {
+      "id": "counter-0#1",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "admission": "admitted",
+      "identityDigest": null,
+      "episodeDigest": "f2f150f00da1937a5113cc829f18376e3cc333921178ad2ae5f49c56ffee9e75",
+      "archiveDigest": "6e17ad7505e41630e5d39fbcb0808ff9a73d4c6241e30935890938e03953df51",
+      "sourceDigests": [
+        {
+          "sourceId": "src1",
+          "digest": "a66d7c5931a75114127af903b09b9e6cddd8a56036ce361a6eed7ecc10162ba5"
+        }
+      ],
+      "scope": "executed-strict-getter-only-PUT_PROP",
+      "status": "no_affected_path_observed",
+      "reason": "No executed strict getter-only PUT_PROP was found; this is not semantic requalification",
+      "structuralValidation": true,
+      "propertyWriteEvents": 0,
+      "affectedEvents": [],
+      "uncertainEvents": [],
+      "sloppyGetterOnlyEvents": 0,
+      "action": "none_for_this_narrow_audit",
+      "independentRequalification": false
+    },
+    {
+      "id": "persistent-external-trigger#1",
+      "producerRevision": "b238fb48e6dc2b3a97e8c1280d4b961c0593466c",
+      "admission": "admitted",
+      "identityDigest": null,
+      "episodeDigest": "8f190568516d55c1de80696708fa8e5a7ee08ee7f3f7402958c6d03329227031",
+      "archiveDigest": "653cc1db7d3bdb36731749a571caa4829be51858e841ab3ae1e1d28fa2a58745",
+      "sourceDigests": [
+        {
+          "sourceId": "src1",
+          "digest": "93a8f0b65add29cc6846e215f00bc7894e7ce50ac358ec97555cf106dbdff0f3"
+        }
+      ],
+      "scope": "executed-strict-getter-only-PUT_PROP",
+      "status": "no_affected_path_observed",
+      "reason": "No executed strict getter-only PUT_PROP was found; this is not semantic requalification",
+      "structuralValidation": true,
+      "propertyWriteEvents": 0,
+      "affectedEvents": [],
+      "uncertainEvents": [],
+      "sloppyGetterOnlyEvents": 0,
+      "action": "none_for_this_narrow_audit",
+      "independentRequalification": false
+    }
+  ]
+}

@@ -22,6 +22,7 @@ import subprocess
 import sys
 import time
 import traceback
+import uuid
 from collections import Counter, defaultdict
 from dataclasses import asdict
 from pathlib import Path
@@ -681,6 +682,12 @@ def rollout(case, origin, bundle, consumer, root, args, env):
                   '--device', 'cpu', '--effort', '1', '--max-tokens', str(args.rollout_tokens),
                   '--profile-output', str(destination / 'serving-profile.json'),
                   '--profile-origin', 'trained' if origin == 'trained' else 'fixed']
+    capture_process = getattr(args, 'native_process_receipts', False)
+    launch_id = uuid.uuid4().hex if capture_process else None
+    if capture_process:
+        model_args = [str(Path(__file__).with_name('launch-native-diagnostic.py')),
+                      '--receipt', str(destination / 'native-process.json'),
+                      '--launch-id', launch_id, *model_args]
     evaluator = getattr(args, 'evaluator_script', Path(__file__).with_name('run-selected-evaluation.mjs'))
     command = ['node', str(evaluator),
                '--origin', origin, '--model-command', sys.executable,
@@ -692,11 +699,15 @@ def rollout(case, origin, bundle, consumer, root, args, env):
                'wholeTaskSuccess': False, 'traceValid': False,
                'checkpointIdentity': bundle['model_sha256'],
                'artifacts': str(destination), 'generatedTokenCost': None}
+    if capture_process:
+        summary['nativeLaunchId'] = launch_id
     # A process group includes the evaluator's model child. A killed evaluator
     # must not leave a decoder running after the declared case budget.
     with (destination / 'result.json').open('w') as output, (destination / 'stderr.log').open('w') as errors:
         process = subprocess.Popen(command, stdin=subprocess.PIPE, text=True, stdout=output,
                                    stderr=errors, env=env, start_new_session=True)
+        if capture_process:
+            summary['evaluatorProcess'] = {'pid': process.pid, 'startedWallNs': time.time_ns()}
         try:
             process.communicate(json.dumps(case['envelope']), timeout=args.rollout_timeout + 45)
         except subprocess.TimeoutExpired:
@@ -717,6 +728,15 @@ def rollout(case, origin, bundle, consumer, root, args, env):
             if process.returncode:
                 summary.update(pipelineFailure='evaluator-process-exit', returnCode=process.returncode)
     summary['wallSeconds'] = time.monotonic() - started
+    if capture_process:
+        try:
+            launch = json.loads((destination / 'native-process.json').read_text())
+            if (launch.get('launchId') != launch_id or
+                    launch.get('scriptSha256') != sha256(consumer / 'scripts/serve_selected_semantic.py')):
+                raise ValueError('Native model process launcher identity differs')
+            summary['nativeProcess'] = launch
+        except (OSError, ValueError) as error:
+            summary.update(pipelineFailure='missing-or-invalid-native-process-receipt', processError=str(error))
     profile = None
     profile_path = destination / 'serving-profile.json'
     if profile_path.exists():
@@ -743,12 +763,19 @@ def rollout(case, origin, bundle, consumer, root, args, env):
                 codec = ByteCodec.from_tokenizer_json(Path(bundle['bundle']) / bundle['codec_file'],
                                                       expected_sha256=bundle['tokenizer_sha256'])
             summary['generatedTokenCost'] = generated_token_cost(profile, actual, codec)
+            if capture_process:
+                from convergence_ladder import first_record_receipt
+                summary['firstRecord'] = first_record_receipt(actual, profile)
             summary.update(wholeTaskSuccess=trace_valid and success,
                            traceValid=trace_valid, failure=actual['failure'],
                            rejections=rejections, firstSemanticInconsistency=actual.get('firstSemanticInconsistency'),
                            hardGates=gates, costs=actual['costs'], cleanup=actual['outcome']['cleanup'])
         except (ValueError, TypeError, KeyError) as error:
             summary.update(pipelineFailure='invalid-evaluator-result', resultError=str(error))
+    if capture_process:
+        summary['artifactBindings'] = {name: sha256(destination / name) for name in
+            ('request.json', 'private-expected.json', 'result.json', 'serving-profile.json', 'native-process.json')
+            if (destination / name).exists()}
     write_json(destination / 'summary.json', summary)
     return summary
 
@@ -763,6 +790,8 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--examples', type=int, default=32)
     parser.add_argument('--experiment', type=Path, help='Private membership and rules frozen before optimization')
+    parser.add_argument('--convergence-declaration', type=Path,
+                        help='Bind a separately frozen L1/L2 convergence gate before any optimizer step')
     parser.add_argument('--initialization-seed', type=int, choices=[17, 29, 43], default=17)
     parser.add_argument('--steps', type=int, default=16)
     parser.add_argument('--base-checkpoint', type=Path,
@@ -806,6 +835,17 @@ def main():
         require_clean_checkout(consumer)
         producer_revision, consumer_revision = git_head(tracer), git_head(consumer)
         experiment = json.loads(args.experiment.read_text()) if args.experiment else None
+        if args.convergence_declaration:
+            if experiment is None:
+                raise ValueError('A convergence declaration requires its frozen learning experiment')
+            from convergence_ladder import require_declaration
+            declaration = require_declaration(json.loads(args.convergence_declaration.read_text()),
+                                              experiment, sha256(args.experiment))
+            if args.seed != declaration['optimizerSeed']:
+                raise ValueError('Optimizer seed differs from the bounded convergence declaration')
+            args.native_process_receipts = True
+            record(convergenceDeclarationSha256=sha256(args.convergence_declaration),
+                   convergenceDeclarationIdentity=declaration['declarationIdentity'])
         from learning_evaluation import selected_rollout_budget, frozen_training_budget
         budget = selected_rollout_budget(experiment or {})
         if experiment is not None:
@@ -868,6 +908,14 @@ def main():
             raise ValueError('Smoke preparation refused/deduplicated candidates; inspect semantic-report.json')
         masks = mask_receipt(prepared, codec)
         write_json(root / 'loss-masks.json', masks)
+        from learning_diagnostics import native_target_audit
+        targets = native_target_audit(prepared, codec)
+        write_json(root / 'target-audit.json', targets)
+        record(targetAudit={'path': 'target-audit.json', 'sha256': sha256(root / 'target-audit.json'),
+                            'episodeIds': [row['episodeId'] for row in targets['episodes']],
+                            'tokenizerIdentity': codec.fingerprint,
+                            'trainingServingParity': 'unmeasured',
+                            'nonlexicalMasks': 'unmeasured', 'perHeadObjectiveGradients': 'unmeasured'})
         record(phase='initializing-checkpoint', preparedFingerprint=prepared_manifest['fingerprint'],
                preparation=preparation, lossMaskCounts=masks['counts'],
                dataLoading={'losslessRegistryInterning': True, **dict(loading_counts)})
@@ -969,7 +1017,8 @@ def main():
                                  'counters': row['step_counters']} for row in training])
         gc.collect()
         run_logged(['node', str(Path(__file__).with_name('build-optimization-cases.mjs')),
-                    str(root / 'inputs.json'), str(root / 'private-cases.json'), str(args.seed)],
+                    str(root / 'inputs.json'), str(root / 'private-cases.json'),
+                    str(experiment['decoderSeed'] if experiment else args.seed)],
                    root / 'build-cases.log', env=env, timeout=60)
         cases = json.loads((root / 'private-cases.json').read_text())['cases'][:args.rollout_cases]
         rollouts = []

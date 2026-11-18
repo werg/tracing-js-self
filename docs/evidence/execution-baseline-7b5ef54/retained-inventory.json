@@ -1,0 +1,200 @@
+{
+  "schema": "execution-baseline-committed-evidence/1",
+  "producerRevision": "7b5ef549c711b9937ab8721ec607f55354047b97",
+  "scope": "Compact baseline receipts, full command logs and corpus manifests; not a complete private native release",
+  "files": [
+    {
+      "path": "STATUS.md",
+      "bytes": 1297,
+      "sha256": "14fa314c6648991a365badb30db80d3ba0a4b53d8a4933c44dedc37349167357"
+    },
+    {
+      "path": "baseline-start.json",
+      "bytes": 2189,
+      "sha256": "3826da65f57faed65c1abe084ce1aa07f78ca5fa4e722c4c74c8f94f34a5ffd1"
+    },
+    {
+      "path": "baseline.json",
+      "bytes": 33333,
+      "sha256": "418c86515d8b73378df6dc5cc4e4473cbc84ac899f14780917095130151d7e76"
+    },
+    {
+      "path": "benchmark-v1-manifest.json",
+      "bytes": 1327878,
+      "sha256": "97e850db861d47ca5f102672f9ee1fce674e836814d06cd0476f6d152dd87e1b"
+    },
+    {
+      "path": "capabilities.json",
+      "bytes": 31928,
+      "sha256": "b3daf81c39b03b61960a05a441648293cf2c07979880b33430521afaeadf3859"
+    },
+    {
+      "path": "capability-ledger.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "capability-ledger.stdout.log",
+      "bytes": 994,
+      "sha256": "7851d0be423376c8ac05d47f89478ede69fdf11aac99ed2e10ec30e3bd9c91b3"
+    },
+    {
+      "path": "checks.jsonl",
+      "bytes": 20096,
+      "sha256": "39af926c5b00e663041c73e027ad9d18fdb689e7c6db08502abd7a4054ca6c1a"
+    },
+    {
+      "path": "corpus-benchmark-v1.stderr.log",
+      "bytes": 6069,
+      "sha256": "f91cb1f95579f20341d92953301e656408070fe22f719707a50a0885c05e72e4"
+    },
+    {
+      "path": "corpus-benchmark-v1.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "corpus-engineering.stderr.log",
+      "bytes": 918,
+      "sha256": "ac9c677df478260a665591eab8e219e55896c63829bb3ffa31d85e6f72ae46eb"
+    },
+    {
+      "path": "corpus-engineering.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "corpus-training-v4.stderr.log",
+      "bytes": 2263,
+      "sha256": "ca42cab8d44524b282b908a7234a4725f9b10eac5f4cff56416d83f80092e9f7"
+    },
+    {
+      "path": "corpus-training-v4.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "engineering-manifest.json",
+      "bytes": 148157,
+      "sha256": "3ea1e29f99ca27515b35e6a1d7ade08581b6b8e311d7e9f1fd08b9c95b4f911d"
+    },
+    {
+      "path": "host-contract.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "host-contract.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reference-fixture.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reference-fixture.stdout.log",
+      "bytes": 393,
+      "sha256": "fc53ef9d327aa46a3968f073e1c35d1ca05af8710d42c3cfc903c8db54d9e560"
+    },
+    {
+      "path": "semantic-contract.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "semantic-contract.stdout.log",
+      "bytes": 200,
+      "sha256": "d3f706018476a2d58b77a840ef3a8c6562d2e5e1b1b74da67fb2931fc16de57d"
+    },
+    {
+      "path": "semantic-inspection.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "semantic-inspection.stdout.log",
+      "bytes": 10245,
+      "sha256": "3b90f9e407e60f74d8730e038b6418bfe2066b1e0c1cbf59c3043d986e143a17"
+    },
+    {
+      "path": "source-registry.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "source-registry.stdout.log",
+      "bytes": 404,
+      "sha256": "def2338cc8079110a4737ea6630de9d92314573f386c0d0e8b76929055e47c0e"
+    },
+    {
+      "path": "summary-prototype.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "summary-prototype.stdout.log",
+      "bytes": 1042,
+      "sha256": "d95cf5e14e46870f6b2db061c989d67161b4ffff331e5abf74479bedcc2fb024"
+    },
+    {
+      "path": "target-gallery-compact.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "target-gallery-compact.stdout.log",
+      "bytes": 409,
+      "sha256": "ba24116af257ec0247e6daef8578bd6c0396b71a275e7b3ba908e4485b0b5bfb"
+    },
+    {
+      "path": "target-gallery.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "target-gallery.stdout.log",
+      "bytes": 401,
+      "sha256": "06b7e9e9d22343db6602ff48d949b53b72cd5ac4d7e95ecf4b633c63eeb479a5"
+    },
+    {
+      "path": "teacher-mutations.json",
+      "bytes": 12414,
+      "sha256": "167f41e9826e3f9856b5f80582d6a76f5fc61fab88b2c589e1867bd82d7750ca"
+    },
+    {
+      "path": "teacher-mutations.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "teacher-mutations.stdout.log",
+      "bytes": 12414,
+      "sha256": "167f41e9826e3f9856b5f80582d6a76f5fc61fab88b2c589e1867bd82d7750ca"
+    },
+    {
+      "path": "training-v4-manifest.json",
+      "bytes": 304774,
+      "sha256": "70b530572df8e908185fc5d158a9dd37e1b43feb73730e3f3ee86b2bb9b6af16"
+    },
+    {
+      "path": "unit.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "unit.stdout.log",
+      "bytes": 225105,
+      "sha256": "e6d4093f9ff527658fc011d515438bb1370d49ed05e56f84e2386ae2835d0f70"
+    }
+  ],
+  "notIncluded": [
+    "Generated corpus candidate/private object directories",
+    "Frozen source-registry payload (identity and digest retained in baseline.json)"
+  ],
+  "reproduce": "At the exact producer, npm run baseline:v5 -- --out NEW_DIRECTORY --jobs 2",
+  "nativeAdmission": "untested",
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}

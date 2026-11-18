@@ -17,7 +17,11 @@ ECMA-262 `[[Get]]`/`[[Set]]`/`[[DefineOwnProperty]]` semantics.
   callbacks execute in owned frames, with receiver identity and thrown
   completions preserved. Accessor-only properties are supported, not general
   data descriptors. Non-configurable accessor redefinition is catchable as
-  guest `TypeError`. No user getter runs during archive serialization.
+  guest `TypeError`. Assignment to an own or inherited accessor without a
+  setter throws a guest `TypeError` in strict code and silently retains the
+  property in sloppy code. Strictness follows the source directive prologue
+  and lexical function nesting, including arrows; it is not inherited from
+  the caller. No user getter runs during archive serialization.
 - `new Proxy(target, handler)` allocates an owned proxy identity for ordinary
   targets and handlers. `get`/`set` handler data methods execute as guest
   frames with target, key, value (for set) and proxy receiver arguments. Without
@@ -37,8 +41,10 @@ ownKeys/has/delete/define/getOwnPropertyDescriptor, species, exotic built-ins,
 or a complete Proxy invariant checker. A trap targeting a non-configurable
 accessor rejects the operation as unsupported before calling the trap. A
 non-callable or asynchronous trap, several target shapes, and general
-descriptor combinations likewise fail closed. Ordinary `[[Set]]` is a bounded
-sloppy-script subset and does not establish strict-assignment equivalence.
+descriptor combinations likewise fail closed. Ordinary `[[Set]]` remains a
+bounded data/accessor subset. Getter-only assignment failure is modeled in
+strict and sloppy code, but general non-writable data descriptors, primitive
+receivers and full strict Proxy invariants remain outside this claim.
 
 `OrdinaryToPrimitive` can call **data** conversion methods reached through
 prototype links. A conversion-method **accessor** still requires an owned
@@ -57,6 +63,10 @@ prototype-based conversion. `test/owned-exotics.test.js` compares supported
 paths against a separate Node V8 `vm` reference and also checks exact replay.
 `test/promise-reactions.test.js` covers reaction order, rejected callbacks,
 async continuations, self-resolution and host-completion boundaries.
+`test/strict-accessor-assignment.test.js` covers strict and sloppy getter-only
+assignments, inherited properties, directive scope, setter completion and
+finally overrides. Its training regressions inspect intermediate bindings,
+so overwriting the final answer cannot conceal a failed assignment.
 
 These tests are *local selected-case evidence*, not Test262/WPT compliance.
 Any wider implementation must extend independent validation of descriptor

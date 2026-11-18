@@ -16,6 +16,8 @@ import time
 from collections import Counter, defaultdict
 from pathlib import Path
 
+import native_prepared_sampler as S
+
 
 def require(condition, message):
     if not condition:
@@ -48,26 +50,54 @@ def pinned_checkout(path, revision):
     require(actual == revision and not dirty, "Native checkout differs from its immutable policy")
 
 
+def verify_native_lineage(episode, expected, joins):
+    if joins is not None:
+        authenticated = joins[episode.episode_id]
+        require(all(expected.get(key) == value for key, value in authenticated.items()),
+                "Sampler candidate/native task identities differ from the authenticated audit join")
+        task_id = authenticated["nativeTaskId"]
+    else:
+        # Frozen historical samplers predate separate task identities. Preserve
+        # their stricter task==candidate check; they cannot authorize aliases.
+        require("nativeTaskId" not in expected and "nativeAuditSupervisionSha256" not in expected,
+                "Separate native task identity lacks its authenticated source join")
+        task_id = expected["id"]
+    require(episode.lineage.task_id == task_id and episode.lineage.family_id == expected["family"],
+            "Native lineage differs from authenticated original source")
+    return task_id
+
+
 def materialize(args):
     started = time.monotonic()
     parent = args.parent.resolve()
     output = args.out.resolve()
     staging = output.with_name(output.name + ".building")
     require(not output.exists() and not staging.exists(), "Use a new native subset output directory")
-    sampler = read(args.sampler)
+    bound = {}
+    bind = lambda path: S.bind_file(bound, path)
+    sampler = read(bind(args.sampler))
     require(sampler.get("schema") == "semantic-native-prepared-training-sampler/1", "Unsupported sampler")
     policy = sampler["nativePolicy"]
     pinned_checkout(args.megatoken.resolve(), policy["consumerRevision"])
-    require(sha(args.tokenizer) == policy["tokenizerSha256"], "Tokenizer bytes changed")
-    require(sha(parent / "manifest.json") == sampler["nativePreparedManifestSha256"], "Parent manifest changed")
-    require(sha(parent / "semantic-dedup.sqlite") == sampler["nativeDedupDatabaseSha256"], "Parent dedup database changed")
-    require(sha(parent / "semantic-report.json") == sampler["nativeReportSha256"], "Parent native report changed")
-    require(sha(args.audit_campaign / "manifest.json") == sampler["sourceManifestSha256"], "Original campaign changed")
+    require(sha(bind(args.tokenizer)) == policy["tokenizerSha256"], "Tokenizer bytes changed")
+    require(sha(bind(parent / "manifest.json")) == sampler["nativePreparedManifestSha256"], "Parent manifest changed")
+    require(sha(bind(parent / "semantic-dedup.sqlite")) == sampler["nativeDedupDatabaseSha256"], "Parent dedup database changed")
+    require(sha(bind(parent / "semantic-report.json")) == sampler["nativeReportSha256"], "Parent native report changed")
+    require(sha(bind(args.audit_campaign / "manifest.json")) == sampler["sourceManifestSha256"], "Original campaign changed")
     original = read(args.audit_campaign / "manifest.json")
     require(original["campaign"]["identityDigest"] == sampler["sourceCampaignDigest"], "Campaign identity changed")
     require(original["sourceRegistry"]["digest"] == sampler["sourceRegistryDigest"], "Registry identity changed")
     require(original["producerRevision"] == sampler["producerRevision"], "Producer identity changed")
-    originals = {row["id"]: row for row in original["cases"]}
+    originals = S.unique(original["cases"], "id", "original candidate")
+    joins = None
+    if sampler.get("sourceJoinSchema") is not None or any("nativeTaskId" in row or
+            "nativeAuditSupervisionSha256" in row for row in sampler["acceptedDecisions"]):
+        audit_path = bind(parent / "semantic-audit.json")
+        require(sha(audit_path) == sampler.get("nativeAuditSha256"), "Parent native audit changed or is unbound")
+        database_rows = S.read_database(parent / "semantic-dedup.sqlite", "SELECT * FROM episodes ORDER BY ordinal")
+        audit = S.read_audit_proofs(audit_path, len(database_rows))
+        joins = S.sampler_source_joins(sampler, original, database_rows, audit)
+        S.check_bindings(bound.values())
 
     from megatoken.data import storage
     from megatoken.data.dedup import DedupConfig, DedupStore
@@ -105,6 +135,8 @@ def materialize(args):
         "sourceCampaignDigest": sampler["sourceCampaignDigest"],
         "sourceManifestSha256": sampler["sourceManifestSha256"],
         "sourceRegistryDigest": sampler["sourceRegistryDigest"],
+        "sourceJoinSchema": sampler.get("sourceJoinSchema"),
+        "parentNativeAuditSha256": sampler.get("nativeAuditSha256"),
         "sourceAttemptedCandidates": len(original["cases"]),
         "producerRevision": sampler["producerRevision"], "nativePolicy": policy,
         "policy": sampler["policy"], "includedEpisodeIds": sorted(wanted),
@@ -131,12 +163,11 @@ def materialize(args):
                 require(original_row["status"] == "admitted", "Subset refers to an original non-admission")
                 for key, original_key in (("family", "family"), ("split", "split"),
                                           ("frozenSourceComponent", "sourceCluster"),
-                                          ("identityDigest", "identityDigest")):
+                                          ("identityDigest", "identityDigest"), ("episodeDigest", "episodeDigest")):
                     require(expected[key] == original_row[original_key], "Sampler differs from original identity: " + key)
                 episode = corpus[row["entry_id"]]
                 require(episode.episode_id == row["episode_id"], "Parent position differs from entry identity")
-                require(episode.lineage.task_id == expected["id"] and episode.lineage.family_id == expected["family"],
-                        "Native lineage differs from original source")
+                native_task_id = verify_native_lineage(episode, expected, joins)
                 require(episode.lineage.frozen_split == row["split"] == expected["split"], "Frozen split changed")
                 require(row["family_id"] == expected["nativeResolvedFamily"], "Parent resolved family changed")
                 exact = canonical_json(episode.to_dict()).encode() + b"\n"
@@ -152,7 +183,8 @@ def materialize(args):
                 require(store.add(episode, codec, encoded=encoded) == "accepted_candidate",
                         "Normal native ingestion did not preserve subset membership")
                 provenance[episode.episode_id] = {
-                    "candidateId": expected["id"], "parentEntryId": row["entry_id"], "episodeId": episode.episode_id,
+                    "candidateId": expected["id"], "nativeTaskId": native_task_id,
+                    "parentEntryId": row["entry_id"], "episodeId": episode.episode_id,
                     "episodeJsonLineSha256": row["sha256"], "encodedTokensAndMasksSha256": encoded_identity(encoded),
                     "split": row["split"], "parentResolvedFamily": row["family_id"],
                     "budgetComponent": expected["budgetComponent"], "wholeTranscriptTokens": tokens,
@@ -177,6 +209,8 @@ def materialize(args):
             require(retained == wanted, "Native subset deduplication removed a requested parent example")
             require(all(len(groups) == 1 for groups in native_groups.values()), "Native subset merged unrelated budget components")
             total_training = sum(budgets.values())
+            require(total_training <= sampler["policy"].get("maxTrainingTokens", total_training),
+                    "Final native subset exceeds declared total training token budget")
             require(all(value <= sampler["policy"]["maxFamilyTokens"] and
                         value <= total_training * sampler["policy"]["maxFamilyShare"] + 1e-9
                         for value in budgets.values()), "Final native subset exceeds declared training caps")
@@ -192,6 +226,7 @@ def materialize(args):
             episode = subset[index]
             expected = provenance[row["episode_id"]]
             require(row["sha256"] == expected["episodeJsonLineSha256"], "Native output changed full Episode bytes")
+            require(episode.lineage.task_id == expected["nativeTaskId"], "Native output changed the original task identity")
             require(row["split"] == expected["split"] == episode.lineage.frozen_split, "Native output changed frozen split")
             require(row["tokens"] == expected["wholeTranscriptTokens"] and
                     row["scored_positions"] == expected["scoredPositions"], "Native output changed token counts")
@@ -204,6 +239,7 @@ def materialize(args):
             sha(parent / "semantic-dedup.sqlite") == source["parentDedupDatabaseSha256"] and
             sha(args.audit_campaign / "manifest.json") == source["sourceManifestSha256"],
             "A parent or original campaign changed during subset export")
+    S.check_bindings(bound.values())
     receipt = {
         "schema": "semantic-native-prepared-subset-verification/1", "status": "verified",
         "source": source, "preparedFingerprint": manifest["fingerprint"],

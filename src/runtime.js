@@ -1362,7 +1362,18 @@ if(object.kind==='regexp'){
           const accessor=propertyAccessor(s.heap,route.target,property);
           if(accessor){
             const setter=accessor.set.value;
-            if(setter[0]==='undefined')return {...operands(base,key,v),...result(v.value)};
+            if(setter[0]==='undefined'){
+              if(this.programs[f.codeId].strict){
+                // OrdinarySet returns false for an own or inherited accessor
+                // without a setter. PutValue turns that failure into a guest
+                // TypeError in strict code; it must not yield the RHS to an
+                // enclosing assignment before catch/finally have run.
+                const receiverKind=obj.kind==='array'?'[object Array]':
+                  objectPrototype(obj)===null?'[object Object]':'#<Object>';
+                guestFault('TypeError',`Cannot set property ${property} of ${receiverKind} which has only a getter`);
+              }
+              return {...operands(base,key,v),...result(v.value)};
+            }
             if(!this.callableGuest(s,setter)||s.heap[setter[1]].async)
               throw new TypeError('Unsupported accessor setter continuation');
             const target=s.heap[setter[1]];

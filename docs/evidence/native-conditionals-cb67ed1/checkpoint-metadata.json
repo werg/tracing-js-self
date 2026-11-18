@@ -1,0 +1,13 @@
+{
+  "checkpoint_name": "initialized-untrained",
+  "format_version": 19,
+  "global_step": 0,
+  "optimizerSteps": 0,
+  "origin": "newly-initialized-tiny-diagnostic",
+  "pinned": true,
+  "state_sha256": "1395a9cccf9b905bd621327c29f15ee7a0c99e6ae1f63af52e775f8605e89647",
+  "transducer_checkpoint": {
+    "file": "transducer.pt",
+    "sha256": "9c9408389bc485909e7a1f813cc8b9a2a6c4516de0d3f0816ebe31c4d698de37"
+  }
+}

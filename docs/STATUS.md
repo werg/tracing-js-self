@@ -17,14 +17,37 @@ general native Node.js/browser compatibility layer. Unsupported cases fail
 closed. The private journal and independent V8 reference verify owned
 source execution, but are not learner trace targets.
 
-## Active code
+## Active code and evidence
 
-The latest frozen [I qualification](evidence/qualification-I-2026-11-18.json)
-passes 945 unit tests with zero skips, eight reference fixtures and all forty
-attempted native probes. All eight hosted workflows pass at the exact revision
-recorded in the [handover](RESUMPTION_HANDOVER.md). The completed learning
-diagnostic still has zero successful held-in or held-out executions; its
-acceptance criteria remain unmet.
+The [execution-training implementation ledger](EXECUTION_TRAINING_IMPLEMENTATION.md)
+tracks the current strict-assignment repair, independent completion checks,
+teacher mutation audit, native input diagnosis, causal-LM bridge, checked
+trace abstractions, coverage selection and bounded generation tools. Use
+`npm run baseline:v5` to generate an exact-revision manifest and status page.
+Code availability, a locally verified sample, native admission and successful
+model learning are separate evidence levels.
+
+The [executed roadmap baseline](evidence/execution-baseline-7b5ef54/STATUS.md)
+records fourteen passed command checks at `7b5ef54…`: 1,004 unit passes,
+five explicit native-serving skips, zero failures, all thirteen teacher
+mutants detected, and 203 locally verified recipe examples. That source-only
+run does not assert native admission or model learning.
+
+The retained [I qualification](evidence/qualification-I-2026-11-18.json)
+is **historical evidence at its recorded producer and consumer**: 945 unit
+passes, eight reference fixtures and forty attempted native probes. Its
+hosted workflow results belong to the exact revision in the
+[historical handover](RESUMPTION_HANDOVER.md), not a later containing commit.
+Historical learning diagnostics have zero successful held-in or held-out
+executions. The [new input-boundary diagnosis](LEARNING_DIAGNOSTICS.md)
+identifies unequal training/serving instructions and observations; it does
+not establish successful learning. The instruction/observation repair passed
+its hosted byte comparison. The subsequent
+[actual native conditional capture](evidence/native-conditionals-cb67ed1/README.md)
+**failed parity** at producer `cb67ed1…` and consumer `2725842…`: the same
+zero-update checkpoint and public prefix reached different conditional state
+through the two real paths. Metadata, track ownership and lifecycle history
+remain different. No new learned-execution success is claimed.
 
 The November resumption adds an explicit [capability index](../coverage/required.json),
 [measured v5 probes](../coverage/current-v5.json), and
@@ -43,6 +66,8 @@ unhandled rejection obligations remain admission refusals.
   through the **same** v5 producer; does not grant admitted training status
 - `src/training/effectful-admit.js`: independent source/effect/replay gates
   and optional pinned Megatoken native admission
+- `src/training/completion-reference.js`: once-evaluated independent source
+  completion observations and committed-state comparisons
 - `src/training/semantic-source.js`: independently checked, bounded source
   expressions
 - `tools/inspect-semantic-reasoning.mjs`: actual generated-trace inspection

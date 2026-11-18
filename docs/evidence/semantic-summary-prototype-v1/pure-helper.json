@@ -1,0 +1,4781 @@
+{
+  "predictionOrigin": "authored-diagnostic",
+  "candidate": {
+    "id": "pure-helper",
+    "context": {
+      "schema": "experimental-summary-context/1",
+      "profile": "pure-helper/1",
+      "source": "\"use strict\";function increment(value){return value+1;}",
+      "sourceDigest": "35b1fefcd03e0cd457b1e21ab55cac0f4243d541eb98f9bbb3e9aedc2efd9bde",
+      "entry": "increment",
+      "region": {
+        "start": 13,
+        "end": 55
+      },
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "num",
+            4
+          ]
+        ],
+        "objects": []
+      },
+      "inputDigest": "83dfd556f46faabd808330b93d371fdfe844ad7a001bc0ec1df62f3417dbd05a",
+      "maxIterations": 128
+    },
+    "summary": {
+      "schema": "experimental-semantic-summary/1",
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          5
+        ]
+      },
+      "inputUnchanged": true
+    },
+    "family": "summary-prototype-pure-helper",
+    "expected": "experimental_verified"
+  },
+  "result": {
+    "schema": "semantic-summary-experiment/1",
+    "status": "experimental_verified",
+    "public": {
+      "context": {
+        "schema": "experimental-summary-context/1",
+        "profile": "pure-helper/1",
+        "source": "\"use strict\";function increment(value){return value+1;}",
+        "sourceDigest": "35b1fefcd03e0cd457b1e21ab55cac0f4243d541eb98f9bbb3e9aedc2efd9bde",
+        "entry": "increment",
+        "region": {
+          "start": 13,
+          "end": 55
+        },
+        "inputGraph": {
+          "schema": "owned-graph/1",
+          "roots": [
+            [
+              "num",
+              4
+            ]
+          ],
+          "objects": []
+        },
+        "inputDigest": "83dfd556f46faabd808330b93d371fdfe844ad7a001bc0ec1df62f3417dbd05a",
+        "maxIterations": 128
+      },
+      "raw": "summary {\"schema\":\"experimental-semantic-summary/1\",\"completion\":{\"kind\":\"return\",\"value\":[\"num\",5]},\"inputUnchanged\":true}",
+      "summary": {
+        "schema": "experimental-semantic-summary/1",
+        "completion": {
+          "kind": "return",
+          "value": [
+            "num",
+            5
+          ]
+        },
+        "inputUnchanged": true
+      }
+    },
+    "private": {
+      "certificate": {
+        "status": "verified",
+        "schema": "experimental-summary-certificate/1",
+        "authority": "independent-node-v8-source",
+        "contextDigest": "b8a44424f7a994cf5b433def83761a4531b4c4631f134c0ac59bdb506a8c8ecb",
+        "summaryDigest": "d9bc8e059c5fd6bba7ca51d14607edc41af7e2ffa550bc585863fb11c0f5fbb9",
+        "references": {
+          "original": {
+            "schema": "effectful-reference/4",
+            "exceptionProfile": "declared-error/name-message/1",
+            "outcome": {
+              "kind": "return",
+              "graph": {
+                "roots": [
+                  [
+                    "num",
+                    4
+                  ],
+                  [
+                    "num",
+                    5
+                  ]
+                ],
+                "objects": []
+              }
+            },
+            "effects": [],
+            "operations": [],
+            "decisions": [],
+            "completions": [],
+            "callbackFailures": [],
+            "unhandledRejections": []
+          }
+        },
+        "nativeAdmission": false,
+        "learningStatus": "untested",
+        "claimsChecked": {
+          "completion": true,
+          "inputState": true,
+          "iterations": false,
+          "intermediateCheckpoints": 0
+        }
+      },
+      "detailedEpisode": {
+        "public": {
+          "schema": "semantic-execution/5",
+          "profile": "selected-harness/2",
+          "traceFormat": "semantic-trace/5",
+          "contextFormat": "semantic-context/5",
+          "timeline": [
+            {
+              "schema": "semantic-execution/5",
+              "session": "teacher1",
+              "sequence": 1,
+              "ownerSequence": 1,
+              "track": "host",
+              "mode": "observed",
+              "kind": "program",
+              "programId": "program1",
+              "digest": "35b1fefcd03e0cd457b1e21ab55cac0f4243d541eb98f9bbb3e9aedc2efd9bde",
+              "entry": "increment",
+              "source": "\"use strict\";function increment(value){return value+1;}",
+              "sites": [
+                {
+                  "id": "s1",
+                  "start": 0,
+                  "end": 12,
+                  "role": "Literal"
+                },
+                {
+                  "id": "s2",
+                  "start": 13,
+                  "end": 55,
+                  "role": "FunctionDeclaration"
+                },
+                {
+                  "id": "s3",
+                  "start": 22,
+                  "end": 31,
+                  "role": "Identifier"
+                },
+                {
+                  "id": "s4",
+                  "start": 32,
+                  "end": 37,
+                  "role": "Identifier"
+                },
+                {
+                  "id": "s5",
+                  "start": 39,
+                  "end": 54,
+                  "role": "ReturnStatement"
+                },
+                {
+                  "id": "s6",
+                  "start": 46,
+                  "end": 51,
+                  "role": "Identifier"
+                },
+                {
+                  "id": "s7",
+                  "start": 46,
+                  "end": 53,
+                  "role": "BinaryExpression"
+                },
+                {
+                  "id": "s8",
+                  "start": 52,
+                  "end": 53,
+                  "role": "Literal"
+                }
+              ],
+              "functions": [
+                {
+                  "start": 13,
+                  "end": 55,
+                  "name": "increment",
+                  "params": [
+                    "value"
+                  ]
+                }
+              ],
+              "capabilities": [],
+              "dependencies": [],
+              "sourceMap": null,
+              "languageProfile": "owned-javascript/1",
+              "module": false,
+              "sourceMetadata": null
+            },
+            {
+              "schema": "semantic-execution/5",
+              "session": "teacher1",
+              "sequence": 2,
+              "ownerSequence": 1,
+              "track": "worker1",
+              "mode": "observed",
+              "kind": "invocation",
+              "programId": "program1",
+              "invocationId": "invocation1",
+              "realmId": "realm1",
+              "triggerId": "teacher-entry",
+              "completionPolicy": "await-returned-promise",
+              "realmPolicy": "retained",
+              "inputGraph": {
+                "roots": [
+                  [
+                    "num",
+                    4
+                  ]
+                ],
+                "objects": []
+              },
+              "entry": "increment",
+              "sourceDigest": "35b1fefcd03e0cd457b1e21ab55cac0f4243d541eb98f9bbb3e9aedc2efd9bde",
+              "receiver": [
+                "undefined"
+              ],
+              "closureId": null,
+              "activation": "call",
+              "parentInvocationId": null,
+              "taskRevision": 1,
+              "deadline": null,
+              "bindings": {},
+              "ingressKey": "teacher-entry"
+            },
+            {
+              "schema": "semantic-execution/5",
+              "session": "teacher1",
+              "sequence": 3,
+              "ownerSequence": 2,
+              "track": "worker1",
+              "mode": "generated",
+              "kind": "semantic",
+              "invocationId": "invocation1",
+              "traceFormat": "semantic-trace/5",
+              "line": "bind {\"name\":\"value\",\"value\":[\"num\",4]}"
+            },
+            {
+              "schema": "semantic-execution/5",
+              "session": "teacher1",
+              "sequence": 4,
+              "ownerSequence": 3,
+              "track": "worker1",
+              "mode": "generated",
+              "kind": "semantic",
+              "invocationId": "invocation1",
+              "traceFormat": "semantic-trace/5",
+              "line": "compute {\"expr\":{\"op\":\"binary\",\"operator\":\"+\",\"left\":{\"op\":\"local\",\"name\":\"value\"},\"right\":{\"op\":\"literal\",\"value\":[\"num\",1]}},\"result\":[\"num\",5],\"invocation\":\"invocation1\"}"
+            },
+            {
+              "schema": "semantic-execution/5",
+              "session": "teacher1",
+              "sequence": 5,
+              "ownerSequence": 4,
+              "track": "worker1",
+              "mode": "generated",
+              "kind": "semantic",
+              "invocationId": "invocation1",
+              "traceFormat": "semantic-trace/5",
+              "line": "return {\"value\":[\"num\",5],\"invocation\":\"invocation1\"}"
+            },
+            {
+              "schema": "semantic-execution/5",
+              "session": "teacher1",
+              "sequence": 6,
+              "ownerSequence": 5,
+              "track": "worker1",
+              "mode": "generated",
+              "kind": "semantic",
+              "invocationId": "invocation1",
+              "traceFormat": "semantic-trace/5",
+              "line": "end {\"kind\":\"return\"}"
+            }
+          ]
+        },
+        "sidecar": {
+          "schema": "semantic-supervision/2",
+          "admission": "locally_verified",
+          "representation": "compact",
+          "referenceStatus": "agreed",
+          "sourceLineage": "summary-prototype-pure-helper",
+          "split": "train",
+          "selectionOrigin": "owned-interpreter-teacher",
+          "compiler": {
+            "schema": "semantic-effectful-compiler/4",
+            "certificates": [
+              {
+                "sequence": 3,
+                "rule": "owned-parameter-binding/4",
+                "journalEvents": [],
+                "source": null,
+                "digest": "e12a9d7f07b9b818a32626e5588b6656bd9dfc08be5d21c0332991028ed8d57e"
+              },
+              {
+                "sequence": 4,
+                "rule": "owned-compute/4",
+                "journalEvents": [
+                  "a0:e17"
+                ],
+                "source": {
+                  "sourceId": "src1",
+                  "siteId": "src1:s3"
+                },
+                "digest": "c82bf13a5f74c1096b34999e9b524a696b547ba120c827320282078fa51abe90"
+              },
+              {
+                "sequence": 5,
+                "rule": "owned-completion/4",
+                "journalEvents": [
+                  "a0:e18"
+                ],
+                "source": {
+                  "sourceId": "src1",
+                  "siteId": "src1:s4"
+                },
+                "digest": "5d4bf3818a36e4eea6f1873b707acf19228c74f425966756dc70c57dd512b06b"
+              },
+              {
+                "sequence": 6,
+                "rule": "owned-completion/4",
+                "journalEvents": [
+                  "a0:e18"
+                ],
+                "source": {
+                  "sourceId": "src1",
+                  "siteId": "src1:s4"
+                },
+                "digest": "46fdec95f0f71f09a443caac98175c868070c30a932d94e3a449658e95db68bc"
+              }
+            ],
+            "elided": [
+              {
+                "journalEvent": "a0:e2",
+                "operation": "literal.materialize",
+                "reason": "private-machine-transition"
+              },
+              {
+                "journalEvent": "a0:e3",
+                "operation": "primitive.binary",
+                "reason": "private-machine-transition"
+              },
+              {
+                "journalEvent": "a0:e4",
+                "operation": "spec.to-primitive",
+                "reason": "private-machine-transition"
+              },
+              {
+                "journalEvent": "a0:e5",
+                "operation": "spec.to-primitive",
+                "reason": "private-machine-transition"
+              },
+              {
+                "journalEvent": "a0:e6",
+                "operation": "spec.binary.select",
+                "reason": "private-machine-transition"
+              },
+              {
+                "journalEvent": "a0:e7",
+                "operation": "spec.to-numeric",
+                "reason": "private-machine-transition"
+              },
+              {
+                "journalEvent": "a0:e8",
+                "operation": "spec.to-primitive",
+                "reason": "private-machine-transition"
+              },
+              {
+                "journalEvent": "a0:e9",
+                "operation": "spec.to-numeric",
+                "reason": "private-machine-transition"
+              },
+              {
+                "journalEvent": "a0:e10",
+                "operation": "spec.to-number",
+                "reason": "private-machine-transition"
+              },
+              {
+                "journalEvent": "a0:e11",
+                "operation": "spec.to-numeric",
+                "reason": "private-machine-transition"
+              },
+              {
+                "journalEvent": "a0:e12",
+                "operation": "spec.to-primitive",
+                "reason": "private-machine-transition"
+              },
+              {
+                "journalEvent": "a0:e13",
+                "operation": "spec.to-numeric",
+                "reason": "private-machine-transition"
+              },
+              {
+                "journalEvent": "a0:e14",
+                "operation": "spec.to-number",
+                "reason": "private-machine-transition"
+              },
+              {
+                "journalEvent": "a0:e15",
+                "operation": "spec.numeric.same-type",
+                "reason": "private-machine-transition"
+              },
+              {
+                "journalEvent": "a0:e16",
+                "operation": "spec.numeric.apply",
+                "reason": "private-machine-transition"
+              }
+            ],
+            "checkpoints": [],
+            "exceptionProfile": "declared-error/name-message/1",
+            "sourceDigest": "35b1fefcd03e0cd457b1e21ab55cac0f4243d541eb98f9bbb3e9aedc2efd9bde",
+            "archiveDigest": "fbdcaaa5ce0d2dbcee48684d312445415d5cb4a1656f2ff8be55d979d549b23d",
+            "capabilities": [],
+            "representation": "compact",
+            "compaction": {
+              "maxOperators": 8,
+              "maxNodes": 32,
+              "removedComputations": 0,
+              "foldedConditions": 0,
+              "fusedBindings": 0
+            },
+            "generatedRecords": 4,
+            "publicDigest": "f1cd3573460629f1975b65ec8d2a399ea1d53c62173fda103dc3b7c2ff1fff4c"
+          },
+          "splitIdentity": {
+            "schema": "semantic-split-identity/1",
+            "policy": "family-hash/1",
+            "seed": 17,
+            "componentId": "summary-prototype-pure-helper",
+            "members": [
+              "summary-prototype-pure-helper"
+            ],
+            "split": "train",
+            "registryDigest": null,
+            "holdout": null
+          },
+          "sourceFamily": "summary-prototype-pure-helper",
+          "fixtureFamily": "summary-prototype-pure-helper",
+          "ancestorIds": [
+            "summary-prototype-pure-helper"
+          ],
+          "taskId": "summary-prototype-pure-helper",
+          "producerRevision": null,
+          "license": "repository-fixture",
+          "trustTier": "repository-fixture",
+          "nativePolicy": null,
+          "capabilityProfile": [],
+          "sourceProvenance": {
+            "family": "summary-prototype-pure-helper",
+            "license": "repository-fixture",
+            "trustTier": "repository-fixture",
+            "sourceDigest": "35b1fefcd03e0cd457b1e21ab55cac0f4243d541eb98f9bbb3e9aedc2efd9bde",
+            "fixtureDigest": "88eda9256df24f8acf4a6051ec324c08c93a77621e62116997f3a8748de778f9",
+            "seed": 17,
+            "upstream": {}
+          },
+          "executionLimits": {
+            "maxSteps": 100000,
+            "timeoutMs": 5000,
+            "maxGenerated": 16384,
+            "maxOperators": 8
+          },
+          "seeds": {
+            "generation": null,
+            "input": null,
+            "schedule": null,
+            "optimizer": null,
+            "guestRng": null,
+            "split": 17
+          },
+          "environment": {
+            "schema": "semantic-execution-environment/1",
+            "node": "24.22.3",
+            "v8": "13.6.233.17-node.63",
+            "platform": "linux",
+            "arch": "x64",
+            "timezone": "Europe/Berlin",
+            "parser": "8.15.0",
+            "typescript": "5.9.3",
+            "packageLockDigest": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88",
+            "implementationDigest": "81aa299f8c357794ad5915315ec3c560eccbdd7b020de86bf19330dd0b107ca8",
+            "locale": "en-US",
+            "referenceIsolation": {
+              "schema": "semantic-reference-isolation/1",
+              "mode": "trusted-process",
+              "launcherSha256": "b9d3bd23d092083173508fd570c3d5b6dc4e0e98fc9814e3df543e634351ea24"
+            }
+          },
+          "archive": {
+            "manifest": {
+              "schema": "semantic-tracing-run/2",
+              "profile": "training-js/1",
+              "completeSemanticTrace": false,
+              "completeEcma262": false,
+              "completeHostIntegration": false,
+              "coverage": "docs/STATUS.md",
+              "chunkPolicy": "accumulate-until-wait/1",
+              "eventVersion": 2,
+              "operationVersion": 2,
+              "mutationSchema": "owned-spec-commands/2",
+              "ownedArithmetic": {
+                "revision": 2,
+                "referenceEngineRevision": "2d7d8d988c77e94473ba0377122cdfccdfe243ba",
+                "operators": [
+                  "+",
+                  "-",
+                  "*",
+                  "/",
+                  "%",
+                  "**"
+                ],
+                "domain": "primitives-and-bounded-ordinary-data-objects"
+              },
+              "guestExecution": "owned-bytecode-and-spec-phase-machine",
+              "replay": "bounded-deterministic-reexecution/2"
+            },
+            "sources": [
+              {
+                "sourceId": "src1",
+                "text": "\"use strict\";function increment(value){return value+1;}",
+                "url": "<native-entry>",
+                "goal": "script",
+                "entry": "src1:code1",
+                "parser": "acorn/8.15.0:training-js/1"
+              }
+            ],
+            "sites": [
+              {
+                "siteId": "src1:s1",
+                "start": 46,
+                "end": 51,
+                "op": "GET",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s2",
+                "start": 52,
+                "end": 53,
+                "op": "CONST",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s3",
+                "start": 46,
+                "end": 53,
+                "op": "BINARY",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s4",
+                "start": 39,
+                "end": 54,
+                "op": "RETURN",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s5",
+                "start": 0,
+                "end": 55,
+                "op": "CONST",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s6",
+                "start": 0,
+                "end": 55,
+                "op": "RETURN",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s7",
+                "start": 13,
+                "end": 55,
+                "op": "DEF_FN",
+                "codeId": "src1:code1",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s8",
+                "start": 0,
+                "end": 12,
+                "op": "CONST",
+                "codeId": "src1:code1",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s9",
+                "start": 0,
+                "end": 13,
+                "op": "POP",
+                "codeId": "src1:code1",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s10",
+                "start": 0,
+                "end": 55,
+                "op": "CONST",
+                "codeId": "src1:code1",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s11",
+                "start": 0,
+                "end": 55,
+                "op": "RETURN",
+                "codeId": "src1:code1",
+                "sourceId": "src1"
+              }
+            ],
+            "programs": {
+              "src1:code2": {
+                "id": "src1:code2",
+                "params": [
+                  "value"
+                ],
+                "restIndex": -1,
+                "async": false,
+                "strict": true,
+                "parameterExpressions": false,
+                "varNames": [],
+                "instructions": [
+                  {
+                    "op": "GET",
+                    "arg": "value",
+                    "siteId": "src1:s1",
+                    "start": 46,
+                    "end": 51
+                  },
+                  {
+                    "op": "CONST",
+                    "arg": {
+                      "value": [
+                        "num",
+                        1
+                      ],
+                      "raw": "1"
+                    },
+                    "siteId": "src1:s2",
+                    "start": 52,
+                    "end": 53
+                  },
+                  {
+                    "op": "BINARY",
+                    "arg": "+",
+                    "siteId": "src1:s3",
+                    "start": 46,
+                    "end": 53
+                  },
+                  {
+                    "op": "RETURN",
+                    "arg": null,
+                    "siteId": "src1:s4",
+                    "start": 39,
+                    "end": 54
+                  },
+                  {
+                    "op": "CONST",
+                    "arg": {
+                      "value": [
+                        "undefined"
+                      ]
+                    },
+                    "siteId": "src1:s5",
+                    "start": 0,
+                    "end": 55
+                  },
+                  {
+                    "op": "RETURN",
+                    "arg": null,
+                    "siteId": "src1:s6",
+                    "start": 0,
+                    "end": 55
+                  }
+                ]
+              },
+              "src1:code1": {
+                "id": "src1:code1",
+                "params": [],
+                "restIndex": -1,
+                "async": false,
+                "strict": true,
+                "parameterExpressions": false,
+                "varNames": [],
+                "instructions": [
+                  {
+                    "op": "DEF_FN",
+                    "arg": {
+                      "name": "increment",
+                      "codeId": "src1:code2",
+                      "params": [
+                        "value"
+                      ],
+                      "async": false
+                    },
+                    "siteId": "src1:s7",
+                    "start": 13,
+                    "end": 55
+                  },
+                  {
+                    "op": "CONST",
+                    "arg": {
+                      "value": [
+                        "str",
+                        "use strict"
+                      ],
+                      "raw": "\"use strict\""
+                    },
+                    "siteId": "src1:s8",
+                    "start": 0,
+                    "end": 12
+                  },
+                  {
+                    "op": "POP",
+                    "arg": null,
+                    "siteId": "src1:s9",
+                    "start": 0,
+                    "end": 13
+                  },
+                  {
+                    "op": "CONST",
+                    "arg": {
+                      "value": [
+                        "undefined"
+                      ]
+                    },
+                    "siteId": "src1:s10",
+                    "start": 0,
+                    "end": 55
+                  },
+                  {
+                    "op": "RETURN",
+                    "arg": null,
+                    "siteId": "src1:s11",
+                    "start": 0,
+                    "end": 55
+                  }
+                ]
+              }
+            },
+            "entrySpec": {
+              "kind": "function",
+              "sourceId": "src1",
+              "functionName": "increment",
+              "arguments": [
+                [
+                  "num",
+                  4
+                ]
+              ]
+            },
+            "initialState": {
+              "counters": {
+                "ids": {
+                  "version": 0,
+                  "env": 2,
+                  "obj": 1,
+                  "promise": 0,
+                  "frame": 1,
+                  "effect": 0,
+                  "input": 0,
+                  "operation": 0
+                }
+              },
+              "envs": {
+                "e1": {
+                  "id": "e1",
+                  "parent": null,
+                  "bindings": {
+                    "undefined": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "undefined"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "NaN": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "num",
+                          "NaN"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Infinity": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "num",
+                          "+Infinity"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "host": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "host",
+                          "demo"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Date": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Date"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "console": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "host",
+                          "platform.console"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "parseInt": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "parseInt"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "isNaN": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "isNaN"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "queueMicrotask": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "queueMicrotask"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "setTimeout": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "setTimeout"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "clearTimeout": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "clearTimeout"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "setInterval": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "setInterval"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "clearInterval": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "clearInterval"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Object": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Object"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Number": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Number"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "BigInt": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "BigInt"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "String": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "String"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Math": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Math"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Promise": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Promise"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Set": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Set"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Error": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Error"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "TypeError": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "TypeError"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "SharedArrayBuffer": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "SharedArrayBuffer"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "DataView": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "DataView"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Int8Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Int8Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Uint8Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Uint8Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Int16Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Int16Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Uint16Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Uint16Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Int32Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Int32Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Uint32Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Uint32Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "BigInt64Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "BigInt64Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "BigUint64Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "BigUint64Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Float32Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Float32Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Float64Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Float64Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Atomics": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Atomics"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "increment": {
+                      "kind": "function",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "ref",
+                          "o1"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    }
+                  },
+                  "version": 0
+                },
+                "e2": {
+                  "id": "e2",
+                  "parent": "e1",
+                  "bindings": {
+                    "value": {
+                      "kind": "parameter",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "num",
+                          4
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    }
+                  },
+                  "version": 0
+                }
+              },
+              "heap": {
+                "o1": {
+                  "id": "o1",
+                  "kind": "function",
+                  "codeId": "src1:code2",
+                  "closureEnvId": "e1",
+                  "async": false,
+                  "version": 0
+                }
+              },
+              "promises": {},
+              "frames": {
+                "f1": {
+                  "id": "f1",
+                  "codeId": "src1:code2",
+                  "pc": 0,
+                  "stack": [],
+                  "envId": "e2",
+                  "callerFrameId": null,
+                  "asyncPromiseId": null,
+                  "status": "running",
+                  "blockedOn": null,
+                  "awaiting": null,
+                  "operationId": null,
+                  "pendingCoercionThrow": null,
+                  "handlers": [],
+                  "loops": [],
+                  "thisValue": [
+                    "undefined"
+                  ],
+                  "version": 0
+                }
+              },
+              "effects": {},
+              "inputs": {},
+              "operations": {},
+              "control": {
+                "a0": {
+                  "version": 0,
+                  "activeFrameId": "f1",
+                  "queue": [],
+                  "timers": [],
+                  "now": 0,
+                  "nextTimerId": 0,
+                  "timerTurns": 0,
+                  "status": "running",
+                  "globalEnvId": "e1"
+                }
+              }
+            },
+            "finalState": {
+              "counters": {
+                "ids": {
+                  "version": 1,
+                  "env": 2,
+                  "obj": 1,
+                  "promise": 0,
+                  "frame": 1,
+                  "effect": 0,
+                  "input": 0,
+                  "operation": 1
+                }
+              },
+              "envs": {
+                "e1": {
+                  "id": "e1",
+                  "parent": null,
+                  "bindings": {
+                    "undefined": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "undefined"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "NaN": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "num",
+                          "NaN"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Infinity": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "num",
+                          "+Infinity"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "host": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "host",
+                          "demo"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Date": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Date"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "console": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "host",
+                          "platform.console"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "parseInt": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "parseInt"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "isNaN": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "isNaN"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "queueMicrotask": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "queueMicrotask"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "setTimeout": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "setTimeout"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "clearTimeout": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "clearTimeout"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "setInterval": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "setInterval"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "clearInterval": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "clearInterval"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Object": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Object"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Number": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Number"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "BigInt": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "BigInt"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "String": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "String"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Math": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Math"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Promise": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Promise"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Set": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Set"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Error": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Error"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "TypeError": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "TypeError"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "SharedArrayBuffer": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "SharedArrayBuffer"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "DataView": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "DataView"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Int8Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Int8Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Uint8Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Uint8Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Int16Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Int16Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Uint16Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Uint16Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Int32Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Int32Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Uint32Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Uint32Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "BigInt64Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "BigInt64Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "BigUint64Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "BigUint64Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Float32Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Float32Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Float64Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Float64Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Atomics": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Atomics"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "increment": {
+                      "kind": "function",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "ref",
+                          "o1"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    }
+                  },
+                  "version": 0
+                },
+                "e2": {
+                  "id": "e2",
+                  "parent": "e1",
+                  "bindings": {
+                    "value": {
+                      "kind": "parameter",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "num",
+                          4
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    }
+                  },
+                  "version": 0
+                }
+              },
+              "heap": {
+                "o1": {
+                  "id": "o1",
+                  "kind": "function",
+                  "codeId": "src1:code2",
+                  "closureEnvId": "e1",
+                  "async": false,
+                  "version": 0
+                }
+              },
+              "promises": {},
+              "frames": {
+                "f1": {
+                  "id": "f1",
+                  "codeId": "src1:code2",
+                  "pc": 4,
+                  "stack": [],
+                  "envId": "e2",
+                  "callerFrameId": null,
+                  "asyncPromiseId": null,
+                  "status": "completed",
+                  "blockedOn": null,
+                  "awaiting": null,
+                  "operationId": null,
+                  "pendingCoercionThrow": null,
+                  "handlers": [],
+                  "loops": [],
+                  "thisValue": [
+                    "undefined"
+                  ],
+                  "version": 5,
+                  "completion": {
+                    "type": "return",
+                    "value": {
+                      "value": [
+                        "num",
+                        5
+                      ],
+                      "origin": "a0:e17"
+                    }
+                  }
+                }
+              },
+              "effects": {},
+              "inputs": {},
+              "operations": {
+                "op1": {
+                  "id": "op1",
+                  "frameId": "f1",
+                  "algorithm": "ApplyStringOrNumericBinaryOperator",
+                  "operator": "+",
+                  "siteId": "src1:s3",
+                  "sourceId": "src1",
+                  "codeId": "src1:code2",
+                  "operands": [
+                    {
+                      "value": [
+                        "num",
+                        4
+                      ],
+                      "origin": "a0:e1"
+                    },
+                    {
+                      "value": [
+                        "num",
+                        1
+                      ],
+                      "origin": "a0:e2"
+                    }
+                  ],
+                  "registers": {
+                    "leftPrimitive": {
+                      "value": [
+                        "num",
+                        4
+                      ],
+                      "origin": "a0:e4"
+                    },
+                    "rightPrimitive": {
+                      "value": [
+                        "num",
+                        1
+                      ],
+                      "origin": "a0:e5"
+                    },
+                    "leftNumericPrimitive": {
+                      "value": [
+                        "num",
+                        4
+                      ],
+                      "origin": "a0:e8"
+                    },
+                    "leftNumeric": {
+                      "value": [
+                        "num",
+                        4
+                      ],
+                      "origin": "a0:e10"
+                    },
+                    "rightNumericPrimitive": {
+                      "value": [
+                        "num",
+                        1
+                      ],
+                      "origin": "a0:e12"
+                    },
+                    "rightNumeric": {
+                      "value": [
+                        "num",
+                        1
+                      ],
+                      "origin": "a0:e14"
+                    },
+                    "value": {
+                      "value": [
+                        "num",
+                        5
+                      ],
+                      "origin": "a0:e16"
+                    }
+                  },
+                  "completion": {
+                    "type": "normal",
+                    "value": {
+                      "value": [
+                        "num",
+                        5
+                      ],
+                      "origin": "a0:e16"
+                    }
+                  },
+                  "phase": "done",
+                  "status": "completed",
+                  "coercion": null,
+                  "version": 15
+                }
+              },
+              "control": {
+                "a0": {
+                  "version": 1,
+                  "activeFrameId": null,
+                  "queue": [],
+                  "timers": [],
+                  "now": 0,
+                  "nextTimerId": 0,
+                  "timerTurns": 0,
+                  "status": "completed",
+                  "globalEnvId": "e1",
+                  "completion": {
+                    "kind": "return",
+                    "value": [
+                      "num",
+                      5
+                    ]
+                  }
+                }
+              }
+            },
+            "events": [
+              {
+                "eventId": "a0:e1",
+                "agentId": "a0",
+                "sequence": 1,
+                "operation": "binding.read",
+                "catalogRef": "binding.read/1",
+                "siteId": "src1:s1",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [],
+                "operandOrigins": [
+                  null
+                ],
+                "result": [
+                  "num",
+                  4
+                ],
+                "readObservations": [
+                  {
+                    "kind": "binding",
+                    "envId": "e2",
+                    "name": "value",
+                    "version": 0,
+                    "value": [
+                      "num",
+                      4
+                    ],
+                    "supplyingEvent": null
+                  }
+                ],
+                "causes": [],
+                "stateChanges": [
+                  {
+                    "kind": "frames.replace",
+                    "table": "frames",
+                    "id": "f1",
+                    "before": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 0,
+                      "stack": [],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 0
+                    },
+                    "after": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 1,
+                      "stack": [
+                        {
+                          "value": [
+                            "num",
+                            4
+                          ],
+                          "origin": "a0:e1"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 1
+                    }
+                  }
+                ],
+                "before": "q0",
+                "after": "q1"
+              },
+              {
+                "eventId": "a0:e2",
+                "agentId": "a0",
+                "sequence": 2,
+                "operation": "literal.materialize",
+                "catalogRef": "literal.materialize/1",
+                "siteId": "src1:s2",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [],
+                "operandOrigins": [],
+                "result": [
+                  "num",
+                  1
+                ],
+                "readObservations": [],
+                "causes": [],
+                "stateChanges": [
+                  {
+                    "kind": "frames.replace",
+                    "table": "frames",
+                    "id": "f1",
+                    "before": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 1,
+                      "stack": [
+                        {
+                          "value": [
+                            "num",
+                            4
+                          ],
+                          "origin": "a0:e1"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 1
+                    },
+                    "after": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 2,
+                      "stack": [
+                        {
+                          "value": [
+                            "num",
+                            4
+                          ],
+                          "origin": "a0:e1"
+                        },
+                        {
+                          "value": [
+                            "num",
+                            1
+                          ],
+                          "origin": "a0:e2"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 2
+                    }
+                  }
+                ],
+                "before": "q1",
+                "after": "q2"
+              },
+              {
+                "eventId": "a0:e3",
+                "agentId": "a0",
+                "sequence": 3,
+                "operation": "primitive.binary",
+                "catalogRef": "primitive.binary/1",
+                "siteId": "src1:s3",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "num",
+                    4
+                  ],
+                  [
+                    "num",
+                    1
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e1",
+                  "a0:e2"
+                ],
+                "result": null,
+                "readObservations": [],
+                "causes": [
+                  {
+                    "kind": "spec-operation",
+                    "operationId": "op1"
+                  }
+                ],
+                "stateChanges": [
+                  {
+                    "kind": "counters.replace",
+                    "table": "counters",
+                    "id": "ids",
+                    "before": {
+                      "version": 0,
+                      "env": 2,
+                      "obj": 1,
+                      "promise": 0,
+                      "frame": 1,
+                      "effect": 0,
+                      "input": 0,
+                      "operation": 0
+                    },
+                    "after": {
+                      "version": 1,
+                      "env": 2,
+                      "obj": 1,
+                      "promise": 0,
+                      "frame": 1,
+                      "effect": 0,
+                      "input": 0,
+                      "operation": 1
+                    }
+                  },
+                  {
+                    "kind": "frames.replace",
+                    "table": "frames",
+                    "id": "f1",
+                    "before": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 2,
+                      "stack": [
+                        {
+                          "value": [
+                            "num",
+                            4
+                          ],
+                          "origin": "a0:e1"
+                        },
+                        {
+                          "value": [
+                            "num",
+                            1
+                          ],
+                          "origin": "a0:e2"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 2
+                    },
+                    "after": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 3,
+                      "stack": [],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": "op1",
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 3
+                    }
+                  },
+                  {
+                    "kind": "operation.create",
+                    "table": "operations",
+                    "id": "op1",
+                    "record": {
+                      "id": "op1",
+                      "frameId": "f1",
+                      "algorithm": "ApplyStringOrNumericBinaryOperator",
+                      "operator": "+",
+                      "siteId": "src1:s3",
+                      "sourceId": "src1",
+                      "codeId": "src1:code2",
+                      "operands": [
+                        {
+                          "value": [
+                            "num",
+                            4
+                          ],
+                          "origin": "a0:e1"
+                        },
+                        {
+                          "value": [
+                            "num",
+                            1
+                          ],
+                          "origin": "a0:e2"
+                        }
+                      ],
+                      "registers": {},
+                      "completion": null,
+                      "phase": "left-primitive",
+                      "status": "running",
+                      "coercion": null,
+                      "version": 1
+                    }
+                  }
+                ],
+                "before": "q2",
+                "after": "q3"
+              },
+              {
+                "eventId": "a0:e4",
+                "agentId": "a0",
+                "sequence": 4,
+                "operation": "spec.to-primitive",
+                "catalogRef": "spec.to-primitive/1",
+                "siteId": "src1:s3",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "num",
+                    4
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e1"
+                ],
+                "result": [
+                  "num",
+                  4
+                ],
+                "readObservations": [],
+                "causes": [
+                  {
+                    "kind": "spec-operation",
+                    "operationId": "op1"
+                  }
+                ],
+                "stateChanges": [
+                  {
+                    "kind": "operation.advance",
+                    "table": "operations",
+                    "id": "op1",
+                    "expectedVersion": 1,
+                    "from": "left-primitive",
+                    "to": "right-primitive",
+                    "writes": [
+                      {
+                        "name": "leftPrimitive",
+                        "before": null,
+                        "after": {
+                          "value": [
+                            "num",
+                            4
+                          ],
+                          "origin": "a0:e4"
+                        }
+                      }
+                    ],
+                    "completionBefore": null,
+                    "completionAfter": null,
+                    "coercionBefore": null,
+                    "coercionAfter": null
+                  }
+                ],
+                "before": "q3",
+                "after": "q4",
+                "spec": {
+                  "algorithm": "ToPrimitive",
+                  "clause": "sec-toprimitive",
+                  "step": "primitive identity; object branch unsupported",
+                  "phase": "left-primitive",
+                  "engineRevision": "2d7d8d988c77e94473ba0377122cdfccdfe243ba"
+                }
+              },
+              {
+                "eventId": "a0:e5",
+                "agentId": "a0",
+                "sequence": 5,
+                "operation": "spec.to-primitive",
+                "catalogRef": "spec.to-primitive/1",
+                "siteId": "src1:s3",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "num",
+                    1
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e2"
+                ],
+                "result": [
+                  "num",
+                  1
+                ],
+                "readObservations": [],
+                "causes": [
+                  {
+                    "kind": "spec-operation",
+                    "operationId": "op1"
+                  }
+                ],
+                "stateChanges": [
+                  {
+                    "kind": "operation.advance",
+                    "table": "operations",
+                    "id": "op1",
+                    "expectedVersion": 2,
+                    "from": "right-primitive",
+                    "to": "select",
+                    "writes": [
+                      {
+                        "name": "rightPrimitive",
+                        "before": null,
+                        "after": {
+                          "value": [
+                            "num",
+                            1
+                          ],
+                          "origin": "a0:e5"
+                        }
+                      }
+                    ],
+                    "completionBefore": null,
+                    "completionAfter": null,
+                    "coercionBefore": null,
+                    "coercionAfter": null
+                  }
+                ],
+                "before": "q4",
+                "after": "q5",
+                "spec": {
+                  "algorithm": "ToPrimitive",
+                  "clause": "sec-toprimitive",
+                  "step": "primitive identity; object branch unsupported",
+                  "phase": "right-primitive",
+                  "engineRevision": "2d7d8d988c77e94473ba0377122cdfccdfe243ba"
+                }
+              },
+              {
+                "eventId": "a0:e6",
+                "agentId": "a0",
+                "sequence": 6,
+                "operation": "spec.binary.select",
+                "catalogRef": "spec.binary.select/1",
+                "siteId": "src1:s3",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "num",
+                    4
+                  ],
+                  [
+                    "num",
+                    1
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e4",
+                  "a0:e5"
+                ],
+                "result": [
+                  "bool",
+                  false
+                ],
+                "readObservations": [],
+                "causes": [
+                  {
+                    "kind": "spec-operation",
+                    "operationId": "op1"
+                  }
+                ],
+                "stateChanges": [
+                  {
+                    "kind": "operation.advance",
+                    "table": "operations",
+                    "id": "op1",
+                    "expectedVersion": 3,
+                    "from": "select",
+                    "to": "left-numeric",
+                    "writes": [],
+                    "completionBefore": null,
+                    "completionAfter": null,
+                    "coercionBefore": null,
+                    "coercionAfter": null
+                  }
+                ],
+                "before": "q5",
+                "after": "q6",
+                "spec": {
+                  "algorithm": "ApplyStringOrNumericBinaryOperator",
+                  "clause": "sec-applystringornumericbinaryoperator",
+                  "step": "string or numeric branch",
+                  "phase": "select",
+                  "engineRevision": "2d7d8d988c77e94473ba0377122cdfccdfe243ba"
+                }
+              },
+              {
+                "eventId": "a0:e7",
+                "agentId": "a0",
+                "sequence": 7,
+                "operation": "spec.to-numeric",
+                "catalogRef": "spec.to-numeric/1",
+                "siteId": "src1:s3",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "num",
+                    4
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e4"
+                ],
+                "result": null,
+                "readObservations": [],
+                "causes": [
+                  {
+                    "kind": "spec-operation",
+                    "operationId": "op1"
+                  }
+                ],
+                "stateChanges": [
+                  {
+                    "kind": "operation.advance",
+                    "table": "operations",
+                    "id": "op1",
+                    "expectedVersion": 4,
+                    "from": "left-numeric",
+                    "to": "left-numeric-primitive",
+                    "writes": [],
+                    "completionBefore": null,
+                    "completionAfter": null,
+                    "coercionBefore": null,
+                    "coercionAfter": null
+                  }
+                ],
+                "before": "q6",
+                "after": "q7",
+                "spec": {
+                  "algorithm": "ToNumeric",
+                  "clause": "sec-tonumeric",
+                  "step": "enter ToPrimitive with number hint",
+                  "phase": "left-numeric",
+                  "engineRevision": "2d7d8d988c77e94473ba0377122cdfccdfe243ba"
+                }
+              },
+              {
+                "eventId": "a0:e8",
+                "agentId": "a0",
+                "sequence": 8,
+                "operation": "spec.to-primitive",
+                "catalogRef": "spec.to-primitive/1",
+                "siteId": "src1:s3",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "num",
+                    4
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e4"
+                ],
+                "result": [
+                  "num",
+                  4
+                ],
+                "readObservations": [],
+                "causes": [
+                  {
+                    "kind": "spec-operation",
+                    "operationId": "op1"
+                  }
+                ],
+                "stateChanges": [
+                  {
+                    "kind": "operation.advance",
+                    "table": "operations",
+                    "id": "op1",
+                    "expectedVersion": 5,
+                    "from": "left-numeric-primitive",
+                    "to": "left-numeric-kind",
+                    "writes": [
+                      {
+                        "name": "leftNumericPrimitive",
+                        "before": null,
+                        "after": {
+                          "value": [
+                            "num",
+                            4
+                          ],
+                          "origin": "a0:e8"
+                        }
+                      }
+                    ],
+                    "completionBefore": null,
+                    "completionAfter": null,
+                    "coercionBefore": null,
+                    "coercionAfter": null
+                  }
+                ],
+                "before": "q7",
+                "after": "q8",
+                "spec": {
+                  "algorithm": "ToPrimitive",
+                  "clause": "sec-toprimitive",
+                  "step": "primitive identity; object branch unsupported",
+                  "phase": "left-numeric-primitive",
+                  "engineRevision": "2d7d8d988c77e94473ba0377122cdfccdfe243ba"
+                }
+              },
+              {
+                "eventId": "a0:e9",
+                "agentId": "a0",
+                "sequence": 9,
+                "operation": "spec.to-numeric",
+                "catalogRef": "spec.to-numeric/1",
+                "siteId": "src1:s3",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "num",
+                    4
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e8"
+                ],
+                "result": null,
+                "readObservations": [],
+                "causes": [
+                  {
+                    "kind": "spec-operation",
+                    "operationId": "op1"
+                  }
+                ],
+                "stateChanges": [
+                  {
+                    "kind": "operation.advance",
+                    "table": "operations",
+                    "id": "op1",
+                    "expectedVersion": 6,
+                    "from": "left-numeric-kind",
+                    "to": "left-number",
+                    "writes": [],
+                    "completionBefore": null,
+                    "completionAfter": null,
+                    "coercionBefore": null,
+                    "coercionAfter": null
+                  }
+                ],
+                "before": "q8",
+                "after": "q9",
+                "spec": {
+                  "algorithm": "ToNumeric",
+                  "clause": "sec-tonumeric",
+                  "step": "BigInt or ToNumber",
+                  "phase": "left-numeric-kind",
+                  "engineRevision": "2d7d8d988c77e94473ba0377122cdfccdfe243ba"
+                }
+              },
+              {
+                "eventId": "a0:e10",
+                "agentId": "a0",
+                "sequence": 10,
+                "operation": "spec.to-number",
+                "catalogRef": "spec.to-number/1",
+                "siteId": "src1:s3",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "num",
+                    4
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e8"
+                ],
+                "result": [
+                  "num",
+                  4
+                ],
+                "readObservations": [],
+                "causes": [
+                  {
+                    "kind": "spec-operation",
+                    "operationId": "op1"
+                  }
+                ],
+                "stateChanges": [
+                  {
+                    "kind": "operation.advance",
+                    "table": "operations",
+                    "id": "op1",
+                    "expectedVersion": 7,
+                    "from": "left-number",
+                    "to": "right-numeric",
+                    "writes": [
+                      {
+                        "name": "leftNumeric",
+                        "before": null,
+                        "after": {
+                          "value": [
+                            "num",
+                            4
+                          ],
+                          "origin": "a0:e10"
+                        }
+                      }
+                    ],
+                    "completionBefore": null,
+                    "completionAfter": null,
+                    "coercionBefore": null,
+                    "coercionAfter": null
+                  }
+                ],
+                "before": "q9",
+                "after": "q10",
+                "spec": {
+                  "algorithm": "ToNumber",
+                  "clause": "sec-tonumber",
+                  "step": "primitive conversion",
+                  "phase": "left-number",
+                  "engineRevision": "2d7d8d988c77e94473ba0377122cdfccdfe243ba"
+                }
+              },
+              {
+                "eventId": "a0:e11",
+                "agentId": "a0",
+                "sequence": 11,
+                "operation": "spec.to-numeric",
+                "catalogRef": "spec.to-numeric/1",
+                "siteId": "src1:s3",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "num",
+                    1
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e5"
+                ],
+                "result": null,
+                "readObservations": [],
+                "causes": [
+                  {
+                    "kind": "spec-operation",
+                    "operationId": "op1"
+                  }
+                ],
+                "stateChanges": [
+                  {
+                    "kind": "operation.advance",
+                    "table": "operations",
+                    "id": "op1",
+                    "expectedVersion": 8,
+                    "from": "right-numeric",
+                    "to": "right-numeric-primitive",
+                    "writes": [],
+                    "completionBefore": null,
+                    "completionAfter": null,
+                    "coercionBefore": null,
+                    "coercionAfter": null
+                  }
+                ],
+                "before": "q10",
+                "after": "q11",
+                "spec": {
+                  "algorithm": "ToNumeric",
+                  "clause": "sec-tonumeric",
+                  "step": "enter ToPrimitive with number hint",
+                  "phase": "right-numeric",
+                  "engineRevision": "2d7d8d988c77e94473ba0377122cdfccdfe243ba"
+                }
+              },
+              {
+                "eventId": "a0:e12",
+                "agentId": "a0",
+                "sequence": 12,
+                "operation": "spec.to-primitive",
+                "catalogRef": "spec.to-primitive/1",
+                "siteId": "src1:s3",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "num",
+                    1
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e5"
+                ],
+                "result": [
+                  "num",
+                  1
+                ],
+                "readObservations": [],
+                "causes": [
+                  {
+                    "kind": "spec-operation",
+                    "operationId": "op1"
+                  }
+                ],
+                "stateChanges": [
+                  {
+                    "kind": "operation.advance",
+                    "table": "operations",
+                    "id": "op1",
+                    "expectedVersion": 9,
+                    "from": "right-numeric-primitive",
+                    "to": "right-numeric-kind",
+                    "writes": [
+                      {
+                        "name": "rightNumericPrimitive",
+                        "before": null,
+                        "after": {
+                          "value": [
+                            "num",
+                            1
+                          ],
+                          "origin": "a0:e12"
+                        }
+                      }
+                    ],
+                    "completionBefore": null,
+                    "completionAfter": null,
+                    "coercionBefore": null,
+                    "coercionAfter": null
+                  }
+                ],
+                "before": "q11",
+                "after": "q12",
+                "spec": {
+                  "algorithm": "ToPrimitive",
+                  "clause": "sec-toprimitive",
+                  "step": "primitive identity; object branch unsupported",
+                  "phase": "right-numeric-primitive",
+                  "engineRevision": "2d7d8d988c77e94473ba0377122cdfccdfe243ba"
+                }
+              },
+              {
+                "eventId": "a0:e13",
+                "agentId": "a0",
+                "sequence": 13,
+                "operation": "spec.to-numeric",
+                "catalogRef": "spec.to-numeric/1",
+                "siteId": "src1:s3",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "num",
+                    1
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e12"
+                ],
+                "result": null,
+                "readObservations": [],
+                "causes": [
+                  {
+                    "kind": "spec-operation",
+                    "operationId": "op1"
+                  }
+                ],
+                "stateChanges": [
+                  {
+                    "kind": "operation.advance",
+                    "table": "operations",
+                    "id": "op1",
+                    "expectedVersion": 10,
+                    "from": "right-numeric-kind",
+                    "to": "right-number",
+                    "writes": [],
+                    "completionBefore": null,
+                    "completionAfter": null,
+                    "coercionBefore": null,
+                    "coercionAfter": null
+                  }
+                ],
+                "before": "q12",
+                "after": "q13",
+                "spec": {
+                  "algorithm": "ToNumeric",
+                  "clause": "sec-tonumeric",
+                  "step": "BigInt or ToNumber",
+                  "phase": "right-numeric-kind",
+                  "engineRevision": "2d7d8d988c77e94473ba0377122cdfccdfe243ba"
+                }
+              },
+              {
+                "eventId": "a0:e14",
+                "agentId": "a0",
+                "sequence": 14,
+                "operation": "spec.to-number",
+                "catalogRef": "spec.to-number/1",
+                "siteId": "src1:s3",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "num",
+                    1
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e12"
+                ],
+                "result": [
+                  "num",
+                  1
+                ],
+                "readObservations": [],
+                "causes": [
+                  {
+                    "kind": "spec-operation",
+                    "operationId": "op1"
+                  }
+                ],
+                "stateChanges": [
+                  {
+                    "kind": "operation.advance",
+                    "table": "operations",
+                    "id": "op1",
+                    "expectedVersion": 11,
+                    "from": "right-number",
+                    "to": "numeric-types",
+                    "writes": [
+                      {
+                        "name": "rightNumeric",
+                        "before": null,
+                        "after": {
+                          "value": [
+                            "num",
+                            1
+                          ],
+                          "origin": "a0:e14"
+                        }
+                      }
+                    ],
+                    "completionBefore": null,
+                    "completionAfter": null,
+                    "coercionBefore": null,
+                    "coercionAfter": null
+                  }
+                ],
+                "before": "q13",
+                "after": "q14",
+                "spec": {
+                  "algorithm": "ToNumber",
+                  "clause": "sec-tonumber",
+                  "step": "primitive conversion",
+                  "phase": "right-number",
+                  "engineRevision": "2d7d8d988c77e94473ba0377122cdfccdfe243ba"
+                }
+              },
+              {
+                "eventId": "a0:e15",
+                "agentId": "a0",
+                "sequence": 15,
+                "operation": "spec.numeric.same-type",
+                "catalogRef": "spec.numeric.same-type/1",
+                "siteId": "src1:s3",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "num",
+                    4
+                  ],
+                  [
+                    "num",
+                    1
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e10",
+                  "a0:e14"
+                ],
+                "result": [
+                  "bool",
+                  true
+                ],
+                "readObservations": [],
+                "causes": [
+                  {
+                    "kind": "spec-operation",
+                    "operationId": "op1"
+                  }
+                ],
+                "stateChanges": [
+                  {
+                    "kind": "operation.advance",
+                    "table": "operations",
+                    "id": "op1",
+                    "expectedVersion": 12,
+                    "from": "numeric-types",
+                    "to": "apply",
+                    "writes": [],
+                    "completionBefore": null,
+                    "completionAfter": null,
+                    "coercionBefore": null,
+                    "coercionAfter": null
+                  }
+                ],
+                "before": "q14",
+                "after": "q15",
+                "spec": {
+                  "algorithm": "ApplyStringOrNumericBinaryOperator",
+                  "clause": "sec-applystringornumericbinaryoperator",
+                  "step": "same numeric type",
+                  "phase": "numeric-types",
+                  "engineRevision": "2d7d8d988c77e94473ba0377122cdfccdfe243ba"
+                }
+              },
+              {
+                "eventId": "a0:e16",
+                "agentId": "a0",
+                "sequence": 16,
+                "operation": "spec.numeric.apply",
+                "catalogRef": "spec.numeric.apply/1",
+                "siteId": "src1:s3",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "num",
+                    4
+                  ],
+                  [
+                    "num",
+                    1
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e10",
+                  "a0:e14"
+                ],
+                "result": [
+                  "num",
+                  5
+                ],
+                "readObservations": [],
+                "causes": [
+                  {
+                    "kind": "spec-operation",
+                    "operationId": "op1"
+                  }
+                ],
+                "stateChanges": [
+                  {
+                    "kind": "operation.advance",
+                    "table": "operations",
+                    "id": "op1",
+                    "expectedVersion": 13,
+                    "from": "apply",
+                    "to": "complete",
+                    "writes": [
+                      {
+                        "name": "value",
+                        "before": null,
+                        "after": {
+                          "value": [
+                            "num",
+                            5
+                          ],
+                          "origin": "a0:e16"
+                        }
+                      }
+                    ],
+                    "completionBefore": null,
+                    "completionAfter": {
+                      "type": "normal",
+                      "value": {
+                        "value": [
+                          "num",
+                          5
+                        ],
+                        "origin": "a0:e16"
+                      }
+                    },
+                    "coercionBefore": null,
+                    "coercionAfter": null
+                  }
+                ],
+                "before": "q15",
+                "after": "q16",
+                "spec": {
+                  "algorithm": "Number::add",
+                  "clause": "sec-numeric-types-number-add",
+                  "step": "typed scalar leaf",
+                  "phase": "apply",
+                  "engineRevision": "2d7d8d988c77e94473ba0377122cdfccdfe243ba"
+                }
+              },
+              {
+                "eventId": "a0:e17",
+                "agentId": "a0",
+                "sequence": 17,
+                "operation": "spec.operation.complete",
+                "catalogRef": "spec.operation.complete/1",
+                "siteId": "src1:s3",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "num",
+                    5
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e16"
+                ],
+                "result": [
+                  "num",
+                  5
+                ],
+                "readObservations": [],
+                "causes": [
+                  {
+                    "kind": "spec-operation",
+                    "operationId": "op1"
+                  }
+                ],
+                "stateChanges": [
+                  {
+                    "kind": "frames.replace",
+                    "table": "frames",
+                    "id": "f1",
+                    "before": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 3,
+                      "stack": [],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": "op1",
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 3
+                    },
+                    "after": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 3,
+                      "stack": [
+                        {
+                          "value": [
+                            "num",
+                            5
+                          ],
+                          "origin": "a0:e17"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 4
+                    }
+                  },
+                  {
+                    "kind": "operation.complete",
+                    "table": "operations",
+                    "id": "op1",
+                    "expectedVersion": 14,
+                    "completion": {
+                      "type": "normal",
+                      "value": {
+                        "value": [
+                          "num",
+                          5
+                        ],
+                        "origin": "a0:e16"
+                      }
+                    }
+                  }
+                ],
+                "before": "q16",
+                "after": "q17",
+                "spec": {
+                  "algorithm": "ApplyStringOrNumericBinaryOperator",
+                  "clause": "sec-applystringornumericbinaryoperator",
+                  "step": "return completion",
+                  "phase": "complete",
+                  "engineRevision": "2d7d8d988c77e94473ba0377122cdfccdfe243ba"
+                },
+                "completion": {
+                  "type": "normal",
+                  "value": {
+                    "value": [
+                      "num",
+                      5
+                    ],
+                    "origin": "a0:e16"
+                  }
+                }
+              },
+              {
+                "eventId": "a0:e18",
+                "agentId": "a0",
+                "sequence": 18,
+                "operation": "call.return",
+                "catalogRef": "call.return/1",
+                "siteId": "src1:s4",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "num",
+                    5
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e17"
+                ],
+                "result": [
+                  "num",
+                  5
+                ],
+                "readObservations": [],
+                "causes": [],
+                "stateChanges": [
+                  {
+                    "kind": "frames.replace",
+                    "table": "frames",
+                    "id": "f1",
+                    "before": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 3,
+                      "stack": [
+                        {
+                          "value": [
+                            "num",
+                            5
+                          ],
+                          "origin": "a0:e17"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 4
+                    },
+                    "after": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 4,
+                      "stack": [],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "completed",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 5,
+                      "completion": {
+                        "type": "return",
+                        "value": {
+                          "value": [
+                            "num",
+                            5
+                          ],
+                          "origin": "a0:e17"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "kind": "control.replace",
+                    "table": "control",
+                    "id": "a0",
+                    "before": {
+                      "version": 0,
+                      "activeFrameId": "f1",
+                      "queue": [],
+                      "timers": [],
+                      "now": 0,
+                      "nextTimerId": 0,
+                      "timerTurns": 0,
+                      "status": "running",
+                      "globalEnvId": "e1"
+                    },
+                    "after": {
+                      "version": 1,
+                      "activeFrameId": null,
+                      "queue": [],
+                      "timers": [],
+                      "now": 0,
+                      "nextTimerId": 0,
+                      "timerTurns": 0,
+                      "status": "completed",
+                      "globalEnvId": "e1",
+                      "completion": {
+                        "kind": "return",
+                        "value": [
+                          "num",
+                          5
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "before": "q17",
+                "after": "q18"
+              }
+            ],
+            "chunks": [
+              {
+                "chunkId": "a0:c1",
+                "agentId": "a0",
+                "policy": "accumulate-until-wait/1",
+                "before": "q0",
+                "after": "q18",
+                "firstEvent": 1,
+                "lastEvent": 18,
+                "eventIds": [
+                  "a0:e1",
+                  "a0:e2",
+                  "a0:e3",
+                  "a0:e4",
+                  "a0:e5",
+                  "a0:e6",
+                  "a0:e7",
+                  "a0:e8",
+                  "a0:e9",
+                  "a0:e10",
+                  "a0:e11",
+                  "a0:e12",
+                  "a0:e13",
+                  "a0:e14",
+                  "a0:e15",
+                  "a0:e16",
+                  "a0:e17",
+                  "a0:e18"
+                ],
+                "effects": [],
+                "inputs": [],
+                "exit": {
+                  "kind": "terminated",
+                  "pendingEffects": [],
+                  "waitingOn": []
+                }
+              }
+            ],
+            "checkpoints": {
+              "q0": {
+                "counters": {
+                  "ids": {
+                    "version": 0,
+                    "env": 2,
+                    "obj": 1,
+                    "promise": 0,
+                    "frame": 1,
+                    "effect": 0,
+                    "input": 0,
+                    "operation": 0
+                  }
+                },
+                "envs": {
+                  "e1": {
+                    "id": "e1",
+                    "parent": null,
+                    "bindings": {
+                      "undefined": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "undefined"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "NaN": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "num",
+                            "NaN"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Infinity": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "num",
+                            "+Infinity"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "host": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "host",
+                            "demo"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Date": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Date"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "console": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "host",
+                            "platform.console"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "parseInt": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "parseInt"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "isNaN": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "isNaN"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "queueMicrotask": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "queueMicrotask"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "setTimeout": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "setTimeout"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "clearTimeout": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "clearTimeout"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "setInterval": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "setInterval"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "clearInterval": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "clearInterval"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Object": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Object"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Number": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Number"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "BigInt": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "BigInt"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "String": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "String"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Math": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Math"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Promise": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Promise"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Set": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Set"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Error": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Error"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "TypeError": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "TypeError"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "SharedArrayBuffer": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "SharedArrayBuffer"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "DataView": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "DataView"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Int8Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Int8Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Uint8Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Uint8Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Int16Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Int16Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Uint16Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Uint16Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Int32Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Int32Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Uint32Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Uint32Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "BigInt64Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "BigInt64Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "BigUint64Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "BigUint64Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Float32Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Float32Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Float64Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Float64Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Atomics": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Atomics"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "increment": {
+                        "kind": "function",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "ref",
+                            "o1"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      }
+                    },
+                    "version": 0
+                  },
+                  "e2": {
+                    "id": "e2",
+                    "parent": "e1",
+                    "bindings": {
+                      "value": {
+                        "kind": "parameter",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "num",
+                            4
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      }
+                    },
+                    "version": 0
+                  }
+                },
+                "heap": {
+                  "o1": {
+                    "id": "o1",
+                    "kind": "function",
+                    "codeId": "src1:code2",
+                    "closureEnvId": "e1",
+                    "async": false,
+                    "version": 0
+                  }
+                },
+                "promises": {},
+                "frames": {
+                  "f1": {
+                    "id": "f1",
+                    "codeId": "src1:code2",
+                    "pc": 0,
+                    "stack": [],
+                    "envId": "e2",
+                    "callerFrameId": null,
+                    "asyncPromiseId": null,
+                    "status": "running",
+                    "blockedOn": null,
+                    "awaiting": null,
+                    "operationId": null,
+                    "pendingCoercionThrow": null,
+                    "handlers": [],
+                    "loops": [],
+                    "thisValue": [
+                      "undefined"
+                    ],
+                    "version": 0
+                  }
+                },
+                "effects": {},
+                "inputs": {},
+                "operations": {},
+                "control": {
+                  "a0": {
+                    "version": 0,
+                    "activeFrameId": "f1",
+                    "queue": [],
+                    "timers": [],
+                    "now": 0,
+                    "nextTimerId": 0,
+                    "timerTurns": 0,
+                    "status": "running",
+                    "globalEnvId": "e1"
+                  }
+                }
+              },
+              "q18": {
+                "counters": {
+                  "ids": {
+                    "version": 1,
+                    "env": 2,
+                    "obj": 1,
+                    "promise": 0,
+                    "frame": 1,
+                    "effect": 0,
+                    "input": 0,
+                    "operation": 1
+                  }
+                },
+                "envs": {
+                  "e1": {
+                    "id": "e1",
+                    "parent": null,
+                    "bindings": {
+                      "undefined": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "undefined"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "NaN": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "num",
+                            "NaN"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Infinity": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "num",
+                            "+Infinity"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "host": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "host",
+                            "demo"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Date": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Date"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "console": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "host",
+                            "platform.console"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "parseInt": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "parseInt"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "isNaN": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "isNaN"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "queueMicrotask": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "queueMicrotask"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "setTimeout": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "setTimeout"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "clearTimeout": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "clearTimeout"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "setInterval": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "setInterval"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "clearInterval": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "clearInterval"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Object": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Object"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Number": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Number"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "BigInt": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "BigInt"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "String": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "String"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Math": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Math"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Promise": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Promise"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Set": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Set"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Error": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Error"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "TypeError": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "TypeError"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "SharedArrayBuffer": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "SharedArrayBuffer"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "DataView": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "DataView"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Int8Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Int8Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Uint8Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Uint8Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Int16Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Int16Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Uint16Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Uint16Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Int32Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Int32Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Uint32Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Uint32Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "BigInt64Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "BigInt64Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "BigUint64Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "BigUint64Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Float32Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Float32Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Float64Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Float64Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Atomics": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Atomics"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "increment": {
+                        "kind": "function",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "ref",
+                            "o1"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      }
+                    },
+                    "version": 0
+                  },
+                  "e2": {
+                    "id": "e2",
+                    "parent": "e1",
+                    "bindings": {
+                      "value": {
+                        "kind": "parameter",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "num",
+                            4
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      }
+                    },
+                    "version": 0
+                  }
+                },
+                "heap": {
+                  "o1": {
+                    "id": "o1",
+                    "kind": "function",
+                    "codeId": "src1:code2",
+                    "closureEnvId": "e1",
+                    "async": false,
+                    "version": 0
+                  }
+                },
+                "promises": {},
+                "frames": {
+                  "f1": {
+                    "id": "f1",
+                    "codeId": "src1:code2",
+                    "pc": 4,
+                    "stack": [],
+                    "envId": "e2",
+                    "callerFrameId": null,
+                    "asyncPromiseId": null,
+                    "status": "completed",
+                    "blockedOn": null,
+                    "awaiting": null,
+                    "operationId": null,
+                    "pendingCoercionThrow": null,
+                    "handlers": [],
+                    "loops": [],
+                    "thisValue": [
+                      "undefined"
+                    ],
+                    "version": 5,
+                    "completion": {
+                      "type": "return",
+                      "value": {
+                        "value": [
+                          "num",
+                          5
+                        ],
+                        "origin": "a0:e17"
+                      }
+                    }
+                  }
+                },
+                "effects": {},
+                "inputs": {},
+                "operations": {
+                  "op1": {
+                    "id": "op1",
+                    "frameId": "f1",
+                    "algorithm": "ApplyStringOrNumericBinaryOperator",
+                    "operator": "+",
+                    "siteId": "src1:s3",
+                    "sourceId": "src1",
+                    "codeId": "src1:code2",
+                    "operands": [
+                      {
+                        "value": [
+                          "num",
+                          4
+                        ],
+                        "origin": "a0:e1"
+                      },
+                      {
+                        "value": [
+                          "num",
+                          1
+                        ],
+                        "origin": "a0:e2"
+                      }
+                    ],
+                    "registers": {
+                      "leftPrimitive": {
+                        "value": [
+                          "num",
+                          4
+                        ],
+                        "origin": "a0:e4"
+                      },
+                      "rightPrimitive": {
+                        "value": [
+                          "num",
+                          1
+                        ],
+                        "origin": "a0:e5"
+                      },
+                      "leftNumericPrimitive": {
+                        "value": [
+                          "num",
+                          4
+                        ],
+                        "origin": "a0:e8"
+                      },
+                      "leftNumeric": {
+                        "value": [
+                          "num",
+                          4
+                        ],
+                        "origin": "a0:e10"
+                      },
+                      "rightNumericPrimitive": {
+                        "value": [
+                          "num",
+                          1
+                        ],
+                        "origin": "a0:e12"
+                      },
+                      "rightNumeric": {
+                        "value": [
+                          "num",
+                          1
+                        ],
+                        "origin": "a0:e14"
+                      },
+                      "value": {
+                        "value": [
+                          "num",
+                          5
+                        ],
+                        "origin": "a0:e16"
+                      }
+                    },
+                    "completion": {
+                      "type": "normal",
+                      "value": {
+                        "value": [
+                          "num",
+                          5
+                        ],
+                        "origin": "a0:e16"
+                      }
+                    },
+                    "phase": "done",
+                    "status": "completed",
+                    "coercion": null,
+                    "version": 15
+                  }
+                },
+                "control": {
+                  "a0": {
+                    "version": 1,
+                    "activeFrameId": null,
+                    "queue": [],
+                    "timers": [],
+                    "now": 0,
+                    "nextTimerId": 0,
+                    "timerTurns": 0,
+                    "status": "completed",
+                    "globalEnvId": "e1",
+                    "completion": {
+                      "kind": "return",
+                      "value": [
+                        "num",
+                        5
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "effects": {},
+            "inputs": {}
+          },
+          "projectionOptions": {
+            "sourceLineage": "summary-prototype-pure-helper"
+          },
+          "referenceInput": {
+            "source": "\"use strict\";function increment(value){return value+1;}",
+            "entry": "increment",
+            "inputGraph": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  4
+                ]
+              ],
+              "objects": []
+            },
+            "fixture": {
+              "calls": [],
+              "settlementOrder": null
+            },
+            "randomSeed": null
+          },
+          "reference": {
+            "schema": "effectful-reference/4",
+            "exceptionProfile": "declared-error/name-message/1",
+            "outcome": {
+              "kind": "return",
+              "graph": {
+                "roots": [
+                  [
+                    "num",
+                    4
+                  ],
+                  [
+                    "num",
+                    5
+                  ]
+                ],
+                "objects": []
+              }
+            },
+            "effects": [],
+            "operations": [],
+            "decisions": [],
+            "completions": [],
+            "callbackFailures": [],
+            "unhandledRejections": [],
+            "sourceChecks": {
+              "schema": "effectful-source-checks/5",
+              "status": "agreed",
+              "computations": 1,
+              "branches": 0,
+              "completions": {
+                "schema": "source-completions/1",
+                "status": "agreed",
+                "checked": 1,
+                "counts": {
+                  "return": 1
+                },
+                "referenceValues": "scalars-and-input-rooted-reference-identity",
+                "uncovered": [
+                  "intermediate-reference-property-snapshots",
+                  "implicit-parameter-initialization",
+                  "implicit-call-throws-without-a-catch-or-finally",
+                  "Promise-job-internals"
+                ]
+              }
+            }
+          },
+          "effects": [],
+          "replay": {
+            "valid": true,
+            "publicDigest": "f1cd3573460629f1975b65ec8d2a399ea1d53c62173fda103dc3b7c2ff1fff4c",
+            "certificates": 4,
+            "generatedRecords": 4,
+            "nativeReplayDispatches": 0
+          },
+          "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+          "evidenceKind": "deterministic-engineering",
+          "optimizerSteps": 0,
+          "identity": {
+            "schema": "semantic-candidate-identity/1",
+            "episodeDigest": "f1cd3573460629f1975b65ec8d2a399ea1d53c62173fda103dc3b7c2ff1fff4c",
+            "source": {
+              "provenance": {
+                "family": "summary-prototype-pure-helper",
+                "license": "repository-fixture",
+                "trustTier": "repository-fixture",
+                "sourceDigest": "35b1fefcd03e0cd457b1e21ab55cac0f4243d541eb98f9bbb3e9aedc2efd9bde",
+                "fixtureDigest": "88eda9256df24f8acf4a6051ec324c08c93a77621e62116997f3a8748de778f9",
+                "seed": 17,
+                "upstream": {}
+              },
+              "referenceInputDigest": "4f1f9052c3b27ee9cfcd75a3b67e988682a03f279be57736b209a68b311819c7"
+            },
+            "lineage": {
+              "sourceFamily": "summary-prototype-pure-helper",
+              "sourceLineage": "summary-prototype-pure-helper",
+              "fixtureFamily": "summary-prototype-pure-helper",
+              "taskId": "summary-prototype-pure-helper",
+              "ancestorIds": [
+                "summary-prototype-pure-helper"
+              ]
+            },
+            "split": {
+              "schema": "semantic-split-identity/1",
+              "policy": "family-hash/1",
+              "seed": 17,
+              "componentId": "summary-prototype-pure-helper",
+              "members": [
+                "summary-prototype-pure-helper"
+              ],
+              "split": "train",
+              "registryDigest": null,
+              "holdout": null
+            },
+            "execution": {
+              "profile": "training-js/1",
+              "parser": "acorn/8.15.0:training-js/1",
+              "execution": "semantic-execution/5",
+              "trace": "semantic-trace/5",
+              "context": "semantic-context/5",
+              "harness": "selected-harness/2",
+              "representation": "compact",
+              "capabilities": [],
+              "limits": {
+                "maxSteps": 100000,
+                "timeoutMs": 5000,
+                "maxGenerated": 16384,
+                "maxOperators": 8
+              },
+              "projectionOptions": {
+                "sourceLineage": "summary-prototype-pure-helper"
+              },
+              "completionPolicy": "complete-root-and-observed-callbacks/1"
+            },
+            "seeds": {
+              "generation": null,
+              "input": null,
+              "schedule": null,
+              "optimizer": null,
+              "guestRng": null,
+              "split": 17
+            },
+            "environment": {
+              "schema": "semantic-execution-environment/1",
+              "node": "24.22.3",
+              "v8": "13.6.233.17-node.63",
+              "platform": "linux",
+              "arch": "x64",
+              "timezone": "Europe/Berlin",
+              "parser": "8.15.0",
+              "typescript": "5.9.3",
+              "packageLockDigest": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88",
+              "implementationDigest": "81aa299f8c357794ad5915315ec3c560eccbdd7b020de86bf19330dd0b107ca8",
+              "locale": "en-US",
+              "referenceIsolation": {
+                "schema": "semantic-reference-isolation/1",
+                "mode": "trusted-process",
+                "launcherSha256": "b9d3bd23d092083173508fd570c3d5b6dc4e0e98fc9814e3df543e634351ea24"
+              }
+            },
+            "certification": {
+              "producerRevision": null,
+              "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+              "evidenceKind": "deterministic-engineering",
+              "optimizerSteps": 0,
+              "learnedSuccess": null,
+              "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+              "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+              "archiveDigest": "fbdcaaa5ce0d2dbcee48684d312445415d5cb4a1656f2ff8be55d979d549b23d",
+              "referenceDigest": "e4d4406f85bf7b06ca5efff379973a200ee740d9bc23d7b14d115e211b99d236",
+              "effectsDigest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+              "compilerDigest": "4f9e40ed7881247fbf51903f31c5bc1fd00d8946de37809faf44a2a5f36cb3b4",
+              "replayDigest": "fd24c50846558fe0cb5616d366a68a8753aa8a748aa81d4cbbaebf2e666dc8fb",
+              "componentIdentities": [],
+              "nativePolicy": null
+            }
+          },
+          "identityDigest": "80186d3b84b42a3af2b6a277cd7bdf5ba984adcc7db75b0b933762d833a8fce5"
+        }
+      }
+    },
+    "sourceLineage": "summary-prototype-pure-helper",
+    "splitIdentity": {
+      "schema": "semantic-split-identity/1",
+      "policy": "family-hash/1",
+      "seed": 17,
+      "componentId": "summary-prototype-pure-helper",
+      "members": [
+        "summary-prototype-pure-helper"
+      ],
+      "split": "train",
+      "registryDigest": null,
+      "holdout": null
+    },
+    "metrics": {
+      "detailedRecords": 4,
+      "detailedBytes": 286,
+      "summaryRecords": 1,
+      "summaryBytes": 123,
+      "nativeTokens": null
+    },
+    "nativeAdmission": false,
+    "learningStatus": "untested",
+    "boundary": "A separately provided region endpoint, not a v5 selected-execution record or native consumer qualification."
+  }
+}
