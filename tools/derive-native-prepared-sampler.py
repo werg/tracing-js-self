@@ -58,6 +58,18 @@ try{for(const id of JSON.parse(readFileSync(0,'utf8'))){
     S.require(process.returncode == 0, "Original campaign document export failed: " + process.stderr[-4000:])
 
 
+def verify_archived_document(document, original, source, audit_row, join, public_digest):
+    side = document["sidecar"]
+    S.require(side["taskId"] == join["nativeTaskId"] and side["identityDigest"] == original["identityDigest"] and
+        side["producerRevision"] == source["producerRevision"] and
+        side["sourceFamily"] == original["family"] and side["split"] == original["split"] and
+        public_digest(document) == original["episodeDigest"],
+        "Archived source document differs from its original campaign identity")
+    S.require(audit_row["supervisionSha256"] == S.digest(side) and
+        audit_row["source"].get("identityDigest") == original["identityDigest"],
+        "Native audit source/sidecar differs from the complete archived campaign")
+
+
 def reconstruct_rows(prepared_root, database_rows, index_rows, source, native, audit, documents_path,
                      policy, codec, modules, destination):
     storage, schema, corpus_module, admission, adapter, _ = modules
@@ -65,7 +77,8 @@ def reconstruct_rows(prepared_root, database_rows, index_rows, source, native, a
     database = S.unique(database_rows, "episode_id", "native database")
     S.require(set(audit_by_id) == set(database), "Native audit omits or adds a prepared input episode")
     originals = S.unique(source["cases"], "id", "source")
-    by_candidate = {json.loads(row["episode_json"])["lineage"]["task_id"]: row for row in database_rows}
+    joins = S.source_episode_joins(source, database_rows, audit, policy)
+    by_candidate = {joins[row["episode_id"]]["id"]: row for row in database_rows}
     indexed = S.unique(index_rows, "episode_id", "index")
     proofs, seen = [], set()
     with storage.PreparedDataset(prepared_root, split=None, verify_checksums=True) as prepared:
@@ -84,15 +97,8 @@ def reconstruct_rows(prepared_root, database_rows, index_rows, source, native, a
                 seen.add(case_id)
                 row, original = by_candidate[case_id], originals[case_id]
                 audit_row = audit_by_id[row["episode_id"]]
-                side = document["sidecar"]
-                S.require(side["taskId"] == case_id and side["identityDigest"] == original["identityDigest"] and
-                    side["producerRevision"] == source["producerRevision"] and
-                    side["sourceFamily"] == original["family"] and side["split"] == original["split"] and
-                    corpus_module.public_digest(document) == original["episodeDigest"],
-                    "Archived source document differs from its original campaign identity")
-                S.require(S.canonical(audit_row["supervision"]) == S.canonical(side) and
-                    audit_row["source"].get("identityDigest") == original["identityDigest"],
-                    "Native audit source/sidecar differs from the complete archived campaign")
+                verify_archived_document(document, original, source, audit_row,
+                    joins[row["episode_id"]], corpus_module.public_digest)
                 fresh = admission.native_admission(document, codec=codec,
                     consumer_revision=policy["consumerRevision"], max_positions=native["maxPositions"],
                     max_history=native["maxHistory"])
@@ -122,7 +128,7 @@ def reconstruct_rows(prepared_root, database_rows, index_rows, source, native, a
                 line_sha = hashlib.sha256((exact + "\n").encode()).hexdigest()
                 if row["episode_id"] in indexed:
                     S.require(line_sha == indexed[row["episode_id"]]["sha256"], "Prepared canonical Episode bytes changed")
-                proof = {"id": case_id, "episodeId": episode.episode_id, "episodeJsonLineSha256": line_sha,
+                proof = {**joins[row["episode_id"]], "episodeId": episode.episode_id, "episodeJsonLineSha256": line_sha,
                     "sourceDocumentSha256": S.digest(document), "sourceAdmissionSha256": S.digest(audit_row["source"]),
                     "nativeAdmissionSha256": S.digest(fresh), "pinnedNativeReconstructionIdentical": True,
                     "generatedTokens": generated, "scoredPositions": scored, "wholeTranscriptTokens": total,
@@ -186,9 +192,9 @@ def derive(args, staging):
     S.require(codec.fingerprint == policy["tokenizerIdentity"], "Actual native tokenizer identity differs")
     database_rows = S.read_database(prepared_root / "semantic-dedup.sqlite", "SELECT * FROM episodes ORDER BY ordinal")
     index_rows = S.read_database(index_path, "SELECT * FROM episodes ORDER BY entry_id")
-    accepted, excluded, omissions = S.joined_inventory(source, prepared, native, policy, database_rows, index_rows)
-    audit = S.read(prepared_root / "semantic-audit.json", maximum=256 << 20)
-    S.require(isinstance(audit, list) and len(audit) == len(database_rows), "Native audit population differs from preparation")
+    audit = S.read_audit_proofs(prepared_root / "semantic-audit.json", len(database_rows),
+        staging / "native-audit-proofs.jsonl")
+    accepted, excluded, omissions = S.joined_inventory(source, prepared, native, policy, database_rows, index_rows, audit)
     S.check_bindings(bindings)
     documents = staging / "source-documents.jsonl"
     campaign_documents(campaign, [row["id"] for row in accepted + excluded], documents)
@@ -206,6 +212,7 @@ def derive(args, staging):
             "nativeDedupDatabaseSha256": S.sha(prepared_root / "semantic-dedup.sqlite"),
             "nativeReportSha256": S.sha(prepared_root / "semantic-report.json"),
             "nativeAuditSha256": S.sha(prepared_root / "semantic-audit.json"),
+            "nativeAuditProofsSha256": S.sha(staging / "native-audit-proofs.jsonl"),
             "campaignVerificationSha256": S.sha(staging / "campaign-verification.json"),
             "nativeRowVerificationSha256": S.sha(staging / "native-row-verification.jsonl")})
     S.check_bindings(bindings)
@@ -218,6 +225,9 @@ def derive(args, staging):
         "nativePreparedFingerprint": prepared["fingerprint"], "fileBindings": bindings,
         "campaignVerificationSha256": S.sha(staging / "campaign-verification.json"),
         "sourceDocumentsSha256": S.sha(documents), "nativeRowVerificationSha256": sampler["nativeRowVerificationSha256"],
+        "nativeAuditProofsSha256": sampler["nativeAuditProofsSha256"], "sourceJoinSchema": S.SOURCE_JOIN_SCHEMA,
+        "auditReader": {"mode": "stream-one-object-with-complete-sidecar-digest",
+                        "maxItemBytes": S.AUDIT_ITEM_BYTES, "maxRows": len(database_rows)},
         "samplerSha256": S.sha(staging / "sampler.json"), "nativeRowsReconstructed": len(proofs),
         "acceptedRows": len(accepted), "nativeExclusions": len(excluded), "upstreamOmissions": len(omissions),
         "sourceAdmission": "archived-source-receipts-reconciled-to-complete-campaign",

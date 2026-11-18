@@ -14,6 +14,7 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,11 +24,14 @@ import native_prepared_sampler as S
 SPEC = importlib.util.spec_from_file_location("sampler_cli", ROOT / "tools/derive-native-prepared-sampler.py")
 CLI = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(CLI)
+MATERIALIZER_SPEC = importlib.util.spec_from_file_location("materializer_cli", ROOT / "tools/materialize-native-prepared-subset.py")
+MATERIALIZER = importlib.util.module_from_spec(MATERIALIZER_SPEC)
+MATERIALIZER_SPEC.loader.exec_module(MATERIALIZER)
 
 
 def fixture():
     policy = {"consumerRevision": "b" * 40, "tokenizerIdentity": "c" * 64, "tokenizerSha256": "d" * 64}
-    rows, indexed, cases = [], [], []
+    rows, indexed, cases, audit = [], [], [], []
     for ordinal, (name, split) in enumerate((("train-a", "train"), ("train-b", "train"),
                                             ("validation-v", "validation"), ("test-t", "test"),
                                             ("duplicate", "train"))):
@@ -51,8 +55,18 @@ def fixture():
             "episodeDigest": S.digest([name, "public"]), "metrics": {"generatedTokens": generated, "observedTokens": observed},
             "difficulty": {"schema": "semantic-execution-difficulty/1", "activations": 1,
                 "episodes": [{"executedOperations": ["primitive.binary"], "exceptionPath": {"outcome": "return", "throws": 0}}]}})
+        audit.append(S.compact_audit_row({"episodeId": episode["episode_id"],
+            "source": {"schema": "semantic-source-admission/4", "producerRevision": "a" * 40,
+                "identityDigest": cases[-1]["identityDigest"], "episodeDigest": cases[-1]["episodeDigest"]},
+            "native": {"schema": "semantic-native-admission/4", "admitted": True, **policy,
+                "episodeDigest": cases[-1]["episodeDigest"]},
+            "supervision": {"taskId": name, "identityDigest": cases[-1]["identityDigest"],
+                "producerRevision": "a" * 40, "sourceFamily": cases[-1]["family"],
+                "sourceLineage": cases[-1]["family"], "split": split}}))
     omitted = copy.deepcopy(cases[0])
     omitted["id"] = "upstream-budget-omission"
+    omitted["identityDigest"] = S.digest([omitted["id"], "identity"])
+    omitted["episodeDigest"] = S.digest([omitted["id"], "public"])
     cases.extend([omitted, {"id": "unsupported", "status": "unsupported", "family": "unsupported"}])
     source = {"schema": "semantic-corpus-manifest/4", "producerRevision": "a" * 40,
         "campaign": {"identityDigest": "e" * 64}, "sourceRegistry": {"digest": "f" * 64}, "cases": cases}
@@ -62,10 +76,103 @@ def fixture():
     native = {"schema": "semantic-preparation/4", "producerRevision": source["producerRevision"],
         "consumerRevision": policy["consumerRevision"], "tokenizerIdentity": policy["tokenizerIdentity"],
         "refusals": [], "counts": {"admitted": 5, "attempted": 5}, "accepted": 4}
-    return source, prepared, native, policy, rows, indexed
+    return source, prepared, native, policy, rows, indexed, audit
 
 
 class InventoryTests(unittest.TestCase):
+    def test_distinct_candidates_can_retain_the_same_native_task_identity(self):
+        values = fixture()
+        for index in (0, 1):
+            episode = json.loads(values[4][index]["episode_json"])
+            episode["lineage"]["task_id"] = "async-counter"
+            values[4][index]["episode_json"] = S.canonical(episode)
+            values[6][index]["supervision"]["taskId"] = "async-counter"
+            values[6][index]["supervisionSha256"] = S.digest(values[6][index]["supervision"])
+        accepted, excluded, omissions = S.joined_inventory(*values)
+        self.assertEqual([(row["id"], row["nativeTaskId"]) for row in accepted[:2]],
+                         [("train-a", "async-counter"), ("train-b", "async-counter")])
+        self.assertEqual(len(accepted) + len(excluded), len(values[4]))
+        self.assertEqual([row["id"] for row in omissions], ["upstream-budget-omission"])
+
+    def test_audit_identity_joins_refuse_missing_ambiguous_repeated_or_tampered_evidence(self):
+        def ambiguous(values):
+            values[0]["cases"].append({**values[0]["cases"][0], "id": "ambiguous-candidate"})
+        def repeated(values):
+            other_id = values[6][1]["episodeId"]
+            values[6][1] = {**copy.deepcopy(values[6][0]), "episodeId": other_id}
+        attacks = [
+            (lambda f: f[6].pop(), "omits or adds"),
+            (lambda f: f[6].append(copy.deepcopy(f[6][0])), "Repeated native audit"),
+            (lambda f: f[6][0].update(episodeId="foreign"), "omits or adds"),
+            (lambda f: f[6][0]["source"].update(identityDigest="0" * 64), "missing or ambiguous"),
+            (lambda f: f[6][0]["source"].update(episodeDigest="0" * 64), "missing or ambiguous"),
+            (lambda f: f[6][0]["supervision"].update(identityDigest="0" * 64), "source/sidecar"),
+            (lambda f: f[6][0]["supervision"].update(taskId="different-task"), "task identity"),
+            (lambda f: f[6][0].update(supervisionSha256=None), "source/sidecar"),
+            (lambda f: f[6][0]["native"].update(episodeDigest="0" * 64), "pinned source or consumer"),
+            (lambda f: f[6][0]["native"].update(consumerRevision="0" * 40), "pinned source or consumer"),
+            (lambda f: f[6][0]["native"].update(tokenizerIdentity="0" * 64), "pinned source or consumer"),
+            (lambda f: f[6][0]["native"].update(admitted=False), "pinned source or consumer"),
+            (ambiguous, "missing or ambiguous"), (repeated, "repeats an original candidate")]
+        for change, error in attacks:
+            with self.subTest(error=error):
+                values = fixture()
+                change(values)
+                with self.assertRaisesRegex(ValueError, error):
+                    S.joined_inventory(*values)
+
+    def test_materializer_authenticates_separate_task_ids_and_preserves_legacy_gate(self):
+        values = fixture()
+        episode_value = json.loads(values[4][0]["episode_json"])
+        episode_value["lineage"]["task_id"] = "async-counter"
+        values[4][0]["episode_json"] = S.canonical(episode_value)
+        values[6][0]["supervision"]["taskId"] = "async-counter"
+        values[6][0]["supervisionSha256"] = S.digest(values[6][0]["supervision"])
+        accepted, _, _ = S.joined_inventory(*values)
+        sampler = {"sourceJoinSchema": S.SOURCE_JOIN_SCHEMA, "nativePolicy": values[3], "acceptedDecisions": accepted}
+        joins = S.sampler_source_joins(sampler, values[0], values[4], values[6])
+        episode = SimpleNamespace(episode_id=episode_value["episode_id"],
+                                  lineage=SimpleNamespace(**episode_value["lineage"]))
+        self.assertEqual(MATERIALIZER.verify_native_lineage(episode, accepted[0], joins), "async-counter")
+        for key, value in (("id", "train-b"), ("nativeTaskId", "train-a"),
+                           ("nativeAuditSupervisionSha256", "0" * 64)):
+            with self.subTest(key=key):
+                changed = copy.deepcopy(sampler)
+                changed["acceptedDecisions"][0][key] = value
+                with self.assertRaisesRegex(ValueError, "authenticated audit join"):
+                    S.sampler_source_joins(changed, values[0], values[4], values[6])
+                with self.assertRaisesRegex(ValueError, "authenticated audit join"):
+                    MATERIALIZER.verify_native_lineage(episode, changed["acceptedDecisions"][0], joins)
+        del sampler["sourceJoinSchema"]
+        with self.assertRaisesRegex(ValueError, "declared source audit join"):
+            S.sampler_source_joins(sampler, values[0], values[4], values[6])
+        with self.assertRaisesRegex(ValueError, "lacks its authenticated source join"):
+            MATERIALIZER.verify_native_lineage(episode, accepted[0], None)
+        legacy = {key: value for key, value in accepted[0].items()
+                  if key not in ("nativeTaskId", "nativeAuditSupervisionSha256")}
+        with self.assertRaisesRegex(ValueError, "Native lineage"):
+            MATERIALIZER.verify_native_lineage(episode, legacy, None)
+        episode.lineage.task_id = legacy["id"]
+        self.assertEqual(MATERIALIZER.verify_native_lineage(episode, legacy, None), legacy["id"])
+
+    def test_complete_archived_sidecar_hash_is_checked_beyond_join_fields(self):
+        values = fixture()
+        public = {"original": "public source bytes"}
+        original = {**values[0]["cases"][0], "episodeDigest": S.digest(public)}
+        side = {**values[6][0]["supervision"], "taskId": "async-counter", "privateWitness": {"value": 7}}
+        audit = {**values[6][0], "supervisionSha256": S.digest(side)}
+        document = {"public": public, "sidecar": side}
+        join = {"id": original["id"], "nativeTaskId": "async-counter"}
+        public_digest = lambda value: S.digest(value["public"])
+        CLI.verify_archived_document(document, original, values[0], audit, join, public_digest)
+        side["privateWitness"]["value"] = 8
+        with self.assertRaisesRegex(ValueError, "complete archived campaign"):
+            CLI.verify_archived_document(document, original, values[0], audit, join, public_digest)
+        side["privateWitness"]["value"] = 7
+        side["taskId"] = original["id"]
+        with self.assertRaisesRegex(ValueError, "original campaign identity"):
+            CLI.verify_archived_document(document, original, values[0], audit, join, public_digest)
+
     def test_all_native_rows_partition_and_upstream_omissions_remain_separate(self):
         inputs = fixture()
         original = copy.deepcopy(inputs)
@@ -107,8 +214,8 @@ class InventoryTests(unittest.TestCase):
                 f[4][0]["episode_json"] = S.canonical(episode)
             return change
         attacks = [
-            (lineage("task_id", "foreign-candidate"), "candidate join"),
-            (lineage("task_id", "train-b"), "family or frozen split"),
+            (lineage("task_id", "foreign-candidate"), "audit task identity"),
+            (lineage("task_id", "train-b"), "audit task identity"),
             (lineage("family_id", "invented-family"), "family or frozen split"),
             (lineage("frozen_split", "test"), "family or frozen split"),
             (lambda f: f[4][0].update(split="test"), "moved its frozen"),
@@ -264,6 +371,56 @@ writeFileSync(join(process.argv[2],'manifest.json'),JSON.stringify({sourceRegist
             (campaign / "manifest.json").write_text(S.canonical(manifest))
             with self.assertRaisesRegex(ValueError, "Frozen registry/component identity"):
                 CLI.campaign_documents(campaign, ["one"], root / "forged-registry.jsonl")
+
+
+class StreamingAuditTests(unittest.TestCase):
+    def test_streams_pretty_multibyte_rows_when_the_whole_file_exceeds_the_item_cap(self):
+        rows = [{"name": "é🦊", "escaped": "\\\"}],[", "nested": [{"i": index}]} for index in range(50)]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "audit.json"
+            path.write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
+            self.assertGreater(path.stat().st_size, 256)
+            for chunk in (1, 7, 4096):
+                self.assertEqual(list(S.iter_json_array(path, max_item_bytes=256, max_items=50, chunk_bytes=chunk)), rows)
+            with self.assertRaisesRegex(ValueError, "declared row population"):
+                list(S.iter_json_array(path, max_items=49))
+
+    def test_byte_cap_and_invalid_structure_fail_without_a_partial_success(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "audit.json"
+            row = {"unicode": "é" * 40}
+            raw = S.canonical(row).encode()
+            path.write_bytes(b"[" + raw + b"]")
+            self.assertEqual(list(S.iter_json_array(path, max_item_bytes=len(raw), chunk_bytes=1)), [row])
+            with self.assertRaisesRegex(ValueError, "item exceeds"):
+                list(S.iter_json_array(path, max_item_bytes=len(raw) - 1, chunk_bytes=1))
+            for raw in (b'{}', b'[{"a":1},]', b'[{"a":1}{"b":2}]', b'[{"a":1}]x', b'[{"a":1',
+                        b'[{"a":1,"a":2}]', b'[{"a":NaN}]', b'[{"a":1e999}]', b'[0]', b'[{"a":"\xff"}]'):
+                with self.subTest(raw=raw):
+                    path.write_bytes(raw)
+                    with self.assertRaises(ValueError):
+                        list(S.iter_json_array(path, max_item_bytes=256, chunk_bytes=1))
+
+    def test_compact_proofs_bind_all_supervision_without_retaining_witnesses(self):
+        values = fixture()
+        rows = [{key: copy.deepcopy(value) for key, value in proof.items() if key != "supervisionSha256"}
+                for proof in values[6]]
+        for row in rows:
+            row["supervision"]["privateWitness"] = {"value": "original " * 20}
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            S.write(root / "audit.json", rows)
+            proofs = S.read_audit_proofs(root / "audit.json", len(rows), root / "proofs.jsonl", max_item_bytes=4096)
+            self.assertEqual(len(proofs), len(rows))
+            self.assertEqual([json.loads(line) for line in (root / "proofs.jsonl").read_text().splitlines()], proofs)
+            self.assertEqual(proofs[0]["supervisionSha256"], S.digest(rows[0]["supervision"]))
+            self.assertNotIn("privateWitness", proofs[0]["supervision"])
+            altered = copy.deepcopy(rows[0])
+            altered["supervision"]["privateWitness"]["value"] = "changed"
+            self.assertEqual(S.compact_audit_row(altered)["supervision"], proofs[0]["supervision"])
+            self.assertNotEqual(S.compact_audit_row(altered)["supervisionSha256"], proofs[0]["supervisionSha256"])
+            with self.assertRaisesRegex(ValueError, "population differs"):
+                S.read_audit_proofs(root / "audit.json", len(rows) + 1)
 
 
 if __name__ == "__main__":

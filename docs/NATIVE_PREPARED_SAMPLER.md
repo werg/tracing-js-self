@@ -59,6 +59,10 @@ python tools/materialize-native-prepared-subset.py \
 This last command is separate because a membership report is not a newly
 exported native dataset. It rechecks the parent identities, actual token IDs and
 free masks, final native deduplication, frozen splits, and output budgets.
+For current samplers it also reauthenticates the separate candidate and native
+task identities against the hash-bound parent audit. Historical samplers that
+predate these fields retain their original strict task-equals-candidate check;
+they cannot authorize a different native task identity.
 
 ## What the derivation verifies
 
@@ -71,10 +75,18 @@ is revalidated against its full source registry, original component, and split.
 
 For the native input it verifies the complete manifest, index and shard hashes,
 then opens the actual pinned `PreparedDataset` with checksum verification. It
-joins every dedup row to the original candidate through `lineage.task_id` and
-joins every accepted row to the entire prepared index. Missing, foreign,
-repeated, or unexplained rows fail the command. Native exclusions retain their
-duplicate and quarantine reasons.
+joins every dedup row to its audit by exact native episode ID. The audit's
+source `identityDigest` and public `episodeDigest` must identify exactly one
+original campaign candidate. Both receipts, the sidecar identity, source
+revision, consumer revision, and tokenizer must agree. `lineage.task_id` must
+match the audited sidecar's `taskId`; it is retained as `nativeTaskId` separately
+from the campaign candidate `id`. These values can legitimately differ, and
+multiple candidates can share a task ID without being collapsed. A task name
+is never a fallback for missing or ambiguous content identities.
+
+Every accepted row also joins the entire prepared index. Missing, foreign,
+repeated, ambiguous, or unexplained rows fail the command. Native exclusions
+retain their duplicate and quarantine reasons.
 
 Each input episode is reconstructed from its exact archived source document
 using the pinned `adapt_selected_harness_v5`. The command recomputes actual
@@ -85,6 +97,17 @@ bytes, reassembled logical record digests, encoded token IDs, free masks, and
 generated/scored/observed counts. The source oracle is not rerun by this
 inventory command; its archived source receipt is reconciled to the verified
 campaign rather than represented as a fresh source execution.
+
+The audit array is read one object at a time. Each UTF-8 JSON row is limited to
+256 MiB, and the maximum row count is the exact dedup database population. The
+whole-file 256 MiB limit is removed: a larger campaign can contain many bounded
+rows. Duplicate JSON keys, malformed or truncated arrays, trailing data,
+nonfinite values, and oversized rows fail. Only the small source/native
+receipts, join fields, and a SHA-256 of the **complete** supervision sidecar are
+retained. Reconstruction compares that hash with the complete rehydrated
+original sidecar, including private witnesses that are absent from the compact
+projection. The raw audit file remains hash-bound before and after its use.
+This is a serialized-row bound, not a Python process memory quota.
 
 The existing `preparedBudgetGroups` implementation rebuilds the conservative
 transitive union of frozen source components and native resolved families.
@@ -125,6 +148,7 @@ preparation. Successful output contains:
 | `sampler.json` | Full accepted decisions, immutable source/native identities, token budgets, evaluation membership, native exclusions and upstream omissions. |
 | `inventory-verification.json` | Exact input/tool file hashes, pinned revisions, sampler hash, reconstructed row count and scope declarations. |
 | `campaign-verification.json` | Complete original campaign verification, including non-admissions. |
+| `native-audit-proofs.jsonl` | One compact proof per native input, retaining source/native receipts, both identity domains, and a hash of the full original supervision sidecar. |
 | `native-row-verification.jsonl` | One receipt for every native input episode, binding its full Episode, original document, native/source receipts and encoded tokens/masks. |
 | `source-documents.jsonl` | Exact selected original documents rehydrated from the campaign; includes the existing private audit sidecars. |
 
@@ -151,10 +175,12 @@ python test/test_native_prepared_sampler.py
 node --test test/native-prepared-coverage.test.js
 ```
 
-The focused fixtures exercise complete joins, altered identities/splits/counts,
-missing/repeated/foreign rows, stale pins, fragmented records, scored context,
-cross-split native/source unions, sealed SQLite files, and the maintained
-coverage CLI handoff. Their token counts are explicitly synthetic test inputs.
+The focused fixtures exercise different and shared native task IDs, authenticated
+candidate joins, complete-sidecar tampering, altered identities/splits/counts,
+missing/repeated/foreign/ambiguous rows, stale pins, fragmented records, scored
+context, streaming UTF-8 and JSON boundaries, cross-split native/source unions,
+sealed SQLite files, materializer identity gates, and the maintained coverage
+CLI handoff. Their token counts are explicitly synthetic test inputs.
 They are not an actual native admission or learned result. Full production
 reconstruction requires the actual current campaign, sealed prepared archive,
 pinned consumer, and production tokenizer in the native engineering lane.

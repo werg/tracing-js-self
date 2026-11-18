@@ -7,8 +7,10 @@ admission, tokenizer, or model. Production reconstruction happens in the CLI.
 from __future__ import annotations
 
 import base64
+import codecs
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 import sqlite3
@@ -16,6 +18,9 @@ import subprocess
 
 
 SCHEMA = "semantic-native-prepared-training-sampler/1"
+SOURCE_JOIN_SCHEMA = "semantic-native-audit-source-join/1"
+AUDIT_ITEM_BYTES = 256 << 20
+AUDIT_SUPERVISION_FIELDS = ("identityDigest", "taskId", "sourceFamily", "sourceLineage", "split", "producerRevision")
 SPLITS = ("train", "validation", "test")
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -46,6 +51,114 @@ def read(path, maximum=64 << 20):
     require(path.stat().st_size <= maximum, "Metadata exceeds the declared bounded reader: " + str(path))
     with path.open("r", encoding="utf-8") as stream:
         return json.load(stream)
+
+
+def _unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        require(key not in result, "Repeated JSON object key in native audit: " + key)
+        result[key] = value
+    return result
+
+
+def iter_json_array(path, *, max_item_bytes=AUDIT_ITEM_BYTES, max_items=1_000_000, chunk_bytes=64 << 10):
+    """Read a strict object array with bounded buffering, retaining one row only.
+
+    Grow incomplete-row reads geometrically so a large pretty-printed sidecar
+    is not reparsed once per small chunk. The cap applies to each UTF-8 JSON
+    item, not the entire campaign audit. No external parser is required.
+    """
+    require(type(max_item_bytes) is int and max_item_bytes > 0 and
+            type(max_items) is int and max_items >= 0 and type(chunk_bytes) is int and chunk_bytes > 0,
+            "Invalid streaming native audit limits")
+    def invalid_constant(value):
+        raise ValueError("Nonfinite JSON value in native audit: " + value)
+    def finite_float(value):
+        parsed = float(value)
+        require(math.isfinite(parsed), "Nonfinite JSON value in native audit: " + value)
+        return parsed
+    decoder = json.JSONDecoder(object_pairs_hook=_unique_object, parse_constant=invalid_constant,
+                               parse_float=finite_float)
+    utf8 = codecs.getincrementaldecoder("utf-8")()
+    buffer, ended = "", False
+    with Path(path).open("rb") as stream:
+        def more(amount):
+            nonlocal buffer, ended
+            block = stream.read(amount)
+            ended = not block
+            buffer += utf8.decode(block, final=ended)
+
+        def whitespace():
+            nonlocal buffer
+            buffer = buffer.lstrip(" \t\r\n")
+            while not buffer and not ended:
+                more(min(chunk_bytes, max_item_bytes))
+                buffer = buffer.lstrip(" \t\r\n")
+
+        whitespace()
+        require(buffer.startswith("["), "Native audit must be a JSON array")
+        buffer = buffer[1:]
+        count = 0
+        whitespace()
+        while not buffer.startswith("]"):
+            require(buffer.startswith("{"), "Native audit needs an object; truncated array or invalid item")
+            require(count < max_items, "Native audit exceeds the declared row population")
+            growth = min(chunk_bytes, max_item_bytes)
+            while True:
+                try:
+                    item, end = decoder.raw_decode(buffer)
+                except json.JSONDecodeError as error:
+                    require(not ended, "Malformed or truncated native audit JSON: " + str(error))
+                    pending = len(buffer.encode("utf-8")) + len(utf8.getstate()[0])
+                    require(pending < max_item_bytes, "Native audit item exceeds the bounded reader")
+                    more(min(growth, max_item_bytes - pending))
+                    growth = min(growth * 2, max_item_bytes)
+                else:
+                    require(len(buffer[:end].encode("utf-8")) <= max_item_bytes,
+                            "Native audit item exceeds the bounded reader")
+                    buffer = buffer[end:]
+                    count += 1
+                    yield item
+                    del item
+                    break
+            whitespace()
+            require(buffer and buffer[0] in ",]", "Native audit is missing an array separator or end")
+            if buffer[0] == "]":
+                break
+            buffer = buffer[1:]
+            whitespace()
+            require(not buffer.startswith("]"), "Native audit has a trailing array comma")
+        require(buffer.startswith("]"), "Truncated native audit array")
+        buffer = buffer[1:]
+        whitespace()
+        require(not buffer and ended, "Trailing data after native audit array")
+
+
+def compact_audit_row(row):
+    """Keep receipts and a digest of the complete sidecar, never its witnesses."""
+    require(isinstance(row, dict) and isinstance(row.get("supervision"), dict) and
+            isinstance(row.get("source"), dict) and isinstance(row.get("native"), dict),
+            "Incomplete native audit row")
+    return {"episodeId": row["episodeId"], "source": row["source"], "native": row["native"],
+            "supervision": {key: row["supervision"].get(key) for key in AUDIT_SUPERVISION_FIELDS},
+            "supervisionSha256": digest(row["supervision"])}
+
+
+def read_audit_proofs(path, expected_rows, destination=None, *, max_item_bytes=AUDIT_ITEM_BYTES):
+    proofs = []
+    output = Path(destination).open("x", encoding="utf-8") if destination is not None else None
+    try:
+        for row in iter_json_array(path, max_items=expected_rows, max_item_bytes=max_item_bytes):
+            proof = compact_audit_row(row)
+            proofs.append(proof)
+            if output is not None:
+                output.write(canonical(proof) + "\n")
+            del row
+        require(len(proofs) == expected_rows, "Native audit population differs from preparation")
+    finally:
+        if output is not None:
+            output.close()
+    return proofs
 
 
 def write(path, value):
@@ -119,6 +232,65 @@ def unique(rows, key, label):
     return result
 
 
+def source_episode_joins(source, database_rows, audit, policy):
+    """Authenticate candidate IDs without conflating them with native task IDs."""
+    originals = unique(source["cases"], "id", "original candidate")
+    database = unique(database_rows, "episode_id", "dedup episode")
+    audit_by_id = unique(audit, "episodeId", "native audit")
+    require(set(audit_by_id) == set(database), "Native audit omits or adds a prepared input episode")
+    by_identity = {}
+    for case in originals.values():
+        pair = (case.get("identityDigest"), case.get("episodeDigest"))
+        if case.get("status") == "admitted":
+            require(all(isinstance(value, str) and re.fullmatch(r"[a-f0-9]{64}", value) for value in pair),
+                    "Original admission is missing authenticated source identities")
+        if all(isinstance(value, str) for value in pair):
+            by_identity.setdefault(pair, []).append(case)
+    joins, seen = {}, set()
+    for episode_id, row in database.items():
+        proof = audit_by_id[episode_id]
+        source_receipt, native_receipt, side = proof["source"], proof["native"], proof["supervision"]
+        pair = (source_receipt.get("identityDigest"), source_receipt.get("episodeDigest"))
+        candidates = by_identity.get(pair, [])
+        require(len(candidates) == 1, "Native audit has a missing or ambiguous original candidate join")
+        case = candidates[0]
+        require(case["id"] not in seen, "Native audit repeats an original candidate join")
+        seen.add(case["id"])
+        require(case.get("status") == "admitted", "Native row joins an original non-admission")
+        require(source_receipt.get("schema") == "semantic-source-admission/4" and
+                source_receipt.get("producerRevision") == side.get("producerRevision") == source["producerRevision"] and
+                side.get("identityDigest") == pair[0] and side.get("sourceFamily") == case["family"] and
+                side.get("split") == case["split"] and
+                isinstance(proof.get("supervisionSha256"), str) and
+                re.fullmatch(r"[a-f0-9]{64}", proof["supervisionSha256"]),
+                "Native audit source/sidecar identity differs from the original campaign")
+        require(native_receipt.get("schema") == "semantic-native-admission/4" and
+                native_receipt.get("admitted") is True and native_receipt.get("episodeDigest") == pair[1] and
+                native_receipt.get("consumerRevision") == policy["consumerRevision"] and
+                native_receipt.get("tokenizerIdentity") == policy["tokenizerIdentity"] and
+                native_receipt.get("tokenizerSha256") == policy["tokenizerSha256"],
+                "Native audit admission differs from the pinned source or consumer")
+        episode = json.loads(row["episode_json"])
+        task_id = episode["lineage"]["task_id"]
+        require(isinstance(task_id, str) and task_id and side.get("taskId") == task_id,
+                "Native audit task identity differs from the stored native lineage")
+        joins[episode_id] = {"id": case["id"], "nativeTaskId": task_id,
+                            "nativeAuditSupervisionSha256": proof["supervisionSha256"]}
+    return joins
+
+
+def sampler_source_joins(sampler, source, database_rows, audit):
+    """Reauthenticate current sampler task fields before native materialization."""
+    require(sampler.get("sourceJoinSchema") == SOURCE_JOIN_SCHEMA,
+            "Current native task identities require their declared source audit join")
+    joins = source_episode_joins(source, database_rows, audit, sampler["nativePolicy"])
+    for expected in sampler["acceptedDecisions"]:
+        join = joins.get(expected["episodeId"])
+        require(join is not None and all(expected.get(key) == value for key, value in join.items()),
+                "Sampler candidate/native task identities differ from the authenticated audit join")
+    return joins
+
+
 def native_logical_digest(episode, tokenizer_identity):
     """Reassemble the pinned harness's exact pre-fragmentation record digest."""
     groups, seen, record_ids = [], set(), set()
@@ -156,7 +328,7 @@ def native_logical_digest(episode, tokenizer_identity):
     return hashlib.sha256(b"\n".join(bytes(group[1]) for group in groups)).hexdigest()
 
 
-def joined_inventory(source, prepared, native, policy, database_rows, index_rows):
+def joined_inventory(source, prepared, native, policy, database_rows, index_rows, audit):
     """Join the entire sealed dedup/index population; never silently drop a row."""
     require(source.get("schema") == "semantic-corpus-manifest/4", "Complete original campaign manifest required")
     for value in (source.get("campaign", {}).get("identityDigest"), source.get("sourceRegistry", {}).get("digest")):
@@ -172,6 +344,7 @@ def joined_inventory(source, prepared, native, policy, database_rows, index_rows
     indexed = unique(index_rows, "episode_id", "prepared episode")
     unique(index_rows, "entry_id", "prepared entry")
     unique(database_rows, "episode_id", "dedup episode")
+    joins = source_episode_joins(source, database_rows, audit, policy)
     require(native["counts"].get("admitted") == native["counts"].get("attempted") == len(database_rows),
             "Native admitted input population differs from the full dedup inventory")
     require(native["counts"].get("already_present", 0) == 0,
@@ -180,8 +353,8 @@ def joined_inventory(source, prepared, native, policy, database_rows, index_rows
     for row in database_rows:
         episode = json.loads(row["episode_json"])
         lineage = episode["lineage"]
-        case_id = lineage["task_id"]
-        require(case_id in originals and case_id not in seen, "Native row has a missing or repeated original candidate join")
+        join = joins[row["episode_id"]]
+        case_id = join["id"]
         seen.add(case_id)
         case = originals[case_id]
         require(case.get("status") == "admitted", "Native row joins an original non-admission")
@@ -196,7 +369,7 @@ def joined_inventory(source, prepared, native, policy, database_rows, index_rows
                 0 < generated == scored <= total and generated == case["metrics"]["generatedTokens"] and
                 total - generated == case["metrics"]["observedTokens"],
                 "Native generated/scored/observed token counts differ from original admission")
-        record = {"id": case_id, "episodeId": row["episode_id"], "split": case["split"],
+        record = {**join, "episodeId": row["episode_id"], "split": case["split"],
             "nativeSplit": row["split"], "family": case["family"],
             "frozenSourceComponent": case["sourceCluster"], "nativeResolvedFamily": row["resolved_family"],
             "generatedTokens": generated, "scoredPositions": scored, "wholeTranscriptTokens": total,
@@ -301,6 +474,7 @@ def make_sampler(source, prepared, policy, budget, accepted, excluded, omissions
         "evaluationRows": "retain-all-native-accepted-validation-and-test"},
         "scope": "Read-only sampler over the entire authenticated native accepted inventory; no new native dataset or optimization.",
         "producerRevision": source["producerRevision"], "nativePolicy": policy,
+        "sourceJoinSchema": SOURCE_JOIN_SCHEMA,
         "sourceRegistryDigest": source["sourceRegistry"]["digest"],
         "sourceCampaignDigest": source["campaign"]["identityDigest"],
         "nativePreparedFingerprint": prepared["fingerprint"], **bindings,
