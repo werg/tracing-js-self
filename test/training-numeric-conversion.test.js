@@ -20,6 +20,13 @@ test('Number primitive conversion retains missing arguments, special numbers and
     'Number(""),Number("  -12.5e1  "),Number("0x10"),Number("Infinity"),Number("invalid"),'+
     'Number(-0),Number(9007199254740993n),typeof Number];}');
 });
+test('String primitive conversion preserves missing arguments, signed zero and exact BigInts',async()=>{
+  await qualify('function run(){return [String(),String(undefined),String(null),String(false),String(true),'+
+    'String("unchanged"),String(-0),String(NaN),String(Infinity),String(9007199254740993n),typeof String];}');
+  await qualify('function argument(log,value){log.push(value);return value;}'+
+    'function run(){const log=[];const value=String(argument(log,12),argument(log,"ignored"),{value:99});'+
+    'return [value,log];}');
+});
 test('numeric calls evaluate ignored arguments once before conversion without coercing them',async()=>{
   await qualify('function argument(log,value){log.push(value);return value;}'+
     'function run(){const log=[];'+
@@ -44,7 +51,7 @@ test('uncaught numeric conversion errors complete selected execution after final
   assert.equal(actual.outcome.completion.kind,'throw');
 });
 test('owned object conversion remains an explicit uncaught profile refusal',async()=>{
-  for(const intrinsic of ['Number','BigInt']){
+  for(const intrinsic of ['Number','BigInt','String']){
     const result=await verifyEffectfulTrainingCase({source:'"use strict";function run(){try{return '+intrinsic+
       '({valueOf:function(){return 7;}});}catch(error){return 8;}}',entry:'run',family:'numeric-object-refusal',fixture:{calls:[]}});
     assert.equal(result.status,'unsupported',result.reason);

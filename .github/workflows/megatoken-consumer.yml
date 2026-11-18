@@ -69,7 +69,7 @@ jobs:
         if: matrix.recipe == 'engineering'
         run: |
           node tools/generate-capability-ledger.mjs --out "$RUNNER_TEMP/native-capabilities.json" \
-            --cases scalar-arithmetic,slice-undefined-end,parameter-body-scope,later-parameter-tdz,synchronous-primitive-throw,synchronous-declared-error,alias-preserving-mutation,input-array-mutation,array-some-short-circuit,array-for-each-owned-callback,sparse-array-fill,input-graph-mutation,parameter-camelcase-default-capture \
+            --cases scalar-arithmetic,slice-undefined-end,parameter-body-scope,later-parameter-tdz,synchronous-primitive-throw,synchronous-declared-error,alias-preserving-mutation,input-array-mutation,array-some-short-circuit,array-for-each-owned-callback,sparse-array-fill,input-graph-mutation,parameter-camelcase-default-capture,primitive-number-conversion,primitive-bigint-conversion,invalid-bigint-catch-and-throw,primitive-string-conversion \
             --megatoken megatoken --python python --tokenizer "$RUNNER_TEMP/tokenizer.json" \
             --native-policy contracts/native-admission-policy-v5.json
       - name: Validate shared schemas and independently source-check every corpus family

@@ -38,3 +38,21 @@ actual observable exception name/message under the declared error profile.
 the upstream source and canonical-file hashes, and the fresh
 `originalSourceCheck.canonicalExpectation`. Historical campaign objects retain
 their original dispositions and are never relabeled by these fixes.
+
+## Requalifying individual pinned cases
+
+`tools/check-real-source-cases.mjs` selects exact IDs from the current pinned
+real-source catalog and executes the same original-source, transformed-source,
+owned execution, replay, and optional native gates as the corpus worker. Pass
+`--out NEW_DIRECTORY --cases ID,ID` with either `--local` or the exact
+`--megatoken`, `--python`, `--tokenizer`, and `--native-policy` paths. The default
+catalog contains two canonical inputs per family; `--per-family N` selects the
+catalog bound explicitly. Native qualification requires a clean producer.
+
+The report declares its selected and available denominators and does not claim
+whole-corpus coverage. It retains the exact original/canonical source pins,
+notice hashes, canonical input and result bindings, fresh source recheck,
+native receipts, and checksums of compressed per-case evidence. Task inputs use
+the canonical graph encoding, preserving undefined, BigInts, special numbers,
+and aliases. A new output directory is required, and the historical campaign
+and its previous dispositions are never rewritten by this command.

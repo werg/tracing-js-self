@@ -36,8 +36,8 @@ caller supplies the completion owner, and the witness records any subsequent
 unwinding or enclosing async rejection without converting the host result into
 a generated value.
 Primitive-only `BigInt(...)` conversion also retains its actual TypeError,
-RangeError, or SyntaxError name/message. `Number(...)` and `BigInt(...)` support
-bounded primitive conversion and preserve argument evaluation order. Object
+RangeError, or SyntaxError name/message. `Number(...)`, `BigInt(...)`, and
+`String(...)` support bounded primitive conversion and preserve argument evaluation order. Object
 conversion remains an uncaught profile refusal; it never invokes native
 ToPrimitive or substitutes a catchable language error for unsupported behavior.
 An expression that throws contributes no successful-value instrumentation
