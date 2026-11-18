@@ -39,7 +39,7 @@ test('capability ladder executes a configured native gate and retains its failur
 });
 
 test('primitive numeric conversions and caught BigInt errors have independent positive probes',async()=>{
-  const ids=['primitive-number-conversion','primitive-bigint-conversion','invalid-bigint-catch-and-throw'];
+  const ids=['primitive-number-conversion','primitive-bigint-conversion','primitive-string-conversion','invalid-bigint-catch-and-throw'];
   const report=await buildCapabilityLedger({cases:CAPABILITY_CASES.filter(row=>ids.includes(row.id))});
   assert.equal(report.rows.length,ids.length);
   for(const row of report.rows){

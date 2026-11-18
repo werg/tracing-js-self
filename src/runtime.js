@@ -236,7 +236,7 @@ export class Runtime {
     for(const name of ['queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
-    for(const name of ['Object','Array','Number','BigInt','Math','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
+    for(const name of ['Object','Array','Number','BigInt','String','Math','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     s.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
@@ -280,7 +280,7 @@ export class Runtime {
     for(const name of ['parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
-    for(const name of ['Object','Array','Number','BigInt','Math','Promise','Set','Error','TypeError','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
+    for(const name of ['Object','Array','Number','BigInt','String','Math','Promise','Set','Error','TypeError','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     state.control.a0.globalEnvId=global;
@@ -1395,7 +1395,7 @@ if(object.kind==='regexp'){
           const fn=pop();let callable=fn.value;
           const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
-          if(callable[0]==='intrinsic'&&['Number','BigInt'].includes(callable[1])){
+          if(callable[0]==='intrinsic'&&['Number','BigInt','String'].includes(callable[1])){
             const value=args[0]?.value??U;
             // An explicit primitive-only intrinsic leaf. CALL has already
             // evaluated every argument in order; unused extra arguments are
@@ -1404,9 +1404,10 @@ if(object.kind==='regexp'){
             if(!['undefined','null','bool','str','num','bigint'].includes(value[0]))
               throw new TypeError(callable[1]+' conversion of an owned object is outside the bounded scalar profile');
             if(['str','bigint'].includes(value[0])&&value[1].length>10000)
-              throw new RangeError('Numeric conversion input exceeds the bounded scalar budget');
+              throw new RangeError('Primitive conversion input exceeds the bounded scalar budget');
             let converted;
-            try{converted=callable[1]==='Number'?(args.length?Number(decode(value)):0):BigInt(decode(value));}
+            try{converted=callable[1]==='Number'?(args.length?Number(decode(value)):0):
+              callable[1]==='String'?(args.length?String(decode(value)):''):BigInt(decode(value));}
             catch(error){
               // Only the scalar intrinsic can throw here. Preserve its real
               // language exception for catch/finally/replay and the oracle.
