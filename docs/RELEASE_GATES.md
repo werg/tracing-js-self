@@ -121,6 +121,10 @@ release review requires all of the following evidence:
    measured producer and profiles. Do not silently promote old feature-level
    receipts merely because a later subset passes.
 
+The engineering native job also runs the Python release/alias/learning-evidence
+regressions and retains their JUnit report. Tests requiring the actual optional
+diagnostic artifact bundle remain explicitly skipped when that bundle is absent.
+
 The companion CI uploads complete native corpus/prepared/release artifacts for
 90 days. Some historical utility workflows retain artifacts for only 14 days.
 CI retention is finite; a release is not durably delivered merely because an
