@@ -32,7 +32,7 @@ function requireDataOnly(value,path='state',seen=new WeakSet()){
 const tableNames = ['counters','envs','heap','promises','frames','effects','inputs','control','operations'];
 const opNames = {
   CONST:'literal.materialize', GET:'binding.read',
-  DEFAULT_GUARD:'binding.default.guard', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
+  DEFAULT_GUARD:'binding.default.guard', PARAM_INIT:'binding.initialize', ENTER_BODY_ENV:'environment.enter', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
   CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
   GET_PROP:'property.read', GET_METHOD:'property.read', PUT_PROP:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
@@ -214,9 +214,10 @@ export class Runtime {
         for(let k=0;k<extras.length;k++)putOwn(array,String(k),extras[k].value,null);
         binding=token(['ref',id]);
       }
-      draft.envs[envId].bindings[name]={kind:'parameter',initialized:true,token:binding,version:0};
+      draft.envs[envId].bindings[name]={kind:'parameter',
+        initialized:!this.programs[codeId].parameterExpressions,token:binding,version:0};
     });
-    for(const name of this.programs[codeId].varNames??[])
+    for(const name of this.programs[codeId].parameterExpressions?[]:(this.programs[codeId].varNames??[]))
       if(!Object.hasOwn(draft.envs[envId].bindings,name))
         draft.envs[envId].bindings[name]={kind:'var',initialized:true,
           token:token(U),version:0};
@@ -772,6 +773,22 @@ export class Runtime {
           return result(f.thisValue);
         case 'DECLARE':{const e=s.envs[f.envId];if(Object.hasOwn(e.bindings,arg.name))throw new SyntaxError(`Duplicate declaration ${arg.name}`);e.bindings[arg.name]={kind:arg.kind,initialized:false,token:null,version:0};return {};}
         case 'INIT':{const v=pop(),b=lookup(s,f.envId,arg);if(b.cell.initialized)throw new Error('Already initialized');b.cell.initialized=true;b.cell.token=v;b.cell.version++;return {...operands(v),result:v.value};}
+        case 'PARAM_INIT':{
+          const b=lookup(s,f.envId,arg);
+          if(b.cell.kind!=='parameter'||b.cell.initialized)
+            throw new Error('Invalid parameter initialization');
+          b.cell.initialized=true;b.cell.version++;
+          return {...operands(b.cell.token),result:b.cell.token.value};
+        }
+        case 'ENTER_BODY_ENV':{
+          const parameters=s.envs[f.envId],body=this.newEnv(s,f.envId);
+          for(const name of this.programs[f.codeId].varNames??[]){
+            const parameter=parameters.bindings[name];
+            s.envs[body].bindings[name]={kind:'var',initialized:true,
+              token:parameter?copy(parameter.token):token(U),version:0};
+          }
+          f.envId=body;return {};
+        }
         case 'GET':{const b=lookup(s,f.envId,arg);if(!b.cell.initialized)guestFault('ReferenceError',`Cannot access '${arg}' before initialization`);this.stackPush(f,b.cell.token.value,eventId);return {result:b.cell.token.value,reads:[{kind:'binding',envId:b.env.id,name:arg,version:b.cell.version??0,
             value:b.cell.token.value,supplyingEvent:b.cell.token.origin??null}],origins:[b.cell.token.origin]};}
         case 'TYPEOF_BINDING':{
@@ -796,8 +813,8 @@ export class Runtime {
         }
         case 'DEFAULT_GUARD':{
           const b=lookup(s,f.envId,arg.name);
-          if(!b.cell.initialized)
-            guestFault('ReferenceError','Default parameter is not initialized');
+          if(b.cell.kind!=='parameter'||b.cell.initialized)
+            throw new Error('Default guard requires an uninitialized parameter');
           const needsDefault=b.cell.token.value[0]==='undefined';
           if(!needsDefault)f.pc=arg.skipPc;
           return {result:['bool',needsDefault],

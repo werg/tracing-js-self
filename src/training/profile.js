@@ -486,12 +486,13 @@ export function parseTraining(source) {
         default:reject(n,'unhandled statement');
       }
     }
-    // Parameter initializers run before body var/lexical bindings exist and
-    // cannot read the current or later parameter while it is uninitialized.
-    // Validate in the narrower left-to-right parameter environment.
-    defaults.forEach((initializer,i)=>{
+    // All parameter names shadow the outer scope during initialization.
+    // Runtime initialization order enforces TDZ for the current/later names;
+    // closures may capture those names and call them after initialization.
+    // Body bindings never enter an initializer's lexical environment.
+    defaults.forEach(initializer=>{
       if(initializer)value(initializer,{
-        names:new Set(params.slice(0,i)),parent
+        names:new Set(params),parent
       });
     });
     statements.forEach(n=>statement(n,env));

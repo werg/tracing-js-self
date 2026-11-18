@@ -114,7 +114,9 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   const entryEnvironment=bundle.initialState.envs[
     bundle.initialState.frames[semantic.rootInvocation]?.envId];
   const entryData=Object.values(entryEnvironment?.bindings??{}).flatMap(binding=>{
-    const value=binding.initialized?binding.token?.value:null;
+    // Uninitialized parameter cells retain their incoming argument privately;
+    // those argument/rest identities are observed input, not a future value.
+    const value=(binding.initialized||binding.kind==='parameter')?binding.token?.value:null;
     return value?.[0]==='ref'&&['array','object'].includes(
       bundle.initialState.heap[value[1]]?.kind)?[value]:[];
   });
@@ -319,9 +321,13 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
         const capturedNames=new Set();
         for(let env=allocation.capture;env;env=state.envs[env]?.parent)
           for(const [name,binding] of Object.entries(state.envs[env]?.bindings??{}))
-            if(functionReferences.get(allocation.codeId)?.has(name)&&!capturedNames.has(name)&&
-              binding.initialized&&graphValue(binding.token?.value)){
+            if(functionReferences.get(allocation.codeId)?.has(name)&&!capturedNames.has(name)){
               capturedNames.add(name);
+              // An inner TDZ binding shadows every outer binding, even when
+              // the closure runs only after it initializes. v5 has no public
+              // uninitialized-cell record; never fabricate an outer capture.
+              if(!binding.initialized)refuse('closure captures an uninitialized binding: '+name);
+              if(!graphValue(binding.token?.value))continue;
               const id=cell(env,name);
               if(!controller(owner).locals.has(id))emit(owner,'bind',{name:id,value:tag(binding.token.value)},event,'capture-binding');
               fields.captures.push({binding:name,cell:id});
