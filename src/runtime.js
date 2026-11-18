@@ -2033,6 +2033,8 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                  Object.keys(descriptor.accessors??{}).length)
                 guestFault('TypeError','Accessor descriptor must be an owned data object');
               const d=descriptor.properties;
+              if(![null,'Object.prototype','Array.prototype'].includes(objectPrototype(descriptor)))
+                throw new TypeError('Inherited descriptor fields are outside the bounded profile');
               if(!Object.hasOwn(d,'get')&&!Object.hasOwn(d,'set'))
                 throw new TypeError('Only accessor descriptors are modeled');
               if(Object.hasOwn(d,'value')||Object.hasOwn(d,'writable'))
@@ -2041,6 +2043,11 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               for(const method of [getter,setter])
                 if(method.value[0]!=='undefined'&&!this.callableGuest(s,method.value))
                   guestFault('TypeError','Accessor must be a guest function or undefined');
+              // Indexed accessors need ArraySetLength's non-configurable
+              // deletion and ordered array-method continuations. Refuse the
+              // combination until those invariants are modeled together.
+              if(obj.kind==='array'&&arrayIndex(name))
+                throw new TypeError('Array index accessor descriptors are outside the bounded profile');
               if((Object.hasOwn(obj.accessors??{},name)&&!obj.accessors[name].configurable)||
                  name==='__proto__'||(obj.kind==='array'&&name==='length'))
                 guestFault('TypeError','Cannot redefine a non-configurable or reserved property');
@@ -2054,6 +2061,11 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               return {...operands(fn,...args),...result(v)};
             }
             if(callable[1]==='Object.create'){
+              // Never silently ignore the optional Properties argument.
+              // General data descriptors (including their default flags)
+              // are not part of the owned object model yet.
+              if(args.length>1&&args[1].value[0]!=='undefined')
+                throw new TypeError('Object.create property descriptors are outside the bounded profile');
               const proto=primitiveProto(v),id=this.next(s,'obj');
               s.heap[id]={id,kind:'object',prototype:proto,properties:{},propertyVersions:{},
                 shapeVersion:0,version:0};
