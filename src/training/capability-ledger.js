@@ -14,6 +14,9 @@ const pure=(id,body,args=[])=>({id,feature:id,source:'"use strict";'+body,entry:
 export const CAPABILITY_CASES=Object.freeze([
   pure('scalar-arithmetic','function run(a,b){return (a+b)*(a-b);}',[7,3]),
   pure('coercion-and-signed-zero','function run(){return ["2"-1,1/(-0),0/0];}'),
+  pure('primitive-number-conversion','function run(){return [Number(),Number(undefined),Number(null),Number(true),Number(" 2.5 "),1/Number("-0"),Number(3n)];}'),
+  pure('primitive-bigint-conversion','function run(){return [BigInt(3),BigInt(false),BigInt(" 9007199254740993 "),BigInt(3n)];}'),
+  pure('invalid-bigint-catch-and-throw','function run(){try{BigInt("invalid");}catch(error){if(error.name==="SyntaxError"){throw error;}return error.name;}}'),
   pure('both-branch-outcomes','function run(){let n=0;for(let i=0;i<2;i++){if(i===0){n+=3;}else{n+=7;}}return n;}'),
   pure('zero-loop-trips','function run(){let n=0;while(n<0){n++;}return n;}'),
   pure('short-circuit-mutation','function run(){let n=0;false&&(n++);true&&(n++);return n;}'),

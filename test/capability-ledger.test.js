@@ -37,3 +37,16 @@ test('capability ladder executes a configured native gate and retains its failur
   assert.equal(report.totals.nativeAdmission.untested,1);
   assert.equal(report.totals.modelEvaluation.untested,2);
 });
+
+test('primitive numeric conversions and caught BigInt errors have independent positive probes',async()=>{
+  const ids=['primitive-number-conversion','primitive-bigint-conversion','invalid-bigint-catch-and-throw'];
+  const report=await buildCapabilityLedger({cases:CAPABILITY_CASES.filter(row=>ids.includes(row.id))});
+  assert.equal(report.rows.length,ids.length);
+  for(const row of report.rows){
+    assert.equal(row.disposition,'locally_verified',row.id+': '+row.reason);
+    for(const stage of ['frontend','ownedEvaluation','independentOutcome','independentIntermediate','v5ProjectionAndPublicReplay'])
+      assert.equal(row.stages[stage],'passed',row.id+': '+stage);
+    assert.equal(row.stages.nativeAdmission,'untested');
+    assert.equal(row.stages.modelEvaluation,'untested');
+  }
+});
