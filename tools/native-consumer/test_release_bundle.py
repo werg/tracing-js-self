@@ -1,10 +1,12 @@
 import importlib.util
+import gzip
 import io
 import json
 import tarfile
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 spec = importlib.util.spec_from_file_location("release", Path(__file__).parents[1] / "package-semantic-release.py")
@@ -116,6 +118,107 @@ class ReleaseArchiveTests(unittest.TestCase):
                     release.verify_archive(archive)
                 with self.assertRaisesRegex(ValueError, "bounded metadata"):
                     release.write_archive(Path(directory) / "large.tar.gz", {"files": []}, {})
+
+
+class ReleaseQualificationTests(unittest.TestCase):
+    def environment_fixture(self, root):
+        tracer = root / "original-producing-checkout"
+        (tracer / "contracts").mkdir(parents=True)
+        (tracer / "tools/native-consumer").mkdir(parents=True)
+        policy = {"consumerRevision": "a" * 40, "tokenizerIdentity": "b" * 64, "tokenizerSha256": "c" * 64}
+        (tracer / "contracts/native-admission-policy-v5.json").write_text(json.dumps(policy))
+        (tracer / "tools/native-consumer/requirements.lock").write_text("actual-dependency==1.0\n")
+        receipt = {"schema": "semantic-native-environment-receipt/1", "status": "verified", **policy,
+                   "requirementsLockSha256": release.file_receipt(tracer / "tools/native-consumer/requirements.lock")["sha256"],
+                   "nativePolicySha256": release.file_receipt(tracer / "contracts/native-admission-policy-v5.json")["sha256"],
+                   "packages": {"actual-dependency": "1.0"}}
+        supplied = root / "supplied.json"
+        supplied.write_text(json.dumps(receipt))
+        return tracer, policy, receipt, supplied
+
+    def test_environment_gate_executes_the_exact_producer_checker_and_retains_actual_receipt(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            tracer, policy, receipt, supplied = self.environment_fixture(root)
+            actual = root / "actual.json"
+
+            def check(argv, **kwargs):
+                self.assertEqual(argv[:2], [release.sys.executable, str(tracer / "tools/native-consumer/check_environment.py")])
+                self.assertEqual(argv[-2:], ["--out", str(actual)])
+                actual.write_text(json.dumps(receipt))
+                return SimpleNamespace(returncode=0, stderr="")
+
+            with mock.patch.object(release.subprocess, "run", side_effect=check) as runner:
+                self.assertEqual(release.recheck_environment(tracer, root / "consumer", root / "tokenizer",
+                                 supplied, actual, policy), receipt)
+            runner.assert_called_once()
+            self.assertEqual(release.read_json(actual), receipt)
+
+    def test_stale_dependency_receipt_is_rejected_even_when_policy_pins_match(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            tracer, policy, receipt, supplied = self.environment_fixture(root)
+            stale = {**receipt, "packages": {"actual-dependency": "stale"}}
+            supplied.write_text(json.dumps(stale))
+            actual = root / "actual.json"
+
+            def check(argv, **kwargs):
+                actual.write_text(json.dumps(receipt))
+                return SimpleNamespace(returncode=0, stderr="")
+
+            with mock.patch.object(release.subprocess, "run", side_effect=check):
+                with self.assertRaisesRegex(ValueError, "stale"):
+                    release.recheck_environment(tracer, root / "consumer", root / "tokenizer", supplied, actual, policy)
+            self.assertEqual(release.read_json(actual), receipt)
+
+    def test_fresh_checker_failure_cannot_be_bypassed_by_a_previous_verified_receipt(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            tracer, policy, _, supplied = self.environment_fixture(root)
+            with mock.patch.object(release.subprocess, "run", return_value=SimpleNamespace(returncode=1, stderr="dirty consumer")):
+                with self.assertRaisesRegex(ValueError, "Fresh native environment verification failed: dirty consumer"):
+                    release.recheck_environment(tracer, root / "consumer", root / "tokenizer", supplied, root / "actual.json", policy)
+
+    def test_actual_public_digest_is_checked_independently_of_sidecar_identity(self):
+        row = {"id": "candidate", "family": "family", "split": "train", "identityDigest": "unchanged", "episodeDigest": "stale"}
+        document = {"public": {"changed": True}, "sidecar": {"sourceFamily": "family", "split": "train",
+                    "identityDigest": "unchanged", "producerRevision": "producer", "admission": "admitted"}}
+        with self.assertRaisesRegex(ValueError, "actual public digest"):
+            release.check_document_identity(row, document, "producer", lambda _: "actual")
+        row["episodeDigest"] = "actual"
+        self.assertEqual(release.check_document_identity(row, document, "producer", lambda _: "actual")["id"], "candidate")
+
+    def test_compact_documents_are_read_from_checksummed_bounded_objects(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = b'{"public":"data"}\n'
+            path = root / "object.json.gz"
+            path.write_bytes(gzip.compress(raw, mtime=0))
+            reference = {"path": path.name, "encoding": "gzip", "uncompressedBytes": len(raw),
+                         "contentSha256": release.digest(raw), **release.file_receipt(path)}
+            self.assertEqual(release.read_campaign_object(root, reference), {"public": "data"})
+            too_small = {**reference, "uncompressedBytes": 2}
+            with self.assertRaisesRegex(ValueError, "bounded object"):
+                release.read_campaign_object(root, too_small)
+            path.write_bytes(gzip.compress(b'{"public":"changed"}\n', mtime=0))
+            with self.assertRaisesRegex(ValueError, "bytes changed"):
+                release.read_campaign_object(root, reference)
+
+    def test_package_lock_excludes_resumed_generation_until_the_bundle_is_complete(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / ".campaign.lock"
+            path.touch()
+            with release.locked_campaign(root), path.open("rb") as writer:
+                with self.assertRaises(BlockingIOError):
+                    release.fcntl.flock(writer.fileno(), release.fcntl.LOCK_EX | release.fcntl.LOCK_NB)
+                with release.locked_campaign(root):
+                    pass
+            with path.open("rb") as writer:
+                release.fcntl.flock(writer.fileno(), release.fcntl.LOCK_EX | release.fcntl.LOCK_NB)
+                with self.assertRaisesRegex(ValueError, "still open by a writer"):
+                    with release.locked_campaign(root):
+                        self.fail("Writer exclusion was bypassed")
 
 
 if __name__ == "__main__":
