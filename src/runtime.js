@@ -2075,11 +2075,19 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               const d=descriptor.properties;
               if(![null,'Object.prototype','Array.prototype'].includes(objectPrototype(descriptor)))
                 throw new TypeError('Inherited descriptor fields are outside the bounded profile');
-              if(!Object.hasOwn(d,'get')&&!Object.hasOwn(d,'set'))
+              const previous=obj.accessors?.[name];
+              if(!Object.hasOwn(d,'get')&&!Object.hasOwn(d,'set')&&!previous)
                 throw new TypeError('Only accessor descriptors are modeled');
               if(Object.hasOwn(d,'value')||Object.hasOwn(d,'writable'))
-                guestFault('TypeError','Invalid mixed data/accessor descriptor');
-              const getter=d.get??token(U),setter=d.set??token(U);
+                if(Object.hasOwn(d,'get')||Object.hasOwn(d,'set'))
+                  guestFault('TypeError','Invalid mixed data/accessor descriptor');
+                else throw new TypeError('Data descriptor conversion is outside the bounded profile');
+              // ValidateAndApplyPropertyDescriptor preserves absent fields
+              // when changing an existing property. New accessors alone get
+              // the false/undefined defaults; replacing ordinary own data
+              // retains that property's modeled enumerable/configurable flags.
+              const getter=d.get??previous?.get??token(U),
+                setter=d.set??previous?.set??token(U);
               for(const method of [getter,setter])
                 if(method.value[0]!=='undefined'&&!this.callableGuest(s,method.value))
                   guestFault('TypeError','Accessor must be a guest function or undefined');
@@ -2088,13 +2096,20 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               // combination until those invariants are modeled together.
               if(obj.kind==='array'&&arrayIndex(name))
                 throw new TypeError('Array index accessor descriptors are outside the bounded profile');
-              if((Object.hasOwn(obj.accessors??{},name)&&!obj.accessors[name].configurable)||
-                 name==='__proto__'||(obj.kind==='array'&&name==='length'))
+              if(name==='__proto__'||(obj.kind==='array'&&name==='length'))
                 guestFault('TypeError','Cannot redefine a non-configurable or reserved property');
+              const existingData=Object.hasOwn(obj.properties,name),
+                enumerable=Object.hasOwn(d,'enumerable')?truthy(d.enumerable.value):
+                  previous?.enumerable??existingData,
+                configurable=Object.hasOwn(d,'configurable')?truthy(d.configurable.value):
+                  previous?.configurable??existingData;
+              if(previous&&!previous.configurable&&
+                 (configurable||enumerable!==previous.enumerable||
+                  !ownedSameValue(getter.value,previous.get.value)||
+                  !ownedSameValue(setter.value,previous.set.value)))
+                guestFault('TypeError','Cannot redefine a non-configurable property');
               obj.accessors??={};
-              obj.accessors[name]={get:getter,set:setter,
-                enumerable:Object.hasOwn(d,'enumerable')?truthy(d.enumerable.value):false,
-                configurable:Object.hasOwn(d,'configurable')?truthy(d.configurable.value):false};
+              obj.accessors[name]={get:getter,set:setter,enumerable,configurable};
               delete obj.properties[name];
               obj.propertyVersions[name]=(Object.hasOwn(obj.propertyVersions,name)?obj.propertyVersions[name]:0)+1;
               obj.shapeVersion++;
