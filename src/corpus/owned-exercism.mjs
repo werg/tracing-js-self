@@ -75,14 +75,32 @@ export function loadPinnedPairs(base=process.cwd()){
    // Keep the original decimal lexeme before JSON's Number conversion rounds
    // large grains expectations. The JavaScript track returns BigInt exactly.
    const canonicalIntegerExpectations={};
-   const document=JSON.parse(canonical,function(key,value,context){
-     if(slug==='grains'&&key==='expected'&&typeof value==='number'){
-       if(typeof this.uuid!=='string'||!context||!/^(0|[1-9]\d*)$/.test(context.source))
-         throw new Error('Pinned grains integers require exact JSON source lexemes');
-       canonicalIntegerExpectations[slug+'/'+this.uuid]=context.source;
-     }
-     return value;
-   });
+   const document=JSON.parse(canonical);
+   if(slug==='grains'){
+     // Node 20 has no JSON.parse reviver context.source. The already-pinned
+     // TypeScript JSON parser supplies source spans without rounding the text.
+     // JSON.parse above remains the authority that these bytes are valid JSON.
+     const syntax=ts.parseJsonText('canonical-data.json',canonical);
+     if(syntax.parseDiagnostics.length)throw new Error('Invalid pinned canonical JSON syntax');
+     const visit=node=>{
+       if(ts.isObjectLiteralExpression(node)){
+         const field=name=>node.properties.find(p=>ts.isPropertyAssignment(p)&&
+           ts.isStringLiteral(p.name)&&p.name.text===name)?.initializer;
+         const expected=field('expected');
+         if(expected&&(ts.isNumericLiteral(expected)||ts.isPrefixUnaryExpression(expected))){
+           const uuid=field('uuid'),lexeme=expected.getText(syntax);
+           if(!uuid||!ts.isStringLiteral(uuid)||!/^(0|[1-9]\d*)$/.test(lexeme))
+             throw new Error('Pinned grains integers require exact JSON source lexemes');
+           const id=slug+'/'+uuid.text;
+           if(Object.hasOwn(canonicalIntegerExpectations,id))
+             throw new Error('Duplicate pinned grains integer identity '+id);
+           canonicalIntegerExpectations[id]=lexeme;
+         }
+       }
+       ts.forEachChild(node,visit);
+     };
+     visit(syntax);
+   }
    return {slug,source,canonical:document,canonicalIntegerExpectations,
      provenance:{solution:{repository:JS_REPO,revision:JS_REVISION,
        path:solutionPath,sha256:sha256(source),license:'MIT'},
