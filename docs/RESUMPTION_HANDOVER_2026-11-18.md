@@ -4,6 +4,27 @@
 
 **Implementation and evidence report.** Results below identify the actual producing revisions, populations and gates. Original failed attempts are preserved alongside successful workarounds. Infrastructure completion, native admission, prepared training data and learned execution are separate outcomes.
 
+## Subsequent main change received during final synchronization
+
+After the completed qualification and archive preservation, main advanced to
+`53180e0b0dfbf6c9544b680f854a442db53bb0ab` through
+[PR41](https://github.com/werg/tracing-js-self/pull/41). This is a direct child of
+`0c307781fea0fa3fca58f1dec037c8653cc921e0`, not a merge of the separate PR39.
+It changes only producer `src/training/format.js` and adds
+`test/training-capture-binding-grammar.test.js`: captured aliases must satisfy
+the same source-identifier grammar already applied to captured cell names.
+Malformed aliases are rejected; valid camelCase, underscore, dollar and Unicode
+identifiers, and distinct aliases sharing a cell, remain accepted. The three
+new focused regression tests passed on Node 24.22.3 in the reconciled worktree.
+
+PR40 receives this new main source without overwriting it. The seven full
+hosted workflow results below remain qualified at their exact original head
+`1e2e6a0`; they are **not reattributed to `53180e0`**. No optimizer experiment,
+source campaign or new broad qualification was introduced by PR41. The original
+receipt populations and all 15 saved archive groups remain unchanged. Relative
+to the new main, PR40 still changes only documentation and the three reviewed
+artifact-preservation workflow/script/test files outside documentation.
+
 ## Outcome and repository state
 
 The resumption work repairs ordinary JavaScript teacher behavior, authenticates source/split/native identity, bridges real sources into actual native admission, makes collection recoverable and bounded, and implements complete private release verification. It also executes the real native optimizer and measures free-running models. **The completed 56-update run exposed all 32 selected sources and all 56 planned windows, but still completed zero of four held-in tasks and zero of three held-out tasks.** The initialized base also scored zero. No learned execution or generalization improvement is claimed. Original model bytes, actual exposure, checkpoint choice, invalid emissions and costs are preserved.
@@ -21,7 +42,7 @@ The production learner representation remains `semantic-execution/5`, `semantic-
 | Thirteen later native capability probes | `25f8e905789f811920c138281074a292d4e571c1` | `3d7ffc701a3e692883819fb623a03b1942cd8b5c` | All 13 admitted; fresh environment binds 47 installed packages |
 | Repaired historical cases and expanded capability ledger | `a9c964330c4ab0acb97f74103324b304685459ae`; metadata/extra boundaries `f0ff9c9c9a04a899b7bc99d23cdde90a6308bf4c` | `3d7ffc701a3e692883819fb623a03b1942cd8b5c` | 16 original defect cases, 17 capabilities and three extra BigInt/error boundaries; 19 distinct real-source case IDs |
 | Complete historical real-source release | Original producer `5753de1`; packaging implementation `a1560f5badbe8ad733150aa6a091d53a8dd9d11f` | Original `6206b33` | All 174 original admissions freshly requalified; 40 distinct prepared rows after training caps and native deduplication |
-| Current integrated implementation and storage repair | `1e2e6a0de8952c4349edbeef46ab70c4a06f8157`; separate 17-probe/18-real-source qualification at `f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1` | `6b4382b9af3bef120ca3a95ae24d35154d4cd66b` | Exact current local three-case native/release smoke and hosted results are listed below; original local full-suite receipt remains at `aa7b843` |
+| Completed integrated qualification and storage repair | `1e2e6a0de8952c4349edbeef46ab70c4a06f8157`; separate 17-probe/18-real-source qualification at `f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1` | `6b4382b9af3bef120ca3a95ae24d35154d4cd66b` | Exact current local three-case native/release smoke and hosted results are listed below; original local full-suite receipt remains at `aa7b843` |
 
 The tokenizer identity is `7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2`; its file SHA-256 is `40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60`. The release environment locks Node 24.22.3, V8 13.6.233.17-node.63, npm 11.9.0, Python 3.12.14, Linux/x64, UTC and C.UTF-8. Actual receipts, including any missing container image identity, take precedence over an assumed portable environment.
 

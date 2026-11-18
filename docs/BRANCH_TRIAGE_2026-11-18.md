@@ -120,3 +120,15 @@ git diff "$incorporating_commit^" "$incorporating_commit" | git patch-id --stabl
 ```
 
 For the four content cases, also compare the exact paths and PR disposition described above. Retain historical format and corpus receipts at their original revisions; do not relabel them as current admission evidence. No tests were rerun solely for this documentation audit: the claims are history, patch identity, inspected content, current API metadata, and the separately reported CI-fix checks.
+
+## Subsequent main advance received during final synchronization
+
+A later remote check observed main `53180e0b0dfbf6c9544b680f854a442db53bb0ab`,
+a direct child of `0c30778`, titled “Validate captured aliases with the source
+identifier grammar” ([PR41](https://github.com/werg/tracing-js-self/pull/41)).
+Only `src/training/format.js` and its new three-case regression file changed.
+This was not PR39 and introduced no new optimizer/corpus receipt population.
+PR40 received it through a clean merge; its old receipts retain their original
+producing revisions. Relative to this new main, the only non-documentation
+changes remain the three reviewed artifact-preservation files. No independent
+active branch was overwritten.

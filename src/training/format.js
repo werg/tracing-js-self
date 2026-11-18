@@ -243,7 +243,8 @@ export function validateWitness(kind,fields){
     const bindings=new Set();
     for(const relation of fields.captures??[]){
       if(!object(relation)||Object.keys(relation).sort().join(',')!=='binding,cell'||
-         typeof relation.binding!=='string'||typeof relation.cell!=='string'||
+         typeof relation.binding!=='string'||!sourceIdentifier.test(relation.binding)||
+         typeof relation.cell!=='string'||
          !sourceIdentifier.test(relation.cell)||bindings.has(relation.binding))
         fail('malformed captured cell relation');
       bindings.add(relation.binding);

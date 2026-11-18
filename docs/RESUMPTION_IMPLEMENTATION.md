@@ -1,12 +1,23 @@
 # JavaScript execution data resumption — implementation ledger
 
-The supplied 18 November 2026 plan audited `55a53c4b884b7d536cfc06220d8838d8cead9236`. The continuation began after PR36 at `dac57b163f277085f1ee42f5d1fa0085eeecb556`; the completed fixed-revision baseline retained here is **`5753de14760b76754fd1bd49ca7c8bfc6de85831`**. Current integrated implementation head is `1e2e6a0de8952c4349edbeef46ab70c4a06f8157`; all five current hosted native lanes passed at that exact producer and consumer `6b4382b9af3bef120ca3a95ae24d35154d4cd66b`. The earlier focused 17-probe/18-real-source qualification remains separately bound to `f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1`. The final local full-suite receipt remains at exact `aa7b843`; later campaign persistence/shutdown changes have 15 focused passing tests, 473 actual fixture CAS/resume checks and an actual isolated three-case native/release qualification at `1e2e6a0`. None of these revisions is substituted into an older receipt.
+The supplied 18 November 2026 plan audited `55a53c4b884b7d536cfc06220d8838d8cead9236`. The continuation began after PR36 at `dac57b163f277085f1ee42f5d1fa0085eeecb556`; the completed fixed-revision baseline retained here is **`5753de14760b76754fd1bd49ca7c8bfc6de85831`**. The completed integrated qualification head is `1e2e6a0de8952c4349edbeef46ab70c4a06f8157`; all five current hosted native lanes passed at that exact producer and consumer `6b4382b9af3bef120ca3a95ae24d35154d4cd66b`. The earlier focused 17-probe/18-real-source qualification remains separately bound to `f4ce1b96b9a27da32943af5e1c2c5d597f6e6ac1`. The final local full-suite receipt remains at exact `aa7b843`; later campaign persistence/shutdown changes have 15 focused passing tests, 473 actual fixture CAS/resume checks and an actual isolated three-case native/release qualification at `1e2e6a0`. None of these revisions is substituted into an older receipt.
 
 Implementation reached main through [tracer PR38](https://github.com/werg/tracing-js-self/pull/38), merged at `0c307781fea0fa3fca58f1dec037c8653cc921e0` on 18 November at 14:23:55 UTC, with companion transport/parser/preparation repairs on [Megatoken PR31](https://github.com/werg/megatoken/pull/31), subsequently merged at `9bf32c3fc794c532444d6a84629bfa29599eb49c` on 18 November at 14:31:06 UTC. Qualification remains pinned to the exact pre-merge consumer `6b4382b`. The production contracts remain `semantic-execution/5`, `semantic-trace/5`, `semantic-context/5`, `semantic-continuation/5`, and `selected-harness/2`. Historical v4 and prior v5 evidence retain their original pins.
 
 **The infrastructure and bounded semantic repairs are implemented, with actual native qualification and actual optimizer measurements. The final 56-update learning experiment exposed all 32 selected sources and all planned windows, but failed the held-in execution criterion and demonstrated no generalization improvement.** Implementation completion is not the empirical W10/W11 success gate. The [handover](RESUMPTION_HANDOVER_2026-11-18.md) separates completed evidence, exact hosted-gate status, intentional unsupported scope, unmet empirical goals, and external dependencies.
 
 **Preserved hosted integration failure and completed repair:** the `aa7b843` native matrix exposed a registry-metadata alias/JSON persistence defect in all five recipes, plus a sibling-worker shutdown race. The original logs are [retained](receipts/final-integration-2026-11-18/native-aa7b-failure/README.md). Local tests and selected native probes passed independently. The five published fixes through `1e2e6a0` have the separate completed [repair qualification](receipts/native-ci-repair-2026-11-18/README.md); the [completed successor matrix](receipts/final-integration-2026-11-18/native-successor/README.md) passed all five lanes: 477 attempts, 457 admissions/fresh qualifications and 364 within-release distinct prepared rows. The latter is a sum across recipes, not a deduplicated global union.
+
+## New main revision received after qualification
+
+Main `53180e0b0dfbf6c9544b680f854a442db53bb0ab` subsequently arrived through
+[PR41](https://github.com/werg/tracing-js-self/pull/41), directly after `0c30778`.
+The final evidence branch receives its two-file change: producer capture aliases
+now use the existing source-identifier validator, with three focused passing
+regressions. It introduces no learning/campaign population. The completed
+seven-workflow qualification remains bound to `1e2e6a0`, and the earlier full
+local suite remains bound to `aa7b843`; neither is claimed as a new broad test
+of `53180e0`. All original receipts remain unchanged.
 
 ## W01–W14 status
 
