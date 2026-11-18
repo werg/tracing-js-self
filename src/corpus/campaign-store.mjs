@@ -48,9 +48,10 @@ export function atomicWrite(path,bytes){
 }
 
 export class CampaignStore{
-  constructor(directory,identity,{resume=false,maxObjectBytes=268435456}={}){
+  constructor(directory,identity,{resume=false,maxObjectBytes=268435456,recoverTornLog=true}={}){
     this.directory=resolve(directory);this.identity=identity;
     this.identityDigest=identityHash(identity);this.maxObjectBytes=maxObjectBytes;
+    this.recoverTornLog=recoverTornLog;
     this.latest=new Map();this.entries=[];this.previous=null;
     mkdirSync(this.directory,{recursive:true});
     this.headerPath=join(this.directory,'campaign.json');
@@ -74,6 +75,7 @@ export class CampaignStore{
     // A process can die during append. Complete records remain authoritative;
     // preserve the partial bytes as forensic evidence before trimming them.
     if(end!==bytes.length){
+      if(!this.recoverTornLog)throw new Error('Incomplete campaign log; resume collection before read-only export');
       atomicWrite(join(this.directory,'recovery','torn-log-'+sha256(bytes.subarray(end))+'.bin'),bytes.subarray(end));
       truncateSync(this.logPath,end);
     }

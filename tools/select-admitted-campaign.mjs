@@ -16,7 +16,7 @@ export function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_
     throw new Error('Selection requires a new output directory distinct from the complete campaign');
   if(!['all','train','validation','test'].includes(split))throw new Error('Invalid requested split');
   const header=JSON.parse(readFileSync(join(input,'campaign.json'),'utf8'));
-  const campaign=new CampaignStore(input,header.identity,{resume:true,
+  const campaign=new CampaignStore(input,header.identity,{resume:true,recoverTornLog:false,
     maxObjectBytes:header.identity.bounds?.maxOutputBytes??268435456});
   const sourceBytes=readFileSync(join(input,'manifest.json')),
     sourceManifest=JSON.parse(sourceBytes.toString('utf8'));
@@ -47,19 +47,28 @@ export function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_
       verifyNativeBinding(exported,header.identity.nativePolicy);
       if(split!=='all'&&side.split!==split){exclude(entry,'split_excluded','Requested '+split+' split');continue;}
       eligible.push({id:entry.id,status:'admitted',sourceCluster:side.splitIdentity.componentId,
+        componentPolicy:side.splitIdentity.policy,
         family:side.sourceFamily,split:side.split,generatedTokens:side.nativeAdmission.generatedTokens});
     }catch(error){exclude(entry,'admission_invalid',String(error.message));}
   }
   const balanced=balanceFamilyTokens(eligible.filter(row=>row.split==='train'),{maxFamilyTokens,maxFamilyShare});
   for(const row of balanced.refused)exclude(campaign.latest.get(row.id),'training_budget_excluded',row.reason);
   const selected=[...balanced.selected,...eligible.filter(row=>row.split!=='train')].sort((a,b)=>a.id.localeCompare(b.id));
+  const trainingComponents=[...new Set(selected.filter(row=>row.split==='train').map(row=>row.sourceCluster))].sort()
+    .map(componentId=>{const rows=selected.filter(row=>row.split==='train'&&row.sourceCluster===componentId);
+      const generatedTokens=rows.reduce((n,row)=>n+row.generatedTokens,0);
+      return {componentId,episodes:rows.length,declaredFamilies:[...new Set(rows.map(row=>row.family))].sort(),
+        generatedTokens,shareOfTrainingTokens:generatedTokens/balanced.generatedTokens};});
   const report={schema:'semantic-admitted-selection/1',sourceCampaignDigest:campaign.identityDigest,
     sourceManifestSha256:sha256(sourceBytes),sourceCounts:sourceManifest.counts,
     sourceCandidates:sourceManifest.cases.length,selected:selected.length,excluded:exclusions.length,
     split,budgetScope:'train-only; evaluation tokens do not subsidize a training-family cap',
     maxFamilyTokens,maxFamilyShare,
+    groupingPolicies:[...new Set(eligible.map(row=>row.componentPolicy))].sort(),trainingComponents,
+    maximumTrainingComponentShare:Math.max(0,...trainingComponents.map(row=>row.shareOfTrainingTokens)),
     splits:Object.fromEntries(['train','validation','test'].map(name=>[name,{
       episodes:selected.filter(row=>row.split===name).length,
+      declaredFamilies:new Set(selected.filter(row=>row.split===name).map(row=>row.family)).size,
       sourceComponents:new Set(selected.filter(row=>row.split===name).map(row=>row.sourceCluster)).size,
       generatedTokens:selected.filter(row=>row.split===name).reduce((n,row)=>n+row.generatedTokens,0)}])),
     exclusions,originalCampaignRequiredForAudit:true,

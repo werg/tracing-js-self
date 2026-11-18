@@ -31,6 +31,9 @@ test('recovers a torn final log append but refuses committed corruption',t=>{
   const dir=temporary(t),store=new CampaignStore(dir,identity);
   const entry=store.record('one',candidate,{status:'unsupported',reason:'original failure'});
   appendFileSync(join(dir,'campaign.jsonl'),'{"interrupted":');
+  const torn=readFileSync(join(dir,'campaign.jsonl'));
+  assert.throws(()=>new CampaignStore(dir,identity,{resume:true,recoverTornLog:false}),/Incomplete campaign log/);
+  assert.deepEqual(readFileSync(join(dir,'campaign.jsonl')),torn);
   const resumed=new CampaignStore(dir,identity,{resume:true});
   assert.equal(resumed.latest.size,1);
   assert.equal(readdirSync(join(dir,'recovery')).length,1);
