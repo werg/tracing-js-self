@@ -11,9 +11,12 @@ const task={kind:'source',producerRevision:'a'.repeat(40),fixture:{id:'one',
 function directory(t){const path=mkdtempSync(join(tmpdir(),'semantic-worker-'));
   t.after(()=>rmSync(path,{recursive:true,force:true}));return path;}
 test('bounded generation process keeps the source gate and reports measured RSS',async t=>{
+  const previousTZ=process.env.TZ;process.env.TZ='UTC';
+  t.after(()=>{if(previousTZ===undefined)delete process.env.TZ;else process.env.TZ=previousTZ;});
   const run=await runGenerationProcess(task,{outputDirectory:directory(t),timeoutMs:30000});
   assert.equal(run.result.status,'locally_verified',run.result.reason);
   assert.equal(run.result.exported.sidecar.referenceStatus,'agreed');
+  assert.equal(run.result.exported.sidecar.environment.timezone,'UTC');
   assert.ok(run.durationMs>0);assert.ok(run.peakRssBytes>0);
   assert.equal(Object.keys(generationEnvironment()).some(key=>/TOKEN|SECRET|PROXY/i.test(key)),false);
 });

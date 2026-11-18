@@ -9,7 +9,7 @@ const worker=fileURLToPath(new URL('../../tools/generation-worker.mjs',import.me
 // Deliberately do not forward credentials or network proxy settings to trusted
 // reference workers. This is defense in depth, not an OS security boundary.
 export function generationEnvironment(){
-  const keys=['PATH','TMPDIR','TEMP','TMP','LANG','LC_ALL','PYTHONPATH','VIRTUAL_ENV','OMP_NUM_THREADS'];
+  const keys=['PATH','TMPDIR','TEMP','TMP','LANG','LC_ALL','TZ','PYTHONPATH','VIRTUAL_ENV','OMP_NUM_THREADS','MKL_NUM_THREADS'];
   return Object.fromEntries(keys.filter(key=>process.env[key]!=null).map(key=>[key,process.env[key]]));
 }
 export async function runGenerationProcess(task,{outputDirectory,timeoutMs=120000,
