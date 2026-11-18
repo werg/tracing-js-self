@@ -37,14 +37,26 @@ try{
         reason:'Pinned original and transformed source observations disagree',
         failure:{referenceInput,transformedSource:options.source,original,transformed}};
       const expected=options.provenance?.canonicalExpected;
-      if(!result&&expected!==undefined&&options.provenance?.inputOrigin==='upstream-canonical'&&!(expected&&typeof expected==='object'&&Object.hasOwn(expected,'error'))){
-        const graph=original.outcome.graph;
-        const value=decodeOwnedGraph(JSON.stringify({schema:'owned-graph/1',roots:[graph.roots.at(-1)],
-          objects:graph.objects.map(object=>({...object,
-            properties:object.properties.map(([key,value])=>({key,value}))}))}))[0];
-        if(original.outcome.kind!=='return'||!isDeepStrictEqual(value,expected))result={status:'canonical_mismatch',
+      if(!result&&expected!==undefined&&options.provenance?.inputOrigin==='upstream-canonical'){
+        const expectsError=expected&&typeof expected==='object'&&Object.hasOwn(expected,'error');
+        let matches=original.outcome.kind===(expectsError?'throw':'return');
+        if(matches&&!expectsError){
+          const graph=original.outcome.graph;
+          const value=decodeOwnedGraph(JSON.stringify({schema:'owned-graph/1',roots:[graph.roots.at(-1)],
+            objects:graph.objects.map(object=>({...object,
+              properties:object.properties.map(([key,value])=>({key,value}))}))}))[0];
+          matches=isDeepStrictEqual(value,expected);
+        }
+        // Canonical error prose is language-neutral: pinned JS proof messages
+        // can differ (including case and wording). Require the error completion
+        // here; original/transform/owned comparisons bind its exact JS graph.
+        const canonicalCheck={status:matches?'agreed':'disagreed',
+          mode:expectsError?'error-completion-only':'exact-return-value',
+          expectedKind:expectsError?'throw':'return',observedKind:original.outcome.kind};
+        options.provenance={...options.provenance,canonicalCheck};
+        if(!matches)result={status:'canonical_mismatch',
           reason:'Pinned original source disagrees with independent canonical expected result',
-          failure:{referenceInput,original,canonicalExpected:expected}};
+          failure:{referenceInput,original,canonicalExpected:expected,canonicalCheck}};
       }
       if(!result)options.provenance={...options.provenance,originalSourceCheck:{status:'agreed',
         originalReferenceDigest:identityHash(original),transformedReferenceDigest:identityHash(transformed)}};

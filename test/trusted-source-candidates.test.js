@@ -43,3 +43,19 @@ test('retains independently specified Exercism expected outcome as a separate ga
     {outputDirectory:directory(t),timeoutMs:30000});
   assert.equal(run.result.status,'canonical_mismatch',run.result.reason);
 });
+test('canonical error expectations require thrown completion and declare message comparison scope',async t=>{
+  const outputDirectory=directory(t),source='"use strict";function run(){throw new Error("Pinned JS message");}';
+  const fixture={id:'canonical-error',family:'canonical-error',entry:'run',source,originalReferenceSource:source,
+    args:[],fixture:{calls:[]},license:'MIT',trustTier:'trusted-owned-source',
+    provenance:{inputOrigin:'upstream-canonical',canonicalExpected:{error:'Language-neutral error description'}}};
+  const run=await runGenerationProcess({kind:'source',fixture,producerRevision:'a'.repeat(40)},
+    {outputDirectory,timeoutMs:30000});
+  assert.equal(run.result.status,'locally_verified',run.result.reason);
+  assert.deepEqual(run.result.exported.sidecar.sourceProvenance.upstream.canonicalCheck,
+    {status:'agreed',mode:'error-completion-only',expectedKind:'throw',observedKind:'throw'});
+  const returning='"use strict";function run(){return 7;}';
+  const wrong=await runGenerationProcess({kind:'source',fixture:{...fixture,source:returning,
+    originalReferenceSource:returning},producerRevision:'a'.repeat(40)},{outputDirectory,timeoutMs:30000});
+  assert.equal(wrong.result.status,'canonical_mismatch');
+  assert.equal(wrong.result.failure.canonicalCheck.observedKind,'return');
+});
