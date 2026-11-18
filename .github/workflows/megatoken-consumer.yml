@@ -184,10 +184,21 @@ jobs:
           if [[ '${{ matrix.recipe }}' == 'real-source' || '${{ matrix.recipe }}' == 'generated-v1' ]]; then
             training_caps=(--max-family-tokens 10000 --max-family-share 0.2)
           fi
-          python tools/package-semantic-release.py --corpus "$RUNNER_TEMP/corpus" \
+          release_corpus="$RUNNER_TEMP/corpus"
+          audit_args=()
+          if [[ '${{ matrix.recipe }}' == 'real-source' ]]; then
+            # Distinct task IDs can share one exact public stream. Keep the
+            # complete original audit and select authenticated representatives
+            # before native preparation enforces immutable episode identities.
+            node tools/select-admitted-campaign.mjs --input "$RUNNER_TEMP/corpus" \
+              --out "$RUNNER_TEMP/selected-corpus" --deduplicate-exact-public true --tracer-root .
+            release_corpus="$RUNNER_TEMP/selected-corpus"
+            audit_args=(--audit-campaign "$RUNNER_TEMP/corpus")
+          fi
+          python tools/package-semantic-release.py --corpus "$release_corpus" \
             --tracer-root . --megatoken megatoken --tokenizer "$RUNNER_TEMP/tokenizer.json" \
             --environment-receipt "$RUNNER_TEMP/native-environment.json" --out "$RUNNER_TEMP/release" \
-            "${training_caps[@]}"
+            "${audit_args[@]}" "${training_caps[@]}"
           python tools/package-semantic-release.py --verify "$RUNNER_TEMP/release/semantic-v5-release.tar.gz"
       - name: Reconcile all source dispositions and independent family counts
         run: |
@@ -220,6 +231,7 @@ jobs:
             ${{ runner.temp }}/corpus/
             !${{ runner.temp }}/corpus/.native/**
             !${{ runner.temp }}/corpus/.workers/**
+            ${{ runner.temp }}/selected-corpus/
             ${{ runner.temp }}/prepared-semantic/
             ${{ runner.temp }}/release/
             ${{ runner.temp }}/native-environment.json
