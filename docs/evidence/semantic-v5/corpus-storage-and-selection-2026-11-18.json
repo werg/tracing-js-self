@@ -307,7 +307,10 @@
     "previousPrivateRowsReleased": true,
     "interruptedAuditCleanupVerified": true,
     "archiveMembersAndChecksumsReadInBoundedChunks": true,
-    "qualification": "Streaming tests establish bounded retention and byte identity; the two native release checks above used the earlier frozen consumer."
+    "qualification": "Streaming tests establish bounded retention and byte identity; the two native release checks above used the earlier frozen consumer.",
+    "publishedConsumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+    "testedAndPublishedConsumerTree": "a82ea11111ccbd5ae4fef24bf25b725044053cdc",
+    "publishedProducerRevisionIncludingStreaming": "83e0d5742e63dc4439b68d6296f323cb7a3aafdc"
   },
   "limitations": [
     "Native prepared audit and compatibility JSON retain complete registry evidence and still require substantial disk space.",
