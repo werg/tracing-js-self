@@ -1,4 +1,7 @@
 name: External JS/TS corpus acquisition (non-admitted)
+concurrency:
+  group: external-corpus-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
 on:
   push:
     branches: [main]

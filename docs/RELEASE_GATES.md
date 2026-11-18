@@ -160,6 +160,22 @@ The one production trace format remains unchanged. Diagnostic success, passing
 synthetic comparison tests, teacher-forced loss or compact storage cannot be
 relabeled as held-out learning improvement.
 
+## Superseded CI runs
+
+The Exercism and external-acquisition workflows now cancel superseded runs for
+one event/ref pair, matching the existing latest-revision behavior of core CI.
+This prevents a sequence of incremental pull-request pushes from indefinitely
+queueing redundant expensive checks. The event name separates explicit manual
+sweeps from pull-request and main-push runs; different branches/PRs do not share
+a group. The newest run still executes every declared gate. Cancellation is
+reported as cancellation, never as a passing check.
+
+Runs created before this policy were not assigned those concurrency groups and
+can remain queued or running. This change does not retroactively claim to have
+cancelled them. At the recorded browser check the browser was signed out, and
+the connected API did not expose workflow cancellation, so no manual queue
+mutation was performed.
+
 ## Maintenance follow-through
 
 Issue [#13](https://github.com/werg/tracing-js-self/issues/13) was still open in
