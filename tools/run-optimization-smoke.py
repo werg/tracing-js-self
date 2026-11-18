@@ -263,10 +263,11 @@ def create_initial_checkpoint(root, config, codec, chunking, *, initialization_s
     return checkpoint, initial_parameters
 
 
-def checkpoint_receipt(checkpoint, initial_parameters):
+def checkpoint_receipt(checkpoint, initial_parameters, *, stream_fingerprint=None):
     import torch
     from megatoken.loading import load_trained
     from megatoken.training.checkpoint import load_checkpoint
+    from megatoken.training.stream import source_sampling_report
 
     loaded = load_trained(checkpoint, device='cpu')
     payload, metadata = load_checkpoint(checkpoint)
@@ -291,7 +292,24 @@ def checkpoint_receipt(checkpoint, initial_parameters):
             'changedParameters': changed, 'updatedOptimizerOwners': updated,
             'allParametersFinite': True, 'counters': payload['counters'],
             'nativeCursors': [rank['cursor'] for rank in payload['rank_state']],
-            'sourceSampling': metadata['source_sampling']}
+            'sourceSampling': authenticated_source_sampling(payload, metadata, source_sampling_report,
+                stream_fingerprint=stream_fingerprint)}
+
+
+def authenticated_source_sampling(payload, metadata, native_source_report, *, stream_fingerprint=None):
+    """Metadata counters cannot override the checksummed optimizer cursor state."""
+    ranks = payload.get('rank_state')
+    if not isinstance(ranks, list) or not ranks or any(
+            not isinstance(rank, dict) or not isinstance(rank.get('cursor'), dict) for rank in ranks):
+        raise ValueError('Checkpoint lacks authenticated native source cursors')
+    cursors = [rank['cursor'] for rank in ranks]
+    if stream_fingerprint is not None and any(
+            cursor.get('dataset_fingerprint') != stream_fingerprint for cursor in cursors):
+        raise ValueError('Authenticated native cursor differs from the verified prepared window plan')
+    actual = native_source_report(cursors)
+    if metadata.get('source_sampling') != actual:
+        raise ValueError('Checkpoint source sampling metadata differs from authenticated payload cursors')
+    return actual
 
 
 def native_window_plan(prepared, codec, config):
@@ -326,6 +344,7 @@ def native_window_plan(prepared, codec, config):
             raise ValueError('Native first-epoch sampler differs from the inspected packing plan')
         return {'schema': 'native-training-window-plan/1', 'sampler': 'native-sequential-permuted-episodes',
                 'seed': config.seed, 'windowConfig': asdict(window), 'preparedIdentity': dataset.identity,
+                'streamFingerprint': stream.fingerprint,
                 'sources': sources, 'firstEpochSourceOrder': order,
                 'firstEpochWindows': sum(counts.values()),
                 'eachEpisodeIsOneWindow': all(row['windows'] == 1 for row in sources)}
@@ -333,8 +352,21 @@ def native_window_plan(prepared, codec, config):
         dataset.close()
 
 
+def verify_native_window_plan(plan, prepared, codec, config):
+    """Rebuild from checksummed prepared shards, including legacy plan receipts."""
+    actual = native_window_plan(prepared, codec, config)
+    comparable = dict(actual)
+    if 'streamFingerprint' not in plan:
+        comparable.pop('streamFingerprint')
+    if comparable != plan:
+        raise ValueError('Frozen native window inventory differs from the actual prepared corpus and configuration')
+    return actual
+
+
 def training_exposure(plan, sampling):
     expected = {row['sourceId']: row['windows'] for row in plan['sources']}
+    if len(expected) != len(plan['sources']) or any(type(count) is not int or count < 1 for count in expected.values()):
+        raise ValueError('Native window plan has duplicate sources or invalid window counts')
     actual = sampling.get('source_windows', {})
     if (set(actual) - set(expected) or any(type(count) is not int or count < 1 for count in actual.values())):
         raise ValueError('Checkpoint source exposure contains a foreign source or invalid window count')
@@ -365,17 +397,45 @@ def partial_training_receipt(root):
         if row.get('event') == 'train':
             rows.append(row)
     pointer = root / 'training/checkpoints/latest.json'
-    checkpoint = None
+    checkpoint, checkpoint_error = None, None
     if pointer.exists():
-        name = json.loads(pointer.read_text())['checkpoint']
-        metadata = root / 'training/checkpoints' / name / 'metadata.json'
-        if metadata.exists():
-            checkpoint = {'path': str(metadata.parent), 'metadataSha256': sha256(metadata),
-                          'metadata': json.loads(metadata.read_text())}
+        try:
+            reference = json.loads(pointer.read_text())
+            if not isinstance(reference, dict):
+                raise ValueError('Invalid native checkpoint pointer object')
+            name = reference['checkpoint']
+            if not isinstance(name, str) or not name or name in ('.', '..') or Path(name).name != name:
+                raise ValueError('Invalid native checkpoint pointer name')
+            directory = (pointer.parent / name).resolve()
+            if directory.parent != pointer.parent.resolve():
+                raise ValueError('Native checkpoint pointer escapes its root')
+            metadata = directory / 'metadata.json'
+            metadata_sha = sha256(metadata)
+            if metadata_sha != reference['metadata_sha256']:
+                raise ValueError('Native checkpoint metadata checksum differs from the committed pointer')
+            value = json.loads(metadata.read_text())
+            if not isinstance(value, dict):
+                raise ValueError('Invalid native checkpoint metadata object')
+            if (value.get('checkpoint_name') != name or (directory / 'state.pt').resolve().parent != directory or
+                    sha256(directory / 'state.pt') != value['state_sha256']):
+                raise ValueError('Native checkpoint state is missing, changed or bound to another name')
+            transducer = value['transducer_checkpoint']
+            if not isinstance(transducer, dict):
+                raise ValueError('Invalid native checkpoint transducer receipt')
+            filename = transducer['file']
+            if (not isinstance(filename, str) or not filename or filename in ('.', '..') or
+                    Path(filename).name != filename or (directory / filename).resolve().parent != directory or
+                    sha256(directory / filename) != transducer['sha256']):
+                raise ValueError('Native checkpoint transducer is missing or changed')
+            checkpoint = {'path': str(directory), 'metadataSha256': metadata_sha, 'metadata': value,
+                          'checkpointFilesVerified': True, 'nativePayloadLoadVerified': False}
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            checkpoint_error = {'type': type(error).__name__, 'message': str(error)}
     return {'schema': 'partial-native-optimization/1', 'metricsSha256': sha256(metrics),
             'observedOptimizerSteps': max((row['global_step'] for row in rows), default=0),
             'supervisedLexicalTokens': sum(row['denominators']['lexical'] for row in rows),
             'malformedMetricLines': malformed, 'lastDurableCheckpoint': checkpoint,
+            'checkpointVerificationFailure': checkpoint_error,
             'updatesAreNotDurableCheckpointEvidence': True}
 
 
@@ -818,7 +878,7 @@ def main():
         start_check = verify_training_start(initial, root / 'training/checkpoints/P1-000000000-phase-start')
         pointer = json.loads((root / 'training/checkpoints/latest.json').read_text())
         checkpoint = root / 'training/checkpoints' / pointer['checkpoint']
-        checkpoint_check = checkpoint_receipt(checkpoint, initial_parameters)
+        checkpoint_check = checkpoint_receipt(checkpoint, initial_parameters, stream_fingerprint=plan['streamFingerprint'])
         exposure = training_exposure(plan, checkpoint_check['sourceSampling'])
         if checkpoint_check['globalStep'] != args.steps:
             raise ValueError('Actual optimizer step count differs from the requested cap')

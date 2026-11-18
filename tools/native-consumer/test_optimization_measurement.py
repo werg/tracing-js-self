@@ -15,6 +15,61 @@ SPEC.loader.exec_module(SMOKE)
 
 
 class OptimizationMeasurementTests(unittest.TestCase):
+    def test_sampling_metadata_cannot_invent_exposure_without_changing_authenticated_payload(self):
+        cursor = {'sampled_source_windows': {'actual': 2}, 'sampled_history_complete': True,
+                  'dataset_fingerprint': 'frozen-stream'}
+        payload = {'rank_state': [{'cursor': cursor}]}
+        native_report = lambda cursors: {'source_windows': dict(cursors[0]['sampled_source_windows']),
+            'complete_history': cursors[0]['sampled_history_complete']}
+        metadata = {'source_sampling': native_report([cursor])}
+        self.assertEqual(SMOKE.authenticated_source_sampling(payload, metadata, native_report,
+            stream_fingerprint='frozen-stream'), metadata['source_sampling'])
+        metadata['source_sampling']['source_windows']['invented'] = 1
+        with self.assertRaisesRegex(ValueError, 'metadata differs'):
+            SMOKE.authenticated_source_sampling(payload, metadata, native_report)
+        metadata['source_sampling'] = native_report([cursor])
+        with self.assertRaisesRegex(ValueError, 'prepared window plan'):
+            SMOKE.authenticated_source_sampling(payload, metadata, native_report, stream_fingerprint='different-stream')
+
+    def test_native_plan_inventory_is_recomputed_and_legacy_hashes_remain_immutable(self):
+        original = {'sources': [{'sourceId': 'actual', 'windows': 3}], 'preparedIdentity': 'prepared'}
+        rebuilt = {**original, 'streamFingerprint': 'native-fingerprint'}
+        with patch.object(SMOKE, 'native_window_plan', return_value=rebuilt):
+            self.assertEqual(SMOKE.verify_native_window_plan(original, None, None, None), rebuilt)
+            self.assertNotIn('streamFingerprint', original)
+            with self.assertRaisesRegex(ValueError, 'inventory differs'):
+                SMOKE.verify_native_window_plan({**original, 'sources': [{'sourceId': 'actual', 'windows': 1}]}, None, None, None)
+        with self.assertRaisesRegex(ValueError, 'duplicate'):
+            SMOKE.training_exposure({'sources': [{'sourceId': 'same', 'windows': 1}] * 2},
+                {'source_windows': {'same': 2}, 'complete_history': True})
+
+    def test_partial_checkpoint_requires_committed_metadata_and_both_payload_hashes(self):
+        with TemporaryDirectory() as root:
+            training = Path(root) / 'training'
+            checkpoint = training / 'checkpoints/P1-000000002-paused'
+            checkpoint.mkdir(parents=True)
+            (training / 'metrics.jsonl').write_text('')
+            state, bank = checkpoint/'state.pt', checkpoint/'transducer.pt'
+            state.write_bytes(b'synthetic-state');bank.write_bytes(b'synthetic-bank')
+            metadata = {'checkpoint_name': checkpoint.name, 'state_sha256': SMOKE.sha256(state),
+                        'transducer_checkpoint': {'file': bank.name, 'sha256': SMOKE.sha256(bank)}}
+            SMOKE.write_json(checkpoint/'metadata.json', metadata)
+            SMOKE.write_json(checkpoint.parent/'latest.json', {'checkpoint': checkpoint.name,
+                'metadata_sha256': SMOKE.sha256(checkpoint/'metadata.json')})
+            receipt = SMOKE.partial_training_receipt(root)
+            self.assertTrue(receipt['lastDurableCheckpoint']['checkpointFilesVerified'])
+            self.assertFalse(receipt['lastDurableCheckpoint']['nativePayloadLoadVerified'])
+            state.unlink()
+            self.assertIsNone(SMOKE.partial_training_receipt(root)['lastDurableCheckpoint'])
+            state.write_bytes(b'corrupt-state')
+            self.assertIsNone(SMOKE.partial_training_receipt(root)['lastDurableCheckpoint'])
+            state.write_bytes(b'synthetic-state');bank.write_bytes(b'corrupt-bank')
+            self.assertIsNone(SMOKE.partial_training_receipt(root)['lastDurableCheckpoint'])
+            bank.write_bytes(b'synthetic-bank')
+            metadata['source_sampling'] = {'invented': 1}
+            SMOKE.write_json(checkpoint/'metadata.json', metadata)
+            self.assertIsNone(SMOKE.partial_training_receipt(root)['lastDurableCheckpoint'])
+
     def test_native_training_time_cap_reserves_graceful_checkpoint_time(self):
         class Process:
             returncode = 0

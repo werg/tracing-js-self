@@ -87,6 +87,11 @@ requires actual coverage of all selected episodes and records the original
 native source counters. The pilot reports exposure and scored tokens at the
 **selected checkpoint**, as well as at the end of training. Missing or incomplete
 selected-checkpoint exposure prevents a confirmatory pass.
+The pilot rebuilds the frozen window inventory from checksummed native prepared
+shards and the saved training configuration. Its stream fingerprint must match
+the authenticated checkpoint cursor. Source counts come from that checksummed
+payload, with metadata checked for consistency. Legacy window-plan receipts are
+rechecked without modifying their original bytes or frozen hashes.
 
 Initialization and optimizer seeds are separate. Keeping initialization fixed
 permits multiple optimizer seeds to share the exact same base weights. The

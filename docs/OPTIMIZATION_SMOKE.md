@@ -118,6 +118,11 @@ partial runs retain checkpoints, logs, and the last completed phase.
    exported with the official served exporter. Reloaded served tensors must
    exactly match the checkpoint's served tensors, and optimization must change
    the served model identity.
+   Source exposure is recomputed from the checksummed checkpoint's native rank
+   cursors and compared with metadata and the prepared stream fingerprint.
+   Partial-run receipts validate the committed metadata pointer plus state and
+   transducer file checksums; they separately disclose whether native payload
+   loading has been verified.
 5. **Actual free-running rollouts.** Base and trained models generate their own
    decisions through `run-selected-evaluation.mjs` and
    `serve_selected_semantic.py`. Private expectations are scored outside that
