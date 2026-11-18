@@ -55,7 +55,7 @@ class ComparisonTests(unittest.TestCase):
         for mutate, pattern in [
             (lambda p: p['identity'].update(publicPrefixSha256='c'*64), 'identity differs'),
             (lambda p: p.update(dropoutDisabled=False), 'disabled-dropout'),
-            (lambda p: p.update(capturedBeforePolicyDraw=False), 'pre-sampling'),
+            (lambda p: p.update(capturedBeforePolicyDraw=False), 'Gaussian facet draw'),
             (lambda p: p['conditional']['mean']['values'].append(1), 'shape'),
             (lambda p: p['conditional']['mean']['values'].__setitem__(0, float('nan')), 'finite')]:
             changed = copy.deepcopy(b); mutate(changed)
