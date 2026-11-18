@@ -1,7 +1,7 @@
 {
   "schema": "semantic-capability-index/1",
   "currentReport": "coverage/current-v5.json",
-  "currentReportProducer": "83e0d5742e63dc4439b68d6296f323cb7a3aafdc",
+  "currentReportProducer": "22eaac6a46e262b00986c63b4fc66f6240016252",
   "profile": "training-js/1",
   "contracts": [
     "semantic-execution/5",
@@ -31,6 +31,6 @@
   "historicalReport": "coverage/historical/required-v1.json",
   "historicalScope": "Original synchronous semantic-execution/1 ledger, retained byte-for-byte; not current capability evidence.",
   "interpretation": "The linked measured report states its exact producer and denominators. Native qualification of separate corpora does not automatically fill its feature-level native column. Model results require actual model evaluation. No full ECMAScript or Test262 claim.",
-  "currentReportNativeConsumer": "b88073dcb5a8e438a711d494a5fd592e773798f5",
-  "currentReportSha256": "68c71dc6406c01c918eb27796f20289d7677660049745d70b757e5287b77224f"
+  "currentReportNativeConsumer": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+  "currentReportSha256": "d06dcc0febee5ae0273b5ee25e68728c4bc9c6948bd86e9462c6f6758f5faba4"
 }

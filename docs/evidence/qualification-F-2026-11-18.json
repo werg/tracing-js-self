@@ -1,0 +1,93 @@
+{
+  "schema": "semantic-frozen-qualification/1",
+  "producerRevision": "22eaac6a46e262b00986c63b4fc66f6240016252",
+  "nativeConsumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+  "producerTrackedFilesClean": true,
+  "unitCommand": "npm test",
+  "unitAndFixtureLog": "release-evidence-F/unit-and-fixture.log",
+  "unitAndFixtureLogSha256": "51887a41d6e57784ebb8961b9c942678d787abcaf3934e4c8822988b0ec7ebe1",
+  "unitTests": {
+    "tests": 858,
+    "pass": 853,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 5,
+    "todo": 0,
+    "durationMs": 75039.002235
+  },
+  "referenceFixture": {
+    "passed": [
+      "getterReadOnce",
+      "bufferCoherenceAcrossCallback",
+      "synchronousThrowPreserved",
+      "reverseCompletionOrder",
+      "internalAwaitSuspends",
+      "permittedBatchingEquivalent",
+      "transcriptStoreDoesNotRepeatMockEffect",
+      "duplicateConversionDetected"
+    ],
+    "result": {
+      "answer": 47,
+      "optionReads": 1,
+      "memory": 7,
+      "caught": "fixture boom"
+    }
+  },
+  "capabilityReport": "coverage/current-v5.json",
+  "capabilityReportSha256": "d06dcc0febee5ae0273b5ee25e68728c4bc9c6948bd86e9462c6f6758f5faba4",
+  "capabilityProbeCount": 43,
+  "capabilityStages": {
+    "frontend": {
+      "passed": 37,
+      "failed": 0,
+      "unsupported": 6,
+      "resource_limited": 0,
+      "untested": 0
+    },
+    "ownedEvaluation": {
+      "passed": 35,
+      "failed": 0,
+      "unsupported": 2,
+      "resource_limited": 0,
+      "untested": 6
+    },
+    "independentOutcome": {
+      "passed": 32,
+      "failed": 1,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 10
+    },
+    "independentIntermediate": {
+      "passed": 32,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 11
+    },
+    "v5ProjectionAndPublicReplay": {
+      "passed": 33,
+      "failed": 0,
+      "unsupported": 2,
+      "resource_limited": 0,
+      "untested": 8
+    },
+    "nativeAdmission": {
+      "passed": 32,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 11
+    },
+    "modelEvaluation": {
+      "passed": 0,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 43
+    }
+  },
+  "nativeEnvironment": "docs/evidence/native-environment-F-2026-11-18.json",
+  "nativeEnvironmentSha256": "a516b50ebde7362a98d580309cb385b9fe20f0321d025dba953d2f6d41688ed4",
+  "interpretation": "Finite training-js/1 capability probes only. Earlier gate refusals remain untested at native/model stages. No conformance or learned execution claim."
+}
