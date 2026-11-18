@@ -6,6 +6,8 @@ import {tmpdir} from 'node:os';
 import {spawnSync} from 'node:child_process';
 import {runGenerationProcess,generationEnvironment,encodeGenerationTask,decodeGenerationTask} from '../src/corpus/generation-process.mjs';
 import {verifyEffectfulTrainingCase} from '../src/training/effectful-admit.js';
+import {materializeCampaign} from '../tools/materialize-campaign.mjs';
+import {CampaignStore} from '../src/corpus/campaign-store.mjs';
 
 const task={kind:'source',producerRevision:'a'.repeat(40),fixture:{id:'one',
   source:'"use strict";function run(x){return x+1;}',entry:'run',args:[1],fixture:{calls:[]},family:'increment'}};
@@ -35,13 +37,13 @@ test('worker transport preserves null prototypes and shared input identities',as
   const value=Object.create(null);value.x=1;
   const request={...task,fixture:{...task.fixture,args:[value,value],
     source:'"use strict";function run(a,b){return Object.getPrototypeOf(a)===null&&a===b;}'}};
-  const decoded=decodeGenerationTask(encodeGenerationTask(request));
+  const decoded=decodeGenerationTask(JSON.parse(JSON.stringify(encodeGenerationTask(request))));
   assert.equal(Object.getPrototypeOf(decoded.fixture.args[0]),null);
   assert.equal(decoded.fixture.args[0],decoded.fixture.args[1]);
   const direct=await verifyEffectfulTrainingCase(request.fixture);
   const run=await runGenerationProcess(request,{outputDirectory:directory(t),timeoutMs:30000});
-  // The current public projection can refuse null-prototype graphs. A worker
-  // must preserve that exact input/refusal, not silently certify a plain object.
+  // The worker and JSON campaign representation must preserve the exact input
+  // graph, rather than silently certifying a plain object with another meaning.
   assert.equal(run.result.status,direct.status,run.result.reason);
   assert.equal(run.result.reason,direct.reason);
 });
@@ -59,4 +61,16 @@ test('collector resumes exact successful receipts without launching new attempts
   assert.equal(manifest.campaign.compatibilityExports,false);
   assert.ok(manifest.cases.every(row=>row.publicShard&&row.privateEvidence&&!row.path));
   assert.equal(manifest.throughput.admittedLearnerTokensPerHour,null);
+  const manifestBytes=readFileSync(join(out,'manifest.json'));
+  const destination=directory(t),materialization=materializeCampaign(out,{output:destination});
+  assert.equal(materialization.materialized,2);
+  assert.equal(materialization.sourceCampaignRequiredForAudit,true);
+  assert.deepEqual(readFileSync(join(out,'manifest.json')),manifestBytes);
+  assert.equal(readFileSync(join(out,'campaign.jsonl'),'utf8'),original);
+  const expanded=JSON.parse(readFileSync(join(destination,'manifest.json'),'utf8'));
+  const header=JSON.parse(readFileSync(join(out,'campaign.json'),'utf8'));
+  const store=new CampaignStore(out,header.identity,{resume:true,recoverTornLog:false});
+  for(const row of expanded.cases)assert.deepEqual(JSON.parse(readFileSync(join(destination,row.path),'utf8')),
+    store.exported(store.latest.get(row.id)));
+  assert.throws(()=>materializeCampaign(out,{output:join(out,'..nested')}),/outside/);
 });

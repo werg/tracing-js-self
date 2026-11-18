@@ -8,6 +8,7 @@ import {cases as utilities,sources as utilityPins} from '../../corpus/cases.mjs'
 import {original,lowerPinnedCharCode} from '../../corpus/pinned-source.mjs';
 import {buildOwnedFixtureEntry} from '../../corpus/owned-fixture-adapter.mjs';
 import {loadPinnedPairs,lowerPinnedProof,extractCanonicalCases} from './owned-exercism.mjs';
+import {buildOwnedSourceMap} from './original-sites.mjs';
 import {generateInputVariations} from './variation-exercism.mjs';
 import {OWNED_PRODUCTION_HELPERS,OWNED_PRODUCTION_CLOSURE_CASES,extractPinnedHelper,
   extractPinnedTypeOfTestClosure} from './production-owned.mjs';
@@ -81,8 +82,12 @@ function exercismCandidates(root,perFamily,mutationsPerFamily){
   const notice=readFileSync(resolve(root,noticePath),'utf8');
   for(const pair of loadPinnedPairs(root)){
     const canonical=extractCanonicalCases(pair),variations=generateInputVariations(pair.slug,canonical,{limit:mutationsPerFamily});
-    let lowered=null,refusal=null;
+    let lowered=null,refusal=null,originalSites={status:'unavailable',reason:'No supported source lowering'};
     try{lowered=lowerPinnedProof(pair.source);}catch(error){refusal={status:'source_unsupported',reason:String(error.message)};}
+    if(lowered){
+      try{originalSites={status:'mapped',scope:'unchanged-spans-only',map:buildOwnedSourceMap(pair.source,lowered.source)};}
+      catch(error){originalSites={status:'unavailable',reason:String(error.message)};}
+    }
     for(const fixture of [...canonical.slice(0,perFamily),...variations]){
       const entry=fixture.entry??'unsupportedEntry',source=lowered?.source??originalExercism(pair.source);
       let rejected=refusal;
@@ -92,8 +97,13 @@ function exercismCandidates(root,perFamily,mutationsPerFamily){
         source,entry,args:fixture.args??[],originalSource:originalExercism(pair.source),refusal:rejected,
         provenance:{upstream:pair.provenance.solution,canonical:pair.provenance.canonical,
           license:'MIT',notice,noticePath,originalFile:pair.source,
-          transform:{schema:'pinned-exercism-projection/1',lowering:lowered?.lowering??null},
+          transform:{schema:'pinned-exercism-projection/1',lowering:lowered?.lowering??null,originalSites},
           inputOrigin:fixture.generator??'upstream-canonical',derivedFrom:fixture.derivedFrom??null,
+          canonicalInput:fixture.generator?null:fixture.canonicalInput,
+          canonicalInputBinding:fixture.generator?null:fixture.inputBinding,
+          canonicalExpectedBinding:fixture.generator?null:fixture.expectedBinding,
+          canonicalReimplements:fixture.generator?null:fixture.reimplements,
+          canonicalSelection:'active-reimplementations/1',
           canonicalExpected:fixture.generator?null:fixture.expected,canonicalProperty:fixture.property}}));
     }
   }

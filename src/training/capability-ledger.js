@@ -25,6 +25,10 @@ export const CAPABILITY_CASES=Object.freeze([
   pure('slice-undefined-end','function run(){return [1,2,3].slice(0,undefined);}'),
   pure('fill-undefined-end','function run(){return [1,2,3].fill(7,1,undefined);}'),
   pure('copy-within-undefined-end','function run(){return [1,2,3].copyWithin(0,1,undefined);}'),
+  pure('array-some-short-circuit','function run(){let seen=0;const found=[1,2,3].some(function(n){seen++;return n===2;});return [found,seen];}'),
+  pure('array-for-each-owned-callback','function run(){let total=0;const result=[1,2,3].forEach(function(n){total+=n;});return [result,total];}'),
+  pure('sparse-array-fill','function run(){return Array(3).fill(7);}'),
+  pure('input-graph-mutation','function run(a){a[0]=a[0]+1;return a;}',[[0,1]]),
   pure('alias-preserving-mutation','function run(){const a={n:1};const b=a;b.n=4;return [a,b];}'),
   pure('synchronous-primitive-throw','function run(){throw 7;}'),
   pure('synchronous-declared-error','function run(){throw new Error("declared");}'),
@@ -60,14 +64,16 @@ export function summarizeCapabilityRows(rows){
     return [stage,{total:rows.length,attempted:rows.length-counts.untested,...counts}];
   }));
 }
-export async function buildCapabilityLedger({producerRevision=null,cases=CAPABILITY_CASES}={}){
+export async function buildCapabilityLedger({producerRevision=null,cases=CAPABILITY_CASES,
+    nativeConsumer=null,nativePolicy=null}={}){
   const rows=[];
   for(const fixture of cases){
     const stages=Object.fromEntries(CAPABILITY_STAGES.map(stage=>[stage,'untested']));
     const row={id:fixture.id,feature:fixture.feature,profile:'training-js/1',stages};
     try{parseTraining(fixture.source);stages.frontend='passed';}
     catch(error){stages.frontend='unsupported';row.reason=error.message;rows.push(row);continue;}
-    const result=await verifyEffectfulTrainingCase({...fixture,family:'capability:'+fixture.id,producerRevision});
+    const result=await verifyEffectfulTrainingCase({...fixture,family:'capability:'+fixture.id,
+      producerRevision,nativeConsumer,nativePolicy});
     row.disposition=result.status;row.reason=result.reason??null;
     const success=['locally_verified','admitted'].includes(result.status);
     const afterTeacher=success||['projection','reference','native-consumer'].includes(result.phase);
@@ -86,7 +92,10 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
     }
     if(result.status==='admitted')stages.nativeAdmission='passed';
     else if(result.phase==='native-consumer')stages.nativeAdmission='failed';
-    if(result.exported)row.identityDigest=result.exported.sidecar.identityDigest;
+    if(result.exported){
+      row.identityDigest=result.exported.sidecar.identityDigest;
+      if(result.status==='admitted')row.nativeReceipt=result.exported.sidecar.nativeAdmission;
+    }
     rows.push(row);
   }
   return {schema:'semantic-capability-ledger/1',producerRevision,
@@ -99,5 +108,6 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
     otherAdapters:[{adapter:'typescript/5.9.3',targetProfile:'training-js/1',status:'untested',
       reason:'Syntax lowering and source-map preservation require their separate adapter tests.'}],
     claims:{fullEcmaScript:false,fullTest262:false,optimizerSteps:0,learnedSuccess:null},
-    limitation:'Finite probes measure distinctions, not exhaustive feature conformance. Native and model stages remain untested without executed evidence.'};
+    nativePolicy,
+    limitation:'Finite probes measure distinctions, not exhaustive feature conformance. Native admission is measured only when configured; model evaluation remains untested by this command.'};
 }

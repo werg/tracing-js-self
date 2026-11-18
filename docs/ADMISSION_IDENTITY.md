@@ -151,11 +151,19 @@ Use the exact timezone stored in the candidate environment. `--session` can
 supply a separately admitted session when testing a small single-only corpus.
 The output directory must be new to avoid reusing dedup state.
 
-The [18 November 2026 measured receipt](evidence/native-provenance-2026-11-18.json)
-records a successful real run: two untampered single/session controls prepared,
-all thirty private metadata mutations rejected with public execution bytes
-unchanged, and zero optimizer steps. The controls were generated at producer
-`3a2178252a370c3d91c85d42751b2a4f82376bd4` and tested with consumer
-`277edd4a2983e81f5e2a71b34a7ce29348e4e7a0`. This is a scoped regression receipt,
-not a native qualification claim for every later producer revision. Subsequent
-releases should rerun this gate at their own immutable revision.
+The [release C measured receipt](evidence/native-provenance-C-2026-11-18.json)
+records the current 18 November 2026 rerun at immutable producer
+`c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39`, consumer
+`277edd4a2983e81f5e2a71b34a7ce29348e4e7a0`, and `TZ=UTC`: both untampered
+single/session controls prepared, all thirty private metadata mutations rejected
+with public execution bytes unchanged, and zero optimizer steps. Exact private
+mutation inputs are retained as compressed files, and the native audit includes
+both independently rechecked source-identity receipts. The integration runner
+streams the selected controls and retained mutation files so a full release's
+private journals do not all have to be resident at once.
+
+The [earlier measured receipt](evidence/native-provenance-2026-11-18.json) remains
+historical evidence for producer `3a2178252a370c3d91c85d42751b2a4f82376bd4` and
+its recorded Europe/Berlin environment. Both receipts are scoped to their exact
+producer revisions; subsequent releases should rerun the gate rather than
+relabel either receipt as evidence for a changed producer.

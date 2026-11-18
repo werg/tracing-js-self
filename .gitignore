@@ -13,6 +13,8 @@ training-manifest.json
 # Locally produced external manifests and large diagnostic traces
 corpus/out/
 
-# Python verification and release tooling caches
+# Python verification, release, and native comparison tooling caches
 __pycache__/
 *.py[cod]
+.pytest_cache/
+pytest-of-*/

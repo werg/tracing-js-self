@@ -31,7 +31,10 @@ additions; no claim is made that the recorded parent commit already contained
 the runner. The final runner is committed separately and records its source
 file digests for future runs.
 
-`index.json` binds every retained evidence file by SHA-256. Large binary
+`index.json` binds the original execution evidence files by SHA-256. The
+separate `initial-state-recheck.json` records a later exact comparison of the
+trainer's phase-start model and optimizer masters against the bound base;
+both matched, with zero optimizer moments before training. Large binary
 checkpoints are not copied into Git; their hashes and original local paths are
 retained in the report, and the deterministic capped experiment is rerunnable.
 Absolute paths inside raw receipts describe the original sandbox execution.
