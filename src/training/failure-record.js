@@ -58,5 +58,14 @@ export function verifyFailureRecord(record){
     record.original.fixtureDigest!==identityDigest(record.original.fixture)||
     record.original.inputGraph!==null&&record.original.inputDigest!==identityDigest(record.original.inputGraph))
     throw new Error('Original candidate failure evidence changed');
+  if(record.minimizationDigest!==undefined&&record.minimizationDigest!==identityDigest(record.minimization))
+    throw new Error('Failure minimization receipt changed');
+  const counterexample=record.minimization.counterexample;
+  if(counterexample!==null){
+    if(counterexample.sourceDigest!==exactHash(counterexample.source)||
+      counterexample.failure?.original.source!==counterexample.source)
+      throw new Error('Minimized counterexample bytes changed');
+    verifyFailureRecord(counterexample.failure);
+  }
   return true;
 }
