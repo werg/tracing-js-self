@@ -512,7 +512,7 @@ def main() -> int:
     from megatoken.loading import load_trained
     from megatoken.model.multitrack import MultiTrackGenerator
     from megatoken.runtime import seed_everything
-    from megatoken.training.checkpoint import save_checkpoint, transducer_attachment
+    from megatoken.training.checkpoint import resolve_checkpoint, save_checkpoint, transducer_attachment
     from megatoken.training.config import TrainConfig
     from megatoken.training.optimizer import MasterAdamW
     from megatoken.served import ServedBundle, export_served
@@ -529,7 +529,18 @@ def main() -> int:
     validate_admission(packet, candidate, tracer_revision, consumer_revision)
     atomic_json(output / "public-probe-input.json", packet)
 
+    checkpoint_path = resolve_checkpoint(checkpoint_path).resolve(strict=True)
     trained = load_trained(checkpoint_path, device="cpu")
+    original_transducer_path = checkpoint_path / trained.metadata["transducer_checkpoint"]["file"]
+    original_transducer_sha = sha(original_transducer_path.read_bytes())
+    require(original_transducer_sha == trained.metadata["transducer_checkpoint"]["sha256"],
+            "Original transducer training attachment changed after checkpoint validation")
+    # Preserve the complete native envelope (bank, optimizer, growth and any
+    # other training state); a raw bank snapshot is not a checkpoint attachment.
+    original_transducer_state = torch.load(
+        original_transducer_path, map_location="cpu", weights_only=True)
+    require(isinstance(original_transducer_state, dict) and "bank" in original_transducer_state,
+            "Original checkpoint lacks its complete native transducer envelope")
     model, codec = trained.model, trained.codec
     require(codec.fingerprint == trained.payload["codec_fingerprint"],
             "Loaded checkpoint codec fingerprint differs")
@@ -651,11 +662,13 @@ def main() -> int:
         "optimizerResumeClaim": False,
         "changedModelOwners": changed_owners,
         "sourceAdmissionIdentityDigest": packet["sourceAdmission"]["identityDigest"],
+        "originalTransducerAttachmentSha256": original_transducer_sha,
+        "completeTransducerTrainingStatePreserved": True,
     }
     saved_checkpoint = save_checkpoint(
         output / "checkpoint", "decoder-fit-v6", original_payload, checkpoint_metadata,
         pinned=False, keep=1,
-        attachments=transducer_attachment(lambda: model.transducer.bank.state_snapshot()),
+        attachments=transducer_attachment(lambda: original_transducer_state),
     )
     saved_metadata = json.loads((saved_checkpoint / "metadata.json").read_text())
     del model_state
@@ -699,6 +712,9 @@ def main() -> int:
         "inMemoryServedStateIdentity": in_memory_served_identity,
         "reloadedServedStateIdentity": reloaded_served_identity,
         "servedStateReloadExact": in_memory_served_identity == reloaded_served_identity,
+        "originalTransducerAttachmentSha256": original_transducer_sha,
+        "savedTransducerAttachmentSha256": saved_metadata["transducer_checkpoint"]["sha256"],
+        "completeTransducerTrainingStatePreserved": True,
         "servedCheckpointSha256": served.manifest["checkpoint_sha256"],
         "tokenizerIdentity": codec.fingerprint,
         "publicPrefixSha256": json_digest(packet["prefix"]),

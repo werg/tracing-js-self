@@ -132,5 +132,37 @@ class SingletonChoiceTests(unittest.TestCase):
         self.assertEqual(PROBE.compare_singleton_text_choices(left, right)["status"], "failed")
 
 
+
+class ActualSampleTests(unittest.TestCase):
+    def captures(self):
+        tensor = {"shape": [1, 2], "values": [0.1, 0.2], "float32Sha256": "original"}
+        capture = {"actualSampledFacets": tensor,
+                   "coupledSamples": [{"seed": 17, "eventIds": ["event"],
+                                       "nativeUnmodifiedSample": copy.deepcopy(tensor)}]}
+        return copy.deepcopy(capture), copy.deepcopy(capture)
+
+    def test_actual_same_draw_is_compared(self):
+        left, right = self.captures()
+        row = PROBE.compare_actual_samples(left, right, 1)
+        self.assertEqual(row["status"], "passed")
+        self.assertTrue(row["bitwiseEqual"])
+        self.assertEqual(row["comparedCoordinates"], 2)
+
+    def test_different_draw_fails_even_if_gaussian_metadata_were_equal(self):
+        left, right = self.captures()
+        right["actualSampledFacets"]["values"][0] = 0.4
+        right["actualSampledFacets"]["float32Sha256"] = "changed"
+        right["coupledSamples"][0]["nativeUnmodifiedSample"] = copy.deepcopy(right["actualSampledFacets"])
+        self.assertEqual(PROBE.compare_actual_samples(left, right, 1)["status"], "failed")
+
+    def test_wrapper_cannot_replace_or_mislabel_actual_sample(self):
+        left, right = self.captures()
+        right["coupledSamples"][0]["nativeUnmodifiedSample"]["values"][0] = 0.4
+        self.assertEqual(PROBE.compare_actual_samples(left, right, 1)["status"], "failed")
+        left, right = self.captures()
+        right["coupledSamples"][0]["seed"] = 18
+        self.assertEqual(PROBE.compare_actual_samples(left, right, 1)["status"], "failed")
+
+
 if __name__ == "__main__":
     unittest.main()

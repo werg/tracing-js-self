@@ -188,6 +188,41 @@ def compare_singleton_text_choices(training, serving):
     }
 
 
+def compare_actual_samples(training, serving, boundary):
+    """Verify the native draws themselves, not only their Gaussian parameters."""
+    import math
+
+    sides = {}
+    for name, capture in (("training", training), ("serving", serving)):
+        draws = capture.get("coupledSamples", [])
+        if len(draws) != boundary:
+            return {"status": "failed", "reason": name + " native draw count differs"}
+        draw = draws[boundary - 1]
+        original = capture.get("actualSampledFacets")
+        wrapped = draw["nativeUnmodifiedSample"]
+        if original is None or original != wrapped:
+            return {"status": "failed", "reason": name + " captured draw differs from actual native sample"}
+        sides[name] = {"seed": draw["seed"], "eventIds": draw["eventIds"], "tensor": original}
+    a, b = sides["training"]["tensor"], sides["serving"]["tensor"]
+    shapes = a["shape"] == b["shape"] and len(a["values"]) == len(b["values"]) == math.prod(a["shape"])
+    same_seed = sides["training"]["seed"] == sides["serving"]["seed"]
+    differences = [abs(x - y) for x, y in zip(a["values"], b["values"])] if shapes else []
+    finite = shapes and all(math.isfinite(x) for x in a["values"] + b["values"])
+    maximum = max(differences, default=0.0) if shapes else None
+    passed = finite and same_seed and maximum <= 1e-6
+    return {
+        "status": "passed" if passed else "failed",
+        "sameNativeDrawSeed": same_seed, "seed": sides["training"]["seed"],
+        "shapesEqual": shapes, "comparedCoordinates": len(differences),
+        "maximumAbsoluteDifference": maximum, "absoluteTolerance": 1e-6,
+        "bitwiseEqual": shapes and a["float32Sha256"] == b["float32Sha256"],
+        "trainingSha256": a["float32Sha256"], "servingSha256": b["float32Sha256"],
+        "trainingEventIds": sides["training"]["eventIds"],
+        "servingEventIds": sides["serving"]["eventIds"],
+        "scope": "Original native samples at the same boundary and seeded draw, with no tensor replacement",
+    }
+
+
 def numeric_decoder_comparison(model, teacher, renderer, emitted_ids):
     """Measure full probabilities from actual captured native projected states.
 
@@ -531,10 +566,11 @@ def main():
         tracks = compare_track_context(training, emitted)
         controls = compare_decision_controls(training, emitted)
         singletons = compare_singleton_text_choices(training, emitted)
+        samples = compare_actual_samples(training, emitted, index)
         support = compare_output_support(training, emitted)
         decoder = training["sameEmissionTrainingReadout"]["comparison"]
         tensor_identity = training["actualModelTensorIdentity"] == emitted["actualServedTensorIdentity"]
-        passed = all(row["status"] == "passed" for row in (prior, recurrence, tracks, controls, singletons, support, decoder))
+        passed = all(row["status"] == "passed" for row in (prior, recurrence, tracks, controls, singletons, samples, support, decoder))
         passed &= tensor_identity
         prior["encoderCallAuditComparable"] = False
         prior["encoderCallAuditInterpretation"] = controls["encoderHookScopes"]
@@ -542,7 +578,7 @@ def main():
             "boundary": index, "status": "passed" if passed else "failed",
             "gaussian": prior, "recurrentState": recurrence, "tracks": tracks,
             "decisionControls": controls, "singletonTextChoices": singletons,
-            "outputSupport": support, "sameEmissionDecoderConditionals": decoder,
+            "actualSampledFacets": samples, "outputSupport": support, "sameEmissionDecoderConditionals": decoder,
             "loadedModelTensorsExactlyEqual": tensor_identity,
         })
         del training
