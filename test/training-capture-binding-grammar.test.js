@@ -9,7 +9,7 @@ const allocation=captures=>({
 test('capture aliases and captured cells use the source identifier grammar',()=>{
   for(const name of ['keyFn','_key','key_fn','keyFn_2','$key','key$Fn','$','éclair']){
     const capture={binding:name,cell:name};
-    const [kind,fields]=decodeWitness(encodeWitness('allocate',allocation([capture])));
+    const {kind,fields}=decodeWitness(encodeWitness('allocate',allocation([capture])));
     assert.equal(kind,'allocate');
     assert.deepEqual(fields.captures,[capture]);
   }
@@ -26,7 +26,7 @@ test('malformed captured aliases and cells are rejected alike',()=>{
 
 test('different capture aliases may share one cell but aliases cannot duplicate',()=>{
   const captures=[{binding:'left',cell:'sharedCell'},{binding:'right',cell:'sharedCell'}];
-  assert.deepEqual(decodeWitness(encodeWitness('allocate',allocation(captures)))[1].captures,captures);
+  assert.deepEqual(decodeWitness(encodeWitness('allocate',allocation(captures))).fields.captures,captures);
   assert.throws(()=>encodeWitness('allocate',allocation([
     {binding:'same',cell:'firstCell'},{binding:'same',cell:'secondCell'}
   ])),/captured cell relation/);
