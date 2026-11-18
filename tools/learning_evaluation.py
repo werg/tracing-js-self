@@ -287,6 +287,11 @@ def summarize_learning(experiment, runs):
         by_seed[seed] = {'optimizerSeed': seed, 'optimizerSteps': run['optimizerSteps'],
                          'baseIdentity': run['baseIdentity'], 'trainedIdentity': run['trainedIdentity'],
                          'selectedCheckpointStep': selection['step'], 'base': base, 'trained': trained,
+                         'selectedCheckpointExposureAssessment': run.get('selectedCheckpointExposureAssessment'),
+                         'trainingExposure': run.get('trainingExposure'),
+                         'trainingSupervisedTokens': run.get('trainingSupervisedTokens'),
+                         'selectedCheckpointReceipt': run.get('selectedCheckpointReceipt'),
+                         'selectedCheckpointSupervisedTokens': run.get('selectedCheckpointSupervisedTokens'),
                          'improvement': trained['familyWeightedWholeTaskSuccess'] - base['familyWeightedWholeTaskSuccess']}
     if set(by_seed) != set(experiment['optimizerSeeds']):
         raise ValueError('Missing optimizer seeds cannot leave the experiment denominator')
@@ -334,6 +339,9 @@ def summarize_learning(experiment, runs):
         'frozenInferenceBudget': experiment.get('rolloutBudget') is not None,
         'atLeastThreeOptimizerSeeds': len(by_seed) >= 3,
         'sameActualBaseCheckpointAcrossSeeds': len({row['baseIdentity'] for row in by_seed.values()}) == 1,
+        'completeSelectedCheckpointTrainingExposure': all(
+            (row['selectedCheckpointExposureAssessment'] or {}).get('everySelectedEpisodeVisitedAllWindows') is True
+            for row in by_seed.values()),
         'declaredTestComponentMinimum': len(component_deltas) >= policy['minimumConfirmatoryTestComponents'],
         'usefulMeanImprovement': improvement >= policy['minimumUsefulImprovement'],
         'pairedFamilyIntervalAboveZero': uncertainty['lower'] > 0,
