@@ -17,13 +17,19 @@ test('default callback is created inside guest code and uses earlier bindings',(
  verify('function f(values=[1,2],fn=(x)=>x*2){return [fn(values[0]),fn(values[1])];}');
  verify('function f(x,fn=(v)=>v+x){return fn(3);}',[5]);
 });
-test('unsafe later/self/body parameter initialization dependencies fail closed',()=>{
+test('later and self parameter dependencies qualify as ReferenceError outcomes',()=>{
  for(const code of [
    'function f(a=b,b=1){return a;}',
-   'function f(x=x){return x;}',
-   'function f(cb=()=>y){var y=4;return cb();}'
+   'function f(x=x){return x;}'
  ]) {
    const r=verifyOwnedSourceCase({source:'"use strict";\n'+code,entry:'f',args:[]});
-   assert.notEqual(r.status,'locally_verified');
+   assert.equal(r.status,'locally_verified',r.reason);
+   assert.equal(r.exported.sidecar.reference.outcome.kind,'throw');
+   assert.equal(r.exported.sidecar.reference.outcome.graph.objects[0].properties[0][1][1],'ReferenceError');
  }
+});
+test('a default closure cannot acquire bindings from the separate body var environment',()=>{
+ const r=verifyOwnedSourceCase({source:'"use strict";\nfunction f(cb=()=>y){var y=4;return cb();}',entry:'f'});
+ assert.equal(r.status,'unsupported');
+ assert.match(r.reason,/unbound identifier y/);
 });

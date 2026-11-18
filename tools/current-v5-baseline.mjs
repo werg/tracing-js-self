@@ -7,6 +7,7 @@ import {resolve,join,relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {admissionEnvironment} from '../src/training/admission-identity.js';
+import {producerSnapshot,compareProducerSnapshot,compareReleaseEnvironment} from './lib/baseline-identity.mjs';
 
 process.env.TZ='UTC';
 const root=fileURLToPath(new URL('..',import.meta.url));
@@ -26,6 +27,13 @@ mkdirSync(output,{recursive:true});mkdirSync(join(output,'.tmp'),{recursive:true
 const env={...process.env,TMPDIR:join(output,'.tmp'),TZ:'UTC',LANG:'C.UTF-8',LC_ALL:'C.UTF-8',OMP_NUM_THREADS:'1',MKL_NUM_THREADS:'1'};
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const git=(...args)=>execFileSync('git',['-C',root,...args],{encoding:'utf8'}).trim();
+const initialProducer=producerSnapshot(root);
+if(initialProducer.trackedChanges)throw new Error('A reproducible baseline needs a clean producer checkout; commit changes or use an immutable worktree');
+const lockedEnvironment=JSON.parse(readFileSync(join(root,'profiles/release-environment.lock.json'),'utf8'));
+const actualEnvironment={node:process.versions.node,v8:process.versions.v8,
+  npm:execFileSync('npm',['--version'],{cwd:root,env,encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim(),
+  platform:process.platform,arch:process.arch,timezone:env.TZ,locale:env.LC_ALL};
+const environmentMismatches=compareReleaseEnvironment(lockedEnvironment,actualEnvironment);
 const report={schema:'semantic-v5-baseline/1',producerRevision:git('rev-parse','HEAD'),
   producerTree:git('rev-parse','HEAD^{tree}'),workingTreeClean:git('status','--porcelain','--untracked-files=no')==='',
   environment:admissionEnvironment(),executionEnvironment:{timezone:env.TZ,locale:env.LC_ALL},
@@ -33,15 +41,29 @@ const report={schema:'semantic-v5-baseline/1',producerRevision:git('rev-parse','
     'tools/native-consumer/requirements.lock','profiles/release-environment.lock.json',
     'contracts/native-admission-policy-v5.json','contracts/semantic-harness-v5.json',
     'contracts/host-operations-v4.json'].map(path=>[path,existsSync(join(root,path))?sha(readFileSync(join(root,path))):null])),
+  qualificationEnvironment:{status:Object.keys(environmentMismatches).length?'failed':'passed',
+    actual:actualEnvironment,mismatches:environmentMismatches},
   checks:[],corpora:[],optimizerSteps:0,learnedSuccess:null};
 writeFileSync(join(output,'baseline-start.json'),JSON.stringify(report,null,2)+'\n');
+let producerChanged=false;
 function check(name,command,args,{timeout=900000}={}){
+  const before=producerSnapshot(root),beforeMismatch=compareProducerSnapshot(initialProducer,before);
+  if(producerChanged||beforeMismatch.length){
+    producerChanged=true;
+    const row={name,command:[command,...args],status:'untested',reason:'Producer identity changed; remaining checks were not run',
+      producerBefore:before,identityFailures:beforeMismatch};
+    report.checks.push(row);appendFileSync(join(output,'checks.jsonl'),JSON.stringify(row)+'\n');
+    return row;
+  }
   const start=performance.now();
   const result=spawnSync(command,args,{cwd:root,env,encoding:'utf8',timeout,maxBuffer:64*1024*1024});
   const stdout=result.stdout??'',stderr=result.stderr??'';
   writeFileSync(join(output,name+'.stdout.log'),stdout);writeFileSync(join(output,name+'.stderr.log'),stderr);
-  const row={name,command:[command,...args],status:result.status===0?'passed':'failed',exitCode:result.status,
+  const after=producerSnapshot(root),identityFailures=compareProducerSnapshot(initialProducer,after);
+  producerChanged=identityFailures.length>0;
+  const row={name,command:[command,...args],status:result.status===0&&!producerChanged?'passed':'failed',exitCode:result.status,
     signal:result.signal??null,reason:result.error?.message??null,wallSeconds:(performance.now()-start)/1000,
+    producerBefore:before,producerAfter:after,identityFailures,
     stdout:{path:name+'.stdout.log',sha256:sha(stdout)},stderr:{path:name+'.stderr.log',sha256:sha(stderr)}};
   if(name==='unit')row.counts=Object.fromEntries(['tests','pass','fail','skipped','cancelled','todo'].map(key=>{
     const match=stdout.match(new RegExp('^# '+key+' (\\d+)$','m'));return [key,match?Number(match[1]):null];
@@ -74,6 +96,10 @@ if(!options.has('--skip-recipes'))for(const recipe of ['engineering','training-v
   const path=join(directory,'manifest.json');
   if(existsSync(path)){
     const manifest=JSON.parse(readFileSync(path,'utf8'));
+    if(manifest.producerRevision!==report.producerRevision){
+      producerChanged=true;
+      report.checks.push({name:'identity-'+recipe,status:'failed',reason:'Corpus producer differs from baseline revision'});
+    }
     report.corpora.push({recipe,path:relative(output,path),sha256:sha(readFileSync(path)),counts:manifest.counts,
       families:new Set(manifest.cases.map(row=>row.family)).size,
       splitFamilies:Object.fromEntries(['train','validation','test'].map(split=>[split,new Set(manifest.cases.filter(row=>row.split===split).map(row=>row.family)).size])),
@@ -81,7 +107,10 @@ if(!options.has('--skip-recipes'))for(const recipe of ['engineering','training-v
       evidenceStage:native.length?'native-admission':'local-verification'});
   }
 }
-report.status=report.checks.some(row=>row.status==='failed')?'failed':'passed';
+report.producerAtFinish=producerSnapshot(root);
+report.identityFailures=compareProducerSnapshot(initialProducer,report.producerAtFinish);
+report.status=producerChanged||report.identityFailures.length||Object.keys(environmentMismatches).length||
+  report.checks.some(row=>row.status==='failed')?'failed':'passed';
 if(existsSync(registry))report.sourceRegistry={path:'source-registry.json',sha256:sha(readFileSync(registry)),
   diagnostics:JSON.parse(readFileSync(registry,'utf8')).diagnostics};
 report.evidenceBoundaries={acquisition:'not measured here',nativeAdmission:native.length?'executed; inspect per-corpus counts':'untested',

@@ -23,6 +23,7 @@ export function describeCompletionGraph(args,value,kind){
       if(key!=='message')
         throw new TypeError('Unsupported exception boundary: Error extensions');
       const descriptor=Object.getOwnPropertyDescriptor(value,key);
+      // Every observed message must be an own data field.
       if(!Object.hasOwn(descriptor,'value')||
         typeof descriptor.value!=='string'||descriptor.enumerable||
         !descriptor.writable||!descriptor.configurable)

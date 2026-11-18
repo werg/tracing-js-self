@@ -1,0 +1,56 @@
+{
+  "schema": "semantic-pure-output-comparison/1",
+  "endpoint": "pure-output-transfer",
+  "cohortSha256": "69eb288023895c40fe4895e3725bdbd28280c960b4d3086247001ba032e4d505",
+  "base": {
+    "episodes": 1,
+    "independentComponents": 1,
+    "successes": 0,
+    "familyWeightedWholeTaskSuccess": 0.0,
+    "episodeWeightedWholeTaskSuccess": 0.0,
+    "components": {
+      "component:a1aca22a005b30bee347b92eb12ac5df8fe0cd43e6193d281902118660f96548": 0.0
+    },
+    "validOutputRate": 0.0,
+    "wallSeconds": 11.555609287001062,
+    "wallSecondsPerCorrectTask": null,
+    "generatedTokens": 32,
+    "retainedGeneratedTokensLowerBound": 32,
+    "generatedTokensPerCorrectTask": null
+  },
+  "trained": {
+    "episodes": 1,
+    "independentComponents": 1,
+    "successes": 0,
+    "familyWeightedWholeTaskSuccess": 0.0,
+    "episodeWeightedWholeTaskSuccess": 0.0,
+    "components": {
+      "component:a1aca22a005b30bee347b92eb12ac5df8fe0cd43e6193d281902118660f96548": 0.0
+    },
+    "validOutputRate": 0.0,
+    "wallSeconds": 10.046616739000456,
+    "wallSecondsPerCorrectTask": null,
+    "generatedTokens": 126,
+    "retainedGeneratedTokensLowerBound": 126,
+    "generatedTokensPerCorrectTask": null
+  },
+  "baseCheckpointIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+  "trainedCheckpointIdentity": "dd969f909f23feb82a651c03fe3d1fa4911642502fd6b7f8c0bbb0c271d4be29",
+  "meanImprovement": 0.0,
+  "uncertainty": {
+    "unit": "connected-source-ancestor-component",
+    "confidence": 0.95,
+    "method": "paired-percentile-bootstrap",
+    "replicates": 2000,
+    "seed": 101,
+    "components": 1,
+    "lower": 0.0,
+    "upper": 0.0,
+    "scope": "family-resampling-with-all-seeds-and-input-variants-kept-paired",
+    "smallSampleWarning": true
+  },
+  "baseReportSha256": "758402aef99ae5917f4fa86398b0b238ac92ea7fb5a6025ae9753b51f21c403a",
+  "trainedReportSha256": "1b4cbc0ebd030acbdc4a8bab5cf94ad33e472ccdfa4b68f5024d68241a03a0b2",
+  "generalizationClaim": false,
+  "scope": "Exploratory separate endpoint; no production trace or confirmatory claim."
+}

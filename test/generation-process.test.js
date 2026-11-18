@@ -61,6 +61,9 @@ test('collector resumes exact successful receipts without launching new attempts
   assert.equal(manifest.campaign.compatibilityExports,false);
   assert.ok(manifest.cases.every(row=>row.publicShard&&row.privateEvidence&&!row.path));
   assert.equal(manifest.throughput.admittedLearnerTokensPerHour,null);
+  assert.ok(manifest.throughput.preparationMs>0);assert.ok(manifest.throughput.collectionMs>=0);
+  assert.equal(manifest.throughput.elapsedMs,manifest.throughput.preparationMs+manifest.throughput.collectionMs);
+  assert.equal(manifest.throughput.timingScope,'process-start-through-final-manifest-measurement');
   const manifestBytes=readFileSync(join(out,'manifest.json'));
   const destination=directory(t),materialization=materializeCampaign(out,{output:destination});
   assert.equal(materialization.materialized,2);
@@ -69,8 +72,9 @@ test('collector resumes exact successful receipts without launching new attempts
   assert.equal(readFileSync(join(out,'campaign.jsonl'),'utf8'),original);
   const expanded=JSON.parse(readFileSync(join(destination,'manifest.json'),'utf8'));
   const header=JSON.parse(readFileSync(join(out,'campaign.json'),'utf8'));
-  const store=new CampaignStore(out,header.identity,{resume:true,recoverTornLog:false});
+  const store=new CampaignStore(out,header.identity,{readOnly:true,recoverTornLog:false});
   for(const row of expanded.cases)assert.deepEqual(JSON.parse(readFileSync(join(destination,row.path),'utf8')),
     store.exported(store.latest.get(row.id)));
+  store.close();
   assert.throws(()=>materializeCampaign(out,{output:join(out,'..nested')}),/outside/);
 });

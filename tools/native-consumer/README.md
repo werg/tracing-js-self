@@ -21,6 +21,12 @@ the wrong Python version, and tokenizer byte or codec identity changes. The
 receipt records the actual host, libc, available runner/container identifiers,
 dependencies and lock hashes. An absent container identity remains explicit.
 
+The current consumer pin also isolates mutable replay state from the original
+observed input graph. Without that fix, valid examples that mutate input arrays
+or objects fail the byte-preservation gate because replay changes its input
+document. The v5 wire format is unchanged. Recollect native receipts with the
+new pin; receipts naming an earlier consumer remain historical evidence.
+
 `requirements.in` pins the companion's direct dependencies, native admission and
 CPU learning dependencies, and the editable build backend. The committed lock
 also pins transitive versions and distribution hashes. Regenerate deliberately

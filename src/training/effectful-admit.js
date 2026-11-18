@@ -18,22 +18,34 @@ import {compileEffectfulWitness,verifyEffectfulProjection} from './effectful-com
 import {normalizeJournal} from '../semantic/normalize.js';
 import {decodeWitness} from './format.js';
 import {recheckEffectfulSession} from './effectful-session.js';
-import {effectfulFamilySplit,defaultSplitIdentity,validateSplitIdentity,normalizeSeeds,
+import {effectfulFamilySplit,defaultSplitIdentity,validateSplitIdentity,cloneSplitIdentity,normalizeSeeds,
   admissionEnvironment,bindAdmissionIdentity,verifyAdmissionIdentity,identityDigest} from './admission-identity.js';
 export {effectfulFamilySplit} from './admission-identity.js';
 import {AdmissionFailure,createFailureRecord} from './failure-record.js';
+import {referenceCommand,referenceIsolationMode} from '../corpus/reference-isolation.mjs';
 
 const hash=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
 const referenceWorker=fileURLToPath(new URL('../../tools/effectful-reference-worker.mjs',import.meta.url));
-export function independentEffectfulReference(input,{timeoutMs=5000,maxOutputBytes=4194304}={}){
+export function independentEffectfulReference(input,{timeoutMs=5000,maxOutputBytes=4194304,
+    isolation=referenceIsolationMode()}={}){
   if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||!Number.isSafeInteger(maxOutputBytes)||maxOutputBytes<1)
     throw new TypeError('Reference deadline and output bound must be positive safe integers');
   return new Promise((resolve,reject)=>{
-    const child=spawn(process.execPath,[referenceWorker],{stdio:['pipe','pipe','pipe'],shell:false});
+    let command;
+    try{command=referenceCommand(referenceWorker,{timeoutMs,isolation});}
+    catch(error){reject(new AdmissionFailure('reference_isolation_failure',error.message));return;}
+    const child=spawn(command.command,command.args,{stdio:['pipe','pipe','pipe'],shell:false,
+      env:command.env});
     const chunks=[];let outputBytes=0,stderr='',done=false;
     const fail=(category,message,details=null)=>new AdmissionFailure(category,message,details);
     const finish=(error,value)=>{if(done)return;done=true;clearTimeout(timer);
-      if(error){child.kill();reject(error);}else resolve(value);};
+      if(error){
+        // Keep the generation worker's process group so campaign cancellation
+        // reaches the complete tree. unshare --kill-child also reaps the isolated
+        // PID-namespace init when this direct child is killed on a deadline.
+        child.kill('SIGKILL');
+        command.cleanup();reject(error);
+      }else{command.cleanup();resolve(value);}};
     const timer=setTimeout(()=>finish(fail('reference_timeout','Independent source-reference deadline exceeded',
       {timeoutMs,mode:input.mode??'original'})),timeoutMs);
     child.once('error',error=>finish(fail('reference_process_failure','Independent source process failed to start',
@@ -57,7 +69,11 @@ export function independentEffectfulReference(input,{timeoutMs=5000,maxOutputByt
           !Array.isArray(result.effects)||!Array.isArray(result.callbackFailures))
           throw new Error('Incomplete independent reference response');
         finish(null,result);
-      }catch(error){finish(fail('reference_process_failure','Independent source process '+code+': '+error.message,
+      }catch(error){
+        const setupFailed=isolation==='linux-namespace'&&(code===126||/^(?:unshare:|mount:|Reference isolation setup failed)/m.test(stderr));
+        const resourceFailed=isolation==='linux-namespace'&&([137,152].includes(code)||/out of memory|heap limit/i.test(stderr));
+        finish(fail(setupFailed?'reference_isolation_failure':resourceFailed?'reference_resource_limit':'reference_process_failure',
+        'Independent source process '+code+': '+error.message,
         {code,stderr,stdout:stdout.slice(0,8192),mode:input.mode??'original'}));}
     });
     child.stdin.on('error',error=>finish(fail('reference_process_failure','Independent reference input failed',
@@ -87,9 +103,9 @@ function independentSemanticChecks(bundle,source,operations,decisions){
   const expectedOperations=[],expectedBranches=[];
   for(const row of semantic.events){
     const event=events.get(row.journalEvent),site=row.source?row.source.start+':'+row.source.end:null;
-    if(types.has(event.operation)&&sites.operation.has(site))
+    if(types.has(event.operation)&&sites.operation.has(site)&&event.completion?.type!=='throw')
       expectedOperations.push({site,value:row.result});
-    if(event.operation==='control.branch'&&sites.branch.has(site))
+    if(event.operation==='control.branch'&&sites.branch.has(site)&&event.completion?.type!=='throw')
       expectedBranches.push({site,decision:row.result});
   }
   if(!isDeepStrictEqual(expectedOperations,operations))
@@ -171,7 +187,7 @@ export async function verifyEffectfulTrainingCase({source,entry,args=[],fixture,
   normalizeSeeds(seeds,seed,randomSeed);
   if(nativeConsumer||nativePolicy!==null)nativePolicy=validateNativePolicy(nativePolicy);
   if(nativeConsumer)validateNativeProducer(producerRevision);
-  splitIdentity=structuredClone(splitIdentity??defaultSplitIdentity(family,{seed}));
+  splitIdentity=cloneSplitIdentity(splitIdentity??defaultSplitIdentity(family,{seed}));
   validateSplitIdentity(splitIdentity,{family,seed});
   fixture=canonicalFixturePlan(fixture);
   const broker=createFixtureBroker(fixture),abort=new AbortController();

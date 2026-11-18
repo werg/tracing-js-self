@@ -73,11 +73,14 @@ export function auditReferenceOperations({source,entry,args,initialHeap,bundle,r
   const sourceSites=new Set(sourceOperationNodes(source).map(node=>node.site));
   const unverified=new Set();
   for(const row of normalized.events){
-    const operation=eventsById.get(row.journalEvent)?.operation;
+    const event=eventsById.get(row.journalEvent),operation=event?.operation;
     if(!observedOperations.has(operation)){
       if(operation)unverified.add(operation);
       continue;
     }
+    // Capture surrounds a source expression; if it throws there is no
+    // returned value for the independent instrumentation to record.
+    if(event.completion?.type==='throw')continue;
     if(row.source && !sourceSites.has(String(row.source.start)+':'+row.source.end)){
       unverified.add('synthetic.'+operation);
       continue;

@@ -2,7 +2,7 @@
 // Select already admitted bytes for the native consumer without rewriting an
 // identity, a frozen split, or a receipt. Keep the full campaign for audit.
 import {readFileSync,existsSync,readdirSync,mkdirSync} from 'node:fs';
-import {resolve,join} from 'node:path';
+import {resolve,join,relative,sep} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {gzipSync} from 'node:zlib';
 import {CampaignStore,atomicWrite,sha256} from '../src/corpus/campaign-store.mjs';
@@ -12,12 +12,14 @@ import {verifyNativeBinding} from '../src/training/effectful-admit.js';
 export function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_SAFE_INTEGER,
     maxFamilyShare=1,split='all'}={}){
   input=resolve(input);output=resolve(output);
-  if(input===output||existsSync(output)&&readdirSync(output).length)
-    throw new Error('Selection requires a new output directory distinct from the complete campaign');
+  const destination=relative(input,output);
+  if(!(destination==='..'||destination.startsWith('..'+sep))||existsSync(output)&&readdirSync(output).length)
+    throw new Error('Selection requires a new output directory outside the complete campaign');
   if(!['all','train','validation','test'].includes(split))throw new Error('Invalid requested split');
   const header=JSON.parse(readFileSync(join(input,'campaign.json'),'utf8'));
-  const campaign=new CampaignStore(input,header.identity,{resume:true,recoverTornLog:false,
+  const campaign=new CampaignStore(input,header.identity,{readOnly:true,recoverTornLog:false,
     maxObjectBytes:header.identity.bounds?.maxOutputBytes??268435456});
+  try{
   const sourceBytes=readFileSync(join(input,'manifest.json')),
     sourceManifest=JSON.parse(sourceBytes.toString('utf8'));
   if(sourceManifest.campaign?.identityDigest!==campaign.identityDigest)
@@ -51,6 +53,7 @@ export function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_
         family:side.sourceFamily,split:side.split,generatedTokens:side.nativeAdmission.generatedTokens});
     }catch(error){exclude(entry,'admission_invalid',String(error.message));}
   }
+  if(originalRows.size!==campaign.latest.size)throw new Error('Manifest omits durable campaign cases');
   const balanced=balanceFamilyTokens(eligible.filter(row=>row.split==='train'),{maxFamilyTokens,maxFamilyShare});
   for(const row of balanced.refused)exclude(campaign.latest.get(row.id),'training_budget_excluded',row.reason);
   const selected=[...balanced.selected,...eligible.filter(row=>row.split!=='train')].sort((a,b)=>a.id.localeCompare(b.id));
@@ -100,6 +103,7 @@ export function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_
     throughput:{measuredDuringSourceCampaign:sourceManifest.throughput,selectionDoesNotGenerateNewTokens:true}};
   atomicWrite(join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
   return report;
+  }finally{campaign.close();}
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
   const flags=new Map(),allowed=new Set(['--input','--out','--max-family-tokens','--max-family-share','--split']);

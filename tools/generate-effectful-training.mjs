@@ -17,7 +17,7 @@ import {CampaignStore,atomicWrite,identityHash} from '../src/corpus/campaign-sto
 import {generationIdentity} from '../src/corpus/campaign-identity.mjs';
 import {runGenerationProcess,encodeGenerationTask} from '../src/corpus/generation-process.mjs';
 import {loadNativeSettings,createNativeConsumer} from '../src/corpus/native-admission-client.mjs';
-import {buildSourceRegistry,verifySourceRegistry,frozenSplitIdentity,canonicalHash}
+import {buildSourceRegistry,verifySourceRegistry,immutableSourceRegistry,frozenSplitIdentity,canonicalHash}
   from '../src/corpus/source-registry.mjs';
 import {trainingCandidateTasks,candidateSourceInventory,SOURCE_RECIPES} from '../src/corpus/training-candidates.mjs';
 import {measureExecutionDifficulty} from '../src/corpus/execution-difficulty.mjs';
@@ -25,13 +25,18 @@ import {measureExecutionDifficulty} from '../src/corpus/execution-difficulty.mjs
 const booleanFlags=new Set(['--require-native','--resume','--retry-failures','--compact-storage']);
 const valueFlags=new Set(['--out','--megatoken','--tokenizer','--python','--recipe','--jobs','--native-policy',
   '--worker-memory-mb','--worker-timeout-ms','--max-output-bytes','--limit','--registry','--freeze-registry',
-  '--source-stream','--per-family','--mutations-per-family','--generated-families','--generation-seed','--input-seed']);
+  '--reference-isolation','--source-stream','--per-family','--mutations-per-family','--generated-families','--generation-seed','--input-seed']);
 const flags=new Map();
 for(let i=2;i<process.argv.length;i++){
   const name=process.argv[i];
   if(flags.has(name)||!booleanFlags.has(name)&&!valueFlags.has(name))throw new Error('Unknown or repeated option '+name);
   if(booleanFlags.has(name))flags.set(name,true);
   else {const value=process.argv[++i];if(value==null||value.startsWith('--'))throw new Error('Missing value for '+name);flags.set(name,value);}
+}
+if(flags.has('--reference-isolation')){
+  const mode=flags.get('--reference-isolation');
+  if(!['trusted-process','linux-namespace'].includes(mode))throw new Error('Unknown reference isolation mode');
+  process.env.TRACING_REFERENCE_ISOLATION=mode;
 }
 const root=fileURLToPath(new URL('..',import.meta.url));
 const output=resolve(flags.get('--out')??'corpus/out/semantic-v5');mkdirSync(output,{recursive:true});
@@ -69,6 +74,7 @@ if(flags.has('--registry')){registry=JSON.parse(readFileSync(resolve(flags.get('
 if(flags.has('--freeze-registry')){
   registry=buildSourceRegistry(sourceInventory);atomicWrite(resolve(flags.get('--freeze-registry')),JSON.stringify(registry,null,2)+'\n');
 }
+if(registry)registry=immutableSourceRegistry(registry);
 if(registry)for(const task of tasks){
   const splitIdentity=frozenSplitIdentity(registry,task.fixture.family);
   task.fixture={...task.fixture,splitIdentity,seed:registry.seed};
@@ -214,7 +220,9 @@ const manifest={schema:'semantic-corpus-manifest/4',execution:EXECUTION_VERSION,
   catalogDigest:hash(JSON.stringify(hostOperationContract(),null,2)+'\n'),
   counts,cases,counterfactuals,selectionOrigin:nativeConsumer?'certified_teacher':'owned-interpreter-teacher',
   evidenceKind:recipe==='real-source'?'pinned-real-source':recipe==='generated-v1'?'bounded-generated-programs':'deterministic-engineering',optimizerSteps:0,learnedSuccess:null};
-const elapsedMs=performance.now()-start;
+// performance.now() is monotonic time since this CLI process started. Include
+// dependency inspection, source construction and registry freezing in throughput.
+const elapsedMs=performance.now();
 const generatedTokens=cases.reduce((sum,row)=>sum+(row.metrics?.generatedTokens??0),0);
 const fresh=cases.filter(row=>freshlyRun.has(row.id));
 const freshTokens=fresh.filter(row=>row.status==='admitted').reduce((sum,row)=>sum+(row.metrics?.generatedTokens??0),0);
@@ -228,7 +236,9 @@ Object.assign(manifest,{campaign:{schema:'semantic-generation-summary/1',identit
   compatibilityExports:!flags.has('--compact-storage'),
   limits:bounds,workers:jobs,receiptCache:'full-source-profile-runtime-verifier-identity'},
   sourceRegistry:registry?{digest:canonicalHash(registry),...registry.diagnostics}:null,
-  throughput:{elapsedMs,totalVerificationMs:cases.reduce((n,row)=>n+row.durationMs,0),
+  throughput:{elapsedMs,preparationMs:start,collectionMs:elapsedMs-start,
+    timingScope:'process-start-through-final-manifest-measurement',totalVerificationMs:cases.reduce((n,row)=>n+row.durationMs,0),
+    peakCoordinatorRssBytes:process.resourceUsage().maxRSS*1024,
     peakWorkerRssBytes:Math.max(0,...cases.map(row=>row.peakRssBytes??0)),
     admittedGeneratedTokens:native?generatedTokens:null,
     admittedLearnerTokensPerHour:native&&elapsedMs>0?freshTokens*3600000/elapsedMs:null,
@@ -247,10 +257,13 @@ Object.assign(manifest,{campaign:{schema:'semantic-generation-summary/1',identit
     storedObjectBytesPerAdmission:counts.admitted?storage.bytes/counts.admitted:null,
     bytesPerAdmission:counts.admitted?cases.filter(row=>row.status==='admitted').reduce((n,row)=>n+
       (row.publicShard?.bytes??0)+(row.privateEvidence?.bytes??0),storage.byKind.registries.bytes)/counts.admitted:null},
-  limitations:['Workers are bounded trusted-source processes; OS-level isolation for untrusted programs remains required.',
+  limitations:[process.env.TRACING_REFERENCE_ISOLATION==='linux-namespace'?
+    'References use qualified Linux namespace/seccomp confinement; the owned teacher and native consumer still accept only reviewed candidates.':
+    'References use trusted-source processes; choose --reference-isolation linux-namespace for OS confinement.',
     'Worker heap limits are V8 heap limits, not whole-process cgroup memory limits.',
     'Executed path signatures describe source-site branch and throw sequences; lexical families without a registry are not independent clusters.']});
 atomicWrite(join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
+campaign.close();
 process.removeListener('SIGINT',cancel);process.removeListener('SIGTERM',cancel);
 if(abort.signal.aborted)process.exitCode=130;
 else if(cases.some(item=>item.status!==(nativeConsumer?'admitted':'locally_verified')))

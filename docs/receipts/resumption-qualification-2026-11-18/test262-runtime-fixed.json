@@ -1,0 +1,266 @@
+{
+  "schema": "test262-runtime-report/1",
+  "evidence": "Unchanged official bodies executed as non-strict scripts with the declared guest scalar harness; each sealed run reconstructed and replayed. Not the complete official harness, strict-mode conformance, or a full Test262 pass count.",
+  "profile": "bounded-scalar-test262/1",
+  "suite": {
+    "repository": "tc39/test262",
+    "commit": "d53ebc8b1931d9f1541e43d59650776e4b766248",
+    "files": 8,
+    "source": "pinned-commit-and-verified-git-blobs"
+  },
+  "harness": {
+    "implementation": "src/test262-runtime.js",
+    "operations": [
+      "assert.sameValue",
+      "assert.notSameValue"
+    ],
+    "valueDomain": "primitives without Symbol",
+    "guestExecuted": true,
+    "officialHarness": false,
+    "strictVariantsExecuted": false
+  },
+  "oracle": {
+    "name": "engine262",
+    "revision": "2d7d8d988c77e94473ba0377122cdfccdfe243ba",
+    "packageVersion": "0.0.1-2d7d8d988c77e94473ba0377122cdfccdfe243ba",
+    "traceAuthority": false
+  },
+  "summary": {
+    "files": 8,
+    "executedVariants": 6,
+    "passedVariants": 6,
+    "failedVariants": 0,
+    "unsupportedVariants": 2,
+    "omittedStrictVariants": 8,
+    "executedAssertions": 16
+  },
+  "rows": [
+    {
+      "path": "test/language/expressions/addition/coerce-bigint-to-string.js",
+      "gitBlobSha": "2e5105befea218ffe00b4d903a0ae6b314ca5c36",
+      "metadata": {
+        "flags": [],
+        "features": [
+          "BigInt"
+        ],
+        "variant": "non-strict-script",
+        "requestedVariants": [
+          "non-strict-script",
+          "strict-script"
+        ],
+        "omittedVariants": [
+          "strict-script"
+        ]
+      },
+      "assertionCount": 10,
+      "progress": "terminated",
+      "trace": {
+        "eventCount": 565,
+        "chunkCount": 1,
+        "reconstructed": true,
+        "replayed": true,
+        "externalAdapterCalls": 0
+      },
+      "status": "passed",
+      "phase": "execution",
+      "referencePassed": true,
+      "matchesBaseline": true
+    },
+    {
+      "path": "test/language/expressions/exponentiation/bigint-zero-base-zero-exponent.js",
+      "gitBlobSha": "6c7218c53a4ebd05ad2f60557c9e4a2b6677cca4",
+      "metadata": {
+        "flags": [],
+        "features": [
+          "BigInt",
+          "exponentiation"
+        ],
+        "variant": "non-strict-script",
+        "requestedVariants": [
+          "non-strict-script",
+          "strict-script"
+        ],
+        "omittedVariants": [
+          "strict-script"
+        ]
+      },
+      "assertionCount": 1,
+      "progress": "terminated",
+      "trace": {
+        "eventCount": 78,
+        "chunkCount": 1,
+        "reconstructed": true,
+        "replayed": true,
+        "externalAdapterCalls": 0
+      },
+      "status": "passed",
+      "phase": "execution",
+      "referencePassed": true,
+      "matchesBaseline": true
+    },
+    {
+      "path": "test/language/expressions/multiplication/line-terminator.js",
+      "gitBlobSha": "3711c705a845cfcf27c0038155def8eba91d0cee",
+      "metadata": {
+        "flags": [],
+        "features": [],
+        "variant": "non-strict-script",
+        "requestedVariants": [
+          "non-strict-script",
+          "strict-script"
+        ],
+        "omittedVariants": [
+          "strict-script"
+        ]
+      },
+      "assertionCount": 1,
+      "progress": "terminated",
+      "trace": {
+        "eventCount": 95,
+        "chunkCount": 1,
+        "reconstructed": true,
+        "replayed": true,
+        "externalAdapterCalls": 0
+      },
+      "status": "passed",
+      "phase": "execution",
+      "referencePassed": true,
+      "matchesBaseline": true
+    },
+    {
+      "path": "test/language/expressions/division/line-terminator.js",
+      "gitBlobSha": "ff1ecbe6c94356076df89934d7e8d0446c111a1f",
+      "metadata": {
+        "flags": [],
+        "features": [],
+        "variant": "non-strict-script",
+        "requestedVariants": [
+          "non-strict-script",
+          "strict-script"
+        ],
+        "omittedVariants": [
+          "strict-script"
+        ]
+      },
+      "assertionCount": 1,
+      "progress": "terminated",
+      "trace": {
+        "eventCount": 95,
+        "chunkCount": 1,
+        "reconstructed": true,
+        "replayed": true,
+        "externalAdapterCalls": 0
+      },
+      "status": "passed",
+      "phase": "execution",
+      "referencePassed": true,
+      "matchesBaseline": true
+    },
+    {
+      "path": "test/language/expressions/modulus/line-terminator.js",
+      "gitBlobSha": "3ec90e2d8b3920a7c3e9f75f0dfe239536174489",
+      "metadata": {
+        "flags": [],
+        "features": [],
+        "variant": "non-strict-script",
+        "requestedVariants": [
+          "non-strict-script",
+          "strict-script"
+        ],
+        "omittedVariants": [
+          "strict-script"
+        ]
+      },
+      "assertionCount": 1,
+      "progress": "terminated",
+      "trace": {
+        "eventCount": 95,
+        "chunkCount": 1,
+        "reconstructed": true,
+        "replayed": true,
+        "externalAdapterCalls": 0
+      },
+      "status": "passed",
+      "phase": "execution",
+      "referencePassed": true,
+      "matchesBaseline": true
+    },
+    {
+      "path": "test/language/expressions/exponentiation/int32_min-exponent.js",
+      "gitBlobSha": "0d91d53f8bd24ff432581631072a0f6718c9247a",
+      "metadata": {
+        "flags": [],
+        "features": [
+          "exponentiation"
+        ],
+        "variant": "non-strict-script",
+        "requestedVariants": [
+          "non-strict-script",
+          "strict-script"
+        ],
+        "omittedVariants": [
+          "strict-script"
+        ]
+      },
+      "assertionCount": 2,
+      "progress": "terminated",
+      "trace": {
+        "eventCount": 182,
+        "chunkCount": 1,
+        "reconstructed": true,
+        "replayed": true,
+        "externalAdapterCalls": 0
+      },
+      "status": "passed",
+      "phase": "execution",
+      "referencePassed": true,
+      "matchesBaseline": true
+    },
+    {
+      "path": "test/language/expressions/exponentiation/exp-operator.js",
+      "gitBlobSha": "fdf3c8fa2464889ccb86c3cdde240826de22adda",
+      "status": "unsupported",
+      "phase": "compile",
+      "reason": "Unexpected token ++ at 466",
+      "metadata": {
+        "flags": [],
+        "features": [
+          "exponentiation"
+        ],
+        "variant": "non-strict-script",
+        "requestedVariants": [
+          "non-strict-script",
+          "strict-script"
+        ],
+        "omittedVariants": [
+          "strict-script"
+        ]
+      },
+      "declaredGap": "Update expressions are outside the bounded grammar",
+      "matchesBaseline": true
+    },
+    {
+      "path": "test/language/expressions/addition/bigint-and-number.js",
+      "gitBlobSha": "657b3d003a0eae741e32c34ef46c012835d6144c",
+      "status": "unsupported",
+      "phase": "compile",
+      "reason": "Test body requires an unavailable assert helper",
+      "metadata": {
+        "flags": [],
+        "features": [
+          "BigInt"
+        ],
+        "variant": "non-strict-script",
+        "requestedVariants": [
+          "non-strict-script",
+          "strict-script"
+        ],
+        "omittedVariants": [
+          "strict-script"
+        ]
+      },
+      "declaredGap": "assert.throws and guest exception callbacks are outside the scalar harness",
+      "matchesBaseline": true
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "schema": "spec-reference-probes/1",
+  "oracle": "0.0.1-2d7d8d988c77e94473ba0377122cdfccdfe243ba",
+  "cases": 12,
+  "passed": 12,
+  "evidence": "matching scalar results plus independently reconstructible bounded trace; NOT full conformance"
+}

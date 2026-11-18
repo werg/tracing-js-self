@@ -1,0 +1,275 @@
+{
+  "schema": "native-training-window-plan/1",
+  "sampler": "native-sequential-permuted-episodes",
+  "seed": 17,
+  "windowConfig": {
+    "max_window_tokens": 16384,
+    "max_decisions": 16,
+    "respect_dependencies": false,
+    "max_dependency_tokens": 16384,
+    "max_records": 32
+  },
+  "preparedIdentity": "f546f845a0c99a1e83ee1b366963db51c55f0ddb5cf9d720d8fa302c4a5688a5",
+  "sources": [
+    {
+      "sourceId": "semantic-harness:3e3e8e2b86b43d22",
+      "episodeId": "semantic:harness:3e3e8e2b86b43d22cfae071ffea25a6573134d36412b1d71c527ec7cb61499cd",
+      "windows": 2,
+      "scoredTokens": 765,
+      "transcriptTokens": 6351
+    },
+    {
+      "sourceId": "semantic-harness:ce0d444b78aca1af",
+      "episodeId": "semantic:harness:ce0d444b78aca1af9cae3855e119980210484a6683a0661368dd35f0afef6a9d",
+      "windows": 2,
+      "scoredTokens": 693,
+      "transcriptTokens": 6230
+    },
+    {
+      "sourceId": "semantic-harness:a75a8e6185270302",
+      "episodeId": "semantic:harness:a75a8e6185270302eb8babc983f7a377721cf53658ee126a3663c6a81491acdd",
+      "windows": 3,
+      "scoredTokens": 829,
+      "transcriptTokens": 6592
+    },
+    {
+      "sourceId": "semantic-harness:8898dcaba1a4d2db",
+      "episodeId": "semantic:harness:8898dcaba1a4d2db96c4a6a87e64871ff641e10b245cbf886e02f089f41bc84f",
+      "windows": 2,
+      "scoredTokens": 750,
+      "transcriptTokens": 6318
+    },
+    {
+      "sourceId": "semantic-harness:41f1fd06c48f0bf1",
+      "episodeId": "semantic:harness:41f1fd06c48f0bf125edcc30047a059a9d6c928f6b297a553739e5d3e01e2a76",
+      "windows": 2,
+      "scoredTokens": 785,
+      "transcriptTokens": 6395
+    },
+    {
+      "sourceId": "semantic-harness:203bfbcdd321bd17",
+      "episodeId": "semantic:harness:203bfbcdd321bd1732cb145d4e1ded3d8ee23100f778a71a324f2e8bccfc3fee",
+      "windows": 2,
+      "scoredTokens": 872,
+      "transcriptTokens": 6444
+    },
+    {
+      "sourceId": "semantic-harness:83f671ba94880a84",
+      "episodeId": "semantic:harness:83f671ba94880a8456a37d58696f9635d14c7b961a81e484fe18625096bd520b",
+      "windows": 2,
+      "scoredTokens": 788,
+      "transcriptTokens": 2856
+    },
+    {
+      "sourceId": "semantic-harness:445f84d885b19938",
+      "episodeId": "semantic:harness:445f84d885b1993845518ef8b6395ebb5abcabf7f12435e659db01a76bda487f",
+      "windows": 2,
+      "scoredTokens": 786,
+      "transcriptTokens": 2847
+    },
+    {
+      "sourceId": "semantic-harness:c8dfb9a67ef6f126",
+      "episodeId": "semantic:harness:c8dfb9a67ef6f12600c04688e53a51c4dd4b2f2282f5361cf809504b0b3c87db",
+      "windows": 3,
+      "scoredTokens": 902,
+      "transcriptTokens": 6825
+    },
+    {
+      "sourceId": "semantic-harness:4984c044ecb1641a",
+      "episodeId": "semantic:harness:4984c044ecb1641a50d4ea8c3bcf6a03e7a2910172cd48ac13562c9f00908dc4",
+      "windows": 2,
+      "scoredTokens": 701,
+      "transcriptTokens": 6238
+    },
+    {
+      "sourceId": "semantic-harness:4add10c4504caaca",
+      "episodeId": "semantic:harness:4add10c4504caaca59043e69a4dd3a7e56a3c7c87a4213c5f556e886b61a6349",
+      "windows": 2,
+      "scoredTokens": 774,
+      "transcriptTokens": 2757
+    },
+    {
+      "sourceId": "semantic-harness:10ebe707cce4a980",
+      "episodeId": "semantic:harness:10ebe707cce4a980256165931befd4b7ea6eb90f69b7ee5d967ee951848bba56",
+      "windows": 2,
+      "scoredTokens": 767,
+      "transcriptTokens": 6316
+    },
+    {
+      "sourceId": "semantic-harness:9e0492917da5cc02",
+      "episodeId": "semantic:harness:9e0492917da5cc027d59b6a2e91666ad26faa222d0d66823846d23d37712879d",
+      "windows": 3,
+      "scoredTokens": 788,
+      "transcriptTokens": 6493
+    },
+    {
+      "sourceId": "semantic-harness:feca5c1e10cc6404",
+      "episodeId": "semantic:harness:feca5c1e10cc6404bda4b1e23529dbf2e3a1456a24b9172871a62642f3b917af",
+      "windows": 3,
+      "scoredTokens": 895,
+      "transcriptTokens": 6632
+    },
+    {
+      "sourceId": "semantic-harness:2ec6688d67a231ce",
+      "episodeId": "semantic:harness:2ec6688d67a231cec9cc429be246dad41e3978ac5c0514b75bba9d3208cd71a1",
+      "windows": 1,
+      "scoredTokens": 123,
+      "transcriptTokens": 796
+    },
+    {
+      "sourceId": "semantic-harness:9193bd760d71e4e1",
+      "episodeId": "semantic:harness:9193bd760d71e4e101eed32649f4f40da51173913e99b6325bf195e33da18189",
+      "windows": 1,
+      "scoredTokens": 48,
+      "transcriptTokens": 682
+    },
+    {
+      "sourceId": "semantic-harness:32db05b865768c4f",
+      "episodeId": "semantic:harness:32db05b865768c4f84680cfcf2af9e099cb14ad39afe97fb52798947d67913fa",
+      "windows": 1,
+      "scoredTokens": 176,
+      "transcriptTokens": 961
+    },
+    {
+      "sourceId": "semantic-harness:44bf4be458d27f62",
+      "episodeId": "semantic:harness:44bf4be458d27f62d27430206b7657eb02efa12ec76ec2eff7d098e4c1414f94",
+      "windows": 1,
+      "scoredTokens": 98,
+      "transcriptTokens": 727
+    },
+    {
+      "sourceId": "semantic-harness:cf566a052cac3ebb",
+      "episodeId": "semantic:harness:cf566a052cac3ebb33719723204aa3ae598a064953781af09bee500edfc82298",
+      "windows": 1,
+      "scoredTokens": 148,
+      "transcriptTokens": 862
+    },
+    {
+      "sourceId": "semantic-harness:7c05614d5a35833c",
+      "episodeId": "semantic:harness:7c05614d5a35833c18302d24a82b5d93cd16d609ce7487af51fc47ffe158b0ab",
+      "windows": 1,
+      "scoredTokens": 151,
+      "transcriptTokens": 818
+    },
+    {
+      "sourceId": "semantic-harness:313b828a039f10c4",
+      "episodeId": "semantic:harness:313b828a039f10c44b34a79dccad23f7ab91ba9810dde76efbbcfe27c2ab81cb",
+      "windows": 2,
+      "scoredTokens": 812,
+      "transcriptTokens": 6449
+    },
+    {
+      "sourceId": "semantic-harness:71473c5dc12133c5",
+      "episodeId": "semantic:harness:71473c5dc12133c557e6449d8bb38f1c3e38a29978a74538cd2d8928217b710b",
+      "windows": 2,
+      "scoredTokens": 802,
+      "transcriptTokens": 6494
+    },
+    {
+      "sourceId": "semantic-harness:d2488b66f4b3be4b",
+      "episodeId": "semantic:harness:d2488b66f4b3be4bc332a37edb7e02988cc99ff05b9adb49cf6773e675a058aa",
+      "windows": 1,
+      "scoredTokens": 249,
+      "transcriptTokens": 1212
+    },
+    {
+      "sourceId": "semantic-harness:ce24b3d371c9d028",
+      "episodeId": "semantic:harness:ce24b3d371c9d0285b50204562302416ac6b77eb158eb605eb65ee2b15b350b6",
+      "windows": 1,
+      "scoredTokens": 49,
+      "transcriptTokens": 683
+    },
+    {
+      "sourceId": "semantic-harness:0ba8737e12b29d73",
+      "episodeId": "semantic:harness:0ba8737e12b29d7377602962d4bc9a42243696447d2e4303cea6d7ca72f7fada",
+      "windows": 2,
+      "scoredTokens": 896,
+      "transcriptTokens": 6542
+    },
+    {
+      "sourceId": "semantic-harness:50ccd8fac330f92f",
+      "episodeId": "semantic:harness:50ccd8fac330f92f264fd92a60df97a4dc61a673eed7a7c25dedfc8e5656a099",
+      "windows": 1,
+      "scoredTokens": 125,
+      "transcriptTokens": 796
+    },
+    {
+      "sourceId": "semantic-harness:a41afcc81e031951",
+      "episodeId": "semantic:harness:a41afcc81e031951d5e9b44cbba9df319ef0374ba2d3a89e98a07c341fb74186",
+      "windows": 1,
+      "scoredTokens": 148,
+      "transcriptTokens": 927
+    },
+    {
+      "sourceId": "semantic-harness:34cd45445206c0fc",
+      "episodeId": "semantic:harness:34cd45445206c0fc45313e2c1923805253ab1f93d50e4d99479cdf5945cace80",
+      "windows": 1,
+      "scoredTokens": 232,
+      "transcriptTokens": 1062
+    },
+    {
+      "sourceId": "semantic-harness:93dc65677d122f37",
+      "episodeId": "semantic:harness:93dc65677d122f3724667d5363ba4b52952e4e33a982fac6a8445bb987a3b817",
+      "windows": 1,
+      "scoredTokens": 348,
+      "transcriptTokens": 1752
+    },
+    {
+      "sourceId": "semantic-harness:e962b4971427c398",
+      "episodeId": "semantic:harness:e962b4971427c3980b909bb77366ff76236ae91b924d9ea5ae64ae66e568705a",
+      "windows": 2,
+      "scoredTokens": 560,
+      "transcriptTokens": 2498
+    },
+    {
+      "sourceId": "semantic-harness:4047539d339502e9",
+      "episodeId": "semantic:harness:4047539d339502e91615583a856edc5413b664b140f0a8bb481b271109dcb748",
+      "windows": 2,
+      "scoredTokens": 858,
+      "transcriptTokens": 2964
+    },
+    {
+      "sourceId": "semantic-harness:1a859ac0bafa5f06",
+      "episodeId": "semantic:harness:1a859ac0bafa5f06cdb3f9d2d4033f38a03b663465f1740d1bf28d226e1195ea",
+      "windows": 2,
+      "scoredTokens": 656,
+      "transcriptTokens": 2595
+    }
+  ],
+  "firstEpochSourceOrder": [
+    "semantic-harness:50ccd8fac330f92f",
+    "semantic-harness:9e0492917da5cc02",
+    "semantic-harness:1a859ac0bafa5f06",
+    "semantic-harness:cf566a052cac3ebb",
+    "semantic-harness:203bfbcdd321bd17",
+    "semantic-harness:0ba8737e12b29d73",
+    "semantic-harness:10ebe707cce4a980",
+    "semantic-harness:4047539d339502e9",
+    "semantic-harness:44bf4be458d27f62",
+    "semantic-harness:41f1fd06c48f0bf1",
+    "semantic-harness:ce24b3d371c9d028",
+    "semantic-harness:4add10c4504caaca",
+    "semantic-harness:e962b4971427c398",
+    "semantic-harness:32db05b865768c4f",
+    "semantic-harness:8898dcaba1a4d2db",
+    "semantic-harness:d2488b66f4b3be4b",
+    "semantic-harness:4984c044ecb1641a",
+    "semantic-harness:93dc65677d122f37",
+    "semantic-harness:9193bd760d71e4e1",
+    "semantic-harness:a75a8e6185270302",
+    "semantic-harness:71473c5dc12133c5",
+    "semantic-harness:c8dfb9a67ef6f126",
+    "semantic-harness:34cd45445206c0fc",
+    "semantic-harness:2ec6688d67a231ce",
+    "semantic-harness:ce0d444b78aca1af",
+    "semantic-harness:313b828a039f10c4",
+    "semantic-harness:445f84d885b19938",
+    "semantic-harness:a41afcc81e031951",
+    "semantic-harness:feca5c1e10cc6404",
+    "semantic-harness:3e3e8e2b86b43d22",
+    "semantic-harness:7c05614d5a35833c",
+    "semantic-harness:83f671ba94880a84"
+  ],
+  "firstEpochWindows": 56,
+  "eachEpisodeIsOneWindow": false
+}

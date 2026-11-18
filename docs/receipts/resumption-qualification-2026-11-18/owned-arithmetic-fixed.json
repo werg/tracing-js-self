@@ -1,0 +1,23 @@
+{
+  "schema": "owned-arithmetic-differential/1",
+  "oracle": "0.0.1-2d7d8d988c77e94473ba0377122cdfccdfe243ba",
+  "corpusValues": 18,
+  "operators": [
+    "+",
+    "-",
+    "*",
+    "/",
+    "%",
+    "**"
+  ],
+  "cartesianCases": 1944,
+  "edgeCases": 14,
+  "cases": 1958,
+  "normal": 1433,
+  "abrupt": 525,
+  "events": 41917,
+  "passed": 1958,
+  "reconstructed": 1958,
+  "replayed": 1958,
+  "evidence": "finite primitive corpus plus edge probes; not exhaustive ECMA-262, Test262 or native-host conformance"
+}

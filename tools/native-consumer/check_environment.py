@@ -41,6 +41,11 @@ def main() -> int:
     revision = git("rev-parse", "HEAD")
     if revision != policy["consumerRevision"] or git("status", "--porcelain", "--untracked-files=no"):
         raise ValueError("Native consumer must be the clean, exact policy revision")
+    untracked = [path for path in git("ls-files", "--others", "-z", "--", "src", "scripts").split("\0")
+                 if path and Path(path).suffix in {".py", ".pyc", ".pyo", ".so", ".pyd"}
+                 and not ("__pycache__" in Path(path).parts and Path(path).suffix == ".pyc")]
+    if untracked:
+        raise ValueError("Native consumer contains untracked importable code: " + ", ".join(untracked))
     import megatoken
     import torch
     from megatoken.generation.codec import ByteCodec

@@ -50,6 +50,38 @@ export const stableSplit=slug=>{
  return h===0?'test':h<=2?'validation':'train';
 };
 
+function integerExpectedLexemes(text){
+ // JSON.parse rounds large JSON integers. Read the expected-value token from
+ // TypeScript's JSON syntax tree before interpreting the language-track type.
+ // This works on the pinned Node 20 lane too; it needs no JSON reviver context.
+ const tree=ts.parseJsonText('canonical-data.json',text),integers={};
+ function visit(node){
+  if(ts.isObjectLiteralExpression(node)){
+   const fields=new Map(node.properties.filter(ts.isPropertyAssignment).map(property=>
+     [property.name.text,property.initializer]));
+   const id=fields.get('uuid'),expected=fields.get('expected');
+   if(id&&ts.isStringLiteral(id)&&expected){
+    const raw=expected.getText(tree);
+    if(/^-?(?:0|[1-9][0-9]*)$/.test(raw))integers[id.text]=raw;
+   }
+  }
+  ts.forEachChild(node,visit);
+ }
+ visit(tree);return integers;
+}
+
+export function canonicalJavaScriptExpected(expected,binding=null){
+ if(binding===null||binding===undefined)return expected;
+ const knownBinding=binding.schema==='exercism-javascript-expected/1'&&binding.kind==='bigint'||
+   binding.schema==='exercism-grains-bigint/1';
+ if(!knownBinding||
+    typeof binding.decimal!=='string'||binding.decimal.length>10000||
+    !/^-?(?:0|[1-9][0-9]*)$/.test(binding.decimal)||typeof expected!=='number'||
+    !Number.isInteger(expected)||Number(binding.decimal)!==expected)
+   throw new TypeError('Invalid exact canonical JavaScript expected-value binding');
+ return BigInt(binding.decimal);
+}
+
 export function loadPinnedPairs(base=process.cwd()){
  const root=resolve(base),jsRoot=resolve(root,PROOF_ROOT),inRoot=resolve(root,INPUT_ROOT);
  const jsLock=JSON.parse(readFileSync(resolve(jsRoot,'snapshot.lock.json'),'utf8'));
@@ -72,18 +104,9 @@ export function loadPinnedPairs(base=process.cwd()){
    };
    const source=check(jsRoot,jsLock,solutionPath),
      canonical=check(inRoot,inputLock,canonicalPath);
-   // Keep the original decimal lexeme before JSON's Number conversion rounds
-   // large grains expectations. The JavaScript track returns BigInt exactly.
-   const canonicalIntegerExpectations={};
-   const document=JSON.parse(canonical,function(key,value,context){
-     if(slug==='grains'&&key==='expected'&&typeof value==='number'){
-       if(typeof this.uuid!=='string'||!context||!/^(0|[1-9]\d*)$/.test(context.source))
-         throw new Error('Pinned grains integers require exact JSON source lexemes');
-       canonicalIntegerExpectations[slug+'/'+this.uuid]=context.source;
-     }
-     return value;
-   });
-   return {slug,source,canonical:document,canonicalIntegerExpectations,
+   const expectedIntegerLexemes=integerExpectedLexemes(canonical);
+   return {slug,source,canonical:JSON.parse(canonical),expectedIntegerLexemes,
+     canonicalIntegerExpectations:Object.fromEntries(Object.entries(expectedIntegerLexemes).map(([uuid,decimal])=>[slug+'/'+uuid,decimal])),
      provenance:{solution:{repository:JS_REPO,revision:JS_REVISION,
        path:solutionPath,sha256:sha256(source),license:'MIT'},
        canonical:{repository:INPUT_REPO,revision:INPUT_REVISION,
@@ -115,31 +138,37 @@ export function extractCanonicalCases(record,{includeSuperseded=false}={}){
      const caseId=record.slug+'/'+id;
      if(seen.has(caseId))throw new Error('Duplicate canonical case id '+caseId);
      seen.add(caseId);
-     if(replacements.has(caseId)){
-       if(includeSuperseded)output.push({caseId,property,status:'superseded_canonical_case',
-         replacedBy:replacements.get(caseId),description:path});
-       return;
-     }
+     const replacedBy=replacements.get(caseId)??null;
+     if(replacedBy&&!includeSuperseded)return;
      if(!mapping){output.push({caseId,property,status:'unsupported_property',description:path});return;}
      const [entry,...keys]=mapping;
      if(!value.input||typeof value.input!=='object'||
         keys.some(k=>!Object.hasOwn(value.input,k))){
        output.push({caseId,property,status:'unsupported_input_shape',description:path});return;
      }
-     let args=keys.map(k=>value.input[k]),inputBinding=null,expectedBinding=null;
-     // The neutral two-fer null denotes an omitted name. JavaScript's default
-     // parameter is activated by omission; passing null changes the API call.
+     let args=keys.map(k=>value.input[k]),argumentBinding=null,inputBinding=null,expectedBinding=null;
+     // Problem specifications are language-neutral. These two explicit track
+     // bindings preserve the original canonical input alongside the JS call.
+     // No expected outcome is used to choose or alter an argument.
      if(record.slug==='two-fer'&&property==='twoFer'&&value.input.name===null){
-       args=[];
+       args=[];argumentBinding='two-fer-null-name-as-omitted-argument/1';
        inputBinding={schema:'exercism-two-fer-omitted-name/1',canonicalName:null,argumentCount:0};
      }
-     if(record.slug==='grains'&&['square','total'].includes(property)&&typeof value.expected==='number'){
-       const decimal=record.canonicalIntegerExpectations?.[caseId];
-       if(typeof decimal!=='string')throw new Error('Missing exact pinned grains integer '+caseId);
-       expectedBinding={schema:'exercism-grains-bigint/1',decimal};
+     if(record.slug==='knapsack'&&property==='maximumValue'&&value.input.items&&
+        !Array.isArray(value.input.items)&&typeof value.input.items==='object'&&
+        Object.keys(value.input.items).length===0){
+       args=[value.input.maximumWeight,[]];argumentBinding='knapsack-empty-record-as-empty-items/1';
      }
-     output.push({caseId,property,entry,args,canonicalInput:value.input,inputBinding,expectedBinding,
-       reimplements:value.reimplements??null,expected:value.expected,description:path,status:'candidate'});
+     if(record.slug==='grains'&&typeof value.expected==='number'){
+       const decimal=record.expectedIntegerLexemes?.[value.uuid]??
+         (Number.isSafeInteger(value.expected)?String(value.expected):null);
+       if(decimal===null){output.push({caseId,property,status:'unsupported_expected_precision',description:path});return;}
+       expectedBinding={schema:'exercism-grains-bigint/1',decimal};
+       canonicalJavaScriptExpected(value.expected,expectedBinding);
+     }
+     output.push({caseId,property,entry,args,canonicalInput:structuredClone(value.input),argumentBinding,inputBinding,
+       reimplements:value.reimplements??null,expected:value.expected,expectedBinding,description:path,
+       status:replacedBy?'superseded_canonical_case':'candidate',...(replacedBy?{replacedBy}:{})});
    }
    if(Array.isArray(value.cases))walk(value.cases,path);
  }

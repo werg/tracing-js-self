@@ -1,0 +1,152 @@
+{
+  "date": "2026-11-18",
+  "runs": [
+    {
+      "allOriginalCampaignObjectsRetained": true,
+      "archive": {
+        "archiveSha256": "d37ede7e792e7b1de16a6fabade2ef7b774a410cff2ca4128ce22b95eb93624e",
+        "files": 45,
+        "identityDigest": "480b3f05c362f48fba7a5a2ec86c18006903a3a8eb44ffa00f9eadce4dbbcacb",
+        "schema": "semantic-release-verification/1",
+        "status": "verified"
+      },
+      "consumerRevision": "6206b33a55eba3e50f80498f906439221bc289b7",
+      "generatedTokens": {
+        "availableTrain": 906,
+        "excludedTrain": 0,
+        "heldOut": 0,
+        "selectedTrain": 906
+      },
+      "heldOutSupplied": 0,
+      "learnedSuccess": null,
+      "mode": "default",
+      "nativeEnvironmentSha256": "4f4de9b24e02e4e8ced52fb69caf470d3289fe1649244b2585dfd3b1521836b6",
+      "nativePrepared": 3,
+      "nativeQualificationSha256": "7f3e1e7476b6420c6b2160223055554084c8225b1080371f2d62aa459bd56364",
+      "nativeQualified": 3,
+      "optimizerSteps": 0,
+      "originalCandidateCounts": {
+        "admitted": 3
+      },
+      "packagingTool": {
+        "files": [
+          {
+            "bytes": 35198,
+            "path": "tools/package-semantic-release.py",
+            "sha256": "2b488cc92c544cdc664de70054288a434f941d8a393f166e6e551658d25793db"
+          },
+          {
+            "bytes": 8318,
+            "path": "tools/verify-release-campaign.mjs",
+            "sha256": "3ee1f4dbbc95dbfbd510e9b70333464f44309a2ed36dbe70677a5b2d22ce3435"
+          },
+          {
+            "bytes": 4415,
+            "path": "tools/select-release-training.mjs",
+            "sha256": "f70ef26fccfd50a540b5ed739335c6274ab39fe790893c9647156ba358612b4e"
+          },
+          {
+            "bytes": 12146,
+            "path": "src/corpus/campaign-store.mjs",
+            "sha256": "0c09e2b389153b3cb9b653cccd3cdfbfda2c123c0159527efd8221bb4ee1d9a3"
+          },
+          {
+            "bytes": 11706,
+            "path": "src/corpus/source-registry.mjs",
+            "sha256": "134a5fd6cd31b553e917db3fd0c0ff6adf9fbadc4f8a0f61cf339d01cb92951f"
+          }
+        ],
+        "revision": "1a31a812bb054bc6d77b5a9729d0ee70c2adf52e",
+        "trackedWorktreeClean": true
+      },
+      "preparedTrainingSelectionStatus": "verified",
+      "producerRevision": "5753de14760b76754fd1bd49ca7c8bfc6de85831",
+      "trainingExcluded": 0,
+      "trainingSelected": 3
+    },
+    {
+      "allOriginalCampaignObjectsRetained": true,
+      "archive": {
+        "archiveSha256": "a1f54b11840c278c6b2d27fb54f0d34f8cdabcd33010baaf8a54dd4ae9a0bf6f",
+        "files": 45,
+        "identityDigest": "bc42883b1f4ddb35e4ae63d1f9906371ea3305abb3925844f304a740a25038ec",
+        "schema": "semantic-release-verification/1",
+        "status": "verified"
+      },
+      "consumerRevision": "6206b33a55eba3e50f80498f906439221bc289b7",
+      "generatedTokens": {
+        "availableTrain": 906,
+        "excludedTrain": 306,
+        "heldOut": 0,
+        "selectedTrain": 600
+      },
+      "heldOutSupplied": 0,
+      "learnedSuccess": null,
+      "mode": "capped",
+      "nativeEnvironmentSha256": "4f4de9b24e02e4e8ced52fb69caf470d3289fe1649244b2585dfd3b1521836b6",
+      "nativePrepared": 2,
+      "nativeQualificationSha256": "7f3e1e7476b6420c6b2160223055554084c8225b1080371f2d62aa459bd56364",
+      "nativeQualified": 3,
+      "optimizerSteps": 0,
+      "originalCandidateCounts": {
+        "admitted": 3
+      },
+      "packagingTool": {
+        "files": [
+          {
+            "bytes": 35198,
+            "path": "tools/package-semantic-release.py",
+            "sha256": "2b488cc92c544cdc664de70054288a434f941d8a393f166e6e551658d25793db"
+          },
+          {
+            "bytes": 8318,
+            "path": "tools/verify-release-campaign.mjs",
+            "sha256": "3ee1f4dbbc95dbfbd510e9b70333464f44309a2ed36dbe70677a5b2d22ce3435"
+          },
+          {
+            "bytes": 4415,
+            "path": "tools/select-release-training.mjs",
+            "sha256": "f70ef26fccfd50a540b5ed739335c6274ab39fe790893c9647156ba358612b4e"
+          },
+          {
+            "bytes": 12146,
+            "path": "src/corpus/campaign-store.mjs",
+            "sha256": "0c09e2b389153b3cb9b653cccd3cdfbfda2c123c0159527efd8221bb4ee1d9a3"
+          },
+          {
+            "bytes": 11706,
+            "path": "src/corpus/source-registry.mjs",
+            "sha256": "134a5fd6cd31b553e917db3fd0c0ff6adf9fbadc4f8a0f61cf339d01cb92951f"
+          }
+        ],
+        "revision": "1a31a812bb054bc6d77b5a9729d0ee70c2adf52e",
+        "trackedWorktreeClean": true
+      },
+      "preparedTrainingSelectionStatus": "verified",
+      "producerRevision": "5753de14760b76754fd1bd49ca7c8bfc6de85831",
+      "trainingExcluded": 1,
+      "trainingSelected": 2
+    }
+  ],
+  "schema": "semantic-release-packaging-evidence/1",
+  "scope": {
+    "actualCorpus": "three native-admitted engineering examples from one frozen training component",
+    "heldOutExamplesInActualSmoke": 0,
+    "heldOutMembershipAndFinalDenominatorRegressions": "tested with synthetic fixtures; not a held-out native corpus measurement",
+    "largeRealSourcePackage": "not part of these smoke receipts",
+    "learnedSuccess": null,
+    "optimizerSteps": 0
+  },
+  "tests": {
+    "node": {
+      "command": "node --test test/release-training-selection.test.js test/source-registry.test.js test/release-campaign.test.js",
+      "failed": 0,
+      "passed": 21
+    },
+    "python": {
+      "command": "python -m unittest discover -s tools/native-consumer -p 'test_*.py'",
+      "failed": 0,
+      "passed": 35
+    }
+  }
+}
