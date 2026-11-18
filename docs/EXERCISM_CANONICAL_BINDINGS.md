@@ -38,6 +38,9 @@ actual observable exception name/message under the declared error profile.
 the upstream source and canonical-file hashes, and the fresh
 `originalSourceCheck.canonicalExpectation`. Historical campaign objects retain
 their original dispositions and are never relabeled by these fixes.
+New candidates retain both the proof implementation's MIT notice and the
+separately pinned canonical input notice. `canonicalNotice` names the canonical
+repository and revision, vendored notice path, exact SHA-256, and original text.
 
 ## Requalifying individual pinned cases
 
