@@ -4,11 +4,39 @@ An **experimental, owned-machine JavaScript semantic tracing runtime**, bootstra
 
 This is a working **bounded prototype**, **not** a complete JavaScript interpreter or complete Node/browser runtime. Unsupported language features fail explicitly rather than running guest JavaScript outside the tracer. See [current semantic-execution scope](docs/SEMANTIC_REASONING_TRACE.md) and [coverage ledger](coverage/required.json).
 
-Version 0.2.0 adds the first serializable spec-operation path for primitive
-arithmetic, typed operation commands, a pinned upstream source inventory, and a
-small executed Test262 slice. It preserves the strict synchronous training
-foundation and its source-anchored trace format. See
-[owned arithmetic and evidence](docs/OWNED_ARITHMETIC.md).
+The current strict training profile includes bounded synchronous and async
+execution, effects, observable state, and declared abrupt completions. The
+[measured capability ladder](coverage/current-v5.json) separates parsing,
+owned execution, independent checks, public replay, native admission, and model
+evaluation. Every report names the revision it actually tested; an untested
+stage is not promoted from another collection's results. The earlier synchronous
+ledger is retained in [historical coverage](coverage/historical/required-v1.json).
+
+The [18 November resumption implementation](docs/RESUMPTION_IMPLEMENTATION.md)
+tracks semantic repairs, immutable provenance, global split isolation,
+resumable source campaigns, native releases, and actual optimization diagnostics.
+See [owned arithmetic and evidence](docs/OWNED_ARITHMETIC.md) for the earlier
+spec-operation milestone.
+
+## Reproduce the current baseline
+
+Use the Node version in `.nvmrc`, then install the committed dependency locks:
+
+```sh
+npm ci --ignore-scripts
+npm run oracle:install
+npm run baseline:v5 -- --out ../current-v5-baseline --jobs 2
+```
+
+For actual native admission, prepare the hash-locked Python environment and
+exact consumer/tokenizer described in
+[native environment setup](tools/native-consumer/README.md), then add
+`--megatoken DIR --tokenizer FILE --python PYTHON` to the baseline command.
+The baseline freezes one global source registry with project and composition
+holdouts, retains each check's logs, and reports exact per-stage counts.
+[Optimization smoke instructions](docs/OPTIMIZATION_SMOKE.md) describe the
+separate real optimizer/checkpoint/rollout diagnostic; corpus qualification
+alone does not establish model learning.
 
 ## Model-facing semantic execution traces
 
