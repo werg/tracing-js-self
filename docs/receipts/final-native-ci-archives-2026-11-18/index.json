@@ -1,0 +1,63 @@
+{
+  "schema": "complete-native-ci-archive-preservation/1",
+  "workflowRunUrl": "https://github.com/werg/tracing-js-self/actions/runs/44321402524",
+  "sourceRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+  "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+  "scope": "Complete original GitHub ZIP archives from successful native CI recipe jobs, preserved independently of90-day source artifact retention; no learned-success claim.",
+  "expectedRecipes": [
+    "engineering",
+    "training-v4",
+    "benchmark-v1",
+    "real-source",
+    "generated-v1"
+  ],
+  "preservedRecipes": [
+    "engineering"
+  ],
+  "pendingRecipes": [
+    "training-v4",
+    "benchmark-v1",
+    "real-source",
+    "generated-v1"
+  ],
+  "allRecipesPreserved": false,
+  "totalOriginalZipBytes": 106834065,
+  "totalUncompressedMemberBytes": 552224318,
+  "artifacts": [
+    {
+      "recipe": "engineering",
+      "jobConclusion": "success",
+      "originalZip": "semantic-v5-engineering-admission-and-evaluation.zip",
+      "zipBytes": 106834065,
+      "zipSha256": "2a7996fccf119eb28ba943d2ae1c78c6cc425d7dab6f302f1b4f97680b7cea57",
+      "apiDigest": "sha256:2a7996fccf119eb28ba943d2ae1c78c6cc425d7dab6f302f1b4f97680b7cea57",
+      "apiSizeAndDigestVerified": true,
+      "zipCrcVerifiedForEveryMember": true,
+      "zipMembers": 215,
+      "zipUncompressedBytes": 552224318,
+      "preservationMode": "completeOriginalZip",
+      "parts": [],
+      "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+      "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+      "sourceDispositions": {
+        "schema": "semantic-source-dispositions/1",
+        "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+        "recipe": {
+          "name": "engineering"
+        },
+        "attempted": 25,
+        "dispositions": {
+          "admitted": 25
+        },
+        "admittedFamilies": 20,
+        "admittedComponents": 20,
+        "optimizerSteps": 0,
+        "learnedSuccess": null
+      },
+      "verificationFile": "engineering/verification.json",
+      "memberIndexFile": "engineering/member-index.json"
+    }
+  ],
+  "archiveExtractionPerformed": false,
+  "exactSplitThresholdBytes": 419430400
+}
