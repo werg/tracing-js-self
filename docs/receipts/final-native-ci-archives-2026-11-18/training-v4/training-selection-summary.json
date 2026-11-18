@@ -1,0 +1,49 @@
+{
+  "schema": "derived-native-prepared-selection-summary/1",
+  "scope": "Independently recomputed from unchanged original ZIP training-selection and prepared-training-selection receipts; no episode shard rewrite or optimization.",
+  "recipe": "training-v4",
+  "zipSha256": "375ad315a10b1c9336350756867ab6b12ee092e2ba5c1a5bc3c56469615291a7",
+  "originalReceiptHashes": {
+    "release/training-selection.json": "1f4b1d09b88cde0d1b3ba823a0b81ffc34dd7086b3b34568ed38e11f522e9ea1",
+    "release/prepared-training-selection.json": "902379cb081bb974b1460ce75cfa159d57d8e1878a435eeba39876ea8cd18b04"
+  },
+  "policy": {
+    "componentIdentity": "authenticated-frozen-source-components",
+    "enabled": false,
+    "maxFamilyShare": null,
+    "maxFamilyTokens": null,
+    "scope": "training-only",
+    "tokenMeasurement": "fresh-native-generatedTokens"
+  },
+  "originalAvailableTrainInputs": 43,
+  "originalSelectedTrainInputs": 43,
+  "originalExcludedTrainInputs": 0,
+  "originalHeldOutInputs": 7,
+  "heldOutInputMembershipsPreserved": true,
+  "suppliedPreparationInputs": 50,
+  "distinctNativePreparedExamples": 50,
+  "nativePreparedSplitCounts": {
+    "train": 43,
+    "test": 3,
+    "validation": 4
+  },
+  "nativePreparedGeneratedTokensBySplit": {
+    "train": 24065,
+    "test": 1656,
+    "validation": 2086
+  },
+  "finalGeneratedTrainTokens": 24065,
+  "finalTrainComponents": 14,
+  "maximumPreparedComponentTokenShare": 0.08555994182422605,
+  "maximumPreparedComponentGeneratedTokens": 2059,
+  "capPolicyApplicable": false,
+  "capPolicySatisfiedAfterDeduplication": null,
+  "violations": [],
+  "nativeDispositionCounts": {
+    "native_prepared": 50
+  },
+  "retainedDuplicateAliasCount": 0,
+  "retainedDuplicateAliases": [],
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}

@@ -1,0 +1,79 @@
+{
+  "schema": "preserved-native-ci-artifact/1",
+  "workflowRunUrl": "https://github.com/werg/tracing-js-self/actions/runs/44321402524",
+  "workflowRunId": 44321402524,
+  "recipe": "real-source",
+  "jobConclusion": "success",
+  "artifactName": "semantic-v5-real-source-admission-and-evaluation",
+  "originalZip": "semantic-v5-real-source-admission-and-evaluation.zip",
+  "zipBytes": 494989082,
+  "zipSha256": "d441754ecd7a195e72312e042288dfa808ffbecaca1d0d4f15d04db2078a663c",
+  "apiSizeBytes": 494989082,
+  "apiDigest": "sha256:d441754ecd7a195e72312e042288dfa808ffbecaca1d0d4f15d04db2078a663c",
+  "apiSizeAndDigestVerified": true,
+  "zipCrcVerifiedForEveryMember": true,
+  "zipMembers": 1280,
+  "zipUncompressedBytes": 1896531287,
+  "zipFiles": 1280,
+  "archiveMembersExtractedAsPaths": false,
+  "unsafeMemberPaths": [],
+  "nativeIdentity": {
+    "schema": "semantic-native-ci-identity/1",
+    "workflowRunId": "44321402524",
+    "workflowRunAttempt": "1",
+    "workflowTriggerRevision": "3497ee3454ea75715db1bc50c3e7cfc35ecc0fc2",
+    "workflowHeadRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+    "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+    "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b"
+  },
+  "sourceDispositions": {
+    "schema": "semantic-source-dispositions/1",
+    "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+    "recipe": {
+      "name": "real-source",
+      "sourceStreams": [
+        "utilities",
+        "exercism",
+        "production"
+      ],
+      "perFamily": 2,
+      "mutationsPerFamily": 0,
+      "authority": "fresh-original-transformed-owned-reference-native-gates",
+      "admittedByLocalFlag": false
+    },
+    "attempted": 210,
+    "dispositions": {
+      "admitted": 190,
+      "unsupported": 18,
+      "source_unsupported": 2
+    },
+    "admittedFamilies": 95,
+    "admittedComponents": 35,
+    "optimizerSteps": 0,
+    "learnedSuccess": null
+  },
+  "retentionSourceDays": 90,
+  "preservationMode": "exact400MiBParts",
+  "parts": [
+    {
+      "file": "semantic-v5-real-source-admission-and-evaluation.zip.part001",
+      "bytes": 419430400,
+      "offset": 0,
+      "sha256": "b0b284360b9490c95a1028b869571470be3cddcd74587ee3b3fbab43e52984ad"
+    },
+    {
+      "file": "semantic-v5-real-source-admission-and-evaluation.zip.part002",
+      "bytes": 75558682,
+      "offset": 419430400,
+      "sha256": "8222a249e9a55b07a1421f3c82c407bb79597faf25f2cf627e5e6df1ca6f68ac"
+    }
+  ],
+  "reconstructionVerified": true,
+  "selectedReceiptHashes": {
+    "release/archive-receipt.json": "aefb7dd3bd094ca25719363d616ebced6903a12490799380d897bab786ab26e5",
+    "release/native-qualification-summary.json": "f4ff10fa9508f67f8c99ba176745b44b5e0a6d8a7d086a4692df8bc63e828676",
+    "native-run-identity.json": "5910a9ae602800b82f43f96758fb65c99c22b05b0de6a8477b91064016e3b2ac",
+    "native-environment.json": "144c9c2d5b4a222ddea8d16c46c0b7075943a52518f47212e3d3b642584d3a28",
+    "source-dispositions.json": "a50d26f75b384b8882c3a48e593b5cff40fa913dd566b47c6e642e5075830de7"
+  }
+}
