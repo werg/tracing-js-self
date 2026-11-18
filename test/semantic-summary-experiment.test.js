@@ -75,3 +75,45 @@ test('experimental summary retains detailed private execution and shared split l
   assert.equal(result.metrics.nativeTokens,null);
   assert.equal(result.learningStatus,'untested');
 });
+
+test('pure control summaries certify executed branches and skip unexecuted alternatives',async()=>{
+  const source='"use strict";function select(x,flag,fallback){return x<0?(flag&&(-x)):(fallback??3);}';
+  const input=context(source,'select',[-4,true,0],'pure-control-helper/1');
+  const [conditional,and,coalesce]=input.decisionSites;
+  const summary={...returned(4),decisions:[
+    {site:conditional.site,selected:'consequent'},
+    {site:and.site,selected:'right'}]};
+  const good=await buildSemanticSummaryExperiment({context:input,summary,family:'summary-pure-control'});
+  assert.equal(good.status,'experimental_verified',good.reason);
+  assert.equal(good.private.certificate.claimsChecked.controlDecisions,2);
+  assert(good.private.detailedEpisode.public.timeline.some(row=>row.kind==='semantic'));
+  for(const decisions of [summary.decisions.slice(0,1),[...summary.decisions].reverse(),
+    [...summary.decisions,{site:coalesce.site,selected:'left'}],
+    [{site:conditional.site,selected:'alternate'},summary.decisions[1]]]){
+    const refused=await verifySemanticSummary({context:input,summary:{...summary,decisions}});
+    assert.equal(refused.status,'rejected');
+    assert(!Object.hasOwn(refused,'correctedSummary'));
+  }
+  const zero=context(source,'select',[1,true,0],'pure-control-helper/1');
+  assert.equal((await verifySemanticSummary({context:zero,summary:{...returned(0),decisions:[
+    {site:conditional.site,selected:'alternate'},{site:coalesce.site,selected:'left'}]}})).status,'verified');
+});
+
+test('correct output cannot excuse a false branch claim',async()=>{
+  const input=context('"use strict";function f(x){return x?4:4;}','f',[false],'pure-control-helper/1');
+  const site=input.decisionSites[0].site;
+  const good={...returned(4),decisions:[{site,selected:'alternate'}]};
+  assert.equal((await verifySemanticSummary({context:input,summary:good})).status,'verified');
+  const bad={...returned(4),decisions:[{site,selected:'consequent'}]};
+  assert.equal((await verifySemanticSummary({context:input,summary:bad})).status,'rejected');
+  assert.deepEqual(bad.decisions,[{site,selected:'consequent'}],'rejection preserves the original prediction');
+});
+
+test('pure control summaries refuse hidden effects, object coercion and unbounded expressions',()=>{
+  for(const expression of ['x?host.readAsync("x"):0','x?x.value:0','x?(x=1):0','x?(()=>1)():0']){
+    assert.throws(()=>context('"use strict";function f(x){return '+expression+';}','f',[true],'pure-control-helper/1'));
+  }
+  assert.throws(()=>context('"use strict";function f(x){return x?1:2;}','f',[{}],'pure-control-helper/1'),/scalar/);
+  assert.throws(()=>context('"use strict";function f(x){return x+1;}','f',[1],'pure-control-helper/1'),/requires a conditional/);
+  assert.throws(()=>context('"use strict";function f(x){return x?1:2;}','f',[true],'pure-helper/1'));
+});

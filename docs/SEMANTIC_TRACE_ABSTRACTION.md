@@ -162,3 +162,29 @@ Production promotion requires coordinated codec, controller, source-certificate,
 native-consumer and loss/visibility support, independent adversarial checks,
 actual token/comprehension measurements, and a separate learning comparison.
 None of those later gates is implied by this gallery or compatible reduction.
+
+## Checked conditional and short-circuit summaries
+
+The additional `pure-control-helper/1` experimental profile admits a single
+scalar return expression containing conditional (`?:`) and short-circuit
+(`&&`, `||`, `??`) expressions within the existing eight-operator/32-node
+bound. Its public context identifies the source decision sites. Its generated
+summary must predict the result and the exact ordered sequence of decisions
+that actually executed: `consequent`/`alternate` for conditionals and
+`left`/`right` for short-circuit expressions. An unexecuted alternative must not
+appear as though it ran.
+
+An independent instrumented V8 execution checks every stated decision against
+the original execution, including its order, and checks that instrumentation
+did not change the result or effects. A correct final result does not excuse a
+wrong branch, a missing decision, a reordered decision, or an invented visit
+to a skipped expression. Calls, property access, assignment, object coercion,
+and other effects remain outside this pure profile, including in unreachable
+branches. Nullish selection preserves the distinction between `0` and a
+missing value.
+
+The [expanded diagnostic gallery](evidence/semantic-summary-control-v1/README.md)
+retains the original authored predictions, a detailed production-v5 control,
+and independent completion and decision receipts. These new summaries remain
+experimental region tasks. They are not accepted by the production-v5
+controller or native consumer and are not evidence of learned model outputs.
