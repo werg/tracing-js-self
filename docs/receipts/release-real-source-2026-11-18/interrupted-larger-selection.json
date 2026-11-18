@@ -1,0 +1,40 @@
+{
+  "completedArchive": false,
+  "consumerRevision": "6206b33a55eba3e50f80498f906439221bc289b7",
+  "freshQualification": {
+    "admitted": 174,
+    "consumerRevision": "6206b33a55eba3e50f80498f906439221bc289b7",
+    "evidenceSha256": "a693bc3421209da884dc0679e36673d5858ada1d2751d945a4fc15389f214166",
+    "generatedTokens": 138758,
+    "learnedSuccess": null,
+    "optimizerSteps": 0,
+    "producerRevision": "5753de14760b76754fd1bd49ca7c8bfc6de85831",
+    "schema": "semantic-release-native-qualification/1",
+    "status": "verified",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "heldOutSupplied": 26,
+  "learnedSuccess": null,
+  "nativeIntakeCounts": {
+    "accepted_candidate": 88,
+    "admitted": 95,
+    "attempted": 95,
+    "duplicate": 7
+  },
+  "observation": "The execution tool reported the packaging process killed with exit code 137; no kernel counter was captured to establish the cause.",
+  "optimizerSteps": 0,
+  "preparedSelectionReceiptExists": false,
+  "processExitCode": 137,
+  "producerRevision": "5753de14760b76754fd1bd49ca7c8bfc6de85831",
+  "schema": "interrupted-release-attempt/1",
+  "selectedTrain": 69,
+  "status": "interrupted",
+  "trainingPolicy": {
+    "componentIdentity": "authenticated-frozen-source-components",
+    "enabled": true,
+    "maxFamilyShare": 0.2,
+    "maxFamilyTokens": 10000,
+    "scope": "training-only",
+    "tokenMeasurement": "fresh-native-generatedTokens"
+  }
+}
