@@ -9,12 +9,51 @@ import {CampaignStore,atomicWrite,sha256} from '../src/corpus/campaign-store.mjs
 import {balanceFamilyTokens} from '../src/corpus/source-registry.mjs';
 import {verifyNativeBinding} from '../src/training/effectful-admit.js';
 
+// Exact public aliases can have distinct private task IDs. The native adapter
+// derives episode identity from the public stream, so feeding both unchanged
+// task lineages to its immutable episode store is correctly refused. Select a
+// representative before native preparation, retaining every alias in the audit.
+export function exactPublicRepresentatives(rows){
+  const groups=new Map(),selected=[],aliases=[],representatives=[];
+  for(const row of [...rows].sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0)){
+    if(typeof row.episodeDigest!=='string'||!/^[a-f0-9]{64}$/.test(row.episodeDigest))
+      throw new Error('Exact-public selection requires authenticated public digests');
+    const group=groups.get(row.episodeDigest)??[];group.push(row);groups.set(row.episodeDigest,group);
+  }
+  for(const [episodeDigest,group] of groups){
+    const representative=group[0];
+    if(group.length>1){
+      const fields=['componentPolicy','sourceCluster','registryDigest','split','nativeContractDigest'];
+      if(representative.componentPolicy!=='source-components/1'||
+        typeof representative.sourceCluster!=='string'||typeof representative.registryDigest!=='string'||
+        typeof representative.nativeContractDigest!=='string'||
+        group.some(row=>fields.some(field=>row[field]!==representative[field]))){
+        const error=new Error('Exact public aliases have incompatible frozen component, split, or native contract');
+        error.code='EXACT_PUBLIC_ALIAS_CONFLICT';
+        error.details={episodeDigest,members:group.map(row=>({id:row.id,sourceCluster:row.sourceCluster,
+          split:row.split,registryDigest:row.registryDigest,nativeContractDigest:row.nativeContractDigest}))};
+        throw error;
+      }
+      representatives.push({episodeDigest,representativeId:representative.id,
+        representativeIdentityDigest:representative.identityDigest,componentId:representative.sourceCluster,
+        registryDigest:representative.registryDigest,split:representative.split,
+        nativeContractDigest:representative.nativeContractDigest,
+        declaredFamilies:[...new Set(group.map(row=>row.family))].sort(),
+        aliases:group.slice(1).map(row=>row.id)});
+      for(const row of group.slice(1))aliases.push({row,representative});
+    }
+    selected.push(representative);
+  }
+  return {selected,aliases,representatives};
+}
+
 export function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_SAFE_INTEGER,
-    maxFamilyShare=1,split='all'}={}){
+    maxFamilyShare=1,split='all',deduplicateExactPublic=false}={}){
   input=resolve(input);output=resolve(output);
   if(input===output||existsSync(output)&&readdirSync(output).length)
     throw new Error('Selection requires a new output directory distinct from the complete campaign');
   if(!['all','train','validation','test'].includes(split))throw new Error('Invalid requested split');
+  if(typeof deduplicateExactPublic!=='boolean')throw new Error('Exact-public representative selection must be explicitly boolean');
   const header=JSON.parse(readFileSync(join(input,'campaign.json'),'utf8'));
   const campaign=new CampaignStore(input,header.identity,{resume:true,recoverTornLog:false,
     maxObjectBytes:header.identity.bounds?.maxOutputBytes??268435456});
@@ -24,14 +63,14 @@ export function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_
     throw new Error('Manifest and campaign identity disagree');
   mkdirSync(output,{recursive:true});
   const eligible=[],exclusions=[],originalRows=new Map();
-  const exclude=(entry,status,reason)=>{
+  const exclude=(entry,status,reason,evidence={})=>{
     const result=campaign.readObject(entry.result);
     const failurePath=result.failure?'refusals/'+entry.id+'.json.gz':null;
     if(failurePath)atomicWrite(join(output,failurePath),gzipSync(JSON.stringify({id:entry.id,
       candidateDigest:entry.candidateDigest,failure:result.failure})+'\n'));
     exclusions.push({id:entry.id,sourceStatus:entry.status,status,reason,
       candidateDigest:entry.candidateDigest,sourceEntryDigest:entry.entryDigest,
-      resultReference:entry.result,...(failurePath?{failurePath}: {})});
+      resultReference:entry.result,...(failurePath?{failurePath}: {}),...evidence});
   };
   for(const row of sourceManifest.cases){
     const entry=campaign.latest.get(row.id);
@@ -45,15 +84,53 @@ export function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_
         row.episodeDigest!==sha256(JSON.stringify(exported.public))||row.identityDigest!==side.identityDigest)
         throw new Error('Manifest/public/private admission binding changed');
       verifyNativeBinding(exported,header.identity.nativePolicy);
-      if(split!=='all'&&side.split!==split){exclude(entry,'split_excluded','Requested '+split+' split');continue;}
+      const native=side.nativeAdmission;
       eligible.push({id:entry.id,status:'admitted',sourceCluster:side.splitIdentity.componentId,
         componentPolicy:side.splitIdentity.policy,
-        family:side.sourceFamily,split:side.split,generatedTokens:side.nativeAdmission.generatedTokens});
+        registryDigest:side.splitIdentity.registryDigest,episodeDigest:row.episodeDigest,
+        identityDigest:side.identityDigest,taskId:side.taskId,ancestorIds:side.ancestorIds,
+        provenanceDigest:sha256(JSON.stringify(side.sourceProvenance)),
+        nativeReceiptDigest:side.nativeBinding.receiptDigest,
+        nativeContractDigest:sha256(JSON.stringify({producerRevision:side.producerRevision,
+          environment:side.environment,representation:side.representation,license:side.license,trustTier:side.trustTier,
+          nativePolicyDigest:side.nativeBinding.policyDigest,consumerRevision:native.consumerRevision,
+          tokenizerIdentity:native.tokenizerIdentity,tokenizerSha256:native.tokenizerSha256,
+          contractDigest:native.contractDigest,schemaDigest:native.schemaDigest,fixtureDigest:native.fixtureDigest,
+          generatedTokens:native.generatedTokens,observedTokens:native.observedTokens,
+          physicalRecords:native.physicalRecords,contextTransportRecords:native.contextTransportRecords})),
+        family:side.sourceFamily,split:side.split,generatedTokens:native.generatedTokens});
     }catch(error){exclude(entry,'admission_invalid',String(error.message));}
   }
-  const balanced=balanceFamilyTokens(eligible.filter(row=>row.split==='train'),{maxFamilyTokens,maxFamilyShare});
+  let candidates=eligible,representatives=[];
+  if(deduplicateExactPublic){
+    let exact;
+    try{exact=exactPublicRepresentatives(eligible);}
+    catch(error){
+      atomicWrite(join(output,'selection-conflicts.json'),JSON.stringify({
+        schema:'semantic-exact-public-selection-conflict/1',status:'refused',sourceCampaignDigest:campaign.identityDigest,
+        sourceManifestSha256:sha256(sourceBytes),originalCampaignRequiredForAudit:true,
+        reason:error.message,details:error.details??null},null,2)+'\n');throw error;
+    }
+    candidates=exact.selected;representatives=exact.representatives;
+    for(const {row,representative} of exact.aliases)exclude(campaign.latest.get(row.id),'exact_public_alias',
+      'Exact public stream represented by '+representative.id,{
+        representativeId:representative.id,representativeIdentityDigest:representative.identityDigest,
+        episodeDigest:row.episodeDigest,identityDigest:row.identityDigest,taskId:row.taskId,
+        sourceFamily:row.family,ancestorIds:row.ancestorIds,componentId:row.sourceCluster,
+        registryDigest:row.registryDigest,split:row.split,provenanceDigest:row.provenanceDigest,
+        nativeReceiptDigest:row.nativeReceiptDigest,nativeContractDigest:row.nativeContractDigest});
+  }
+  // Inspect collisions before applying a requested split: a train/test alias
+  // must not disappear from the conflict check because one side was filtered.
+  for(const row of candidates)if(split!=='all'&&row.split!==split)
+    exclude(campaign.latest.get(row.id),'split_excluded','Requested '+split+' split');
+  candidates=candidates.filter(row=>split==='all'||row.split===split);
+  const balanced=balanceFamilyTokens(candidates.filter(row=>row.split==='train'),{maxFamilyTokens,maxFamilyShare});
   for(const row of balanced.refused)exclude(campaign.latest.get(row.id),'training_budget_excluded',row.reason);
-  const selected=[...balanced.selected,...eligible.filter(row=>row.split!=='train')].sort((a,b)=>a.id.localeCompare(b.id));
+  const selected=[...balanced.selected,...candidates.filter(row=>row.split!=='train')].sort((a,b)=>a.id.localeCompare(b.id));
+  const selectedIdentities=new Set(selected.map(row=>row.id));
+  for(const alias of exclusions)if(alias.status==='exact_public_alias')
+    alias.representativeSelected=selectedIdentities.has(alias.representativeId);
   const trainingComponents=[...new Set(selected.filter(row=>row.split==='train').map(row=>row.sourceCluster))].sort()
     .map(componentId=>{const rows=selected.filter(row=>row.split==='train'&&row.sourceCluster===componentId);
       const generatedTokens=rows.reduce((n,row)=>n+row.generatedTokens,0);
@@ -63,6 +140,11 @@ export function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_
     sourceManifestSha256:sha256(sourceBytes),sourceCounts:sourceManifest.counts,
     sourceCandidates:sourceManifest.cases.length,selected:selected.length,excluded:exclusions.length,
     split,budgetScope:'train-only; evaluation tokens do not subsidize a training-family cap',
+    exactPublicSelection:{enabled:deduplicateExactPublic,
+      policy:deduplicateExactPublic?'exact-public-within-frozen-component/1':null,
+      representativeOrder:'lexicographic candidate ID; selected export bytes remain unchanged',
+      excludedAliases:exclusions.filter(row=>row.status==='exact_public_alias').length,groups:representatives,
+      nativeDedupUnchanged:true,rawAdmissionsUnchanged:true},
     maxFamilyTokens,maxFamilyShare,
     groupingPolicies:[...new Set(eligible.map(row=>row.componentPolicy))].sort(),trainingComponents,
     maximumTrainingComponentShare:Math.max(0,...trainingComponents.map(row=>row.shareOfTrainingTokens)),
@@ -102,15 +184,19 @@ export function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_
   return report;
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
-  const flags=new Map(),allowed=new Set(['--input','--out','--max-family-tokens','--max-family-share','--split']);
+  const flags=new Map(),allowed=new Set(['--input','--out','--max-family-tokens','--max-family-share','--split',
+    '--deduplicate-exact-public']);
   for(let index=2;index<process.argv.length;index++){
     const key=process.argv[index],value=process.argv[++index];
     if(!allowed.has(key)||flags.has(key)||!value||value.startsWith('--'))throw new Error('Invalid option '+key);
     flags.set(key,value);
   }
   if(!flags.has('--input')||!flags.has('--out'))throw new Error('--input and --out are required');
+  if(flags.has('--deduplicate-exact-public')&&!['true','false'].includes(flags.get('--deduplicate-exact-public')))
+    throw new Error('--deduplicate-exact-public must be true or false');
   const result=selectAdmittedCampaign({input:flags.get('--input'),output:flags.get('--out'),
     maxFamilyTokens:Number(flags.get('--max-family-tokens')??Number.MAX_SAFE_INTEGER),
-    maxFamilyShare:Number(flags.get('--max-family-share')??1),split:flags.get('--split')??'all'});
+    maxFamilyShare:Number(flags.get('--max-family-share')??1),split:flags.get('--split')??'all',
+    deduplicateExactPublic:flags.get('--deduplicate-exact-public')==='true'});
   console.log(JSON.stringify({selected:result.selected,excluded:result.excluded,splits:result.splits}));
 }
