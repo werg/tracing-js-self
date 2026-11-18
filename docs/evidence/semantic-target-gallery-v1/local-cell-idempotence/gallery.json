@@ -65,10 +65,25 @@
       "qualification": {
         "status": "locally_verified",
         "independentSourceChecks": {
-          "schema": "effectful-source-checks/4",
+          "schema": "effectful-source-checks/5",
           "status": "agreed",
           "computations": 4,
-          "branches": 0
+          "branches": 0,
+          "completions": {
+            "schema": "source-completions/1",
+            "status": "agreed",
+            "checked": 1,
+            "counts": {
+              "return": 1
+            },
+            "referenceValues": "scalars-and-input-rooted-reference-identity",
+            "uncovered": [
+              "intermediate-reference-property-snapshots",
+              "implicit-parameter-initialization",
+              "implicit-call-throws-without-a-catch-or-finally",
+              "Promise-job-internals"
+            ]
+          }
         },
         "nativeAdmission": false,
         "boundary": "Private certificates, source checks and native admission are separate authorities; this gallery grants none."
@@ -557,10 +572,28 @@
       "qualification": {
         "status": "locally_verified",
         "independentSourceChecks": {
-          "schema": "effectful-source-checks/4",
+          "schema": "effectful-source-checks/5",
           "status": "agreed",
           "computations": 1,
-          "branches": 1
+          "branches": 1,
+          "completions": {
+            "schema": "source-completions/1",
+            "status": "agreed",
+            "checked": 5,
+            "counts": {
+              "call": 2,
+              "initialize": 1,
+              "statement": 1,
+              "return": 1
+            },
+            "referenceValues": "scalars-and-input-rooted-reference-identity",
+            "uncovered": [
+              "intermediate-reference-property-snapshots",
+              "implicit-parameter-initialization",
+              "implicit-call-throws-without-a-catch-or-finally",
+              "Promise-job-internals"
+            ]
+          }
         },
         "nativeAdmission": false,
         "boundary": "Private certificates, source checks and native admission are separate authorities; this gallery grants none."
@@ -1401,10 +1434,28 @@
       "qualification": {
         "status": "locally_verified",
         "independentSourceChecks": {
-          "schema": "effectful-source-checks/4",
+          "schema": "effectful-source-checks/5",
           "status": "agreed",
           "computations": 1,
-          "branches": 0
+          "branches": 0,
+          "completions": {
+            "schema": "source-completions/1",
+            "status": "agreed",
+            "checked": 5,
+            "counts": {
+              "initialize": 2,
+              "assign": 1,
+              "statement": 1,
+              "return": 1
+            },
+            "referenceValues": "scalars-and-input-rooted-reference-identity",
+            "uncovered": [
+              "intermediate-reference-property-snapshots",
+              "implicit-parameter-initialization",
+              "implicit-call-throws-without-a-catch-or-finally",
+              "Promise-job-internals"
+            ]
+          }
         },
         "nativeAdmission": false,
         "boundary": "Private certificates, source checks and native admission are separate authorities; this gallery grants none."
@@ -2069,10 +2120,26 @@
       "qualification": {
         "status": "locally_verified",
         "independentSourceChecks": {
-          "schema": "effectful-source-checks/4",
+          "schema": "effectful-source-checks/5",
           "status": "agreed",
           "computations": 1,
-          "branches": 0
+          "branches": 0,
+          "completions": {
+            "schema": "source-completions/1",
+            "status": "agreed",
+            "checked": 3,
+            "counts": {
+              "return": 2,
+              "call": 1
+            },
+            "referenceValues": "scalars-and-input-rooted-reference-identity",
+            "uncovered": [
+              "intermediate-reference-property-snapshots",
+              "implicit-parameter-initialization",
+              "implicit-call-throws-without-a-catch-or-finally",
+              "Promise-job-internals"
+            ]
+          }
         },
         "nativeAdmission": false,
         "boundary": "Private certificates, source checks and native admission are separate authorities; this gallery grants none."
@@ -2568,10 +2635,28 @@
       "qualification": {
         "status": "locally_verified",
         "independentSourceChecks": {
-          "schema": "effectful-source-checks/4",
+          "schema": "effectful-source-checks/5",
           "status": "agreed",
           "computations": 10,
-          "branches": 4
+          "branches": 4,
+          "completions": {
+            "schema": "source-completions/1",
+            "status": "agreed",
+            "checked": 9,
+            "counts": {
+              "initialize": 2,
+              "assign": 3,
+              "statement": 3,
+              "return": 1
+            },
+            "referenceValues": "scalars-and-input-rooted-reference-identity",
+            "uncovered": [
+              "intermediate-reference-property-snapshots",
+              "implicit-parameter-initialization",
+              "implicit-call-throws-without-a-catch-or-finally",
+              "Promise-job-internals"
+            ]
+          }
         },
         "nativeAdmission": false,
         "boundary": "Private certificates, source checks and native admission are separate authorities; this gallery grants none."
@@ -3986,10 +4071,31 @@
       "qualification": {
         "status": "locally_verified",
         "independentSourceChecks": {
-          "schema": "effectful-source-checks/4",
+          "schema": "effectful-source-checks/5",
           "status": "agreed",
           "computations": 2,
-          "branches": 0
+          "branches": 0,
+          "completions": {
+            "schema": "source-completions/1",
+            "status": "agreed",
+            "checked": 9,
+            "counts": {
+              "initialize": 1,
+              "throw": 1,
+              "catch": 1,
+              "assign": 2,
+              "statement": 2,
+              "finally": 1,
+              "return": 1
+            },
+            "referenceValues": "scalars-and-input-rooted-reference-identity",
+            "uncovered": [
+              "intermediate-reference-property-snapshots",
+              "implicit-parameter-initialization",
+              "implicit-call-throws-without-a-catch-or-finally",
+              "Promise-job-internals"
+            ]
+          }
         },
         "nativeAdmission": false,
         "boundary": "Private certificates, source checks and native admission are separate authorities; this gallery grants none."
@@ -4526,10 +4632,28 @@
       "qualification": {
         "status": "locally_verified",
         "independentSourceChecks": {
-          "schema": "effectful-source-checks/4",
+          "schema": "effectful-source-checks/5",
           "status": "agreed",
           "computations": 1,
-          "branches": 0
+          "branches": 0,
+          "completions": {
+            "schema": "source-completions/1",
+            "status": "agreed",
+            "checked": 6,
+            "counts": {
+              "call": 2,
+              "initialize": 2,
+              "statement": 1,
+              "return": 1
+            },
+            "referenceValues": "scalars-and-input-rooted-reference-identity",
+            "uncovered": [
+              "intermediate-reference-property-snapshots",
+              "implicit-parameter-initialization",
+              "implicit-call-throws-without-a-catch-or-finally",
+              "Promise-job-internals"
+            ]
+          }
         },
         "nativeAdmission": false,
         "boundary": "Private certificates, source checks and native admission are separate authorities; this gallery grants none."
@@ -5371,10 +5495,29 @@
       "qualification": {
         "status": "locally_verified",
         "independentSourceChecks": {
-          "schema": "effectful-source-checks/4",
+          "schema": "effectful-source-checks/5",
           "status": "agreed",
           "computations": 0,
-          "branches": 0
+          "branches": 0,
+          "completions": {
+            "schema": "source-completions/1",
+            "status": "agreed",
+            "checked": 8,
+            "counts": {
+              "call": 3,
+              "catch": 1,
+              "statement": 2,
+              "return": 1,
+              "finally": 1
+            },
+            "referenceValues": "scalars-and-input-rooted-reference-identity",
+            "uncovered": [
+              "intermediate-reference-property-snapshots",
+              "implicit-parameter-initialization",
+              "implicit-call-throws-without-a-catch-or-finally",
+              "Promise-job-internals"
+            ]
+          }
         },
         "nativeAdmission": false,
         "boundary": "Private certificates, source checks and native admission are separate authorities; this gallery grants none."
@@ -6309,10 +6452,29 @@
       "qualification": {
         "status": "locally_verified",
         "independentSourceChecks": {
-          "schema": "effectful-source-checks/4",
+          "schema": "effectful-source-checks/5",
           "status": "agreed",
           "computations": 2,
-          "branches": 0
+          "branches": 0,
+          "completions": {
+            "schema": "source-completions/1",
+            "status": "agreed",
+            "checked": 14,
+            "counts": {
+              "initialize": 1,
+              "call": 4,
+              "assign": 2,
+              "statement": 6,
+              "return": 1
+            },
+            "referenceValues": "scalars-and-input-rooted-reference-identity",
+            "uncovered": [
+              "intermediate-reference-property-snapshots",
+              "implicit-parameter-initialization",
+              "implicit-call-throws-without-a-catch-or-finally",
+              "Promise-job-internals"
+            ]
+          }
         },
         "nativeAdmission": false,
         "boundary": "Private certificates, source checks and native admission are separate authorities; this gallery grants none."
@@ -8203,10 +8365,29 @@
       "qualification": {
         "status": "locally_verified",
         "independentSourceChecks": {
-          "schema": "effectful-source-checks/4",
+          "schema": "effectful-source-checks/5",
           "status": "agreed",
           "computations": 2,
-          "branches": 0
+          "branches": 0,
+          "completions": {
+            "schema": "source-completions/1",
+            "status": "agreed",
+            "checked": 16,
+            "counts": {
+              "initialize": 2,
+              "call": 5,
+              "assign": 2,
+              "statement": 6,
+              "return": 1
+            },
+            "referenceValues": "scalars-and-input-rooted-reference-identity",
+            "uncovered": [
+              "intermediate-reference-property-snapshots",
+              "implicit-parameter-initialization",
+              "implicit-call-throws-without-a-catch-or-finally",
+              "Promise-job-internals"
+            ]
+          }
         },
         "nativeAdmission": false,
         "boundary": "Private certificates, source checks and native admission are separate authorities; this gallery grants none."
@@ -10537,10 +10718,28 @@
       "qualification": {
         "status": "locally_verified",
         "independentSourceChecks": {
-          "schema": "effectful-source-checks/4",
+          "schema": "effectful-source-checks/5",
           "status": "agreed",
           "computations": 0,
-          "branches": 0
+          "branches": 0,
+          "completions": {
+            "schema": "source-completions/1",
+            "status": "agreed",
+            "checked": 6,
+            "counts": {
+              "initialize": 1,
+              "assign": 2,
+              "statement": 2,
+              "return": 1
+            },
+            "referenceValues": "scalars-and-input-rooted-reference-identity",
+            "uncovered": [
+              "intermediate-reference-property-snapshots",
+              "implicit-parameter-initialization",
+              "implicit-call-throws-without-a-catch-or-finally",
+              "Promise-job-internals"
+            ]
+          }
         },
         "nativeAdmission": false,
         "boundary": "Private certificates, source checks and native admission are separate authorities; this gallery grants none."

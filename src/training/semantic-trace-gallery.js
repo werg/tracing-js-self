@@ -79,7 +79,9 @@ export async function inspectSemanticEpisode(exported,{id,categories=[],tokenize
   if(!Array.isArray(exported?.public?.timeline))throw new TypeError('A public episode is required');
   const timeline=exported.public.timeline,program=timeline.find(row=>row.kind==='program');
   if(!program)throw new TypeError('An exact observed source program is required');
-  if(tokenizer&&(!tokenizer.identity||typeof tokenizer.encode!=='function'||
+  if(tokenizer&&(!tokenizer.identity||typeof tokenizer.identity.name!=='string'||
+      !tokenizer.identity.name||!(typeof tokenizer.identity.revision==='string'&&tokenizer.identity.revision||
+      typeof tokenizer.identity.digest==='string'&&tokenizer.identity.digest)||typeof tokenizer.encode!=='function'||
       typeof tokenizer.decode!=='function'))
     throw new TypeError('Tokenizer audit requires pinned identity, encode and decode');
   const names=sourceNames(program),certificateBySequence=new Map(

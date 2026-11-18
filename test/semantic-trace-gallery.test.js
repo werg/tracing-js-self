@@ -48,5 +48,6 @@ test('tokenization is opt-in, byte-roundtripped, and has separate cost scope',as
   assert.equal(inspected.metrics.generatedTokens,inspected.metrics.generatedBytes);
   assert.equal(inspected.metrics.transportFragments,null);
   assert.match(inspected.tokenization.scope,/excludes native transport/);
+  await assert.rejects(inspectSemanticEpisode(result.exported,{tokenizer:{...tokenizer,identity:{name:'unpinned'}}}),/pinned identity/);
   await assert.rejects(inspectSemanticEpisode(result.exported,{tokenizer:{...tokenizer,decode:()=>''}}),/changes actual target bytes/);
 });

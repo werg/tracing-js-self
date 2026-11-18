@@ -247,11 +247,12 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     if(localStateCompaction&&kind==='bind'&&rule==='cell-write'&&
        event?.operation==='binding.write'&&!Object.hasOwn(fields,'from')){
       flushComputations();
-      const locals=controller(owner).locals;
-      if(locals.has(fields.name)&&isDeepStrictEqual(locals.get(fields.name),fields.value)){
+      const selected=controller(owner),locals=selected.locals;
+      const destination=selected.captureAliases.get(fields.name)??fields.name;
+      if(locals.has(destination)&&isDeepStrictEqual(locals.get(destination),fields.value)){
         elided.push({journalEvent:event.eventId,operation:event.operation,
           reason:'idempotent-committed-cell-write',rule:'owned-idempotent-cell-write/1',
-          cell:fields.name,value:copy(fields.value)});
+          cell:destination,value:copy(fields.value)});
         removedCellWrites++;
         return null;
       }

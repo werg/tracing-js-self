@@ -16,8 +16,10 @@ test('opt-in idempotent lexical writes save actual target bytes and retain priva
   const compact=await verifyEffectfulTrainingCase({...input,projectionOptions:{localStateCompaction:true}});
   assert.equal(control.status,'locally_verified',control.reason);
   assert.equal(compact.status,'locally_verified',compact.reason);
-  assert.deepEqual(compileEffectfulWitness(control.exported.sidecar.archive,
-    {...control.exported.sidecar.projectionOptions,localStateCompaction:false}).exported.public,control.exported.public);
+  const explicitControl=compileEffectfulWitness(control.exported.sidecar.archive,
+    {...control.exported.sidecar.projectionOptions,localStateCompaction:false}).exported;
+  assert.deepEqual(explicitControl.public,control.exported.public);
+  assert.deepEqual(explicitControl.sidecar.compiler,control.exported.sidecar.compiler);
   assert.equal(compact.exported.sidecar.compiler.compaction.removedCellWrites,2);
   assert(bytes(compact.exported)<bytes(control.exported));
   assert.equal(records(compact.exported).filter(row=>row.kind==='bind'&&row.fields.name==='value').length,1);
