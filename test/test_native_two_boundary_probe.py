@@ -1,0 +1,136 @@
+"""Native history identities preserve repeated reserved controls and physical uniqueness."""
+import copy
+import importlib.util
+from pathlib import Path
+import sys
+import unittest
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools"))
+SPEC = importlib.util.spec_from_file_location("native_two_boundary_probe", ROOT / "tools/native_two_boundary_probe.py")
+PROBE = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(PROBE)
+
+
+def boundary(prefix):
+    return {
+        "tracks": ["track:0"], "trackRegistry": ["__transducer_query__", "track:0"],
+        "trackDescriptions": [], "eventsSeen": [4], "meridiansSeen": [4],
+        "modelVersion": 0,
+        "historyEventIds": ["__transducer_query__", prefix + "a", "__transducer_query__", prefix + "b"],
+        "historyTracks": ["__transducer_query__", "track:0", "__transducer_query__", "track:0"],
+        "historyPositions": [0, 1, 2, 3], "contextDropped": [],
+        "frontierEventIds": [prefix + "b"], "frontierTracks": ["track:0"],
+        "frontierModalities": ["text"], "meridianSizes": [1, 1, 1, 1],
+        "contextSeen": 4, "contextPolicy": {},
+    }
+
+
+class TrackIdentityTests(unittest.TestCase):
+    def compare(self, left, right):
+        return PROBE.compare_track_context({"boundary": left}, {"boundary": right})
+
+    def test_repeated_reserved_controls_keep_exact_chronology(self):
+        left, right = boundary("training:"), boundary("serving:")
+        before = copy.deepcopy((left, right))
+        result = self.compare(left, right)
+        self.assertEqual(result["status"], "passed")
+        self.assertEqual((left, right), before)
+        self.assertEqual(len(result["opaqueEventIdCorrespondence"]["historyEventIds"]), 4)
+        self.assertFalse(result["eventIdsRewritten"])
+
+    def test_duplicate_physical_event_is_rejected(self):
+        left, right = boundary("training:"), boundary("serving:")
+        right["historyEventIds"][3] = right["historyEventIds"][1]
+        self.assertEqual(self.compare(left, right)["status"], "failed")
+
+    def test_reserved_identity_cannot_alias_an_ordinary_event(self):
+        left, right = boundary("training:"), boundary("serving:")
+        right["historyEventIds"][1] = "__transducer_query__"
+        self.assertEqual(self.compare(left, right)["status"], "failed")
+
+    def test_control_identity_must_match_its_reserved_track(self):
+        left, right = boundary("training:"), boundary("serving:")
+        right["historyEventIds"][2] = "__metadata__"
+        self.assertEqual(self.compare(left, right)["status"], "failed")
+
+    def test_attachment_length_and_chronological_position_must_match(self):
+        left, right = boundary("training:"), boundary("serving:")
+        right["historyEventIds"].pop()
+        self.assertEqual(self.compare(left, right)["status"], "failed")
+        right = boundary("serving:")
+        right["historyPositions"][2] = 1
+        self.assertEqual(self.compare(left, right)["status"], "failed")
+
+
+
+class DecisionControlTests(unittest.TestCase):
+    def captures(self):
+        tensor = {"shape": [1, 1, 2], "values": [0.1, 0.2]}
+        return (
+            {"trainingCall": {"controlHex": ["6162"]},
+             "boundary": {"encodedControl": copy.deepcopy(tensor)}, "encoderCalls": [{}]},
+            {"servingCall": {"controlHex": ["6162"]},
+             "boundary": {"encodedControl": copy.deepcopy(tensor)}, "encoderCalls": [{}, {}, {}]},
+        )
+
+    def test_different_hook_intervals_do_not_hide_equal_current_controls(self):
+        left, right = self.captures()
+        row = PROBE.compare_decision_controls(left, right)
+        self.assertEqual(row["status"], "passed")
+        self.assertFalse(row["fullEncoderHookListsComparable"])
+        self.assertEqual(row["observedEncoderCallCounts"], {"training": 1, "serving": 3})
+
+    def test_different_bytes_fail_even_when_an_encoded_tensor_collides(self):
+        left, right = self.captures()
+        right["servingCall"]["controlHex"] = ["6163"]
+        self.assertEqual(PROBE.compare_decision_controls(left, right)["status"], "failed")
+
+    def test_changed_actual_control_tensor_fails(self):
+        left, right = self.captures()
+        right["boundary"]["encodedControl"]["values"][1] = 0.3
+        self.assertEqual(PROBE.compare_decision_controls(left, right)["status"], "failed")
+
+    def test_missing_capture_does_not_count_as_equal(self):
+        left, right = self.captures()
+        left["trainingCall"] = {}
+        right["servingCall"] = {}
+        self.assertEqual(PROBE.compare_decision_controls(left, right)["status"], "failed")
+
+
+
+class SingletonChoiceTests(unittest.TestCase):
+    def captures(self):
+        capture = {
+            "modalityCalls": [{"rows": [{"support": [0], "probabilities": [1.0]}]}],
+            "decoderExecution": {
+                "publicModeSupports": [[0]],
+                "categoricals": [{"name": "mode", "support": [0],
+                                   "probabilities": [1.0], "selected": 0}],
+            },
+        }
+        return copy.deepcopy(capture), copy.deepcopy(capture)
+
+    def test_actual_text_only_supports_are_deterministic(self):
+        left, right = self.captures()
+        row = PROBE.compare_singleton_text_choices(left, right)
+        self.assertEqual(row["status"], "passed")
+        self.assertEqual(row["conditionalProbability"], 1.0)
+
+    def test_installed_alternative_modality_cannot_pass_as_text_only(self):
+        left, right = self.captures()
+        left["modalityCalls"][0]["rows"][0] = {
+            "support": [0, 1], "probabilities": [0.6, 0.4]}
+        self.assertEqual(PROBE.compare_singleton_text_choices(left, right)["status"], "failed")
+
+    def test_alternative_format_or_missing_support_is_not_inferred(self):
+        left, right = self.captures()
+        left["decoderExecution"]["publicModeSupports"] = [[0, 1]]
+        self.assertEqual(PROBE.compare_singleton_text_choices(left, right)["status"], "failed")
+        left, right = self.captures()
+        left["modalityCalls"] = []
+        self.assertEqual(PROBE.compare_singleton_text_choices(left, right)["status"], "failed")
+
+
+if __name__ == "__main__":
+    unittest.main()

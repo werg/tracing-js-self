@@ -78,10 +78,34 @@ def compare_track_context(training, serving):
         "trainingFrontierAttachment": len(left["frontierEventIds"]) == len(left["frontierTracks"]) == len(left["frontierModalities"]),
         "servingFrontierAttachment": len(right["frontierEventIds"]) == len(right["frontierTracks"]) == len(right["frontierModalities"]),
     }
+    from megatoken.model.config import RESERVED_TRACKS
+
+    def valid_history(boundary):
+        identities, tracks = boundary["historyEventIds"], boundary["historyTracks"]
+        if len(identities) != len(tracks):
+            return False
+        physical = []
+        for event_id, track in zip(identities, tracks, strict=True):
+            if track in RESERVED_TRACKS:
+                if event_id != track:
+                    return False
+            else:
+                if not event_id or event_id in RESERVED_TRACKS:
+                    return False
+                physical.append(event_id)
+        # Transducer controls intentionally recur with their reserved track ID.
+        # Ordinary physical records still need distinct retained identities.
+        return len(set(physical)) == len(physical)
+
+    id_shapes["trainingHistoryIdentityValidity"] = valid_history(left)
+    id_shapes["servingHistoryIdentityValidity"] = valid_history(right)
     correspondences = {}
     for name in ("historyEventIds", "frontierEventIds"):
         a, b = left[name], right[name]
-        id_shapes[name] = len(a) == len(b) and len(set(a)) == len(a) and len(set(b)) == len(b)
+        id_shapes[name] = len(a) == len(b)
+        if name == "frontierEventIds":
+            id_shapes[name] &= (all(a) and all(b) and
+                                len(set(a)) == len(a) and len(set(b)) == len(b))
         correspondences[name] = [
             {"position": i, "training": x, "serving": y}
             for i, (x, y) in enumerate(zip(a, b))
@@ -93,6 +117,74 @@ def compare_track_context(training, serving):
         "trackAddressesRemapped": False, "eventIdsRewritten": False,
         "modelVersions": {"training": left["modelVersion"], "serving": right["modelVersion"]},
         "scope": "Exact native track addresses, descriptions, causal order and event attachment",
+    }
+
+
+def compare_decision_controls(training, serving):
+    """Compare the same policy call, retaining unequal observation-hook scopes."""
+    import math
+
+    left = training.get("trainingCall", {}).get("controlHex")
+    right = serving.get("servingCall", {}).get("controlHex")
+    byte_match = isinstance(left, list) and isinstance(right, list) and left == right
+    a, b = training["boundary"]["encodedControl"], serving["boundary"]["encodedControl"]
+    tensor = {"status": "failed", "maximumAbsoluteDifference": None}
+    if a is None or b is None:
+        tensor.update(status="passed" if a is None and b is None else "failed",
+                      bothAbsent=a is None and b is None)
+    elif a["shape"] == b["shape"] and len(a["values"]) == len(b["values"]):
+        pairs = list(zip(a["values"], b["values"], strict=True))
+        finite = all(math.isfinite(x) and math.isfinite(y) for x, y in pairs)
+        maximum = max((abs(x - y) for x, y in pairs), default=0.0)
+        passed = finite and all(abs(x - y) <= 1e-6 + 1e-5 * abs(x) for x, y in pairs)
+        tensor.update(status="passed" if passed else "failed",
+                      maximumAbsoluteDifference=maximum, comparedCoordinates=len(pairs),
+                      absoluteTolerance=1e-6, relativeTolerance=1e-5)
+    return {
+        "status": "passed" if byte_match and tensor["status"] == "passed" else "failed",
+        "publicControlBytesEqual": byte_match, "encodedControl": tensor,
+        "fullEncoderHookListsComparable": False,
+        "encoderHookScopes": {
+            "training": "Selected supervised_meridian call only; earlier prefix replay already completed",
+            "serving": "Selected adapter call, including any prefix replay before this policy draw",
+        },
+        "observedEncoderCallCounts": {
+            "training": len(training["encoderCalls"]), "serving": len(serving["encoderCalls"]),
+        },
+        "scope": "Same current public policy controls and their actual encoded tensors; recurrent-state parity separately checks the accumulated context",
+    }
+
+
+def compare_singleton_text_choices(training, serving):
+    """Observe actual legal modality and mode supports for this text-only request."""
+    modalities = {}
+    modes = {}
+    for name, capture in (("training", training), ("serving", serving)):
+        calls = capture.get("modalityCalls", [])
+        rows = [row for call in calls for row in call["rows"]]
+        modalities[name] = {
+            "calls": len(calls), "rows": rows,
+            "textOnly": len(calls) == 1 and len(rows) == 1 and
+                rows[0]["support"] == [0] and rows[0]["probabilities"] == [1.0],
+        }
+        supports = capture["decoderExecution"].get("publicModeSupports", [])
+        modes[name] = {
+            "actualPublicSupports": supports,
+            "textOnly": bool(supports) and all(support == [0] for support in supports),
+        }
+    rendered_modes = [row for row in serving["decoderExecution"]["categoricals"]
+                      if row["name"] == "mode"]
+    renderer_text_only = (len(rendered_modes) == 1 and rendered_modes[0]["support"] == [0]
+                          and rendered_modes[0]["probabilities"] == [1.0]
+                          and rendered_modes[0]["selected"] == 0)
+    passed = (all(row["textOnly"] for row in modalities.values()) and
+              all(row["textOnly"] for row in modes.values()) and renderer_text_only)
+    return {
+        "status": "passed" if passed else "failed",
+        "modality": modalities, "mode": modes,
+        "actualRendererTextChoice": renderer_text_only,
+        "conditionalProbability": 1.0 if passed else None,
+        "scope": "Actual native masks and public support calls must make modality and output mode singleton text choices; no equality claim for unsupported raw logits",
     }
 
 
@@ -437,14 +529,19 @@ def main():
         prior["scope"] = f"Actual native Gaussian at generated boundary {index}"
         recurrence = compare_recurrent_states(training, emitted)
         tracks = compare_track_context(training, emitted)
+        controls = compare_decision_controls(training, emitted)
+        singletons = compare_singleton_text_choices(training, emitted)
         support = compare_output_support(training, emitted)
         decoder = training["sameEmissionTrainingReadout"]["comparison"]
         tensor_identity = training["actualModelTensorIdentity"] == emitted["actualServedTensorIdentity"]
-        passed = all(row["status"] == "passed" for row in (prior, recurrence, tracks, support, decoder))
-        passed &= tensor_identity and prior["encoderCallAuditIdentical"]
+        passed = all(row["status"] == "passed" for row in (prior, recurrence, tracks, controls, singletons, support, decoder))
+        passed &= tensor_identity
+        prior["encoderCallAuditComparable"] = False
+        prior["encoderCallAuditInterpretation"] = controls["encoderHookScopes"]
         comparisons.append({
             "boundary": index, "status": "passed" if passed else "failed",
             "gaussian": prior, "recurrentState": recurrence, "tracks": tracks,
+            "decisionControls": controls, "singletonTextChoices": singletons,
             "outputSupport": support, "sameEmissionDecoderConditionals": decoder,
             "loadedModelTensorsExactlyEqual": tensor_identity,
         })

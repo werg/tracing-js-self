@@ -112,16 +112,17 @@ def capture_prior(operation, model, *, path, identity, maximum_input_bytes=16777
     """Run real native code and intercept the first Gaussian facet draw."""
     import torch
     from megatoken.model.core import FacetedCore
-    from megatoken.model.multitrack import MultiTrackGenerator
+    from megatoken.model.multitrack import MultiTrackCore, MultiTrackGenerator
     from megatoken.multitrack_runtime import MultiTrackRuntime
     require(path in ('training', 'serving'), 'Unknown native conditional path')
     require(all(not module.training for module in model.modules()), 'All native modules must have dropout disabled')
     result = {'schema': SCHEMA, 'path': path, 'identity': identity, 'dropoutDisabled': True,
-              'modelSelections': 0, 'optimizerSteps': 0, 'encoderCalls': [], 'boundary': None}
+              'modelSelections': 0, 'optimizerSteps': 0, 'encoderCalls': [], 'modalityCalls': [], 'boundary': None}
     observed_bytes = 0
     original_encode = FacetedCore.encode_chunk
     original_control = FacetedCore.encode_control
     original_prior = MultiTrackGenerator._prior
+    original_modality = MultiTrackCore.modality_logits
     original_train = MultiTrackGenerator.supervised_meridian
     original_generate = MultiTrackRuntime.generate
     original_sample = MultiTrackGenerator._sample_policy
@@ -147,6 +148,24 @@ def capture_prior(operation, model, *, path, identity, maximum_input_bytes=16777
                 'trackSemantics': tensor_record(kwargs['track_semantics']) if kwargs.get('track_semantics') is not None else None})
             return original(core, values, lengths, **kwargs)
         return capture
+
+    def modality(core, state, tracks, control=None, legal=None):
+        logits = original_modality(core, state, tracks, control, legal)
+        if core.core is model.core:
+            rows = []
+            for row in logits.detach().float().reshape(-1, logits.shape[-1]):
+                support = torch.isfinite(row).nonzero().reshape(-1)
+                require(support.numel() > 0, 'Actual native modality support is empty')
+                values = row.index_select(0, support)
+                rows.append({'support': support.cpu().tolist(),
+                             'logits': values.cpu().tolist(),
+                             'probabilities': values.softmax(-1).cpu().tolist()})
+            result['modalityCalls'].append({
+                'tracks': list(tracks),
+                'legalMask': None if legal is None else legal.detach().cpu().tolist(),
+                'rows': rows,
+            })
+        return logits
 
     def prior(multi, mean, state, tracks, control=None):
         require(result['boundary'] is None, 'Unexpected earlier native generated policy boundary')
@@ -222,6 +241,7 @@ def capture_prior(operation, model, *, path, identity, maximum_input_bytes=16777
     with ExitStack() as stack:
         stack.enter_context(patch.object(FacetedCore, 'encode_chunk', encoded('encode_chunk', original_encode)))
         stack.enter_context(patch.object(FacetedCore, 'encode_control', encoded('encode_control', original_control)))
+        stack.enter_context(patch.object(MultiTrackCore, 'modality_logits', modality))
         stack.enter_context(patch.object(MultiTrackGenerator, '_prior', prior))
         stack.enter_context(patch.object(MultiTrackGenerator, '_sample_policy', staticmethod(sample)))
         stack.enter_context(patch.object(MultiTrackGenerator, 'supervised_meridian', train))

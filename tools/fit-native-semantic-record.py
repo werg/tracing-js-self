@@ -191,9 +191,11 @@ def actual_service(model, codec, chunking, prefix: dict, *, seed: int, max_token
     samples, priors = [], []
 
     def sample(distribution, names, generator):
-        local = torch.Generator(device=distribution.mean.device).manual_seed(seed)
+        draw_seed = seed + len(samples)
+        local = torch.Generator(device=distribution.mean.device).manual_seed(draw_seed)
         value = original_sample(distribution, names, local)
-        samples.append({"sample": tensor_record(value), "eventIds": list(names)})
+        samples.append({"sample": tensor_record(value), "eventIds": list(names),
+                        "seed": draw_seed})
         return value
 
     def prior(multi, mean, state, tracks, control=None):
@@ -227,7 +229,8 @@ def actual_service(model, codec, chunking, prefix: dict, *, seed: int, max_token
                 capture["evidence"] = error.evidence
         capture.update(samples=samples, priors=priors, runtimeModelIdentity=identity)
         capture["coupledSampling"] = {
-            "seedAtNativeSampleBoundary": seed,
+            "seedAtFirstNativeSampleBoundary": seed,
+            "subsequentDrawSeeds": "seed + draw_index",
             "sampleIsUnmodifiedNativeDraw": True,
             "globalRngSequenceEqualityClaimed": False,
         }
@@ -240,6 +243,9 @@ def max_tensor_difference(left: dict, right: dict) -> dict:
     if left["shape"] != right["shape"]:
         return {"status": "failed", "reason": "shape",
                 "leftShape": left["shape"], "rightShape": right["shape"]}
+    if (len(left["values"]) != len(right["values"]) or
+            not all(math.isfinite(x) for x in left["values"] + right["values"])):
+        return {"status": "failed", "reason": "nonfinite-or-inconsistent-values"}
     diffs = [abs(a - b) for a, b in zip(left["values"], right["values"], strict=True)]
     return {"status": "passed" if max(diffs, default=0.0) == 0.0 else "different",
             "coordinates": len(diffs), "maximumAbsoluteDifference": max(diffs, default=0.0)}
@@ -359,6 +365,9 @@ def fit(model, codec, chunking, prefix, target, state, train_kwargs, optimizer, 
             first_boundary_audit = {
                 "priorMean": prior_diff, "priorLogScale": scale_diff,
                 "sampleDifference": sample_diff, "recurrentState": state_diff,
+                "sampleAbsoluteTolerance": 1e-6,
+                "firstSampleBitwiseEqual": sample_hash == initial_service["samples"][0]["sample"]["float32Sha256"],
+                "comparisonExecution": "Gradient-enabled trainer boundary versus no-grad actual service; finite float32 tolerances are retained with original hashes",
                 "trainerTracks": captured["prior"]["tracks"],
                 "trainerEventIds": captured["sample"]["eventIds"],
                 "servingTracks": baseline_service["tracks"],
@@ -373,6 +382,7 @@ def fit(model, codec, chunking, prefix, target, state, train_kwargs, optimizer, 
                 "trainingPriorCalls": len(captured["priorCalls"]),
                 "servingSampleCalls": len(initial_service["samples"]),
                 "servingPriorCalls": len(initial_service["priors"]),
+                "additionalServingCalls": "Continuation fragments while the untrained decoder has not ended its first logical record; only the first draw is paired here",
                 "optimizerStepsBeforeComparison": 0,
             }
             # Persist the original tensors and diagnostics before any assertion or
@@ -384,9 +394,9 @@ def fit(model, codec, chunking, prefix, target, state, train_kwargs, optimizer, 
                 "serving": {"samples": initial_service["samples"],
                             "priors": initial_service["priors"]},
             })
-            require(len(captured["sampleCalls"]) == len(captured["priorCalls"]) ==
-                    len(initial_service["samples"]) == len(initial_service["priors"]) == 1,
-                    "First-boundary fit made more than one native prior or sample call")
+            require(len(captured["sampleCalls"]) == len(captured["priorCalls"]) == 1 and
+                    len(initial_service["samples"]) == len(initial_service["priors"]) >= 1,
+                    "First-boundary fit lacks one trainer draw or aligned serving continuation draws")
             require(prior_diff["status"] != "failed" and scale_diff["status"] != "failed",
                     "Trainer and serving prior geometry differs")
             require(prior_diff["maximumAbsoluteDifference"] <= 1e-6 and
@@ -397,8 +407,9 @@ def fit(model, codec, chunking, prefix, target, state, train_kwargs, optimizer, 
             require(first_boundary_audit["nativeTrackAddressesEqual"] and
                     first_boundary_audit["trackRegistryStringsEqual"],
                     "Actual native track addresses differ at the first boundary")
-            require(sample_hash == initial_service["samples"][0]["sample"]["float32Sha256"],
-                    "Trainer and serving did not draw the same actual first-prefix facets")
+            require(sample_diff["status"] != "failed" and
+                    sample_diff["maximumAbsoluteDifference"] <= 1e-6,
+                    "Trainer and serving first-prefix draws differ beyond the declared float32 tolerance")
             stable_sample = sample_hash
         else:
             require(sample_hash == stable_sample,
@@ -433,7 +444,9 @@ def fit(model, codec, chunking, prefix, target, state, train_kwargs, optimizer, 
                 "actualServingSamples": [item["sample"]["float32Sha256"]
                                          for item in service["samples"]],
                 "actualServingEventIds": [item["eventIds"] for item in service["samples"]],
-                "firstSampleMatchesTrainer": bool(service["samples"] and
+                "firstSampleDifference": None if not service["samples"] else max_tensor_difference(
+                    captured["sample"]["sample"], service["samples"][0]["sample"]),
+                "firstSampleBitwiseMatchesTrainer": bool(service["samples"] and
                     service["samples"][0]["sample"]["float32Sha256"] == sample_hash),
                 "actualRecord": emitted,
                 "actualRecordHex": None if emitted is None else emitted.encode("utf-8").hex(),
@@ -442,7 +455,9 @@ def fit(model, codec, chunking, prefix, target, state, train_kwargs, optimizer, 
                 "strictKind": None if parsed is None else parsed[0],
                 "strictFields": None if parsed is None else parsed[1],
                 "recordMatchesTarget": emitted is not None and
-                    emitted.encode("utf-8") == target and parsed is not None,
+                    emitted.encode("utf-8") == target and parsed is not None and
+                    len(service["samples"]) == 1,
+                "singleCompleteNativeRecord": len(service["samples"]) == 1 and emitted is not None,
                 "actualServingTracks": [item["tracks"] for item in service["priors"]],
             })
             if row["recordMatchesTarget"]:
@@ -663,9 +678,10 @@ def main() -> int:
     kind, fields = strict_record(served_record) if served_record is not None else (None, None)
     require(served_record == record and kind == strict_kind,
             "Reloaded actual serving API did not emit the exact complete strict target record")
-    require(actual["samples"] and
-            actual["samples"][0]["sample"]["float32Sha256"] == sample_sha,
-            "Reloaded model sampled different first-prefix facets")
+    require(len(actual["samples"]) == 1 and
+            actual["samples"][0]["sample"]["float32Sha256"] ==
+            initial_service["samples"][0]["sample"]["float32Sha256"],
+            "Reloaded service changed its frozen first-prefix draw or required multiple fragments")
 
     report = {
         "schema": "semantic-native-decoder-fit/1",
@@ -698,7 +714,9 @@ def main() -> int:
         "actualServingTracks": initial_service["priors"][0]["tracks"],
         "actualServingTrackRegistry": initial_service["priors"][0]["trackRegistry"],
         "trackIdentityStringsEqual": train["trainingTracks"] == initial_service["priors"][0]["tracks"],
-        "trainerServingFirstSampleEqual": sample_sha == initial_service["samples"][0]["sample"]["float32Sha256"],
+        "trainerServingFirstSampleBitwiseEqual": sample_sha == initial_service["samples"][0]["sample"]["float32Sha256"],
+        "trainerServingFirstSampleWithinTolerance": first_boundary_audit["sampleDifference"]["maximumAbsoluteDifference"] <= 1e-6,
+        "reloadedServingSampleExactlyUnchanged": actual["samples"][0]["sample"]["float32Sha256"] == initial_service["samples"][0]["sample"]["float32Sha256"],
         "firstBoundaryAudit": first_boundary_audit,
         "modelOwnersChanged": changed_owners,
         "optimizerType": "MasterAdamW",

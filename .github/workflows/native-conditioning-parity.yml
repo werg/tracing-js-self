@@ -67,6 +67,7 @@ jobs:
           python -m unittest discover -s test -p 'test_native_input_parity.py' -v
           python -m unittest discover -s test -p 'test_native_conditional_probe.py' -v
           python -m unittest discover -s test -p 'test_native_decoder_fit.py' -v
+          python -m unittest discover -s test -p 'test_native_two_boundary_probe.py' -v
           python -m unittest discover -s test -p 'test_native_supervision_audit.py' -v
           node --test test/semantic-v6-emission-validator.test.js
       - name: Freshly verify one direct execution and save its original candidate

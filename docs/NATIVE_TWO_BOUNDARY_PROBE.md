@@ -21,8 +21,10 @@ tokenizer and decoder. It is separate from a held-out learned-execution result.
    controller then commits those original bytes. No teacher line is substituted
    into the serving history.
 5. A second real prediction is measured after that commitment. Both boundaries
-   compare the native conditional, recurrent tensors, causal track attachments,
-   public output support and the decoder's full conditional probabilities.
+   compare the native Gaussian, recurrent tensors, causal track attachments,
+   length and terminal probabilities, and every permitted lexical-token
+   probability. Actual native modality masks and output-mode support calls must
+   separately show that both choices are singleton text with probability one.
 
 For the decoder comparison, the training readout also scores the actual serving
 emission as a diagnostic label. This is a read-only calculation after generation,
@@ -36,9 +38,25 @@ removes unrelated differences in earlier random-number consumption without
 claiming that two independently scheduled runtimes have identical global random
 number streams.
 
-Native track addresses and causal attachments must match exactly. Opaque
+The first fit comparison retains float32 roundoff from the gradient-enabled
+trainer prefix versus the no-grad service. It reports original hashes and numeric
+deltas; the first sample and prior must agree within an absolute 1e-6, and the
+recurrent tensors within the declared 1e-6 absolute / 1e-5 relative tolerance.
+The frozen serving prior must remain bitwise unchanged through decoder fitting
+and exact checkpoint reload. An untrained selection may need continuation
+fragments; the fitted target must be one complete native record.
+
+Native track addresses and causal attachments must match exactly. Reserved
+metadata and transducer control IDs may recur at their original chronological
+positions; ordinary retained physical event IDs must be unique. Opaque
 dataset event IDs and runtime event IDs are retained separately, with their
 chronological correspondence shown. They are never rewritten to create a match.
+The per-boundary encoder hooks have different intervals: the serving hook may
+include prefix replay, while the training hook begins at the chosen supervised
+call. Their whole call lists are retained but are not treated as comparable.
+The exact current public control bytes and their actual encoded tensors are
+compared, alongside the complete accumulated recurrent state. The separate
+first-boundary probe still captures both paths from the start of prefix replay.
 The model's declared served-state export must match exactly after independent
 training and serving loads. All model weights are also checked for accidental
 mutation during the read-only measurements.

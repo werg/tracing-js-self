@@ -55,10 +55,17 @@ def observe_decoder(model):
     from unittest.mock import patch
     from megatoken.generation.decoder import DeterministicDecoder, _Program
     from megatoken.generation.distributions import TiedVocabulary
-    capture = {'categoricals': [], 'lexical': []}
+    capture = {'categoricals': [], 'lexical': [], 'publicModeSupports': []}
+    original_public = DeterministicDecoder._public_support
     original_support = DeterministicDecoder._support_loss
     original_choose = _Program.choose
     original_loss, original_argmax = TiedVocabulary.loss, TiedVocabulary.argmax
+
+    def public_support(decoder, spec):
+        result = original_public(decoder, spec)
+        if decoder is model.decoder:
+            capture['publicModeSupports'].append(list(result[3]))
+        return result
 
     def support(decoder, header, codes, targets, supports, *, name):
         if decoder is model.decoder:
@@ -90,6 +97,7 @@ def observe_decoder(model):
         return result
 
     with ExitStack() as stack:
+        stack.enter_context(patch.object(DeterministicDecoder, '_public_support', public_support))
         stack.enter_context(patch.object(DeterministicDecoder, '_support_loss', support))
         stack.enter_context(patch.object(_Program, 'choose', choose))
         stack.enter_context(patch.object(TiedVocabulary, 'loss', loss))
