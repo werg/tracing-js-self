@@ -70,8 +70,11 @@ snapshot on 18 November initially observed head
 `54d3e68a6f3a3c71cd29fe98805e05d0dd64fccb`, recorded base `2aa694b`,
 open/draft/unmerged and mergeable false at 14:28:41 UTC. A later snapshot
 records head `a994f90eb7559e154421a25f381e94065d54c5c9`, open/unmerged,
-`draft: false` and `mergeable: false`, with metadata updated at 14:41:25 UTC. Its description reports further qualification
-and separate experiment/corpus evidence still being assembled. This is active
+`draft: false` and `mergeable: false`, with metadata updated at 14:41:25 UTC. The final 14:56:41 UTC read-only snapshot records a further head
+`7c80a564e81c04248df54ac82bb9ec31c4cfa288` (metadata updated at 14:48:54 UTC),
+still open/unmerged, no longer draft and mergeable false. Its description
+reports further qualification and separate experiment/corpus evidence still
+being assembled. This is active
 independent work, not a stale branch, and its additional code/results have not
 been silently incorporated into the qualified `1e2e6a0` tree. Recheck its exact
 head, content and completed qualification before any later integration; do not
@@ -85,8 +88,9 @@ Its runtime and consumer implementation matches merged main; the follow-up
 also adds an archive-preservation workflow for an original CI artifact larger
 than the download connector limit. This branch preserves evidence and current
 status without treating the separate PR39
-as already merged. PR descriptions and review readiness are maintained by the
-coordinating owner.
+as already merged. PR40 was open, ready for review and mergeable in the
+final 14:56:41 UTC snapshot. PR descriptions and review readiness are
+maintained by the coordinating owner.
 
 The companion [Megatoken PR31](https://github.com/werg/megatoken/pull/31)
 was merged by the user at 14:31:06 UTC on 18 November, with merge commit

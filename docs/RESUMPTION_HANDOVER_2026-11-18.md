@@ -1,6 +1,6 @@
 # Resumption implementation and evidence handover — 18 November 2026
 
-**Qualification complete.** All seven hosted workflows for the qualified implementation head passed, including all five exact-head native lanes and the complete real-world corpus audit. All declared optimizer experiments also completed and their negative outcomes are retained. Original archive preservation has separate byte-level verification and delivery receipts.
+**Qualification complete.** All seven hosted workflows for the qualified implementation head passed, including all five exact-head native lanes and the complete real-world corpus audit. The executed optimizer attempts have final recorded outcomes, including interrupted attempts; the completed runs’ negative results and the separate untrained prospective declaration are retained. Original archive preservation has separate byte-level verification and delivery receipts.
 
 **Implementation and evidence report.** Results below identify the actual producing revisions, populations and gates. Original failed attempts are preserved alongside successful workarounds. Infrastructure completion, native admission, prepared training data and learned execution are separate outcomes.
 
@@ -185,7 +185,9 @@ The repository retains compact exact receipts and failure bytes; large private a
 | Reconciled full private native proofs, `semantic-reconciled-private-proofs-2026-11-18.tar.gz` | **2,780,064 bytes**; SHA-256 `35a4c5af381ec0decc20a07b3e1abbc7e32ec37d194b920ff7cc207e3a8ae29e`; 47 members, including all 35 current full case proofs and the unchanged earlier archive; verified and saved |
 | Current isolated three-case release, `tracing-js-current-isolated-native-release-2026-11-18.tar.gz` | **5,052,896 bytes**; SHA-256 `b18302be17ef07eb2a344d41416868c36c33f1c419aa1287eb0c3d3feffc92d9`; 46 files verified and saved at producer `1e2e6a0` / consumer `6b4382b`. [Receipt](receipts/native-ci-repair-2026-11-18/README.md) |
 | Failed hosted native evidence, `native-aa7b-failure-evidence-2026-11-18.tar.gz` | **6,455,182 bytes**; SHA-256 `b14dfcc222940f316db9933a1003daa4bd0542adbb280fe7fc7e95378d5d3b02`; 14 members verified and saved, including the four available original artifact ZIPs and all five complete job logs. Engineering published no ZIP. [Receipt](receipts/final-integration-2026-11-18/native-aa7b-failure/README.md) |
-| Isolated three-admission/two-prepared private release, `semantic-v5-release.tar.gz` | **8,391,520 bytes**; SHA-256 `a1f54b11840c278c6b2d27fb54f0d34f8cdabcd33010baaf8a54dd4ae9a0bf6f`; 45 archive files verified and saved. [Receipt](receipts/resumption-qualification-2026-11-18/release-cap-smoke/archive-receipt.json) |
+| Isolated three-admission/two-prepared private release, `tracing-js-isolated-native-release-2026-11-18.tar.gz` | **8,391,520 bytes**; SHA-256 `a1f54b11840c278c6b2d27fb54f0d34f8cdabcd33010baaf8a54dd4ae9a0bf6f`; 45 archive files verified and saved. [Receipt](receipts/resumption-qualification-2026-11-18/release-cap-smoke/archive-receipt.json) |
+
+The historical real-source and isolated cap-smoke releases both originated with the packager basename `semantic-v5-release.tar.gz`; the table uses the actual delivered filenames. Their byte identities and populations remain distinct. Keep reconstructed originals in separately named directories. Private download links are delivered separately; service identifiers and private asset URLs are not stored in this public repository.
 
 ### Current hosted native artifacts
 
@@ -201,7 +203,31 @@ The complete original ZIPs from successful native run `44321402524` form five ad
 
 The five originals total **2,053,572,132 ZIP bytes and 3,352 members containing 10,333,415,654 uncompressed bytes**. Every original member was streamed and checked; archive content was neither regenerated nor repacked. The connector's observed 536,870,912-byte single-download limit was resolved for the benchmark artifact by the small read-only preservation workflow, which verifies the original API identity and whole hash before splitting. Reconstruct the binary parts in the order recorded by each `reconstruction.json`, verify both the part hashes and original whole ZIP hash, then inspect/extract that exact ZIP. The original native corpus is never rerun as a substitute for missing archive bytes.
 
-The two release archives share their packager's default basename but have distinct identities and populations. Keep them in separately named directories. Private download links are delivered separately; service identifiers and private asset URLs are not stored in this public repository.
+After downloading and naming the parts as recorded in their indexes, reconstruct and verify the original ZIPs in a new directory:
+
+```sh
+cat semantic-v5-benchmark-v1-admission-and-evaluation.zip.part001 \
+    semantic-v5-benchmark-v1-admission-and-evaluation.zip.part002 \
+    semantic-v5-benchmark-v1-admission-and-evaluation.zip.part003 \
+  > semantic-v5-benchmark-v1-admission-and-evaluation.zip
+printf '%s  %s\n' \
+  8aea8598302d2e675ac7be4003e3f185e87106f2c4010ed1c2ebde54056b8a7e \
+  semantic-v5-benchmark-v1-admission-and-evaluation.zip | sha256sum --check
+cat semantic-v5-real-source-admission-and-evaluation.zip.part001 \
+    semantic-v5-real-source-admission-and-evaluation.zip.part002 \
+  > semantic-v5-real-source-admission-and-evaluation.zip
+printf '%s  %s\n' \
+  d441754ecd7a195e72312e042288dfa808ffbecaca1d0d4f15d04db2078a663c \
+  semantic-v5-real-source-admission-and-evaluation.zip | sha256sum --check
+```
+
+### Diagnostic archive and complete delivery
+
+The separately saved [current diagnostic bundle](receipts/current-diagnostic-ci-2026-11-18/README.md), `current-diagnostic-ci-evidence-2026-11-18.tar.gz`, is **26,218,879 bytes**, SHA-256 `ab66a5624fe3730b2b9ac905f2796dcf61011ccbe1ce9b3ab7185fcd6cbfd7a5`. Its 40 outer members retain all nine unchanged original diagnostic ZIPs—eight real-corpus artifacts and one Exercism artifact—plus full original logs, summaries, a member index and an executable verifier. The original ZIPs total 26,762,547 bytes and contain 25 original members. Every API size/digest, ZIP-member byte count/CRC/SHA and outer member hash was verified.
+
+Those workflows triggered for head `1e2e6a0` but actually checked out synthetic merge `3497ee3`; their exact logs preserve that distinction. Their 936/936 and 132/361 locally verified results remain separate diagnostic populations, with no native-admission or learned-success claim. After extracting the outer archive, `python3 verify_bundle.py` rechecks every indexed original file and ZIP member without extracting the nested ZIPs.
+
+**All 15 logical archive groups are verified and saved as 21 payload files totaling 4,882,964,897 bytes.** The original corpus group has four parts; the current real-source and benchmark ZIP groups have two and three parts respectively. These counts describe durable delivery objects, not independent corpora or a deduplicated source population. The private download index supplies the file links and their exact hashes; this public report contains no private service identifiers.
 
 ### Completed capped real-source release
 
@@ -421,7 +447,7 @@ The [real-world JS/TS corpus workflow](https://github.com/werg/tracing-js-self/a
 
 The [final hosted snapshot](receipts/final-integration-2026-11-18/native-successor/final-hosted-snapshot.json), observed at **14:44:48 UTC**, records all seven original producer-head workflows completed successfully. Earlier green runs retain their original heads. The benchmark artifact's separate [preservation workflow](https://github.com/werg/tracing-js-self/actions/runs/44326698336) also passed: it verified the existing 874,061,909-byte ZIP against its original API SHA-256 and produced exact 400 MiB, 400 MiB and 35,201,109-byte parts. It performed no source generation, preparation or optimization. Final archive delivery is tracked by original byte identity, separately from workflow success.
 
-Hosted workflows for the earlier companion head `3d7ffc701a3e692883819fb623a03b1942cd8b5c` passed [CPU Python 3.11/3.12 and lint CI](https://github.com/werg/megatoken/actions/runs/44309206418), [native qualification](https://github.com/werg/megatoken/actions/runs/44309206394), and [the selected bridge](https://github.com/werg/megatoken/actions/runs/44309206440). These are hosted results associated with that head; default PR checkout may test a synthetic merge. All three workflows for reconciled companion head `6b4382b9af3bef120ca3a95ae24d35154d4cd66b` subsequently passed: [CPU Python 3.11/3.12 and lint](https://github.com/werg/megatoken/actions/runs/44315347373), [source/native qualification](https://github.com/werg/megatoken/actions/runs/44315347477), and [selected bridge](https://github.com/werg/megatoken/actions/runs/44315347379). The user subsequently merged companion PR31 at **14:31:06 UTC on 18 November**, producing `9bf32c3fc794c532444d6a84629bfa29599eb49c`. Its qualified head remains exact `6b4382b`; the existing native and learning receipts retain their original pins. The later read-only PR39 snapshot at 14:41:25 UTC records open/unmerged, no longer draft, mergeable false, head `a994f90eb7559e154421a25f381e94065d54c5c9`; its body still describes qualification in progress. That independent work is outside this report's qualified implementation.
+Hosted workflows for the earlier companion head `3d7ffc701a3e692883819fb623a03b1942cd8b5c` passed [CPU Python 3.11/3.12 and lint CI](https://github.com/werg/megatoken/actions/runs/44309206418), [native qualification](https://github.com/werg/megatoken/actions/runs/44309206394), and [the selected bridge](https://github.com/werg/megatoken/actions/runs/44309206440). These are hosted results associated with that head; default PR checkout may test a synthetic merge. All three workflows for reconciled companion head `6b4382b9af3bef120ca3a95ae24d35154d4cd66b` subsequently passed: [CPU Python 3.11/3.12 and lint](https://github.com/werg/megatoken/actions/runs/44315347373), [source/native qualification](https://github.com/werg/megatoken/actions/runs/44315347477), and [selected bridge](https://github.com/werg/megatoken/actions/runs/44315347379). The user subsequently merged companion PR31 at **14:31:06 UTC on 18 November**, producing `9bf32c3fc794c532444d6a84629bfa29599eb49c`. Its qualified head remains exact `6b4382b`; the existing native and learning receipts retain their original pins. The [final read-only repository snapshot](receipts/final-integration-2026-11-18/native-successor/final-repository-snapshot.json) at **14:56:41 UTC** records PR40 open, ready for review and mergeable. PR39 remains open/unmerged and conflicted at `7c80a564e81c04248df54ac82bb9ec31c4cfa288`, with draft status false and metadata updated at 14:48:54 UTC; its body still describes qualification in progress. That independent work is outside this report's qualified implementation and its branch was not overwritten. Tracer main remained `0c30778`; companion main was the merged `9bf32c3`.
 
 ## Remaining work, classified correctly
 

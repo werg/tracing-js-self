@@ -74,3 +74,8 @@ when it was taken. The original failed
 [failure receipt](../native-aa7b-failure/README.md). This successful successor
 does not overwrite those failures or attribute its repaired implementation to
 their original runs.
+
+The later [final repository snapshot](final-repository-snapshot.json) at
+14:56:41 UTC records PR40 ready/open/mergeable, PR31 merged, and the active
+independent PR39 still open/unmerged/conflicted. It does not replace the earlier
+workflow snapshot or relabel any producing revision.
