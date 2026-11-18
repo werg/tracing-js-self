@@ -3,7 +3,6 @@ import {execFileSync} from 'node:child_process';
 import {mkdirSync,readFileSync} from 'node:fs';
 import {resolve,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {serialize} from 'node:v8';
 import {createHash} from 'node:crypto';
 import {parse} from 'acorn';
 import * as admission from '../src/training/effectful-admit.js';
@@ -16,7 +15,7 @@ import {encodeNativeGraph} from '../src/host/graph-codec.js';
 import {EXECUTION_VERSION,WITNESS_VERSION,CONTEXT_VERSION,HARNESS_PROFILE} from '../src/training/format.js';
 import {CampaignStore,atomicWrite,identityHash} from '../src/corpus/campaign-store.mjs';
 import {generationIdentity} from '../src/corpus/campaign-identity.mjs';
-import {runGenerationProcess} from '../src/corpus/generation-process.mjs';
+import {runGenerationProcess,encodeGenerationTask} from '../src/corpus/generation-process.mjs';
 import {loadNativeSettings,createNativeConsumer} from '../src/corpus/native-admission-client.mjs';
 import {buildSourceRegistry,verifySourceRegistry,immutableSourceRegistry,frozenSplitIdentity,canonicalHash}
   from '../src/corpus/source-registry.mjs';
@@ -94,9 +93,9 @@ const persistCandidate=task=>{
     input:campaign.putObject('inputs',encodeNativeGraph(fixture.args??[])),
     fixture:campaign.putObject('fixtures',fixture.fixture??{calls:[]})}));
   return {kind:task.kind,id:task.fixture.id,family:task.fixture.family,
-    // V8's data serializer retains undefined, -0, nonfinite numbers and aliases;
-    // its exact runtime version is part of the immutable campaign identity.
-    fixtureEncoding:'node-v8-serialized/base64',fixtureBytes:serialize(task.fixture).toString('base64'),inputs};
+    // Canonical graphs retain null prototypes, aliases, undefined and special
+    // numbers while leaving registry subtrees visible to private CAS storage.
+    fixtureEncoding:'canonical-generation-fixture/1',fixture:encodeGenerationTask(task).fixture,inputs};
 };
 function record(fixture,entry){
   const summary=campaign.readObject(entry.result),details=summary.campaignSummary;
@@ -227,11 +226,14 @@ const elapsedMs=performance.now();
 const generatedTokens=cases.reduce((sum,row)=>sum+(row.metrics?.generatedTokens??0),0);
 const fresh=cases.filter(row=>freshlyRun.has(row.id));
 const freshTokens=fresh.filter(row=>row.status==='admitted').reduce((sum,row)=>sum+(row.metrics?.generatedTokens??0),0);
+const storage=campaign.storageStatistics();
 Object.assign(manifest,{campaign:{schema:'semantic-generation-summary/1',identityDigest:campaign.identityDigest,
   completed:cases.length,planned:selectedTasks.length+(['training-v4','benchmark-v1'].includes(recipe)?2:0),
   untestedLifecycle:lifecycleDispositions.filter(row=>row.status==='untested').length,
   resumed,cancelled:abort.signal.aborted,log:'campaign.jsonl',publicRecords:'objects/public',
-  privateEvidence:'objects/private',compatibilityExports:!flags.has('--compact-storage'),
+  privateEvidence:'objects/private',sharedRegistries:'objects/registries',
+  privateStorage:'lossless-registry-CAS; rehydrate before all admission and native consumers',
+  compatibilityExports:!flags.has('--compact-storage'),
   limits:bounds,workers:jobs,receiptCache:'full-source-profile-runtime-verifier-identity'},
   sourceRegistry:registry?{digest:canonicalHash(registry),...registry.diagnostics}:null,
   throughput:{elapsedMs,preparationMs:start,collectionMs:elapsedMs-start,
@@ -251,8 +253,10 @@ Object.assign(manifest,{campaign:{schema:'semantic-generation-summary/1',identit
       (row.sourceCluster??row.family)+':'+episode.pathDigest))).size,
     publicBytes:cases.reduce((n,row)=>n+(row.publicShard?.bytes??0),0),
     compressedPrivateBytes:cases.reduce((n,row)=>n+(row.privateEvidence?.bytes??0),0),
+    sharedRegistryBytes:storage.byKind.registries.bytes,storedObjects:storage,
+    storedObjectBytesPerAdmission:counts.admitted?storage.bytes/counts.admitted:null,
     bytesPerAdmission:counts.admitted?cases.filter(row=>row.status==='admitted').reduce((n,row)=>n+
-      (row.publicShard?.bytes??0)+(row.privateEvidence?.bytes??0),0)/counts.admitted:null},
+      (row.publicShard?.bytes??0)+(row.privateEvidence?.bytes??0),storage.byKind.registries.bytes)/counts.admitted:null},
   limitations:[process.env.TRACING_REFERENCE_ISOLATION==='linux-namespace'?
     'References use qualified Linux namespace/seccomp confinement; the owned teacher and native consumer still accept only reviewed candidates.':
     'References use trusted-source processes; choose --reference-isolation linux-namespace for OS confinement.',

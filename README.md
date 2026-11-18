@@ -13,6 +13,34 @@ pinned native admission. See [current status](docs/STATUS.md),
 Test262 evidence remain documented in
 [owned arithmetic and evidence](docs/OWNED_ARITHMETIC.md).
 
+A retained [feature-level capability ladder](coverage/current-v5.json) names its original producer revision. It does not qualify a later containing commit; each stage needs its own executed evidence. Earlier synchronous coverage remains in [the historical ledger](coverage/historical/required-v1.json).
+
+The [18 November resumption implementation](docs/RESUMPTION_IMPLEMENTATION.md)
+tracks semantic repairs, immutable provenance, global split isolation,
+resumable source campaigns, native releases, and actual optimization diagnostics.
+See [owned arithmetic and evidence](docs/OWNED_ARITHMETIC.md) for the earlier
+spec-operation milestone.
+
+## Reproduce the current baseline
+
+Use the Node version in `.nvmrc`, then install the committed dependency locks:
+
+```sh
+npm ci --ignore-scripts
+npm run oracle:install
+npm run baseline:v5 -- --out ../current-v5-baseline --jobs 2
+```
+
+For actual native admission, prepare the hash-locked Python environment and
+exact consumer/tokenizer described in
+[native environment setup](tools/native-consumer/README.md), then add
+`--megatoken DIR --tokenizer FILE --python PYTHON` to the baseline command.
+The baseline freezes one global source registry with project and composition
+holdouts, retains each check's logs, and reports exact per-stage counts.
+[Optimization smoke instructions](docs/OPTIMIZATION_SMOKE.md) describe the
+separate real optimizer/checkpoint/rollout diagnostic; corpus qualification
+alone does not establish model learning.
+
 ## Model-facing semantic execution traces
 
 Production uses **`semantic-execution/5`, `semantic-trace/5`,

@@ -11,6 +11,7 @@ import {verifyEffectfulSession} from '../src/training/effectful-session.js';
 import {encodeNativeGraph,decodeOwnedGraph} from '../src/host/graph-codec.js';
 import {decodeGenerationTask} from '../src/corpus/generation-process.mjs';
 import {canonicalJavaScriptExpected} from '../src/corpus/owned-exercism.mjs';
+import {canonicalReturnMatches} from '../src/corpus/exercism-language-bindings.mjs';
 
 const chunks=[];let inputBytes=0;
 for await(const chunk of process.stdin){inputBytes+=chunk.length;
@@ -48,13 +49,22 @@ try{
           const value=decodeOwnedGraph(JSON.stringify({schema:'owned-graph/1',roots:[graph.roots.at(-1)],
             objects:graph.objects.map(object=>({...object,
               properties:object.properties.map(([key,value])=>({key,value}))}))}))[0];
-          const boundExpected=canonicalJavaScriptExpected(expected,options.provenance?.canonicalExpectedBinding);
-          agrees=isDeepStrictEqual(value,boundExpected);
+          const binding=options.provenance?.canonicalExpectedBinding??null;
+          if(binding)canonicalJavaScriptExpected(expected,binding);
+          const contextualBinding=binding?.schema==='exercism-javascript-expected/1'?
+            {schema:'exercism-grains-bigint/1',decimal:binding.decimal}:binding;
+          agrees=canonicalReturnMatches(value,expected,contextualBinding,
+            {family:options.family,property:options.provenance?.canonicalProperty});
         }
+        const canonicalCheck={status:agrees?'agreed':'disagreed',
+          mode:expectsThrow?'error-completion-only':options.provenance?.canonicalExpectedBinding?
+            'exact-bigint-return':'exact-return-value',
+          expectedKind:outcomeKind,observedKind:original.outcome.kind};
+        options.provenance={...options.provenance,canonicalCheck};
         if(!agrees)result={status:'canonical_mismatch',
           reason:'Pinned original source disagrees with independent canonical expected result',
           failure:{referenceInput,original,canonicalExpected:expected,
-            canonicalExpectedBinding:options.provenance?.canonicalExpectedBinding??null}};
+            canonicalExpectedBinding:options.provenance?.canonicalExpectedBinding??null,canonicalCheck}};
         else canonicalExpectation={status:'agreed',outcomeKind,
           expectedValueBinding:options.provenance?.canonicalExpectedBinding??null,
           // Language-neutral error descriptions do not assert JS exception

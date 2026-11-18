@@ -19,6 +19,15 @@ source execution, but are not learner trace targets.
 
 ## Active code
 
+The November resumption adds an explicit [capability index](../coverage/required.json),
+[measured v5 probes](../coverage/current-v5.json), and
+[implementation/evidence ledger](RESUMPTION_IMPLEMENTATION.md). Source-profile
+limits remain explicit: unsupported descriptors and array accessors are refused;
+the declared Error observation profile covers name/message without flattening
+stacks, causes, custom prototypes, or accessors. Synchronous primitive and
+declared-Error throws can be positive execution labels. Callback failures and
+unhandled rejection obligations remain admission refusals.
+
 - `src/training/effectful-compiler.js`: sole source-certified witness producer
 - `src/training/format.js`: sole public codec and strict v5 validator
 - `src/training/harness-v4.js`, `controller.js`, `model-driver.js`:
@@ -30,6 +39,16 @@ source execution, but are not learner trace targets.
 - `src/training/semantic-source.js`: independently checked, bounded source
   expressions
 - `tools/inspect-semantic-reasoning.mjs`: actual generated-trace inspection
+- `src/training/admission-identity.js`: immutable source, split, lineage,
+  environment, and native-receipt bindings for single and session inputs
+- `src/corpus/source-registry.mjs`: frozen cross-stream ancestor/clone components
+- `src/corpus/campaign-store.mjs`: atomic checksummed campaign checkpoints,
+  private evidence compression, and lossless shared registry storage
+- `tools/current-v5-baseline.mjs`: one-command exact-revision evidence collection
+- `tools/package-semantic-release.py`: complete private release and native
+  preparation with an independently verifiable archive inventory
+- `tools/run-optimization-smoke.py`: actual CPU updates, masks, checkpoint reload,
+  and original model-selected rollouts without teacher correction
 
 The separate source-language frontend, graph codec, host payload codec and
 private interpreter archive are necessary **trust boundaries**, not old

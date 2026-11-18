@@ -10,6 +10,7 @@ import io
 import json
 import os
 import re
+import shutil
 import sqlite3
 import stat
 import subprocess
@@ -310,6 +311,8 @@ def read_campaign_object(corpus: Path, reference: dict):
 def load_document(corpus: Path, row: dict) -> dict:
     # Compact collections need no large compatibility export. The campaign
     # verifier binds these exact references to the complete committed attempt.
+    if row.get("path"):
+        return read_json(inside(corpus, row["path"]), 2 * MAX_OBJECT_BYTES)
     return {"public": read_campaign_object(corpus, row["publicShard"]),
             "sidecar": read_campaign_object(corpus, row["privateEvidence"])}
 
@@ -461,10 +464,202 @@ def check_prepared_selection(prepared: Path, qualified: list[dict], selection: d
             "heldOutInputIds": selection["heldOutIds"], "optimizerSteps": 0, "learnedSuccess": None}
 
 
+def stage_compact_campaign(corpus: Path, tracer: Path, output: Path, manifest: dict) -> tuple[dict, Path, dict | None]:
+    """Rehydrate through the exact producer, including producers predating --out.
+
+    Only immutable CAS files may be hard linked into staging; logs/manifests are
+    copied because historical materializers can recover a torn log in place.
+    The original complete campaign is always the archived audit authority.
+    """
+    if all(row.get("path") for row in manifest["cases"] if row["status"] == "admitted"):
+        return manifest, corpus, None
+    source_manifest = file_receipt(inside(corpus, "manifest.json"))
+    staging, destination = output / "materialization-input", output / "materialized"
+    if any(path.is_symlink() for path in corpus.rglob("*")):
+        raise ValueError("Compact campaign must not contain symbolic links")
+
+    def copy_input(source, target):
+        relative = Path(source).relative_to(corpus)
+        if relative.parts[0] == "objects":
+            try:
+                os.link(source, target)
+                return target
+            except OSError:
+                pass
+        return shutil.copy2(source, target)
+
+    try:
+        shutil.copytree(corpus, staging, copy_function=copy_input)
+        completed = subprocess.run(["node", str(tracer / "tools/materialize-campaign.mjs"), str(staging)],
+                                   cwd=tracer, check=True, text=True, capture_output=True, timeout=600)
+        hydrated = read_json(inside(staging, "manifest.json"))
+        before = [(row["id"], row["candidateDigest"], row["status"]) for row in manifest["cases"]]
+        after = [(row["id"], row["candidateDigest"], row["status"]) for row in hydrated["cases"]]
+        if before != after or manifest["producerRevision"] != hydrated["producerRevision"]:
+            raise ValueError("Materialization changed a candidate identity or admission disposition")
+        destination.mkdir(parents=True)
+        paths = []
+        for row in hydrated["cases"]:
+            if row["status"] != "admitted":
+                continue
+            source, target = inside(staging, row["path"]), inside(destination, row["path"])
+            target.parent.mkdir(parents=True, exist_ok=True)
+            source.replace(target)
+            paths.append(row["path"])
+        receipt = {"schema": "semantic-release-materialization/1", "producerRevision": manifest["producerRevision"],
+                   "sourceCampaignDigest": manifest["campaign"]["identityDigest"],
+                   "sourceManifestSha256": source_manifest["sha256"], "materializedAdmitted": len(paths),
+                   "paths": paths, "producerToolReceipt": json.loads(completed.stdout),
+                   "originalCampaignArchived": True, "admissionUnchanged": True}
+        (destination / "materialization-receipt.json").write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
+        if source_manifest != file_receipt(inside(corpus, "manifest.json")):
+            raise ValueError("Original campaign changed during materialization")
+        return hydrated, destination, receipt
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+
+
+def required_audit_campaign(manifest: dict, directory: Path | None) -> tuple[Path | None, dict | None]:
+    declaration = manifest.get("selection") or manifest.get("materialization") or {}
+    required = declaration.get("originalCampaignRequiredForAudit") or declaration.get("sourceCampaignRequiredForAudit")
+    if required and directory is None:
+        raise ValueError("Selected/materialized subsets require --audit-campaign with the complete original CAS and refusals")
+    if directory is None:
+        return None, None
+    root = directory.resolve()
+    original = file_receipt(inside(root, "manifest.json"))
+    header = read_json(inside(root, "campaign.json"))
+    if not required or original["sha256"] != declaration.get("sourceManifestSha256") or \
+            header["identityDigest"] != declaration.get("sourceCampaignDigest"):
+        raise ValueError("Audit campaign differs from the immutable selection/materialization source")
+    source = read_json(inside(root, "manifest.json"))
+    return root, {"sourceCampaignDigest": header["identityDigest"], "manifestSha256": original["sha256"],
+                  "counts": source["counts"], "attempted": len(source["cases"])}
+
+
+def verify_campaign_storage(corpus: Path, tracer: Path) -> dict | None:
+    if not (corpus / "campaign.json").exists():
+        return None
+    # The producer's own decoder knows its historical or registry-CAS format.
+    # Check a complete log first so older decoders cannot recover it in place.
+    script = """
+import {readFileSync,existsSync} from 'node:fs';
+import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+const [moduleFile,directory]=process.argv.slice(1);
+const {CampaignStore}=await import(pathToFileURL(moduleFile));
+const header=JSON.parse(readFileSync(join(directory,'campaign.json'),'utf8'));
+const log=join(directory,'campaign.jsonl');
+if(existsSync(log)){const bytes=readFileSync(log);if(bytes.length&&bytes.at(-1)!==10)
+  throw new Error('Incomplete campaign log; resume collection before release');}
+const store=new CampaignStore(directory,header.identity,{readOnly:true,recoverTornLog:false,
+  maxObjectBytes:header.identity.bounds?.maxOutputBytes??268435456});
+try{
+for(const entry of store.entries){const candidate=store.readObject(entry.candidate);
+  for(const input of candidate.inputs??[])for(const key of ['source','input','fixture'])store.readObject(input[key]);}
+const manifest=JSON.parse(readFileSync(join(directory,'manifest.json'),'utf8')),seen=new Set();
+for(const row of manifest.cases){const entry=store.latest.get(row.id);
+  if(!entry||seen.has(row.id)||entry.status!==row.status||entry.candidateDigest!==row.candidateDigest)
+    throw new Error('Manifest differs from immutable campaign');seen.add(row.id);}
+if(seen.size!==store.latest.size)throw new Error('Manifest omits durable campaign cases');
+console.log(JSON.stringify({schema:'semantic-release-campaign-storage-check/1',status:'verified',
+  identityDigest:store.identityDigest,attempts:store.entries.length,latestRows:store.latest.size,
+  manifestRows:manifest.cases.length}));
+}finally{store.close();}
+"""
+    checked = subprocess.run(["node", "--input-type=module", "-e", script,
+                              str(Path(__file__).resolve().parents[1] / "src/corpus/campaign-store.mjs"), str(corpus)],
+                             cwd=tracer, check=True, text=True, capture_output=True, timeout=600)
+    return json.loads(checked.stdout)
+
+
+def iter_admitted_documents(manifest: dict, root: Path, identities: list, source_notices: dict):
+    """Read one complete row at a time; retain only small release metadata."""
+    for row in manifest["cases"]:
+        if row["status"] != "admitted":
+            continue
+        document = read_json(inside(root, row["path"]), 2 * MAX_OBJECT_BYTES)
+        side = document["sidecar"]
+        if side["producerRevision"] != manifest["producerRevision"] or side.get("identityDigest") != row.get("identityDigest"):
+            raise ValueError("Candidate identity differs from the campaign manifest")
+        identities.append({"id": row["id"], "family": side["sourceFamily"], "split": side["split"],
+                           "identityDigest": side["identityDigest"], "episodeDigest": row["episodeDigest"]})
+        source_notices[side["sourceFamily"]] = {"license": side["license"], "provenance": side["sourceProvenance"]}
+        yield document
+
+
+def verify_materialized_documents(corpus: Path, manifest: dict, document_root: Path, source_manifest: dict) -> dict:
+    """Bind a materialized selection to complete audited original campaign bytes."""
+    original = {row["id"]: row for row in source_manifest["cases"]}
+    seen, selected = set(), set()
+    if manifest["producerRevision"] != source_manifest["producerRevision"]:
+        raise ValueError("Materialized selection changed its producer revision")
+    counts = {}
+    for row in manifest["cases"]:
+        identity = row.get("id")
+        if identity in seen or identity not in original:
+            raise ValueError("Unknown or repeated materialized candidate ID")
+        seen.add(identity)
+        if {key: value for key, value in row.items() if key != "path"} != {
+                key: value for key, value in original[identity].items() if key != "path"}:
+            raise ValueError("Materialized selection changed a candidate disposition or identity")
+        counts[row["status"]] = counts.get(row["status"], 0) + 1
+        if row["status"] == "admitted":
+            inside(document_root, row["path"])
+            selected.add(identity)
+    declared = manifest["counts"]
+    if (declared.get("attempted") != len(seen) or any(declared.get(key) != value for key, value in counts.items())
+            or any(type(value) is not int or value < 0 or value != (len(seen) if key == "attempted" else counts.get(key, 0))
+                   for key, value in declared.items())):
+        raise ValueError("Materialized selection counts do not reconcile")
+    held_out = {row["id"] for row in source_manifest["cases"]
+                if row["status"] == "admitted" and row["split"] != "train"}
+    if not held_out.issubset(selected):
+        raise ValueError("Selected release omits original held-out candidates")
+    script = """
+import {readFileSync,statSync} from 'node:fs';
+import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {isDeepStrictEqual} from 'node:util';
+const [moduleFile,directory,documentRoot]=process.argv.slice(1);
+const {CampaignStore,sha256}=await import(pathToFileURL(moduleFile));
+const header=JSON.parse(readFileSync(join(directory,'campaign.json'),'utf8'));
+const store=new CampaignStore(directory,header.identity,{readOnly:true,maxObjectBytes:268435456});
+try{
+ const input=JSON.parse(readFileSync(0,'utf8')),files=[],paths=new Set(),physical=new Set();
+ for(const row of input.cases){
+  if(row.status!=='admitted')continue;
+  const metadata=statSync(join(documentRoot,row.path)),key=metadata.dev+':'+metadata.ino;
+  if(paths.has(row.path)||physical.has(key)||metadata.size>536870912)throw new Error('Duplicate or oversized materialized candidate');
+  paths.add(row.path);physical.add(key);
+  const bytes=readFileSync(join(documentRoot,row.path));
+  if(!isDeepStrictEqual(JSON.parse(bytes.toString('utf8')),store.exported(store.latest.get(row.id))))
+   throw new Error('Materialized candidate differs from audited campaign: '+row.id);
+  files.push({path:row.path,bytes:bytes.length,sha256:sha256(bytes)});
+ }
+ console.log(JSON.stringify({schema:'semantic-release-materialized-check/1',status:'verified',files}));
+}finally{store.close();}
+"""
+    result = subprocess.run(["node", "--input-type=module", "-e", script,
+        str(Path(__file__).resolve().parents[1] / "src/corpus/campaign-store.mjs"), str(corpus), str(document_root)],
+        input=json.dumps(manifest), capture_output=True, text=True, timeout=600, check=False)
+    if result.returncode:
+        raise ValueError("Materialized campaign verification failed: " + result.stderr[-4000:])
+    return {**json.loads(result.stdout), "selectedIds": sorted(selected)}
+
+
 def package_release(args) -> dict:
     corpus, tracer, consumer, output = (path.resolve() for path in
                                       (args.corpus, args.tracer_root, args.megatoken, args.out))
+    input_corpus = corpus
+    input_manifest = read_json(inside(input_corpus, "manifest.json"))
+    input_manifest_receipt = file_receipt(inside(input_corpus, "manifest.json"))
+    audit, audit_summary = required_audit_campaign(input_manifest, getattr(args, "audit_campaign", None))
+    if audit is not None:
+        corpus = audit
     manifest = read_json(inside(corpus, "manifest.json"))
+    if input_manifest["producerRevision"] != manifest["producerRevision"]:
+        raise ValueError("Selected input changed its producing revision")
     policy = read_json(tracer / "contracts/native-admission-policy-v5.json")
     git = lambda path, *argv: subprocess.check_output(["git", "-C", str(path), *argv], text=True).strip()
     if git(tracer, "rev-parse", "HEAD") != manifest["producerRevision"]:
@@ -484,6 +679,16 @@ def package_release(args) -> dict:
     campaign = verify_campaign(corpus, campaign_path)
     if campaign["manifestSha256"] != file_receipt(corpus / "manifest.json")["sha256"]:
         raise ValueError("Campaign manifest changed during verification")
+    input_check = None
+    if audit is not None:
+        input_check = verify_materialized_documents(corpus, input_manifest, input_corpus, manifest)
+        input_check["manifestSha256"] = input_manifest_receipt["sha256"]
+        write_json(output / "input-verification.json", input_check)
+    document_manifest, document_root, materialization = stage_compact_campaign(corpus, tracer, output, manifest)
+    materialized_check = None
+    if materialization:
+        materialized_check = verify_materialized_documents(corpus, document_manifest, document_root, manifest)
+        write_json(output / "materialization-verification.json", materialized_check)
     actual_environment = output / "native-environment.json"
     recheck_environment(tracer, consumer, args.tokenizer.resolve(), args.environment_receipt.resolve(),
                         actual_environment, policy)
@@ -494,11 +699,11 @@ def package_release(args) -> dict:
     codec = ByteCodec.from_tokenizer_json(args.tokenizer, expected_sha256=policy["tokenizerSha256"])
     if codec.fingerprint != policy["tokenizerIdentity"]:
         raise ValueError("Actual native tokenizer identity changed")
-    admitted = [row for row in manifest["cases"] if row["status"] == "admitted"]
+    admitted = [row for row in document_manifest["cases"] if row["status"] == "admitted"]
     if not admitted:
         raise ValueError("A release needs actual admitted examples")
     qualification_path = output / "native-qualification.jsonl"
-    qualified, source_receipts, identities, source_notices = qualify_candidates(corpus, admitted, qualification_path,
+    qualified, source_receipts, identities, source_notices = qualify_candidates(document_root, admitted, qualification_path,
         codec=codec, producer_revision=manifest["producerRevision"], consumer_revision=policy["consumerRevision"],
         source_verifier=source_verifier_for_checkout(tracer, manifest["producerRevision"]),
         native_admission=native_admission, verify_admission=verify_admission,
@@ -509,20 +714,24 @@ def package_release(args) -> dict:
         "tokenizerIdentity": codec.fingerprint, "admitted": len(qualified),
         "generatedTokens": sum(row["generatedTokens"] for row in qualified),
         "evidenceSha256": file_receipt(qualification_path)["sha256"], "optimizerSteps": 0, "learnedSuccess": None})
-    selection = select_training(qualified, output, max_family_tokens=args.max_family_tokens,
+    eligible = qualified if input_check is None else [row for row in qualified if row["id"] in input_check["selectedIds"]]
+    selection = select_training(eligible, output, max_family_tokens=args.max_family_tokens,
                                 max_family_share=args.max_family_share)
     selected = set(selection["preparedCandidateIds"])
 
     def documents():
         for row in admitted:
             if row["id"] in selected:
-                yield load_document(corpus, row)
+                yield load_document(document_root, row)
 
     prepared, report = prepare_semantic_corpus(documents(), output / "prepared", codec=codec,
         producer_revision=manifest["producerRevision"], consumer_revision=policy["consumerRevision"],
         source_verifier=cached_source_verifier(source_receipts))
     if report["counts"].get("admitted") != len(selected) or report["refusals"]:
         raise ValueError("Production rechecking rejected release rows; refusal evidence was retained")
+    if (git(consumer, "rev-parse", "HEAD") != policy["consumerRevision"]
+            or git(consumer, "status", "--porcelain", "--untracked-files=no")):
+        raise ValueError("Native consumer changed during preparation")
     prepared_selection = check_prepared_selection(output / "prepared", qualified, selection)
     write_json(output / "prepared-training-selection.json", prepared_selection)
     if prepared_selection["status"] != "verified":
@@ -541,6 +750,12 @@ def package_release(args) -> dict:
              "locks/requirements.lock": tracer / "tools/native-consumer/requirements.lock",
              "locks/producer-package-lock.json": tracer / "package-lock.json",
              "locks/oracle-package-lock.json": tracer / "tools/spec-oracle/package-lock.json"}
+    if materialization:
+        roots["materialized"] = document_root
+        roots["materialization-verification.json"] = output / "materialization-verification.json"
+    if input_check:
+        roots["selection-input"] = input_corpus
+        roots["input-verification.json"] = output / "input-verification.json"
     files, sources = inventory(roots)
     # The shared lock excludes generator resumes. Match the archived metadata
     # again so changes made outside that lock cannot silently rebind the release.
@@ -552,8 +767,18 @@ def package_release(args) -> dict:
         archived = by_path.get("corpus/" + reference["path"], {})
         if any(archived.get(key) != reference[key] for key in ("bytes", "sha256")):
             raise ValueError("Qualified campaign bytes changed before archiving: " + reference["path"])
+    for prefix, verification in (("materialized", materialized_check), ("selection-input", input_check)):
+        if verification:
+            for expected in verification["files"]:
+                actual = by_path.get(prefix + "/" + expected["path"], {})
+                if any(actual.get(key) != expected[key] for key in ("bytes", "sha256")):
+                    raise ValueError("Verified materialized candidate changed before archiving")
+    if input_check and by_path["selection-input/manifest.json"]["sha256"] != input_check["manifestSha256"]:
+        raise ValueError("Selection manifest changed after qualification")
     payload = {"schema": "semantic-private-release/1", "distribution": "private-audit-only",
-        "packagingTool": packaging_tool,
+        "packagingTool": packaging_tool, "materialization": materialization,
+        "auditCampaign": audit_summary, "inputProjection": input_check,
+        "qualificationScope": "all original audited admissions before training-only selection",
         "producerRevision": manifest["producerRevision"], "consumerRevision": policy["consumerRevision"],
         "tokenizer": policy, "campaignManifestSha256": campaign["manifestSha256"],
         "campaignVerificationSha256": by_path["campaign-verification.json"]["sha256"],
@@ -580,6 +805,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--verify", type=Path)
     parser.add_argument("--corpus", type=Path)
+    parser.add_argument("--audit-campaign", type=Path)
     parser.add_argument("--tracer-root", type=Path)
     parser.add_argument("--megatoken", type=Path)
     parser.add_argument("--tokenizer", type=Path)
@@ -605,7 +831,11 @@ def main() -> int:
         raise ValueError("Release directories are immutable; choose a new destination")
     if output.is_relative_to(corpus):
         raise ValueError("Release destination must be outside its input corpus")
-    with locked_campaign(corpus):
+    manifest = read_json(inside(corpus, "manifest.json"))
+    audit, _ = required_audit_campaign(manifest, args.audit_campaign)
+    if audit is not None and output.is_relative_to(audit):
+        raise ValueError("Release destination must be outside its audit campaign")
+    with locked_campaign(audit or corpus):
         print(json.dumps(package_release(args)))
     return 0
 

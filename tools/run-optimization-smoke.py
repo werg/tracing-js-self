@@ -15,6 +15,8 @@ import hashlib
 import json
 import math
 import os
+import resource
+import shutil
 import signal
 import subprocess
 import sys
@@ -87,16 +89,27 @@ def run_logged(command, path, *, env, timeout, input_text=None, graceful_checkpo
             'reservedCheckpointSeconds': grace, 'gracefulCheckpointStopRequested': requested_stop}
 
 
-def choose_candidates(corpus, maximum, experiment=None):
-    manifest = json.loads((corpus / 'manifest.json').read_text())
+def choose_candidates(corpora, maximum, experiment=None):
+    corpora = [Path(corpora).resolve()] if isinstance(corpora, (str, Path)) else [Path(p).resolve() for p in corpora]
     if experiment is not None:
         from learning_evaluation import require_frozen_experiment
         require_frozen_experiment(experiment)
+        sources, revisions = [], set()
+        for corpus in corpora:
+            manifest_path = corpus / 'manifest.json'
+            header = json.loads(manifest_path.read_text())
+            revisions.add(header['producerRevision'])
+            sources.append({'path': str(corpus), 'manifestSha256': sha256(manifest_path),
+                            'producerRevision': header['producerRevision'], 'counts': header['counts']})
+        if len(revisions) != 1:
+            raise ValueError('All smoke corpora must use the same immutable producer revision')
         selected = []
         if maximum != len(experiment['training']):
             raise ValueError('Example cap must equal the frozen training membership')
         for frozen in experiment['training']:
             path = Path(frozen['path']).resolve()
+            if not any(path.is_relative_to(corpus) for corpus in corpora):
+                raise ValueError('Frozen training path escapes the declared corpora')
             if sha256(path) != frozen['fileSha256']:
                 raise ValueError('Frozen training input bytes changed')
             exported = json.loads(path.read_text())
@@ -108,17 +121,39 @@ def choose_candidates(corpus, maximum, experiment=None):
                 raise ValueError('Frozen training identity, family or split changed')
             selected.append(({'id': frozen['id'], 'family': frozen['family'],
                               'identityDigest': frozen['identityDigest']}, path))
-        return manifest, selected
+        return {'producerRevision': revisions.pop(), 'sources': sources}, selected
     groups = defaultdict(list)
-    for item in manifest['cases']:
-        if item.get('status') == 'admitted' and item.get('split') == 'train' and item.get('path'):
-            path = (corpus / item['path']).resolve()
-            if not path.is_relative_to(corpus):
-                raise ValueError('Corpus compatibility path escapes its root')
-            groups[item['family']].append((item, path))
+    sources, revisions, identities, episodes = [], set(), {}, set()
+    for corpus in corpora:
+        manifest_path = corpus / 'manifest.json'
+        manifest = json.loads(manifest_path.read_text())
+        revisions.add(manifest['producerRevision'])
+        sources.append({'path': str(corpus), 'manifestSha256': sha256(manifest_path),
+                        'producerRevision': manifest['producerRevision'], 'counts': manifest['counts']})
+        for item in manifest['cases']:
+            if item.get('status') == 'admitted' and item.get('split') == 'train' and item.get('path'):
+                path = (corpus / item['path']).resolve()
+                if not path.is_relative_to(corpus):
+                    raise ValueError('Corpus compatibility path escapes its root')
+                identity = item['episodeDigest']
+                if item['id'] in identities and identities[item['id']] != identity:
+                    raise ValueError('A repeated candidate identity names different public bytes')
+                identities[item['id']] = identity
+                if identity in episodes:
+                    continue
+                episodes.add(identity)
+                groups[item['family']].append((item, path))
+    if len(revisions) != 1:
+        raise ValueError('All smoke corpora must use the same immutable producer revision')
     selected = []
+    def cost(pair):
+        item, _ = pair
+        tokens = item.get('metrics', {}).get('generatedTokens')
+        size = item.get('publicShard', {}).get('uncompressedBytes')
+        return (tokens if type(tokens) is int and tokens > 0 else float('inf'),
+                size if type(size) is int and size > 0 else float('inf'), item['id'])
     for family in groups:
-        groups[family].sort(key=lambda pair: pair[0]['id'])
+        groups[family].sort(key=cost)
     while groups and len(selected) < maximum:
         for family in sorted(list(groups)):
             if len(selected) == maximum:
@@ -128,7 +163,7 @@ def choose_candidates(corpus, maximum, experiment=None):
                 del groups[family]
     if not selected:
         raise ValueError('No natively admitted training compatibility exports in corpus')
-    return manifest, selected
+    return {'producerRevision': revisions.pop(), 'sources': sources}, selected
 
 
 def tensor_hash(tensor):
@@ -143,6 +178,25 @@ def hashes(state):
 
 def state_identity(state):
     return hashlib.sha256(json.dumps(hashes(state), sort_keys=True).encode()).hexdigest()
+
+
+def intern_registries(value, cache, counts):
+    """Share only byte-identical decoded registry subtrees; preserve every field."""
+    if isinstance(value, dict):
+        if value.get('schema') == 'semantic-source-registry/1':
+            encoded = json.dumps(value, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
+            counts['registryOccurrences'] += 1
+            if encoded in cache:
+                counts['duplicateRegistrySerializedBytes'] += len(encoded.encode())
+            else:
+                cache[encoded] = value
+            return cache[encoded]
+        for key in value:
+            value[key] = intern_registries(value[key], cache, counts)
+    elif isinstance(value, list):
+        for index, item in enumerate(value):
+            value[index] = intern_registries(item, cache, counts)
+    return value
 
 
 def mask_receipt(prepared, codec):
@@ -236,6 +290,7 @@ def checkpoint_receipt(checkpoint, initial_parameters):
             'globalStep': payload['global_step'], 'reloadExact': True,
             'changedParameters': changed, 'updatedOptimizerOwners': updated,
             'allParametersFinite': True, 'counters': payload['counters'],
+            'nativeCursors': [rank['cursor'] for rank in payload['rank_state']],
             'sourceSampling': metadata['source_sampling']}
 
 
@@ -338,6 +393,88 @@ def verify_training_start(initial, phase_start):
             'modelTensorIdentity': state_identity(actual['model']), 'optimizerSteps': 0}
 
 
+def source_exposure_receipt(prepared, sampling):
+    """Report actual non-padding native windows, not prepared corpus membership."""
+    from megatoken.data.storage import PreparedCorpus
+
+    if sampling.get('complete_history') is not True:
+        raise ValueError('Actual sampled-source history is incomplete')
+    counts = sampling.get('source_windows', {})
+    if not counts or any(type(value) is not int or value <= 0 for value in counts.values()):
+        raise ValueError('Actual sampled-source windows must be positive integers')
+    inventory = {}
+    with PreparedCorpus([str(prepared)], split='train') as corpus:
+        for episode in corpus.iter_episodes():
+            lineage = episode.lineage
+            if lineage.source_id in inventory:
+                raise ValueError('Prepared source IDs are not unique')
+            inventory[lineage.source_id] = {'sourceId': lineage.source_id,
+                                            'episodeId': episode.episode_id,
+                                            'family': lineage.family_id,
+                                            'taskId': lineage.task_id}
+    if not set(counts).issubset(inventory):
+        raise ValueError('Checkpoint exposure names a source outside the prepared corpus')
+    rows = [{**inventory[source], 'windows': count} for source, count in sorted(counts.items())]
+    return {'completeHistory': True, 'examplesSampled': len(rows),
+            'familiesSampled': len({row['family'] for row in rows}),
+            'windowsSampled': sum(counts.values()), 'sources': rows}
+
+
+def bind_initial_checkpoint(source, root, codec):
+    """Copy and load the same immutable zero-update base; do not reseed a substitute."""
+    from megatoken.loading import load_trained
+    from megatoken.training.checkpoint import load_checkpoint
+
+    payload, _ = load_checkpoint(source)
+    if (payload['global_step'] != 0 or payload['optimizer']['moments'] or
+            payload['codec_fingerprint'] != codec.fingerprint):
+        raise ValueError('Shared diagnostic base must have zero updates and the exact tokenizer')
+    del payload
+    destination = root / 'initialization/initialized-untrained'
+    shutil.copytree(source, destination)
+    trained = load_trained(destination, device='cpu')
+    if trained.codec.fingerprint != codec.fingerprint:
+        raise ValueError('Copied initial checkpoint tokenizer differs')
+    return destination, hashes(dict(trained.model.named_parameters()))
+
+
+def native_optimization_schedule(config, codec):
+    """Freeze the real resolved native sampler's windows before optimizer launch."""
+    from megatoken.data.storage import PreparedCorpus
+    from megatoken.training.engine import window_config
+    from megatoken.training.stream import WindowStream
+
+    rows, first_epoch_windows, final_cursor = [], None, None
+    with PreparedCorpus(config.datasets) as corpus:
+        stream = WindowStream(corpus, codec, window_config(config), seed=config.seed)
+        while len(rows) < config.max_steps or first_epoch_windows is None:
+            item = stream.next()
+            if item is not None:
+                if item.episode.lineage.frozen_split != 'train':
+                    raise ValueError('Native diagnostic sampler selected a non-training example')
+                window = item.window
+                rows.append({'sourceId': item.episode.lineage.source_id,
+                             'family': item.episode.lineage.family_id,
+                             'episodeId': item.episode.episode_id,
+                             'windowIndex': window.index, 'start': window.start, 'end': window.end,
+                             'recordIds': [row.record.record_id for row in window.records],
+                             'scoredTokens': sum(sum(row.free_mask) for row in window.records)})
+            if len(rows) == config.max_steps and final_cursor is None:
+                final_cursor = stream.state_dict()
+            if stream.epoch > 0 and first_epoch_windows is None:
+                first_epoch_windows = len(rows)
+    selected = rows[:config.max_steps]
+    return {'schema': 'optimization-native-window-plan/1',
+            'resolvedWindowConfig': asdict(window_config(config)),
+            'seed': config.seed, 'requestedWindows': config.max_steps,
+            'windowsPerFirstEpoch': first_epoch_windows,
+            'expectedExamples': len({row['sourceId'] for row in selected}),
+            'expectedFamilies': len({row['family'] for row in selected}),
+            'expectedScoredTokens': sum(row['scoredTokens'] for row in selected),
+            'expectedSourceWindows': dict(Counter(row['sourceId'] for row in selected)),
+            'expectedFinalCursor': final_cursor, 'windows': selected}
+
+
 def export_checked(checkpoint, destination):
     from megatoken.loading import load_trained
     from megatoken.served import ServedBundle, export_served
@@ -426,7 +563,8 @@ def rollout(case, origin, bundle, consumer, root, args, env):
                   '--device', 'cpu', '--effort', '1', '--max-tokens', str(args.rollout_tokens),
                   '--profile-output', str(destination / 'serving-profile.json'),
                   '--profile-origin', 'trained' if origin == 'trained' else 'fixed']
-    command = ['node', str(Path(__file__).with_name('run-selected-evaluation.mjs')),
+    evaluator = getattr(args, 'evaluator_script', Path(__file__).with_name('run-selected-evaluation.mjs'))
+    command = ['node', str(evaluator),
                '--origin', origin, '--model-command', sys.executable,
                '--model-args', json.dumps(model_args), '--model-cwd', str(consumer),
                '--checkpoint-identity', bundle['model_sha256'],
@@ -507,7 +645,8 @@ def rollout(case, origin, bundle, consumer, root, args, env):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--corpus', type=Path, required=True)
+    parser.add_argument('--corpus', type=Path, action='append', required=True,
+                        help='Materialized admitted corpus; repeat to combine independently verified campaigns')
     parser.add_argument('--tracer-root', type=Path, required=True)
     parser.add_argument('--consumer-root', type=Path, required=True)
     parser.add_argument('--tokenizer-json', type=Path, required=True)
@@ -516,12 +655,16 @@ def main():
     parser.add_argument('--experiment', type=Path, help='Private membership and rules frozen before optimization')
     parser.add_argument('--initialization-seed', type=int, choices=[17, 29, 43], default=17)
     parser.add_argument('--steps', type=int, default=16)
+    parser.add_argument('--base-checkpoint', type=Path,
+                        help='Reuse this exact zero-update diagnostic base instead of initializing a new one')
+    parser.add_argument('--require-full-epoch', action='store_true',
+                        help='Refuse before launch unless the resolved plan visits every prepared target once')
     parser.add_argument('--rollout-cases', type=int, default=4)
     parser.add_argument('--rollout-tokens', type=int, default=128)
     parser.add_argument('--rollout-timeout', type=int, default=120)
     parser.add_argument('--train-timeout', type=int, default=900)
-    parser.add_argument('--training-window-records', type=int, default=1)
-    parser.add_argument('--training-window-decisions', type=int, default=2)
+    parser.add_argument('--training-window-records', '--max-window-records', dest='training_window_records', type=int, default=1)
+    parser.add_argument('--training-window-decisions', '--scored-decisions', dest='training_window_decisions', type=int, default=2)
     parser.add_argument('--seed', type=int, choices=[17, 29, 43], default=17)
     args = parser.parse_args()
     if min(args.examples, args.steps, args.rollout_cases, args.rollout_tokens, args.train_timeout) < 1:
@@ -536,7 +679,11 @@ def main():
               'evidenceKind': 'newly-initialized-cpu-optimization-diagnostic',
               'stage': 'P1', 'purpose': 'diagnostic', 'split': 'train',
               'generalizationClaim': False, 'injectedSelections': False,
-              'requestedSteps': args.steps, 'seed': args.seed, 'optimizerSteps': 0}
+              'candidateSelection': 'round-robin families; smallest generated-token count then public bytes within each family',
+              'requestedSteps': args.steps, 'maxWindowRecords': args.training_window_records,
+              'scoredDecisions': args.training_window_decisions,
+              'fullEpochRequested': args.require_full_epoch,
+              'seed': args.seed, 'optimizerSteps': 0}
 
     def record(**updates):
         report.update(updates)
@@ -544,7 +691,7 @@ def main():
 
     record(phase='initializing')
     try:
-        corpus, tracer, consumer = args.corpus.resolve(), args.tracer_root.resolve(), args.consumer_root.resolve()
+        corpora, tracer, consumer = [path.resolve() for path in args.corpus], args.tracer_root.resolve(), args.consumer_root.resolve()
         require_clean_checkout(tracer)
         require_clean_checkout(consumer)
         producer_revision, consumer_revision = git_head(tracer), git_head(consumer)
@@ -565,21 +712,19 @@ def main():
                     args.training_window_decisions != training_budget['maxScoredDecisions'] or
                     args.train_timeout != training_budget['seconds']):
                 raise ValueError('Actual native training windows or time cap differ from the frozen budget')
+            if args.base_checkpoint and experiment.get('baseCheckpointSha256') != sha256(args.base_checkpoint / 'state.pt'):
+                raise ValueError('Reused base bytes must be bound explicitly in the frozen experiment')
             record(experimentSha256=sha256(args.experiment), experimentPath=str(args.experiment.resolve()))
         record(rolloutBudget={**budget, 'nativeMaxTokensPerFragment': args.rollout_tokens,
                               'secondsPerCase': args.rollout_timeout})
-        manifest, selected = choose_candidates(corpus, args.examples, experiment)
+        manifest, selected = choose_candidates(corpora, args.examples, experiment)
         record(initializationSeed=args.initialization_seed, optimizerSeed=args.seed,
                baseOrigin='newly-initialized', trainingCandidateIdentities=[item.get('identityDigest') for item, _ in selected])
         if manifest['producerRevision'] != producer_revision:
             raise ValueError('Corpus must match immutable source-verifier checkout')
         sys.path.insert(0, str(consumer / 'src'))
-        import torch
         from megatoken.data.semantic_corpus import prepare_semantic_corpus, source_verifier_for_checkout
         from megatoken.generation.codec import ByteCodec, LING_TOKENIZER_SHA256
-        from megatoken.training.config import TrainConfig
-
-        torch.set_num_threads(1)
         env = {**os.environ, 'PYTHONPATH': str(consumer / 'src'),
                'OMP_NUM_THREADS': '1', 'MKL_NUM_THREADS': '1'}
         codec = ByteCodec.from_tokenizer_json(args.tokenizer_json.resolve(), expected_sha256=LING_TOKENIZER_SHA256)
@@ -589,21 +734,38 @@ def main():
                runnerRevision=git_head(Path(__file__).resolve().parent.parent),
                runnerSha256=sha256(__file__),
                caseBuilderSha256=sha256(Path(__file__).with_name('build-optimization-cases.mjs')),
+               sourceCorpora=manifest['sources'],
                tokenizerIdentity=codec.fingerprint, tokenizerSha256=sha256(args.tokenizer_json),
                examples=len(selected), families=sorted({item['family'] for item, _ in selected}),
                inputIdentities=[{'path': str(path), 'sha256': sha256(path)} for _, path in selected])
         prepared = root / 'prepared'
+        registries, loading_counts = {}, Counter()
         prepared_manifest, preparation = prepare_semantic_corpus(
-            (json.loads(path.read_text()) for _, path in selected), prepared, codec=codec,
+            (intern_registries(json.loads(path.read_text()), registries, loading_counts)
+             for _, path in selected), prepared, codec=codec,
             producer_revision=producer_revision, consumer_revision=consumer_revision,
             source_verifier=source_verifier_for_checkout(tracer, producer_revision),
             max_positions=1024, max_history=1024)
+        for encoded, registry in registries.items():
+            if json.dumps(registry, ensure_ascii=False, separators=(',', ':'), allow_nan=False) != encoded:
+                raise ValueError('Preparation mutated an immutable shared registry')
+        loading_counts['distinctRegistries'] = len(registries)
+        loading_counts['processPeakRssBytesBeforeModelRuntime'] = int(
+            resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == 'darwin' else 1024))
+        registries.clear()
+        gc.collect()
         if preparation['accepted'] != len(selected):
             raise ValueError('Smoke preparation refused/deduplicated candidates; inspect semantic-report.json')
         masks = mask_receipt(prepared, codec)
         write_json(root / 'loss-masks.json', masks)
         record(phase='initializing-checkpoint', preparedFingerprint=prepared_manifest['fingerprint'],
-               preparation=preparation, lossMaskCounts=masks['counts'])
+               preparation=preparation, lossMaskCounts=masks['counts'],
+               dataLoading={'losslessRegistryInterning': True, **dict(loading_counts)})
+        # Preparation and source verification do not need the model runtime.
+        # Avoid retaining its memory alongside repeated private audit sidecars.
+        import torch
+        from megatoken.training.config import TrainConfig
+        torch.set_num_threads(1)
         checkpoint_interval = math.gcd(*experiment['checkpointSteps']) if experiment else 1
         checkpoint_retention = args.steps // checkpoint_interval + 1 if experiment else 3
         if checkpoint_retention > 101:
@@ -623,13 +785,27 @@ def main():
         config_path = root / 'train-config.json'
         write_json(config_path, asdict(config))
         plan = native_window_plan(prepared, codec, config)
-        write_json(root / 'native-window-plan.json', plan)
-        record(nativeWindowPlan={'path': str(root / 'native-window-plan.json'),
-                                'sha256': sha256(root / 'native-window-plan.json'),
-                                'firstEpochWindows': plan['firstEpochWindows'],
-                                'eachEpisodeIsOneWindow': plan['eachEpisodeIsOneWindow']})
-        initial, initial_parameters = create_initial_checkpoint(root, config, codec, masks['chunking'],
-                                                               initialization_seed=args.initialization_seed)
+        schedule = native_optimization_schedule(config, codec)
+        plan_path = root / 'native-window-plan.json'
+        schedule_path = root / 'native-schedule-plan.json'
+        write_json(plan_path, plan)
+        write_json(schedule_path, schedule)
+        record(resolvedTrainingConfigSha256=sha256(config_path), nativeWindowPlanSha256=sha256(plan_path),
+               nativeSchedulePlanSha256=sha256(schedule_path),
+               nativeWindowPlan={'path': str(plan_path), 'sha256': sha256(plan_path),
+                   'firstEpochWindows': plan['firstEpochWindows'],
+                   'eachEpisodeIsOneWindow': plan['eachEpisodeIsOneWindow'],
+                   **{key: value for key, value in schedule.items() if key not in {'windows', 'expectedFinalCursor'}}})
+        if args.require_full_epoch and (args.steps != schedule['windowsPerFirstEpoch'] or
+                schedule['expectedExamples'] != len(selected) or
+                schedule['expectedScoredTokens'] != masks['counts']['generatedScoredTokens']):
+            raise ValueError('Resolved native window plan does not consume exactly one complete prepared epoch')
+        if args.base_checkpoint:
+            initial, initial_parameters = bind_initial_checkpoint(args.base_checkpoint.resolve(), root, codec)
+            record(initialCheckpointSource=str(args.base_checkpoint.resolve()))
+        else:
+            initial, initial_parameters = create_initial_checkpoint(root, config, codec, masks['chunking'],
+                                                                   initialization_seed=args.initialization_seed)
         write_json(root / 'initial-parameter-identities.json', initial_parameters)
         gc.collect()
         base_bundle = export_checked(initial, root / 'served-base')
@@ -646,11 +822,19 @@ def main():
         exposure = training_exposure(plan, checkpoint_check['sourceSampling'])
         if checkpoint_check['globalStep'] != args.steps:
             raise ValueError('Actual optimizer step count differs from the requested cap')
+        source_exposure = source_exposure_receipt(prepared, checkpoint_check['sourceSampling'])
+        if source_exposure['windowsSampled'] != args.steps:
+            raise ValueError('Actual source exposure differs from the atomic update count')
+        if (checkpoint_check['sourceSampling']['source_windows'] != schedule['expectedSourceWindows'] or
+                checkpoint_check['nativeCursors'] != [schedule['expectedFinalCursor']]):
+            raise ValueError('Actual native source exposure/cursor differs from the frozen resolved window plan')
         metrics = [json.loads(line) for line in (root / 'training/metrics.jsonl').read_text().splitlines()]
         training = [row for row in metrics if row['event'] == 'train']
         write_json(root / 'optimizer-verification.json', checkpoint_check)
         if len(training) != args.steps or not all(row['gradient_norm'] > 0 for row in training):
             raise ValueError('Optimizer updates lack measured nonzero gradients')
+        if sum(row['denominators']['lexical'] for row in training) != schedule['expectedScoredTokens']:
+            raise ValueError('Actual scored lexical targets differ from the frozen native window plan')
         gradient_domains = ['encoder', 'model', 'shared']
         if not all(any(row.get('gradient_norm_' + domain, 0) > 0 for row in training)
                    for domain in gradient_domains):
@@ -665,6 +849,8 @@ def main():
                                        if key not in {'changedParameters', 'updatedOptimizerOwners'}},
                changedParameterCount=len(checkpoint_check['changedParameters']),
                updatedOptimizerOwnerCount=len(checkpoint_check['updatedOptimizerOwners']),
+               sourceExposure=source_exposure,
+               nativeWindowPlanMatched=True,
                supervisedLexicalTokens=sum(row['denominators']['lexical'] for row in training),
                trainingSummary=[{'step': row['global_step'], 'gradientNorm': row['gradient_norm'],
                                  'gradientDomains': {domain: row['gradient_norm_' + domain]
@@ -689,7 +875,8 @@ def main():
                         'completeHeldInExecutions': all(row['wholeTaskSuccess'] for row in trained),
                         'approximately32Examples': len(selected) >= 32,
                         'everySelectedSourceExposed': exposure['everySelectedSourceExposed'],
-                        'everySelectedEpisodeVisitedAllWindows': exposure['everySelectedEpisodeVisitedAllWindows']}
+                        'everySelectedEpisodeVisitedAllWindows': exposure['everySelectedEpisodeVisitedAllWindows'],
+                        'approximately32ExamplesSampled': source_exposure['examplesSampled'] >= 32}
         record(status='completed', phase='complete', requirements=requirements,
                optimizationSmokePassed=all(requirements.values()),
                remaining=[] if all(requirements.values()) else [

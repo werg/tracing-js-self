@@ -79,13 +79,13 @@ if(!options.has('--skip-unit')){
 check('host-contract',process.execPath,['tools/generate-host-contract.mjs','--check']);
 check('semantic-contract',process.execPath,['tools/generate-semantic-contract.mjs','--check']);
 check('semantic-inspection',process.execPath,['tools/inspect-semantic-reasoning.mjs']);
-check('capability-ledger',process.execPath,['tools/generate-capability-ledger.mjs','--out',join(output,'capabilities.json')]);
 const native=[];
 if(options.has('--megatoken')||options.has('--tokenizer')){
   if(!options.has('--megatoken')||!options.has('--tokenizer'))throw new Error('Native checks require both --megatoken and --tokenizer');
   for(const key of ['--megatoken','--tokenizer'])native.push(key,resolve(options.get(key)));
   native.push('--python',options.get('--python')??'python3','--native-policy',resolve(options.get('--native-policy')??join(root,'contracts/native-admission-policy-v5.json')),'--require-native');
 }
+check('capability-ledger',process.execPath,['tools/generate-capability-ledger.mjs','--out',join(output,'capabilities.json'),...native]);
 const registry=join(output,'source-registry.json');
 if(!options.has('--skip-recipes'))check('source-registry',process.execPath,[
   'tools/freeze-source-registry.mjs','--out',registry,'--holdout-projects','exercism/javascript',

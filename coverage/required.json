@@ -24,7 +24,13 @@
       "nativeAdmission",
       "modelEvaluation"
     ],
-    "statuses": ["passed", "failed", "unsupported", "resource_limited", "untested"],
+    "statuses": [
+      "passed",
+      "failed",
+      "unsupported",
+      "resource_limited",
+      "untested"
+    ],
     "policy": "A stage is passed only by executed evidence for that exact producer revision and environment. Parser acceptance does not promote later stages. Untested stages remain untested."
   },
   "baselineCommand": "npm run baseline:v5 -- --out /path/to/new-baseline --jobs 4",
@@ -34,5 +40,29 @@
     "status": "historical; includes obsolete schema and missing-capability assertions"
   },
   "fullECMAScriptConformance": false,
-  "learningImprovement": "Requires a separately executed frozen base-versus-trained experiment."
+  "learningImprovement": "Requires a separately executed frozen base-versus-trained experiment.",
+  "currentReport": "coverage/current-v5.json",
+  "currentReportProducer": "c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39",
+  "profile": "training-js/1",
+  "generate": "npm run coverage:current -- --out PATH [--megatoken DIR --tokenizer FILE --python PYTHON]",
+  "baseline": "npm run baseline:v5 -- --out DIRECTORY [--megatoken DIR --tokenizer FILE --python PYTHON]",
+  "stages": [
+    "frontend",
+    "ownedEvaluation",
+    "independentOutcome",
+    "independentIntermediate",
+    "v5ProjectionAndPublicReplay",
+    "nativeAdmission",
+    "modelEvaluation"
+  ],
+  "statuses": [
+    "passed",
+    "failed",
+    "unsupported",
+    "resource_limited",
+    "untested"
+  ],
+  "historicalReport": "coverage/historical/required-v1.json",
+  "historicalScope": "Original synchronous semantic-execution/1 ledger, retained byte-for-byte; not current capability evidence.",
+  "interpretation": "Retained reports state the exact revisions they measured and are not qualification of a later containing commit. Native qualification of separate corpora does not fill a feature-level native column. Model results require actual evaluation. No full ECMAScript or Test262 claim."
 }

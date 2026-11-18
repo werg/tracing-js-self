@@ -72,7 +72,9 @@ function integerExpectedLexemes(text){
 
 export function canonicalJavaScriptExpected(expected,binding=null){
  if(binding===null||binding===undefined)return expected;
- if(binding.schema!=='exercism-javascript-expected/1'||binding.kind!=='bigint'||
+ const knownBinding=binding.schema==='exercism-javascript-expected/1'&&binding.kind==='bigint'||
+   binding.schema==='exercism-grains-bigint/1';
+ if(!knownBinding||
     typeof binding.decimal!=='string'||binding.decimal.length>10000||
     !/^-?(?:0|[1-9][0-9]*)$/.test(binding.decimal)||typeof expected!=='number'||
     !Number.isInteger(expected)||Number(binding.decimal)!==expected)
@@ -102,7 +104,9 @@ export function loadPinnedPairs(base=process.cwd()){
    };
    const source=check(jsRoot,jsLock,solutionPath),
      canonical=check(inRoot,inputLock,canonicalPath);
-   return {slug,source,canonical:JSON.parse(canonical),expectedIntegerLexemes:integerExpectedLexemes(canonical),
+   const expectedIntegerLexemes=integerExpectedLexemes(canonical);
+   return {slug,source,canonical:JSON.parse(canonical),expectedIntegerLexemes,
+     canonicalIntegerExpectations:Object.fromEntries(Object.entries(expectedIntegerLexemes).map(([uuid,decimal])=>[slug+'/'+uuid,decimal])),
      provenance:{solution:{repository:JS_REPO,revision:JS_REVISION,
        path:solutionPath,sha256:sha256(source),license:'MIT'},
        canonical:{repository:INPUT_REPO,revision:INPUT_REVISION,
@@ -111,8 +115,18 @@ export function loadPinnedPairs(base=process.cwd()){
  });
 }
 
-export function extractCanonicalCases(record){
- const output=[],seen=new Set();
+export function extractCanonicalCases(record,{includeSuperseded=false}={}){
+ const output=[],seen=new Set(),replacements=new Map();
+ function collectReplacements(value){
+   if(Array.isArray(value)){for(const item of value)collectReplacements(item);return;}
+   if(!value||typeof value!=='object')return;
+   if(typeof value.reimplements==='string'){
+     const replaced=record.slug+'/'+value.reimplements;
+     replacements.set(replaced,[...(replacements.get(replaced)??[]),record.slug+'/'+value.uuid]);
+   }
+   if(Array.isArray(value.cases))collectReplacements(value.cases);
+ }
+ collectReplacements(record.canonical.cases??[]);
  function walk(value,desc=[]){
    if(Array.isArray(value)){for(const item of value)walk(item,desc);return;}
    if(!value||typeof value!=='object')return;
@@ -124,18 +138,21 @@ export function extractCanonicalCases(record){
      const caseId=record.slug+'/'+id;
      if(seen.has(caseId))throw new Error('Duplicate canonical case id '+caseId);
      seen.add(caseId);
+     const replacedBy=replacements.get(caseId)??null;
+     if(replacedBy&&!includeSuperseded)return;
      if(!mapping){output.push({caseId,property,status:'unsupported_property',description:path});return;}
      const [entry,...keys]=mapping;
      if(!value.input||typeof value.input!=='object'||
         keys.some(k=>!Object.hasOwn(value.input,k))){
        output.push({caseId,property,status:'unsupported_input_shape',description:path});return;
      }
-     let args=keys.map(k=>value.input[k]),argumentBinding=null,expectedBinding=null;
+     let args=keys.map(k=>value.input[k]),argumentBinding=null,inputBinding=null,expectedBinding=null;
      // Problem specifications are language-neutral. These two explicit track
      // bindings preserve the original canonical input alongside the JS call.
      // No expected outcome is used to choose or alter an argument.
      if(record.slug==='two-fer'&&property==='twoFer'&&value.input.name===null){
        args=[];argumentBinding='two-fer-null-name-as-omitted-argument/1';
+       inputBinding={schema:'exercism-two-fer-omitted-name/1',canonicalName:null,argumentCount:0};
      }
      if(record.slug==='knapsack'&&property==='maximumValue'&&value.input.items&&
         !Array.isArray(value.input.items)&&typeof value.input.items==='object'&&
@@ -146,11 +163,12 @@ export function extractCanonicalCases(record){
        const decimal=record.expectedIntegerLexemes?.[value.uuid]??
          (Number.isSafeInteger(value.expected)?String(value.expected):null);
        if(decimal===null){output.push({caseId,property,status:'unsupported_expected_precision',description:path});return;}
-       expectedBinding={schema:'exercism-javascript-expected/1',kind:'bigint',decimal};
+       expectedBinding={schema:'exercism-grains-bigint/1',decimal};
        canonicalJavaScriptExpected(value.expected,expectedBinding);
      }
-     output.push({caseId,property,entry,args,canonicalInput:structuredClone(value.input),argumentBinding,
-       expected:value.expected,expectedBinding,description:path,status:'candidate'});
+     output.push({caseId,property,entry,args,canonicalInput:structuredClone(value.input),argumentBinding,inputBinding,
+       reimplements:value.reimplements??null,expected:value.expected,expectedBinding,description:path,
+       status:replacedBy?'superseded_canonical_case':'candidate',...(replacedBy?{replacedBy}:{})});
    }
    if(Array.isArray(value.cases))walk(value.cases,path);
  }

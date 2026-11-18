@@ -98,14 +98,9 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
     }
     if(result.status==='admitted')stages.nativeAdmission='passed';
     else if(result.phase==='native-consumer')stages.nativeAdmission='failed';
-    if(result.exported)row.identityDigest=result.exported.sidecar.identityDigest;
-    if(result.exported?.sidecar.nativeAdmission){
-      const receipt=result.exported.sidecar.nativeAdmission;
-      row.nativeReceipt={episodeDigest:receipt.episodeDigest,consumerRevision:receipt.consumerRevision,
-        tokenizerIdentity:receipt.tokenizerIdentity,tokenizerSha256:receipt.tokenizerSha256,
-        generatedTokens:receipt.generatedTokens,observedTokens:receipt.observedTokens,
-        visibilityValidated:receipt.visibilityValidated,lossMaskValidated:receipt.lossMaskValidated,
-        fragmentationValidated:receipt.fragmentationValidated};
+    if(result.exported){
+      row.identityDigest=result.exported.sidecar.identityDigest;
+      if(result.status==='admitted')row.nativeReceipt=result.exported.sidecar.nativeAdmission;
     }
     rows.push(row);
   }
@@ -119,5 +114,5 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
     otherAdapters:[{adapter:'typescript/5.9.3',targetProfile:'training-js/1',status:'untested',
       reason:'Syntax lowering and source-map preservation require their separate adapter tests.'}],
     claims:{fullEcmaScript:false,fullTest262:false,optimizerSteps:0,learnedSuccess:null},
-    limitation:'Finite probes measure distinctions, not exhaustive feature conformance. Native and model stages remain untested without executed evidence.'};
+    limitation:'Finite probes measure distinctions, not exhaustive feature conformance. Native admission is measured only when configured; model evaluation remains untested by this command.'};
 }

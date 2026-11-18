@@ -8,6 +8,7 @@ import {cases as utilities,sources as utilityPins} from '../../corpus/cases.mjs'
 import {original,lowerPinnedCharCode} from '../../corpus/pinned-source.mjs';
 import {buildOwnedFixtureEntry} from '../../corpus/owned-fixture-adapter.mjs';
 import {loadPinnedPairs,lowerPinnedProof,extractCanonicalCases} from './owned-exercism.mjs';
+import {buildOwnedSourceMap} from './original-sites.mjs';
 import {generateInputVariations} from './variation-exercism.mjs';
 import {OWNED_PRODUCTION_HELPERS,OWNED_PRODUCTION_CLOSURE_CASES,extractPinnedHelper,
   extractPinnedTypeOfTestClosure} from './production-owned.mjs';
@@ -79,10 +80,16 @@ function utilityCandidates(root,perFamily){
 function exercismCandidates(root,perFamily,mutationsPerFamily){
   const output=[],noticePath='corpus/extension/snapshots/exercism-js/LICENSE';
   const notice=readFileSync(resolve(root,noticePath),'utf8');
+  const canonicalNoticePath='corpus/extension/snapshots/exercism-js-inputs/LICENSE';
+  const canonicalNotice=readFileSync(resolve(root,canonicalNoticePath),'utf8');
   for(const pair of loadPinnedPairs(root)){
     const canonical=extractCanonicalCases(pair),variations=generateInputVariations(pair.slug,canonical,{limit:mutationsPerFamily});
-    let lowered=null,refusal=null;
+    let lowered=null,refusal=null,originalSites={status:'unavailable',reason:'No supported source lowering'};
     try{lowered=lowerPinnedProof(pair.source);}catch(error){refusal={status:'source_unsupported',reason:String(error.message)};}
+    if(lowered){
+      try{originalSites={status:'mapped',scope:'unchanged-spans-only',map:buildOwnedSourceMap(pair.source,lowered.source)};}
+      catch(error){originalSites={status:'unavailable',reason:String(error.message)};}
+    }
     for(const fixture of [...canonical.slice(0,perFamily),...variations]){
       const entry=fixture.entry??'unsupportedEntry',source=lowered?.source??originalExercism(pair.source);
       let rejected=refusal;
@@ -92,12 +99,17 @@ function exercismCandidates(root,perFamily,mutationsPerFamily){
         source,entry,args:fixture.args??[],originalSource:originalExercism(pair.source),refusal:rejected,
         provenance:{upstream:pair.provenance.solution,canonical:pair.provenance.canonical,
           license:'MIT',notice,noticePath,originalFile:pair.source,
-          transform:{schema:'pinned-exercism-projection/1',lowering:lowered?.lowering??null},
+          canonicalNotice:{repository:pair.provenance.canonical.repository,revision:pair.provenance.canonical.revision,
+            license:pair.provenance.canonical.license,path:canonicalNoticePath,sha256:sha(canonicalNotice),text:canonicalNotice},
+          transform:{schema:'pinned-exercism-projection/1',lowering:lowered?.lowering??null,originalSites},
           inputOrigin:fixture.generator??'upstream-canonical',derivedFrom:fixture.derivedFrom??null,
-          canonicalExpected:fixture.generator?null:fixture.expected,
-          canonicalExpectedBinding:fixture.expectedBinding??null,
-          canonicalInput:fixture.canonicalInput??null,canonicalArgumentBinding:fixture.argumentBinding??null,
-          canonicalProperty:fixture.property}}));
+          canonicalInput:fixture.generator?null:(fixture.canonicalInput??null),
+          canonicalInputBinding:fixture.generator?null:(fixture.inputBinding??null),
+          canonicalArgumentBinding:fixture.generator?null:(fixture.argumentBinding??null),
+          canonicalExpectedBinding:fixture.generator?null:(fixture.expectedBinding??null),
+          canonicalReimplements:fixture.generator?null:(fixture.reimplements??null),
+          canonicalSelection:'active-reimplementations/1',
+          canonicalExpected:fixture.generator?null:(fixture.expected??null),canonicalProperty:fixture.property??null}}));
     }
   }
   return output;

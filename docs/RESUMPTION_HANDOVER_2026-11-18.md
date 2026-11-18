@@ -6,7 +6,7 @@
 
 The resumption work repairs ordinary JavaScript teacher behavior, authenticates source/split/native identity, bridges real sources into actual native admission, makes collection recoverable and bounded, and implements complete private release verification. It also executes the real native optimizer and measures free-running models. **The completed learning run did not learn complete held-in execution and did not demonstrate generalization improvement.** Its failures, original model bytes, actual exposure, checkpoint choice and costs are preserved.
 
-The implementation is in [werg/tracing-js-self PR38](https://github.com/werg/tracing-js-self/pull/38). Companion input-graph mutation, captured-source-cell parsing and bounded native-preparation repairs are in [werg/megatoken PR31](https://github.com/werg/megatoken/pull/31). [PR37](https://github.com/werg/tracing-js-self/pull/37) contains active overlapping work; useful isolated array changes were integrated with attribution, without overwriting that branch or relabeling its producer evidence. See the [content-based branch audit](BRANCH_TRIAGE_2026-11-18.md).
+The implementation is in [werg/tracing-js-self PR38](https://github.com/werg/tracing-js-self/pull/38). Companion input-graph mutation, captured-source-cell parsing and bounded native-preparation repairs are in [werg/megatoken PR31](https://github.com/werg/megatoken/pull/31). [PR37](https://github.com/werg/tracing-js-self/pull/37) merged into main at `2aa694be86a6cda3b9d63fde739957d08f568961` during this work. Its useful array changes were first integrated with attribution; the subsequent main merge reconciles compact campaign storage, source bindings, release staging and separate exploratory learning tools with PR38's stronger integrity gates. Neither branch's original producing evidence is relabeled. See the [content-based branch audit and same-day integration update](BRANCH_TRIAGE_2026-11-18.md).
 
 The production learner representation remains `semantic-execution/5`, `semantic-trace/5`, `semantic-context/5`, `semantic-continuation/5`, carried by `selected-harness/2`. Alternate historical exporters were not restored. This remains a bounded owned execution system with separate profiles, independent references and native admission; it is not a full ECMAScript, browser or Node implementation.
 
@@ -92,6 +92,17 @@ The initialized served base SHA-256 is `4ee47430d82fc7e6065bf8319165faca3d4c0d75
 Selected held-out decoding consumed 89 original tokens for base and 70 for trained; the separate pure endpoint consumed 32 and 126. These include invalid emissions and are not comparable task-budget efficiencies when no task succeeds. The selected adapter's original 32-token setting is per native fragment, with up to 64 fragments per logical decision; it was not a 32-token whole-task bound. The pure endpoint separately enforced a 128-token total-output cap.
 
 The reported paired interval `[0,0]` comes from one source component. It does not establish narrow population uncertainty. One optimizer seed and absent primary error/cleanup slices also prevent confirmatory acceptance. Correct masks, changed weights, valid receipt hashes and zero recorded integrity-gate failures do not turn invalid executions into learned success.
+
+### Separate measurements received with PR37
+
+The main integration also preserves two independent diagnostic runs and their original failure bytes. They are additional populations, not replacement receipts for the 64-update experiment above:
+
+| Retained run | Actual optimization/exposure | Held-in complete execution |
+| --- | --- | --- |
+| [32-update diagnostic](receipts/optimization-32-example-2026-11-18/README.md) | 32 prepared episodes / 29 family labels; three source IDs actually sampled; 865 supervised lexical tokens | Base 0/4, trained 0/4 |
+| [95-update partial epoch](receipts/optimization-95-update-partial-epoch-2026-11-18/README.md) | 32 prepared episodes / 29 family labels; 16 source IDs actually sampled over 95 windows; 5,238 supervised lexical tokens | Base 0/4, trained 0/4 |
+
+These runs likewise do not establish useful learned execution. Their source/runner/consumer identities and the corrected sampling forecast remain in their own receipt directories. The integrated [exploratory held-out tools](EXPLORATORY_HELDOUT_DIAGNOSTIC.md) and [strict learning comparator](LEARNING_COMPARISON.md) preserve separate diagnostic and production prerequisites; their availability is not a newly measured held-out score.
 
 ### Subsequent declarations and attempts
 
@@ -245,6 +256,8 @@ Those are executable diagnostic defaults, not a promise that 64 one-record updat
 Two original hosted failures were diagnosed from logs and repaired: Node20 lazy-stack descriptor formatting, and the selected-Test262 CLI's obsolete oracle package path. The original failing runs were [44305588876](https://github.com/werg/tracing-js-self/actions/runs/44305588876) and [44305589113](https://github.com/werg/tracing-js-self/actions/runs/44305589113). Local checks included the exact Node20.20.2 runtime and the actual selected-Test262 command.
 
 At `25f8e90`, [the browser workflow](https://github.com/werg/tracing-js-self/actions/runs/44309531037) and [the pinned spec workflow](https://github.com/werg/tracing-js-self/actions/runs/44309530846) completed successfully. **PENDING FINALIZATION:** final producer full Node20/22/24 unit matrix, all native recipe/package lanes, remaining source/corpus workflows, final learning retry, exact private archive deliveries and PR merge/review disposition. A later source change needs appropriately refreshed evidence; earlier green runs must retain their original head.
+
+The retained companion pin `3d7ffc701a3e692883819fb623a03b1942cd8b5c` separately passed [CPU Python3.11/3.12 and lint CI](https://github.com/werg/megatoken/actions/runs/44309206418), [native qualification](https://github.com/werg/megatoken/actions/runs/44309206394), and [the selected bridge](https://github.com/werg/megatoken/actions/runs/44309206440). These receipts qualify that exact consumer revision; they do not claim that later companion-main changes were incorporated or tested.
 
 ## Remaining work, classified correctly
 

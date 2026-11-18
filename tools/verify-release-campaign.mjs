@@ -45,15 +45,28 @@ export async function verifyReleaseCampaign(directory){
       manifest.cases.length!==campaign.latest.size)fail('manifest does not cover the complete campaign');
     const seen=new Set(),paths=new Set(),physicalPaths=new Set(),counts={},dispositions=[],
       objects=new Map(),compatibilityExports=[];
+    const retainObject=ref=>{
+      sourcePath(root,ref.path);
+      if(objects.has(ref.path)){
+        if(!isDeepStrictEqual(objects.get(ref.path),ref))fail('ambiguous object path identity');
+        return;
+      }
+      objects.set(ref.path,ref);
+      if(ref.format){
+        // Rehydrated sidecars can name shared registry CAS objects. Preserve
+        // those exact compressed bytes in the archive verification inventory,
+        // including references used only by refused or superseded attempts.
+        const stored=JSON.parse(campaign.readRawObject(ref).toString('utf8'));
+        for(const {reference}of stored.registryReferences)retainObject(reference);
+      }
+    };
     // Validate paths for every historical attempt, including refused and
     // superseded candidates. CampaignStore has already verified all bytes.
     for(const entry of campaign.entries){
       const candidate=campaign.readObject(entry.candidate);
       for(const ref of [entry.candidate,entry.result,entry.public,entry.private,
         ...(candidate.inputs??[]).flatMap(input=>[input.source,input.input,input.fixture])].filter(Boolean)){
-        sourcePath(root,ref.path);
-        if(objects.has(ref.path)&&!isDeepStrictEqual(objects.get(ref.path),ref))fail('ambiguous object path identity');
-        objects.set(ref.path,ref);
+        retainObject(ref);
       }
     }
     for(const row of manifest.cases){

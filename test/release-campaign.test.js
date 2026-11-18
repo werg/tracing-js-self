@@ -6,14 +6,16 @@ import {tmpdir} from 'node:os';
 import {CampaignStore,sha256} from '../src/corpus/campaign-store.mjs';
 import {verifyReleaseCampaign} from '../tools/verify-release-campaign.mjs';
 
-function fixture(t,{compact=false}={}){
+function fixture(t,{compact=false,sharedRegistry=false}={}){
   const directory=mkdtempSync(join(tmpdir(),'release-campaign-'));
   t.after(()=>rmSync(directory,{recursive:true,force:true}));
   const producerRevision='a'.repeat(40),store=new CampaignStore(directory,{producerRevision}),cases=[];
+  const registry={schema:'semantic-source-registry/1',sources:[{source:'pinned source'}],components:[]};
   for(const [id,status]of [['one','admitted'],['two','admitted'],['refused','unsupported']]){
-    const candidate={id,family:'family'},exported=status==='admitted'?{
+    const candidate={id,family:'family',...(sharedRegistry?{splitIdentity:{registry}}:{})},exported=status==='admitted'?{
       public:{value:id},sidecar:{admission:status,producerRevision,sourceFamily:'family',
-        split:'train',representation:'compact',identityDigest:sha256(id)}}:null;
+        split:'train',representation:'compact',identityDigest:sha256(id),
+        ...(sharedRegistry?{splitIdentity:{componentId:'family',registry}}:{})}}:null;
     const details=exported?{split:'train',identityDigest:exported.sidecar.identityDigest,
       episodeDigest:sha256(JSON.stringify(exported.public)),metrics:{generatedTokens:5},
       difficulty:{},sourceCluster:'family'}:null;
@@ -42,6 +44,15 @@ test('release campaign receipt retains exact admissions, refusals and compact ob
     assert.equal(receipt.dispositions[0].episodeDigest,manifest.cases[0].episodeDigest);
     assert.equal(receipt.manifestSha256,sha256(readFileSync(join(directory,'manifest.json'))));
   }
+});
+
+test('release inventory includes shared registry objects required to rehydrate all original evidence',async t=>{
+  const {directory}=fixture(t,{compact:true,sharedRegistry:true});
+  const receipt=await verifyReleaseCampaign(directory);
+  const registries=receipt.objects.filter(ref=>ref.path.startsWith('objects/registries/'));
+  assert.equal(registries.length,1);
+  assert.equal(registries[0].sha256,sha256(readFileSync(join(directory,registries[0].path))));
+  assert.equal(receipt.dispositions.length,3);
 });
 
 test('release verification rejects altered IDs, dispositions, summaries, digests and omitted refusals',async t=>{

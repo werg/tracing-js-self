@@ -16,12 +16,12 @@ export function describeCompletionGraph(args,value,kind){
       throw new TypeError('Unsupported exception boundary: custom Error constructor');
     if(!Object.isExtensible(value))throw new TypeError('Unsupported exception boundary: frozen Error');
     for(const key of Reflect.ownKeys(value)){
-      if(key!=='stack'&&key!=='message')
-        throw new TypeError('Unsupported exception boundary: Error extensions');
-      // Even querying a lazy stack descriptor can format the stack in V8,
-      // invoking message/name accessors or Error.prepareStackTrace. This field
-      // is outside the observation profile, so do not inspect it at all.
+      // Older V8 versions materialize a lazy stack even when its descriptor
+      // is requested. That can invoke a guest message/name getter. The stack
+      // is outside this observation profile, so do not inspect it at all.
       if(key==='stack')continue;
+      if(key!=='message')
+        throw new TypeError('Unsupported exception boundary: Error extensions');
       const descriptor=Object.getOwnPropertyDescriptor(value,key);
       // Every observed message must be an own data field.
       if(!Object.hasOwn(descriptor,'value')||
