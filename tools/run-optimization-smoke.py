@@ -60,15 +60,30 @@ def run_logged(command, path, *, env, timeout, input_text=None):
         raise RuntimeError(f'Command exited {result.returncode}; retained log: {path}')
 
 
-def choose_candidates(corpus, maximum):
-    manifest = json.loads((corpus / 'manifest.json').read_text())
+def choose_candidates(corpora, maximum):
     groups = defaultdict(list)
-    for item in manifest['cases']:
-        if item.get('status') == 'admitted' and item.get('split') == 'train' and item.get('path'):
-            path = (corpus / item['path']).resolve()
-            if not path.is_relative_to(corpus):
-                raise ValueError('Corpus compatibility path escapes its root')
-            groups[item['family']].append((item, path))
+    sources, revisions, identities, episodes = [], set(), {}, set()
+    for corpus in corpora:
+        manifest_path = corpus / 'manifest.json'
+        manifest = json.loads(manifest_path.read_text())
+        revisions.add(manifest['producerRevision'])
+        sources.append({'path': str(corpus), 'manifestSha256': sha256(manifest_path),
+                        'producerRevision': manifest['producerRevision'], 'counts': manifest['counts']})
+        for item in manifest['cases']:
+            if item.get('status') == 'admitted' and item.get('split') == 'train' and item.get('path'):
+                path = (corpus / item['path']).resolve()
+                if not path.is_relative_to(corpus):
+                    raise ValueError('Corpus compatibility path escapes its root')
+                identity = item['episodeDigest']
+                if item['id'] in identities and identities[item['id']] != identity:
+                    raise ValueError('A repeated candidate identity names different public bytes')
+                identities[item['id']] = identity
+                if identity in episodes:
+                    continue
+                episodes.add(identity)
+                groups[item['family']].append((item, path))
+    if len(revisions) != 1:
+        raise ValueError('All smoke corpora must use the same immutable producer revision')
     selected = []
     for family in groups:
         groups[family].sort(key=lambda pair: pair[0]['id'])
@@ -81,7 +96,7 @@ def choose_candidates(corpus, maximum):
                 del groups[family]
     if not selected:
         raise ValueError('No natively admitted training compatibility exports in corpus')
-    return manifest, selected
+    return {'producerRevision': revisions.pop(), 'sources': sources}, selected
 
 
 def tensor_hash(tensor):
@@ -254,7 +269,8 @@ def rollout(case, origin, bundle, consumer, root, args, env):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--corpus', type=Path, required=True)
+    parser.add_argument('--corpus', type=Path, action='append', required=True,
+                        help='Materialized admitted corpus; repeat to combine independently verified campaigns')
     parser.add_argument('--tracer-root', type=Path, required=True)
     parser.add_argument('--consumer-root', type=Path, required=True)
     parser.add_argument('--tokenizer-json', type=Path, required=True)
@@ -285,11 +301,11 @@ def main():
 
     record(phase='initializing')
     try:
-        corpus, tracer, consumer = args.corpus.resolve(), args.tracer_root.resolve(), args.consumer_root.resolve()
+        corpora, tracer, consumer = [path.resolve() for path in args.corpus], args.tracer_root.resolve(), args.consumer_root.resolve()
         require_clean_checkout(tracer)
         require_clean_checkout(consumer)
         producer_revision, consumer_revision = git_head(tracer), git_head(consumer)
-        manifest, selected = choose_candidates(corpus, args.examples)
+        manifest, selected = choose_candidates(corpora, args.examples)
         if manifest['producerRevision'] != producer_revision:
             raise ValueError('Corpus must match immutable source-verifier checkout')
         sys.path.insert(0, str(consumer / 'src'))
@@ -308,6 +324,7 @@ def main():
                runnerRevision=git_head(Path(__file__).resolve().parent.parent),
                runnerSha256=sha256(__file__),
                caseBuilderSha256=sha256(Path(__file__).with_name('build-optimization-cases.mjs')),
+               sourceCorpora=manifest['sources'],
                tokenizerIdentity=codec.fingerprint, tokenizerSha256=sha256(args.tokenizer_json),
                examples=len(selected), families=sorted({item['family'] for item, _ in selected}),
                inputIdentities=[{'path': str(path), 'sha256': sha256(path)} for _, path in selected])

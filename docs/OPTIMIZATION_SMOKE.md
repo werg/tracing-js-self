@@ -27,6 +27,9 @@ PYTHONPATH=/path/to/megatoken/src /path/to/python tools/run-optimization-smoke.p
 
 The output directory must be new. Candidate selection cycles through source
 families, uses only the training split, and never relabels held-out examples.
+Repeat `--corpus` to combine materialized authored, generated, and real-source
+campaigns at the same producer revision. Identical public episodes are selected
+only once; a repeated candidate identity with different bytes is rejected.
 Every candidate undergoes fresh source, journal, replay, and native-consumer
 checks before preparation. The report pins both repositories, the tokenizer,
 the actual runner files, input files, and the resulting prepared corpus.
