@@ -23,6 +23,7 @@ def measured(identifier, success, identity='trained'):
 def experiment():
     return {'schema': learning.SCHEMA, 'mode': 'confirmatory', 'optimizerSeeds': [17, 29, 43],
             'decoderSeed': 17, 'initializationSeed': 17, 'baseOrigin': 'newly-initialized', 'checkpointSteps': [2, 4],
+            'rolloutBudget': {'tokensPerDecision': 32, 'secondsPerCase': 120},
             'policy': {'minimumUsefulImprovement': 0.1, 'maximumCriticalSliceRegression': 0.05,
                        'confidence': 0.95, 'bootstrapReplicates': 200, 'bootstrapSeed': 89,
                        'minimumConfirmatoryTestComponents': 2},

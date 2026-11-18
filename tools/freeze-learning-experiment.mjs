@@ -82,7 +82,7 @@ async function main(){
     else flags.set(flag,value);
   }
   const allowed=new Set(['--out','--tracer-root','--name','--mode','--optimizer-seeds','--decoder-seed',
-    '--initialization-seed','--checkpoint-steps','--minimum-improvement','--maximum-slice-regression','--bootstrap-replicates',
+    '--rollout-tokens','--rollout-timeout','--initialization-seed','--checkpoint-steps','--minimum-improvement','--maximum-slice-regression','--bootstrap-replicates',
     '--bootstrap-seed','--minimum-test-components','--train-examples','--validation-cases','--test-cases']);
   for(const key of flags.keys())if(!allowed.has(key))throw new TypeError('Unknown option '+key);
   if(!corpora.length||!flags.has('--out')||!flags.has('--minimum-improvement'))
@@ -140,6 +140,8 @@ async function main(){
     frozenAt:new Date().toISOString(),mode,baseOrigin:'newly-initialized',optimizerSeeds:seeds,decoderSeed,initializationSeed,checkpointSteps:steps,
     producerRevision:revision,nativePolicy,sourceRegistryDigest:candidates[0].registryDigest,
     corpusManifests:manifests,training:selected.train,validation:selected.validation,test:selected.test,
+    rolloutBudget:{tokensPerDecision:integer('--rollout-tokens',32,1,1024),
+      secondsPerCase:integer('--rollout-timeout',120,1,300)},
     policy:{minimumUsefulImprovement:numeric('--minimum-improvement',null,Number.EPSILON,1),
       maximumCriticalSliceRegression:numeric('--maximum-slice-regression',0.05,0,1),
       confidence:0.95,bootstrapReplicates:integer('--bootstrap-replicates',2000,100,100000),

@@ -34,6 +34,13 @@ def require_frozen_experiment(experiment):
     if (experiment.get('baseOrigin') != 'newly-initialized' or
             experiment.get('initializationSeed') not in (17, 29, 43) or experiment.get('decoderSeed') not in (17, 29, 43)):
         raise ValueError('Declare supported initialization and decoder identities')
+    budget = experiment.get('rolloutBudget')
+    if budget is not None and (type(budget.get('tokensPerDecision')) is not int or
+            not 1 <= budget['tokensPerDecision'] <= 1024 or type(budget.get('secondsPerCase')) is not int or
+            not 1 <= budget['secondsPerCase'] <= 300):
+        raise ValueError('Invalid frozen inference budget')
+    if experiment['mode'] == 'confirmatory' and budget is None:
+        raise ValueError('Confirmatory inference budget must be frozen before training')
     policy = experiment['policy']
     for field in ('minimumUsefulImprovement', 'maximumCriticalSliceRegression'):
         if isinstance(policy[field], bool) or not isinstance(policy[field], (int, float)) or not math.isfinite(policy[field]) or not 0 <= policy[field] <= 1:
@@ -242,6 +249,7 @@ def summarize_learning(experiment, runs):
     improvement = mean(row['improvement'] for row in by_seed.values())
     requirements = {
         'declaredConfirmatoryExperiment': experiment['mode'] == 'confirmatory',
+        'frozenInferenceBudget': experiment.get('rolloutBudget') is not None,
         'atLeastThreeOptimizerSeeds': len(by_seed) >= 3,
         'sameActualBaseCheckpointAcrossSeeds': len({row['baseIdentity'] for row in by_seed.values()}) == 1,
         'declaredTestComponentMinimum': len(component_deltas) >= policy['minimumConfirmatoryTestComponents'],

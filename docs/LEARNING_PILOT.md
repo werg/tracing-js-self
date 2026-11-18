@@ -20,7 +20,7 @@ node tools/freeze-learning-experiment.mjs \
   --out /path/to/private-experiment.json \
   --minimum-improvement 0.05 --mode exploratory \
   --optimizer-seeds 17 --initialization-seed 17 --decoder-seed 17 \
-  --checkpoint-steps 16,64 \
+  --checkpoint-steps 16,64 --rollout-tokens 32 --rollout-timeout 120 \
   --train-examples 32 --validation-cases 16 --test-cases 32
 ```
 
@@ -38,7 +38,7 @@ Controlled teacher selections are removed. Source, inputs and broker fixtures
 retain their normal selected-driver visibility rules.
 
 The file fixes optimizer seeds, a separate initialization seed, a separate decoder
-seed, checkpoint steps, a practical improvement threshold, a maximum critical
+seed, checkpoint steps, inference token/time budgets, a practical improvement threshold, a maximum critical
 slice regression, a bootstrap RNG seed and the confirmatory component minimum.
 It is written exclusively and must not be rewritten after seeing model results.
 The optimization report binds its exact SHA-256 before constructing the model.
@@ -54,7 +54,7 @@ PYTHONPATH=/path/to/megatoken/src /path/to/python tools/run-optimization-smoke.p
   --experiment /path/to/private-experiment.json \
   --output /path/to/new-smoke-output \
   --examples 32 --steps 64 --seed 17 --initialization-seed 17 \
-  --rollout-cases 4 --rollout-tokens 128 --train-timeout 900
+  --rollout-cases 4 --rollout-tokens 32 --train-timeout 900
 ```
 
 The requested example count must equal the frozen training selection, and the
@@ -85,7 +85,7 @@ PYTHONPATH=/path/to/megatoken/src /path/to/python tools/run-learning-pilot.py \
   --smoke-report /path/to/new-smoke-output/report.json \
   --consumer-root /path/to/megatoken \
   --output /path/to/new-pilot-output \
-  --rollout-tokens 128 --rollout-timeout 120
+  --rollout-tokens 32 --rollout-timeout 120
 ```
 
 For each frozen optimizer seed, supply one `--smoke-report`. The runner rejects

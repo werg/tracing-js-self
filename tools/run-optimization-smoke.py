@@ -429,6 +429,10 @@ def main():
                     args.initialization_seed != experiment['initializationSeed'] or
                     producer_revision != experiment['producerRevision']):
                 raise ValueError('Actual training inputs differ from the frozen experiment')
+            if experiment.get('rolloutBudget') is not None and (
+                    args.rollout_tokens != experiment['rolloutBudget']['tokensPerDecision'] or
+                    args.rollout_timeout != experiment['rolloutBudget']['secondsPerCase']):
+                raise ValueError('Actual inference caps differ from the frozen budget')
             record(experimentSha256=sha256(args.experiment), experimentPath=str(args.experiment.resolve()))
         manifest, selected = choose_candidates(corpus, args.examples, experiment)
         record(initializationSeed=args.initialization_seed, optimizerSeed=args.seed,
