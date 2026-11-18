@@ -23,3 +23,5 @@ for(const row of manifest.recipe?.lifecycleInputs??[])if(campaign.latest.get(row
 manifest.campaign.compatibilityExports=true;
 atomicWrite(join(directory,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
 console.log(JSON.stringify({materialized:count,identityDigest:campaign.identityDigest,admissionUnchanged:true}));
+
+campaign.close();

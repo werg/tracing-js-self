@@ -247,6 +247,7 @@ Object.assign(manifest,{campaign:{schema:'semantic-generation-summary/1',identit
     'Worker heap limits are V8 heap limits, not whole-process cgroup memory limits.',
     'Executed path signatures describe source-site branch and throw sequences; lexical families without a registry are not independent clusters.']});
 atomicWrite(join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
+campaign.close();
 process.removeListener('SIGINT',cancel);process.removeListener('SIGTERM',cancel);
 if(abort.signal.aborted)process.exitCode=130;
 else if(cases.some(item=>item.status!==(nativeConsumer?'admitted':'locally_verified')))
