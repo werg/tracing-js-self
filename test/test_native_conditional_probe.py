@@ -83,6 +83,23 @@ class ComparisonTests(unittest.TestCase):
             source.write_text('class Decoder:\n    pass\n')
             self.assertEqual(P.decoder_support_comparison(source, {})['status'], 'unmeasured')
 
+    def test_equal_gaussians_do_not_hide_different_recurrent_history(self):
+        a, b = fixture('training'), fixture('serving')
+        self.assertEqual(P.compare_recurrent_states(a, b)['status'], 'unmeasured')
+        a['recurrentState'] = {'raw': {'shape': [1, 2], 'sourceDtype': 'torch.float32',
+            'values': [0.25, -0.5]}, 'historyKeys': {'shape': [1, 1, 0, 2],
+            'sourceDtype': 'torch.float32', 'values': []}, 'historyMask': None}
+        b['recurrentState'] = copy.deepcopy(a['recurrentState'])
+        self.assertEqual(P.compare_recurrent_states(a, b)['status'], 'passed')
+        b['recurrentState']['raw']['values'][1] = -0.3
+        self.assertEqual(P.compare_priors(a, b)['status'], 'passed')
+        result = P.compare_recurrent_states(a, b)
+        self.assertEqual(result['status'], 'failed')
+        self.assertEqual(result['firstDivergence']['field'], 'raw')
+        b['recurrentState']['raw']['values'][0] = float('nan')
+        with self.assertRaisesRegex(ValueError, 'finite'):
+            P.compare_recurrent_states(a, b)
+
 
 class CheckpointBindingTests(unittest.TestCase):
     """Exercise identity orchestration with native I/O doubles, without model claims."""
@@ -207,6 +224,34 @@ class CheckpointBindingTests(unittest.TestCase):
 @unittest.skipUnless(importlib.util.find_spec('torch') and os.environ.get('MEGATOKEN_REPOSITORY'),
                      'Actual conditional hook requires local Torch and an explicit companion checkout')
 class ActualNativeHookTests(unittest.TestCase):
+    def test_actual_renderer_probabilities_match_scoring_its_original_emission(self):
+        sys.path.insert(0, str(Path(os.environ['MEGATOKEN_REPOSITORY']).resolve()/'src'))
+        import torch
+        from megatoken.generation.codec import ByteCodec
+        from megatoken.generation.structure import ActionSpec
+        from megatoken.loading import build_model, load_model_config
+        from megatoken.model.multitrack import MultiTrackGenerator
+        torch.set_num_threads(1); torch.manual_seed(17)
+        codec = ByteCodec.byte_fallback()
+        model = build_model(load_model_config('tiny', vocab_size=codec.vocab_size), codec)
+        model.eval()
+        multi = MultiTrackGenerator.of(model)
+        state = multi.tracks.initial_state(1, device='cpu')
+        def operation():
+            multi.generate_group(state, tracks=('task',), controls=(b'public instruction',),
+                specs=(ActionSpec(text_kind='ascii', min_tokens=1, max_tokens=8),), effort=1)
+            self.fail('The probe stops after the real decoder, before committing a selection')
+        result = P.capture_prior(operation, model, path='serving',
+            identity=fixture('serving')['identity'], execute_decoder=True)
+        self.assertTrue(result['decoderExecuted'])
+        self.assertFalse(result['capturedBeforePolicyDraw'])
+        self.assertEqual(result['modelSelections'], 0)
+        replay = result['decoderScoringReplay']
+        self.assertEqual(replay['status'], 'passed', replay)
+        self.assertTrue(replay['actualEmissionUsedWithoutRepair'])
+        self.assertFalse(replay['semanticSuccessClaim'])
+        self.assertGreater(replay['comparison']['comparedProbabilities'], 100)
+
     def test_real_native_prior_is_captured_before_gaussian_draw_and_hook_is_restored(self):
         sys.path.insert(0, str(Path(os.environ['MEGATOKEN_REPOSITORY']).resolve()/'src'))
         import torch
@@ -231,6 +276,9 @@ class ActualNativeHookTests(unittest.TestCase):
         self.assertEqual(result['modelSelections'], 0)
         self.assertTrue(result['capturedBeforePolicyDraw'])
         self.assertTrue(result['encoderCalls'])
+        self.assertIn('historyKeys', result['recurrentState'])
+        self.assertIn('prediction', result['recurrentState'])
+        self.assertEqual(result['recurrentState']['historyKeys']['values'], [])
         model.train()
         with self.assertRaisesRegex(ValueError, 'dropout disabled'):
             P.capture_prior(operation, model, path='serving', identity=fixture('serving')['identity'])

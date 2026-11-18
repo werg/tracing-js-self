@@ -16,7 +16,7 @@ import math
 from pathlib import Path
 from unittest.mock import patch
 
-SCHEMA = 'semantic-native-conditional-capture/1'
+SCHEMA = 'semantic-native-conditional-capture/2'
 RAW_DECODER_SOURCE_SHA256 = '676cb1fd344aac3d9579cb30b4136f4d1609930e0c767dbf76c5ef89b920cc12'
 
 
@@ -42,9 +42,10 @@ class NativeConditionalCaptured(BaseException):
     """Stop before the Gaussian facet draw; deliberately not an ordinary model error."""
 
 
-def tensor_record(value, *, maximum_elements=1048576):
+def tensor_record(value, *, maximum_elements=1048576, allow_empty=False):
     import torch
-    require(0 < value.numel() <= maximum_elements, 'Native conditional tensor exceeds capture budget')
+    require((0 if allow_empty else 1) <= value.numel() <= maximum_elements,
+            'Native conditional tensor exceeds capture budget')
     require(bool(torch.isfinite(value).all()), 'Actual native conditional tensor is not finite')
     tensor = value.detach().cpu().float().contiguous()
     raw = tensor.numpy().tobytes()
@@ -53,7 +54,61 @@ def tensor_record(value, *, maximum_elements=1048576):
             'values': tensor.reshape(-1).tolist()}
 
 
-def capture_prior(operation, model, *, path, identity, maximum_input_bytes=16777216):
+def recurrent_state_record(state, prediction):
+    """Retain the actual recurrent tensors, including empty startup histories.
+
+    Addresses and chronology are retained separately in ``boundary``. No track
+    remapping or state reconstruction is performed by this measurement.
+    """
+    tensors = {'raw': state.raw, 'final': state.final,
+               'historyKeys': state.history.keys, 'historyValues': state.history.values,
+               'historyMask': state.history.mask, 'historyTrackIds': state.history_tracks,
+               'frontierRoles': state.frontier_roles, 'prediction': prediction}
+    if state.adapters is not None:
+        tensors.update(adapterLogits=state.adapters.logits,
+                       adapterStrength=state.adapters.strength,
+                       adapterContext=state.adapters.context)
+    return {name: None if value is None else tensor_record(value, allow_empty=True)
+            for name, value in tensors.items()}
+
+
+def compare_recurrent_states(training, serving, *, atol=1e-6, rtol=1e-5):
+    """Compare captured state without substituting equal inputs for equal state."""
+    left, right = training.get('recurrentState'), serving.get('recurrentState')
+    if left is None or right is None:
+        return {'status': 'unmeasured', 'reason': 'Both actual recurrent states are required'}
+    require(math.isfinite(atol) and math.isfinite(rtol) and 0 <= atol <= .001 and 0 <= rtol <= .001,
+            'Native parity tolerance must be finite, nonnegative and at most 0.001')
+    first, maximum, count = None, 0.0, 0
+    for field in sorted(set(left) | set(right)):
+        a, b = left.get(field), right.get(field)
+        if a is None or b is None:
+            if a != b or (field in left) != (field in right):
+                first = first or {'field': field, 'reason': 'presence'}
+            continue
+        for value in (a, b):
+            require(isinstance(value.get('shape'), list) and
+                    all(type(n) is int and n >= 0 for n in value['shape']) and
+                    math.prod(value['shape']) == len(value.get('values', [])) <= 1048576 and
+                    all(type(n) in (int, float) and math.isfinite(n) for n in value['values']),
+                    'Actual recurrent tensor shape or finite values invalid')
+        if a['shape'] != b['shape'] or a.get('sourceDtype') != b.get('sourceDtype'):
+            first = first or {'field': field, 'reason': 'shape-or-dtype',
+                              'trainingShape': a['shape'], 'servingShape': b['shape']}
+            continue
+        for index, (x, y) in enumerate(zip(a['values'], b['values'], strict=True)):
+            difference = abs(x - y); maximum = max(maximum, difference); count += 1
+            if difference > atol + rtol * abs(x):
+                first = first or {'field': field, 'flatIndex': index, 'training': x,
+                                  'serving': y, 'absoluteDifference': difference}
+    return {'status': 'passed' if first is None else 'failed',
+            'comparedCoordinates': count, 'maximumAbsoluteDifference': maximum,
+            'firstDivergence': first, 'absoluteTolerance': atol, 'relativeTolerance': rtol,
+            'scope': 'Actual frontier, history, adapter, and prospective prediction tensors'}
+
+
+def capture_prior(operation, model, *, path, identity, maximum_input_bytes=16777216,
+                  execute_decoder=False):
     """Run real native code and intercept the first Gaussian facet draw."""
     import torch
     from megatoken.model.core import FacetedCore
@@ -69,6 +124,12 @@ def capture_prior(operation, model, *, path, identity, maximum_input_bytes=16777
     original_prior = MultiTrackGenerator._prior
     original_train = MultiTrackGenerator.supervised_meridian
     original_generate = MultiTrackRuntime.generate
+    original_sample = MultiTrackGenerator._sample_policy
+    if execute_decoder:
+        from megatoken.generation.decoder import DeterministicDecoder
+        from native_decoder_capture import observe_decoder, emission_scoring_replay
+        original_teacher = DeterministicDecoder.teacher_raw
+        original_render = DeterministicDecoder.forward
 
     def encoded(kind, original):
         def capture(core, values, lengths=None, **kwargs):
@@ -89,12 +150,17 @@ def capture_prior(operation, model, *, path, identity, maximum_input_bytes=16777
 
     def prior(multi, mean, state, tracks, control=None):
         require(result['boundary'] is None, 'Unexpected earlier native generated policy boundary')
+        result['recurrentState'] = recurrent_state_record(state, mean)
         result['boundary'] = {'tracks': list(tracks), 'modelVersion': state.model_version,
             'trackRegistry': list(state.track_registry), 'trackDescriptions': list(state.track_descriptions),
             'eventsSeen': state.events_seen.detach().cpu().tolist(),
             'meridiansSeen': state.meridians_seen.detach().cpu().tolist(),
             'historyEventIds': list(state.history_event_ids), 'historyTracks': list(state.history_event_tracks),
             'historyPositions': list(state.history_positions), 'contextDropped': list(state.context_dropped),
+            'frontierTracks': list(state.frontier_tracks),
+            'frontierEventIds': list(state.frontier_event_ids),
+            'frontierModalities': list(state.frontier_modalities),
+            'meridianSizes': list(state.meridian_sizes), 'contextSeen': state.context_seen,
             'contextPolicy': json.loads(state.context_policy.to_json()),
             'encodedControl': tensor_record(control) if control is not None else None}
         return original_prior(multi, mean, state, tracks, control)
@@ -104,6 +170,33 @@ def capture_prior(operation, model, *, path, identity, maximum_input_bytes=16777
                 'Native capture did not pass through the real prior boundary')
         result['conditional'] = {'eventIds': list(names), 'mean': tensor_record(distribution.mean),
                                  'logScale': tensor_record(distribution.log_scale)}
+        result['policyInputEncoderCallCount'] = len(result['encoderCalls'])
+        if execute_decoder:
+            selected = original_sample(distribution, names, generator)
+            result['actualSampledFacets'] = tensor_record(selected)
+            return selected
+        raise NativeConditionalCaptured()
+
+    def teacher(decoder, core, context, plan):
+        if path != 'training' or decoder is not model.decoder:
+            return original_teacher(decoder, core, context, plan)
+        with observe_decoder(model) as heads:
+            losses = original_teacher(decoder, core, context, plan)
+        result['decoderExecution'] = {'path': 'actual-prior-teacher', **heads,
+            'losses': {name: {'sum': float(value.detach()), 'count': count}
+                       for name, (value, count) in losses.items()}}
+        raise NativeConditionalCaptured()
+
+    def render(decoder, core, context, spec, teacher=None):
+        if path != 'serving' or decoder is not model.decoder:
+            return original_render(decoder, core, context, spec, teacher)
+        with observe_decoder(model) as heads:
+            action = original_render(decoder, core, context, spec, teacher)
+        result['decoderExecution'] = {'path': 'actual-renderer', **heads,
+            'originalEmission': {'payloadHex': action.payload.hex(),
+                'tokenIds': list(action.emitted_ids), 'terminal': action.terminal,
+                'valid': action.valid, 'error': action.error}}
+        result['decoderScoringReplay'] = emission_scoring_replay(model, context, spec, action, heads)
         raise NativeConditionalCaptured()
 
     def train(multi, state, **kwargs):
@@ -114,6 +207,8 @@ def capture_prior(operation, model, *, path, identity, maximum_input_bytes=16777
             'targetPlans': [{'ids': [list(row) for row in plan.ids],
                              'freeMasks': [list(row) for row in plan.free_masks],
                              'terminals': list(plan.terminals), 'capacities': list(plan.capacities),
+                             'modeSpecs': [None if value is None else asdict(value)
+                                           for value in plan.mode_specs],
                              'payloadHex': [value.hex() for value in plan.payloads]}
                             for plan in kwargs['plans']]}
         return original_train(multi, state, **kwargs)
@@ -131,16 +226,27 @@ def capture_prior(operation, model, *, path, identity, maximum_input_bytes=16777
         stack.enter_context(patch.object(MultiTrackGenerator, '_sample_policy', staticmethod(sample)))
         stack.enter_context(patch.object(MultiTrackGenerator, 'supervised_meridian', train))
         stack.enter_context(patch.object(MultiTrackRuntime, 'generate', generate))
+        if execute_decoder:
+            stack.enter_context(patch.object(DeterministicDecoder, 'teacher_raw', teacher))
+            stack.enter_context(patch.object(DeterministicDecoder, 'forward', render))
         with torch.no_grad():
             try: operation()
             except NativeConditionalCaptured: pass
             else: raise ValueError('Native path returned without the declared conditional capture boundary')
     require('conditional' in result, 'Native conditional state was not captured')
+    boundary = result.pop('policyInputEncoderCallCount')
+    result['postPolicyEncoderCalls'] = result['encoderCalls'][boundary:]
+    result['encoderCalls'] = result['encoderCalls'][:boundary]
     result['encoderCallSha256'] = digest(result['encoderCalls'])
     # This flag names the Gaussian policy draw, not earlier modality categoricals.
-    result['capturedBeforePolicyDraw'] = True
-    result['capturedBeforeTrainingTargetEncoding'] = path == 'training'
-    result['scope'] = 'First generated event conditional Gaussian before its facet draw; no lexical realization, returned semantic selection or optimizer step'
+    result['capturedBeforePolicyDraw'] = not execute_decoder
+    result['capturedBeforeTrainingTargetEncoding'] = path == 'training' and not execute_decoder
+    result['decoderExecuted'] = execute_decoder and 'decoderExecution' in result
+    if execute_decoder:
+        require(result['decoderExecuted'], 'Actual first native decoder was not reached')
+    result['scope'] = ('First generated event Gaussian, actual sampled facets, and native decoder execution; '
+                      'no returned semantic selection or optimizer step' if execute_decoder else
+                      'First generated event conditional Gaussian before its facet draw; no lexical realization, returned semantic selection or optimizer step')
     return result
 
 
@@ -153,9 +259,10 @@ def compare_priors(training, serving, *, atol=1e-6, rtol=1e-5):
             'Native parity tolerance must be finite, nonnegative and at most 0.001')
     for value, path in ((training, 'training'), (serving, 'serving')):
         require(value.get('schema') == SCHEMA and value.get('path') == path and
-                value.get('dropoutDisabled') is True and value.get('capturedBeforePolicyDraw') is True and
+                value.get('dropoutDisabled') is True and
+                (value.get('capturedBeforePolicyDraw') is True or value.get('decoderExecuted') is True) and
                 value.get('modelSelections') == 0 and value.get('optimizerSteps') == 0,
-                'Original disabled-dropout capture before the Gaussian facet draw required')
+                'Original disabled-dropout pre-sampling capture before the Gaussian facet draw required')
         require(all(isinstance(v, str) and len(v) == 64 and all(c in '0123456789abcdef' for c in v)
                     for v in value.get('identity', {}).values()) and
                 set(value.get('identity', {})) == {'checkpointStateSha256', 'servedModelSha256', 'tokenizerIdentity',
