@@ -3,7 +3,7 @@
 // identity, a frozen split, or a receipt. Keep the full campaign for audit.
 import {readFileSync,existsSync,readdirSync,mkdirSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
-import {resolve,join} from 'node:path';
+import {resolve,join,relative,sep} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {gzipSync} from 'node:zlib';
 import {CampaignStore,atomicWrite,sha256} from '../src/corpus/campaign-store.mjs';
@@ -69,29 +69,31 @@ export function exactPublicRepresentatives(rows){
 export async function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_SAFE_INTEGER,
     maxFamilyShare=1,split='all',deduplicateExactPublic=false,tracerRoot=null}={}){
   input=resolve(input);output=resolve(output);
-  if(input===output||existsSync(output)&&readdirSync(output).length)
-    throw new Error('Selection requires a new output directory distinct from the complete campaign');
+  const destination=relative(input,output);
+  if(!(destination==='..'||destination.startsWith('..'+sep))||existsSync(output)&&readdirSync(output).length)
+    throw new Error('Selection requires a new output directory outside the complete campaign');
   if(!['all','train','validation','test'].includes(split))throw new Error('Invalid requested split');
   if(typeof deduplicateExactPublic!=='boolean')throw new Error('Exact-public representative selection must be explicitly boolean');
   const header=JSON.parse(readFileSync(join(input,'campaign.json'),'utf8'));
+  const campaign=new CampaignStore(input,header.identity,{readOnly:true,recoverTornLog:false,
+    maxObjectBytes:header.identity.bounds?.maxOutputBytes??268435456});
+  try{
   const sourceBytes=readFileSync(join(input,'manifest.json')),
     sourceManifest=JSON.parse(sourceBytes.toString('utf8'));
-  let Store=CampaignStore,verifyBinding=verifyNativeBinding,producerVerifier=null;
+  let verifyBinding=verifyNativeBinding,producerVerifier=null;
   if(tracerRoot!==null){
     tracerRoot=resolve(tracerRoot);
     const revision=execFileSync('git',['rev-parse','HEAD'],{cwd:tracerRoot,encoding:'utf8'}).trim();
     if(revision!==sourceManifest.producerRevision)
       throw new Error('Historical selection requires the exact immutable producing checkout');
     execFileSync('git',['diff','--quiet','HEAD','--'],{cwd:tracerRoot});
-    const [storage,admission]=await Promise.all([
-      import(pathToFileURL(join(tracerRoot,'src/corpus/campaign-store.mjs')).href),
-      import(pathToFileURL(join(tracerRoot,'src/training/effectful-admit.js')).href)]);
-    Store=storage.CampaignStore;verifyBinding=admission.verifyNativeBinding;
+    // Current storage owns the read-only shared lock and validates the complete
+    // journal. Only admission is routed to the immutable producing checkout.
+    const admission=await import(pathToFileURL(join(tracerRoot,'src/training/effectful-admit.js')).href);
+    verifyBinding=admission.verifyNativeBinding;
     producerVerifier={root:tracerRoot,revision,trackedFilesClean:true,
       sourceEnvironmentChecksUnchanged:true};
   }
-  const campaign=new Store(input,header.identity,{resume:true,recoverTornLog:false,
-    maxObjectBytes:header.identity.bounds?.maxOutputBytes??268435456});
   if(sourceManifest.campaign?.identityDigest!==campaign.identityDigest)
     throw new Error('Manifest and campaign identity disagree');
   mkdirSync(output,{recursive:true});
@@ -137,6 +139,7 @@ export async function selectAdmittedCampaign({input,output,maxFamilyTokens=Numbe
         family:side.sourceFamily,split:side.split,generatedTokens:native.generatedTokens});
     }catch(error){exclude(entry,'admission_invalid',String(error.message));}
   }
+  if(originalRows.size!==campaign.latest.size)throw new Error('Manifest omits durable campaign cases');
   let candidates=eligible,representatives=[];
   if(deduplicateExactPublic){
     let exact;
@@ -221,6 +224,7 @@ export async function selectAdmittedCampaign({input,output,maxFamilyTokens=Numbe
     throughput:{measuredDuringSourceCampaign:sourceManifest.throughput,selectionDoesNotGenerateNewTokens:true}};
   atomicWrite(join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
   return report;
+  }finally{campaign.close();}
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
   const flags=new Map(),allowed=new Set(['--input','--out','--max-family-tokens','--max-family-share','--split',

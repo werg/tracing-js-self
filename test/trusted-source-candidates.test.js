@@ -4,7 +4,8 @@ import {mkdtempSync,mkdirSync,rmSync,readFileSync,writeFileSync} from 'node:fs';
 import {join,dirname} from 'node:path';
 import {tmpdir} from 'node:os';
 import {trustedRealSourceCases} from '../src/corpus/trusted-source-candidates.mjs';
-import {runGenerationProcess} from '../src/corpus/generation-process.mjs';
+import {runGenerationProcess,encodeGenerationTask} from '../src/corpus/generation-process.mjs';
+import {identityHash} from '../src/corpus/campaign-store.mjs';
 function directory(t){const path=mkdtempSync(join(tmpdir(),'real-source-bridge-'));
   t.after(()=>rmSync(path,{recursive:true,force:true}));return path;}
 test('rebuilds original/transform/source/license identity for each pinned real-source stream',()=>{
@@ -15,6 +16,13 @@ test('rebuilds original/transform/source/license identity for each pinned real-s
   assert.ok(rows.every(row=>row.trustTier==='trusted-owned-source'&&row.license&&row.provenance.notice));
   assert.ok(rows.every(row=>row.provenance.transformedSource===row.source&&row.originalReferenceSource));
   assert.ok(rows.every(row=>row.provenance.upstream.revision&&row.ancestorIds.length));
+  for(const row of rows.filter(row=>row.provenance.sourceStream==='exercism')){
+    const notice=row.provenance.canonicalNotice;
+    assert.equal(notice.repository,row.provenance.canonical.repository);
+    assert.equal(notice.revision,row.provenance.canonical.revision);
+    assert.equal(notice.text,readFileSync(notice.path,'utf8'));
+    assert.match(notice.sha256,/^[a-f0-9]{64}$/);
+  }
 });
 test('refuses changed pinned utility bytes before executing any source',t=>{
   const root=directory(t),lock=JSON.parse(readFileSync('corpus/utility-source-lock.json','utf8'));
@@ -43,6 +51,40 @@ test('retains independently specified Exercism expected outcome as a separate ga
     {outputDirectory:directory(t),timeoutMs:30000});
   assert.equal(run.result.status,'canonical_mismatch',run.result.reason);
 });
+
+test('fresh original/transformed/owned gates agree on real numeric and optional-argument bindings',async t=>{
+  const fixtures=trustedRealSourceCases({streams:['exercism'],perFamily:2}),outputDirectory=directory(t);
+  for(const family of ['darts','grains','two-fer']){
+    const fixture=fixtures.find(row=>row.family==='exercism/javascript:'+family);
+    const run=await runGenerationProcess({kind:'source',fixture,producerRevision:'a'.repeat(40)},
+      {outputDirectory,timeoutMs:30000});
+    assert.equal(run.result.status,'locally_verified',family+': '+run.result.reason);
+    const provenance=run.result.exported.sidecar.sourceProvenance.upstream;
+    assert.equal(provenance.originalSourceCheck.status,'agreed');
+    if(family==='two-fer'){
+      assert.deepEqual(fixture.args,[]);assert.deepEqual(provenance.canonicalInput,{name:null});
+    }
+    if(family==='grains')assert.equal(provenance.canonicalExpectedBinding.decimal,'1');
+  }
+});
+
+test('canonical error expectations require a throw and retain exact source error evidence',async t=>{
+  const fixtures=trustedRealSourceCases({streams:['exercism'],perFamily:100}),outputDirectory=directory(t);
+  const returnFixture=fixtures.find(row=>row.family==='exercism/javascript:leap');
+  const changed={...returnFixture,provenance:{...returnFixture.provenance,canonicalExpected:{error:'error required'}}};
+  const wrong=await runGenerationProcess({kind:'source',fixture:changed,producerRevision:'a'.repeat(40)},
+    {outputDirectory,timeoutMs:30000});
+  assert.equal(wrong.result.status,'canonical_mismatch');
+  const fixture=fixtures.find(row=>row.family==='exercism/javascript:grains'&&row.provenance.canonicalExpected?.error);
+  assert(fixture);
+  const correct=await runGenerationProcess({kind:'source',fixture,producerRevision:'a'.repeat(40)},
+    {outputDirectory,timeoutMs:30000});
+  assert.equal(correct.result.status,'locally_verified',correct.result.reason);
+  const check=correct.result.exported.sidecar.sourceProvenance.upstream.originalSourceCheck.canonicalExpectation;
+  assert.equal(check.outcomeKind,'throw');assert.equal(check.canonicalErrorMessageCompared,false);
+  assert.equal(correct.result.exported.sidecar.referenceStatus,'agreed');
+});
+
 test('canonical error expectations require thrown completion and declare message comparison scope',async t=>{
   const outputDirectory=directory(t),source='"use strict";function run(){throw new Error("Pinned JS message");}';
   const fixture={id:'canonical-error',family:'canonical-error',entry:'run',source,originalReferenceSource:source,
@@ -75,17 +117,27 @@ test('the pinned two-fer omission passes original, canonical and owned checks wi
   assert.equal(run.result.exported.sidecar.sourceProvenance.upstream.canonicalCheck.status,'agreed');
 });
 
-test('grains type binding passes the original oracle and still refuses unsupported owned BigInt globals',async t=>{
+test('grains type binding passes the original and owned gates without coercing a wrong Number result',async t=>{
   const fixture=trustedRealSourceCases({streams:['exercism'],perFamily:1}).find(row=>row.family.endsWith(':grains'));
   const outputDirectory=directory(t);
   const run=await runGenerationProcess({kind:'source',fixture,producerRevision:'a'.repeat(40)},
     {outputDirectory,timeoutMs:30000});
-  assert.equal(run.result.status,'unsupported',run.result.reason);
-  assert.deepEqual(run.result.failure.original.provenance.canonicalCheck,
+  assert.equal(run.result.status,'locally_verified',run.result.reason);
+  assert.deepEqual(run.result.exported.sidecar.sourceProvenance.upstream.canonicalCheck,
     {status:'agreed',mode:'exact-bigint-return',expectedKind:'return',observedKind:'return'});
   const source='"use strict";function square(){return 1;}';
   const wrong=await runGenerationProcess({kind:'source',fixture:{...fixture,source,
     originalReferenceSource:source},producerRevision:'a'.repeat(40)},{outputDirectory,timeoutMs:30000});
   assert.equal(wrong.result.status,'canonical_mismatch','a wrong Number result is never coerced');
   assert.equal(wrong.result.failure.canonicalCheck.mode,'exact-bigint-return');
+});
+
+
+test('all canonical refusals remain JSON-safe when encoded for durable campaigns',()=>{
+  const fixtures=trustedRealSourceCases({streams:['exercism'],perFamily:100});
+  assert(fixtures.some(row=>row.preflightFailure?.status==='fixture_unsupported'));
+  for(const fixture of fixtures){
+    const encoded=encodeGenerationTask({kind:'source',fixture,producerRevision:'a'.repeat(40)});
+    assert.equal(identityHash(encoded),identityHash(JSON.parse(JSON.stringify(encoded))),fixture.id);
+  }
 });

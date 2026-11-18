@@ -13,9 +13,11 @@ import argparse
 import gc
 import hashlib
 import json
+import math
 import os
 import resource
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -54,15 +56,72 @@ def require_clean_checkout(path):
         raise ValueError(f'Pinned source/consumer checkout has tracked changes: {path}')
 
 
-def run_logged(command, path, *, env, timeout, input_text=None):
+def run_logged(command, path, *, env, timeout, input_text=None, graceful_checkpoint=False):
+    """Honor the wall cap, reserving native SIGTERM checkpoint time inside it."""
+    grace = min(30, max(1, timeout // 10)) if graceful_checkpoint else 0
+    requested_stop = False
+    started = time.monotonic()
     with Path(path).open('w') as log:
-        result = subprocess.run(command, input=input_text, text=True, stdout=log,
-                                stderr=subprocess.STDOUT, env=env, timeout=timeout)
-    if result.returncode:
-        raise RuntimeError(f'Command exited {result.returncode}; retained log: {path}')
+        process = subprocess.Popen(command, stdin=subprocess.PIPE if input_text is not None else subprocess.DEVNULL,
+            text=True, stdout=log, stderr=subprocess.STDOUT, env=env, start_new_session=True)
+        try:
+            process.communicate(input=input_text, timeout=max(0.01, timeout - grace))
+        except subprocess.TimeoutExpired:
+            if graceful_checkpoint:
+                requested_stop = True
+                # The pinned native engine handles SIGTERM by finishing its
+                # current atomic update and saving a paused checkpoint. Let its
+                # worker processes finish too; kill the group only at the cap.
+                process.terminate()
+                try:
+                    process.communicate(timeout=max(0.01, timeout - (time.monotonic() - started)))
+                except subprocess.TimeoutExpired:
+                    os.killpg(process.pid, signal.SIGKILL)
+                    process.wait()
+                    raise
+            else:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait()
+                raise
+    if process.returncode:
+        raise RuntimeError(f'Command exited {process.returncode}; retained log: {path}')
+    return {'wallSeconds': time.monotonic() - started, 'wallCapSeconds': timeout,
+            'reservedCheckpointSeconds': grace, 'gracefulCheckpointStopRequested': requested_stop}
 
 
-def choose_candidates(corpora, maximum):
+def choose_candidates(corpora, maximum, experiment=None):
+    corpora = [Path(corpora).resolve()] if isinstance(corpora, (str, Path)) else [Path(p).resolve() for p in corpora]
+    if experiment is not None:
+        from learning_evaluation import require_frozen_experiment
+        require_frozen_experiment(experiment)
+        sources, revisions = [], set()
+        for corpus in corpora:
+            manifest_path = corpus / 'manifest.json'
+            header = json.loads(manifest_path.read_text())
+            revisions.add(header['producerRevision'])
+            sources.append({'path': str(corpus), 'manifestSha256': sha256(manifest_path),
+                            'producerRevision': header['producerRevision'], 'counts': header['counts']})
+        if len(revisions) != 1:
+            raise ValueError('All smoke corpora must use the same immutable producer revision')
+        selected = []
+        if maximum != len(experiment['training']):
+            raise ValueError('Example cap must equal the frozen training membership')
+        for frozen in experiment['training']:
+            path = Path(frozen['path']).resolve()
+            if not any(path.is_relative_to(corpus) for corpus in corpora):
+                raise ValueError('Frozen training path escapes the declared corpora')
+            if sha256(path) != frozen['fileSha256']:
+                raise ValueError('Frozen training input bytes changed')
+            exported = json.loads(path.read_text())
+            side = exported['sidecar']
+            if (side['admission'] != 'admitted' or side['split'] != 'train' or
+                    side['identityDigest'] != frozen['identityDigest'] or
+                    side['sourceFamily'] != frozen['family'] or
+                    side['splitIdentity']['componentId'] != frozen['sourceCluster']):
+                raise ValueError('Frozen training identity, family or split changed')
+            selected.append(({'id': frozen['id'], 'family': frozen['family'],
+                              'identityDigest': frozen['identityDigest']}, path))
+        return {'producerRevision': revisions.pop(), 'sources': sources}, selected
     groups = defaultdict(list)
     sources, revisions, identities, episodes = [], set(), {}, set()
     for corpus in corpora:
@@ -170,14 +229,14 @@ def mask_receipt(prepared, codec):
                 'chunking': corpus.chunking}
 
 
-def create_initial_checkpoint(root, config, codec, chunking):
+def create_initial_checkpoint(root, config, codec, chunking, *, initialization_seed=None):
     from megatoken.loading import build_model, load_model_config
     from megatoken.runtime import seed_everything
     from megatoken.training.checkpoint import save_checkpoint, transducer_attachment
     from megatoken.training.optimizer import MasterAdamW
     from megatoken.training.transducer import TransducerTrainer
 
-    seed_everything(config.seed, config.deterministic)
+    seed_everything(config.seed if initialization_seed is None else initialization_seed, config.deterministic)
     model_config = load_model_config(config.model, **config.model_overrides,
                                     expert_backend=config.expert_backend,
                                     checkpoint_stages=config.gradient_checkpointing)
@@ -204,10 +263,11 @@ def create_initial_checkpoint(root, config, codec, chunking):
     return checkpoint, initial_parameters
 
 
-def checkpoint_receipt(checkpoint, initial_parameters):
+def checkpoint_receipt(checkpoint, initial_parameters, *, stream_fingerprint=None):
     import torch
     from megatoken.loading import load_trained
     from megatoken.training.checkpoint import load_checkpoint
+    from megatoken.training.stream import source_sampling_report
 
     loaded = load_trained(checkpoint, device='cpu')
     payload, metadata = load_checkpoint(checkpoint)
@@ -232,7 +292,151 @@ def checkpoint_receipt(checkpoint, initial_parameters):
             'changedParameters': changed, 'updatedOptimizerOwners': updated,
             'allParametersFinite': True, 'counters': payload['counters'],
             'nativeCursors': [rank['cursor'] for rank in payload['rank_state']],
-            'sourceSampling': metadata['source_sampling']}
+            'sourceSampling': authenticated_source_sampling(payload, metadata, source_sampling_report,
+                stream_fingerprint=stream_fingerprint)}
+
+
+def authenticated_source_sampling(payload, metadata, native_source_report, *, stream_fingerprint=None):
+    """Metadata counters cannot override the checksummed optimizer cursor state."""
+    ranks = payload.get('rank_state')
+    if not isinstance(ranks, list) or not ranks or any(
+            not isinstance(rank, dict) or not isinstance(rank.get('cursor'), dict) for rank in ranks):
+        raise ValueError('Checkpoint lacks authenticated native source cursors')
+    cursors = [rank['cursor'] for rank in ranks]
+    if stream_fingerprint is not None and any(
+            cursor.get('dataset_fingerprint') != stream_fingerprint for cursor in cursors):
+        raise ValueError('Authenticated native cursor differs from the verified prepared window plan')
+    actual = native_source_report(cursors)
+    if metadata.get('source_sampling') != actual:
+        raise ValueError('Checkpoint source sampling metadata differs from authenticated payload cursors')
+    return actual
+
+
+def native_window_plan(prepared, codec, config):
+    """Inspect the actual pinned native packing and sampler before any update."""
+    from megatoken.data import PreparedCorpus
+    from megatoken.training.engine import window_config
+    from megatoken.training.stream import _WindowPlan, WindowStream
+
+    dataset = PreparedCorpus([str(prepared)])
+    try:
+        window = window_config(config)
+        sources = []
+        for index in range(len(dataset)):
+            episode, _ = dataset.fetch(index)
+            plan = _WindowPlan(episode, codec, window)
+            sources.append({'sourceId': episode.lineage.source_id, 'episodeId': episode.episode_id,
+                            'windows': len(plan), 'scoredTokens': sum(plan[k].P for k in range(len(plan))),
+                            'transcriptTokens': sum(plan[k].D for k in range(len(plan)))})
+        if len({row['sourceId'] for row in sources}) != len(sources) or any(not row['windows'] for row in sources):
+            raise ValueError('Selected prepared episodes need distinct source IDs and scored native windows')
+        stream = WindowStream(dataset, codec, window, seed=config.seed)
+        order, counts = [], Counter()
+        for _ in range(sum(row['windows'] for row in sources)):
+            item = stream.next()
+            if item is None:
+                raise ValueError('Single-worker scored native window plan unexpectedly contains padding')
+            source = item.episode.lineage.source_id
+            if source not in counts:
+                order.append(source)
+            counts[source] += 1
+        if dict(counts) != {row['sourceId']: row['windows'] for row in sources}:
+            raise ValueError('Native first-epoch sampler differs from the inspected packing plan')
+        return {'schema': 'native-training-window-plan/1', 'sampler': 'native-sequential-permuted-episodes',
+                'seed': config.seed, 'windowConfig': asdict(window), 'preparedIdentity': dataset.identity,
+                'streamFingerprint': stream.fingerprint,
+                'sources': sources, 'firstEpochSourceOrder': order,
+                'firstEpochWindows': sum(counts.values()),
+                'eachEpisodeIsOneWindow': all(row['windows'] == 1 for row in sources)}
+    finally:
+        dataset.close()
+
+
+def verify_native_window_plan(plan, prepared, codec, config):
+    """Rebuild from checksummed prepared shards, including legacy plan receipts."""
+    actual = native_window_plan(prepared, codec, config)
+    comparable = dict(actual)
+    if 'streamFingerprint' not in plan:
+        comparable.pop('streamFingerprint')
+    if comparable != plan:
+        raise ValueError('Frozen native window inventory differs from the actual prepared corpus and configuration')
+    return actual
+
+
+def training_exposure(plan, sampling):
+    expected = {row['sourceId']: row['windows'] for row in plan['sources']}
+    if len(expected) != len(plan['sources']) or any(type(count) is not int or count < 1 for count in expected.values()):
+        raise ValueError('Native window plan has duplicate sources or invalid window counts')
+    actual = sampling.get('source_windows', {})
+    if (set(actual) - set(expected) or any(type(count) is not int or count < 1 for count in actual.values())):
+        raise ValueError('Checkpoint source exposure contains a foreign source or invalid window count')
+    complete = sampling.get('complete_history') is True
+    missing = sorted(set(expected) - set(actual))
+    unfinished = sorted(key for key, count in expected.items() if actual.get(key, 0) < count)
+    return {'selectedSources': len(expected), 'exposedSources': len(actual), 'completeHistory': complete,
+            'sampledWindows': sum(actual.values()), 'expectedFirstEpochWindows': sum(expected.values()),
+            'unexposedSourceIds': missing, 'incompleteEpisodeSourceIds': unfinished,
+            'everySelectedSourceExposed': complete and not missing,
+            'everySelectedEpisodeVisitedAllWindows': complete and not unfinished,
+            'sourceWindowCounts': dict(sorted(actual.items()))}
+
+
+def partial_training_receipt(root):
+    """Retain observed updates after timeout/SIGKILL without inventing a checkpoint."""
+    root = Path(root)
+    metrics = root / 'training/metrics.jsonl'
+    if not metrics.exists():
+        return None
+    rows, malformed = [], 0
+    for line in metrics.read_text().splitlines():
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            malformed += 1
+            continue
+        if row.get('event') == 'train':
+            rows.append(row)
+    pointer = root / 'training/checkpoints/latest.json'
+    checkpoint, checkpoint_error = None, None
+    if pointer.exists():
+        try:
+            reference = json.loads(pointer.read_text())
+            if not isinstance(reference, dict):
+                raise ValueError('Invalid native checkpoint pointer object')
+            name = reference['checkpoint']
+            if not isinstance(name, str) or not name or name in ('.', '..') or Path(name).name != name:
+                raise ValueError('Invalid native checkpoint pointer name')
+            directory = (pointer.parent / name).resolve()
+            if directory.parent != pointer.parent.resolve():
+                raise ValueError('Native checkpoint pointer escapes its root')
+            metadata = directory / 'metadata.json'
+            metadata_sha = sha256(metadata)
+            if metadata_sha != reference['metadata_sha256']:
+                raise ValueError('Native checkpoint metadata checksum differs from the committed pointer')
+            value = json.loads(metadata.read_text())
+            if not isinstance(value, dict):
+                raise ValueError('Invalid native checkpoint metadata object')
+            if (value.get('checkpoint_name') != name or (directory / 'state.pt').resolve().parent != directory or
+                    sha256(directory / 'state.pt') != value['state_sha256']):
+                raise ValueError('Native checkpoint state is missing, changed or bound to another name')
+            transducer = value['transducer_checkpoint']
+            if not isinstance(transducer, dict):
+                raise ValueError('Invalid native checkpoint transducer receipt')
+            filename = transducer['file']
+            if (not isinstance(filename, str) or not filename or filename in ('.', '..') or
+                    Path(filename).name != filename or (directory / filename).resolve().parent != directory or
+                    sha256(directory / filename) != transducer['sha256']):
+                raise ValueError('Native checkpoint transducer is missing or changed')
+            checkpoint = {'path': str(directory), 'metadataSha256': metadata_sha, 'metadata': value,
+                          'checkpointFilesVerified': True, 'nativePayloadLoadVerified': False}
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            checkpoint_error = {'type': type(error).__name__, 'message': str(error)}
+    return {'schema': 'partial-native-optimization/1', 'metricsSha256': sha256(metrics),
+            'observedOptimizerSteps': max((row['global_step'] for row in rows), default=0),
+            'supervisedLexicalTokens': sum(row['denominators']['lexical'] for row in rows),
+            'malformedMetricLines': malformed, 'lastDurableCheckpoint': checkpoint,
+            'checkpointVerificationFailure': checkpoint_error,
+            'updatesAreNotDurableCheckpointEvidence': True}
 
 
 def verify_training_start(initial, phase_start):
@@ -294,7 +498,7 @@ def bind_initial_checkpoint(source, root, codec):
     return destination, hashes(dict(trained.model.named_parameters()))
 
 
-def native_window_plan(config, codec):
+def native_optimization_schedule(config, codec):
     """Freeze the real resolved native sampler's windows before optimizer launch."""
     from megatoken.data.storage import PreparedCorpus
     from megatoken.training.engine import window_config
@@ -357,6 +561,8 @@ def require_counters(value, names, label):
 
 def score_rollout(actual, case, origin, bundle, profile):
     """Score complete, identity-bound evidence; absent gates never mean success."""
+    if not isinstance(actual, dict) or not isinstance(profile, dict):
+        raise ValueError('Diagnostic result and serving profile must be complete objects')
     envelope = case['envelope']
     if (origin not in {'trained', 'fixed-weights'} or envelope.get('caseId') != case['id'] or
             envelope.get('schema') != 'semantic-evaluation-request/4' or
@@ -365,7 +571,10 @@ def score_rollout(actual, case, origin, bundle, profile):
     identity = {'schema': 'semantic-inference-identity/4', 'seed': envelope['seed'],
                 'checkpointIdentity': bundle['model_sha256'],
                 'tokenizerIdentity': bundle['codec_fingerprint']}
-    sidecar = actual.get('episode', {}).get('sidecar', {})
+    episode = actual.get('episode')
+    sidecar = episode.get('sidecar') if isinstance(episode, dict) else None
+    if not isinstance(sidecar, dict):
+        raise ValueError('Diagnostic result lacks its case identity sidecar')
     if (actual.get('schema') != 'semantic-evaluation-result/4' or
             actual.get('origin') != origin or actual.get('representation') != envelope['representation'] or
             actual.get('checkpointIdentity') != bundle['model_sha256'] or
@@ -386,6 +595,7 @@ def score_rollout(actual, case, origin, bundle, profile):
             profile.get('runtimeClosed') is not True or type(profile.get('optimizerSteps')) is not int or
             profile['optimizerSteps'] != 0 or profile.get('initialization') != identity or
             profile.get('declaredOrigin') != ('trained' if origin == 'trained' else 'fixed') or
+            not isinstance(profile.get('identity'), dict) or
             profile.get('identity', {}).get('modelSha256') != bundle['model_sha256'] or
             profile.get('identity', {}).get('tokenizerIdentity') != bundle['codec_fingerprint']):
         raise ValueError('Diagnostic serving profile is incomplete or has a different identity')
@@ -393,6 +603,73 @@ def score_rollout(actual, case, origin, bundle, profile):
     exact_outcome = json.dumps(outcome, sort_keys=True, separators=(',', ':')) == json.dumps(
         case['expected'], sort_keys=True, separators=(',', ':'))
     return actual['failure'] is None and exact_outcome and not any(gates.values()) and not any(cleanup.values())
+
+
+def generated_token_cost(profile, actual=None, codec=None):
+    """Count actual successful/failed decoder tokens once per native event.
+
+    The same failure evidence may be repeated in several receipts. Event IDs
+    identify the original decoder emission, not a retry or a rendered byte count.
+    Incomplete profiles remain lower bounds instead of invented exact costs.
+    """
+    events = {}
+
+    def visit(value):
+        if isinstance(value, dict):
+            event = value.get('selectedEventId')
+            tokens = value.get('emittedTokenIds')
+            if isinstance(event, str) and isinstance(tokens, list):
+                if any(not isinstance(token, int) or isinstance(token, bool) or token < 0 for token in tokens):
+                    raise ValueError('Invalid native emitted-token evidence')
+                payload = value.get('payloadHex')
+                if codec is not None:
+                    if not isinstance(payload, str) or codec.decode(tokens) != bytes.fromhex(payload):
+                        raise ValueError('Native emitted token IDs do not reconstruct original bytes')
+                signature = (tokens, payload)
+                if event in events and events[event] != signature:
+                    raise ValueError('Conflicting native emitted-token evidence for one event')
+                events[event] = signature
+            for child in value.values():
+                visit(child)
+        elif isinstance(value, list):
+            for child in value:
+                visit(child)
+
+    visit(profile)
+    # Successful selection fragments live in evaluator evidence, while profiles
+    # retain failed emissions. Do not mistake a successful profile for zero cost.
+    if actual is not None:
+        for row in [*actual.get('selections', []), *actual.get('rejections', [])]:
+            selection = row.get('selection')
+            if selection is not None:
+                if selection.get('modelSelected') is not True or codec is not None and selection.get('codecFingerprint') != codec.fingerprint:
+                    raise ValueError('Token evidence lacks attested actual model selection')
+                fragments = selection.get('fragments')
+                if not isinstance(fragments, list) or not fragments:
+                    raise ValueError('Actual selection omitted native decoder fragments')
+                if row.get('record') is not None and b''.join(bytes.fromhex(item['payloadHex']) for item in fragments) != row['record'].encode():
+                    raise ValueError('Native fragments do not reconstruct selected record')
+                visit(fragments)
+        visit((actual.get('failure') or {}).get('evidence'))
+    successful_calls = sum(row.get('operation') == 'select' and row.get('ok') is True and
+                           row.get('selectionAuthority') is not None for row in profile.get('records', []))
+    recorded_selections = len(actual.get('selections', [])) if actual is not None else 0
+    failed_calls = [row for row in profile.get('records', []) if row.get('operation') == 'select' and row.get('ok') is False]
+    # complete=True in the serving profile only means RPC rows were retained.
+    # A runtime/OOM exception may interrupt decoding before original token IDs
+    # become a reply. Only the pinned adapter's explicit SemanticSelectionError
+    # with complete original fragments closes that failed decoder stream.
+    failed_emissions_complete = all(
+        (row.get('failure') or {}).get('category') == 'SemanticSelectionError' and
+        isinstance(((row.get('failure') or {}).get('evidence') or {}).get('fragments'), list) and
+        bool(row['failure']['evidence']['fragments']) and
+        all(isinstance(fragment.get('emittedTokenIds'), list) for fragment in row['failure']['evidence']['fragments'])
+        for row in failed_calls)
+    complete = (profile.get('complete') is True and profile.get('droppedRecords') == 0 and
+                recorded_selections >= successful_calls and failed_emissions_complete)
+    return {'generatedTokens': sum(len(tokens) for tokens, _ in events.values()),
+            'decoderEvents': len(events), 'complete': complete,
+            'scope': 'original-native-emitted-token-ids' if complete else 'retained-native-token-lower-bound'}
 
 
 def rollout(case, origin, bundle, consumer, root, args, env):
@@ -411,22 +688,69 @@ def rollout(case, origin, bundle, consumer, root, args, env):
                '--checkpoint-identity', bundle['model_sha256'],
                '--timeout-ms', str(args.rollout_timeout * 1000), '--cleanup-timeout-ms', '10000']
     started = time.monotonic()
+    summary = {'id': case['id'], 'family': case['family'], 'origin': origin,
+               'wholeTaskSuccess': False, 'traceValid': False,
+               'checkpointIdentity': bundle['model_sha256'],
+               'artifacts': str(destination), 'generatedTokenCost': None}
+    # A process group includes the evaluator's model child. A killed evaluator
+    # must not leave a decoder running after the declared case budget.
     with (destination / 'result.json').open('w') as output, (destination / 'stderr.log').open('w') as errors:
-        process = subprocess.run(command, input=json.dumps(case['envelope']), text=True,
-                                 stdout=output, stderr=errors, env=env,
-                                 timeout=args.rollout_timeout + 45)
-    if process.returncode:
-        return {'id': case['id'], 'origin': origin, 'wholeTaskSuccess': False,
-                'pipelineFailure': 'evaluator-process-exit', 'returnCode': process.returncode,
-                'artifacts': str(destination), 'wallSeconds': time.monotonic() - started}
-    actual = json.loads((destination / 'result.json').read_text())
-    profile = json.loads((destination / 'serving-profile.json').read_text())
-    success = score_rollout(actual, case, origin, bundle, profile)
-    return {'id': case['id'], 'origin': origin, 'wholeTaskSuccess': success,
-            'checkpointIdentity': actual['checkpointIdentity'], 'failure': actual['failure'],
-            'hardGates': actual['hardGates'], 'costs': actual['costs'],
-            'cleanup': actual['outcome']['cleanup'], 'servingProfile': profile,
-            'artifacts': str(destination), 'wallSeconds': time.monotonic() - started}
+        process = subprocess.Popen(command, stdin=subprocess.PIPE, text=True, stdout=output,
+                                   stderr=errors, env=env, start_new_session=True)
+        try:
+            process.communicate(json.dumps(case['envelope']), timeout=args.rollout_timeout + 45)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                process.wait()
+            summary.update(pipelineFailure='evaluator-timeout', returnCode=process.returncode)
+        else:
+            if process.returncode:
+                summary.update(pipelineFailure='evaluator-process-exit', returnCode=process.returncode)
+    summary['wallSeconds'] = time.monotonic() - started
+    profile = None
+    profile_path = destination / 'serving-profile.json'
+    if profile_path.exists():
+        try:
+            profile = json.loads(profile_path.read_text())
+            summary['servingProfile'] = profile
+            summary['generatedTokenCost'] = generated_token_cost(profile)
+        except (ValueError, TypeError) as error:
+            summary['pipelineFailure'] = 'invalid-native-profile'
+            summary['profileError'] = str(error)
+    if 'pipelineFailure' not in summary:
+        try:
+            actual = json.loads((destination / 'result.json').read_text())
+            success = score_rollout(actual, case, origin, bundle, profile)
+            gates = actual['hardGates']
+            rejections = actual['rejections']
+            if not isinstance(rejections, list):
+                raise ValueError('Diagnostic rejection evidence must be a list')
+            trace_valid = (actual['failure'] is None and not rejections and
+                           actual.get('firstSemanticInconsistency') is None and not any(gates.values()))
+            codec = None
+            if bundle.get('codec_file'):
+                from megatoken.generation.codec import ByteCodec
+                codec = ByteCodec.from_tokenizer_json(Path(bundle['bundle']) / bundle['codec_file'],
+                                                      expected_sha256=bundle['tokenizer_sha256'])
+            summary['generatedTokenCost'] = generated_token_cost(profile, actual, codec)
+            summary.update(wholeTaskSuccess=trace_valid and success,
+                           traceValid=trace_valid, failure=actual['failure'],
+                           rejections=rejections, firstSemanticInconsistency=actual.get('firstSemanticInconsistency'),
+                           hardGates=gates, costs=actual['costs'], cleanup=actual['outcome']['cleanup'])
+        except (ValueError, TypeError, KeyError) as error:
+            summary.update(pipelineFailure='invalid-evaluator-result', resultError=str(error))
+    write_json(destination / 'summary.json', summary)
+    return summary
 
 
 def main():
@@ -438,11 +762,9 @@ def main():
     parser.add_argument('--tokenizer-json', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--examples', type=int, default=32)
+    parser.add_argument('--experiment', type=Path, help='Private membership and rules frozen before optimization')
+    parser.add_argument('--initialization-seed', type=int, choices=[17, 29, 43], default=17)
     parser.add_argument('--steps', type=int, default=16)
-    parser.add_argument('--max-window-records', type=int, default=1,
-                        help='Native atomic-window record cap; all resolved bounds are profiled before launch')
-    parser.add_argument('--scored-decisions', type=int, default=2,
-                        help='Native causal-window decision cap; diagnostic default is 2')
     parser.add_argument('--base-checkpoint', type=Path,
                         help='Reuse this exact zero-update diagnostic base instead of initializing a new one')
     parser.add_argument('--require-full-epoch', action='store_true',
@@ -451,16 +773,16 @@ def main():
     parser.add_argument('--rollout-tokens', type=int, default=128)
     parser.add_argument('--rollout-timeout', type=int, default=120)
     parser.add_argument('--train-timeout', type=int, default=900)
+    parser.add_argument('--training-window-records', '--max-window-records', dest='training_window_records', type=int, default=1)
+    parser.add_argument('--training-window-decisions', '--scored-decisions', dest='training_window_decisions', type=int, default=2)
     parser.add_argument('--seed', type=int, choices=[17, 29, 43], default=17)
     args = parser.parse_args()
     if min(args.examples, args.steps, args.rollout_cases, args.rollout_tokens, args.train_timeout) < 1:
         parser.error('All caps must be positive')
     if not 1 <= args.rollout_timeout <= 300 or args.rollout_tokens > 1024:
         parser.error('Rollout timeout must be <=300 seconds and token cap <=1024')
-    if not 1 <= args.max_window_records <= 128:
-        parser.error('Native atomic-window record cap must be between 1 and 128')
-    if not 1 <= args.scored_decisions <= 64:
-        parser.error('Native scored-decision cap must be between 1 and 64')
+    if not all(1 <= value <= 1024 for value in (args.training_window_records, args.training_window_decisions)):
+        parser.error('Training window record and decision caps must be 1..1024')
     root = args.output.resolve()
     root.mkdir(parents=True, exist_ok=False)
     report = {'schema': 'optimization-smoke/1', 'status': 'running',
@@ -468,8 +790,8 @@ def main():
               'stage': 'P1', 'purpose': 'diagnostic', 'split': 'train',
               'generalizationClaim': False, 'injectedSelections': False,
               'candidateSelection': 'round-robin families; smallest generated-token count then public bytes within each family',
-              'requestedSteps': args.steps, 'maxWindowRecords': args.max_window_records,
-              'scoredDecisions': args.scored_decisions,
+              'requestedSteps': args.steps, 'maxWindowRecords': args.training_window_records,
+              'scoredDecisions': args.training_window_decisions,
               'fullEpochRequested': args.require_full_epoch,
               'seed': args.seed, 'optimizerSteps': 0}
 
@@ -483,7 +805,31 @@ def main():
         require_clean_checkout(tracer)
         require_clean_checkout(consumer)
         producer_revision, consumer_revision = git_head(tracer), git_head(consumer)
-        manifest, selected = choose_candidates(corpora, args.examples)
+        experiment = json.loads(args.experiment.read_text()) if args.experiment else None
+        from learning_evaluation import selected_rollout_budget, frozen_training_budget
+        budget = selected_rollout_budget(experiment or {})
+        if experiment is not None:
+            if (args.seed not in experiment['optimizerSeeds'] or args.steps != max(experiment['checkpointSteps']) or
+                    args.initialization_seed != experiment['initializationSeed'] or
+                    producer_revision != experiment['producerRevision']):
+                raise ValueError('Actual training inputs differ from the frozen experiment')
+            if experiment.get('rolloutBudget') is not None and (
+                    args.rollout_tokens != budget['nativeMaxTokensPerFragment'] or
+                    args.rollout_timeout != budget['secondsPerCase']):
+                raise ValueError('Actual inference caps differ from the frozen budget')
+            training_budget = frozen_training_budget(experiment)
+            if training_budget is not None and (args.training_window_records != training_budget['maxWindowRecords'] or
+                    args.training_window_decisions != training_budget['maxScoredDecisions'] or
+                    args.train_timeout != training_budget['seconds']):
+                raise ValueError('Actual native training windows or time cap differ from the frozen budget')
+            if args.base_checkpoint and experiment.get('baseCheckpointSha256') != sha256(args.base_checkpoint / 'state.pt'):
+                raise ValueError('Reused base bytes must be bound explicitly in the frozen experiment')
+            record(experimentSha256=sha256(args.experiment), experimentPath=str(args.experiment.resolve()))
+        record(rolloutBudget={**budget, 'nativeMaxTokensPerFragment': args.rollout_tokens,
+                              'secondsPerCase': args.rollout_timeout})
+        manifest, selected = choose_candidates(corpora, args.examples, experiment)
+        record(initializationSeed=args.initialization_seed, optimizerSeed=args.seed,
+               baseOrigin='newly-initialized', trainingCandidateIdentities=[item.get('identityDigest') for item, _ in selected])
         if manifest['producerRevision'] != producer_revision:
             raise ValueError('Corpus must match immutable source-verifier checkout')
         sys.path.insert(0, str(consumer / 'src'))
@@ -530,61 +876,74 @@ def main():
         import torch
         from megatoken.training.config import TrainConfig
         torch.set_num_threads(1)
+        checkpoint_interval = math.gcd(*experiment['checkpointSteps']) if experiment else 1
+        checkpoint_retention = args.steps // checkpoint_interval + 1 if experiment else 3
+        if checkpoint_retention > 101:
+            raise ValueError('Frozen checkpoint schedule would retain more than 100 periodic states')
         config = TrainConfig(purpose='diagnostic', phase='P1', model='tiny',
                              codec=str(args.tokenizer_json.resolve()), datasets=[str(prepared)],
                              output=str(root / 'training'), device='cpu', precision='fp32', seed=args.seed,
                              max_steps=args.steps, microbatch_episodes=1, max_accumulation_windows=1,
                              accumulate_scored=1, accumulate_ingested=16384, max_history_tokens=16384,
-                             max_window_records=args.max_window_records,
-                             scored_decisions=args.scored_decisions,
+                             max_window_records=args.training_window_records, scored_decisions=args.training_window_decisions,
                              max_record_bytes=16384, generated_capacity=1024,
                              model_overrides={'vocab_size': codec.vocab_size, 'max_capacity': 1024,
                                               'max_history_chunks': 1024},
-                             effort=1, gradient_checkpointing=False, checkpoint_every=1, eval_every=0,
+                             effort=1, gradient_checkpointing=False, checkpoint_every=checkpoint_interval,
+                             keep_checkpoints=checkpoint_retention, eval_every=0,
                              deterministic=True, use_stage_mixture=False, use_effort_mixture=False)
         config_path = root / 'train-config.json'
         write_json(config_path, asdict(config))
-        plan = native_window_plan(config, codec)
+        plan = native_window_plan(prepared, codec, config)
+        schedule = native_optimization_schedule(config, codec)
         plan_path = root / 'native-window-plan.json'
+        schedule_path = root / 'native-schedule-plan.json'
         write_json(plan_path, plan)
+        write_json(schedule_path, schedule)
         record(resolvedTrainingConfigSha256=sha256(config_path), nativeWindowPlanSha256=sha256(plan_path),
-               nativeWindowPlan={key: value for key, value in plan.items()
-                                 if key not in {'windows', 'expectedFinalCursor'}})
-        if args.require_full_epoch and (args.steps != plan['windowsPerFirstEpoch'] or
-                plan['expectedExamples'] != len(selected) or
-                plan['expectedScoredTokens'] != masks['counts']['generatedScoredTokens']):
+               nativeSchedulePlanSha256=sha256(schedule_path),
+               nativeWindowPlan={'path': str(plan_path), 'sha256': sha256(plan_path),
+                   'firstEpochWindows': plan['firstEpochWindows'],
+                   'eachEpisodeIsOneWindow': plan['eachEpisodeIsOneWindow'],
+                   **{key: value for key, value in schedule.items() if key not in {'windows', 'expectedFinalCursor'}}})
+        if args.require_full_epoch and (args.steps != schedule['windowsPerFirstEpoch'] or
+                schedule['expectedExamples'] != len(selected) or
+                schedule['expectedScoredTokens'] != masks['counts']['generatedScoredTokens']):
             raise ValueError('Resolved native window plan does not consume exactly one complete prepared epoch')
         if args.base_checkpoint:
             initial, initial_parameters = bind_initial_checkpoint(args.base_checkpoint.resolve(), root, codec)
             record(initialCheckpointSource=str(args.base_checkpoint.resolve()))
         else:
-            initial, initial_parameters = create_initial_checkpoint(root, config, codec, masks['chunking'])
+            initial, initial_parameters = create_initial_checkpoint(root, config, codec, masks['chunking'],
+                                                                   initialization_seed=args.initialization_seed)
         write_json(root / 'initial-parameter-identities.json', initial_parameters)
         gc.collect()
         base_bundle = export_checked(initial, root / 'served-base')
         record(phase='training', initialCheckpoint=str(initial), baseBundle=base_bundle)
         gc.collect()
-        run_logged([sys.executable, '-m', 'megatoken', 'train', '--config', str(config_path),
+        training_process = run_logged([sys.executable, '-m', 'megatoken', 'train', '--config', str(config_path),
                     '--resume', str(initial), '--phase-transition'], root / 'training.log',
-                   env=env, timeout=args.train_timeout)
+                   env=env, timeout=args.train_timeout, graceful_checkpoint=True)
+        record(trainingProcess=training_process)
         start_check = verify_training_start(initial, root / 'training/checkpoints/P1-000000000-phase-start')
         pointer = json.loads((root / 'training/checkpoints/latest.json').read_text())
         checkpoint = root / 'training/checkpoints' / pointer['checkpoint']
-        checkpoint_check = checkpoint_receipt(checkpoint, initial_parameters)
+        checkpoint_check = checkpoint_receipt(checkpoint, initial_parameters, stream_fingerprint=plan['streamFingerprint'])
+        exposure = training_exposure(plan, checkpoint_check['sourceSampling'])
         if checkpoint_check['globalStep'] != args.steps:
             raise ValueError('Actual optimizer step count differs from the requested cap')
-        exposure = source_exposure_receipt(prepared, checkpoint_check['sourceSampling'])
-        if exposure['windowsSampled'] != args.steps:
+        source_exposure = source_exposure_receipt(prepared, checkpoint_check['sourceSampling'])
+        if source_exposure['windowsSampled'] != args.steps:
             raise ValueError('Actual source exposure differs from the atomic update count')
-        if (checkpoint_check['sourceSampling']['source_windows'] != plan['expectedSourceWindows'] or
-                checkpoint_check['nativeCursors'] != [plan['expectedFinalCursor']]):
+        if (checkpoint_check['sourceSampling']['source_windows'] != schedule['expectedSourceWindows'] or
+                checkpoint_check['nativeCursors'] != [schedule['expectedFinalCursor']]):
             raise ValueError('Actual native source exposure/cursor differs from the frozen resolved window plan')
         metrics = [json.loads(line) for line in (root / 'training/metrics.jsonl').read_text().splitlines()]
         training = [row for row in metrics if row['event'] == 'train']
         write_json(root / 'optimizer-verification.json', checkpoint_check)
         if len(training) != args.steps or not all(row['gradient_norm'] > 0 for row in training):
             raise ValueError('Optimizer updates lack measured nonzero gradients')
-        if sum(row['denominators']['lexical'] for row in training) != plan['expectedScoredTokens']:
+        if sum(row['denominators']['lexical'] for row in training) != schedule['expectedScoredTokens']:
             raise ValueError('Actual scored lexical targets differ from the frozen native window plan')
         gradient_domains = ['encoder', 'model', 'shared']
         if not all(any(row.get('gradient_norm_' + domain, 0) > 0 for row in training)
@@ -594,12 +953,13 @@ def main():
         if base_bundle['model_sha256'] == trained_bundle['model_sha256']:
             raise ValueError('Training did not change the actual served model')
         record(phase='evaluating', optimizerSteps=args.steps, trainedBundle=trained_bundle,
+               trainingExposure=exposure,
                initialTrainingState=start_check,
                checkpointVerification={key: value for key, value in checkpoint_check.items()
                                        if key not in {'changedParameters', 'updatedOptimizerOwners'}},
                changedParameterCount=len(checkpoint_check['changedParameters']),
                updatedOptimizerOwnerCount=len(checkpoint_check['updatedOptimizerOwners']),
-               sourceExposure=exposure,
+               sourceExposure=source_exposure,
                nativeWindowPlanMatched=True,
                supervisedLexicalTokens=sum(row['denominators']['lexical'] for row in training),
                trainingSummary=[{'step': row['global_step'], 'gradientNorm': row['gradient_norm'],
@@ -624,7 +984,9 @@ def main():
                         'checkpointReloadExact': True, 'servedReloadExact': True,
                         'completeHeldInExecutions': all(row['wholeTaskSuccess'] for row in trained),
                         'approximately32Examples': len(selected) >= 32,
-                        'approximately32ExamplesSampled': exposure['examplesSampled'] >= 32}
+                        'everySelectedSourceExposed': exposure['everySelectedSourceExposed'],
+                        'everySelectedEpisodeVisitedAllWindows': exposure['everySelectedEpisodeVisitedAllWindows'],
+                        'approximately32ExamplesSampled': source_exposure['examplesSampled'] >= 32}
         record(status='completed', phase='complete', requirements=requirements,
                optimizationSmokePassed=all(requirements.values()),
                remaining=[] if all(requirements.values()) else [
@@ -633,6 +995,14 @@ def main():
                           'optimizerSteps': args.steps}))
         return 0
     except BaseException as error:
+        try:
+            partial = partial_training_receipt(root)
+            if partial is not None:
+                write_json(root / 'partial-training-receipt.json', partial)
+                record(partialTraining=partial, optimizerSteps=partial['observedOptimizerSteps'],
+                       supervisedLexicalTokens=partial['supervisedLexicalTokens'])
+        except Exception as evidence_error:
+            record(partialEvidenceError={'type': type(evidence_error).__name__, 'message': str(evidence_error)})
         record(status='failed', error={'type': type(error).__name__, 'message': str(error)},
                traceback=traceback.format_exc())
         print(f'Optimization smoke stopped; durable report: {root / "report.json"}', file=sys.stderr)

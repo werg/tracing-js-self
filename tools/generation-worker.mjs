@@ -10,6 +10,7 @@ import {verifyEffectfulTrainingCase,independentEffectfulReference} from '../src/
 import {verifyEffectfulSession} from '../src/training/effectful-session.js';
 import {encodeNativeGraph,decodeOwnedGraph} from '../src/host/graph-codec.js';
 import {decodeGenerationTask} from '../src/corpus/generation-process.mjs';
+import {canonicalJavaScriptExpected} from '../src/corpus/owned-exercism.mjs';
 import {canonicalReturnMatches} from '../src/corpus/exercism-language-bindings.mjs';
 
 const chunks=[];let inputBytes=0;
@@ -38,31 +39,42 @@ try{
         reason:'Pinned original and transformed source observations disagree',
         failure:{referenceInput,transformedSource:options.source,original,transformed}};
       const expected=options.provenance?.canonicalExpected;
+      let canonicalExpectation=null;
       if(!result&&expected!==undefined&&options.provenance?.inputOrigin==='upstream-canonical'){
-        const expectsError=expected&&typeof expected==='object'&&Object.hasOwn(expected,'error');
-        let matches=original.outcome.kind===(expectsError?'throw':'return');
-        if(matches&&!expectsError){
+        const expectsThrow=!!(expected&&typeof expected==='object'&&Object.hasOwn(expected,'error'));
+        const outcomeKind=expectsThrow?'throw':'return';
+        let agrees=original.outcome.kind===outcomeKind;
+        if(agrees&&!expectsThrow){
           const graph=original.outcome.graph;
           const value=decodeOwnedGraph(JSON.stringify({schema:'owned-graph/1',roots:[graph.roots.at(-1)],
             objects:graph.objects.map(object=>({...object,
               properties:object.properties.map(([key,value])=>({key,value}))}))}))[0];
-          matches=canonicalReturnMatches(value,expected,options.provenance?.canonicalExpectedBinding,
+          const binding=options.provenance?.canonicalExpectedBinding??null;
+          if(binding)canonicalJavaScriptExpected(expected,binding);
+          const contextualBinding=binding?.schema==='exercism-javascript-expected/1'?
+            {schema:'exercism-grains-bigint/1',decimal:binding.decimal}:binding;
+          agrees=canonicalReturnMatches(value,expected,contextualBinding,
             {family:options.family,property:options.provenance?.canonicalProperty});
         }
-        // Canonical error prose is language-neutral: pinned JS proof messages
-        // can differ (including case and wording). Require the error completion
-        // here; original/transform/owned comparisons bind its exact JS graph.
-        const canonicalCheck={status:matches?'agreed':'disagreed',
-          mode:expectsError?'error-completion-only':options.provenance?.canonicalExpectedBinding?
+        const canonicalCheck={status:agrees?'agreed':'disagreed',
+          mode:expectsThrow?'error-completion-only':options.provenance?.canonicalExpectedBinding?
             'exact-bigint-return':'exact-return-value',
-          expectedKind:expectsError?'throw':'return',observedKind:original.outcome.kind};
+          expectedKind:outcomeKind,observedKind:original.outcome.kind};
         options.provenance={...options.provenance,canonicalCheck};
-        if(!matches)result={status:'canonical_mismatch',
+        if(!agrees)result={status:'canonical_mismatch',
           reason:'Pinned original source disagrees with independent canonical expected result',
-          failure:{referenceInput,original,canonicalExpected:expected,canonicalCheck}};
+          failure:{referenceInput,original,canonicalExpected:expected,
+            canonicalExpectedBinding:options.provenance?.canonicalExpectedBinding??null,canonicalCheck}};
+        else canonicalExpectation={status:'agreed',outcomeKind,
+          expectedValueBinding:options.provenance?.canonicalExpectedBinding??null,
+          // Language-neutral error descriptions do not assert JS exception
+          // wording. The independent original/owned gates still compare the
+          // actual observable exception name/message exactly.
+          ...(expectsThrow?{canonicalErrorMessageCompared:false}:{})};
       }
       if(!result)options.provenance={...options.provenance,originalSourceCheck:{status:'agreed',
-        originalReferenceDigest:identityHash(original),transformedReferenceDigest:identityHash(transformed)}};
+        originalReferenceDigest:identityHash(original),transformedReferenceDigest:identityHash(transformed),
+        ...(canonicalExpectation?{canonicalExpectation}:{})}};
     }
     if(!result){phase='owned-verification';result=await verifyEffectfulTrainingCase(options);}
   }

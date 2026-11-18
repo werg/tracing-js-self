@@ -1,0 +1,54 @@
+{
+  "schema": "semantic-v5-baseline/1",
+  "producerRevision": "5753de14760b76754fd1bd49ca7c8bfc6de85831",
+  "producerTree": "9a501c0bcf4982a4f515b90a0af1cd24721ea6fc",
+  "workingTreeClean": true,
+  "environment": {
+    "schema": "semantic-execution-environment/1",
+    "node": "24.22.3",
+    "v8": "13.6.233.17-node.63",
+    "platform": "linux",
+    "arch": "x64",
+    "timezone": "UTC",
+    "parser": "8.15.0",
+    "typescript": "5.9.3",
+    "packageLockDigest": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88",
+    "implementationDigest": "01116c203fa7d0d73e821ce7de1d928c860dbed8db2190e852739f86f35d3c56",
+    "locale": "en-US",
+    "referenceIsolation": {
+      "schema": "semantic-reference-isolation/1",
+      "mode": "trusted-process",
+      "launcherSha256": "b9d3bd23d092083173508fd570c3d5b6dc4e0e98fc9814e3df543e634351ea24"
+    }
+  },
+  "executionEnvironment": {
+    "timezone": "UTC",
+    "locale": "C.UTF-8"
+  },
+  "lockDigests": {
+    "package-lock.json": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88",
+    "tools/spec-oracle/package-lock.json": "da1280e9edfc16209aed80056ba7921192bc05cf99617d977a72e28dbfac836b",
+    "tools/native-consumer/requirements.lock": "233ce2065a5eebb85472eb2bdab714bedc26aa74536c6c0df73ea0081f204135",
+    "profiles/release-environment.lock.json": "b3da3b1ebbe8bb13e6dee3aabfdd3741bbe9184e710ed0c35ac50703fcb05662",
+    "contracts/native-admission-policy-v5.json": "b735cdf31845c8234c1a9fb10bcc94c76c043a70abc5b9d9acc4625c497ca718",
+    "contracts/semantic-harness-v5.json": "8e8856a48caa5db5cfe8304bb1427343deb58f3275c7b145a31aa93ad04cf8c1",
+    "contracts/host-operations-v4.json": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d"
+  },
+  "qualificationEnvironment": {
+    "status": "passed",
+    "actual": {
+      "node": "24.22.3",
+      "v8": "13.6.233.17-node.63",
+      "npm": "11.9.0",
+      "platform": "linux",
+      "arch": "x64",
+      "timezone": "UTC",
+      "locale": "C.UTF-8"
+    },
+    "mismatches": {}
+  },
+  "checks": [],
+  "corpora": [],
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}

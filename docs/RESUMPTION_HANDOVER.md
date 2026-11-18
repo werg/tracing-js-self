@@ -9,9 +9,15 @@ Completed implementation increments and compact receipts are committed and
 pushed immediately; historical failures remain intact.
 
 The implementation branch is `codex/resumption-20261118`, with current review in
-[producer PR #39](https://github.com/werg/tracing-js-self/pull/39) and
-[companion PR #30](https://github.com/werg/megatoken/pull/30). Earlier producer
-PRs #36 and #37 were merged externally during the work. The per-package
+[producer PR #39](https://github.com/werg/tracing-js-self/pull/39).
+Parallel producer work was merged through PR #38 at
+`0c307781fea0fa3fca58f1dec037c8653cc921e0`; the current reconciliation preserves
+both implementations and their original evidence. The reconciled consumer was
+merged through [companion PR #31](https://github.com/werg/megatoken/pull/31)
+at main `9bf32c3fc794c532444d6a84629bfa29599eb49c`. Its exact qualified policy
+pin is `6b4382b9af3bef120ca3a95ae24d35154d4cd66b`. Companion PR #30 was closed
+unmerged externally; its frozen `1cee21d…` remains the genuine E/F/G consumer.
+Earlier producer PRs #36 and #37 were also merged externally. The per-package
 [acceptance audit](PLAN_ACCEPTANCE_AUDIT.md) distinguishes code completion from
 measured acceptance; it does not grant a blanket pass to W01–W14.
 
@@ -46,6 +52,7 @@ not a production SE/SC experiment.
 | D | `83e0d5742e63dc4439b68d6296f323cb7a3aafdc` | `b88073dcb5a8e438a711d494a5fd592e773798f5` | Corrected runtime/canonical bindings, immutable graph replay, streaming preparation and larger real-source sweep. |
 | E | `1b391c19c3c8137d5b00c5412e53614a568b3704` | `1cee21dd07a687b0a824abff1bbd5ef9a13149ab` | Fresh qualification of twelve captured-binding failures. |
 | F | `22eaac6a46e262b00986c63b4fc66f6240016252` | `1cee21dd07a687b0a824abff1bbd5ef9a13149ab` | Exact canonical-input precision refusal, primitive Number conversion, 60-case fresh recovery, finite capability ledger and timeout review. |
+| G, retained failed unit qualification | `a088ad60028a02e1d595dfc1afe7b6379cd0998a` | `1cee21dd07a687b0a824abff1bbd5ef9a13149ab` | Parameter TDZ, bounded forward closure and async-helper repairs. The full unit run exposes one stale refusal assertion; no native ladder or reference fixture was run after that failure. |
 
 E and F qualify their explicit subsets; neither requalifies every D row.
 D's original capture-name refusals remain in D. The initial two-step model
@@ -99,8 +106,14 @@ rejected without altering originals or making new model calls.
 Semantic repairs include method-specific omitted/undefined array bounds, async
 declaration flags, ordered parameter initialization/TDZ and separate body scope,
 default-parameter closure capture, positive primitive and declared Error throws,
-and explicit descriptor refusals. The Error profile avoids reading accessors or
-lazy stack state. The Node 20 canonical-data compatibility fix preserves exact
+and explicit descriptor refusals. The merged main additionally retains genuine
+implicit owned error completions, supported ordinary descriptor updates and
+bounded primitive String/BigInt conversion. The parameter-specific repair
+authenticates prior TDZ state and allows forward capture only across a proven
+initialization-only interval. Replay of synchronous entries with async helpers
+derives async syntax permission from freshly recompiled and compared source.
+The Error profile avoids reading accessors or lazy stack state. The Node 20
+canonical-data compatibility fix preserves exact
 large integer lexemes without relying on newer JSON reviver context; all twenty
 pinned source/canonical records remain exactly equal to D under Node 24.
 
@@ -293,6 +306,15 @@ pretrained execution baseline. The full evaluation matrix—new project and
 feature compositions, varied feedback/schedules, longer horizons/heaps, and
 pure code/input-to-output transfer—has not been measured by this small cohort.
 
+Parallel main retains a separate negative experiment: 64 updates visiting five
+of 32 prepared source IDs, a selected test with 0/3 successes in both arms from
+one independent component, and a pure source/input-to-output test with 0/1 in
+both arms. Its original receipts and uninjected outputs remain in
+[the separate learning-pilot evidence](receipts/learning-pilot-2026-11-18/README.md).
+The integrated source-only transfer adapter is implemented; that one-task result
+does not establish the broader transfer matrix. None of these denominators is
+added to the 49-update/eight-component experiment above.
+
 The comparison implementation requires complete hard gates, actual artifact
 and budget identities, family-weighted scores, component/seed resampling,
 declared improvement thresholds and protected slices. Confirmatory acceptance
@@ -332,6 +354,15 @@ Unsupported general BigInt execution remains refused.
 These additions increase useful bounded-profile coverage without claiming
 unrestricted library or host compatibility.
 
+The integrated main adds bounded primitive BigInt and String conversion with
+owned abrupt outcomes; this does not reclassify historical D/F refusals. It
+also supplies an optional Linux namespace/seccomp native-reference launcher,
+exclusive writer/shared reader campaign locks, validated registry reuse,
+drained failed workers and stricter checkpoint/exposure checks. Historical
+passes from other hosts retain their recorded producer, consumer and isolation
+identity. Final integrated qualification is recorded separately from those
+existing receipts.
+
 Complete release archives include public records, private evidence, source
 pins/notices, refusals, actual prepared native data and hashed manifests. The
 streaming verifier checks every archived member. Archives are private audit
@@ -343,14 +374,15 @@ releases; they do not invent permission for public redistribution.
 | --- | --- | --- |
 | Qualified production SE/SC training | No compatible preceding phase-S checkpoint, ordered pinned donors, hindsight/coordinator assets or complete experiment identities were supplied. Native launch validation requires them; diagnostic P1 checkpoints are not substitutes. | Supply compatible phase-S or same-stage resume assets, the pinned donor profiles and complete the declared training configuration. Run validation before spending compute. |
 | Production compute and confirmation | This environment has CPU Torch and no CUDA. Actual bounded CPU optimization was completed, but no three-seed production experiment or positive execution result exists. | On a suitable runner, start with the recorded first-action failures, establish held-in execution, then freeze validation/test and run the predeclared multi-seed comparison. |
-| OS isolation for arbitrary untrusted code | The ordinary namespace attempt fails creating a NETLINK_ROUTE socket. The sandbox cannot provision the required isolation boundary. | Provide an isolated runner with network/files/credentials restricted and hard process-tree CPU/memory limits. Keep current trusted-source restrictions until qualified. |
+| OS isolation for arbitrary untrusted code | The earlier ordinary namespace probe fails creating a NETLINK_ROUTE socket. The integrated optional Linux profile confines the native reference only; the owned teacher, acquisition and consumer are separate boundaries. Its host-specific test and explicit skip/failure remain necessary. | Qualify the Linux reference profile on the intended runner and isolate every remaining untrusted execution boundary. Keep the default trusted-source restriction until that complete runner is qualified. |
 | Hard aggregate CPU/RSS quotas | Existing wall/output/V8-heap controls and measured RSS do not enforce a whole-process-tree quota. No writable delegated cgroup/qualified container boundary is supplied. | Add and test runner-level process-tree quotas; report native/reference descendants as well as the JS worker. |
 | Local browser launch | Playwright download produced an invalid archive and system Chromium launch was denied a Unix socket. | Use the existing GitHub real-browser workflow, which has already passed at published revisions. Final revision status is reported separately; local denial is not a total browser blocker. |
 | Public corpus licensing | Source notices and upstream licenses are retained. No owner-selected repository/data redistribution policy was supplied; repository-fixture is not an SPDX license. | Review distribution terms before making a public corpus release. Current archives remain private evidence. |
 
 These are different from supported-profile choices and empirical failures.
-Broader descriptors/prototypes, full Error object behavior, captured TDZ
-projection, sparse/async callbacks, general BigInt construction, complete
+Broader descriptors/prototypes, full Error object behavior, early or escaping
+captures across uninitialized cells, sparse/async callbacks, general object
+coercion beyond bounded primitive conversions, complete
 source maps for utility transforms, full strict/module/async Test262 harness
 behavior, and the remaining evaluation slices are implementation/research work,
 not all sandbox impossibilities. The plan calls for evidence-led expansion;

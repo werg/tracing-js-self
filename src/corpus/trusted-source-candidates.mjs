@@ -80,6 +80,8 @@ function utilityCandidates(root,perFamily){
 function exercismCandidates(root,perFamily,mutationsPerFamily){
   const output=[],noticePath='corpus/extension/snapshots/exercism-js/LICENSE';
   const notice=readFileSync(resolve(root,noticePath),'utf8');
+  const canonicalNoticePath='corpus/extension/snapshots/exercism-js-inputs/LICENSE';
+  const canonicalNotice=readFileSync(resolve(root,canonicalNoticePath),'utf8');
   for(const pair of loadPinnedPairs(root)){
     const canonical=extractCanonicalCases(pair),variations=generateInputVariations(pair.slug,canonical,{limit:mutationsPerFamily});
     let lowered=null,refusal=null,originalSites={status:'unavailable',reason:'No supported source lowering'};
@@ -97,16 +99,19 @@ function exercismCandidates(root,perFamily,mutationsPerFamily){
         source,entry,args:fixture.args??[],originalSource:originalExercism(pair.source),refusal:rejected,
         provenance:{upstream:pair.provenance.solution,canonical:pair.provenance.canonical,
           license:'MIT',notice,noticePath,originalFile:pair.source,
+          canonicalNotice:{repository:pair.provenance.canonical.repository,revision:pair.provenance.canonical.revision,
+            license:pair.provenance.canonical.license,path:canonicalNoticePath,sha256:sha(canonicalNotice),text:canonicalNotice},
           transform:{schema:'pinned-exercism-projection/1',lowering:lowered?.lowering??null,originalSites},
           inputOrigin:fixture.generator??'upstream-canonical',derivedFrom:fixture.derivedFrom??null,
-          canonicalInput:fixture.generator?null:fixture.canonicalInput,
+          canonicalInput:fixture.generator?null:(fixture.canonicalInput??null),
           ...(fixture.inputPrecision?{canonicalInputPrecision:fixture.inputPrecision,
             canonicalScenarios:fixture.scenarios,canonicalComments:fixture.canonicalComments}:{}),
-          canonicalInputBinding:fixture.generator?null:fixture.inputBinding,
-          canonicalExpectedBinding:fixture.generator?null:fixture.expectedBinding,
-          canonicalReimplements:fixture.generator?null:fixture.reimplements,
+          canonicalInputBinding:fixture.generator?null:(fixture.inputBinding??null),
+          canonicalArgumentBinding:fixture.generator?null:(fixture.argumentBinding??null),
+          canonicalExpectedBinding:fixture.generator?null:(fixture.expectedBinding??null),
+          canonicalReimplements:fixture.generator?null:(fixture.reimplements??null),
           canonicalSelection:'active-reimplementations/1',
-          canonicalExpected:fixture.generator?null:fixture.expected,canonicalProperty:fixture.property}}));
+          canonicalExpected:fixture.generator?null:(fixture.expected??null),canonicalProperty:fixture.property??null}}));
     }
   }
   return output;

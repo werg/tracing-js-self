@@ -13,6 +13,7 @@ const text=x=>typeof x==='string'&&x.length>0&&x.length<=2000;
 const list=x=>Array.isArray(x)&&x.every(text)&&new Set(x).size===x.length;
 const sort=x=>[...new Set(x)].sort();
 const verifiedRegistries=new Map();
+const immutableRegistries=new WeakMap();
 const splitFor=(id,seed)=>{
   const bucket=parseInt(sha(seed+':'+id).slice(0,8),16)%100;
   return bucket<80?'train':bucket<90?'validation':'test';
@@ -101,6 +102,8 @@ export function buildSourceRegistry(input,{seed=17,nearThreshold=0.92,
       'These holdouts do not establish absence from a pretrained model\'s pretraining data.']};
 }
 export function verifySourceRegistry(registry){
+  const immutable=immutableRegistries.get(registry);
+  if(immutable)return {valid:true,digest:immutable.digest,components:registry.components.length};
   if(registry?.schema!=='semantic-source-registry/1'||registry.policy!=='source-components/1')
     throw new Error('Unsupported frozen source registry');
   // Rehash the complete caller-supplied payload on every call. Only an exact
@@ -114,13 +117,29 @@ export function verifySourceRegistry(registry){
   verifiedRegistries.set(digest,registry.components.length);
   return {valid:true,digest,components:registry.components.length};
 }
+// Only this function can brand an immutable snapshot. Mutable caller objects
+// retain the complete hash/rebuild verification path on every check. A frozen
+// caller object is not trusted merely because Object.isFrozen returns true.
+export function immutableSourceRegistry(registry){
+  if(immutableRegistries.has(registry))return registry;
+  const snapshot=structuredClone(registry),receipt=verifySourceRegistry(snapshot);
+  const freeze=value=>{
+    if(value&&typeof value==='object'){for(const item of Object.values(value))freeze(item);Object.freeze(value);}
+  };
+  freeze(snapshot);
+  immutableRegistries.set(snapshot,{digest:receipt.digest,
+    byFamily:new Map(snapshot.components.flatMap(component=>component.members.map(family=>[family,component])))});
+  return snapshot;
+}
+export const isImmutableSourceRegistry=registry=>immutableRegistries.has(registry);
 export function frozenSplitIdentity(registry,family){
-  verifySourceRegistry(registry);
-  const component=registry.components.find(row=>row.members.includes(family));
+  const receipt=verifySourceRegistry(registry);
+  const component=immutableRegistries.get(registry)?.byFamily.get(family)??
+    registry.components.find(row=>row.members.includes(family));
   if(!component)throw new Error('Family absent from frozen registry');
   return {schema:'semantic-split-identity/1',policy:registry.policy,seed:registry.seed,
     componentId:component.id,members:component.members,split:component.split,holdout:component.holdout,
-    registryDigest:canonicalHash(registry),registry};
+    registryDigest:receipt.digest,registry};
 }
 export function verifyFrozenSplitIdentity(identity,{family,seed=identity?.seed}={}){
   if(identity?.schema!=='semantic-split-identity/1'||identity.seed!==seed)

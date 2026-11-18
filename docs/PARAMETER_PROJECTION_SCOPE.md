@@ -29,12 +29,15 @@ owning operation's previously committed completion to agree exactly. It does not
 pretend the propagation event created a new error. General object-coercion
 witnesses can still be refused for their existing unrelated profile limits.
 
-This is a positive leaf for **implicit parameter ReferenceError**. It does not
-enable general implicit exception projection or add a `ReferenceError`
-constructor. It does not change native Error prototypes, stacks, descriptors,
-causes, or extensibility coverage. Non-GuestFault interpreter exceptions,
-resource exhaustion, oracle failures, and unsupported features remain distinct
-failures or refusals.
+This repair adds the parameter-specific provenance checks for **implicit
+parameter ReferenceError**. The integrated main implementation also projects
+other genuine owned `GuestFault` leaves through its bounded name/message error
+profile. The two paths share one owned allocation; propagating the parameter
+fault cannot allocate a second error or bypass the prior-cell/source checks.
+This does not add a `ReferenceError` constructor or change native Error
+prototypes, stacks, causes or extensibility coverage. Non-GuestFault interpreter
+exceptions, resource exhaustion, oracle failures and unsupported features remain
+distinct failures or refusals.
 
 ## Forward parameter closure
 

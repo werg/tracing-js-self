@@ -43,9 +43,17 @@ holding its memory alongside repeated large private registries. The report
 records registry counts and the preparation process's measured peak RSS.
 
 Training is capped by `--steps` and `--train-timeout` (900 seconds by default).
-`--max-window-records` controls the supported native atomic-window record cap
-(default 1, at most 128); `--scored-decisions` controls its decision cap (default
-2, at most 64). The native sampler finishes all causal windows of one
+The runner reserves up to 30 seconds **inside** that cap for the native engine's
+SIGTERM handler to finish its current atomic update and save a paused checkpoint.
+If graceful checkpointing cannot finish by the cap, the process group is killed.
+Interrupted logged updates and the last durable checkpoint are reported
+separately. A paused run that did not reach its declared step count does not pass.
+
+`--training-window-records` (alias `--max-window-records`) controls the supported
+native atomic-window record cap (default 1). `--training-window-decisions`
+(alias `--scored-decisions`) controls its decision cap (default 2). Both accept
+explicit bounds up to 1,024; the resolved native plan and actual resource budget
+remain authoritative. The native sampler finishes all causal windows of one
 permuted episode before advancing to the next. With a one-record cap, a short
 run can repeatedly train a few sources. A larger record cap groups records
 and complete atomic meridians, preserving the same records, targets, and causal
@@ -56,8 +64,9 @@ record cap 1 and decision cap 2; 170 at caps 16 and 2; 95 at caps 16 and 4; and
 decision cap 4 instead of the resolved diagnostic cap 2; it incorrectly forecast
 95 updates for the cap-16 run. That run and correction remain separate evidence.
 The runner now profiles the **fully resolved** native configuration before
-launch, retaining expected window indices, record IDs, source membership, scored
-targets, and final cursor. After training it requires exact native cursor,
+launch. `native-window-plan.json` retains the complete episode inventory, and
+`native-schedule-plan.json` retains expected window indices, record IDs, source
+membership, scored targets, and final cursor. After training it requires exact native cursor,
 source-count, and scored-target agreement. Native per-window order is derived
 from its deterministic cursor contract; the engine does not independently log
 each window ID. `--require-full-epoch` refuses before launch unless every prepared
@@ -66,9 +75,14 @@ corpus. Do not assume 32 updates visit 32
 examples. `sourceExposure` maps actual checkpoint window counts to prepared
 source identities and families and refuses unknown or incomplete histories.
 Rollouts are independently capped by `--rollout-timeout` (120 seconds by
-default) and `--rollout-tokens`. The underlying selected transport also retains
-its 30-second per-RPC limit. The native trainer checkpoints every optimizer
-step. Each completed phase and each rollout updates `report.json` atomically;
+default) and `--rollout-tokens` **per native fragment**. The pinned selected
+adapter may emit up to 64 fragments for one logical decision; this flag is not
+a whole-decision or whole-task token cap. All emitted tokens, including invalid
+fragments, enter measured cost. The underlying selected transport also retains
+its 30-second per-RPC limit. The standalone native diagnostic checkpoints every optimizer
+step. A frozen learning experiment instead retains its declared checkpoint
+schedule and binds exact training membership before optimization; see
+[the learning pilot](LEARNING_PILOT.md). Each completed phase and each rollout updates `report.json` atomically;
 partial runs retain checkpoints, logs, and the last completed phase.
 
 ## What is measured
@@ -85,7 +99,9 @@ partial runs retain checkpoints, logs, and the last completed phase.
    seed alone. The trainer also saves its phase-start checkpoint.
    `--base-checkpoint` instead copies and loads the exact existing zero-update
    base, allowing later diagnostic configurations to share identical checkpoint
-   bytes. A stepped checkpoint is refused for this option.
+   bytes. A stepped checkpoint is refused for this option. With `--experiment`,
+   the declaration must additionally bind those exact state bytes in
+   `baseCheckpointSha256` before training.
 3. **Real optimization.** The configured native training engine performs the
    requested updates. Committed weights must be finite, parameter ownership
    must match initialization, changed parameters must have optimizer moments,
@@ -93,11 +109,20 @@ partial runs retain checkpoints, logs, and the last completed phase.
    gradients. Training logs retain losses, denominators, token costs, and
    source-window exposure. A training-corpus member is not necessarily visited
    during a very short cap; the report retains the actual exposure receipt.
+   Before updates, `native-window-plan.json` records the pinned native packing,
+   first-epoch order, scored tokens, and windows for every prepared source.
+   `trainingExposure` distinguishes selected membership, actual visited sources,
+   and completion of every selected episode's windows.
 4. **Checkpoint and served identity.** The committed checkpoint is reloaded and
    every model tensor is compared. Both base and trained checkpoints are
    exported with the official served exporter. Reloaded served tensors must
    exactly match the checkpoint's served tensors, and optimization must change
    the served model identity.
+   Source exposure is recomputed from the checksummed checkpoint's native rank
+   cursors and compared with metadata and the prepared stream fingerprint.
+   Partial-run receipts validate the committed metadata pointer plus state and
+   transducer file checksums; they separately disclose whether native payload
+   loading has been verified.
 5. **Actual free-running rollouts.** Base and trained models generate their own
    decisions through `run-selected-evaluation.mjs` and
    `serve_selected_semantic.py`. Private expectations are scored outside that
@@ -106,8 +131,17 @@ partial runs retain checkpoints, logs, and the last completed phase.
 
 Each rollout retains its request, private expected result, raw evaluator
 result, stderr, and native serving profile. Invalid generated bytes and token
-IDs stay in the original failure evidence. Cleanup state, first failure, hard
-gates, wall time, and native decoder costs remain visible. Serving profiles
+IDs stay in the original failure evidence. Cleanup state, first failure, rejected selections, hard
+gates, wall time, and native decoder costs remain visible. Rejected selections
+count as model failures even if a later completion happens to match. Original
+native event IDs deduplicate decoder-token receipts, including tokens emitted
+before an invalid record. Incomplete profiles report a lower bound explicitly.
+
+Each rollout also saves an atomic `summary.json`. A timeout terminates the
+evaluator and its model process group, records the failed case, and continues
+to measure the other requested cases. Malformed output and missing or invalid
+identity/profile receipts remain explicit pipeline failures; their original
+bytes stay in the case directory. Serving profiles
 correctly report zero optimizer steps for their serving-only scope; the
 training report independently records actual optimizer steps.
 
@@ -115,7 +149,7 @@ training report independently records actual optimizer steps.
 
 `status: completed` means the measurement pipeline finished. The separate
 `optimizationSmokePassed` flag requires all checks, at least 32 admitted
-training examples actually sampled, and successful complete selected executions for every
+training examples, actual complete exposure of every selected episode, and successful complete selected executions for every
 requested trained rollout. A failure to render a valid first record is a
 measured learning failure, even when optimization and checkpoint checks pass.
 Neither flag establishes generalization: these are held-in corpus examples.
@@ -127,14 +161,29 @@ rollouts failed on their first generated record. This is not evidence of
 learned execution. Run receipts, rather than this feasibility description,
 are authoritative for subsequent experiments.
 
+The native sampler permutes episodes deterministically, then visits every
+scored window of one episode before moving to the next. One-record windows can
+therefore spend a short run on only a few selected sources. A separately frozen
+full-episode diagnostic can use `--training-window-records 256
+--training-window-decisions 256` and at least one step per episode, provided the
+native plan confirms each episode fits in one window. These are supported
+native packing settings; no alternate optimizer or sampler is substituted.
+They increase per-step work and must fit the declared time and memory budget.
+The original 32-candidate/64-step sandbox run visited only **five** prepared
+source IDs and scored 1,743 lexical tokens. Its corpus membership is not evidence
+that all 32 episodes were trained. Original declarations and receipts remain
+unchanged when a follow-up experiment changes packing or budgets.
+
 The diagnostic uses the companion's P1 recurrent training engine over verified
 v5 records. Production SE/SC launch gates, frozen experiment receipts,
 donor/hindsight assets, and coordinator requirements remain intact. A larger
 production experiment still needs those assets and its own explicit budget.
-The diagnostic report is not a held-out evaluation report or a native semantic
-experiment budget receipt. It must not be submitted as base-versus-trained
-transfer evidence to the pilot comparator; that requires actual configured
-SE/SC experiment receipts and a separately frozen evaluation cohort.
+The diagnostic report is not itself a held-out evaluation report or a native
+semantic experiment budget receipt. The production comparator
+`compare-learning-runs.py` requires configured SE/SC experiment receipts and a
+separately frozen evaluation cohort. The distinct `run-learning-pilot.py`
+workflow supports an explicitly scoped P1 exploratory comparison when its exact
+experiment was frozen before optimization. These evidence classes remain separate.
 The current companion corpus preparer requires a physical capacity of at least
 768 because its default soft chunk limit is 768; this runner uses the supported
 1024-token capacity and 1024-event history without modifying that consumer.

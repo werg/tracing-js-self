@@ -6,18 +6,70 @@ import {join,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {encodeNativeGraph,decodeOwnedGraph} from '../host/graph-codec.js';
 import {canonicalFixturePlan} from '../training/fixture-broker.js';
+import {isImmutableSourceRegistry} from './source-registry.mjs';
 
 const worker=fileURLToPath(new URL('../../tools/generation-worker.mjs',import.meta.url));
+const registryJsonTrees=new WeakMap();
+const freezeJsonTree=value=>{
+  if(value&&typeof value==='object'){for(const item of Object.values(value))freezeJsonTree(item);Object.freeze(value);}
+  return value;
+};
+// Guest aliases are explicit graph IDs by this point. Shared registry metadata
+// and reused scalar tags instead have structural JSON identity: copying those
+// references must not change a durable candidate's authenticated digest.
+function fixtureJsonTree(value,ancestors=new Set(),registryOccurrences=new Map(),cacheRegistry=true){
+  if(cacheRegistry&&isImmutableSourceRegistry(value)){
+    const index=registryOccurrences.get(value)??0;registryOccurrences.set(value,index+1);
+    // A registry can be reused between independent candidates, but each
+    // occurrence within one candidate needs a distinct structural tree. Keep
+    // at most four immutable copies per live verified registry; larger session
+    // collections use temporary copies and do not grow a permanent cache.
+    if(index<4){
+      let copies=registryJsonTrees.get(value);
+      if(!copies){copies=[];registryJsonTrees.set(value,copies);}
+      if(!copies[index])copies[index]=freezeJsonTree(fixtureJsonTree(value,ancestors,registryOccurrences,false));
+      return copies[index];
+    }
+  }
+  if(value===null||['string','boolean'].includes(typeof value))return value;
+  if(typeof value==='number'&&Number.isFinite(value)&&!Object.is(value,-0))return value;
+  if(typeof value!=='object'||ancestors.has(value)||
+    !Array.isArray(value)&&![Object.prototype,null].includes(Object.getPrototypeOf(value)))
+    throw new TypeError('Generation fixture metadata must be acyclic JSON data; encode guest values as graphs');
+  ancestors.add(value);
+  try{
+    const keys=Object.keys(value);
+    if(Array.isArray(value)&&(keys.length!==value.length||keys.some((key,index)=>key!==String(index))))
+      throw new TypeError('Generation fixture metadata arrays must be dense JSON data');
+    const entries=keys.map(key=>{
+      const descriptor=Object.getOwnPropertyDescriptor(value,key);
+      if(!descriptor||!Object.hasOwn(descriptor,'value'))
+        throw new TypeError('Generation fixture metadata cannot contain accessors');
+      return [key,fixtureJsonTree(descriptor.value,ancestors,registryOccurrences)];
+    });
+    return Array.isArray(value)?entries.map(([,item])=>item):Object.fromEntries(entries);
+  }finally{ancestors.delete(value);}
+}
 // V8 serialization retains aliases and special numbers but discards null
 // prototypes. Use the canonical graph boundary for every semantic value.
-export function encodeGenerationTask(task){
+export function encodeGenerationTask(task,{jsonStorage=true}={}){
   const encodeFixture=fixture=>{
     const {args,cases,...data}=fixture;
     return {...data,argsGraph:encodeNativeGraph(args??[]),
       ...(data.fixture?{fixture:canonicalFixturePlan(data.fixture)}:{}),
       ...(cases?{cases:cases.map(encodeFixture)}:{})};
   };
-  return {...task,fixture:encodeFixture(task.fixture)};
+  const fixture=encodeFixture(task.fixture);
+  return {...task,fixture:jsonStorage?fixtureJsonTree(fixture):fixture};
+}
+export function persistGenerationCandidate(campaign,task){
+  const encoded=encodeGenerationTask(task);
+  const inputs=(task.kind==='source'?[encoded.fixture]:encoded.fixture.cases??[]).map(fixture=>({
+    source:campaign.putObject('sources',fixture.source),
+    input:campaign.putObject('inputs',fixture.argsGraph),
+    fixture:campaign.putObject('fixtures',fixture.fixture??{calls:[]})}));
+  return {kind:task.kind,id:task.fixture.id,family:task.fixture.family,
+    fixtureEncoding:'canonical-generation-fixture/1',fixture:encoded.fixture,inputs};
 }
 export function decodeGenerationTask(task){
   const decodeFixture=fixture=>{
@@ -30,7 +82,7 @@ export function decodeGenerationTask(task){
 // Deliberately do not forward credentials or network proxy settings to trusted
 // reference workers. This is defense in depth, not an OS security boundary.
 export function generationEnvironment(){
-  const keys=['PATH','TMPDIR','TEMP','TMP','LANG','LC_ALL','TZ','PYTHONPATH','VIRTUAL_ENV','OMP_NUM_THREADS','MKL_NUM_THREADS'];
+  const keys=['PATH','TMPDIR','TEMP','TMP','LANG','LC_ALL','TZ','PYTHONPATH','VIRTUAL_ENV','OMP_NUM_THREADS','MKL_NUM_THREADS','TRACING_REFERENCE_ISOLATION'];
   return Object.fromEntries(keys.filter(key=>process.env[key]!=null).map(key=>[key,process.env[key]]));
 }
 export async function runGenerationProcess(task,{outputDirectory,timeoutMs=120000,
@@ -43,18 +95,27 @@ export async function runGenerationProcess(task,{outputDirectory,timeoutMs=12000
   const output=join(directory,'worker-'+randomUUID()+'.json');
   if(signal?.aborted)return {result:{status:'cancelled',reason:'Campaign cancelled before launch'},durationMs:0,peakRssBytes:null};
   let encodedTask;
-  try{encodedTask=encodeGenerationTask(task);}catch(error){
+  // V8 already preserves metadata references. Structural copies are needed
+  // only at the durable JSON boundary; semantic values still use graph tags.
+  try{encodedTask=encodeGenerationTask(task,{jsonStorage:false});}catch(error){
     return {result:{status:'input_unportable',phase:'worker-input',reason:String(error.message)},durationMs:0,peakRssBytes:null};
   }
   return new Promise(resolveRun=>{
     const start=performance.now(),child=spawn(process.execPath,
       ['--max-old-space-size='+memoryMb,worker],{stdio:['pipe','pipe','pipe'],
         detached:process.platform!=='win32',env:generationEnvironment(),shell:false});
-    let stdout='',stderr='',finished=false;
+    let stdout='',stderr='',finished=false,closed=false,pending=null;
     const stop=()=>{try{if(process.platform!=='win32')process.kill(-child.pid,'SIGKILL');else child.kill('SIGKILL');}catch{}};
+    const settle=()=>{
+      if(!closed||!pending)return;
+      rmSync(output,{force:true});
+      resolveRun({...pending,durationMs:performance.now()-start});
+    };
     const finish=(result,peakRssBytes=null)=>{
       if(finished)return;finished=true;clearTimeout(timer);signal?.removeEventListener('abort',cancel);
-      stop();rmSync(output,{force:true});resolveRun({result,durationMs:performance.now()-start,peakRssBytes});
+      pending={result,peakRssBytes};
+      if(!closed)stop();
+      settle();
     };
     const cancel=()=>finish({status:'cancelled',reason:'Campaign cancelled during generation'});
     const timer=setTimeout(()=>finish({status:'worker_timeout',reason:'Generation process exceeded '+timeoutMs+' ms'}),timeoutMs);
@@ -65,7 +126,8 @@ export async function runGenerationProcess(task,{outputDirectory,timeoutMs=12000
       finish({status:'worker_output_limit',reason:'Worker protocol exceeded 8192 bytes'});});
     child.stderr.on('data',bytes=>{stderr=(stderr+bytes.toString()).slice(-8192);});
     child.once('close',(code,exitSignal)=>{
-      if(finished)return;
+      closed=true;
+      if(finished){settle();return;}
       try{
         if(code!==0)throw new Error('Worker exited '+(exitSignal??code)+(stderr?': '+stderr:''));
         if(statSync(output).size>maxOutputBytes)

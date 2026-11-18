@@ -1,0 +1,58 @@
+{
+  "schema": "native-time-cap-failure-index/1",
+  "sourceRoot": "/workspace/scratch/0c59f3502a6d/evidence/optimization-bounded-epoch-56-main",
+  "files": [
+    {
+      "path": "report.json",
+      "bytes": 25877,
+      "sha256": "255c93c8ff0cae20cf2f7e8378d396d8d272a09af6bcf33745f9f57a51fbc70f",
+      "copy": "original-unmodified"
+    },
+    {
+      "path": "train-config.json",
+      "bytes": 2327,
+      "sha256": "d8fd1601d6a7be357b6b0f07eea35d390a12abd992203165d2b1c2c873fcffc2",
+      "copy": "original-unmodified"
+    },
+    {
+      "path": "native-window-plan.json",
+      "bytes": 9793,
+      "sha256": "6c163a694007229fd5d0463ce97ed25c68cef13dbb5229e4c61e775ee8e7d994",
+      "copy": "original-unmodified"
+    },
+    {
+      "path": "partial-training-receipt.json",
+      "bytes": 1537,
+      "sha256": "4d3b03e8bbdc89b00f70e2081de80dcd91ceedd030c4355225df5665db851169",
+      "copy": "original-unmodified"
+    },
+    {
+      "path": "first-update.json",
+      "source": "training/metrics.jsonl",
+      "sourceLine": 2,
+      "bytes": 6147,
+      "sha256": "354bf078d6862d95409594e921bf33939e1f184e445e44d11ae22a55899df86f",
+      "copy": "original-line-unmodified"
+    },
+    {
+      "path": "last-update.json",
+      "source": "training/metrics.jsonl",
+      "sourceLine": 55,
+      "bytes": 6190,
+      "sha256": "72b77bfff992b388253794c65a621d3a93ae2cf5d6faa4186b2566094136cb8d",
+      "copy": "original-line-unmodified"
+    },
+    {
+      "path": "training/metrics.jsonl",
+      "bytes": 331338,
+      "sha256": "55f9888a8a9e6f12b9419e3c3adf126ac7f547a643c4025ef2ab0fe9f584023c",
+      "location": "private-follow-up-archive"
+    },
+    {
+      "path": "training.log",
+      "bytes": 331338,
+      "sha256": "55f9888a8a9e6f12b9419e3c3adf126ac7f547a643c4025ef2ab0fe9f584023c",
+      "location": "private-follow-up-archive"
+    }
+  ]
+}

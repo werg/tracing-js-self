@@ -33,7 +33,7 @@ Require all applicable matrix members in these pull-request workflows:
 | [spec-baseline.yml](../.github/workflows/spec-baseline.yml), `spec-reference` | Exact upstream ownership audit; isolated `npm ci` oracle; independent scalar/arithmetic probes; pinned syntax, scalar-runtime and selected Test262 reports | Only the declared oracle probes and Test262 populations, with their own denominators and explicit unsupported/omitted variants |
 | [semantic-reasoning.yml](../.github/workflows/semantic-reasoning.yml), `semantic-inspection` | Source grounding, projection/context tests, and generated readable examples | Source-certified semantic trace and context checks; no model learning claim |
 | [selected-harness-v4.yml](../.github/workflows/selected-harness-v4.yml), `selected-harness` | Contracts, selected invocation/model/callback/adapters, and actual Chromium DOM/events/CSP/cleanup tests | Current v5 selected runtime and the tested browser path; the historical filename does not imply a second production format |
-| [megatoken-consumer.yml](../.github/workflows/megatoken-consumer.yml), `independent-native-import` for engineering, training-v4, and benchmark-v1 | Exact companion/tokenizer/dependency identities, complete source/native admission, preparation, and release-package verification | Actual admitted rows for those recipes under those pins; the engineering controlled evaluation tests orchestration and cannot measure learned execution |
+| [megatoken-consumer.yml](../.github/workflows/megatoken-consumer.yml), `independent-native-import` for engineering, training-v4, benchmark-v1, real-source and generated-v1 | Exact companion/tokenizer/dependency identities, complete source/native admission, preparation, and release-package verification; the real-source lane retains explicit refusals | Actual admitted rows for those recipes under those pins; the engineering controlled evaluation tests orchestration and cannot measure learned execution |
 
 The native workflow's recipe names `training-v4` and `benchmark-v1` identify
 historical fixture collections. Their current outputs use semantic-execution/5,
@@ -80,6 +80,15 @@ That does not make the ordinary generation worker an OS sandbox for arbitrary
 programs. Its trusted-source restriction, V8 heap bound, wall timeout and output
 bound remain as documented in [RESUMABLE_CORPUS.md](RESUMABLE_CORPUS.md).
 
+The optional [Linux reference isolation profile](REFERENCE_ISOLATION.md) confines
+the independent native reference with namespaces, read-only mounts, a scrubbed
+environment, seccomp and kernel resource limits. It has separate implementation
+and host qualification requirements. A namespace-denied local skip neither
+qualifies that host nor cancels historical passes on another recorded host.
+The default trusted-process profile and the owned teacher/native consumer remain
+separate boundaries. Neither per-process limits nor individual RSS peaks claim
+an aggregate process-tree quota.
+
 ## Data release acceptance
 
 A release must declare its exact producer, consumer, tokenizer, source inventory,
@@ -124,6 +133,9 @@ release review requires all of the following evidence:
 The engineering native job also runs the Python release/alias/learning-evidence
 regressions and retains their JUnit report. Tests requiring the actual optional
 diagnostic artifact bundle remain explicitly skipped when that bundle is absent.
+It also checks the pinned semantic boundary probes. CI records the durable PR
+head as producer identity separately from GitHub's synthetic workflow trigger
+revision, so an ephemeral merge ref cannot be mistaken for a retained producer.
 
 The companion CI uploads complete native corpus/prepared/release artifacts for
 90 days. Some historical utility workflows retain artifacts for only 14 days.
