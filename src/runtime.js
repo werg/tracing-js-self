@@ -313,7 +313,7 @@ export class Runtime {
     for(const def of definitions){
       const id=this.next(state,'obj');
       state.heap[id]={id,kind:'function',codeId:def.arg.codeId,
-        closureEnvId:global,async:false,version:0};
+        closureEnvId:global,async:!!def.arg.async,version:0};
       state.envs[global].bindings[def.arg.name]={kind:'function',initialized:true,token:token(['ref',id]),version:0};
     }
     const imported=importGraph(state,args,kind=>this.next(state,kind));
@@ -1827,8 +1827,8 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                slots.push(slot.value);
              }
              const method=callable[1].slice('Array.prototype.'.length);
-             const numberAt=(i,missing)=>{
-               if(i>=args.length)return missing;
+             const numberAt=(i,missing,{undefinedDefault=false}={})=>{
+               if(i>=args.length || (undefinedDefault && args[i].value[0]==='undefined'))return missing;
                const tag=args[i].value;
                if(!['undefined','null','bool','str','num'].includes(tag[0]))
                  throw new TypeError('Array index requires owned scalar coercion');
@@ -1870,7 +1870,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                }
                out=['num',found];
              }else if(method==='slice'){
-               const start=clamp(numberAt(0,0)),end=clamp(numberAt(1,length));
+               const start=clamp(numberAt(0,0)),end=clamp(numberAt(1,length,{undefinedDefault:true}));
                out=makeArray(slots.slice(start,Math.max(start,end)));
              }else if(method==='concat'){
                const all=slots.slice();
@@ -1914,12 +1914,12 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                }
              }else if(method==='fill'){
                const value=args[0]?.value??U,
-                 start=clamp(numberAt(1,0)),end=clamp(numberAt(2,length));
+                 start=clamp(numberAt(1,0)),end=clamp(numberAt(2,length,{undefinedDefault:true}));
                for(let i=start;i<end;i++)putOwn(obj,String(i),value,eventId);
                out=receiver;
              }else if(method==='copyWithin'){
                const target=clamp(numberAt(0,0)),start=clamp(numberAt(1,0)),
-                 end=clamp(numberAt(2,length));
+                 end=clamp(numberAt(2,length,{undefinedDefault:true}));
                const count=Math.min(Math.max(end-start,0),length-target);
                const copied=slots.slice();
                for(let i=0;i<count;i++)copied[target+i]=slots[start+i];
