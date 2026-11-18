@@ -1,0 +1,34 @@
+{
+  "schema": "native-preparation-dispositions/1",
+  "source": "/workspace/scratch/23f61543c052/deliverables/release-E-capture-representatives/package/prepared/semantic-dedup.sqlite",
+  "rows": [
+    {
+      "episode_id": "semantic:harness:51875fb9dd97b1bbbde9021db4f101a8bf4ce80768334e9b8a5f49e9762014e6",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "train",
+      "content_sha256": "6f5521719e71211a862bb8b71775c2283e68f99f41bad92b4570dc04d437cade"
+    },
+    {
+      "episode_id": "semantic:harness:68c59b01ed79041c59d871ba3f536038ad8ebdc7afa1c4c54616b3807e2a8dff",
+      "duplicate_of": "semantic:harness:51875fb9dd97b1bbbde9021db4f101a8bf4ce80768334e9b8a5f49e9762014e6",
+      "quarantine_reason": null,
+      "split": "train",
+      "content_sha256": "1edf19dda14448d1c006b724ed474639e85783a8bc7c7586dcb9d73754ecc00d"
+    },
+    {
+      "episode_id": "semantic:harness:5f384c63e1748ef4d02421e529e94a0a173cb037f0fb195a409795b45c3f0373",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "train",
+      "content_sha256": "457766ad3c2fb00756a1452dc6f07e3f3caefa27ace8727ba420473c1351f985"
+    },
+    {
+      "episode_id": "semantic:harness:92ebc1d2de8ad1530a8c851ca647e7dda15770d583f06e2d800f995d550705d9",
+      "duplicate_of": "semantic:harness:5f384c63e1748ef4d02421e529e94a0a173cb037f0fb195a409795b45c3f0373",
+      "quarantine_reason": null,
+      "split": "train",
+      "content_sha256": "6dd079041457cd0cf98d44be7e54a0abd707ce23b15d8b90c7a513ddd9a52e8b"
+    }
+  ]
+}
