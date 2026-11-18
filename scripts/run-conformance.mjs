@@ -5,12 +5,12 @@ import assert from 'node:assert/strict';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
-import { createSpecOracle } from '../src/spec-oracle.js';
+import { createSpecOracle, specOraclePackage } from '../src/spec-oracle.js';
 import { verifySuiteFile, parseTest262Metadata, inspectBoundedFrontend, summarizeSyntaxRows } from '../src/test262-baseline.js';
 
 const profile = JSON.parse(readFileSync(new URL('../profiles/targets.lock.json', import.meta.url), 'utf8'));
 const slice = JSON.parse(readFileSync(new URL('../coverage/test262-slice.lock.json', import.meta.url), 'utf8'));
-const pkg = JSON.parse(readFileSync(new URL('../node_modules/@engine262/engine262/package.json', import.meta.url), 'utf8'));
+const pkg = specOraclePackage();
 assert.equal(pkg.version, profile.referenceEngine.npmVersion, 'Unpinned engine262 package');
 assert.equal(slice.schema, 'test262-syntax-slice/1');
 

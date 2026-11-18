@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version-file: .nvmrc
       - name: Install locked parser dependency
         run: npm ci
       - name: Checkout exact upstream source for ownership audit
@@ -28,10 +28,8 @@ jobs:
           persist-credentials: false
       - name: Verify complete declared source inventory and classifications
         run: node scripts/audit-engine262.mjs --engine-source .reference-engine262
-      - name: Install exact published engine262 oracle
-        run: |
-          VERSION="$(node -p "require('./profiles/targets.lock.json').referenceEngine.npmVersion")"
-          npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund "@engine262/engine262@$VERSION"
+      - name: Install isolated integrity-locked engine262 oracle
+        run: npm ci --prefix tools/spec-oracle --ignore-scripts --no-audit --no-fund
       - name: Independently compare scalar behavior and trace replay
         run: node scripts/run-spec-probes.mjs
       - name: Compare owned arithmetic normal and abrupt outcomes

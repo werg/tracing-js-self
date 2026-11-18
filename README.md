@@ -248,8 +248,7 @@ engine262. The strict training path also uses an independent Node V8 `vm`
 reference for fixture comparisons; that reference runs outside the owned tracer.
 
 ```sh
-VERSION="$(node -p "require('./profiles/targets.lock.json').referenceEngine.npmVersion")"
-npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund "@engine262/engine262@$VERSION"
+npm ci --prefix tools/spec-oracle --ignore-scripts --no-audit --no-fund
 node scripts/run-spec-probes.mjs
 node scripts/run-owned-arithmetic-probes.mjs
 node scripts/run-conformance.mjs --output /tmp/test262-baseline.json

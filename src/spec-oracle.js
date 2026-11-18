@@ -2,6 +2,18 @@
 // callers MUST NOT treat this as a substitute for the owned tracing machine.
 // engine262 is optional and pinned in profiles/targets.lock.json and CI.
 import { encode } from './values.js';
+import { readFileSync } from 'node:fs';
+
+export function specOraclePackage() {
+  const pkg = JSON.parse(readFileSync(new URL(
+    '../tools/spec-oracle/node_modules/@engine262/engine262/package.json', import.meta.url), 'utf8'));
+  const pins = JSON.parse(readFileSync(new URL('../profiles/targets.lock.json', import.meta.url), 'utf8'));
+  const lock = JSON.parse(readFileSync(new URL('../tools/spec-oracle/package-lock.json', import.meta.url), 'utf8'));
+  const locked = lock.packages['node_modules/@engine262/engine262'];
+  if (pkg.version !== pins.referenceEngine.npmVersion || pkg.version !== locked?.version ||
+      !/^sha512-/.test(locked.integrity ?? '')) throw new Error('Spec oracle differs from its integrity lock');
+  return pkg;
+}
 
 function scalar(value) {
   if (!value || !['Undefined','Null','Boolean','String','Number','BigInt'].includes(value.type))
@@ -12,9 +24,10 @@ function scalar(value) {
 export async function createSpecOracle() {
   let engine;
   try {
-    engine = await import('@engine262/engine262');
+    specOraclePackage();
+    engine = await import('../tools/spec-oracle/load.mjs');
   } catch (cause) {
-    throw new Error('Spec oracle requires the separately pinned @engine262/engine262 package', { cause });
+    throw new Error('Install the locked oracle with npm ci --prefix tools/spec-oracle --ignore-scripts', { cause });
   }
 
   function makeRealm() {

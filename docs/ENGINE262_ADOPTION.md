@@ -17,15 +17,14 @@ executed slice does not implement the complete official harness.
 - `profiles/targets.lock.json` is the authoritative revision ledger. CI uses Node.js 24 to run the external oracle; the tracer supports Node.js 20+ with its integrity-locked Acorn parser dependency. The engine262 oracle remains optional.
 - Reproduction on Node.js 24:
   ```sh
-  VERSION="$(node -p "require('./profiles/targets.lock.json').referenceEngine.npmVersion")"
-  npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund "@engine262/engine262@$VERSION"
+    npm ci --prefix tools/spec-oracle --ignore-scripts --no-audit --no-fund
   node scripts/run-spec-probes.mjs
   node scripts/run-owned-arithmetic-probes.mjs
   node scripts/run-conformance.mjs --output /tmp/test262-baseline.json
   node tools/test262-baseline.mjs --output /tmp/test262-execution.json
   node scripts/run-runtime-conformance.mjs --oracle --output /tmp/test262-runtime.json
   ```
-  The GitHub Actions spec-reference job runs these commands, verifies the pinned source inventory, and publishes the arithmetic, parse and execution reports. These are **regression baselines**, not a Test262 conformance percentage. The optional engine262 npm package is pinned by an exact published version; an integrity-pinned lock for that reference dependency is still needed before release. The required Acorn parser already has a version and integrity pin in `package-lock.json`.
+  The GitHub Actions spec-reference job runs these commands, verifies the pinned source inventory, and publishes the arithmetic, parse and execution reports. These are **regression baselines**, not a Test262 conformance percentage. The optional engine262 oracle has an isolated committed manifest and integrity lock in `tools/spec-oracle`; the loader rejects a version that differs from either that lock or the target profile. The required Acorn parser already has a version and integrity pin in `package-lock.json`.
 
 ## Engine substitution feasibility
 
