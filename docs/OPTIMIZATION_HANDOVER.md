@@ -33,10 +33,14 @@ CPU experiment, not production SE/SC training.
 
 ## Evidence to preserve
 
-All model evidence uses immutable producer
-`c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39` and native consumer
-`277edd4a2983e81f5e2a71b34a7ce29348e4e7a0`. Later consumer repairs must receive
-new receipts if used for another experiment; old evidence must not be relabeled.
+The final full-pass experiment, the preceding 32-/95-update attempts and the
+held-out diagnostic use immutable producer
+`c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39`. The initial two-step feasibility
+attempt instead uses producer `3a2178252a370c3d91c85d42751b2a4f82376bd4`.
+All use native consumer `277edd4a2983e81f5e2a71b34a7ce29348e4e7a0`.
+The complete archive records those per-attempt identities. Later consumer
+repairs require new receipts for another experiment; old evidence is not
+relabelled.
 
 | Evidence | Repository receipt directory |
 | --- | --- |
@@ -53,8 +57,14 @@ inference; no kernel diagnostic was available to prove the cause.
 
 Full original checkpoints, served bundles, prepared native files, and logs remain
 under the original workspace's `release-evidence/optimization-full-epoch` and
-the preceding attempt directories. They are indexed for separate binary artifact
-packaging rather than committed as weight files. Compact raw evaluation outputs,
+the preceding attempt directories. The complete binary archive is now verified and durably delivered, including
+the initial feasibility, interrupted preparation, both retries, final full pass,
+held-out rollouts and retrospective audit. Its filename is
+`tracing-js-self-optimization-evidence-2026-11-18.tar.gz`, size **678,766,391 bytes**,
+SHA-256 `662d686473ca07cd81af5ae5e742eba484dfbc502b0a46ad225b932c73f6bce1`.
+Its 425 archived files include the actual checkpoint/served/native data bytes.
+The [ordered parts manifest](evidence/durable-archive-parts-2026-11-18.json) and
+[reconstruction guide](ARCHIVE_PARTS.md) describe the two delivery parts. Compact raw evaluation outputs,
 requests, private expectations, profiles, and source/native admission receipts
 are committed. Absolute original paths in these receipts describe provenance;
 artifact archives must retain their relative directory layout for relocation.
@@ -80,6 +90,14 @@ reproduced the original eight test components unchanged. It checked all 24
 original held-in and held-out raw outputs without additional model inference or
 optimization. Original results and frozen cohort bytes remain unmodified. The
 audit is not a substitute for a pre-run production qualification.
+
+The later [actual-artifact regression run](evidence/actual-artifact-regressions-2026-11-18.json)
+passes all fourteen tests with zero skips, including six checks using copies
+of the actual final checkpoint bundle. It rejects changed tokenizer, model
+configuration, transducer bank, model version and incomplete actual training
+inventory. This is separate from the 67-pass general Python boundary run whose
+six artifact-dependent cases were initially skipped. Neither run performs new
+optimization or inference.
 
 ## Work that remains before a production learning claim
 
