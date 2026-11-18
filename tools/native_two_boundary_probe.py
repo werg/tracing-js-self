@@ -240,6 +240,7 @@ def numeric_decoder_comparison(model, teacher, renderer, emitted_ids):
     teacher_log_prob, serving_log_prob = 0.0, 0.0
     max_error, max_tv, compared = 0.0, 0.0, 0
     differences = []
+    choices = []
     left = {r["name"]: r for r in teacher["categoricals"]}
     right = {r["name"]: r for r in renderer["categoricals"]}
     for name in ("length", "terminal"):
@@ -249,6 +250,11 @@ def numeric_decoder_comparison(model, teacher, renderer, emitted_ids):
         require(a["selected"] == b["selected"] and a["selected"] in a["support"],
                 "Same-emission scoring changed original structural choice")
         selected = a["support"].index(a["selected"])
+        teacher_choice = a["support"][max(range(len(a["logits"])), key=a["logits"].__getitem__)]
+        serving_choice = b["support"][max(range(len(b["logits"])), key=b["logits"].__getitem__)]
+        choices.append({"head": name, "trainingArgmax": teacher_choice,
+                        "servingArgmax": serving_choice, "actualSelected": b["selected"],
+                        "equal": teacher_choice == serving_choice == b["selected"]})
         teacher_log_prob += math.log(max(a["probabilities"][selected], 1e-300))
         serving_log_prob += math.log(max(b["probabilities"][selected], 1e-300))
         x = torch.tensor(a["probabilities"], dtype=torch.float64)
@@ -277,11 +283,19 @@ def numeric_decoder_comparison(model, teacher, renderer, emitted_ids):
                 b["projectedStates"]["shape"])
             require(x.shape == y.shape, "Actual lexical state shapes differ")
             for position, (u, v) in enumerate(zip(x, y, strict=True)):
-                p = (u[None] @ weights.T).softmax(-1)[0]
-                q = (v[None] @ weights.T).softmax(-1)[0]
+                p_logits = (u[None] @ weights.T)[0]
+                q_logits = (v[None] @ weights.T)[0]
+                p = p_logits.softmax(-1)
+                q = q_logits.softmax(-1)
                 require(bool(torch.isfinite(p).all() and torch.isfinite(q).all()),
                         "Nonfinite full lexical conditional")
                 token_id = a["tokens"][position]["tokenId"]
+                teacher_choice = int(support[p_logits.argmax()])
+                serving_choice = int(support[q_logits.argmax()])
+                choices.append({"head": "lexical", "call": call, "position": position,
+                                "trainingArgmax": teacher_choice, "servingArgmax": serving_choice,
+                                "actualSelected": token_id,
+                                "equal": teacher_choice == serving_choice == token_id})
                 token_offset = (support == token_id).nonzero().reshape(-1)
                 require(token_offset.numel() == 1, "Original emitted token is outside the actual alphabet")
                 teacher_log_prob += math.log(max(float(p[int(token_offset[0])]), 1e-300))
@@ -297,13 +311,16 @@ def numeric_decoder_comparison(model, teacher, renderer, emitted_ids):
     # variation and selected log-probability bounds still constrain aggregate drift.
     probability_atol = torch.finfo(torch.float32).eps
     return {
-        "status": "passed" if (max_error <= probability_atol and max_tv <= 1e-5
+        "status": "passed" if (all(row["equal"] for row in choices) and
+                                 max_error <= probability_atol and max_tv <= 1e-5
                                  and abs(teacher_log_prob - serving_log_prob) <= 1e-4) else "failed",
         "comparedProbabilities": compared, "maximumAbsoluteDifference": max_error,
         "maximumTotalVariation": max_tv, "absoluteProbabilityTolerance": probability_atol,
         "probabilityToleranceBasis": "torch.finfo(torch.float32).eps at unit probability scale",
         "totalVariationTolerance": 1e-5, "exactLexicalProbabilityHashesMatch": exact_lexical,
         "sameOriginalEmittedIds": True,
+        "actualArgmaxChoicesEqual": all(row["equal"] for row in choices),
+        "actualArgmaxChoiceComparisons": choices,
         "teacherSelectedLogProbability": teacher_log_prob,
         "servingSelectedLogProbability": serving_log_prob,
         "selectedLogProbabilityDifference": abs(teacher_log_prob - serving_log_prob),

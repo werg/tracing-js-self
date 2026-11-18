@@ -183,8 +183,8 @@ class ProbabilityToleranceTests(unittest.TestCase):
             "tokens": [{"tokenId": 0}],
         }
         teacher = {"categoricals": [
-            {"name": "length", "support": [1, 2], "selected": 1, "probabilities": [0.5, 0.5]},
-            {"name": "terminal", "support": [0, 1], "selected": 1, "probabilities": [0.5, 0.5]},
+            {"name": "length", "support": [1, 2], "selected": 1, "probabilities": [0.5, 0.5], "logits": [0.0, 0.0]},
+            {"name": "terminal", "support": [0, 1], "selected": 1, "probabilities": [0.25, 0.75], "logits": [0.0, 1.0]},
         ], "lexical": [lexical]}
         renderer = copy.deepcopy(teacher)
         renderer["categoricals"][0]["probabilities"] = [0.5 + structural_delta, 0.5 - structural_delta]
