@@ -123,7 +123,7 @@ const policy={consumerRevision:'c'.repeat(40),tokenizerIdentity:'synthetic-test-
 const sha=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
 // Shape-only fixture. It tests the producer boundary, not actual native admission.
 function syntheticReceipt(exported){
-  const contract=JSON.parse(readFileSync(new URL('../contracts/semantic-harness-v5.json',import.meta.url),'utf8'));
+  const contract=JSON.parse(readFileSync(new URL('../contracts/semantic-harness-v6.json',import.meta.url),'utf8'));
   return {schema:'semantic-native-admission/4',componentGate:'native-consumer-only',admitted:true,
     episodeDigest:sha(exported.public),contractDigest:sha(JSON.stringify(hostOperationContract(),null,2)+'\n'),
     schemaDigest:contract.digest,fixtureDigest:contract.fixtureDigest,

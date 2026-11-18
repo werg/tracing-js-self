@@ -15,7 +15,7 @@ TZ=UTC LC_ALL=C.UTF-8 .cache/native-venv/bin/python tools/native-consumer/check_
 ```
 
 The consumer checkout and actual tokenizer identity must match
-`contracts/native-admission-policy-v5.json`. The checker rejects dirty tracked
+`contracts/native-admission-policy-v6.json`. The checker rejects dirty tracked
 consumer files, a different installed checkout, mismatched dependency versions,
 the wrong Python version, and tokenizer byte or codec identity changes. The
 receipt records the actual host, libc, available runner/container identifiers,

@@ -10,9 +10,9 @@ const bytes=episode=>episode.public.timeline.filter(row=>row.kind==='semantic').
 const fixture=(body,args=[])=>({source:'"use strict";'+body,entry:'run',args,
   fixture:{calls:[]},family:'local-state-compaction-test'});
 
-test('opt-in idempotent lexical writes save actual target bytes and retain private evidence',async()=>{
+test('idempotent lexical writes save actual target bytes against an explicit detailed control',async()=>{
   const input=fixture('function run(n){let value=n;value=n;value=n;return value;}',[3]);
-  const control=await verifyEffectfulTrainingCase(input);
+  const control=await verifyEffectfulTrainingCase({...input,projectionOptions:{localStateCompaction:false}});
   const compact=await verifyEffectfulTrainingCase({...input,projectionOptions:{localStateCompaction:true}});
   assert.equal(control.status,'locally_verified',control.reason);
   assert.equal(compact.status,'locally_verified',compact.reason);

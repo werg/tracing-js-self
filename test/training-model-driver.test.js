@@ -57,7 +57,7 @@ test('selected supplier issues two effects before waiting and observes reverse s
 
 test('invalid model output is audited before committing any native effect',async()=>{
   let calls=0;
-  const driver=new SelectedModelDriver({select:async()=> 'observe {"effect":"fx1","status":"fulfilled","result":["num",2]}',
+  const driver=new SelectedModelDriver({select:async()=> 'observe @fx1 fulfilled 2',
     harness:new SelectedExecutionHarness({services:{
       'demo.readAsync':()=>{calls++;return 4;}
     }})});

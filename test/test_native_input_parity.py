@@ -117,7 +117,7 @@ writeFileSync(process.argv[1],JSON.stringify(result.exported)+'\\n');
 @unittest.skipUnless(os.environ.get('MEGATOKEN_REPOSITORY'),
                      'Set MEGATOKEN_REPOSITORY to the current pinned companion checkout')
 class ActualCurrentBoundaryTests(unittest.TestCase):
-    expected_pin = json.loads((ROOT/'contracts/native-admission-policy-v5.json').read_text())['consumerRevision']
+    expected_pin = json.loads((ROOT/'contracts/native-admission-policy-v6.json').read_text())['consumerRevision']
     # Share only source certification/setup; historical mismatch assertions
     # remain attached to their original revision in the preceding class.
     setUpClass = classmethod(ActualPinnedBoundaryTests.setUpClass.__func__)

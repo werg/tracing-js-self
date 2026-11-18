@@ -33,7 +33,7 @@ Use the Node version in `.nvmrc`, then install the committed dependency locks:
 ```sh
 npm ci --ignore-scripts
 npm run oracle:install
-npm run baseline:v5 -- --out ../current-v5-baseline --jobs 2
+npm run baseline:v6 -- --out ../current-v5-baseline --jobs 2
 ```
 
 For actual native admission, prepare the hash-locked Python environment and
@@ -48,8 +48,8 @@ alone does not establish model learning.
 
 ## Model-facing semantic execution traces
 
-Production uses **`semantic-execution/5`, `semantic-trace/5`,
-`semantic-context/5`**, and `selected-harness/2`.
+Production uses **`semantic-execution/6`, `semantic-trace/6`,
+`semantic-context/6`**, and `selected-harness/2`.
 The strict machine archive and its exact replay remain private certification
 evidence. Earlier group-shaped corpus exporters and their public formats are
 removed; old bytes can only be recovered from pinned Git history.
@@ -85,7 +85,7 @@ npm ci
 npm test
 node tools/inspect-semantic-reasoning.mjs
 npm run training:generate -- --out /tmp/semantic-v5
-npm run baseline:v5 -- --out /tmp/semantic-v5-baseline --jobs 4
+npm run baseline:v6 -- --out /tmp/semantic-v5-baseline --jobs 4
 ```
 
 The inspection tool executes real pinned counter, choice, compound

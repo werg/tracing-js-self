@@ -21,7 +21,7 @@ def main() -> int:
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
-    policy_path = root / "contracts/native-admission-policy-v5.json"
+    policy_path = root / "contracts/native-admission-policy-v6.json"
     policy = json.loads(policy_path.read_text())
     environment = json.loads((root / "profiles/release-environment.lock.json").read_text())
     lock_path = Path(__file__).with_name("requirements.lock")

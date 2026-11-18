@@ -10,7 +10,7 @@ import {EXECUTION_VERSION,WITNESS_VERSION,CONTEXT_VERSION,CONTINUATION_VERSION,H
 import {SelectedExecutionHarness} from '../src/training/harness-v4.js';
 
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
-const definition={schema:'semantic-harness-contract/5',execution:EXECUTION_VERSION,trace:WITNESS_VERSION,
+const definition={schema:'semantic-harness-contract/6',execution:EXECUTION_VERSION,trace:WITNESS_VERSION,
   context:CONTEXT_VERSION,continuation:CONTINUATION_VERSION,profile:HARNESS_PROFILE,
   completionPolicies:COMPLETION_POLICIES,commonFields:HARNESS_COMMON_FIELDS,
   witness:{allowed:WITNESS_SCHEMA,required:WITNESS_REQUIRED},envelope:HARNESS_RECORD_SCHEMAS,
@@ -114,7 +114,7 @@ const fixtures={witness:{valid:validWitness,invalid:invalidWitness},
   envelope:{valid:[validEnvelope,validContext,validSeed],invalid:invalidEnvelope}};
 const artifact={definition,digest:digest(definition),fixtureDigest:digest(fixtures),fixtures};
 const bytes=JSON.stringify(artifact,null,2)+'\n';
-const destination=new URL('../contracts/semantic-harness-v5.json',import.meta.url);
+const destination=new URL('../contracts/semantic-harness-v6.json',import.meta.url);
 if(process.argv.includes('--check')){
   if(await readFile(destination,'utf8')!==bytes)throw new Error('Shared semantic contract needs regeneration');
 }else await writeFile(destination,bytes);

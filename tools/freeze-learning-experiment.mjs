@@ -162,7 +162,7 @@ async function main(){
   const revision=execFileSync('git',['-C',tracer,'rev-parse','HEAD'],{encoding:'utf8'}).trim();
   const decoderSeed=integer('--decoder-seed',17,17,43),initializationSeed=integer('--initialization-seed',17,17,43);
   if(![17,29,43].includes(decoderSeed)||![17,29,43].includes(initializationSeed))throw new TypeError('Unsupported decoder seed');
-  const nativePolicy=JSON.parse(readFileSync(join(tracer,'contracts/native-admission-policy-v5.json'),'utf8'));
+  const nativePolicy=JSON.parse(readFileSync(join(tracer,'contracts/native-admission-policy-v6.json'),'utf8'));
   const pending=[],seen=new Set(),manifests=[];
   for(const directory of corpora){
     const bytes=readFileSync(join(directory,'manifest.json')),manifest=JSON.parse(bytes);

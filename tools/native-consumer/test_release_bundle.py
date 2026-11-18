@@ -127,11 +127,11 @@ class ReleaseQualificationTests(unittest.TestCase):
         (tracer / "contracts").mkdir(parents=True)
         (tracer / "tools/native-consumer").mkdir(parents=True)
         policy = {"consumerRevision": "a" * 40, "tokenizerIdentity": "b" * 64, "tokenizerSha256": "c" * 64}
-        (tracer / "contracts/native-admission-policy-v5.json").write_text(json.dumps(policy))
+        (tracer / "contracts/native-admission-policy-v6.json").write_text(json.dumps(policy))
         (tracer / "tools/native-consumer/requirements.lock").write_text("actual-dependency==1.0\n")
         receipt = {"schema": "semantic-native-environment-receipt/1", "status": "verified", **policy,
                    "requirementsLockSha256": release.file_receipt(tracer / "tools/native-consumer/requirements.lock")["sha256"],
-                   "nativePolicySha256": release.file_receipt(tracer / "contracts/native-admission-policy-v5.json")["sha256"],
+                   "nativePolicySha256": release.file_receipt(tracer / "contracts/native-admission-policy-v6.json")["sha256"],
                    "packages": {"actual-dependency": "1.0"}}
         supplied = root / "supplied.json"
         supplied.write_text(json.dumps(receipt))

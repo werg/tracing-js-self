@@ -15,7 +15,7 @@ const source=async(text,args=[])=>
 test('source-certified expressions execute through the canonical serving model',async()=>{
   for(const family of ['compound-pure','compound-effectful']){
     const fixture=EFFECTFUL_ENGINEERING_FIXTURES.find(item=>item.id===family);
-    const result=await verifyEffectfulTrainingCase(fixture);
+    const result=await verifyEffectfulTrainingCase({...fixture,projectionOptions:{semanticRegions:false}});
     assert.equal(result.status,'locally_verified',result.reason);
     const episode=result.exported;
     assert.equal(episode.sidecar.representation,'compact');

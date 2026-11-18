@@ -109,8 +109,8 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
     rows.push(row);
   }
   return {schema:'semantic-capability-ledger/1',producerRevision,
-    contracts:{execution:'semantic-execution/5',trace:'semantic-trace/5',context:'semantic-context/5',
-      continuation:'semantic-continuation/5',harness:'selected-harness/2'},
+    contracts:{execution:'semantic-execution/6',trace:'semantic-trace/6',context:'semantic-context/6',
+      continuation:'semantic-continuation/6',harness:'selected-harness/2'},
     environment:admissionEnvironment(),nativePolicy,unit:'declared source/input/fixture probe',rows,
     totals:summarizeCapabilityRows(rows),
     otherProfiles:['bounded-js-subset/2','static-module/1','evaluated-module/1'].map(profile=>({

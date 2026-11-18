@@ -75,7 +75,7 @@ test('future observations and private fixture canaries cannot enter earlier trai
 });
 
 test('preparation and serving use identical explicit prompt tokenization without context truncation',()=>{
-  const prefix=firstPrefix(),target='return {"value":["num",1]}';
+  const prefix=firstPrefix(),target="return 1";
   const example=encodeCausalLmExample(prefix,target,settings);
   assert.deepEqual(example.inputIds.slice(0,example.boundaries.promptTokens),tokenizer.encode(causalLmPrompt(prefix)));
   assert.throws(()=>encodeCausalLmExample(prefix,target,{...settings,maxContextTokens:10}),/budget exceeded/);
@@ -84,7 +84,7 @@ test('preparation and serving use identical explicit prompt tokenization without
 });
 
 test('unmodified conventional model emissions go through the existing semantic driver',async()=>{
-  const runtime=runtimeFor(['return {"value":["num",1]}','end {"kind":"return"}']);
+  const runtime=runtimeFor(["return 1","end return"]);
   const select=createCausalLmSelector({...settings,checkpointIdentity,runtime});
   await select.initialize({seed:17,checkpointIdentity});
   const driver=new SelectedModelDriver({select});
@@ -117,7 +117,7 @@ test('controlled transport reproduces the exact training prefix at every selecte
 });
 
 test('bad syntax is retained exactly and never trimmed or repaired before scoring',async()=>{
-  const original='return {"value":["num",1]} ';
+  const original='return 1 ';
   const select=createCausalLmSelector({...settings,checkpointIdentity,runtime:runtimeFor([original])});
   await select.initialize({seed:17,checkpointIdentity});
   const driver=new SelectedModelDriver({select});
@@ -130,17 +130,17 @@ test('bad syntax is retained exactly and never trimmed or repaired before scorin
 });
 
 test('syntax-only arm supplies grammar with no execution values and requires runtime acknowledgement',async()=>{
-  const runtime=runtimeFor(['return {"value":["num",1]}']);
+  const runtime=runtimeFor(["return 1"]);
   const select=createCausalLmSelector({...settings,checkpointIdentity,runtime,arm:'syntax-only'});
   await select.initialize({seed:17,checkpointIdentity});
   const output=await select(firstPrefix());
-  assert.equal(output.record,'return {"value":["num",1]}');
+  assert.equal(output.record,"return 1");
   assert.equal(runtime.requests[0].grammar,syntaxOnlyV5Grammar());
   assert.equal(runtime.requests[0].grammarDigest,
     createHash('sha256').update(syntaxOnlyV5Grammar()).digest('hex'));
   assert(!syntaxOnlyV5Grammar().includes(args.source));
   assert(!syntaxOnlyV5Grammar().includes('"num",1'));
-  const broken=runtimeFor(['return {"value":["num",1]}']);
+  const broken=runtimeFor(["return 1"]);
   const generate=broken.generate;broken.generate=async request=>{
     const response=await generate(request);delete response.appliedGrammarDigest;return response;
   };

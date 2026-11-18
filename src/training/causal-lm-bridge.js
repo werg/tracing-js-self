@@ -34,7 +34,7 @@ export function causalLmPrompt(prefix){
   require(program?.source===prefix.source&&program?.digest===prefix.sourceDigest,
     'source context differs from its committed program');
   const publicPrefix=Object.fromEntries(PREFIX_FIELDS.map(key=>[key,structuredClone(prefix[key])]));
-  return 'Predict one complete semantic-trace/5 record from this public execution context.\n'+
+  return 'Predict one complete semantic-trace/6 record from this public execution context.\n'+
     JSON.stringify(publicPrefix)+'\nNext record:\n';
 }
 

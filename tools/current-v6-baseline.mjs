@@ -18,7 +18,7 @@ for(let i=2;i<process.argv.length;i++){
   if(booleans.has(key))options.set(key,true);
   else {const value=process.argv[++i];if(!value||value.startsWith('--'))throw new Error('Missing '+key);options.set(key,value);}
 }
-if(!options.get('--out'))throw new Error('Usage: npm run baseline:v5 -- --out DIRECTORY [--jobs 2] [--check-timeout-ms 900000] [--megatoken DIR --tokenizer FILE --python PYTHON]');
+if(!options.get('--out'))throw new Error('Usage: npm run baseline:v6 -- --out DIRECTORY [--jobs 2] [--check-timeout-ms 900000] [--megatoken DIR --tokenizer FILE --python PYTHON]');
 const output=resolve(options.get('--out')),jobs=Number(options.get('--jobs')??2);
 if(!Number.isInteger(jobs)||jobs<1||jobs>8)throw new Error('--jobs must be 1..8');
 const checkTimeoutMs=Number(options.get('--check-timeout-ms')??900000);
@@ -43,7 +43,7 @@ const report={schema:'semantic-v5-baseline/1',producerRevision:git('rev-parse','
   executionLimits:{checkTimeoutMs,testConcurrency:jobs},
   lockDigests:Object.fromEntries(['package-lock.json','tools/spec-oracle/package-lock.json',
     'tools/native-consumer/requirements.lock','profiles/release-environment.lock.json',
-    'contracts/native-admission-policy-v5.json','contracts/semantic-harness-v5.json',
+    'contracts/native-admission-policy-v6.json','contracts/semantic-harness-v6.json',
     'contracts/host-operations-v4.json'].map(path=>[path,existsSync(join(root,path))?sha(readFileSync(join(root,path))):null])),
   qualificationEnvironment:{status:Object.keys(environmentMismatches).length?'failed':'passed',
     actual:actualEnvironment,mismatches:environmentMismatches},
@@ -91,7 +91,7 @@ const native=[];
 if(options.has('--megatoken')||options.has('--tokenizer')){
   if(!options.has('--megatoken')||!options.has('--tokenizer'))throw new Error('Native checks require both --megatoken and --tokenizer');
   for(const key of ['--megatoken','--tokenizer'])native.push(key,resolve(options.get(key)));
-  native.push('--python',options.get('--python')??'python3','--native-policy',resolve(options.get('--native-policy')??join(root,'contracts/native-admission-policy-v5.json')),'--require-native');
+  native.push('--python',options.get('--python')??'python3','--native-policy',resolve(options.get('--native-policy')??join(root,'contracts/native-admission-policy-v6.json')),'--require-native');
 }
 check('capability-ledger',process.execPath,['tools/generate-capability-ledger.mjs','--out',join(output,'capabilities.json'),...native]);
 const registry=join(output,'source-registry.json');
@@ -123,9 +123,9 @@ if(existsSync(registry))report.sourceRegistry={path:'source-registry.json',sha25
   diagnostics:JSON.parse(readFileSync(registry,'utf8')).diagnostics};
 report.evidenceBoundaries={acquisition:'not measured here',nativeAdmission:native.length?'executed; inspect per-corpus counts':'untested',
   browser:'untested; run npm run test:browser separately',modelEvaluation:'untested',learningImprovement:'unmeasured'};
-report.activePolicy={publicRepresentation:'semantic-trace/5',sourceChecks:'effectful-source-checks/5',
+report.activePolicy={publicRepresentation:'semantic-trace/6',sourceChecks:'effectful-source-checks/5',
   defaultProjection:'frozen-v5-control',
-  nativePolicy:JSON.parse(readFileSync(join(root,'contracts/native-admission-policy-v5.json'),'utf8')),
+  nativePolicy:JSON.parse(readFileSync(join(root,'contracts/native-admission-policy-v6.json'),'utf8')),
   nativePolicyExecuted:native.length>0,containerDigest:lockedEnvironment.containerDigest,
   summaryPromotion:'experimental-only; native and learned behavior unmeasured'};
 report.historicalEvidence=['docs/evidence/qualification-I-2026-11-18.json',

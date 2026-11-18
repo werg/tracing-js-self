@@ -268,7 +268,7 @@ def check_environment_receipt(environment: dict, policy: dict, tracer: Path):
         raise ValueError("Native environment receipt differs from the release policy")
     if environment.get("requirementsLockSha256") != file_receipt(tracer / "tools/native-consumer/requirements.lock")["sha256"]:
         raise ValueError("Native environment receipt uses a different dependency lock")
-    if environment.get("nativePolicySha256") != file_receipt(tracer / "contracts/native-admission-policy-v5.json")["sha256"]:
+    if environment.get("nativePolicySha256") != file_receipt(tracer / "contracts/native-admission-policy-v6.json")["sha256"]:
         raise ValueError("Native environment receipt uses different policy bytes")
 
 
@@ -660,7 +660,7 @@ def package_release(args) -> dict:
     manifest = read_json(inside(corpus, "manifest.json"))
     if input_manifest["producerRevision"] != manifest["producerRevision"]:
         raise ValueError("Selected input changed its producing revision")
-    policy = read_json(tracer / "contracts/native-admission-policy-v5.json")
+    policy = read_json(tracer / "contracts/native-admission-policy-v6.json")
     git = lambda path, *argv: subprocess.check_output(["git", "-C", str(path), *argv], text=True).strip()
     if git(tracer, "rev-parse", "HEAD") != manifest["producerRevision"]:
         raise ValueError("Use the exact producing checkout to recheck and release this corpus")
@@ -746,7 +746,7 @@ def package_release(args) -> dict:
              "prepared-training-selection.json": output / "prepared-training-selection.json",
              "supplied-native-environment.json": args.environment_receipt.resolve(),
              "locks/environment.json": tracer / "profiles/release-environment.lock.json",
-             "locks/native-policy.json": tracer / "contracts/native-admission-policy-v5.json",
+             "locks/native-policy.json": tracer / "contracts/native-admission-policy-v6.json",
              "locks/requirements.lock": tracer / "tools/native-consumer/requirements.lock",
              "locks/producer-package-lock.json": tracer / "package-lock.json",
              "locks/oracle-package-lock.json": tracer / "tools/spec-oracle/package-lock.json"}

@@ -23,7 +23,7 @@ test('capability ladder preserves untested stages and exact attempted denominato
 
 test('capability ladder executes a configured native gate and retains its failure separately',async()=>{
   let attempts=0;
-  const nativePolicy=JSON.parse(readFileSync(new URL('../contracts/native-admission-policy-v5.json',import.meta.url),'utf8'));
+  const nativePolicy=JSON.parse(readFileSync(new URL('../contracts/native-admission-policy-v6.json',import.meta.url),'utf8'));
   const report=await buildCapabilityLedger({producerRevision:'a'.repeat(40),nativePolicy,
     cases:CAPABILITY_CASES.filter(row=>['scalar-arithmetic','class-declaration'].includes(row.id)),
     nativeConsumer:async()=>{attempts++;throw new Error('native fixture deliberately rejected');}});

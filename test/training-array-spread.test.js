@@ -5,6 +5,7 @@ import {realizeGraph} from '../src/training/graph.js';
 import {verifyOwnedSourceCase,recheckOwnedSourceEvidence} from '../src/training/source-check.js';
 import {verifyEffectfulTrainingCase} from '../src/training/effectful-admit.js';
 import {SelectedExecutionHarness} from '../src/training/harness-v4.js';
+import {decodeWitness} from '../src/training/format.js';
 
 function verified(source,args=[]){
   const result=verifyOwnedSourceCase({source,entry:'run',args,maxGenerated:4096});
@@ -71,7 +72,7 @@ test('primitive string spread uses code points in literals and calls, including 
   verified(source,[text]);
 });
 
-test('array spread receives independent completion checks and uses only production v5 records',async()=>{
+test('array spread receives independent completion checks and uses only production v6 records',async()=>{
   for(const body of [
     'const xs=[1,2];return [...xs,xs.push(3),..."𝄞"];',
     'const a={n:1};const xs=[a];const ys=[...xs,a.n=2];return [ys,a];',
@@ -82,9 +83,12 @@ test('array spread receives independent completion checks and uses only producti
       entry:'run',fixture:{calls:effectful?[{operation:'demo.store',arguments:['spread','1,2']}]:[]},
       family:'bounded-array-literal-spread'});
     assert.equal(result.status,'locally_verified',result.reason);
-    assert.equal(result.exported.public.schema,'semantic-execution/5');
+    assert.equal(result.exported.public.schema,'semantic-execution/6');
     assert(result.exported.sidecar.reference.sourceChecks.completions.checked>0);
-    assert(!result.exported.public.timeline.some(row=>row.line?.includes('["spread",')),
+    const privateSpread=value=>Array.isArray(value)?value[0]==='spread'||value.some(privateSpread):
+      value!==null&&typeof value==='object'&&Object.values(value).some(privateSpread);
+    assert(!result.exported.public.timeline.filter(row=>row.kind==='semantic').some(row=>
+      privateSpread(decodeWitness(row.line).fields)),
       'the private snapshot must not become a generated value or new public record kind');
   }
 });

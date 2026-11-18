@@ -153,7 +153,7 @@ def derive(args, staging):
         bind(S.inside(campaign, name))
     producer_revision = S.checkout(producer, source["producerRevision"])
     tool_revision = S.checkout(S.ROOT)
-    policy_path = bind(S.inside(producer, "contracts/native-admission-policy-v5.json"))
+    policy_path = bind(S.inside(producer, "contracts/native-admission-policy-v6.json"))
     policy = S.read(policy_path)
     S.checkout(consumer, policy["consumerRevision"])
     tokenizer_path = bind(args.tokenizer.resolve())
