@@ -1,0 +1,32 @@
+{
+  "schema": "original-evidence-archive/1",
+  "scope": "Original local baseline and pre-fix broad native campaign; not a current dataset release",
+  "verifiedFiles": 7641,
+  "uncompressedBytes": 7228861076,
+  "archiveBytes": 1459041613,
+  "archiveSha256": "f3ff1cd6a1e9b5a065f331be3dcda6a50deaef938444384142d9c0162a74602c",
+  "tarStreamSha256": "262a8fe0c74f376c4254c25f824d39f1cd4961d60517c0858595f201d6c98ca9",
+  "compression": "Zstandard, level 6, long window 25, single compression worker",
+  "parts": [
+    {
+      "file": "tracing-js-original-corpus-evidence-2026-11-18.tar.zst.part01",
+      "bytes": 419430400,
+      "sha256": "a6bd0edebcc3c1c6279583c777ca1c12b0d614f540600b08167e7f96185f742f"
+    },
+    {
+      "file": "tracing-js-original-corpus-evidence-2026-11-18.tar.zst.part02",
+      "bytes": 419430400,
+      "sha256": "d11e842ab0f4c940bf274b3da1ab51d2c3e825ae5c72b46353ff182b870753b1"
+    },
+    {
+      "file": "tracing-js-original-corpus-evidence-2026-11-18.tar.zst.part03",
+      "bytes": 419430400,
+      "sha256": "f318aa0ffbda0c07f0bd5547de3ed75412f80ae7f57af3c421305c270ad557d6"
+    },
+    {
+      "file": "tracing-js-original-corpus-evidence-2026-11-18.tar.zst.part04",
+      "bytes": 200750413,
+      "sha256": "a0ed012017fa1bc92fda2558ce76e4d87889f4600bd26a4e407a682394abc87c"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Retained baseline and qualification receipts
 
-These are measured results at the revisions named below. They are not receipts for whichever revision later contains this directory. Original JSON/log files were copied byte-for-byte; [index.json](index.json) and the [baseline inventory](baseline-5753de1/file-inventory.json) record their sizes and SHA-256 digests. The two campaign summaries are explicitly labeled extracts with the hashes of their full source manifests.
+These are measured results at the revisions named below. They are not receipts for whichever revision later contains this directory. Original JSON/log files were copied byte-for-byte; [index.json](index.json) and the [baseline inventory](baseline-5753de1/file-inventory.json) record their sizes and SHA-256 digests. Campaign summaries are explicitly labeled extracts with the hashes of their full source manifests.
 
 ## Completed measurements
 
@@ -39,6 +39,8 @@ The older `dac57b1` training collection used the earlier timing implementation, 
 ## Retention boundary
 
 This directory contains compact logs, manifests, receipts and extracts. Full candidate source/input/fixture objects, compressed private journals, public shards, prepared native datasets and model weights belong to the separately hashed private archives. The 2.6 MB source registry can be regenerated from its recorded producer; its original file hash and internal registry digest are distinct identities and remain recorded. No large corpus or checkpoint was copied into the public source repository for this receipt increment.
+
+The [original corpus/baseline archive receipt](tracing-js-original-corpus-evidence-2026-11-18-zstd.json) records 7,641 verified files and a 1,459,041,613-byte compressed archive, split into four parts. [Reconstruction instructions](ORIGINAL_ARCHIVE.md) verify each part, join in exact order, check the complete SHA-256 and extract with Zstandard. Archive creation/verification is complete; private part-upload completion is **pending confirmation** in this increment. This preserves original pre-fix evidence and is not a current qualified release.
 
 The release-cap smoke uses a one-component share allowance of 1.0; it proves the 600-token component cap and preserved original admissions. It does **not** prove the separately running real-source release's 10,000-token cap and 0.2 share limit. The later 13-case native extension has its own exact receipt; final full producer qualification, final hosted CI, the larger release, and the balanced optimizer retry still need their own completed receipts.
 
