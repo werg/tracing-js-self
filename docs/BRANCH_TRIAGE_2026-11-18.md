@@ -62,6 +62,31 @@ The six active branches at this snapshot are `codex/resumption-20261118`, `codex
 
 PR37 also supplied overlapping campaign/release selection changes, exploratory holdout tooling, exact JavaScript track-API binding, and separate 32-update and partial-epoch optimization/failure receipts. Their producing revisions and evidence remain distinct. The subsequent merge preserves those additions together with PR38's hardened campaign store, isolated reference runner, release verifier and learning experiment. PR37 and PR38 are now merged. Their original branches were not overwritten. Fresh native/source checks and exact hosted results are recorded in the [final handover](RESUMPTION_HANDOVER_2026-11-18.md), separately from the original historical branch audit.
 
+## Later active draft and evidence follow-up
+
+After PR37 merged, its original `codex/resumption-20261118` branch continued in
+[PR39](https://github.com/werg/tracing-js-self/pull/39). The read-only GitHub
+snapshot on 18 November observed head
+`54d3e68a6f3a3c71cd29fe98805e05d0dd64fccb`, recorded base `2aa694b`,
+`open`, `draft: true`, `merged: false` and `mergeable: false`; its metadata
+was updated at 14:28:41 UTC. Its description reports further qualification
+and separate experiment/corpus evidence still being assembled. This is active
+independent work, not a stale branch, and its additional code/results have not
+been silently incorporated into the qualified `1e2e6a0` tree. Recheck its exact
+head, content and completed qualification before any later integration; do not
+overwrite or wholesale merge the ongoing branch as part of this historical
+cleanup audit.
+
+[PR40](https://github.com/werg/tracing-js-self/pull/40) is the separate final
+handover/evidence follow-up to merged PR38. It receives main `0c30778`, all
+published repair/learning receipts and the retained original failed CI producer.
+Its runtime and consumer implementation matches merged main; the follow-up
+also adds an archive-preservation workflow for an original CI artifact larger
+than the download connector limit. This branch preserves evidence and current
+status without treating the separate draft PR39
+as already merged. PR descriptions and review readiness are maintained by the
+coordinating owner.
+
 ## Issue13, actual CI failures, and repository rules
 
 [Issue13](https://github.com/werg/tracing-js-self/issues/13) is an **open issue, not a PR**. It asks for a reproducible oracle dependency lock and passing oracle/selected-Test262 CI. Public main already contains `tools/spec-oracle/package.json`, its SHA-512 integrity lock, and `npm ci --prefix tools/spec-oracle --ignore-scripts --no-audit --no-fund` in the oracle workflow. The isolated lock includes the installed engine; its optional WebSocket peer is not installed.
