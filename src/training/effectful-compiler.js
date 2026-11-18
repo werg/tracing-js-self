@@ -70,7 +70,9 @@ export function ownedEffectfulOutcome(bundle){
   if(entry?.asyncPromiseId&&(frame?.asyncPromiseId!==entry.asyncPromiseId||
     !['completed','thrown'].includes(frame.status)))refuse('async root body has not completed');
   const root=entry?.asyncPromiseId?{kind:'return',value:['promise',entry.asyncPromiseId]}:
-    bundle.finalState.control.a0.completion;
+    frame?.status==='thrown'&&frame.completion?.type==='throw'&&frame.completion.value?
+      {kind:'throw',value:frame.completion.value.value}:
+      bundle.finalState.control.a0.completion;
   if(!root)refuse('missing completed root outcome');
   let kind=root.kind,value=root.value;
   if(value?.[0]==='promise'){
