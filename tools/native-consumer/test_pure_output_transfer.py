@@ -1,5 +1,7 @@
 """Synthetic protocol fixtures only; these tests never claim model learning."""
 import importlib.util
+import hashlib
+import json
 from pathlib import Path
 import sys
 from types import SimpleNamespace
@@ -19,19 +21,24 @@ class PureOutputProtocolTests(unittest.TestCase):
 
     def test_actual_original_emissions_bind_request_identity_tokens_and_bytes(self):
         codec = SimpleNamespace(fingerprint='codec', decode=lambda ids: bytes(ids))
-        case = {'id': 'case', 'envelope': {'decoderSeed': 17}}
+        fields = ['source', 'entry', 'inputGraph', 'randomSeed', 'completionPolicy', 'outputContract']
+        public = {'source': 'function run(){return 7}', 'entry': 'run', 'inputGraph': {'roots': [], 'objects': []},
+                  'randomSeed': None, 'completionPolicy': 'await-returned-promise', 'outputContract': 'pure-observable-outcome/1'}
+        case = {'id': 'case', 'envelope': {'decoderSeed': 17, **public}}
+        public_sha = hashlib.sha256(json.dumps(public, ensure_ascii=False, separators=(',', ':')).encode()).hexdigest()
         policy = {'tokenizerSha256': 'tokenizer', 'consumerRevision': 'consumer'}
         response = {'schema': 'semantic-pure-model-response/1', 'caseId': 'case', 'requestSha256': 'request',
             'checkpointIdentity': 'weights', 'decoderSeed': 17, 'tokenizerIdentity': 'codec',
             'tokenizerSha256': 'tokenizer', 'origin': 'actual-native-model', 'consumerRevision': 'consumer',
             'javascriptExecutedAtInference': False, 'teacherTraceProvided': False,
             'generation': {'maxTokens': 8}, 'payloadHex': '6f6b',
+            'modelInputSha256': public_sha, 'modelInputFields': fields, 'routingMetadataInModelContext': False,
             'emissions': [{'selectedEventId': 'one', 'emittedTokenIds': [111, 107], 'payloadHex': '6f6b'}]}
         kwargs = dict(checkpoint='weights', policy=policy, maximum=8, case=case)
         self.assertEqual(PURE.original_tokens(response, codec, 'request', **kwargs), (b'ok', 2))
         for change in [{'requestSha256': 'different'}, {'checkpointIdentity': 'different'},
                        {'teacherTraceProvided': True}, {'javascriptExecutedAtInference': True},
-                       {'payloadHex': '6e6f'}, {'generation': {'maxTokens': 100}}]:
+                       {'payloadHex': '6e6f'}, {'generation': {'maxTokens': 100}}, {'routingMetadataInModelContext': True}]:
             with self.assertRaises(ValueError):
                 PURE.original_tokens({**response, **change}, codec, 'request', **kwargs)
         response['emissions'][0]['emittedTokenIds'] = [0]

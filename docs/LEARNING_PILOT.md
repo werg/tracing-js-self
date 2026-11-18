@@ -101,7 +101,9 @@ and decoder seed. No inference retries or injected selections are enabled.
 
 Per-case files preserve the request, private expected result, original evaluator
 bytes, original native decoder IDs, failures, cleanup and costs. A timeout is a
-failed case and remains in the denominator. The process group is terminated;
+failed case and remains in the denominator. A failed decoder RPC without complete
+original emission evidence contributes only a retained-token lower bound; a
+complete RPC profile does not prove that zero tokens were generated. The process group is terminated;
 other cases continue. Partial runs retain their phase, completed measurements,
 checkpoint selections and exact artifact identities.
 
@@ -192,7 +194,9 @@ complete paired reports:
 ```
 
 The supplied native adapter uses the pinned `MultiTrackRuntime` with real loaded
-served weights. It observes only the public source/input request and uses the
+served weights. It removes routing IDs and decoder metadata before constructing
+the model context, attests the exact observed field names and payload hash,
+and observes only the source/input request and uses the
 actual decoder to emit an outcome. It performs no JavaScript execution,
 controlled selection, inferred teacher substitution or post-generation repair.
 The same model can be evaluated on both endpoints without restoring an old
@@ -215,7 +219,8 @@ the already qualified name/message observation profile.
 
 A model command reads exactly one `semantic-pure-output-request/1` JSON document
 on stdin and writes one `semantic-pure-model-response/1` document. The wrapper
-contains the unchanged case ID and SHA-256 of the exact stdin bytes, actual
+contains `modelInputFields`, `modelInputSha256` and an explicit assertion that
+routing metadata was excluded from the model context. It also contains the unchanged case ID and SHA-256 of the exact stdin bytes, actual
 checkpoint/tokenizer identities, decoder seed, `payloadHex` for original model
 bytes, and `emissions`. Each emission has a unique `selectedEventId`,
 `payloadHex` and original `emittedTokenIds`. It also declares native generation

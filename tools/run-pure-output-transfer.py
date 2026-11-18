@@ -42,6 +42,9 @@ def strict_json(raw):
 
 
 def original_tokens(response, codec, request_sha, *, checkpoint, policy, maximum, case):
+    fields = ['source', 'entry', 'inputGraph', 'randomSeed', 'completionPolicy', 'outputContract']
+    model_input = {key: case['envelope'][key] for key in fields}
+    model_input_sha = hashlib.sha256(json.dumps(model_input, ensure_ascii=False, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
     if (response.get('schema') != 'semantic-pure-model-response/1' or
             response.get('caseId') != case['id'] or response.get('requestSha256') != request_sha or
             response.get('checkpointIdentity') != checkpoint or response.get('decoderSeed') != case['envelope']['decoderSeed'] or
@@ -49,7 +52,9 @@ def original_tokens(response, codec, request_sha, *, checkpoint, policy, maximum
             response.get('tokenizerSha256') != policy['tokenizerSha256'] or
             response.get('origin') not in ('actual-model', 'actual-native-model') or
             response.get('javascriptExecutedAtInference') is not False or response.get('teacherTraceProvided') is not False or
-            response.get('generation', {}).get('maxTokens') != maximum):
+            response.get('generation', {}).get('maxTokens') != maximum or
+            response.get('modelInputSha256') != model_input_sha or response.get('modelInputFields') != fields or
+            response.get('routingMetadataInModelContext') is not False):
         raise ValueError('Model response changed source/input, seed, identity, budget or inference authority')
     if response['origin'] == 'actual-native-model' and response.get('consumerRevision') != policy['consumerRevision']:
         raise ValueError('Actual native consumer differs from the frozen policy')
@@ -85,7 +90,7 @@ def measure_case(case, destination, args, codec, policy, env):
     IO.write_json(destination / 'private-expected.json', case['expected'])
     summary = {'id': case['id'], 'family': case['family'], 'sourceCluster': case['sourceCluster'],
                'checkpointIdentity': args.checkpoint_identity, 'wholeTaskSuccess': False,
-               'validOutput': False, 'generatedTokens': None, 'artifacts': str(destination)}
+               'validOutput': False, 'generatedTokens': None, 'retainedGeneratedTokensLowerBound': 0, 'artifacts': str(destination)}
     started = time.monotonic()
     def output_limit():
         resource.setrlimit(resource.RLIMIT_FSIZE, (2 * 1024 * 1024, 2 * 1024 * 1024))
@@ -121,7 +126,11 @@ def measure_case(case, destination, args, codec, policy, env):
                 (destination / 'generated.bin').write_bytes(bytes.fromhex(response['payloadHex']))
             raw, tokens = original_tokens(response, codec, hashlib.sha256(request).hexdigest(),
                 checkpoint=args.checkpoint_identity, policy=policy, maximum=args.max_tokens, case=case)
-            summary.update(generatedTokens=tokens, originalPayloadSha256=hashlib.sha256(raw).hexdigest(),
+            complete = (response['generation'].get('emissionsComplete') is True or
+                response.get('failure') is None and response['generation'].get('valid') is True and
+                response['generation'].get('terminal') is True)
+            summary.update(generatedTokens=tokens if complete else None, retainedGeneratedTokensLowerBound=tokens,
+                originalPayloadSha256=hashlib.sha256(raw).hexdigest(),
                 nativeFailure=response.get('failure'), generation=response['generation'],
                 emissionIdentity=hashlib.sha256(json.dumps(response['emissions'], sort_keys=True).encode()).hexdigest(),
                 modelIdentityAuthority=response['origin'])
@@ -154,7 +163,7 @@ def metrics(rows):
         groups[row['sourceCluster']].append(int(row['wholeTaskSuccess']))
     successes = sum(row['wholeTaskSuccess'] for row in rows)
     complete_tokens = all(type(row['generatedTokens']) is int for row in rows)
-    token_sum = sum(row['generatedTokens'] or 0 for row in rows)
+    token_sum = sum(row.get('retainedGeneratedTokensLowerBound', row['generatedTokens'] or 0) for row in rows)
     wall = sum(row['wallSeconds'] for row in rows)
     return {'episodes': len(rows), 'independentComponents': len(groups), 'successes': successes,
         'familyWeightedWholeTaskSuccess': mean(mean(values) for values in groups.values()),

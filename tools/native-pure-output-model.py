@@ -58,8 +58,11 @@ def main():
         raise ValueError('Served tokenizer differs from the pinned native release policy')
     seed_everything(request['decoderSeed'], True)
     runtime = MultiTrackRuntime(MultiTrackGenerator.of(bundle.model), chunking=bundle.chunking)
+    model_input = {key: request[key] for key in ['source', 'entry', 'inputGraph', 'randomSeed', 'completionPolicy', 'outputContract']}
+    model_input_bytes = json.dumps(model_input, ensure_ascii=False, separators=(',', ':'), allow_nan=False).encode()
     fragments, chunks, failure = [], [], None
     terminal, valid = False, True
+    generation_started, generation_pending, emissions_complete = False, False, True
     instruction = (
         'Execute the supplied effect-free JavaScript source on the exact initial inputGraph. '
         'Emit ONLY one JSON object with exactly keys kind and graph. kind is return or throw. '
@@ -78,17 +81,19 @@ def main():
             session = runtime.open(metadata={'task': 'pure-output-transfer/1', 'modality': 'text'},
                                    effort=1, collections=(), memory_writes=False)
             before = set(session.context_archive.events)
-            runtime.observe_text(session, MAIN_TRACK, raw, role='user', effort=1)
+            runtime.observe_text(session, MAIN_TRACK, model_input_bytes, role='user', effort=1)
             source_events = set(session.context_archive.events) - before
             visible = set(runtime.context_status(session, track=MAIN_TRACK)['visible_events'])
             if not source_events or not source_events <= visible:
                 raise ValueError('Exact public source and inputs do not fit the actual model context')
             remaining = args.max_tokens
             for _ in range(64):
+                generation_started, generation_pending = True, True
                 generated = runtime.generate(session, tracks=(MAIN_TRACK,),
                     specs=(ActionSpec(text_kind='utf8', min_tokens=1,
                         max_tokens=min(remaining, bundle.model.config.max_capacity), require_terminal=None),),
                     controls=(instruction,), effort=1)
+                generation_pending = False
                 tape = generated.tape
                 emitted = getattr(tape, 'emitted_ids', ())
                 for index, event in enumerate(tape.event_ids):
@@ -119,6 +124,7 @@ def main():
             else:
                 failure = {'category': 'model-fragment-budget', 'message': 'Original output exceeded 64 fragments'}
     except Exception as error:
+        emissions_complete = not generation_pending and all(row['emittedTokenIds'] is not None for row in fragments)
         failure = {'category': type(error).__name__, 'message': str(error)}
     finally:
         runtime.close()
@@ -128,8 +134,11 @@ def main():
         'tokenizerSha256': bundle.manifest['tokenizer_sha256'], 'consumerRevision': revision,
         'servedManifestSha256': hashlib.sha256((args.served / 'manifest.json').read_bytes()).hexdigest(),
         'requestSha256': hashlib.sha256(raw).hexdigest(), 'decoderSeed': request['decoderSeed'],
+        'modelInputSha256': hashlib.sha256(model_input_bytes).hexdigest(),
+        'modelInputFields': list(model_input), 'routingMetadataInModelContext': False,
         'payloadHex': b''.join(chunks).hex(), 'emissions': fragments,
-        'generation': {'terminal': terminal, 'valid': valid, 'maxTokens': args.max_tokens},
+        'generation': {'terminal': terminal, 'valid': valid, 'maxTokens': args.max_tokens,
+            'started': generation_started, 'emissionsComplete': emissions_complete},
         'failure': failure,
         'costs': {'generatedTokens': sum(len(row['emittedTokenIds']) for row in fragments if row['emittedTokenIds'] is not None),
             'computeSeconds': time.monotonic() - started,
