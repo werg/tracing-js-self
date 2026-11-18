@@ -98,6 +98,18 @@
       "sourcePath": "release-cap-smoke/native-environment.json",
       "bytes": 2318,
       "sha256": "4f4de9b24e02e4e8ced52fb69caf470d3289fe1649244b2585dfd3b1521836b6"
+    },
+    {
+      "path": "native-capabilities-current.json",
+      "sourcePath": "native-capabilities-current.json",
+      "bytes": 18711,
+      "sha256": "5abaa551f554ef5d6d8a5a52a657ca9af95e190a709bc1e20fd769bf1f8d4511"
+    },
+    {
+      "path": "native-environment-current.json",
+      "sourcePath": "native-environment-current.json",
+      "bytes": 2318,
+      "sha256": "4f0c75810d9b5bcc4e9fce49707ecf41d395797103bd37950ac820741b844597"
     }
   ],
   "derivedFiles": [
@@ -120,6 +132,16 @@
       },
       "bytes": 31151,
       "sha256": "76a0f08a493134d6c1da7137923fbe1bf02f9f5200ce9455982214e05bbb7a07"
+    },
+    {
+      "path": "real-source-dac57b1-broad-summary.json",
+      "source": {
+        "path": "native-real-main/manifest.json",
+        "bytes": 6408392,
+        "sha256": "8029c2adf9637dd899d8fb305009b9f04a812e96735c54996d83e40fde862be4"
+      },
+      "bytes": 17102,
+      "sha256": "dd654d044b8a9cff23d4acbbe4e57d408dccbf6ffcff650bfe055b0d21559404"
     }
   ],
   "notIncluded": [
