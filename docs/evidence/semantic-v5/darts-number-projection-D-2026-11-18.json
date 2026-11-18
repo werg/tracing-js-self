@@ -1,0 +1,91 @@
+{
+  "schema": "semantic-darts-minimal-diagnostic/1",
+  "producerRevision": "83e0d5742e63dc4439b68d6296f323cb7a3aafdc",
+  "scope": "Actual local source/projection gate; no native admission claim; frozen producer unchanged",
+  "cases": [
+    {
+      "name": "number",
+      "source": "\"use strict\";function run(x,y){return Number(x);}",
+      "args": [
+        -9,
+        9
+      ],
+      "status": "projection_refused",
+      "reason": "Incomplete replayed invocation",
+      "identityDigest": null,
+      "failureDigest": "d1d1a24cd54c8d2242168e10afffdf881f02a5f53176a18b053ec1059f907f35"
+    },
+    {
+      "name": "isNaN",
+      "source": "\"use strict\";function run(x,y){return Number.isNaN(x);}",
+      "args": [
+        -9,
+        9
+      ],
+      "status": "locally_verified",
+      "reason": null,
+      "identityDigest": "59fa7807bd7b9ba39eca4a1e534703f0b9429a63fde3aa055294cfe59c53d58f",
+      "failureDigest": null
+    },
+    {
+      "name": "nested",
+      "source": "\"use strict\";function run(x,y){return Number.isNaN(Number(x));}",
+      "args": [
+        -9,
+        9
+      ],
+      "status": "projection_refused",
+      "reason": "Incomplete replayed invocation",
+      "identityDigest": null,
+      "failureDigest": "6835b89689d04d72f94316a0fe2a596a392fe44fb429a493bf4c0d79fd45d3bb"
+    },
+    {
+      "name": "logical",
+      "source": "\"use strict\";function run(x,y){return Number.isNaN(Number(x)) || Number.isNaN(Number(y));}",
+      "args": [
+        -9,
+        9
+      ],
+      "status": "projection_refused",
+      "reason": "Incomplete replayed invocation",
+      "identityDigest": null,
+      "failureDigest": "02c753baae5f23a01d6a64fc2fda3decc78c67dc30fae31d0be121fa690d83c3"
+    },
+    {
+      "name": "guard",
+      "source": "\"use strict\";function run(x,y){if(Number.isNaN(Number(x)) || Number.isNaN(Number(y))) return null; return 0;}",
+      "args": [
+        -9,
+        9
+      ],
+      "status": "projection_refused",
+      "reason": "Incomplete replayed invocation",
+      "identityDigest": null,
+      "failureDigest": "f91f2d2af4a837f1f12cef01ba7c503a02d54b8ecb81cd160d7515bb382bb550"
+    },
+    {
+      "name": "sqrt",
+      "source": "\"use strict\";function run(x,y){return Math.sqrt(x*x+y*y);}",
+      "args": [
+        -9,
+        9
+      ],
+      "status": "locally_verified",
+      "reason": null,
+      "identityDigest": "61ceaacee67f561a4df4f7c706adee1d26ad9b05ae961a27b751b4e4d278337d",
+      "failureDigest": null
+    },
+    {
+      "name": "threshold",
+      "source": "\"use strict\";function run(x,y){const d=Math.sqrt(x*x+y*y); if(d>10)return 0; if(d>5)return 1; if(d>1)return 5; return 10;}",
+      "args": [
+        -9,
+        9
+      ],
+      "status": "locally_verified",
+      "reason": null,
+      "identityDigest": "968e9a7e9fdb471febc8d66d9f13e6666a63a00727e93d18e4b23e6f022db68a",
+      "failureDigest": null
+    }
+  ]
+}
