@@ -13,6 +13,7 @@ import argparse
 import gc
 import hashlib
 import json
+import math
 import os
 import signal
 import subprocess
@@ -61,8 +62,28 @@ def run_logged(command, path, *, env, timeout, input_text=None):
         raise RuntimeError(f'Command exited {result.returncode}; retained log: {path}')
 
 
-def choose_candidates(corpus, maximum):
+def choose_candidates(corpus, maximum, experiment=None):
     manifest = json.loads((corpus / 'manifest.json').read_text())
+    if experiment is not None:
+        from learning_evaluation import require_frozen_experiment
+        require_frozen_experiment(experiment)
+        selected = []
+        if maximum != len(experiment['training']):
+            raise ValueError('Example cap must equal the frozen training membership')
+        for frozen in experiment['training']:
+            path = Path(frozen['path']).resolve()
+            if sha256(path) != frozen['fileSha256']:
+                raise ValueError('Frozen training input bytes changed')
+            exported = json.loads(path.read_text())
+            side = exported['sidecar']
+            if (side['admission'] != 'admitted' or side['split'] != 'train' or
+                    side['identityDigest'] != frozen['identityDigest'] or
+                    side['sourceFamily'] != frozen['family'] or
+                    side['splitIdentity']['componentId'] != frozen['sourceCluster']):
+                raise ValueError('Frozen training identity, family or split changed')
+            selected.append(({'id': frozen['id'], 'family': frozen['family'],
+                              'identityDigest': frozen['identityDigest']}, path))
+        return manifest, selected
     groups = defaultdict(list)
     for item in manifest['cases']:
         if item.get('status') == 'admitted' and item.get('split') == 'train' and item.get('path'):
@@ -129,14 +150,14 @@ def mask_receipt(prepared, codec):
                 'chunking': corpus.chunking}
 
 
-def create_initial_checkpoint(root, config, codec, chunking):
+def create_initial_checkpoint(root, config, codec, chunking, *, initialization_seed=None):
     from megatoken.loading import build_model, load_model_config
     from megatoken.runtime import seed_everything
     from megatoken.training.checkpoint import save_checkpoint, transducer_attachment
     from megatoken.training.optimizer import MasterAdamW
     from megatoken.training.transducer import TransducerTrainer
 
-    seed_everything(config.seed, config.deterministic)
+    seed_everything(config.seed if initialization_seed is None else initialization_seed, config.deterministic)
     model_config = load_model_config(config.model, **config.model_overrides,
                                     expert_backend=config.expert_backend,
                                     checkpoint_stages=config.gradient_checkpointing)
@@ -219,7 +240,7 @@ def export_checked(checkpoint, destination):
     return {**manifest, 'servedReloadExact': True}
 
 
-def generated_token_cost(profile):
+def generated_token_cost(profile, actual=None, codec=None):
     """Count actual successful/failed decoder tokens once per native event.
 
     The same failure evidence may be repeated in several receipts. Event IDs
@@ -235,9 +256,14 @@ def generated_token_cost(profile):
             if isinstance(event, str) and isinstance(tokens, list):
                 if any(not isinstance(token, int) or isinstance(token, bool) or token < 0 for token in tokens):
                     raise ValueError('Invalid native emitted-token evidence')
-                if event in events and events[event] != tokens:
+                payload = value.get('payloadHex')
+                if codec is not None:
+                    if not isinstance(payload, str) or codec.decode(tokens) != bytes.fromhex(payload):
+                        raise ValueError('Native emitted token IDs do not reconstruct original bytes')
+                signature = (tokens, payload)
+                if event in events and events[event] != signature:
                     raise ValueError('Conflicting native emitted-token evidence for one event')
-                events[event] = tokens
+                events[event] = signature
             for child in value.values():
                 visit(child)
         elif isinstance(value, list):
@@ -245,8 +271,27 @@ def generated_token_cost(profile):
                 visit(child)
 
     visit(profile)
-    complete = profile.get('complete') is True and profile.get('droppedRecords') == 0
-    return {'generatedTokens': sum(len(tokens) for tokens in events.values()),
+    # Successful selection fragments live in evaluator evidence, while profiles
+    # retain failed emissions. Do not mistake a successful profile for zero cost.
+    if actual is not None:
+        for row in [*actual.get('selections', []), *actual.get('rejections', [])]:
+            selection = row.get('selection')
+            if selection is not None:
+                if selection.get('modelSelected') is not True or codec is not None and selection.get('codecFingerprint') != codec.fingerprint:
+                    raise ValueError('Token evidence lacks attested actual model selection')
+                fragments = selection.get('fragments')
+                if not isinstance(fragments, list) or not fragments:
+                    raise ValueError('Actual selection omitted native decoder fragments')
+                if row.get('record') is not None and b''.join(bytes.fromhex(item['payloadHex']) for item in fragments) != row['record'].encode():
+                    raise ValueError('Native fragments do not reconstruct selected record')
+                visit(fragments)
+        visit((actual.get('failure') or {}).get('evidence'))
+    successful_calls = sum(row.get('operation') == 'select' and row.get('ok') is True and
+                           row.get('selectionAuthority') is not None for row in profile.get('records', []))
+    recorded_selections = len(actual.get('selections', [])) if actual is not None else 0
+    complete = (profile.get('complete') is True and profile.get('droppedRecords') == 0 and
+                recorded_selections >= successful_calls)
+    return {'generatedTokens': sum(len(tokens) for tokens, _ in events.values()),
             'decoderEvents': len(events), 'complete': complete,
             'scope': 'original-native-emitted-token-ids' if complete else 'retained-native-token-lower-bound'}
 
@@ -278,11 +323,17 @@ def rollout(case, origin, bundle, consumer, root, args, env):
         try:
             process.communicate(json.dumps(case['envelope']), timeout=args.rollout_timeout + 45)
         except subprocess.TimeoutExpired:
-            os.killpg(process.pid, signal.SIGTERM)
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
             try:
                 process.wait(timeout=5)
             except subprocess.TimeoutExpired:
-                os.killpg(process.pid, signal.SIGKILL)
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
                 process.wait()
             summary.update(pipelineFailure='evaluator-timeout', returnCode=process.returncode)
         else:
@@ -317,6 +368,12 @@ def rollout(case, origin, bundle, consumer, root, args, env):
             rejections = actual['rejections']
             trace_valid = (actual['failure'] is None and not rejections and
                            actual.get('firstSemanticInconsistency') is None and not any(gates.values()))
+            codec = None
+            if bundle.get('codec_file'):
+                from megatoken.generation.codec import ByteCodec
+                codec = ByteCodec.from_tokenizer_json(Path(bundle['bundle']) / bundle['codec_file'],
+                                                      expected_sha256=bundle['tokenizer_sha256'])
+            summary['generatedTokenCost'] = generated_token_cost(profile, actual, codec)
             summary.update(wholeTaskSuccess=trace_valid and actual['outcome'] == case['expected'],
                            traceValid=trace_valid, failure=actual['failure'],
                            rejections=rejections, firstSemanticInconsistency=actual.get('firstSemanticInconsistency'),
@@ -335,6 +392,8 @@ def main():
     parser.add_argument('--tokenizer-json', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--examples', type=int, default=32)
+    parser.add_argument('--experiment', type=Path, help='Private membership and rules frozen before optimization')
+    parser.add_argument('--initialization-seed', type=int, choices=[17, 29, 43], default=17)
     parser.add_argument('--steps', type=int, default=16)
     parser.add_argument('--rollout-cases', type=int, default=4)
     parser.add_argument('--rollout-tokens', type=int, default=128)
@@ -364,7 +423,16 @@ def main():
         require_clean_checkout(tracer)
         require_clean_checkout(consumer)
         producer_revision, consumer_revision = git_head(tracer), git_head(consumer)
-        manifest, selected = choose_candidates(corpus, args.examples)
+        experiment = json.loads(args.experiment.read_text()) if args.experiment else None
+        if experiment is not None:
+            if (args.seed not in experiment['optimizerSeeds'] or args.steps != max(experiment['checkpointSteps']) or
+                    args.initialization_seed != experiment['initializationSeed'] or
+                    producer_revision != experiment['producerRevision']):
+                raise ValueError('Actual training inputs differ from the frozen experiment')
+            record(experimentSha256=sha256(args.experiment), experimentPath=str(args.experiment.resolve()))
+        manifest, selected = choose_candidates(corpus, args.examples, experiment)
+        record(initializationSeed=args.initialization_seed, optimizerSeed=args.seed,
+               baseOrigin='newly-initialized', trainingCandidateIdentities=[item.get('identityDigest') for item, _ in selected])
         if manifest['producerRevision'] != producer_revision:
             raise ValueError('Corpus must match immutable source-verifier checkout')
         sys.path.insert(0, str(consumer / 'src'))
@@ -398,6 +466,10 @@ def main():
         write_json(root / 'loss-masks.json', masks)
         record(phase='initializing-checkpoint', preparedFingerprint=prepared_manifest['fingerprint'],
                preparation=preparation, lossMaskCounts=masks['counts'])
+        checkpoint_interval = math.gcd(*experiment['checkpointSteps']) if experiment else 1
+        checkpoint_retention = args.steps // checkpoint_interval + 1 if experiment else 3
+        if checkpoint_retention > 101:
+            raise ValueError('Frozen checkpoint schedule would retain more than 100 periodic states')
         config = TrainConfig(purpose='diagnostic', phase='P1', model='tiny',
                              codec=str(args.tokenizer_json.resolve()), datasets=[str(prepared)],
                              output=str(root / 'training'), device='cpu', precision='fp32', seed=args.seed,
@@ -406,11 +478,13 @@ def main():
                              max_window_records=1, max_record_bytes=16384, generated_capacity=1024,
                              model_overrides={'vocab_size': codec.vocab_size, 'max_capacity': 1024,
                                               'max_history_chunks': 1024},
-                             effort=1, gradient_checkpointing=False, checkpoint_every=1, eval_every=0,
+                             effort=1, gradient_checkpointing=False, checkpoint_every=checkpoint_interval,
+                             keep_checkpoints=checkpoint_retention, eval_every=0,
                              deterministic=True, use_stage_mixture=False, use_effort_mixture=False)
         config_path = root / 'train-config.json'
         write_json(config_path, asdict(config))
-        initial, initial_parameters = create_initial_checkpoint(root, config, codec, masks['chunking'])
+        initial, initial_parameters = create_initial_checkpoint(root, config, codec, masks['chunking'],
+                                                               initialization_seed=args.initialization_seed)
         write_json(root / 'initial-parameter-identities.json', initial_parameters)
         gc.collect()
         base_bundle = export_checked(initial, root / 'served-base')

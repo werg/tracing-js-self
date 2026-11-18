@@ -28,6 +28,21 @@ class OptimizationMeasurementTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Conflicting'):
             SMOKE.generated_token_cost(profile)
 
+    def test_successful_tokens_come_from_original_selections_and_decode_exactly(self):
+        profile = {'complete': True, 'droppedRecords': 0, 'records': [
+            {'operation': 'select', 'ok': True, 'selectionAuthority': 'model'}]}
+        self.assertFalse(SMOKE.generated_token_cost(profile)['complete'])
+        codec = SimpleNamespace(fingerprint='codec', decode=lambda tokens: bytes(tokens))
+        actual = {'selections': [{'record': 'ok', 'selection': {
+            'modelSelected': True, 'codecFingerprint': 'codec',
+            'fragments': [{'selectedEventId': 'first', 'emittedTokenIds': [111, 107], 'payloadHex': '6f6b'}]}}]}
+        receipt = SMOKE.generated_token_cost(profile, actual, codec)
+        self.assertTrue(receipt['complete'])
+        self.assertEqual(receipt['generatedTokens'], 2)
+        actual['selections'][0]['selection']['fragments'][0]['emittedTokenIds'] = [0]
+        with self.assertRaisesRegex(ValueError, 'reconstruct original'):
+            SMOKE.generated_token_cost(profile, actual, codec)
+
     def run_rollout(self, root, *, rejected=False, timed_out=False, invalid_result=False):
         identity = 'a' * 64
         outcome = {'cleanup': {'pendingEffects': 0, 'pendingJobs': 0, 'openHandlers': 0},

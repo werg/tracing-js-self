@@ -34,8 +34,10 @@ the actual runner files, input files, and the resulting prepared corpus.
 Training is capped by `--steps` and `--train-timeout` (900 seconds by default).
 Rollouts are independently capped by `--rollout-timeout` (120 seconds by
 default) and `--rollout-tokens`. The underlying selected transport also retains
-its 30-second per-RPC limit. The native trainer checkpoints every optimizer
-step. Each completed phase and each rollout updates `report.json` atomically;
+its 30-second per-RPC limit. The standalone native diagnostic checkpoints every optimizer
+step. A frozen learning experiment instead retains its declared checkpoint
+schedule and binds exact training membership before optimization; see
+[the learning pilot](LEARNING_PILOT.md). Each completed phase and each rollout updates `report.json` atomically;
 partial runs retain checkpoints, logs, and the last completed phase.
 
 ## What is measured
