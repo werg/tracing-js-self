@@ -80,8 +80,8 @@
     },
     {
       "path": "native-aa7b-failure/index.json",
-      "bytes": 2676,
-      "sha256": "0fa48c9b73d2d51c4a8da2625255332aa4ab41e224636c1466965d0d2e810956",
+      "bytes": 3298,
+      "sha256": "1a303daed4431c565ab251b0305b6afaeafbb79d6dcd6f24bbbb86c14288241e",
       "kind": "hosted-native-failure-receipt"
     },
     {
@@ -101,6 +101,24 @@
       "bytes": 56899,
       "sha256": "781897ead0f54710f6e040d5836b717b6b50c4c0e43510293e81b26c846db1e0",
       "kind": "hosted-native-failure-receipt"
+    },
+    {
+      "path": "native-aa7b-failure/artifacts.json",
+      "kind": "private-failure-archive-metadata",
+      "bytes": 3466,
+      "sha256": "2a571b53fb51df8415162105ae297e7fb4977ba41ffe9b8faa230e810224212c"
+    },
+    {
+      "path": "native-aa7b-failure/private-archive-receipt.json",
+      "kind": "private-failure-archive-metadata",
+      "bytes": 818,
+      "sha256": "dacad63d2b576f351bea1026ba8c787659480e90001d10bee41e33950fc82ae5"
+    },
+    {
+      "path": "native-aa7b-failure/private-archive-index.json",
+      "kind": "private-failure-archive-metadata",
+      "bytes": 3086,
+      "sha256": "35e6c891fe375d139dc4a381a4b4fa8c21a3a26893de71fb3db2c6cd51cbd30a"
     }
   ]
 }

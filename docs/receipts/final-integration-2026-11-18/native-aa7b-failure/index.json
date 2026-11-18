@@ -50,6 +50,24 @@
       "bytes": 20645,
       "sha256": "8c398b0e36bafc0513493c923bfa118d6b79e5700f5324cff4aa21f0b57c644e",
       "kind": "GitHub-jobs-response-with-query-identity"
+    },
+    {
+      "path": "artifacts.json",
+      "bytes": 3466,
+      "sha256": "2a571b53fb51df8415162105ae297e7fb4977ba41ffe9b8faa230e810224212c",
+      "kind": "private-failure-archive-metadata"
+    },
+    {
+      "path": "private-archive-receipt.json",
+      "bytes": 818,
+      "sha256": "dacad63d2b576f351bea1026ba8c787659480e90001d10bee41e33950fc82ae5",
+      "kind": "private-failure-archive-metadata"
+    },
+    {
+      "path": "private-archive-index.json",
+      "bytes": 3086,
+      "sha256": "35e6c891fe375d139dc4a381a4b4fa8c21a3a26893de71fb3db2c6cd51cbd30a",
+      "kind": "private-failure-archive-metadata"
     }
   ],
   "triggeringHeadRevision": "aa7b8432761df110df53fc95664b7d767b2eeba0",

@@ -58,3 +58,33 @@ The corrective commit and its subsequent successful qualification belong in
 the [handover](../../../RESUMPTION_HANDOVER_2026-11-18.md) as new evidence. This
 failed workflow and the independently successful local/probe receipts retain
 their original producing identities and outcomes.
+
+## Original downloadable failure artifacts
+
+The run-artifacts API returned exactly four available ZIPs. Each was downloaded
+and verified against GitHub's advertised byte size and SHA-256; every ZIP member
+passed its CRC check. [artifacts.json](artifacts.json) retains the original
+public metadata. Temporary signed download URLs and private file-service IDs
+are excluded.
+
+| Recipe | Original ZIP bytes | SHA-256 |
+| --- | ---: | --- |
+| real-source | 1,759,963 | `e5ef855876bdff06c825c4ce6fd8c906b2b86ae40dbff172da5ca07738ad91cc` |
+| benchmark-v1 | 1,092,572 | `33e608f9cc86673be52d8e16b0a38eeb4db5646dda92c10ed5a335a5b9bd88d6` |
+| generated-v1 | 1,090,915 | `654ec32827447c19a1bef9a488dcf7c7dce146f041cda20a8b53b25bf2a2ad6b` |
+| training-v4 | 2,448,467 | `9ed2e174f4d0faa99f1fd9c54c5e0e92ec3a5734ad874cf1c3f72f2e6d5008f8` |
+
+The engineering upload failed before an artifact was published. Its complete
+original log is retained, but there is no fifth ZIP to download or reconstruct
+as original evidence. A later successful rerun is a new measurement.
+
+The unchanged four ZIPs, all five complete logs and the receipt snapshot are
+bundled in `native-aa7b-failure-evidence-2026-11-18.tar.gz`: **6,455,182 bytes**,
+SHA-256 `b14dfcc222940f316db9933a1003daa4bd0542adbb280fe7fc7e95378d5d3b02`.
+The [verification receipt](private-archive-receipt.json) records 14 archive
+members: 13 individually checksummed payload files (6,713,814 bytes) and the
+embedded [archive index](private-archive-index.json). Every archived member was
+read back and checked. These are partial failed-campaign artifacts, not
+completed corpora or qualified releases. The archive's embedded receipt files
+are the unchanged snapshot taken when it was built; later documentation adds
+new evidence without rewriting that snapshot.
