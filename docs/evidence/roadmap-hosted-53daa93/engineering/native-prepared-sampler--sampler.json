@@ -1,0 +1,1337 @@
+{
+  "acceptedDecisions": [
+    {
+      "budgetComponent": "prepared-budget:b378f60a77c57336ee52bbe8dc3ab69145a6b2c380a9757e0ce18fa1ab8b0295",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "171430fad682803c0d491363b7a5682d2e4bd7c484a13b91fb64e71115c63383",
+      "episodeDigest": "23e882a96196b3d6e1ad50dab4a47433abc62f082c315754ce15f97231215ba8",
+      "episodeId": "semantic:harness:8ae4b2daa0c48a098971db0900841c4ca9aae11d77d33fff83cc23195ff3a776",
+      "family": "async-counter",
+      "frozenSourceComponent": "component:3119c1b837d02134acaccc9062edaa45456498c24db7137e7770cbaf44fd6c3b",
+      "generatedTokens": 300,
+      "id": "counter-0",
+      "identityDigest": "beec4e50bb2961078a32e4b9d5ace7559209f470bab3d53ef488f05816265e9a",
+      "nativeAuditSupervisionSha256": "c766505d3dcbbd600ab77bc2b15f2ad78d863f16a74aeab3c2b34049a12c7c68",
+      "nativeLogicalRecordDigest": "8ae4b2daa0c48a098971db0900841c4ca9aae11d77d33fff83cc23195ff3a776",
+      "nativeResolvedFamily": "async-counter",
+      "nativeSplit": "train",
+      "nativeTaskId": "counter-0",
+      "observedTokens": 1303,
+      "preparedEntryId": 0,
+      "reason": "within-training-component-budgets",
+      "scoredPositions": 300,
+      "split": "train",
+      "wholeTranscriptTokens": 1603
+    },
+    {
+      "budgetComponent": "prepared-budget:b378f60a77c57336ee52bbe8dc3ab69145a6b2c380a9757e0ce18fa1ab8b0295",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "8de6355fcc4d3a7299984015c9cd3f3cbbd8fa7ffd0222518526923016eea9f6",
+      "episodeDigest": "2a86a237620e47d936559b3bafbadaf03774e3c3fe3188e77aaf17afcc3d8d30",
+      "episodeId": "semantic:harness:8afc6112e00e693c5fee22210bb175a2aa5be761e0533af5e821195aa700988b",
+      "family": "async-counter",
+      "frozenSourceComponent": "component:3119c1b837d02134acaccc9062edaa45456498c24db7137e7770cbaf44fd6c3b",
+      "generatedTokens": 306,
+      "id": "counter-1",
+      "identityDigest": "8475ab0cdc72f9393b08d8a2c075300521508376c2c550a351639d3177b34deb",
+      "nativeAuditSupervisionSha256": "bd92b45327c2ec2ae755c64e839ec976dbced50aff9874bafac7966c33cf7be1",
+      "nativeLogicalRecordDigest": "8afc6112e00e693c5fee22210bb175a2aa5be761e0533af5e821195aa700988b",
+      "nativeResolvedFamily": "async-counter",
+      "nativeSplit": "train",
+      "nativeTaskId": "counter-1",
+      "observedTokens": 1305,
+      "preparedEntryId": 1,
+      "reason": "within-training-component-budgets",
+      "scoredPositions": 306,
+      "split": "train",
+      "wholeTranscriptTokens": 1611
+    },
+    {
+      "budgetComponent": "prepared-budget:b378f60a77c57336ee52bbe8dc3ab69145a6b2c380a9757e0ce18fa1ab8b0295",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "3e4ece8323822981f231f38ac7ab02922eb1b25b4ced615afa776ed83807a221",
+      "episodeDigest": "8ff29e4178d7b10d415d951eced36e4ebccc738154999fc210f2cdceca9fcf75",
+      "episodeId": "semantic:harness:6c9937219be6ceebd87650721bf62c67174893a6e9bbccffe050e835f60642f5",
+      "family": "async-counter",
+      "frozenSourceComponent": "component:3119c1b837d02134acaccc9062edaa45456498c24db7137e7770cbaf44fd6c3b",
+      "generatedTokens": 300,
+      "id": "checkpoint-source-reread",
+      "identityDigest": "4aeace0f68a7ed4fadd49b7aaf4489a1de4963bd2d91ee1230b17bea0c673fd1",
+      "nativeAuditSupervisionSha256": "dc0808bdfa0ae627e5920da26ae3646ff4a03241318c7192bbc9dd0f6ff490f3",
+      "nativeLogicalRecordDigest": "6c9937219be6ceebd87650721bf62c67174893a6e9bbccffe050e835f60642f5",
+      "nativeResolvedFamily": "async-counter",
+      "nativeSplit": "train",
+      "nativeTaskId": "checkpoint-source-reread",
+      "observedTokens": 1665,
+      "preparedEntryId": 2,
+      "reason": "within-training-component-budgets",
+      "scoredPositions": 300,
+      "split": "train",
+      "wholeTranscriptTokens": 1965
+    },
+    {
+      "budgetComponent": "prepared-budget:27f888b91345a9ff406e055c2a0d64096c077ad3ecce6422b442f547cb980b5a",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "0ce07a623fd238a553db6f7d1bc32e735ffa24abdd733197a6a98de8d03c200a",
+      "episodeDigest": "9d37b32be2d55f2525bb5b814915f500278d7d1c4f2ed40923e8d6ffb8b5a675",
+      "episodeId": "semantic:harness:dad471f11bcfcfaf8866196f2a6080907ee9a0bc07166e84b6c38985bf0ab0ef",
+      "family": "two-outstanding",
+      "frozenSourceComponent": "component:e18671d68dff02cc0b6d3a543c776baf7be06832593ec7a2acad558fdcba9347",
+      "generatedTokens": 350,
+      "id": "two-pending-reversed",
+      "identityDigest": "dc2bb5897b28afd9cb99d9031f51d11eeeacdb693d0d041dddbe611cb21422c3",
+      "nativeAuditSupervisionSha256": "dfd1e88aea339ab12da60e0192b838d22e2167f4c40f85fbe028edf9265719e6",
+      "nativeLogicalRecordDigest": "dad471f11bcfcfaf8866196f2a6080907ee9a0bc07166e84b6c38985bf0ab0ef",
+      "nativeResolvedFamily": "task:two-pending-reversed",
+      "nativeSplit": "train",
+      "nativeTaskId": "two-pending-reversed",
+      "observedTokens": 1254,
+      "preparedEntryId": 3,
+      "reason": "within-training-component-budgets",
+      "scoredPositions": 350,
+      "split": "train",
+      "wholeTranscriptTokens": 1604
+    },
+    {
+      "budgetComponent": "prepared-budget:8f18465bab768498cdb0cf74659254ff9de460b221be6364374b50a45e9bb28e",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "322044e3cb1a361315ab0c17805a89321a662805e33b24dbca08c71fd070a9d0",
+      "episodeDigest": "4b9ec0839f8b0470040c4f8232be5f86c991694b3fa1f8ab2c1a32581392e450",
+      "episodeId": "semantic:harness:2f48daec4df6819e5c1101572db3a766f8f1f7b6ffa5b7eb551e7787239bf082",
+      "family": "observed-branch",
+      "frozenSourceComponent": "component:e41477e46dde44ee660078efa0bc365bb844c82a31efa01ec570ed01f100529b",
+      "generatedTokens": 289,
+      "id": "branch-0",
+      "identityDigest": "44044cd895188632a4bb8f0caea3d3514a630c4a45c88f362787648d3bb3dcec",
+      "nativeAuditSupervisionSha256": "605dc94e3118199d8354afef648a7565607826e9061806f395f3b501c16f9dd9",
+      "nativeLogicalRecordDigest": "2f48daec4df6819e5c1101572db3a766f8f1f7b6ffa5b7eb551e7787239bf082",
+      "nativeResolvedFamily": "observed-branch",
+      "nativeSplit": "train",
+      "nativeTaskId": "branch-0",
+      "observedTokens": 1460,
+      "preparedEntryId": 4,
+      "reason": "within-training-component-budgets",
+      "scoredPositions": 289,
+      "split": "train",
+      "wholeTranscriptTokens": 1749
+    },
+    {
+      "budgetComponent": "prepared-budget:8f18465bab768498cdb0cf74659254ff9de460b221be6364374b50a45e9bb28e",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "72f0fcdd3ec9e7efd907d16040c429526d8cfd6cfec96a92958c70cf4ba381a2",
+      "episodeDigest": "b93a141488716dadc5bbb42b9f748c7f673b37c021d60ff91d382f5c0723acad",
+      "episodeId": "semantic:harness:3ae1efd1dc83fc9204074863b63a1a6169e2387d2f46a64cc9a6004f78ad5c10",
+      "family": "observed-branch",
+      "frozenSourceComponent": "component:e41477e46dde44ee660078efa0bc365bb844c82a31efa01ec570ed01f100529b",
+      "generatedTokens": 288,
+      "id": "branch-1",
+      "identityDigest": "17281cc26dd872a9b4bcfcc5006712f58d0b7748088bc6699e2b860915222203",
+      "nativeAuditSupervisionSha256": "a4c97587d0eb725dcfa52749d41409c3b42d8ebf1fdbf32e626814c6d80c559c",
+      "nativeLogicalRecordDigest": "3ae1efd1dc83fc9204074863b63a1a6169e2387d2f46a64cc9a6004f78ad5c10",
+      "nativeResolvedFamily": "observed-branch",
+      "nativeSplit": "train",
+      "nativeTaskId": "branch-1",
+      "observedTokens": 1460,
+      "preparedEntryId": 5,
+      "reason": "within-training-component-budgets",
+      "scoredPositions": 288,
+      "split": "train",
+      "wholeTranscriptTokens": 1748
+    },
+    {
+      "budgetComponent": "prepared-budget:9883ba03c9094d213010114cf219594a8a1e0d45abd31e5b51c53f8b18dcf1ef",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "26f49a31072d0c6dac13d5f74377ad0e3e76c23fe95528d53b033c95a03c5169",
+      "episodeDigest": "39f459d4c3fd39fa4e3af721f06b850cad67ebd46e29574bd320a2d716dd7a83",
+      "episodeId": "semantic:harness:8d8e04211298b05126ec3f0d89d4393743c4fb2c81a70742ddad21b6c81c5492",
+      "family": "async-cleanup",
+      "frozenSourceComponent": "component:0a861d93e28b084bc687b4d8ea24888598a08eb40504001fe33ec5d3ba1b14b0",
+      "generatedTokens": 315,
+      "id": "rejection-finally",
+      "identityDigest": "c3fc36f3b65313bccfa21eeec95ffe70b71cfa2fddca0e0fa67c0827733ec82c",
+      "nativeAuditSupervisionSha256": "fa96e31b235996d4535cc74a95aa79bae37801d24f416bff46ee9d6a6c6a70d2",
+      "nativeLogicalRecordDigest": "8d8e04211298b05126ec3f0d89d4393743c4fb2c81a70742ddad21b6c81c5492",
+      "nativeResolvedFamily": "async-cleanup",
+      "nativeSplit": "test",
+      "nativeTaskId": "rejection-finally",
+      "observedTokens": 1518,
+      "preparedEntryId": 6,
+      "reason": "evaluation-retained",
+      "scoredPositions": 315,
+      "split": "test",
+      "wholeTranscriptTokens": 1833
+    },
+    {
+      "budgetComponent": "prepared-budget:9883ba03c9094d213010114cf219594a8a1e0d45abd31e5b51c53f8b18dcf1ef",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "ed8312ef1f270283f6d643083666923f1a0c977e62cf3e3b487e01d55cef1eac",
+      "episodeDigest": "b47014697f03e5c727b00cd304cc28eb4892f388700745ac891b08f13ee26d7d",
+      "episodeId": "semantic:harness:5345e93af88ff4bea1ae8c862be0ec61dab40a2ecaea3a226d73d13c8b7a128f",
+      "family": "async-cleanup",
+      "frozenSourceComponent": "component:0a861d93e28b084bc687b4d8ea24888598a08eb40504001fe33ec5d3ba1b14b0",
+      "generatedTokens": 219,
+      "id": "uncaught-rejection-finally",
+      "identityDigest": "d158c10a3b0920220f284fbc201a1816c89069eee3a7a066d0752762fd452b23",
+      "nativeAuditSupervisionSha256": "9c71cb0051646ba80d0cc0d2152fc64dfd66c20ac72cf3fe377aef8fcbfab1aa",
+      "nativeLogicalRecordDigest": "5345e93af88ff4bea1ae8c862be0ec61dab40a2ecaea3a226d73d13c8b7a128f",
+      "nativeResolvedFamily": "async-cleanup",
+      "nativeSplit": "test",
+      "nativeTaskId": "uncaught-rejection-finally",
+      "observedTokens": 1129,
+      "preparedEntryId": 7,
+      "reason": "evaluation-retained",
+      "scoredPositions": 219,
+      "split": "test",
+      "wholeTranscriptTokens": 1348
+    },
+    {
+      "budgetComponent": "prepared-budget:a9933df02726572560741b16ddb834a9b48c7003a7b85620cca6344322782b35",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "3b0e704799ad01609adda52662c143608d7a88b7d27633c0bd7e7aed91614bfa",
+      "episodeDigest": "e4944c1b44b93395de08380943e2ea9c8fa1da2d0c08e80c73a0f80144877ec5",
+      "episodeId": "semantic:harness:60f4094e29693319ecdf16d0570d999c9ac25eefe856900dcc8c8628a864f77b",
+      "family": "owned-callback",
+      "frozenSourceComponent": "component:026c2d4f8a128c8d356896f32bd63f8ddbf591f6d3da47694fe819c8caa4cf3c",
+      "generatedTokens": 562,
+      "id": "callback-captured-write",
+      "identityDigest": "4cd740fb5a64a6014f27fe1b68d8ca5980691f6fac66dc27ef86dfc266a55274",
+      "nativeAuditSupervisionSha256": "db1a79eee54665353896825ef376a3025bbf4f5d9740579696d1eb96f2f1fe9f",
+      "nativeLogicalRecordDigest": "60f4094e29693319ecdf16d0570d999c9ac25eefe856900dcc8c8628a864f77b",
+      "nativeResolvedFamily": "owned-callback",
+      "nativeSplit": "train",
+      "nativeTaskId": "callback-captured-write",
+      "observedTokens": 4320,
+      "preparedEntryId": 8,
+      "reason": "within-training-component-budgets",
+      "scoredPositions": 562,
+      "split": "train",
+      "wholeTranscriptTokens": 4882
+    },
+    {
+      "budgetComponent": "prepared-budget:45c3cf34a4c1706adc18f3de4570370f5c37187da3f635f07f566f5fcd6605c0",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "3f0a3abd0815aecf43c23e4a37df70fece010d77f057b3d7053ff3e6ea1d04c5",
+      "episodeDigest": "287a78ee18b65203d7d9847acca8edda738969bc1391a78f16ecbd551091e4b9",
+      "episodeId": "semantic:harness:9c94917081dedcd5008581ee96dbe0c600c202ba9e4313c1a9d4970b85ffa8b3",
+      "family": "long-callback-retained-tail",
+      "frozenSourceComponent": "component:f9d5964a22ffd18a3755803a3cb0db5c3c6d37605183cbad8ef312527fbbb6df",
+      "generatedTokens": 6885,
+      "id": "long-callback-retained-tail",
+      "identityDigest": "2c757a5391bfde861870c1c5bce9573a5b5d6ee204c0e2ef8b968b25b9fb93aa",
+      "nativeAuditSupervisionSha256": "ffb4b81a6f7dae8e751325fb1b7ac816b4ccd78943164c27b0986ea50b73ef29",
+      "nativeLogicalRecordDigest": "9c94917081dedcd5008581ee96dbe0c600c202ba9e4313c1a9d4970b85ffa8b3",
+      "nativeResolvedFamily": "long-callback-retained-tail",
+      "nativeSplit": "validation",
+      "nativeTaskId": "long-callback-retained-tail",
+      "observedTokens": 9650,
+      "preparedEntryId": 9,
+      "reason": "evaluation-retained",
+      "scoredPositions": 6885,
+      "split": "validation",
+      "wholeTranscriptTokens": 16535
+    },
+    {
+      "budgetComponent": "prepared-budget:6a60617a7a5408753e1450fbd339748b8c8a273efa461a98e1850272f37ab170",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "5e0a0857b8e6d7a0bf47caaeb31196423b062e96ad619f3d08822f69c3d03c2f",
+      "episodeDigest": "ef839a7215faea164c6b887f7dbb9a5c9a4dcdff31c026bdb3556dabba4a4c28",
+      "episodeId": "semantic:harness:d7f03fb3919503ec1be9acf5c191a74dc7bb5b05eb7c04c4ed0fd102cbed3f37",
+      "family": "synchronous-error",
+      "frozenSourceComponent": "component:2acb7229c847f2f9770b05295de4bb95b419c43cb5f66122e9c449342fc06d3d",
+      "generatedTokens": 169,
+      "id": "sync-rejection",
+      "identityDigest": "b0651a7ad899228553d227f3fb273abbfefba6ded84fa29a0d015097e628c493",
+      "nativeAuditSupervisionSha256": "50d7e94295a69ed33e65df37a9ab76958ed9804a9f42c60aa8a43e1803038c2a",
+      "nativeLogicalRecordDigest": "d7f03fb3919503ec1be9acf5c191a74dc7bb5b05eb7c04c4ed0fd102cbed3f37",
+      "nativeResolvedFamily": "synchronous-error",
+      "nativeSplit": "train",
+      "nativeTaskId": "sync-rejection",
+      "observedTokens": 1193,
+      "preparedEntryId": 10,
+      "reason": "within-training-component-budgets",
+      "scoredPositions": 169,
+      "split": "train",
+      "wholeTranscriptTokens": 1362
+    },
+    {
+      "budgetComponent": "prepared-budget:14a2e90a436c17e4cc50b6ef982522bcd5c9d179fe351cec8c13f7d700cfa8b7",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "c60b36d443c2271107ddf66840267e6ffb354455053769005a32069d69008f48",
+      "episodeDigest": "dfbee77c64e3cab37fecff368766fb207171cd35eebb7b4261c6acbc8a6ec554",
+      "episodeId": "semantic:harness:92599d58b4014974f05757a32a1d1ab1aa472b2c8991bb4aa2b7780aa3bd8d47",
+      "family": "promise-reaction",
+      "frozenSourceComponent": "component:6bf3fa94d521eb9cf94f6b20bba89031b9abf55f2c3d63666d644c6cbe36c8f9",
+      "generatedTokens": 431,
+      "id": "promise-reaction",
+      "identityDigest": "c55ed4b0b59ad42a70d6574d2c02a75dae8cf2742067f9398ae3ee35083296c2",
+      "nativeAuditSupervisionSha256": "676237486361aa439a6d2287aa6552f1edc1587334a9dfa522ad6bc932c4e923",
+      "nativeLogicalRecordDigest": "92599d58b4014974f05757a32a1d1ab1aa472b2c8991bb4aa2b7780aa3bd8d47",
+      "nativeResolvedFamily": "promise-reaction",
+      "nativeSplit": "train",
+      "nativeTaskId": "promise-reaction",
+      "observedTokens": 1469,
+      "preparedEntryId": 11,
+      "reason": "within-training-component-budgets",
+      "scoredPositions": 431,
+      "split": "train",
+      "wholeTranscriptTokens": 1900
+    },
+    {
+      "budgetComponent": "prepared-budget:a5ebb55e8ae5c6dd856d0f81800a687ff46e66ab330d20ea278986b13ad1562c",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "b69762ec1ffb477d28f3e21a07c49c9472684e22c9b7bfa24a1d519c2e879d37",
+      "episodeDigest": "0d155ba227018c97e968111f9854f05c86cae56818099b95e44bae9d167dc135",
+      "episodeId": "semantic:harness:85644c0a99571e1a0e9676c5ed63e58482e80affede519a36f03dd98c3cd19fc",
+      "family": "promise-cleanup",
+      "frozenSourceComponent": "component:e076559170391c4f51ee1c7e9b119c092d0d61e28266f5dcd5004fd993ec944b",
+      "generatedTokens": 553,
+      "id": "promise-rejection-finally",
+      "identityDigest": "198eb5e9e493b4952728cb4b146e53b1b8090275d7740e27bf2246cfd4cec4e2",
+      "nativeAuditSupervisionSha256": "45aa3d50f4f4597455478b976881cf6e6786fd39ae800ca4ce29a7f70246a814",
+      "nativeLogicalRecordDigest": "85644c0a99571e1a0e9676c5ed63e58482e80affede519a36f03dd98c3cd19fc",
+      "nativeResolvedFamily": "promise-cleanup",
+      "nativeSplit": "train",
+      "nativeTaskId": "promise-rejection-finally",
+      "observedTokens": 1835,
+      "preparedEntryId": 12,
+      "reason": "within-training-component-budgets",
+      "scoredPositions": 553,
+      "split": "train",
+      "wholeTranscriptTokens": 2388
+    },
+    {
+      "budgetComponent": "prepared-budget:d04f64885319ce9d07fc412ba43321a704eff3b3a9477514e63b8ac96ed45204",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "793757eb43ad32861353f71583aa385616d4ee39a77b678eef94ce648e3472d7",
+      "episodeDigest": "fe4d94f45d592eb855fd89a65523abaa1059dec87b684f693af0da1dc6a6037a",
+      "episodeId": "semantic:harness:590278eaf679f6935ba1b5ec57b72b16e34cd31518b9c109967b10698b85f543",
+      "family": "owned-microtask",
+      "frozenSourceComponent": "component:4455e0880e021f857963b390d5cab3a3553375f135f87fe9679f4c8efb9d4158",
+      "generatedTokens": 184,
+      "id": "owned-microtask",
+      "identityDigest": "58011853ab206c5a2a2d4437280599f11d7ff47ddc507e973602fcfccd1660bd",
+      "nativeAuditSupervisionSha256": "1387ddf9760fc9104e52b45099283a995b7f4746bb614e9c098f66b861ea9bd7",
+      "nativeLogicalRecordDigest": "590278eaf679f6935ba1b5ec57b72b16e34cd31518b9c109967b10698b85f543",
+      "nativeResolvedFamily": "owned-microtask",
+      "nativeSplit": "train",
+      "nativeTaskId": "owned-microtask",
+      "observedTokens": 893,
+      "preparedEntryId": 13,
+      "reason": "within-training-component-budgets",
+      "scoredPositions": 184,
+      "split": "train",
+      "wholeTranscriptTokens": 1077
+    },
+    {
+      "budgetComponent": "prepared-budget:aa19089470cc95eed4b4803e61a96468130bfa44e87604e51bb9181ff34f1608",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "8e4398e7f9191b72fa9891596fc692fb6ed8bd73b2a30a28031657221b19ad52",
+      "episodeDigest": "1fb57a595b6da949a35e835d62053fdaba445a5b25b9ee30f4f7340e1bbfad6d",
+      "episodeId": "semantic:harness:457687c62f271fd3a42c4d6552e695b591fab926ad358e6a5d7751134a0aae3d",
+      "family": "platform-observation",
+      "frozenSourceComponent": "component:c7a095b760d104b46573e3142193a1b5573c2c61f4481bec88019ecf998fa86e",
+      "generatedTokens": 171,
+      "id": "clock-console",
+      "identityDigest": "d11a7648ce8897bc72ff00c6c0cc02e82123d9320cd93b3249a0bb3c99ed6ab0",
+      "nativeAuditSupervisionSha256": "4100f3ca9bb85a83a399d9e8d3f8d300b2b97ec1ca008805aeeaa71313a84e47",
+      "nativeLogicalRecordDigest": "457687c62f271fd3a42c4d6552e695b591fab926ad358e6a5d7751134a0aae3d",
+      "nativeResolvedFamily": "platform-observation",
+      "nativeSplit": "train",
+      "nativeTaskId": "clock-console",
+      "observedTokens": 1085,
+      "preparedEntryId": 14,
+      "reason": "within-training-component-budgets",
+      "scoredPositions": 171,
+      "split": "train",
+      "wholeTranscriptTokens": 1256
+    },
+    {
+      "budgetComponent": "prepared-budget:8f8071be65db13c22882065cee819f5967bf8aaa1db2bfc0ad194fd22ce0b2f5",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "e131405f25930e9d96e18af3e879d07c32333c6023307235ce070462ca5245dd",
+      "episodeDigest": "950d3f5e09177f915ba03162df4cd23b107c84de4291a62bcb80cea7e02570a6",
+      "episodeId": "semantic:harness:77e563baae012d4661b046ff6eddcce1d08ea29305c1f6fe2eabedd0d913e0a9",
+      "family": "http-response-stream",
+      "frozenSourceComponent": "component:1bb7b22b6c162147409575668945d1de13fbb81109765a4210f89ae3d7a0d7c3",
+      "generatedTokens": 602,
+      "id": "http-response-stream",
+      "identityDigest": "2662bc06262da36b538708bf756313fc8259c016cc61882068bf27fa232e3394",
+      "nativeAuditSupervisionSha256": "a66a0e4d3250611e7891168419953ee2def836dab8fa23d36b8e9c3bce617200",
+      "nativeLogicalRecordDigest": "77e563baae012d4661b046ff6eddcce1d08ea29305c1f6fe2eabedd0d913e0a9",
+      "nativeResolvedFamily": "http-response-stream",
+      "nativeSplit": "train",
+      "nativeTaskId": "http-response-stream",
+      "observedTokens": 2013,
+      "preparedEntryId": 15,
+      "reason": "within-training-component-budgets",
+      "scoredPositions": 602,
+      "split": "train",
+      "wholeTranscriptTokens": 2615
+    },
+    {
+      "budgetComponent": "prepared-budget:628a9df1dc9e4475bc230c48a84b2685dcf8226de6521c61db2853a968bd6a3d",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "f606e508ce6970015d34e8df9a58173633344c5826b077e7c2ee5afdaf6d549b",
+      "episodeDigest": "6c8e496be5b07079b864153ae6736d27b5abe40a2a4f8a52cb90eeabaea44f20",
+      "episodeId": "semantic:harness:ea9702bd290761f1eb99147fe3bc1a20363b06c650c34e7e5caa3a852aa8d771",
+      "family": "filesystem-stream-copy",
+      "frozenSourceComponent": "component:56654d126c738776cbecffc2d61996b5f39f3df2c799b2862a3577ee72f2be64",
+      "generatedTokens": 799,
+      "id": "filesystem-stream-copy",
+      "identityDigest": "4e8144071c444e54ef2003d0b268134cf0772e0151ccc279f8324cf862cf6239",
+      "nativeAuditSupervisionSha256": "a79d57f4e9cc25003879b4bfaadf78fbfc5dff854941e6fe9525c01b50f7c7a7",
+      "nativeLogicalRecordDigest": "ea9702bd290761f1eb99147fe3bc1a20363b06c650c34e7e5caa3a852aa8d771",
+      "nativeResolvedFamily": "filesystem-stream-copy",
+      "nativeSplit": "test",
+      "nativeTaskId": "filesystem-stream-copy",
+      "observedTokens": 2584,
+      "preparedEntryId": 16,
+      "reason": "evaluation-retained",
+      "scoredPositions": 799,
+      "split": "test",
+      "wholeTranscriptTokens": 3383
+    },
+    {
+      "budgetComponent": "prepared-budget:0d9f2269510c646274de7c0d0335d5e6b352b313693ddf2c9d2e72271901d466",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "9dff750c4decf88ded2012203e2d3ab9bb6ad87610e924997edec1b776186a82",
+      "episodeDigest": "eca366c3b43096c306b8f7f42fe35e716aedc8ef6c6b732985c6043b7284d04b",
+      "episodeId": "semantic:harness:52c380f4546b4c64029f8de6a319460ae60094802a86ba8ae7c600cfc4387f5e",
+      "family": "socket-round-trip",
+      "frozenSourceComponent": "component:6a4b9fb9bd6e1a127ba929a6c66b9b0ba7c7eba490a3eb0afde66349ab81bbb4",
+      "generatedTokens": 579,
+      "id": "socket-round-trip",
+      "identityDigest": "84183366266ffde3aff6ade79ae9e023414985d8f02dca928c12fe61e949b8e9",
+      "nativeAuditSupervisionSha256": "5fa96ad4857ca0548ef35f49e1a42ba801bafb2fed60e9acffb31dc276cb7763",
+      "nativeLogicalRecordDigest": "52c380f4546b4c64029f8de6a319460ae60094802a86ba8ae7c600cfc4387f5e",
+      "nativeResolvedFamily": "socket-round-trip",
+      "nativeSplit": "validation",
+      "nativeTaskId": "socket-round-trip",
+      "observedTokens": 1910,
+      "preparedEntryId": 17,
+      "reason": "evaluation-retained",
+      "scoredPositions": 579,
+      "split": "validation",
+      "wholeTranscriptTokens": 2489
+    },
+    {
+      "budgetComponent": "prepared-budget:7b491044caa5b14c494d3619dfa35af56976e6e91d2cd1506c367d1fc54448d9",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "3b0f73e972c3ed2d37fc29e029111cd13982ac1f0ec3f721a9aa1241bdaa5848",
+      "episodeDigest": "c676282ea1090fd3ac22235c45511395e6e3e225bbba23dcadd1f151debccc2f",
+      "episodeId": "semantic:harness:fdee22b7fdb1f5f66c862c4236c23d80d66c0f33ab901e2684631a7be9541ff9",
+      "family": "dom-mutation-release",
+      "frozenSourceComponent": "component:bddb07b64c8188deec3c579939e54d1476ece57a4f96337a08b7e0fd351c2ab6",
+      "generatedTokens": 550,
+      "id": "dom-mutation-release",
+      "identityDigest": "d029c0490d5410a112d82a1aed2609c61ddca024eea2a4575c85b3432c0df153",
+      "nativeAuditSupervisionSha256": "59d306a3172310f41c51a451b5293d4acbb8450910f6d47a401a8da8b54af8f2",
+      "nativeLogicalRecordDigest": "fdee22b7fdb1f5f66c862c4236c23d80d66c0f33ab901e2684631a7be9541ff9",
+      "nativeResolvedFamily": "dom-mutation-release",
+      "nativeSplit": "train",
+      "nativeTaskId": "dom-mutation-release",
+      "observedTokens": 1876,
+      "preparedEntryId": 18,
+      "reason": "within-training-component-budgets",
+      "scoredPositions": 550,
+      "split": "train",
+      "wholeTranscriptTokens": 2426
+    },
+    {
+      "budgetComponent": "prepared-budget:ecfd9e06378571c12cd1fcc71720c7e0b14687c0aef04ce84f30eaf337a4dcb1",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "a937313d01102e82136214db7b08e2b5693cd56a1b8300acf0fcedc5e8bb02cb",
+      "episodeDigest": "0ec8551dcb64bcddf971332ee584491640c3051c252b73b06c523d2319f42fee",
+      "episodeId": "semantic:harness:0edf77570618c207d07bb27acca83334f5a975940b2b95df573b02a232db1724",
+      "family": "natlang-cell-call",
+      "frozenSourceComponent": "component:aea268c42c7bda31e3043a92a90284c5c68163a21ec961652a403d2511d2cdca",
+      "generatedTokens": 590,
+      "id": "natlang-cell-call",
+      "identityDigest": "fb0cd53152aa59124e8d8f9264e19aae3d57d2d4b32e67307c238bd780a3b8a3",
+      "nativeAuditSupervisionSha256": "1cac0c5a20c2cb023a1482d51b560f82815328668944334c319497ff408bfdee",
+      "nativeLogicalRecordDigest": "0edf77570618c207d07bb27acca83334f5a975940b2b95df573b02a232db1724",
+      "nativeResolvedFamily": "natlang-cell-call",
+      "nativeSplit": "train",
+      "nativeTaskId": "natlang-cell-call",
+      "observedTokens": 1625,
+      "preparedEntryId": 19,
+      "reason": "within-training-component-budgets",
+      "scoredPositions": 590,
+      "split": "train",
+      "wholeTranscriptTokens": 2215
+    },
+    {
+      "budgetComponent": "prepared-budget:201b6c350c511db688cc3c4f36633275dd29625aecb96a728997646e5329b722",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "8318e111ad61348d6e4a2e0c0ac141de269017223b6a40b91484b26212b82f1d",
+      "episodeDigest": "107c898635d43a229ce09ac2a84fc5d8f54a98c8aa93d0dffde7ccd9d8c691e5",
+      "episodeId": "semantic:harness:181e78e4a5ef3dc36877d5c1b9a83ddd1e44fec8ffddae6e3a5b29e6de147009",
+      "family": "native-result-graph",
+      "frozenSourceComponent": "component:12e7dfd8463597ad7e736d84afe6b15fc72c41dcce788d56e78e5a603116f3e1",
+      "generatedTokens": 700,
+      "id": "native-result-graph",
+      "identityDigest": "e730d537772b8e4d9a9033ca861ced3756040176ea07782ed9ba681432d4bcff",
+      "nativeAuditSupervisionSha256": "df039bedffc78fe2c24fc9d9d34b86cc0e505fc635701bc93f15629215bbe7fa",
+      "nativeLogicalRecordDigest": "181e78e4a5ef3dc36877d5c1b9a83ddd1e44fec8ffddae6e3a5b29e6de147009",
+      "nativeResolvedFamily": "native-result-graph",
+      "nativeSplit": "train",
+      "nativeTaskId": "native-result-graph",
+      "observedTokens": 2101,
+      "preparedEntryId": 20,
+      "reason": "within-training-component-budgets",
+      "scoredPositions": 700,
+      "split": "train",
+      "wholeTranscriptTokens": 2801
+    },
+    {
+      "budgetComponent": "prepared-budget:6ca887109cdf46781b572cbcd5650914098626571eef60107b091e112acc0a86",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "4d7b6e55109e01f662522a03aac9bc6d11e5731778d2a87c58b7984fcc03cd37",
+      "episodeDigest": "4cdb4b52e7739e54af5b9623a4e75b44b3b26df563c9747dc5bca61135396f10",
+      "episodeId": "semantic:harness:c86e12e5f909e5f518f72bf01b1ccd30b0da4daef7a47a8ddfb2bd8cad38f9ac",
+      "family": "compound-pure",
+      "frozenSourceComponent": "component:7ae6ed9a9d6b79049846439215d807d5bbc7958202cc0159959f2bb50b3fea19",
+      "generatedTokens": 192,
+      "id": "compound-pure",
+      "identityDigest": "588b4d6ad6c86e713d4c66d86314214a6572e1f95c95240b3c7889c1b1dd813a",
+      "nativeAuditSupervisionSha256": "64f507cc1a73d4222e4e2dded4ba63ef6423b2948f09c7149eed261f08fb6804",
+      "nativeLogicalRecordDigest": "c86e12e5f909e5f518f72bf01b1ccd30b0da4daef7a47a8ddfb2bd8cad38f9ac",
+      "nativeResolvedFamily": "compound-pure",
+      "nativeSplit": "train",
+      "nativeTaskId": "compound-pure",
+      "observedTokens": 799,
+      "preparedEntryId": 21,
+      "reason": "within-training-component-budgets",
+      "scoredPositions": 192,
+      "split": "train",
+      "wholeTranscriptTokens": 991
+    },
+    {
+      "budgetComponent": "prepared-budget:fb7e3c8e8eea9d5c4f55e6e5abcc65fe07f8d20b2e8ca32720ebf3dd2e011b11",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "b94755416c06271858b49160d339f3a590e81981d5b9dfb05ecfd8063ddf1ab6",
+      "episodeDigest": "ad10c83c6f75738dc3bbedf4507d1827a14fbfed35538a2589c0320be06fc034",
+      "episodeId": "semantic:harness:103c54174274efa819d91d8c4bd5498769e8265840cf8d29ccb9aa0eba8573d7",
+      "family": "compound-effectful",
+      "frozenSourceComponent": "component:0748d252232434bb0fa3790cb81f4fdfa7c4f3a5d4a43cab16e8344726a7156f",
+      "generatedTokens": 381,
+      "id": "compound-effectful",
+      "identityDigest": "f027bfefc6c01c07c57abb9bf117b09bb7e59176644e3a83a5ff01891b231b1e",
+      "nativeAuditSupervisionSha256": "449f1cab5a6e374357ede08f56e7c8fdf137eae3d9bd5fd402a9af15682d5ea7",
+      "nativeLogicalRecordDigest": "103c54174274efa819d91d8c4bd5498769e8265840cf8d29ccb9aa0eba8573d7",
+      "nativeResolvedFamily": "compound-effectful",
+      "nativeSplit": "train",
+      "nativeTaskId": "compound-effectful",
+      "observedTokens": 1451,
+      "preparedEntryId": 22,
+      "reason": "within-training-component-budgets",
+      "scoredPositions": 381,
+      "split": "train",
+      "wholeTranscriptTokens": 1832
+    },
+    {
+      "budgetComponent": "prepared-budget:df857408fb9e8343cd69d21dbfd74b7dcc57b6c1f4cdbc06bb26f44195407d48",
+      "decision": "included",
+      "encodedTokensAndMasksSha256": "44a04f5e5c7ad499189a5089f292709334c56b0bba5360133cfa4fd616017add",
+      "episodeDigest": "19b71eb027c692f3df17ae2a65e6ffa393df5bf17f0261058c5707bfb8a51093",
+      "episodeId": "semantic:harness:01aa13672dbe6ab38202fea835f9bb518821606ab93d860a0ad99e0cccc0e928",
+      "family": "persistent-external-trigger",
+      "frozenSourceComponent": "component:476ba8f1b2442f32be10eea61b816a6b871b3b54627b8fd0782485d4b61c53d3",
+      "generatedTokens": 751,
+      "id": "persistent-external-trigger",
+      "identityDigest": "89e0358d7ddd4611b0ae67b8d0bd8791ce1ae1a0138b11eac8b115c2cd013aad",
+      "nativeAuditSupervisionSha256": "c191a56a050b94c88b15b38242634db486096d553df13479401212bdb8e52db1",
+      "nativeLogicalRecordDigest": "01aa13672dbe6ab38202fea835f9bb518821606ab93d860a0ad99e0cccc0e928",
+      "nativeResolvedFamily": "persistent-external-trigger",
+      "nativeSplit": "test",
+      "nativeTaskId": "persistent-external-trigger",
+      "observedTokens": 4883,
+      "preparedEntryId": 23,
+      "reason": "evaluation-retained",
+      "scoredPositions": 751,
+      "split": "test",
+      "wholeTranscriptTokens": 5634
+    },
+    {
+      "budgetComponent": "prepared-budget:b378f60a77c57336ee52bbe8dc3ab69145a6b2c380a9757e0ce18fa1ab8b0295",
+      "decision": "excluded",
+      "encodedTokensAndMasksSha256": "293f25275b752097a0c1c7266c310c43ac3880552b14995234b370081819f468",
+      "episodeDigest": "4a7b858a4a347ff2be8ca099a62bba5a0b1309319cfb5d036bf7f9a4dd48b997",
+      "episodeId": "semantic:harness:f4501ce3325026120d7397be08adeea7d9a25ebaecb411b8422c37f2bac51dc1",
+      "family": "async-counter",
+      "frozenSourceComponent": "component:3119c1b837d02134acaccc9062edaa45456498c24db7137e7770cbaf44fd6c3b",
+      "generatedTokens": 606,
+      "id": "repeated-ingress",
+      "identityDigest": "8e90049c4ddecfcb257f98f0b41711cd53d68c76087c8f2422bf710d20ed0bd6",
+      "nativeAuditSupervisionSha256": "87525edfe09aa6558cbdb698441fde81f45ddfc64b9628c004c8b2ede0e5a9b6",
+      "nativeLogicalRecordDigest": "f4501ce3325026120d7397be08adeea7d9a25ebaecb411b8422c37f2bac51dc1",
+      "nativeResolvedFamily": "async-counter",
+      "nativeSplit": "train",
+      "nativeTaskId": "async-counter",
+      "observedTokens": 1859,
+      "preparedEntryId": 24,
+      "reason": "family-token-share",
+      "scoredPositions": 606,
+      "split": "train",
+      "wholeTranscriptTokens": 2465
+    }
+  ],
+  "after": {
+    "budgetComponents": 20,
+    "declaredFamilies": 20,
+    "episodes": 24,
+    "frozenSourceComponents": 20,
+    "maximumTrainingComponentShare": 0.13096270598438856,
+    "nativeGeneratedTokens": 16466,
+    "nativeObservedTokens": 50781,
+    "nativeResolvedFamilies": 20,
+    "scoredPositions": 16466,
+    "splits": {
+      "test": {
+        "budgetComponents": 3,
+        "declaredFamilies": 3,
+        "episodes": 4,
+        "frozenSourceComponents": 3,
+        "nativeGeneratedTokens": 2084,
+        "nativeObservedTokens": 10114,
+        "nativeResolvedFamilies": 3,
+        "scoredPositions": 2084
+      },
+      "train": {
+        "budgetComponents": 15,
+        "declaredFamilies": 15,
+        "episodes": 18,
+        "frozenSourceComponents": 15,
+        "nativeGeneratedTokens": 6918,
+        "nativeObservedTokens": 29107,
+        "nativeResolvedFamilies": 15,
+        "scoredPositions": 6918
+      },
+      "validation": {
+        "budgetComponents": 2,
+        "declaredFamilies": 2,
+        "episodes": 2,
+        "frozenSourceComponents": 2,
+        "nativeGeneratedTokens": 7464,
+        "nativeObservedTokens": 11560,
+        "nativeResolvedFamilies": 2,
+        "scoredPositions": 7464
+      }
+    },
+    "trainingComponents": [
+      {
+        "budgetComponent": "prepared-budget:b378f60a77c57336ee52bbe8dc3ab69145a6b2c380a9757e0ce18fa1ab8b0295",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 3,
+        "frozenComponents": [
+          "component:3119c1b837d02134acaccc9062edaa45456498c24db7137e7770cbaf44fd6c3b"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "async-counter"
+        ],
+        "nativeGeneratedTokens": 906,
+        "nativeObservedTokens": 4273,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 906,
+        "share": 0.13096270598438856
+      },
+      {
+        "budgetComponent": "prepared-budget:201b6c350c511db688cc3c4f36633275dd29625aecb96a728997646e5329b722",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:12e7dfd8463597ad7e736d84afe6b15fc72c41dcce788d56e78e5a603116f3e1"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "native-result-graph"
+        ],
+        "nativeGeneratedTokens": 700,
+        "nativeObservedTokens": 2101,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 700,
+        "share": 0.1011853136744724
+      },
+      {
+        "budgetComponent": "prepared-budget:8f8071be65db13c22882065cee819f5967bf8aaa1db2bfc0ad194fd22ce0b2f5",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:1bb7b22b6c162147409575668945d1de13fbb81109765a4210f89ae3d7a0d7c3"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "http-response-stream"
+        ],
+        "nativeGeneratedTokens": 602,
+        "nativeObservedTokens": 2013,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 602,
+        "share": 0.08701936976004626
+      },
+      {
+        "budgetComponent": "prepared-budget:ecfd9e06378571c12cd1fcc71720c7e0b14687c0aef04ce84f30eaf337a4dcb1",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:aea268c42c7bda31e3043a92a90284c5c68163a21ec961652a403d2511d2cdca"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "natlang-cell-call"
+        ],
+        "nativeGeneratedTokens": 590,
+        "nativeObservedTokens": 1625,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 590,
+        "share": 0.08528476438276959
+      },
+      {
+        "budgetComponent": "prepared-budget:8f18465bab768498cdb0cf74659254ff9de460b221be6364374b50a45e9bb28e",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 2,
+        "frozenComponents": [
+          "component:e41477e46dde44ee660078efa0bc365bb844c82a31efa01ec570ed01f100529b"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "observed-branch"
+        ],
+        "nativeGeneratedTokens": 577,
+        "nativeObservedTokens": 2920,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 577,
+        "share": 0.08340560855738653
+      },
+      {
+        "budgetComponent": "prepared-budget:a9933df02726572560741b16ddb834a9b48c7003a7b85620cca6344322782b35",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:026c2d4f8a128c8d356896f32bd63f8ddbf591f6d3da47694fe819c8caa4cf3c"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "owned-callback"
+        ],
+        "nativeGeneratedTokens": 562,
+        "nativeObservedTokens": 4320,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 562,
+        "share": 0.08123735183579069
+      },
+      {
+        "budgetComponent": "prepared-budget:a5ebb55e8ae5c6dd856d0f81800a687ff46e66ab330d20ea278986b13ad1562c",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:e076559170391c4f51ee1c7e9b119c092d0d61e28266f5dcd5004fd993ec944b"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "promise-cleanup"
+        ],
+        "nativeGeneratedTokens": 553,
+        "nativeObservedTokens": 1835,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 553,
+        "share": 0.0799363978028332
+      },
+      {
+        "budgetComponent": "prepared-budget:7b491044caa5b14c494d3619dfa35af56976e6e91d2cd1506c367d1fc54448d9",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:bddb07b64c8188deec3c579939e54d1476ece57a4f96337a08b7e0fd351c2ab6"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "dom-mutation-release"
+        ],
+        "nativeGeneratedTokens": 550,
+        "nativeObservedTokens": 1876,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 550,
+        "share": 0.07950274645851402
+      },
+      {
+        "budgetComponent": "prepared-budget:14a2e90a436c17e4cc50b6ef982522bcd5c9d179fe351cec8c13f7d700cfa8b7",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:6bf3fa94d521eb9cf94f6b20bba89031b9abf55f2c3d63666d644c6cbe36c8f9"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "promise-reaction"
+        ],
+        "nativeGeneratedTokens": 431,
+        "nativeObservedTokens": 1469,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 431,
+        "share": 0.06230124313385371
+      },
+      {
+        "budgetComponent": "prepared-budget:fb7e3c8e8eea9d5c4f55e6e5abcc65fe07f8d20b2e8ca32720ebf3dd2e011b11",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:0748d252232434bb0fa3790cb81f4fdfa7c4f3a5d4a43cab16e8344726a7156f"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "compound-effectful"
+        ],
+        "nativeGeneratedTokens": 381,
+        "nativeObservedTokens": 1451,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 381,
+        "share": 0.05507372072853426
+      },
+      {
+        "budgetComponent": "prepared-budget:27f888b91345a9ff406e055c2a0d64096c077ad3ecce6422b442f547cb980b5a",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:e18671d68dff02cc0b6d3a543c776baf7be06832593ec7a2acad558fdcba9347"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "task:two-pending-reversed"
+        ],
+        "nativeGeneratedTokens": 350,
+        "nativeObservedTokens": 1254,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 350,
+        "share": 0.0505926568372362
+      },
+      {
+        "budgetComponent": "prepared-budget:6ca887109cdf46781b572cbcd5650914098626571eef60107b091e112acc0a86",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:7ae6ed9a9d6b79049846439215d807d5bbc7958202cc0159959f2bb50b3fea19"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "compound-pure"
+        ],
+        "nativeGeneratedTokens": 192,
+        "nativeObservedTokens": 799,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 192,
+        "share": 0.027753686036426712
+      },
+      {
+        "budgetComponent": "prepared-budget:d04f64885319ce9d07fc412ba43321a704eff3b3a9477514e63b8ac96ed45204",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:4455e0880e021f857963b390d5cab3a3553375f135f87fe9679f4c8efb9d4158"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "owned-microtask"
+        ],
+        "nativeGeneratedTokens": 184,
+        "nativeObservedTokens": 893,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 184,
+        "share": 0.0265972824515756
+      },
+      {
+        "budgetComponent": "prepared-budget:aa19089470cc95eed4b4803e61a96468130bfa44e87604e51bb9181ff34f1608",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:c7a095b760d104b46573e3142193a1b5573c2c61f4481bec88019ecf998fa86e"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "platform-observation"
+        ],
+        "nativeGeneratedTokens": 171,
+        "nativeObservedTokens": 1085,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 171,
+        "share": 0.024718126626192542
+      },
+      {
+        "budgetComponent": "prepared-budget:6a60617a7a5408753e1450fbd339748b8c8a273efa461a98e1850272f37ab170",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:2acb7229c847f2f9770b05295de4bb95b419c43cb5f66122e9c449342fc06d3d"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "synchronous-error"
+        ],
+        "nativeGeneratedTokens": 169,
+        "nativeObservedTokens": 1193,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 169,
+        "share": 0.024429025729979764
+      }
+    ]
+  },
+  "before": {
+    "budgetComponents": 20,
+    "declaredFamilies": 20,
+    "episodes": 25,
+    "frozenSourceComponents": 20,
+    "maximumTrainingComponentShare": 0.20095693779904306,
+    "nativeGeneratedTokens": 17072,
+    "nativeObservedTokens": 52640,
+    "nativeResolvedFamilies": 20,
+    "scoredPositions": 17072,
+    "splits": {
+      "test": {
+        "budgetComponents": 3,
+        "declaredFamilies": 3,
+        "episodes": 4,
+        "frozenSourceComponents": 3,
+        "nativeGeneratedTokens": 2084,
+        "nativeObservedTokens": 10114,
+        "nativeResolvedFamilies": 3,
+        "scoredPositions": 2084
+      },
+      "train": {
+        "budgetComponents": 15,
+        "declaredFamilies": 15,
+        "episodes": 19,
+        "frozenSourceComponents": 15,
+        "nativeGeneratedTokens": 7524,
+        "nativeObservedTokens": 30966,
+        "nativeResolvedFamilies": 15,
+        "scoredPositions": 7524
+      },
+      "validation": {
+        "budgetComponents": 2,
+        "declaredFamilies": 2,
+        "episodes": 2,
+        "frozenSourceComponents": 2,
+        "nativeGeneratedTokens": 7464,
+        "nativeObservedTokens": 11560,
+        "nativeResolvedFamilies": 2,
+        "scoredPositions": 7464
+      }
+    },
+    "trainingComponents": [
+      {
+        "budgetComponent": "prepared-budget:b378f60a77c57336ee52bbe8dc3ab69145a6b2c380a9757e0ce18fa1ab8b0295",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 4,
+        "frozenComponents": [
+          "component:3119c1b837d02134acaccc9062edaa45456498c24db7137e7770cbaf44fd6c3b"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "async-counter"
+        ],
+        "nativeGeneratedTokens": 1512,
+        "nativeObservedTokens": 6132,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 1512,
+        "share": 0.20095693779904306
+      },
+      {
+        "budgetComponent": "prepared-budget:201b6c350c511db688cc3c4f36633275dd29625aecb96a728997646e5329b722",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:12e7dfd8463597ad7e736d84afe6b15fc72c41dcce788d56e78e5a603116f3e1"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "native-result-graph"
+        ],
+        "nativeGeneratedTokens": 700,
+        "nativeObservedTokens": 2101,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 700,
+        "share": 0.09303561935140882
+      },
+      {
+        "budgetComponent": "prepared-budget:8f8071be65db13c22882065cee819f5967bf8aaa1db2bfc0ad194fd22ce0b2f5",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:1bb7b22b6c162147409575668945d1de13fbb81109765a4210f89ae3d7a0d7c3"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "http-response-stream"
+        ],
+        "nativeGeneratedTokens": 602,
+        "nativeObservedTokens": 2013,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 602,
+        "share": 0.08001063264221159
+      },
+      {
+        "budgetComponent": "prepared-budget:ecfd9e06378571c12cd1fcc71720c7e0b14687c0aef04ce84f30eaf337a4dcb1",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:aea268c42c7bda31e3043a92a90284c5c68163a21ec961652a403d2511d2cdca"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "natlang-cell-call"
+        ],
+        "nativeGeneratedTokens": 590,
+        "nativeObservedTokens": 1625,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 590,
+        "share": 0.07841573631047315
+      },
+      {
+        "budgetComponent": "prepared-budget:8f18465bab768498cdb0cf74659254ff9de460b221be6364374b50a45e9bb28e",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 2,
+        "frozenComponents": [
+          "component:e41477e46dde44ee660078efa0bc365bb844c82a31efa01ec570ed01f100529b"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "observed-branch"
+        ],
+        "nativeGeneratedTokens": 577,
+        "nativeObservedTokens": 2920,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 577,
+        "share": 0.07668793195108985
+      },
+      {
+        "budgetComponent": "prepared-budget:a9933df02726572560741b16ddb834a9b48c7003a7b85620cca6344322782b35",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:026c2d4f8a128c8d356896f32bd63f8ddbf591f6d3da47694fe819c8caa4cf3c"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "owned-callback"
+        ],
+        "nativeGeneratedTokens": 562,
+        "nativeObservedTokens": 4320,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 562,
+        "share": 0.0746943115364168
+      },
+      {
+        "budgetComponent": "prepared-budget:a5ebb55e8ae5c6dd856d0f81800a687ff46e66ab330d20ea278986b13ad1562c",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:e076559170391c4f51ee1c7e9b119c092d0d61e28266f5dcd5004fd993ec944b"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "promise-cleanup"
+        ],
+        "nativeGeneratedTokens": 553,
+        "nativeObservedTokens": 1835,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 553,
+        "share": 0.07349813928761297
+      },
+      {
+        "budgetComponent": "prepared-budget:7b491044caa5b14c494d3619dfa35af56976e6e91d2cd1506c367d1fc54448d9",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:bddb07b64c8188deec3c579939e54d1476ece57a4f96337a08b7e0fd351c2ab6"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "dom-mutation-release"
+        ],
+        "nativeGeneratedTokens": 550,
+        "nativeObservedTokens": 1876,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 550,
+        "share": 0.07309941520467836
+      },
+      {
+        "budgetComponent": "prepared-budget:14a2e90a436c17e4cc50b6ef982522bcd5c9d179fe351cec8c13f7d700cfa8b7",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:6bf3fa94d521eb9cf94f6b20bba89031b9abf55f2c3d63666d644c6cbe36c8f9"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "promise-reaction"
+        ],
+        "nativeGeneratedTokens": 431,
+        "nativeObservedTokens": 1469,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 431,
+        "share": 0.05728335991493886
+      },
+      {
+        "budgetComponent": "prepared-budget:fb7e3c8e8eea9d5c4f55e6e5abcc65fe07f8d20b2e8ca32720ebf3dd2e011b11",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:0748d252232434bb0fa3790cb81f4fdfa7c4f3a5d4a43cab16e8344726a7156f"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "compound-effectful"
+        ],
+        "nativeGeneratedTokens": 381,
+        "nativeObservedTokens": 1451,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 381,
+        "share": 0.05063795853269538
+      },
+      {
+        "budgetComponent": "prepared-budget:27f888b91345a9ff406e055c2a0d64096c077ad3ecce6422b442f547cb980b5a",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:e18671d68dff02cc0b6d3a543c776baf7be06832593ec7a2acad558fdcba9347"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "task:two-pending-reversed"
+        ],
+        "nativeGeneratedTokens": 350,
+        "nativeObservedTokens": 1254,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 350,
+        "share": 0.04651780967570441
+      },
+      {
+        "budgetComponent": "prepared-budget:6ca887109cdf46781b572cbcd5650914098626571eef60107b091e112acc0a86",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:7ae6ed9a9d6b79049846439215d807d5bbc7958202cc0159959f2bb50b3fea19"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "compound-pure"
+        ],
+        "nativeGeneratedTokens": 192,
+        "nativeObservedTokens": 799,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 192,
+        "share": 0.025518341307814992
+      },
+      {
+        "budgetComponent": "prepared-budget:d04f64885319ce9d07fc412ba43321a704eff3b3a9477514e63b8ac96ed45204",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:4455e0880e021f857963b390d5cab3a3553375f135f87fe9679f4c8efb9d4158"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "owned-microtask"
+        ],
+        "nativeGeneratedTokens": 184,
+        "nativeObservedTokens": 893,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 184,
+        "share": 0.024455077086656035
+      },
+      {
+        "budgetComponent": "prepared-budget:aa19089470cc95eed4b4803e61a96468130bfa44e87604e51bb9181ff34f1608",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:c7a095b760d104b46573e3142193a1b5573c2c61f4481bec88019ecf998fa86e"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "platform-observation"
+        ],
+        "nativeGeneratedTokens": 171,
+        "nativeObservedTokens": 1085,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 171,
+        "share": 0.022727272727272728
+      },
+      {
+        "budgetComponent": "prepared-budget:6a60617a7a5408753e1450fbd339748b8c8a273efa461a98e1850272f37ab170",
+        "budgetComponents": 1,
+        "declaredFamilies": 1,
+        "episodes": 1,
+        "frozenComponents": [
+          "component:2acb7229c847f2f9770b05295de4bb95b419c43cb5f66122e9c449342fc06d3d"
+        ],
+        "frozenSourceComponents": 1,
+        "nativeFamilies": [
+          "synchronous-error"
+        ],
+        "nativeGeneratedTokens": 169,
+        "nativeObservedTokens": 1193,
+        "nativeResolvedFamilies": 1,
+        "scoredPositions": 169,
+        "share": 0.022461456671982988
+      }
+    ]
+  },
+  "campaignVerificationSha256": "d1deeb6b72b8e169950ddedf4961227d5be3aeaae909f8abfe30792d5056ca2e",
+  "excludedAcceptedCandidateIds": [
+    "repeated-ingress"
+  ],
+  "includedCandidateIds": [
+    "branch-0",
+    "branch-1",
+    "callback-captured-write",
+    "checkpoint-source-reread",
+    "clock-console",
+    "compound-effectful",
+    "compound-pure",
+    "counter-0",
+    "counter-1",
+    "dom-mutation-release",
+    "filesystem-stream-copy",
+    "http-response-stream",
+    "long-callback-retained-tail",
+    "native-result-graph",
+    "natlang-cell-call",
+    "owned-microtask",
+    "persistent-external-trigger",
+    "promise-reaction",
+    "promise-rejection-finally",
+    "rejection-finally",
+    "socket-round-trip",
+    "sync-rejection",
+    "two-pending-reversed",
+    "uncaught-rejection-finally"
+  ],
+  "includedEpisodeIds": [
+    "semantic:harness:01aa13672dbe6ab38202fea835f9bb518821606ab93d860a0ad99e0cccc0e928",
+    "semantic:harness:0edf77570618c207d07bb27acca83334f5a975940b2b95df573b02a232db1724",
+    "semantic:harness:103c54174274efa819d91d8c4bd5498769e8265840cf8d29ccb9aa0eba8573d7",
+    "semantic:harness:181e78e4a5ef3dc36877d5c1b9a83ddd1e44fec8ffddae6e3a5b29e6de147009",
+    "semantic:harness:2f48daec4df6819e5c1101572db3a766f8f1f7b6ffa5b7eb551e7787239bf082",
+    "semantic:harness:3ae1efd1dc83fc9204074863b63a1a6169e2387d2f46a64cc9a6004f78ad5c10",
+    "semantic:harness:457687c62f271fd3a42c4d6552e695b591fab926ad358e6a5d7751134a0aae3d",
+    "semantic:harness:52c380f4546b4c64029f8de6a319460ae60094802a86ba8ae7c600cfc4387f5e",
+    "semantic:harness:5345e93af88ff4bea1ae8c862be0ec61dab40a2ecaea3a226d73d13c8b7a128f",
+    "semantic:harness:590278eaf679f6935ba1b5ec57b72b16e34cd31518b9c109967b10698b85f543",
+    "semantic:harness:60f4094e29693319ecdf16d0570d999c9ac25eefe856900dcc8c8628a864f77b",
+    "semantic:harness:6c9937219be6ceebd87650721bf62c67174893a6e9bbccffe050e835f60642f5",
+    "semantic:harness:77e563baae012d4661b046ff6eddcce1d08ea29305c1f6fe2eabedd0d913e0a9",
+    "semantic:harness:85644c0a99571e1a0e9676c5ed63e58482e80affede519a36f03dd98c3cd19fc",
+    "semantic:harness:8ae4b2daa0c48a098971db0900841c4ca9aae11d77d33fff83cc23195ff3a776",
+    "semantic:harness:8afc6112e00e693c5fee22210bb175a2aa5be761e0533af5e821195aa700988b",
+    "semantic:harness:8d8e04211298b05126ec3f0d89d4393743c4fb2c81a70742ddad21b6c81c5492",
+    "semantic:harness:92599d58b4014974f05757a32a1d1ab1aa472b2c8991bb4aa2b7780aa3bd8d47",
+    "semantic:harness:9c94917081dedcd5008581ee96dbe0c600c202ba9e4313c1a9d4970b85ffa8b3",
+    "semantic:harness:c86e12e5f909e5f518f72bf01b1ccd30b0da4daef7a47a8ddfb2bd8cad38f9ac",
+    "semantic:harness:d7f03fb3919503ec1be9acf5c191a74dc7bb5b05eb7c04c4ed0fd102cbed3f37",
+    "semantic:harness:dad471f11bcfcfaf8866196f2a6080907ee9a0bc07166e84b6c38985bf0ab0ef",
+    "semantic:harness:ea9702bd290761f1eb99147fe3bc1a20363b06c650c34e7e5caa3a852aa8d771",
+    "semantic:harness:fdee22b7fdb1f5f66c862c4236c23d80d66c0f33ab901e2684631a7be9541ff9"
+  ],
+  "includedPreparedEntryIds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+  ],
+  "learnedSuccess": null,
+  "limitations": [
+    "Membership and static target counts are not actual optimizer exposure.",
+    "Every native-accepted evaluation row is retained. Original admissions absent upstream remain explicit and are not reclassified as native exclusions.",
+    "Archived source receipts are reconciled to the complete campaign; this inventory command does not rerun the independent source oracle.",
+    "Native source reconstruction, token IDs and masks are rechecked under the pinned consumer; no model is executed."
+  ],
+  "nativeAuditProofsSha256": "b63f5221c1968a9f9127e871f8f3353b985392f90e89a01d225d4e456561938c",
+  "nativeAuditSha256": "7630c76182daa843886ce6f7447d2ea2a1420f48cff149723e565fe5c8ad97db",
+  "nativeDedupDatabaseSha256": "d4843c972eca9a495676aa753e9a854afbe177844191c94e682e8ad880a918c3",
+  "nativeExclusions": [],
+  "nativePolicy": {
+    "consumerRevision": "9a9dd3593c6887d63012dd5c953e914557dca386",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+  },
+  "nativePreparedFingerprint": "bd465e65119eb75266f16c09b3394267b4c2ab63c7c074d36eacde858fb586b2",
+  "nativePreparedIndexSha256": "ad10a078ac812a17c668515eeb55ee52cf3dd23f20fd037df688676af1eae9f4",
+  "nativePreparedManifestSha256": "79b9745c1fff9c6404da0fd9ed262f837ae7fd9417d579bb20d2c1f4171b87ac",
+  "nativeReportSha256": "4c5b2ab3d12bd22f80a6300309581ffb12449212b210340d4cb07834cb4aaf9a",
+  "nativeRowVerificationSha256": "b536d3123761cc52d7a09870c3886cd45303cd3895326a5fc7209acd03c9bf52",
+  "optimizerSteps": 0,
+  "policy": {
+    "evaluationRows": "retain-all-native-accepted-validation-and-test",
+    "grouping": "transitive-union-of-frozen-source-components-and-native-resolved-families/1",
+    "maxFamilyShare": 0.2,
+    "maxFamilyTokens": 10000
+  },
+  "producerRevision": "53daa939dba0a0202402dc980a17a6682e719b37",
+  "schema": "semantic-native-prepared-training-sampler/1",
+  "scope": "Read-only sampler over the entire authenticated native accepted inventory; no new native dataset or optimization.",
+  "sourceCampaignDigest": "651fb88e7e0731ba8350fcd10d918e2528dccbbffe066f0398042bfb4ea7224e",
+  "sourceJoinSchema": "semantic-native-audit-source-join/1",
+  "sourceManifestSha256": "de3ddbb4ff1b0157ae12b6d2cd6e7f4b540ea448fee843656dbdf9874989c9e5",
+  "sourceRegistryDigest": "e8491e60884a56b7db9d66255d15bfc012b68a44e304e4a43b69832a60b93ae4",
+  "status": "verified",
+  "upstreamDispositions": {
+    "nativeExcluded": 0,
+    "nativePreparedAccepted": 25,
+    "nativePreparedInputs": 25,
+    "originalAdmissionsAbsentFromPreparation": 0,
+    "originalAttempted": 25,
+    "originalNativeAdmitted": 25,
+    "originalNonAdmissions": 0
+  },
+  "upstreamOmissions": []
+}

@@ -1,0 +1,103 @@
+{
+  "artifact": {
+    "id": 14468541876,
+    "name": "semantic-v5-generated-v1-admission-and-evaluation",
+    "size_in_bytes": 304050875,
+    "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14468541876",
+    "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14468541876/zip",
+    "expired": false,
+    "created_at": "2026-11-18T20:31:25Z",
+    "expires_at": "2027-02-16T20:24:35Z",
+    "updated_at": "2026-11-18T20:31:25Z",
+    "digest": "sha256:237ed76e86e36d7454546a0eb1a127f4ec4b75cdb3bc195b1d6514c83f5b1d34",
+    "workflow_run": {
+      "id": 44390718053,
+      "repository_id": 1429775465,
+      "head_repository_id": 1429775465,
+      "head_branch": "codex/execution-training-roadmap-20261118",
+      "head_sha": "53daa939dba0a0202402dc980a17a6682e719b37"
+    }
+  },
+  "transport": "Exact bounded HTTP ranges over approved artifact URL",
+  "verification": "ZIP member CRC checked; SHA-256 measured per retained original member; entire artifact SHA-256 reported by GitHub API and not recomputed from partial retrieval",
+  "downloadedBytes": 5206715,
+  "members": [
+    {
+      "path": "native-run-identity.json",
+      "storedFile": "native-run-identity.json",
+      "bytes": 386,
+      "sha256": "ed46258c4bf63aae98bea355fd0953058afa424dda0e4ddd97e46f85f0764360",
+      "crc32": "2e2a8f93"
+    },
+    {
+      "path": "native-environment.json",
+      "storedFile": "native-environment.json",
+      "bytes": 2340,
+      "sha256": "fee2e1c02edc289ae3abcf9afb6cda7907b5111095107808215195a992755383",
+      "crc32": "398040a0"
+    },
+    {
+      "path": "source-dispositions.json",
+      "storedFile": "source-dispositions.json",
+      "bytes": 510,
+      "sha256": "a3755cc2a0592e45b784c0775c19c7b1ede25a0bd2ff8a2c27df7c60829bff6c",
+      "crc32": "f4ab99ce"
+    },
+    {
+      "path": "release/archive-receipt.json",
+      "storedFile": "release--archive-receipt.json",
+      "bytes": 265,
+      "sha256": "7b4f83eab0df3e41822f6ddf4174bce97a383d531b86b4b904e07ae0b4223461",
+      "crc32": "58603fe4"
+    },
+    {
+      "path": "release/native-qualification-summary.json",
+      "storedFile": "release--native-qualification-summary.json",
+      "bytes": 488,
+      "sha256": "b34ae377562d5f60441a21d0b7b52e1a10683d549b9afcd0b0f9b752c47f656d",
+      "crc32": "637cf836"
+    },
+    {
+      "path": "release/prepared/manifest.json",
+      "storedFile": "release--prepared--manifest.json",
+      "bytes": 38804,
+      "sha256": "d81a8974319b026619856d1059f477495f2da42cfc001b1ff1a2640fe2fba882",
+      "crc32": "3328aae5"
+    },
+    {
+      "path": "release/prepared-training-selection.json",
+      "storedFile": "release--prepared-training-selection.json",
+      "bytes": 39650,
+      "sha256": "882969769e913c0e675d3d638fa945c1979a2ea09cb715fb798b5ab10d0a07c7",
+      "crc32": "c03232e5"
+    },
+    {
+      "path": "native-prepared-sampler/inventory-verification.json",
+      "storedFile": "native-prepared-sampler--inventory-verification.json",
+      "bytes": 95802,
+      "sha256": "69dd75e509bf32cc60b36a587d7fc7a759a6b2241fbc2e9e2a115136255bbea5",
+      "crc32": "917f9d60"
+    },
+    {
+      "path": "native-prepared-sampler/sampler.json",
+      "storedFile": "native-prepared-sampler--sampler.json",
+      "bytes": 115722,
+      "sha256": "bb463837000fc2a75506769d8f9c50de619a74772438cacc49db92e6140511d3",
+      "crc32": "680980e7"
+    },
+    {
+      "path": "native-prepared-coverage/coverage.json",
+      "storedFile": "native-prepared-coverage--coverage.json",
+      "bytes": 73809,
+      "sha256": "b7d9158d9ed8228649ba897fcbf687144a57ca2f4126a1b1d214dbb137888452",
+      "crc32": "feb0d7b8"
+    },
+    {
+      "path": "native-prepared-coverage/sampler.json",
+      "storedFile": "native-prepared-coverage--sampler.json",
+      "bytes": 363480,
+      "sha256": "94f4289b9dbebda65e9f3fd748da05f583684b2d6a810cc3d73da1416d07591d",
+      "crc32": "9dfac5f0"
+    }
+  ]
+}

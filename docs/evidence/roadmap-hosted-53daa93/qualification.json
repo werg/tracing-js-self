@@ -1,0 +1,790 @@
+{
+  "schema": "execution-roadmap-hosted-qualification/1",
+  "status": "infrastructure-qualified-with-failed-native-model-parity",
+  "identities": {
+    "schema": "execution-roadmap-hosted-identities/1",
+    "primary": {
+      "repository": "werg/tracing-js-self",
+      "testedHead": "53daa939dba0a0202402dc980a17a6682e719b37",
+      "testedNativeCheckout": "53daa939dba0a0202402dc980a17a6682e719b37",
+      "testedUnitAndAuxiliaryCheckout": "6b9acf98e14f73a5865b4b38ac0390f119f101ab",
+      "testedTree": "47b2d97cfd7e6197a08a82274e8a701041a8d36e",
+      "mergeParents": [
+        "9ab2b75a58d744265ff5dd9f4d00450a9286c00e",
+        "53daa939dba0a0202402dc980a17a6682e719b37"
+      ],
+      "headAndMergeTreesEqual": true,
+      "implementationPullRequest": 42,
+      "followupPullRequest": 43
+    },
+    "companion": {
+      "repository": "werg/megatoken",
+      "testedHead": "9a9dd3593c6887d63012dd5c953e914557dca386",
+      "testedCpuCheckout": "b216f13dc1cbb7209b0fc6028a26db62120cf1fe",
+      "testedTree": "36cc04b9bfdcb038cabf63cda96839839e4748ce",
+      "mergeParents": [
+        "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+        "9a9dd3593c6887d63012dd5c953e914557dca386"
+      ],
+      "headAndMergeTreesEqual": true,
+      "implementationPullRequest": 33
+    },
+    "verification": "Exact PR merge objects were fetched and git show independently verified both source-tree equalities. Job logs retain the actual checkout revisions. Later documentation commits do not change the tested identities."
+  },
+  "workflowRuns": [
+    {
+      "id": 44390718006,
+      "name": "Prototype tests and deterministic replay",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 1122,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44390718006/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44390718006/logs",
+      "workflow_id": 392971404
+    },
+    {
+      "id": 44390718021,
+      "name": "Inspect source-grounded semantic traces",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 200,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44390718021/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44390718021/logs",
+      "workflow_id": 396203051
+    },
+    {
+      "id": 44390717908,
+      "name": "Paired native training and serving input parity",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 9,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44390717908/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44390717908/logs",
+      "workflow_id": 423014044
+    },
+    {
+      "id": 44390717993,
+      "name": "Selected semantic v5 runtime and real browser",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 219,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44390717993/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44390717993/logs",
+      "workflow_id": 395845233
+    },
+    {
+      "id": 44390718113,
+      "name": "Pinned spec oracle, owned arithmetic and Test262 evidence",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 1112,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44390718113/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44390718113/logs",
+      "workflow_id": 393046610
+    },
+    {
+      "id": 44390718053,
+      "name": "Pinned semantic v5 source and native admission",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 927,
+      "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44390718053/jobs",
+      "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/44390718053/logs",
+      "workflow_id": 393799826
+    }
+  ],
+  "nodeMatrix": [
+    {
+      "jobId": 135107281383,
+      "node": "20.20.2",
+      "npm": "10.8.2",
+      "counts": {
+        "tests": 1013,
+        "pass": 1006,
+        "fail": 0,
+        "skipped": 7,
+        "cancelled": 0,
+        "todo": 0
+      },
+      "executedRevision": "6b9acf98e14f73a5865b4b38ac0390f119f101ab",
+      "log": "node20-job-135107281383.log.gz"
+    },
+    {
+      "jobId": 135107280747,
+      "node": "22.23.4",
+      "npm": "10.9.9",
+      "counts": {
+        "tests": 1013,
+        "pass": 1006,
+        "fail": 0,
+        "skipped": 7,
+        "cancelled": 0,
+        "todo": 0
+      },
+      "executedRevision": "6b9acf98e14f73a5865b4b38ac0390f119f101ab",
+      "log": "node22-job-135107280747.log.gz"
+    },
+    {
+      "jobId": 135107281427,
+      "node": "24.22.2",
+      "npm": "11.19.1",
+      "counts": {
+        "tests": 1013,
+        "pass": 1006,
+        "fail": 0,
+        "skipped": 7,
+        "cancelled": 0,
+        "todo": 0
+      },
+      "executedRevision": "6b9acf98e14f73a5865b4b38ac0390f119f101ab",
+      "log": "node24-job-135107281427.log.gz"
+    }
+  ],
+  "companionCpu": {
+    "workflowRunId": 44386208384,
+    "executedRevision": "b216f13dc1cbb7209b0fc6028a26db62120cf1fe",
+    "python311": {
+      "passed": 2906,
+      "skipped": 50,
+      "failed": 0,
+      "jobId": 135091381182
+    },
+    "python312": {
+      "passed": 2906,
+      "skipped": 50,
+      "failed": 0,
+      "jobId": 135091381727
+    }
+  },
+  "nativeEnvironment": {
+    "consumerRevision": "9a9dd3593c6887d63012dd5c953e914557dca386",
+    "consumerTree": "36cc04b9bfdcb038cabf63cda96839839e4748ce",
+    "cudaAvailable": false,
+    "learnedSuccess": null,
+    "libc": [
+      "glibc",
+      "2.39"
+    ],
+    "locale": "C.UTF-8",
+    "machine": "x86_64",
+    "nativePolicySha256": "22ff2039b4efdb556aa6e2c3e1b85b7c34b82ca99b1a330cec52081566f23c38",
+    "optimizerSteps": 0,
+    "packages": {
+      "anyio": "4.16.0",
+      "attrs": "26.1.0",
+      "certifi": "2026.10.23",
+      "click": "8.5.1",
+      "editables": "0.6",
+      "filelock": "4.2.12",
+      "fsspec": "2026.9.0",
+      "h11": "0.16.0",
+      "hatchling": "1.33.0",
+      "hf-xet": "1.8.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "huggingface-hub": "1.33.0",
+      "idna": "3.20",
+      "iniconfig": "2.3.1",
+      "jinja2": "3.1.6",
+      "jsonschema": "4.26.0",
+      "jsonschema-specifications": "2025.9.1",
+      "markdown-it-py": "4.0.0",
+      "markupsafe": "3.0.4",
+      "mdurl": "0.1.2",
+      "mpmath": "1.3.0",
+      "networkx": "3.7",
+      "numpy": "2.5.5",
+      "packaging": "26.3",
+      "pathspec": "1.1.1",
+      "pluggy": "1.7.0",
+      "pygments": "2.21.0",
+      "pytest": "8.4.2",
+      "pyyaml": "6.0.3",
+      "referencing": "0.37.0",
+      "rpds-py": "2026.9.1",
+      "safetensors": "0.8.0",
+      "setuptools": "84.2.1",
+      "sympy": "1.14.0",
+      "tokenizers": "0.23.3",
+      "tomlkit": "0.15.2",
+      "torch": "2.10.0+cpu",
+      "tqdm": "4.70.1",
+      "tree-sitter": "0.25.2",
+      "tree-sitter-c-sharp": "0.23.5",
+      "tree-sitter-embedded-template": "0.25.0",
+      "tree-sitter-language-pack": "0.13.0",
+      "tree-sitter-yaml": "0.7.2",
+      "trove-classifiers": "2026.9.21.13",
+      "typing-extensions": "4.16.0",
+      "uniseg": "0.10.1"
+    },
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "python": "3.12.14 (main, Aug 13 2026, 02:47:42) [GCC 13.3.0]",
+    "requirementsLockSha256": "233ce2065a5eebb85472eb2bdab714bedc26aa74536c6c0df73ea0081f204135",
+    "runnerImage": {
+      "CONTAINER_IMAGE_DIGEST": null,
+      "ImageOS": "ubuntu24",
+      "ImageVersion": "20261111.127.1"
+    },
+    "schema": "semantic-native-environment-receipt/1",
+    "status": "verified",
+    "timezone": "UTC",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "torch": "2.10.0+cpu"
+  },
+  "hostedRestore": {
+    "status": "verified",
+    "workflowRunId": 44390718053,
+    "jobId": 135118194072,
+    "archive": {
+      "archiveSha256": "9a1f040d53682b65e9f698aeaa34ee8eb321a6f5b7e7dc7452811837e5e80b05",
+      "files": 200,
+      "identityDigest": "463da78e59d5cd80b646a4ec3988e19188ede9a18922576e57ce9b14a291d648",
+      "schema": "semantic-release-verification/1",
+      "status": "verified"
+    },
+    "extraction": {
+      "bytes": 312325944,
+      "files": 200,
+      "status": "verified"
+    },
+    "positiveAttempts": 25,
+    "replayVerified": 25,
+    "replayFailed": 0,
+    "executionEnvironment": {
+      "arch": "x64",
+      "locale": "C.UTF-8",
+      "node": "24.22.3",
+      "npm": "11.9.0",
+      "platform": "linux",
+      "timezone": "UTC",
+      "v8": "13.6.233.17-node.63"
+    },
+    "executionEnvironmentMismatches": {},
+    "nativeRequalification": "untested",
+    "preparedData": "inventory-only",
+    "restorerFreshMachineQualification": false,
+    "hostedJob": {
+      "schema": "semantic-release-hosted-restore/1",
+      "producerRevision": "53daa939dba0a0202402dc980a17a6682e719b37",
+      "runId": "44390718053",
+      "runAttempt": "1",
+      "job": "restore-engineering-release",
+      "runnerName": "GitHub Actions 1000035042",
+      "runnerOS": "Linux",
+      "runnerArch": "X64",
+      "imageOS": "ubuntu24",
+      "imageVersion": "20261116.376.1",
+      "artifactName": "semantic-v5-engineering-admission-and-evaluation",
+      "archiveSha256": "9a1f040d53682b65e9f698aeaa34ee8eb321a6f5b7e7dc7452811837e5e80b05",
+      "originalArchiveReceiptSha256": "d1a2123ccd1a4c2d61f4c57afb7ca322cd2dce5b7f2ab40d81f7acb90eb8ec42",
+      "restoreReceiptSha256": "b0a0fdbdf8957622f514511c540da2fa185c956949fac4c00692822de6ea5953",
+      "scope": "Separate GitHub-hosted job: original archive inventory and source replay; native requalification untested"
+    },
+    "scope": "Separate GitHub-hosted job and downloaded original archive; the restorer alone does not establish fresh-host provenance. Original-producer source replay passed; native requalification remains untested."
+  },
+  "corpora": [
+    {
+      "recipe": "engineering",
+      "source": {
+        "attempted": 25,
+        "dispositions": {
+          "admitted": 25
+        },
+        "admittedFamilies": 20,
+        "admittedComponents": 20
+      },
+      "preparationStages": {
+        "nativeExcluded": 0,
+        "nativePreparedAccepted": 25,
+        "nativePreparedInputs": 25,
+        "originalAdmissionsAbsentFromPreparation": 0,
+        "originalAttempted": 25,
+        "originalNativeAdmitted": 25,
+        "originalNonAdmissions": 0
+      },
+      "reconstructedRows": 25,
+      "nativePrepared": {
+        "episodes": 25,
+        "declaredFamilies": 20,
+        "frozenSourceComponents": 20,
+        "nativeResolvedFamilies": 20,
+        "budgetComponents": 20,
+        "nativeGeneratedTokens": 17072,
+        "scoredPositions": 17072,
+        "nativeObservedTokens": 52640,
+        "maximumComponentShare": 0.40329194001874413,
+        "measuredFeatureRows": 25,
+        "unavailableFeatureRows": 0
+      },
+      "preparedSplits": {
+        "test": 4,
+        "train": 19,
+        "validation": 2
+      },
+      "trainingBeforeCoverage": {
+        "episodes": 19,
+        "declaredFamilies": 15,
+        "frozenSourceComponents": 15,
+        "nativeResolvedFamilies": 15,
+        "budgetComponents": 15,
+        "nativeGeneratedTokens": 7524,
+        "scoredPositions": 7524,
+        "nativeObservedTokens": 30966,
+        "maximumComponentShare": 0.20095693779904306,
+        "measuredFeatureRows": 19,
+        "unavailableFeatureRows": 0
+      },
+      "trainingAfterCoverage": {
+        "episodes": 18,
+        "declaredFamilies": 15,
+        "frozenSourceComponents": 15,
+        "nativeResolvedFamilies": 15,
+        "budgetComponents": 15,
+        "nativeGeneratedTokens": 7218,
+        "scoredPositions": 7218,
+        "nativeObservedTokens": 29661,
+        "maximumComponentShare": 0.16708229426433915,
+        "measuredFeatureRows": 18,
+        "unavailableFeatureRows": 0
+      },
+      "lostTrainingFeatures": [],
+      "lostTrainingFamilies": [],
+      "evaluationEpisodes": 6,
+      "evaluationMembershipUnchanged": true,
+      "consumed": {
+        "status": "unavailable",
+        "scoredTargets": null,
+        "reason": "No authenticated optimizer exposure supplied"
+      },
+      "optimizerSteps": 0,
+      "learnedSuccess": null,
+      "nativePreparedFingerprint": "bd465e65119eb75266f16c09b3394267b4c2ab63c7c074d36eacde858fb586b2",
+      "nativePolicy": {
+        "consumerRevision": "9a9dd3593c6887d63012dd5c953e914557dca386",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+      },
+      "releaseArchive": {
+        "archiveSha256": "9a1f040d53682b65e9f698aeaa34ee8eb321a6f5b7e7dc7452811837e5e80b05",
+        "files": 200,
+        "identityDigest": "463da78e59d5cd80b646a4ec3988e19188ede9a18922576e57ce9b14a291d648",
+        "schema": "semantic-release-verification/1",
+        "status": "verified"
+      },
+      "evidenceDirectory": "engineering"
+    },
+    {
+      "recipe": "training-v4",
+      "source": {
+        "attempted": 50,
+        "dispositions": {
+          "admitted": 50
+        },
+        "admittedFamilies": 16,
+        "admittedComponents": 16
+      },
+      "preparationStages": {
+        "nativeExcluded": 0,
+        "nativePreparedAccepted": 50,
+        "nativePreparedInputs": 50,
+        "originalAdmissionsAbsentFromPreparation": 0,
+        "originalAttempted": 50,
+        "originalNativeAdmitted": 50,
+        "originalNonAdmissions": 0
+      },
+      "reconstructedRows": 50,
+      "nativePrepared": {
+        "episodes": 50,
+        "declaredFamilies": 16,
+        "frozenSourceComponents": 16,
+        "nativeResolvedFamilies": 16,
+        "budgetComponents": 16,
+        "nativeGeneratedTokens": 27807,
+        "scoredPositions": 27807,
+        "nativeObservedTokens": 132395,
+        "maximumComponentShare": 0.07501708202970475,
+        "measuredFeatureRows": 50,
+        "unavailableFeatureRows": 0
+      },
+      "preparedSplits": {
+        "test": 3,
+        "train": 43,
+        "validation": 4
+      },
+      "trainingBeforeCoverage": {
+        "episodes": 43,
+        "declaredFamilies": 14,
+        "frozenSourceComponents": 14,
+        "nativeResolvedFamilies": 14,
+        "budgetComponents": 14,
+        "nativeGeneratedTokens": 24065,
+        "scoredPositions": 24065,
+        "nativeObservedTokens": 114704,
+        "maximumComponentShare": 0.08555994182422605,
+        "measuredFeatureRows": 43,
+        "unavailableFeatureRows": 0
+      },
+      "trainingAfterCoverage": {
+        "episodes": 43,
+        "declaredFamilies": 14,
+        "frozenSourceComponents": 14,
+        "nativeResolvedFamilies": 14,
+        "budgetComponents": 14,
+        "nativeGeneratedTokens": 24065,
+        "scoredPositions": 24065,
+        "nativeObservedTokens": 114704,
+        "maximumComponentShare": 0.08555994182422605,
+        "measuredFeatureRows": 43,
+        "unavailableFeatureRows": 0
+      },
+      "lostTrainingFeatures": [],
+      "lostTrainingFamilies": [],
+      "evaluationEpisodes": 7,
+      "evaluationMembershipUnchanged": true,
+      "consumed": {
+        "status": "unavailable",
+        "scoredTargets": null,
+        "reason": "No authenticated optimizer exposure supplied"
+      },
+      "optimizerSteps": 0,
+      "learnedSuccess": null,
+      "nativePreparedFingerprint": "70d3fd56e3d4028823039a7ff58da184fe9196200ea80913a6828c25f2e94c49",
+      "nativePolicy": {
+        "consumerRevision": "9a9dd3593c6887d63012dd5c953e914557dca386",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+      },
+      "releaseArchive": {
+        "archiveSha256": "898d2e16271d0c4b53bbd61ad2ac13621d4250b0053b7926b941f25bc8b81a8f",
+        "files": 407,
+        "identityDigest": "f8189a6b6276ae3fb0eadfde51c02932e2eb3bbc3fd3c581b6fa20875981789e",
+        "schema": "semantic-release-verification/1",
+        "status": "verified"
+      },
+      "evidenceDirectory": "corpora/training-v4"
+    },
+    {
+      "recipe": "benchmark-v1",
+      "source": {
+        "attempted": 128,
+        "dispositions": {
+          "admitted": 128
+        },
+        "admittedFamilies": 42,
+        "admittedComponents": 38
+      },
+      "preparationStages": {
+        "originalAttempted": 128,
+        "originalNonAdmissions": 0,
+        "originalNativeAdmitted": 128,
+        "originalAdmissionsAbsentFromPreparation": 0,
+        "nativePreparedInputs": 128,
+        "nativeExcluded": 0,
+        "nativePreparedAccepted": 128
+      },
+      "reconstructedRows": null,
+      "reconstructionStatus": "Successful complete-reconstruction workflow step; detailed report retained in full remote artifact",
+      "nativePrepared": {
+        "episodes": 128
+      },
+      "preparedSplits": null,
+      "trainingBeforeCoverage": null,
+      "trainingAfterCoverage": null,
+      "lostTrainingFeatures": null,
+      "lostTrainingFamilies": null,
+      "evaluationEpisodes": null,
+      "evaluationMembershipUnchanged": null,
+      "coverage": {
+        "status": "measured",
+        "selectionCreated": true,
+        "trainingMembership": null,
+        "evaluationMembership": null,
+        "reason": "Full coverage report is retained in the remote artifact; not available in job log."
+      },
+      "consumed": {
+        "status": "unavailable",
+        "scoredTargets": null,
+        "reason": "No optimizer updates ran"
+      },
+      "optimizerSteps": 0,
+      "learnedSuccess": null,
+      "releaseArchive": {
+        "archiveSha256": "c1b864b2601330a48c702e3fe1a080f82109dc22af94450bd0c0266f84940fcd"
+      },
+      "evidenceScope": "Derived from original hosted job log JSON receipts; archive members unavailable because the download connector rejects artifacts over 512 MiB. Job metadata confirms the full native reconstruction/coverage/disposition steps succeeded.",
+      "artifact": {
+        "id": 14468858323,
+        "name": "semantic-v5-benchmark-v1-admission-and-evaluation",
+        "size_in_bytes": 1027025111,
+        "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14468858323",
+        "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14468858323/zip",
+        "expired": false,
+        "created_at": "2026-11-18T20:42:16Z",
+        "expires_at": "2027-02-16T20:24:35Z",
+        "updated_at": "2026-11-18T20:42:16Z",
+        "digest": "sha256:f8e40773e4f8628677d4e9748c3e9af14d45c09336764313254d37be664fea38",
+        "workflow_run": {
+          "id": 44390718053,
+          "repository_id": 1429775465,
+          "head_repository_id": 1429775465,
+          "head_branch": "codex/execution-training-roadmap-20261118",
+          "head_sha": "53daa939dba0a0202402dc980a17a6682e719b37"
+        }
+      },
+      "evidenceDirectory": "corpora/benchmark-v1"
+    },
+    {
+      "recipe": "real-source",
+      "source": {
+        "attempted": 210,
+        "dispositions": {
+          "admitted": 180,
+          "reference_completion_mismatch": 10,
+          "unsupported": 18,
+          "source_unsupported": 2
+        },
+        "admittedFamilies": 90,
+        "admittedComponents": 35
+      },
+      "preparationStages": {
+        "originalAttempted": 210,
+        "originalNonAdmissions": 30,
+        "originalNativeAdmitted": 180,
+        "originalAdmissionsAbsentFromPreparation": 71,
+        "nativePreparedInputs": 109,
+        "nativeExcluded": 9,
+        "nativePreparedAccepted": 100
+      },
+      "reconstructedRows": null,
+      "reconstructionStatus": "Successful complete-reconstruction workflow step; detailed report retained in full remote artifact",
+      "nativePrepared": {
+        "episodes": 100
+      },
+      "preparedSplits": null,
+      "trainingBeforeCoverage": null,
+      "trainingAfterCoverage": null,
+      "lostTrainingFeatures": null,
+      "lostTrainingFamilies": null,
+      "evaluationEpisodes": null,
+      "evaluationMembershipUnchanged": null,
+      "coverage": {
+        "status": "measured",
+        "selectionCreated": true,
+        "trainingMembership": null,
+        "evaluationMembership": null,
+        "reason": "Full coverage report is retained in the remote artifact; not available in job log."
+      },
+      "consumed": {
+        "status": "unavailable",
+        "scoredTargets": null,
+        "reason": "No optimizer updates ran"
+      },
+      "optimizerSteps": 0,
+      "learnedSuccess": null,
+      "releaseArchive": {
+        "archiveSha256": "5955560f54e8d0534ca2f5a8c67eb7b35c3dbf8798247c4c631ae533ac766524"
+      },
+      "evidenceScope": "Derived from original hosted job log JSON receipts; archive members unavailable because the download connector rejects artifacts over 512 MiB. Job metadata confirms the full native reconstruction/coverage/disposition steps succeeded.",
+      "artifact": {
+        "id": 14468452972,
+        "name": "semantic-v5-real-source-admission-and-evaluation",
+        "size_in_bytes": 844662195,
+        "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14468452972",
+        "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14468452972/zip",
+        "expired": false,
+        "created_at": "2026-11-18T20:38:24Z",
+        "expires_at": "2027-02-16T20:24:35Z",
+        "updated_at": "2026-11-18T20:38:24Z",
+        "digest": "sha256:389368d6596345f75950ee1eb7a861653de484316ca76596eb729ce28d026f42",
+        "workflow_run": {
+          "id": 44390718053,
+          "repository_id": 1429775465,
+          "head_repository_id": 1429775465,
+          "head_branch": "codex/execution-training-roadmap-20261118",
+          "head_sha": "53daa939dba0a0202402dc980a17a6682e719b37"
+        }
+      },
+      "evidenceDirectory": "corpora/real-source"
+    },
+    {
+      "recipe": "generated-v1",
+      "source": {
+        "attempted": 64,
+        "dispositions": {
+          "admitted": 64
+        },
+        "admittedFamilies": 16,
+        "admittedComponents": 16
+      },
+      "preparationStages": {
+        "nativeExcluded": 3,
+        "nativePreparedAccepted": 61,
+        "nativePreparedInputs": 64,
+        "originalAdmissionsAbsentFromPreparation": 0,
+        "originalAttempted": 64,
+        "originalNativeAdmitted": 64,
+        "originalNonAdmissions": 0
+      },
+      "reconstructedRows": 64,
+      "nativePrepared": {
+        "episodes": 61,
+        "declaredFamilies": 16,
+        "frozenSourceComponents": 16,
+        "nativeResolvedFamilies": 16,
+        "budgetComponents": 16,
+        "nativeGeneratedTokens": 73694,
+        "scoredPositions": 73694,
+        "nativeObservedTokens": 153404,
+        "maximumComponentShare": 0.08505441419925638,
+        "measuredFeatureRows": 61,
+        "unavailableFeatureRows": 0
+      },
+      "preparedSplits": {
+        "test": 11,
+        "train": 43,
+        "validation": 7
+      },
+      "trainingBeforeCoverage": {
+        "episodes": 43,
+        "declaredFamilies": 11,
+        "frozenSourceComponents": 11,
+        "nativeResolvedFamilies": 11,
+        "budgetComponents": 11,
+        "nativeGeneratedTokens": 54117,
+        "scoredPositions": 54117,
+        "nativeObservedTokens": 109291,
+        "maximumComponentShare": 0.11582312397213446,
+        "measuredFeatureRows": 43,
+        "unavailableFeatureRows": 0
+      },
+      "trainingAfterCoverage": {
+        "episodes": 43,
+        "declaredFamilies": 11,
+        "frozenSourceComponents": 11,
+        "nativeResolvedFamilies": 11,
+        "budgetComponents": 11,
+        "nativeGeneratedTokens": 54117,
+        "scoredPositions": 54117,
+        "nativeObservedTokens": 109291,
+        "maximumComponentShare": 0.11582312397213446,
+        "measuredFeatureRows": 43,
+        "unavailableFeatureRows": 0
+      },
+      "lostTrainingFeatures": [],
+      "lostTrainingFamilies": [],
+      "evaluationEpisodes": 18,
+      "evaluationMembershipUnchanged": true,
+      "consumed": {
+        "status": "unavailable",
+        "scoredTargets": null,
+        "reason": "No authenticated optimizer exposure supplied"
+      },
+      "optimizerSteps": 0,
+      "learnedSuccess": null,
+      "nativePreparedFingerprint": "1ac02cf94e0bb04d9dcf14f5885b35785edbb396dc1d224d742112c0e4926833",
+      "nativePolicy": {
+        "consumerRevision": "9a9dd3593c6887d63012dd5c953e914557dca386",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+      },
+      "releaseArchive": {
+        "archiveSha256": "16a425c24786f0066e1ed9975646ef45b6af06efc0a8f772928912fe3b5ad32f",
+        "files": 383,
+        "identityDigest": "4a0c91186a29c5c902d65a16d8683f36555dbbd93338bb3c866f9de854ada4fd",
+        "schema": "semantic-release-verification/1",
+        "status": "verified"
+      },
+      "evidenceDirectory": "corpora/generated-v1"
+    }
+  ],
+  "countsPolicy": "Each recipe is a separate denominator. Do not add their rows, families or components as unique source programs. Prepared and planned rows are not optimizer-consumed rows.",
+  "conditionalMeasurement": {
+    "status": "failed",
+    "phase": "complete",
+    "producerRevision": "53daa939dba0a0202402dc980a17a6682e719b37",
+    "consumerRevision": "9a9dd3593c6887d63012dd5c953e914557dca386",
+    "scope": "First generated native Gaussian prior, with real prefix reconstruction and dropout disabled",
+    "identity": {
+      "checkpointStateSha256": "1395a9cccf9b905bd621327c29f15ee7a0c99e6ae1f63af52e775f8605e89647",
+      "servedModelSha256": "df2726f03886ffb07148e8ab62feccf9b402e551b87431af7c996e394166323e",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "publicPrefixSha256": "961e2d0b3eb741cbb7fa4ffc092308094768647db28f7c6822ffafccf5bd4be5",
+      "firstTargetSha256": "21cec908c656d7577119b6c0fe48069567d0d666cd8df2172a53578e9f0077a4"
+    },
+    "seed": 17,
+    "checkpointGlobalStep": 0,
+    "comparison": {
+      "status": "failed",
+      "identity": {
+        "checkpointStateSha256": "1395a9cccf9b905bd621327c29f15ee7a0c99e6ae1f63af52e775f8605e89647",
+        "servedModelSha256": "df2726f03886ffb07148e8ab62feccf9b402e551b87431af7c996e394166323e",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "publicPrefixSha256": "961e2d0b3eb741cbb7fa4ffc092308094768647db28f7c6822ffafccf5bd4be5",
+        "firstTargetSha256": "21cec908c656d7577119b6c0fe48069567d0d666cd8df2172a53578e9f0077a4"
+      },
+      "absoluteTolerance": 1e-06,
+      "relativeTolerance": 1e-05,
+      "comparedCoordinates": 256,
+      "maximumAbsoluteDifference": 2.4304623007774353,
+      "firstDivergence": {
+        "field": "mean",
+        "flatIndex": 0,
+        "training": -0.24988460540771484,
+        "serving": 0.02719087339937687,
+        "absoluteDifference": 0.2770754788070917
+      },
+      "encoderCallAuditIdentical": false,
+      "scope": "Only the first-event native policy Gaussian for this exact checkpoint and public prefix",
+      "downstreamLexicalAndActionParity": "unmeasured",
+      "interpretation": "A Gaussian mismatch establishes divergent native conditional state. Agreement does not establish equal lexical/terminal decoding or learned execution."
+    },
+    "decoderSupportComparison": {
+      "status": "source-defined-mismatch",
+      "nativeMethodSha256": "676cb1fd344aac3d9579cb30b4136f4d1609930e0c767dbf76c5ef89b920cc12",
+      "trainingLengthInclusive": [
+        0,
+        1024
+      ],
+      "servingLengthInclusive": [
+        1,
+        128
+      ],
+      "trainingTerminalIds": [
+        0,
+        1
+      ],
+      "servingTerminalIds": [
+        0,
+        1
+      ],
+      "lexicalAlphabetSupportMatches": true,
+      "trainingLexicalAlphabet": "bytes",
+      "servingLexicalAlphabet": "utf8",
+      "scope": "Exact bound trainer source, actual loaded head/alphabet buffers and actual serving request; downstream head execution not measured"
+    },
+    "gaussianConditionalStatus": "failed",
+    "trainingServingParityStatus": "failed",
+    "fullConditionalParityClaim": false,
+    "modelSelections": 0,
+    "optimizerSteps": 0,
+    "learnedSuccess": null,
+    "limitations": [
+      "Measurement covers the first event Gaussian; serving also executes its prior text-only modality categorical. Downstream lexical/length/terminal realization is not executed.",
+      "The trainer uses its real eval-mode prefix reconstruction; no synthetic serving state is substituted.",
+      "A match at an untrained checkpoint does not establish equivalence after learning or across other prefixes.",
+      "Categorical decoder supports remain a distinct check; native alphabets and head sizes are retained."
+    ]
+  },
+  "optimizerSteps": 0,
+  "learnedExecutionEstablished": false,
+  "limitations": [
+    "This is a frozen hosted integration receipt, not a completion claim for the full research roadmap.",
+    "The conditional measurement uses the same seed and zero-update checkpoint as the earlier cb67ed1 diagnosis; it is an integration repeat, not an independent learning seed.",
+    "Controlled selected-harness success is infrastructure evidence, not learned model success.",
+    "Fresh archive restoration covers original source replay; original-policy native requalification is not claimed.",
+    "Benchmark-v1 and real-source full artifacts exceed the artifact reader limit. Their complete jobs and logged stage counts are verified; detailed final coverage membership is unavailable in this compact receipt and remains null. The complete reports remain in the identified hosted artifacts.",
+    "Aggregate runner qualification, convergence, transfer, abstraction learning gains and public dataset distribution remain separate gates."
+  ]
+}

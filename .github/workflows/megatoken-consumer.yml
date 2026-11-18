@@ -275,6 +275,43 @@ jobs:
           (root / 'source-dispositions.json').write_text(json.dumps(summary,indent=2)+'\n')
           print(json.dumps(summary))
           PY
+      - name: Retain independently retrievable qualification reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semantic-v5-${{ matrix.recipe }}-qualification-reports
+          retention-days: 90
+          compression-level: 6
+          # Keep reviewable receipts separate from full audit archives, which
+          # already exceed some artifact clients' maximum download size.
+          path: |
+            ${{ runner.temp }}/native-run-identity.json
+            ${{ runner.temp }}/native-environment.json
+            ${{ runner.temp }}/source-dispositions.json
+            ${{ runner.temp }}/native-capabilities.json
+            ${{ runner.temp }}/python-release-regressions.xml
+            ${{ runner.temp }}/evaluation.json
+            ${{ runner.temp }}/native-input-parity.json
+            ${{ runner.temp }}/native-orchestration-validation.json
+            ${{ runner.temp }}/native-inference/inference-check.json
+            ${{ runner.temp }}/native-conditional-probe/report.json
+            ${{ runner.temp }}/native-conditional-probe/comparison.json
+            ${{ runner.temp }}/native-conditional-probe/training-conditional.json
+            ${{ runner.temp }}/native-conditional-probe/serving-conditional.json
+            ${{ runner.temp }}/native-conditional-probe/served-exact/manifest.json
+            ${{ runner.temp }}/native-conditional-probe/initialization/initialized-untrained/metadata.json
+            ${{ runner.temp }}/corpus/manifest.json
+            ${{ runner.temp }}/release/archive-receipt.json
+            ${{ runner.temp }}/release/release-manifest.json
+            ${{ runner.temp }}/release/native-qualification-summary.json
+            ${{ runner.temp }}/release/prepared/manifest.json
+            ${{ runner.temp }}/release/prepared-training-selection.json
+            ${{ runner.temp }}/native-prepared-sampler/sampler.json
+            ${{ runner.temp }}/native-prepared-sampler/inventory-verification.json
+            ${{ runner.temp }}/native-prepared-sampler/campaign-verification.json
+            ${{ runner.temp }}/native-prepared-coverage/coverage.json
+            ${{ runner.temp }}/native-prepared-coverage/sampler.json
+          if-no-files-found: error
       - name: Retain complete corpus, prepared shards and actionable refusals
         if: always()
         uses: actions/upload-artifact@v4

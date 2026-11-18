@@ -1,0 +1,55 @@
+{
+  "schema": "sha256-file-inventory/1",
+  "files": [
+    {
+      "path": "auxiliary-qualification.json",
+      "bytes": 3363,
+      "sha256": "3d6c700bb791f9d3d76cd39c8d2062635b43bf7e42095d5d50425b0b3f8283e0"
+    },
+    {
+      "path": "selected-harness.job.log.gz",
+      "bytes": 13346,
+      "sha256": "55b05ad0b7a698b06ea5fe7b93203cdb6d8ce9cd5ee119755bbd2713178c8d06"
+    },
+    {
+      "path": "selected-harness.jobs-api.json",
+      "bytes": 2319,
+      "sha256": "e54149658b5992233c265a725652e3a3ede1af765ec105a8578dbaaff9b99cfe"
+    },
+    {
+      "path": "selected-harness.provenance.json",
+      "bytes": 1187,
+      "sha256": "66dfd981ab1194e13456d1a88cdc783df811f7bd3c71013f36295b70446a630b"
+    },
+    {
+      "path": "semantic-inspection.job.log.gz",
+      "bytes": 14683,
+      "sha256": "f2eccd139cc6bbfe78c3c17cbdda9c8cd0247190516a542df349498e4272ffdf"
+    },
+    {
+      "path": "semantic-inspection.jobs-api.json",
+      "bytes": 2767,
+      "sha256": "503a50aeee1d34fdf620ab1c5e23522664e4e7fa392e906ca048b6307561b496"
+    },
+    {
+      "path": "semantic-inspection.provenance.json",
+      "bytes": 1196,
+      "sha256": "341f7a8557d13d610024b1174299d49eca6834b057a2570c4c40e036698ad2ff"
+    },
+    {
+      "path": "spec-reference.job.log.gz",
+      "bytes": 8432,
+      "sha256": "752c59d81d58eb005057922f11a128c97df0dd27c2377ef694a3371f858427fe"
+    },
+    {
+      "path": "spec-reference.jobs-api.json",
+      "bytes": 3714,
+      "sha256": "af441ca1c398f0bb1610cf81c3bb5c89711823b2a0272f6a46395ae49f2e13fd"
+    },
+    {
+      "path": "spec-reference.provenance.json",
+      "bytes": 1180,
+      "sha256": "1562b42cbdc767c013aecb0382518d24622ed5a855ab87892f3e7850f17e61a7"
+    }
+  ]
+}

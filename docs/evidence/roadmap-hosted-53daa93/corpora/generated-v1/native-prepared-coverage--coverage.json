@@ -1,0 +1,2404 @@
+{
+  "schema": "semantic-native-prepared-coverage-report/1",
+  "status": "measured",
+  "policy": {
+    "strategy": "rare-component-feature-greedy/1",
+    "maxFamilyTokens": 10000,
+    "maxFamilyShare": 0.2,
+    "maxTrainingTokens": 9007199254740991,
+    "ranking": "uncovered inverse-component-support feature/family/component weight; shorter row; candidate ID",
+    "sharePruning": "least lost unique feature weight per removed token",
+    "optimal": false
+  },
+  "nativePreparedFingerprint": "1ac02cf94e0bb04d9dcf14f5885b35785edbb396dc1d224d742112c0e4926833",
+  "originalPolicy": {
+    "evaluationRows": "retain-all-native-accepted-validation-and-test",
+    "grouping": "transitive-union-of-frozen-source-components-and-native-resolved-families/1",
+    "maxFamilyShare": 0.2,
+    "maxFamilyTokens": 10000
+  },
+  "originalProducerRevision": "53daa939dba0a0202402dc980a17a6682e719b37",
+  "inventories": {
+    "candidates": {
+      "status": "measured",
+      "rows": 64,
+      "declaredFamilies": 16,
+      "sourceComponents": 16,
+      "measuredTokenRows": 64,
+      "generatedTokens": 77855,
+      "measuredFeatureRows": 64,
+      "unavailableFeatureRows": 0,
+      "features": [
+        {
+          "feature": "branch:falsy",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "branch:truthy",
+          "rows": 48,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73447
+        },
+        {
+          "feature": "call:nested",
+          "rows": 48,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73447
+        },
+        {
+          "feature": "completion:return",
+          "rows": 43,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 42838
+        },
+        {
+          "feature": "completion:throw",
+          "rows": 21,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 35017
+        },
+        {
+          "feature": "exception:thrown",
+          "rows": 21,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 35017
+        },
+        {
+          "feature": "interaction:branch:falsy & branch:truthy",
+          "rows": 48,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73447
+        },
+        {
+          "feature": "interaction:branch:falsy & exception:thrown",
+          "rows": 21,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 35017
+        },
+        {
+          "feature": "interaction:branch:falsy & state:mutation",
+          "rows": 52,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 75119
+        },
+        {
+          "feature": "interaction:branch:falsy & state:output-alias",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "interaction:branch:truthy & exception:thrown",
+          "rows": 21,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 35017
+        },
+        {
+          "feature": "interaction:branch:truthy & state:mutation",
+          "rows": 48,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73447
+        },
+        {
+          "feature": "interaction:branch:truthy & state:output-alias",
+          "rows": 9,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 16055
+        },
+        {
+          "feature": "interaction:exception:thrown & state:mutation",
+          "rows": 21,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 35017
+        },
+        {
+          "feature": "interaction:state:mutation & state:output-alias",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "loop-trips:multiple",
+          "rows": 32,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 62595
+        },
+        {
+          "feature": "loop-trips:one",
+          "rows": 16,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 10852
+        },
+        {
+          "feature": "loop-trips:zero",
+          "rows": 16,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 4408
+        },
+        {
+          "feature": "operation:array.allocate",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "operation:binding.declare",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:binding.default.guard",
+          "rows": 48,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73447
+        },
+        {
+          "feature": "operation:binding.initialize",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:binding.read",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:binding.update",
+          "rows": 48,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73447
+        },
+        {
+          "feature": "operation:binding.write",
+          "rows": 44,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 71191
+        },
+        {
+          "feature": "operation:call.enter",
+          "rows": 48,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73447
+        },
+        {
+          "feature": "operation:call.return",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:completion.throw",
+          "rows": 21,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 35017
+        },
+        {
+          "feature": "operation:control.branch",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:control.jump",
+          "rows": 48,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73447
+        },
+        {
+          "feature": "operation:control.loop.enter",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:control.loop.exit",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:environment.enter",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:environment.iteration",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:environment.leave",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:literal.materialize",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:primitive.binary",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:primitive.unary",
+          "rows": 5,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 10793
+        },
+        {
+          "feature": "operation:property.read",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:property.write",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "operation:spec.binary.select",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 71835
+        },
+        {
+          "feature": "operation:spec.numeric.apply",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 71835
+        },
+        {
+          "feature": "operation:spec.numeric.same-type",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 71835
+        },
+        {
+          "feature": "operation:spec.operation.complete",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 71835
+        },
+        {
+          "feature": "operation:spec.to-number",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 71835
+        },
+        {
+          "feature": "operation:spec.to-numeric",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 71835
+        },
+        {
+          "feature": "operation:spec.to-primitive",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 71835
+        },
+        {
+          "feature": "operation:stack.duplicate",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "operation:stack.pop",
+          "rows": 52,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 75119
+        },
+        {
+          "feature": "state:mutation",
+          "rows": 52,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 75119
+        },
+        {
+          "feature": "state:output-alias",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        }
+      ],
+      "dispositions": {
+        "admitted": 64
+      }
+    },
+    "admitted": {
+      "status": "measured",
+      "rows": 64,
+      "declaredFamilies": 16,
+      "sourceComponents": 16,
+      "measuredTokenRows": 64,
+      "generatedTokens": 77855,
+      "measuredFeatureRows": 64,
+      "unavailableFeatureRows": 0,
+      "features": [
+        {
+          "feature": "branch:falsy",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "branch:truthy",
+          "rows": 48,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73447
+        },
+        {
+          "feature": "call:nested",
+          "rows": 48,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73447
+        },
+        {
+          "feature": "completion:return",
+          "rows": 43,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 42838
+        },
+        {
+          "feature": "completion:throw",
+          "rows": 21,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 35017
+        },
+        {
+          "feature": "exception:thrown",
+          "rows": 21,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 35017
+        },
+        {
+          "feature": "interaction:branch:falsy & branch:truthy",
+          "rows": 48,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73447
+        },
+        {
+          "feature": "interaction:branch:falsy & exception:thrown",
+          "rows": 21,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 35017
+        },
+        {
+          "feature": "interaction:branch:falsy & state:mutation",
+          "rows": 52,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 75119
+        },
+        {
+          "feature": "interaction:branch:falsy & state:output-alias",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "interaction:branch:truthy & exception:thrown",
+          "rows": 21,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 35017
+        },
+        {
+          "feature": "interaction:branch:truthy & state:mutation",
+          "rows": 48,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73447
+        },
+        {
+          "feature": "interaction:branch:truthy & state:output-alias",
+          "rows": 9,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 16055
+        },
+        {
+          "feature": "interaction:exception:thrown & state:mutation",
+          "rows": 21,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 35017
+        },
+        {
+          "feature": "interaction:state:mutation & state:output-alias",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "loop-trips:multiple",
+          "rows": 32,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 62595
+        },
+        {
+          "feature": "loop-trips:one",
+          "rows": 16,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 10852
+        },
+        {
+          "feature": "loop-trips:zero",
+          "rows": 16,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 4408
+        },
+        {
+          "feature": "operation:array.allocate",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "operation:binding.declare",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:binding.default.guard",
+          "rows": 48,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73447
+        },
+        {
+          "feature": "operation:binding.initialize",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:binding.read",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:binding.update",
+          "rows": 48,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73447
+        },
+        {
+          "feature": "operation:binding.write",
+          "rows": 44,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 71191
+        },
+        {
+          "feature": "operation:call.enter",
+          "rows": 48,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73447
+        },
+        {
+          "feature": "operation:call.return",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:completion.throw",
+          "rows": 21,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 35017
+        },
+        {
+          "feature": "operation:control.branch",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:control.jump",
+          "rows": 48,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73447
+        },
+        {
+          "feature": "operation:control.loop.enter",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:control.loop.exit",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:environment.enter",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:environment.iteration",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:environment.leave",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:literal.materialize",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:primitive.binary",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:primitive.unary",
+          "rows": 5,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 10793
+        },
+        {
+          "feature": "operation:property.read",
+          "rows": 64,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 77855
+        },
+        {
+          "feature": "operation:property.write",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "operation:spec.binary.select",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 71835
+        },
+        {
+          "feature": "operation:spec.numeric.apply",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 71835
+        },
+        {
+          "feature": "operation:spec.numeric.same-type",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 71835
+        },
+        {
+          "feature": "operation:spec.operation.complete",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 71835
+        },
+        {
+          "feature": "operation:spec.to-number",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 71835
+        },
+        {
+          "feature": "operation:spec.to-numeric",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 71835
+        },
+        {
+          "feature": "operation:spec.to-primitive",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 71835
+        },
+        {
+          "feature": "operation:stack.duplicate",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "operation:stack.pop",
+          "rows": 52,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 75119
+        },
+        {
+          "feature": "state:mutation",
+          "rows": 52,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 75119
+        },
+        {
+          "feature": "state:output-alias",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        }
+      ]
+    },
+    "nativePrepared": {
+      "episodes": 61,
+      "declaredFamilies": 16,
+      "frozenSourceComponents": 16,
+      "nativeResolvedFamilies": 16,
+      "budgetComponents": 16,
+      "nativeGeneratedTokens": 73694,
+      "scoredPositions": 73694,
+      "nativeObservedTokens": 153404,
+      "maximumComponentShare": 0.08505441419925638,
+      "measuredFeatureRows": 61,
+      "unavailableFeatureRows": 0,
+      "families": [
+        "generated-grammar:16676a89ce7afd1e5aa0effe",
+        "generated-grammar:18f9c826ee8389d4b113a786",
+        "generated-grammar:1de0d2838f7e94ff352dd6a0",
+        "generated-grammar:3011613fcf46de149162e15a",
+        "generated-grammar:37d82be30acc634bd6393143",
+        "generated-grammar:56070b0c432bb43f1a275006",
+        "generated-grammar:669b15ff4d2d77b507aa79b4",
+        "generated-grammar:7083d531fdfc1289532dbcc4",
+        "generated-grammar:7c79ad8b055501600f2f43a4",
+        "generated-grammar:a79adfbbe5c55d19b361a954",
+        "generated-grammar:ae3e58f163acb8a56796be20",
+        "generated-grammar:c27cefd49666819b7b822323",
+        "generated-grammar:c463c20543c011d6508ffff4",
+        "generated-grammar:cd1dad873b9995b0801ad356",
+        "generated-grammar:e1e4f2b56b6447ff1215265b",
+        "generated-grammar:f37ddea2adca6b372e6a45dc"
+      ],
+      "features": [
+        {
+          "feature": "branch:falsy",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "branch:truthy",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 69286
+        },
+        {
+          "feature": "call:nested",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 69286
+        },
+        {
+          "feature": "completion:return",
+          "rows": 43,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 42838
+        },
+        {
+          "feature": "completion:throw",
+          "rows": 18,
+          "components": 9,
+          "supportingEpisodeGeneratedTokens": 30856
+        },
+        {
+          "feature": "exception:thrown",
+          "rows": 18,
+          "components": 9,
+          "supportingEpisodeGeneratedTokens": 30856
+        },
+        {
+          "feature": "interaction:branch:falsy & branch:truthy",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 69286
+        },
+        {
+          "feature": "interaction:branch:falsy & exception:thrown",
+          "rows": 18,
+          "components": 9,
+          "supportingEpisodeGeneratedTokens": 30856
+        },
+        {
+          "feature": "interaction:branch:falsy & state:mutation",
+          "rows": 49,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 70958
+        },
+        {
+          "feature": "interaction:branch:falsy & state:output-alias",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "interaction:branch:truthy & exception:thrown",
+          "rows": 18,
+          "components": 9,
+          "supportingEpisodeGeneratedTokens": 30856
+        },
+        {
+          "feature": "interaction:branch:truthy & state:mutation",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 69286
+        },
+        {
+          "feature": "interaction:branch:truthy & state:output-alias",
+          "rows": 9,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 16055
+        },
+        {
+          "feature": "interaction:exception:thrown & state:mutation",
+          "rows": 18,
+          "components": 9,
+          "supportingEpisodeGeneratedTokens": 30856
+        },
+        {
+          "feature": "interaction:state:mutation & state:output-alias",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "loop-trips:multiple",
+          "rows": 29,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 58434
+        },
+        {
+          "feature": "loop-trips:one",
+          "rows": 16,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 10852
+        },
+        {
+          "feature": "loop-trips:zero",
+          "rows": 16,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 4408
+        },
+        {
+          "feature": "operation:array.allocate",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "operation:binding.declare",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:binding.default.guard",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 69286
+        },
+        {
+          "feature": "operation:binding.initialize",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:binding.read",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:binding.update",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 69286
+        },
+        {
+          "feature": "operation:binding.write",
+          "rows": 41,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 67030
+        },
+        {
+          "feature": "operation:call.enter",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 69286
+        },
+        {
+          "feature": "operation:call.return",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:completion.throw",
+          "rows": 18,
+          "components": 9,
+          "supportingEpisodeGeneratedTokens": 30856
+        },
+        {
+          "feature": "operation:control.branch",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:control.jump",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 69286
+        },
+        {
+          "feature": "operation:control.loop.enter",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:control.loop.exit",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:environment.enter",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:environment.iteration",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:environment.leave",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:literal.materialize",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:primitive.binary",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:primitive.unary",
+          "rows": 5,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 10793
+        },
+        {
+          "feature": "operation:property.read",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:property.write",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "operation:spec.binary.select",
+          "rows": 42,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 67674
+        },
+        {
+          "feature": "operation:spec.numeric.apply",
+          "rows": 42,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 67674
+        },
+        {
+          "feature": "operation:spec.numeric.same-type",
+          "rows": 42,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 67674
+        },
+        {
+          "feature": "operation:spec.operation.complete",
+          "rows": 42,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 67674
+        },
+        {
+          "feature": "operation:spec.to-number",
+          "rows": 42,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 67674
+        },
+        {
+          "feature": "operation:spec.to-numeric",
+          "rows": 42,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 67674
+        },
+        {
+          "feature": "operation:spec.to-primitive",
+          "rows": 42,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 67674
+        },
+        {
+          "feature": "operation:stack.duplicate",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "operation:stack.pop",
+          "rows": 49,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 70958
+        },
+        {
+          "feature": "state:mutation",
+          "rows": 49,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 70958
+        },
+        {
+          "feature": "state:output-alias",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        }
+      ]
+    },
+    "plannedSelection": {
+      "episodes": 61,
+      "declaredFamilies": 16,
+      "frozenSourceComponents": 16,
+      "nativeResolvedFamilies": 16,
+      "budgetComponents": 16,
+      "nativeGeneratedTokens": 73694,
+      "scoredPositions": 73694,
+      "nativeObservedTokens": 153404,
+      "maximumComponentShare": 0.08505441419925638,
+      "measuredFeatureRows": 61,
+      "unavailableFeatureRows": 0,
+      "families": [
+        "generated-grammar:16676a89ce7afd1e5aa0effe",
+        "generated-grammar:18f9c826ee8389d4b113a786",
+        "generated-grammar:1de0d2838f7e94ff352dd6a0",
+        "generated-grammar:3011613fcf46de149162e15a",
+        "generated-grammar:37d82be30acc634bd6393143",
+        "generated-grammar:56070b0c432bb43f1a275006",
+        "generated-grammar:669b15ff4d2d77b507aa79b4",
+        "generated-grammar:7083d531fdfc1289532dbcc4",
+        "generated-grammar:7c79ad8b055501600f2f43a4",
+        "generated-grammar:a79adfbbe5c55d19b361a954",
+        "generated-grammar:ae3e58f163acb8a56796be20",
+        "generated-grammar:c27cefd49666819b7b822323",
+        "generated-grammar:c463c20543c011d6508ffff4",
+        "generated-grammar:cd1dad873b9995b0801ad356",
+        "generated-grammar:e1e4f2b56b6447ff1215265b",
+        "generated-grammar:f37ddea2adca6b372e6a45dc"
+      ],
+      "features": [
+        {
+          "feature": "branch:falsy",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "branch:truthy",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 69286
+        },
+        {
+          "feature": "call:nested",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 69286
+        },
+        {
+          "feature": "completion:return",
+          "rows": 43,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 42838
+        },
+        {
+          "feature": "completion:throw",
+          "rows": 18,
+          "components": 9,
+          "supportingEpisodeGeneratedTokens": 30856
+        },
+        {
+          "feature": "exception:thrown",
+          "rows": 18,
+          "components": 9,
+          "supportingEpisodeGeneratedTokens": 30856
+        },
+        {
+          "feature": "interaction:branch:falsy & branch:truthy",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 69286
+        },
+        {
+          "feature": "interaction:branch:falsy & exception:thrown",
+          "rows": 18,
+          "components": 9,
+          "supportingEpisodeGeneratedTokens": 30856
+        },
+        {
+          "feature": "interaction:branch:falsy & state:mutation",
+          "rows": 49,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 70958
+        },
+        {
+          "feature": "interaction:branch:falsy & state:output-alias",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "interaction:branch:truthy & exception:thrown",
+          "rows": 18,
+          "components": 9,
+          "supportingEpisodeGeneratedTokens": 30856
+        },
+        {
+          "feature": "interaction:branch:truthy & state:mutation",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 69286
+        },
+        {
+          "feature": "interaction:branch:truthy & state:output-alias",
+          "rows": 9,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 16055
+        },
+        {
+          "feature": "interaction:exception:thrown & state:mutation",
+          "rows": 18,
+          "components": 9,
+          "supportingEpisodeGeneratedTokens": 30856
+        },
+        {
+          "feature": "interaction:state:mutation & state:output-alias",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "loop-trips:multiple",
+          "rows": 29,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 58434
+        },
+        {
+          "feature": "loop-trips:one",
+          "rows": 16,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 10852
+        },
+        {
+          "feature": "loop-trips:zero",
+          "rows": 16,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 4408
+        },
+        {
+          "feature": "operation:array.allocate",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "operation:binding.declare",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:binding.default.guard",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 69286
+        },
+        {
+          "feature": "operation:binding.initialize",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:binding.read",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:binding.update",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 69286
+        },
+        {
+          "feature": "operation:binding.write",
+          "rows": 41,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 67030
+        },
+        {
+          "feature": "operation:call.enter",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 69286
+        },
+        {
+          "feature": "operation:call.return",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:completion.throw",
+          "rows": 18,
+          "components": 9,
+          "supportingEpisodeGeneratedTokens": 30856
+        },
+        {
+          "feature": "operation:control.branch",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:control.jump",
+          "rows": 45,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 69286
+        },
+        {
+          "feature": "operation:control.loop.enter",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:control.loop.exit",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:environment.enter",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:environment.iteration",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:environment.leave",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:literal.materialize",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:primitive.binary",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:primitive.unary",
+          "rows": 5,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 10793
+        },
+        {
+          "feature": "operation:property.read",
+          "rows": 61,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 73694
+        },
+        {
+          "feature": "operation:property.write",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "operation:spec.binary.select",
+          "rows": 42,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 67674
+        },
+        {
+          "feature": "operation:spec.numeric.apply",
+          "rows": 42,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 67674
+        },
+        {
+          "feature": "operation:spec.numeric.same-type",
+          "rows": 42,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 67674
+        },
+        {
+          "feature": "operation:spec.operation.complete",
+          "rows": 42,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 67674
+        },
+        {
+          "feature": "operation:spec.to-number",
+          "rows": 42,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 67674
+        },
+        {
+          "feature": "operation:spec.to-numeric",
+          "rows": 42,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 67674
+        },
+        {
+          "feature": "operation:spec.to-primitive",
+          "rows": 42,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 67674
+        },
+        {
+          "feature": "operation:stack.duplicate",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        },
+        {
+          "feature": "operation:stack.pop",
+          "rows": 49,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 70958
+        },
+        {
+          "feature": "state:mutation",
+          "rows": 49,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 70958
+        },
+        {
+          "feature": "state:output-alias",
+          "rows": 13,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 17727
+        }
+      ]
+    },
+    "consumed": {
+      "status": "unavailable",
+      "scoredTargets": null,
+      "reason": "No authenticated optimizer exposure supplied"
+    }
+  },
+  "training": {
+    "before": {
+      "episodes": 43,
+      "declaredFamilies": 11,
+      "frozenSourceComponents": 11,
+      "nativeResolvedFamilies": 11,
+      "budgetComponents": 11,
+      "nativeGeneratedTokens": 54117,
+      "scoredPositions": 54117,
+      "nativeObservedTokens": 109291,
+      "maximumComponentShare": 0.11582312397213446,
+      "measuredFeatureRows": 43,
+      "unavailableFeatureRows": 0,
+      "families": [
+        "generated-grammar:16676a89ce7afd1e5aa0effe",
+        "generated-grammar:18f9c826ee8389d4b113a786",
+        "generated-grammar:3011613fcf46de149162e15a",
+        "generated-grammar:56070b0c432bb43f1a275006",
+        "generated-grammar:669b15ff4d2d77b507aa79b4",
+        "generated-grammar:7c79ad8b055501600f2f43a4",
+        "generated-grammar:a79adfbbe5c55d19b361a954",
+        "generated-grammar:ae3e58f163acb8a56796be20",
+        "generated-grammar:c463c20543c011d6508ffff4",
+        "generated-grammar:cd1dad873b9995b0801ad356",
+        "generated-grammar:f37ddea2adca6b372e6a45dc"
+      ],
+      "features": [
+        {
+          "feature": "branch:falsy",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "branch:truthy",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "call:nested",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "completion:return",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 27501
+        },
+        {
+          "feature": "completion:throw",
+          "rows": 14,
+          "components": 7,
+          "supportingEpisodeGeneratedTokens": 26616
+        },
+        {
+          "feature": "exception:thrown",
+          "rows": 14,
+          "components": 7,
+          "supportingEpisodeGeneratedTokens": 26616
+        },
+        {
+          "feature": "interaction:branch:falsy & branch:truthy",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "interaction:branch:falsy & exception:thrown",
+          "rows": 14,
+          "components": 7,
+          "supportingEpisodeGeneratedTokens": 26616
+        },
+        {
+          "feature": "interaction:branch:falsy & state:mutation",
+          "rows": 33,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51811
+        },
+        {
+          "feature": "interaction:branch:falsy & state:output-alias",
+          "rows": 4,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5911
+        },
+        {
+          "feature": "interaction:branch:truthy & exception:thrown",
+          "rows": 14,
+          "components": 7,
+          "supportingEpisodeGeneratedTokens": 26616
+        },
+        {
+          "feature": "interaction:branch:truthy & state:mutation",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "interaction:branch:truthy & state:output-alias",
+          "rows": 3,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5506
+        },
+        {
+          "feature": "interaction:exception:thrown & state:mutation",
+          "rows": 14,
+          "components": 7,
+          "supportingEpisodeGeneratedTokens": 26616
+        },
+        {
+          "feature": "interaction:state:mutation & state:output-alias",
+          "rows": 4,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5911
+        },
+        {
+          "feature": "loop-trips:multiple",
+          "rows": 21,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 44174
+        },
+        {
+          "feature": "loop-trips:one",
+          "rows": 11,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 7232
+        },
+        {
+          "feature": "loop-trips:zero",
+          "rows": 11,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 2711
+        },
+        {
+          "feature": "operation:array.allocate",
+          "rows": 4,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5911
+        },
+        {
+          "feature": "operation:binding.declare",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:binding.default.guard",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "operation:binding.initialize",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:binding.read",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:binding.update",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "operation:binding.write",
+          "rows": 28,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49150
+        },
+        {
+          "feature": "operation:call.enter",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "operation:call.return",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:completion.throw",
+          "rows": 14,
+          "components": 7,
+          "supportingEpisodeGeneratedTokens": 26616
+        },
+        {
+          "feature": "operation:control.branch",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:control.jump",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "operation:control.loop.enter",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:control.loop.exit",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:environment.enter",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:environment.iteration",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:environment.leave",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:literal.materialize",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:primitive.binary",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:primitive.unary",
+          "rows": 5,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 10793
+        },
+        {
+          "feature": "operation:property.read",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:property.write",
+          "rows": 4,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5911
+        },
+        {
+          "feature": "operation:spec.binary.select",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:spec.numeric.apply",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:spec.numeric.same-type",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:spec.operation.complete",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:spec.to-number",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:spec.to-numeric",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:spec.to-primitive",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:stack.duplicate",
+          "rows": 4,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5911
+        },
+        {
+          "feature": "operation:stack.pop",
+          "rows": 33,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51811
+        },
+        {
+          "feature": "state:mutation",
+          "rows": 33,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51811
+        },
+        {
+          "feature": "state:output-alias",
+          "rows": 4,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5911
+        }
+      ]
+    },
+    "after": {
+      "episodes": 43,
+      "declaredFamilies": 11,
+      "frozenSourceComponents": 11,
+      "nativeResolvedFamilies": 11,
+      "budgetComponents": 11,
+      "nativeGeneratedTokens": 54117,
+      "scoredPositions": 54117,
+      "nativeObservedTokens": 109291,
+      "maximumComponentShare": 0.11582312397213446,
+      "measuredFeatureRows": 43,
+      "unavailableFeatureRows": 0,
+      "families": [
+        "generated-grammar:16676a89ce7afd1e5aa0effe",
+        "generated-grammar:18f9c826ee8389d4b113a786",
+        "generated-grammar:3011613fcf46de149162e15a",
+        "generated-grammar:56070b0c432bb43f1a275006",
+        "generated-grammar:669b15ff4d2d77b507aa79b4",
+        "generated-grammar:7c79ad8b055501600f2f43a4",
+        "generated-grammar:a79adfbbe5c55d19b361a954",
+        "generated-grammar:ae3e58f163acb8a56796be20",
+        "generated-grammar:c463c20543c011d6508ffff4",
+        "generated-grammar:cd1dad873b9995b0801ad356",
+        "generated-grammar:f37ddea2adca6b372e6a45dc"
+      ],
+      "features": [
+        {
+          "feature": "branch:falsy",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "branch:truthy",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "call:nested",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "completion:return",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 27501
+        },
+        {
+          "feature": "completion:throw",
+          "rows": 14,
+          "components": 7,
+          "supportingEpisodeGeneratedTokens": 26616
+        },
+        {
+          "feature": "exception:thrown",
+          "rows": 14,
+          "components": 7,
+          "supportingEpisodeGeneratedTokens": 26616
+        },
+        {
+          "feature": "interaction:branch:falsy & branch:truthy",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "interaction:branch:falsy & exception:thrown",
+          "rows": 14,
+          "components": 7,
+          "supportingEpisodeGeneratedTokens": 26616
+        },
+        {
+          "feature": "interaction:branch:falsy & state:mutation",
+          "rows": 33,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51811
+        },
+        {
+          "feature": "interaction:branch:falsy & state:output-alias",
+          "rows": 4,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5911
+        },
+        {
+          "feature": "interaction:branch:truthy & exception:thrown",
+          "rows": 14,
+          "components": 7,
+          "supportingEpisodeGeneratedTokens": 26616
+        },
+        {
+          "feature": "interaction:branch:truthy & state:mutation",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "interaction:branch:truthy & state:output-alias",
+          "rows": 3,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5506
+        },
+        {
+          "feature": "interaction:exception:thrown & state:mutation",
+          "rows": 14,
+          "components": 7,
+          "supportingEpisodeGeneratedTokens": 26616
+        },
+        {
+          "feature": "interaction:state:mutation & state:output-alias",
+          "rows": 4,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5911
+        },
+        {
+          "feature": "loop-trips:multiple",
+          "rows": 21,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 44174
+        },
+        {
+          "feature": "loop-trips:one",
+          "rows": 11,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 7232
+        },
+        {
+          "feature": "loop-trips:zero",
+          "rows": 11,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 2711
+        },
+        {
+          "feature": "operation:array.allocate",
+          "rows": 4,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5911
+        },
+        {
+          "feature": "operation:binding.declare",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:binding.default.guard",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "operation:binding.initialize",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:binding.read",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:binding.update",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "operation:binding.write",
+          "rows": 28,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49150
+        },
+        {
+          "feature": "operation:call.enter",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "operation:call.return",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:completion.throw",
+          "rows": 14,
+          "components": 7,
+          "supportingEpisodeGeneratedTokens": 26616
+        },
+        {
+          "feature": "operation:control.branch",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:control.jump",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "operation:control.loop.enter",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:control.loop.exit",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:environment.enter",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:environment.iteration",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:environment.leave",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:literal.materialize",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:primitive.binary",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:primitive.unary",
+          "rows": 5,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 10793
+        },
+        {
+          "feature": "operation:property.read",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:property.write",
+          "rows": 4,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5911
+        },
+        {
+          "feature": "operation:spec.binary.select",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:spec.numeric.apply",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:spec.numeric.same-type",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:spec.operation.complete",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:spec.to-number",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:spec.to-numeric",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:spec.to-primitive",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:stack.duplicate",
+          "rows": 4,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5911
+        },
+        {
+          "feature": "operation:stack.pop",
+          "rows": 33,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51811
+        },
+        {
+          "feature": "state:mutation",
+          "rows": 33,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51811
+        },
+        {
+          "feature": "state:output-alias",
+          "rows": 4,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5911
+        }
+      ]
+    },
+    "identityOrderedControl": {
+      "episodes": 43,
+      "declaredFamilies": 11,
+      "frozenSourceComponents": 11,
+      "nativeResolvedFamilies": 11,
+      "budgetComponents": 11,
+      "nativeGeneratedTokens": 54117,
+      "scoredPositions": 54117,
+      "nativeObservedTokens": 109291,
+      "maximumComponentShare": 0.11582312397213446,
+      "measuredFeatureRows": 43,
+      "unavailableFeatureRows": 0,
+      "families": [
+        "generated-grammar:16676a89ce7afd1e5aa0effe",
+        "generated-grammar:18f9c826ee8389d4b113a786",
+        "generated-grammar:3011613fcf46de149162e15a",
+        "generated-grammar:56070b0c432bb43f1a275006",
+        "generated-grammar:669b15ff4d2d77b507aa79b4",
+        "generated-grammar:7c79ad8b055501600f2f43a4",
+        "generated-grammar:a79adfbbe5c55d19b361a954",
+        "generated-grammar:ae3e58f163acb8a56796be20",
+        "generated-grammar:c463c20543c011d6508ffff4",
+        "generated-grammar:cd1dad873b9995b0801ad356",
+        "generated-grammar:f37ddea2adca6b372e6a45dc"
+      ],
+      "features": [
+        {
+          "feature": "branch:falsy",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "branch:truthy",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "call:nested",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "completion:return",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 27501
+        },
+        {
+          "feature": "completion:throw",
+          "rows": 14,
+          "components": 7,
+          "supportingEpisodeGeneratedTokens": 26616
+        },
+        {
+          "feature": "exception:thrown",
+          "rows": 14,
+          "components": 7,
+          "supportingEpisodeGeneratedTokens": 26616
+        },
+        {
+          "feature": "interaction:branch:falsy & branch:truthy",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "interaction:branch:falsy & exception:thrown",
+          "rows": 14,
+          "components": 7,
+          "supportingEpisodeGeneratedTokens": 26616
+        },
+        {
+          "feature": "interaction:branch:falsy & state:mutation",
+          "rows": 33,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51811
+        },
+        {
+          "feature": "interaction:branch:falsy & state:output-alias",
+          "rows": 4,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5911
+        },
+        {
+          "feature": "interaction:branch:truthy & exception:thrown",
+          "rows": 14,
+          "components": 7,
+          "supportingEpisodeGeneratedTokens": 26616
+        },
+        {
+          "feature": "interaction:branch:truthy & state:mutation",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "interaction:branch:truthy & state:output-alias",
+          "rows": 3,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5506
+        },
+        {
+          "feature": "interaction:exception:thrown & state:mutation",
+          "rows": 14,
+          "components": 7,
+          "supportingEpisodeGeneratedTokens": 26616
+        },
+        {
+          "feature": "interaction:state:mutation & state:output-alias",
+          "rows": 4,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5911
+        },
+        {
+          "feature": "loop-trips:multiple",
+          "rows": 21,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 44174
+        },
+        {
+          "feature": "loop-trips:one",
+          "rows": 11,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 7232
+        },
+        {
+          "feature": "loop-trips:zero",
+          "rows": 11,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 2711
+        },
+        {
+          "feature": "operation:array.allocate",
+          "rows": 4,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5911
+        },
+        {
+          "feature": "operation:binding.declare",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:binding.default.guard",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "operation:binding.initialize",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:binding.read",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:binding.update",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "operation:binding.write",
+          "rows": 28,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49150
+        },
+        {
+          "feature": "operation:call.enter",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "operation:call.return",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:completion.throw",
+          "rows": 14,
+          "components": 7,
+          "supportingEpisodeGeneratedTokens": 26616
+        },
+        {
+          "feature": "operation:control.branch",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:control.jump",
+          "rows": 32,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51406
+        },
+        {
+          "feature": "operation:control.loop.enter",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:control.loop.exit",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:environment.enter",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:environment.iteration",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:environment.leave",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:literal.materialize",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:primitive.binary",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:primitive.unary",
+          "rows": 5,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 10793
+        },
+        {
+          "feature": "operation:property.read",
+          "rows": 43,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 54117
+        },
+        {
+          "feature": "operation:property.write",
+          "rows": 4,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5911
+        },
+        {
+          "feature": "operation:spec.binary.select",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:spec.numeric.apply",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:spec.numeric.same-type",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:spec.operation.complete",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:spec.to-number",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:spec.to-numeric",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:spec.to-primitive",
+          "rows": 29,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 49794
+        },
+        {
+          "feature": "operation:stack.duplicate",
+          "rows": 4,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5911
+        },
+        {
+          "feature": "operation:stack.pop",
+          "rows": 33,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51811
+        },
+        {
+          "feature": "state:mutation",
+          "rows": 33,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 51811
+        },
+        {
+          "feature": "state:output-alias",
+          "rows": 4,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 5911
+        }
+      ]
+    },
+    "lostFeatures": [],
+    "lostFamilies": []
+  },
+  "evaluation": {
+    "policy": "retain-all-native-accepted-validation-and-test",
+    "beforeEpisodeIds": [
+      "semantic:harness:032ca524f74739332a53c1313c93a55bf4967ca39f4352d4f2516aed1a7f0e08",
+      "semantic:harness:0e2a2d278daaf98b12a1059ad985dec292dfc257b45c2d4c006a017bd335f583",
+      "semantic:harness:1c578649655dcd92944d1b3593ff080933ca019a20fad3b896e6e6110846a7b8",
+      "semantic:harness:2b99d197b0b3d04aee52c37fb3310f4441defd9f5103edfc1253d22ebfb5c848",
+      "semantic:harness:32e4640c85a515f2f41eacafcc718a9081494a5d8e188d87472eed442928fb4f",
+      "semantic:harness:3464758a2dd2e7b1f54890da0dd5e887eec9eea9e314627f5b0133d4fc0b5bd4",
+      "semantic:harness:37b3686bfdd3003cf8e492f08aad56dcec42ee35bc057917692bc598ee962037",
+      "semantic:harness:39a55636e1077a053b75a82b4c73e75df7e327e8de125b0f097f5d987eb0d652",
+      "semantic:harness:510a4c2117d3312a95bcc6366cd1a5d3c9134c37b184607bcf4f9f6a2ec373b6",
+      "semantic:harness:580fae46a506900665cd7ad5b7f6e2e3214a79983fe9d38023b081cd4680c05f",
+      "semantic:harness:b2f079ca5bf008946f9f99cde4efc219207d1d1413dc9d5563c65b7ca148387a",
+      "semantic:harness:bb40ed8671d64a36e10d7b3b48f90143b7edc6b457f3b5e066a55dfd1f6aac32",
+      "semantic:harness:d14ac6813684b1e6af9062a3235eb204c295a46db43a7651e5313cda38c29295",
+      "semantic:harness:db7de2fc661ee3ede6a146615e229a6cb649d898d9e7a453d3807fcbf2a46b91",
+      "semantic:harness:dde0221592d471c828202484b814329c5595519dd968d426282aa82179fe61e3",
+      "semantic:harness:e67de7bd197e9511dc4f39c43e140fd33fd96c5c2ea2fed0c3673dd449cf0d78",
+      "semantic:harness:e86c3e4fc19d45ba174ca6d39e635fe8683380a6e73bbc576b40097e8b394f0a",
+      "semantic:harness:eaa6c3906e2777e3b11de48d278d5a28d9ab2be82c793e7087d5fd9c60c2d5b6"
+    ],
+    "afterEpisodeIds": [
+      "semantic:harness:032ca524f74739332a53c1313c93a55bf4967ca39f4352d4f2516aed1a7f0e08",
+      "semantic:harness:0e2a2d278daaf98b12a1059ad985dec292dfc257b45c2d4c006a017bd335f583",
+      "semantic:harness:1c578649655dcd92944d1b3593ff080933ca019a20fad3b896e6e6110846a7b8",
+      "semantic:harness:2b99d197b0b3d04aee52c37fb3310f4441defd9f5103edfc1253d22ebfb5c848",
+      "semantic:harness:32e4640c85a515f2f41eacafcc718a9081494a5d8e188d87472eed442928fb4f",
+      "semantic:harness:3464758a2dd2e7b1f54890da0dd5e887eec9eea9e314627f5b0133d4fc0b5bd4",
+      "semantic:harness:37b3686bfdd3003cf8e492f08aad56dcec42ee35bc057917692bc598ee962037",
+      "semantic:harness:39a55636e1077a053b75a82b4c73e75df7e327e8de125b0f097f5d987eb0d652",
+      "semantic:harness:510a4c2117d3312a95bcc6366cd1a5d3c9134c37b184607bcf4f9f6a2ec373b6",
+      "semantic:harness:580fae46a506900665cd7ad5b7f6e2e3214a79983fe9d38023b081cd4680c05f",
+      "semantic:harness:b2f079ca5bf008946f9f99cde4efc219207d1d1413dc9d5563c65b7ca148387a",
+      "semantic:harness:bb40ed8671d64a36e10d7b3b48f90143b7edc6b457f3b5e066a55dfd1f6aac32",
+      "semantic:harness:d14ac6813684b1e6af9062a3235eb204c295a46db43a7651e5313cda38c29295",
+      "semantic:harness:db7de2fc661ee3ede6a146615e229a6cb649d898d9e7a453d3807fcbf2a46b91",
+      "semantic:harness:dde0221592d471c828202484b814329c5595519dd968d426282aa82179fe61e3",
+      "semantic:harness:e67de7bd197e9511dc4f39c43e140fd33fd96c5c2ea2fed0c3673dd449cf0d78",
+      "semantic:harness:e86c3e4fc19d45ba174ca6d39e635fe8683380a6e73bbc576b40097e8b394f0a",
+      "semantic:harness:eaa6c3906e2777e3b11de48d278d5a28d9ab2be82c793e7087d5fd9c60c2d5b6"
+    ],
+    "unchanged": true
+  },
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "limitations": [
+    "Coverage is a deterministic selection heuristic; conflicting budgets may lose rare features.",
+    "Feature counts are measured from original admitted execution difficulty, not all JavaScript semantics.",
+    "Prepared membership is not actual optimizer exposure. Historical receipts retain their original pins."
+  ],
+  "sourceManifestSha256": "21287a04254891746571e616880325be129f7b52f21950b00dce34465ee068e3",
+  "parentSamplerSha256": "bb463837000fc2a75506769d8f9c50de619a74772438cacc49db92e6140511d3"
+}

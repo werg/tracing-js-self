@@ -1,0 +1,21 @@
+{
+  "schema": "paired-input-hosted-evidence/1",
+  "repository": "werg/tracing-js-self",
+  "runId": 44390717908,
+  "jobId": 135107280489,
+  "producerRevision": "53daa939dba0a0202402dc980a17a6682e719b37",
+  "consumerRevision": "9a9dd3593c6887d63012dd5c953e914557dca386",
+  "artifactId": 14468201105,
+  "artifactSizeBytes": 11849,
+  "artifactSha256": "0bbb5c98a9056f097bdd6ae3c037b1c7e6c26ef071d43dd012a9d40b47a6891c",
+  "artifactDigestVerification": "Entire downloaded ZIP independently SHA-256 checked",
+  "artifactExpiresAt": "2026-12-18T20:25:24Z",
+  "logFile": "job.log.gz",
+  "decodedLogBytes": 53194,
+  "decodedLogSha256": "c456dc3ed55d540a7e1c5ee0745e372432d0df1ddacc1fb1a8eac361b2ec7add",
+  "compressedLogBytes": 11614,
+  "compressedLogSha256": "386904cc10e4152fdba42187b5cc582c62eb3695b84b7190045eef4d34679ff8",
+  "scope": "Actual adapter inputs before neural execution; source locally verified, not a native-admission or conditional-model claim",
+  "modelSelections": 0,
+  "optimizerSteps": 0
+}

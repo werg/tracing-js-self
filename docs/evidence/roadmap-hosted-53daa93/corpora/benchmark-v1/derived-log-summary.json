@@ -1,0 +1,89 @@
+{
+  "schema": "roadmap-hosted-corpus-log-summary/1",
+  "recipe": "benchmark-v1",
+  "producerRevision": "53daa939dba0a0202402dc980a17a6682e719b37",
+  "consumerRevision": "9a9dd3593c6887d63012dd5c953e914557dca386",
+  "workflowRunId": "44390718053",
+  "jobId": 135107282012,
+  "jobConclusion": "success",
+  "evidenceScope": "Derived from original hosted job log JSON receipts; archive members unavailable because the download connector rejects artifacts over 512 MiB. Job metadata confirms the full native reconstruction/coverage/disposition steps succeeded.",
+  "source": {
+    "attempted": 128,
+    "dispositions": {
+      "admitted": 128
+    },
+    "admittedFamilies": 42,
+    "admittedComponents": 38
+  },
+  "nativePreparationStages": {
+    "originalAttempted": 128,
+    "originalNonAdmissions": 0,
+    "originalNativeAdmitted": 128,
+    "originalAdmissionsAbsentFromPreparation": 0,
+    "nativePreparedInputs": 128,
+    "nativeExcluded": 0,
+    "nativePreparedAccepted": 128
+  },
+  "stageAccounting": "128 attempted = 128 admitted = 128 native preparation inputs = 128 native prepared accepted; zero source nonadmissions, upstream omissions, and native exclusions.",
+  "releaseSelectionBeforeNativeDeduplication": {
+    "trainingSelected": 94,
+    "trainingExcluded": 0,
+    "heldOutSupplied": 34
+  },
+  "coverage": {
+    "status": "measured",
+    "selectionCreated": true,
+    "trainingMembership": null,
+    "evaluationMembership": null,
+    "reason": "Full coverage report is retained in the remote artifact; not available in job log."
+  },
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "artifact": {
+    "id": 14468858323,
+    "name": "semantic-v5-benchmark-v1-admission-and-evaluation",
+    "size_in_bytes": 1027025111,
+    "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14468858323",
+    "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14468858323/zip",
+    "expired": false,
+    "created_at": "2026-11-18T20:42:16Z",
+    "expires_at": "2027-02-16T20:24:35Z",
+    "updated_at": "2026-11-18T20:42:16Z",
+    "digest": "sha256:f8e40773e4f8628677d4e9748c3e9af14d45c09336764313254d37be664fea38",
+    "workflow_run": {
+      "id": 44390718053,
+      "repository_id": 1429775465,
+      "head_repository_id": 1429775465,
+      "head_branch": "codex/execution-training-roadmap-20261118",
+      "head_sha": "53daa939dba0a0202402dc980a17a6682e719b37"
+    }
+  },
+  "releaseArchiveSha256": "c1b864b2601330a48c702e3fe1a080f82109dc22af94450bd0c0266f84940fcd",
+  "retainedFiles": [
+    {
+      "path": "artifact-metadata.json",
+      "bytes": 792,
+      "sha256": "b10c050b13b6f0c968ef0829762376995d97a168d8a8765978e1a03068911dc5"
+    },
+    {
+      "path": "artifact-retrieval.json",
+      "bytes": 470,
+      "sha256": "786e04d8a49bc2a46e95ead9ecc7ceb4c49d69c2d90112d2e55f113da86db11c"
+    },
+    {
+      "path": "job.json",
+      "bytes": 4112,
+      "sha256": "8fd26c0f0716e0d612beea69716368d77eac51caddc9c4592bbe5490e5e18b87"
+    },
+    {
+      "path": "job.log",
+      "bytes": 111000,
+      "sha256": "8984622fbbae812c189e71799412236ca0373673d304d6a741ff7176bd42d0de"
+    },
+    {
+      "path": "original-log-receipts.json",
+      "bytes": 48090,
+      "sha256": "bdcec981b92c5706a06890d5e75f929e2b08ba4fd7756ecd6d862c46e31ed631"
+    }
+  ]
+}

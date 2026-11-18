@@ -1,0 +1,40 @@
+{
+  "artifact": {
+    "id": 14469675812,
+    "name": "semantic-v5-engineering-admission-and-evaluation",
+    "size_in_bytes": 155692841,
+    "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14469675812",
+    "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14469675812/zip",
+    "expired": false,
+    "created_at": "2026-11-18T20:30:38Z",
+    "expires_at": "2027-02-16T20:24:35Z",
+    "updated_at": "2026-11-18T20:30:38Z",
+    "digest": "sha256:b1c2fc2fe4544fd1061cc84bd22fd01bf0cc2204df0a5949bab6815a49b2b2ea",
+    "workflow_run": {
+      "id": 44390718053,
+      "repository_id": 1429775465,
+      "head_repository_id": 1429775465,
+      "head_branch": "codex/execution-training-roadmap-20261118",
+      "head_sha": "53daa939dba0a0202402dc980a17a6682e719b37"
+    }
+  },
+  "transport": "Exact bounded HTTP ranges over approved artifact URL",
+  "verification": "ZIP member CRC checked; SHA-256 measured per retained original member; entire artifact SHA-256 reported by GitHub API and not recomputed from partial retrieval",
+  "downloadedBytes": 3649321,
+  "members": [
+    {
+      "path": "corpus/compound-pure.json",
+      "storedFile": "corpus--compound-pure.json",
+      "bytes": 4161171,
+      "sha256": "f6a3ff2b5b3c4947950347b365bb2b771a3c1f5e77944d639cc1366eba3314f4",
+      "crc32": "17ec9e7d"
+    },
+    {
+      "path": "native-conditional-probe/serving-conditional.json",
+      "storedFile": "native-conditional-probe--serving-conditional.json",
+      "bytes": 4214624,
+      "sha256": "789a87aed214f8a2c35482406067382fb283528811059eddd3e8a1c68071e3e1",
+      "crc32": "dfbd2d3a"
+    }
+  ]
+}

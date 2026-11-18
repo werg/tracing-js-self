@@ -1,0 +1,143 @@
+{
+  "archive": {
+    "archiveSha256": "9a1f040d53682b65e9f698aeaa34ee8eb321a6f5b7e7dc7452811837e5e80b05",
+    "files": 200,
+    "identityDigest": "463da78e59d5cd80b646a4ec3988e19188ede9a18922576e57ce9b14a291d648",
+    "schema": "semantic-release-verification/1",
+    "status": "verified"
+  },
+  "executionEnvironment": {
+    "arch": "x64",
+    "locale": "C.UTF-8",
+    "node": "24.22.3",
+    "npm": "11.9.0",
+    "platform": "linux",
+    "timezone": "UTC",
+    "v8": "13.6.233.17-node.63"
+  },
+  "executionEnvironmentMismatches": {},
+  "expectedExecutionEnvironment": {
+    "arch": "x64",
+    "locale": "C.UTF-8",
+    "node": "24.22.3",
+    "npm": "11.9.0",
+    "platform": "linux",
+    "timezone": "UTC",
+    "v8": "13.6.233.17-node.63"
+  },
+  "extraction": {
+    "bytes": 312325944,
+    "files": 200,
+    "status": "verified"
+  },
+  "freshMachineQualification": false,
+  "host": {
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+    "python": "3.12.14 (main, Aug 13 2026, 02:47:42) [GCC 13.3.0]"
+  },
+  "hostScope": "current-host-restore; fresh-host provenance is not established by this tool",
+  "learnedSuccess": null,
+  "limits": {
+    "archiveBytes": 2147483648,
+    "files": 100000,
+    "memberBytes": 536870912,
+    "unpackedBytes": 8589934592
+  },
+  "locks": {
+    "locks/environment.json": {
+      "bytes": 924,
+      "sha256": "b3da3b1ebbe8bb13e6dee3aabfdd3741bbe9184e710ed0c35ac50703fcb05662"
+    },
+    "locks/native-policy.json": {
+      "bytes": 249,
+      "sha256": "22ff2039b4efdb556aa6e2c3e1b85b7c34b82ca99b1a330cec52081566f23c38"
+    },
+    "locks/oracle-package-lock.json": {
+      "bytes": 994,
+      "sha256": "da1280e9edfc16209aed80056ba7921192bc05cf99617d977a72e28dbfac836b"
+    },
+    "locks/producer-package-lock.json": {
+      "bytes": 2742,
+      "sha256": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88"
+    },
+    "locks/requirements.lock": {
+      "bytes": 58598,
+      "sha256": "233ce2065a5eebb85472eb2bdab714bedc26aa74536c6c0df73ea0081f204135"
+    }
+  },
+  "nativeRequalification": "untested",
+  "optimizerSteps": 0,
+  "originalArtifactsModified": false,
+  "phase": "complete",
+  "preparedData": "inventory-only",
+  "producer": {
+    "revision": "53daa939dba0a0202402dc980a17a6682e719b37",
+    "trackedWorktreeClean": true,
+    "tree": "47b2d97cfd7e6197a08a82274e8a701041a8d36e"
+  },
+  "replay": {
+    "admissionChanged": false,
+    "attemptedCandidates": 25,
+    "attempts": 25,
+    "campaignHead": "de7f208c654c707008292b28921084c22688bbf89fd9a50ef6f7728e7f6fbadc",
+    "campaignIdentityDigest": "651fb88e7e0731ba8350fcd10d918e2528dccbbffe066f0398042bfb4ea7224e",
+    "environment": {
+      "arch": "x64",
+      "implementationDigest": "81aa299f8c357794ad5915315ec3c560eccbdd7b020de86bf19330dd0b107ca8",
+      "locale": "en-US",
+      "node": "24.22.3",
+      "packageLockDigest": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88",
+      "parser": "8.15.0",
+      "platform": "linux",
+      "referenceIsolation": {
+        "launcherSha256": "b9d3bd23d092083173508fd570c3d5b6dc4e0e98fc9814e3df543e634351ea24",
+        "mode": "trusted-process",
+        "schema": "semantic-reference-isolation/1"
+      },
+      "schema": "semantic-execution-environment/1",
+      "timezone": "UTC",
+      "typescript": "5.9.3",
+      "v8": "13.6.233.17-node.63"
+    },
+    "freshMachineQualification": false,
+    "latestDispositionCounts": {
+      "admitted": 25
+    },
+    "learnedSuccess": null,
+    "manifestSha256": "de3ddbb4ff1b0157ae12b6d2cd6e7f4b540ea448fee843656dbdf9874989c9e5",
+    "nativeRequalification": "untested",
+    "nativeRequalified": 0,
+    "optimizerSteps": 0,
+    "originalAdmittedAttempts": 25,
+    "originalArtifactsModified": false,
+    "originalLocallyVerifiedAttempts": 0,
+    "positiveAttempts": 25,
+    "preservedNonpositiveAttempts": 0,
+    "producer": {
+      "revision": "53daa939dba0a0202402dc980a17a6682e719b37",
+      "trackedWorktreeClean": true,
+      "tree": "47b2d97cfd7e6197a08a82274e8a701041a8d36e"
+    },
+    "replayFailed": 0,
+    "replayVerified": 25,
+    "schema": "semantic-release-original-replay/1",
+    "scope": "every original positive attempt, including superseded attempts; other dispositions preserved",
+    "status": "verified"
+  },
+  "restorerFiles": {
+    "package-semantic-release.py": {
+      "bytes": 49589,
+      "sha256": "12d3c4d0755253ca1a756beb041246bf2b27aa0922ab840e014686beaae44bd9"
+    },
+    "restore-release-campaign.mjs": {
+      "bytes": 9104,
+      "sha256": "e1fbb76a37c503af124ab45b97592c77a19da7df56b01dc13dd7d9b61d3210d5"
+    },
+    "restore-semantic-release.py": {
+      "bytes": 17553,
+      "sha256": "c3605afeda02ebe4bc7b72e442b591f2c5ba20a522f938c9c3f5cef2c9e3b790"
+    }
+  },
+  "schema": "semantic-release-restore-drill/1",
+  "status": "verified"
+}

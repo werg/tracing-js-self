@@ -1,0 +1,32 @@
+[
+  {
+    "log": "node20-job-135107281383.log.gz",
+    "decodedBytes": 390868,
+    "decodedSha256": "c360aeba3f965a3c86cdbe60a97ffb6384dc036bf7d9a87afa5048bb32157540",
+    "compressedBytes": 77449,
+    "compressedSha256": "8113920c8fdf81de10fec43e4bf62fef5b13217c974420cf324e530abda51386",
+    "node": "20.20.2",
+    "npm": "10.8.2",
+    "testedRevision": "6b9acf98e14f73a5865b4b38ac0390f119f101ab"
+  },
+  {
+    "log": "node22-job-135107280747.log.gz",
+    "decodedBytes": 434990,
+    "decodedSha256": "cd61610a8803199f030311c3df0b7fcb9858696b869fd8947a6653445f536839",
+    "compressedBytes": 83569,
+    "compressedSha256": "c2f5978859bab932c5b3adcb9f0b0fab44b8e7fcfaa792746075b547c1c5e570",
+    "node": "22.23.4",
+    "npm": "10.9.9",
+    "testedRevision": "6b9acf98e14f73a5865b4b38ac0390f119f101ab"
+  },
+  {
+    "log": "node24-job-135107281427.log.gz",
+    "decodedBytes": 157047,
+    "decodedSha256": "b6b6cca3b0be28107ee66d0901d81f354f44a306a3428557b18ae44e05dda1a6",
+    "compressedBytes": 47112,
+    "compressedSha256": "3362835adf89ace7231ae1dcbb1b5b0078930b642e3ee75721e5219a3de2a738",
+    "node": "24.22.2",
+    "npm": "11.19.1",
+    "testedRevision": "6b9acf98e14f73a5865b4b38ac0390f119f101ab"
+  }
+]
