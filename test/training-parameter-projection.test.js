@@ -5,6 +5,7 @@ import {verifyEffectfulTrainingCase,recheckEffectfulAdmission} from '../src/trai
 import {controlledEvaluationCase,evaluateSelectedCase} from '../src/training/selected-evaluation.js';
 import {ownedEffectfulOutcome} from '../src/training/effectful-compiler.js';
 import {describeCompletionGraph} from '../src/training/exception-profile.js';
+import {decodeWitness} from '../src/training/format.js';
 
 const checked=code=>verifyEffectfulTrainingCase({source:'"use strict";'+code,
   entry:'run',family:'parameter-projection',fixture:{calls:[]}});
@@ -105,4 +106,69 @@ test('coercion propagates the original authenticated parameter error without all
   const forged=structuredClone(archive);
   forged.events.find(event=>event.eventId===propagation.eventId).completion.origin='a0:e1';
   assert.throws(()=>validateBundle(forged),/Invalid propagated parameter TDZ exception/);
+  const replaced=structuredClone(archive);
+  replaced.events.find(event=>event.eventId===propagation.eventId).completion.value.value=['num',3];
+  assert.throws(()=>validateBundle(replaced),/Invalid propagated parameter TDZ exception/);
+});
+
+test('forward parameter closures publish only after captured cells actually initialize',async()=>{
+  for(const code of [
+    'const b=7;function run(a=()=>b,b=3){return a();}',
+    'function run(a=function(){return b;},b=3){return a();}',
+    'function run(a=()=>b,b=3){b=5;return a();}',
+    'function run(a=()=>b,b=3){var b=5;return a();}',
+    'function run(a=()=>b,b=3,c=a){b=5;return [c===a,c()];}',
+    'function run(a=()=>[b,c],b=3,c=4){b=6;return a();}'
+  ]){
+    const result=await checked(code);
+    assert.equal(result.status,'locally_verified',code+': '+result.reason);
+    const rechecked=await recheckEffectfulAdmission(result.exported,{requireAdmitted:false});
+    assert(rechecked.sourceValidated&&rechecked.replayValidated&&rechecked.effectsValidated);
+  }
+  const result=await checked('const b=7;function run(a=()=>b,b=3){return a();}');
+  const records=result.exported.public.timeline.filter(row=>row.kind==='semantic')
+    .map(row=>({...decodeWitness(row.line),sequence:row.sequence}));
+  assert.deepEqual(records[0].fields,{name:'b',value:['num',3]});
+  assert.equal(records[1].kind,'allocate');
+  assert.deepEqual(records[1].fields.captures,[{binding:'b',cell:'b'}]);
+  assert.deepEqual(records[2].fields,{name:'a',value:['ref',records[1].fields.name]});
+  const certificate=result.exported.sidecar.compiler.certificates.find(row=>row.sequence===records[1].sequence);
+  assert.equal(certificate.rule,'owned-deferred-parameter-closure/4');
+  assert.equal(certificate.journalEvents[0],certificate.allocationEvent);
+  assert.equal(certificate.journalEvents.at(-1),certificate.initializationBoundary);
+  assert.notEqual(certificate.allocationEvent,certificate.initializationBoundary);
+  const fixture=controlledEvaluationCase(result.exported,{id:'parameter-forward-capture'});
+  const actual=await evaluateSelectedCase({schema:'semantic-evaluation-request/4',caseId:fixture.id,
+    request:fixture.request,seed:17,representation:'compact'});
+  assert.equal(actual.failure,null,JSON.stringify(actual.failure));
+  assert.deepEqual(actual.outcome,fixture.expected);
+});
+
+test('a provided object keeps its observed identity through deferred capture and later alias mutation',async()=>{
+  const result=await verifyEffectfulTrainingCase({source:'"use strict";function run(a=()=>b,b){b.n=5;return [a()===b,a().n];}',
+    entry:'run',args:[undefined,{n:1}],family:'parameter-capture-object',fixture:{calls:[]}});
+  assert.equal(result.status,'locally_verified',result.reason);
+  const rechecked=await recheckEffectfulAdmission(result.exported,{requireAdmitted:false});
+  assert(rechecked.sourceValidated&&rechecked.replayValidated&&rechecked.effectsValidated);
+});
+
+test('deferred capture refuses early reads, effects, exceptions, allocation and circular dependencies',async()=>{
+  for(const code of [
+    'function run(a=()=>b,b=a()){return b;}',
+    'function run(a=()=>b,c=a,b=3){return c();}',
+    'function run(a=()=>b,b={n:3}){return a().n;}',
+    'function run(a=()=>a){return a()===a;}',
+    'function run(a=()=>b,b=()=>c,c=3){return a()();}',
+    'function fail(){throw 7;}function run(a=()=>b,b=fail()){return a();}',
+    'function run(){function f(a=()=>[x,b],b=3){return a();}return f();let x=1;}'
+  ]){
+    const result=await checked(code);
+    assert.equal(result.status,'projection_refused',code+': '+result.reason);
+    assert.match(result.reason,/deferred parameter|deferred closure/);
+    assert.equal(result.exported,undefined);
+  }
+  const effect=await verifyEffectfulTrainingCase({source:'"use strict";function run(a=()=>b,b=host.store("x",1)){return a();}',
+    entry:'run',family:'parameter-capture-effect',fixture:{calls:[{operation:'demo.store',arguments:['x',1]}]}});
+  assert.equal(effect.status,'projection_refused',effect.reason);
+  assert.match(effect.reason,/deferred parameter closure crosses/);
 });

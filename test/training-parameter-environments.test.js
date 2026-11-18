@@ -71,10 +71,10 @@ test('successful parameter environment repairs pass independent current-v5 admis
   }
 });
 
-test('v5 explicitly refuses a closure capturing a later TDZ cell instead of capturing an outer name',async()=>{
+test('v5 refuses reading a forward parameter closure before its captured cell initializes',async()=>{
   const checked=await verifyEffectfulTrainingCase({
-    source:'"use strict";const b=7;function run(a=()=>b,b=3){return a();}',
+    source:'"use strict";const b=7;function run(a=()=>b,b=a()){return b;}',
     entry:'run',family:'parameter-forward-capture',fixture:{calls:[]}});
   assert.equal(checked.status,'projection_refused');
-  assert.match(checked.reason,/closure captures an uninitialized binding: b/);
+  assert.match(checked.reason,/deferred parameter closure crosses an observable or unsupported operation/);
 });

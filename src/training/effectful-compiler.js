@@ -141,6 +141,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   const emittedPromises=new Set(),settledPromises=new Set(),returnedPromises=new Set(),reactionJobs=new Map();
   const reactionFrames=new Map(),reactionTargets=new Set(),microtasks=new Map(),privatePromises=new Set();
   const awaitingCompletion=new Map();
+  const deferredClosures=new Map();
   const pendingComputations=[];
   let fusedComputations=0,foldedComputations=0,fusedBindings=0;
   let cellOrdinal=0,frameOrdinal=0,continuationOrdinal=0,eventOrdinal=0,generated=0,jobOrdinal=0;
@@ -304,6 +305,14 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     for(const change of row.writes??[]){
       if(change.kind==='cell'){
         if(!graphValue(change.value))refuse('unrepresentable captured cell');
+        const deferred=change.value[0]==='ref'&&deferredClosures.get(change.value[1]);
+        if(deferred){
+          const binding=state.envs[change.env]?.bindings?.[change.key];
+          if(event.operation!=='binding.initialize'||change.env!==deferred.parameterEnv||
+             binding?.kind!=='parameter'||binding.initialized||owner!==deferred.owner)
+            refuse('deferred parameter closure escapes its initialization');
+          deferred.writes.push({change:copy(change),event});continue;
+        }
         emit(owner,'bind',{name:cell(change.env,change.key),value:tag(change.value)},event,'cell-write');
       }else if(change.kind==='property')emit(owner,'write',{object:identity(change.object),key:change.key,
         present:change.present,value:change.present?tag(change.value):['undefined']},event,'property-write');
@@ -321,26 +330,87 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
         fields.code=functionNames.get(allocation.codeId);
         if(!fields.code)refuse('closure source identity is absent');
         fields.captures=[];
-        const capturedNames=new Set();
+        const capturedNames=new Set(),captureBindings=[];let unresolvedLexical=false;
         for(let env=allocation.capture;env;env=state.envs[env]?.parent)
           for(const [name,binding] of Object.entries(state.envs[env]?.bindings??{}))
             if(functionReferences.get(allocation.codeId)?.has(name)&&!capturedNames.has(name)){
               capturedNames.add(name);
-              // An inner TDZ binding shadows every outer binding. Parameter
-              // TDZ captures require an explicit v5 representation; preserve
-              // the existing delayed lexical-write path for body bindings.
-              // In both cases never fall through to an outer namesake.
-              if(!binding.initialized){
-                if(binding.kind==='parameter')refuse('closure captures an uninitialized binding: '+name);
-                continue;
-              }
-              if(!graphValue(binding.token?.value))continue;
-              const id=cell(env,name);
-              if(!controller(owner).locals.has(id))emit(owner,'bind',{name:id,value:tag(binding.token.value)},event,'capture-binding');
-              fields.captures.push({binding:name,cell:id});
+              // The nearest declaration shadows all outer namesakes, even
+              // before initialization. Never substitute an outer/final value.
+              if(!binding.initialized&&binding.kind!=='parameter'){unresolvedLexical=true;continue;}
+              if(binding.initialized&&!graphValue(binding.token?.value))continue;
+              captureBindings.push({environment:env,name,cell:cell(env,name)});
             }
+        const unresolved=captureBindings.filter(relation=>
+          !state.envs[relation.environment].bindings[relation.name].initialized);
+        if(unresolved.length){
+          const parameterEnv=state.frames[event.invocationId]?.envId;
+          if(deferredClosures.size||unresolvedLexical||(row.allocations??[]).length!==1||
+             allocation.capture!==parameterEnv||unresolved.some(relation=>relation.environment!==parameterEnv))
+            refuse('closure has unsupported deferred parameter captures');
+          deferredClosures.set(allocation.identity,{owner,fields,parameterEnv,
+            frame:event.invocationId,event,captureBindings,writes:[],events:[event.eventId]});
+          continue;
+        }
+        for(const relation of captureBindings){
+          const binding=state.envs[relation.environment].bindings[relation.name];
+          if(!controller(owner).locals.has(relation.cell))
+            emit(owner,'bind',{name:relation.cell,value:tag(binding.token.value)},event,'capture-binding');
+          fields.captures.push({binding:relation.name,cell:relation.cell});
+        }
       }
       emit(owner,'allocate',fields,event,'allocate');
+    }
+  }
+  function guardDeferredClosures(row,event){
+    for(const pending of deferredClosures.values()){
+      // Only read-free, call-free parameter housekeeping can commute with an
+      // unpublished allocation. This intentionally excludes other defaults,
+      // heap writes/allocations, effects, exceptions, jobs and checkpoints.
+      if(event.invocationId!==pending.frame||event.completion||
+         !['binding.default.guard','literal.materialize','control.jump','binding.initialize'].includes(event.operation)||
+         event.stateChanges.some(change=>!['frames','envs'].includes(change.table)||
+           change.table==='frames'&&change.id!==pending.frame||
+           change.table==='envs'&&(event.operation!=='binding.initialize'||change.id!==pending.parameterEnv)))
+        refuse('deferred parameter closure crosses an observable or unsupported operation: '+event.operation);
+      if(event.operation==='binding.initialize'){
+        const write=row?.writes?.[0],binding=write&&state.envs[write.env]?.bindings?.[write.key];
+        if(row?.writes?.length!==1||write.kind!=='cell'||write.env!==pending.parameterEnv||
+           binding?.kind!=='parameter'||binding.initialized)
+          refuse('deferred closure crossed a non-parameter initialization');
+      }
+      pending.events.push(event.eventId);
+    }
+  }
+  function flushDeferredClosures(event){
+    for(const [identity,pending] of deferredClosures){
+      const captures=pending.captureBindings.map(relation=>({relation,
+        binding:state.envs[relation.environment]?.bindings?.[relation.name]}));
+      if(captures.some(({binding})=>!binding?.initialized))continue;
+      if(!pending.writes.length)refuse('deferred parameter closure lacks its initializing write');
+      for(const {binding} of captures)
+        if(!graphValue(binding.token?.value)||binding.token.value[0]==='ref'&&
+           (deferredClosures.has(binding.token.value[1])||!controller(pending.owner).heap.has(tag(binding.token.value)[1])))
+          refuse('deferred parameter capture depends on an unpublished identity');
+      const emitDeferred=(kind,fields)=>{
+        flushComputations();
+        return commitEmission(pending.owner,kind,fields,{
+          rule:'owned-deferred-parameter-closure/4',journalEvents:[...pending.events],
+          allocationEvent:pending.event.eventId,initializationBoundary:event.eventId,
+          capturedCells:copy(pending.captureBindings),
+          source:{sourceId:pending.event.sourceId,siteId:pending.event.siteId}});
+      };
+      for(const {relation,binding} of captures){
+        const value=tag(binding.token.value),locals=controller(pending.owner).locals;
+        if(!locals.has(relation.cell))emitDeferred('bind',{name:relation.cell,value});
+        else if(!isDeepStrictEqual(locals.get(relation.cell),value))
+          refuse('deferred capture disagrees with its committed public cell');
+        pending.fields.captures.push({binding:relation.name,cell:relation.cell});
+      }
+      emitDeferred('allocate',pending.fields);
+      for(const {change} of pending.writes)
+        emitDeferred('bind',{name:cell(change.env,change.key),value:tag(change.value)});
+      deferredClosures.delete(identity);
     }
   }
   // Initial owned result Promises are part of entering an async function, not
@@ -352,6 +422,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     // mutation, control, observation, call/job activation and cleanup cannot.
     // These boundaries flush even when they have no standalone public row.
     const row=rows.get(event.eventId),fact=facts.get(event.eventId);
+    guardDeferredClosures(row,event);
     const pureTransition=['binding.read','literal.materialize','primitive.binary'].includes(event.operation)||
       event.operation.startsWith('spec.');
     // A branch has no independent guest mutation. Keep its immediately
@@ -678,6 +749,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       if(change.after===null)delete state[change.table][change.id];
       else state[change.table][change.id]=copy(change.after);
     }
+    flushDeferredClosures(event);
     if(event.operation==='job.enter'){
       const created=event.stateChanges.find(change=>change.table==='frames'&&change.before===null);
       if(created)seedBindings(created.id,rootFor(created.id),event);
@@ -690,6 +762,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       emit(pendingOwner,'end',{kind},event,'completion');awaitingCompletion.delete(pendingOwner);
     }
   }
+  if(deferredClosures.size)refuse('unresolved parameter closure at final snapshot');
   flushComputations();
   const exported=harness.exportEpisode({sourceLineage});
   if(checkpointAtFirstAwait&&!checkpoints.length)refuse('checkpoint profile requires an actual source await');
