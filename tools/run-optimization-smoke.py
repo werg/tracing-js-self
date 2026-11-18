@@ -352,7 +352,8 @@ def rollout(case, origin, bundle, consumer, root, args, env):
                   '--device', 'cpu', '--effort', '1', '--max-tokens', str(args.rollout_tokens),
                   '--profile-output', str(destination / 'serving-profile.json'),
                   '--profile-origin', 'trained' if origin == 'trained' else 'fixed']
-    command = ['node', str(Path(__file__).with_name('run-selected-evaluation.mjs')),
+    evaluator = getattr(args, 'evaluator_script', Path(__file__).with_name('run-selected-evaluation.mjs'))
+    command = ['node', str(evaluator),
                '--origin', origin, '--model-command', sys.executable,
                '--model-args', json.dumps(model_args), '--model-cwd', str(consumer),
                '--checkpoint-identity', bundle['model_sha256'],

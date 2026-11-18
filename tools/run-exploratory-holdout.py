@@ -90,7 +90,8 @@ def main():
               'injectedSelections': False, 'generalizationClaim': False,
               'cohortPath': str(args.cohort.resolve()), 'cohortSha256': smoke.sha256(args.cohort),
               'runnerRevision': smoke.git_head(Path(__file__).resolve().parent.parent),
-              'runnerSha256': smoke.sha256(__file__)}
+              'runnerSha256': smoke.sha256(__file__),
+              'optimizerHelperSha256': smoke.sha256(Path(__file__).with_name('run-optimization-smoke.py'))}
 
     def record(**changes):
         report.update(changes)
@@ -171,6 +172,9 @@ def main():
         gc.collect()
         args.rollout_tokens = cohort['limits']['modelTokens']
         args.rollout_timeout = cohort['limits']['caseTimeoutSeconds']
+        args.evaluator_script = tracer / 'tools/run-selected-evaluation.mjs'
+        record(evaluatorRevision=cohort['producerRevision'],
+               evaluatorScriptSha256=smoke.sha256(args.evaluator_script))
         rows = []
         for index, case in enumerate(cohort['cases']):
             case = {**case, 'index': index}

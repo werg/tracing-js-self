@@ -98,6 +98,7 @@ export async function freezeExploratoryHoldout({trainingRun,corpora,tracerRoot,r
     .sort((a,b)=>a.family.localeCompare(b.family)||a.id.localeCompare(b.id)).slice(0,maximum);
   if(!cases.length)throw new Error('No independent native-admitted test components');
   const cohort={schema:'exploratory-heldout-diagnostic-cohort/1',createdAt:new Date().toISOString(),
+    builderSha256:sha(readFileSync(new URL(import.meta.url))),
     purpose:'diagnostic',confirmatory:false,productionQualification:false,
     selectionPolicy:'One smallest generated-token example per frozen test component; then public bytes and ID. Alphabetical family order if capped.',
     seed,representation:'compact',producerRevision:revision,consumerRevision:training.consumerRevision,
