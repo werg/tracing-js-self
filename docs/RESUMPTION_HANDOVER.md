@@ -2,10 +2,12 @@
 
 **Implementation and artifact delivery:** the complete D collection, native
 preparation, consumable capped dataset, F recovery and supplemental verification
-archive are finished. All twelve complete archives are verified and durably
-saved, with a separate private download index. The integrated H revision passes
-its full unit, reference-fixture and attempted native capability gates, including
-the parameter and async repairs. Learning acceptance remains unmet. Hosted CI
+archive are finished. All thirteen complete archives are verified and durably
+saved, with a separate private download index. The latest integrated I revision
+passes 945 unit tests with zero skips, all eight reference fixtures and all
+forty attempted native capability admissions. Its paired hosted CI also passes
+all eight workflows at the explicitly recorded revision. Learning acceptance
+remains unmet. Hosted CI
 has separate revision-specific status below; a pending or superseded job is not
 a pass. Implementation increments and compact receipts are committed and pushed
 immediately, preserving historical failures.
@@ -17,11 +19,19 @@ Parallel producer work was merged through PR #38 at
 both implementations and their original evidence. The reconciled consumer was
 merged through [companion PR #31](https://github.com/werg/megatoken/pull/31)
 at main `9bf32c3fc794c532444d6a84629bfa29599eb49c`. Its exact qualified policy
-pin is `6b4382b9af3bef120ca3a95ae24d35154d4cd66b`. Companion PR #30 was closed
+pin for H is `6b4382b9af3bef120ca3a95ae24d35154d4cd66b`. Companion PR #30 was closed
 unmerged externally; its frozen `1cee21d…` remains the genuine E/F/G consumer.
 Earlier producer PRs #36 and #37 were also merged externally. The per-package
 [final acceptance audit](PLAN_ACCEPTANCE_FINAL.md) distinguishes code completion from
 measured acceptance; it does not grant a blanket pass to W01–W14.
+
+The later [producer PR #41](https://github.com/werg/tracing-js-self/pull/41)
+was merged at `53180e0b0dfbf6c9544b680f854a442db53bb0ab`. I incorporates that
+capture-alias validation and pins the paired merged
+[consumer PR #32](https://github.com/werg/megatoken/pull/32) at
+`6e27a7c6529aa0778c5ea818432461db7cd05ea7`. Both upstream merge histories are
+preserved. I's new source/native qualification and the reused H/C model
+dependencies have separate exact identities.
 
 ## Outcome and acceptance
 
@@ -56,6 +66,7 @@ not a production SE/SC experiment.
 | F | `22eaac6a46e262b00986c63b4fc66f6240016252` | `1cee21dd07a687b0a824abff1bbd5ef9a13149ab` | Exact canonical-input precision refusal, primitive Number conversion, 60-case fresh recovery, finite capability ledger and timeout review. |
 | G, retained failed unit qualification | `a088ad60028a02e1d595dfc1afe7b6379cd0998a` | `1cee21dd07a687b0a824abff1bbd5ef9a13149ab` | Parameter TDZ, bounded forward closure and async-helper repairs. The full unit run exposes one stale refusal assertion; no native ladder or reference fixture was run after that failure. |
 | H, integrated qualification | `881664b98ec9d484f9f4775d0b40a3a2b1b81174` | `6b4382b9af3bef120ca3a95ae24d35154d4cd66b` | Reconciled main and branch implementation; 932 unit passes, five explicit initial skips, eight fixture passes, actual Linux reference isolation tests, and 40/40 attempted native capability admissions from 49 probes. |
+| I, latest paired qualification | `c2a64424d052f9b90a340a59a8d74cf5564e47aa` | `6e27a7c6529aa0778c5ea818432461db7cd05ea7` | Adds capture-alias grammar hardening; 945 unit passes with zero skips, eight fixture passes, five independently validated coordinator cases and a fresh 40/40 attempted native ladder from 49 probes. The unchanged H initialized model and original C artifact tests retain their original model/consumer pins. |
 
 E and F qualify their explicit subsets; neither requalifies every D row.
 D's original capture-name refusals remain in D. The initial two-step model
@@ -75,6 +86,48 @@ not a substitute for those identities.
 
 ### W01–W06: trustworthy teacher and evidence
 
+The [latest complete I qualification](evidence/qualification-I-2026-11-18.json)
+uses a separate clean consumer checkout and Python environment; the old H
+environment still imports its original consumer. All 47 locked dependencies and
+the production tokenizer are verified. The actual measured gates are:
+
+| I gate | Result |
+| --- | --- |
+| Full Node suite | **945 passed, zero failures or skips** |
+| Reference fixture | **8/8 passed** |
+| Actual Linux reference confinement | Both filesystem/network/process and isolated source-reference tests passed |
+| Native coordinator | **5/5 executed and independently validated**: two controlled completions and three expected refusals, including an actual initialized-model refusal |
+| Python native-consumer tool tests | **56 passed** |
+| Python release regressions | **85 passed**, with six conditional original-artifact skips |
+| Separate original C artifact tests | **14/14 passed**, including all six omitted cases; I is the tool revision and the original C/277 model environment remains explicit |
+| Finite native capability ladder | **40 attempted, 40 passed, zero native failures**, from 49 declared probes; nine stop at earlier profile/reference gates |
+
+The unit/reference process takes 159.885 seconds and reports a 536,412,160-byte
+child RSS maximum. The fresh native ladder takes 147.362 seconds and reports a
+383,029,248-byte child RSS maximum. Neither is an aggregate process-tree quota.
+All 120 exact native inputs, full receipts and admitted private exports are
+retained, totaling 14,132,251 bytes. All 49 feature-level model stages remain
+untested. The ladder's `trusted-process` reference mode stays distinct from the
+separately executed Linux confinement tests.
+
+The coordinator cases reuse H's initialized model with its original H/6b
+identity; ten payload hashes match before and after the new I/6e27 executions.
+The original C checkpoint, served bundle and report/configuration also remain
+unchanged after the separate artifact tests. The [integration report](evidence/integration-I-2026-11-18/README.md)
+and [additive archive](QUALIFICATION_I_AUDIT_ARCHIVE.md) provide full receipts
+and the exact external dependencies.
+
+The broad Python regression suite creates temporary synthetic model artifacts
+and performs **two parameter-sum optimizer updates per fixture** for tamper
+tests. Aggregate fixture counts were not instrumented and remain null. The
+[scope clarification](evidence/integration-I-2026-11-18/integration-scope-clarification.json)
+preserves the first I receipt and corrects an overbroad global zero-update field
+in H's broad-suite receipt. No original H archive/model or C experiment was
+rewritten. These unit fixtures do not create a new semantic-learning experiment.
+
+The following H and earlier measurements remain historical evidence at their
+own exact revisions; I does not retrospectively relabel them.
+
 The baseline command records each check and its logs before continuing. Oracle
 dependencies now have an isolated committed npm manifest/lock and install with
 `npm ci`; the Python native environment locks 47 packages with hashes. Runtime,
@@ -82,7 +135,7 @@ parser, locale, timezone, policy, tokenizer, producer and consumer identities ar
 recorded. No container-image digest was supplied, so the receipt does not claim
 one.
 
-The current frozen H capability report measures **49** finite `training-js/1`
+The preserved frozen H capability report measures **49** finite `training-js/1`
 probes. **40 reach native admission and all 40 pass**; nine remain untested at
 that stage because an earlier profile/gate stops them: six unsupported frontend
 forms, two descriptor refusals and one callback-abrupt reference refusal. The
@@ -319,11 +372,22 @@ stream complete private audits rather than duplicating them in memory, and
 validate captured cells as source-binding names while retaining strict heap
 reference grammar. Full Unicode identifier parity is not claimed.
 
+The later paired producer/consumer correction validates capture aliases and
+cells with their respective source-name predicates while keeping heap-reference
+identities strict. The separate consumer review passes 81 semantic tests and
+eight focused DiLoCo unit tests; thirteen other DiLoCo tests are deselected,
+and distributed training is not thereby qualified. A read-only inventory of
+106 retained exports finds 414 capture relations and 111 distinct names, with
+zero observed incompatibilities. JavaScript accepts U+200C/U+200D continuation
+characters that Python's predicate rejects; the four preserved counterexamples
+were absent from that finite inventory. This is a documented profile boundary,
+not complete ECMAScript Unicode alignment.
+
 ### W10–W11: real optimization and negative execution results
 
 | Actual attempt | Optimizer updates | Consumed members / families | Supervised generated lexical tokens | Complete held-in executions, baseline → trained |
 | --- | ---: | ---: | ---: | --- |
-| Initial feasibility | 2 | Tiny diagnostic | 25 | No successful complete execution |
+| Initial feasibility | 2 | Tiny diagnostic | 25 | Not evaluated |
 | First 32-example preparation | 0 | Preparation interrupted | 0 | Not run |
 | 32-update retry | 32 | 3 / 3 | 865 | 0/4 → 0/4 |
 | Longer partial pass | 95 | 16 / 16 | 5,238 | 0/4 → 0/4 |
@@ -425,7 +489,7 @@ releases; they do not invent permission for public redistribution.
 | --- | --- | --- |
 | Qualified production SE/SC training | No compatible preceding phase-S checkpoint, ordered pinned donors, hindsight/coordinator assets or complete experiment identities were supplied. Native launch validation requires them; diagnostic P1 checkpoints are not substitutes. | Supply compatible phase-S or same-stage resume assets, the pinned donor profiles and complete the declared training configuration. Run validation before spending compute. |
 | Production compute and confirmation | This environment has CPU Torch and no CUDA. Actual bounded CPU optimization was completed, but no three-seed production experiment or positive execution result exists. | On a suitable runner, start with the recorded first-action failures, establish held-in execution, then freeze validation/test and run the predeclared multi-seed comparison. |
-| Complete isolation for arbitrary untrusted code | H actually passes the optional Linux native-reference confinement tests on this host. That profile confines the reference only; the owned teacher, acquisition and native consumer remain separate boundaries. | Retain the qualified reference profile and isolate every remaining untrusted execution boundary on the intended runner. Keep the default trusted-source restriction until that complete runner is qualified. |
+| Complete isolation for arbitrary untrusted code | I and H actually pass the optional Linux native-reference confinement tests on this host. That profile confines the reference only; the owned teacher, acquisition and native consumer remain separate boundaries. | Retain the qualified reference profile and isolate every remaining untrusted execution boundary on the intended runner. Keep the default trusted-source restriction until that complete runner is qualified. |
 | Hard aggregate CPU/RSS quotas | Existing wall/output/V8-heap controls and measured RSS do not enforce a whole-process-tree quota. No writable delegated cgroup/qualified container boundary is supplied. | Add and test runner-level process-tree quotas; report native/reference descendants as well as the JS worker. |
 | Local browser launch | Playwright download produced an invalid archive and system Chromium launch was denied a Unix socket. | Use the existing GitHub real-browser workflow, which has already passed at published revisions. Final revision status is reported separately; local denial is not a total browser blocker. |
 | Public corpus licensing | Source notices and upstream licenses are retained. No owner-selected repository/data redistribution policy was supplied; repository-fixture is not an SPDX license. | Review distribution terms before making a public corpus release. Current archives remain private evidence. |
@@ -479,7 +543,7 @@ archive and a freshly native-prepared release have separate schemas and claims.
 The following complete archives are verified and saved. Private download links
 are supplied with the delivery index; they are not embedded in the public
 repository. Every archive has a complete member inventory and identity digest.
-The twelve archives are delivered in nineteen binary files. The C audit,
+The thirteen archives are delivered in twenty binary files. The C audit,
 complete model archive and complete D real-source native census use
 the checksummed split parts in [ARCHIVE_PARTS.md](ARCHIVE_PARTS.md). All other
 listed archives fit in one file.
@@ -498,6 +562,7 @@ listed archives fit in one file.
 | D complete real-source native census | 1,688,252,285 | 6,474 | `ac4e88a3fba5f046ad44501e5751560806b1cdeaf701deb46fd6eea80aff9558` |
 | D consumable capped native release | 77,464,260 | 5,339 | `e59a167d4192efbdb499a382ee3108425503e6d268544d6dbb78cbe867eef25c` |
 | Verification and recovery audit supplement | 67,052,493 | 825 | `fab00bb4ec0a30bc8dbf086ac1705d5def9611523516462a5b2ad2ee594170e5` |
+| Latest I qualification audit | 1,323,700 | 185 | `216bdd783f488dc97bfe8523c3818567eb764c8015f5377ff9a8b13aff1a103d` |
 
 The audit-only archives preserve original attempts and refusals. They do not
 claim a new native-preparation run. Native releases include the independently
@@ -515,7 +580,49 @@ claim. All original source selections, archived members and archive bytes are
 hash checked. Its audit identity is
 `44576af1d9a8e78baf71cbf1eabfe3778fbaf6571c3d11006034dad6492101ea`.
 
+The [additive I archive](QUALIFICATION_I_AUDIT_ARCHIVE.md) preserves all fresh
+I receipts, all 120 exact native payloads, the consumer review and the fixture
+accounting correction. Its 181 original evidence files become 185 archive
+members. It references unchanged H/F/C artifacts by exact archived member hashes
+instead of duplicating model binaries. Its audit identity is
+`4a43da2307cef8ffc156cb6a1478cd268ec8baf61590097d0dcbfa725885c5ad`.
+The private delivery index contains all twenty binary download links, archive
+hashes, dependency instructions and ordered-part reconstruction guidance.
+
 ### Hosted CI and revision boundaries
+
+**All eight workflows for the I pair completed successfully** at published
+head `057e39b4176914f8c3c74967af2491a268b93a53`, observed on
+18 November 2026 at 16:09:26 UTC. The complete
+[hosted snapshot](evidence/hosted-ci-057e39b-2026-11-18.json) records 22 successful
+jobs, one explicit conditional full-acquisition skip, and zero failed or pending
+jobs at that cutoff.
+
+| Completed workflow | Exact run |
+| --- | --- |
+| Native admission: engineering, training-v4, benchmark-v1, real-source and generated-v1 | [44340467423](https://github.com/werg/tracing-js-self/actions/runs/44340467423) |
+| Node 20/22/24 matrix | [44340467464](https://github.com/werg/tracing-js-self/actions/runs/44340467464) |
+| Real browser | [44340467397](https://github.com/werg/tracing-js-self/actions/runs/44340467397) |
+| Spec oracle | [44340467475](https://github.com/werg/tracing-js-self/actions/runs/44340467475) |
+| Exercism | [44340467521](https://github.com/werg/tracing-js-self/actions/runs/44340467521) |
+| Real-world corpus | [44340467829](https://github.com/werg/tracing-js-self/actions/runs/44340467829) |
+| External acquisition | [44340467461](https://github.com/werg/tracing-js-self/actions/runs/44340467461) |
+| Semantic inspection | [44340467656](https://github.com/werg/tracing-js-self/actions/runs/44340467656) |
+
+All five native identity assertions, packaging, reconciliation and evidence
+uploads pass at explicit producer head `057e39b…` and consumer `6e27a7c…`.
+The other workflows' default PR checkout is merge
+`46aab965f1e3eed09253a5c96f980a1d46ae16d2`, with parents `53180e0b…` and
+`057e39b…`. The GitHub API verifies that the merge and head have the same tree,
+`4871a42ca3a98f7a8961325e413b198ceadf70ae`; both commit identities remain in
+the snapshot. Subsequent changes are documentation, evidence and measured
+coverage reports. Jobs triggered by those later publication commits retain their
+own status; the completed receipts above remain bound to `057e39b…`.
+
+The preceding [438bf29 snapshot](evidence/hosted-ci-438bf29-2026-11-18.json) also
+records eight successful workflows and all five native lanes under consumer
+`6b4382b…`. Its default PR merge tree differed from its explicit head; that
+earlier checkout distinction remains recorded rather than relabeled as I.
 
 Published commit `7394e4c29a1895b8e8cee25fe0dd1f170b46d087` has six successful
 workflows: [Node 20/22/24](https://github.com/werg/tracing-js-self/actions/runs/44333224185),
@@ -532,7 +639,7 @@ The later implementation commit `92526c619a2a6dcadc4c10fab8a117228f72f98d`
 adds the real-source representative-selection hook and its focused tests. Its
 browser, spec, acquisition and inspection workflows passed; its remaining
 in-flight workflows were superseded by the next proof-only push. Later commits
-record evidence and delivery documentation. Current hosted jobs can be reviewed
-in [PR #39](https://github.com/werg/tracing-js-self/pull/39); the final observation
-must retain its actual revision and job links separately from the frozen H
-qualification and these historical hosted results.
+record evidence and delivery documentation. These superseded runs remain
+historical. The successful paired I run above supplies its own complete
+revision-specific evidence, and [PR #39](https://github.com/werg/tracing-js-self/pull/39)
+shows checks triggered by the latest publication commits.

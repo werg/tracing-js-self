@@ -1,5 +1,10 @@
 # Final acceptance review of the integrated resumption work
 
+The original review cutoff below is preserved. The [subsequent I qualification
+and completed hosted CI](#subsequent-i-qualification-and-completed-hosted-ci)
+section records the later 945-test qualification, completed delivery and all
+eight successful hosted workflows; earlier pending closeout items are historical.
+
 ## Scope and conclusion
 
 This read-only review updates the unchanged [initial audit](PLAN_ACCEPTANCE_AUDIT.md)
@@ -149,3 +154,33 @@ instructions. This closes the supplemental-delivery item in W09/W14 without
 changing any historical experiment, native denominator or learning conclusion.
 The [consolidated handover](RESUMPTION_HANDOVER.md) records hosted CI separately
 at its observed revision; cancelled and pending workflows are not passes.
+
+## Subsequent I qualification and completed hosted CI
+
+The late upstream capture-alias correction and paired consumer revision have
+their own [complete I receipt](evidence/qualification-I-2026-11-18.json): producer
+`c2a64424d052f9b90a340a59a8d74cf5564e47aa`, consumer
+`6e27a7c6529aa0778c5ea818432461db7cd05ea7`. All 945 unit tests execute and pass
+with zero skips, along with eight reference fixtures and five independently
+validated coordinator cases. The fresh finite native ladder passes all forty
+attempted admissions from 49 probes. The two Python suites pass 56 and 85 tests;
+the separate original-C/original-277 run passes all fourteen artifact checks.
+The original H and C model bytes remain unchanged.
+
+The canonical integration v2 receipt also records temporary Python test-fixture
+initialization and two parameter-sum optimizer updates **per fixture**, with
+aggregate counts uninstrumented. An additive clarification corrects H's
+overbroad global zero-update field while preserving its original receipt. These
+unit fixtures neither constitute a new semantic-learning experiment nor alter
+the negative learning conclusions above.
+
+The [I audit archive](QUALIFICATION_I_AUDIT_ARCHIVE.md) is verified and saved;
+delivery now comprises thirteen complete archives across twenty binary files.
+At the 16:09:26 UTC cutoff, [all eight hosted workflows](evidence/hosted-ci-057e39b-2026-11-18.json)
+for head `057e39b4176914f8c3c74967af2491a268b93a53` pass, including all five
+native lanes with consumer `6e27a7c…` and all three Node versions. There are
+22 successful jobs, one explicit conditional acquisition skip and zero failed
+or pending jobs in that frozen run set. Default merge checkout and explicit
+head have the same tree; their distinct commit identities remain recorded.
+This closes the final delivery/CI items from the earlier review cutoff, without
+promoting W10/W11 or the larger diversity/production targets to success.
