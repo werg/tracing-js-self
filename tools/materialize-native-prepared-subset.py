@@ -177,6 +177,8 @@ def materialize(args):
             require(retained == wanted, "Native subset deduplication removed a requested parent example")
             require(all(len(groups) == 1 for groups in native_groups.values()), "Native subset merged unrelated budget components")
             total_training = sum(budgets.values())
+            require(total_training <= sampler["policy"].get("maxTrainingTokens", total_training),
+                    "Final native subset exceeds declared total training token budget")
             require(all(value <= sampler["policy"]["maxFamilyTokens"] and
                         value <= total_training * sampler["policy"]["maxFamilyShare"] + 1e-9
                         for value in budgets.values()), "Final native subset exceeds declared training caps")
