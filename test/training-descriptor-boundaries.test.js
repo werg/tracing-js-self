@@ -90,3 +90,17 @@ test('non-configurable accessor invariants reject actual changes but retain the 
     assert.equal(replayExact(r.exportRun()).valid,true);
   }
 });
+
+test('unowned descriptor getters cannot be replaced by a catchable guest TypeError',async()=>{
+  for(const getter of ['()=>()=>3','()=>{throw 3;}','()=>{throw new TypeError("blocked");}']){
+    const body='const d={};Object.defineProperty(d,"get",{get:'+getter+'});'+
+      'try{Object.defineProperty({},"x",d);}catch(e){return e.name;}';
+    const r=runtime(body);
+    assert.throws(()=>r.drive(),/Accessor descriptor fields are outside the bounded profile/);
+    const checked=await verifyEffectfulTrainingCase({source:source(body),entry:'run',
+      family:'descriptor-getter-refusal',fixture:{calls:[]}});
+    assert.notEqual(checked.status,'locally_verified');
+    assert.notEqual(checked.status,'admitted');
+    assert.match(checked.reason,/Accessor descriptor fields are outside the bounded profile/);
+  }
+});

@@ -2069,9 +2069,14 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                 guestFault('TypeError','Object.defineProperty requires an owned ordinary object');
               const key=args[1]?.value??U,descValue=args[2]?.value??U;
               const name=valueKey(key),descriptor=descValue[0]==='ref'?s.heap[descValue[1]]:null;
-              if(!descriptor||!['object','array'].includes(descriptor.kind)||
-                 Object.keys(descriptor.accessors??{}).length)
+              if(!descriptor||!['object','array'].includes(descriptor.kind))
                 guestFault('TypeError','Accessor descriptor must be an owned data object');
+              // ToPropertyDescriptor executes descriptor getters in source
+              // order. Until that continuation is owned, this is a profile
+              // refusal, never a substitute guest TypeError that a catch can
+              // hide when the native getter happens to throw the same class.
+              if(Object.keys(descriptor.accessors??{}).length)
+                throw new TypeError('Accessor descriptor fields are outside the bounded profile');
               const d=descriptor.properties;
               if(![null,'Object.prototype','Array.prototype'].includes(objectPrototype(descriptor)))
                 throw new TypeError('Inherited descriptor fields are outside the bounded profile');
