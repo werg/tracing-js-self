@@ -76,6 +76,8 @@ def supervision_audit_summary(audit):
         'allObservedTokensUnscored': audit['allObservedTokensUnscored'],
         'decisionCount': audit['decisionCount'],
         'actualDecoderGroupsEmitted': len(decoder_groups),
+        'decoderContinuationMode': audit['decoderContinuationMode'],
+        'decoderContinuationModeSource': audit['decoderContinuationModeSource'],
         'futureObservationCanary': audit['futureObservationCanary']['status'],
         'decoderEmissions': {
             'count': len(decoder_groups),
@@ -83,6 +85,9 @@ def supervision_audit_summary(audit):
             'status': 'complete-valid' if decoder_groups and
                 all(row.get('completeValidGroup') for row in decoder_groups) else 'invalid-or-incomplete',
             'completeNativeRecords': sum(bool(row.get('completeNativeRecord')) for row in emitted),
+            'completeGeneratedRecords': sum(bool(row.get('completeGeneratedRecord')) for row in emitted),
+            'completeNativeRecordStatus': audit['completeNativeRecordStatus'],
+            'completeGeneratedRecordStatus': audit['completeGeneratedRecordStatus'],
             'semanticParserValidRecords': sum(value is True for value in parser_results),
             'semanticParserInvalidRecords': sum(value is False for value in parser_results),
             'semanticParserStatus': ('measured-all-valid' if parser_results and all(value is True for value in parser_results)

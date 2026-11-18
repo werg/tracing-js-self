@@ -128,11 +128,20 @@ class ActualCurrentBoundaryTests(unittest.TestCase):
         self.assertTrue(report['controlBytesMatch'])
         self.assertTrue(report['observedRecordBytesMatch'])
         self.assertEqual(report['training']['control']['bytes'], 580)
-        self.assertEqual(len(report['training']['observedRecords']), 2)
-        self.assertEqual(len(report['serving']['observedRecords']), 2)
+        self.assertEqual(len(report['training']['observedRecords']), 3)
+        self.assertEqual(len(report['serving']['observedRecords']), 3)
         event = report['training']['event']
         track = next(row for row in report['training']['tracks'] if row['track_id'] == event['track_id'])
-        self.assertEqual(track['description'], report['serving']['generation']['trackDescriptions'][0]['purpose'])
+        self.assertEqual(track['description'], '')
+        revision = report['training']['availableTrackRevisions'][0]
+        self.assertEqual(revision['track_id'], event['track_id'])
+        self.assertEqual(revision['purpose'], report['serving']['generation']['trackDescriptions'][0]['purpose'])
+        self.assertTrue(report['nativeTrackIdentityMatch'])
+        # Source-certified local fixtures have not passed native admission;
+        # they qualify byte identity, not a training continuation claim.
+        self.assertFalse(report['continuationModeComparable'])
+        self.assertIsNone(report['continuationModeMatch'])
+        self.assertEqual(report['serving']['generation']['continuationMode'], 'encoded_text')
         self.assertEqual(report['modelSelections'], 0)
         self.assertEqual(report['optimizerSteps'], 0)
         self.assertIn('checkpoint identity and conditional logits', report['unmeasured'])

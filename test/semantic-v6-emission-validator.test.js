@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {encodeWitness} from '../src/training/format.js';
 
 const repository=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const validator=resolve(repository,'tools/validate-semantic-v6-emission.mjs');
@@ -25,4 +26,14 @@ test('native emission validator uses exact production v6 parsing',()=>{
 
   const trailingNewline=validate('end return\n');
   assert.equal(trailingNewline.status,'invalid');
+
+  const ineligible=[
+    encodeWitness('code',{entry:'run',source:'function run(){}',sites:[]}),
+    encodeWitness('input',{graph:{roots:[],objects:[]}}),
+    encodeWitness('observe',{effect:'e1',status:'fulfilled',result:['num',8]}),
+    encodeWitness('value-open',{id:'r1',type:'object'}),
+    encodeWitness('value-part',{id:'r1',data:'payload'}),
+    encodeWitness('value-close',{id:'r1'}),
+  ];
+  for(const record of ineligible)assert.equal(validate(record).status,'invalid',record);
 });

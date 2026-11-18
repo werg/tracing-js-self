@@ -174,6 +174,24 @@ def _record_map(batch):
     return episode, records, offsets
 
 
+def _episode_decoder_continuation(episode):
+    """Use the selected semantic serving continuation for semantic episodes."""
+    if episode.stream != "semantic_execution":
+        return "sampled", "non-semantic-stream-default"
+    try:
+        annotations = json.loads(episode.supervision.annotations_json)
+        semantic = annotations["semantic_execution"]
+        continuation = semantic["continuation"]
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError("Semantic episode is missing its continuation provenance") from error
+    if continuation not in {"teacher_conditioned", "recorded"}:
+        raise ValueError("Semantic episode has an unknown continuation provenance")
+    # SelectedSemanticInference serves both provenance classes from the exact
+    # emitted UTF-8 text. Keep provenance visible, but do not label a sampled
+    # facet continuation as serving-comparable.
+    return "encoded_text", "semantic_execution." + continuation
+
+
 def _expected_context_ids(batch, first_target_offset):
     episode, records, _ = _record_map(batch)
     allowed = {record.record_id for record in records[:first_target_offset]}
@@ -347,7 +365,8 @@ def _decoder_specs(plans):
 
 
 def _actual_decoder_emission(multi, state, *, tracks, event_ids, plans, controls,
-                             effort, codec, seed, record_validator=None):
+                             effort, codec, seed, continuation_mode="sampled",
+                             record_validator=None):
     import torch
 
     generator = torch.Generator(device=state.device).manual_seed(seed)
@@ -380,6 +399,7 @@ def _actual_decoder_emission(multi, state, *, tracks, event_ids, plans, controls
             controls=controls,
             effort=effort,
             generator=generator,
+            continuation_mode=continuation_mode,
         )
     finally:
         multi.tracks.modality_logits = original_modality_logits
@@ -399,6 +419,8 @@ def _actual_decoder_emission(multi, state, *, tracks, event_ids, plans, controls
         distribution_identity, sort_keys=True, separators=(",", ":")
     ).encode())
     tape = produced.tape
+    require(tape.continuation_mode == continuation_mode,
+            "Actual decoder continuation mode differs from the selected episode provenance")
     require(tape.render_status == "rendered", "Native decoder did not complete rendering")
     events = []
     for index, (payload, emitted, valid, terminal) in enumerate(
@@ -419,12 +441,18 @@ def _actual_decoder_emission(multi, state, *, tracks, event_ids, plans, controls
             "emittedTokenCount": len(emitted),
             "decoderValid": bool(valid),
             "terminal": bool(terminal),
+            "continuationMode": tape.continuation_mode,
             "completeNativeTextAction": bool(valid and emitted and decoded == payload),
             "completeNativeRecord": bool(valid and terminal and emitted and decoded == payload),
             "semanticParserValid": semantic_valid if record_validator is not None else None,
+            "completeGeneratedRecord": (
+                bool(valid and terminal and emitted and decoded == payload and semantic_valid)
+                if record_validator is not None else None
+            ),
             "sourceRecordValidation": validator_result,
         })
     return {"renderStatus": tape.render_status, "events": events,
+            "continuationMode": tape.continuation_mode,
             "conditionalDistribution": distribution_identity,
             "selectedGroupLogProbability": float(produced.log_prob.detach().float().cpu().sum()),
             "behaviorLogProbability": float(tape.behavior_log_prob),
@@ -433,7 +461,7 @@ def _actual_decoder_emission(multi, state, *, tracks, event_ids, plans, controls
 
 def _one_native_capture(model, batch, *, codec, config, device, model_version,
                         transducer, decoder_seed, record_validator, window_scale,
-                        owner_map):
+                        owner_map, continuation_mode):
     import torch
     from megatoken.model.multitrack import MultiTrackGenerator
     from megatoken.model.config import RESERVED_TRACKS
@@ -502,7 +530,8 @@ def _one_native_capture(model, batch, *, codec, config, device, model_version,
         emission = _actual_decoder_emission(
             self, state, tracks=tracks, event_ids=event_ids, plans=plans,
             controls=controls, effort=int(kwargs.get("effort", 6)), codec=codec,
-            seed=decoder_seed, record_validator=record_validator,
+            seed=decoder_seed, continuation_mode=continuation_mode,
+            record_validator=record_validator,
         )
         result = original(self, state, **kwargs)
         objective_rows = {}
@@ -785,6 +814,9 @@ def capture_native_supervision_audit(
                 "Checkpoint identity must be a lowercase SHA-256")
     owners = native_parameter_owners(model)
     episode_rows = _audit_episode_tokens(batch, codec)
+    continuation_mode, continuation_mode_source = _episode_decoder_continuation(
+        batch.windows[0].episode
+    )
     require(not transducer.records and not transducer.candidates,
             "Native audit must start at a complete trainer window boundary")
 
@@ -803,6 +835,7 @@ def capture_native_supervision_audit(
             model_version=model_version, transducer=transducer,
             decoder_seed=decoder_seed, record_validator=record_validator,
             window_scale=window_scale, owner_map=owners,
+            continuation_mode=continuation_mode,
         )
 
     original_rng = torch.get_rng_state()
@@ -862,6 +895,7 @@ def capture_native_supervision_audit(
     emitted_rows = [event for decision in decisions
                     for event in decision["decoderEmission"]["events"]]
     native_complete_count = sum(bool(row["completeNativeRecord"]) for row in emitted_rows)
+    generated_complete_count = sum(bool(row["completeGeneratedRecord"]) for row in emitted_rows)
     parser_measurements = [row["semanticParserValid"] for row in emitted_rows
                            if row["semanticParserValid"] is not None]
     semantic_parser_status = (
@@ -878,6 +912,12 @@ def capture_native_supervision_audit(
             "complete" if emitted_rows and native_complete_count == len(emitted_rows)
             else "incomplete-or-invalid"
         ),
+        "completeGeneratedRecordCount": generated_complete_count,
+        "completeGeneratedRecordStatus": (
+            "unmeasured" if not parser_measurements else
+            "complete" if emitted_rows and generated_complete_count == len(emitted_rows)
+            else "incomplete-or-invalid-or-unmeasured"
+        ),
         "semanticParserStatus": semantic_parser_status,
         "semanticParserValidEmissionCount": sum(parser_measurements),
         "semanticParserMeasuredEmissionCount": len(parser_measurements),
@@ -889,6 +929,8 @@ def capture_native_supervision_audit(
                            "split": batch.windows[0].episode.lineage.frozen_split},
         "tokenizerIdentity": codec.fingerprint,
         "decoderSeed": decoder_seed,
+        "decoderContinuationMode": continuation_mode,
+        "decoderContinuationModeSource": continuation_mode_source,
         "episodeRecords": episode_rows,
         "decisionCount": len(decisions),
         "decisions": decisions,

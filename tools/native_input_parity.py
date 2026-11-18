@@ -41,7 +41,15 @@ class CaptureBoundary:
 
     def track_action(self, session, operation, **kwargs):
         if operation != 'create': raise ValueError('Initial probe cannot mutate an existing track')
-        return session.tracks.create(**kwargs)
+        from megatoken.lifecycle import track_description_observation
+        description = session.tracks.create(**kwargs)
+        # The real runtime publishes this canonical acknowledgement before
+        # installing the causal purpose. This input-only endpoint records the
+        # same production helper's bytes; neural publication is measured by
+        # the separate actual conditional probe.
+        self.observe_text(session, description.address, track_description_observation(description),
+                          role='system', effort=1)
+        return description
 
     def observe_text(self, session, track, payload, **kwargs):
         self.observations.append({'track': track, 'role': kwargs['role'],
@@ -49,8 +57,9 @@ class CaptureBoundary:
                                   'sha256': sha(payload)})
         return len(self.observations)
 
-    def generate(self, session, *, tracks, specs, controls, effort):
+    def generate(self, session, *, tracks, specs, controls, effort, continuation_mode):
         self.generation = {'tracks': list(tracks), 'effort': effort,
+            'continuationMode': continuation_mode,
             'specs': [asdict(spec) for spec in specs],
             'controls': [{'hex': control.hex(), 'text': control.decode('utf-8'),
                           'sha256': sha(control), 'bytes': len(control)} for control in controls],
@@ -123,26 +132,49 @@ def inspect_inputs(packet, *, max_capacity=1024, max_tokens=128):
     # A worker's declared purpose is also supplied to the native model. Equal
     # record bytes and control bytes alone do not establish the same conditions.
     selected_track = next(track for track in episode.tracks if track.track_id == event.track_id)
+    available = {row.record_id for row in before}
+    training_purpose = selected_track.description
+    for revision in episode.track_revisions:
+        if revision.track_id == event.track_id and revision.record_id in available:
+            training_purpose = revision.purpose
     serving_purposes = [
         row['purpose'] for row in boundary.generation['trackDescriptions']
     ]
     equal_purpose = (len(serving_purposes) == 1 and
-                     selected_track.description == serving_purposes[0])
+                     training_purpose == serving_purposes[0])
+    equal_track = boundary.generation['tracks'] == [event.track_id]
+    semantic_policy = json.loads(episode.supervision.annotations_json)['semantic_execution']
+    # Locally certified diagnostic inputs are deliberately not marked as
+    # admitted training demonstrations by the native adapter. They still
+    # qualify an input-byte comparison, but cannot establish how training
+    # continues after the first prediction. Keep that result unmeasured.
+    continuation_comparable = semantic_policy['continuation'] == 'teacher_conditioned'
+    equal_continuation = (boundary.generation['continuationMode'] == 'encoded_text'
+                          if continuation_comparable else None)
     return {'schema': 'semantic-native-input-parity/1',
-        'status': 'passed' if equal_control and equal_observed and equal_purpose else 'failed',
+        'status': 'passed' if (all((equal_control, equal_observed, equal_purpose, equal_track))
+                               and equal_continuation is not False) else 'failed',
         'scope': 'Actual data and serving adapter call arguments before neural execution',
         'sourceIdentityDigest': receipt['identityDigest'], 'sourceAdmission': receipt,
         'sourceCandidateAdmission': exported['sidecar']['admission'],
         'nativeAdmissionClaim': False, 'freshDirectCall': True,
         'controlBytesMatch': equal_control, 'observedRecordBytesMatch': equal_observed,
         'trackPurposeMatch': equal_purpose,
-        'trainingTrackPurpose': selected_track.description,
+        'nativeTrackIdentityMatch': equal_track, 'continuationModeMatch': equal_continuation,
+        'continuationModeComparable': continuation_comparable,
+        'continuationComparisonScope': ('Admitted teacher-conditioned semantic demonstration'
+            if continuation_comparable else
+            'Unmeasured: input is not an admitted teacher-conditioned demonstration'),
+        'trainingTrackPurpose': training_purpose,
         'servingTrackPurpose': serving_purposes[0] if len(serving_purposes) == 1 else None,
         'observedRecordComparisons': pairs,
         'training': {'control': {'hex': control.hex(), 'text': control.decode('utf-8'),
                                 'sha256': sha(control), 'bytes': len(control)},
                      'observedRecords': observed, 'event': asdict(event),
                      'tracks': [asdict(track) for track in episode.tracks],
+                     'availableTrackRevisions': [asdict(row) for row in episode.track_revisions
+                                                 if row.record_id in available],
+                     'semanticContinuation': semantic_policy['continuation'],
                      'firstTarget': packet['firstTarget'],
                      'dataAdapterReceipt': asdict(native), 'physicalChunking': 'unmeasured: codec not loaded'},
         'serving': {'observedRecords': serving, 'generation': boundary.generation,
@@ -150,6 +182,7 @@ def inspect_inputs(packet, *, max_capacity=1024, max_tokens=128):
         'unmeasured': ['actual tokenizer IDs', 'recurrent history and track-state equivalence',
                        'checkpoint identity and conditional logits', 'effect of the mismatch on learning'],
         'visibilityVerification': 'not executed: neural context is outside this input-byte probe',
+        'creationAcknowledgement': 'canonical runtime helper bytes; actual neural publication is measured separately',
         'modelSelections': 0, 'optimizerSteps': 0,
         'interpretation': ('An input-byte mismatch is a conditioning-path defect to investigate. '
                            'It is not proof that the mismatch is the only cause of failed learning.')}

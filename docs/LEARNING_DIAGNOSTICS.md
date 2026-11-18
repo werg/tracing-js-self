@@ -110,6 +110,11 @@ record status, and v6 parser status are separate fields. The production v6
 parser is run on each actual native emission in the CLI; parse validity is not
 semantic correctness. A random emission can be invalid or incomplete while
 the mask, context, loss, and gradient checks still pass.
+For any episode on the `semantic_execution` stream, the emission uses native
+`encoded_text` continuation, matching `SelectedSemanticInference` regardless
+of whether the input provenance is `teacher_conditioned` or `recorded`. The
+provenance and exact mode from the produced tape are both reported. Other
+streams keep the diagnostic's default sampled continuation.
 
 When a later observed text record exists in the same episode, the helper
 changes one byte of that later row in a counterfactual copy, replays the same

@@ -30,7 +30,7 @@ jobs:
         with:
           repository: werg/megatoken
           # Exact paired consumer; old checkpoint and prepared formats are rejected.
-          ref: c46acf851baca2c5351a6596fa61bdddee313fc8
+          ref: 088fd8983c4caa219cf2c4684c038c69fcf7edd2
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -41,7 +41,7 @@ jobs:
           python-version: '3.12.14'
       - name: Install immutable producer and companion prerequisites
         run: |
-          npm install --global "$(node -p "require('./profiles/release-environment.lock.json').npm")" --ignore-scripts --no-audit --no-fund
+          npm install --global "npm@$(node -p "require('./profiles/release-environment.lock.json').npm")" --ignore-scripts --no-audit --no-fund
           npm ci --ignore-scripts --no-audit --no-fund
           python -m pip install --require-hashes -r tools/native-consumer/requirements.lock
           python -m pip install --no-deps --no-build-isolation -e ./megatoken

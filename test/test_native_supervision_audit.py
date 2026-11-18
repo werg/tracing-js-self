@@ -9,10 +9,26 @@ COMPANION = ROOT.parent / "megatoken"
 sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(COMPANION / "src"))
 
-from native_supervision_audit import capture_native_supervision_audit  # noqa: E402
+from native_supervision_audit import (capture_native_supervision_audit,
+                                      _episode_decoder_continuation)  # noqa: E402
 
 
 class NativeSupervisionAuditTests(unittest.TestCase):
+    def test_teacher_conditioned_semantic_episode_uses_encoded_text_continuation(self):
+        from types import SimpleNamespace
+
+        teacher = SimpleNamespace(stream="semantic_execution", supervision=SimpleNamespace(
+            annotations_json=json.dumps({"semantic_execution": {"continuation": "teacher_conditioned"}})))
+        self.assertEqual(_episode_decoder_continuation(teacher),
+                         ("encoded_text", "semantic_execution.teacher_conditioned"))
+        recorded = SimpleNamespace(stream="semantic_execution", supervision=SimpleNamespace(
+            annotations_json=json.dumps({"semantic_execution": {"continuation": "recorded"}})))
+        self.assertEqual(_episode_decoder_continuation(recorded),
+                         ("encoded_text", "semantic_execution.recorded"))
+        ordinary = SimpleNamespace(stream="chat", supervision=SimpleNamespace(annotations_json="{}"))
+        self.assertEqual(_episode_decoder_continuation(ordinary),
+                         ("sampled", "non-semantic-stream-default"))
+
     def test_one_native_byte_episode_has_exact_masks_context_targets_and_gradients(self):
         import torch
 
@@ -98,6 +114,7 @@ class NativeSupervisionAuditTests(unittest.TestCase):
         self.assertEqual(report["schema"], "native-token-supervision-audit/1")
         self.assertEqual(report["status"], "passed")
         self.assertEqual(report["optimizerSteps"], 0)
+        self.assertEqual(report["decoderContinuationMode"], "sampled")
         self.assertTrue(report["allGeneratedTokensScored"])
         self.assertTrue(report["allObservedTokensUnscored"])
         decision = report["decisions"][0]
