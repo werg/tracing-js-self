@@ -2,9 +2,10 @@
 
 **Release closeout in progress:** the complete D collection, native preparation,
 consumable capped dataset and F recovery are finished, and their complete
-archives are durably saved. The bounded parameter-projection and async replay
-repairs are published. Their final qualification, the supplemental verification
-archive and current-revision CI are being completed.
+archives are durably saved. The integrated H revision passes its full unit,
+reference-fixture and native capability gates, including the parameter and async
+repairs. The supplemental verification archive and the final hosted-CI snapshot
+are being completed.
 Completed implementation increments and compact receipts are committed and
 pushed immediately; historical failures remain intact.
 
@@ -53,6 +54,7 @@ not a production SE/SC experiment.
 | E | `1b391c19c3c8137d5b00c5412e53614a568b3704` | `1cee21dd07a687b0a824abff1bbd5ef9a13149ab` | Fresh qualification of twelve captured-binding failures. |
 | F | `22eaac6a46e262b00986c63b4fc66f6240016252` | `1cee21dd07a687b0a824abff1bbd5ef9a13149ab` | Exact canonical-input precision refusal, primitive Number conversion, 60-case fresh recovery, finite capability ledger and timeout review. |
 | G, retained failed unit qualification | `a088ad60028a02e1d595dfc1afe7b6379cd0998a` | `1cee21dd07a687b0a824abff1bbd5ef9a13149ab` | Parameter TDZ, bounded forward closure and async-helper repairs. The full unit run exposes one stale refusal assertion; no native ladder or reference fixture was run after that failure. |
+| H, integrated qualification | `881664b98ec9d484f9f4775d0b40a3a2b1b81174` | `6b4382b9af3bef120ca3a95ae24d35154d4cd66b` | Reconciled main and branch implementation; 932 unit passes, five explicit initial skips, eight fixture passes, actual Linux reference isolation tests, and 40/40 attempted native capability admissions from 49 probes. |
 
 E and F qualify their explicit subsets; neither requalifies every D row.
 D's original capture-name refusals remain in D. The initial two-step model
@@ -79,17 +81,28 @@ parser, locale, timezone, policy, tokenizer, producer and consumer identities ar
 recorded. No container-image digest was supplied, so the receipt does not claim
 one.
 
-The frozen F capability report measures **43** finite `training-js/1` probes.
-**32 reach native admission and all 32 pass**; eleven remain untested at that
-stage because an earlier profile/gate stops them. The independent-outcome
-column retains one deliberately refused callback-abrupt case. All 43
+The current frozen H capability report measures **49** finite `training-js/1`
+probes. **40 reach native admission and all 40 pass**; nine remain untested at
+that stage because an earlier profile/gate stops them: six unsupported frontend
+forms, two descriptor refusals and one callback-abrupt reference refusal. The
+independent-outcome column retains that deliberately refused case. All 49
 feature-level model stages and the other source-profile ladders remain
 explicitly untested. Separate regression suites do not silently fill those
 columns.
 
-F's complete unit run has **858 tests: 853 pass, zero fail, five explicit
-external-environment skips**, followed by all eight reference-fixture checks
-passing. A fresh D/pinned-engine262 comparison passes 1,958 finite arithmetic
+H's complete unit run has **937 tests: 932 pass, zero fail, five explicit
+served-coordinator environment skips**, followed by all eight reference-fixture
+checks passing. It takes 155.376 seconds and records a 698,408,960-byte peak
+child RSS, not an aggregate process-tree quota. A separate run then configures
+the actual native served coordinator and passes **all five previously skipped
+tests**, with zero skips, in 67.271 seconds. It uses a freshly initialized served
+model and preserves controlled fixtures versus uninjected model emissions; it
+performs no optimization and establishes no learned-accuracy gain.
+
+The earlier G run retains its 864 passes, one stale expectation failure and five
+skips; the corrected test requires the exact authenticated ReferenceError rather
+than merely accepting any new status. F's separate 853-pass/43-probe evidence
+remains historical. A fresh D/pinned-engine262 comparison passes 1,958 finite arithmetic
 cases with reconstruction and replay. The published Node 20/22/24 matrix passes
 at `4011c3c1ff3206bdb8a0ba96478514a9fcabdcf2`, confirming the Node 20 canonical
 lexeme compatibility repair. Final-revision CI is recorded separately below.
@@ -102,6 +115,24 @@ checkpoint passes all fourteen diagnostic-evidence tests, including those six
 artifact-dependent cases, with zero skips. Changed served tokenizer/config,
 transducer bank, model version and incomplete actual training inventory are
 rejected without altering originals or making new model calls.
+The complete integrated H Python suite subsequently passes **141 tests**, with
+the six optional original-checkpoint cases explicitly skipped in that run.
+This larger suite includes both merged release/evidence regression populations;
+the separate 14/14 actual-checkpoint receipt retains its original C pins.
+
+The H capability run takes 138.65 seconds and records a 394.4 MB peak child RSS.
+All forty actual native inputs, full receipt values and admission-bound exports
+are retained: **120 files / 14,132,251 bytes**, independently hash checked.
+The repaired parameter TDZ, forward closure and sync-root async-helper probes
+contribute 71, 125 and 218 generated tokens respectively. The native ladder's
+declared reference mode is `trusted-process`; it does not borrow the separate
+Linux-isolation unit result as if all forty probes had used that mode.
+
+The two H Linux tests actually pass on this host: direct Node filesystem,
+network and process confinement, and isolated original/instrumented source
+checks with executed-policy binding. The earlier bwrap NETLINK_ROUTE failure
+remains historical evidence; the integrated launcher provides a working
+sandbox-local alternative for the native-reference boundary.
 
 Semantic repairs include method-specific omitted/undefined array bounds, async
 declaration flags, ordered parameter initialization/TDZ and separate body scope,
@@ -125,6 +156,9 @@ remain unchanged. Hashes support integrity relative to trusted release anchors;
 they are not signatures proving an arbitrary producer's authenticity.
 
 Evidence: [capability index](../coverage/required.json),
+[H unit/namespace receipt](evidence/qualification-H-unit-2026-11-18.json),
+[H native qualification](evidence/qualification-H-2026-11-18.json),
+[H Python regression receipt](evidence/python-boundary-regressions-H-2026-11-18.json),
 [provenance receipt](evidence/native-provenance-C-2026-11-18.json),
 [D arithmetic receipt](evidence/owned-arithmetic-D-2026-11-18.json),
 [D Python integration](PYTHON_INTEGRATION_D.md), and
@@ -374,7 +408,7 @@ releases; they do not invent permission for public redistribution.
 | --- | --- | --- |
 | Qualified production SE/SC training | No compatible preceding phase-S checkpoint, ordered pinned donors, hindsight/coordinator assets or complete experiment identities were supplied. Native launch validation requires them; diagnostic P1 checkpoints are not substitutes. | Supply compatible phase-S or same-stage resume assets, the pinned donor profiles and complete the declared training configuration. Run validation before spending compute. |
 | Production compute and confirmation | This environment has CPU Torch and no CUDA. Actual bounded CPU optimization was completed, but no three-seed production experiment or positive execution result exists. | On a suitable runner, start with the recorded first-action failures, establish held-in execution, then freeze validation/test and run the predeclared multi-seed comparison. |
-| OS isolation for arbitrary untrusted code | The earlier ordinary namespace probe fails creating a NETLINK_ROUTE socket. The integrated optional Linux profile confines the native reference only; the owned teacher, acquisition and consumer are separate boundaries. Its host-specific test and explicit skip/failure remain necessary. | Qualify the Linux reference profile on the intended runner and isolate every remaining untrusted execution boundary. Keep the default trusted-source restriction until that complete runner is qualified. |
+| Complete isolation for arbitrary untrusted code | H actually passes the optional Linux native-reference confinement tests on this host. That profile confines the reference only; the owned teacher, acquisition and native consumer remain separate boundaries. | Retain the qualified reference profile and isolate every remaining untrusted execution boundary on the intended runner. Keep the default trusted-source restriction until that complete runner is qualified. |
 | Hard aggregate CPU/RSS quotas | Existing wall/output/V8-heap controls and measured RSS do not enforce a whole-process-tree quota. No writable delegated cgroup/qualified container boundary is supplied. | Add and test runner-level process-tree quotas; report native/reference descendants as well as the JS worker. |
 | Local browser launch | Playwright download produced an invalid archive and system Chromium launch was denied a Unix socket. | Use the existing GitHub real-browser workflow, which has already passed at published revisions. Final revision status is reported separately; local denial is not a total browser blocker. |
 | Public corpus licensing | Source notices and upstream licenses are retained. No owner-selected repository/data redistribution policy was supplied; repository-fixture is not an SPDX license. | Review distribution terms before making a public corpus release. Current archives remain private evidence. |
@@ -395,6 +429,18 @@ for each evidence revision. Install only committed dependency locks. Do not move
 an active campaign's editable native checkout or repoint its Python environment.
 Verify the actual imported consumer and tokenizer with
 `tools/native-consumer/check_environment.py` before generation.
+
+Historical campaign selection requires explicit `--tracer-root` routing to the
+clean recorded producer. Older graph-sensitive candidate commitments cannot be
+recomputed from their JSON trees under the new writer's stricter round-trip
+rule. The selector keeps those original commitments, loads the exact producing
+reader, holds a current shared lock and checks all result/attempt/public/private
+and nested input references. There is no fallback after a failed current read
+and no rehashing of history. Copy a legacy campaign without `.campaign.lock`
+to a separately verified staging snapshot first. The actual F compatibility
+check validates all sixty original admission bindings on such a snapshot and
+confirms original metadata and lock state remain unchanged; it creates no new
+admissions. See [the compatibility receipt](evidence/historical-campaign-compatibility-2026-11-18.json).
 
 For a new full baseline, use `npm run baseline:v5 -- --out NEW_DIRECTORY` with
 the exact native paths and a declared `--check-timeout-ms` appropriate to the
