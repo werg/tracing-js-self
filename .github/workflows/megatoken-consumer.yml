@@ -240,6 +240,18 @@ jobs:
             --environment-receipt "$RUNNER_TEMP/native-environment.json" --out "$RUNNER_TEMP/release" \
             "${audit_args[@]}" "${training_caps[@]}"
           python tools/package-semantic-release.py --verify "$RUNNER_TEMP/release/semantic-v5-release.tar.gz"
+      - name: Reconstruct every prepared native row and measure coverage membership
+        run: |
+          python tools/derive-native-prepared-sampler.py \
+            --prepared "$RUNNER_TEMP/release/prepared" \
+            --audit-campaign "$RUNNER_TEMP/corpus" --producer-root . \
+            --megatoken megatoken --tokenizer "$RUNNER_TEMP/tokenizer.json" \
+            --max-family-tokens 10000 --max-family-share 0.20 \
+            --out "$RUNNER_TEMP/native-prepared-sampler"
+          node tools/select-native-prepared-coverage.mjs \
+            --sampler "$RUNNER_TEMP/native-prepared-sampler/sampler.json" \
+            --source-manifest "$RUNNER_TEMP/corpus/manifest.json" \
+            --out "$RUNNER_TEMP/native-prepared-coverage"
       - name: Reconcile all source dispositions and independent family counts
         run: |
           python - <<'PY'
@@ -286,6 +298,9 @@ jobs:
             ${{ runner.temp }}/native-orchestration-validation.json
             ${{ runner.temp }}/native-input-parity.json
             ${{ runner.temp }}/native-conditional-probe/
+            ${{ runner.temp }}/native-prepared-sampler/
+            ${{ runner.temp }}/native-prepared-sampler.building/
+            ${{ runner.temp }}/native-prepared-coverage/
           if-no-files-found: error
 
   restore-engineering-release:

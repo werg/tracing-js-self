@@ -16,8 +16,10 @@ node tools/select-native-prepared-coverage.mjs \
   --max-training-tokens 250000 --out NEW_SELECTION_DIR
 ```
 
-The complete sampler is the existing derivation's report containing
-`acceptedDecisions`, not the reduced receipt committed for historical D.
+Create the complete sampler with the maintained
+[current native derivation](NATIVE_PREPARED_SAMPLER.md). Its report contains
+every `acceptedDecisions` row; the reduced historical D receipt is insufficient
+for a new selection.
 The source manifest must match the exact bytes, producer, campaign and
 registry named by that sampler. Every final native row is joined to its
 original admitted candidate, including identities, family, frozen split,
