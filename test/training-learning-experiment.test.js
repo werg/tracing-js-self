@@ -1,8 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {learningCase,diverseSubset} from '../tools/freeze-learning-experiment.mjs';
+import {learningCase,diverseSubset,mapConcurrent} from '../tools/freeze-learning-experiment.mjs';
 import {buildSourceRegistry,frozenSplitIdentity} from '../src/corpus/source-registry.mjs';
 import {verifyEffectfulTrainingCase} from '../src/training/effectful-admit.js';
+
+test('bounded source verification preserves order and cannot drop a rejected candidate',async()=>{
+  let active=0,peak=0;
+  const values=await mapConcurrent([1,2,3,4],2,async value=>{
+    active++;peak=Math.max(peak,active);await new Promise(resolve=>setImmediate(resolve));active--;return value*2;
+  });
+  assert.deepEqual(values,[2,4,6,8]);assert.equal(peak,2);assert.equal(active,0);
+  await assert.rejects(mapConcurrent([1,2,3],2,async value=>{
+    active++;await new Promise(resolve=>setImmediate(resolve));active--;
+    if(value===1)throw new Error('source rejected');return value;
+  }),/source rejected/);
+  assert.equal(active,0);
+});
 
 test('frozen learning requests exclude teacher selections and keep expected outcomes private',async()=>{
   const source='"use strict";function run(x){return x+1;}',family='frozen-learning-source';

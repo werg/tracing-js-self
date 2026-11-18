@@ -37,6 +37,7 @@ def run(expt, seed):
                    'cases': [measured('validation', step == 4, f'trained-{seed}-{step}')]} for step in (2, 4)]
     chosen = learning.choose_validation_checkpoint(expt, candidates)
     return {'optimizerSeed': seed, 'optimizerSteps': 4, 'baseIdentity': 'base',
+            'selectedCheckpointExposureAssessment': {'everySelectedEpisodeVisitedAllWindows': True},
             'trainedIdentity': chosen['checkpointIdentity'], 'validation': candidates,
             'selection': chosen, 'base': [measured(row['id'], False, 'base') for row in expt['test']],
             'trained': [measured(row['id'], True, chosen['checkpointIdentity']) for row in expt['test']]}
@@ -128,6 +129,9 @@ class FrozenLearningTests(unittest.TestCase):
         self.assertEqual(result['uncertainty']['lower'], 1)
         self.assertEqual(result['pureOutcomeTransfer']['status'], 'untested')
         self.assertFalse(result['teacherForcedLossIsExecutionAccuracy'])
+        runs[0]['selectedCheckpointExposureAssessment'] = None
+        self.assertFalse(learning.summarize_learning(expt, runs)['requirements']['completeSelectedCheckpointTrainingExposure'])
+        runs[0]['selectedCheckpointExposureAssessment'] = {'everySelectedEpisodeVisitedAllWindows': True}
         runs[1]['baseIdentity'] = 'different-base'
         for row in runs[1]['base']:
             row['checkpointIdentity'] = 'different-base'

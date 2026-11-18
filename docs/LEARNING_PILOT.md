@@ -36,12 +36,24 @@ The experiment file is private evidence. Test and validation expectations stay
 outside the model; only each case's `envelope` enters the selected evaluator.
 Controlled teacher selections are removed. Source, inputs and broker fixtures
 retain their normal selected-driver visibility rules.
+For a larger admitted corpus, `--verification-concurrency 4` runs independent
+source rechecks concurrently (supported range 1–8; default 1). Every admitted
+candidate still receives the same immutable producer verification. Output
+ordering remains deterministic; any rejection aborts the declaration, and a
+file changing during verification is rejected. Concurrency does not discard
+failed candidates or change selection membership.
 
 The file fixes optimizer seeds, a separate initialization seed, a separate decoder
-seed, checkpoint steps, inference token/time budgets, a practical improvement threshold, a maximum critical
+seed, checkpoint steps, native training window and wall-time budgets, inference
+fragment/time budgets, a practical improvement threshold, a maximum critical
 slice regression, a bootstrap RNG seed and the confirmatory component minimum.
 It is written exclusively and must not be rewritten after seeing model results.
 The optimization report binds its exact SHA-256 before constructing the model.
+The selected inference limit is `nativeMaxTokensPerFragment`; the pinned native
+adapter allows up to 64 fragments per decision. Its token cap is not a whole-task
+or whole-decision limit. Original emissions supply the measured total cost.
+Legacy declarations with `tokensPerDecision` remain immutable and receive an
+explicit per-fragment interpretation in later measurement reports.
 
 ## Optimize and retain the declared checkpoints
 
@@ -64,6 +76,17 @@ It retains all declared checkpoint candidates using the companion's supported
 checkpoint interval and retention settings, capped at 100 periodic snapshots.
 Without an experiment, the standalone smoke retains its existing every-step
 checkpoint policy and the companion's bounded default retention.
+
+The native sampler consumes all windows of each deterministically permuted
+episode in sequence. Frozen membership therefore differs from actual training
+exposure under a short cap. To run one complete native window per bounded
+episode, freeze and pass `--training-window-records 256
+--training-window-decisions 256`; check `native-window-plan.json` before claiming
+this property. Larger episodes can still require multiple windows. The smoke
+requires actual coverage of all selected episodes and records the original
+native source counters. The pilot reports exposure and scored tokens at the
+**selected checkpoint**, as well as at the end of training. Missing or incomplete
+selected-checkpoint exposure prevents a confirmatory pass.
 
 Initialization and optimizer seeds are separate. Keeping initialization fixed
 permits multiple optimizer seeds to share the exact same base weights. The

@@ -15,6 +15,19 @@ SPEC.loader.exec_module(SMOKE)
 
 
 class OptimizationMeasurementTests(unittest.TestCase):
+    def test_interrupted_optimizer_updates_are_not_a_restorable_checkpoint(self):
+        with TemporaryDirectory() as root:
+            directory = Path(root) / 'training'
+            directory.mkdir()
+            (directory / 'metrics.jsonl').write_text(json.dumps({'event': 'train', 'global_step': 2,
+                'denominators': {'lexical': 99}}) + '\n{"event":')
+            receipt = SMOKE.partial_training_receipt(root)
+            self.assertEqual(receipt['observedOptimizerSteps'], 2)
+            self.assertEqual(receipt['supervisedLexicalTokens'], 99)
+            self.assertEqual(receipt['malformedMetricLines'], 1)
+            self.assertIsNone(receipt['lastDurableCheckpoint'])
+            self.assertTrue(receipt['updatesAreNotDurableCheckpointEvidence'])
+
     def test_prepared_membership_is_not_actual_optimizer_exposure(self):
         plan = {'sources': [{'sourceId': 'long', 'windows': 64}, {'sourceId': 'short', 'windows': 1}]}
         actual = {'source_windows': {'long': 64}, 'complete_history': True}

@@ -122,6 +122,14 @@ def main():
             seed = smoke['optimizerSeed']
             destination = root / f'seed-{seed}'
             candidates, bundles, checkpoint_receipts = [], {}, {}
+            plan = None
+            if smoke.get('nativeWindowPlan') is not None:
+                plan_path = smoke_path.parent / 'native-window-plan.json'
+                if SMOKE.sha256(plan_path) != smoke['nativeWindowPlan']['sha256']:
+                    raise ValueError('Pre-update native window plan changed')
+                plan = json.loads(plan_path.read_text())
+                if len(plan['sources']) != len(experiment['training']):
+                    raise ValueError('Native window plan does not cover the declared training members')
             for step in experiment['checkpointSteps']:
                 checkpoint = locate_checkpoint(smoke_path, step)
                 bundle = SMOKE.export_checked(checkpoint, destination / f'served-step-{step}')
@@ -135,6 +143,8 @@ def main():
                     raise ValueError('Checkpoint is not from this declared optimizer/data run')
                 checkpoint_receipts[step] = {'checkpointStateSha256': metadata['state_sha256'],
                     'globalStep': step, 'sourceSampling': metadata['source_sampling']}
+                if plan is not None:
+                    checkpoint_receipts[step]['exposureAssessment'] = SMOKE.training_exposure(plan, metadata['source_sampling'])
                 del payload
                 bundles[step] = bundle
                 gc.collect()
@@ -167,6 +177,7 @@ def main():
                    'trainingExposure': smoke['checkpointVerification']['sourceSampling'],
                    'trainingSupervisedTokens': smoke['supervisedLexicalTokens'],
                    'selectedCheckpointReceipt': selected_receipt,
+                   'selectedCheckpointExposureAssessment': selected_receipt.get('exposureAssessment'),
                    'selectedCheckpointSupervisedTokens': sum(row['denominators']['lexical'] for row in
                        smoke['trainingSummary'] if row['step'] <= choice['step'])}
             runs.append(run)

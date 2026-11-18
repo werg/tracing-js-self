@@ -269,6 +269,36 @@ def training_exposure(plan, sampling):
             'sourceWindowCounts': dict(sorted(actual.items()))}
 
 
+def partial_training_receipt(root):
+    """Retain observed updates after timeout/SIGKILL without inventing a checkpoint."""
+    root = Path(root)
+    metrics = root / 'training/metrics.jsonl'
+    if not metrics.exists():
+        return None
+    rows, malformed = [], 0
+    for line in metrics.read_text().splitlines():
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            malformed += 1
+            continue
+        if row.get('event') == 'train':
+            rows.append(row)
+    pointer = root / 'training/checkpoints/latest.json'
+    checkpoint = None
+    if pointer.exists():
+        name = json.loads(pointer.read_text())['checkpoint']
+        metadata = root / 'training/checkpoints' / name / 'metadata.json'
+        if metadata.exists():
+            checkpoint = {'path': str(metadata.parent), 'metadataSha256': sha256(metadata),
+                          'metadata': json.loads(metadata.read_text())}
+    return {'schema': 'partial-native-optimization/1', 'metricsSha256': sha256(metrics),
+            'observedOptimizerSteps': max((row['global_step'] for row in rows), default=0),
+            'supervisedLexicalTokens': sum(row['denominators']['lexical'] for row in rows),
+            'malformedMetricLines': malformed, 'lastDurableCheckpoint': checkpoint,
+            'updatesAreNotDurableCheckpointEvidence': True}
+
+
 def verify_training_start(initial, phase_start):
     from megatoken.training.checkpoint import load_checkpoint
 
@@ -642,6 +672,14 @@ def main():
                           'optimizerSteps': args.steps}))
         return 0
     except BaseException as error:
+        try:
+            partial = partial_training_receipt(root)
+            if partial is not None:
+                write_json(root / 'partial-training-receipt.json', partial)
+                record(partialTraining=partial, optimizerSteps=partial['observedOptimizerSteps'],
+                       supervisedLexicalTokens=partial['supervisedLexicalTokens'])
+        except Exception as evidence_error:
+            record(partialEvidenceError={'type': type(evidence_error).__name__, 'message': str(evidence_error)})
         record(status='failed', error={'type': type(error).__name__, 'message': str(error)},
                traceback=traceback.format_exc())
         print(f'Optimization smoke stopped; durable report: {root / "report.json"}', file=sys.stderr)
