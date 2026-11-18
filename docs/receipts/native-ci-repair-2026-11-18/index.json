@@ -1,0 +1,126 @@
+{
+  "schema": "semantic-native-ci-repair-qualification/1",
+  "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+  "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+  "originalFailure": {
+    "workflowRunId": 44317350987,
+    "triggerHead": "aa7b8432761df110df53fc95664b7d767b2eeba0",
+    "actualProducerRevision": "3850539e1038f3cd19c19c446403444b96281797",
+    "durableDiagnostics": "docs/receipts/final-integration-2026-11-18/native-aa7b-failure"
+  },
+  "successorWorkflow": {
+    "workflowRunId": 44321402524,
+    "triggerHead": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+    "outcome": "pending at this local qualification receipt"
+  },
+  "fixCommits": [
+    "10663c756a45c4c421901dc6d0f99d8124932a9b",
+    "048f956041c52f4718a91041660238d976a49a32",
+    "94632154851d2e963272bac2df37f9b8e0059346",
+    "ba9560ea4abbdb31421868b53be1117d94cfe6b6",
+    "1e2e6a0de8952c4349edbeef46ab70c4a06f8157"
+  ],
+  "focusedTests": {
+    "passed": 15,
+    "failed": 0,
+    "skipped": 0,
+    "fixtureStorageRoundtrips": 473,
+    "recipeFixtureCounts": {
+      "engineering": 25,
+      "training-v4": 48,
+      "benchmark-v1": 126,
+      "real-source": 210,
+      "generated-v1": 64
+    },
+    "command": "node --test --test-concurrency=1 test/generation-process.test.js test/generation-dispositions.test.js test/source-registry.test.js"
+  },
+  "nativeSmoke": {
+    "counts": {
+      "attempted": 3,
+      "admitted": 3,
+      "locally_verified": 0
+    },
+    "ids": [
+      "counter-0",
+      "counter-1",
+      "checkpoint-source-reread"
+    ],
+    "recipe": "engineering",
+    "limit": 3,
+    "jobs": 1,
+    "referenceIsolation": "linux-namespace",
+    "sourceRegistry": {
+      "digest": "27f3b0e8b276a64d648b4cc56e8f069ea3194c46c32fd7d532db2e53b2979ba7",
+      "sourceVariants": 508,
+      "sourceFamilies": 199,
+      "independentComponents": 135,
+      "nearPairs": 5,
+      "splitComponents": {
+        "train": 89,
+        "validation": 13,
+        "test": 33
+      }
+    },
+    "registryCasObjects": {
+      "objects": 1,
+      "bytes": 339897
+    },
+    "freshNativeQualified": 3,
+    "nativePrepared": 3,
+    "generatedTokens": 906,
+    "heldOutSupplied": 0,
+    "familyTokenCapsEnabled": false
+  },
+  "archive": {
+    "archiveSha256": "b18302be17ef07eb2a344d41416868c36c33f1c419aa1287eb0c3d3feffc92d9",
+    "files": 46,
+    "identityDigest": "10af6a2818136a3a6d8bffdc4edcc2100b53e4f3b67ebe052661f9904c458f82",
+    "schema": "semantic-release-verification/1",
+    "status": "verified",
+    "filename": "semantic-v5-release.tar.gz",
+    "bytes": 5052896
+  },
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "limitations": [
+    "This is a selected three-case engineering pipeline smoke, not a completed five-recipe hosted matrix.",
+    "The native boundary/source qualifications at earlier exact producer pins remain separate immutable receipts."
+  ],
+  "files": [
+    {
+      "path": "focused-tests.log",
+      "bytes": 1736,
+      "sha256": "6ad994b7e0c57807bf196c6f66535c479d209cdb0f9822de4d8bfafecd17f67c"
+    },
+    {
+      "path": "corpus-manifest.json",
+      "bytes": 19846,
+      "sha256": "344d7824268c64a6d0f7ced8ee3ca33e7f1e325c359b4b13f729ff82398a5d4c"
+    },
+    {
+      "path": "native-environment.json",
+      "bytes": 2318,
+      "sha256": "9c27072f1c8f24d0209918c466f8352f546613a3f94b669dc455ad3809c0a9c0"
+    },
+    {
+      "path": "native-qualification-summary.json",
+      "bytes": 485,
+      "sha256": "6490fc54f7483f602514bcbe6e96840c4fbf77f7f9ab310bb1865b037857e25b"
+    },
+    {
+      "path": "native-preparation-report.json",
+      "bytes": 835,
+      "sha256": "cf72d6486e9d093f62e0ed7538714debf3c8187ad256eb75860f6b4b24697319"
+    },
+    {
+      "path": "prepared-training-selection.json",
+      "bytes": 2342,
+      "sha256": "fe5e72fc0d275b34d07759b1b84cd7fd8151323b3b3742faa8082cd133f34cf3"
+    },
+    {
+      "path": "archive-receipt.json",
+      "bytes": 264,
+      "sha256": "d8c6784ecd645ca9dd018ba65333b366b2ccb06ce51f6e5d7240cd2e9de38b5b"
+    }
+  ]
+}
