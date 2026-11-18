@@ -1,6 +1,6 @@
 {
   "schema": "semantic-capability-ledger/1",
-  "producerRevision": "c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39",
+  "producerRevision": "83e0d5742e63dc4439b68d6296f323cb7a3aafdc",
   "contracts": {
     "execution": "semantic-execution/5",
     "trace": "semantic-trace/5",
@@ -18,7 +18,7 @@
     "parser": "8.15.0",
     "typescript": "5.9.3",
     "packageLockDigest": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88",
-    "implementationDigest": "9ff2b16f626873893b3c2e3e48bdedd243b8c85bbf435029baa191daa25461b5"
+    "implementationDigest": "e83ea9e4d980be45fa807eb380e6c5e55865ecfce816b1ca36816350a6f00e77"
   },
   "unit": "declared source/input/fixture probe",
   "rows": [
@@ -32,12 +32,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "5dcb3f55d090abf6ea4e507e2a51e358a90b30520c4a1fd75e08d3bf818b1be8"
+      "identityDigest": "d66c732b35c812facc650189a139922ff57e308059e8153339de782adcc978c0",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "270b3ecbb5fc910f33ab00e23503e388fe828e080cc86bd357a4339de58cce0c",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 141,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                40
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 8,
+          "tracks": 2
+        },
+        "logicalRecords": 7,
+        "lossMaskValidated": true,
+        "observedTokens": 714,
+        "optimizerSteps": 0,
+        "physicalRecords": 8,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "coercion-and-signed-zero",
@@ -49,12 +90,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "e82d8dbe8e0fefedf90f5504a6b08464cbd977104c93ae253e42c16c42c6ca1e"
+      "identityDigest": "e2d551d746c2880d854e7a6f6d8f50446485655836168d2d677ed9941f497081",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "0efb5e15eef66c064b6f0a005aca4637a75f1903431da7a716dad3a1592f26a1",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 348,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "ref",
+                "o2"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 15,
+          "tracks": 2
+        },
+        "logicalRecords": 14,
+        "lossMaskValidated": true,
+        "observedTokens": 751,
+        "optimizerSteps": 0,
+        "physicalRecords": 15,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "both-branch-outcomes",
@@ -66,12 +148,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "f04b64b99d6d868c104cbe3f9c3ac269515d555f21dfa4ab71ca7fa04b5eb3e1"
+      "identityDigest": "7877b91a1732742cccfde16e3534ad9588578b9ec3c8e89e45606074229d2048",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "ac54ca6d2156ddc0d320d44e5fcd5e6854186e6b01986baa30dd9fd024951ec6",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 564,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                10
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 21,
+          "tracks": 2
+        },
+        "logicalRecords": 20,
+        "lossMaskValidated": true,
+        "observedTokens": 1028,
+        "optimizerSteps": 0,
+        "physicalRecords": 21,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "zero-loop-trips",
@@ -83,12 +206,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "8538cfb285d920c74ec35ea07c06ef3c16c6c22c8234d5c7f7dc6e68b5e22e84"
+      "identityDigest": "a78af562847cef6c3f37a6b196c0f6e539c9c1124d89b66a44f554429ae87734",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "2597aa1ac9f4b06e6259b557c9f451da5525f258d446154a94b156e2eac0a765",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 91,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                0
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 7,
+          "tracks": 2
+        },
+        "logicalRecords": 6,
+        "lossMaskValidated": true,
+        "observedTokens": 729,
+        "optimizerSteps": 0,
+        "physicalRecords": 7,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "short-circuit-mutation",
@@ -100,12 +264,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "c31aaf7842c06acf8f8694f4f0ffadd239bd0f1d71f178eb4018e13750bfc034"
+      "identityDigest": "f76eb4dc00d3d82b13a6d7165b55dc929d8b43f97eda340247b4a2e84803e451",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "3e31e1032821d341243189f7e3e5ac35b28f5d9972bc6ffd603a549074f856c1",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 118,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                1
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 9,
+          "tracks": 2
+        },
+        "logicalRecords": 8,
+        "lossMaskValidated": true,
+        "observedTokens": 776,
+        "optimizerSteps": 0,
+        "physicalRecords": 9,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "nested-calls-and-recursion",
@@ -117,12 +322,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "e7688e3ef1955e172ec0d4d356ec61462f41500eec1cd4d554bcff4584bf2ff4"
+      "identityDigest": "ca95164b38f9efee61627cb46d70d37827633963c4747382b7c426c752673c01",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "115eec64ca2ec214c6111c81a88be8283ef71a71e8664bf642ea9e4a54fbbd2a",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 642,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                6
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 23,
+          "tracks": 2
+        },
+        "logicalRecords": 22,
+        "lossMaskValidated": true,
+        "observedTokens": 978,
+        "optimizerSteps": 0,
+        "physicalRecords": 23,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "parameter-body-scope",
@@ -134,12 +380,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "3969110de8ac25cbee55a1aa2eeeccd783bc47d752abdc6daf66c9a8779a3533"
+      "identityDigest": "0c60bddbb9df2e6173f3b19a00a25af23b665cef700f4c3f3ea5d8647761f2b6",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "de7b34eea84509f98412586ab602093352d9cec6a56612e3ea39614481ed9a49",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 48,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                7
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 7,
+          "tracks": 2
+        },
+        "logicalRecords": 6,
+        "lossMaskValidated": true,
+        "observedTokens": 706,
+        "optimizerSteps": 0,
+        "physicalRecords": 7,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "parameter-closure-capture",
@@ -151,12 +438,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "13bee82bf21a7d129a0776c5e5a4ff0bf6d52eadc2502fd4e7bc66a8bca16e9a"
+      "identityDigest": "5bca2376217c057867c3e8b101ee931cf27ae442b0435c7356e91f85c88eafa9",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "52472fbc98f7de86263c752ffbcd59af0e69bde1e5b0d2505f1d2c4741ac4d64",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 140,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                7
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 11,
+          "tracks": 2
+        },
+        "logicalRecords": 10,
+        "lossMaskValidated": true,
+        "observedTokens": 767,
+        "optimizerSteps": 0,
+        "physicalRecords": 11,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "later-parameter-tdz",
@@ -184,12 +512,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "572c50ad162601b91aafd63bfdfca60cb444487c74da56ed073ce8114cbe09df"
+      "identityDigest": "b05e18bbdfd66f98604fa0517509e5339638c2c0ac7bbe0df97fbb12d579c83f",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "0ce1b6f249f2779d6bdcbbc91f0ff795d2c29b00429b078386867701a643effd",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 122,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "str",
+                "object"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 11,
+          "tracks": 2
+        },
+        "logicalRecords": 10,
+        "lossMaskValidated": true,
+        "observedTokens": 674,
+        "optimizerSteps": 0,
+        "physicalRecords": 11,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "slice-undefined-end",
@@ -201,12 +570,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "484b539bef20db51ac8da42fffe44aaae7bb01f96694b1a3bdaffd330fbcfdde"
+      "identityDigest": "3dd10446c4bf5d6957d77c204b0400add789dc27b0b70d11b6f0cc954f61825d",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "811e69270023d3148c6e4f3decd42dde513a8094c2d76383789a22d41f9aa708",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 231,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "ref",
+                "o3"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 13,
+          "tracks": 2
+        },
+        "logicalRecords": 12,
+        "lossMaskValidated": true,
+        "observedTokens": 701,
+        "optimizerSteps": 0,
+        "physicalRecords": 13,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "fill-undefined-end",
@@ -218,12 +628,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "aefbbd56d251fb1670610cdd00cf09f1fc13e1fccc06e1b2335defe1f94ee037"
+      "identityDigest": "ffc10e3b095e8adfff081722bf47149100dc36de19175840681d7aee58c0f895",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "fcb3976d41251f02119d489427f22b0584dd9e5e7b617cffa3acd9f9c750a795",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 219,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "ref",
+                "o2"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 14,
+          "tracks": 2
+        },
+        "logicalRecords": 13,
+        "lossMaskValidated": true,
+        "observedTokens": 730,
+        "optimizerSteps": 0,
+        "physicalRecords": 14,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "copy-within-undefined-end",
@@ -235,12 +686,285 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "cde19f00e5d9d4ebfb8a540cfed7b75370ca8ee4e538ee6fbb9f29a8b60ee56e"
+      "identityDigest": "34f058dffaf627b7959f6222a79518fbfd602aa9332168e6444b3b0c08d3b8dd",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "858cee2b96ab3ced38a5c4cfe9ec3e5395eeb9b45d5b62e7dff2d932c95158d1",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 219,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "ref",
+                "o2"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 14,
+          "tracks": 2
+        },
+        "logicalRecords": 13,
+        "lossMaskValidated": true,
+        "observedTokens": 723,
+        "optimizerSteps": 0,
+        "physicalRecords": 14,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "array-some-short-circuit",
+      "feature": "array-some-short-circuit",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "passed",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "admitted",
+      "reason": null,
+      "identityDigest": "e55ee51b83825b453aa5f0eabb7d90dcd9b9c1f9ca215901d5ac2092e1f780b2",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "14a9d961523db62e1dc3a8929233ee84a6772514c1a560ee1a806a9a52f371d5",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 457,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "ref",
+                "o4"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 26,
+          "tracks": 2
+        },
+        "logicalRecords": 25,
+        "lossMaskValidated": true,
+        "observedTokens": 1062,
+        "optimizerSteps": 0,
+        "physicalRecords": 26,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "array-for-each-owned-callback",
+      "feature": "array-for-each-owned-callback",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "passed",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "admitted",
+      "reason": null,
+      "identityDigest": "3cee6ff234093ef21cbcffa46c2bd6542a92d85c11b8731d82b666f4db90df44",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "3e4d6beff103142b48101b700a79a8e76e99ebd013ecddd5cc6077dcdf1bc7ac",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 662,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "ref",
+                "o4"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 32,
+          "tracks": 2
+        },
+        "logicalRecords": 31,
+        "lossMaskValidated": true,
+        "observedTokens": 986,
+        "optimizerSteps": 0,
+        "physicalRecords": 32,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "sparse-array-fill",
+      "feature": "sparse-array-fill",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "passed",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "admitted",
+      "reason": null,
+      "identityDigest": "c9c80079c3de9757cae7d63d807c1ada459f321b93e25e2b5c657371d5e86828",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "cf8b9d350f8dc8841cd0a9c01f6328414bec02af5464a3b12c3bda3cd076bf14",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 109,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "ref",
+                "o2"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 9,
+          "tracks": 2
+        },
+        "logicalRecords": 8,
+        "lossMaskValidated": true,
+        "observedTokens": 646,
+        "optimizerSteps": 0,
+        "physicalRecords": 9,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "input-graph-mutation",
+      "feature": "input-graph-mutation",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "passed",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "admitted",
+      "reason": null,
+      "identityDigest": "17e56a40d10d59e860b0da71e8ccc321604d3651446e57605f3e4f6f106b641e",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "555e08ed206edfc19d0f562086293486cf15c1250f5fc110dfed3af26f7cd063",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 140,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "ref",
+                "o2"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 9,
+          "tracks": 2
+        },
+        "logicalRecords": 8,
+        "lossMaskValidated": true,
+        "observedTokens": 811,
+        "optimizerSteps": 0,
+        "physicalRecords": 9,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "alias-preserving-mutation",
@@ -252,12 +976,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "885221a202be23572d029949ab98191508c1adb5a33e2abd74e6a7d2f017d546"
+      "identityDigest": "d0becba552a650e6bd1e96f3202643291d27b7f45ceea484c40fbcfdb2d3b9e1",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "e6d42ab2e3b2969c136e45b14332c7ef00a0cb36563a358803490d536014ffd8",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 224,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "ref",
+                "o3"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 15,
+          "tracks": 2
+        },
+        "logicalRecords": 14,
+        "lossMaskValidated": true,
+        "observedTokens": 870,
+        "optimizerSteps": 0,
+        "physicalRecords": 15,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "synchronous-primitive-throw",
@@ -269,12 +1034,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "98e506019346832ba73689d0f2056a378a092a2ef5ab050feef1781c0d0428ef"
+      "identityDigest": "ecfbeb52867c73f337dde81be1f40307bc18d6c76a0c2c602cd9f3c08ab61c27",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "fd7b6bf19e885b8b8268fad9b627f2472fa55cc380bfa59dd11b4bd9716f0f28",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 22,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "throw",
+              "value": [
+                "num",
+                7
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 5,
+          "tracks": 2
+        },
+        "logicalRecords": 4,
+        "lossMaskValidated": true,
+        "observedTokens": 527,
+        "optimizerSteps": 0,
+        "physicalRecords": 5,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "synchronous-declared-error",
@@ -286,12 +1092,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "996724d6f99561b74756b9329436df068a183f01978d48f5ac01b0661febe0d8"
+      "identityDigest": "604350decc0b04a3e2982e3af59917ca7976efff10ed4848bd30c0bf40487e33",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "e66ee3c7404b060fc14a512395e37d7606d7ae2a597198c8e13a7aec01111954",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 65,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "throw",
+              "value": [
+                "ref",
+                "o2"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 6,
+          "tracks": 2
+        },
+        "logicalRecords": 5,
+        "lossMaskValidated": true,
+        "observedTokens": 571,
+        "optimizerSteps": 0,
+        "physicalRecords": 6,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "finally-overrides-return",
@@ -303,12 +1150,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "c76e48338b388366b8a736f46fab2c226b7c41076917513272735ccc0a56ba47"
+      "identityDigest": "e9809f251494d2370834a319bae390ccd1be6257f4df84ced5b35783d65dca1c",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "de7abb132e0b2927228644815b1b42d29b095e1c774b816253fb5a27f3ae0c60",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 46,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                2
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 6,
+          "tracks": 2
+        },
+        "logicalRecords": 5,
+        "lossMaskValidated": true,
+        "observedTokens": 602,
+        "optimizerSteps": 0,
+        "physicalRecords": 6,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "finally-overrides-throw",
@@ -320,12 +1208,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "ababc6e4574ea368f9d1870c2238b2edb3138150c9b89305b2e09da526ffa010"
+      "identityDigest": "528d27b97dd725700d5b418ba08020a2991db1de85e60f6d8ba033bdda779e30",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "82007ffb98088dd092c3171e3bf48cec4c2f36a62a0ec3baaaba4c3f5e2e2739",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 49,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "throw",
+              "value": [
+                "num",
+                2
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 6,
+          "tracks": 2
+        },
+        "logicalRecords": 5,
+        "lossMaskValidated": true,
+        "observedTokens": 592,
+        "optimizerSteps": 0,
+        "physicalRecords": 6,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "object-create-descriptors",
@@ -491,12 +1420,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "49e451a63e8832666e2edb547d477a0e3bffa1b4a5f6049cad126755d5271934"
+      "identityDigest": "84488c071026dc59ab3ca88ac77808bb8fc19ba50b21dc635865583d8cab5b35",
+      "nativeReceipt": {
+        "actions": 2,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "23e882a96196b3d6e1ad50dab4a47433abc62f082c315754ce15f97231215ba8",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 300,
+        "importReceipt": {
+          "actions": 2,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                8
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 6,
+          "records": 18,
+          "tracks": 2
+        },
+        "logicalRecords": 17,
+        "lossMaskValidated": true,
+        "observedTokens": 1326,
+        "optimizerSteps": 0,
+        "physicalRecords": 18,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "two-pending-reversed",
@@ -508,12 +1478,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "fad155dd6a748c1d699d188fffea595c4aa9b38ceada1493145038f7febbd152"
+      "identityDigest": "a30f4bde71c1fd90dade4b96f737a0785e5123dd59f83b498129d46c52900f81",
+      "nativeReceipt": {
+        "actions": 2,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "9d37b32be2d55f2525bb5b814915f500278d7d1c4f2ed40923e8d6ffb8b5a675",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 350,
+        "importReceipt": {
+          "actions": 2,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                7
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 6,
+          "records": 20,
+          "tracks": 2
+        },
+        "logicalRecords": 19,
+        "lossMaskValidated": true,
+        "observedTokens": 1277,
+        "optimizerSteps": 0,
+        "physicalRecords": 20,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "rejection-finally",
@@ -525,12 +1536,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "45d4063cccf9f8e8f13b04b4b136f74e083075e04e6f440803d75300e92450b6"
+      "identityDigest": "29e97e13fe5d1b6774a11e71a1febc4b4dcf6139af2942f7551ef91ba57afd23",
+      "nativeReceipt": {
+        "actions": 3,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "39f459d4c3fd39fa4e3af721f06b850cad67ebd46e29574bd320a2d716dd7a83",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 315,
+        "importReceipt": {
+          "actions": 3,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                11
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 8,
+          "records": 20,
+          "tracks": 2
+        },
+        "logicalRecords": 19,
+        "lossMaskValidated": true,
+        "observedTokens": 1541,
+        "optimizerSteps": 0,
+        "physicalRecords": 20,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "callback-captured-write",
@@ -542,12 +1594,67 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "2d6ca79cfb5179bbde7408b2f2aab275631dcd10e7cafdf3ad971034bfcf13a6"
+      "identityDigest": "742ed688a5c5bf569948773f3023bcd8030f46536bef900b13aa9f7ad293fde3",
+      "nativeReceipt": {
+        "actions": 4,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 9,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "e4944c1b44b93395de08380943e2ea9c8fa1da2d0c08e80c73a0f80144877ec5",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 562,
+        "importReceipt": {
+          "actions": 4,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                7
+              ]
+            },
+            {
+              "invocationId": "event1",
+              "kind": "return",
+              "value": [
+                "undefined"
+              ]
+            },
+            {
+              "invocationId": "event2",
+              "kind": "return",
+              "value": [
+                "undefined"
+              ]
+            }
+          ],
+          "invocations": 3,
+          "observations": 22,
+          "records": 52,
+          "tracks": 2
+        },
+        "logicalRecords": 42,
+        "lossMaskValidated": true,
+        "observedTokens": 4527,
+        "optimizerSteps": 0,
+        "physicalRecords": 52,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "promise-reaction",
@@ -559,12 +1666,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "da10b93112f67b1d4aa4f6b40b0e156f3e3651d4966860a34ea0f760b6ac0ff0"
+      "identityDigest": "9b5ff707b642359e0395b6a1d5d220a790ced78f51a0ebe50fac196ed6273b67",
+      "nativeReceipt": {
+        "actions": 2,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "dfbee77c64e3cab37fecff368766fb207171cd35eebb7b4261c6acbc8a6ec554",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 431,
+        "importReceipt": {
+          "actions": 2,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                4
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 6,
+          "records": 25,
+          "tracks": 2
+        },
+        "logicalRecords": 23,
+        "lossMaskValidated": true,
+        "observedTokens": 1492,
+        "optimizerSteps": 0,
+        "physicalRecords": 25,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "promise-rejection-finally",
@@ -576,12 +1724,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "64be86abd97e5c002b8e9dda5c3077f803545688ee410f481f130effcd5f2544"
+      "identityDigest": "b9a98d3ca2276c67e1539dc1cc30620827bf93e97ae96f5d49f2c152dfaeabe4",
+      "nativeReceipt": {
+        "actions": 3,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "0d155ba227018c97e968111f9854f05c86cae56818099b95e44bae9d167dc135",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 553,
+        "importReceipt": {
+          "actions": 3,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                9
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 8,
+          "records": 31,
+          "tracks": 2
+        },
+        "logicalRecords": 29,
+        "lossMaskValidated": true,
+        "observedTokens": 1858,
+        "optimizerSteps": 0,
+        "physicalRecords": 31,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "owned-microtask",
@@ -593,12 +1782,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "875b67ab5559bc25ce1471fe97be2eac1c029e22346aaf9c42a41c98b13d9c4a"
+      "identityDigest": "24bc09aaa4ccf689dfd881e1d4a76919ea432deef0870e8f21344b871785cd11",
+      "nativeReceipt": {
+        "actions": 1,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "fe4d94f45d592eb855fd89a65523abaa1059dec87b684f693af0da1dc6a6037a",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 184,
+        "importReceipt": {
+          "actions": 1,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                3
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 4,
+          "records": 13,
+          "tracks": 2
+        },
+        "logicalRecords": 12,
+        "lossMaskValidated": true,
+        "observedTokens": 916,
+        "optimizerSteps": 0,
+        "physicalRecords": 13,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "http-response-stream",
@@ -610,12 +1840,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "5027200439b1043896d42b8fbb356184beac69213535fbb6871511a346503f1c"
+      "identityDigest": "7e189631d933395f6d79a10ec50202812717f186dee2fba6dd9c475c40636f2e",
+      "nativeReceipt": {
+        "actions": 4,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "950d3f5e09177f915ba03162df4cd23b107c84de4291a62bcb80cea7e02570a6",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 602,
+        "importReceipt": {
+          "actions": 4,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "str",
+                "b2s="
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 10,
+          "records": 31,
+          "tracks": 2
+        },
+        "logicalRecords": 29,
+        "lossMaskValidated": true,
+        "observedTokens": 2036,
+        "optimizerSteps": 0,
+        "physicalRecords": 31,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "filesystem-stream-copy",
@@ -627,12 +1898,53 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "480c087efa50bfa2dac40945bf097616d46fc4e8d6020ad7807ad14319a3dd0a"
+      "identityDigest": "a00de065266827b89b0c10fd481a88c72a7ef08082d750f0df731b5169c0a153",
+      "nativeReceipt": {
+        "actions": 6,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "6c8e496be5b07079b864153ae6736d27b5abe40a2a4f8a52cb90eeabaea44f20",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 799,
+        "importReceipt": {
+          "actions": 6,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "str",
+                "b2s="
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 14,
+          "records": 41,
+          "tracks": 2
+        },
+        "logicalRecords": 39,
+        "lossMaskValidated": true,
+        "observedTokens": 2607,
+        "optimizerSteps": 0,
+        "physicalRecords": 41,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "dom-mutation-release",
@@ -644,77 +1956,118 @@
         "independentOutcome": "passed",
         "independentIntermediate": "passed",
         "v5ProjectionAndPublicReplay": "passed",
-        "nativeAdmission": "untested",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "locally_verified",
+      "disposition": "admitted",
       "reason": null,
-      "identityDigest": "9cb3248ed099c8e078ba778b775dc474de6218f51489cca55ffe784b3411aac4"
+      "identityDigest": "bbefc815868321e371efed6647f5eb69a59fb9feb2a2205ec9c2e23df0864cd7",
+      "nativeReceipt": {
+        "actions": 4,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "c676282ea1090fd3ac22235c45511395e6e3e225bbba23dcadd1f151debccc2f",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 550,
+        "importReceipt": {
+          "actions": 4,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "str",
+                "updated"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 10,
+          "records": 30,
+          "tracks": 2
+        },
+        "logicalRecords": 28,
+        "lossMaskValidated": true,
+        "observedTokens": 1899,
+        "optimizerSteps": 0,
+        "physicalRecords": 30,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     }
   ],
   "totals": {
     "frontend": {
-      "total": 38,
-      "attempted": 38,
-      "passed": 32,
+      "total": 42,
+      "attempted": 42,
+      "passed": 36,
       "failed": 0,
       "unsupported": 6,
       "resource_limited": 0,
       "untested": 0
     },
     "ownedEvaluation": {
-      "total": 38,
-      "attempted": 32,
-      "passed": 30,
+      "total": 42,
+      "attempted": 36,
+      "passed": 34,
       "failed": 0,
       "unsupported": 2,
       "resource_limited": 0,
       "untested": 6
     },
     "independentOutcome": {
-      "total": 38,
-      "attempted": 28,
-      "passed": 27,
+      "total": 42,
+      "attempted": 32,
+      "passed": 31,
       "failed": 1,
       "unsupported": 0,
       "resource_limited": 0,
       "untested": 10
     },
     "independentIntermediate": {
-      "total": 38,
-      "attempted": 27,
-      "passed": 27,
+      "total": 42,
+      "attempted": 31,
+      "passed": 31,
       "failed": 0,
       "unsupported": 0,
       "resource_limited": 0,
       "untested": 11
     },
     "v5ProjectionAndPublicReplay": {
-      "total": 38,
-      "attempted": 30,
-      "passed": 28,
+      "total": 42,
+      "attempted": 34,
+      "passed": 32,
       "failed": 0,
       "unsupported": 2,
       "resource_limited": 0,
       "untested": 8
     },
     "nativeAdmission": {
-      "total": 38,
-      "attempted": 0,
-      "passed": 0,
+      "total": 42,
+      "attempted": 31,
+      "passed": 31,
       "failed": 0,
       "unsupported": 0,
       "resource_limited": 0,
-      "untested": 38
+      "untested": 11
     },
     "modelEvaluation": {
-      "total": 38,
+      "total": 42,
       "attempted": 0,
       "passed": 0,
       "failed": 0,
       "unsupported": 0,
       "resource_limited": 0,
-      "untested": 38
+      "untested": 42
     }
   },
   "otherProfiles": [
@@ -748,5 +2101,10 @@
     "optimizerSteps": 0,
     "learnedSuccess": null
   },
-  "limitation": "Finite probes measure distinctions, not exhaustive feature conformance. Native and model stages remain untested without executed evidence."
+  "nativePolicy": {
+    "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+  },
+  "limitation": "Finite probes measure distinctions, not exhaustive feature conformance. Native admission is measured only when configured; model evaluation remains untested by this command."
 }
