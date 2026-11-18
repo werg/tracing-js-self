@@ -1,6 +1,6 @@
 {
   "schema": "semantic-capability-ledger/1",
-  "producerRevision": "22eaac6a46e262b00986c63b4fc66f6240016252",
+  "producerRevision": "881664b98ec9d484f9f4775d0b40a3a2b1b81174",
   "contracts": {
     "execution": "semantic-execution/5",
     "trace": "semantic-trace/5",
@@ -18,7 +18,18 @@
     "parser": "8.15.0",
     "typescript": "5.9.3",
     "packageLockDigest": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88",
-    "implementationDigest": "8e785e29491ce85e0f3012775124bdb470281161c8c421b12b7e92773fa815ea"
+    "implementationDigest": "fc04697928f9008d790ae115c02faec1dc251dd79ba9c1613504c7dda2851ac1",
+    "locale": "en-US",
+    "referenceIsolation": {
+      "schema": "semantic-reference-isolation/1",
+      "mode": "trusted-process",
+      "launcherSha256": "b9d3bd23d092083173508fd570c3d5b6dc4e0e98fc9814e3df543e634351ea24"
+    }
+  },
+  "nativePolicy": {
+    "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
   },
   "unit": "declared source/input/fixture probe",
   "rows": [
@@ -37,12 +48,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "5084e6ac9b82f003f0d7188cbc0bb94ef98933afde1c777a8174873d25d01aab",
+      "identityDigest": "2c58e75a2de7beef3c40281d5fdbcc8c1e25bd9865ce7c5da3656f888e08768a",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "270b3ecbb5fc910f33ab00e23503e388fe828e080cc86bd357a4339de58cce0c",
@@ -95,12 +106,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "ad7c9e27c718883dbe748fe2794bf1a060edfde8bc853f70de60101d80eafbed",
+      "identityDigest": "14a31ab237eb7d7451854c036151b3c28633f4d6174ee2488c2f2630c75cbe47",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "0efb5e15eef66c064b6f0a005aca4637a75f1903431da7a716dad3a1592f26a1",
@@ -153,18 +164,18 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "03180d8b389fd282e59feefd02be3165675e1b68541aa7f8d9203013de8b5e1b",
+      "identityDigest": "8fc81bdece0c0f1c629418f18b2ecfc80edfcc99fe2465fd0e7d14472f83606c",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
-        "episodeDigest": "940a7f9de7e9b8ccc8e20672c4c9d911a30ee28ee5faf1fa96b850e49645e652",
+        "episodeDigest": "22147bed1d5b26ac8b8d4abf0e8d69af6d0bdb3e178803372909c5f3a957f4e6",
         "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
         "fragmentationValidated": true,
-        "generatedTokens": 268,
+        "generatedTokens": 506,
         "importReceipt": {
           "actions": 0,
           "admission": "locally_verified",
@@ -181,14 +192,188 @@
           ],
           "invocations": 1,
           "observations": 2,
-          "records": 16,
+          "records": 26,
           "tracks": 2
         },
-        "logicalRecords": 15,
+        "logicalRecords": 24,
         "lossMaskValidated": true,
-        "observedTokens": 843,
+        "observedTokens": 1204,
         "optimizerSteps": 0,
-        "physicalRecords": 16,
+        "physicalRecords": 26,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "primitive-bigint-conversion",
+      "feature": "primitive-bigint-conversion",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "passed",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "admitted",
+      "reason": null,
+      "identityDigest": "56c11460217d5ce7bcf41e6d875c472e80e0462b402b87a55048c6c76cbdf438",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "c106d631721ac8839e2c055e855d5d8ab105624ebf8f8014d58166f4cc8dd154",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 242,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "ref",
+                "o2"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 14,
+          "tracks": 2
+        },
+        "logicalRecords": 13,
+        "lossMaskValidated": true,
+        "observedTokens": 831,
+        "optimizerSteps": 0,
+        "physicalRecords": 14,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "primitive-string-conversion",
+      "feature": "primitive-string-conversion",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "passed",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "admitted",
+      "reason": null,
+      "identityDigest": "1b7b2f3f337816a2c9e2fee040af2c6d67724b0276062dd06930c06d194d82ee",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "02e40c6bbae2f0e937b03ed4be69020bfee3ba01e4ce04285b2abb1506ad3d5b",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 372,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "ref",
+                "o2"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 20,
+          "tracks": 2
+        },
+        "logicalRecords": 19,
+        "lossMaskValidated": true,
+        "observedTokens": 1037,
+        "optimizerSteps": 0,
+        "physicalRecords": 20,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "invalid-bigint-catch-and-throw",
+      "feature": "invalid-bigint-catch-and-throw",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "passed",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "admitted",
+      "reason": null,
+      "identityDigest": "589f57cfd76c4a60cb57955359027e145e748c2e91a6f758d2206269104e6b06",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "7b384e88a9453a13b2e714852b10e8fa83a0d81df43a1052a8b23eedded1afd3",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 173,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "throw",
+              "value": [
+                "ref",
+                "o2"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 10,
+          "tracks": 2
+        },
+        "logicalRecords": 9,
+        "lossMaskValidated": true,
+        "observedTokens": 908,
+        "optimizerSteps": 0,
+        "physicalRecords": 10,
         "schema": "semantic-native-admission/4",
         "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
         "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
@@ -211,12 +396,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "393bea4f07f40d41fa34934adb0644a41836548b502ac1a1f8620b8cdb8fe5ca",
+      "identityDigest": "b49a109efa1155f2818fb21051f3fe0ad85228c56806120dd58c8f26e536d38b",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "ac54ca6d2156ddc0d320d44e5fcd5e6854186e6b01986baa30dd9fd024951ec6",
@@ -269,12 +454,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "0709bfc6ad59fde3c8ec28691ed6b4d22eeff91692db3c15a8f7a4f91feb22d2",
+      "identityDigest": "7f2dd818077066910480a00fd20fa1037f2f43038f23bfeaeb84aa5c87a0451c",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "2597aa1ac9f4b06e6259b557c9f451da5525f258d446154a94b156e2eac0a765",
@@ -327,12 +512,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "ea349b72d3a05749980c2b6aaf789800adab214797150b9d95df41905f41fdb3",
+      "identityDigest": "f40efb7d3c10a5a1d5f7391d6df57cc90f88cd43efaea296e2b24a7b41d99114",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "3e31e1032821d341243189f7e3e5ac35b28f5d9972bc6ffd603a549074f856c1",
@@ -385,12 +570,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "15f3b84a938189ebd621787499571e02c5d153cee31524c58856feff7788d669",
+      "identityDigest": "bdafb019a1cca4e38368fd7bf623e87e0860bd28a1b32a53f64e7edcb4ea56a9",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "115eec64ca2ec214c6111c81a88be8283ef71a71e8664bf642ea9e4a54fbbd2a",
@@ -443,12 +628,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "e63d42b6b6dd700c5d81c445d77d037d7308daed0eed32a252c32b6b9f38ea38",
+      "identityDigest": "f4bdc7a0c8280ba3d79152546c190941ea9a7c8acdb0cab545d9f9780b1dfa45",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "de7b34eea84509f98412586ab602093352d9cec6a56612e3ea39614481ed9a49",
@@ -501,12 +686,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "8c8614f748a413c2fd1d9d4f1ef9684880f3735c299238d35dbf3103e0fd763f",
+      "identityDigest": "d0f934b4c42fa8d73e2d142545d6c2790c922e986ed64d1b854965e8538dc248",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "52472fbc98f7de86263c752ffbcd59af0e69bde1e5b0d2505f1d2c4741ac4d64",
@@ -545,20 +730,120 @@
       }
     },
     {
+      "id": "parameter-camelcase-default-capture",
+      "feature": "parameter-camelcase-default-capture",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "passed",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "admitted",
+      "reason": null,
+      "identityDigest": "faef995cbf305dc1168cf09d49ad2432eabee623b8d5b0076528e6305bef8dd2",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "24dbd98bde093bed4c2b79cd6bac7532dad00c4a2f2610b4aee7f40f3a053c1e",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 197,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                7
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 13,
+          "tracks": 2
+        },
+        "logicalRecords": 12,
+        "lossMaskValidated": true,
+        "observedTokens": 773,
+        "optimizerSteps": 0,
+        "physicalRecords": 13,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
       "id": "later-parameter-tdz",
       "feature": "later-parameter-tdz",
       "profile": "training-js/1",
       "stages": {
         "frontend": "passed",
         "ownedEvaluation": "passed",
-        "independentOutcome": "untested",
-        "independentIntermediate": "untested",
-        "v5ProjectionAndPublicReplay": "unsupported",
-        "nativeAdmission": "untested",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "projection_refused",
-      "reason": "Incomplete replayed invocation"
+      "disposition": "admitted",
+      "reason": null,
+      "identityDigest": "753acd1c5f2e672ddd24ce78f42652f2dd85313635d2bd1550de08e72bbc54bb",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "9faf9d26e000e410b156b9a04c733b5c245fc2f1408d84ba6d4704af1a130301",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 71,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "throw",
+              "value": [
+                "ref",
+                "o2"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 6,
+          "tracks": 2
+        },
+        "logicalRecords": 5,
+        "lossMaskValidated": true,
+        "observedTokens": 682,
+        "optimizerSteps": 0,
+        "physicalRecords": 6,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "async-helper-declaration",
@@ -575,12 +860,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "ff212e3e933b15fd771a547c42abead02521f040764cd7b15c71bcdc9283a7b9",
+      "identityDigest": "218216d0c198d12b5d2e5a0a75342694f859643cd959c59e8e0771a2a67e5e1e",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "0ce1b6f249f2779d6bdcbbc91f0ff795d2c29b00429b078386867701a643effd",
@@ -619,6 +904,64 @@
       }
     },
     {
+      "id": "sync-root-async-helper-rejection",
+      "feature": "sync-root-async-helper-rejection",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "passed",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "admitted",
+      "reason": null,
+      "identityDigest": "36037c3c99045d3e3258e38924d5d4599c86f5c37c858aaea209162f0cfc14d9",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "3ba490350bc2665f20afb4fe95ceb5b2b87b779117d7468f62114b354abae110",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 218,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                7
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 15,
+          "tracks": 2
+        },
+        "logicalRecords": 14,
+        "lossMaskValidated": true,
+        "observedTokens": 812,
+        "optimizerSteps": 0,
+        "physicalRecords": 15,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
       "id": "slice-undefined-end",
       "feature": "slice-undefined-end",
       "profile": "training-js/1",
@@ -633,12 +976,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "d13c1c554108d84608d185ad7d2e933f557be6e2897313f0bced08ddde609b64",
+      "identityDigest": "ad66025a3ee3a09a84b5cb4e14dc52e54375aa8075c6de8bdd07b4195fa99861",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "811e69270023d3148c6e4f3decd42dde513a8094c2d76383789a22d41f9aa708",
@@ -691,12 +1034,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "1e4384b09aabeac9ac63d9cfd7b02502d8b7c75fe9a2d88deee862d63f119f6f",
+      "identityDigest": "a9fb9144a74293cd4094a5d23f5932253e875af4df08507fb028de43acc1e42f",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "fcb3976d41251f02119d489427f22b0584dd9e5e7b617cffa3acd9f9c750a795",
@@ -749,12 +1092,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "54c7d177ddb4b0bfb286bedb5e5679a57f3febcca6921deba515b36e1bbf0a77",
+      "identityDigest": "50dd0cb87e8c932c2df9e9647cf9e05c8939a25bf3298388ab197f798f78eec3",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "858cee2b96ab3ced38a5c4cfe9ec3e5395eeb9b45d5b62e7dff2d932c95158d1",
@@ -807,12 +1150,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "8343f84bc3a1c097fdf7bdb578ffa9065a1d3adc0aecfcd7738a8d679183ceb3",
+      "identityDigest": "e1fb8c1fd07a6078a84bcdcb925b72a53f2c490fb33449654f6abe0db544c132",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "14a9d961523db62e1dc3a8929233ee84a6772514c1a560ee1a806a9a52f371d5",
@@ -865,12 +1208,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "e69322fd23671ca4459c6226c0cb7ed410efb1dfa3dd652d38c60c474f7449bc",
+      "identityDigest": "ded694bb388f66f40b5a095485ce8dde5f272f3b821b8716636eb9c83ce3e16c",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "3e4d6beff103142b48101b700a79a8e76e99ebd013ecddd5cc6077dcdf1bc7ac",
@@ -923,12 +1266,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "7cb6ec6ea2423c9087ec0e3fde6edbab66894b9efccbf25c296982b37750bb80",
+      "identityDigest": "6e07cd40533a8c2fb2d788438f0215e8225ea2f005f9d25986dea8b22dabf1d1",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "cf8b9d350f8dc8841cd0a9c01f6328414bec02af5464a3b12c3bda3cd076bf14",
@@ -981,12 +1324,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "47e18cbfe596f0a2ec69c5139d65e9f7be61d7895a176522821f0fa614c7f7c2",
+      "identityDigest": "ea6072aaf69e059027b1bbab9591734ca82f6fde6855e056fe59cffcf231cedf",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "555e08ed206edfc19d0f562086293486cf15c1250f5fc110dfed3af26f7cd063",
@@ -1039,12 +1382,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "46c91643e84d4d80dca723be24885019862a2719ee88a9665f0ec6dd264abc13",
+      "identityDigest": "15fda03fe4e96033508591b6f48651638dda6aacfe8d0d1620cb8931a98e41e4",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "e6d42ab2e3b2969c136e45b14332c7ef00a0cb36563a358803490d536014ffd8",
@@ -1083,6 +1426,64 @@
       }
     },
     {
+      "id": "input-array-mutation",
+      "feature": "input-array-mutation",
+      "profile": "training-js/1",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "passed",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "admitted",
+      "reason": null,
+      "identityDigest": "08130fa14a8717ffed46c982939de1febf7f6c27cf28a43e9c118c614701dddd",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "8a6cbb0d8a7b86e9750a4a89587f5c62c74e35c07f70177e813d4b80f73c7e4d",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 146,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                2
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 11,
+          "tracks": 2
+        },
+        "logicalRecords": 10,
+        "lossMaskValidated": true,
+        "observedTokens": 906,
+        "optimizerSteps": 0,
+        "physicalRecords": 11,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
       "id": "synchronous-primitive-throw",
       "feature": "synchronous-primitive-throw",
       "profile": "training-js/1",
@@ -1097,12 +1498,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "6f672e875b9d86832f3efa31cfba9dda39525270262cf1d2f9166b06df4b40e5",
+      "identityDigest": "1743738bfcf5ce8fd2fab4c44b9be4c6813a459443b78045786bbf9289ac5e57",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "fd7b6bf19e885b8b8268fad9b627f2472fa55cc380bfa59dd11b4bd9716f0f28",
@@ -1155,12 +1556,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "ae9f687951d6c4361c9bd74b35eaefccf65d5990ecbd84c8df71de1465bf07bc",
+      "identityDigest": "7d2ca106a76d66cf0224f3a007bab73a4e2119429cb87221700f32958fdc933e",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "e66ee3c7404b060fc14a512395e37d7606d7ae2a597198c8e13a7aec01111954",
@@ -1213,12 +1614,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "597c090433fa691e38a80edab3992ec75087f3c5fa9ed77152cd6eb703f33729",
+      "identityDigest": "1d6237d886a733095c4390b02deea560bb288b0c3a5122eb6e2532131bb90dd3",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "de7abb132e0b2927228644815b1b42d29b095e1c774b816253fb5a27f3ae0c60",
@@ -1271,12 +1672,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "5ebe47604a86755a30dca87ebe3c79f5f29db0c1798fa516a5ebb0896173af11",
+      "identityDigest": "f4457164821f4946b0e70fb1b018470de85e401a232308ccbe9ba7263e9dca5f",
       "nativeReceipt": {
         "actions": 0,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "82007ffb98088dd092c3171e3bf48cec4c2f36a62a0ec3baaaba4c3f5e2e2739",
@@ -1353,14 +1754,56 @@
       "stages": {
         "frontend": "passed",
         "ownedEvaluation": "passed",
-        "independentOutcome": "untested",
-        "independentIntermediate": "untested",
-        "v5ProjectionAndPublicReplay": "unsupported",
-        "nativeAdmission": "untested",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "v5ProjectionAndPublicReplay": "passed",
+        "nativeAdmission": "passed",
         "modelEvaluation": "untested"
       },
-      "disposition": "projection_refused",
-      "reason": "Effectful teacher projection: closure captures an uninitialized binding: b"
+      "disposition": "admitted",
+      "reason": null,
+      "identityDigest": "b9057837c11e4ed56b062a828693d7e7f43076c8b98869e611c4cebd307784cd",
+      "nativeReceipt": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "44784f3f0cf7c62719dc941959b073b800e11d95762a869d1d3d2b9701cb5bb8",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 125,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                3
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 10,
+          "tracks": 2
+        },
+        "logicalRecords": 9,
+        "lossMaskValidated": true,
+        "observedTokens": 757,
+        "optimizerSteps": 0,
+        "physicalRecords": 10,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
     },
     {
       "id": "receiver-this",
@@ -1483,12 +1926,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "4fc6ae4d646543896460dbbc9adfd6a63bf1d2863e99c64a1ebc995ed913e591",
+      "identityDigest": "e04c373452f6bb4be2262b265cec7e2b9504fd903e9fee793c03d06fc4ea07f8",
       "nativeReceipt": {
         "actions": 2,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "23e882a96196b3d6e1ad50dab4a47433abc62f082c315754ce15f97231215ba8",
@@ -1541,12 +1984,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "552c047e8fec7602430882f93ff81be7464ee169c0b1807767e65f4d02f8166e",
+      "identityDigest": "f27ebbc1d5ffc4f4b1495bb7d1d7b388eb9c7e585cab1d059cce56405fe41c84",
       "nativeReceipt": {
         "actions": 2,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "9d37b32be2d55f2525bb5b814915f500278d7d1c4f2ed40923e8d6ffb8b5a675",
@@ -1599,12 +2042,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "3672b046e7842cda5980a2170f2606db86a2cac799bc4ee10c97ca3d6d250057",
+      "identityDigest": "b45ea5fb52c689fbf88ea5177eb3cf853d4697bf06a3577520d4e3a1322b9207",
       "nativeReceipt": {
         "actions": 3,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "39f459d4c3fd39fa4e3af721f06b850cad67ebd46e29574bd320a2d716dd7a83",
@@ -1657,12 +2100,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "3a256455814c68d305f3c5b6e3c194c520bc1f19fa1b09338c6b1b7cd947df8e",
+      "identityDigest": "53fa24e95b1021310dd82ccc99f00165841e4900690e745f902b3cfa2a51611e",
       "nativeReceipt": {
         "actions": 4,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 9,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "e4944c1b44b93395de08380943e2ea9c8fa1da2d0c08e80c73a0f80144877ec5",
@@ -1729,12 +2172,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "82928d1a386a4c6b8312469555762f06ce01e36f1203204a96c70c68cda65d4c",
+      "identityDigest": "60669b193cf7cc15977cc9ad9f3fbbc0ae39e8907e41729e8b6adf91d245bdc6",
       "nativeReceipt": {
         "actions": 2,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "dfbee77c64e3cab37fecff368766fb207171cd35eebb7b4261c6acbc8a6ec554",
@@ -1787,12 +2230,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "a3336f40979f52b6c75019d6abdc4c49fd77091d10b84887a29d8b112d19d72b",
+      "identityDigest": "b30350035fbc7c1f2686b324bd39a5ebeb30b866538851748ae9c2da54d2aeb9",
       "nativeReceipt": {
         "actions": 3,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "0d155ba227018c97e968111f9854f05c86cae56818099b95e44bae9d167dc135",
@@ -1845,12 +2288,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "df0970d28a86d5e79c31c2098aacb96d7e126c11e01600f975f3d121be83db4f",
+      "identityDigest": "2f6bbb13c5c6e3e3030e74e259f9fda5af309e38d77fbc290ec97c83b18eb4ac",
       "nativeReceipt": {
         "actions": 1,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "fe4d94f45d592eb855fd89a65523abaa1059dec87b684f693af0da1dc6a6037a",
@@ -1903,12 +2346,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "e34c8a0f4996b507f618bef45dcfe77e98851ed533474fe746ffcbc5738a0011",
+      "identityDigest": "c09bb016b39d000f466a5bd061a3b3425eb1264e7836fe6b5e9e7ddfa47eae60",
       "nativeReceipt": {
         "actions": 4,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "950d3f5e09177f915ba03162df4cd23b107c84de4291a62bcb80cea7e02570a6",
@@ -1961,12 +2404,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "3ec7a0d525bb7b9392cb83a4abf055f1756d2f977534f34e7c09dab9381eec96",
+      "identityDigest": "a5ccbe928d1372ae23e26f49c49299d815684fcaacac46c2ee14e4c0e593a856",
       "nativeReceipt": {
         "actions": 6,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "6c8e496be5b07079b864153ae6736d27b5abe40a2a4f8a52cb90eeabaea44f20",
@@ -2019,12 +2462,12 @@
       },
       "disposition": "admitted",
       "reason": null,
-      "identityDigest": "ea738fa6c52ab87f93e0b00ec45963e4b791ffd941ac1c09cf4e4e9ce0a8c130",
+      "identityDigest": "bd8077d1ba99113f62801571f22680d79ecf40478052818ac818fa17a1d4d716",
       "nativeReceipt": {
         "actions": 4,
         "admitted": true,
         "componentGate": "native-consumer-only",
-        "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+        "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
         "contextTransportRecords": 1,
         "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
         "episodeDigest": "c676282ea1090fd3ac22235c45511395e6e3e225bbba23dcadd1f151debccc2f",
@@ -2065,67 +2508,67 @@
   ],
   "totals": {
     "frontend": {
-      "total": 43,
-      "attempted": 43,
-      "passed": 37,
+      "total": 49,
+      "attempted": 49,
+      "passed": 43,
       "failed": 0,
       "unsupported": 6,
       "resource_limited": 0,
       "untested": 0
     },
     "ownedEvaluation": {
-      "total": 43,
-      "attempted": 37,
-      "passed": 35,
+      "total": 49,
+      "attempted": 43,
+      "passed": 41,
       "failed": 0,
       "unsupported": 2,
       "resource_limited": 0,
       "untested": 6
     },
     "independentOutcome": {
-      "total": 43,
-      "attempted": 33,
-      "passed": 32,
+      "total": 49,
+      "attempted": 41,
+      "passed": 40,
       "failed": 1,
       "unsupported": 0,
       "resource_limited": 0,
-      "untested": 10
+      "untested": 8
     },
     "independentIntermediate": {
-      "total": 43,
-      "attempted": 32,
-      "passed": 32,
+      "total": 49,
+      "attempted": 40,
+      "passed": 40,
       "failed": 0,
       "unsupported": 0,
       "resource_limited": 0,
-      "untested": 11
+      "untested": 9
     },
     "v5ProjectionAndPublicReplay": {
-      "total": 43,
-      "attempted": 35,
-      "passed": 33,
+      "total": 49,
+      "attempted": 41,
+      "passed": 41,
       "failed": 0,
-      "unsupported": 2,
+      "unsupported": 0,
       "resource_limited": 0,
       "untested": 8
     },
     "nativeAdmission": {
-      "total": 43,
-      "attempted": 32,
-      "passed": 32,
+      "total": 49,
+      "attempted": 40,
+      "passed": 40,
       "failed": 0,
       "unsupported": 0,
       "resource_limited": 0,
-      "untested": 11
+      "untested": 9
     },
     "modelEvaluation": {
-      "total": 43,
+      "total": 49,
       "attempted": 0,
       "passed": 0,
       "failed": 0,
       "unsupported": 0,
       "resource_limited": 0,
-      "untested": 43
+      "untested": 49
     }
   },
   "otherProfiles": [
@@ -2158,11 +2601,6 @@
     "fullTest262": false,
     "optimizerSteps": 0,
     "learnedSuccess": null
-  },
-  "nativePolicy": {
-    "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
-    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
-    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
   },
   "limitation": "Finite probes measure distinctions, not exhaustive feature conformance. Native admission is measured only when configured; model evaluation remains untested by this command."
 }
