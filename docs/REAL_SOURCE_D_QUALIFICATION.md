@@ -115,8 +115,9 @@ must retain the complete original campaign as its audit authority. Native
 preparation may further deduplicate training examples; selected native-admitted
 rows and prepared examples must remain separate counts.
 
-This document records the completed original D campaign. It does not claim
-batch packaging, a balanced training selection, optimizer updates or learned
-success. Those require their own receipts. The trusted-source restriction and
+This document records the completed original D campaign. The subsequent
+[native-prepared training selection](REAL_SOURCE_D_TRAINING_SELECTION.md)
+records the distinct native deduplication and component-cap denominators.
+Neither document claims optimizer updates or learned success. The trusted-source restriction and
 the need for operating-system isolation before accepting arbitrary untrusted
 programs remain unchanged.
