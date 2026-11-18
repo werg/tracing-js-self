@@ -6,6 +6,8 @@ Implementation is on [tracer PR38](https://github.com/werg/tracing-js-self/pull/
 
 **The infrastructure and bounded semantic repairs are implemented, with actual native qualification and actual optimizer measurements. The final 56-update learning experiment exposed all 32 selected sources and all planned windows, but failed the held-in execution criterion and demonstrated no generalization improvement.** Implementation completion is not the empirical W10/W11 success gate. The [handover](RESUMPTION_HANDOVER_2026-11-18.md) separates completed evidence, exact hosted-gate status, intentional unsupported scope, unmet empirical goals, and external dependencies.
 
+**Intermediate hosted result:** the `aa7b843` native matrix exposed a registry-metadata alias/JSON persistence defect in all five recipes, plus a sibling-worker shutdown race. The original logs are [retained](receipts/final-integration-2026-11-18/native-aa7b-failure/README.md). Local tests and selected native probes passed independently; the focused correction and successor matrix require new evidence. This is an identified integration repair, not an external prerequisite.
+
 ## W01–W14 status
 
 | Work | Implemented result | Evidence and remaining acceptance condition |

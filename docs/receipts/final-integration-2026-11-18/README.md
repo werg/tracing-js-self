@@ -43,6 +43,16 @@ unwired merged learning-artifact/comparison tests in the engineering CI lane.
 No semantic/native gate was relaxed. The complete successful rerun above is a
 new measurement; it does not overwrite or relabel the first attempt.
 
+## Separate hosted native failure
+
+The same producer's hosted native matrix later failed in all five registry-bound
+recipe lanes, despite successful environment checks and 17 capability probes.
+The [complete original job logs and diagnosis](native-aa7b-failure/README.md)
+record the shared metadata alias/JSON identity defect and the sibling-worker
+shutdown race. Local tests and selected native probes did not cover that full
+registry persistence path. The passing local results above do not replace the
+failed hosted result.
+
 ## Integrity and scope
 
 [index.json](index.json) binds every unchanged original file copied here. The

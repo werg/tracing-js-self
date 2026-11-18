@@ -4,7 +4,7 @@
   "producerTree": "ef8a36f0da31bd2b20032a27c3fb4cfded6f6a02",
   "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
   "measuredAtUtc": "2026-11-18T13:49:44.417858+00:00",
-  "scope": "Final local qualification only. Native admission and hosted CI retain separate exact receipts. Earlier failed attempt is preserved without changing its disposition.",
+  "scope": "Final local qualification at aa7b plus separately retained earlier local and hosted native failures. The final local checks passed; hosted registry generation at the same producer failed. Later fixes and workflows require their own receipts.",
   "files": [
     {
       "path": "local-qualification.json",
@@ -59,6 +59,48 @@
       "bytes": 2,
       "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
       "kind": "unchanged-original-failed-attempt"
+    },
+    {
+      "path": "native-aa7b-failure/benchmark-v1-134846880725.log",
+      "bytes": 57661,
+      "sha256": "f92db7c38fdabcd2b698db87bee9ac84a486f46f7d10cd02ac4cd489a08a9edb",
+      "kind": "hosted-native-failure-receipt"
+    },
+    {
+      "path": "native-aa7b-failure/engineering-134846879903.log",
+      "bytes": 62037,
+      "sha256": "9f9ee5d19ef5b4cb018ff91f72e2d16b994834191397fc1b8395ee8e869ce170",
+      "kind": "hosted-native-failure-receipt"
+    },
+    {
+      "path": "native-aa7b-failure/generated-v1-134846880630.log",
+      "bytes": 57665,
+      "sha256": "8cc5bb13cdd82b0130fc3d79a01364fded3438c3c65108025d1da418e7f5458d",
+      "kind": "hosted-native-failure-receipt"
+    },
+    {
+      "path": "native-aa7b-failure/index.json",
+      "bytes": 2179,
+      "sha256": "9a7e860422674a3551742d1f234c7ece9c25457e1a986afc3c3316130262e8b0",
+      "kind": "hosted-native-failure-receipt"
+    },
+    {
+      "path": "native-aa7b-failure/jobs.json",
+      "bytes": 20148,
+      "sha256": "072032883f08fde0cbed1d39cb60672f6f68ef1cd8017c9a98392d848b0cdc19",
+      "kind": "hosted-native-failure-receipt"
+    },
+    {
+      "path": "native-aa7b-failure/real-source-134846880770.log",
+      "bytes": 57093,
+      "sha256": "cd7a60723309c75ca13fa2942f498f319c386dc4b6f4e0d31daf98a023e936c4",
+      "kind": "hosted-native-failure-receipt"
+    },
+    {
+      "path": "native-aa7b-failure/training-v4-134846880668.log",
+      "bytes": 56899,
+      "sha256": "781897ead0f54710f6e040d5836b717b6b50c4c0e43510293e81b26c846db1e0",
+      "kind": "hosted-native-failure-receipt"
     }
   ]
 }
