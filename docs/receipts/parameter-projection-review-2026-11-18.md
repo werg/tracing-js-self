@@ -129,3 +129,34 @@ checks and adding both successful and rejected async-helper cases.
 | `src/training/completion-facts.js` | `b1ddf97aac8bc2db8fd4ae034787b6843afde06211270c108cdddf80796bd6b5` |
 | `src/training/effectful-admit.js` | `256c7f9e4f01095f73107cf6b8731016e000cf567a4b7e57879c6ecf599e4cfc` |
 | `src/training/effectful-compiler.js` | `a55f71f707666d5fab51f36c52e8fd322d0f719d6ca20dba1ebff0108bf3692b` |
+
+## Resolution addendum: authenticated async replay repair in G
+
+The preexisting async-helper startup defect above is **resolved in producer G**,
+`a088ad60028a02e1d595dfc1afe7b6379cd0998a` (implementation commit `a08f3e0`).
+The original finding and its earlier cutoff remain unchanged. The reviewed new
+`src/replay.js` SHA-256 is
+`237364213f0b930958eeab730d95145c25a4c3268ac4578027032444963a2e15`.
+
+The repair first recompiles source and compares complete source descriptors,
+sites and programs. Only after those comparisons does it derive `allowAsync`
+from fresh top-level `DEF_FN` instructions carrying `async: true`. It does not
+trust an archived async flag or infer syntax capability from the selected root's
+completion kind. `allowHost` remains independent, and direct callers with a
+disabled async profile still refuse async declarations.
+
+Five narrow independent checks on the repaired code passed:
+
+- The original synchronous-root/catching-async-helper reproducer locally
+  verifies, returns `7`, and passes source and replay rechecking.
+- An altered archived bytecode async annotation fails with
+  `Replay divergence: compiled bytecode`.
+- Source changed to async while retaining the old program fails with
+  `Replay divergence: compiled source sites`.
+- A host-free async-helper archive replays and retains `typeof host ===
+  "undefined"`.
+- Explicit `allowAsync: false` still refuses the direct entry.
+
+No authentication regression was found. These are source/replay review results;
+the separate fresh G full-unit/native 44-probe campaign was still pending when
+this addendum was written. No model result or historical D/E/F receipt changed.
