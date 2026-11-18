@@ -132,6 +132,31 @@ def compare_decoder_execution(teacher, renderer, *, atol=1e-6, rtol=1e-5):
             'lexicalComparison': 'exact float32 probability checksums over the full permitted alphabet'}
 
 
+def compare_output_support(training, serving):
+    """Compare the supports actually used by both native decoder executions."""
+    teacher, renderer = training.get('decoderExecution'), serving.get('decoderExecution')
+    if not teacher or not renderer:
+        return {'status': 'unmeasured', 'reason': 'Both actual native decoders must execute'}
+    left = {row['name']: row for row in teacher['categoricals']}
+    right = {row['name']: row for row in renderer['categoricals']}
+    heads = {}
+    for name in ('length', 'terminal'):
+        if name not in left or name not in right:
+            return {'status': 'unmeasured', 'reason': 'Missing actual ' + name + ' support'}
+        a, b = left[name]['support'], right[name]['support']
+        heads[name] = {'training': a, 'serving': b, 'equal': a == b}
+    a = {row['alphabetSha256'] for row in teacher['lexical']}
+    b = {row['alphabetSha256'] for row in renderer['lexical']}
+    if not a or not b:
+        return {'status': 'unmeasured', 'reason': 'Missing actual lexical support'}
+    alphabets = a == b
+    equal = alphabets and all(row['equal'] for row in heads.values())
+    return {'status': 'passed' if equal else 'failed', 'heads': heads,
+            'lexicalAlphabetSupportMatches': alphabets,
+            'trainingAlphabetSha256': sorted(a), 'servingAlphabetSha256': sorted(b),
+            'scope': 'Supports passed to actual native loss and renderer calls; no source-hash inference'}
+
+
 def emission_scoring_replay(model, context, spec, action, renderer):
     """Use actual emitted IDs as diagnostic labels, with no optimization."""
     if not action.valid:

@@ -251,6 +251,13 @@ class ActualNativeHookTests(unittest.TestCase):
         self.assertTrue(replay['actualEmissionUsedWithoutRepair'])
         self.assertFalse(replay['semanticSuccessClaim'])
         self.assertGreater(replay['comparison']['comparedProbabilities'], 100)
+        from native_decoder_capture import compare_output_support
+        teacher = {'decoderExecution': replay['teacher']}
+        self.assertEqual(compare_output_support(teacher, result)['status'], 'passed')
+        changed = copy.deepcopy(teacher)
+        changed['decoderExecution']['lexical'][0]['alphabetSha256'] = '0'*64
+        self.assertEqual(compare_output_support(changed, result)['status'], 'failed')
+        self.assertEqual(compare_output_support({}, result)['status'], 'unmeasured')
 
     def test_real_native_prior_is_captured_before_gaussian_draw_and_hook_is_restored(self):
         sys.path.insert(0, str(Path(os.environ['MEGATOKEN_REPOSITORY']).resolve()/'src'))
