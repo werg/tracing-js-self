@@ -56,7 +56,11 @@ test('typeof uninitialized lexical binding is a guest throw, not undefined',()=>
   assert.equal(validateBundle(bundle).valid,true);
   assert.equal(replayExact(bundle).valid,true);
   assert.equal(bundle.finalState.control.a0.failure.completion.type,'throw');
-  assert.notEqual(verifyOwnedSourceCase({source,entry:'f'}).status,'locally_verified');
+  const checked=verifyOwnedSourceCase({source,entry:'f'});
+  assert.equal(checked.status,'locally_verified',checked.reason);
+  assert.equal(checked.exported.sidecar.reference.outcome.kind,'throw');
+  assert.equal(checked.exported.sidecar.reference.outcome.graph.objects[0].properties[0][1][1],'ReferenceError');
+  assert.equal(recheckOwnedSourceEvidence(checked.exported).valid,true);
 });
 test('unresolved assignment and value reads remain unbound, no ambient fallback',()=>{
   for(const body of ['function f(){return absent+1;}',
