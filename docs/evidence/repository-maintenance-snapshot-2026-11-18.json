@@ -1,0 +1,202 @@
+{
+  "schema": "semantic-repository-maintenance-snapshot/1",
+  "observedAt": "2026-11-18 13:25:59 UTC",
+  "repository": "werg/tracing-js-self",
+  "method": "GitHub connector GET only; Git branch objects fetched without modifying remote refs",
+  "main": {
+    "head": "2aa694be86a6cda3b9d63fde739957d08f568961",
+    "tree": "273944ba36271402c9f90c98cef14c1bb9ad0958",
+    "protected": false,
+    "protection": {
+      "enabled": false,
+      "required_status_checks": {
+        "enforcement_level": "off",
+        "contexts": [],
+        "checks": []
+      }
+    }
+  },
+  "rulesets": [],
+  "branchCount": 31,
+  "branches": [
+    {
+      "name": "audit/grounded-effects-single-witness-path",
+      "head": "e032f737830d2e46930e31af950b4e61b82c10c2",
+      "protected": false
+    },
+    {
+      "name": "codex/real-source-semantics-20261118",
+      "head": "f0ff9c9c9a04a899b7bc99d23cdde90a6308bf4c",
+      "protected": false
+    },
+    {
+      "name": "codex/release-integrity-20261118",
+      "head": "90510a7eb9e1f48b3622decce64df058ca11ccd1",
+      "protected": false
+    },
+    {
+      "name": "codex/resumption-20261118",
+      "head": "8a41f1a739fb78bc0383d1a01309d81ea83a97b9",
+      "protected": false
+    },
+    {
+      "name": "codex/resumption-completion-20261118",
+      "head": "58dd347f3f29c044bd2fd4b872c8f1c727fe2899",
+      "protected": false
+    },
+    {
+      "name": "codex/resumption-integrity-20261118",
+      "head": "237becbb3f1016db399eacf9cc07d2fda58bdd8b",
+      "protected": false
+    },
+    {
+      "name": "codex/resumption-learning-20261118",
+      "head": "977cafbe1031015fe5e70d3f655b7752ece17b30",
+      "protected": false
+    },
+    {
+      "name": "codex/resumption-semantics-20261118",
+      "head": "095da723b254fdf1c8748ca7a1c1bc6fc1466021",
+      "protected": false
+    },
+    {
+      "name": "docs/semantic-execution-track-invocations",
+      "head": "c560d90dd06a13d34dfc91a8f09defba7daa0aac",
+      "protected": false
+    },
+    {
+      "name": "eliminate-legacy-trace-paths-20261025",
+      "head": "4b45aaddf815f9fc48f35819f9894cd4e1e8e0e1",
+      "protected": false
+    },
+    {
+      "name": "feat/common-control-updates-20261023",
+      "head": "1a3a0d465478ebe0b78bc7e7233f849aed72c215",
+      "protected": false
+    },
+    {
+      "name": "feat/semantic-choice-reasoning-20261025",
+      "head": "b103d28cbaed1834c4b3938d892ce5d3b01d96a1",
+      "protected": false
+    },
+    {
+      "name": "feat/semantic-execution-followups-20261025",
+      "head": "5a413868639e8532e36dbd451804ab76f905005d",
+      "protected": false
+    },
+    {
+      "name": "feat/semantic-execution-harness-v4-20261025",
+      "head": "e486399c165fcc897ec40bbb2e81d83a6f4bd9d8",
+      "protected": false
+    },
+    {
+      "name": "feat/semantic-trace-boundary-foundations-20261024",
+      "head": "f4966c052c5ba7cb2b03656d237a6e19c966e8d2",
+      "protected": false
+    },
+    {
+      "name": "feat/spec-oracle-test262-baseline",
+      "head": "bbbadb9321e922fa955128c030ba7dbf5a9378be",
+      "protected": false
+    },
+    {
+      "name": "fix/corpus-last-96-20261023",
+      "head": "0f9a6d04c0f3d80857fff7243e0a8e02849ff96b",
+      "protected": false
+    },
+    {
+      "name": "fix/corpus-rest-spread-complete-20261023",
+      "head": "a369a26174856ed3bb60e069d245392e792a3d0f",
+      "protected": false
+    },
+    {
+      "name": "fix/corpus-trace-capabilities-20261023",
+      "head": "d6827a9aa23059806cbe6d87c8d5217acf6803b2",
+      "protected": false
+    },
+    {
+      "name": "fix/corpus-verified-traces-20261023",
+      "head": "a90ff81b0f032235c92135e8bf7ef4122094a8cf",
+      "protected": false
+    },
+    {
+      "name": "fix/host-journal-integrity-20261022",
+      "head": "adf1354e3e0aa3e1cf9564cfb3df6cc50505373d",
+      "protected": false
+    },
+    {
+      "name": "fix/owned-array-sort-corpus-20261023",
+      "head": "55ef645f63e8038cdaa2d6632d674160b10d90fb",
+      "protected": false
+    },
+    {
+      "name": "fix/register-owned-template-substitution-20261023",
+      "head": "c7e9c9a22c4540407cc8dc35cbe8b51543e5f2ad",
+      "protected": false
+    },
+    {
+      "name": "fix/remaining-corpus-classes-20261023",
+      "head": "d7622455aa8d195ba36bdf5800ccaa2f6206b2fa",
+      "protected": false
+    },
+    {
+      "name": "fix/salvage-pr9-pr11-integrity-20261023",
+      "head": "dc96914512d63351a567396bb481f1c2808d091d",
+      "protected": false
+    },
+    {
+      "name": "fix/semantic-v3-unified-hardening-20261024",
+      "head": "f2da83dd4abfe884a281457ba3db2a53ce1809bc",
+      "protected": false
+    },
+    {
+      "name": "main",
+      "head": "2aa694be86a6cda3b9d63fde739957d08f568961",
+      "protected": false
+    },
+    {
+      "name": "owned-coercion-rejection-20261022",
+      "head": "1f2b7d2f4b7a76276c108e78282f16eccea22e1b",
+      "protected": false
+    },
+    {
+      "name": "semantic-reasoning-traces-20261025",
+      "head": "0894066c149be5b281784b6d9ad1cda8dcee4515",
+      "protected": false
+    },
+    {
+      "name": "work/natlang-bounded-20261022",
+      "head": "4338da3f01eb3af6c18c6120b8939ea6e40fa9a7",
+      "protected": false
+    },
+    {
+      "name": "work/promise-reactions-20261022",
+      "head": "60b8494514c47c064cef62a90ec42867cdcb4726",
+      "protected": false
+    }
+  ],
+  "issue13": {
+    "number": 13,
+    "title": "Commit a reproducible dependency lock for the engine262 oracle CI job",
+    "state": "open",
+    "updatedAt": "2026-10-23T08:00:44Z",
+    "url": "https://github.com/werg/tracing-js-self/issues/13"
+  },
+  "sources": {
+    "branches": "https://api.github.com/repos/werg/tracing-js-self/branches?per_page=100",
+    "main": "https://api.github.com/repos/werg/tracing-js-self/branches/main",
+    "rulesets": "https://api.github.com/repos/werg/tracing-js-self/rulesets?per_page=100&includes_parents=true",
+    "issue13": "https://api.github.com/repos/werg/tracing-js-self/issues/13"
+  },
+  "changesMade": {
+    "remoteBranches": false,
+    "issues": false,
+    "comments": false,
+    "protection": false,
+    "rulesets": false
+  },
+  "limitations": [
+    "This is a time-specific read-only inventory, not a declaration that branch content is absent or safe to delete.",
+    "Protection observations concern the returned repository/parent rulesets and branch metadata; no administration change was requested."
+  ]
+}
