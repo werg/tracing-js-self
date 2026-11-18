@@ -54,10 +54,18 @@ Shutdown must abort and drain those workers before failure is returned. The
 observed ZIP error and warnings are retained as consequences of this lifetime
 defect, not attributed to an unexplained GitHub outage.
 
-The corrective commit and its subsequent successful qualification belong in
-the [handover](../../../RESUMPTION_HANDOVER_2026-11-18.md) as new evidence. This
-failed workflow and the independently successful local/probe receipts retain
-their original producing identities and outcomes.
+The correction through producer `1e2e6a0de8952c4349edbeef46ab70c4a06f8157`
+has separate [local repair qualification](../../native-ci-repair-2026-11-18/README.md).
+The [handover](../../../RESUMPTION_HANDOVER_2026-11-18.md) records its subsequent
+hosted outcomes as new evidence. This failed workflow and the independently
+successful local/probe receipts retain their original producing identities.
+
+Evidence-retention merge `8f99dd6436cb517fa31be246ed945efe997a0b29` preserves
+actual synthetic producer `3850539e1038f3cd19c19c446403444b96281797` as a
+reachable parent. Its Git tree exactly equals recorded head `aa7b843` tree
+`ef8a36f0da31bd2b20032a27c3fb4cfded6f6a02`. The retention merge changed no
+source, documentation or receipt bytes; it keeps the original producer
+reachable after GitHub replaces its temporary PR merge ref.
 
 ## Original downloadable failure artifacts
 
