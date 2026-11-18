@@ -1,0 +1,121 @@
+{
+  "schema": "semantic-native-capture-requalification-selection/1",
+  "origin": "completed-log-prefix-read-only",
+  "producerRevision": "83e0d5742e63dc4439b68d6296f323cb7a3aafdc",
+  "campaignDigest": "9feebefdd391b9d6aabb62cb5a4dafb921c48cee2ae9f90f70f89a983243fcb6",
+  "completeLogEntries": 737,
+  "completeLogPrefixSha256": "be4eed39e251c91d371ccf10f76ea50bee7ded94e11848aa3f28dc23f0ec24e0",
+  "completeLogPrefixBytes": 1548605,
+  "lastCompleteEntryDigest": "aec2fe6baa86776d2767dc4e8b13e62bbb8ce12654d991ee11457bc65ee3d3f5",
+  "catalog": {
+    "recipe": "real-source",
+    "sourceStreams": [
+      "utilities",
+      "exercism",
+      "production"
+    ],
+    "perFamily": 12,
+    "registeredCases": 1171
+  },
+  "selectedCount": 12,
+  "cases": [
+    {
+      "id": "real-utilities-5a1fde95b4daab8314e03d36",
+      "family": "utility:vscode/arrays.ts/distinct",
+      "entryDigest": "6abe3955edd47ac4ef25ad3ac32b19e445121db8382630d217a4f8dde6b1e64b",
+      "candidateDigest": "39414f033ec9e991193677333cb61af69d6fca98a0369be1adebeb68e9b726b2",
+      "resultDigest": "3dbb34f2104cda6cc4bf61c3836781bcc282815ee2deb41ed17071e5cf28d807",
+      "status": "native_rejected"
+    },
+    {
+      "id": "real-utilities-76c442299b70a90a72a85bcb",
+      "family": "utility:vscode/arrays.ts/distinct",
+      "entryDigest": "fdd3df71ce531cee56f0dd47a34541a7a2f2dfd48d2b7835706894d9bec8b5a4",
+      "candidateDigest": "04471b242ac8195325f4ddb7ebe629a11f07f68be6ed90dab93e4117e689cf5f",
+      "resultDigest": "40c1dc75377cda40a8992e1ebbb5b8bcf86e29c684e2436b0a5cb7f667b93c93",
+      "status": "native_rejected"
+    },
+    {
+      "id": "real-utilities-9c88a96c1d64b6bc739f6255",
+      "family": "utility:vscode/arrays.ts/distinct",
+      "entryDigest": "fa4f835bb637833dc8126cc17eaee6f43324891f0e2cfa5469d549d343ce579d",
+      "candidateDigest": "42756476d2eb6d6a13b2efe8c1ee2dd8e2774296d882a9bb95822a3cb7227410",
+      "resultDigest": "fa692e87eb7f2d01329bf5056a825b73e7e8552e2d60e42f619b3eb450b846f5",
+      "status": "native_rejected"
+    },
+    {
+      "id": "real-utilities-a551d3f4fd8586b1e524f3c2",
+      "family": "utility:vscode/arrays.ts/distinct",
+      "entryDigest": "e41a6ea205ae1c39040f77f6ef714cc03f3b0ea1974d75d6f5f13c267e82d0d7",
+      "candidateDigest": "3141878ef7dc9acecd8a6a2f8e341fe9bb26b6994e9d3da116e41db619b8b8f6",
+      "resultDigest": "9665ff3a100a414410015bf0574884ba74472d07611ba07f5c2dc69529f428d2",
+      "status": "native_rejected"
+    },
+    {
+      "id": "real-utilities-2ebfe51f48dad1a027958ec0",
+      "family": "utility:vscode/arrays.ts/distinct",
+      "entryDigest": "f9d8d0bb6a5d405bdf12c79633df0c762d384dc7eb92a21bcff86e60d4493fa7",
+      "candidateDigest": "b28393a99780212dbe656d760853faa1d16d1a6fb565f284e828a82e6cbf9df8",
+      "resultDigest": "ccf87060e3918ab0127ca811ec866068f5f139a581b3d657b793823f3ccfbe2d",
+      "status": "native_rejected"
+    },
+    {
+      "id": "real-utilities-1ca447dc84aec4b73ec36c7e",
+      "family": "utility:vscode/arrays.ts/distinct",
+      "entryDigest": "6d1ab4a2e3cabafa33cc8d21539f8c9c7f87ed52aa74b5323e35b97e633cdd02",
+      "candidateDigest": "d635bb9f259aa484331393e090cb327fa3b6db3e78d2eeccb1cc3ecea5a695ba",
+      "resultDigest": "7b57378271fd237bcbaab6cc30a3813b867ba796f962bc98a74500b493a01a6b",
+      "status": "native_rejected"
+    },
+    {
+      "id": "real-utilities-1fa488b9e746edfaf512180b",
+      "family": "utility:vscode/arrays.ts/distinct",
+      "entryDigest": "813bfa52469ce6cc504c83b4a0b92427349fed47dd1448d400423ac9617abd22",
+      "candidateDigest": "9fe6fda0b94e26c6b385be0a465d8e40913ef46257f671ce1315c8bec1adc572",
+      "resultDigest": "2b5487fb5213362e3efc8391003eb9301e8c930781e48e134ba815bfac280375",
+      "status": "native_rejected"
+    },
+    {
+      "id": "real-utilities-c84a5f43c81770a28dd173e9",
+      "family": "utility:vscode/arrays.ts/distinct",
+      "entryDigest": "30e8255d3cc3ea76696c63590ecf2b5df9bfff0959bd7d5842f73954082077cf",
+      "candidateDigest": "77920fac8e2feea0669668f8772a63031e12327ced824bce2d75bb5c20143bb9",
+      "resultDigest": "d27736492e9c5aaff0ca585cdf34d999642e1b92a6f1f13735474c284373e02a",
+      "status": "native_rejected"
+    },
+    {
+      "id": "real-utilities-958259a2c2d9660948f86316",
+      "family": "utility:vscode/arrays.ts/distinct",
+      "entryDigest": "717183c13fafb3304e88507486b89ea68bce6dd0595ae0b911e8eb1d7bf5d4eb",
+      "candidateDigest": "e5f41f55ebf0d48f58cb3d4118aa9a921622c391a728f151c46331d711eefc47",
+      "resultDigest": "abc908e5f0522352e8dcb635d5c69a9b0c65332a7fc4b19d59d99af32e8f781d",
+      "status": "native_rejected"
+    },
+    {
+      "id": "real-utilities-bc7e3ae0147f10c6ef5a0cd6",
+      "family": "utility:vscode/arrays.ts/distinct",
+      "entryDigest": "d2a68d8103b1f1f78247eca25ba95e1a18f9f91f7f7a732e50c2d60861685d95",
+      "candidateDigest": "a80657866aba37444949fd03d1a9874f0152a718e9f770af50a87d3d1b754b70",
+      "resultDigest": "b59bcb670263e89ae75645e243762c06d0b5cf25c7bcf078cc40009994684031",
+      "status": "native_rejected"
+    },
+    {
+      "id": "real-utilities-8d94996f150702d880d83da2",
+      "family": "utility:vscode/arrays.ts/distinct",
+      "entryDigest": "cbc16ac3f884017c408247499d7296f473fb74a24addf6d7c343731959d11da5",
+      "candidateDigest": "0bc60adcc26c65ac89e7dc3efdab71d8bf222fec66fa9851db8713ec56cefb7b",
+      "resultDigest": "8dd6c983ae9bcbc16e78f04b4f650f9000d27ca64b10b6ab42197b93e5e1e77d",
+      "status": "native_rejected"
+    },
+    {
+      "id": "real-utilities-86111448602711c38983cd0c",
+      "family": "utility:vscode/arrays.ts/distinct",
+      "entryDigest": "1e97b501dfae997168ff3ab22819a0be3bc5ddcddaf6bc1c9fedd9a29ad42c54",
+      "candidateDigest": "ab010d814cb0252165a55d801d0db9418f4df00fb85680fd754a84e95c080ab1",
+      "resultDigest": "10d53d7cd82e7573958eaaa1d01e1be9b6645dc6888fa80ffe8d7279c5f2b98c",
+      "status": "native_rejected"
+    }
+  ],
+  "nativeRequalification": "pending-fresh-producer-and-consumer-run",
+  "optimizerSteps": 0
+}
