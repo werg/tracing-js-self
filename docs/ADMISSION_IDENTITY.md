@@ -126,3 +126,33 @@ external diagnostic path instead of being represented as source reductions.
 All native reference execution retains the existing trusted-source restriction.
 The Node VM and a child process are not an OS security boundary for hostile
 programs.
+
+## Actual native provenance regression
+
+`tools/check-native-provenance.py` is an opt-in integration gate that calls the
+pinned companion's production preparation function with a real tokenizer and
+fresh producer source rechecks. It requires one admitted single episode and
+one admitted repeated session, and rejects dirty tracked producer/consumer
+checkouts. It preserves all test inputs, source/native receipts, refusal reasons
+and prepared control shards in its output directory.
+
+```sh
+TZ=UTC ../native-venv/bin/python tools/check-native-provenance.py \
+  --corpus artifacts/engineering \
+  --tracer-root ../immutable-producer-checkout \
+  --consumer-root ../megatoken --tokenizer-json ../tokenizer.json \
+  --output artifacts/native-provenance-regression
+```
+
+Use the exact timezone stored in the candidate environment. `--session` can
+supply a separately admitted session when testing a small single-only corpus.
+The output directory must be new to avoid reusing dedup state.
+
+The [18 November 2026 measured receipt](evidence/native-provenance-2026-11-18.json)
+records a successful real run: two untampered single/session controls prepared,
+all thirty private metadata mutations rejected with public execution bytes
+unchanged, and zero optimizer steps. The controls were generated at producer
+`3a2178252a370c3d91c85d42751b2a4f82376bd4` and tested with consumer
+`277edd4a2983e81f5e2a71b34a7ce29348e4e7a0`. This is a scoped regression receipt,
+not a native qualification claim for every later producer revision. Subsequent
+releases should rerun this gate at their own immutable revision.

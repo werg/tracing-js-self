@@ -1,0 +1,920 @@
+{
+  "schema": "semantic-native-provenance-regression/1",
+  "status": "passed",
+  "producerRevision": "3a2178252a370c3d91c85d42751b2a4f82376bd4",
+  "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+  "runnerSha256": "327b48dcc863c092c3bb6f611ef9c43af600e77686a51c083638c908e7ffa767",
+  "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+  "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+  "timezone": "Europe/Berlin",
+  "controlsAdmitted": 2,
+  "mutationsAttempted": 30,
+  "mutationsRejected": 30,
+  "nativePreparedEpisodes": 2,
+  "nativeManifestFingerprint": "ab4e7bed09436187572058dc4a0b9d702983a6d38dd0f2a8986f3022e0367591",
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "mutations": [
+    {
+      "candidate": 2,
+      "case": "single-split",
+      "path": [
+        "sidecar",
+        "split"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: split assignment\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at identityPayload (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:94:89)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:39)\n    at recheckEffectfulAdmission (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-admit.js:210:3)\n    at file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:23\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n"
+    },
+    {
+      "candidate": 3,
+      "case": "single-family",
+      "path": [
+        "sidecar",
+        "sourceFamily"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: source family, lineage, license or ancestors\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at identityPayload (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:92:5)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:39)\n    at recheckEffectfulAdmission (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-admit.js:210:3)\n    at file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:23\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n"
+    },
+    {
+      "candidate": 4,
+      "case": "single-lineage",
+      "path": [
+        "sidecar",
+        "sourceLineage"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: source family, lineage, license or ancestors\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at identityPayload (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:92:5)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:39)\n    at recheckEffectfulAdmission (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-admit.js:210:3)\n    at file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:23\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n"
+    },
+    {
+      "candidate": 5,
+      "case": "single-ancestors",
+      "path": [
+        "sidecar",
+        "ancestorIds"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: immutable payload\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:66)\n    at recheckEffectfulAdmission (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-admit.js:210:3)\n    at file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:23\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n"
+    },
+    {
+      "candidate": 6,
+      "case": "single-task",
+      "path": [
+        "sidecar",
+        "taskId"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: immutable payload\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:66)\n    at recheckEffectfulAdmission (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-admit.js:210:3)\n    at file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:23\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n"
+    },
+    {
+      "candidate": 7,
+      "case": "single-fixture-family",
+      "path": [
+        "sidecar",
+        "fixtureFamily"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: immutable payload\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:66)\n    at recheckEffectfulAdmission (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-admit.js:210:3)\n    at file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:23\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n"
+    },
+    {
+      "candidate": 8,
+      "case": "single-source-digest",
+      "path": [
+        "sidecar",
+        "sourceProvenance",
+        "sourceDigest"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Source/reference inputs differ from the owned initial context\n    at recheckEffectfulAdmission (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-admit.js:209:11)\n    at file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:23\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n"
+    },
+    {
+      "candidate": 9,
+      "case": "single-provenance-family",
+      "path": [
+        "sidecar",
+        "sourceProvenance",
+        "family"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: source family, lineage, license or ancestors\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at identityPayload (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:92:5)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:39)\n    at recheckEffectfulAdmission (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-admit.js:210:3)\n    at file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:23\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n"
+    },
+    {
+      "candidate": 10,
+      "case": "single-split-seed",
+      "path": [
+        "sidecar",
+        "sourceProvenance",
+        "seed"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: split membership\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at validateSplitIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:37:94)\n    at identityPayload (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:93:3)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:39)\n    at recheckEffectfulAdmission (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-admit.js:210:3)\n    at file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:23\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n"
+    },
+    {
+      "candidate": 11,
+      "case": "single-license",
+      "path": [
+        "sidecar",
+        "license"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: source family, lineage, license or ancestors\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at identityPayload (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:92:5)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:39)\n    at recheckEffectfulAdmission (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-admit.js:210:3)\n    at file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:23\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n"
+    },
+    {
+      "candidate": 12,
+      "case": "single-identity-digest",
+      "path": [
+        "sidecar",
+        "identityDigest"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: immutable payload digest\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:130:81)\n    at recheckEffectfulAdmission (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-admit.js:210:3)\n    at file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:23\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n"
+    },
+    {
+      "candidate": 13,
+      "case": "single-native-binding",
+      "path": [
+        "sidecar",
+        "nativeBinding",
+        "identityDigest"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Native receipt does not bind the immutable candidate identity\n    at verifyNativeBinding (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-admit.js:130:11)\n    at recheckEffectfulAdmission (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-admit.js:235:22)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:17\n"
+    },
+    {
+      "candidate": 14,
+      "case": "single-consumer-policy",
+      "path": [
+        "sidecar",
+        "nativePolicy",
+        "consumerRevision"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: immutable payload\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:66)\n    at recheckEffectfulAdmission (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-admit.js:210:3)\n    at file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:23\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n"
+    },
+    {
+      "candidate": 15,
+      "case": "single-tokenizer-policy",
+      "path": [
+        "sidecar",
+        "nativePolicy",
+        "tokenizerSha256"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: immutable payload\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:66)\n    at recheckEffectfulAdmission (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-admit.js:210:3)\n    at file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:23\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n"
+    },
+    {
+      "candidate": 16,
+      "case": "session-split",
+      "path": [
+        "sidecar",
+        "split"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: split assignment\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at identityPayload (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:94:89)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:39)\n    at recheckEffectfulSession (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-session.js:147:3)\n    at async file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:17\n"
+    },
+    {
+      "candidate": 17,
+      "case": "session-family",
+      "path": [
+        "sidecar",
+        "sourceFamily"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: source family, lineage, license or ancestors\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at identityPayload (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:92:5)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:39)\n    at recheckEffectfulSession (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-session.js:147:3)\n    at async file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:17\n"
+    },
+    {
+      "candidate": 18,
+      "case": "session-lineage",
+      "path": [
+        "sidecar",
+        "sourceLineage"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: source family, lineage, license or ancestors\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at identityPayload (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:92:5)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:39)\n    at recheckEffectfulSession (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-session.js:147:3)\n    at async file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:17\n"
+    },
+    {
+      "candidate": 19,
+      "case": "session-ancestors",
+      "path": [
+        "sidecar",
+        "ancestorIds"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: immutable payload\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:66)\n    at recheckEffectfulSession (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-session.js:147:3)\n    at async file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:17\n"
+    },
+    {
+      "candidate": 20,
+      "case": "session-task",
+      "path": [
+        "sidecar",
+        "taskId"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: immutable payload\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:66)\n    at recheckEffectfulSession (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-session.js:147:3)\n    at async file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:17\n"
+    },
+    {
+      "candidate": 21,
+      "case": "session-fixture-family",
+      "path": [
+        "sidecar",
+        "fixtureFamily"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: immutable payload\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:66)\n    at recheckEffectfulSession (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-session.js:147:3)\n    at async file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:17\n"
+    },
+    {
+      "candidate": 22,
+      "case": "session-source-digest",
+      "path": [
+        "sidecar",
+        "sourceProvenance",
+        "sourceDigest"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: immutable payload\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:66)\n    at recheckEffectfulSession (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-session.js:147:3)\n    at async file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:17\n"
+    },
+    {
+      "candidate": 23,
+      "case": "session-provenance-family",
+      "path": [
+        "sidecar",
+        "sourceProvenance",
+        "family"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: source family, lineage, license or ancestors\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at identityPayload (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:92:5)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:39)\n    at recheckEffectfulSession (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-session.js:147:3)\n    at async file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:17\n"
+    },
+    {
+      "candidate": 24,
+      "case": "session-split-seed",
+      "path": [
+        "sidecar",
+        "sourceProvenance",
+        "seed"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: split membership\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at validateSplitIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:37:94)\n    at identityPayload (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:93:3)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:39)\n    at recheckEffectfulSession (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-session.js:147:3)\n    at async file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:17\n"
+    },
+    {
+      "candidate": 25,
+      "case": "session-license",
+      "path": [
+        "sidecar",
+        "license"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: source family, lineage, license or ancestors\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at identityPayload (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:92:5)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:39)\n    at recheckEffectfulSession (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-session.js:147:3)\n    at async file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:17\n"
+    },
+    {
+      "candidate": 26,
+      "case": "session-identity-digest",
+      "path": [
+        "sidecar",
+        "identityDigest"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: immutable payload digest\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:130:81)\n    at recheckEffectfulSession (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-session.js:147:3)\n    at async file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:17\n"
+    },
+    {
+      "candidate": 27,
+      "case": "session-native-binding",
+      "path": [
+        "sidecar",
+        "nativeBinding",
+        "identityDigest"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Native receipt does not bind the immutable candidate identity\n    at verifyNativeBinding (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-admit.js:130:11)\n    at recheckEffectfulSession (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-session.js:162:5)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:17\n"
+    },
+    {
+      "candidate": 28,
+      "case": "session-consumer-policy",
+      "path": [
+        "sidecar",
+        "nativePolicy",
+        "consumerRevision"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: immutable payload\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:66)\n    at recheckEffectfulSession (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-session.js:147:3)\n    at async file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:17\n"
+    },
+    {
+      "candidate": 29,
+      "case": "session-tokenizer-policy",
+      "path": [
+        "sidecar",
+        "nativePolicy",
+        "tokenizerSha256"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: immutable payload\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:66)\n    at recheckEffectfulSession (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-session.js:147:3)\n    at async file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:17\n"
+    },
+    {
+      "candidate": 30,
+      "case": "session-component-split",
+      "path": [
+        "sidecar",
+        "collection",
+        "components",
+        0,
+        "sidecar",
+        "split"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: split assignment\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at identityPayload (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:94:89)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:39)\n    at recheckEffectfulAdmission (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-admit.js:210:3)\n    at recheckEffectfulSession (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-session.js:149:11)\n    at async file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:17\n"
+    },
+    {
+      "candidate": 31,
+      "case": "session-component-ancestors",
+      "path": [
+        "sidecar",
+        "collection",
+        "components",
+        0,
+        "sidecar",
+        "ancestorIds"
+      ],
+      "status": "admission_rejected",
+      "reason": "Independent source admission rejected candidate: Error: Candidate identity evidence changed: immutable payload\n    at fail (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:22:28)\n    at verifyAdmissionIdentity (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/admission-identity.js:131:66)\n    at recheckEffectfulAdmission (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-admit.js:210:3)\n    at recheckEffectfulSession (file:///workspace/scratch/23f61543c052/tracing-native-check/src/training/effectful-session.js:149:11)\n    at async file:///workspace/scratch/23f61543c052/tracing-native-check/tools/verify-effectful-admission.mjs:9:17\n"
+    }
+  ],
+  "inputArtifacts": [
+    {
+      "case": "control-single",
+      "path": "inputs/control-single.json.gz",
+      "sha256": "34e66b886381912268149b38c6546fec676156569f9ff587aaa22ea10be9057d"
+    },
+    {
+      "case": "control-session",
+      "path": "inputs/control-session.json.gz",
+      "sha256": "433354004d1bf463e872317a05234d8b7a463ebf56414009ef5c6e6500c404fc"
+    },
+    {
+      "case": "single-split",
+      "path": "inputs/single-split.json.gz",
+      "sha256": "5b429c9eae2060d2068d60a5379f29227569dd065df25ff1101b3dd376e0b3e8"
+    },
+    {
+      "case": "single-family",
+      "path": "inputs/single-family.json.gz",
+      "sha256": "ccc0120e73e6a468b6053ae0165d739f23aa672bff8b09668b309c6672d1c28f"
+    },
+    {
+      "case": "single-lineage",
+      "path": "inputs/single-lineage.json.gz",
+      "sha256": "48a435c9a712db6d39656832e9569d72295dd66ee282147255a7c0cebc239378"
+    },
+    {
+      "case": "single-ancestors",
+      "path": "inputs/single-ancestors.json.gz",
+      "sha256": "4f11551cda7e8a602997e8de4ae04016b8a29b1fbe59fb90c511c36e79375144"
+    },
+    {
+      "case": "single-task",
+      "path": "inputs/single-task.json.gz",
+      "sha256": "2badc4f79a66b5620894f76c58535992890ef01087512462e7c3d4ed9c181f88"
+    },
+    {
+      "case": "single-fixture-family",
+      "path": "inputs/single-fixture-family.json.gz",
+      "sha256": "ef102a46dcfed11084dad2456bf1aa004ba8930b43bccb3272096bd95dae2cad"
+    },
+    {
+      "case": "single-source-digest",
+      "path": "inputs/single-source-digest.json.gz",
+      "sha256": "dcaa78a3b8c7438f471b0bb1ae8b7cf63c7fbceab05d2ce02e3dcd462245bd60"
+    },
+    {
+      "case": "single-provenance-family",
+      "path": "inputs/single-provenance-family.json.gz",
+      "sha256": "17114599764315e2b94c369712aa10d4b5daa1483336929b36f0401b2d5de825"
+    },
+    {
+      "case": "single-split-seed",
+      "path": "inputs/single-split-seed.json.gz",
+      "sha256": "11ec62d26b942914974582c75cc4841fa1c051d9cb7499c4f59dfe4336f31e0d"
+    },
+    {
+      "case": "single-license",
+      "path": "inputs/single-license.json.gz",
+      "sha256": "6648675d395ad0c37b3c2fd9fc63be63835d011cc45287c9f4a69a17b8bc9f42"
+    },
+    {
+      "case": "single-identity-digest",
+      "path": "inputs/single-identity-digest.json.gz",
+      "sha256": "a31dd05097785a9b47e496e1ef3fcfa360ec14ced37a25c0930393d72056e005"
+    },
+    {
+      "case": "single-native-binding",
+      "path": "inputs/single-native-binding.json.gz",
+      "sha256": "7e9c14584e547f9472526f67f584057abcbd4d206d2c91aafb1109cbaef75ad8"
+    },
+    {
+      "case": "single-consumer-policy",
+      "path": "inputs/single-consumer-policy.json.gz",
+      "sha256": "c9aec4a3f23b84e39b16793ca2bca92e980aa6c467690afe08c469efeaba2f2f"
+    },
+    {
+      "case": "single-tokenizer-policy",
+      "path": "inputs/single-tokenizer-policy.json.gz",
+      "sha256": "ee62f38df62ffe72bb611c288ca2279a2181b3219712a01e8c716fe706ec8ed6"
+    },
+    {
+      "case": "session-split",
+      "path": "inputs/session-split.json.gz",
+      "sha256": "f0b9b4671998d736658c4768775a3e426669fd449a50e15e05bc1fdf5f302770"
+    },
+    {
+      "case": "session-family",
+      "path": "inputs/session-family.json.gz",
+      "sha256": "7a2c6452b01969263250dc285eb2c00ccc2ae696c3298ce034b1ddb34fed44cc"
+    },
+    {
+      "case": "session-lineage",
+      "path": "inputs/session-lineage.json.gz",
+      "sha256": "071fb8ba7525c68a0b19a7df63f5f348ecd0f0660a75ed1600954aac66e044bc"
+    },
+    {
+      "case": "session-ancestors",
+      "path": "inputs/session-ancestors.json.gz",
+      "sha256": "5eec8de09eec6d82d6538c24eab0d7179c2d676d36bb827741aa8f8f95771e9f"
+    },
+    {
+      "case": "session-task",
+      "path": "inputs/session-task.json.gz",
+      "sha256": "4f5ed589ed39806042acbfafbc0bbdece07dc864530c7262f123032e7ec79755"
+    },
+    {
+      "case": "session-fixture-family",
+      "path": "inputs/session-fixture-family.json.gz",
+      "sha256": "d945185995f10e9ece4f8948ec342204f67d9b224b7064498bc4f5651cf6d068"
+    },
+    {
+      "case": "session-source-digest",
+      "path": "inputs/session-source-digest.json.gz",
+      "sha256": "9eec237f2edecbcadf806518557b451959934b9e35fe51c63ece8758c30ef177"
+    },
+    {
+      "case": "session-provenance-family",
+      "path": "inputs/session-provenance-family.json.gz",
+      "sha256": "78ace63ca4b84032fe7b057972b68bab558fddae921f2b65e8657100cde3f435"
+    },
+    {
+      "case": "session-split-seed",
+      "path": "inputs/session-split-seed.json.gz",
+      "sha256": "1256c39f88c1d885d2cef41e471b3f9045f90d7dad356dfb024f33dce43ea200"
+    },
+    {
+      "case": "session-license",
+      "path": "inputs/session-license.json.gz",
+      "sha256": "91ee730befb227863c3746e40e25497e52f18f7ff3d7f68928dacd82fbb0cb6f"
+    },
+    {
+      "case": "session-identity-digest",
+      "path": "inputs/session-identity-digest.json.gz",
+      "sha256": "7a2ca20f93640934b2a5fb87c31bebbe293f502629f3acd1559fe1ccda70c2cb"
+    },
+    {
+      "case": "session-native-binding",
+      "path": "inputs/session-native-binding.json.gz",
+      "sha256": "71b468c41b9ff9a0f2e8aa9757d5f08bebced9cf57153356d04c4db942cd4f37"
+    },
+    {
+      "case": "session-consumer-policy",
+      "path": "inputs/session-consumer-policy.json.gz",
+      "sha256": "9dfd4a7d6deff98da0811372bc593046dd2c875b3808c16b41133bdb5906d44a"
+    },
+    {
+      "case": "session-tokenizer-policy",
+      "path": "inputs/session-tokenizer-policy.json.gz",
+      "sha256": "c77e8442f54a67a3b6d2c38f87c97cba2fcbce2e2295600aaa113c65ef75b219"
+    },
+    {
+      "case": "session-component-split",
+      "path": "inputs/session-component-split.json.gz",
+      "sha256": "e5be27d66e699ea7e48767eb46a1c09eaec397c9e3109f033e2d62343156268d"
+    },
+    {
+      "case": "session-component-ancestors",
+      "path": "inputs/session-component-ancestors.json.gz",
+      "sha256": "824ca70b7cf7df19e93fec342716bfa31ef2c3610f42914a78b3b8c1c36e16a7"
+    }
+  ],
+  "failures": [],
+  "scope": "Private metadata tampering with unchanged public bytes; actual pinned source/native preparation.",
+  "recordedDate": "2026-11-18",
+  "fullRuntimeReportSha256": "6919b7c067d498c1b26c34d784f3b2a01d7a4ad801498a4c87878dc25f1eda3e",
+  "controlReceipts": [
+    {
+      "episodeId": "semantic:harness:dcaeefc92cff1a63ad6e9ba476065b387327a190c08628fdf8a700abba17b9c9",
+      "source": {
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "effectsValidated": true,
+        "episodeDigest": "23e882a96196b3d6e1ad50dab4a47433abc62f082c315754ce15f97231215ba8",
+        "identityDigest": "036d21b842156dba5663a36941527f2da8ae7afd93f899ce78562824f2285c61",
+        "identityValidated": true,
+        "journalValidated": true,
+        "optimizerSteps": 0,
+        "producerRevision": "3a2178252a370c3d91c85d42751b2a4f82376bd4",
+        "referenceStatus": "agreed",
+        "replayValidated": true,
+        "schema": "semantic-source-admission/4",
+        "sourceValidated": true
+      },
+      "native": {
+        "actions": 2,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "23e882a96196b3d6e1ad50dab4a47433abc62f082c315754ce15f97231215ba8",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 300,
+        "importReceipt": {
+          "actions": 2,
+          "admission": "admitted",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                8
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 6,
+          "records": 18,
+          "tracks": 2
+        },
+        "logicalRecords": 17,
+        "lossMaskValidated": true,
+        "observedTokens": 1326,
+        "optimizerSteps": 0,
+        "physicalRecords": 18,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "originalSourceInputs": [
+        {
+          "entry": "run",
+          "fixture": {
+            "calls": [
+              {
+                "argumentGraph": {
+                  "objects": [],
+                  "roots": [
+                    [
+                      "str",
+                      "counter"
+                    ]
+                  ],
+                  "schema": "owned-graph/1"
+                },
+                "operation": "demo.readAsync",
+                "resultGraph": {
+                  "objects": [],
+                  "roots": [
+                    [
+                      "num",
+                      7
+                    ]
+                  ],
+                  "schema": "owned-graph/1"
+                },
+                "status": "fulfilled"
+              },
+              {
+                "argumentGraph": {
+                  "objects": [],
+                  "roots": [
+                    [
+                      "str",
+                      "counter"
+                    ],
+                    [
+                      "num",
+                      8
+                    ]
+                  ],
+                  "schema": "owned-graph/1"
+                },
+                "operation": "demo.store",
+                "resultGraph": {
+                  "objects": [],
+                  "roots": [
+                    [
+                      "undefined"
+                    ]
+                  ],
+                  "schema": "owned-graph/1"
+                },
+                "status": "fulfilled"
+              }
+            ],
+            "settlementOrder": null
+          },
+          "inputGraph": {
+            "objects": [],
+            "roots": [
+              [
+                "str",
+                "counter"
+              ]
+            ],
+            "schema": "owned-graph/1"
+          },
+          "source": "\"use strict\";async function run(key){const current=await host.readAsync(key);const next=current+1;host.store(key,next);return next;}"
+        }
+      ],
+      "sourceProvenance": {
+        "family": "async-counter",
+        "fixtureDigest": "ee809c933dcf72e056fb52f8bfd6875cafc6497765f478ba76812a71001bd051",
+        "license": "repository-fixture",
+        "seed": 17,
+        "sourceDigest": "a66d7c5931a75114127af903b09b9e6cddd8a56036ce361a6eed7ecc10162ba5",
+        "trustTier": "repository-fixture",
+        "upstream": {}
+      },
+      "environment": {
+        "arch": "x64",
+        "implementationDigest": "7f05841c0251f4924d61b421713311cc1a2a439a5c9c645344c161257336ae0b",
+        "node": "24.22.3",
+        "packageLockDigest": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88",
+        "parser": "8.15.0",
+        "platform": "linux",
+        "schema": "semantic-execution-environment/1",
+        "timezone": "Europe/Berlin",
+        "typescript": "5.9.3",
+        "v8": "13.6.233.17-node.63"
+      },
+      "identityDigest": "036d21b842156dba5663a36941527f2da8ae7afd93f899ce78562824f2285c61",
+      "sourceFamily": "async-counter",
+      "ancestorIds": [
+        "async-counter"
+      ],
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:4c2f1ba840f36ad83e471ddc62ad54e2c6e515462eb892edf0dab83fec7947ef",
+      "source": {
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "effectsValidated": true,
+        "episodeDigest": "4a7b858a4a347ff2be8ca099a62bba5a0b1309319cfb5d036bf7f9a4dd48b997",
+        "identityDigest": "6382f47cfa0abb31049da8a0cbc8e62159f37cb0ee6b7fba2f9a7c8c33a69ee0",
+        "identityValidated": true,
+        "journalValidated": true,
+        "optimizerSteps": 0,
+        "producerRevision": "3a2178252a370c3d91c85d42751b2a4f82376bd4",
+        "referenceStatus": "agreed",
+        "replayValidated": true,
+        "schema": "semantic-source-admission/4",
+        "sourceValidated": true
+      },
+      "native": {
+        "actions": 4,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+        "contextTransportRecords": 2,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "4a7b858a4a347ff2be8ca099a62bba5a0b1309319cfb5d036bf7f9a4dd48b997",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 606,
+        "importReceipt": {
+          "actions": 4,
+          "admission": "admitted",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "ingress1",
+              "kind": "return",
+              "value": [
+                "num",
+                8
+              ]
+            },
+            {
+              "invocationId": "ingress2",
+              "kind": "return",
+              "value": [
+                "num",
+                22
+              ]
+            }
+          ],
+          "invocations": 2,
+          "observations": 11,
+          "records": 35,
+          "tracks": 3
+        },
+        "logicalRecords": 33,
+        "lossMaskValidated": true,
+        "observedTokens": 1905,
+        "optimizerSteps": 0,
+        "physicalRecords": 35,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "originalSourceInputs": [
+        {
+          "entry": "run",
+          "fixture": {
+            "calls": [
+              {
+                "argumentGraph": {
+                  "objects": [],
+                  "roots": [
+                    [
+                      "str",
+                      "counter"
+                    ]
+                  ],
+                  "schema": "owned-graph/1"
+                },
+                "operation": "demo.readAsync",
+                "resultGraph": {
+                  "objects": [],
+                  "roots": [
+                    [
+                      "num",
+                      7
+                    ]
+                  ],
+                  "schema": "owned-graph/1"
+                },
+                "status": "fulfilled"
+              },
+              {
+                "argumentGraph": {
+                  "objects": [],
+                  "roots": [
+                    [
+                      "str",
+                      "counter"
+                    ],
+                    [
+                      "num",
+                      8
+                    ]
+                  ],
+                  "schema": "owned-graph/1"
+                },
+                "operation": "demo.store",
+                "resultGraph": {
+                  "objects": [],
+                  "roots": [
+                    [
+                      "undefined"
+                    ]
+                  ],
+                  "schema": "owned-graph/1"
+                },
+                "status": "fulfilled"
+              }
+            ],
+            "settlementOrder": null
+          },
+          "inputGraph": {
+            "objects": [],
+            "roots": [
+              [
+                "str",
+                "counter"
+              ]
+            ],
+            "schema": "owned-graph/1"
+          },
+          "source": "\"use strict\";async function run(key){const current=await host.readAsync(key);const next=current+1;host.store(key,next);return next;}"
+        },
+        {
+          "entry": "run",
+          "fixture": {
+            "calls": [
+              {
+                "argumentGraph": {
+                  "objects": [],
+                  "roots": [
+                    [
+                      "str",
+                      "counter"
+                    ]
+                  ],
+                  "schema": "owned-graph/1"
+                },
+                "operation": "demo.readAsync",
+                "resultGraph": {
+                  "objects": [],
+                  "roots": [
+                    [
+                      "num",
+                      21
+                    ]
+                  ],
+                  "schema": "owned-graph/1"
+                },
+                "status": "fulfilled"
+              },
+              {
+                "argumentGraph": {
+                  "objects": [],
+                  "roots": [
+                    [
+                      "str",
+                      "counter"
+                    ],
+                    [
+                      "num",
+                      22
+                    ]
+                  ],
+                  "schema": "owned-graph/1"
+                },
+                "operation": "demo.store",
+                "resultGraph": {
+                  "objects": [],
+                  "roots": [
+                    [
+                      "undefined"
+                    ]
+                  ],
+                  "schema": "owned-graph/1"
+                },
+                "status": "fulfilled"
+              }
+            ],
+            "settlementOrder": null
+          },
+          "inputGraph": {
+            "objects": [],
+            "roots": [
+              [
+                "str",
+                "counter"
+              ]
+            ],
+            "schema": "owned-graph/1"
+          },
+          "source": "\"use strict\";async function run(key){const current=await host.readAsync(key);const next=current+1;host.store(key,next);return next;}"
+        }
+      ],
+      "sourceProvenance": {
+        "family": "async-counter",
+        "fixtureDigest": "1e721733566fd03142f76365a963a1e7dcc99abf8395f92650a9dde061b075c0",
+        "license": "repository-fixture",
+        "seed": 17,
+        "sourceDigest": "f61a2c5f8b1b89b60dbb6902955bc5c008ed798c5ab0fdbfba3ccc21cca08f7d",
+        "trustTier": "repository-fixture",
+        "upstream": [
+          {},
+          {}
+        ]
+      },
+      "environment": {
+        "arch": "x64",
+        "implementationDigest": "7f05841c0251f4924d61b421713311cc1a2a439a5c9c645344c161257336ae0b",
+        "node": "24.22.3",
+        "packageLockDigest": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88",
+        "parser": "8.15.0",
+        "platform": "linux",
+        "schema": "semantic-execution-environment/1",
+        "timezone": "Europe/Berlin",
+        "typescript": "5.9.3",
+        "v8": "13.6.233.17-node.63"
+      },
+      "identityDigest": "6382f47cfa0abb31049da8a0cbc8e62159f37cb0ee6b7fba2f9a7c8c33a69ee0",
+      "sourceFamily": "async-counter",
+      "ancestorIds": [
+        "async-counter"
+      ],
+      "split": "train"
+    }
+  ],
+  "separateTwoRowBaseline": {
+    "counts": {
+      "attempted": 2,
+      "admitted": 2,
+      "accepted_candidate": 2
+    },
+    "accepted": 2,
+    "refusals": []
+  },
+  "environmentRegression": {
+    "attemptedTimezone": "UTC",
+    "recordedTimezone": "Europe/Berlin",
+    "attempted": 2,
+    "admissionRejected": 2,
+    "reason": "Candidate identity evidence changed: runtime, dependency or verifier environment",
+    "resolution": "Source recheck passed only after restoring the recorded Europe/Berlin timezone. Final campaigns must forward TZ consistently to workers."
+  },
+  "retainedInputsNote": "Compressed complete control/mutation inputs are identified by SHA-256 above. Exact original source/input/fixture data and actual source/native receipts are retained here; regenerate the complete artifacts with the pinned checkouts and this runner."
+}
