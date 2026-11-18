@@ -1,0 +1,28 @@
+{
+  "schema": "semantic-actual-artifact-regressions/1",
+  "toolRevision": "aa0559c62f8874c93bd295f80306cb9da0b220b9",
+  "modelProducerRevision": "c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39",
+  "nativeConsumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+  "artifactRun": "release-evidence/optimization-full-epoch",
+  "command": "TZ=UTC LC_ALL=C.UTF-8 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 PYTHONPATH=/workspace/scratch/23f61543c052/megatoken/src TRACING_DIAGNOSTIC_RUN=/workspace/scratch/23f61543c052/release-evidence/optimization-full-epoch TRACING_DIAGNOSTIC_CONSUMER=/workspace/scratch/23f61543c052/megatoken ../native-venv/bin/python -m pytest -q test/test_diagnostic_evidence.py",
+  "counts": {
+    "tests": 14,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0
+  },
+  "seconds": 10.356,
+  "actualArtifactTests": 6,
+  "ordinaryBoundaryTests": 8,
+  "files": [
+    {
+      "path": "release-evidence-F/actual-artifact-regressions.log",
+      "sha256": "e8807a92e8b8318de947d66ad1ea4a70dc00e413669cfbac43f10575b685cdc2"
+    },
+    {
+      "path": "release-evidence-F/actual-artifact-regressions.xml",
+      "sha256": "2d5720b3cd91a5f196be6bfe0071ba2b95017697272ffa7afeeaf926f9a96c52"
+    }
+  ],
+  "scope": "Copies of actual retained49-update artifacts. Original bundle passes; altered serving tokenizer, model configuration, transducer bank, model version and omitted actual training inventory fail. Original checkpoint/evaluation bytes unchanged. No new training or inference."
+}
