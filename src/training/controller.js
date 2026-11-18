@@ -1,11 +1,12 @@
-// Transactional selected-trajectory state machine for semantic-trace/5.
+// Transactional selected-trajectory state machine for semantic-trace/6.
 // No teacher records, VM instructions or source interpreter are loaded here.
-import {decodeWitness,CONTINUATION_VERSION,canonicalCompletionPolicy,assertValue} from './format.js';
+import {decodeWitness,encodeWitness,CONTINUATION_VERSION,canonicalCompletionPolicy,assertValue} from './format.js';
 import {checkWitnessClaim} from './witness-check.js';
 import {describeGraph} from './graph.js';
 import {analyzeSemanticProgram} from './semantic-program.js';
 import {materializeHostArguments,decodeHostPayload} from '../host/materialize.js';
 import {hostOperation} from '../host/operations.js';
+import {checkSemanticRegionClaim} from './semantic-regions.js';
 
 const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 function fail(category,message) {
@@ -220,7 +221,20 @@ export class SemanticController {
         for(const value of f.arguments??[])known(value);
         for(const property of f.properties??[])known(property.value);
       }
-      if(kind==='compute'||kind==='choose'){
+      if(kind==='summarize'){
+        if(this.generated!==1||this.stack.length!==1||active!==this.rootInvocation||
+           this.effects.size||this.jobs.size||this.continuations.size||this.pending)
+          fail('region','A whole-region claim requires the untouched invocation entry');
+        let claim;
+        try {claim=checkSemanticRegionClaim(this.source.source,this.source.entry,
+          this.input.graph.roots,f,{heap:this.heap});}
+        catch(error){fail('region',error.message);}
+        this.claims.push({index:this.history.length,kind,...claim});
+        // Preserve the supplied prediction even when its computation is false.
+        // Independent checks report the violation; they never substitute truth.
+        this.pending={kind:'return',value:structuredClone(f.result)};
+        this.stack.pop();
+      }else if(kind==='compute'||kind==='choose'){
         const claimed=kind==='compute'?f.result:f.decision;
         const claim=checkWitnessClaim(f.expr,claimed,{
           locals:this.visibleLocals(),randomState:this.randomState,
@@ -573,7 +587,7 @@ export class SemanticController {
       fail('continuation','Committed-state packet requires an explicit null or unsigned 32-bit random state');
     const copied=structuredClone(packet);
     const controller=new SemanticController([
-      'code '+JSON.stringify(packet.context),'input '+JSON.stringify({graph:{roots:[],objects:[]}})
+      encodeWitness('code',packet.context),encodeWitness('input',{graph:{roots:[],objects:[]}})
     ],{...options,completionPolicy:packet.policy,capabilities:packet.capabilities,
       fixtureReplies:packet.fixtureReplies,observationAuthority:packet.observationAuthority??'fixture',
       maxGenerated:packet.maxGenerated,

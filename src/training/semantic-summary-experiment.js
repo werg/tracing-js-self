@@ -1,4 +1,4 @@
-// Experimental region endpoint. These summaries are NOT semantic-trace/5
+// Experimental region endpoint. These summaries are NOT semantic-trace/6
 // records and cannot be fed into the production selected controller/consumer.
 // V8 independently executes the source; no owned transition computes a verdict.
 import {parse} from 'acorn';
@@ -239,7 +239,7 @@ export async function buildSemanticSummaryExperiment({context,summary,family,tim
   if(certificate.status!=='verified')return certificate;
   const args=decodeOwnedGraph(JSON.stringify(context.inputGraph));
   const detailed=await verifyEffectfulTrainingCase({source:context.source,entry:context.entry,args,
-    family,fixture:{calls:[]},timeoutMs});
+    family,fixture:{calls:[]},timeoutMs,projectionOptions:{semanticRegions:false,localStateCompaction:false}});
   if(detailed.status!=='locally_verified')return {status:'rejected',phase:'detailed-control',reason:detailed.reason};
   const raw='summary '+JSON.stringify(summary);
   const detailedLines=detailed.exported.public.timeline.filter(row=>row.kind==='semantic').map(row=>row.line);

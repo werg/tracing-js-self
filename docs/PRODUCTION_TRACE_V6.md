@@ -20,6 +20,36 @@ evaluate twice(3) => 6 in @call1
 end return
 ```
 
+These regions are enabled by default in the production compiler. The bounded
+profiles cover primitive expression returns, conditional and short-circuit
+expressions, and a counted sum over a dense ordinary numeric array. Up to four
+acyclic calls to statically named pure helpers are included in the same region;
+the complete expression tree is limited to eight operators and 32 nodes. Dense
+sums have a production limit of 128 iterations. A three-element sum becomes:
+
+```text
+evaluate sum(@o1) => 9 over 3 items into total
+end return
+```
+
+The model predicts the result and, for control expressions, the exact ordered
+executed decisions. The public checker uses only immutable source and current
+input arguments. It applies explicit primitive rules without evaluating source
+text or calling a guest function. A wrong branch remains wrong even when both
+branches return the same value. A whole-region record is permitted only at an
+untouched invocation entry; it cannot skip earlier selected work or absorb an
+external observation.
+
+The compiler retains the full owned journal and an exact region certificate.
+Independent V8 source, operation, branch, and completion checks still gate
+training admission. Source shapes with mutation, getters, ambient state,
+recursion, exceptions, async work, callbacks or external effects keep their
+detailed semantic boundaries. `semanticRegions: false` is an explicit
+diagnostic control using the same v6 language. Repeated writes of the exact
+already-committed value to the same lexical cell are also omitted by default,
+with a private receipt; distinct aliases, property writes and intermediate
+changes remain visible.
+
 An object identity appears where aliasing matters:
 
 ```text

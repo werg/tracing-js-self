@@ -15,6 +15,7 @@ import {hostOperation,SUBSCRIPTION_CLOSERS} from '../host/operations.js';
 import {analyzeSemanticProgram} from './semantic-program.js';
 import {sourceLinkedComputation,sourceLinkedDecision} from './semantic-source.js';
 import {DECLARED_EXCEPTION_PROFILE} from './exception-profile.js';
+import {inspectSemanticRegion,evaluateSemanticRegion,checkSemanticRegionClaim} from './semantic-regions.js';
 
 const copy=value=>structuredClone(value);
 const hash=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
@@ -89,9 +90,10 @@ export function ownedEffectfulOutcome(bundle){
 export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='program1',
     invocationId='invocation1',trackId='worker1',realmId='realm1',sourceLineage=null,
     maxGenerated=16384,realmPolicy='retained',triggerId='teacher-entry',checkpointAtFirstAwait=false,
-    representation='compact',maxOperators=8,localStateCompaction=false}={}){
+    representation='compact',maxOperators=8,localStateCompaction=true,semanticRegions=true}={}){
   if(typeof checkpointAtFirstAwait!=='boolean')refuse('checkpointAtFirstAwait must be boolean');
   if(typeof localStateCompaction!=='boolean')refuse('localStateCompaction must be boolean');
+  if(typeof semanticRegions!=='boolean')refuse('semanticRegions must be boolean');
   if(representation!=='compact')refuse('Only the canonical semantic trace is supported');
   if(!Number.isInteger(maxOperators)||maxOperators<1||maxOperators>8)
     refuse('compact expressions require an operator bound from 1 through 8');
@@ -134,6 +136,69 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   const certifiedDataIdentities=new Set(inputGraph.objects.map(node=>node.id));
   harness.admitInvocation({programId,invocationId,trackId,realmId,triggerId,
     inputGraph,realmPolicy,completionPolicy:'await-returned-promise'});
+  // Production whole-region explanations are selected only from a bounded
+  // public-source proof. The detailed owned journal and independent source
+  // checks remain private admission evidence. An unsupported shape falls back
+  // to the normal detailed semantic trace, never to a guessed summary.
+  let region=null,evaluation=null;
+  if(semanticRegions&&!checkpointAtFirstAwait&&capabilities.length===0){
+    try {
+      region=inspectSemanticRegion(source,entry.functionName);
+      evaluation=evaluateSemanticRegion(region,inputGraph.roots,
+        {heap:harness.invocations.get(invocationId).controller.heap});
+    }catch{region=null;evaluation=null;}
+  }
+  if(region){
+    const expected=ownedEffectfulOutcome(bundle);
+    const completion=expected.graph.roots.at(-1);
+    if(expected.kind!=='return'||!isDeepStrictEqual(evaluation.result,completion))
+      refuse('public region proof differs from the owned completion');
+    // Branch decisions come from committed owned events and are checked
+    // against the independent primitive rules before becoming public targets.
+    const decisions=[];
+    if(region.profile==='pure-control-helper/1'){
+      for(const row of semantic.events.filter(row=>row.op==='branch')){
+        const site=region.decisionSites.find(item=>
+          (['then','else'].includes(row.path)?item.kind==='conditional':item.kind==='logical')&&
+          (item.source.start===row.source?.start&&item.source.end===row.source?.end||
+          item.site.start===row.source?.start&&item.site.end===row.source?.end));
+        if(!site)refuse('region branch lacks its exact public source site');
+        const selected=site.kind==='conditional'?
+          (row.path==='then'?'consequent':row.path==='else'?'alternate':null):
+          (row.path==='use-left'?'left':row.path==='evaluate-right'?'right':null);
+        if(!selected)refuse('region branch lacks a recognized owned path');
+        decisions.push({site:copy(site.site),selected});
+      }
+    }
+    const fields={entry:entry.functionName,arguments:copy(inputGraph.roots),result:copy(completion),
+      profile:region.profile,...(region.loop?{iterations:evaluation.iterations,accumulator:region.loop.accumulator}:{}),
+      ...(region.profile==='pure-control-helper/1'?{decisions}:{})};
+    const claim=checkSemanticRegionClaim(source,entry.functionName,inputGraph.roots,fields,
+      {heap:harness.invocations.get(invocationId).controller.heap});
+    if(!claim.consistent)refuse('owned region claims disagree with public source proof');
+    const certificates=[];
+    for(const [kind,record] of [['summarize',fields],['end',{kind:'return'}]]){
+      const line=encodeWitness(kind,record);
+      harness.prepareModelContext(invocationId);harness.selected(invocationId,line);
+      const receipt=harness.timeline.findLast(row=>row.kind==='semantic');
+      certificates.push({sequence:receipt.sequence,rule:kind==='summarize'?'owned-semantic-region/1':'owned-completion/4',
+        journalEvents:kind==='summarize'?bundle.events.map(event=>event.eventId):[],
+        source:region.region,digest:hash(line)});
+    }
+    const exported=harness.exportEpisode({sourceLineage});
+    Object.assign(exported.sidecar,{selectionOrigin:'owned-interpreter-teacher',referenceStatus:'unverified',
+      admission:'projected',representation:'compact',compiler:{schema:'semantic-effectful-compiler/5',
+        certificates,elided:[],checkpoints:[],exceptionProfile:DECLARED_EXCEPTION_PROFILE,
+        sourceDigest:hash(source),archiveDigest:hash(bundle),capabilities,representation:'compact',
+        region:{profile:region.profile,sourceRegion:region.region,bounds:{operators:8,nodes:32,helperCalls:4,iterations:128},
+          inputUnchanged:true,executedDecisions:decisions.length},
+        compaction:{maxOperators,maxNodes:32,removedComputations:0,foldedConditions:0,fusedBindings:0,
+          removedCellWrites:0},generatedRecords:2,publicDigest:hash(exported.public)}});
+    const replayed=SelectedExecutionHarness.replay(exported).invocations.get(invocationId).controller;
+    if(replayed.firstWitnessViolation||!isDeepStrictEqual({kind:replayed.completion.kind,
+      graph:replayed.observedGraph()},expected))refuse('public region replay differs from owned outcome');
+    return {exported,semantic,certificates,outcome:expected};
+  }
   const certificates=[],elided=[],checkpoints=[],rows=new Map(semantic.events.map(row=>[row.journalEvent,row]));
   const facts=normalizeCompletionFacts(bundle),state=copy(bundle.initialState);
   const roots=new Map([[semantic.rootInvocation,invocationId]]),frames=new Map([[semantic.rootInvocation,invocationId]]);
@@ -238,7 +303,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     return {last,write};
   }
   function emit(owner,kind,fields,event=null,rule=kind){
-    // Versioned, opt-in experiment; the default v5 target remains byte-stable.
+    // Canonical production reduction over an already committed local cell.
     // A normal assignment to an already published lexical cell is idempotent
     // only when the exact cell and tagged value already match. This cannot
     // remove an initialization, property setter, iteration-cell identity link,
@@ -794,12 +859,12 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   exported.sidecar.referenceStatus='unverified';
   exported.sidecar.admission='projected';
   exported.sidecar.representation='compact';
-  exported.sidecar.compiler={schema:'semantic-effectful-compiler/4',certificates,elided,checkpoints,
+  exported.sidecar.compiler={schema:'semantic-effectful-compiler/5',certificates,elided,checkpoints,
     exceptionProfile:DECLARED_EXCEPTION_PROFILE,
     sourceDigest:hash(source),archiveDigest:hash(bundle),capabilities,
     representation:'compact',compaction:{maxOperators,maxNodes:32,removedComputations:fusedComputations,
       foldedConditions:foldedComputations,fusedBindings,...(localStateCompaction?{
-        experiment:'local-cell-idempotence/1',removedCellWrites}:{})},
+        rule:'local-cell-idempotence/1',removedCellWrites}:{})},
     generatedRecords:generated,publicDigest:hash(exported.public)};
   const replayed=SelectedExecutionHarness.replay(exported);
   for(const activation of replayed.invocations.values())

@@ -1,9 +1,13 @@
-# Semantic trace abstraction experiments
+# Semantic trace abstraction experiments and production promotion
 
-The production `semantic-trace/5` codec and default compiler remain the control.
-This work inspects actual predicted records and adds a deliberately narrow,
-opt-in compatible reduction. A readable rendering is never counted as the
-model's target, and byte savings are not described as token or learning gains.
+The bounded profiles below have now been promoted into the production
+[`semantic-trace/6` language](PRODUCTION_TRACE_V6.md). Its actual model targets
+use source-shaped statements, production region claims run through the selected
+controller, and idempotent lexical-write reduction is enabled by default.
+The sections and checked-in v5 evidence below document the earlier experiments;
+they are historical comparisons, not a current production contract. Fresh
+episodes must be generated and admitted under v6. Byte savings alone are not
+described as token or learning gains.
 
 ## Reproduce the paired gallery
 
