@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Select already admitted bytes for the native consumer without rewriting an
 // identity, a frozen split, or a receipt. Keep the full campaign for audit.
-import {readFileSync,existsSync,readdirSync,mkdirSync} from 'node:fs';
+import {readFileSync,existsSync,readdirSync,mkdirSync,openSync,closeSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {resolve,join,relative,sep} from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -66,6 +66,24 @@ export function exactPublicRepresentatives(rows){
   return {selected,aliases,representatives};
 }
 
+function verifyJournalBindings(campaign){
+  const attempts=new Map();
+  for(const entry of campaign.entries){
+    const candidate=campaign.readObject(entry.candidate),result=campaign.readObject(entry.result);
+    if(result.status!==entry.status||entry.attempt!==(attempts.get(entry.id)??0)+1||
+      Boolean(entry.public)!==Boolean(entry.private))
+      throw new Error('Historical campaign result, attempt or public/private binding changed');
+    attempts.set(entry.id,entry.attempt);
+    if(candidate.inputs!==undefined){
+      if(!Array.isArray(candidate.inputs))throw new Error('Invalid historical candidate input references');
+      for(const input of candidate.inputs){
+        if(!input||typeof input!=='object')throw new Error('Invalid historical candidate input reference');
+        for(const kind of ['source','input','fixture'])campaign.readObject(input[kind]);
+      }
+    }
+  }
+}
+
 export async function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_SAFE_INTEGER,
     maxFamilyShare=1,split='all',deduplicateExactPublic=false,tracerRoot=null}={}){
   input=resolve(input);output=resolve(output);
@@ -75,25 +93,35 @@ export async function selectAdmittedCampaign({input,output,maxFamilyTokens=Numbe
   if(!['all','train','validation','test'].includes(split))throw new Error('Invalid requested split');
   if(typeof deduplicateExactPublic!=='boolean')throw new Error('Exact-public representative selection must be explicitly boolean');
   const header=JSON.parse(readFileSync(join(input,'campaign.json'),'utf8'));
-  const campaign=new CampaignStore(input,header.identity,{readOnly:true,recoverTornLog:false,
-    maxObjectBytes:header.identity.bounds?.maxOutputBytes??268435456});
+  // The producing reader may predate shared locks. Hold the current lock outside
+  // either constructor; explicit historical routing is never a failed-read fallback.
+  const lock=openSync(join(input,'.campaign.lock'),'a',0o600);
+  try{execFileSync('flock',['--shared','--nonblock','3'],{stdio:['ignore','pipe','pipe',lock]});}
+  catch(error){closeSync(lock);throw new Error(error.status===1?'Campaign is already open by another writer':
+    'Campaign selection requires the OS flock utility',{cause:error});}
+  let campaign;
   try{
   const sourceBytes=readFileSync(join(input,'manifest.json')),
     sourceManifest=JSON.parse(sourceBytes.toString('utf8'));
-  let verifyBinding=verifyNativeBinding,producerVerifier=null;
+  let Reader=CampaignStore,verifyBinding=verifyNativeBinding,producerVerifier=null;
   if(tracerRoot!==null){
     tracerRoot=resolve(tracerRoot);
     const revision=execFileSync('git',['rev-parse','HEAD'],{cwd:tracerRoot,encoding:'utf8'}).trim();
     if(revision!==sourceManifest.producerRevision)
       throw new Error('Historical selection requires the exact immutable producing checkout');
     execFileSync('git',['diff','--quiet','HEAD','--'],{cwd:tracerRoot});
-    // Current storage owns the read-only shared lock and validates the complete
-    // journal. Only admission is routed to the immutable producing checkout.
-    const admission=await import(pathToFileURL(join(tracerRoot,'src/training/effectful-admit.js')).href);
-    verifyBinding=admission.verifyNativeBinding;
+    const [storage,admission]=await Promise.all([
+      import(pathToFileURL(join(tracerRoot,'src/corpus/campaign-store.mjs')).href),
+      import(pathToFileURL(join(tracerRoot,'src/training/effectful-admit.js')).href)]);
+    Reader=storage.CampaignStore;verifyBinding=admission.verifyNativeBinding;
     producerVerifier={root:tracerRoot,revision,trackedFilesClean:true,
-      sourceEnvironmentChecksUnchanged:true};
+      sourceEnvironmentChecksUnchanged:true,campaignReader:'exact-producing-format-under-shared-lock',
+      candidateDigestPolicy:'original-producing-format; legacy graph commitments are not rewritten',
+      campaignReaderSha256:sha256(readFileSync(join(tracerRoot,'src/corpus/campaign-store.mjs')))};
   }
+  campaign=new Reader(input,header.identity,{readOnly:true,resume:true,recoverTornLog:false,
+    maxObjectBytes:header.identity.bounds?.maxOutputBytes??268435456});
+  verifyJournalBindings(campaign);
   if(sourceManifest.campaign?.identityDigest!==campaign.identityDigest)
     throw new Error('Manifest and campaign identity disagree');
   mkdirSync(output,{recursive:true});
@@ -224,7 +252,7 @@ export async function selectAdmittedCampaign({input,output,maxFamilyTokens=Numbe
     throughput:{measuredDuringSourceCampaign:sourceManifest.throughput,selectionDoesNotGenerateNewTokens:true}};
   atomicWrite(join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
   return report;
-  }finally{campaign.close();}
+  }finally{try{campaign?.close?.();}finally{closeSync(lock);}}
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
   const flags=new Map(),allowed=new Set(['--input','--out','--max-family-tokens','--max-family-share','--split',

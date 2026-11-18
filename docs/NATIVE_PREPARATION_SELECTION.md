@@ -26,13 +26,26 @@ Exact equality uses the existing SHA-256 over the exact serialized public
 document; this is not a source-similarity or near-duplicate heuristic.
 
 For a historical campaign, `--tracer-root` loads its exact immutable producer's
-native-admission identity verifier. The current campaign reader validates the
-complete journal and CAS under its shared read lock. The current selection tool
+campaign reader and native-admission identity verifier. The current selector
+holds a shared read lock around that reader and additionally checks result,
+attempt, public/private and nested input-reference bindings. The producing
+reader validates its complete journal and CAS under its original format. The current selection tool
 can then apply its stronger selection rule without substituting newer runtime
 implementation bytes into the original verifier environment. The producing Git
 revision must match the manifest and tracked files must be clean. Original
 environment checks, including the recorded timezone, remain mandatory; this
 option does not relax them. Without the option the selector uses its own checkout.
+
+This explicit route is necessary for legacy graph-sensitive candidate digests:
+some original writers committed the in-memory graph before JSON storage erased
+shared references or undefined metadata. Those digests remain opaque historical
+commitments retained by the original journal under its producing format; they
+are never replaced with newly computed values. New writers require a lossless
+JSON identity round trip, and current-format reads keep their strict digest
+recomputation. A failed current read does not trigger a historical fallback.
+The selection report records the exact producing revision and reader-module
+hash. Historical admission identity verification still checks every selected
+complete export; independent native preparation must rerun source/native gates.
 
 **Use a separate snapshot for legacy campaigns without `.campaign.lock`.** The
 current shared-lock reader opens that lock file and can create it when absent;
@@ -41,7 +54,7 @@ inspect it. Copy the completed campaign to a new staging directory, record and
 verify its original manifest, journal and CAS hashes, and run selection against
 that snapshot. Keep the frozen original untouched and retain the exact
 `--tracer-root` for its admission identities. Do not replace the current reader
-with a legacy writer constructor or bypass journal/lock validation. The output
+with an unpinned legacy constructor or bypass journal/lock validation. The output
 directory must remain outside the input campaign.
 
 ## Required compatibility and audit evidence
