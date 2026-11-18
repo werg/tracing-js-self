@@ -21,29 +21,47 @@ import {recheckEffectfulSession} from './effectful-session.js';
 import {effectfulFamilySplit,defaultSplitIdentity,validateSplitIdentity,normalizeSeeds,
   admissionEnvironment,bindAdmissionIdentity,verifyAdmissionIdentity,identityDigest} from './admission-identity.js';
 export {effectfulFamilySplit} from './admission-identity.js';
+import {AdmissionFailure,createFailureRecord} from './failure-record.js';
 
 const hash=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
 const referenceWorker=fileURLToPath(new URL('../../tools/effectful-reference-worker.mjs',import.meta.url));
 export function independentEffectfulReference(input,{timeoutMs=5000,maxOutputBytes=4194304}={}){
+  if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||!Number.isSafeInteger(maxOutputBytes)||maxOutputBytes<1)
+    throw new TypeError('Reference deadline and output bound must be positive safe integers');
   return new Promise((resolve,reject)=>{
     const child=spawn(process.execPath,[referenceWorker],{stdio:['pipe','pipe','pipe'],shell:false});
-    let stdout='',stderr='',done=false;
+    const chunks=[];let outputBytes=0,stderr='',done=false;
+    const fail=(category,message,details=null)=>new AdmissionFailure(category,message,details);
     const finish=(error,value)=>{if(done)return;done=true;clearTimeout(timer);
       if(error){child.kill();reject(error);}else resolve(value);};
-    const timer=setTimeout(()=>finish(new Error('Independent source-reference deadline exceeded')),timeoutMs);
-    child.once('error',finish);
-    child.stdout.on('data',bytes=>{stdout+=bytes.toString();if(Buffer.byteLength(stdout)>maxOutputBytes)
-      finish(new RangeError('Independent reference output bound exceeded'));});
+    const timer=setTimeout(()=>finish(fail('reference_timeout','Independent source-reference deadline exceeded',
+      {timeoutMs,mode:input.mode??'original'})),timeoutMs);
+    child.once('error',error=>finish(fail('reference_process_failure','Independent source process failed to start',
+      {code:error.code??null,message:error.message})));
+    child.stdout.on('data',bytes=>{outputBytes+=bytes.length;
+      if(outputBytes>maxOutputBytes)finish(fail('reference_output_limit','Independent reference output bound exceeded',
+        {maxOutputBytes,mode:input.mode??'original'}));
+      else chunks.push(bytes);});
     child.stderr.on('data',bytes=>{stderr=(stderr+bytes.toString()).slice(-4096);});
     child.once('close',code=>{
+      if(done)return;
+      const stdout=Buffer.concat(chunks).toString('utf8');
       try{
         const result=JSON.parse(stdout);
-        if(code!==0||result.error)throw new Error(result.error??stderr??'Independent reference failed');
+        if(code!==0||result.error){
+          const category=result.failure?.category??'reference_process_failure';
+          finish(fail(category,String(result.error??stderr??'Independent reference failed'),
+            {code,stderr,mode:input.mode??'original',failure:result.failure??null}));return;
+        }
+        if(result.schema!=='effectful-reference/4'||!['return','throw'].includes(result.outcome?.kind)||
+          !Array.isArray(result.effects)||!Array.isArray(result.callbackFailures))
+          throw new Error('Incomplete independent reference response');
         finish(null,result);
-      }catch(error){finish(new Error('Independent source process '+code+': '+error.message+
-        (stderr?' ('+stderr+')':'')));}
+      }catch(error){finish(fail('reference_process_failure','Independent source process '+code+': '+error.message,
+        {code,stderr,stdout:stdout.slice(0,8192),mode:input.mode??'original'}));}
     });
-    child.stdin.on('error',finish);
+    child.stdin.on('error',error=>finish(fail('reference_process_failure','Independent reference input failed',
+      {code:error.code??null,message:error.message})));
     child.stdin.end(JSON.stringify({...input,timeoutMs}));
   });
 }
@@ -75,9 +93,11 @@ function independentSemanticChecks(bundle,source,operations,decisions){
       expectedBranches.push({site,decision:row.result});
   }
   if(!isDeepStrictEqual(expectedOperations,operations))
-    throw new Error('Independent executed computation receipts disagree: '+JSON.stringify({expectedOperations,operations}));
+    throw new AdmissionFailure('reference_operation_mismatch','Independent executed computation receipts disagree',
+      {expectedOperations,operations});
   if(!isDeepStrictEqual(expectedBranches,decisions))
-    throw new Error('Independent executed branch receipts disagree: '+JSON.stringify({expectedBranches,decisions}));
+    throw new AdmissionFailure('reference_branch_mismatch','Independent executed branch receipts disagree',
+      {expectedBranches,decisions});
   return {schema:'effectful-source-checks/4',status:'agreed',
     computations:operations.length,branches:decisions.length};
 }
@@ -134,7 +154,8 @@ export async function verifyEffectfulTrainingCase({source,entry,args=[],fixture,
     family,license='repository-fixture',trustTier='repository-fixture',maxSteps=100000,
     timeoutMs=10000,nativeConsumer=null,seed=17,projectionOptions={},producerRevision=null,
     ancestorIds=[],taskId=null,fixtureFamily=null,provenance={},seeds={},splitIdentity=null,nativePolicy=null}={}){
-  if(typeof family!=='string'||!family||typeof license!=='string'||!license||
+  if(typeof source!=='string'||typeof entry!=='string'||!entry||
+    typeof family!=='string'||!family||typeof license!=='string'||!license||
     !['repository-fixture','trusted-owned-source'].includes(trustTier))
     throw new TypeError('Effectful admission requires source family, license and declared trusted source tier');
   if(nativeConsumer||nativePolicy!==null)nativePolicy=validateNativePolicy(nativePolicy);
@@ -144,20 +165,29 @@ export async function verifyEffectfulTrainingCase({source,entry,args=[],fixture,
   const broker=createFixtureBroker(fixture),abort=new AbortController();
   const timer=setTimeout(()=>{const error=new Error('Owned teacher deadline exceeded');
     broker.abort(error);abort.abort(error);},timeoutMs);
-  let phase='teacher',bundle;
+  let phase='teacher',bundle;const observations={};
+  const candidate={source,entry,args,fixture,family,license,trustTier,maxSteps,timeoutMs,seed,
+    projectionOptions,producerRevision,ancestorIds,taskId,fixtureFamily,provenance,seeds,splitIdentity,nativePolicy};
   try{
     const run=await executeWithNativeServices({entry:{text:source,functionName:entry,args},
       services:broker.services,maxSteps,signal:abort.signal});bundle=run.bundle;
     const effects=broker.finish();phase='projection';
     const compiled=compileEffectfulWitness(bundle,{sourceLineage:family,...projectionOptions});
+    observations.owned={outcome:compiled.outcome,effects};
     phase='reference';
     const input={source,entry,inputGraph:encodeNativeGraph(args),fixture};
-    const reference=await independentEffectfulReference(input,{timeoutMs});
-    const operationReference=await independentEffectfulReference({...input,mode:'operations'},{timeoutMs});
-    const branchReference=await independentEffectfulReference({...input,mode:'branches'},{timeoutMs});
+    const reference=observations.original=await independentEffectfulReference(input,{timeoutMs});
+    const operationReference=observations.operations=await independentEffectfulReference({...input,mode:'operations'},{timeoutMs});
+    const branchReference=observations.branches=await independentEffectfulReference({...input,mode:'branches'},{timeoutMs});
     for(const result of [reference,operationReference,branchReference]){
+      if(result.callbackFailures.length)throw new AdmissionFailure('reference_callback_failure',
+        'Callback failures are outside the qualified observable completion profile',result.callbackFailures);
+      if(result.unhandledRejections?.length)throw new AdmissionFailure('reference_unhandled_rejection',
+        'Unhandled rejections are outside the qualified observable completion profile',result.unhandledRejections);
       if(!isDeepStrictEqual(result.outcome,compiled.outcome)||!isDeepStrictEqual(result.effects,effects))
-        throw new Error('Independent Node source outcome, mutations, callback order or effects disagree');
+        throw new AdmissionFailure('reference_outcome_mismatch',
+          'Independent Node source outcome, mutations, callback order or effects disagree',
+          {expected:observations.owned,actual:{outcome:result.outcome,effects:result.effects}});
     }
     const sourceChecks=independentSemanticChecks(bundle,source,operationReference.operations,
       branchReference.decisions);
@@ -186,9 +216,9 @@ export async function verifyEffectfulTrainingCase({source,entry,args=[],fixture,
     }
     return {status:exported.sidecar.admission,exported};
   }catch(error){
-    return {status:phase==='reference'?'reference_mismatch':phase==='native-consumer'?'native_rejected':
-      error instanceof RangeError?'profile_limit':phase==='projection'?'projection_refused':'unsupported',
-      phase,reason:String(error.message??error),family,archiveDigest:bundle?hash(bundle):null};
+    const failure=createFailureRecord({candidate,error,phase,archive:bundle??null,observations});
+    return {status:failure.original.status,category:failure.original.category,
+      phase,reason:failure.original.reason,family,archiveDigest:failure.original.archiveDigest,failure};
   }finally{clearTimeout(timer);broker.abort();}
 }
 
@@ -211,9 +241,17 @@ export async function recheckEffectfulAdmission(exported,{requireAdmitted=true,t
   const references=[];
   for(const mode of [null,'operations','branches'])references.push(await independentEffectfulReference(
     mode?{...input,mode}:input,{timeoutMs}));
-  for(const result of references)if(!isDeepStrictEqual(result.outcome,side.reference.outcome)||
-      !isDeepStrictEqual(result.effects,side.effects))
-    throw new Error('Independent effectful source evidence changed');
+  for(const result of references){
+    if(result.callbackFailures.length)throw new AdmissionFailure('reference_callback_failure',
+      'Callback failures are outside the qualified observable completion profile',result.callbackFailures);
+    if(result.unhandledRejections?.length)throw new AdmissionFailure('reference_unhandled_rejection',
+      'Unhandled rejections are outside the qualified observable completion profile',result.unhandledRejections);
+    if(!isDeepStrictEqual(result.outcome,side.reference.outcome)||
+      !isDeepStrictEqual(result.effects,side.effects)||
+      !isDeepStrictEqual(result.callbackFailures,side.reference.callbackFailures)||
+      !isDeepStrictEqual(result.unhandledRejections??[],side.reference.unhandledRejections??[]))
+      throw new Error('Independent effectful source evidence changed');
+  }
   const sourceChecks=independentSemanticChecks(side.archive,source,references[1].operations,references[2].decisions);
   if(!isDeepStrictEqual(sourceChecks,side.reference.sourceChecks))throw new Error('Source computation evidence changed');
   const dispatches=side.archive.events.filter(event=>event.operation==='effect.dispatch');
