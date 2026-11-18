@@ -44,7 +44,7 @@ test('primitive numeric conversions and caught BigInt errors have independent po
   assert.equal(report.rows.length,ids.length);
   for(const row of report.rows){
     assert.equal(row.disposition,'locally_verified',row.id+': '+row.reason);
-    for(const stage of ['frontend','ownedEvaluation','independentOutcome','independentIntermediate','v5ProjectionAndPublicReplay'])
+    for(const stage of ['frontend','ownedEvaluation','independentOutcome','independentIntermediate','v6ProjectionAndPublicReplay'])
       assert.equal(row.stages[stage],'passed',row.id+': '+stage);
     assert.equal(row.stages.nativeAdmission,'untested');
     assert.equal(row.stages.modelEvaluation,'untested');

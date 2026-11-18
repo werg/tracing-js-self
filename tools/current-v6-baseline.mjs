@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// One reproducible current-v5 baseline. Each completed check and its logs are
+// One reproducible current-v6 baseline. Each completed check and its logs are
 // durable before the next check starts. No historical receipt is relabeled.
 import {spawnSync,execFileSync} from 'node:child_process';
 import {mkdirSync,readFileSync,writeFileSync,appendFileSync,readdirSync,existsSync} from 'node:fs';
@@ -37,7 +37,7 @@ const actualEnvironment={node:process.versions.node,v8:process.versions.v8,
   npm:execFileSync('npm',['--version'],{cwd:root,env,encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim(),
   platform:process.platform,arch:process.arch,timezone:env.TZ,locale:env.LC_ALL};
 const environmentMismatches=compareReleaseEnvironment(lockedEnvironment,actualEnvironment);
-const report={schema:'semantic-v5-baseline/1',producerRevision:git('rev-parse','HEAD'),
+const report={schema:'semantic-v6-baseline/1',producerRevision:git('rev-parse','HEAD'),
   producerTree:git('rev-parse','HEAD^{tree}'),workingTreeClean:git('status','--porcelain','--untracked-files=no')==='',
   environment:admissionEnvironment(),executionEnvironment:{timezone:env.TZ,locale:env.LC_ALL},
   executionLimits:{checkTimeoutMs,testConcurrency:jobs},
@@ -124,10 +124,10 @@ if(existsSync(registry))report.sourceRegistry={path:'source-registry.json',sha25
 report.evidenceBoundaries={acquisition:'not measured here',nativeAdmission:native.length?'executed; inspect per-corpus counts':'untested',
   browser:'untested; run npm run test:browser separately',modelEvaluation:'untested',learningImprovement:'unmeasured'};
 report.activePolicy={publicRepresentation:'semantic-trace/6',sourceChecks:'effectful-source-checks/5',
-  defaultProjection:'frozen-v5-control',
+  defaultProjection:'production-v6-bounded-regions',
   nativePolicy:JSON.parse(readFileSync(join(root,'contracts/native-admission-policy-v6.json'),'utf8')),
   nativePolicyExecuted:native.length>0,containerDigest:lockedEnvironment.containerDigest,
-  summaryPromotion:'experimental-only; native and learned behavior unmeasured'};
+  summaryPromotion:'bounded regions enabled in production; native and learned evidence reported separately'};
 report.historicalEvidence=['docs/evidence/qualification-I-2026-11-18.json',
   'docs/evidence/semantic-v5/real-source-native-capped-release-D-2026-11-18.json',
   'docs/evidence/learning-diagnostics-2026-11-18.json',

@@ -7,7 +7,7 @@ import {admissionEnvironment} from './admission-identity.js';
 
 export const CAPABILITY_STAGES=Object.freeze([
   'frontend','ownedEvaluation','independentOutcome','independentIntermediate',
-  'v5ProjectionAndPublicReplay','nativeAdmission','modelEvaluation'
+  'v6ProjectionAndPublicReplay','nativeAdmission','modelEvaluation'
 ]);
 export const CAPABILITY_STATUSES=Object.freeze(['passed','failed','unsupported','resource_limited','untested']);
 const pure=(id,body,args=[])=>({id,feature:id,source:'"use strict";'+body,entry:'run',args,fixture:{calls:[]}});
@@ -92,7 +92,7 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
       result.status==='unsupported'?'unsupported':'failed';
     if(afterTeacher){
       const projected=success||['reference','native-consumer'].includes(result.phase);
-      stages.v5ProjectionAndPublicReplay=projected?'passed':result.status==='projection_refused'?'unsupported':'failed';
+      stages.v6ProjectionAndPublicReplay=projected?'passed':result.status==='projection_refused'?'unsupported':'failed';
       if(projected){
         const referenced=success||result.phase==='native-consumer';
         const intermediateMismatch=['reference_operation_mismatch','reference_branch_mismatch'].includes(result.status);
@@ -108,7 +108,7 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
     }
     rows.push(row);
   }
-  return {schema:'semantic-capability-ledger/1',producerRevision,
+  return {schema:'semantic-capability-ledger/2',producerRevision,
     contracts:{execution:'semantic-execution/6',trace:'semantic-trace/6',context:'semantic-context/6',
       continuation:'semantic-continuation/6',harness:'selected-harness/2'},
     environment:admissionEnvironment(),nativePolicy,unit:'declared source/input/fixture probe',rows,

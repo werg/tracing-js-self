@@ -1,17 +1,17 @@
 {
-  "schema": "semantic-capability-index/1",
+  "schema": "semantic-capability-index/2",
   "purpose": "Navigation and evidence policy; measured counts are produced by the commands below.",
   "contracts": {
-    "execution": "semantic-execution/5",
-    "trace": "semantic-trace/5",
-    "context": "semantic-context/5",
-    "continuation": "semantic-continuation/5",
+    "execution": "semantic-execution/6",
+    "trace": "semantic-trace/6",
+    "context": "semantic-context/6",
+    "continuation": "semantic-continuation/6",
     "harness": "selected-harness/2"
   },
   "currentStatus": "docs/STATUS.md",
   "releaseGates": "docs/RELEASE_GATES.md",
   "measuredLedger": {
-    "schema": "semantic-capability-ledger/1",
+    "schema": "semantic-capability-ledger/2",
     "command": "npm run coverage:current -- --out /path/to/capabilities.json",
     "profile": "training-js/1",
     "unit": "declared source/input/fixture probe",
@@ -20,7 +20,7 @@
       "ownedEvaluation",
       "independentOutcome",
       "independentIntermediate",
-      "v5ProjectionAndPublicReplay",
+      "v6ProjectionAndPublicReplay",
       "nativeAdmission",
       "modelEvaluation"
     ],
@@ -33,7 +33,7 @@
     ],
     "policy": "A stage is passed only by executed evidence for that exact producer revision and environment. Parser acceptance does not promote later stages. Untested stages remain untested."
   },
-  "baselineCommand": "npm run baseline:v5 -- --out /path/to/new-baseline --jobs 4",
+  "baselineCommand": "npm run baseline:v6 -- --out /path/to/new-baseline --jobs 4",
   "historicalLedger": {
     "path": "coverage/historical/required-pre-v5.json",
     "lastCurrentRevision": "55a53c4b884b7d536cfc06220d8838d8cead9236",
@@ -45,13 +45,13 @@
   "currentReportProducer": "c2a64424d052f9b90a340a59a8d74cf5564e47aa",
   "profile": "training-js/1",
   "generate": "npm run coverage:current -- --out PATH [--megatoken DIR --tokenizer FILE --python PYTHON]",
-  "baseline": "npm run baseline:v5 -- --out DIRECTORY [--megatoken DIR --tokenizer FILE --python PYTHON]",
+  "baseline": "npm run baseline:v6 -- --out DIRECTORY [--megatoken DIR --tokenizer FILE --python PYTHON]",
   "stages": [
     "frontend",
     "ownedEvaluation",
     "independentOutcome",
     "independentIntermediate",
-    "v5ProjectionAndPublicReplay",
+    "v6ProjectionAndPublicReplay",
     "nativeAdmission",
     "modelEvaluation"
   ],

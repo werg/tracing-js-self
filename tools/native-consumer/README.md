@@ -1,4 +1,4 @@
-# Locked current-v5 native environment
+# Locked current-v6 native environment
 
 The lock targets CPython 3.12 on Linux x86_64 and CPU PyTorch. The exact
 qualification runtime is in `profiles/release-environment.lock.json`. GPU
@@ -21,11 +21,12 @@ the wrong Python version, and tokenizer byte or codec identity changes. The
 receipt records the actual host, libc, available runner/container identifiers,
 dependencies and lock hashes. An absent container identity remains explicit.
 
-The current consumer pin also isolates mutable replay state from the original
-observed input graph. Without that fix, valid examples that mutate input arrays
-or objects fail the byte-preservation gate because replay changes its input
-document. The v5 wire format is unchanged. Recollect native receipts with the
-new pin; receipts naming an earlier consumer remain historical evidence.
+The current consumer parses the same canonical v6 witness language as the
+producer and rejects the old JSON format. Its version gates also reject older
+prepared data and checkpoints. Recollect native receipts, regenerate prepared
+data and create fresh checkpoints with the paired revisions; old receipts stay
+historical. Mutable replay state remains isolated from original observed input
+bytes, so validation cannot change its own input evidence.
 
 `requirements.in` pins the companion's direct dependencies, native admission and
 CPU learning dependencies, and the editable build backend. The committed lock

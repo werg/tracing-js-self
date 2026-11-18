@@ -1,7 +1,7 @@
 # Current execution tracing status
 
-**Only model-facing execution representation:** `semantic-execution/5`,
-`semantic-trace/5`, `semantic-context/5`, `semantic-continuation/5`,
+**Only model-facing execution representation:** `semantic-execution/6`,
+`semantic-trace/6`, `semantic-context/6`, `semantic-continuation/6`,
 `selected-harness/2`.
 
 The canonical target is a **source-grounded semantic account**: calculations
@@ -17,17 +17,37 @@ general native Node.js/browser compatibility layer. Unsupported cases fail
 closed. The private journal and independent V8 reference verify owned
 source execution, but are not learner trace targets.
 
+## Production language and abstraction
+
+The model now predicts the [readable v6 language](PRODUCTION_TRACE_V6.md)
+directly. The former kind-plus-JSON witness writer/parser is removed from the
+active producer and native consumer. Source names, ordinary literals and
+short verbs express computations; identities remain explicit where aliasing,
+effects, continuations or ownership need them.
+
+Bounded primitive expressions, pure helper calls and dense numeric sum loops
+use checked whole-region results by default. Effects, observations, mutations
+and asynchronous transitions retain their causal boundaries. The source proof
+checks exact branch decisions as well as final values, and independent V8
+execution still gates teacher admission.
+
+The [paired target gallery](evidence/semantic-target-gallery-v2/README.md)
+contains eleven real source examples: 107 generated v6 records, 3,861 target
+UTF-8 bytes and 1,307 production-tokenizer tokens, compared with 145 records,
+12,345 bytes and 3,784 tokens in its unchanged v5 archive. This is a measured
+reduction in target size, not evidence of improved learned reasoning.
+
 ## Active code and evidence
 
 The [execution-training implementation ledger](EXECUTION_TRAINING_IMPLEMENTATION.md)
 tracks the current strict-assignment repair, independent completion checks,
 teacher mutation audit, native input diagnosis, causal-LM bridge, checked
 trace abstractions, coverage selection and bounded generation tools. Use
-`npm run baseline:v5` to generate an exact-revision manifest and status page.
+`npm run baseline:v6` to generate an exact-revision manifest and status page.
 Code availability, a locally verified sample, native admission and successful
 model learning are separate evidence levels.
 
-The [executed roadmap baseline](evidence/execution-baseline-7b5ef54/STATUS.md)
+The historical [executed roadmap baseline](evidence/execution-baseline-7b5ef54/STATUS.md)
 records fourteen passed command checks at `7b5ef54…`: 1,004 unit passes,
 five explicit native-serving skips, zero failures, all thirteen teacher
 mutants detected, and 203 locally verified recipe examples. That source-only
@@ -46,8 +66,11 @@ its hosted byte comparison. The subsequent
 [actual native conditional capture](evidence/native-conditionals-cb67ed1/README.md)
 **failed parity** at producer `cb67ed1…` and consumer `2725842…`: the same
 zero-update checkpoint and public prefix reached different conditional state
-through the two real paths. Metadata, track ownership and lifecycle history
-remain different. No new learned-execution success is claimed.
+through the two real paths. Those differences motivated the current native metadata, causal track,
+observation and decoder-support repairs. The archived failure is retained
+unchanged; it does not measure the new v6 code. Current evidence must identify
+the exact paired revisions and checkpoint, including transitions after a
+generated record. No general learned-execution success is claimed.
 
 The November resumption adds an explicit [capability index](../coverage/required.json),
 [measured v5 probes](../coverage/current-v5.json), and
@@ -59,11 +82,11 @@ declared-Error throws can be positive execution labels. Callback failures and
 unhandled rejection obligations remain admission refusals.
 
 - `src/training/effectful-compiler.js`: sole source-certified witness producer
-- `src/training/format.js`: sole public codec and strict v5 validator
+- `src/training/format.js`: sole public codec and strict v6 validator
 - `src/training/harness-v4.js`, `controller.js`, `model-driver.js`:
   selected execution, state, external effects and observed continuations
 - `src/training/source-check.js`: synchronous trusted-source verification
-  through the **same** v5 producer; does not grant admitted training status
+  through the **same** v6 producer; does not grant admitted training status
 - `src/training/effectful-admit.js`: independent source/effect/replay gates
   and optional pinned Megatoken native admission
 - `src/training/completion-reference.js`: once-evaluated independent source
@@ -76,7 +99,7 @@ unhandled rejection obligations remain admission refusals.
 - `src/corpus/source-registry.mjs`: frozen cross-stream ancestor/clone components
 - `src/corpus/campaign-store.mjs`: atomic checksummed campaign checkpoints,
   private evidence compression, and lossless shared registry storage
-- `tools/current-v5-baseline.mjs`: one-command exact-revision evidence collection
+- `tools/current-v6-baseline.mjs`: one-command exact-revision evidence collection
 - `tools/package-semantic-release.py`: complete private release and native
   preparation with an independently verifiable archive inventory
 - `tools/run-optimization-smoke.py`: actual CPU updates, masks, checkpoint reload,
@@ -107,8 +130,9 @@ Local source validation is not the same as native data admission. A
 production training sample must additionally pass complete selected
 record replay, strict observable reference agreement, pinned native
 tokenizer, native action/visibility/loss checks, and family/split
-provenance. Schema changes require coordinated migration of the
-separately versioned Megatoken consumer. No model-learning improvement
+provenance. Schema changes require coordinated version changes, fresh collection and
+preparation with the separately versioned Megatoken consumer; old artifacts
+are rejected rather than migrated. No model-learning improvement
 is claimed from compactness alone; learned quality must be measured
 with genuine held-out model runs.
 

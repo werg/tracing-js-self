@@ -4,7 +4,7 @@ An **experimental, owned-machine JavaScript semantic tracing runtime**, bootstra
 
 This is a working **bounded prototype**, **not** a complete JavaScript interpreter or complete Node/browser runtime. Unsupported language features fail explicitly rather than running guest JavaScript outside the tracer. See [current semantic-execution scope](docs/SEMANTIC_REASONING_TRACE.md) and [coverage ledger](coverage/required.json).
 
-The current v5 pipeline includes bounded synchronous and asynchronous
+The current v6 pipeline includes bounded synchronous and asynchronous
 execution, explicit guest throws, independent source verification, immutable
 candidate identities, frozen source components, resumable generation and
 pinned native admission. See [current status](docs/STATUS.md),
@@ -33,7 +33,7 @@ Use the Node version in `.nvmrc`, then install the committed dependency locks:
 ```sh
 npm ci --ignore-scripts
 npm run oracle:install
-npm run baseline:v6 -- --out ../current-v5-baseline --jobs 2
+npm run baseline:v6 -- --out ../current-v6-baseline --jobs 2
 ```
 
 For actual native admission, prepare the hash-locked Python environment and
@@ -62,11 +62,10 @@ receive a disambiguating suffix. Anonymous pure subexpressions get no synthetic
 temporary identities. For instance:
 
 ```text
-bind current = 7
-next = (current + 1) -> 8
-request demo.store("counter", 8)
-observe fulfilled undefined
-return 8
+current = 7
+compute (current + 1) => 8 as next in @invocation1
+request @e2 demo.store("counter", 8) payload ["counter",8] in @invocation1 at 98..118
+observe @e2 fulfilled undefined
 ```
 
 The external request, ordered response, state mutations, event/callback
@@ -75,8 +74,24 @@ with the independently executed source. Checked reasoning claims are evaluated
 against **prior committed public state**, never private future results.
 Calls, getters, proxies, updates and other effectful terms cannot be silently
 flattened into pure arithmetic; unsupported projections fail closed.
-See [reasoning trace design](docs/SEMANTIC_REASONING_TRACE.md) and
-[production v5 implementation](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md).
+The `observe` line is supplied context and receives no prediction loss.
+See the [production language](docs/PRODUCTION_TRACE_V6.md),
+[reasoning trace design](docs/SEMANTIC_REASONING_TRACE.md), and
+[exact target gallery](docs/evidence/semantic-target-gallery-v2/README.md).
+
+Bounded pure helpers and dense numeric sums now produce a single checked
+result followed by completion. These are actual production targets:
+
+```text
+evaluate run(4) => 5
+end return
+```
+
+The same eleven source examples use 1,307 target tokens in v6 versus 3,784 in
+the archived v5 format, measured with the same production tokenizer. This
+measures target size; learned execution quality still requires model evaluation.
+The grammar, native consumer, saved artifacts and generated fixtures move
+together to v6. Old JSON witness records are rejected.
 
 From an installed checkout:
 
@@ -84,8 +99,8 @@ From an installed checkout:
 npm ci
 npm test
 node tools/inspect-semantic-reasoning.mjs
-npm run training:generate -- --out /tmp/semantic-v5
-npm run baseline:v6 -- --out /tmp/semantic-v5-baseline --jobs 4
+npm run training:generate -- --out /tmp/semantic-v6
+npm run baseline:v6 -- --out /tmp/semantic-v6-baseline --jobs 4
 ```
 
 The inspection tool executes real pinned counter, choice, compound

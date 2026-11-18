@@ -42,7 +42,7 @@ def main():
     if revision != policy['consumerRevision'] or checksum(args.tokenizer_json) != policy['tokenizerSha256']:
         raise ValueError('Alias verification must use the original native consumer and tokenizer')
     sys.path.insert(0, str(consumer / 'src'))
-    from megatoken.data.semantic_harness_v5 import adapt_selected_harness_v5
+    from megatoken.data.semantic_harness_v6 import adapt_selected_harness_v6
     from megatoken.generation.codec import ByteCodec
     codec = ByteCodec.from_tokenizer_json(args.tokenizer_json, expected_sha256=policy['tokenizerSha256'])
     if codec.fingerprint != policy['tokenizerIdentity']:
@@ -58,7 +58,7 @@ def main():
             # The exact producer verifier already checked the original admission
             # binding. This pass compares native adaptation; it issues no new
             # source/native admission or optimization claim.
-            episode, receipt = adapt_selected_harness_v5(document, codec=codec,
+            episode, receipt = adapt_selected_harness_v6(document, codec=codec,
                 max_positions=1024, max_history=1024, admission_verifier=lambda _: True)
             actual = episode.to_dict()
             if baseline is None:

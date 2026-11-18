@@ -84,9 +84,9 @@ def inspect_inputs(packet, *, max_capacity=1024, max_tokens=128):
     if not 1 <= max_tokens <= max_capacity <= 8192:
         raise ValueError('Invalid declared text action capacity')
     from megatoken.controls import resolve_event_control
-    from megatoken.data.semantic_harness_v5 import adapt_selected_harness_v5
+    from megatoken.data.semantic_harness_v6 import adapt_selected_harness_v6
     from megatoken.semantic_model_adapter import SelectedSemanticInference
-    episode, native = adapt_selected_harness_v5(exported, codec=None, allow_local=True,
+    episode, native = adapt_selected_harness_v6(exported, codec=None, allow_local=True,
         admission_verifier=lambda document: document['sidecar']['identityDigest'] == receipt['identityDigest'])
     first = next(row for row in episode.records if row.policy_mask)
     if first.payload.decode('utf-8') != packet['firstTarget']['record']:
@@ -172,7 +172,7 @@ def main():
                                                text=True, timeout=120))
     sys.path.insert(0, str(consumer / 'src'))
     result = inspect_inputs(packet, max_capacity=args.max_capacity, max_tokens=args.max_tokens)
-    files = ['src/megatoken/data/semantic_harness_v5.py', 'src/megatoken/data/semantic_physical.py',
+    files = ['src/megatoken/data/semantic_harness_v6.py', 'src/megatoken/data/semantic_physical.py',
              'src/megatoken/controls.py', 'src/megatoken/semantic_model_adapter.py', 'src/megatoken/data/schema.py']
     result.update(consumerRevision=revision, episodeSha256=packet['episodeSha256'],
                   firstPublicPrefix=packet['prefix'],
