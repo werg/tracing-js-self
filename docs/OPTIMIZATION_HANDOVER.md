@@ -99,6 +99,13 @@ inventory. This is separate from the 67-pass general Python boundary run whose
 six artifact-dependent cases were initially skipped. Neither run performs new
 optimization or inference.
 
+The later integrated H validator also repeats all fourteen actual-artifact
+checks successfully against those same original C assets and original consumer.
+Its [separate receipt](evidence/actual-artifact-regressions-H-2026-11-18.json)
+binds the H tool revision without changing the original model provenance.
+Complete raw verification and model-context measurements are now retained in
+the [delivered audit supplement](VERIFICATION_AUDIT_SUPPLEMENT.md).
+
 ## Work that remains before a production learning claim
 
 1. **Obtain and bind an eligible actual base.** Native SE and SC require the

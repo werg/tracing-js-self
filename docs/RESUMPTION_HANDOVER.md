@@ -1,13 +1,14 @@
 # Resumption implementation handover — 18 November 2026
 
-**Release closeout in progress:** the complete D collection, native preparation,
-consumable capped dataset and F recovery are finished, and their complete
-archives are durably saved. The integrated H revision passes its full unit,
-reference-fixture and native capability gates, including the parameter and async
-repairs. The supplemental verification archive and the final hosted-CI snapshot
-are being completed.
-Completed implementation increments and compact receipts are committed and
-pushed immediately; historical failures remain intact.
+**Implementation and artifact delivery:** the complete D collection, native
+preparation, consumable capped dataset, F recovery and supplemental verification
+archive are finished. All twelve complete archives are verified and durably
+saved, with a separate private download index. The integrated H revision passes
+its full unit, reference-fixture and attempted native capability gates, including
+the parameter and async repairs. Learning acceptance remains unmet. Hosted CI
+has separate revision-specific status below; a pending or superseded job is not
+a pass. Implementation increments and compact receipts are committed and pushed
+immediately, preserving historical failures.
 
 The implementation branch is `codex/resumption-20261118`, with current review in
 [producer PR #39](https://github.com/werg/tracing-js-self/pull/39).
@@ -19,7 +20,7 @@ at main `9bf32c3fc794c532444d6a84629bfa29599eb49c`. Its exact qualified policy
 pin is `6b4382b9af3bef120ca3a95ae24d35154d4cd66b`. Companion PR #30 was closed
 unmerged externally; its frozen `1cee21d…` remains the genuine E/F/G consumer.
 Earlier producer PRs #36 and #37 were also merged externally. The per-package
-[acceptance audit](PLAN_ACCEPTANCE_AUDIT.md) distinguishes code completion from
+[final acceptance audit](PLAN_ACCEPTANCE_FINAL.md) distinguishes code completion from
 measured acceptance; it does not grant a blanket pass to W01–W14.
 
 ## Outcome and acceptance
@@ -118,7 +119,10 @@ rejected without altering originals or making new model calls.
 The complete integrated H Python suite subsequently passes **141 tests**, with
 the six optional original-checkpoint cases explicitly skipped in that run.
 This larger suite includes both merged release/evidence regression populations;
-the separate 14/14 actual-checkpoint receipt retains its original C pins.
+an additional H-validator follow-up then passes **14/14 actual-checkpoint tests**
+with zero skips in 8.827 seconds. It uses the original C checkpoint and original
+consumer, records H separately as the validation-tool revision, and leaves all
+original model bytes unchanged. It performs no optimization or inference.
 
 The H capability run takes 138.65 seconds and records a 394.4 MB peak child RSS.
 All forty actual native inputs, full receipt values and admission-bound exports
@@ -159,6 +163,8 @@ Evidence: [capability index](../coverage/required.json),
 [H unit/namespace receipt](evidence/qualification-H-unit-2026-11-18.json),
 [H native qualification](evidence/qualification-H-2026-11-18.json),
 [H Python regression receipt](evidence/python-boundary-regressions-H-2026-11-18.json),
+[H actual-artifact follow-up](evidence/actual-artifact-regressions-H-2026-11-18.json),
+[H native coordinator follow-up](evidence/native-orchestration-H-2026-11-18.json),
 [provenance receipt](evidence/native-provenance-C-2026-11-18.json),
 [D arithmetic receipt](evidence/owned-arithmetic-D-2026-11-18.json),
 [D Python integration](PYTHON_INTEGRATION_D.md), and
@@ -375,6 +381,17 @@ storage bytes. Token-share selection acts on admitted training components and
 retains evaluation rows. A selected release must also include its original
 audit campaign so rejected/excluded evidence is not lost.
 
+The real-source CI lane now selects exact-public representatives before native
+preparation and supplies the complete original campaign separately for audit.
+A fresh two-case diagnostic at producer `d15ddca…` and consumer `6b4382b…`
+reproduces an immutable episode-ID collision: both cases individually admit,
+the raw batch refuses one, and the selected representative admits normally.
+The unchanged 10,000-token/20% final cap check correctly refuses that one-family
+diagnostic as a balanced release. A read-only scan found no repeated same-family
+source/input groups among the default 210 inputs; the fresh collision uses
+registered inputs 0 and 4 from the supported larger inventory and does not
+claim the default lane was already failing. See [the integration receipt](evidence/ci-real-source-alias-routing-2026-11-18.json).
+
 Refusal-driven additions include dense owned `Array.some` and `forEach`, early
 exit/current-heap reads, sparse `fill`, and primitive `Number` conversion.
 `Number()` distinguishes omitted from undefined arguments, evaluates extra
@@ -462,7 +479,8 @@ archive and a freshly native-prepared release have separate schemas and claims.
 The following complete archives are verified and saved. Private download links
 are supplied with the delivery index; they are not embedded in the public
 repository. Every archive has a complete member inventory and identity digest.
-The C audit, complete model archive and complete D real-source native census use
+The twelve archives are delivered in nineteen binary files. The C audit,
+complete model archive and complete D real-source native census use
 the checksummed split parts in [ARCHIVE_PARTS.md](ARCHIVE_PARTS.md). All other
 listed archives fit in one file.
 
@@ -479,6 +497,7 @@ listed archives fit in one file.
 | F targeted native release | 102,268,413 | 366 | `dd6097d6b309e630cab1088809fdfce71706eed650f5f2c57c40da396b42dddc` |
 | D complete real-source native census | 1,688,252,285 | 6,474 | `ac4e88a3fba5f046ad44501e5751560806b1cdeaf701deb46fd6eea80aff9558` |
 | D consumable capped native release | 77,464,260 | 5,339 | `e59a167d4192efbdb499a382ee3108425503e6d268544d6dbb78cbe867eef25c` |
+| Verification and recovery audit supplement | 67,052,493 | 825 | `fab00bb4ec0a30bc8dbf086ac1705d5def9611523516462a5b2ad2ee594170e5` |
 
 The audit-only archives preserve original attempts and refusals. They do not
 claim a new native-preparation run. Native releases include the independently
@@ -486,8 +505,34 @@ rechecked prepared data as well as their required original audits. The model
 archive includes checkpoints and served weights, not merely summaries of files
 that once existed.
 
-Remaining verification logs and current-revision CI are being appended here.
-Queued, cancelled, skipped and historical checks remain separate from a pass at
-the final revision. The Node 20/22/24 regression matrix and browser/spec gates
-already have passing published-revision evidence; final CI must retain its
-own exact head and job links.
+The [supplemental audit inventory](VERIFICATION_AUDIT_SUPPLEMENT.md) retains
+821 original evidence files plus audit metadata and the release manifest. It
+includes the original failed E preparation, D/F recovery and numeric diagnoses,
+G's failed qualification, the full H qualification and served-coordinator
+payloads, native context measurements, historical-reader recovery and the later
+separate CI routing proof. It creates no new training admission or learning
+claim. All original source selections, archived members and archive bytes are
+hash checked. Its audit identity is
+`44576af1d9a8e78baf71cbf1eabfe3778fbaf6571c3d11006034dad6492101ea`.
+
+### Hosted CI and revision boundaries
+
+Published commit `7394e4c29a1895b8e8cee25fe0dd1f170b46d087` has six successful
+workflows: [Node 20/22/24](https://github.com/werg/tracing-js-self/actions/runs/44333224185),
+[real browser](https://github.com/werg/tracing-js-self/actions/runs/44333224000),
+[spec oracle](https://github.com/werg/tracing-js-self/actions/runs/44333223968),
+[real-world corpus](https://github.com/werg/tracing-js-self/actions/runs/44333224106),
+[external acquisition](https://github.com/werg/tracing-js-self/actions/runs/44333224224)
+and [trace inspection](https://github.com/werg/tracing-js-self/actions/runs/44333224025).
+Its engineering native lane passes, but the overall five-lane native workflow
+and Exercism workflow were cancelled by the next incremental push. They are
+not overall passes.
+
+The later implementation commit `92526c619a2a6dcadc4c10fab8a117228f72f98d`
+adds the real-source representative-selection hook and its focused tests. Its
+browser, spec, acquisition and inspection workflows passed; its remaining
+in-flight workflows were superseded by the next proof-only push. Later commits
+record evidence and delivery documentation. Current hosted jobs can be reviewed
+in [PR #39](https://github.com/werg/tracing-js-self/pull/39); the final observation
+must retain its actual revision and job links separately from the frozen H
+qualification and these historical hosted results.

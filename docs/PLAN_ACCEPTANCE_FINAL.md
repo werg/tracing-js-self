@@ -134,3 +134,18 @@ The remaining learning negatives are empirical outcomes; production assets and
 whole-pipeline resource isolation are distinct dependencies; supported-profile
 refusals are explicit scope choices. Keeping those causes separate is the
 remaining acceptance boundary for a truthful bounded engineering/data release.
+
+## Delivery closeout after this review's cutoff
+
+The statements above retain the 15:10 UTC review cutoff. The subsequent
+[supplemental audit release](VERIFICATION_AUDIT_SUPPLEMENT.md) is now fully
+verified and durably saved: 67,052,493 bytes, 825 archive members, SHA-256
+`fab00bb4ec0a30bc8dbf086ac1705d5def9611523516462a5b2ad2ee594170e5`.
+It includes the complete H payloads and the separately pinned
+[fresh CI alias-routing diagnostic](evidence/ci-real-source-alias-routing-2026-11-18.json).
+All twelve completed archives are saved across nineteen binary delivery files;
+the private download index supplies their exact links, hashes and reassembly
+instructions. This closes the supplemental-delivery item in W09/W14 without
+changing any historical experiment, native denominator or learning conclusion.
+The [consolidated handover](RESUMPTION_HANDOVER.md) records hosted CI separately
+at its observed revision; cancelled and pending workflows are not passes.
