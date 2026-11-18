@@ -19,6 +19,32 @@ def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def stream_fingerprint(handle) -> tuple[int, str]:
+    checksum, size = hashlib.sha256(), 0
+    for block in iter(lambda: handle.read(1 << 20), b""):
+        size += len(block)
+        checksum.update(block)
+    return size, checksum.hexdigest()
+
+
+def file_fingerprint(path: Path) -> tuple[int, str]:
+    with path.open("rb") as handle:
+        return stream_fingerprint(handle)
+
+
+class DigestingReader:
+    def __init__(self, handle):
+        self.handle, self.checksum, self.size = handle, hashlib.sha256(), 0
+
+    def read(self, size):
+        if size < 0:
+            raise ValueError("Archive reads must be bounded")
+        block = self.handle.read(size)
+        self.size += len(block)
+        self.checksum.update(block)
+        return block
+
+
 def canonical(value) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode()
 
@@ -45,8 +71,8 @@ def inventory(roots: dict[str, Path]) -> tuple[list[dict], dict[str, Path]]:
             name = prefix if root.is_file() else prefix + "/" + relative
             if name in sources:
                 raise ValueError("Repeated release archive path")
-            data = path.read_bytes()
-            rows.append({"path": name, "bytes": len(data), "sha256": digest(data)})
+            size, checksum = file_fingerprint(path)
+            rows.append({"path": name, "bytes": size, "sha256": checksum})
             sources[name] = path
     return sorted(rows, key=lambda row: row["path"]), sources
 
@@ -60,12 +86,17 @@ def write_archive(destination: Path, payload: dict, sources: dict[str, Path]) ->
         with temporary.open("xb") as raw, gzip.GzipFile(fileobj=raw, mode="wb", filename="", mtime=0) as compressed:
             with tarfile.open(fileobj=compressed, mode="w|", format=tarfile.PAX_FORMAT) as archive:
                 for row in payload["files"]:
-                    data = sources[row["path"]].read_bytes()
-                    if len(data) != row["bytes"] or digest(data) != row["sha256"]:
+                    source = sources[row["path"]]
+                    if source.stat().st_size != row["bytes"]:
                         raise ValueError("Release input changed after inventory: " + row["path"])
                     info = tarfile.TarInfo(row["path"])
-                    info.size, info.mode, info.mtime = len(data), 0o644, 0
-                    archive.addfile(info, io.BytesIO(data))
+                    info.size, info.mode, info.mtime = row["bytes"], 0o644, 0
+                    with source.open("rb") as handle:
+                        checked = DigestingReader(handle)
+                        archive.addfile(info, checked)
+                        if checked.size != row["bytes"] or checked.checksum.hexdigest() != row["sha256"] or \
+                                source.stat().st_size != row["bytes"]:
+                            raise ValueError("Release input changed after inventory: " + row["path"])
                 info = tarfile.TarInfo("release-manifest.json")
                 info.size, info.mode, info.mtime = len(manifest_bytes), 0o644, 0
                 archive.addfile(info, io.BytesIO(manifest_bytes))
@@ -100,11 +131,12 @@ def verify_archive(path: Path) -> dict:
         if set(names) != set(expected) | {"release-manifest.json"}:
             raise ValueError("Release inventory differs from archive contents")
         for name, row in expected.items():
-            data = archive.extractfile(name).read()
-            if len(data) != row["bytes"] or digest(data) != row["sha256"]:
+            with archive.extractfile(name) as handle:
+                size, checksum = stream_fingerprint(handle)
+            if size != row["bytes"] or checksum != row["sha256"]:
                 raise ValueError("Release member checksum changed: " + name)
         return {"schema": "semantic-release-verification/1", "status": "verified", "files": len(expected),
-                "identityDigest": identity, "archiveSha256": digest(path.read_bytes())}
+                "identityDigest": identity, "archiveSha256": file_fingerprint(path)[1]}
 
 
 def stage_compact_campaign(corpus: Path, tracer: Path, output: Path, manifest: dict) -> tuple[dict, Path, dict | None]:
@@ -213,6 +245,21 @@ console.log(JSON.stringify({schema:'semantic-release-campaign-storage-check/1',s
     return json.loads(checked.stdout)
 
 
+def iter_admitted_documents(manifest: dict, root: Path, identities: list, source_notices: dict):
+    """Read one complete row at a time; retain only small release metadata."""
+    for row in manifest["cases"]:
+        if row["status"] != "admitted":
+            continue
+        document = json.loads(inside(root, row["path"]).read_text())
+        side = document["sidecar"]
+        if side["producerRevision"] != manifest["producerRevision"] or side.get("identityDigest") != row.get("identityDigest"):
+            raise ValueError("Candidate identity differs from the campaign manifest")
+        identities.append({"id": row["id"], "family": side["sourceFamily"], "split": side["split"],
+                           "identityDigest": side["identityDigest"], "episodeDigest": row["episodeDigest"]})
+        source_notices[side["sourceFamily"]] = {"license": side["license"], "provenance": side["sourceProvenance"]}
+        yield document
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--verify", type=Path)
@@ -264,20 +311,8 @@ def main() -> int:
                        if source is not None and (receipt := verify_campaign_storage(source, tracer)) is not None}
     output.mkdir(parents=True)
     document_manifest, document_root, materialization = stage_compact_campaign(corpus, tracer, output, manifest)
-    documents, identities, source_notices = [], [], {}
-    for row in document_manifest["cases"]:
-        if row["status"] != "admitted":
-            continue
-        document = json.loads(inside(document_root, row["path"]).read_text())
-        side = document["sidecar"]
-        if side["producerRevision"] != manifest["producerRevision"] or side.get("identityDigest") != row.get("identityDigest"):
-            raise ValueError("Candidate identity differs from the campaign manifest")
-        documents.append(document)
-        identities.append({"id": row["id"], "family": side["sourceFamily"], "split": side["split"],
-                           "identityDigest": side["identityDigest"], "episodeDigest": row["episodeDigest"]})
-        source_notices[side["sourceFamily"]] = {"license": side["license"], "provenance": side["sourceProvenance"]}
-    if not documents:
-        raise ValueError("A release needs actual admitted examples")
+    identities, source_notices = [], {}
+    documents = iter_admitted_documents(document_manifest, document_root, identities, source_notices)
     import megatoken
     if not Path(megatoken.__file__).resolve().is_relative_to(consumer):
         raise ValueError("Installed native consumer package is outside the requested checkout")
@@ -289,7 +324,8 @@ def main() -> int:
     prepared, report = prepare_semantic_corpus(documents, output / "prepared", codec=codec,
         producer_revision=manifest["producerRevision"], consumer_revision=policy["consumerRevision"],
         source_verifier=source_verifier_for_checkout(tracer, manifest["producerRevision"]))
-    if report["counts"].get("admitted") != len(documents) or report["refusals"]:
+    if report["counts"].get("admitted") != counts["admitted"] or \
+            len(identities) != counts["admitted"] or report["refusals"]:
         raise ValueError("Production rechecking rejected release rows; refusal evidence was retained")
     if git(consumer, "rev-parse", "HEAD") != policy["consumerRevision"] or \
             git(consumer, "status", "--porcelain", "--untracked-files=no"):

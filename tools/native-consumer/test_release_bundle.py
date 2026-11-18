@@ -3,6 +3,7 @@ import json
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location("release", Path(__file__).parents[1] / "package-semantic-release.py")
@@ -11,6 +12,39 @@ spec.loader.exec_module(release)
 
 
 class ReleaseArchiveTests(unittest.TestCase):
+    def test_archive_streams_large_members_and_checksums_without_read_bytes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, archive = root / "semantic-audit.json", root / "release.tar.gz"
+            with source.open("wb") as handle:
+                for _ in range(16):
+                    handle.write(b"bounded-private-evidence" * 32768)
+            with mock.patch.object(Path, "read_bytes", side_effect=AssertionError("whole-file read")):
+                files, paths = release.inventory({"prepared/semantic-audit.json": source})
+                release.write_archive(archive, {"schema": "test", "files": files}, paths)
+                receipt = release.verify_archive(archive)
+            self.assertEqual(receipt["files"], 1)
+            self.assertEqual(files[0]["bytes"], source.stat().st_size)
+
+    def test_admitted_document_loading_is_lazy_and_keeps_only_release_metadata(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            side = {"producerRevision": "a" * 40, "identityDigest": "identity", "sourceFamily": "family",
+                    "split": "train", "license": "MIT", "sourceProvenance": {"pinned": True}}
+            (root / "first.json").write_text(json.dumps({"public": {}, "sidecar": side}))
+            (root / "second.json").write_text("invalid JSON that must not be read eagerly")
+            manifest = {"producerRevision": "a" * 40, "cases": [
+                {"id": name, "status": "admitted", "path": name + ".json",
+                 "identityDigest": "identity", "episodeDigest": "public"} for name in ("first", "second")]}
+            identities, notices = [], {}
+            rows = release.iter_admitted_documents(manifest, root, identities, notices)
+            self.assertFalse(identities)
+            self.assertEqual(next(rows)["sidecar"], side)
+            self.assertEqual(len(identities), 1)
+            self.assertEqual(notices, {"family": {"license": "MIT", "provenance": {"pinned": True}}})
+            with self.assertRaises(json.JSONDecodeError):
+                next(rows)
+
     def test_deterministic_complete_archive_and_checksum_verification(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
