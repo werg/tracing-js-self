@@ -1,6 +1,6 @@
 import {spawn,execFileSync} from 'node:child_process';
-import {readFileSync,rmSync,mkdirSync,statSync} from 'node:fs';
-import {resolve,join} from 'node:path';
+import {readFileSync,rmSync,mkdirSync,statSync,realpathSync} from 'node:fs';
+import {resolve,join,relative,isAbsolute} from 'node:path';
 import {randomUUID,createHash} from 'node:crypto';
 import {atomicWrite} from './campaign-store.mjs';
 import {generationEnvironment} from './generation-process.mjs';
@@ -15,9 +15,17 @@ export function loadNativeSettings({megatoken,tokenizer,python='python3',policyF
     typeof policy.tokenizerIdentity!=='string'||!policy.tokenizerIdentity)
     throw new Error('Native policy must declare exact consumerRevision, tokenizerIdentity and tokenizerSha256');
   const revision=execFileSync('git',['-C',resolve(megatoken),'rev-parse','HEAD'],{encoding:'utf8'}).trim();
+  const changes=execFileSync('git',['-C',resolve(megatoken),'status','--porcelain','--untracked-files=no'],{encoding:'utf8'}).trim();
+  if(changes)throw new Error('Native consumer checkout has uncommitted tracked changes');
   const tokenizerHash=createHash('sha256').update(readFileSync(resolve(tokenizer))).digest('hex');
   if(policy.consumerRevision!==revision||policy.tokenizerSha256!==tokenizerHash)
     throw new Error('Native checkout or tokenizer bytes disagree with release policy');
+  const installed=JSON.parse(execFileSync(python,['-c',
+    'import json,pathlib,megatoken; print(json.dumps({"moduleFile":str(pathlib.Path(megatoken.__file__).resolve())}))'],
+    {encoding:'utf8',timeout:30000,maxBuffer:65536,env:generationEnvironment()}));
+  const relativeModule=relative(realpathSync(resolve(megatoken)),realpathSync(installed.moduleFile));
+  if(!relativeModule||relativeModule==='..'||relativeModule.startsWith('..'+(process.platform==='win32'?'\\':'/'))||
+    isAbsolute(relativeModule))throw new Error('Selected Python imports megatoken outside the pinned consumer checkout');
   return {megatoken:resolve(megatoken),tokenizer:resolve(tokenizer),python,policy,timeoutMs,maxOutputBytes,
     temporaryDirectory:resolve(temporaryDirectory)};
 }
