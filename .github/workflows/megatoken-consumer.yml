@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: werg/megatoken
-          ref: 6e27a7c6529aa0778c5ea818432461db7cd05ea7 # immutable inputs, strict source capture names and streamed native preparation
+          ref: 272584270a00409cee6c7c49078c775faf24d16b # semantic observation/control alignment; fresh schema 7 and checkpoint 19
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -89,6 +89,7 @@ jobs:
         if: matrix.recipe == 'engineering'
         env:
           MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
+          MEGATOKEN_REPOSITORY: ${{ github.workspace }}/megatoken
         run: |
           python -m pytest -q test/test_*.py --junitxml="$RUNNER_TEMP/python-release-regressions.xml"
       - name: Qualify native semantic boundary and input-mutation probes
@@ -143,6 +144,45 @@ jobs:
               episode, receipt = adapt_selected_harness_v5(json.loads(path.read_text()), codec=codec,
                 allow_local=True, max_positions=1024, max_history=1024)
               assert episode.records and episode.supervision.outcome == 'unknown'
+          PY
+      - name: Verify actual first-invocation observation and control bytes
+        if: matrix.recipe == 'engineering'
+        run: |
+          python tools/native_input_parity.py --consumer-root megatoken \
+            --episode "$RUNNER_TEMP/corpus/compound-pure.json" \
+            --max-capacity 1024 --max-tokens 128 --out "$RUNNER_TEMP/native-input-parity.json"
+      - name: Capture actual native conditionals and retain the scientific verdict
+        if: matrix.recipe == 'engineering'
+        run: |
+          set +e
+          python tools/probe-native-conditionals.py --consumer-root megatoken \
+            --episode "$RUNNER_TEMP/corpus/compound-pure.json" \
+            --initialize-tiny --tokenizer-json "$RUNNER_TEMP/tokenizer.json" \
+            --seed 17 --max-tokens 128 --atol 0.000001 --rtol 0.00001 \
+            --output "$RUNNER_TEMP/native-conditional-probe"
+          diagnostic_exit=$?
+          set -e
+          python - "$diagnostic_exit" <<'PY'
+          import json, os, sys
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP']) / 'native-conditional-probe'
+          report = json.loads((root / 'report.json').read_text())
+          # A completed measurement can find a real mismatch. Preserve that
+          # failed parity verdict; this step checks completion of the diagnostic,
+          # not successful learning or a passing training/serving parity gate.
+          assert report['phase'] == 'complete', report.get('error')
+          assert report['status'] in ('failed', 'measured')
+          assert int(sys.argv[1]) == (1 if report['status'] == 'failed' else 0)
+          assert report['modelSelections'] == 0 and report['optimizerSteps'] == 0
+          assert report['fullConditionalParityClaim'] is False
+          verdict = {key: report[key] for key in ('status', 'gaussianConditionalStatus',
+            'trainingServingParityStatus', 'fullConditionalParityClaim', 'modelSelections', 'optimizerSteps')}
+          print(json.dumps(verdict))
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
+              out.write('## Native conditional diagnostic\n\n')
+              out.write('The measurement completed. Training/serving parity verdict: **' +
+                report['trainingServingParityStatus'] + '**. No model selections or optimizer updates ran.\n')
+              out.write('A successful workflow step records a completed diagnosis; it does not turn a failed parity result into a pass.\n')
           PY
       - name: Freeze and evaluate held-out engineering cohort through real selected driver
         if: matrix.recipe == 'engineering'
@@ -244,4 +284,70 @@ jobs:
             ${{ runner.temp }}/continuity/*.txt
             ${{ runner.temp }}/native-inference/inference-check.json
             ${{ runner.temp }}/native-orchestration-validation.json
+            ${{ runner.temp }}/native-input-parity.json
+            ${{ runner.temp }}/native-conditional-probe/
+          if-no-files-found: error
+
+  restore-engineering-release:
+    needs: independent-native-import
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      TZ: UTC
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.14'
+      - name: Install the original producer's locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - uses: actions/download-artifact@v4
+        with:
+          name: semantic-v5-engineering-admission-and-evaluation
+          path: ${{ runner.temp }}/downloaded-native-engineering
+      - name: Restore the original archive and replay every positive attempt
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, subprocess, sys
+          from pathlib import Path
+          downloaded = Path(os.environ['RUNNER_TEMP']) / 'downloaded-native-engineering'
+          archive = downloaded / 'release/semantic-v5-release.tar.gz'
+          receipt_path = downloaded / 'release/archive-receipt.json'
+          receipt = json.loads(receipt_path.read_text())
+          out = Path(os.environ['RUNNER_TEMP']) / 'restored-native-engineering'
+          subprocess.run([sys.executable, 'tools/restore-semantic-release.py',
+            '--archive', str(archive), '--archive-sha256', receipt['archiveSha256'],
+            '--tracer-root', '.', '--out', str(out)], check=True)
+          identity = {'schema': 'semantic-release-hosted-restore/1',
+            'producerRevision': subprocess.check_output(['git','rev-parse','HEAD'], text=True).strip(),
+            'runId': os.environ['GITHUB_RUN_ID'], 'runAttempt': os.environ['GITHUB_RUN_ATTEMPT'],
+            'job': os.environ['GITHUB_JOB'], 'runnerName': os.environ['RUNNER_NAME'],
+            'runnerOS': os.environ['RUNNER_OS'], 'runnerArch': os.environ['RUNNER_ARCH'],
+            'imageOS': os.environ.get('ImageOS'), 'imageVersion': os.environ.get('ImageVersion'),
+            'artifactName': 'semantic-v5-engineering-admission-and-evaluation',
+            'archiveSha256': receipt['archiveSha256'],
+            'originalArchiveReceiptSha256': hashlib.sha256(receipt_path.read_bytes()).hexdigest(),
+            'restoreReceiptSha256': hashlib.sha256((out/'restore.json').read_bytes()).hexdigest(),
+            'scope': 'Separate GitHub-hosted job: original archive inventory and source replay; native requalification untested'}
+          (out/'hosted-job.json').write_text(json.dumps(identity, indent=2)+'\n')
+          print(json.dumps(identity))
+          PY
+      - name: Preserve restore identity, inventory and replay receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semantic-v5-engineering-restore-drill
+          retention-days: 90
+          path: |
+            ${{ runner.temp }}/restored-native-engineering/restore.json
+            ${{ runner.temp }}/restored-native-engineering/hosted-job.json
+            ${{ runner.temp }}/restored-native-engineering/checks/
           if-no-files-found: error

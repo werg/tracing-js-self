@@ -10,6 +10,7 @@ import inspect
 import os
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -63,6 +64,16 @@ class ComparisonTests(unittest.TestCase):
         self.assertEqual(result['status'], 'passed', 'Numerical state equality alone is the narrow metric')
         self.assertFalse(result['encoderCallAuditIdentical'])
         self.assertEqual(result['downstreamLexicalAndActionParity'], 'unmeasured')
+
+    def test_changed_native_decoder_body_leaves_support_unmeasured(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory)/'decoder.py'
+            source.write_text('class Decoder:\n    def _teacher_raw_impl(self, core, context, plan):\n        return {}\n')
+            result = P.decoder_support_comparison(source, {})
+            self.assertEqual(result['status'], 'unmeasured')
+            self.assertIn('implementation changed', result['reason'])
+            source.write_text('class Decoder:\n    pass\n')
+            self.assertEqual(P.decoder_support_comparison(source, {})['status'], 'unmeasured')
 
 
 @unittest.skipUnless(importlib.util.find_spec('torch') and os.environ.get('MEGATOKEN_REPOSITORY'),

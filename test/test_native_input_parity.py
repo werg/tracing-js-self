@@ -54,12 +54,14 @@ class RetainedBoundaryReceiptTests(unittest.TestCase):
 @unittest.skipUnless(os.environ.get('MEGATOKEN_REPOSITORY'),
                      'Set MEGATOKEN_REPOSITORY to the real pinned companion checkout')
 class ActualPinnedBoundaryTests(unittest.TestCase):
+    expected_pin = PIN
+
     @classmethod
     def setUpClass(cls):
         cls.consumer = Path(os.environ['MEGATOKEN_REPOSITORY']).resolve()
         revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=cls.consumer, text=True).strip()
-        if revision != PIN:
-            raise unittest.SkipTest('Regression reproduces the preserved failed native pin only')
+        if revision != cls.expected_pin:
+            raise unittest.SkipTest('Regression requires its exact declared companion pin')
         subprocess.run(['git', 'diff', '--quiet', 'HEAD', '--'], cwd=cls.consumer, check=True)
         sys.path.insert(0, str(cls.consumer/'src'))
         with tempfile.TemporaryDirectory() as temporary:
@@ -110,6 +112,30 @@ writeFileSync(process.argv[1],JSON.stringify(result.exported)+'\\n');
         changed['sourceAdmission']['effectsValidated'] = False
         with self.assertRaisesRegex(ValueError, 'source/replay/identity'): N.inspect_inputs(changed)
         with self.assertRaisesRegex(ValueError, 'capacity'): N.inspect_inputs(self.packet, max_tokens=2048)
+
+
+@unittest.skipUnless(os.environ.get('MEGATOKEN_REPOSITORY'),
+                     'Set MEGATOKEN_REPOSITORY to the current pinned companion checkout')
+class ActualCurrentBoundaryTests(unittest.TestCase):
+    expected_pin = json.loads((ROOT/'contracts/native-admission-policy-v5.json').read_text())['consumerRevision']
+    # Share only source certification/setup; historical mismatch assertions
+    # remain attached to their original revision in the preceding class.
+    setUpClass = classmethod(ActualPinnedBoundaryTests.setUpClass.__func__)
+
+    def test_current_first_input_bytes_and_execution_purpose_agree(self):
+        report = N.inspect_inputs(self.packet)
+        self.assertEqual(report['status'], 'passed')
+        self.assertTrue(report['controlBytesMatch'])
+        self.assertTrue(report['observedRecordBytesMatch'])
+        self.assertEqual(report['training']['control']['bytes'], 580)
+        self.assertEqual(len(report['training']['observedRecords']), 2)
+        self.assertEqual(len(report['serving']['observedRecords']), 2)
+        event = report['training']['event']
+        track = next(row for row in report['training']['tracks'] if row['track_id'] == event['track_id'])
+        self.assertEqual(track['description'], report['serving']['generation']['trackDescriptions'][0]['purpose'])
+        self.assertEqual(report['modelSelections'], 0)
+        self.assertEqual(report['optimizerSteps'], 0)
+        self.assertIn('checkpoint identity and conditional logits', report['unmeasured'])
 
 
 if __name__ == '__main__': unittest.main()

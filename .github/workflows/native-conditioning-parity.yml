@@ -31,7 +31,7 @@ jobs:
           repository: werg/megatoken
           # A distinct, unmerged diagnostic contract; never silently substitute
           # the current production consumer or reinterpret historical receipts.
-          ref: 548ab7eb32a1a4bbc9071f429c49ef5f1b778188
+          ref: 272584270a00409cee6c7c49078c775faf24d16b
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@v4
