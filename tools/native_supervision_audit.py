@@ -12,7 +12,7 @@ import hashlib
 import json
 from typing import Callable
 
-from learning_diagnostics import exact_record_audit, objective_gradient_norms, require
+from learning_diagnostics import exact_record_audit, require
 
 
 SCHEMA = "native-token-supervision-audit/1"
@@ -29,13 +29,59 @@ def _tensor_digest(value) -> str:
     if not isinstance(value, torch.Tensor):
         raise ValueError("Context fingerprints require native tensors")
     tensor = value.detach().contiguous().cpu()
-    raw = tensor.view(torch.uint8).numpy().tobytes()
+    raw = tensor.reshape(-1).view(torch.uint8).numpy().tobytes()
     header = json.dumps(
         {"shape": list(tensor.shape), "dtype": str(tensor.dtype)},
         sort_keys=True,
         separators=(",", ":"),
     ).encode()
     return _digest(header + b"\0" + raw)
+
+
+def _objective_gradient_metrics(model, loss, owners):
+    """Retain exact per-owner gradients as digests plus readable norms.
+
+    The gradient tensors are streamed into hashes and discarded. This lets the
+    future-observation canary compare their actual values without writing a
+    model-sized gradient artifact.
+    """
+    import torch
+
+    parameters = dict(model.named_parameters())
+    names = [name for owned in owners.values() for name in owned]
+    require(names and len(names) == len(set(names)) and all(name in parameters for name in names),
+            "Objective gradient owners must be unique actual parameter names")
+    grads = torch.autograd.grad(loss, [parameters[name] for name in names],
+                                allow_unused=True, retain_graph=True)
+    by_name = dict(zip(names, grads, strict=True))
+    result = {}
+    for owner, owned in owners.items():
+        connected = 0
+        squared_norm = 0.0
+        fingerprint = hashlib.sha256()
+        for name in owned:
+            gradient = by_name[name]
+            fingerprint.update(name.encode("utf-8") + b"\0")
+            if gradient is None:
+                fingerprint.update(b"unused\0")
+                continue
+            require(bool(torch.isfinite(gradient).all()), "Nonfinite objective gradient")
+            connected += 1
+            detached = gradient.detach().contiguous().cpu()
+            squared_norm += float(detached.double().square().sum())
+            header = json.dumps(
+                {"shape": list(detached.shape), "dtype": str(detached.dtype)},
+                sort_keys=True, separators=(",", ":"),
+            ).encode()
+            raw = detached.reshape(-1).view(torch.uint8).numpy().tobytes()
+            fingerprint.update(header + b"\0" + raw + b"\0")
+        result[owner] = {
+            "parameters": len(owned),
+            "connectedParameters": connected,
+            "gradientNorm": squared_norm ** 0.5,
+            "gradientSha256": fingerprint.hexdigest(),
+        }
+    return result
 
 
 def _state_fingerprint(state) -> str:
@@ -57,6 +103,9 @@ def _state_fingerprint(state) -> str:
         "contextPolicy": state.context_policy.to_json(),
         "trackDescriptions": list(state.track_descriptions),
         "trackRegistry": list(state.track_registry),
+        "frontierEventIds": list(state.frontier_event_ids),
+        "contextDropped": list(state.context_dropped),
+        "policyHistory": list(state.policy_history or ()),
     }
     return _digest(json.dumps(pieces, sort_keys=True, separators=(",", ":")).encode())
 
@@ -302,15 +351,53 @@ def _actual_decoder_emission(multi, state, *, tracks, event_ids, plans, controls
     import torch
 
     generator = torch.Generator(device=state.device).manual_seed(seed)
-    produced = multi.generate_group(
-        state,
-        tracks=tracks,
-        event_ids=event_ids,
-        specs=_decoder_specs(plans),
-        controls=controls,
-        effort=effort,
-        generator=generator,
-    )
+    captured_distribution = {}
+    original_modality_logits = multi.tracks.modality_logits
+    original_prior = multi._prior
+
+    def capture_modality_logits(*args, **kwargs):
+        logits = original_modality_logits(*args, **kwargs)
+        captured_distribution["modalityLogitsSha256"] = _tensor_digest(logits)
+        captured_distribution["modalityLogitsShape"] = list(logits.shape)
+        return logits
+
+    def capture_prior(*args, **kwargs):
+        distribution = original_prior(*args, **kwargs)
+        captured_distribution["gaussianMeanSha256"] = _tensor_digest(distribution.mean)
+        captured_distribution["gaussianMeanShape"] = list(distribution.mean.shape)
+        captured_distribution["gaussianLogScaleSha256"] = _tensor_digest(distribution.log_scale)
+        captured_distribution["gaussianLogScaleShape"] = list(distribution.log_scale.shape)
+        return distribution
+
+    multi.tracks.modality_logits = capture_modality_logits
+    multi._prior = capture_prior
+    try:
+        produced = multi.generate_group(
+            state,
+            tracks=tracks,
+            event_ids=event_ids,
+            specs=_decoder_specs(plans),
+            controls=controls,
+            effort=effort,
+            generator=generator,
+        )
+    finally:
+        multi.tracks.modality_logits = original_modality_logits
+        multi._prior = original_prior
+    require(all(key in captured_distribution for key in (
+        "modalityLogitsSha256", "gaussianMeanSha256", "gaussianLogScaleSha256")),
+        "Actual decoder prior distributions were not captured")
+    distribution_identity = {
+        "modalityLogitsSha256": captured_distribution["modalityLogitsSha256"],
+        "modalityLogitsShape": captured_distribution["modalityLogitsShape"],
+        "gaussianMeanSha256": captured_distribution["gaussianMeanSha256"],
+        "gaussianMeanShape": captured_distribution["gaussianMeanShape"],
+        "gaussianLogScaleSha256": captured_distribution["gaussianLogScaleSha256"],
+        "gaussianLogScaleShape": captured_distribution["gaussianLogScaleShape"],
+    }
+    distribution_identity["jointSha256"] = _digest(json.dumps(
+        distribution_identity, sort_keys=True, separators=(",", ":")
+    ).encode())
     tape = produced.tape
     require(tape.render_status == "rendered", "Native decoder did not complete rendering")
     events = []
@@ -322,6 +409,8 @@ def _actual_decoder_emission(multi, state, *, tracks, event_ids, plans, controls
         if record_validator is not None:
             validator_result = record_validator(payload)
             json.dumps(validator_result, sort_keys=True, allow_nan=False)
+        semantic_valid = (isinstance(validator_result, dict) and
+                          validator_result.get("status") == "valid")
         events.append({
             "eventId": tape.event_ids[index],
             "payloadHex": payload.hex(),
@@ -331,9 +420,14 @@ def _actual_decoder_emission(multi, state, *, tracks, event_ids, plans, controls
             "decoderValid": bool(valid),
             "terminal": bool(terminal),
             "completeNativeTextAction": bool(valid and emitted and decoded == payload),
+            "completeNativeRecord": bool(valid and terminal and emitted and decoded == payload),
+            "semanticParserValid": semantic_valid if record_validator is not None else None,
             "sourceRecordValidation": validator_result,
         })
     return {"renderStatus": tape.render_status, "events": events,
+            "conditionalDistribution": distribution_identity,
+            "selectedGroupLogProbability": float(produced.log_prob.detach().float().cpu().sum()),
+            "behaviorLogProbability": float(tape.behavior_log_prob),
             "completeValidGroup": bool(events) and all(row["completeNativeTextAction"] for row in events)}
 
 
@@ -366,7 +460,10 @@ def _one_native_capture(model, batch, *, codec, config, device, model_version,
         require(len(offsets) == len(event_ids),
                 "Every generated native target must bind to a physical episode record")
         first_offset = min(offsets)
-        visible = set(state.history_event_ids)
+        visible = set(state.history_event_ids) | set(state.frontier_event_ids)
+        visible.update(event for event, _reason in state.context_dropped)
+        for entry in state.policy_history or ():
+            visible.update(json.loads(entry).get("events", ()))
         allowed = _expected_context_ids(batch, first_offset)
         internal = visible - allowed
         require(internal <= set(RESERVED_TRACKS),
@@ -376,6 +473,8 @@ def _one_native_capture(model, batch, *, codec, config, device, model_version,
                 "Pre-target recurrent state contains the target or a future physical record")
         context = {
             "eventIds": list(state.history_event_ids),
+            "frontierEventIds": list(state.frontier_event_ids),
+            "contextDroppedEventIds": [event for event, _reason in state.context_dropped],
             "earlierPhysicalEventIds": sorted(visible & allowed),
             "reservedNativeControlEventIds": sorted(internal),
             "eventTracks": list(state.history_event_tracks),
@@ -427,9 +526,7 @@ def _one_native_capture(model, batch, *, codec, config, device, model_version,
                 "ledgerScale": float(factor),
             }
             if denominator:
-                measured = objective_gradient_norms(
-                    model, {objective: numerator}, owner_map
-                )["objectives"][objective]
+                measured = _objective_gradient_metrics(model, numerator, owner_map)
                 for owner in expected_owners[objective]:
                     owner_result = measured[owner]
                     require(owner_result["connectedParameters"] > 0 and
@@ -439,7 +536,8 @@ def _one_native_capture(model, batch, *, codec, config, device, model_version,
                     owner: {"parameters": measured[owner]["parameters"],
                             "connectedParameters": measured[owner]["connectedParameters"],
                             "rawGradientNorm": measured[owner]["gradientNorm"],
-                            "ledgerGradientNorm": measured[owner]["gradientNorm"] * abs(factor)}
+                            "ledgerGradientNorm": measured[owner]["gradientNorm"] * abs(factor),
+                            "gradientSha256": measured[owner]["gradientSha256"]}
                     for owner in owner_map
                 }
             else:
@@ -448,7 +546,8 @@ def _one_native_capture(model, batch, *, codec, config, device, model_version,
                 gradients[objective] = {owner: {"parameters": len(names),
                                                  "connectedParameters": 0,
                                                  "rawGradientNorm": 0.0,
-                                                 "ledgerGradientNorm": 0.0}
+                                                 "ledgerGradientNorm": 0.0,
+                                                 "gradientSha256": None}
                                        for owner, names in owner_map.items()}
         captured.append({
             "eventIds": list(event_ids),
@@ -594,7 +693,7 @@ def _compare_canary(original, changed, mutation, *, atol=1e-6, rtol=1e-5):
         require(peer is not None, "Future-canary rerun lost an earlier target decision")
         context_equal = row["context"]["stateSha256"] == peer["context"]["stateSha256"]
         targets_equal = row["targets"] == peer["targets"]
-        loss_checks, gradient_checks = {}, {}
+        loss_checks, gradient_norm_checks, gradient_value_checks = {}, {}, {}
         for objective, values in row["objectives"].items():
             changed_values = peer["objectives"][objective]
             loss_checks[objective] = (
@@ -605,31 +704,48 @@ def _compare_canary(original, changed, mutation, *, atol=1e-6, rtol=1e-5):
                 and values["ledgerScale"] == changed_values["ledgerScale"]
             )
         for objective, values in row["gradients"].items():
-            gradient_checks[objective] = {}
+            gradient_norm_checks[objective] = {}
+            gradient_value_checks[objective] = {}
             for owner, measure in values.items():
-                gradient_checks[objective][owner] = close(
+                gradient_norm_checks[objective][owner] = close(
                     measure["rawGradientNorm"],
                     peer["gradients"][objective][owner]["rawGradientNorm"],
                 ) and close(
                     measure["ledgerGradientNorm"],
                     peer["gradients"][objective][owner]["ledgerGradientNorm"],
                 )
+                gradient_value_checks[objective][owner] = (
+                    measure["gradientSha256"] ==
+                    peer["gradients"][objective][owner]["gradientSha256"]
+                )
         output_equal = row["decoderEmission"]["events"] == peer["decoderEmission"]["events"]
+        distributions_equal = (row["decoderEmission"]["conditionalDistribution"] ==
+                               peer["decoderEmission"]["conditionalDistribution"])
+        selected_log_probability_equal = close(
+            row["decoderEmission"]["selectedGroupLogProbability"],
+            peer["decoderEmission"]["selectedGroupLogProbability"],
+        ) and close(row["decoderEmission"]["behaviorLogProbability"],
+                    peer["decoderEmission"]["behaviorLogProbability"])
         comparisons.append({"eventIds": row["eventIds"], "contextStateEqual": context_equal,
                             "targetIdsMasksAndBoundariesEqual": targets_equal,
+                            "conditionalDistributionsEqual": distributions_equal,
+                            "selectedLogProbabilitiesEqual": selected_log_probability_equal,
                             "objectiveLossesEqual": loss_checks,
-                            "objectiveGradientNormsEqual": gradient_checks,
+                            "objectiveGradientNormsEqual": gradient_norm_checks,
+                            "objectiveGradientValuesEqual": gradient_value_checks,
                             "actualDecoderOutputEqual": output_equal})
     require(comparisons, "Future-canary did not precede any generated decision")
     passed = all(row["contextStateEqual"] and row["targetIdsMasksAndBoundariesEqual"] and
+                 row["conditionalDistributionsEqual"] and row["selectedLogProbabilitiesEqual"] and
                  row["actualDecoderOutputEqual"] and
                  all(row["objectiveLossesEqual"].values()) and
-                 all(all(values.values()) for values in row["objectiveGradientNormsEqual"].values())
+                 all(all(values.values()) for values in row["objectiveGradientNormsEqual"].values()) and
+                 all(all(values.values()) for values in row["objectiveGradientValuesEqual"].values())
                  for row in comparisons)
     return {"status": "passed" if passed else "failed", "mutation": mutation,
             "absoluteTolerance": atol, "relativeTolerance": rtol,
             "comparisons": comparisons,
-            "scope": "Earlier selected meridian states, text losses, gradients, and actual decoder output"}
+            "scope": "Earlier selected meridian states, full modality/Gaussian prior fingerprints, target log probabilities, text losses, exact gradient fingerprints, and actual decoder output"}
 
 
 def capture_native_supervision_audit(
@@ -743,10 +859,28 @@ def capture_native_supervision_audit(
             decision["decoderEmission"]["completeValidGroup"] for decision in decisions
         ) else "invalid-or-incomplete"
     )
+    emitted_rows = [event for decision in decisions
+                    for event in decision["decoderEmission"]["events"]]
+    native_complete_count = sum(bool(row["completeNativeRecord"]) for row in emitted_rows)
+    parser_measurements = [row["semanticParserValid"] for row in emitted_rows
+                           if row["semanticParserValid"] is not None]
+    semantic_parser_status = (
+        "unmeasured" if not parser_measurements else
+        "measured-all-valid" if all(parser_measurements) else
+        "measured-with-invalid-emissions"
+    )
     return {
         "schema": SCHEMA,
         "status": status,
         "decoderEmissionStatus": decoder_emission_status,
+        "completeNativeRecordCount": native_complete_count,
+        "completeNativeRecordStatus": (
+            "complete" if emitted_rows and native_complete_count == len(emitted_rows)
+            else "incomplete-or-invalid"
+        ),
+        "semanticParserStatus": semantic_parser_status,
+        "semanticParserValidEmissionCount": sum(parser_measurements),
+        "semanticParserMeasuredEmissionCount": len(parser_measurements),
         "semanticOutcome": "not-evaluated",
         "checkpointSha256": checkpoint_sha256,
         "episodeId": batch.windows[0].episode.episode_id,
@@ -772,6 +906,6 @@ def capture_native_supervision_audit(
         "nativeForwardMetrics": baseline["metrics"],
         "optimizerSteps": 0,
         "scope": "One actual native episode window and restored checkpoint; no optimizer update",
-        "recordValidation": "callback-result-per-actual-decoder-emission" if record_validator else
-                            "unmeasured: native decoder validity and exact token-to-byte roundtrip only",
+        "recordValidation": "production-semantic-trace-v6-parser-per-actual-decoder-emission" if record_validator else
+                            "unmeasured: native tape validity and exact token-to-byte roundtrip only",
     }

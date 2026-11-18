@@ -94,23 +94,32 @@ generated record whose policy mask is only partly scored, an observed record
 with any lexical loss, a missing structural/terminal gradient, or a state that
 contains a current or later physical record fails the audit.
 
+The report retains exact token IDs and Boolean supervision masks for every
+physical text record. For each target decision it also records hashes of the
+actual modality logits and Gaussian mean/scale used by the native decoder, the
+selected action log probability, and per-owner exact gradient tensor hashes
+alongside norms. These hashes keep large distributions and gradient tensors
+bounded in the artifact while allowing exact same-run canary comparisons.
+
 The helper also runs the native decoder from the same pre-target state using
 the declared decoder seed. It preserves the decoder's emitted token IDs and
 bytes, requires an exact token-to-byte round trip, and reports the decoder's
 own validity and completeness flags separately from the supervision-audit
-status. A random emission can be invalid or incomplete while the mask, context,
-loss, and gradient checks still pass. If a native record validator is supplied,
-its result is retained separately; decoder validity alone is not reported as
-source-record validity or semantic success.
+status. The native tape's valid flag, terminal boundary, complete byte-exact
+record status, and v6 parser status are separate fields. The production v6
+parser is run on each actual native emission in the CLI; parse validity is not
+semantic correctness. A random emission can be invalid or incomplete while
+the mask, context, loss, and gradient checks still pass.
 
 When a later observed text record exists in the same episode, the helper
 changes one byte of that later row in a counterfactual copy, replays the same
 native forward at the same random state, then compares every earlier target's
 recurrent state, IDs, masks, structure and terminal labels, losses, gradients,
-and actual decoder output. This numerical canary complements the hard check
-that no current or future physical record ID is present in the pre-target
-state. If there is no later observed text row, the canary is explicitly
-`unmeasured` and the result is incomplete.
+full earlier modality/Gaussian prior fingerprints, selected action log
+probabilities, exact per-owner gradient values, and actual decoder output. This
+numerical canary complements the hard check that no current or future physical
+record ID is present in the pre-target state. If there is no later observed
+text row, the canary is explicitly `unmeasured` and the result is incomplete.
 
 The local byte-model regression exercises masks, boundaries, gradients, the
 no-future canary and the actual decoder. It is infrastructure evidence only;

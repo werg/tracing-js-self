@@ -37,6 +37,7 @@ class NativeSupervisionAuditTests(unittest.TestCase):
         from megatoken.training.stream import EpisodeWindow
         from megatoken.training.transducer import TransducerTrainer
 
+        torch.set_num_threads(1)
         torch.manual_seed(37)
         codec = ByteCodec.byte_fallback()
         records = (
@@ -112,7 +113,13 @@ class NativeSupervisionAuditTests(unittest.TestCase):
         self.assertTrue(decision["gradients"]["structure"]["structureHeads"]["rawGradientNorm"] > 0)
         self.assertTrue(decision["gradients"]["terminal"]["terminalHead"]["rawGradientNorm"] > 0)
         self.assertEqual(report["futureObservationCanary"]["status"], "passed")
+        canary_check = report["futureObservationCanary"]["comparisons"][0]
+        self.assertTrue(canary_check["conditionalDistributionsEqual"])
+        self.assertTrue(canary_check["selectedLogProbabilitiesEqual"])
+        self.assertTrue(all(canary_check["objectiveGradientValuesEqual"]["lexical"].values()))
         self.assertTrue(decision["decoderEmission"]["completeValidGroup"])
+        self.assertEqual(len(decision["decoderEmission"]["conditionalDistribution"]["jointSha256"]), 64)
+        self.assertTrue(report["semanticParserStatus"] == "unmeasured")
         emitted = decision["decoderEmission"]["events"][0]
         self.assertEqual(codec.decode(emitted["emittedTokenIds"]).hex(), emitted["payloadHex"])
         json.dumps(report, allow_nan=False)

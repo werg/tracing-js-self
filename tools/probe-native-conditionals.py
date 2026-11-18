@@ -4,8 +4,9 @@
 Use --initialize-tiny with one CURRENT natively admitted episode to prepare and
 save an actual zero-update diagnostic checkpoint, or supply --checkpoint and its
 --prepared corpus. No optimizer update or returned semantic selection occurs.
-Both paths stop before the first Gaussian facet draw; serving has already
-executed its internal text-only modality categorical.
+With --execute-decoder, each path also draws the actual policy facets and runs
+the actual first decoder emission before the capture stops without returning or
+committing the semantic selection.
 """
 from __future__ import annotations
 
@@ -33,13 +34,21 @@ SPEC.loader.exec_module(SMOKE)
 def read_json(path): return json.loads(Path(path).read_text())
 
 
+def validate_semantic_v6_emission(payload):
+    """Ask the current production parser to validate these exact emitted bytes."""
+    script = Path(__file__).with_name('validate-semantic-v6-emission.mjs')
+    result = subprocess.run(['node', str(script)], input=payload, capture_output=True,
+                            check=True, timeout=15)
+    return json.loads(result.stdout)
+
+
 def prepared_identity(episode):
     data = episode.to_dict()
     return digest({key: value for key, value in data.items() if key not in ('lineage', 'supervision')})
 
 
 def source_bindings(consumer):
-    files = ['src/megatoken/data/semantic_harness_v5.py', 'src/megatoken/data/semantic_physical.py',
+    files = ['src/megatoken/data/semantic_harness_v6.py', 'src/megatoken/data/semantic_physical.py',
              'src/megatoken/controls.py', 'src/megatoken/semantic_model_adapter.py',
              'src/megatoken/data/schema.py', 'src/megatoken/data/storage.py',
              'src/megatoken/training/meridians.py', 'src/megatoken/training/engine.py',
@@ -54,6 +63,8 @@ def supervision_audit_summary(audit):
     generated = [row for row in records if row['mode'] == 'generated' and row['tokenTargets']]
     observed = [row for row in records if row['mode'] == 'observed' and row['tokenTargets']]
     decoder_groups = [decision['decoderEmission'] for decision in audit['decisions']]
+    emitted = [event for group in decoder_groups for event in group['events']]
+    parser_results = [row.get('semanticParserValid') for row in emitted]
     return {
         'status': audit['status'],
         'semanticOutcome': 'not-evaluated',
@@ -64,13 +75,20 @@ def supervision_audit_summary(audit):
         'allGeneratedTokensScored': audit['allGeneratedTokensScored'],
         'allObservedTokensUnscored': audit['allObservedTokensUnscored'],
         'decisionCount': audit['decisionCount'],
+        'actualDecoderGroupsEmitted': len(decoder_groups),
         'futureObservationCanary': audit['futureObservationCanary']['status'],
         'decoderEmissions': {
             'count': len(decoder_groups),
             'completeValidGroups': sum(bool(row.get('completeValidGroup')) for row in decoder_groups),
             'status': 'complete-valid' if decoder_groups and
                 all(row.get('completeValidGroup') for row in decoder_groups) else 'invalid-or-incomplete',
-            'semanticCorrectness': 'not-claimed',
+            'completeNativeRecords': sum(bool(row.get('completeNativeRecord')) for row in emitted),
+            'semanticParserValidRecords': sum(value is True for value in parser_results),
+            'semanticParserInvalidRecords': sum(value is False for value in parser_results),
+            'semanticParserStatus': ('measured-all-valid' if parser_results and all(value is True for value in parser_results)
+                                     else 'measured-with-invalid-emissions' if parser_results
+                                     else 'unmeasured'),
+            'semanticCorrectness': 'not-evaluated',
         },
         'optimizerSteps': audit['optimizerSteps'],
     }
@@ -84,7 +102,7 @@ def training_capture(checkpoint, prepared, packet, *, identity, seed, execute_de
                             origin='Actual training reload')
     import torch
     from megatoken.data.storage import PreparedCorpus
-    from megatoken.data.semantic_harness_v5 import adapt_selected_harness_v5
+    from megatoken.data.semantic_harness_v6 import adapt_selected_harness_v6
     from megatoken.runtime import seed_everything
     from megatoken.training.config import TrainConfig
     from megatoken.training.engine import prepare_batches, window_config
@@ -95,7 +113,7 @@ def training_capture(checkpoint, prepared, packet, *, identity, seed, execute_de
     model, codec = trained.model, trained.codec
     model.eval()
     config = TrainConfig.from_dict(trained.payload['train_config'], expand_data=False)
-    expected, _ = adapt_selected_harness_v5(packet['exported'], codec=codec,
+    expected, _ = adapt_selected_harness_v6(packet['exported'], codec=codec,
         max_positions=model.config.max_capacity, max_history=model.config.max_history_chunks,
         allow_local=False, admission_verifier=lambda document:
             document['sidecar']['identityDigest'] == packet['sourceAdmission']['identityDigest'])
@@ -140,6 +158,7 @@ def training_capture(checkpoint, prepared, packet, *, identity, seed, execute_de
                 model, batch, codec=codec, config=config, device=torch.device('cpu'),
                 model_version=trained.payload['global_step'], transducer=transducer,
                 checkpoint_sha256=identity['checkpointStateSha256'], decoder_seed=seed,
+                record_validator=validate_semantic_v6_emission,
             )
             SMOKE.write_json(supervision_audit_path, audit)
             result['supervisionAudit'] = {
@@ -231,7 +250,9 @@ def main():
     if not 0 <= args.atol <= .001 or not 0 <= args.rtol <= .001: parser.error('Numeric tolerance must be 0..0.001')
     root = args.output.resolve(); root.mkdir(parents=True, exist_ok=False)
     report = {'schema': 'semantic-native-conditional-parity/1', 'status': 'running',
-              'modelSelections': 0, 'optimizerSteps': 0, 'learnedSuccess': None,
+              'modelSelections': 0, 'modelSelectionsMeaning': 'returned-or-committed semantic selections',
+              'returnedSemanticSelections': 0, 'actualPolicySampleCount': 0,
+              'actualDecoderEmissionCount': 0, 'optimizerSteps': 0, 'learnedSuccess': None,
               'scope': 'First generated native Gaussian prior, with real prefix reconstruction and dropout disabled',
               'downstreamLexicalAndActionParity': 'unmeasured',
               'supervisionAuditStatus': 'not-requested' if not args.audit_supervision else 'pending'}
@@ -333,6 +354,10 @@ def main():
         supports = (compare_output_support(training, serving) if args.execute_decoder else
                     decoder_support_comparison(consumer/'src/megatoken/generation/decoder.py', serving))
         replay = serving.get('decoderScoringReplay', {})
+        captures = (training, serving)
+        actual_policy_samples = sum('actualSampledFacets' in value for value in captures)
+        actual_decoder_emissions = sum('originalEmission' in value.get('decoderExecution', {})
+                                       for value in captures)
         support_mismatch = supports['status'] in ('failed', 'source-defined-mismatch')
         mismatch = (comparison['status'] == 'failed' or not comparison['encoderCallAuditIdentical'] or
                     recurrent['status'] == 'failed' or
@@ -346,6 +371,12 @@ def main():
         record(status='failed' if mismatch else 'measured', phase='complete', comparison=comparison,
                gaussianConditionalStatus=comparison['status'],
                recurrentStateComparison=recurrent,
+               modelSelections=0, modelSelectionsMeaning='returned-or-committed semantic selections',
+               returnedSemanticSelections=0, actualPolicySampleCount=actual_policy_samples,
+               actualDecoderEmissionCount=actual_decoder_emissions,
+               selectionBoundary=('actual policy draws and decoder emissions were measured, but no semantic selection was returned or committed'
+                                  if args.execute_decoder else
+                                  'capture stopped before the Gaussian policy draw'),
                trainingServingParityStatus=('failed' if mismatch else
                    'partial-measured' if args.execute_decoder else 'unmeasured'),
                fullConditionalParityClaim=False, decoderSupportComparison=supports,
@@ -365,7 +396,10 @@ def main():
         print(json.dumps({'report': str(root/'report.json'), 'status': report['status'],
                           'gaussianConditionalStatus': comparison['status'],
                           'maxAbsoluteDifference': comparison['maximumAbsoluteDifference'],
-                          'modelSelections': 0, 'optimizerSteps': 0}))
+                          'modelSelections': 0, 'returnedSemanticSelections': 0,
+                          'actualPolicySampleCount': actual_policy_samples,
+                          'actualDecoderEmissionCount': actual_decoder_emissions,
+                          'optimizerSteps': 0}))
         return 1 if mismatch else 0
     except BaseException as error:
         record(status='unmeasured', phase='capture-incomplete',
