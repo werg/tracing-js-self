@@ -326,10 +326,14 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
           for(const [name,binding] of Object.entries(state.envs[env]?.bindings??{}))
             if(functionReferences.get(allocation.codeId)?.has(name)&&!capturedNames.has(name)){
               capturedNames.add(name);
-              // An inner TDZ binding shadows every outer binding, even when
-              // the closure runs only after it initializes. v5 has no public
-              // uninitialized-cell record; never fabricate an outer capture.
-              if(!binding.initialized)refuse('closure captures an uninitialized binding: '+name);
+              // An inner TDZ binding shadows every outer binding. Parameter
+              // TDZ captures require an explicit v5 representation; preserve
+              // the existing delayed lexical-write path for body bindings.
+              // In both cases never fall through to an outer namesake.
+              if(!binding.initialized){
+                if(binding.kind==='parameter')refuse('closure captures an uninitialized binding: '+name);
+                continue;
+              }
               if(!graphValue(binding.token?.value))continue;
               const id=cell(env,name);
               if(!controller(owner).locals.has(id))emit(owner,'bind',{name:id,value:tag(binding.token.value)},event,'capture-binding');
