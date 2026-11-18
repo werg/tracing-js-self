@@ -122,7 +122,7 @@ def main():
             seed = smoke['optimizerSeed']
             destination = root / f'seed-{seed}'
             candidates, bundles, checkpoint_receipts = [], {}, {}
-            plan = None
+            plan, verified_plan = None, None
             if smoke.get('nativeWindowPlan') is not None:
                 plan_path = smoke_path.parent / 'native-window-plan.json'
                 if SMOKE.sha256(plan_path) != smoke['nativeWindowPlan']['sha256']:
@@ -136,15 +136,26 @@ def main():
                 if bundle['codec_fingerprint'] != experiment['nativePolicy']['tokenizerIdentity']:
                     raise ValueError('Actual checkpoint tokenizer differs from the frozen policy')
                 from megatoken.training.checkpoint import load_checkpoint
+                from megatoken.training.stream import source_sampling_report
                 payload, metadata = load_checkpoint(checkpoint)
                 if (payload['global_step'] != step or payload['train_config']['seed'] != seed or
                         payload['train_config']['datasets'] != [str(smoke_path.parent / 'prepared')] or
                         payload['codec_fingerprint'] != experiment['nativePolicy']['tokenizerIdentity']):
                     raise ValueError('Checkpoint is not from this declared optimizer/data run')
+                if plan is not None and verified_plan is None:
+                    from megatoken.training.config import TrainConfig
+                    from megatoken.generation.codec import ByteCodec
+                    codec = ByteCodec.from_tokenizer_json(payload['train_config']['codec'],
+                        expected_sha256=experiment['nativePolicy']['tokenizerSha256'])
+                    verified_plan = SMOKE.verify_native_window_plan(plan, smoke_path.parent / 'prepared', codec,
+                        TrainConfig.from_dict(payload['train_config'], expand_data=False))
+                sampling = SMOKE.authenticated_source_sampling(payload, metadata, source_sampling_report,
+                    stream_fingerprint=verified_plan['streamFingerprint'] if verified_plan is not None else None)
                 checkpoint_receipts[step] = {'checkpointStateSha256': metadata['state_sha256'],
-                    'globalStep': step, 'sourceSampling': metadata['source_sampling']}
-                if plan is not None:
-                    checkpoint_receipts[step]['exposureAssessment'] = SMOKE.training_exposure(plan, metadata['source_sampling'])
+                    'globalStep': step, 'sourceSampling': sampling, 'samplingBoundToAuthenticatedPayload': True}
+                if verified_plan is not None:
+                    checkpoint_receipts[step]['verifiedStreamFingerprint'] = verified_plan['streamFingerprint']
+                    checkpoint_receipts[step]['exposureAssessment'] = SMOKE.training_exposure(verified_plan, sampling)
                 del payload
                 bundles[step] = bundle
                 gc.collect()
