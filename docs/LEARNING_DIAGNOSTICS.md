@@ -98,3 +98,70 @@ codec/conditional fixtures and original retained JSON; they are infrastructure
 evidence. Current-source native qualification, an actual paired conditional
 capture, and the L1 ten-restart/L2 held-in convergence experiments remain separate
 gates requiring their pinned assets and a frozen compute budget.
+
+## Reproduced native input mismatch before neural execution
+
+The [actual native boundary receipt](evidence/native-input-parity-2026-11-18.json)
+uses the preserved companion revision
+`6e27a7c6529aa0778c5ea818432461db7cd05ea7`, which was also that repository's
+current main when checked. Its [original locally verified candidate](evidence/native-input-parity-2026-11-18.candidate.json)
+is retained and bound by SHA-256. This candidate is diagnostic material, not a
+native-admitted training sample.
+
+The executable probe calls the real companion functions
+`megatoken.data.semantic_harness_v5.adapt_selected_harness_v5`,
+`megatoken.controls.resolve_event_control`, and
+`megatoken.semantic_model_adapter.SelectedSemanticInference.select`. The
+serving adapter uses its real track registry. A capture endpoint intercepts
+its actual `observe_text` and `generate` arguments and stops **before** any
+neural generation. It never injects a successful selection. The source and
+initial prefix are freshly rechecked through this repository's independent
+source/replay/identity checks before crossing the boundary.
+
+For one first direct invocation of `run(a,b){return a&b;}` with inputs `6,3`,
+three concrete input differences were measured:
+
+| Input to the native runtime | Training data path | Serving adapter path |
+| --- | --- | --- |
+| Semantic instruction bytes | 0 bytes | 553 bytes |
+| Initial program and invocation observations | Insertion-order JSON | Sorted-key JSON; equal JSON values, different bytes for both records |
+| Observations before the first prediction | Program and invocation | Program, invocation, and an extra retained-activation selected-state bootstrap |
+
+The receipt also retains the exact training track declarations and serving
+track description; their recurrent effect remains unmeasured. These input
+mismatches are concrete defects to investigate before interpreting loss curves.
+They do not establish their numerical effect on logits, nor that they are the
+only cause of the failed learning attempts.
+
+```sh
+python tools/native_input_parity.py \
+  --consumer-root /path/to/immutable/megatoken \
+  --episode /path/to/current-source-certified-episode.json \
+  --max-capacity 1024 --max-tokens 128 \
+  --out /path/to/new-native-input-receipt.json
+```
+
+The command requires an unchanged companion checkout and a new output path.
+It exits 1 on a measured mismatch, retaining the failed receipt. Original
+candidate bytes are never rewritten. Historical candidates whose verifier
+identity has changed must be regenerated and freshly certified for a new run;
+the retained original receipt is not reclassified. The probe deliberately does
+not load a tokenizer, perform physical chunking, assert recurrent visibility,
+load a checkpoint, compute logits, or step an optimizer. Each missing layer is
+listed explicitly in its result. The current bounded probe covers the first
+direct invocation only, not resumed or callback executions.
+
+Run the retained-evidence tests without the companion, or include the exact
+pinned companion to execute the real native boundary regression:
+
+```sh
+python test/test_native_input_parity.py
+MEGATOKEN_REPOSITORY=/path/to/pinned/megatoken python test/test_native_input_parity.py
+```
+
+A corrected conditioning experiment must have its own native artifact identity
+and regenerated data/model artifacts under the companion repository's contract
+rules. Preserve the original pin and failed receipts as the fixed control.
+Control text, observation serialization, retained-state publication, physical
+fragment instructions, track metadata and categorical action support must all
+be checked; fixing two byte differences alone is not a conditional-parity pass.
