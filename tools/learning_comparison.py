@@ -554,6 +554,7 @@ def _rates(rows, component_by_family):
     compute = sum(row["costs"]["computeSeconds"] for row in rows)
     return {"cases": len(rows), "correctCases": correct, "declaredFamilies": len(by_family),
             "independentComponents": len(by_component), "episodeWeightedAccuracy": correct / len(rows),
+            "traceValidRate": sum(row["traceValid"] for row in rows) / len(rows),
             "familyWeightedAccuracy": mean(list(family_rates.values())),
             "componentWeightedAccuracy": mean(list(component_rates.values())),
             "familyRates": family_rates, "componentRates": component_rates,
@@ -631,6 +632,10 @@ def compare_validated_runs(declaration, cohort, pairs):
             slice_rows[name].append({"seed": seed, "base": a, "trained": b,
                                     "delta": b["familyWeightedAccuracy"] - a["familyWeightedAccuracy"]})
         results.append({"seed": seed, "base": base, "trained": trained,
+                        "absoluteCohortGates": {role: {
+                            "wholeTaskSuccess": metrics["episodeWeightedAccuracy"] >= cohort["thresholds"]["wholeTaskSuccess"],
+                            "traceValid": metrics["traceValidRate"] >= cohort["thresholds"]["traceValid"]}
+                            for role, metrics in (("base", base), ("trained", trained))},
                         "delta": {key: trained[key] - base[key] for key in ("episodeWeightedAccuracy", "familyWeightedAccuracy", "componentWeightedAccuracy")},
                         "pairedComponentInterval": _interval([delta], confidence=declaration["confidenceLevel"],
                             repetitions=declaration["bootstrapReplicates"], seed=declaration["bootstrapSeed"] + seed, weights=weights),
@@ -663,10 +668,11 @@ def compare_validated_runs(declaration, cohort, pairs):
                 for name in ("effects", "errors", "cleanup")},
             "excludedCriticalSlices": declaration["excludedCriticalSlices"],
             "meanAccuracy": {role: {metric: sum(run[role][metric] for run in results) / len(results)
-                for metric in ("episodeWeightedAccuracy", "familyWeightedAccuracy", "componentWeightedAccuracy")}
+                for metric in ("episodeWeightedAccuracy", "familyWeightedAccuracy", "componentWeightedAccuracy", "traceValidRate")}
                 for role in ("base", "trained")},
             "hardGateTotals": {key: all_gates[key] for key in HARD_GATES}, "gates": gates,
-            "accepted": all(gates.values()), "optimizerStepsDuringComparison": 0,
+            "accepted": all(gates.values()), "acceptanceMeaning": "relative-learning-improvement/1",
+            "optimizerStepsDuringComparison": 0,
             "limitations": ["Source/ancestor components, not declared names or repeated episodes, determine independent resampling units.",
                 "Bootstrap intervals describe this frozen component collection; they are not a power guarantee or evidence against pretraining contamination.",
                 "Pre-run declarations and launch receipts require trusted external retention; checksums are not signatures.",

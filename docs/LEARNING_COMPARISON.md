@@ -211,6 +211,12 @@ per-component rates, per-seed effects, all declared slices, generated/observed
 tokens, wall time, compute time, and exact retained first-failure evidence. Cost
 per correct task is null when no tasks succeeded.
 
+Trace-validity rates and the frozen cohort's absolute task/trace thresholds are
+reported for each arm. Comparison acceptance has the explicit meaning
+`relative-learning-improvement/1`: a measured gain can pass while the trained
+model still falls below the cohort's absolute correctness target. Both results
+remain visible; a relative learning gain does not assert production competence.
+
 Uncertainty uses a deterministic paired crossed bootstrap. Each replicate
 resamples whole frozen source/ancestor components and optimizer seeds. The same
 component draw is used for every selected seed; base/trained observations stay

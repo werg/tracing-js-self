@@ -133,6 +133,16 @@ def test_confirmatory_positive_fixture_and_predeclared_practical_threshold():
     assert not result["gates"]["practicalImprovement"] and not result["accepted"]
 
 
+def test_relative_learning_gate_retains_separate_absolute_task_and_trace_gates():
+    cohort = cohort_for(["a", "a", "b", "b"])
+    result = comparison.compare_validated_runs(declaration_for(cohort), cohort,
+        pairs_for(cohort, [False] * 4, [True, False, True, False]))
+    assert result["accepted"] and result["acceptanceMeaning"] == "relative-learning-improvement/1"
+    assert not result["runs"][0]["absoluteCohortGates"]["trained"]["wholeTaskSuccess"]
+    assert result["runs"][0]["absoluteCohortGates"]["trained"]["traceValid"]
+    assert result["meanAccuracy"]["trained"]["traceValidRate"] == 1
+
+
 def test_one_seed_is_exploratory_and_missing_planned_seeds_are_refused():
     cohort = cohort_for(["a", "b"])
     result = comparison.compare_validated_runs(declaration_for(cohort, mode="exploratory", optimizerSeeds=[17]), cohort,
