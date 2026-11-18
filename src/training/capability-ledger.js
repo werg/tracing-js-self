@@ -26,6 +26,7 @@ export const CAPABILITY_CASES=Object.freeze([
   pure('fill-undefined-end','function run(){return [1,2,3].fill(7,1,undefined);}'),
   pure('copy-within-undefined-end','function run(){return [1,2,3].copyWithin(0,1,undefined);}'),
   pure('alias-preserving-mutation','function run(){const a={n:1};const b=a;b.n=4;return [a,b];}'),
+  pure('input-array-mutation','function run(values){values[0]=values[1];values.pop();return values.length;}',[[3,5,7]]),
   pure('synchronous-primitive-throw','function run(){throw 7;}'),
   pure('synchronous-declared-error','function run(){throw new Error("declared");}'),
   pure('finally-overrides-return','function run(){try{return 1;}finally{return 2;}}'),
