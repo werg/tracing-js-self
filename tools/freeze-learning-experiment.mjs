@@ -1,0 +1,161 @@
+#!/usr/bin/env node
+// Freeze source membership, checkpoint schedule and decision rules BEFORE any
+// optimizer launch. This file is PRIVATE: only each envelope enters the runner.
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {readFileSync,writeFileSync,mkdirSync,realpathSync} from 'node:fs';
+import {resolve,dirname,join,relative,isAbsolute} from 'node:path';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+import {controlledEvaluationCase} from '../src/training/selected-evaluation.js';
+import {measureExecutionDifficulty} from '../src/corpus/execution-difficulty.mjs';
+import {verifyFrozenSplitIdentity} from '../src/corpus/source-registry.mjs';
+
+const sha=value=>createHash('sha256').update(value).digest('hex');
+const inside=(root,path)=>{const rel=relative(root,path);return rel!==''&&!rel.startsWith('..'+(process.platform==='win32'?'\\':'/'))&&rel!=='..'&&!isAbsolute(rel);};
+
+export function learningCase(exported,{path,fileSha256,sourceReceipt,decoderSeed=17}={}){
+  const side=exported?.sidecar;
+  if(side?.admission!=='admitted'||side.nativeAdmission?.admitted!==true||
+    side.referenceStatus!=='agreed'||side.splitIdentity?.policy!=='source-components/1')
+    throw new TypeError('Learning requires actual native admission and frozen global source components');
+  verifyFrozenSplitIdentity(side.splitIdentity,{family:side.sourceFamily,seed:side.seeds.split});
+  if(!sourceReceipt?.identityValidated||sourceReceipt.identityDigest!==side.identityDigest||
+    sourceReceipt.producerRevision!==side.producerRevision||
+    !sourceReceipt.sourceValidated||!sourceReceipt.journalValidated||!sourceReceipt.replayValidated||
+    !sourceReceipt.effectsValidated)
+    throw new TypeError('Fresh source, replay and immutable identity receipt required');
+  if(![17,29,43].includes(decoderSeed))throw new TypeError('Unsupported frozen decoder seed');
+  const id=side.sourceFamily+'/'+side.taskId+'@'+side.identityDigest.slice(0,16);
+  const fixture=controlledEvaluationCase(exported,{id,family:side.sourceFamily,split:side.split});
+  const request=structuredClone(fixture.request);
+  delete request.controlledSelectionsByRepresentation;
+  const difficulty=measureExecutionDifficulty(exported),slices=new Set(['new-source']);
+  if(side.splitIdentity.holdout)slices.add(side.splitIdentity.holdout.kind);
+  if(fixture.expected.effects.length)slices.add('effects');else slices.add('pure-selected');
+  if(difficulty.exceptionOutcomes)slices.add('valid-errors');
+  if(fixture.expected.effects.some(effect=>['demo.listen','demo.unlisten','dom.on','dom.off','dom.setTimer','dom.stopTimer']
+    .includes(effect.operation)))slices.add('cleanup');
+  if(difficulty.activations>1)slices.add('retained-state');
+  if(difficulty.finalAliasEdges)slices.add('aliasing');
+  if(difficulty.mutationEvents)slices.add('mutation');
+  const tokens=side.nativeAdmission.generatedTokens;
+  if(!Number.isSafeInteger(tokens)||tokens<1)throw new TypeError('Actual native learner-token count required');
+  slices.add(tokens<=512?'length-short':tokens<=2048?'length-medium':'length-long');
+  slices.add(difficulty.peakHeapObjects<=64?'heap-small':'heap-large');
+  const row={id,sourceTaskId:side.taskId,family:side.sourceFamily,split:side.split,
+    sourceCluster:side.splitIdentity.componentId,ancestorIds:side.ancestorIds,
+    registryDigest:side.splitIdentity.registryDigest,identityDigest:side.identityDigest,
+    episodeDigest:sourceReceipt.episodeDigest,producerRevision:side.producerRevision,
+    generatedTokens:tokens,path,fileSha256,sourceReceipt,slices:[...slices].sort(),
+    difficulty:{activations:difficulty.activations,maxCallDepth:difficulty.maxCallDepth,
+      loopTrips:difficulty.loopTrips,peakHeapObjects:difficulty.peakHeapObjects,
+      finalAliasEdges:difficulty.finalAliasEdges,mutationEvents:difficulty.mutationEvents,
+      exceptionOutcomes:difficulty.exceptionOutcomes,asyncDependencyDepth:difficulty.asyncDependencyDepth,
+      peakPendingEffects:difficulty.peakPendingEffects,learnerGeneratedTokens:tokens}};
+  if(side.split!=='train')Object.assign(row,{expected:fixture.expected,
+    envelope:{schema:'semantic-evaluation-request/4',caseId:id,request,
+      seed:decoderSeed,representation:'compact'}});
+  return row;
+}
+
+export function diverseSubset(rows,maximum){
+  if(!Number.isSafeInteger(maximum)||maximum<1)throw new TypeError('Positive case cap required');
+  const groups=new Map();
+  for(const row of [...rows].sort((a,b)=>a.id.localeCompare(b.id))){
+    const list=groups.get(row.sourceCluster)??[];list.push(row);groups.set(row.sourceCluster,list);
+  }
+  const selected=[];
+  while(groups.size&&selected.length<maximum)for(const component of [...groups.keys()].sort()){
+    if(selected.length===maximum)break;
+    const group=groups.get(component);selected.push(group.shift());if(!group.length)groups.delete(component);
+  }
+  return selected;
+}
+
+async function main(){
+  const corpora=[],flags=new Map();
+  for(let i=2;i<process.argv.length;i+=2){
+    const flag=process.argv[i],value=process.argv[i+1];
+    if(!value||value.startsWith('--'))throw new TypeError('Missing value for '+flag);
+    if(flag==='--corpus')corpora.push(realpathSync(resolve(value)));
+    else if(flags.has(flag))throw new TypeError('Repeated option '+flag);
+    else flags.set(flag,value);
+  }
+  const allowed=new Set(['--out','--tracer-root','--name','--mode','--optimizer-seeds','--decoder-seed',
+    '--initialization-seed','--checkpoint-steps','--minimum-improvement','--maximum-slice-regression','--bootstrap-replicates',
+    '--bootstrap-seed','--minimum-test-components','--train-examples','--validation-cases','--test-cases']);
+  for(const key of flags.keys())if(!allowed.has(key))throw new TypeError('Unknown option '+key);
+  if(!corpora.length||!flags.has('--out')||!flags.has('--minimum-improvement'))
+    throw new TypeError('Usage: freeze-learning-experiment.mjs --corpus DIR [--corpus DIR] --out PRIVATE.json --minimum-improvement 0.05 [--checkpoint-steps 8,16 --train-examples 32 --validation-cases 16 --test-cases 32]');
+  const integer=(name,fallback,min,max)=>{const value=Number(flags.get(name)??fallback);
+    if(!Number.isSafeInteger(value)||value<min||value>max)throw new TypeError('Invalid '+name);return value;};
+  const numeric=(name,fallback,min,max)=>{const value=Number(flags.get(name)??fallback);
+    if(!Number.isFinite(value)||value<min||value>max)throw new TypeError('Invalid '+name);return value;};
+  const seeds=(flags.get('--optimizer-seeds')??'17').split(',').map(Number);
+  if(!seeds.length||new Set(seeds).size!==seeds.length||seeds.some(seed=>![17,29,43].includes(seed)))
+    throw new TypeError('Declare unique optimizer seeds among 17,29,43');
+  const mode=flags.get('--mode')??'exploratory';
+  if(!['exploratory','confirmatory'].includes(mode)||mode==='confirmatory'&&seeds.length<3)
+    throw new TypeError('Confirmatory experiments require at least three optimizer seeds');
+  const steps=(flags.get('--checkpoint-steps')??'16').split(',').map(Number);
+  if(!steps.length||steps.some(step=>!Number.isSafeInteger(step)||step<1||step>1000000)||
+    steps.some((step,index)=>index&&step<=steps[index-1]))throw new TypeError('Checkpoint steps must be unique, positive and ascending');
+  const tracer=realpathSync(resolve(flags.get('--tracer-root')??fileURLToPath(new URL('..',import.meta.url))));
+  execFileSync('git',['-C',tracer,'diff','--quiet','HEAD','--']);
+  const revision=execFileSync('git',['-C',tracer,'rev-parse','HEAD'],{encoding:'utf8'}).trim();
+  const decoderSeed=integer('--decoder-seed',17,17,43),initializationSeed=integer('--initialization-seed',17,17,43);
+  if(![17,29,43].includes(decoderSeed)||![17,29,43].includes(initializationSeed))throw new TypeError('Unsupported decoder seed');
+  const nativePolicy=JSON.parse(readFileSync(join(tracer,'contracts/native-admission-policy-v5.json'),'utf8'));
+  const candidates=[],seen=new Set(),manifests=[];
+  for(const directory of corpora){
+    const bytes=readFileSync(join(directory,'manifest.json')),manifest=JSON.parse(bytes);
+    if(manifest.producerRevision!==revision)throw new TypeError('Corpus differs from the clean producer revision');
+    manifests.push({path:join(directory,'manifest.json'),sha256:sha(bytes),counts:manifest.counts});
+    for(const item of manifest.cases){
+      if(item.status!=='admitted')continue;
+      if(typeof item.path!=='string')throw new TypeError('Materialize compact campaign exports before freezing');
+      const path=realpathSync(resolve(directory,item.path));
+      if(!inside(directory,path))throw new TypeError('Candidate path escapes corpus');
+      const bytes=readFileSync(path),exported=JSON.parse(bytes),side=exported.sidecar;
+      if(seen.has(side.identityDigest))continue;
+      const receipt=JSON.parse(execFileSync('node',[join(tracer,'tools/verify-effectful-admission.mjs'),path],
+        {encoding:'utf8',timeout:120000,maxBuffer:16*1024*1024}));
+      if(side.nativePolicy.consumerRevision!==nativePolicy.consumerRevision||
+        side.nativePolicy.tokenizerIdentity!==nativePolicy.tokenizerIdentity||
+        side.nativePolicy.tokenizerSha256!==nativePolicy.tokenizerSha256)
+        throw new TypeError('Native consumer/tokenizer release policy changed');
+      candidates.push(learningCase(exported,{path,fileSha256:sha(bytes),sourceReceipt:receipt,decoderSeed}));
+      seen.add(side.identityDigest);
+      process.stderr.write(item.id+': frozen verified '+side.split+'\n');
+    }
+  }
+  if(new Set(candidates.map(row=>row.registryDigest)).size!==1)throw new TypeError('All streams must share one frozen global source registry');
+  const selected=Object.fromEntries(['train','validation','test'].map(split=>[split,
+    diverseSubset(candidates.filter(row=>row.split===split),integer(split==='train'?'--train-examples':`--${split}-cases`,split==='train'?32:split==='validation'?16:32,1,100000))]));
+  if(Object.values(selected).some(rows=>!rows.length))throw new TypeError('Need independently admitted training, validation and test components');
+  const count=rows=>({episodes:rows.length,sourceFamilies:new Set(rows.map(row=>row.family)).size,
+    independentComponents:new Set(rows.map(row=>row.sourceCluster)).size,
+    learnerGeneratedTokens:rows.reduce((n,row)=>n+row.generatedTokens,0)});
+  const payload={schema:'semantic-learning-experiment/1',name:flags.get('--name')??'bounded-v5-transfer',
+    frozenAt:new Date().toISOString(),mode,baseOrigin:'newly-initialized',optimizerSeeds:seeds,decoderSeed,initializationSeed,checkpointSteps:steps,
+    producerRevision:revision,nativePolicy,sourceRegistryDigest:candidates[0].registryDigest,
+    corpusManifests:manifests,training:selected.train,validation:selected.validation,test:selected.test,
+    policy:{minimumUsefulImprovement:numeric('--minimum-improvement',null,Number.EPSILON,1),
+      maximumCriticalSliceRegression:numeric('--maximum-slice-regression',0.05,0,1),
+      confidence:0.95,bootstrapReplicates:integer('--bootstrap-replicates',2000,100,100000),
+      bootstrapSeed:integer('--bootstrap-seed',101,0,0xffffffff),
+      minimumConfirmatoryTestComponents:integer('--minimum-test-components',100,2,100000)},
+    population:Object.fromEntries(['train','validation','test'].map(split=>[split,{
+      available:count(candidates.filter(row=>row.split===split)),selected:count(selected[split])}])),
+    selection:'deterministic-round-robin-by-authenticated-source-component',
+    privateExpectedOutcomes:true,injectedSelections:false,optimizerSteps:0,learnedSuccess:null,
+    limits:['Selected continuation execution is measured separately from pure output transfer.',
+      'Frozen source components do not establish absence from a pretrained model training corpus.',
+      'A small exploratory cohort does not support a confirmatory generalization claim.']};
+  const output=resolve(flags.get('--out'));mkdirSync(dirname(output),{recursive:true});
+  const bytes=JSON.stringify(payload,null,2)+'\n';writeFileSync(output,bytes,{flag:'wx'});
+  process.stdout.write(JSON.stringify({experiment:output,sha256:sha(bytes),population:payload.population,optimizerSeeds:seeds})+'\n');
+}
+
+if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href)
+  main().catch(error=>{process.stderr.write(String(error.stack??error)+'\n');process.exitCode=1;});
