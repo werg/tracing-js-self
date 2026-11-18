@@ -44,6 +44,32 @@ test('synchronous throw runs through the selected driver with exact error and cl
   assert.deepEqual(actual.outcome.completion,{kind:'throw',value:['num',7]});
 });
 
+test('synchronous host rejections retain observation authority through root and caller completion',async()=>{
+  const programs=[
+    ['function run(){return host.readNumber("bad");}','throw'],
+    ['function fail(){return host.readNumber("bad");}function run(){return fail();}','throw'],
+    ['function run(){try{return host.readNumber("bad");}catch(e){return e;}}','return'],
+    ['function run(){try{return host.readNumber("bad");}finally{host.store("cleanup",1);}}','throw']
+  ];
+  for(const asynchronous of [false,true])for(const [program,kind] of programs){
+    const code='"use strict";'+(asynchronous?program.replaceAll('function ','async function '):program);
+    const calls=[{operation:'demo.readNumber',arguments:['bad'],status:'rejected',result:'missing'}];
+    if(program.includes('cleanup'))calls.push({operation:'demo.store',arguments:['cleanup',1]});
+    const checked=await verifyEffectfulTrainingCase({source:code,entry:'run',
+      family:'sync-host-rejection',fixture:{calls}});
+    assert.equal(checked.status,'locally_verified',code+': '+checked.reason);
+    assert.equal(checked.exported.sidecar.reference.outcome.kind,kind);
+    assert((await recheckEffectfulAdmission(checked.exported,{requireAdmitted:false})).sourceValidated);
+    const fixture=controlledEvaluationCase(checked.exported,{id:'sync-host-rejection'});
+    const actual=await evaluateSelectedCase({schema:'semantic-evaluation-request/4',caseId:fixture.id,
+      request:fixture.request,seed:17,representation:'compact'});
+    assert.equal(actual.failure,null,JSON.stringify(actual.failure));
+    assert.deepEqual(actual.outcome,fixture.expected);
+    assert.deepEqual(actual.outcome.completion,{kind,value:['str','missing']});
+    assert.deepEqual(actual.outcome.cleanup,{pendingEffects:0,pendingJobs:0,openHandlers:0});
+  }
+});
+
 function worker(code,{mode,timeoutMs=100,fixture={calls:[]}}={}){
   const process=spawnSync(globalThis.process.execPath,['tools/effectful-reference-worker.mjs'],{
     encoding:'utf8',input:JSON.stringify({source:code,entry:'run',inputGraph:encodeNativeGraph([]),

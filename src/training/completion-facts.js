@@ -5,7 +5,7 @@ export function normalizeCompletionFacts(bundle) {
   const facts=new Map();
   for(const event of bundle.events){
     if(!['call.return','completion.finally.end','completion.throw','job.enter',
-      'completion.catch.bind'].includes(event.operation))
+      'completion.catch.bind'].includes(event.operation)&&event.completion?.type!=='throw')
       continue;
     if(event.operation==='job.enter'){
       // Rejected await may unwind the resumed async frame in this same job;
@@ -17,8 +17,11 @@ export function normalizeCompletionFacts(bundle) {
           invocation:exited.id,journalEvent:event.eventId});
       continue;
     }
-    const frame=event.stateChanges.find(p=>p.table==='frames' &&
-      p.id===event.invocationId);
+    // A synchronous host rejection resumes its blocked caller on observed
+    // delivery, which has no source instruction invocationId of its own.
+    const invocation=event.invocationId??(event.operation==='external.input.deliver'?
+      event.stateChanges.find(p=>p.table==='effects')?.before?.frameId:null);
+    const frame=event.stateChanges.find(p=>p.table==='frames' && p.id===invocation);
     if(!frame)continue;
     const status=frame.after?.status;
     if(event.operation==='completion.catch.bind'){
@@ -29,7 +32,7 @@ export function normalizeCompletionFacts(bundle) {
         throw new TypeError('Catch binding lacks committed owned data cell');
       const [name,binding]=introduced[0];
       facts.set(event.eventId,{operation:'catch-bind',name,
-        value:binding.token.value,invocation:event.invocationId,
+        value:binding.token.value,invocation,
         journalEvent:event.eventId});
       continue;
     }
@@ -43,29 +46,29 @@ export function normalizeCompletionFacts(bundle) {
       facts.set(event.eventId,{operation:actual?'return':'transfer',
         kind:'return',value:event.result,
         ...(actual?{}:{handler:'finally'}),
-        invocation:event.invocationId,journalEvent:event.eventId});
+        invocation,journalEvent:event.eventId});
     }else if(event.operation==='completion.finally.end'){
       const pending=frame.before?.handlers?.at(-1)?.pending;
       if(!pending)throw new TypeError('Finally completion lost its prior outcome');
       if(status==='completed'&&pending.type==='return' &&
          Array.isArray(pending.value?.value)){
         facts.set(event.eventId,{operation:'return',kind:'return',
-          value:pending.value.value,invocation:event.invocationId,
+          value:pending.value.value,invocation,
           journalEvent:event.eventId});
       }else if(status==='thrown'&&pending.type==='throw'){
         // The classified error boundary is deliberately a distinct contract:
         // do not synthesize an ordinary data return from a native exception.
         facts.set(event.eventId,{operation:'unhandled-throw',
           ...(Array.isArray(frame.after.completion?.value?.value)?{value:frame.after.completion.value.value}:{}),
-          invocation:event.invocationId,journalEvent:event.eventId});
+          invocation,journalEvent:event.eventId});
       }
-    }else if(event.operation==='completion.throw'){
+    }else if(event.operation==='completion.throw'||event.completion?.type==='throw'){
       const routed=frame.after?.status;
-      const input=event.operands?.[0]??event.completion?.value?.value;
+      const input=event.completion?.value?.value??event.operands?.[0];
       if(Array.isArray(input))
         facts.set(event.eventId,{operation:routed==='thrown'?'throw':'transfer',
           kind:'throw',value:input,handler:routed==='thrown'?null:'catch-or-finally',
-          invocation:event.invocationId,journalEvent:event.eventId});
+          invocation,journalEvent:event.eventId});
     }
     const fact=facts.get(event.eventId);
     if(fact&&['throw','unhandled-throw'].includes(fact.operation)){

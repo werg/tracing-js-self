@@ -1,0 +1,40 @@
+{
+  "schema": "semantic-native-admission/4",
+  "componentGate": "native-consumer-only",
+  "episodeDigest": "ac3c48030902c0b1d0f1ea0a8364d5b3825e9642d841ecc5915ad6e858ca9543",
+  "consumerRevision": "9de216646633686a275d47b716501fdb57962afc",
+  "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+  "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+  "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+  "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+  "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+  "generatedTokens": 271,
+  "observedTokens": 1195,
+  "physicalRecords": 14,
+  "contextTransportRecords": 1,
+  "logicalRecords": 13,
+  "actions": 0,
+  "lossMaskValidated": true,
+  "visibilityValidated": true,
+  "fragmentationValidated": true,
+  "admitted": true,
+  "optimizerSteps": 0,
+  "importReceipt": {
+    "records": 14,
+    "invocations": 1,
+    "tracks": 2,
+    "actions": 0,
+    "observations": 2,
+    "admission": "locally_verified",
+    "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "completions": [
+      {
+        "invocationId": "invocation1",
+        "kind": "return",
+        "value": [
+          "undefined"
+        ]
+      }
+    ]
+  }
+}

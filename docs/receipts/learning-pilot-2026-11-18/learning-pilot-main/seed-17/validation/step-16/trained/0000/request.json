@@ -1,0 +1,196 @@
+{
+  "schema": "semantic-evaluation-request/4",
+  "caseId": "semantic-recipe:inventory-shortfall/inventory-shortfall-callbacks-recovery@90751b748698c84d",
+  "request": {
+    "schema": "selected-evaluation-case/4",
+    "program": {
+      "programId": "program1",
+      "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);let answer=a>b?a-b:0;await host.withCallback(key,function(delta){answer=answer+delta;host.store(key,answer);});return answer;}",
+      "entry": "run",
+      "capabilities": [
+        "demo.readAsync",
+        "demo.store",
+        "demo.withCallback"
+      ]
+    },
+    "invocation": {
+      "programId": "program1",
+      "invocationId": "invocation1",
+      "trackId": "worker1",
+      "realmId": "realm1",
+      "triggerId": "teacher-entry",
+      "inputGraph": {
+        "roots": [
+          [
+            "str",
+            "inventory-shortfall"
+          ],
+          [
+            "num",
+            3
+          ]
+        ],
+        "objects": []
+      },
+      "realmPolicy": "retained",
+      "completionPolicy": "await-returned-promise",
+      "receiverValue": [
+        "undefined"
+      ]
+    },
+    "fixture": {
+      "calls": [
+        {
+          "operation": "demo.readAsync",
+          "status": "fulfilled",
+          "argumentGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "str",
+                "inventory-shortfall"
+              ]
+            ],
+            "objects": []
+          },
+          "resultGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "num",
+                8
+              ]
+            ],
+            "objects": []
+          }
+        },
+        {
+          "operation": "demo.withCallback",
+          "status": "fulfilled",
+          "argumentGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "str",
+                "inventory-shortfall"
+              ],
+              [
+                "ref",
+                "o0"
+              ]
+            ],
+            "objects": [
+              {
+                "id": "o0",
+                "kind": "object",
+                "properties": [
+                  {
+                    "key": "callback",
+                    "value": [
+                      "bool",
+                      true
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "resultGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "undefined"
+              ]
+            ],
+            "objects": []
+          },
+          "callbacks": [
+            {
+              "slot": 1,
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "num",
+                    2
+                  ]
+                ],
+                "objects": []
+              }
+            },
+            {
+              "slot": 1,
+              "argumentGraph": {
+                "schema": "owned-graph/1",
+                "roots": [
+                  [
+                    "num",
+                    3
+                  ]
+                ],
+                "objects": []
+              }
+            }
+          ]
+        },
+        {
+          "operation": "demo.store",
+          "status": "fulfilled",
+          "argumentGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "str",
+                "inventory-shortfall"
+              ],
+              [
+                "num",
+                7
+              ]
+            ],
+            "objects": []
+          },
+          "resultGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "undefined"
+              ]
+            ],
+            "objects": []
+          }
+        },
+        {
+          "operation": "demo.store",
+          "status": "fulfilled",
+          "argumentGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "str",
+                "inventory-shortfall"
+              ],
+              [
+                "num",
+                10
+              ]
+            ],
+            "objects": []
+          },
+          "resultGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "undefined"
+              ]
+            ],
+            "objects": []
+          }
+        }
+      ],
+      "settlementOrder": null
+    }
+  },
+  "seed": 17,
+  "representation": "compact"
+}

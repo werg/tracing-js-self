@@ -1,36 +1,39 @@
-# JavaScript execution data resumption — 18 November 2026
+# JavaScript execution data resumption — implementation ledger
 
-Starting revision: `55a53c4b884b7d536cfc06220d8838d8cead9236`.
+The supplied 18 November 2026 plan audited `55a53c4b884b7d536cfc06220d8838d8cead9236`. The continuation began after PR36 at `dac57b163f277085f1ee42f5d1fa0085eeecb556`; the completed fixed-revision baseline retained here is **`5753de14760b76754fd1bd49ca7c8bfc6de85831`**. Later changes have their own focused checks and require refreshed final qualification. None of these revisions is substituted into an older receipt.
 
-This work implements the supplied 18 November audit plan in independently
-reviewable increments. The production learner contract remains semantic-execution/5,
-semantic-trace/5, semantic-context/5, semantic-continuation/5, selected-harness/2.
-Historical v4 receipts and integration locks are preserved.
+Implementation is on [tracer PR38](https://github.com/werg/tracing-js-self/pull/38), with companion transport/parser/preparation repairs on [Megatoken PR31](https://github.com/werg/megatoken/pull/31). The production contracts remain `semantic-execution/5`, `semantic-trace/5`, `semantic-context/5`, `semantic-continuation/5`, and `selected-harness/2`. Historical v4 and prior v5 evidence retain their original pins.
 
-## Work and evidence ledger
+**The infrastructure and bounded semantic repairs are implemented, with actual native qualification and actual optimizer measurements. The completed learning experiment failed the held-in execution criterion and demonstrated no generalization improvement.** Implementation completion is not the empirical W10/W11 success gate. The [handover](RESUMPTION_HANDOVER_2026-11-18.md) separates completed evidence, final integration still running, intentional unsupported scope, and external dependencies.
 
-| Work | Scope | Status |
+## W01–W14 status
+
+| Work | Implemented result | Evidence and remaining acceptance condition |
 | --- | --- | --- |
-| W01 | Current baseline, capability ledger, environment/oracle locks | In progress |
-| W02–W04 | Array defaults, async declarations, parameter environments, descriptors | In progress |
-| W05 | Immutable identity, provenance, split and admission policy | In progress |
-| W06 | Guest throws, failure categories and callback checks | In progress |
-| W07–W08 | Real-source bridge, family/clone isolation, frozen holdouts | In progress |
-| W09 | Broader current-v5 native qualification and durable evidence | In progress |
-| W10–W11 | Actual optimizer smoke and held-out learning experiment | Environment and inputs being investigated |
-| W12 | Resumable campaigns and measured generation costs | In progress |
-| W13 | Further language features selected by measured evidence | Depends on learning and refusal results |
-| W14 | Release/documentation/source-license maintenance | In progress |
+| W01 — baseline and locks | One immutable baseline command, producer/environment drift rejection, actual capability stages, isolated integrity-locked oracle, native requirements and release locks. | `5753de1`: 841 unit passes / five explicit skips; 203 local examples; named oracle/native receipts. Final code/policy refresh remains pending in the handover. |
+| W02 — defaults and async declarations | Method-specific omitted/undefined array bounds and preserved async declaration flags, with differential/replay/projection regressions. | Baseline checks and measured native boundary subsets; later `some`/`forEach` and sparse-fill additions have a 20-test regression group and actual admissions in the 13/13 `25f8e90` native probe run. |
+| W03 — parameter environments | Separate parameter/body scopes, ordered initialization and TDZ, default closure capture and source-cell identity checks. | Parameter/body, TDZ and captured camelCase default probes passed native admission at their recorded pins. Forward-parameter closure projection remains an explicit bounded refusal. |
+| W04 — descriptors | Unsupported `Object.create` descriptor and array-index accessor combinations refuse explicitly. Supported ordinary accessor updates preserve omitted fields and legal non-configurable invariants; descriptor getters outside the owned continuation refuse. | Focused descriptor regressions plus retained capability refusals; no claim of complete descriptor semantics. |
+| W05 — provenance and splits | Immutable single/session identity binds source/input/fixture, family/ancestors, frozen split registry, producer/runtime/verifier, policy and native receipt. Actual consumer worktree/tokenizer/environment checks reject drift, including importable untracked code. | Earlier native tamper receipt rejects all 30 private metadata mutations and preserves both valid controls at its recorded revision. Later release qualification rechecks actual source and native gates. |
+| W06 — abrupt outcomes and failures | Primitive, declared-Error and implicit guest throws become owned completions with preserved identity through calls/catches/finally. Root and host rejection paths are checked; callback/unhandled obligations remain explicit. Original/minimized failure evidence and distinct categories are retained. | Actual native primitive/Error/TDZ admissions and declared/implicit regressions. Node20 lazy-stack defect fixed and checked on Node20.20.2. Broader Error stacks/causes/prototypes and unsupported callback obligations are not flattened into labels. |
+| W07 — real-source native bridge | Pinned utility, Exercism and production-helper adapters reach the same v5 source/replay/native gates, retaining transformations and original refusal dispositions. | `5753de1` / consumer `6206b33`: 210 attempts, 174 admissions, 36 refusals; 88 admitted source-family labels form 31 components. Follow-up canonical input/conversion repairs and final requalification are active integration work. |
+| W08 — global identity and evaluation | One frozen ancestry/clone registry across streams; holdout projects/compositions; input/schedule expansion within components; immutable verified registry reuse; source-token caps and frozen primary/auxiliary cohorts. | Registry: 508 variants / 199 family labels / 135 components, split 89/13/33. Completed primary learning test had one component. A larger prospective declaration is frozen but untrained; registry size is not measured evaluation diversity. |
+| W09 — native CI and durability | Native matrix covers engineering, training-v4, benchmark-v1, real-source and generated-v1, with full packaging and actionable refusal accounting. Exact compact receipts are committed; complete private archives are separate deliverables. | Earlier training-v4 50/50 and broad real-source 873/1,177 at `dac57b1`; eight native probes and a separate 174/210 pilot at `5753de1`; 13/13 later probes at `25f8e90`. Final full hosted matrix and publication status remain pending finalization. |
+| W10 — optimizer smoke | Actual native optimization, loss masks, exact initialization/reload, checkpoints, native selected serving, original invalid bytes, and complete exposure accounting. | 64 actual updates changed 307 parameter tensors; only five of 32 prepared source IDs were visited. Held-in base 0/4 and trained 0/4: **empirical smoke failed**. Balanced retry status is separate. |
+| W11 — held-out pilot | Preregistered component splits, validation-only checkpoint selection, actual base/trained serving, paired component uncertainty, hard gates, known-source auxiliary probes and separate pure-output adapter. | Completed exploratory selected test: 0/3 each, one component; pure output: 0/1 each. No improvement, multi-seed confirmation, or production launch is claimed. A new declaration cannot retroactively widen this result. |
+| W12 — durability and profiling | Append-only checksummed campaign/CAS, exclusive writer/shared reader OS locks, torn-tail recovery, cancelled-work retry, full identity cache, bounded workers, original failures, public/private separation, kernel-enforced reference isolation, end-to-end timing and separate parent/worker RSS. | Crash/resume/corruption/locking tests; three actual isolated native admissions. Individual RSS peaks are not a measured simultaneous process-tree total. |
+| W13 — measured expansion | Refusal-driven bounded `some`/`forEach`, callback-throw cleanup and sparse `fill` integrated with original attribution; capture-name and primitive conversion/canonical-fixture follow-ups target actual campaign failures. | Array integration passes 20 focused tests; five added probes are included in 13/13 actual native admissions at `25f8e90` / `3d7ffc7`. Conversion/canonical follow-ups remain active integration items. Broad language support remains outside the bounded profile. |
+| W14 — release and maintenance | Complete campaign verifier, fresh source/native/environment requalification, deterministic streaming archives, authenticated component caps, retained license notices, current navigation and content-based branch audit. | Three-admission cap smoke prepares two selected inputs and verifies its archive. Real-source 10,000-token/0.2-share release and final CI/publication remain pending. No administrative setting was changed. |
+
+## Completed evidence, with exact scopes
+
+- [Qualification receipts](receipts/resumption-qualification-2026-11-18/README.md) retain the unchanged `5753de1` baseline and logs, eight native capability receipts, native `6206b33` environment, 12 spec probes, 1,958 arithmetic comparisons, the eight-file Test262 slice, original 210-case pilot dispositions, the separate broad 1,177-case aggregate, isolated native collection and cap-smoke receipts. The later `25f8e90` / `3d7ffc7` 13-case receipt and fresh 47-package environment are separate files.
+- [Learning receipts](receipts/learning-pilot-2026-11-18/README.md) retain all 22 selected-execution failures and both original pure-output responses, optimizer/checkpoint identities, actual token/source exposure, validation selection and paired comparisons.
+- [Admission identity](ADMISSION_IDENTITY.md), [reference isolation](REFERENCE_ISOLATION.md), [release bundles](RELEASE_BUNDLE.md), [optimizer smoke](OPTIMIZATION_SMOKE.md), and [learning pilot](LEARNING_PILOT.md) document the executable mechanisms and boundaries.
+- [Branch triage](BRANCH_TRIAGE_2026-11-18.md) distinguishes ten ancestor branches, nine aggregate patch matches and four content reconciliations, while preserving active PR37/PR38 work and every original producing revision.
 
 ## Evidence rules
 
-- Acquisition, local verification, native admission and learned accuracy are
-  separate stages with separate denominators.
-- Intentional guest throws are outcomes; unsupported programs, budgets,
-  interpreter errors and failed oracle processes are separate dispositions.
-- Public learner records must not contain private identity payloads, future
-  observations or teacher corrections.
-- No optimizer, native-admission, browser or generalization success is claimed
-  without a corresponding executed check and retained evidence.
-- Every implementation increment is committed and pushed promptly. An end-of-run
-  handover records exact checks, unresolved work, blockers and reproduction steps.
+Acquisition, local verification, native admission, native preparation and learned execution have separate denominators. A training exclusion due to a token cap does not change the candidate's original admission. A guest throw is a result; an unsupported feature, teacher bug, oracle disagreement, budget failure or invalid model record is not a positive target. Public model input excludes private identity/expected-result material and future observations. An attempted or completed pipeline is never reported as a passed empirical learning gate.
+
+Every implementation and evidence increment is committed and pushed. The final handover must be updated from completed final jobs, not from estimates, in-flight logs, intended pins, or a previous revision's successful receipts.

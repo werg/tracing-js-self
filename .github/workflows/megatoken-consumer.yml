@@ -20,21 +20,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        recipe: [engineering, training-v4, benchmark-v1]
+        recipe: [engineering, training-v4, benchmark-v1, real-source, generated-v1]
     env:
       TZ: UTC
       LANG: C.UTF-8
       LC_ALL: C.UTF-8
       OMP_NUM_THREADS: '1'
       MKL_NUM_THREADS: '1'
+      NATIVE_WORKFLOW_HEAD_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: werg/megatoken
-          ref: b88073dcb5a8e438a711d494a5fd592e773798f5 # companion PR #30: immutable graph replay and bounded audit preparation
+          ref: 6b4382b9af3bef120ca3a95ae24d35154d4cd66b # immutable inputs, captured source cells and streamed native preparation
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -43,6 +45,24 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12.14'
+      - name: Record durable producer and workflow trigger identities
+        run: |
+          python - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          receipt = {
+            'schema': 'semantic-native-ci-identity/1',
+            'workflowRunId': os.environ['GITHUB_RUN_ID'],
+            'workflowRunAttempt': os.environ['GITHUB_RUN_ATTEMPT'],
+            'workflowTriggerRevision': os.environ['GITHUB_SHA'],
+            'workflowHeadRevision': os.environ['NATIVE_WORKFLOW_HEAD_REVISION'],
+            'producerRevision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+            'consumerRevision': subprocess.check_output(['git', '-C', 'megatoken', 'rev-parse', 'HEAD'], text=True).strip(),
+          }
+          assert receipt['producerRevision'] == receipt['workflowHeadRevision']
+          (Path(os.environ['RUNNER_TEMP']) / 'native-run-identity.json').write_text(json.dumps(receipt, indent=2) + '\n')
+          print(json.dumps(receipt))
+          PY
       - name: Install paired producer and native consumer
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
@@ -65,6 +85,20 @@ jobs:
           python tools/native-consumer/check_environment.py --megatoken megatoken \
             --tokenizer "$RUNNER_TEMP/tokenizer.json" --out "$RUNNER_TEMP/native-environment.json"
           python -m unittest discover -s tools/native-consumer -p 'test_*.py'
+      - name: Check merged learning artifact, comparison and source selection regressions
+        if: matrix.recipe == 'engineering'
+        env:
+          MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
+        run: |
+          python -m pytest -q test/test_learning_artifacts.py \
+            test/test_learning_comparison.py test/test_optimization_smoke_selection.py
+      - name: Qualify native semantic boundary and input-mutation probes
+        if: matrix.recipe == 'engineering'
+        run: |
+          node tools/generate-capability-ledger.mjs --out "$RUNNER_TEMP/native-capabilities.json" \
+            --cases scalar-arithmetic,slice-undefined-end,parameter-body-scope,later-parameter-tdz,synchronous-primitive-throw,synchronous-declared-error,alias-preserving-mutation,input-array-mutation,array-some-short-circuit,array-for-each-owned-callback,sparse-array-fill,input-graph-mutation,parameter-camelcase-default-capture,primitive-number-conversion,primitive-bigint-conversion,invalid-bigint-catch-and-throw,primitive-string-conversion \
+            --megatoken megatoken --python python --tokenizer "$RUNNER_TEMP/tokenizer.json" \
+            --native-policy contracts/native-admission-policy-v5.json
       - name: Validate shared schemas and independently source-check every corpus family
         run: |
           npm run contracts:check
@@ -72,13 +106,20 @@ jobs:
           cmp contracts/semantic-harness-v5.json megatoken/src/megatoken/data/contracts/semantic-harness-v5.json
           node tools/freeze-source-registry.mjs --out "$RUNNER_TEMP/source-registry.json" \
             --holdout-projects exercism/javascript --holdout-compositions square/even/maximum/alias/return
-          node tools/generate-effectful-training.mjs --recipe '${{ matrix.recipe }}' --jobs 4 --out "$RUNNER_TEMP/corpus" \
+          require_native=(--require-native)
+          if [[ '${{ matrix.recipe }}' == 'real-source' ]]; then
+            # Real upstream candidates retain every unsupported/refused row;
+            # the release step rechecks and prepares only actual admissions.
+            require_native+=(--allow-refusals)
+          fi
+          node tools/generate-effectful-training.mjs --recipe '${{ matrix.recipe }}' --jobs 3 --out "$RUNNER_TEMP/corpus" \
             --registry "$RUNNER_TEMP/source-registry.json" \
             --megatoken megatoken --python python --tokenizer "$RUNNER_TEMP/tokenizer.json" \
-            --native-policy contracts/native-admission-policy-v5.json --require-native
+            --native-policy contracts/native-admission-policy-v5.json "${require_native[@]}"
           node tools/generate-selected-harness-v4.mjs "$RUNNER_TEMP/two-invocations.json"
           node tools/generate-selected-continuity-v4.mjs "$RUNNER_TEMP/continuity"
       - name: Recheck admitted evidence and export real native training data without optimizing
+        if: matrix.recipe != 'real-source'
         run: |
           python - <<'PY'
           import json, os, subprocess, sys
@@ -140,10 +181,34 @@ jobs:
           PY
       - name: Package complete rechecked native release and rejection evidence
         run: |
+          training_caps=()
+          if [[ '${{ matrix.recipe }}' == 'real-source' || '${{ matrix.recipe }}' == 'generated-v1' ]]; then
+            training_caps=(--max-family-tokens 10000 --max-family-share 0.2)
+          fi
           python tools/package-semantic-release.py --corpus "$RUNNER_TEMP/corpus" \
             --tracer-root . --megatoken megatoken --tokenizer "$RUNNER_TEMP/tokenizer.json" \
-            --environment-receipt "$RUNNER_TEMP/native-environment.json" --out "$RUNNER_TEMP/release"
+            --environment-receipt "$RUNNER_TEMP/native-environment.json" --out "$RUNNER_TEMP/release" \
+            "${training_caps[@]}"
           python tools/package-semantic-release.py --verify "$RUNNER_TEMP/release/semantic-v5-release.tar.gz"
+      - name: Reconcile all source dispositions and independent family counts
+        run: |
+          python - <<'PY'
+          import collections, json, os
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          manifest = json.loads((root / 'corpus/manifest.json').read_text())
+          counts = collections.Counter(row['status'] for row in manifest['cases'])
+          assert sum(counts.values()) == manifest['counts']['attempted']
+          assert counts['admitted'] > 0, 'A native qualification lane must yield actual admitted examples'
+          assert all(manifest['counts'].get(key) == value for key, value in counts.items())
+          summary = {'schema':'semantic-source-dispositions/1', 'producerRevision':manifest['producerRevision'],
+            'recipe':manifest['recipe'], 'attempted':len(manifest['cases']), 'dispositions':dict(counts),
+            'admittedFamilies':len({row['family'] for row in manifest['cases'] if row['status']=='admitted'}),
+            'admittedComponents':len({row['sourceCluster'] for row in manifest['cases'] if row['status']=='admitted'}),
+            'optimizerSteps':0, 'learnedSuccess':None}
+          (root / 'source-dispositions.json').write_text(json.dumps(summary,indent=2)+'\n')
+          print(json.dumps(summary))
+          PY
       - name: Retain complete corpus, prepared shards and actionable refusals
         if: always()
         uses: actions/upload-artifact@v4
@@ -154,10 +219,15 @@ jobs:
           include-hidden-files: true
           path: |
             ${{ runner.temp }}/corpus/
+            !${{ runner.temp }}/corpus/.native/**
+            !${{ runner.temp }}/corpus/.workers/**
             ${{ runner.temp }}/prepared-semantic/
             ${{ runner.temp }}/release/
             ${{ runner.temp }}/native-environment.json
+            ${{ runner.temp }}/native-run-identity.json
+            ${{ runner.temp }}/native-capabilities.json
             ${{ runner.temp }}/source-registry.json
+            ${{ runner.temp }}/source-dispositions.json
             ${{ runner.temp }}/evaluation.json
             ${{ runner.temp }}/continuity/*.txt
             ${{ runner.temp }}/native-inference/inference-check.json

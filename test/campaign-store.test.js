@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync,appendFileSync,readFileSync,writeFileSync,readdirSync} from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
+import {spawn} from 'node:child_process';
+import {once} from 'node:events';
 import {gzipSync,gunzipSync} from 'node:zlib';
 import {CampaignStore,identityHash,sha256} from '../src/corpus/campaign-store.mjs';
 
@@ -15,6 +17,7 @@ test('resumes completed receipts and preserves rejected attempts without private
   const exported={public:{timeline:[{kind:'semantic',line:'visible'}]},sidecar:{secret:'private proof'}};
   store.record('one',candidate,{status:'locally_verified',exported},{durationMs:14,peakRssBytes:100});
   store.record('two',{...candidate,args:[2]},{status:'reference_mismatch',reason:'disagreement'});
+  store.close();
   const resumed=new CampaignStore(dir,identity,{resume:true});
   const entry=resumed.cached('one',candidate);
   assert.deepEqual(resumed.exported(entry),exported);
@@ -25,12 +28,14 @@ test('resumes completed receipts and preserves rejected attempts without private
   assert.equal(resumed.entries.length,3);
   assert.equal(resumed.readObject(resumed.entries[1].result).reason,'disagreement');
   assert.throws(()=>resumed.cached('one',{...candidate,args:[3]}),/Candidate changed/);
+  resumed.close();
   assert.throws(()=>new CampaignStore(dir,{...identity,tokenizer:'changed'},{resume:true}),/identity changed/);
 });
 test('recovers a torn final log append but refuses committed corruption',t=>{
   const dir=temporary(t),store=new CampaignStore(dir,identity);
   const entry=store.record('one',candidate,{status:'unsupported',reason:'original failure'});
   appendFileSync(join(dir,'campaign.jsonl'),'{"interrupted":');
+  store.close();
   const torn=readFileSync(join(dir,'campaign.jsonl'));
   assert.throws(()=>new CampaignStore(dir,identity,{resume:true,recoverTornLog:false}),/Incomplete campaign log/);
   assert.deepEqual(readFileSync(join(dir,'campaign.jsonl')),torn);
@@ -39,19 +44,89 @@ test('recovers a torn final log append but refuses committed corruption',t=>{
   assert.equal(readdirSync(join(dir,'recovery')).length,1);
   const object=join(dir,entry.result.path),bytes=readFileSync(object);
   bytes[bytes.length-1]^=1;writeFileSync(object,bytes);
+  resumed.close();
   assert.throws(()=>new CampaignStore(dir,identity,{resume:true}),/checksum/);
 });
 test('log order is authenticated and candidate identity preserves special numbers and aliases',t=>{
   const dir=temporary(t),store=new CampaignStore(dir,identity);
+  assert.throws(()=>store.record('special',{...candidate,args:[undefined,-0]},
+    {status:'unsupported'}),/encode non-JSON values/);
   store.record('one',candidate,{status:'unsupported'});
   store.record('two',{...candidate,args:[2]},{status:'unsupported'});
   const path=join(dir,'campaign.jsonl'),lines=readFileSync(path,'utf8').trim().split('\n');
   writeFileSync(path,lines.reverse().join('\n')+'\n');
+  store.close();
   assert.throws(()=>new CampaignStore(dir,identity,{resume:true}),/reordered/);
   assert.notEqual(identityHash([undefined]),identityHash([null]));
   assert.notEqual(identityHash([-0]),identityHash([0]));
   const a={x:1};assert.notEqual(identityHash([a,a]),identityHash([{x:1},{x:1}]));
   assert.equal(identityHash({b:1,a:2}),identityHash({a:2,b:1}));
+});
+
+
+test('excludes concurrent writers and releases the OS lock when a process crashes',{timeout:10000},async t=>{
+  const dir=temporary(t),module=new URL('../src/corpus/campaign-store.mjs',import.meta.url).href;
+  const child=spawn(process.execPath,['--input-type=module','-e',
+    `import {CampaignStore} from ${JSON.stringify(module)};
+     new CampaignStore(process.argv[1],JSON.parse(process.argv[2]));
+     process.stdout.write('ready');setInterval(()=>{},1000);`,dir,JSON.stringify(identity)],
+    {stdio:['ignore','pipe','pipe']});
+  t.after(()=>child.kill('SIGKILL'));
+  await once(child.stdout,'data');
+  assert.throws(()=>new CampaignStore(dir,identity,{resume:true}),/another writer/);
+  child.kill('SIGKILL');await once(child,'close');
+  const resumed=new CampaignStore(dir,identity,{resume:true});
+  resumed.record('one',candidate,{status:'locally_verified'});resumed.close();
+  assert.throws(()=>resumed.record('two',candidate,{status:'unsupported'}),/closed/);
+});
+test('plain resume retries cancelled work and validates referenced source/input/fixture bytes',t=>{
+  const dir=temporary(t),store=new CampaignStore(dir,identity);
+  const source=store.putObject('sources',candidate.source),input=store.putObject('inputs',candidate.args),
+    fixture=store.putObject('fixtures',{calls:[]});
+  const linked={...candidate,inputs:[{source,input,fixture}]};
+  store.record('one',linked,{status:'cancelled'});store.close();
+  const resumed=new CampaignStore(dir,identity,{resume:true});
+  assert.equal(resumed.cached('one',linked),null);
+  resumed.record('one',linked,{status:'unsupported'});resumed.close();
+  const path=join(dir,input.path),bytes=readFileSync(path);bytes[0]^=1;writeFileSync(path,bytes);
+  assert.throws(()=>new CampaignStore(dir,identity,{resume:true}),/checksum/);
+});
+
+
+test('release readers share a nonmutating lock and reject unrecovered log tails',t=>{
+  const dir=temporary(t),store=new CampaignStore(dir,identity);
+  store.record('one',candidate,{status:'unsupported'});store.close();
+  const reader=new CampaignStore(dir,identity,{readOnly:true});
+  const second=new CampaignStore(dir,identity,{readOnly:true});
+  assert.equal(reader.cached('one',candidate).status,'unsupported');
+  assert.throws(()=>new CampaignStore(dir,identity,{resume:true}),/another writer/);
+  assert.throws(()=>reader.record('two',candidate,{status:'unsupported'}),/read only/);
+  assert.throws(()=>reader.putObject('inputs',[]),/read only/);
+  assert.throws(()=>reader.putRawObject('inputs',Buffer.from('[]\n'),false),/read only/);
+  reader.close();second.close();
+  const path=join(dir,'campaign.jsonl');appendFileSync(path,'{"unfinished":');
+  const before=readFileSync(path);
+  assert.throws(()=>new CampaignStore(dir,identity,{readOnly:true}),/incomplete log tail/);
+  assert.deepEqual(readFileSync(path),before);
+});
+
+
+test('binds content-addressed filenames and rejects forged status or cost measurements',t=>{
+  const dir=temporary(t),store=new CampaignStore(dir,identity);
+  const original=store.putObject('inputs',{value:1}),renamed={...original,
+    path:original.path.replace(original.contentSha256,'0'.repeat(64))};
+  writeFileSync(join(dir,renamed.path),readFileSync(join(dir,original.path)));
+  assert.throws(()=>store.readObject(renamed),/Invalid campaign object reference/);
+  for(const costs of [{durationMs:-1},{durationMs:Infinity},{peakRssBytes:-1},{peakRssBytes:1.5}])
+    assert.throws(()=>store.record('bad',candidate,{status:'unsupported'},costs),/status or measured costs/);
+  assert.throws(()=>store.record('bad',candidate,{status:''}),/status or measured costs/);
+  const entry=store.record('one',candidate,{status:'unsupported'},{durationMs:1,peakRssBytes:1024});
+  store.close();
+  for(const update of [{durationMs:-1},{peakRssBytes:1.5},{status:''}]){
+    const {entryDigest,...payload}={...entry,...update};
+    writeFileSync(join(dir,'campaign.jsonl'),JSON.stringify({...payload,entryDigest:identityHash(payload)})+'\n');
+    assert.throws(()=>new CampaignStore(dir,identity,{readOnly:true}),/Corrupt or reordered/);
+  }
 });
 test('shared registries are stored once and materialize byte-identical evidence including sessions',t=>{
   const dir=temporary(t),store=new CampaignStore(dir,identity);
@@ -81,11 +156,13 @@ test('shared registries are stored once and materialize byte-identical evidence 
   assert.equal(Object.getPrototypeOf(store.exported(entry).sidecar),Object.prototype);
   store.materialize(entry);
   assert.equal(readFileSync(join(dir,'one.json'),'utf8'),JSON.stringify(exported)+'\n');
-  const resumed=new CampaignStore(dir,identity,{resume:true});
-  assert.deepEqual(resumed.exported(resumed.latest.get('one')),exported);
   const legacy=store.putObject('private',exported.sidecar,{compress:true,deduplicateRegistries:false});
   assert.equal(legacy.format,undefined);
   assert.deepEqual(store.readObject(legacy),exported.sidecar);
+  store.close();
+  const resumed=new CampaignStore(dir,identity,{resume:true});
+  assert.deepEqual(resumed.exported(resumed.latest.get('one')),exported);
+  resumed.close();
 });
 test('rehydration refuses changed or missing registry bytes and mismatched logical evidence',t=>{
   const dir=temporary(t),store=new CampaignStore(dir,identity);
@@ -99,9 +176,12 @@ test('rehydration refuses changed or missing registry bytes and mismatched logic
   const registryPath=join(dir,packed.registryReferences[0].reference.path),original=readFileSync(registryPath);
   const changed=Buffer.from(original);changed[changed.length-1]^=1;writeFileSync(registryPath,changed);
   assert.throws(()=>store.exported(entry),/checksum/);
-  assert.throws(()=>new CampaignStore(dir,identity,{resume:true}),/checksum/);
+  store.close();
+  assert.throws(()=>new CampaignStore(dir,identity,{readOnly:true}),/checksum/);
   writeFileSync(registryPath,original);
-  assert.equal(store.exported(entry).sidecar.splitIdentity.registry.sources[0].source,'trusted source bytes');
+  const reader=new CampaignStore(dir,identity,{readOnly:true});
+  assert.equal(reader.exported(entry).sidecar.splitIdentity.registry.sources[0].source,'trusted source bytes');
   rmSync(registryPath);
-  assert.throws(()=>store.exported(entry),/ENOENT/);
+  assert.throws(()=>reader.exported(entry),/ENOENT/);
+  reader.close();
 });

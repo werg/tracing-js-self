@@ -236,7 +236,7 @@ export class Runtime {
     for(const name of ['queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
-    for(const name of ['Object','Array','Number','Math','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
+    for(const name of ['Object','Array','Number','BigInt','String','Math','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     s.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
@@ -280,7 +280,7 @@ export class Runtime {
     for(const name of ['parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
-    for(const name of ['Object','Array','Number','Math','Promise','Set','Error','TypeError','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
+    for(const name of ['Object','Array','Number','BigInt','String','Math','Promise','Set','Error','TypeError','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     state.control.a0.globalEnvId=global;
@@ -626,7 +626,7 @@ export class Runtime {
     if(completion.value)return completion.value;
     if(!completion.errorType)throw new Error('Unrepresentable guest throw completion');
     const id=this.next(draft,'obj');
-    draft.heap[id]={id,kind:'object',properties:{
+    draft.heap[id]={id,kind:'object',declaredError:completion.errorType,properties:{
       name:token(['str',completion.errorType],eventId),
       message:token(['str',completion.message??''],eventId)
     },propertyVersions:{name:1,message:1},shapeVersion:2,version:0};
@@ -1395,6 +1395,26 @@ if(object.kind==='regexp'){
           const fn=pop();let callable=fn.value;
           const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
+          if(callable[0]==='intrinsic'&&['Number','BigInt','String'].includes(callable[1])){
+            const value=args[0]?.value??U;
+            // An explicit primitive-only intrinsic leaf. CALL has already
+            // evaluated every argument in order; unused extra arguments are
+            // not coerced. Owned objects require a separate continuation and
+            // must not reach native ToPrimitive or become catchable refusals.
+            if(!['undefined','null','bool','str','num','bigint'].includes(value[0]))
+              throw new TypeError(callable[1]+' conversion of an owned object is outside the bounded scalar profile');
+            if(['str','bigint'].includes(value[0])&&value[1].length>10000)
+              throw new RangeError('Primitive conversion input exceeds the bounded scalar budget');
+            let converted;
+            try{converted=callable[1]==='Number'?(args.length?Number(decode(value)):0):
+              callable[1]==='String'?(args.length?String(decode(value)):''):BigInt(decode(value));}
+            catch(error){
+              // Only the scalar intrinsic can throw here. Preserve its real
+              // language exception for catch/finally/replay and the oracle.
+              guestFault(error.name,error.message);
+            }
+            return {...operands(fn,...args),...result(encode(converted))};
+          }
           if(callable[0]==='builtinfn'&&callable[1].startsWith('Object.')&&
              callable[1]!=='Object.is'&&args.some(item=>item.value[0]==='ref'&&s.heap[item.value[1]]?.declaredError))
             throw new TypeError('Object descriptor and prototype operations on declared errors are outside the bounded error profile');
@@ -2081,17 +2101,30 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                 guestFault('TypeError','Object.defineProperty requires an owned ordinary object');
               const key=args[1]?.value??U,descValue=args[2]?.value??U;
               const name=valueKey(key),descriptor=descValue[0]==='ref'?s.heap[descValue[1]]:null;
-              if(!descriptor||!['object','array'].includes(descriptor.kind)||
-                 Object.keys(descriptor.accessors??{}).length)
+              if(!descriptor||!['object','array'].includes(descriptor.kind))
                 guestFault('TypeError','Accessor descriptor must be an owned data object');
+              // ToPropertyDescriptor executes descriptor getters in source
+              // order. Until that continuation is owned, this is a profile
+              // refusal, never a substitute guest TypeError that a catch can
+              // hide when the native getter happens to throw the same class.
+              if(Object.keys(descriptor.accessors??{}).length)
+                throw new TypeError('Accessor descriptor fields are outside the bounded profile');
               const d=descriptor.properties;
               if(![null,'Object.prototype','Array.prototype'].includes(objectPrototype(descriptor)))
                 throw new TypeError('Inherited descriptor fields are outside the bounded profile');
-              if(!Object.hasOwn(d,'get')&&!Object.hasOwn(d,'set'))
+              const previous=obj.accessors?.[name];
+              if(!Object.hasOwn(d,'get')&&!Object.hasOwn(d,'set')&&!previous)
                 throw new TypeError('Only accessor descriptors are modeled');
               if(Object.hasOwn(d,'value')||Object.hasOwn(d,'writable'))
-                guestFault('TypeError','Invalid mixed data/accessor descriptor');
-              const getter=d.get??token(U),setter=d.set??token(U);
+                if(Object.hasOwn(d,'get')||Object.hasOwn(d,'set'))
+                  guestFault('TypeError','Invalid mixed data/accessor descriptor');
+                else throw new TypeError('Data descriptor conversion is outside the bounded profile');
+              // ValidateAndApplyPropertyDescriptor preserves absent fields
+              // when changing an existing property. New accessors alone get
+              // the false/undefined defaults; replacing ordinary own data
+              // retains that property's modeled enumerable/configurable flags.
+              const getter=d.get??previous?.get??token(U),
+                setter=d.set??previous?.set??token(U);
               for(const method of [getter,setter])
                 if(method.value[0]!=='undefined'&&!this.callableGuest(s,method.value))
                   guestFault('TypeError','Accessor must be a guest function or undefined');
@@ -2100,13 +2133,20 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               // combination until those invariants are modeled together.
               if(obj.kind==='array'&&arrayIndex(name))
                 throw new TypeError('Array index accessor descriptors are outside the bounded profile');
-              if((Object.hasOwn(obj.accessors??{},name)&&!obj.accessors[name].configurable)||
-                 name==='__proto__'||(obj.kind==='array'&&name==='length'))
+              if(name==='__proto__'||(obj.kind==='array'&&name==='length'))
                 guestFault('TypeError','Cannot redefine a non-configurable or reserved property');
+              const existingData=Object.hasOwn(obj.properties,name),
+                enumerable=Object.hasOwn(d,'enumerable')?truthy(d.enumerable.value):
+                  previous?.enumerable??existingData,
+                configurable=Object.hasOwn(d,'configurable')?truthy(d.configurable.value):
+                  previous?.configurable??existingData;
+              if(previous&&!previous.configurable&&
+                 (configurable||enumerable!==previous.enumerable||
+                  !ownedSameValue(getter.value,previous.get.value)||
+                  !ownedSameValue(setter.value,previous.set.value)))
+                guestFault('TypeError','Cannot redefine a non-configurable property');
               obj.accessors??={};
-              obj.accessors[name]={get:getter,set:setter,
-                enumerable:Object.hasOwn(d,'enumerable')?truthy(d.enumerable.value):false,
-                configurable:Object.hasOwn(d,'configurable')?truthy(d.configurable.value):false};
+              obj.accessors[name]={get:getter,set:setter,enumerable,configurable};
               delete obj.properties[name];
               obj.propertyVersions[name]=(Object.hasOwn(obj.propertyVersions,name)?obj.propertyVersions[name]:0)+1;
               obj.shapeVersion++;
@@ -2255,6 +2295,10 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
       }} catch(error) {
         if(!(error instanceof GuestFault))throw error;
         const completion={type:'throw',errorType:error.name,message:error.message,origin:eventId};
+        // Commit one owned exception identity at the faulting operation, even
+        // when it escapes synchronously. All callers, catches and finally
+        // blocks must see that same value rather than allocating on demand.
+        completion.value=this.caughtError(s,completion,eventId);
         this.routeCompletion(s,f,completion,eventId);
         return {completion};
       }

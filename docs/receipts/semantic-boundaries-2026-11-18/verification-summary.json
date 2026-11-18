@@ -1,0 +1,49 @@
+{
+  "schema": "semantic-boundary-verification-summary/1",
+  "producerRevision": "e71ea3054e304d61a77a33832e733907e06a36bb",
+  "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+  "status": "passed-after-sandbox-temporary-directory-rerun",
+  "fullSuite": {
+    "tests": 832,
+    "passed": 779,
+    "failed": 48,
+    "skipped": 5,
+    "concurrency": 2,
+    "failureCause": "All 48 failures were ENOENT from absent /tmp; no source edits were made between the full run and rerun."
+  },
+  "temporaryDirectoryRerun": {
+    "tests": 102,
+    "passed": 102,
+    "failed": 0,
+    "skipped": 0,
+    "scope": "All test files containing any failed test from the full suite; configured an existing workspace TMPDIR."
+  },
+  "remainingFailedTests": 0,
+  "distinctPassedTestsAfterRerun": 827,
+  "referenceFixture": {
+    "status": "passed",
+    "scenarios": 8
+  },
+  "contracts": {
+    "status": "passed",
+    "schema": "semantic-harness-contract/5",
+    "digest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+    "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e"
+  },
+  "nativeBoundaryQualification": {
+    "attempted": 19,
+    "admitted": 14,
+    "qualifiedRefusals": 5,
+    "failed": 0
+  },
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "evidenceSha256": {
+    "native-qualification.json": "4295259b2adc3116163bfc111bf3489228d7b3dbb079d7aad4de84a729828745",
+    "native-environment.json": "27406fb3995cece36f3384d877fb0db1e7908eeb81ba1ba09d58605b46835a10"
+  },
+  "logsSha256": {
+    "semantics-final-test.log": "f4bf9ac51c99d91533f646ac96be483d571abcb0f7f81c645238929d54806d67",
+    "semantics-tmpdir-rerun.log": "67d22d4da59ec7ed339e10c785d3047a9caa6b5f66bb2e3537eb8bdf4461e6ba"
+  }
+}

@@ -1,0 +1,440 @@
+{
+  "schema": "selected-real-source-qualification/1",
+  "status": "passed",
+  "producerRevision": "f0ff9c9c9a04a899b7bc99d23cdde90a6308bf4c",
+  "trackedProducerClean": true,
+  "runnerSha256": "3416f9991f1b781378cebf8cac581ba46b0f04890d3a3f2c83be6bceda72f772",
+  "environment": {
+    "schema": "semantic-execution-environment/1",
+    "node": "24.22.3",
+    "v8": "13.6.233.17-node.63",
+    "platform": "linux",
+    "arch": "x64",
+    "timezone": "UTC",
+    "parser": "8.15.0",
+    "typescript": "5.9.3",
+    "packageLockDigest": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88",
+    "implementationDigest": "3c4a4ed61c2e10949795129b48a4ec008cded2c7d2066c724993b12f373bd376",
+    "locale": "en-US",
+    "referenceIsolation": {
+      "schema": "semantic-reference-isolation/1",
+      "mode": "linux-namespace",
+      "launcherSha256": "b9d3bd23d092083173508fd570c3d5b6dc4e0e98fc9814e3df543e634351ea24",
+      "profile": "linux-namespace/1",
+      "network": "new-network-namespace-and-denied-socket-syscalls",
+      "filesystem": "read-only-code-and-runtime-with-private-tmpfs",
+      "capabilities": "none",
+      "childProcesses": "denied",
+      "addressSpaceBytes": 1073741824,
+      "heapMb": 256,
+      "temporaryBytes": 67108864,
+      "openFiles": 64,
+      "jit": "disabled"
+    }
+  },
+  "nativePolicy": {
+    "consumerRevision": "3d7ffc701a3e692883819fb623a03b1942cd8b5c",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+  },
+  "selection": {
+    "kind": "explicit-regression-ids",
+    "perFamily": 100,
+    "ids": [
+      "real-exercism-76f193de010b69142cda36e9",
+      "real-exercism-a56b1d631c41b895f5490973",
+      "real-exercism-6d8b08c82c127ea5d6ab9269"
+    ],
+    "selected": 3,
+    "available": 1243,
+    "wholeCorpus": false
+  },
+  "counts": {
+    "attempted": 3,
+    "admitted": 3,
+    "locallyVerified": 0,
+    "failed": 0
+  },
+  "cases": [
+    {
+      "id": "real-exercism-76f193de010b69142cda36e9",
+      "family": "exercism/javascript:grains",
+      "status": "admitted",
+      "passed": true,
+      "reason": null,
+      "durationMs": 7061.8498009999985,
+      "peakRssBytes": 121577472,
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "num",
+            64
+          ]
+        ],
+        "objects": []
+      },
+      "upstream": {
+        "repository": "exercism/javascript",
+        "revision": "ff04f35158cdf61eebfdf18a774010495a1fd6d9",
+        "path": "exercises/practice/grains/.meta/proof.ci.js",
+        "sha256": "7d7f99ebfc0a2b5324f71eeb599e2bfb59845b30ca8b48693f072e010aa63536",
+        "license": "MIT"
+      },
+      "canonical": {
+        "repository": "exercism/problem-specifications",
+        "revision": "650bebeb39ad40439175288042aece982b0a90a9",
+        "path": "exercises/grains/canonical-data.json",
+        "sha256": "b5c2c1a38ed4527681f0f4dcc09b91fe26f87162188146d919fb478f23d3e473",
+        "license": "MIT"
+      },
+      "canonicalInput": {
+        "square": 64
+      },
+      "canonicalNotice": {
+        "repository": "exercism/problem-specifications",
+        "revision": "650bebeb39ad40439175288042aece982b0a90a9",
+        "license": "MIT",
+        "path": "corpus/extension/snapshots/exercism-js-inputs/LICENSE",
+        "sha256": "564d81b4e8fa0a816529287256d25d477106e540682003a718140eb7cf913601"
+      },
+      "canonicalArgumentBinding": null,
+      "canonicalExpected": 9223372036854776000,
+      "canonicalExpectedBinding": {
+        "schema": "exercism-javascript-expected/1",
+        "kind": "bigint",
+        "decimal": "9223372036854775808"
+      },
+      "originalSourceSha256": "cea6cb211b124e27bf69e0587b1712f25dcc905b48bf60d3477a3f00d8978196",
+      "transformedSourceSha256": "ddf956e9587ea556a842414e07e7665ac6f0f135d70ded2fead751d97a59492e",
+      "license": "MIT",
+      "noticePath": "corpus/extension/snapshots/exercism-js/LICENSE",
+      "noticeSha256": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "3be3254e3c9befd4666d6a1496459233d6b0e261e4877a09776f78d7400c3b45",
+        "identityDigest": "d2ea5dc376412c74a755a170ef7ad9df6119496fa936cabf188be20420788bd6",
+        "identityValidated": true,
+        "producerRevision": "f0ff9c9c9a04a899b7bc99d23cdde90a6308bf4c",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "originalSourceCheck": {
+        "status": "agreed",
+        "originalReferenceDigest": "7cbdcbaaef6eae56bd896fbd1d9527e700055919d6f1d38f6ff8b235a925fcca",
+        "transformedReferenceDigest": "7cbdcbaaef6eae56bd896fbd1d9527e700055919d6f1d38f6ff8b235a925fcca",
+        "canonicalExpectation": {
+          "status": "agreed",
+          "outcomeKind": "return",
+          "expectedValueBinding": {
+            "schema": "exercism-javascript-expected/1",
+            "kind": "bigint",
+            "decimal": "9223372036854775808"
+          }
+        }
+      },
+      "identityDigest": "d2ea5dc376412c74a755a170ef7ad9df6119496fa936cabf188be20420788bd6",
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "3d7ffc701a3e692883819fb623a03b1942cd8b5c",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "3be3254e3c9befd4666d6a1496459233d6b0e261e4877a09776f78d7400c3b45",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 257,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "bigint",
+                "9223372036854775808"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 11,
+          "tracks": 2
+        },
+        "logicalRecords": 9,
+        "lossMaskValidated": true,
+        "observedTokens": 1685,
+        "optimizerSteps": 0,
+        "physicalRecords": 11,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "evidence": {
+        "path": "cases/real-exercism-76f193de010b69142cda36e9.json.gz",
+        "bytes": 22171,
+        "sha256": "de762f7017084f8ad9d779cb691ddcbea01aefc565284f0c5157b2051395dcf8"
+      }
+    },
+    {
+      "id": "real-exercism-a56b1d631c41b895f5490973",
+      "family": "exercism/javascript:grains",
+      "status": "admitted",
+      "passed": true,
+      "reason": null,
+      "durationMs": 71220.376765,
+      "peakRssBytes": 391794688,
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [],
+        "objects": []
+      },
+      "upstream": {
+        "repository": "exercism/javascript",
+        "revision": "ff04f35158cdf61eebfdf18a774010495a1fd6d9",
+        "path": "exercises/practice/grains/.meta/proof.ci.js",
+        "sha256": "7d7f99ebfc0a2b5324f71eeb599e2bfb59845b30ca8b48693f072e010aa63536",
+        "license": "MIT"
+      },
+      "canonical": {
+        "repository": "exercism/problem-specifications",
+        "revision": "650bebeb39ad40439175288042aece982b0a90a9",
+        "path": "exercises/grains/canonical-data.json",
+        "sha256": "b5c2c1a38ed4527681f0f4dcc09b91fe26f87162188146d919fb478f23d3e473",
+        "license": "MIT"
+      },
+      "canonicalInput": {},
+      "canonicalNotice": {
+        "repository": "exercism/problem-specifications",
+        "revision": "650bebeb39ad40439175288042aece982b0a90a9",
+        "license": "MIT",
+        "path": "corpus/extension/snapshots/exercism-js-inputs/LICENSE",
+        "sha256": "564d81b4e8fa0a816529287256d25d477106e540682003a718140eb7cf913601"
+      },
+      "canonicalArgumentBinding": null,
+      "canonicalExpected": 18446744073709552000,
+      "canonicalExpectedBinding": {
+        "schema": "exercism-javascript-expected/1",
+        "kind": "bigint",
+        "decimal": "18446744073709551615"
+      },
+      "originalSourceSha256": "cea6cb211b124e27bf69e0587b1712f25dcc905b48bf60d3477a3f00d8978196",
+      "transformedSourceSha256": "ddf956e9587ea556a842414e07e7665ac6f0f135d70ded2fead751d97a59492e",
+      "license": "MIT",
+      "noticePath": "corpus/extension/snapshots/exercism-js/LICENSE",
+      "noticeSha256": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "cf31e72c7610996005d0a075e039ef0e72a685ac0ef8311fcc612f29553af967",
+        "identityDigest": "36349976ec14e96635c8ed7acacaa181505668699fe59d8ebad72fcd929d5993",
+        "identityValidated": true,
+        "producerRevision": "f0ff9c9c9a04a899b7bc99d23cdde90a6308bf4c",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "originalSourceCheck": {
+        "status": "agreed",
+        "originalReferenceDigest": "d6c2712741242e78a813d5a16bac679ec0d7bd9357afad2212029489117d3eee",
+        "transformedReferenceDigest": "d6c2712741242e78a813d5a16bac679ec0d7bd9357afad2212029489117d3eee",
+        "canonicalExpectation": {
+          "status": "agreed",
+          "outcomeKind": "return",
+          "expectedValueBinding": {
+            "schema": "exercism-javascript-expected/1",
+            "kind": "bigint",
+            "decimal": "18446744073709551615"
+          }
+        }
+      },
+      "identityDigest": "36349976ec14e96635c8ed7acacaa181505668699fe59d8ebad72fcd929d5993",
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "3d7ffc701a3e692883819fb623a03b1942cd8b5c",
+        "contextTransportRecords": 45,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "cf31e72c7610996005d0a075e039ef0e72a685ac0ef8311fcc612f29553af967",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 29106,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "bigint",
+                "18446744073709551615"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 46,
+          "records": 806,
+          "tracks": 2
+        },
+        "logicalRecords": 756,
+        "lossMaskValidated": true,
+        "observedTokens": 23045,
+        "optimizerSteps": 0,
+        "physicalRecords": 806,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "evidence": {
+        "path": "cases/real-exercism-a56b1d631c41b895f5490973.json.gz",
+        "bytes": 650255,
+        "sha256": "998baac1e6e3de925190ba118d5f12905c6b60b5b96f267b4810602dd1ef7876"
+      }
+    },
+    {
+      "id": "real-exercism-6d8b08c82c127ea5d6ab9269",
+      "family": "exercism/javascript:grains",
+      "status": "admitted",
+      "passed": true,
+      "reason": null,
+      "durationMs": 6549.185545999993,
+      "peakRssBytes": 132689920,
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "num",
+            0
+          ]
+        ],
+        "objects": []
+      },
+      "upstream": {
+        "repository": "exercism/javascript",
+        "revision": "ff04f35158cdf61eebfdf18a774010495a1fd6d9",
+        "path": "exercises/practice/grains/.meta/proof.ci.js",
+        "sha256": "7d7f99ebfc0a2b5324f71eeb599e2bfb59845b30ca8b48693f072e010aa63536",
+        "license": "MIT"
+      },
+      "canonical": {
+        "repository": "exercism/problem-specifications",
+        "revision": "650bebeb39ad40439175288042aece982b0a90a9",
+        "path": "exercises/grains/canonical-data.json",
+        "sha256": "b5c2c1a38ed4527681f0f4dcc09b91fe26f87162188146d919fb478f23d3e473",
+        "license": "MIT"
+      },
+      "canonicalInput": {
+        "square": 0
+      },
+      "canonicalNotice": {
+        "repository": "exercism/problem-specifications",
+        "revision": "650bebeb39ad40439175288042aece982b0a90a9",
+        "license": "MIT",
+        "path": "corpus/extension/snapshots/exercism-js-inputs/LICENSE",
+        "sha256": "564d81b4e8fa0a816529287256d25d477106e540682003a718140eb7cf913601"
+      },
+      "canonicalArgumentBinding": null,
+      "canonicalExpected": {
+        "error": "square must be between 1 and 64"
+      },
+      "canonicalExpectedBinding": null,
+      "originalSourceSha256": "cea6cb211b124e27bf69e0587b1712f25dcc905b48bf60d3477a3f00d8978196",
+      "transformedSourceSha256": "ddf956e9587ea556a842414e07e7665ac6f0f135d70ded2fead751d97a59492e",
+      "license": "MIT",
+      "noticePath": "corpus/extension/snapshots/exercism-js/LICENSE",
+      "noticeSha256": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "b243df1940b9265f4916b2c6e8505b1f323d4d56de0ae7c0e70b194bdfbd05f3",
+        "identityDigest": "bff2a31053a2d39774bdd45ff368c776a0963b2e96937b4ffa001732dd277d03",
+        "identityValidated": true,
+        "producerRevision": "f0ff9c9c9a04a899b7bc99d23cdde90a6308bf4c",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "originalSourceCheck": {
+        "status": "agreed",
+        "originalReferenceDigest": "25c2742e1ee1bd43fa41029e218f64334eb68fe7acd3f1583d64587ba46be121",
+        "transformedReferenceDigest": "25c2742e1ee1bd43fa41029e218f64334eb68fe7acd3f1583d64587ba46be121",
+        "canonicalExpectation": {
+          "status": "agreed",
+          "outcomeKind": "throw",
+          "expectedValueBinding": null,
+          "canonicalErrorMessageCompared": false
+        }
+      },
+      "identityDigest": "bff2a31053a2d39774bdd45ff368c776a0963b2e96937b4ffa001732dd277d03",
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "3d7ffc701a3e692883819fb623a03b1942cd8b5c",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "b243df1940b9265f4916b2c6e8505b1f323d4d56de0ae7c0e70b194bdfbd05f3",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 155,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "throw",
+              "value": [
+                "ref",
+                "o3"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 10,
+          "tracks": 2
+        },
+        "logicalRecords": 8,
+        "lossMaskValidated": true,
+        "observedTokens": 1684,
+        "optimizerSteps": 0,
+        "physicalRecords": 10,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      },
+      "evidence": {
+        "path": "cases/real-exercism-6d8b08c82c127ea5d6ab9269.json.gz",
+        "bytes": 18460,
+        "sha256": "c8b71925e0c087377977d3d233e09158856f8de00863e698fce5a89e1b255408"
+      }
+    }
+  ],
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}

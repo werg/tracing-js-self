@@ -7,7 +7,8 @@ import {createRequire} from 'node:module';
 import {isDeepStrictEqual} from 'node:util';
 import {TRAINING_PROFILE,TRAINING_PARSER} from './profile.js';
 import {EXECUTION_VERSION,WITNESS_VERSION,CONTEXT_VERSION,HARNESS_PROFILE} from './format.js';
-import {verifyFrozenSplitIdentity} from '../corpus/source-registry.mjs';
+import {verifyFrozenSplitIdentity,verifySourceRegistry,immutableSourceRegistry} from '../corpus/source-registry.mjs';
+import {referenceIsolationIdentity} from '../corpus/reference-isolation.mjs';
 
 const require=createRequire(import.meta.url);
 const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -31,6 +32,10 @@ export function defaultSplitIdentity(family,{seed=17}={}){
   return {schema:'semantic-split-identity/1',policy:'family-hash/1',seed,
     componentId:family,members:[family],split:effectfulFamilySplit(family,{seed}),registryDigest:null,holdout:null};
 }
+export function cloneSplitIdentity(value){
+  const {registry,...fields}=value;
+  return {...structuredClone(fields),...(registry?{registry:immutableSourceRegistry(registry)}:{})};
+}
 export function validateSplitIdentity(value,{family,seed}={}){
   if(value?.schema!=='semantic-split-identity/1'||!Number.isSafeInteger(value.seed)||
     value.seed!==seed||!Array.isArray(value.members)||value.members.some(x=>typeof x!=='string'||!x)||
@@ -38,9 +43,12 @@ export function validateSplitIdentity(value,{family,seed}={}){
   if(value.policy==='family-hash/1'){
     if(!isDeepStrictEqual(value,defaultSplitIdentity(family,{seed})))fail('family split policy');
   }else if(value.policy==='source-components/1'){
+    let registryDigest;
+    try{registryDigest=verifySourceRegistry(value.registry).digest;}
+    catch(error){fail('frozen source registry: '+error.message);}
     if(value.componentId!=='component:'+exactHash(value.members)||
       !/^[a-f0-9]{64}$/.test(value.registryDigest??'')||!value.registry||
-      identityDigest(value.registry)!==value.registryDigest)fail('frozen registry digest');
+      registryDigest!==value.registryDigest)fail('frozen registry digest');
     const heldOut=value.holdout!==null&&value.holdout!==undefined;
     if(heldOut&&(!['upstream-project','composition'].includes(value.holdout.kind)||
       typeof value.holdout.key!=='string'||!value.holdout.key))fail('holdout declaration');
@@ -64,6 +72,7 @@ export function admissionEnvironment(){
       }
     }
     collect(new URL('src/',root),'src/');
+    collect(new URL('catalog/',root),'catalog/');
     files.push(['tools/effectful-reference-worker.mjs',sha256(readFileSync(new URL('tools/effectful-reference-worker.mjs',root)))]);
     cachedEnvironment={schema:'semantic-execution-environment/1',
       node:process.versions.node,v8:process.versions.v8,platform:process.platform,arch:process.arch,
@@ -72,7 +81,9 @@ export function admissionEnvironment(){
       packageLockDigest:sha256(readFileSync(new URL('package-lock.json',root))),
       implementationDigest:identityDigest(files)};
   }
-  return structuredClone(cachedEnvironment);
+  return {...structuredClone(cachedEnvironment),
+    timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,
+    locale:Intl.DateTimeFormat().resolvedOptions().locale,referenceIsolation:referenceIsolationIdentity()};
 }
 
 export function normalizeSeeds(seeds={},split=17,guestRng=null){

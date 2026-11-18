@@ -1,15 +1,49 @@
 {
   "schema": "semantic-capability-index/1",
+  "purpose": "Navigation and evidence policy; measured counts are produced by the commands below.",
+  "contracts": {
+    "execution": "semantic-execution/5",
+    "trace": "semantic-trace/5",
+    "context": "semantic-context/5",
+    "continuation": "semantic-continuation/5",
+    "harness": "selected-harness/2"
+  },
+  "currentStatus": "docs/STATUS.md",
+  "releaseGates": "docs/RELEASE_GATES.md",
+  "measuredLedger": {
+    "schema": "semantic-capability-ledger/1",
+    "command": "npm run coverage:current -- --out /path/to/capabilities.json",
+    "profile": "training-js/1",
+    "unit": "declared source/input/fixture probe",
+    "stages": [
+      "frontend",
+      "ownedEvaluation",
+      "independentOutcome",
+      "independentIntermediate",
+      "v5ProjectionAndPublicReplay",
+      "nativeAdmission",
+      "modelEvaluation"
+    ],
+    "statuses": [
+      "passed",
+      "failed",
+      "unsupported",
+      "resource_limited",
+      "untested"
+    ],
+    "policy": "A stage is passed only by executed evidence for that exact producer revision and environment. Parser acceptance does not promote later stages. Untested stages remain untested."
+  },
+  "baselineCommand": "npm run baseline:v5 -- --out /path/to/new-baseline --jobs 4",
+  "historicalLedger": {
+    "path": "coverage/historical/required-pre-v5.json",
+    "lastCurrentRevision": "55a53c4b884b7d536cfc06220d8838d8cead9236",
+    "status": "historical; includes obsolete schema and missing-capability assertions"
+  },
+  "fullECMAScriptConformance": false,
+  "learningImprovement": "Requires a separately executed frozen base-versus-trained experiment.",
   "currentReport": "coverage/current-v5.json",
   "currentReportProducer": "c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39",
   "profile": "training-js/1",
-  "contracts": [
-    "semantic-execution/5",
-    "semantic-trace/5",
-    "semantic-context/5",
-    "semantic-continuation/5",
-    "selected-harness/2"
-  ],
   "generate": "npm run coverage:current -- --out PATH [--megatoken DIR --tokenizer FILE --python PYTHON]",
   "baseline": "npm run baseline:v5 -- --out DIRECTORY [--megatoken DIR --tokenizer FILE --python PYTHON]",
   "stages": [
@@ -30,5 +64,5 @@
   ],
   "historicalReport": "coverage/historical/required-v1.json",
   "historicalScope": "Original synchronous semantic-execution/1 ledger, retained byte-for-byte; not current capability evidence.",
-  "interpretation": "The linked measured report states its exact producer and denominators. Native qualification of separate corpora does not automatically fill its feature-level native column. Model results require actual model evaluation. No full ECMAScript or Test262 claim."
+  "interpretation": "Retained reports state the exact revisions they measured and are not qualification of a later containing commit. Native qualification of separate corpora does not fill a feature-level native column. Model results require actual evaluation. No full ECMAScript or Test262 claim."
 }

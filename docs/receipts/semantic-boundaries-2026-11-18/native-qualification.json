@@ -1,0 +1,1514 @@
+{
+  "schema": "semantic-boundary-qualification/1",
+  "status": "passed",
+  "producerRevision": "e71ea3054e304d61a77a33832e733907e06a36bb",
+  "trackedProducerClean": true,
+  "environment": {
+    "schema": "semantic-execution-environment/1",
+    "node": "24.22.3",
+    "v8": "13.6.233.17-node.63",
+    "platform": "linux",
+    "arch": "x64",
+    "timezone": "UTC",
+    "parser": "8.15.0",
+    "typescript": "5.9.3",
+    "packageLockDigest": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88",
+    "implementationDigest": "b35ea3ccdbbf7d6b949f870411c6d22bc032a7f825e857b9a42c444ccbc318d0"
+  },
+  "runnerSha256": "bf68ce291e5c2c3b2baf2b23ca3a8135281bb2e51802780bab0e848c313ef62f",
+  "nativePolicy": {
+    "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+  },
+  "startedAt": "2026-11-18T12:22:37.932Z",
+  "counts": {
+    "attempted": 19,
+    "locallyVerified": 0,
+    "admitted": 14,
+    "qualifiedRefusals": 5,
+    "failures": 0
+  },
+  "cases": [
+    {
+      "id": "slice-undefined",
+      "source": "\"use strict\";function run(){return [1,2,3].slice(0,undefined);}",
+      "sourceSha256": "acba16d77061f9ea5a35febb701ae21723dc25fad610001bc80910e8ea7703f8",
+      "args": [],
+      "fixture": {
+        "calls": []
+      },
+      "fixtureSha256": "621d51202f38693e32078404ea1baf179547c67ef85fe7f6b3fdb79b22659a63",
+      "expected": "admitted",
+      "status": "admitted",
+      "category": null,
+      "reason": null,
+      "passed": true,
+      "identityDigest": "b59ad0af5ba1bb943dd77f406ee66fd4d01ed2d9e86ecdc69be9cb7df81f2a76",
+      "publicDigest": "811e69270023d3148c6e4f3decd42dde513a8094c2d76383789a22d41f9aa708",
+      "referenceOutcome": {
+        "kind": "return",
+        "graph": {
+          "roots": [
+            [
+              "ref",
+              "o0"
+            ]
+          ],
+          "objects": [
+            {
+              "id": "o0",
+              "kind": "array",
+              "properties": [
+                [
+                  "0",
+                  [
+                    "num",
+                    1
+                  ]
+                ],
+                [
+                  "1",
+                  [
+                    "num",
+                    2
+                  ]
+                ],
+                [
+                  "2",
+                  [
+                    "num",
+                    3
+                  ]
+                ],
+                [
+                  "length",
+                  [
+                    "num",
+                    3
+                  ]
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "811e69270023d3148c6e4f3decd42dde513a8094c2d76383789a22d41f9aa708",
+        "identityDigest": "b59ad0af5ba1bb943dd77f406ee66fd4d01ed2d9e86ecdc69be9cb7df81f2a76",
+        "identityValidated": true,
+        "producerRevision": "e71ea3054e304d61a77a33832e733907e06a36bb",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "811e69270023d3148c6e4f3decd42dde513a8094c2d76383789a22d41f9aa708",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 231,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "ref",
+                "o3"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 13,
+          "tracks": 2
+        },
+        "logicalRecords": 12,
+        "lossMaskValidated": true,
+        "observedTokens": 701,
+        "optimizerSteps": 0,
+        "physicalRecords": 13,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "fill-undefined",
+      "source": "\"use strict\";function run(){const a=[1,2,3];a.fill(9,0,undefined);return a;}",
+      "sourceSha256": "04c28d71c4b9ea760bf5150e588e5c41c33868a2af8c075bfcd723a0edd0b9cd",
+      "args": [],
+      "fixture": {
+        "calls": []
+      },
+      "fixtureSha256": "621d51202f38693e32078404ea1baf179547c67ef85fe7f6b3fdb79b22659a63",
+      "expected": "admitted",
+      "status": "admitted",
+      "category": null,
+      "reason": null,
+      "passed": true,
+      "identityDigest": "09c6b5fcffa0deb3edb97b99700f3affa15ceef94204c09a1534e3a1fb4f5452",
+      "publicDigest": "95075c9cc104d7f0a92c18d3f7428ebc012a37811978c8187c6c36bcc03a88c4",
+      "referenceOutcome": {
+        "kind": "return",
+        "graph": {
+          "roots": [
+            [
+              "ref",
+              "o0"
+            ]
+          ],
+          "objects": [
+            {
+              "id": "o0",
+              "kind": "array",
+              "properties": [
+                [
+                  "0",
+                  [
+                    "num",
+                    9
+                  ]
+                ],
+                [
+                  "1",
+                  [
+                    "num",
+                    9
+                  ]
+                ],
+                [
+                  "2",
+                  [
+                    "num",
+                    9
+                  ]
+                ],
+                [
+                  "length",
+                  [
+                    "num",
+                    3
+                  ]
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "95075c9cc104d7f0a92c18d3f7428ebc012a37811978c8187c6c36bcc03a88c4",
+        "identityDigest": "09c6b5fcffa0deb3edb97b99700f3affa15ceef94204c09a1534e3a1fb4f5452",
+        "identityValidated": true,
+        "producerRevision": "e71ea3054e304d61a77a33832e733907e06a36bb",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "95075c9cc104d7f0a92c18d3f7428ebc012a37811978c8187c6c36bcc03a88c4",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 256,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "ref",
+                "o2"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 16,
+          "tracks": 2
+        },
+        "logicalRecords": 15,
+        "lossMaskValidated": true,
+        "observedTokens": 818,
+        "optimizerSteps": 0,
+        "physicalRecords": 16,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "copy-within-undefined",
+      "source": "\"use strict\";function run(){const a=[1,2,3];a.copyWithin(0,1,undefined);return a;}",
+      "sourceSha256": "bd05ba1786c91fda8330c2fa8a87b49ddaff830f94f8bc94d0f39f7709808c07",
+      "args": [],
+      "fixture": {
+        "calls": []
+      },
+      "fixtureSha256": "621d51202f38693e32078404ea1baf179547c67ef85fe7f6b3fdb79b22659a63",
+      "expected": "admitted",
+      "status": "admitted",
+      "category": null,
+      "reason": null,
+      "passed": true,
+      "identityDigest": "13a92bd3ba7587999d8e4091028675ae613a42f6687bbfeb89c83a08c493a5ad",
+      "publicDigest": "433abef5dff2e5a23b871904bff2bd8ca4c7c6c73ef7b63e56e8816022d7b928",
+      "referenceOutcome": {
+        "kind": "return",
+        "graph": {
+          "roots": [
+            [
+              "ref",
+              "o0"
+            ]
+          ],
+          "objects": [
+            {
+              "id": "o0",
+              "kind": "array",
+              "properties": [
+                [
+                  "0",
+                  [
+                    "num",
+                    2
+                  ]
+                ],
+                [
+                  "1",
+                  [
+                    "num",
+                    3
+                  ]
+                ],
+                [
+                  "2",
+                  [
+                    "num",
+                    3
+                  ]
+                ],
+                [
+                  "length",
+                  [
+                    "num",
+                    3
+                  ]
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "433abef5dff2e5a23b871904bff2bd8ca4c7c6c73ef7b63e56e8816022d7b928",
+        "identityDigest": "13a92bd3ba7587999d8e4091028675ae613a42f6687bbfeb89c83a08c493a5ad",
+        "identityValidated": true,
+        "producerRevision": "e71ea3054e304d61a77a33832e733907e06a36bb",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "433abef5dff2e5a23b871904bff2bd8ca4c7c6c73ef7b63e56e8816022d7b928",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 234,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "ref",
+                "o2"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 15,
+          "tracks": 2
+        },
+        "logicalRecords": 14,
+        "lossMaskValidated": true,
+        "observedTokens": 819,
+        "optimizerSteps": 0,
+        "physicalRecords": 15,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "parameter-outer",
+      "source": "\"use strict\";const x=7;function run(a=x){var x=3;return a;}",
+      "sourceSha256": "e85bfe2297650de6afb6f4ce8cdae95a7b652c6ed7e671ca68807abf53f69a41",
+      "args": [],
+      "fixture": {
+        "calls": []
+      },
+      "fixtureSha256": "621d51202f38693e32078404ea1baf179547c67ef85fe7f6b3fdb79b22659a63",
+      "expected": "admitted",
+      "status": "admitted",
+      "category": null,
+      "reason": null,
+      "passed": true,
+      "identityDigest": "d42c96c8304704fc97369ff0f8ebf050caa1c9d1204c6709d35a5149bd07fe47",
+      "publicDigest": "de7b34eea84509f98412586ab602093352d9cec6a56612e3ea39614481ed9a49",
+      "referenceOutcome": {
+        "kind": "return",
+        "graph": {
+          "roots": [
+            [
+              "num",
+              7
+            ]
+          ],
+          "objects": []
+        }
+      },
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "de7b34eea84509f98412586ab602093352d9cec6a56612e3ea39614481ed9a49",
+        "identityDigest": "d42c96c8304704fc97369ff0f8ebf050caa1c9d1204c6709d35a5149bd07fe47",
+        "identityValidated": true,
+        "producerRevision": "e71ea3054e304d61a77a33832e733907e06a36bb",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "de7b34eea84509f98412586ab602093352d9cec6a56612e3ea39614481ed9a49",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 48,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                7
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 7,
+          "tracks": 2
+        },
+        "logicalRecords": 6,
+        "lossMaskValidated": true,
+        "observedTokens": 706,
+        "optimizerSteps": 0,
+        "physicalRecords": 7,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "parameter-closure",
+      "source": "\"use strict\";const x=7;function run(a=()=>x){var x=3;return a();}",
+      "sourceSha256": "ea0aeb9099be51d365452a22112c790ced132097eff5976ebaca0be3de594315",
+      "args": [],
+      "fixture": {
+        "calls": []
+      },
+      "fixtureSha256": "621d51202f38693e32078404ea1baf179547c67ef85fe7f6b3fdb79b22659a63",
+      "expected": "admitted",
+      "status": "admitted",
+      "category": null,
+      "reason": null,
+      "passed": true,
+      "identityDigest": "7a48539a976601831d3f10053e72d0b2c009c37b6bf358d43034ccbdd47599a3",
+      "publicDigest": "52472fbc98f7de86263c752ffbcd59af0e69bde1e5b0d2505f1d2c4741ac4d64",
+      "referenceOutcome": {
+        "kind": "return",
+        "graph": {
+          "roots": [
+            [
+              "num",
+              7
+            ]
+          ],
+          "objects": []
+        }
+      },
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "52472fbc98f7de86263c752ffbcd59af0e69bde1e5b0d2505f1d2c4741ac4d64",
+        "identityDigest": "7a48539a976601831d3f10053e72d0b2c009c37b6bf358d43034ccbdd47599a3",
+        "identityValidated": true,
+        "producerRevision": "e71ea3054e304d61a77a33832e733907e06a36bb",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "52472fbc98f7de86263c752ffbcd59af0e69bde1e5b0d2505f1d2c4741ac4d64",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 140,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                7
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 11,
+          "tracks": 2
+        },
+        "logicalRecords": 10,
+        "lossMaskValidated": true,
+        "observedTokens": 767,
+        "optimizerSteps": 0,
+        "physicalRecords": 11,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "parameter-tdz",
+      "source": "\"use strict\";const b=7;function run(a=b,b=3){return a;}",
+      "sourceSha256": "59de2bbe3980d5b8e5420ab2cfbdc8ea0c7968c3e57af4e458dd6f3f097cb20d",
+      "args": [],
+      "fixture": {
+        "calls": []
+      },
+      "fixtureSha256": "621d51202f38693e32078404ea1baf179547c67ef85fe7f6b3fdb79b22659a63",
+      "expected": "admitted",
+      "status": "admitted",
+      "category": null,
+      "reason": null,
+      "passed": true,
+      "identityDigest": "ff6d7c543bc1d7a3e1f308300e970bb146780810efa6d295696a484c2f1b0197",
+      "publicDigest": "f87c10d2d6b9bf631535dd21cf5ce29f2badd99c80659c9ffddb6b7d0cf12bfc",
+      "referenceOutcome": {
+        "kind": "throw",
+        "graph": {
+          "roots": [
+            [
+              "ref",
+              "o0"
+            ]
+          ],
+          "objects": [
+            {
+              "id": "o0",
+              "kind": "object",
+              "properties": [
+                [
+                  "name",
+                  [
+                    "str",
+                    "ReferenceError"
+                  ]
+                ],
+                [
+                  "message",
+                  [
+                    "str",
+                    "Cannot access 'b' before initialization"
+                  ]
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "f87c10d2d6b9bf631535dd21cf5ce29f2badd99c80659c9ffddb6b7d0cf12bfc",
+        "identityDigest": "ff6d7c543bc1d7a3e1f308300e970bb146780810efa6d295696a484c2f1b0197",
+        "identityValidated": true,
+        "producerRevision": "e71ea3054e304d61a77a33832e733907e06a36bb",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "f87c10d2d6b9bf631535dd21cf5ce29f2badd99c80659c9ffddb6b7d0cf12bfc",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 71,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "throw",
+              "value": [
+                "ref",
+                "o2"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 6,
+          "tracks": 2
+        },
+        "logicalRecords": 5,
+        "lossMaskValidated": true,
+        "observedTokens": 678,
+        "optimizerSteps": 0,
+        "physicalRecords": 6,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "parameter-typeof-tdz",
+      "source": "\"use strict\";function run(a=typeof b,b=3){return a;}",
+      "sourceSha256": "f804bb71f998f8af9010d879157762dd338c9c3b16b4c09f68c870395e079bc0",
+      "args": [],
+      "fixture": {
+        "calls": []
+      },
+      "fixtureSha256": "621d51202f38693e32078404ea1baf179547c67ef85fe7f6b3fdb79b22659a63",
+      "expected": "admitted",
+      "status": "admitted",
+      "category": null,
+      "reason": null,
+      "passed": true,
+      "identityDigest": "fd9afd1a7e2afae82203e2973ce26e23c019fa480fdfb710ee1d7143e74ce70c",
+      "publicDigest": "93bb6b4631454d02590e404071ac3d26517f3a5c4a04c7446465b82bb93bd195",
+      "referenceOutcome": {
+        "kind": "throw",
+        "graph": {
+          "roots": [
+            [
+              "ref",
+              "o0"
+            ]
+          ],
+          "objects": [
+            {
+              "id": "o0",
+              "kind": "object",
+              "properties": [
+                [
+                  "name",
+                  [
+                    "str",
+                    "ReferenceError"
+                  ]
+                ],
+                [
+                  "message",
+                  [
+                    "str",
+                    "Cannot access 'b' before initialization"
+                  ]
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "93bb6b4631454d02590e404071ac3d26517f3a5c4a04c7446465b82bb93bd195",
+        "identityDigest": "fd9afd1a7e2afae82203e2973ce26e23c019fa480fdfb710ee1d7143e74ce70c",
+        "identityValidated": true,
+        "producerRevision": "e71ea3054e304d61a77a33832e733907e06a36bb",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "93bb6b4631454d02590e404071ac3d26517f3a5c4a04c7446465b82bb93bd195",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 71,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "throw",
+              "value": [
+                "ref",
+                "o2"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 6,
+          "tracks": 2
+        },
+        "logicalRecords": 5,
+        "lossMaskValidated": true,
+        "observedTokens": 644,
+        "optimizerSteps": 0,
+        "physicalRecords": 6,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "async-helper",
+      "source": "\"use strict\";async function helper(){return 7;}async function run(){return typeof helper();}",
+      "sourceSha256": "924ef03ddcf52d7bebfc0dcfc757aec5d9dfcf8ce4f7d491d9d6f196df6458b2",
+      "args": [],
+      "fixture": {
+        "calls": []
+      },
+      "fixtureSha256": "621d51202f38693e32078404ea1baf179547c67ef85fe7f6b3fdb79b22659a63",
+      "expected": "admitted",
+      "status": "admitted",
+      "category": null,
+      "reason": null,
+      "passed": true,
+      "identityDigest": "8020188030e93087eb98a3a1ab1e8524680ee161ec14ca7916f6feccc378ac80",
+      "publicDigest": "0ce1b6f249f2779d6bdcbbc91f0ff795d2c29b00429b078386867701a643effd",
+      "referenceOutcome": {
+        "kind": "return",
+        "graph": {
+          "roots": [
+            [
+              "str",
+              "object"
+            ]
+          ],
+          "objects": []
+        }
+      },
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "0ce1b6f249f2779d6bdcbbc91f0ff795d2c29b00429b078386867701a643effd",
+        "identityDigest": "8020188030e93087eb98a3a1ab1e8524680ee161ec14ca7916f6feccc378ac80",
+        "identityValidated": true,
+        "producerRevision": "e71ea3054e304d61a77a33832e733907e06a36bb",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "0ce1b6f249f2779d6bdcbbc91f0ff795d2c29b00429b078386867701a643effd",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 122,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "str",
+                "object"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 11,
+          "tracks": 2
+        },
+        "logicalRecords": 10,
+        "lossMaskValidated": true,
+        "observedTokens": 674,
+        "optimizerSteps": 0,
+        "physicalRecords": 11,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "accessor-update",
+      "source": "\"use strict\";function run(){let x=0;const o={};Object.defineProperty(o,\"v\",{get:()=>1,set:v=>{x=v;},configurable:true});Object.defineProperty(o,\"v\",{get:()=>2});o.v=3;return [o.v,x];}",
+      "sourceSha256": "e187ff9a5ccdc3973467bec2215cdb456dbf93ebe132ee0aae95d1024a87d56e",
+      "args": [],
+      "fixture": {
+        "calls": []
+      },
+      "fixtureSha256": "621d51202f38693e32078404ea1baf179547c67ef85fe7f6b3fdb79b22659a63",
+      "expected": "admitted",
+      "status": "admitted",
+      "category": null,
+      "reason": null,
+      "passed": true,
+      "identityDigest": "5d4cae096622223aed43905538a91ac7e77cc54001e235a53d1fce3b1a81c57d",
+      "publicDigest": "9a1aac749303b6fd09214efcb5d5f6d858989f0ed9f58fc833ef13822919ff6f",
+      "referenceOutcome": {
+        "kind": "return",
+        "graph": {
+          "roots": [
+            [
+              "ref",
+              "o0"
+            ]
+          ],
+          "objects": [
+            {
+              "id": "o0",
+              "kind": "array",
+              "properties": [
+                [
+                  "0",
+                  [
+                    "num",
+                    2
+                  ]
+                ],
+                [
+                  "1",
+                  [
+                    "num",
+                    3
+                  ]
+                ],
+                [
+                  "length",
+                  [
+                    "num",
+                    2
+                  ]
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "9a1aac749303b6fd09214efcb5d5f6d858989f0ed9f58fc833ef13822919ff6f",
+        "identityDigest": "5d4cae096622223aed43905538a91ac7e77cc54001e235a53d1fce3b1a81c57d",
+        "identityValidated": true,
+        "producerRevision": "e71ea3054e304d61a77a33832e733907e06a36bb",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "9a1aac749303b6fd09214efcb5d5f6d858989f0ed9f58fc833ef13822919ff6f",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 492,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "ref",
+                "o8"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 28,
+          "tracks": 2
+        },
+        "logicalRecords": 26,
+        "lossMaskValidated": true,
+        "observedTokens": 1608,
+        "optimizerSteps": 0,
+        "physicalRecords": 28,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "accessor-idempotent",
+      "source": "\"use strict\";function run(){const o={};const get=()=>1;Object.defineProperty(o,\"v\",{get});Object.defineProperty(o,\"v\",{get});return o.v;}",
+      "sourceSha256": "5663be060c525356ccac76069de72b1089c2c2a1a6f20f7de83003da7c36012b",
+      "args": [],
+      "fixture": {
+        "calls": []
+      },
+      "fixtureSha256": "621d51202f38693e32078404ea1baf179547c67ef85fe7f6b3fdb79b22659a63",
+      "expected": "admitted",
+      "status": "admitted",
+      "category": null,
+      "reason": null,
+      "passed": true,
+      "identityDigest": "8230a3a90a02ec8b00bb7e2fb7fbd94fd63c8f641609a1438119c9296f43dbc7",
+      "publicDigest": "42edf0551ad5e7ae66ef7da23d21a77424245a06f07db7e8243050d985cd6a7b",
+      "referenceOutcome": {
+        "kind": "return",
+        "graph": {
+          "roots": [
+            [
+              "num",
+              1
+            ]
+          ],
+          "objects": []
+        }
+      },
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "42edf0551ad5e7ae66ef7da23d21a77424245a06f07db7e8243050d985cd6a7b",
+        "identityDigest": "8230a3a90a02ec8b00bb7e2fb7fbd94fd63c8f641609a1438119c9296f43dbc7",
+        "identityValidated": true,
+        "producerRevision": "e71ea3054e304d61a77a33832e733907e06a36bb",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "42edf0551ad5e7ae66ef7da23d21a77424245a06f07db7e8243050d985cd6a7b",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 215,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "return",
+              "value": [
+                "num",
+                1
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 15,
+          "tracks": 2
+        },
+        "logicalRecords": 14,
+        "lossMaskValidated": true,
+        "observedTokens": 1135,
+        "optimizerSteps": 0,
+        "physicalRecords": 15,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "primitive-throw",
+      "source": "\"use strict\";function run(){throw 7;}",
+      "sourceSha256": "f56e9adcc87684d98275833cf84e090870acfec395d5761334c2be11046da993",
+      "args": [],
+      "fixture": {
+        "calls": []
+      },
+      "fixtureSha256": "621d51202f38693e32078404ea1baf179547c67ef85fe7f6b3fdb79b22659a63",
+      "expected": "admitted",
+      "status": "admitted",
+      "category": null,
+      "reason": null,
+      "passed": true,
+      "identityDigest": "2562bbac3469f5e92dc8c45ecd3bb3776c6685f1da3d99604b66a483671dfce7",
+      "publicDigest": "fd7b6bf19e885b8b8268fad9b627f2472fa55cc380bfa59dd11b4bd9716f0f28",
+      "referenceOutcome": {
+        "kind": "throw",
+        "graph": {
+          "roots": [
+            [
+              "num",
+              7
+            ]
+          ],
+          "objects": []
+        }
+      },
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "fd7b6bf19e885b8b8268fad9b627f2472fa55cc380bfa59dd11b4bd9716f0f28",
+        "identityDigest": "2562bbac3469f5e92dc8c45ecd3bb3776c6685f1da3d99604b66a483671dfce7",
+        "identityValidated": true,
+        "producerRevision": "e71ea3054e304d61a77a33832e733907e06a36bb",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "fd7b6bf19e885b8b8268fad9b627f2472fa55cc380bfa59dd11b4bd9716f0f28",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 22,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "throw",
+              "value": [
+                "num",
+                7
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 5,
+          "tracks": 2
+        },
+        "logicalRecords": 4,
+        "lossMaskValidated": true,
+        "observedTokens": 527,
+        "optimizerSteps": 0,
+        "physicalRecords": 5,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "declared-error",
+      "source": "\"use strict\";function run(){throw new TypeError(\"declared\");}",
+      "sourceSha256": "fef880f4312699ac5a89dedc5f87a5e2f6df5b88873e10b19d914039f6b59ce1",
+      "args": [],
+      "fixture": {
+        "calls": []
+      },
+      "fixtureSha256": "621d51202f38693e32078404ea1baf179547c67ef85fe7f6b3fdb79b22659a63",
+      "expected": "admitted",
+      "status": "admitted",
+      "category": null,
+      "reason": null,
+      "passed": true,
+      "identityDigest": "a29793a124609b5b00a5d1768bb9b628bfd8325b646a38031293b8d0c9ab4bf3",
+      "publicDigest": "640e520b40ee2e83e080329168ec86298d6e3e4b1364f5db45827aa3c808bc57",
+      "referenceOutcome": {
+        "kind": "throw",
+        "graph": {
+          "roots": [
+            [
+              "ref",
+              "o0"
+            ]
+          ],
+          "objects": [
+            {
+              "id": "o0",
+              "kind": "object",
+              "properties": [
+                [
+                  "name",
+                  [
+                    "str",
+                    "TypeError"
+                  ]
+                ],
+                [
+                  "message",
+                  [
+                    "str",
+                    "declared"
+                  ]
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "640e520b40ee2e83e080329168ec86298d6e3e4b1364f5db45827aa3c808bc57",
+        "identityDigest": "a29793a124609b5b00a5d1768bb9b628bfd8325b646a38031293b8d0c9ab4bf3",
+        "identityValidated": true,
+        "producerRevision": "e71ea3054e304d61a77a33832e733907e06a36bb",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "nativeAdmission": {
+        "actions": 0,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "640e520b40ee2e83e080329168ec86298d6e3e4b1364f5db45827aa3c808bc57",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 65,
+        "importReceipt": {
+          "actions": 0,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "throw",
+              "value": [
+                "ref",
+                "o2"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 2,
+          "records": 6,
+          "tracks": 2
+        },
+        "logicalRecords": 5,
+        "lossMaskValidated": true,
+        "observedTokens": 577,
+        "optimizerSteps": 0,
+        "physicalRecords": 6,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "synchronous-host-throw",
+      "source": "\"use strict\";function run(){return host.readNumber(\"bad\");}",
+      "sourceSha256": "3628446e428f1090fb39e5a01a863e7f86d86b3bf290bac3e8565b0476c8fe1a",
+      "args": [],
+      "fixture": {
+        "calls": [
+          {
+            "operation": "demo.readNumber",
+            "arguments": [
+              "bad"
+            ],
+            "status": "rejected",
+            "result": "missing"
+          }
+        ]
+      },
+      "fixtureSha256": "7253e6ceabd14e2ecd8f5c9b6abb5d11b67ae19bc9bccf4726efe7fe6d0aff53",
+      "expected": "admitted",
+      "status": "admitted",
+      "category": null,
+      "reason": null,
+      "passed": true,
+      "identityDigest": "15c17d11a18712bfc0721bc1d7f2c72c68b47e1f37850f31c9235a0a59c5a905",
+      "publicDigest": "15f22a909cb06b4de69cd0b4a93abf8fa1546aa7d57c645857182531d5624d79",
+      "referenceOutcome": {
+        "kind": "throw",
+        "graph": {
+          "roots": [
+            [
+              "str",
+              "missing"
+            ]
+          ],
+          "objects": []
+        }
+      },
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "15f22a909cb06b4de69cd0b4a93abf8fa1546aa7d57c645857182531d5624d79",
+        "identityDigest": "15c17d11a18712bfc0721bc1d7f2c72c68b47e1f37850f31c9235a0a59c5a905",
+        "identityValidated": true,
+        "producerRevision": "e71ea3054e304d61a77a33832e733907e06a36bb",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "nativeAdmission": {
+        "actions": 1,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "15f22a909cb06b4de69cd0b4a93abf8fa1546aa7d57c645857182531d5624d79",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 72,
+        "importReceipt": {
+          "actions": 1,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "throw",
+              "value": [
+                "str",
+                "missing"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 4,
+          "records": 8,
+          "tracks": 2
+        },
+        "logicalRecords": 7,
+        "lossMaskValidated": true,
+        "observedTokens": 791,
+        "optimizerSteps": 0,
+        "physicalRecords": 8,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "async-host-throw-cleanup",
+      "source": "\"use strict\";async function run(){try{return host.readNumber(\"bad\");}finally{host.store(\"cleanup\",1);}}",
+      "sourceSha256": "e9d5a93358599a215aaa4e184eef25a01275c4945302d55f884a123a03e41cd6",
+      "args": [],
+      "fixture": {
+        "calls": [
+          {
+            "operation": "demo.readNumber",
+            "arguments": [
+              "bad"
+            ],
+            "status": "rejected",
+            "result": "missing"
+          },
+          {
+            "operation": "demo.store",
+            "arguments": [
+              "cleanup",
+              1
+            ]
+          }
+        ]
+      },
+      "fixtureSha256": "7047fc627947378483f6ea2e26bd2d8754eba241ba2241d5bac71b0b51a74dfc",
+      "expected": "admitted",
+      "status": "admitted",
+      "category": null,
+      "reason": null,
+      "passed": true,
+      "identityDigest": "1aa523f9b1be0aacfa051978db545ede118db35baf47f042b180f2e1928b89e0",
+      "publicDigest": "ac93ce3e185f71175c72dba6943467c2ca8ce8bf6748b9ea0e64f909aef47c23",
+      "referenceOutcome": {
+        "kind": "throw",
+        "graph": {
+          "roots": [
+            [
+              "str",
+              "missing"
+            ]
+          ],
+          "objects": []
+        }
+      },
+      "sourceRecheck": {
+        "schema": "semantic-source-admission/4",
+        "episodeDigest": "ac93ce3e185f71175c72dba6943467c2ca8ce8bf6748b9ea0e64f909aef47c23",
+        "identityDigest": "1aa523f9b1be0aacfa051978db545ede118db35baf47f042b180f2e1928b89e0",
+        "identityValidated": true,
+        "producerRevision": "e71ea3054e304d61a77a33832e733907e06a36bb",
+        "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "referenceStatus": "agreed",
+        "journalValidated": true,
+        "replayValidated": true,
+        "sourceValidated": true,
+        "effectsValidated": true,
+        "optimizerSteps": 0
+      },
+      "nativeAdmission": {
+        "actions": 2,
+        "admitted": true,
+        "componentGate": "native-consumer-only",
+        "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+        "contextTransportRecords": 1,
+        "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+        "episodeDigest": "ac93ce3e185f71175c72dba6943467c2ca8ce8bf6748b9ea0e64f909aef47c23",
+        "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+        "fragmentationValidated": true,
+        "generatedTokens": 186,
+        "importReceipt": {
+          "actions": 2,
+          "admission": "locally_verified",
+          "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "completions": [
+            {
+              "invocationId": "invocation1",
+              "kind": "throw",
+              "value": [
+                "str",
+                "missing"
+              ]
+            }
+          ],
+          "invocations": 1,
+          "observations": 6,
+          "records": 14,
+          "tracks": 2
+        },
+        "logicalRecords": 13,
+        "lossMaskValidated": true,
+        "observedTokens": 1120,
+        "optimizerSteps": 0,
+        "physicalRecords": 14,
+        "schema": "semantic-native-admission/4",
+        "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "visibilityValidated": true
+      }
+    },
+    {
+      "id": "create-descriptors-refused",
+      "source": "\"use strict\";function run(){return Object.create(null,{foo:{value:7}}).foo;}",
+      "sourceSha256": "f3ca899c6ff7c793a16d748227356bc22691aaca7586e78f5aefdf5f1c0233cd",
+      "args": [],
+      "fixture": {
+        "calls": []
+      },
+      "fixtureSha256": "621d51202f38693e32078404ea1baf179547c67ef85fe7f6b3fdb79b22659a63",
+      "expected": "refused",
+      "status": "unsupported",
+      "category": "unsupported_source",
+      "reason": "Object.create property descriptors are outside the bounded profile",
+      "passed": true,
+      "failureEvidenceDigest": "bbb66e3fa9d5f32c9b94ed0a36dca275be1b440d1a7a91ed1353ebd19710bc96"
+    },
+    {
+      "id": "array-accessor-refused",
+      "source": "\"use strict\";function run(){const a=[];Object.defineProperty(a,\"0\",{get:()=>7});return a.length;}",
+      "sourceSha256": "67816aaf8559d0e19cd1e2c4e49a8bff1bb70f4daeef362f1ad4ad1bc8cd3475",
+      "args": [],
+      "fixture": {
+        "calls": []
+      },
+      "fixtureSha256": "621d51202f38693e32078404ea1baf179547c67ef85fe7f6b3fdb79b22659a63",
+      "expected": "refused",
+      "status": "unsupported",
+      "category": "unsupported_source",
+      "reason": "Array index accessor descriptors are outside the bounded profile",
+      "passed": true,
+      "failureEvidenceDigest": "15c14c8743aceab1c9ef3ea9be3bb5628bd48e2361ae2564f91c6556d97fa4f4"
+    },
+    {
+      "id": "descriptor-getter-refused",
+      "source": "\"use strict\";function run(){const d={};Object.defineProperty(d,\"get\",{get:()=>{throw new TypeError(\"blocked\");}});try{Object.defineProperty({},\"x\",d);}catch(e){return e.name;}}",
+      "sourceSha256": "281fa13627b53f578685c3f3f3cb7c98c12d12b31a7e8a318edccd2e3ebfb5a0",
+      "args": [],
+      "fixture": {
+        "calls": []
+      },
+      "fixtureSha256": "621d51202f38693e32078404ea1baf179547c67ef85fe7f6b3fdb79b22659a63",
+      "expected": "refused",
+      "status": "unsupported",
+      "category": "unsupported_source",
+      "reason": "Accessor descriptor fields are outside the bounded profile",
+      "passed": true,
+      "failureEvidenceDigest": "0cb12824fbeaa900ca03b8cbbc90f77901fc319dfc1e4962fabbaa7bf42938f4"
+    },
+    {
+      "id": "callback-failure-refused",
+      "source": "\"use strict\";function run(){queueMicrotask(()=>{throw 7;});return 3;}",
+      "sourceSha256": "ddfdaa0e3dbf01812ca11c24035cc504572138d2126747be4f4a7db6215dcaaf",
+      "args": [],
+      "fixture": {
+        "calls": []
+      },
+      "fixtureSha256": "621d51202f38693e32078404ea1baf179547c67ef85fe7f6b3fdb79b22659a63",
+      "expected": "refused",
+      "status": "reference_callback_failure",
+      "category": "reference_callback_failure",
+      "reason": "Callback failures are outside the qualified observable completion profile",
+      "passed": true,
+      "failureEvidenceDigest": "a169c89a2da89bebd29c08764d4ff8c8f5abf2cb1cca896684c6c584bf6d06a3"
+    },
+    {
+      "id": "unhandled-rejection-refused",
+      "source": "\"use strict\";function run(){Promise.reject(9);return 3;}",
+      "sourceSha256": "cc8b3a7c6a3f727fca8960879492d1b5238c09508816efe811e84ddcaf5f3dc5",
+      "args": [],
+      "fixture": {
+        "calls": []
+      },
+      "fixtureSha256": "621d51202f38693e32078404ea1baf179547c67ef85fe7f6b3fdb79b22659a63",
+      "expected": "refused",
+      "status": "reference_unhandled_rejection",
+      "category": "reference_unhandled_rejection",
+      "reason": "Unhandled rejections are outside the qualified observable completion profile",
+      "passed": true,
+      "failureEvidenceDigest": "7b01b35c901f19354d6006840a6085fc1133db8b60713815c39847b1c75fd0c7"
+    }
+  ],
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "completedAt": "2026-11-18T12:24:48.116Z"
+}

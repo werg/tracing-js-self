@@ -13,8 +13,9 @@ export function materializeCampaign(directory,{output=directory}={}){
     existsSync(output)&&readdirSync(output).length))
     throw new Error('Materialization needs a new destination outside its original campaign');
   const header=JSON.parse(readFileSync(join(directory,'campaign.json'),'utf8'));
-  const campaign=new CampaignStore(directory,header.identity,{resume:true,recoverTornLog:false,
+  const campaign=new CampaignStore(directory,header.identity,{resume:true,readOnly:external,recoverTornLog:false,
     maxObjectBytes:header.identity.bounds?.maxOutputBytes??268435456});
+  try{
   const manifestBytes=readFileSync(join(directory,'manifest.json'));
   const manifest=JSON.parse(manifestBytes.toString('utf8'));
   if(manifest.campaign?.identityDigest!==campaign.identityDigest)throw new Error('Manifest belongs to another campaign');
@@ -31,6 +32,7 @@ export function materializeCampaign(directory,{output=directory}={}){
       atomicWrite(join(output,row.path),JSON.stringify(campaign.exported(entry))+'\n');count++;
     }
   }
+  if(seen.size!==campaign.latest.size)throw new Error('Manifest omits durable campaign cases');
   for(const row of manifest.recipe?.lifecycleInputs??[])if(campaign.latest.get(row.id)?.public)row.path=row.id+'.json';
   manifest.campaign.compatibilityExports=true;
   if(external){
@@ -44,6 +46,7 @@ export function materializeCampaign(directory,{output=directory}={}){
   atomicWrite(join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
   return {materialized:count,identityDigest:campaign.identityDigest,admissionUnchanged:true,
     sourceCampaignRequiredForAudit:external};
+  }finally{campaign.close();}
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
   const args=process.argv.slice(2);

@@ -15,6 +15,7 @@ test('admitted selection retains refusals and never promotes local or forged adm
   atomicWrite(join(input,'manifest.json'),JSON.stringify({schema:'semantic-corpus-manifest/4',
     campaign:{identityDigest:store.identityDigest},counts:{attempted:2,locally_verified:1,admitted:1},
     cases:[first,forged].map(entry=>({id:entry.id,status:entry.status,candidateDigest:entry.candidateDigest}))}));
+  store.close();
   const output=join(root,'selection');
   assert.throws(()=>selectAdmittedCampaign({input,output}),/No native-admitted/);
   const report=JSON.parse(readFileSync(join(output,'selection-report.json'),'utf8'));
