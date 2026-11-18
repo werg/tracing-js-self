@@ -10,6 +10,7 @@ import {verifyEffectfulTrainingCase,independentEffectfulReference} from '../src/
 import {verifyEffectfulSession} from '../src/training/effectful-session.js';
 import {encodeNativeGraph,decodeOwnedGraph} from '../src/host/graph-codec.js';
 import {decodeGenerationTask} from '../src/corpus/generation-process.mjs';
+import {canonicalReturnMatches} from '../src/corpus/exercism-language-bindings.mjs';
 
 const chunks=[];let inputBytes=0;
 for await(const chunk of process.stdin){inputBytes+=chunk.length;
@@ -45,13 +46,15 @@ try{
           const value=decodeOwnedGraph(JSON.stringify({schema:'owned-graph/1',roots:[graph.roots.at(-1)],
             objects:graph.objects.map(object=>({...object,
               properties:object.properties.map(([key,value])=>({key,value}))}))}))[0];
-          matches=isDeepStrictEqual(value,expected);
+          matches=canonicalReturnMatches(value,expected,options.provenance?.canonicalExpectedBinding,
+            {family:options.family,property:options.provenance?.canonicalProperty});
         }
         // Canonical error prose is language-neutral: pinned JS proof messages
         // can differ (including case and wording). Require the error completion
         // here; original/transform/owned comparisons bind its exact JS graph.
         const canonicalCheck={status:matches?'agreed':'disagreed',
-          mode:expectsError?'error-completion-only':'exact-return-value',
+          mode:expectsError?'error-completion-only':options.provenance?.canonicalExpectedBinding?
+            'exact-bigint-return':'exact-return-value',
           expectedKind:expectsError?'throw':'return',observedKind:original.outcome.kind};
         options.provenance={...options.provenance,canonicalCheck};
         if(!matches)result={status:'canonical_mismatch',

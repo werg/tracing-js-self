@@ -59,3 +59,33 @@ test('canonical error expectations require thrown completion and declare message
   assert.equal(wrong.result.status,'canonical_mismatch');
   assert.equal(wrong.result.failure.canonicalCheck.observedKind,'return');
 });
+
+test('the pinned two-fer omission passes original, canonical and owned checks with exact span provenance',async t=>{
+  const fixture=trustedRealSourceCases({streams:['exercism'],perFamily:1}).find(row=>row.family.endsWith(':two-fer'));
+  assert.deepEqual(fixture.args,[]);
+  assert.deepEqual(fixture.provenance.canonicalInput,{name:null});
+  const sites=fixture.provenance.transform.originalSites;
+  assert.equal(sites.status,'mapped');assert.equal(sites.scope,'unchanged-spans-only');
+  for(const span of sites.map.segments)assert.equal(
+    fixture.source.slice(span.generatedStart,span.generatedEnd),
+    fixture.provenance.originalFile.slice(span.originalStart,span.originalEnd));
+  const run=await runGenerationProcess({kind:'source',fixture,producerRevision:'a'.repeat(40)},
+    {outputDirectory:directory(t),timeoutMs:30000});
+  assert.equal(run.result.status,'locally_verified',run.result.reason);
+  assert.equal(run.result.exported.sidecar.sourceProvenance.upstream.canonicalCheck.status,'agreed');
+});
+
+test('grains type binding passes the original oracle and still refuses unsupported owned BigInt globals',async t=>{
+  const fixture=trustedRealSourceCases({streams:['exercism'],perFamily:1}).find(row=>row.family.endsWith(':grains'));
+  const outputDirectory=directory(t);
+  const run=await runGenerationProcess({kind:'source',fixture,producerRevision:'a'.repeat(40)},
+    {outputDirectory,timeoutMs:30000});
+  assert.equal(run.result.status,'unsupported',run.result.reason);
+  assert.deepEqual(run.result.failure.original.provenance.canonicalCheck,
+    {status:'agreed',mode:'exact-bigint-return',expectedKind:'return',observedKind:'return'});
+  const source='"use strict";function square(){return 1;}';
+  const wrong=await runGenerationProcess({kind:'source',fixture:{...fixture,source,
+    originalReferenceSource:source},producerRevision:'a'.repeat(40)},{outputDirectory,timeoutMs:30000});
+  assert.equal(wrong.result.status,'canonical_mismatch','a wrong Number result is never coerced');
+  assert.equal(wrong.result.failure.canonicalCheck.mode,'exact-bigint-return');
+});

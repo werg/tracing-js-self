@@ -72,7 +72,18 @@ export function loadPinnedPairs(base=process.cwd()){
    };
    const source=check(jsRoot,jsLock,solutionPath),
      canonical=check(inRoot,inputLock,canonicalPath);
-   return {slug,source,canonical:JSON.parse(canonical),
+   // Keep the original decimal lexeme before JSON's Number conversion rounds
+   // large grains expectations. The JavaScript track returns BigInt exactly.
+   const canonicalIntegerExpectations={};
+   const document=JSON.parse(canonical,function(key,value,context){
+     if(slug==='grains'&&key==='expected'&&typeof value==='number'){
+       if(typeof this.uuid!=='string'||!context||!/^(0|[1-9]\d*)$/.test(context.source))
+         throw new Error('Pinned grains integers require exact JSON source lexemes');
+       canonicalIntegerExpectations[slug+'/'+this.uuid]=context.source;
+     }
+     return value;
+   });
+   return {slug,source,canonical:document,canonicalIntegerExpectations,
      provenance:{solution:{repository:JS_REPO,revision:JS_REVISION,
        path:solutionPath,sha256:sha256(source),license:'MIT'},
        canonical:{repository:INPUT_REPO,revision:INPUT_REVISION,
@@ -81,8 +92,18 @@ export function loadPinnedPairs(base=process.cwd()){
  });
 }
 
-export function extractCanonicalCases(record){
- const output=[],seen=new Set();
+export function extractCanonicalCases(record,{includeSuperseded=false}={}){
+ const output=[],seen=new Set(),replacements=new Map();
+ function collectReplacements(value){
+   if(Array.isArray(value)){for(const item of value)collectReplacements(item);return;}
+   if(!value||typeof value!=='object')return;
+   if(typeof value.reimplements==='string'){
+     const replaced=record.slug+'/'+value.reimplements;
+     replacements.set(replaced,[...(replacements.get(replaced)??[]),record.slug+'/'+value.uuid]);
+   }
+   if(Array.isArray(value.cases))collectReplacements(value.cases);
+ }
+ collectReplacements(record.canonical.cases??[]);
  function walk(value,desc=[]){
    if(Array.isArray(value)){for(const item of value)walk(item,desc);return;}
    if(!value||typeof value!=='object')return;
@@ -94,14 +115,31 @@ export function extractCanonicalCases(record){
      const caseId=record.slug+'/'+id;
      if(seen.has(caseId))throw new Error('Duplicate canonical case id '+caseId);
      seen.add(caseId);
+     if(replacements.has(caseId)){
+       if(includeSuperseded)output.push({caseId,property,status:'superseded_canonical_case',
+         replacedBy:replacements.get(caseId),description:path});
+       return;
+     }
      if(!mapping){output.push({caseId,property,status:'unsupported_property',description:path});return;}
      const [entry,...keys]=mapping;
      if(!value.input||typeof value.input!=='object'||
         keys.some(k=>!Object.hasOwn(value.input,k))){
        output.push({caseId,property,status:'unsupported_input_shape',description:path});return;
      }
-     output.push({caseId,property,entry,args:keys.map(k=>value.input[k]),
-       expected:value.expected,description:path,status:'candidate'});
+     let args=keys.map(k=>value.input[k]),inputBinding=null,expectedBinding=null;
+     // The neutral two-fer null denotes an omitted name. JavaScript's default
+     // parameter is activated by omission; passing null changes the API call.
+     if(record.slug==='two-fer'&&property==='twoFer'&&value.input.name===null){
+       args=[];
+       inputBinding={schema:'exercism-two-fer-omitted-name/1',canonicalName:null,argumentCount:0};
+     }
+     if(record.slug==='grains'&&['square','total'].includes(property)&&typeof value.expected==='number'){
+       const decimal=record.canonicalIntegerExpectations?.[caseId];
+       if(typeof decimal!=='string')throw new Error('Missing exact pinned grains integer '+caseId);
+       expectedBinding={schema:'exercism-grains-bigint/1',decimal};
+     }
+     output.push({caseId,property,entry,args,canonicalInput:value.input,inputBinding,expectedBinding,
+       reimplements:value.reimplements??null,expected:value.expected,description:path,status:'candidate'});
    }
    if(Array.isArray(value.cases))walk(value.cases,path);
  }
