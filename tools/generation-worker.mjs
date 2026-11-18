@@ -10,6 +10,7 @@ import {verifyEffectfulTrainingCase,independentEffectfulReference} from '../src/
 import {verifyEffectfulSession} from '../src/training/effectful-session.js';
 import {encodeNativeGraph,decodeOwnedGraph} from '../src/host/graph-codec.js';
 import {decodeGenerationTask} from '../src/corpus/generation-process.mjs';
+import {canonicalJavaScriptExpected} from '../src/corpus/owned-exercism.mjs';
 
 const chunks=[];let inputBytes=0;
 for await(const chunk of process.stdin){inputBytes+=chunk.length;
@@ -37,17 +38,33 @@ try{
         reason:'Pinned original and transformed source observations disagree',
         failure:{referenceInput,transformedSource:options.source,original,transformed}};
       const expected=options.provenance?.canonicalExpected;
-      if(!result&&expected!==undefined&&options.provenance?.inputOrigin==='upstream-canonical'&&!(expected&&typeof expected==='object'&&Object.hasOwn(expected,'error'))){
-        const graph=original.outcome.graph;
-        const value=decodeOwnedGraph(JSON.stringify({schema:'owned-graph/1',roots:[graph.roots.at(-1)],
-          objects:graph.objects.map(object=>({...object,
-            properties:object.properties.map(([key,value])=>({key,value}))}))}))[0];
-        if(original.outcome.kind!=='return'||!isDeepStrictEqual(value,expected))result={status:'canonical_mismatch',
+      let canonicalExpectation=null;
+      if(!result&&expected!==undefined&&options.provenance?.inputOrigin==='upstream-canonical'){
+        const expectsThrow=!!(expected&&typeof expected==='object'&&Object.hasOwn(expected,'error'));
+        const outcomeKind=expectsThrow?'throw':'return';
+        let agrees=original.outcome.kind===outcomeKind;
+        if(agrees&&!expectsThrow){
+          const graph=original.outcome.graph;
+          const value=decodeOwnedGraph(JSON.stringify({schema:'owned-graph/1',roots:[graph.roots.at(-1)],
+            objects:graph.objects.map(object=>({...object,
+              properties:object.properties.map(([key,value])=>({key,value}))}))}))[0];
+          const boundExpected=canonicalJavaScriptExpected(expected,options.provenance?.canonicalExpectedBinding);
+          agrees=isDeepStrictEqual(value,boundExpected);
+        }
+        if(!agrees)result={status:'canonical_mismatch',
           reason:'Pinned original source disagrees with independent canonical expected result',
-          failure:{referenceInput,original,canonicalExpected:expected}};
+          failure:{referenceInput,original,canonicalExpected:expected,
+            canonicalExpectedBinding:options.provenance?.canonicalExpectedBinding??null}};
+        else canonicalExpectation={status:'agreed',outcomeKind,
+          expectedValueBinding:options.provenance?.canonicalExpectedBinding??null,
+          // Language-neutral error descriptions do not assert JS exception
+          // wording. The independent original/owned gates still compare the
+          // actual observable exception name/message exactly.
+          ...(expectsThrow?{canonicalErrorMessageCompared:false}:{})};
       }
       if(!result)options.provenance={...options.provenance,originalSourceCheck:{status:'agreed',
-        originalReferenceDigest:identityHash(original),transformedReferenceDigest:identityHash(transformed)}};
+        originalReferenceDigest:identityHash(original),transformedReferenceDigest:identityHash(transformed),
+        ...(canonicalExpectation?{canonicalExpectation}:{})}};
     }
     if(!result){phase='owned-verification';result=await verifyEffectfulTrainingCase(options);}
   }
