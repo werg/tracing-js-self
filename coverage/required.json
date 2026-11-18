@@ -41,8 +41,8 @@
   },
   "fullECMAScriptConformance": false,
   "learningImprovement": "Requires a separately executed frozen base-versus-trained experiment.",
-  "currentReport": "coverage/current-v5.json",
-  "currentReportProducer": "c2a64424d052f9b90a340a59a8d74cf5564e47aa",
+  "currentReport": "coverage/current-v6.json",
+  "currentReportProducer": "3a2e8b9bade0a3abb2797114f798d04832072dec",
   "profile": "training-js/1",
   "generate": "npm run coverage:current -- --out PATH [--megatoken DIR --tokenizer FILE --python PYTHON]",
   "baseline": "npm run baseline:v6 -- --out DIRECTORY [--megatoken DIR --tokenizer FILE --python PYTHON]",
@@ -65,12 +65,27 @@
   "historicalReport": "coverage/historical/required-v1.json",
   "historicalScope": "Original synchronous semantic-execution/1 ledger, retained byte-for-byte; not current capability evidence.",
   "interpretation": "Retained reports state the exact revisions they measured and are not qualification of a later containing commit. Native qualification of separate corpora does not fill a feature-level native column. Model results require actual evaluation. No full ECMAScript or Test262 claim.",
-  "currentReportNativeConsumer": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
-  "currentReportSha256": "b63dbbdf053e099a9408cd451991bf7bd69113308e1c0806bf2f9271c0e36918",
+  "currentReportNativeConsumer": "d644e3dfc01a22a14f039a9c063d7b65937d8e8f",
+  "currentReportSha256": "fbc42845774b7dd774a7fab20dd36db40128f0b3b8084d0c2d6c2f850da89ba3",
   "previousQualifiedReport": {
     "path": "coverage/historical/qualification-H-2026-11-18.json",
     "producerRevision": "881664b98ec9d484f9f4775d0b40a3a2b1b81174",
     "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
     "sha256": "7a5bbae9fc70be87d884a8b550bac7a816c03de47dbd88cd53dc19ddcf83cba2"
+  },
+  "previousV5Report": {
+    "path": "coverage/current-v5.json",
+    "producerRevision": "c2a64424d052f9b90a340a59a8d74cf5564e47aa",
+    "consumerRevision": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+    "sha256": "b63dbbdf053e099a9408cd451991bf7bd69113308e1c0806bf2f9271c0e36918",
+    "status": "Historical v5 evidence retained unchanged."
+  },
+  "nativeComputationQualification": {
+    "path": "docs/evidence/native-v6-qualification-20261118/README.md",
+    "manifest": "docs/evidence/native-v6-qualification-20261118/manifest.json",
+    "producerRevision": "3a2e8b9bade0a3abb2797114f798d04832072dec",
+    "consumerRevision": "d644e3dfc01a22a14f039a9c063d7b65937d8e8f",
+    "workflowRunId": "44416218114",
+    "scope": "Two actual generated boundaries and a full short-episode supervision audit; not whole-episode or held-out learned execution."
   }
 }

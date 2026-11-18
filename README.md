@@ -13,7 +13,7 @@ pinned native admission. See [current status](docs/STATUS.md),
 Test262 evidence remain documented in
 [owned arithmetic and evidence](docs/OWNED_ARITHMETIC.md).
 
-A retained [feature-level capability ladder](coverage/current-v5.json) names its original producer revision. It does not qualify a later containing commit; each stage needs its own executed evidence. Earlier synchronous coverage remains in [the historical ledger](coverage/historical/required-v1.json).
+The executed [v6 feature-level capability ladder](coverage/current-v6.json) records 43 passed native admissions from 52 declared probes, with unsupported, refused and untested stages kept explicit. The [saved-checkpoint qualification](docs/evidence/native-v6-qualification-20261118/README.md) measures two actual native prediction boundaries and the complete short-episode supervision audit. Reports name the exact revisions they measured; earlier synchronous coverage remains in [the historical ledger](coverage/historical/required-v1.json).
 
 The [18 November resumption implementation](docs/RESUMPTION_IMPLEMENTATION.md)
 tracks semantic repairs, immutable provenance, global split isolation,

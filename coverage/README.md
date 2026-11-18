@@ -3,6 +3,14 @@
 `required.json` indexes the current v6 contracts, measured ledger command and
 release gates. It contains no inferred conformance percentage.
 
+The retained [current v6 report](current-v6.json) measures producer
+`3a2e8b9bade0a3abb2797114f798d04832072dec` and consumer
+`d644e3dfc01a22a14f039a9c063d7b65937d8e8f`: 43 native admissions pass,
+with zero native failures and nine probes not admitted/tested at that stage.
+Its 52-probe denominator and the callback-failure refusal remain explicit.
+The previous `current-v5.json` is historical evidence and is retained unchanged.
+See the [exact native evidence](../docs/evidence/native-v6-qualification-20261118/README.md).
+
 Run `npm run coverage:current -- --out /path/to/capabilities.json` to execute
 the strict training probes. Each row reports parser, owned execution,
 independent outcome, independent intermediate checks, public v6 replay,

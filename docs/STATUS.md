@@ -68,12 +68,28 @@ its hosted byte comparison. The subsequent
 zero-update checkpoint and public prefix reached different conditional state
 through the two real paths. Those differences motivated the current native metadata, causal track,
 observation and decoder-support repairs. The archived failure is retained
-unchanged; it does not measure the new v6 code. Current evidence must identify
-the exact paired revisions and checkpoint, including transitions after a
-generated record. No general learned-execution success is claimed.
+unchanged; it does not measure the new v6 code.
+
+The [executed v6 qualification](evidence/native-v6-qualification-20261118/README.md)
+now measures producer `3a2e8b9…` and consumer `d644e3d…` with the production
+tokenizer. A full saved checkpoint emits `promise create @p1` after 16 bounded
+decoder updates; independent reload reproduces the record and the public
+controller accepts its original bytes. At two actual prediction boundaries,
+training and serving have identical model weights, track attachments, output
+support and argmax choices. The first measured conditional is exact; the second
+passes explicit float32 probability, total-variation and log-probability bounds.
+The raw differences and an earlier stricter-threshold failure remain visible.
+
+All 142 generated tokens are supervised and all 1,567 observed tokens are
+unscored. A valid future result change from 7 to 8 preserves the four earlier
+decisions' states, distributions, losses and exact gradient fingerprints, both
+before and after the fit. The [token audit](evidence/native-v6-qualification-20261118/TOKEN_AUDIT.md)
+explains the actual target positions and gradient paths. These are bounded
+computation and supervision results; general learned-execution success remains
+unmeasured.
 
 The November resumption adds an explicit [capability index](../coverage/required.json),
-[measured v5 probes](../coverage/current-v5.json), and
+[executed v6 probes](../coverage/current-v6.json), and
 [implementation/evidence ledger](RESUMPTION_IMPLEMENTATION.md). Source-profile
 limits remain explicit: unsupported descriptors and array accessors are refused;
 the declared Error observation profile covers name/message without flattening

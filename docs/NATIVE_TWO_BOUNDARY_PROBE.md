@@ -4,6 +4,11 @@ This is a bounded diagnostic of the production v6 producer and native consumer.
 It exercises the real saved checkpoint, training window, serving adapter,
 tokenizer and decoder. It is separate from a held-out learned-execution result.
 
+The [executed v6 evidence](evidence/native-v6-qualification-20261118/README.md)
+contains both original boundary captures, exact hashes, the token audit and
+saved-checkpoint identity. Every lexical and structural argmax must agree as
+well as the conditional probabilities passing their declared numeric bounds.
+
 ## What the checks establish
 
 1. The source-certified asynchronous counter is admitted by the pinned native
