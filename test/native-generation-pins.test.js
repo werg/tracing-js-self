@@ -24,6 +24,14 @@ test('native settings reject modified tracked consumers and an interpreter impor
   writeFileSync(module,'# same HEAD, modified implementation\n');
   assert.throws(()=>loadNativeSettings(options),/uncommitted tracked changes/);
   git('checkout','--','src/megatoken/__init__.py');
+  const shadow=join(repo,'src/megatoken/data/__init__.py');
+  mkdirSync(join(repo,'src/megatoken/data'),{recursive:true});
+  writeFileSync(shadow,'# an untracked package can shadow a tracked data.py\n');
+  assert.throws(()=>loadNativeSettings(options),/untracked importable code/);
+  rmSync(shadow);
+  mkdirSync(join(repo,'src/megatoken/__pycache__'),{recursive:true});
+  writeFileSync(join(repo,'src/megatoken/__pycache__/__init__.cpython-312.pyc'),'normal cache');
+  assert.equal(loadNativeSettings(options).policy.consumerRevision,policy.consumerRevision);
   const elsewhere=join(root,'other-megatoken.py');writeFileSync(elsewhere,'# unrelated installed module\n');
   queryResult(elsewhere);
   assert.throws(()=>loadNativeSettings(options),/outside the pinned consumer checkout/);
