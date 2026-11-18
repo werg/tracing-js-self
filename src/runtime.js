@@ -624,7 +624,7 @@ export class Runtime {
     if(completion.value)return completion.value;
     if(!completion.errorType)throw new Error('Unrepresentable guest throw completion');
     const id=this.next(draft,'obj');
-    draft.heap[id]={id,kind:'object',properties:{
+    draft.heap[id]={id,kind:'object',declaredError:completion.errorType,properties:{
       name:token(['str',completion.errorType],eventId),
       message:token(['str',completion.message??''],eventId)
     },propertyVersions:{name:1,message:1},shapeVersion:2,version:0};
@@ -2258,6 +2258,10 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
       }} catch(error) {
         if(!(error instanceof GuestFault))throw error;
         const completion={type:'throw',errorType:error.name,message:error.message,origin:eventId};
+        // Commit one owned exception identity at the faulting operation, even
+        // when it escapes synchronously. All callers, catches and finally
+        // blocks must see that same value rather than allocating on demand.
+        completion.value=this.caughtError(s,completion,eventId);
         this.routeCompletion(s,f,completion,eventId);
         return {completion};
       }

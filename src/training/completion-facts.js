@@ -5,7 +5,7 @@ export function normalizeCompletionFacts(bundle) {
   const facts=new Map();
   for(const event of bundle.events){
     if(!['call.return','completion.finally.end','completion.throw','job.enter',
-      'completion.catch.bind'].includes(event.operation))
+      'completion.catch.bind'].includes(event.operation)&&event.completion?.type!=='throw')
       continue;
     if(event.operation==='job.enter'){
       // Rejected await may unwind the resumed async frame in this same job;
@@ -59,9 +59,9 @@ export function normalizeCompletionFacts(bundle) {
           ...(Array.isArray(frame.after.completion?.value?.value)?{value:frame.after.completion.value.value}:{}),
           invocation:event.invocationId,journalEvent:event.eventId});
       }
-    }else if(event.operation==='completion.throw'){
+    }else if(event.operation==='completion.throw'||event.completion?.type==='throw'){
       const routed=frame.after?.status;
-      const input=event.operands?.[0]??event.completion?.value?.value;
+      const input=event.completion?.value?.value??event.operands?.[0];
       if(Array.isArray(input))
         facts.set(event.eventId,{operation:routed==='thrown'?'throw':'transfer',
           kind:'throw',value:input,handler:routed==='thrown'?null:'catch-or-finally',

@@ -87,9 +87,9 @@ function independentSemanticChecks(bundle,source,operations,decisions){
   const expectedOperations=[],expectedBranches=[];
   for(const row of semantic.events){
     const event=events.get(row.journalEvent),site=row.source?row.source.start+':'+row.source.end:null;
-    if(types.has(event.operation)&&sites.operation.has(site))
+    if(types.has(event.operation)&&sites.operation.has(site)&&event.completion?.type!=='throw')
       expectedOperations.push({site,value:row.result});
-    if(event.operation==='control.branch'&&sites.branch.has(site))
+    if(event.operation==='control.branch'&&sites.branch.has(site)&&event.completion?.type!=='throw')
       expectedBranches.push({site,decision:row.result});
   }
   if(!isDeepStrictEqual(expectedOperations,operations))

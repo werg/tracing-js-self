@@ -365,6 +365,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       event.stateChanges.some(change=>['envs','heap','effects','inputs','promises','control'].includes(change.table))))
       flushComputations();
     let owner=rootFor(event.invocationId),handled=false;
+    if(row?.op==='throw'&&row.allocations?.length)allocations(row,owner,event);
     const promiseChanges=event.stateChanges.filter(change=>change.table==='promises');
     const effectCreated=event.stateChanges.find(change=>change.table==='effects'&&change.before===null);
     const queued=state.control.a0.queue?.[0];

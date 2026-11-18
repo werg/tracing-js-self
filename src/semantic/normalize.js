@@ -78,6 +78,10 @@ export function normalizeJournal(bundle) {
     // It is not modeled as a mysterious internal [[Get]] or [[Set]] step.
     const invoked=e.causes?.find(c=>c.kind==='invocation');
     if(invoked && e.operation!=='call.enter')op='call';
+    // Implicit guest errors occur at reads/calls/updates, not a THROW opcode.
+    // Their committed exception allocation and abrupt completion are still
+    // part of the source execution and must precede any catch/rethrow use.
+    if(e.completion?.type==='throw'&&Array.isArray(e.completion.value?.value))op='throw';
     if(!op)continue;
     const args=inputs.operands??[];
     const source=sites.get(e.siteId);
@@ -179,6 +183,8 @@ export function normalizeJournal(bundle) {
       }
     }
     if(op==='return'||op==='throw') {
+      const additions=e.stateChanges.filter(p=>p.table==='heap'&&p.before===null);
+      if(additions.length)r.allocations=additions.map(allocation);
       // Callback completion can update a surrounding collection as one
       // committed continuation. Publish the exact mutation, not a final diff.
       for(const p of e.stateChanges.filter(p=>p.table==='heap'&&p.before!==null))
