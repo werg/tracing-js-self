@@ -1,0 +1,45 @@
+{
+  "schema": "post-run-native-pointer-verification/1",
+  "scope": "Independent read-only file-integrity verification after the immutable native training/evaluation process exited. Native payload reload and cursor exposure are verified in the original report.",
+  "originalReportSha256": "1d92e103e305cfe7ac54500574b6ee3b5145cc2f33d27399c11709163c744c00",
+  "verification": {
+    "schema": "partial-native-optimization/1",
+    "metricsSha256": "0ecd622ada21513836c2c223df6d0350aa5d33c808e969ff209838a5a0a06cd7",
+    "observedOptimizerSteps": 256,
+    "supervisedLexicalTokens": 12288,
+    "malformedMetricLines": 0,
+    "lastDurableCheckpoint": {
+      "path": "/workspace/scratch/0c59f3502a6d/evidence/optimization-one-input-256-main/training/checkpoints/P1-000000256-periodic",
+      "metadataSha256": "85c9768b444bf8e2c5a45403416360147203d90199c5d7bac0bfe6e089a4c268",
+      "metadata": {
+        "checkpoint_name": "P1-000000256-periodic",
+        "chunking_fingerprint": "7cebc47329c000282659ce2f7498e5528a636e79a0d6d6e62ef36c79588a1f87",
+        "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "config_fingerprint": "21f377419fd68227e73a264555da53f3de69124de4a1346c3a7da255a009c6ab",
+        "dataset_fingerprint": "9d78b4d821bb8c55fe1880380ea7f46aed997dd22b06b1b31fffef29f9d54775",
+        "format_version": 18,
+        "global_step": 256,
+        "packs_fingerprint": null,
+        "phase": "P1",
+        "phase_consumed": 174592,
+        "pinned": false,
+        "routing_version": 4,
+        "source_sampling": {
+          "complete_history": true,
+          "source_windows": {
+            "semantic-harness:9193bd760d71e4e1": 256
+          }
+        },
+        "state_sha256": "93b6080a2af97356ace6f40084702f95bcf761c8d1082cb934c5859c59f2a6a6",
+        "transducer_checkpoint": {
+          "file": "transducer.pt",
+          "sha256": "a30fb4fce9f1b1d03ffabfb167995041b4d0d11ea663e7c7ff445a0f2ba2c04b"
+        }
+      },
+      "checkpointFilesVerified": true,
+      "nativePayloadLoadVerified": false
+    },
+    "checkpointVerificationFailure": null,
+    "updatesAreNotDurableCheckpointEvidence": true
+  }
+}

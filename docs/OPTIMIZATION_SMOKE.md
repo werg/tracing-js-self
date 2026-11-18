@@ -211,3 +211,17 @@ for unchanged original reports, the explicit post-run authentication recheck,
 all 20 complete measurement artifacts, and the actual optimizer-settings audit.
 P1 used its full `0.0002` learning rate on all 56 updates with zero warmup; both
 decoder output owners have nonzero Adam moments and changed weights.
+
+### Separate one-input repeated-exposure diagnostic
+
+A subsequently frozen, single bounded attempt repeated the shortest admitted
+training episode (`flag-intersection-pure`, 48 native generated tokens) for 256
+native P1 updates from the same exact initialized base. It completed in 1,097.59
+seconds under a 1,200-second cap, supervised 12,288 lexical tokens, authenticated
+one source across 256 complete episode windows, and passed optimizer/checkpoint
+reload checks. Final free execution remained 0/1 for both arms: 171 original
+base decoder tokens and 59 trained tokens, all retained with original failures.
+A recorded training-loss decrease did not yield execution success. No held-out
+cohort was evaluated and no extension followed. The [one-input receipt](receipts/learning-one-input-2026-11-18/README.md)
+keeps this memorization diagnostic separate from the 32-source smoke and frozen
+held-out comparison.
