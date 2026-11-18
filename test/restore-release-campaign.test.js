@@ -20,6 +20,21 @@ test.before(async()=>{
   // uncommitted implementation work and prevents relabeling a newer producer.
   execFileSync('git',['clone','--quiet','--shared','--no-checkout',root,producer]);
   execFileSync('git',['-C',producer,'checkout','--quiet','--detach',revision]);
+  // The unit matrix deliberately runs several Node versions. Pin this
+  // isolated fixture's actual runtime before generating its original evidence;
+  // production locks and previously generated archives remain untouched.
+  const lockPath=join(producer,'profiles/release-environment.lock.json');
+  const lock={...JSON.parse(readFileSync(lockPath)),node:process.versions.node,v8:process.versions.v8,
+    npm:execFileSync('npm',['--version'],{encoding:'utf8'}).trim(),platform:process.platform,arch:process.arch,
+    python:execFileSync('python3',['-c','import platform;print(platform.python_version())'],{encoding:'utf8'}).trim()};
+  const locked=JSON.stringify(lock,null,2)+'\n';
+  if(readFileSync(lockPath,'utf8')!==locked){
+    writeFileSync(lockPath,locked);
+    execFileSync('git',['-C',producer,'add','--','profiles/release-environment.lock.json']);
+    execFileSync('git',['-C',producer,'-c','user.name=Restore Test','-c','user.email=restore@example.invalid',
+      'commit','--quiet','-m','Pin isolated restore fixture runtime']);
+    revision=execFileSync('git',['-C',producer,'rev-parse','HEAD'],{encoding:'utf8'}).trim();
+  }
   symlinkSync(realpathSync(join(root,'node_modules')),join(producer,'node_modules'),'dir');
   const load=name=>import(pathToFileURL(join(producer,name)).href);
   ({CampaignStore}=await load('src/corpus/campaign-store.mjs'));
@@ -29,6 +44,16 @@ test.before(async()=>{
 });
 test.after(()=>{rmSync(temporary,{recursive:true,force:true});
   if(priorTZ===undefined)delete process.env.TZ;else process.env.TZ=priorTZ;});
+
+function restoreFailure(error,output){
+  const details=[error.message,error.stderr?.toString(),error.stdout?.toString()];
+  for(const name of ['restore.json','checks/original-source-replay.stderr.log',
+    'checks/original-source-replay.stdout.log','checks/replay/attempts.jsonl']){
+    try{details.push(name+'\n'+readFileSync(join(output,name),'utf8'));}
+    catch(readError){if(readError.code!=='ENOENT')details.push(name+': '+readError.message);}
+  }
+  return new Error(details.filter(Boolean).join('\n'),{cause:error});
+}
 
 async function fixture({corruptAdmission=false}={}){
   const directory=mkdtempSync(join(temporary,'fixture-')),corpus=join(directory,'corpus');
@@ -127,13 +152,17 @@ payload=json.loads((root/'release-manifest.json').read_text());payload['files']=
 m.write_archive(archive,payload,sources)
 `;
   execFileSync('python3',['-c',code,join(root,'tools/package-semantic-release.py'),original.directory,producer,archive]);
+  const rejectedOutput=join(temporary,'rejected-before-extraction');
+  assert.throws(()=>{
+    try{execFileSync('python3',[join(root,'tools/restore-semantic-release.py'),'--archive',archive,
+      '--archive-sha256','0'.repeat(64),'--tracer-root',producer,'--out',rejectedOutput],{encoding:'utf8',stdio:'pipe'});}
+    catch(error){throw restoreFailure(error,rejectedOutput);}
+  },/Archive differs from the expected SHA-256/);
   const output=join(temporary,'whole-drill');
   try{execFileSync('python3',[join(root,'tools/restore-semantic-release.py'),'--archive',archive,
     '--archive-sha256',sha(readFileSync(archive)),'--tracer-root',producer,'--out',output],
     {encoding:'utf8',timeout:120000,maxBuffer:1024*1024,stdio:'pipe'});
-  }catch(error){throw new Error(error.message+'\n'+readFileSync(join(output,'checks/original-source-replay.stderr.log'),'utf8')+
-    '\n'+readFileSync(join(output,'checks/original-source-replay.stdout.log'),'utf8')+
-    '\n'+readFileSync(join(output,'checks/replay/attempts.jsonl'),'utf8'));}
+  }catch(error){throw restoreFailure(error,output);}
   const report=JSON.parse(readFileSync(join(output,'restore.json')));
   assert.equal(report.status,'verified');assert.equal(report.producer.revision,revision);
   assert.equal(report.replay.replayVerified,3);assert.equal(report.nativeRequalification,'untested');

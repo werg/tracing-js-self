@@ -234,9 +234,15 @@ def restore_release(args) -> dict:
         # also authenticate their detailed parser/dependency/runtime receipts.
         actual = json.loads(subprocess.check_output(["node", "-p", "JSON.stringify({node:process.versions.node,v8:process.versions.v8,platform:process.platform,arch:process.arch})"], env=env, text=True))
         actual["npm"] = subprocess.check_output(["npm", "--version"], env=env, text=True).strip()
-        if any(actual[key] != environment[key] for key in actual):
-            raise ValueError("Original producer runtime environment differs")
         receipt["executionEnvironment"] = {**actual, "timezone": env["TZ"], "locale": env["LC_ALL"]}
+        receipt["expectedExecutionEnvironment"] = {key: environment[key] for key in receipt["executionEnvironment"]}
+        mismatches = {key: {"expected": environment[key], "actual": actual[key]}
+                      for key in actual if actual[key] != environment[key]}
+        receipt["executionEnvironmentMismatches"] = mismatches
+        if mismatches:
+            details = "; ".join(key + ": expected " + str(value["expected"]) + ", actual " + str(value["actual"])
+                                for key, value in mismatches.items())
+            raise ValueError("Original producer runtime environment differs: " + details)
         native = []
         if args.megatoken:
             receipt["phase"] = "native-environment"

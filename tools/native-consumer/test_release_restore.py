@@ -161,6 +161,45 @@ class ReleaseRestoreTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "lock differs"):
                 restore.verify_locks(restored, producer)
 
+    def test_runtime_mismatch_retains_exact_expected_and_actual_before_replay(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            producer = root / "producer"
+            expected = {"node": "24.22.3", "v8": "13.6.233.17-node.63", "npm": "11.9.0",
+                        "platform": "linux", "arch": "x64", "timezone": "UTC", "locale": "C.UTF-8"}
+            for archived, original in restore.LOCKS.items():
+                path = producer / original
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(json.dumps(expected) if archived == "locks/environment.json" else "original lock")
+            rows, sources = release.inventory({archived: producer / original for archived, original in restore.LOCKS.items()})
+            archive = root / "release.tar.gz"
+            release.write_archive(archive, {"schema": "semantic-private-release/1", "producerRevision": "a" * 40,
+                                            "files": rows}, sources)
+            archive_sha = release.file_receipt(archive)["sha256"]
+            for field, changed in [("node", "22.0.0"), ("v8", "12.4.0"), ("npm", "11.19.1")]:
+                with self.subTest(field=field):
+                    actual = {key: expected[key] for key in ("node", "v8", "npm", "platform", "arch")}
+                    actual[field] = changed
+                    args = SimpleNamespace(archive=archive, out=root / ("restore-" + field), tracer_root=producer,
+                        archive_sha256=archive_sha, limits=restore.DEFAULT_LIMITS)
+                    with mock.patch.object(restore, "producer_identity", return_value={"revision": "a" * 40}), \
+                            mock.patch.object(restore.platform, "platform", return_value="isolated-runtime-test"), \
+                            mock.patch.object(restore.subprocess, "check_output", side_effect=[
+                                json.dumps({key: value for key, value in actual.items() if key != "npm"}), actual["npm"] + "\n"]), \
+                            mock.patch.object(restore, "run_logged") as execute:
+                        with self.assertRaisesRegex(ValueError, field + ": expected " + expected[field]):
+                            restore.restore_release(args)
+                        execute.assert_not_called()
+                    receipt = json.loads((args.out / "restore.json").read_text())
+                    self.assertEqual(receipt["status"], "failed")
+                    self.assertEqual(receipt["phase"], "producer-environment")
+                    self.assertEqual(receipt["expectedExecutionEnvironment"], expected)
+                    self.assertEqual(receipt["executionEnvironment"], {**actual, "timezone": "UTC", "locale": "C.UTF-8"})
+                    self.assertEqual(receipt["executionEnvironmentMismatches"],
+                                     {field: {"expected": expected[field], "actual": changed}})
+                    self.assertNotIn("replay", receipt)
+                    self.assertEqual(release.file_receipt(archive)["sha256"], archive_sha)
+
 
 if __name__ == "__main__":
     unittest.main()

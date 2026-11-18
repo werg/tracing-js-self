@@ -51,6 +51,12 @@ the archived timezone and locale. The original source admission checker also
 validates its detailed parser, implementation, runtime, and reference-isolation
 identity; an incompatible historical profile fails explicitly.
 
+The hosted producer and restore jobs install the npm version named in that
+lock before installing dependencies. A Node distribution can bundle a newer
+npm, so selecting the Node version alone is insufficient. Runtime failures
+retain the expected and actual values and the mismatched fields before replay
+is attempted; the original archive and its lock remain unchanged.
+
 `restore-release-campaign.mjs` then imports **the original checkout's**
 `CampaignStore`, `verifyReleaseCampaign`, and `recheckEffectfulAdmission`.
 There is no fallback to the restorer checkout's runtime. It checks all durable

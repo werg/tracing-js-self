@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: werg/megatoken
-          ref: 272584270a00409cee6c7c49078c775faf24d16b # semantic observation/control alignment; fresh schema 7 and checkpoint 19
+          ref: 9a9dd3593c6887d63012dd5c953e914557dca386 # semantic observation/control alignment; fresh schema 7 and checkpoint 19
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -65,6 +65,9 @@ jobs:
           PY
       - name: Install paired producer and native consumer
         run: |
+          release_npm_version="$(node -p "require('./profiles/release-environment.lock.json').npm")"
+          npm install --global "npm@$release_npm_version" --ignore-scripts --no-audit --no-fund
+          test "$(npm --version)" = "$release_npm_version"
           npm ci --ignore-scripts --no-audit --no-fund
           python -m pip install --require-hashes -r tools/native-consumer/requirements.lock
           python -m pip install --no-deps --no-build-isolation -e ./megatoken
@@ -181,7 +184,8 @@ jobs:
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
               out.write('## Native conditional diagnostic\n\n')
               out.write('The measurement completed. Training/serving parity verdict: **' +
-                report['trainingServingParityStatus'] + '**. No model selections or optimizer updates ran.\n')
+                report['trainingServingParityStatus'] + '**. No returned semantic selections or optimizer updates ran.\n')
+              out.write('Capture stopped before the Gaussian facet draw; serving executed its earlier text-only modality categorical.\n')
               out.write('A successful workflow step records a completed diagnosis; it does not turn a failed parity result into a pass.\n')
           PY
       - name: Freeze and evaluate held-out engineering cohort through real selected driver
@@ -326,7 +330,11 @@ jobs:
         with:
           python-version: '3.12.14'
       - name: Install the original producer's locked dependencies
-        run: npm ci --ignore-scripts --no-audit --no-fund
+        run: |
+          release_npm_version="$(node -p "require('./profiles/release-environment.lock.json').npm")"
+          npm install --global "npm@$release_npm_version" --ignore-scripts --no-audit --no-fund
+          test "$(npm --version)" = "$release_npm_version"
+          npm ci --ignore-scripts --no-audit --no-fund
       - uses: actions/download-artifact@v4
         with:
           name: semantic-v5-engineering-admission-and-evaluation
