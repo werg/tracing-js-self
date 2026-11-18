@@ -1,0 +1,44 @@
+{
+  "schema": "semantic-evaluation-request/4",
+  "caseId": "semantic-recipe:squared-distance/squared-distance-pure@1fc153775bc3bb9c",
+  "request": {
+    "schema": "selected-evaluation-case/4",
+    "program": {
+      "programId": "program1",
+      "source": "\"use strict\";function run(a,b){return a*a+b*b;}",
+      "entry": "run",
+      "capabilities": []
+    },
+    "invocation": {
+      "programId": "program1",
+      "invocationId": "invocation1",
+      "trackId": "worker1",
+      "realmId": "realm1",
+      "triggerId": "teacher-entry",
+      "inputGraph": {
+        "roots": [
+          [
+            "num",
+            8
+          ],
+          [
+            "num",
+            3
+          ]
+        ],
+        "objects": []
+      },
+      "realmPolicy": "retained",
+      "completionPolicy": "await-returned-promise",
+      "receiverValue": [
+        "undefined"
+      ]
+    },
+    "fixture": {
+      "calls": [],
+      "settlementOrder": null
+    }
+  },
+  "seed": 17,
+  "representation": "compact"
+}

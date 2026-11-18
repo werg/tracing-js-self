@@ -1,0 +1,20 @@
+{
+  "kind": "return",
+  "graph": {
+    "roots": [
+      [
+        "num",
+        8
+      ],
+      [
+        "num",
+        3
+      ],
+      [
+        "num",
+        73
+      ]
+    ],
+    "objects": []
+  }
+}

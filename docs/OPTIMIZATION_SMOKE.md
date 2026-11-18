@@ -191,3 +191,23 @@ The CPU trainer currently records zero for its GPU allocator peak-memory
 counter. That counter does not measure CPU training memory. The native serving
 profiles separately retain observed process memory; neither quantity is a
 claim that a larger training configuration fits in memory.
+
+### Completed 56-window full-coverage retry
+
+The independently frozen 1,500-second retry completed 56 native optimizer
+updates, 17,574 supervised lexical tokens, and every native window of all 32
+selected episodes (14 source components). Actual checksummed cursor state and
+the rebuilt prepared-stream fingerprint authenticate this coverage. Checkpoint
+and served-model reloads passed; 311 parameter tensors changed.
+
+Complete held-in execution remains 0/4 for each arm, so
+`optimizationSmokePassed` is false. The sealed checkpoint-56 pilot measured
+held-out execution 0/3 for each arm, with one independent test component. Its
+original decoder-token totals are 89 for the initialized base and 35 for the
+trained model. The separate source/input-only pure endpoint measured 0/1 for
+each arm with 32 versus 64 original decoder tokens. Every failure is retained;
+no generalization claim follows. See the [full-coverage receipt](receipts/learning-full-epoch-2026-11-18/README.md)
+for unchanged original reports, the explicit post-run authentication recheck,
+all 20 complete measurement artifacts, and the actual optimizer-settings audit.
+P1 used its full `0.0002` learning rate on all 56 updates with zero warmup; both
+decoder output owners have nonzero Adam moments and changed weights.
