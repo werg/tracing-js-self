@@ -81,6 +81,7 @@ def report_for(cohort, successes, *, seed=17, role="base"):
 def pairs_for(cohort, before, after, seeds=(17, 29, 43)):
     return [{"seed": seed, "base": report_for(cohort, before, seed=seed), "trained": report_for(cohort, after, seed=seed, role="trained"),
              "artifactBinding": {"schema": "semantic-verified-learning-arm/1", "seed": seed, "optimizerSteps": 2,
+                "nativeLaunchQualified": True,
                 "served": {"checkpointIdentity": "b" * 64}, "budget": {"syntheticTestFixture": True}}} for seed in seeds]
 
 
@@ -209,3 +210,14 @@ def test_changes_after_freeze_and_training_test_overlap_are_refused():
         comparison.verify_declaration(declaration, cohort)
     with pytest.raises(ValueError, match="overlaps"):
         declaration_for(cohort, trainingComponents=["component-a"])
+
+
+def test_replicates_can_change_run_identity_but_not_budget_or_worker_topology():
+    config = {"seed": 17, "output": "runs/17", "budget": 100,
+              "decoupled": {"run_id": "seed-17", "coordinator_url": "http://localhost:8001", "workers": 1, "local_steps": 4}}
+    other = copy.deepcopy(config)
+    other.update(seed=29, output="runs/29")
+    other["decoupled"].update(run_id="seed-29", coordinator_url="http://localhost:8002")
+    assert comparison.training_template(config) == comparison.training_template(other)
+    other["decoupled"]["workers"] = 2
+    assert comparison.training_template(config) != comparison.training_template(other)

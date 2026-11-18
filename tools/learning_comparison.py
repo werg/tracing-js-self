@@ -151,15 +151,22 @@ def checkpoint_binding(directory, served_directory, actual):
         raise ValueError("Served model geometry differs from its native checkpoint")
     saved_bank = torch.load(served_directory / "transducer.pt", weights_only=True, map_location="cpu")
     native_bank = torch.load(directory / metadata["transducer_checkpoint"]["file"], weights_only=True, map_location="cpu")
-    if set(saved_bank) != {"bank"} or not _same_tensors(saved_bank["bank"], native_bank.get("bank")):
+    expected_bank = native_bank.get("bank")
+    if not isinstance(expected_bank, dict):
+        raise ValueError("Native checkpoint is missing its transducer bank")
+    # Native export reloads into a fresh bank. load_snapshot increments its
+    # cache-invalidation version once; every semantic row and other field stays exact.
+    expected_bank = {**expected_bank, "version": integer(expected_bank.get("version"), "native bank version") + 1}
+    if set(saved_bank) != {"bank"} or not _same_tensors(saved_bank["bank"], expected_bank):
         raise ValueError("Served transducer bank differs from its native checkpoint")
     return payload, metadata
 
 
 def base_artifact_identity(served_directory, checkpoint_directory, tokenizer_path):
     actual = served_identity(served_directory, tokenizer_path)
-    checkpoint_binding(checkpoint_directory, served_directory, actual)
-    return {**actual, "checkpointMetadataSha256": file_digest(Path(checkpoint_directory) / "metadata.json")}
+    payload, _ = checkpoint_binding(checkpoint_directory, served_directory, actual)
+    return {**actual, "checkpointMetadataSha256": file_digest(Path(checkpoint_directory) / "metadata.json"),
+            "semanticExposure": payload.get("semantic_exposure"), "semanticCohortDigest": payload.get("semantic_cohort_digest")}
 
 
 def component_map_from_registry(cohort, registry):
@@ -204,8 +211,12 @@ def normalized_training_config(config):
 
 
 def training_template(config):
-    """Only seed and output may vary between replicated training arms."""
-    return {key: value for key, value in config.items() if key not in {"seed", "output"}}
+    """Exclude execution identities, retaining every objective/budget/topology setting."""
+    template = {key: value for key, value in config.items() if key not in {"seed", "output"}}
+    if isinstance(template.get("decoupled"), dict):
+        template["decoupled"] = {key: value for key, value in template["decoupled"].items()
+                                  if key not in {"run_id", "coordinator_url"}}
+    return template
 
 
 def prepared_component_inventory(config, registry, codec):
@@ -215,9 +226,13 @@ def prepared_component_inventory(config, registry, codec):
     from megatoken.training.config import TrainConfig
     from megatoken.training.engine import window_config
     from megatoken.training.stream import MixtureWindowStream, WindowStream, IndependentWindowStream
-    from megatoken.training.semantic_budget import validate_stage_supply
+    from megatoken.training.semantic_budget import SemanticExperimentConfig, validate_stage_supply
+    experiment = SemanticExperimentConfig(**config["semantic_experiment"])
+    experiment.preflight(phase=config["phase"])
+    repositories = read_json(experiment.engineering_receipt)["repositories"]
     supply = validate_stage_supply(config["datasets"], phase=config["phase"],
-                                   representation=config["semantic_experiment"]["representation"], codec=codec)
+        representation=config["semantic_experiment"]["representation"], codec=codec,
+        producer_revision=repositories["tracing-js-self"], consumer_revision=repositories["megatoken"])
     by_member = {member: component for component in registry["components"] for member in component["members"]}
     counts, used = Counter(), set()
     with PreparedCorpus(config["datasets"], split=None) as corpus:
@@ -350,7 +365,45 @@ def verify_declaration(declaration, cohort):
         raise ValueError("Learning declaration is not the canonical pre-run design")
 
 
-def register_launch(declaration, cohort, config, base_identity, inventory, *, started_at=None):
+def validate_launch_qualification(declaration, config, inventory, qualification):
+    """Keep a production/confirmatory claim behind the existing native preflight."""
+    from megatoken.io import content_hash
+    if declaration["mode"] == "exploratory" and config["purpose"] == "diagnostic" and qualification is None:
+        return False
+    required = {"configurationFile", "configuration", "resolvedBindings", "codeRevisions", "engineering",
+                "modelGeometry", "tokenizer", "corpus", "donors", "hindsight", "checkpoint",
+                "bootstrapProvenance", "outputLocation", "hardware", "coordinator"}
+    if config["purpose"] != "production" or not isinstance(qualification, dict):
+        raise ValueError("Confirmatory comparisons require actual production native launch qualification")
+    if qualification.get("schema") != "semantic-launch-qualification/1" or qualification.get("preflightReady") is not True or qualification.get("optimizerSteps") != 0 or qualification.get("learnerStarted") is not False:
+        raise ValueError("Native training launch was not independently qualified before starting")
+    if qualification.get("digest") != content_hash({key: value for key, value in qualification.items() if key != "digest"}):
+        raise ValueError("Native launch qualification changed")
+    gates = qualification.get("gates", {})
+    if not required.issubset(gates) or any(gate.get("status") != "passed" for gate in gates.values()):
+        raise ValueError("Native launch qualification omits or fails a required gate")
+    evidence = {name: gate["evidence"] for name, gate in gates.items()}
+    if evidence["configuration"]["resolvedConfigDigest"] != content_hash(config):
+        raise ValueError("Native launch qualified a different training configuration")
+    if evidence["checkpoint"]["state"]["sha256"] != declaration["base"]["trainingCheckpointSha256"] or evidence["checkpoint"]["metadata"]["sha256"] != declaration["base"]["checkpointMetadataSha256"]:
+        raise ValueError("Native launch did not bind the actual frozen starting checkpoint")
+    if evidence["checkpoint"].get("mode") not in {"resume", "coordinator-bootstrap"}:
+        raise ValueError("Native launch must use the frozen starting checkpoint")
+    if evidence["checkpoint"]["mode"] == "coordinator-bootstrap":
+        bootstrap = evidence["bootstrapProvenance"]
+        coordinator = evidence["coordinator"]
+        if not isinstance(bootstrap, dict) or bootstrap.get("schema") != "diloco-bootstrap-provenance/1" or bootstrap.get("source_kind") != "checkpoint" or bootstrap.get("source_checkpoint_state_sha256") != declaration["base"]["trainingCheckpointSha256"] or bootstrap.get("source_checkpoint_metadata_sha256") != declaration["base"]["checkpointMetadataSha256"]:
+            raise ValueError("Fresh worker counters require exact native coordinator bootstrap provenance")
+        if coordinator.get("bootstrapProvenance") != bootstrap or coordinator.get("bootstrapArtifact", {}).get("sha256") != bootstrap.get("coordinator_bootstrap_sha256"):
+            raise ValueError("Native coordinator bootstrap was not independently read and hashed")
+    if evidence["tokenizer"]["fingerprint"] != declaration["base"]["tokenizerIdentity"] or evidence["codeRevisions"]["megatoken"]["revision"] != declaration["consumerRevision"]:
+        raise ValueError("Native launch changed the frozen tokenizer or consumer")
+    if evidence["corpus"] != inventory["nativeSupply"] or evidence["engineering"]["cohortDigest"] != declaration["cohortDigest"]:
+        raise ValueError("Native launch changed the held-out cohort or actual prepared training supply")
+    return True
+
+
+def register_launch(declaration, cohort, config, base_identity, inventory, *, started_at=None, qualification=None):
     from megatoken.training.semantic_budget import SemanticExperimentConfig
     verify_declaration(declaration, cohort)
     if base_identity != declaration["base"]:
@@ -364,12 +417,14 @@ def register_launch(declaration, cohort, config, base_identity, inventory, *, st
         raise ValueError("Actual training configuration references a different frozen cohort")
     if digest(training_template(config)) != declaration["trainingDesign"]["templateDigest"] or inventory != declaration["trainingDesign"]["supply"]:
         raise ValueError("Training launch changed the frozen configuration, budget or prepared source inventory")
+    qualified = validate_launch_qualification(declaration, config, inventory, qualification)
     started_at = started_at or datetime.now(timezone.utc).isoformat()
     if timestamp(started_at) < timestamp(declaration["frozenAt"]):
         raise ValueError("Learning declaration must be frozen before launch")
     return sealed({"schema": LAUNCH_SCHEMA, "declarationDigest": declaration["digest"],
                    "seed": seed, "startedAt": started_at, "base": base_identity,
                    "trainingConfigDigest": digest(config), "trainingSupply": inventory,
+                   "nativeLaunchQualification": qualification, "nativeLaunchQualified": qualified,
                    "cohortDigest": cohort["digest"]})
 
 
@@ -395,14 +450,20 @@ def bind_training_artifacts(declaration, cohort, launch, served_directory, check
     budget = read_json(budget_path)
     payload, metadata = checkpoint_binding(checkpoint_directory, served_directory, actual)
     total_steps = integer(payload.get("global_step"), "actual optimizer steps", minimum=1)
-    steps = total_steps - declaration["base"]["modelVersion"]
-    integer(steps, "new optimizer steps beyond the frozen base", minimum=1)
     if digest(payload["train_config"]) != launch["trainingConfigDigest"] or payload["train_config"]["seed"] != launch["seed"]:
         raise ValueError("Actual training configuration or optimizer seed differs from launch")
     if digest(training_template(payload["train_config"])) != declaration["trainingDesign"]["templateDigest"] or launch.get("trainingSupply") != declaration["trainingDesign"]["supply"]:
         raise ValueError("Trained arm changed the predeclared replicated experiment")
     if metadata.get("dataset_fingerprint") != declaration["trainingDesign"]["supply"]["streamFingerprint"]:
         raise ValueError("Actual trained checkpoint used another prepared dataset inventory")
+    qualified = validate_launch_qualification(declaration, payload["train_config"], launch["trainingSupply"], launch.get("nativeLaunchQualification"))
+    if launch.get("nativeLaunchQualified") is not qualified:
+        raise ValueError("Launch qualification classification changed")
+    mode = launch["nativeLaunchQualification"]["gates"]["checkpoint"]["evidence"]["mode"] if qualified else "resume"
+    # A fresh coordinator bootstrap copies parameters into a new worker whose
+    # step/exposure counters start at zero. Exact worker resume retains counters.
+    baseline_steps = 0 if mode == "coordinator-bootstrap" else declaration["base"]["modelVersion"]
+    steps = integer(total_steps - baseline_steps, "new optimizer steps beyond the frozen base", minimum=1)
     if payload.get("semantic_cohort_digest") != cohort["digest"]:
         raise ValueError("Training budget did not bind the frozen test cohort")
     exposure = SemanticExposure.restore(payload["semantic_exposure"])
@@ -418,6 +479,15 @@ def bind_training_artifacts(declaration, cohort, launch, served_directory, check
     for field in ("examples", "generatedTokens", "computeSeconds"):
         number(budget.get(field), "actual training " + field, positive=True)
     number(budget.get("observedTokens"), "actual training observed tokens")
+    baseline_exposure = declaration["base"].get("semanticExposure") if mode == "resume" else None
+    if baseline_exposure is not None:
+        if declaration["base"].get("semanticCohortDigest") != cohort["digest"]:
+            raise ValueError("Exact worker resume inherited another semantic cohort's exposure")
+        baseline_exposure = SemanticExposure.restore(baseline_exposure).checkpoint()
+    new_exposure = {field: budget[field] - (baseline_exposure or {}).get(field, 0)
+                    for field in ("examples", "generatedTokens", "observedTokens", "computeSeconds")}
+    for field, value in new_exposure.items():
+        number(value, "new training exposure " + field, positive=field != "observedTokens")
     moments = payload.get("optimizer", {}).get("moments", {})
     updated = []
     for name, value in moments.items():
@@ -428,6 +498,8 @@ def bind_training_artifacts(declaration, cohort, launch, served_directory, check
         raise ValueError("Positive global steps have no actual optimizer-owner updates")
     return {"schema": "semantic-verified-learning-arm/1", "seed": launch["seed"], "served": actual,
             "optimizerSteps": steps, "checkpointGlobalStep": total_steps, "updatedOptimizerOwners": len(updated), "budget": budget,
+            "nativeLaunchQualified": qualified,
+            "startingCounterPolicy": mode, "newTrainingExposure": new_exposure,
             "launchDigest": launch["digest"], "checkpointMetadataSha256": file_digest(Path(checkpoint_directory) / "metadata.json")}
 
 
@@ -575,6 +647,7 @@ def compare_validated_runs(declaration, cohort, pairs):
     sufficient_seeds = len(seeds) >= 3
     eligibility = declaration["mode"] == "confirmatory" and sufficient_seeds and len(components) >= declaration["minimumIndependentComponents"]
     gates = {"confirmatoryDesign": eligibility,
+             "qualifiedNativeLaunches": all(pair["artifactBinding"].get("nativeLaunchQualified") is True for pair in pairs),
              "positivePairedUncertaintyInterval": interval["lower"] is not None and interval["lower"] > 0,
              "practicalImprovement": interval["estimate"] >= declaration["minimumPracticalImprovement"],
              "consistentAcrossSeeds": all(row["delta"]["familyWeightedAccuracy"] > declaration["minimumSeedImprovement"] for row in results),
