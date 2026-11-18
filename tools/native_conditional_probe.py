@@ -2,7 +2,7 @@
 
 The hook runs the real trainer or serving runtime until its actual
 MultiTrackGenerator._sample_policy boundary, records the already computed
-Gaussian, then stops before sampling or target encoding. It supplies no model
+Gaussian, then stops before its facet draw or target encoding. It supplies no model
 choice, teacher continuation, replacement state, or successful execution.
 """
 from __future__ import annotations
@@ -39,7 +39,7 @@ def require_checkpoint_hash(actual, expected, *, origin):
 
 
 class NativeConditionalCaptured(BaseException):
-    """Stop before the native policy draw; deliberately not an ordinary model error."""
+    """Stop before the Gaussian facet draw; deliberately not an ordinary model error."""
 
 
 def tensor_record(value, *, maximum_elements=1048576):
@@ -54,7 +54,7 @@ def tensor_record(value, *, maximum_elements=1048576):
 
 
 def capture_prior(operation, model, *, path, identity, maximum_input_bytes=16777216):
-    """Run a callable through real native code; the first policy draw is intercepted."""
+    """Run real native code and intercept the first Gaussian facet draw."""
     import torch
     from megatoken.model.core import FacetedCore
     from megatoken.model.multitrack import MultiTrackGenerator
@@ -137,9 +137,10 @@ def capture_prior(operation, model, *, path, identity, maximum_input_bytes=16777
             else: raise ValueError('Native path returned without the declared conditional capture boundary')
     require('conditional' in result, 'Native conditional state was not captured')
     result['encoderCallSha256'] = digest(result['encoderCalls'])
+    # This flag names the Gaussian policy draw, not earlier modality categoricals.
     result['capturedBeforePolicyDraw'] = True
     result['capturedBeforeTrainingTargetEncoding'] = path == 'training'
-    result['scope'] = 'First generated event conditional Gaussian before native sampling; no lexical realization or optimizer step'
+    result['scope'] = 'First generated event conditional Gaussian before its facet draw; no lexical realization, returned semantic selection or optimizer step'
     return result
 
 
@@ -154,7 +155,7 @@ def compare_priors(training, serving, *, atol=1e-6, rtol=1e-5):
         require(value.get('schema') == SCHEMA and value.get('path') == path and
                 value.get('dropoutDisabled') is True and value.get('capturedBeforePolicyDraw') is True and
                 value.get('modelSelections') == 0 and value.get('optimizerSteps') == 0,
-                'Original disabled-dropout, pre-sampling native capture required')
+                'Original disabled-dropout capture before the Gaussian facet draw required')
         require(all(isinstance(v, str) and len(v) == 64 and all(c in '0123456789abcdef' for c in v)
                     for v in value.get('identity', {}).values()) and
                 set(value.get('identity', {})) == {'checkpointStateSha256', 'servedModelSha256', 'tokenizerIdentity',

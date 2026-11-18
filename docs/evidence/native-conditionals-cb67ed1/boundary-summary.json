@@ -1,0 +1,355 @@
+{
+  "schema": "semantic-native-boundary-summary/1",
+  "scope": "Derived inspection of unchanged original native captures; no causal ablation or optimizer run",
+  "producerRevision": "cb67ed15750760267d1bb6edd53b4190d349885c",
+  "consumerRevision": "272584270a00409cee6c7c49078c775faf24d16b",
+  "comparison": {
+    "status": "failed",
+    "identity": {
+      "checkpointStateSha256": "1395a9cccf9b905bd621327c29f15ee7a0c99e6ae1f63af52e775f8605e89647",
+      "servedModelSha256": "df2726f03886ffb07148e8ab62feccf9b402e551b87431af7c996e394166323e",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "publicPrefixSha256": "961e2d0b3eb741cbb7fa4ffc092308094768647db28f7c6822ffafccf5bd4be5",
+      "firstTargetSha256": "21cec908c656d7577119b6c0fe48069567d0d666cd8df2172a53578e9f0077a4"
+    },
+    "absoluteTolerance": 1e-06,
+    "relativeTolerance": 1e-05,
+    "comparedCoordinates": 256,
+    "maximumAbsoluteDifference": 2.4304623007774353,
+    "firstDivergence": {
+      "field": "mean",
+      "flatIndex": 0,
+      "training": -0.24988460540771484,
+      "serving": 0.02719087339937687,
+      "absoluteDifference": 0.2770754788070917
+    },
+    "encoderCallAuditIdentical": false,
+    "scope": "Only the first-event native policy Gaussian for this exact checkpoint and public prefix",
+    "downstreamLexicalAndActionParity": "unmeasured",
+    "interpretation": "A Gaussian mismatch establishes divergent native conditional state. Agreement does not establish equal lexical/terminal decoding or learned execution."
+  },
+  "decoderSupportComparison": {
+    "status": "source-defined-mismatch",
+    "nativeMethodSha256": "676cb1fd344aac3d9579cb30b4136f4d1609930e0c767dbf76c5ef89b920cc12",
+    "trainingLengthInclusive": [
+      0,
+      1024
+    ],
+    "servingLengthInclusive": [
+      1,
+      128
+    ],
+    "trainingTerminalIds": [
+      0,
+      1
+    ],
+    "servingTerminalIds": [
+      0,
+      1
+    ],
+    "lexicalAlphabetSupportMatches": true,
+    "trainingLexicalAlphabet": "bytes",
+    "servingLexicalAlphabet": "utf8",
+    "scope": "Exact bound trainer source, actual loaded head/alphabet buffers and actual serving request; downstream head execution not measured"
+  },
+  "paths": {
+    "training": {
+      "metadata": {
+        "date": null,
+        "language": null,
+        "modality": [
+          "text"
+        ],
+        "request": null,
+        "task": "semantic_execution",
+        "topic": null,
+        "version": "v12"
+      },
+      "encoderCalls": 29,
+      "observedChunks": [
+        {
+          "trackIds": [
+            0
+          ],
+          "payloads": [
+            {
+              "bytes": 134,
+              "sha256": "4ed12e3a1d91a6c82d25445f4ecb6e83e735c42990159ecc2b70fc782623b6bd",
+              "textPreview": "{\"date\": null, \"language\": null, \"modality\": [\"text\"], \"request\": null, \"task\": \"semantic_execution\", \"topic\": null, \"version\": \"v12\"}"
+            }
+          ]
+        },
+        {
+          "trackIds": null,
+          "payloads": [
+            {
+              "bytes": 1457,
+              "sha256": "fae089b967789a1acc9e3eaa438c7ca76b74f36c23bdcb199192174c0c94775a",
+              "textPreview": "{\"capabilities\":[],\"dependencies\":[],\"digest\":\"095956b8d5e642b98014804fbb8681eabd0642629adeb0048f1bd4d3539d8378\",\"entry\":\"run\",\"functions\":[{\"end\":57,\"name\":\"ru"
+            }
+          ]
+        },
+        {
+          "trackIds": null,
+          "payloads": [
+            {
+              "bytes": 647,
+              "sha256": "61c53da2447e228d70c442cf804bc4f4355a1bd25b2ac3e617551286c4d49267",
+              "textPreview": "{\"activation\":\"call\",\"bindings\":{},\"closureId\":null,\"completionPolicy\":\"await-returned-promise\",\"deadline\":null,\"entry\":\"run\",\"ingressKey\":\"teacher-entry\",\"inpu"
+            }
+          ]
+        },
+        {
+          "trackIds": null,
+          "payloads": [
+            {
+              "bytes": 79,
+              "sha256": "bf843010f7c4f4c4014466228da0b745eb3c0ab1e131561078c1e36fcb3ad07e",
+              "textPreview": "{\"context_window\":{\"cross_events\":1024,\"local_events\":1024,\"pinned_events\":[]}}"
+            }
+          ]
+        }
+      ],
+      "boundary": {
+        "tracks": [
+          "worker1"
+        ],
+        "modelVersion": 0,
+        "trackRegistry": [
+          "__metadata__",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "host",
+          "worker1"
+        ],
+        "trackDescriptions": [
+          [
+            "worker1",
+            "Execute program1.run",
+            0
+          ]
+        ],
+        "eventsSeen": [
+          10
+        ],
+        "meridiansSeen": [
+          10
+        ],
+        "historyEventIds": [
+          "__metadata__",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "7541b29e2a47e5406044b386843db5d4bb6ce13f76c07535692dfb63f7a78ff7",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "c9eda18c6bab18b42d80a229f05c461bcfc815680bab11e5a56fb60e58bcfc86",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "adf9fab940c9f162abc72966606d30965d732c14da72cad1ec848087f900cf0c"
+        ],
+        "historyTracks": [
+          "__metadata__",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "host",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "worker1",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "worker1"
+        ],
+        "historyPositions": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "contextDropped": [],
+        "contextPolicy": {
+          "cross_events": 16,
+          "local_events": 256,
+          "max_pins": 8,
+          "pins": [],
+          "version": 1,
+          "windows": [
+            [
+              "worker1",
+              1024,
+              1024
+            ]
+          ]
+        }
+      },
+      "encodedControlSha256": "43f1c85717e360163f38457503e90d2e704df5ca2ece9c065d9bb6fbb68229b8",
+      "modelStateUnchanged": true
+    },
+    "serving": {
+      "metadata": {
+        "date": null,
+        "language": null,
+        "modality": "text",
+        "request": null,
+        "task": "semantic-execution/5",
+        "topic": null,
+        "version": null
+      },
+      "encoderCalls": 33,
+      "observedChunks": [
+        {
+          "trackIds": [
+            0
+          ],
+          "payloads": [
+            {
+              "bytes": 133,
+              "sha256": "8840e8e407f9029ae20e0ca664ab85cdf9e6387ec91b7b29fe0465bbb175130f",
+              "textPreview": "{\"date\": null, \"language\": null, \"modality\": \"text\", \"request\": null, \"task\": \"semantic-execution/5\", \"topic\": null, \"version\": null}"
+            }
+          ]
+        },
+        {
+          "trackIds": [
+            3
+          ],
+          "payloads": [
+            {
+              "bytes": 692,
+              "sha256": "891607a784e18e21fa512aa3b9b2af99f31e66d7ea48dd7d0ebcf2738307853f",
+              "textPreview": "{\"bootstrap_ready\": false, \"budget\": 4096, \"capabilities\": [\"text\"], \"completion\": \"Invocation invocation1 completion\", \"execution\": {\"capability_grants\": [], \""
+            }
+          ]
+        },
+        {
+          "trackIds": [
+            3
+          ],
+          "payloads": [
+            {
+              "bytes": 1457,
+              "sha256": "fae089b967789a1acc9e3eaa438c7ca76b74f36c23bdcb199192174c0c94775a",
+              "textPreview": "{\"capabilities\":[],\"dependencies\":[],\"digest\":\"095956b8d5e642b98014804fbb8681eabd0642629adeb0048f1bd4d3539d8378\",\"entry\":\"run\",\"functions\":[{\"end\":57,\"name\":\"ru"
+            }
+          ]
+        },
+        {
+          "trackIds": [
+            3
+          ],
+          "payloads": [
+            {
+              "bytes": 647,
+              "sha256": "61c53da2447e228d70c442cf804bc4f4355a1bd25b2ac3e617551286c4d49267",
+              "textPreview": "{\"activation\":\"call\",\"bindings\":{},\"closureId\":null,\"completionPolicy\":\"await-returned-promise\",\"deadline\":null,\"entry\":\"run\",\"ingressKey\":\"teacher-entry\",\"inpu"
+            }
+          ]
+        },
+        {
+          "trackIds": [
+            3
+          ],
+          "payloads": [
+            {
+              "bytes": 79,
+              "sha256": "bf843010f7c4f4c4014466228da0b745eb3c0ab1e131561078c1e36fcb3ad07e",
+              "textPreview": "{\"context_window\":{\"cross_events\":1024,\"local_events\":1024,\"pinned_events\":[]}}"
+            }
+          ]
+        }
+      ],
+      "boundary": {
+        "tracks": [
+          "track:0"
+        ],
+        "modelVersion": 0,
+        "trackRegistry": [
+          "__metadata__",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "track:0"
+        ],
+        "trackDescriptions": [
+          [
+            "assistant",
+            "Continue the user's task using its messages, evidence, and tool results.",
+            0
+          ],
+          [
+            "track:0",
+            "Execute program1.run",
+            0
+          ]
+        ],
+        "eventsSeen": [
+          11
+        ],
+        "meridiansSeen": [
+          11
+        ],
+        "historyEventIds": [
+          "__metadata__",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "observed:0:0",
+          "observed:1:0",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "observed:2:0",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "context:3:0"
+        ],
+        "historyTracks": [
+          "__metadata__",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "track:0",
+          "track:0",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "track:0",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "track:0"
+        ],
+        "historyPositions": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "contextDropped": [],
+        "contextPolicy": {
+          "cross_events": 16,
+          "local_events": 256,
+          "max_pins": 8,
+          "pins": [],
+          "version": 1,
+          "windows": [
+            [
+              "track:0",
+              1024,
+              1024
+            ]
+          ]
+        }
+      },
+      "encodedControlSha256": "43f1c85717e360163f38457503e90d2e704df5ca2ece9c065d9bb6fbb68229b8",
+      "modelStateUnchanged": true
+    }
+  },
+  "encodedRequestControlsIdentical": true
+}

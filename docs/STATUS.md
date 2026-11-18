@@ -41,7 +41,13 @@ hosted workflow results belong to the exact revision in the
 Historical learning diagnostics have zero successful held-in or held-out
 executions. The [new input-boundary diagnosis](LEARNING_DIAGNOSTICS.md)
 identifies unequal training/serving instructions and observations; it does
-not yet establish successful learning or equal neural conditionals.
+not establish successful learning. The instruction/observation repair passed
+its hosted byte comparison. The subsequent
+[actual native conditional capture](evidence/native-conditionals-cb67ed1/README.md)
+**failed parity** at producer `cb67ed1…` and consumer `2725842…`: the same
+zero-update checkpoint and public prefix reached different conditional state
+through the two real paths. Metadata, track ownership and lifecycle history
+remain different. No new learned-execution success is claimed.
 
 The November resumption adds an explicit [capability index](../coverage/required.json),
 [measured v5 probes](../coverage/current-v5.json), and

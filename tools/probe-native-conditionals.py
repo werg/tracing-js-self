@@ -3,8 +3,9 @@
 
 Use --initialize-tiny with one CURRENT natively admitted episode to prepare and
 save an actual zero-update diagnostic checkpoint, or supply --checkpoint and its
---prepared corpus. No optimizer or model selection is executed. Both paths stop
-at the first real native conditional Gaussian before the policy draw.
+--prepared corpus. No optimizer update or returned semantic selection occurs.
+Both paths stop before the first Gaussian facet draw; serving has already
+executed its internal text-only modality categorical.
 """
 from __future__ import annotations
 
@@ -280,7 +281,7 @@ def main():
                fullConditionalParityClaim=False, decoderSupportComparison=supports,
                servingCaptureSha256=SMOKE.sha256(root/'serving-conditional.json'),
                comparisonSha256=SMOKE.sha256(root/'comparison.json'), wallSeconds=time.monotonic()-started,
-               limitations=['Only the first event conditional Gaussian was executed, not downstream lexical or action heads.',
+               limitations=['Measurement covers the first event Gaussian; serving also executes its prior text-only modality categorical. Downstream lexical/length/terminal realization is not executed.',
                             'The trainer uses its real eval-mode prefix reconstruction; no synthetic serving state is substituted.',
                             'A match at an untrained checkpoint does not establish equivalence after learning or across other prefixes.',
                             'Categorical decoder supports remain a distinct check; native alphabets and head sizes are retained.'])

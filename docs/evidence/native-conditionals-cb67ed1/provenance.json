@@ -1,0 +1,93 @@
+{
+  "schema": "semantic-hosted-conditional-evidence/1",
+  "repository": "werg/tracing-js-self",
+  "workflowRunId": 44384520028,
+  "workflowJobId": 135085742048,
+  "workflowHeadRevision": "cb67ed15750760267d1bb6edd53b4190d349885c",
+  "consumerRevision": "272584270a00409cee6c7c49078c775faf24d16b",
+  "artifactId": 14464484722,
+  "artifactSha256": "4aed345357b13f781acde98f5c7ad796a2c7dc76996c333a9bbabe694ac3de32",
+  "artifactBytes": 136731851,
+  "files": {
+    "native-run-identity.json": {
+      "originalArtifactPath": "native-run-identity.json",
+      "bytes": 386,
+      "sha256": "6f81e460ba2089e55fe27a0d1ebb37956f6dc6811f35ac85b94abd82f750767f",
+      "originalBytes": 386,
+      "originalSha256": "6f81e460ba2089e55fe27a0d1ebb37956f6dc6811f35ac85b94abd82f750767f",
+      "encoding": "identity"
+    },
+    "native-input-parity.json": {
+      "originalArtifactPath": "native-input-parity.json",
+      "bytes": 35417,
+      "sha256": "702a16d1db1b5ad77248bb26be73c6f5d4ffd1c3bff5597ca81765ae6aee1da9",
+      "originalBytes": 35417,
+      "originalSha256": "702a16d1db1b5ad77248bb26be73c6f5d4ffd1c3bff5597ca81765ae6aee1da9",
+      "encoding": "identity"
+    },
+    "report.json": {
+      "originalArtifactPath": "native-conditional-probe/report.json",
+      "bytes": 8290,
+      "sha256": "a5844bc0347279da8853057e1669e8f7546409d6b484ffd07e494f3c86a715b2",
+      "originalBytes": 8290,
+      "originalSha256": "a5844bc0347279da8853057e1669e8f7546409d6b484ffd07e494f3c86a715b2",
+      "encoding": "identity"
+    },
+    "comparison.json": {
+      "originalArtifactPath": "native-conditional-probe/comparison.json",
+      "bytes": 1210,
+      "sha256": "5aed4594c62c5ce56855602bda6f5f57498215381b67e9e400733cd7209bec83",
+      "originalBytes": 1210,
+      "originalSha256": "5aed4594c62c5ce56855602bda6f5f57498215381b67e9e400733cd7209bec83",
+      "encoding": "identity"
+    },
+    "training-conditional.json": {
+      "originalArtifactPath": "native-conditional-probe/training-conditional.json",
+      "bytes": 40181,
+      "sha256": "6fac99e958e38182ee12b60b7f6bdfc49619958452f81fdabaf5124322d1514f",
+      "originalBytes": 40181,
+      "originalSha256": "6fac99e958e38182ee12b60b7f6bdfc49619958452f81fdabaf5124322d1514f",
+      "encoding": "identity"
+    },
+    "serving-conditional.json.gz": {
+      "originalArtifactPath": "native-conditional-probe/serving-conditional.json",
+      "bytes": 755226,
+      "sha256": "6ce161ecd2af9cbf0520a1a62fd759e122491ca70a19779cc854ca1fd999d148",
+      "originalBytes": 4214596,
+      "originalSha256": "51eaa3341c57258b7e81621ca31ca4d010d79dd5e9b752762b9f2f45769948ca",
+      "encoding": "gzip"
+    },
+    "checkpoint-metadata.json": {
+      "originalArtifactPath": "native-conditional-probe/initialization/initialized-untrained/metadata.json",
+      "bytes": 413,
+      "sha256": "f38460abf8c4ec11efeceb6660a12b45351432ca3aee311bdeb5f1d3dc260d06",
+      "originalBytes": 413,
+      "originalSha256": "f38460abf8c4ec11efeceb6660a12b45351432ca3aee311bdeb5f1d3dc260d06",
+      "encoding": "identity"
+    },
+    "served-manifest.json": {
+      "originalArtifactPath": "native-conditional-probe/served-exact/manifest.json",
+      "bytes": 7786,
+      "sha256": "94179a195637d3346d09fa2d879ada95cee9c9b21e83b99eeb01c16119ca0241",
+      "originalBytes": 7786,
+      "originalSha256": "94179a195637d3346d09fa2d879ada95cee9c9b21e83b99eeb01c16119ca0241",
+      "encoding": "identity"
+    },
+    "compound-pure.json.gz": {
+      "originalArtifactPath": "corpus/compound-pure.json",
+      "bytes": 724521,
+      "sha256": "556790d616db368fca924b20acc930dde00a545a4c3a08007e5eb1b1e33bfd12",
+      "originalBytes": 4161171,
+      "originalSha256": "dac3b7d52c9379cb4e4bf0ccf76ecb1871174373615fe1c545e5fdcc83bb768e",
+      "encoding": "gzip"
+    }
+  },
+  "boundarySummarySha256": "767e4bd87613f6d39d4fc42e230749707921b663c787187bb974788c2cf8cccb",
+  "scope": "Original completed failed native conditional diagnosis; later coverage inventory failure does not alter this measurement",
+  "measurementBoundary": "Before the Gaussian facet draw, generated-target encoding and downstream rendering or returned semantic selection. Serving first executed its text-only modality categorical.",
+  "originalWordingQualification": "The unchanged report and captures use broader policy-draw/only-Gaussian language. That language does not exclude the prior text-only modality categorical; see README.",
+  "checkpointWeightsCommitted": false,
+  "optimizerSteps": 0,
+  "modelSelections": 0,
+  "learnedSuccess": null
+}

@@ -3,8 +3,9 @@
 `tools/probe-native-conditionals.py` executes the real native training and
 serving paths at the same saved checkpoint and the same first public prefix.
 It captures each path's already computed Gaussian policy mean and log-scale,
-then stops **before** the native policy draw. This is a measurement of native
-conditional state, not a model generation, optimizer update or learned success.
+then stops **before** the Gaussian facet draw. Serving has already evaluated
+and drawn its text-only modality categorical. No semantic selection is returned,
+no optimizer update runs, and no learned execution success is claimed.
 
 The implementation is runnable in the existing qualified native environment.
 The current local workspace has no PyTorch runtime; its numerical execution
@@ -74,8 +75,10 @@ this neural probe.
 
 Both paths reach the actual `MultiTrackGenerator._prior` and
 `MultiTrackGenerator._sample_policy` boundary. The hook records the finite
-model-produced distribution before calling any sampler, then raises a dedicated
-stop signal. In the trainer this boundary occurs before the generated target's
+model-produced Gaussian before its facet sampler runs, then raises a dedicated
+stop signal. The serving path's earlier text-only modality categorical is outside
+this comparison; `capturedBeforePolicyDraw` refers specifically to the Gaussian
+facet draw. In the trainer this boundary occurs before the generated target's
 neural encoding or teacher continuation. The hook does not supply replacement
 states, forced target choices, repaired output bytes or a successful selection.
 All patched methods are restored on exit, and model-state hashes are checked
@@ -143,7 +146,7 @@ MEGATOKEN_REPOSITORY=/path/to/pinned/megatoken python test/test_native_condition
 
 The optional test requires installed PyTorch and uses the companion's real tiny
 model with its built-in byte codec. It verifies that the real Gaussian boundary
-is reached, the stop occurs before sampling, and the original native method is
+is reached, the stop occurs before the Gaussian facet draw, and the original native method is
 restored. That small hook test does not qualify a source sample or establish
 training/serving parity. The standalone command above is the actual paired
 capture that must be executed and reviewed.

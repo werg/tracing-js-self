@@ -1,7 +1,7 @@
 """Synthetic finite-vector fixtures test comparison only, never claim model parity.
 
 The optional native test executes a real tiny model's conditional hook with a
-built-in byte codec, then stops before sampling. It is not source qualification,
+built-in byte codec, then stops before the Gaussian facet draw. It is not source qualification,
 complete training/serving equivalence, or a learned execution result.
 """
 import copy
@@ -207,7 +207,7 @@ class CheckpointBindingTests(unittest.TestCase):
 @unittest.skipUnless(importlib.util.find_spec('torch') and os.environ.get('MEGATOKEN_REPOSITORY'),
                      'Actual conditional hook requires local Torch and an explicit companion checkout')
 class ActualNativeHookTests(unittest.TestCase):
-    def test_real_native_prior_is_captured_before_sampling_and_hook_is_restored(self):
+    def test_real_native_prior_is_captured_before_gaussian_draw_and_hook_is_restored(self):
         sys.path.insert(0, str(Path(os.environ['MEGATOKEN_REPOSITORY']).resolve()/'src'))
         import torch
         from megatoken.generation.codec import ByteCodec
@@ -224,7 +224,7 @@ class ActualNativeHookTests(unittest.TestCase):
         def operation():
             multi.select_group(state, tracks=('task',), controls=(b'public instruction',),
                                specs=(ActionSpec(max_tokens=16),), effort=1)
-            self.fail('The hook must stop before any native policy selection')
+            self.fail('The hook must stop before the Gaussian facet draw or returned selection')
         result = P.capture_prior(operation, model, path='serving', identity=fixture('serving')['identity'])
         self.assertIs(inspect.getattr_static(MultiTrackGenerator, '_sample_policy'), original)
         self.assertEqual(result['conditional']['mean']['shape'], [1, 1, 4, 32])

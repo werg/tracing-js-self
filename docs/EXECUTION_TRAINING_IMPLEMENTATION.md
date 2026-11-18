@@ -19,7 +19,7 @@ retain their original producer, consumer and verification identities.
 | A1: strict failed assignments | Lexical strictness is compiled per program/function, including directive inheritance. Own and inherited getter-only writes throw in strict functions. Successful/throwing setters, single evaluation and finally overrides have regressions. | General unsupported data descriptors remain explicit refusals. See [strict assignment audit](STRICT_ASSIGNMENT_REQUALIFICATION.md). |
 | A2: independent intermediate authority | A separate V8 instrumentation pass checks once-evaluated initializers, assignments, calls, returns, throws and abrupt control markers. Owned values are read from committed storage. Input graph identities are rooted before comparison. | Thirteen implementation mutants target overwritten/dropped writes, catch/finally, helper completion and reference substitution. The [authority matrix](SEMANTIC_AUTHORITY_MATRIX.md) states each category's limits. This is bounded coverage, not complete JS conformance. |
 | A3: baseline and affected data | The current baseline runner collects exact producer/policy identities, full unit/reference/contract checks, mutations, paired galleries, summaries, capability probes and three recipes. The affected-row scanner reads historical pre-state descriptors and source strictness. | A source-only run cannot establish native admission. Missing historical private archives remain unaudited/quarantined; old D totals are not a repaired census. |
-| B1: locate the learning failure | Native target audits expose bytes, tokens, masks and loss-field categories. Checkpoint/prefix comparators refuse mismatched or missing evidence. A real adapter-boundary probe reproduces training/serving input differences. | The [original mismatch receipt](evidence/native-input-parity-2026-11-18.json) proves unequal inputs at consumer `6e27a7c…`; it does not prove equal logits or the sole cause of failed learning. See [learning diagnostics](LEARNING_DIAGNOSTICS.md). |
+| B1: locate the learning failure | Native target audits expose bytes, tokens, masks and loss-field categories. The actual paired probe authenticates one physical checkpoint and captures real training/serving Gaussian state before its facet draw. | [Executed native comparison](evidence/native-conditionals-cb67ed1/README.md): failed at producer `cb67ed1…` and consumer `2725842…`, with maximum absolute difference 2.4304623 across 256 mean/log-scale coordinates. Controls agree; metadata, track ownership and lifecycle history differ. This establishes a conditioning blocker, not its sole historical cause or learned execution. |
 | B2: bounded convergence | Immutable declarations freeze budgets, membership and restart schedules. The runner reuses actual optimization, exact checkpoint reload and the selected scorer, retaining original emissions and real serving-process launch receipts. | Ten restarts for one case; 16–32 cases and at least 100 first-record trials for the stratified gate. No model pass follows from scorer tests. Native seeded policy sampling is explicitly distinguished from fully greedy inference. See [convergence diagnostics](CONVERGENCE_LADDER.md). |
 | B3: separate causal-LM control | A conventional causal-LM exporter uses the actual selected driver's public prefix, generated-only labels, exact tokenizer round trips and explicit EOS. Both unconstrained and syntax-only constrained evaluation feed original emissions to the same semantic scorer. | No pretrained checkpoint or successful optimization is implied by the bridge. The grammar may constrain syntax but cannot supply the correct answer. See [causal-LM diagnostic](CAUSAL_LM_DIAGNOSTIC.md). |
 | T1/T2: inspect and simplify actual targets | Paired galleries retain source, actual target bytes, readable records, public-prefix identities and claim counts. Optional cell compaction removes only an already committed, identical lexical assignment. Default target bytes and certificate shape remain unchanged. | The eleven-case gallery falls from 145 records / 12,345 UTF-8 bytes to 143 / 12,267. All 78 saved bytes come from the repeated-cell fixture. These are byte counts, not native tokenizer costs or learning gains. |
@@ -57,6 +57,24 @@ compatible checkpoint through the real training and serving paths; it retains
 failed or incomplete measurements and never infers full parity from input-byte
 agreement. Hosted numerical execution and source/native qualification are
 separate checks.
+
+The [completed actual native capture](evidence/native-conditionals-cb67ed1/README.md)
+then measured a failed Gaussian comparison at `cb67ed1…` / `2725842…`. Both
+paths used the same physical zero-update checkpoint, disabled dropout and
+public prefix; their encoded request controls match exactly. Training has ten
+committed history events at the captured boundary and serving has eleven,
+including its real track-creation observation. Metadata conventions and program
+track ownership also differ. The largest difference among 256 mean/log-scale
+coordinates was 2.4304623, exceeding absolute/relative tolerances of `1e-6` /
+`1e-5`. Both actual model-state hashes remained unchanged.
+
+This is the roadmap's well-localized remaining native conditioning blocker.
+No returned semantic selection or optimizer update ran. Serving's earlier
+singleton text-modality categorical did execute; capture stops specifically
+before the Gaussian facet draw and downstream rendering. Declared length
+support differs separately, while the loaded lexical alphabets agree. Resolve
+the actual prefix-construction differences and qualify downstream support
+before interpreting a new run as a clean convergence experiment.
 
 ## Reproduce the bounded evidence
 
