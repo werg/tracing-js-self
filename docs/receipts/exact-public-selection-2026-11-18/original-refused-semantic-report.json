@@ -1,0 +1,67 @@
+{
+  "accepted": 2,
+  "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+  "consumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+  "counts": {
+    "accepted_candidate": 2,
+    "admission_rejected": 8,
+    "admitted": 4,
+    "attempted": 12,
+    "duplicate": 2
+  },
+  "familySplits": {
+    "task:real-utilities-5a1fde95b4daab8314e03d36": "train"
+  },
+  "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+  "maxHistory": 1024,
+  "maxPositions": 1024,
+  "optimizerSteps": 0,
+  "producerRevision": "1b391c19c3c8137d5b00c5412e53614a568b3704",
+  "refusals": [
+    {
+      "candidate": 4,
+      "reason": "An immutable episode ID was reused with changed bytes, masks, or metadata: semantic:harness:5f384c63e1748ef4d02421e529e94a0a173cb037f0fb195a409795b45c3f0373",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 5,
+      "reason": "An immutable episode ID was reused with changed bytes, masks, or metadata: semantic:harness:51875fb9dd97b1bbbde9021db4f101a8bf4ce80768334e9b8a5f49e9762014e6",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 6,
+      "reason": "An immutable episode ID was reused with changed bytes, masks, or metadata: semantic:harness:68c59b01ed79041c59d871ba3f536038ad8ebdc7afa1c4c54616b3807e2a8dff",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 7,
+      "reason": "An immutable episode ID was reused with changed bytes, masks, or metadata: semantic:harness:92ebc1d2de8ad1530a8c851ca647e7dda15770d583f06e2d800f995d550705d9",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 8,
+      "reason": "An immutable episode ID was reused with changed bytes, masks, or metadata: semantic:harness:5f384c63e1748ef4d02421e529e94a0a173cb037f0fb195a409795b45c3f0373",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 9,
+      "reason": "An immutable episode ID was reused with changed bytes, masks, or metadata: semantic:harness:51875fb9dd97b1bbbde9021db4f101a8bf4ce80768334e9b8a5f49e9762014e6",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 10,
+      "reason": "An immutable episode ID was reused with changed bytes, masks, or metadata: semantic:harness:68c59b01ed79041c59d871ba3f536038ad8ebdc7afa1c4c54616b3807e2a8dff",
+      "status": "admission_rejected"
+    },
+    {
+      "candidate": 11,
+      "reason": "An immutable episode ID was reused with changed bytes, masks, or metadata: semantic:harness:92ebc1d2de8ad1530a8c851ca647e7dda15770d583f06e2d800f995d550705d9",
+      "status": "admission_rejected"
+    }
+  ],
+  "representation": "compact",
+  "schema": "semantic-preparation/4",
+  "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+  "splitSeed": "semantic-family/4",
+  "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+}

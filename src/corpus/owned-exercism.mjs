@@ -7,6 +7,7 @@ import ts from 'typescript';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
+import {inspectCanonicalInputPrecision} from './canonical-input-precision.mjs';
 
 export const JS_REVISION='ff04f35158cdf61eebfdf18a774010495a1fd6d9';
 export const INPUT_REVISION='650bebeb39ad40439175288042aece982b0a90a9';
@@ -104,9 +105,38 @@ export function loadPinnedPairs(base=process.cwd()){
    };
    const source=check(jsRoot,jsLock,solutionPath),
      canonical=check(inRoot,inputLock,canonicalPath);
+   // Keep the original decimal lexeme before JSON's Number conversion rounds
+   // large grains expectations. The JavaScript track returns BigInt exactly.
+   const canonicalIntegerExpectations={};
+   const document=JSON.parse(canonical);
    const expectedIntegerLexemes=integerExpectedLexemes(canonical);
-   return {slug,source,canonical:JSON.parse(canonical),expectedIntegerLexemes,
-     canonicalIntegerExpectations:Object.fromEntries(Object.entries(expectedIntegerLexemes).map(([uuid,decimal])=>[slug+'/'+uuid,decimal])),
+   const canonicalInputPrecision=inspectCanonicalInputPrecision(canonical,{slug});
+   if(slug==='grains'){
+     // Node 20 has no JSON.parse reviver context.source. The already-pinned
+     // TypeScript JSON parser supplies source spans without rounding the text.
+     // JSON.parse above remains the authority that these bytes are valid JSON.
+     const syntax=ts.parseJsonText('canonical-data.json',canonical);
+     if(syntax.parseDiagnostics.length)throw new Error('Invalid pinned canonical JSON syntax');
+     const visit=node=>{
+       if(ts.isObjectLiteralExpression(node)){
+         const field=name=>node.properties.find(p=>ts.isPropertyAssignment(p)&&
+           ts.isStringLiteral(p.name)&&p.name.text===name)?.initializer;
+         const expected=field('expected');
+         if(expected&&(ts.isNumericLiteral(expected)||ts.isPrefixUnaryExpression(expected))){
+           const uuid=field('uuid'),lexeme=expected.getText(syntax);
+           if(!uuid||!ts.isStringLiteral(uuid)||!/^(0|[1-9]\d*)$/.test(lexeme))
+             throw new Error('Pinned grains integers require exact JSON source lexemes');
+           const id=slug+'/'+uuid.text;
+           if(Object.hasOwn(canonicalIntegerExpectations,id))
+             throw new Error('Duplicate pinned grains integer identity '+id);
+           canonicalIntegerExpectations[id]=lexeme;
+         }
+       }
+       ts.forEachChild(node,visit);
+     };
+     visit(syntax);
+   }
+   return {slug,source,canonical:document,canonicalIntegerExpectations,expectedIntegerLexemes,canonicalInputPrecision,
      provenance:{solution:{repository:JS_REPO,revision:JS_REVISION,
        path:solutionPath,sha256:sha256(source),license:'MIT'},
        canonical:{repository:INPUT_REPO,revision:INPUT_REVISION,
@@ -147,6 +177,15 @@ export function extractCanonicalCases(record,{includeSuperseded=false}={}){
        output.push({caseId,property,status:'unsupported_input_shape',description:path});return;
      }
      let args=keys.map(k=>value.input[k]),argumentBinding=null,inputBinding=null,expectedBinding=null;
+     const inputPrecision=record.canonicalInputPrecision?.[caseId];
+     if(inputPrecision){
+       output.push({caseId,property,entry,args,canonicalInput:value.input,
+         argumentBinding,inputBinding,expectedBinding,reimplements:value.reimplements??null,
+         inputPrecision,expected:value.expected,description:path,
+         scenarios:value.scenarios??[],canonicalComments:value.comments??[],
+         status:'unsupported_input_precision'});
+       return;
+     }
      // Problem specifications are language-neutral. These two explicit track
      // bindings preserve the original canonical input alongside the JS call.
      // No expected outcome is used to choose or alter an argument.
@@ -161,6 +200,7 @@ export function extractCanonicalCases(record,{includeSuperseded=false}={}){
      }
      if(record.slug==='grains'&&typeof value.expected==='number'){
        const decimal=record.expectedIntegerLexemes?.[value.uuid]??
+         record.canonicalIntegerExpectations?.[caseId]??
          (Number.isSafeInteger(value.expected)?String(value.expected):null);
        if(decimal===null){output.push({caseId,property,status:'unsupported_expected_precision',description:path});return;}
        expectedBinding={schema:'exercism-grains-bigint/1',decimal};

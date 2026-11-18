@@ -1,0 +1,218 @@
+{
+  "actualOsIsolationTests": {
+    "names": [
+      "OS confinement survives direct access to Node filesystem, networking and process APIs",
+      "isolated original and instrumented references pass the source gate and bind the executed policy"
+    ],
+    "passed": 2
+  },
+  "completedAt": "2026-11-18T15:55:20.515075+00:00",
+  "consumerRevision": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+  "finiteNativeLadder": "Separate fresh I qualification owned by the root agent; not inferred from these integration gates.",
+  "historicalDatasetsRequalified": false,
+  "learnedSuccess": null,
+  "nativeCoordinator": {
+    "caseSummaries": [
+      {
+        "caseId": "pure-orchestration",
+        "disposition": "expected-refusal",
+        "evidenceSha256": "e111a991e31a0967e5311d1e4793522669c7fa973e4f0da38201857203c3fc9d",
+        "origin": "controlled"
+      },
+      {
+        "caseId": "pure-orchestration",
+        "disposition": "expected-refusal",
+        "evidenceSha256": "2e07a27c2b0ecc221f85e6c814dc96bf59b88ab806c69322c314eec615533015",
+        "origin": "controlled"
+      },
+      {
+        "caseId": "pure-orchestration",
+        "disposition": "expected-refusal",
+        "evidenceSha256": "2b041690c8870b93f2f93a5f4f433f8a18d72a1a0eea88391cbf44a368a22940",
+        "origin": "fixed-weights"
+      },
+      {
+        "caseId": "native-retained-tail-compact",
+        "disposition": "complete",
+        "evidenceSha256": "6c35b921a7916f307185bf1c828ac85d60a02dd85457c63909944ddbb9fc6884",
+        "origin": "controlled"
+      },
+      {
+        "caseId": "native-services-compact",
+        "disposition": "complete",
+        "evidenceSha256": "e54a786820eff3e61e816ce8496851ab4525dcf393f45b9d9571b518015a4061",
+        "origin": "controlled"
+      }
+    ],
+    "completeControlledCases": 2,
+    "expectedRefusals": 3,
+    "independentValidationPassed": true,
+    "modelDependency": {
+      "initializationIdentity": {
+        "checkpointIdentity": "c7d9040ec72553cf84d1030bd8481b0f03dcfaeb989b2e347239aee135aa0943",
+        "schema": "semantic-inference-identity/4",
+        "seed": 17,
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+      },
+      "inventoryAfter": "reused-h-model-after.json",
+      "inventoryBefore": "reused-h-model-before.json",
+      "kind": "reused-initialized-untrained-engineering-model",
+      "newInitialization": false,
+      "optimizerSteps": 0,
+      "provenanceReceipt": "/workspace/scratch/23f61543c052/release-evidence-H/native-orchestration-qualification.json",
+      "provenanceReceiptSha256": "a764b1f648de00bfd4a9dd35fac221028573a58d1509f3ff11eb007a83d92a8d",
+      "served": "/workspace/scratch/23f61543c052/release-evidence-H/native-inference/served",
+      "sourceConsumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+      "sourceProducerRevision": "881664b98ec9d484f9f4775d0b40a3a2b1b81174",
+      "verifiedPayloadBytes": 44833844,
+      "verifiedPayloadFiles": 10
+    },
+    "modelPayloadsUnchanged": true,
+    "rpcEvidence": [
+      {
+        "bytes": 71799,
+        "path": "native-orchestration/native-budget.json",
+        "sha256": "e111a991e31a0967e5311d1e4793522669c7fa973e4f0da38201857203c3fc9d"
+      },
+      {
+        "bytes": 95988,
+        "path": "native-orchestration/native-invalid-child.json",
+        "sha256": "2e07a27c2b0ecc221f85e6c814dc96bf59b88ab806c69322c314eec615533015"
+      },
+      {
+        "bytes": 40642,
+        "path": "native-orchestration/native-model-rejection.json",
+        "sha256": "2b041690c8870b93f2f93a5f4f433f8a18d72a1a0eea88391cbf44a368a22940"
+      },
+      {
+        "bytes": 1305854,
+        "path": "native-orchestration/native-retained-tail-compact.json",
+        "sha256": "6c35b921a7916f307185bf1c828ac85d60a02dd85457c63909944ddbb9fc6884"
+      },
+      {
+        "bytes": 839284,
+        "path": "native-orchestration/native-services-compact.json",
+        "sha256": "e54a786820eff3e61e816ce8496851ab4525dcf393f45b9d9571b518015a4061"
+      }
+    ],
+    "skipped": 0,
+    "testsPassed": 5,
+    "validationReceipt": "native-orchestration-validation.json"
+  },
+  "newModelInitialization": false,
+  "newModelOptimizationExperiment": false,
+  "nodeTests": {
+    "cancelled": 0,
+    "fail": 0,
+    "pass": 945,
+    "skipped": 0,
+    "tests": 945,
+    "todo": 0
+  },
+  "nodeVersion": "v24.22.3",
+  "originalArtifactRegressions": {
+    "actualConsumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+    "counts": {
+      "errors": 0,
+      "failed": 0,
+      "passed": 14,
+      "skipped": 0,
+      "skippedCases": [],
+      "total": 14
+    },
+    "modelDependency": {
+      "checkpoint": "/workspace/scratch/23f61543c052/release-evidence/optimization-full-epoch/training/checkpoints/P1-000000049-periodic",
+      "inventoryAfter": "original-c-artifacts-after.json",
+      "inventoryBefore": "original-c-artifacts-before.json",
+      "kind": "retained-original-C-checkpoint-artifact-validation",
+      "modelInferenceCalls": 0,
+      "newInitialization": false,
+      "newOptimizerSteps": 0,
+      "served": "/workspace/scratch/23f61543c052/release-evidence/optimization-full-epoch/served-trained",
+      "sourceConsumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+      "sourceProducerRevision": "c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39",
+      "sourceReport": "/workspace/scratch/23f61543c052/release-evidence/optimization-full-epoch/report.json",
+      "sourceReportSha256": "398d20fb1ccb7f38bb972c2c0a125038fe9eae937a919403a4b3ac91f241ca90",
+      "stateSha256": "8a252dff697b1de7fa842c0370cc6a37626e4720be23858b39b82f100b93546c",
+      "verifiedPayloadBytes": 68389648,
+      "verifiedPayloadFiles": 10
+    },
+    "modelPayloadsUnchanged": true,
+    "toolProducerRevision": "c2a64424d052f9b90a340a59a8d74cf5564e47aa"
+  },
+  "processes": {
+    "actual-artifacts": {
+      "actualConsumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+      "logSha256": "2c6acba8aeca70874324c6e768395e9562c3e907923a6dd4a8559f8d036235f6",
+      "peakRssBytes": 566910976,
+      "wallSeconds": 11.02227586799927
+    },
+    "native-validation": {
+      "actualConsumerRevision": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+      "logSha256": "456600bca7e400753400c430b7b2ecae557d645d9d8ac955fbd3266f1836698b",
+      "peakRssBytes": 331907072,
+      "wallSeconds": 2.4201004349997675
+    },
+    "python-release": {
+      "actualConsumerRevision": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+      "logSha256": "5e0a44e760fa25c69d4db0f9c60a55c6e7b22f3eb5454d9722348bda9c764ee3",
+      "peakRssBytes": 379707392,
+      "wallSeconds": 7.6120082789966546
+    },
+    "python-tools": {
+      "actualConsumerRevision": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+      "logSha256": "eb980b6f030ff98a2b6faa84dda1afe364265d51d676bfefdef39e689bef17d5",
+      "peakRssBytes": 43200512,
+      "wallSeconds": 1.4437369179977395
+    },
+    "unit": {
+      "actualConsumerRevision": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+      "logSha256": "8a1702ad21d477c6c8cf09cfeb1092d2ebacb4dae2b672f5cafef454ae05cd53",
+      "peakRssBytes": 536412160,
+      "wallSeconds": 159.8845245770026
+    }
+  },
+  "producerRevision": "c2a64424d052f9b90a340a59a8d74cf5564e47aa",
+  "producerTree": "8a862717d8f3ba17a1c2c904947abb86a6b4c198",
+  "pythonNativeConsumerTools": {
+    "failed": 0,
+    "passed": 56,
+    "skipped": 0
+  },
+  "pythonReleaseRegressions": {
+    "errors": 0,
+    "failed": 0,
+    "passed": 85,
+    "skipped": 6,
+    "skippedCases": [
+      "test.test_diagnostic_evidence.ActualBundleTampering.test_actual_original_bundle_passes",
+      "test.test_diagnostic_evidence.ActualBundleTampering.test_declared_input_subset_cannot_omit_an_actual_training_member",
+      "test.test_diagnostic_evidence.ActualBundleTampering.test_model_version_cannot_be_relabelled",
+      "test.test_diagnostic_evidence.ActualBundleTampering.test_rehashed_model_config_cannot_replace_checkpoint_config",
+      "test.test_diagnostic_evidence.ActualBundleTampering.test_rehashed_served_tokenizer_cannot_replace_frozen_codec",
+      "test.test_diagnostic_evidence.ActualBundleTampering.test_rehashed_transducer_bank_cannot_replace_checkpoint_bank"
+    ],
+    "total": 91
+  },
+  "referenceFixture": {
+    "passed": [
+      "getterReadOnce",
+      "bufferCoherenceAcrossCallback",
+      "synchronousThrowPreserved",
+      "reverseCompletionOrder",
+      "internalAwaitSuspends",
+      "permittedBatchingEquivalent",
+      "transcriptStoreDoesNotRepeatMockEffect",
+      "duplicateConversionDetected"
+    ],
+    "result": {
+      "answer": 47,
+      "caught": "fixture boom",
+      "memory": 7,
+      "optionReads": 1
+    }
+  },
+  "schema": "semantic-release-integration-qualification/1",
+  "scope": "Fresh I unit/reference/native-coordinator and Python integration checks. Controlled coordination and initialized-model rejection stay distinct; original C artifact checks retain their original consumer. All historical datasets and model experiment outcomes keep their original pins.",
+  "status": "passed"
+}

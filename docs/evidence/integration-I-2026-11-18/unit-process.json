@@ -1,0 +1,58 @@
+{
+  "actualConsumerRevision": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+  "argv": [
+    "npm",
+    "test"
+  ],
+  "completedAt": "2026-11-18T15:53:10.242213+00:00",
+  "configuredReleaseConsumerRevision": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+  "cwd": "/workspace/scratch/23f61543c052/tracing-release-I",
+  "environment": {
+    "LC_ALL": "C.UTF-8",
+    "MEGATOKEN_ORCHESTRATION_EVIDENCE_DIR": "/workspace/scratch/23f61543c052/release-evidence-I/native-orchestration",
+    "MEGATOKEN_ORCHESTRATION_SERVED": "/workspace/scratch/23f61543c052/release-evidence-H/native-inference/served",
+    "MEGATOKEN_PYTHON": "/workspace/scratch/23f61543c052/native-venv-capture-grammar/bin/python",
+    "MEGATOKEN_REPOSITORY": "/workspace/scratch/23f61543c052/megatoken-capture-grammar",
+    "MEGATOKEN_ROOT": "/workspace/scratch/23f61543c052/megatoken-capture-grammar",
+    "MEGATOKEN_TOKENIZER_JSON": "/workspace/scratch/23f61543c052/tokenizer.json",
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "PYTHONPATH": "/workspace/scratch/23f61543c052/megatoken-capture-grammar/src",
+    "TMPDIR": "/workspace/scratch/23f61543c052/release-evidence-I/tmp",
+    "TZ": "UTC"
+  },
+  "exitCode": 0,
+  "kind": "unit",
+  "logBytes": 88845,
+  "logSha256": "8a1702ad21d477c6c8cf09cfeb1092d2ebacb4dae2b672f5cafef454ae05cd53",
+  "modelDependency": {
+    "initializationIdentity": {
+      "checkpointIdentity": "c7d9040ec72553cf84d1030bd8481b0f03dcfaeb989b2e347239aee135aa0943",
+      "schema": "semantic-inference-identity/4",
+      "seed": 17,
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    },
+    "inventoryAfter": "reused-h-model-after.json",
+    "inventoryBefore": "reused-h-model-before.json",
+    "kind": "reused-initialized-untrained-engineering-model",
+    "newInitialization": false,
+    "optimizerSteps": 0,
+    "provenanceReceipt": "/workspace/scratch/23f61543c052/release-evidence-H/native-orchestration-qualification.json",
+    "provenanceReceiptSha256": "a764b1f648de00bfd4a9dd35fac221028573a58d1509f3ff11eb007a83d92a8d",
+    "served": "/workspace/scratch/23f61543c052/release-evidence-H/native-inference/served",
+    "sourceConsumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+    "sourceProducerRevision": "881664b98ec9d484f9f4775d0b40a3a2b1b81174"
+  },
+  "modelDependencyPayloadsUnchanged": true,
+  "peakRssBytes": 536412160,
+  "producerRevision": "c2a64424d052f9b90a340a59a8d74cf5564e47aa",
+  "producerTrackedFilesClean": true,
+  "pythonImportBinding": {
+    "module": "/workspace/scratch/23f61543c052/megatoken-capture-grammar/src/megatoken/__init__.py",
+    "prefix": "/workspace/scratch/23f61543c052/native-venv-capture-grammar"
+  },
+  "schema": "semantic-integration-process/1",
+  "startedAt": "2026-11-18T15:50:30.357571+00:00",
+  "status": "passed",
+  "wallSeconds": 159.8845245770026
+}

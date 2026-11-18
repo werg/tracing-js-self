@@ -1,0 +1,106 @@
+{
+  "schema": "semantic-python-integration-verification/1",
+  "scope": "contract-and-artifact-regressions",
+  "startedAt": "2026-11-18T12:54:54.510440+00:00",
+  "toolCheckout": {
+    "path": "/workspace/scratch/23f61543c052/tracing-js-self",
+    "revision": "73f5977506f102f2abe7a439c0951fe18c10b7c9",
+    "trackedDirty": false
+  },
+  "consumer": {
+    "path": "/workspace/scratch/23f61543c052/megatoken-immutable-inputs",
+    "revision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+    "importPaths": [
+      "/workspace/scratch/23f61543c052/megatoken-immutable-inputs/src/megatoken"
+    ]
+  },
+  "python": {
+    "executable": "/workspace/scratch/23f61543c052/tracing-js-self/../native-venv-fixed/bin/python",
+    "version": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]"
+  },
+  "environment": {
+    "TZ": "UTC",
+    "TMPDIR": "/workspace/scratch/23f61543c052/integrity-triage-tmp",
+    "MEGATOKEN_ROOT": "/workspace/scratch/23f61543c052/megatoken-immutable-inputs",
+    "PYTHONPATH": "/workspace/scratch/23f61543c052/megatoken-immutable-inputs/src",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1"
+  },
+  "inputSha256": {
+    "test/test_learning_comparison.py": "6e5e20a48710a59fe1a26482800895a00fadd2216ec9a5fd0e99749b7a60d2b1",
+    "test/test_learning_artifacts.py": "8414c3de50b14a97a75d050c6b7ec2a4db2143c883c7af062d63080d8f718d95",
+    "test/test_optimization_smoke_selection.py": "02572acef01719ff23a2c9c769156866b18d6866ca6a7bc79946ab6c8cafc46c",
+    "tools/native-consumer/test_release_bundle.py": "b5fad77930dc261efb5466a557b49dded2f35e26880a88a97ea2476b59add7eb",
+    "tools/learning_comparison.py": "ccf281eae7e8f8b32d260161a2c3a3696675f2a84ec490f8954273f5198b8e9c",
+    "tools/compare-learning-runs.py": "b20da7fa6b582a5aaf1451e4dbaafa0df760b18dba3fe7785cec7400cd2d0664",
+    "tools/run-optimization-smoke.py": "0881a526e296aebc2eaec0d68d151ed655f5143a3d06daadcd8569c17effcc41",
+    "tools/package-semantic-release.py": "1a55b8217b109d64cf82eab20a6398bcc340269e5bdc336971fd178a3e99836c"
+  },
+  "suites": [
+    "test/test_learning_comparison.py",
+    "test/test_learning_artifacts.py",
+    "test/test_optimization_smoke_selection.py",
+    "tools/native-consumer/test_release_bundle.py"
+  ],
+  "semanticTrainingPerformed": false,
+  "semanticLearningClaim": null,
+  "fixtureScope": "Synthetic native checkpoint fixtures include two artificial parameter-sum optimizer updates; neither training nor evaluation fixtures assert semantic learning.",
+  "command": [
+    "/workspace/scratch/23f61543c052/tracing-js-self/../native-venv-fixed/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "test/test_learning_comparison.py",
+    "test/test_learning_artifacts.py",
+    "test/test_optimization_smoke_selection.py",
+    "tools/native-consumer/test_release_bundle.py",
+    "--junitxml=/workspace/scratch/23f61543c052/release-evidence-D/python-integration/junit.xml"
+  ],
+  "exitCode": 0,
+  "durationSeconds": 14.922853279000265,
+  "finishedAt": "2026-11-18T12:55:09.456624+00:00",
+  "toolRevisionAfter": "73f5977506f102f2abe7a439c0951fe18c10b7c9",
+  "inputBytesUnchanged": true,
+  "counts": {
+    "tests": 62,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "perSuite": {
+    "test.test_learning_comparison": {
+      "tests": 30,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "test.test_learning_artifacts": {
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "test.test_optimization_smoke_selection.SelectionIntegrity": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "tools.native-consumer.test_release_bundle.ReleaseArchiveTests": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "artifacts": {
+    "pytest.log": {
+      "sha256": "69f5fd8bd81ad3b08e3cf25388c3c011f43b92d9a6bafacde82591dfe00c4548",
+      "bytes": 204
+    },
+    "junit.xml": {
+      "sha256": "e8ab5684e4b5941545acf9e8a383b579881935d9c448b092146e21b1e12eda95",
+      "bytes": 9411
+    }
+  }
+}

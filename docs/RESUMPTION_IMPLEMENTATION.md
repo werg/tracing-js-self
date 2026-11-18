@@ -25,7 +25,15 @@ It introduces no learning/campaign population. The completed full native
 qualification remains bound to `1e2e6a0`, and the earlier full local suite remains
 bound to `aa7b843`. All original receipts remain unchanged.
 
-## W01–W14 status
+## Parallel PR39 qualification — separate measured cohort
+
+[PR39](https://github.com/werg/tracing-js-self/pull/39) integrates the producer correction from PR41 and pins the paired consumer to `6e27a7c6529aa0778c5ea818432461db7cd05ea7`. Its local I evidence at producer `c2a64424d052f9b90a340a59a8d74cf5564e47aa` records **945 Node tests passed with zero failures or skips**, eight independent reference fixtures passed, and **40/40 attempted native capability admissions** (of 49 declared probes). All eight hosted workflows completed successfully at `057e39b4176914f8c3c74967af2491a268b93a53`, including all five native lanes. Those are exact historical producing pins, not a claim that the merged tree was separately requalified.
+
+The D real-source census records **987/1,171 admissions**, 965 exact-public representatives, and a component-capped release of **211 prepared examples (132 train / 27 validation / 52 test)**. The separate F follow-up admits **60/60 targeted cases** after retaining and retrying the original timeouts. The I-paired optimizer diagnostic ran **49 updates over all 32 examples / 9,379 supervised lexical targets**, with held-in complete execution **0/4** and held-out complete execution **0/8** for both base and trained arms. **W10/W11 empirical learning acceptance remains unmet.**
+
+These D/F populations, native results and 49-update training outcomes must not be merged numerically with the independent main/PR38 native matrix or its 56-update learning run. The original main ledger below is preserved for its historical scope. PR39's [consolidated handover](RESUMPTION_HANDOVER.md), [final acceptance review](PLAN_ACCEPTANCE_FINAL.md), and [I qualification receipt](evidence/qualification-I-2026-11-18.json) retain its detailed evidence and limitations.
+
+## W01–W14 status — parallel-main qualification
 
 | Work | Implemented result | Evidence and remaining acceptance condition |
 | --- | --- | --- |

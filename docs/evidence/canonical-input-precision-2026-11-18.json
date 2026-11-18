@@ -1,0 +1,272 @@
+{
+  "schema": "semantic-canonical-input-precision-triage/1",
+  "recordedAt": "2026-11-18T13:41:47.046Z",
+  "producerRevision": "a01cdc6d7e8efccf22ac5cce40c0a7c6d9efdcd4",
+  "producerTree": "c5a115cd2d09462481d31a5c5748c83508a1b11b",
+  "workingTreeClean": true,
+  "node": "24.22.3",
+  "timezone": "UTC",
+  "originalD": {
+    "producerRevision": "83e0d5742e63dc4439b68d6296f323cb7a3aafdc",
+    "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+    "campaignDigest": "9feebefdd391b9d6aabb62cb5a4dafb921c48cee2ae9f90f70f89a983243fcb6",
+    "completeLogEntries": 1171,
+    "decodedArtifactSha256": "8916aab8298bd9f549a5c5e90a40c12bcc11c9c6b12b5afd3f57fbd736b5d248",
+    "failuresPreservedAndRechecked": true
+  },
+  "fresh": {
+    "command": [
+      "node",
+      "tools/generate-effectful-training.mjs",
+      "--recipe",
+      "real-source",
+      "--source-stream",
+      "utilities,exercism,production",
+      "--per-family",
+      "12",
+      "--case-ids",
+      "case-ids.json",
+      "--registry",
+      "release-evidence-D/source-registry.json",
+      "--out",
+      "canonical-input-precision-review/campaign",
+      "--jobs",
+      "1",
+      "--compact-storage"
+    ],
+    "exitCode": 1,
+    "exitMeaning": "Both selected candidates explicitly refused; this is the expected collector failure status.",
+    "campaignDigest": "53c4dcd3495d1ef813b858bc135bfd5103763272cffcfa1a1c21e9b709751762",
+    "manifestSha256": "12f2e1122c05cfcc25108824217adad56d045461fcf594128dda06af735b3b3c",
+    "counts": {
+      "attempted": 2,
+      "admitted": 0,
+      "locally_verified": 0,
+      "fixture_unsupported": 2
+    },
+    "selection": {
+      "schema": "semantic-case-selection/1",
+      "mode": "registered-case-ids",
+      "order": "registered-catalog",
+      "caseIds": [
+        "real-exercism-fd163dd26aa026080cdd1737",
+        "real-exercism-4524e8796cbf93cbc09c7b60"
+      ],
+      "requestedFileSha256": "d2cc1888bf9e3327a9fac2ab796430a61078e0aa1eaabbf19bb00d7e76cb8df2",
+      "registeredCandidates": 1171,
+      "sourceInventoryEntries": 297,
+      "sourceInventoryDigest": "4296036f3e997688ebd704026b6ed8298125be50ff1f7ddb32e27ab28b6c29a9"
+    },
+    "sourceRegistry": {
+      "digest": "3518d930f2d486f81e6d914c5233b5475450b149d0036d1bee50364bf43e1498",
+      "sourceVariants": 508,
+      "sourceFamilies": 199,
+      "independentComponents": 135,
+      "nearPairs": 5,
+      "splitComponents": {
+        "train": 89,
+        "validation": 13,
+        "test": 33
+      }
+    },
+    "generatedExports": 0,
+    "guestSourceExecution": "not-reached: precision preflight",
+    "nativeAdmission": "not-requested",
+    "optimizerSteps": 0,
+    "runtime": {
+      "node": "v24.22.3",
+      "v8": "13.6.233.17-node.63",
+      "platform": "linux",
+      "arch": "x64",
+      "dependencies": {
+        "acorn": "8.15.0",
+        "typescript": "5.9.3"
+      },
+      "timezone": "UTC",
+      "locale": "en-US"
+    }
+  },
+  "scopeCheck": {
+    "canonicalCandidates": 201,
+    "unchangedCandidates": 199,
+    "precisionRefusals": 2,
+    "argumentValuesChanged": false,
+    "originalOrTransformedSourceBytesChanged": false,
+    "comparisonBase": "7d447f13c712e45a0cc222f1a598f4050dc84246"
+  },
+  "javascriptTrack": {
+    "repository": "exercism/javascript",
+    "revision": "ff04f35158cdf61eebfdf18a774010495a1fd6d9",
+    "path": "exercises/practice/armstrong-numbers/armstrong-numbers.spec.js",
+    "gitBlob": "4d380e8b7d5b417d8add4e5c48ae5f0493e3a970",
+    "sha256": "74f44633814b1303fafe90c9b4eed7bb7ca7e8493982d5424fd1d3111d6f1cc0",
+    "bytes": 1619,
+    "sourceURL": "https://raw.githubusercontent.com/exercism/javascript/ff04f35158cdf61eebfdf18a774010495a1fd6d9/exercises/practice/armstrong-numbers/armstrong-numbers.spec.js",
+    "declaredLargeInputType": "BigInt literals",
+    "execution": "not-executed; upstream xtest declarations inspected",
+    "license": "MIT",
+    "retainedLicenseSha256": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+    "retainedSpecPath": "canonical-input-precision-2026-11-18/armstrong-numbers.spec.js",
+    "retainedLicensePath": "canonical-input-precision-2026-11-18/LICENSE",
+    "licenseGitBlob": "90e73be03b5e239275cce1821bbd742e63a502a3"
+  },
+  "tests": {
+    "command": "node --test test/canonical-input-precision.test.js test/owned-exercism.test.js test/trusted-source-candidates.test.js",
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 5235.837329,
+    "node": "24.22.3"
+  },
+  "cases": [
+    {
+      "id": "real-exercism-fd163dd26aa026080cdd1737",
+      "canonicalInputPrecision": {
+        "schema": "canonical-input-precision/1",
+        "status": "unsupported",
+        "scope": "integer-valued-json-numbers",
+        "losses": [
+          {
+            "lexeme": "186709961001538790100634132976990",
+            "canonicalInteger": "186709961001538790100634132976990",
+            "observedNumber": "1.8670996100153877e+32",
+            "observedInteger": "186709961001538774354986564321280",
+            "path": [
+              "input",
+              "number"
+            ],
+            "span": {
+              "start": 2641,
+              "end": 2674
+            }
+          }
+        ]
+      },
+      "historical": {
+        "status": "canonical_mismatch",
+        "entryDigest": "cd814273ac3cd3663583557946c73f9b60481277a95b3db4e2a748cb115017ae",
+        "candidateDigest": "936b07d756c3d12a0117225503a6ff67092917870604482af477259bafe8fb55",
+        "result": {
+          "path": "objects/results/83f9037e2755e7ceb511feefe922ced17f55833ec63c455335a8bdc7cba7eb5d.json.gz",
+          "sha256": "049f55f617b010fab7f4996dc33c4c82c3d8e9bc0e317c9c44bc0ca8b4bd3933",
+          "contentSha256": "83f9037e2755e7ceb511feefe922ced17f55833ec63c455335a8bdc7cba7eb5d",
+          "bytes": 586,
+          "uncompressedBytes": 1083,
+          "encoding": "gzip"
+        },
+        "observedOutcome": "return",
+        "observedValue": [
+          "bool",
+          false
+        ],
+        "expected": true
+      },
+      "fresh": {
+        "status": "fixture_unsupported",
+        "reason": "unsupported_input_precision",
+        "entryDigest": "c6c720df6ce900d9753957eda241cb1c3eac5eb16c279e01f3307bf455339b70",
+        "candidateDigest": "c3341a03bc923c32d2532530d8d8348c68bbbde4d7fb16df7ceca9da24ff0320",
+        "result": {
+          "path": "objects/results/a2b631419873995389063dd0cbf44d146f990d696399d2402fa617a7b19f4677.json.gz",
+          "sha256": "f1164fee09f5d144dd2282d9c38e3f40119575b543f8c0a44141fe4c7fd878b4",
+          "contentSha256": "a2b631419873995389063dd0cbf44d146f990d696399d2402fa617a7b19f4677",
+          "bytes": 2066,
+          "uncompressedBytes": 5212,
+          "encoding": "gzip"
+        },
+        "canonicalScenarios": [
+          "big-integer"
+        ],
+        "canonicalComments": [
+          "The numeric size of this input number is 108 bits. Consider skipping this test if appropriate."
+        ],
+        "sourceSha256": "dade500f9ceba1ad58e3110dd22166ea102dec6f141ee52fc6dd9f5770b4b0b1",
+        "canonicalProvenance": {
+          "repository": "exercism/problem-specifications",
+          "revision": "650bebeb39ad40439175288042aece982b0a90a9",
+          "path": "exercises/armstrong-numbers/canonical-data.json",
+          "sha256": "e8567a19cfaa0cf711fa2a1b2d4ec92b9fcdfddf42d89b969ce32f99fcc7a1fe",
+          "license": "MIT"
+        }
+      }
+    },
+    {
+      "id": "real-exercism-4524e8796cbf93cbc09c7b60",
+      "canonicalInputPrecision": {
+        "schema": "canonical-input-precision/1",
+        "status": "unsupported",
+        "scope": "integer-valued-json-numbers",
+        "losses": [
+          {
+            "lexeme": "115132219018763992565095597973971522401",
+            "canonicalInteger": "115132219018763992565095597973971522401",
+            "observedNumber": "1.15132219018764e+38",
+            "observedInteger": "115132219018763998168113697698579742720",
+            "path": [
+              "input",
+              "number"
+            ],
+            "span": {
+              "start": 3080,
+              "end": 3119
+            }
+          }
+        ]
+      },
+      "historical": {
+        "status": "canonical_mismatch",
+        "entryDigest": "052670020a0c16c51eb56bfa7b01423b5b2b07e732197e7ca9ef5c6957d1fd47",
+        "candidateDigest": "d64308fa331fdca66dcf070108e9e8818268b6deff880b35c7866b3fb2b83b5a",
+        "result": {
+          "path": "objects/results/639732306b0c77efea5478e1ff184684f19b15a7e7b2b940dbc94a208216fb93.json.gz",
+          "sha256": "84ad1c66443ff8913902329471b3ee6f564bb9b754526618ce7d13bccdad767b",
+          "contentSha256": "639732306b0c77efea5478e1ff184684f19b15a7e7b2b940dbc94a208216fb93",
+          "bytes": 583,
+          "uncompressedBytes": 1079,
+          "encoding": "gzip"
+        },
+        "observedOutcome": "return",
+        "observedValue": [
+          "bool",
+          false
+        ],
+        "expected": true
+      },
+      "fresh": {
+        "status": "fixture_unsupported",
+        "reason": "unsupported_input_precision",
+        "entryDigest": "5180e933603d92b5c9a89ec01f2df41a13a84ec5d7d2ea675b0c49e8af7652cb",
+        "candidateDigest": "4f04d6959921c32280a46c5cbcc598e4fa8eac5dfab7f49c104018304ecc2ddb",
+        "result": {
+          "path": "objects/results/14815b00efd50d86d966560e6a250a287f8304f8b4f2b756808beb7b8b7df4d6.json.gz",
+          "sha256": "f2d8f752fc14088f7d4186730800a45cab2b4a990a669aabeee0e63dcf55256b",
+          "contentSha256": "14815b00efd50d86d966560e6a250a287f8304f8b4f2b756808beb7b8b7df4d6",
+          "bytes": 2077,
+          "uncompressedBytes": 5224,
+          "encoding": "gzip"
+        },
+        "canonicalScenarios": [
+          "big-integer"
+        ],
+        "canonicalComments": [
+          "The numeric size of this input number is 127 bits. Consider skipping this test if appropriate."
+        ],
+        "sourceSha256": "dade500f9ceba1ad58e3110dd22166ea102dec6f141ee52fc6dd9f5770b4b0b1",
+        "canonicalProvenance": {
+          "repository": "exercism/problem-specifications",
+          "revision": "650bebeb39ad40439175288042aece982b0a90a9",
+          "path": "exercises/armstrong-numbers/canonical-data.json",
+          "sha256": "e8567a19cfaa0cf711fa2a1b2d4ec92b9fcdfddf42d89b969ce32f99fcc7a1fe",
+          "license": "MIT"
+        }
+      }
+    }
+  ],
+  "limitations": [
+    "No canonical input or observed result is coerced.",
+    "Exact representable integer values above Number.MAX_SAFE_INTEGER are not refused merely because of magnitude.",
+    "Fractional values retain the existing Number contract; this inspection is not arbitrary decimal arithmetic.",
+    "The existing owned BigInt/spread profile is not expanded, and these rows have no new native or model result.",
+    "Original D canonical_mismatch receipts remain historical evidence and are not relabeled."
+  ]
+}

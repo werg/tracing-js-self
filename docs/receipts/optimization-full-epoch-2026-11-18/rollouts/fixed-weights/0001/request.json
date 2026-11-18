@@ -1,0 +1,95 @@
+{
+  "schema": "semantic-evaluation-request/4",
+  "caseId": "compound-effectful",
+  "request": {
+    "schema": "selected-evaluation-case/4",
+    "program": {
+      "programId": "program1",
+      "source": "\"use strict\";async function run(key){const value=await host.readAsync(key);const next=(value+2)*(value-1)+3;host.store(key,next);return next;}",
+      "entry": "run",
+      "capabilities": [
+        "demo.readAsync",
+        "demo.store"
+      ]
+    },
+    "invocation": {
+      "programId": "program1",
+      "invocationId": "invocation1",
+      "trackId": "worker1",
+      "realmId": "realm1",
+      "triggerId": "teacher-entry",
+      "inputGraph": {
+        "roots": [
+          [
+            "str",
+            "compound"
+          ]
+        ],
+        "objects": []
+      },
+      "realmPolicy": "retained",
+      "completionPolicy": "await-returned-promise",
+      "receiverValue": [
+        "undefined"
+      ]
+    },
+    "fixture": {
+      "calls": [
+        {
+          "operation": "demo.readAsync",
+          "status": "fulfilled",
+          "argumentGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "str",
+                "compound"
+              ]
+            ],
+            "objects": []
+          },
+          "resultGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "num",
+                5
+              ]
+            ],
+            "objects": []
+          }
+        },
+        {
+          "operation": "demo.store",
+          "status": "fulfilled",
+          "argumentGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "str",
+                "compound"
+              ],
+              [
+                "num",
+                31
+              ]
+            ],
+            "objects": []
+          },
+          "resultGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "undefined"
+              ]
+            ],
+            "objects": []
+          }
+        }
+      ],
+      "settlementOrder": null
+    }
+  },
+  "seed": 17,
+  "representation": "compact"
+}

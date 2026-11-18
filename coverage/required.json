@@ -42,7 +42,7 @@
   "fullECMAScriptConformance": false,
   "learningImprovement": "Requires a separately executed frozen base-versus-trained experiment.",
   "currentReport": "coverage/current-v5.json",
-  "currentReportProducer": "c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39",
+  "currentReportProducer": "c2a64424d052f9b90a340a59a8d74cf5564e47aa",
   "profile": "training-js/1",
   "generate": "npm run coverage:current -- --out PATH [--megatoken DIR --tokenizer FILE --python PYTHON]",
   "baseline": "npm run baseline:v5 -- --out DIRECTORY [--megatoken DIR --tokenizer FILE --python PYTHON]",
@@ -64,5 +64,13 @@
   ],
   "historicalReport": "coverage/historical/required-v1.json",
   "historicalScope": "Original synchronous semantic-execution/1 ledger, retained byte-for-byte; not current capability evidence.",
-  "interpretation": "Retained reports state the exact revisions they measured and are not qualification of a later containing commit. Native qualification of separate corpora does not fill a feature-level native column. Model results require actual evaluation. No full ECMAScript or Test262 claim."
+  "interpretation": "Retained reports state the exact revisions they measured and are not qualification of a later containing commit. Native qualification of separate corpora does not fill a feature-level native column. Model results require actual evaluation. No full ECMAScript or Test262 claim.",
+  "currentReportNativeConsumer": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+  "currentReportSha256": "b63dbbdf053e099a9408cd451991bf7bd69113308e1c0806bf2f9271c0e36918",
+  "previousQualifiedReport": {
+    "path": "coverage/historical/qualification-H-2026-11-18.json",
+    "producerRevision": "881664b98ec9d484f9f4775d0b40a3a2b1b81174",
+    "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+    "sha256": "7a5bbae9fc70be87d884a8b550bac7a816c03de47dbd88cd53dc19ddcf83cba2"
+  }
 }

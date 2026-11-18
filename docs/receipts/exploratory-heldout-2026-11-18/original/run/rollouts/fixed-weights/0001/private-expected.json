@@ -1,0 +1,208 @@
+{
+  "completion": {
+    "kind": "return",
+    "value": [
+      "str",
+      "b2s="
+    ]
+  },
+  "state": {
+    "roots": [
+      [
+        "str",
+        "b2s="
+      ]
+    ],
+    "objects": []
+  },
+  "effects": [
+    {
+      "kind": "dispatch",
+      "call": 0,
+      "operation": "fs.openRead",
+      "arguments": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "input.txt"
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "settlement",
+      "call": 0,
+      "status": "fulfilled",
+      "result": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "stream:read:1"
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "dispatch",
+      "call": 1,
+      "operation": "fs.readChunk",
+      "arguments": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "stream:read:1"
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "settlement",
+      "call": 1,
+      "status": "fulfilled",
+      "result": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "b2s="
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "dispatch",
+      "call": 2,
+      "operation": "fs.openWrite",
+      "arguments": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "output.txt"
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "settlement",
+      "call": 2,
+      "status": "fulfilled",
+      "result": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "stream:write:1"
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "dispatch",
+      "call": 3,
+      "operation": "fs.writeChunk",
+      "arguments": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "stream:write:1"
+          ],
+          [
+            "str",
+            "b2s="
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "settlement",
+      "call": 3,
+      "status": "fulfilled",
+      "result": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "num",
+            2
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "dispatch",
+      "call": 4,
+      "operation": "fs.closeWrite",
+      "arguments": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "stream:write:1"
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "settlement",
+      "call": 4,
+      "status": "fulfilled",
+      "result": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "undefined"
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "dispatch",
+      "call": 5,
+      "operation": "fs.close",
+      "arguments": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "str",
+            "stream:read:1"
+          ]
+        ],
+        "objects": []
+      }
+    },
+    {
+      "kind": "settlement",
+      "call": 5,
+      "status": "fulfilled",
+      "result": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "undefined"
+          ]
+        ],
+        "objects": []
+      }
+    }
+  ],
+  "callbacks": [],
+  "cleanup": {
+    "pendingEffects": 0,
+    "pendingJobs": 0,
+    "openHandlers": 0
+  }
+}

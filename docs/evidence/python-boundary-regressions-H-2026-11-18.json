@@ -1,0 +1,38 @@
+{
+  "schema": "semantic-python-boundary-regressions/1",
+  "status": "passed",
+  "producerRevision": "881664b98ec9d484f9f4775d0b40a3a2b1b81174",
+  "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+  "totals": {
+    "tests": 147,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 6,
+    "passed": 141
+  },
+  "command": "python -m pytest -q test/test_*.py tools/native-consumer/test_*.py --junitxml=python-merged-regressions.xml",
+  "durationSeconds": 7.238,
+  "environment": {
+    "TZ": "UTC",
+    "LC_ALL": "C.UTF-8",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "nativeCheckout": "megatoken-merged",
+    "nativeEnvironment": "native-venv-merged"
+  },
+  "files": [
+    {
+      "path": "release-evidence-H/python-merged-regressions.log",
+      "bytes": 376,
+      "sha256": "3b2ea2f5e6a1d4beb3cf7d40dd983874832b5d40b925db1709d55248b64eb6fe"
+    },
+    {
+      "path": "release-evidence-H/python-merged-regressions.xml",
+      "bytes": 25406,
+      "sha256": "85b3dde901ebc648197985f247edce5f1e535fd3b47da527700c3b11bf253296"
+    }
+  ],
+  "skipScope": "Six tests require the original retained diagnostic checkpoint; all six were separately exercised at the original C producer/consumer pins, with a preserved14/14 actual-artifact receipt. This H run does not relabel those historical results.",
+  "optimizerSteps": 0,
+  "modelInferenceCalls": 0
+}

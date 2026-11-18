@@ -12,15 +12,18 @@ import {producerSnapshot,compareProducerSnapshot,compareReleaseEnvironment} from
 process.env.TZ='UTC';
 const root=fileURLToPath(new URL('..',import.meta.url));
 const options=new Map(),booleans=new Set(['--skip-unit','--skip-recipes']);
-const valued=new Set(['--out','--jobs','--megatoken','--python','--tokenizer','--native-policy']);
+const valued=new Set(['--out','--jobs','--megatoken','--python','--tokenizer','--native-policy','--check-timeout-ms']);
 for(let i=2;i<process.argv.length;i++){
   const key=process.argv[i];if(options.has(key)||!booleans.has(key)&&!valued.has(key))throw new Error('Unknown or repeated option '+key);
   if(booleans.has(key))options.set(key,true);
   else {const value=process.argv[++i];if(!value||value.startsWith('--'))throw new Error('Missing '+key);options.set(key,value);}
 }
-if(!options.get('--out'))throw new Error('Usage: npm run baseline:v5 -- --out DIRECTORY [--jobs 2] [--megatoken DIR --tokenizer FILE --python PYTHON]');
+if(!options.get('--out'))throw new Error('Usage: npm run baseline:v5 -- --out DIRECTORY [--jobs 2] [--check-timeout-ms 900000] [--megatoken DIR --tokenizer FILE --python PYTHON]');
 const output=resolve(options.get('--out')),jobs=Number(options.get('--jobs')??2);
 if(!Number.isInteger(jobs)||jobs<1||jobs>8)throw new Error('--jobs must be 1..8');
+const checkTimeoutMs=Number(options.get('--check-timeout-ms')??900000);
+if(!Number.isSafeInteger(checkTimeoutMs)||checkTimeoutMs<1000||checkTimeoutMs>3600000)
+  throw new Error('--check-timeout-ms must be an integer from 1000 to 3600000');
 if(existsSync(join(output,'baseline.json'))||existsSync(join(output,'baseline-start.json')))
   throw new Error('Baseline reports are immutable; choose a fresh output directory');
 mkdirSync(output,{recursive:true});mkdirSync(join(output,'.tmp'),{recursive:true});
@@ -37,6 +40,7 @@ const environmentMismatches=compareReleaseEnvironment(lockedEnvironment,actualEn
 const report={schema:'semantic-v5-baseline/1',producerRevision:git('rev-parse','HEAD'),
   producerTree:git('rev-parse','HEAD^{tree}'),workingTreeClean:git('status','--porcelain','--untracked-files=no')==='',
   environment:admissionEnvironment(),executionEnvironment:{timezone:env.TZ,locale:env.LC_ALL},
+  executionLimits:{checkTimeoutMs},
   lockDigests:Object.fromEntries(['package-lock.json','tools/spec-oracle/package-lock.json',
     'tools/native-consumer/requirements.lock','profiles/release-environment.lock.json',
     'contracts/native-admission-policy-v5.json','contracts/semantic-harness-v5.json',
@@ -46,7 +50,7 @@ const report={schema:'semantic-v5-baseline/1',producerRevision:git('rev-parse','
   checks:[],corpora:[],optimizerSteps:0,learnedSuccess:null};
 writeFileSync(join(output,'baseline-start.json'),JSON.stringify(report,null,2)+'\n');
 let producerChanged=false;
-function check(name,command,args,{timeout=900000}={}){
+function check(name,command,args,{timeout=checkTimeoutMs}={}){
   const before=producerSnapshot(root),beforeMismatch=compareProducerSnapshot(initialProducer,before);
   if(producerChanged||beforeMismatch.length){
     producerChanged=true;
@@ -62,7 +66,7 @@ function check(name,command,args,{timeout=900000}={}){
   const after=producerSnapshot(root),identityFailures=compareProducerSnapshot(initialProducer,after);
   producerChanged=identityFailures.length>0;
   const row={name,command:[command,...args],status:result.status===0&&!producerChanged?'passed':'failed',exitCode:result.status,
-    signal:result.signal??null,reason:result.error?.message??null,wallSeconds:(performance.now()-start)/1000,
+    signal:result.signal??null,reason:result.error?.message??null,timeoutMs:timeout,wallSeconds:(performance.now()-start)/1000,
     producerBefore:before,producerAfter:after,identityFailures,
     stdout:{path:name+'.stdout.log',sha256:sha(stdout)},stderr:{path:name+'.stderr.log',sha256:sha(stderr)}};
   if(name==='unit')row.counts=Object.fromEntries(['tests','pass','fail','skipped','cancelled','todo'].map(key=>{

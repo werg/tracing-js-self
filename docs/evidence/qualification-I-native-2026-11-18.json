@@ -1,0 +1,116 @@
+{
+  "schema": "semantic-frozen-native-qualification/1",
+  "status": "passed-with-explicit-profile-refusals",
+  "producerRevision": "c2a64424d052f9b90a340a59a8d74cf5564e47aa",
+  "consumerRevision": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+  "scope": "Fresh 49-probe native capability ladder only. Separate unit/fixture/coordinator/Python gates have their own receipts; historical datasets and model runs are not requalified.",
+  "referenceMode": "trusted-process",
+  "probeCount": 49,
+  "nativeAttempts": 40,
+  "nativePassed": 40,
+  "nativeFailed": 0,
+  "earlierStoppedProbes": 9,
+  "allFeatureModelStagesUntested": true,
+  "stages": {
+    "frontend": {
+      "total": 49,
+      "attempted": 49,
+      "passed": 43,
+      "failed": 0,
+      "unsupported": 6,
+      "resource_limited": 0,
+      "untested": 0
+    },
+    "ownedEvaluation": {
+      "total": 49,
+      "attempted": 43,
+      "passed": 41,
+      "failed": 0,
+      "unsupported": 2,
+      "resource_limited": 0,
+      "untested": 6
+    },
+    "independentOutcome": {
+      "total": 49,
+      "attempted": 41,
+      "passed": 40,
+      "failed": 1,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 8
+    },
+    "independentIntermediate": {
+      "total": 49,
+      "attempted": 40,
+      "passed": 40,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 9
+    },
+    "v5ProjectionAndPublicReplay": {
+      "total": 49,
+      "attempted": 41,
+      "passed": 41,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 8
+    },
+    "nativeAdmission": {
+      "total": 49,
+      "attempted": 40,
+      "passed": 40,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 9
+    },
+    "modelEvaluation": {
+      "total": 49,
+      "attempted": 0,
+      "passed": 0,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 49
+    }
+  },
+  "requiredRepairedProbesAdmitted": true,
+  "retainedNativeFiles": 120,
+  "retainedNativeBytes": 14132251,
+  "retentionInventorySha256": "a1506fbe02ab282b4c484ab2f11df918508a236dd60083202a97efb34ef82950",
+  "reportSha256": "b63dbbdf053e099a9408cd451991bf7bd69113308e1c0806bf2f9271c0e36918",
+  "environmentReceiptSha256": "13bc5598adf1ec87e691fa6ed5596ae5e4d7fbb6de550c36747de900f1bcd75a",
+  "process": {
+    "schema": "semantic-qualification-process/1",
+    "kind": "native-capability-ladder",
+    "status": "passed",
+    "producerRevision": "c2a64424d052f9b90a340a59a8d74cf5564e47aa",
+    "consumerRevision": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+    "argv": [
+      "node",
+      "/workspace/scratch/23f61543c052/release-evidence-I/run-capabilities.mjs"
+    ],
+    "cwd": "/workspace/scratch/23f61543c052/tracing-release-I",
+    "startedAt": "2026-11-18T15:53:46.675472+00:00",
+    "environment": {
+      "TZ": "UTC",
+      "LC_ALL": "C.UTF-8",
+      "OMP_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "TMPDIR": "/workspace/scratch/23f61543c052/release-evidence-I/tmp"
+    },
+    "exitCode": 0,
+    "completedAt": "2026-11-18T15:56:14.038159+00:00",
+    "wallSeconds": 147.36243778800053,
+    "peakRssBytes": 383029248,
+    "logBytes": 4863,
+    "logSha256": "becbd3d7a67d954138095ff09f6f39b91821869688cf46863853e8f7d9ba5005",
+    "producerTrackedFilesClean": true
+  },
+  "optimizerSteps": 0,
+  "modelInferenceCalls": 0,
+  "historicalEvidenceModified": false,
+  "producerAndConsumerTrackedFilesClean": true
+}

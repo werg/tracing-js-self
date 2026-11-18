@@ -1,0 +1,129 @@
+{
+  "schema": "semantic-admitted-selection/1",
+  "sourceCampaignDigest": "72c81f00d232edd291b93fc2dc522604caead1800d95895e59ac142b5760b47c",
+  "producerVerifier": {
+    "root": "/workspace/scratch/23f61543c052/tracing-ci-selection-probe",
+    "revision": "d15ddca47854ebdb92b23598dd720ccd1a18c822",
+    "trackedFilesClean": true,
+    "sourceEnvironmentChecksUnchanged": true,
+    "campaignReader": "exact-producing-format-under-shared-lock",
+    "candidateDigestPolicy": "original-producing-format; legacy graph commitments are not rewritten",
+    "campaignReaderSha256": "bc79b879d01472979336ae7531ffca72b7623282133fe53230caf7f4bc9a1e14"
+  },
+  "sourceManifestSha256": "309ccd7b1aef696e242d7f5230b72a10922083f23a3ec1945b9efa400d2e17b3",
+  "sourceCounts": {
+    "attempted": 2,
+    "admitted": 2,
+    "locally_verified": 0
+  },
+  "sourceCandidates": 2,
+  "selected": 1,
+  "excluded": 1,
+  "split": "all",
+  "budgetScope": "train-only; evaluation tokens do not subsidize a training-family cap",
+  "exactPublicSelection": {
+    "enabled": true,
+    "policy": "exact-public-within-frozen-component/2",
+    "nativeEpisodeDifferenceAllowed": [
+      "lineage.task_id"
+    ],
+    "representativeOrder": "lexicographic candidate ID; selected export bytes remain unchanged",
+    "excludedAliases": 1,
+    "groups": [
+      {
+        "episodeDigest": "c116e16d25bd0827e2a6ed4d1aac0020c38c0cae9f92b0b6e6fbe84af03a82ca",
+        "representativeId": "real-utilities-2ebfe51f48dad1a027958ec0",
+        "representativeIdentityDigest": "3bdeae5cbbffab1523ebff8af1758f2528a99c5719b0864e0a489a890cacafb4",
+        "componentId": "component:00c29ea794d8eedd0eb1282d361db202212b4aa25792ce18723a17ee837f2ca6",
+        "registryDigest": "4a68a123c8b1d04fa0f95ca4b5c9b45022c676bb43cbd4c9e39dbb183cb19733",
+        "split": "train",
+        "nativeContractDigest": "a8a6559dde51e99ecc35e0680c543a584f2b898b930a91728a16fe2569360329",
+        "nativeEpisodeMetadataDigest": "c8904c8846874efc8cb07a3e0a693adb47a9b485a3f8d1af9b4692f77657d706",
+        "declaredFamilies": [
+          "utility:vscode/arrays.ts/distinct"
+        ],
+        "aliases": [
+          "real-utilities-5a1fde95b4daab8314e03d36"
+        ]
+      }
+    ],
+    "nativeDedupUnchanged": true,
+    "rawAdmissionsUnchanged": true
+  },
+  "maxFamilyTokens": 9007199254740991,
+  "maxFamilyShare": 1,
+  "groupingPolicies": [
+    "source-components/1"
+  ],
+  "trainingComponents": [
+    {
+      "componentId": "component:00c29ea794d8eedd0eb1282d361db202212b4aa25792ce18723a17ee837f2ca6",
+      "episodes": 1,
+      "declaredFamilies": [
+        "utility:vscode/arrays.ts/distinct"
+      ],
+      "generatedTokens": 1379,
+      "shareOfTrainingTokens": 1
+    }
+  ],
+  "maximumTrainingComponentShare": 1,
+  "splits": {
+    "train": {
+      "episodes": 1,
+      "declaredFamilies": 1,
+      "sourceComponents": 1,
+      "generatedTokens": 1379
+    },
+    "validation": {
+      "episodes": 0,
+      "declaredFamilies": 0,
+      "sourceComponents": 0,
+      "generatedTokens": 0
+    },
+    "test": {
+      "episodes": 0,
+      "declaredFamilies": 0,
+      "sourceComponents": 0,
+      "generatedTokens": 0
+    }
+  },
+  "exclusions": [
+    {
+      "id": "real-utilities-5a1fde95b4daab8314e03d36",
+      "sourceStatus": "admitted",
+      "status": "exact_public_alias",
+      "reason": "Exact public stream represented by real-utilities-2ebfe51f48dad1a027958ec0",
+      "candidateDigest": "60971ce1f5978db2a3ef97b3f1caddcf7b7b6b2944bc68534c170a8d62578403",
+      "sourceEntryDigest": "370add01c09129d4a4d8a6a939d15d176f7dddb446c4f00b45883e567680d492",
+      "resultReference": {
+        "path": "objects/results/4c72db308909182d2958918da2262c4d4a32457001bad842593ffb305dabeed6.json.gz",
+        "sha256": "10aa4c8eb679bd3c22e4466df91fdec906cf1ed8d44d6abbf6578246f03b4f4c",
+        "contentSha256": "4c72db308909182d2958918da2262c4d4a32457001bad842593ffb305dabeed6",
+        "bytes": 1348,
+        "uncompressedBytes": 3106,
+        "encoding": "gzip"
+      },
+      "representativeId": "real-utilities-2ebfe51f48dad1a027958ec0",
+      "representativeIdentityDigest": "3bdeae5cbbffab1523ebff8af1758f2528a99c5719b0864e0a489a890cacafb4",
+      "episodeDigest": "c116e16d25bd0827e2a6ed4d1aac0020c38c0cae9f92b0b6e6fbe84af03a82ca",
+      "identityDigest": "a8d3d61deac82891b576f3f5150f2f787281442ef40604bc80b1ffb6e18869a9",
+      "taskId": "real-utilities-5a1fde95b4daab8314e03d36",
+      "sourceFamily": "utility:vscode/arrays.ts/distinct",
+      "ancestorIds": [
+        "utility:vscode/arrays.ts/distinct",
+        "upstream:microsoft/vscode:src/vs/base/common/arrays.ts"
+      ],
+      "componentId": "component:00c29ea794d8eedd0eb1282d361db202212b4aa25792ce18723a17ee837f2ca6",
+      "registryDigest": "4a68a123c8b1d04fa0f95ca4b5c9b45022c676bb43cbd4c9e39dbb183cb19733",
+      "split": "train",
+      "provenanceDigest": "ff11b250725ee823cab623e5e6a39176611296f1eafba7f7c552a904346c9732",
+      "nativeReceiptDigest": "f8a9284c9a9c9ab091947720900fd10bba3b68bd64cef17675b3b1cb463f923d",
+      "nativeContractDigest": "a8a6559dde51e99ecc35e0680c543a584f2b898b930a91728a16fe2569360329",
+      "nativeEpisodeMetadataDigest": "c8904c8846874efc8cb07a3e0a693adb47a9b485a3f8d1af9b4692f77657d706",
+      "representativeSelected": true
+    }
+  ],
+  "originalCampaignRequiredForAudit": true,
+  "admission": "retained-existing-receipts; independent consumer preparation must rerun source/native gates",
+  "optimizerSteps": 0
+}

@@ -104,6 +104,8 @@ function exercismCandidates(root,perFamily,mutationsPerFamily){
           transform:{schema:'pinned-exercism-projection/1',lowering:lowered?.lowering??null,originalSites},
           inputOrigin:fixture.generator??'upstream-canonical',derivedFrom:fixture.derivedFrom??null,
           canonicalInput:fixture.generator?null:(fixture.canonicalInput??null),
+          ...(fixture.inputPrecision?{canonicalInputPrecision:fixture.inputPrecision,
+            canonicalScenarios:fixture.scenarios,canonicalComments:fixture.canonicalComments}:{}),
           canonicalInputBinding:fixture.generator?null:(fixture.inputBinding??null),
           canonicalArgumentBinding:fixture.generator?null:(fixture.argumentBinding??null),
           canonicalExpectedBinding:fixture.generator?null:(fixture.expectedBinding??null),

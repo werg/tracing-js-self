@@ -19,6 +19,13 @@ source execution, but are not learner trace targets.
 
 ## Active code
 
+The latest frozen [I qualification](evidence/qualification-I-2026-11-18.json)
+passes 945 unit tests with zero skips, eight reference fixtures and all forty
+attempted native probes. All eight hosted workflows pass at the exact revision
+recorded in the [handover](RESUMPTION_HANDOVER.md). The completed learning
+diagnostic still has zero successful held-in or held-out executions; its
+acceptance criteria remain unmet.
+
 The November resumption adds an explicit [capability index](../coverage/required.json),
 [measured v5 probes](../coverage/current-v5.json), and
 [implementation/evidence ledger](RESUMPTION_IMPLEMENTATION.md). Source-profile

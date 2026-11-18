@@ -1,0 +1,16 @@
+{
+  "schema": "semantic-release-verification/1",
+  "status": "verified",
+  "files": 5336,
+  "identityDigest": "9fdfb1b056b851faba3414e5ddc9a7dcf8e21e906e029c26ce56c97311d5dbce",
+  "archiveSha256": "8fc95f764422b9062c119e46d7218be97e650b63ff04c645f07d33691d1245cc",
+  "archive": "tracing-js-self-release-D-source-audit-2026-11-18.tar.gz",
+  "bytes": 69861152,
+  "uncompressedBytes": 96171471,
+  "producerRevision": "83e0d5742e63dc4439b68d6296f323cb7a3aafdc",
+  "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+  "candidateInvocations": 1171,
+  "nativeAdmissions": 987,
+  "refusals": 184,
+  "scope": "Complete immutable original D real-source audit checkpoint; not the later native-prepared release. All original dispositions remain unchanged."
+}

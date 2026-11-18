@@ -116,6 +116,8 @@ try{
      split:pair.split,caseId:fixture.caseId,property:fixture.property,
      inputOrigin:fixture.generator??'upstream-canonical',
      derivedFrom:fixture.derivedFrom??null,
+     ...(fixture.inputPrecision?{canonicalInputPrecision:fixture.inputPrecision,
+       canonicalScenarios:fixture.scenarios,canonicalComments:fixture.canonicalComments}:{}),
      provenance:pair.provenance,lowering:lowered?.lowering??null};
    records.push(item);
    if(fixture.status!=='candidate'){fail(item,'fixture_unsupported',fixture.status);continue;}

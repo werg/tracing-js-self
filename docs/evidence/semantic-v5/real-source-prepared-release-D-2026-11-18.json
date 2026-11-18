@@ -1,0 +1,129 @@
+{
+  "archive": {
+    "archiveSha256": "ac4e88a3fba5f046ad44501e5751560806b1cdeaf701deb46fd6eea80aff9558",
+    "bytes": 1688252285,
+    "files": 6474,
+    "identityDigest": "113e8faec41e9455c755860c6e32b74c16da7d01bf603f5467aaf1aad2fec030",
+    "path": "deliverables/release-D-real-source/package/semantic-v5-release.tar.gz",
+    "schema": "semantic-release-verification/1",
+    "status": "verified"
+  },
+  "learnedSuccess": null,
+  "nativeAliasProofSha256": "d54d7e92a003547e1c29279583d97a65d6f3589fc0186ef802b277f7e45c63c3",
+  "nativeCounts": {
+    "accepted_candidate": 541,
+    "admitted": 965,
+    "attempted": 965,
+    "duplicate": 424
+  },
+  "nativeDedupDatabaseSha256": "a0803c23ed56131a99db3817fdd2ffeb67929c801c6ec8b07f2aed45429f52a1",
+  "nativePolicy": {
+    "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+  },
+  "nativePrepared": {
+    "budgetComponents": 32,
+    "declaredFamilies": 89,
+    "episodes": 541,
+    "frozenSourceComponents": 32,
+    "maximumTrainingComponentShare": 0.4459451167007469,
+    "nativeGeneratedTokens": 546670,
+    "nativeObservedTokens": 1394518,
+    "nativeResolvedFamilies": 32,
+    "scoredPositions": 546670,
+    "splits": {
+      "test": {
+        "budgetComponents": 9,
+        "declaredFamilies": 11,
+        "episodes": 52,
+        "frozenSourceComponents": 9,
+        "nativeGeneratedTokens": 38179,
+        "nativeObservedTokens": 108300,
+        "nativeResolvedFamilies": 9,
+        "scoredPositions": 38179
+      },
+      "train": {
+        "budgetComponents": 21,
+        "declaredFamilies": 74,
+        "episodes": 462,
+        "frozenSourceComponents": 21,
+        "nativeGeneratedTokens": 505181,
+        "nativeObservedTokens": 1261608,
+        "nativeResolvedFamilies": 21,
+        "scoredPositions": 505181
+      },
+      "validation": {
+        "budgetComponents": 2,
+        "declaredFamilies": 4,
+        "episodes": 27,
+        "frozenSourceComponents": 2,
+        "nativeGeneratedTokens": 3310,
+        "nativeObservedTokens": 24610,
+        "nativeResolvedFamilies": 2,
+        "scoredPositions": 3310
+      }
+    }
+  },
+  "nativePreparedIndexSha256": "0fe9a4e9bf8fd65901abd9c40a480a07e7182aa52729a04ce80defbc2393fbb4",
+  "nativePreparedManifestSha256": "e92d7aa90aa45e561b7bda79379853191a6308fd5168804b1f2ea4d0c62a0918",
+  "nativeRefusals": [],
+  "nativeReportSha256": "88b11afbf7c02c1300b2aeabf903c53d029cae44e93f050c2378d88b438adc5e",
+  "optimizerSteps": 0,
+  "preparedFingerprint": "10dcfdd852c753e2d5febfd4a824dd865a366148197f39038975bafaed398fce",
+  "producerRevision": "83e0d5742e63dc4439b68d6296f323cb7a3aafdc",
+  "publicRedistributionApproved": false,
+  "representativeManifestSha256": "f5fd2542c6f09bfe1ab070bbd637c042cbe4d970e6cc1d3b59988244f9a78289",
+  "resources": {
+    "consumerRevision": "b88073dcb5a8e438a711d494a5fd592e773798f5",
+    "elapsedMs": 2055308.514766002,
+    "execution": "runpy.run_path of the exact frozen packager, without rewriting or monkey-patching its source",
+    "exitCode": 0,
+    "invocation": [
+      "/workspace/scratch/23f61543c052/tracing-release-D/tools/package-semantic-release.py",
+      "--corpus",
+      "../deliverables/release-D-real-source/selected-v2",
+      "--audit-campaign",
+      "../release-evidence-D/real-source",
+      "--tracer-root",
+      ".",
+      "--megatoken",
+      "../megatoken-immutable-inputs",
+      "--tokenizer",
+      "../tokenizer.json",
+      "--environment-receipt",
+      "../release-evidence-D/native-environment.json",
+      "--out",
+      "../deliverables/release-D-real-source/package"
+    ],
+    "peakPythonProcessRssBytes": 446980096,
+    "producerRevision": "83e0d5742e63dc4439b68d6296f323cb7a3aafdc",
+    "pythonSystemCpuSeconds": 54.003303,
+    "pythonUserCpuSeconds": 774.523247,
+    "rssScope": "Linux RUSAGE_SELF measures the packager Python process; RUSAGE_CHILDREN is the maximum reported for waited children, not simultaneous process-tree memory.",
+    "schema": "semantic-release-package-resources/1",
+    "waitedChildrenReportedPeakRssBytes": 446980096,
+    "waitedChildrenSystemCpuSeconds": 274.741338,
+    "waitedChildrenUserCpuSeconds": 1238.203193
+  },
+  "schema": "semantic-real-source-prepared-release-receipt/1",
+  "scope": "All 965 representatives rechecked through the unchanged frozen producer and pinned native consumer; every archive member verified against its inventory. Complete original 1171-attempt audit is included. Native duplicates, exact-public aliases and original non-admissions remain distinct.",
+  "sourceCampaignDigest": "9feebefdd391b9d6aabb62cb5a4dafb921c48cee2ae9f90f70f89a983243fcb6",
+  "sourceManifestSha256": "dc630eb7d08d09fd4020b74b437efc997c35efa094adae05ab4f724a9f09310f",
+  "sourceRegistryDigest": "3518d930f2d486f81e6d914c5233b5475450b149d0036d1bee50364bf43e1498",
+  "status": "verified",
+  "storage": {
+    "nativeAuditJsonBytes": 6874306358,
+    "nativePreparedDirectoryBytes": 7015316066,
+    "selectedExportBytes": 4224964911
+  },
+  "upstreamDispositions": {
+    "exactPublicAliases": 22,
+    "nativeExcluded": 424,
+    "nativePreparedAccepted": 541,
+    "nativeRepresentatives": 965,
+    "originalAttempted": 1171,
+    "originalNativeAdmitted": 987,
+    "originalNonAdmissions": 184
+  }
+}

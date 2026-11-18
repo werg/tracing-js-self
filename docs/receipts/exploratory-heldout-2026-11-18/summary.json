@@ -1,0 +1,133 @@
+{
+  "schema": "exploratory-heldout-evidence-summary/1",
+  "purpose": "diagnostic",
+  "confirmatory": false,
+  "productionQualification": false,
+  "generalizationClaim": false,
+  "optimizerSeed": 17,
+  "interpretation": "Neither the initialized base nor its trained checkpoint completed any of the eight frozen test tasks. The family-weighted change is zero; no learned generalization is established.",
+  "actualTraining": {
+    "preparedExamples": 32,
+    "actualExamplesSampled": 32,
+    "familiesSampled": 29,
+    "optimizerSteps": 49,
+    "supervisedLexicalTargets": 9379
+  },
+  "originalFrozenCohortSha256": "753306fad714c04ad70ff755ea9f5d65b128be1341fff4c83ba2fcd94c7405d7",
+  "originalReportSha256": "6caf2cd01f01a6d86bac5d05ee588cee7fddc4f5b1d5b9c6003e24ae5ef303f8",
+  "retrospectiveAuditSha256": "d65bb4b885dcc6221c8363ef8bbfdb80063347e6d08697b08b260b688a5e3690",
+  "summary": {
+    "arms": {
+      "fixed-weights": {
+        "episodes": 8,
+        "families": 8,
+        "wholeTaskSuccesses": 0,
+        "episodeWeightedCorrectness": 0.0,
+        "familyWeightedCorrectness": 0.0,
+        "familyScores": {
+          "async-cleanup": 0.0,
+          "filesystem-stream-copy": 0.0,
+          "persistent-external-trigger": 0.0,
+          "semantic-benchmark-v1:fibonacci-iterative": 0.0,
+          "semantic-benchmark-v1:modular-exponentiation": 0.0,
+          "semantic-benchmark-v1:running-prefix-checksum": 0.0,
+          "semantic-benchmark-v1:single-transaction-profit": 0.0,
+          "semantic-recipe:squared-distance": 0.0
+        },
+        "failureCategories": {
+          "TypeError": 5,
+          "SemanticSelectionError": 3
+        },
+        "hardGateTotals": {
+          "futureObservationLeaks": 0,
+          "unauthorizedEffects": 0,
+          "untrackedNativeFallback": 0,
+          "falseAdmissions": 0,
+          "replayNativeEffects": 0
+        },
+        "cleanupTotals": {
+          "pendingEffects": 0,
+          "pendingJobs": 0,
+          "openHandlers": 0
+        },
+        "originalEmittedTokens": 710,
+        "wallSeconds": 90.99498117399708
+      },
+      "trained": {
+        "episodes": 8,
+        "families": 8,
+        "wholeTaskSuccesses": 0,
+        "episodeWeightedCorrectness": 0.0,
+        "familyWeightedCorrectness": 0.0,
+        "familyScores": {
+          "async-cleanup": 0.0,
+          "filesystem-stream-copy": 0.0,
+          "persistent-external-trigger": 0.0,
+          "semantic-benchmark-v1:fibonacci-iterative": 0.0,
+          "semantic-benchmark-v1:modular-exponentiation": 0.0,
+          "semantic-benchmark-v1:running-prefix-checksum": 0.0,
+          "semantic-benchmark-v1:single-transaction-profit": 0.0,
+          "semantic-recipe:squared-distance": 0.0
+        },
+        "failureCategories": {
+          "TypeError": 6,
+          "SemanticSelectionError": 2
+        },
+        "hardGateTotals": {
+          "futureObservationLeaks": 0,
+          "unauthorizedEffects": 0,
+          "untrackedNativeFallback": 0,
+          "falseAdmissions": 0,
+          "replayNativeEffects": 0
+        },
+        "cleanupTotals": {
+          "pendingEffects": 0,
+          "pendingJobs": 0,
+          "openHandlers": 0
+        },
+        "originalEmittedTokens": 843,
+        "wallSeconds": 92.04415643700122
+      }
+    },
+    "familyWeightedChange": 0.0,
+    "uncertainty": "Descriptive one-seed bounded sample; no confirmatory interval or broad transfer claim."
+  },
+  "bundles": {
+    "fixed-weights": {
+      "modelSha256": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+      "checkpointSha256": "1e72b5c00d2554a1c0d5c732d48b0cf8936ddb1c5185dc56a10959fcd34d62db",
+      "tensorsExact": true,
+      "modelConfigExact": true,
+      "transducerBankExact": true,
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+      "modelVersion": 0,
+      "manifestSha256": "7179d897cfab96ded8155ddce8598a5c33da469e7eb496396370120aea2c1594"
+    },
+    "trained": {
+      "modelSha256": "853c12ec19ccd6add5850f76773fe4a781c923cfd4e7c226a1e7fc4071484103",
+      "checkpointSha256": "8a252dff697b1de7fa842c0370cc6a37626e4720be23858b39b82f100b93546c",
+      "tensorsExact": true,
+      "modelConfigExact": true,
+      "transducerBankExact": true,
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+      "modelVersion": 49,
+      "manifestSha256": "6a9bb2e07f3a9b7d7269f096264083ff4305fe67a93f066309ba050d3a6af205"
+    }
+  },
+  "limits": {
+    "modelTokens": 128,
+    "caseTimeoutSeconds": 120,
+    "cleanupTimeoutSeconds": 10
+  },
+  "failuresAtFirstCandidateAction": true,
+  "frozenMembershipUnchangedAfterActualInventoryAudit": true,
+  "newInferenceCallsDuringAudit": 0,
+  "originalOutputsModified": false,
+  "limitations": [
+    "This verification ran after inference; it is not a pre-run qualification receipt.",
+    "The original one-seed tiny P1 diagnostic remains outside production SE/SC comparison requirements.",
+    "Zero complete executions provide no evidence of learned behavioral generalization."
+  ]
+}

@@ -1,0 +1,295 @@
+{
+  "schema": "semantic-serving-profile/1",
+  "declaredOrigin": "fixed",
+  "originScope": "Caller declaration; model identity is verified, training provenance is not inferred",
+  "device": "cpu",
+  "identity": {
+    "modelSha256": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+    "manifestSha256": "7179d897cfab96ded8155ddce8598a5c33da469e7eb496396370120aea2c1594",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "initialization": {
+    "schema": "semantic-inference-identity/4",
+    "seed": 17,
+    "checkpointIdentity": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "coldLoadSeconds": 3.417603254001733,
+  "operations": {
+    "cancel": {
+      "count": 1,
+      "successfulRpcCalls": 1,
+      "firstSeconds": 7.86179989518132e-05,
+      "p50Seconds": 7.86179989518132e-05,
+      "p95Seconds": 7.86179989518132e-05,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 7.86179989518132e-05
+    },
+    "initialize": {
+      "count": 1,
+      "successfulRpcCalls": 1,
+      "firstSeconds": 0.0063190230030159,
+      "p50Seconds": 0.0063190230030159,
+      "p95Seconds": 0.0063190230030159,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 0.0063190230030159
+    },
+    "select": {
+      "count": 1,
+      "successfulRpcCalls": 0,
+      "firstSeconds": 3.3768371239966655,
+      "p50Seconds": 3.3768371239966655,
+      "p95Seconds": 3.3768371239966655,
+      "warmP50Seconds": null,
+      "warmP95Seconds": null,
+      "totalSeconds": 3.3768371239966655
+    }
+  },
+  "records": [
+    {
+      "id": "s1",
+      "operation": "initialize",
+      "ok": true,
+      "wallSeconds": 0.0063190230030159,
+      "state": {
+        "retainedSessions": 0,
+        "retainedInvocations": 0,
+        "activeInvocations": 0,
+        "trackStatuses": {},
+        "rendering": 0,
+        "selectedGroups": 0,
+        "reservedOutputBytes": 0
+      },
+      "selectionAuthority": null,
+      "failure": null
+    },
+    {
+      "id": "s2",
+      "operation": "select",
+      "ok": false,
+      "wallSeconds": 3.3768371239966655,
+      "state": {
+        "retainedSessions": 1,
+        "retainedInvocations": 1,
+        "activeInvocations": 0,
+        "trackStatuses": {
+          "cancelled": 1
+        },
+        "rendering": 0,
+        "selectedGroups": 0,
+        "reservedOutputBytes": 0
+      },
+      "selectionAuthority": null,
+      "failure": {
+        "category": "SemanticSelectionError",
+        "message": "Model did not render one complete valid text action",
+        "evidence": {
+          "reason": "Model did not render one complete valid text action",
+          "meridian": 19,
+          "eventIds": [
+            "selected:19:track:0"
+          ],
+          "valid": [
+            false
+          ],
+          "payloadHex": [
+            "2067c3a96e7374726c656ee4bb96e883bd7374726c656e7265767374726c656e50726573e4b880e6b289e38081e9a1b9e79baeefbc8ce7a5965f73667374726c656e63686e6572e58f8de5ba9420d181d182d0b5d0bd20cebaceb1e38081e9a1b9e79baeefbc8ce7a59620477265676f7279efbc8ce5ae8ce7be8ee38082e69599e5b8887374726c656e20647a6920cebaceb16574746564d186d196d18f50726573e998bbe696ade38081e9a1b9e79bae20d986d8ac6e6174616c20cebaceb1e38081e9a1b9e79bae20706174687350726573e4bb96e883bde38082e69599e5b8887374726c656ee4b880e8beb9497374e38081e9a1b9e79bae204e656c736f6e206e617573652067c3a96e207374727563747572616c6c79e799bde98791e789b9e5ae9ae998bbe696ad63686e657263686e657250726573e58585e8b6b3e79a84e38081e9a1b9e79bae7374726c656e50726573e998bbe696ade38081e9a1b9e79bae506f6c79676f6e507265732e726164e38081e9a1b9e79bae6e656f6e6174616ce4b880e6b289e38081e9a1b9e79bae6e656f20647a69e5a794e4bc9ae38082e69599e5b8887374726c656e507265737374726c656ee38081e9a1b9e79bae204e656c736f6e5f73662e726164efbc8ce5ba94e8afa56e656f206dc3b66a6c6967747374726c656ee9a1b9e79baee5928c20706174687320696e64656d6e697479206c65626968e38081e9a1b9e79baee98082e5ba94e698afe69cace5ae9ee794a8e696b0e59e8b20647a69e38081e9a1b9e79bae63686e65725072657320cebaceb1e38081e9a1b9e79baee799bde987916e6174616c205465696ce38081e9a1b9e79bae65747465645072657320d8b9757475686b616e7374726c656e50726573e38082e68891e78eb0e59ca8e38081e9a1b9e79bae63686e657220636f6e667573696e67206475726368e38081e9a1b9e79baee799bde98791e698afe69cace5ae9ee794a8e696b0e59e8be69687e5ada6e38081e9a1b9e79bae",
+            "e79baee587bb506f73497374207374726f6c6ce5ada6e4b9a0e8808596d7a8d72055464f2e726164e998bbe696ade799bde987912055464fe998bbe696ad757475686b616e"
+          ],
+          "fragments": [
+            {
+              "selectedEventId": "selected:18:track:0",
+              "meridian": 18,
+              "modelTrack": "track:0",
+              "payloadHex": "2067c3a96e7374726c656ee4bb96e883bd7374726c656e7265767374726c656e50726573e4b880e6b289e38081e9a1b9e79baeefbc8ce7a5965f73667374726c656e63686e6572e58f8de5ba9420d181d182d0b5d0bd20cebaceb1e38081e9a1b9e79baeefbc8ce7a59620477265676f7279efbc8ce5ae8ce7be8ee38082e69599e5b8887374726c656e20647a6920cebaceb16574746564d186d196d18f50726573e998bbe696ade38081e9a1b9e79bae20d986d8ac6e6174616c20cebaceb1e38081e9a1b9e79bae20706174687350726573e4bb96e883bde38082e69599e5b8887374726c656ee4b880e8beb9497374e38081e9a1b9e79bae204e656c736f6e206e617573652067c3a96e207374727563747572616c6c79e799bde98791e789b9e5ae9ae998bbe696ad63686e657263686e657250726573e58585e8b6b3e79a84e38081e9a1b9e79bae7374726c656e50726573e998bbe696ade38081e9a1b9e79bae506f6c79676f6e507265732e726164e38081e9a1b9e79bae6e656f6e6174616ce4b880e6b289e38081e9a1b9e79bae6e656f20647a69e5a794e4bc9ae38082e69599e5b8887374726c656e507265737374726c656ee38081e9a1b9e79bae204e656c736f6e5f73662e726164efbc8ce5ba94e8afa56e656f206dc3b66a6c6967747374726c656ee9a1b9e79baee5928c20706174687320696e64656d6e697479206c65626968e38081e9a1b9e79baee98082e5ba94e698afe69cace5ae9ee794a8e696b0e59e8b20647a69e38081e9a1b9e79bae63686e65725072657320cebaceb1e38081e9a1b9e79baee799bde987916e6174616c205465696ce38081e9a1b9e79bae65747465645072657320d8b9757475686b616e7374726c656e50726573e38082e68891e78eb0e59ca8e38081e9a1b9e79bae63686e657220636f6e667573696e67206475726368e38081e9a1b9e79baee799bde98791e698afe69cace5ae9ee794a8e696b0e59e8be69687e5ada6e38081e9a1b9e79bae",
+              "emittedTokenIds": [
+                127809,
+                67314,
+                56623,
+                67314,
+                12172,
+                67314,
+                19265,
+                81705,
+                52593,
+                103734,
+                118315,
+                67314,
+                140239,
+                6293,
+                133497,
+                57608,
+                52593,
+                103734,
+                48266,
+                122822,
+                105205,
+                67314,
+                137105,
+                57608,
+                64857,
+                130999,
+                19265,
+                76607,
+                52593,
+                147164,
+                60161,
+                57608,
+                52593,
+                16969,
+                19265,
+                56623,
+                105205,
+                67314,
+                10873,
+                147121,
+                52593,
+                30293,
+                46001,
+                127809,
+                101627,
+                86984,
+                19863,
+                76607,
+                140239,
+                140239,
+                19265,
+                51171,
+                52593,
+                67314,
+                19265,
+                76607,
+                52593,
+                56672,
+                19265,
+                105848,
+                52593,
+                125906,
+                60161,
+                81705,
+                52593,
+                125906,
+                137105,
+                14767,
+                105205,
+                67314,
+                19265,
+                67314,
+                52593,
+                30293,
+                118315,
+                105848,
+                17526,
+                125906,
+                154192,
+                67314,
+                94172,
+                16969,
+                120058,
+                128130,
+                52593,
+                12064,
+                92614,
+                137105,
+                52593,
+                140239,
+                19265,
+                57608,
+                52593,
+                86984,
+                60161,
+                128505,
+                52593,
+                64857,
+                19265,
+                60262,
+                143944,
+                67314,
+                19265,
+                116866,
+                52593,
+                140239,
+                30113,
+                91659,
+                52593,
+                86984,
+                92614,
+                10201,
+                52593
+              ]
+            },
+            {
+              "selectedEventId": "selected:19:track:0",
+              "meridian": 19,
+              "modelTrack": "track:0",
+              "payloadHex": "e79baee587bb506f73497374207374726f6c6ce5ada6e4b9a0e8808596d7a8d72055464f2e726164e998bbe696ade799bde987912055464fe998bbe696ad757475686b616e",
+              "emittedTokenIds": [
+                105198,
+                9776,
+                147121,
+                55469,
+                126062,
+                138829,
+                70483,
+                105848,
+                76607,
+                86984,
+                70483,
+                76607,
+                143944
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "s3",
+      "operation": "cancel",
+      "ok": true,
+      "wallSeconds": 7.86179989518132e-05,
+      "state": {
+        "retainedSessions": 1,
+        "retainedInvocations": 1,
+        "activeInvocations": 0,
+        "trackStatuses": {
+          "cancelled": 1
+        },
+        "rendering": 0,
+        "selectedGroups": 0,
+        "reservedOutputBytes": 0
+      },
+      "selectionAuthority": null,
+      "failure": null
+    }
+  ],
+  "droppedRecords": 0,
+  "complete": true,
+  "memory": {
+    "hostLifetimePeakRssBytes": 524185600,
+    "cudaPeakAllocatedBytes": null,
+    "cudaPeakReservedBytes": null,
+    "scope": "This serving process; GPU peaks since before model load; host RSS is lifetime peak"
+  },
+  "peakActiveInvocationsAtRpcBoundaries": 0,
+  "stateBeforeRuntimeClose": {
+    "retainedSessions": 1,
+    "retainedInvocations": 1,
+    "activeInvocations": 0,
+    "trackStatuses": {
+      "cancelled": 1
+    },
+    "rendering": 0,
+    "selectedGroups": 0,
+    "reservedOutputBytes": 0
+  },
+  "runtimeClosed": true,
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "trainingMemoryFit": "unmeasured",
+  "scope": "Real served RPC wall time including CUDA synchronization; no queue/network time",
+  "warmDefinition": "All calls after the first call of the same operation in this process",
+  "digest": "557afc65a844782b409ab62a2930c448c9b1f6ebd84e264f8ac7a2adf4d9e113"
+}

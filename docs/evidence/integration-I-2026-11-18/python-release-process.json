@@ -1,0 +1,48 @@
+{
+  "actualConsumerRevision": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+  "argv": [
+    "/workspace/scratch/23f61543c052/native-venv-capture-grammar/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "test/test_diagnostic_evidence.py",
+    "test/test_exact_public_aliases.py",
+    "test/test_learning_artifacts.py",
+    "test/test_learning_comparison.py",
+    "test/test_native_context_costs.py",
+    "test/test_optimization_smoke_selection.py",
+    "--junitxml=/workspace/scratch/23f61543c052/release-evidence-I/python-release.xml",
+    "--basetemp=/workspace/scratch/23f61543c052/release-evidence-I/tmp/python-release"
+  ],
+  "completedAt": "2026-11-18T15:53:58.932378+00:00",
+  "configuredReleaseConsumerRevision": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+  "cwd": "/workspace/scratch/23f61543c052/tracing-release-I",
+  "environment": {
+    "LC_ALL": "C.UTF-8",
+    "MEGATOKEN_PYTHON": "/workspace/scratch/23f61543c052/native-venv-capture-grammar/bin/python",
+    "MEGATOKEN_REPOSITORY": "/workspace/scratch/23f61543c052/megatoken-capture-grammar",
+    "MEGATOKEN_ROOT": "/workspace/scratch/23f61543c052/megatoken-capture-grammar",
+    "MEGATOKEN_TOKENIZER_JSON": "/workspace/scratch/23f61543c052/tokenizer.json",
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "PYTHONPATH": "/workspace/scratch/23f61543c052/megatoken-capture-grammar/src",
+    "TMPDIR": "/workspace/scratch/23f61543c052/release-evidence-I/tmp",
+    "TZ": "UTC"
+  },
+  "exitCode": 0,
+  "kind": "python-release",
+  "logBytes": 284,
+  "logSha256": "5e0a44e760fa25c69d4db0f9c60a55c6e7b22f3eb5454d9722348bda9c764ee3",
+  "modelDependency": null,
+  "peakRssBytes": 379707392,
+  "producerRevision": "c2a64424d052f9b90a340a59a8d74cf5564e47aa",
+  "producerTrackedFilesClean": true,
+  "pythonImportBinding": {
+    "module": "/workspace/scratch/23f61543c052/megatoken-capture-grammar/src/megatoken/__init__.py",
+    "prefix": "/workspace/scratch/23f61543c052/native-venv-capture-grammar"
+  },
+  "schema": "semantic-integration-process/1",
+  "startedAt": "2026-11-18T15:53:51.320029+00:00",
+  "status": "passed",
+  "wallSeconds": 7.6120082789966546
+}

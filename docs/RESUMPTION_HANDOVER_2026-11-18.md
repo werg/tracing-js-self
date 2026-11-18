@@ -4,6 +4,8 @@
 
 **Implementation and evidence report.** Results below identify the actual producing revisions, populations and gates. Original failed attempts are preserved alongside successful workarounds. Infrastructure completion, native admission, prepared training data and learned execution are separate outcomes.
 
+> **Separate PR39 continuation.** The original parallel-main measurements below retain their own revision and population boundaries. [PR39's consolidated handover](RESUMPTION_HANDOVER.md) and [work-package acceptance review](PLAN_ACCEPTANCE_FINAL.md) separately report the I producer/consumer qualification, D/F admissions, and a 49-update/32-source diagnostic. That training result is not the 56-update main learning experiment recorded here. Both experiments failed their empirical learned-execution acceptance; neither cohort or revision is substituted into the other's receipts.
+
 ## Subsequent main change received during final synchronization
 
 After the completed qualification and archive preservation, main advanced to

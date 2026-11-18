@@ -1,4 +1,7 @@
 name: Pinned Exercism JS owned trace verification
+concurrency:
+  group: owned-exercism-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
 on:
   push:
     branches: [main]

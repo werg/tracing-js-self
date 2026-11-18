@@ -20,11 +20,12 @@ import {buildSourceRegistry,verifySourceRegistry,immutableSourceRegistry,frozenS
   from '../src/corpus/source-registry.mjs';
 import {trainingCandidateTasks,candidateSourceInventory,SOURCE_RECIPES} from '../src/corpus/training-candidates.mjs';
 import {measureExecutionDifficulty} from '../src/corpus/execution-difficulty.mjs';
+import {selectRegisteredCaseIds} from './registered-case-selection.mjs';
 
 const booleanFlags=new Set(['--require-native','--allow-refusals','--resume','--retry-failures','--compact-storage']);
 const valueFlags=new Set(['--out','--megatoken','--tokenizer','--python','--recipe','--jobs','--native-policy',
   '--worker-memory-mb','--worker-timeout-ms','--max-output-bytes','--limit','--registry','--freeze-registry',
-  '--reference-isolation','--source-stream','--per-family','--mutations-per-family','--generated-families','--generation-seed','--input-seed']);
+  '--reference-isolation','--source-stream','--per-family','--mutations-per-family','--generated-families','--generation-seed','--input-seed','--case-ids']);
 const flags=new Map();
 for(let i=2;i<process.argv.length;i++){
   const name=process.argv[i];
@@ -38,9 +39,13 @@ if(flags.has('--reference-isolation')){
   process.env.TRACING_REFERENCE_ISOLATION=mode;
 }
 const root=fileURLToPath(new URL('..',import.meta.url));
-const output=resolve(flags.get('--out')??'corpus/out/semantic-v5');mkdirSync(output,{recursive:true});
+const output=resolve(flags.get('--out')??'corpus/out/semantic-v5');
 const recipe=flags.get('--recipe')??'engineering';
 if(!SOURCE_RECIPES.includes(recipe))throw new Error('Unknown source recipe');
+if(flags.has('--case-ids')&&recipe!=='real-source')
+  throw new Error('--case-ids is supported only for the real-source recipe');
+const caseIdsBytes=flags.has('--case-ids')?readFileSync(resolve(flags.get('--case-ids')),'utf8'):null;
+const requestedCaseIds=caseIdsBytes===null?null:JSON.parse(caseIdsBytes);
 const bounded=(flag,fallback,min,max)=>{const n=Number(flags.get(flag)??fallback);
   if(!Number.isSafeInteger(n)||n<min||n>max)throw new Error(flag+' must be '+min+'..'+max);return n;};
 const jobs=bounded('--jobs',1,1,8),limit=bounded('--limit',10000,1,10000);
@@ -67,6 +72,10 @@ const tasks=trainingCandidateTasks(recipe,{root,
   generatedFamilies:bounded('--generated-families',16,1,144),
   generationSeed:bounded('--generation-seed',73,0,0xffffffff),inputSeed:bounded('--input-seed',89,0,0xffffffff)});
 const sourceInventory=candidateSourceInventory(tasks,{producerRevision});
+// Validate against the complete registered recipe before any campaign or
+// registry writes. Filtering never changes source inventory or candidate IDs.
+const selectedTasks=caseIdsBytes===null?tasks.slice(0,limit):
+  selectRegisteredCaseIds(tasks,requestedCaseIds,{recipe,limit});
 let registry=null;
 if(flags.has('--registry')&&flags.has('--freeze-registry'))throw new Error('Choose an existing registry or freeze a new one');
 if(flags.has('--registry')){registry=JSON.parse(readFileSync(resolve(flags.get('--registry')),'utf8'));verifySourceRegistry(registry);}
@@ -79,7 +88,7 @@ if(registry)for(const task of tasks){
   task.fixture={...task.fixture,splitIdentity,seed:registry.seed};
   if(task.kind==='session')task.fixture.cases=task.fixture.cases.map(fixture=>({...fixture,splitIdentity,seed:registry.seed}));
 }
-const selectedTasks=tasks.slice(0,limit);
+mkdirSync(output,{recursive:true});
 const campaign=new CampaignStore(output,generationIdentity(root,{producerRevision,recipe,native,
   bounds,registryDigest:registry?canonicalHash(registry):null}),{resume:flags.has('--resume'),maxObjectBytes:bounds.maxOutputBytes});
 const start=performance.now(),cases=[],exportEntries=new Map(),summaryById=new Map();
@@ -213,6 +222,10 @@ const manifest={schema:'semantic-corpus-manifest/4',execution:EXECUTION_VERSION,
   context:CONTEXT_VERSION,profile:HARNESS_PROFILE,producerRevision,
   representation:'compact',
   recipe:recipeMetadata,
+  ...(caseIdsBytes===null?{}:{selection:{schema:'semantic-case-selection/1',mode:'registered-case-ids',
+    order:'registered-catalog',caseIds:selectedTasks.map(task=>task.fixture.id),
+    requestedFileSha256:hash(caseIdsBytes),registeredCandidates:tasks.length,
+    sourceInventoryEntries:sourceInventory.length,sourceInventoryDigest:identityHash(sourceInventory)}}),
   refusalPolicy:flags.has('--allow-refusals')?'retain-all-dispositions':'fail-collection',
   catalogDigest:hash(JSON.stringify(hostOperationContract(),null,2)+'\n'),
   counts,cases,counterfactuals,selectionOrigin:nativeConsumer?'certified_teacher':'owned-interpreter-teacher',

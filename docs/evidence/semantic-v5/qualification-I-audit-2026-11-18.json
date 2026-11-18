@@ -1,0 +1,499 @@
+{
+  "archive": {
+    "bytes": 1323700,
+    "exactByteDeliveryCopyVerified": true,
+    "helperOutputPath": "deliverables/qualification-I-audit/semantic-audit-supplement.tar.gz",
+    "path": "deliverables/qualification-I-audit/tracing-js-self-qualification-I-audit-2026-11-18.tar.gz",
+    "sha256": "216bdd783f488dc97bfe8523c3818567eb764c8015f5377ff9a8b13aff1a103d"
+  },
+  "auditBundleSchema": "semantic-verification-audit-bundle/1",
+  "auditOnly": true,
+  "captureGrammarReview": {
+    "completeUnicodeAlignmentClaim": false,
+    "consumerRevision": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+    "distributedTrainingQualified": false,
+    "focusedDilocoPasses": 8,
+    "historicalAdmissionsRerun": 0,
+    "historicalDispositionsChanged": false,
+    "historicalInventory": {
+      "bytes": 106279,
+      "path": "release-evidence-capture-grammar-2026-11-18/historical-capture-inventory.json",
+      "sha256": "0ee25204bd934dcc7851a6441e2b899b185bbad246a99a45ff4e368799d5ac4e"
+    },
+    "historicalTotals": {
+      "bindingAndCellOccurrences": 828,
+      "captureRelations": 414,
+      "closureAllocations": 387,
+      "exports": 106,
+      "generatedSemanticRecords": 10561,
+      "inputBytes": 351902688,
+      "observedIncompatibleNames": 0,
+      "publicTimelineRecords": 11409,
+      "uniqueCaptureNames": 111,
+      "uniqueCapturePairs": 110
+    },
+    "knownLimitation": "The tested U+200C/U+200D continuation names pass the JavaScript regex but fail Python dollar-normalized isidentifier. None occurred in the106 inspected exports.",
+    "otherDilocoDeselected": 13,
+    "semanticUnitPasses": 81
+  },
+  "completedAt": "2026-11-18T16:00:44.196350+00:00",
+  "consumerRevision": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+  "currentQualification": "I",
+  "deliveryBoundary": "The parent delivery agent confirmed successful finalization with local metadata applied for the descriptive exact-byte archive. No private delivery identifier or transfer metadata is recorded.",
+  "deliveryStatus": "saved",
+  "deliverySummary": {
+    "binaryFiles": 20,
+    "completeLogicalArchives": 13,
+    "confirmationScope": "Completed delivery set reported by the parent agent; archive byte identity verified locally."
+  },
+  "exclusions": [
+    "All prior archives,indexes and payloads remain immutable.",
+    "No copied dependency installations,temporary caches,private upload identities or nested complete archives.",
+    "Historical scan source files are referenced in the existing H supplement and F archive rather than copied.",
+    "I reuses unchanged H initialized weights and original C model artifacts as explicit external dependencies; their binaries are not duplicated.",
+    "Newer057 hosted CI is distinct from the included438/6b snapshot; any result after the I archive cutoff is retained separately.",
+    "I/tmp and transient native staging are excluded.",
+    "Original H initialized model and original C model binaries are external dependencies; no duplicate model bytes enter this archive.",
+    "Original I integration summary/index remain for history; v2 and its explicit synthetic-fixture clarification are authoritative."
+  ],
+  "externalDependencies": [
+    {
+      "alreadyDelivered": true,
+      "archiveBytes": 67052493,
+      "archiveName": "semantic-audit-supplement.tar.gz",
+      "archiveSha256": "fab00bb4ec0a30bc8dbf086ac1705d5def9611523516462a5b2ad2ee594170e5",
+      "duplicatePayloadsIncluded": false,
+      "manifest": {
+        "bytes": 193057,
+        "path": "deliverables/final-audit-supplement/release-manifest.json",
+        "sha256": "c04840dd52b640ca0ed37458cb4dc3beba95fb42623707002078cc88198578fc"
+      },
+      "name": "H-verification-and-recovery-supplement",
+      "releaseIdentity": "44576af1d9a8e78baf71cbf1eabfe3778fbaf6571c3d11006034dad6492101ea"
+    },
+    {
+      "alreadyDelivered": true,
+      "archiveBytes": 102268413,
+      "archiveName": "semantic-v5-release.tar.gz",
+      "archiveSha256": "dd6097d6b309e630cab1088809fdfce71706eed650f5f2c57c40da396b42dddc",
+      "duplicatePayloadsIncluded": false,
+      "manifest": {
+        "bytes": 101745,
+        "path": "deliverables/release-F-requalification/package/release-manifest.json",
+        "sha256": "adc7c8554225077d48a2f647e42dbd5692be7dbd7f37e3d26f6b9190d8902648"
+      },
+      "name": "F-real-source-requalification",
+      "releaseIdentity": "9366a4142efdea954ea4a9ecd616e87278f0bbfef65f0b729128e6365a46deed"
+    },
+    {
+      "alreadyDelivered": true,
+      "archiveBytes": 678766391,
+      "archiveName": "tracing-js-self-optimization-evidence-2026-11-18.tar.gz",
+      "archiveSha256": "662d686473ca07cd81af5ae5e742eba484dfbc502b0a46ad225b932c73f6bce1",
+      "duplicatePayloadsIncluded": false,
+      "manifest": {
+        "bytes": 87568,
+        "path": "deliverables/optimization-evidence-complete/release-manifest.json",
+        "sha256": "6aaebadd45c289db9b353e7454b19d73183027a3f93c46c3d94d02f04f778bfa"
+      },
+      "name": "original-C-complete-model-evidence",
+      "purpose": "Reproduce the separate14 actual-artifact validator tests using I tool code against the original C checkpoint and original277 consumer/Python. No inference or optimization is attributed to these integrity tests.",
+      "releaseIdentity": "81c3e2bfd1cc2d6b01aa2b30b488d9c988f7482771e713c040c1f1abbaf5713f"
+    }
+  ],
+  "externalDependencyReceipt": {
+    "bytes": 58274,
+    "path": "qualification-I-staging/dependency-references-I-final.json",
+    "sha256": "3e48edd56503a8b7bffa04246b7d6f8e07a33b58135df6e69c0922011729cfc6"
+  },
+  "fixtureAccounting": {
+    "aggregateCountScope": "Not instrumented; two updates are established per synthetic fixture, not asserted as a process-wide aggregate.",
+    "aggregateInitializationCount": null,
+    "aggregateOptimizerUpdateCount": null,
+    "loss": "sum of the first model parameter tensor",
+    "modelExperimentEvidence": false,
+    "optimizerUpdatesPerFixture": 2,
+    "passedTestsUsingFixture": 20,
+    "purpose": "Validate real checkpoint/served/budget bindings and reject copied or rehashed artifact tampering",
+    "retainedReleaseModelsChanged": false,
+    "scope": "module",
+    "source": "test/test_learning_artifacts.py",
+    "sourceSha256": "8414c3de50b14a97a75d050c6b7ec2a4db2143c883c7af062d63080d8f718d95",
+    "temporaryModelInitialization": true,
+    "tokenizer": "synthetic 256-token byte-alphabet fixture"
+  },
+  "freshQualification": {
+    "actualNamespaceTestsPassed": 2,
+    "actualNativeAttempted": 40,
+    "actualNativePassed": 40,
+    "capabilityReportSha256": "b63dbbdf053e099a9408cd451991bf7bd69113308e1c0806bf2f9271c0e36918",
+    "earlierStopped": {
+      "callbackIndependentReferenceRefusal": 1,
+      "unsupported": 8
+    },
+    "featureLevelModelEvaluationUntested": 49,
+    "historicalDatasetsRequalified": false,
+    "learnedSuccess": null,
+    "nativeCapabilityProbes": 49,
+    "nativeCoordinator": {
+      "controlledCompletions": 2,
+      "expectedRefusals": 3,
+      "includesActualInitializedModelRefusal": true,
+      "independentValidationPassed": true,
+      "modelPayloadsUnchanged": true,
+      "reusedModelIdentity": "c7d9040ec72553cf84d1030bd8481b0f03dcfaeb989b2e347239aee135aa0943",
+      "reusedModelSourceConsumer": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+      "reusedModelSourceProducer": "881664b98ec9d484f9f4775d0b40a3a2b1b81174",
+      "testsPassed": 5
+    },
+    "nativeFailures": 0,
+    "nativeLadderPeakChildRssBytes": 383029248,
+    "nativeLadderWallSeconds": 147.36243778800053,
+    "nativeReferenceMode": "trusted-process",
+    "newSemanticLearningExperiment": false,
+    "nodeTests": {
+      "cancelled": 0,
+      "fail": 0,
+      "pass": 945,
+      "skipped": 0,
+      "tests": 945,
+      "todo": 0
+    },
+    "originalArtifactRegressions": {
+      "originalConsumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+      "originalModelPayloadsUnchanged": true,
+      "originalModelProducerRevision": "c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39",
+      "passed": 14,
+      "skipped": 0,
+      "toolProducerRevision": "c2a64424d052f9b90a340a59a8d74cf5564e47aa"
+    },
+    "pythonNativeConsumerTools": {
+      "failed": 0,
+      "passed": 56,
+      "skipped": 0
+    },
+    "pythonReleaseRegressions": {
+      "errors": 0,
+      "failed": 0,
+      "passed": 85,
+      "skipped": 6,
+      "skippedCases": [
+        "test.test_diagnostic_evidence.ActualBundleTampering.test_actual_original_bundle_passes",
+        "test.test_diagnostic_evidence.ActualBundleTampering.test_declared_input_subset_cannot_omit_an_actual_training_member",
+        "test.test_diagnostic_evidence.ActualBundleTampering.test_model_version_cannot_be_relabelled",
+        "test.test_diagnostic_evidence.ActualBundleTampering.test_rehashed_model_config_cannot_replace_checkpoint_config",
+        "test.test_diagnostic_evidence.ActualBundleTampering.test_rehashed_served_tokenizer_cannot_replace_frozen_codec",
+        "test.test_diagnostic_evidence.ActualBundleTampering.test_rehashed_transducer_bank_cannot_replace_checkpoint_bank"
+      ],
+      "total": 91
+    },
+    "referenceFixtureChecksPassed": 8,
+    "retainedNativeBytes": 14132251,
+    "retainedNativeFiles": 120
+  },
+  "groups": {
+    "I-completed-source-native-qualification-and-runners": {
+      "bytes": 179037,
+      "files": 13
+    },
+    "I-full-unit-integration-and-external-model-integrity": {
+      "bytes": 2545216,
+      "files": 30
+    },
+    "I-retained-native-inputs-receipts-exports": {
+      "bytes": 14132251,
+      "files": 120
+    },
+    "capture-grammar-consumer-review-and-historical-predicate-inventory": {
+      "bytes": 146640,
+      "files": 13
+    },
+    "explicit-external-dependencies-and-scope-corrections": {
+      "bytes": 59659,
+      "files": 2
+    },
+    "frozen-archive-helper-and-unit-fixture-source": {
+      "bytes": 63441,
+      "files": 2
+    },
+    "historical-hosted-CI-boundary": {
+      "bytes": 39045,
+      "files": 1
+    }
+  },
+  "historicalHostedCi": {
+    "associatedHeadSha": "438bf298128c1cb502d86ab801ec2adfa5c17cab",
+    "declaredConsumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+    "new057HostedSuccessClaim": false,
+    "scope": "Hosted workflow/job metadata only; no successful-job logs or hosted archive payloads downloaded/independently validated. Separate from I/6e27 and from the newer057 hosted run.",
+    "snapshot": {
+      "bytes": 39045,
+      "path": "final-ci-snapshot-438bf29.json",
+      "sha256": "6cb086bd8a44a407623783631e646364bb37d9935cb33f654892cc6c35c5f87c"
+    },
+    "summary": {
+      "failedJobs": 0,
+      "nativeLanes": 5,
+      "nodeVersions": [
+        "20",
+        "22",
+        "24"
+      ],
+      "pendingJobs": 0,
+      "skippedJobs": 1,
+      "successfulJobs": 22,
+      "successfulNativeLanes": 5,
+      "successfulNodeJobs": 3,
+      "successfulWorkflows": 8,
+      "workflows": 8
+    }
+  },
+  "identityDigest": "4a43da2307cef8ffc156cb6a1478cd268ec8baf61590097d0dcbfa725885c5ad",
+  "inventory": {
+    "archiveRegularMembersIncludingReleaseManifest": 185,
+    "inventoriedBytesIncludingAuditMetadata": 17242113,
+    "inventoriedFilesIncludingAuditMetadata": 184,
+    "releaseManifest": {
+      "bytes": 49632,
+      "path": "deliverables/qualification-I-audit/release-manifest.json",
+      "sha256": "ee54b8e3940200d4c3db88453226ff9be0aef296e1531e93b512386ec8ce5f41"
+    },
+    "selection": {
+      "bytes": 61290,
+      "path": "qualification-I-staging/selection-final.json",
+      "sha256": "1946d3a7d8d4b7eeee96a2a3c998fc815889c793bd1c254c4143243b9e340a2b"
+    },
+    "sourceBytes": 17165289,
+    "sourceFiles": 181,
+    "verificationReceipt": {
+      "bytes": 9026,
+      "path": "deliverables/qualification-I-audit/audit-receipt.json",
+      "sha256": "2e0e09ad188243bc4f936c9af819560914dc4504946b38dc3fc6405930392051"
+    }
+  },
+  "isPreparedTrainingDataset": false,
+  "masterQualification": {
+    "bytes": 7754,
+    "path": "release-evidence-I/qualification.json",
+    "sha256": "f57fff63da32cfebb0d47f212a885c79c7d166ed96d63ddce4890d708a461616"
+  },
+  "packaging": {
+    "allMembersVerified": true,
+    "declaredMaxArchiveBytes": 536870912,
+    "existingMergedHelperSyntheticAndRefusalChecksPassed": 7,
+    "frozenHelper": {
+      "bytes": 49543,
+      "path": "tracing-release-I/tools/package-semantic-release.py",
+      "sha256": "41df333a46012801ea114432f466fb320ca29ad62c8d5c03ae8798950c059ead"
+    },
+    "helperBytesIdenticalToPriorVerifiedH": true,
+    "memoryScope": "Peak RSS of the single archive writer/verifier child; not a model/native process-tree quota.",
+    "modelInferenceCallsByPackaging": 0,
+    "optimizerWorkPerformedByPackaging": 0,
+    "sourceOrNativeAdmissionsPerformedByPackaging": 0,
+    "waitedChildPeakRssBytes": 16617472,
+    "wallSeconds": 0.8595904329995392,
+    "wrapper": {
+      "bytes": 6556,
+      "path": "tracing-data/tools/package-audit-supplement.py",
+      "sha256": "2b0b386a0fa2f5c65b9b15bead9257d423dfee2f6bcf5c595d93b14c05a77543"
+    }
+  },
+  "postArchiveIndependentReview": {
+    "archiveChanged": false,
+    "beforeAfterModelInventoriesAgree": true,
+    "integrationIndexEntriesChecked": 29,
+    "masterRpcAndNativeReferencesChecked": 135,
+    "nativeCalls": 40,
+    "nativePayloadBytes": 14132251,
+    "nativePayloads": 120,
+    "reviewer": "/root/integrity",
+    "scope": "Metadata, scope, pointer existence and size review after archive creation; no tests or full-payload rehashes.",
+    "status": "no-material-issue",
+    "syntheticFixtureScopeCorrect": true
+  },
+  "priorArtifacts": {
+    "duplicateHistoricalCaptureInputsCopied": 0,
+    "earlierCompleteArchivesUnchanged": 12,
+    "earlierIndexesAndPayloadsUnchanged": true
+  },
+  "producerRevision": "c2a64424d052f9b90a340a59a8d74cf5564e47aa",
+  "qualifications": [
+    {
+      "associatedHeadSha": "438bf298128c1cb502d86ab801ec2adfa5c17cab",
+      "checkoutProvenance": "See included snapshot for actual pinned native and other-workflow checkout distinctions.",
+      "completionReceipt": "final-ci-snapshot-438bf29.json",
+      "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+      "name": "historical-hosted-CI-438bf29",
+      "outcome": "eight-workflows-and-five-native-lanes-passed",
+      "scope": "Historical438/6b hosted workflow/job metadata snapshot, not I/6e27 qualification. No successful-job logs or hosted artifact payloads were downloaded/independently validated. The newer057 CI is a distinct run outside this archive cutoff.",
+      "status": "complete"
+    },
+    {
+      "completionReceipt": "release-evidence-capture-grammar-2026-11-18/qualification.json",
+      "consumerRevision": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+      "dependencies": [
+        {
+          "alreadyDelivered": true,
+          "archiveBytes": 67052493,
+          "archiveName": "semantic-audit-supplement.tar.gz",
+          "archiveSha256": "fab00bb4ec0a30bc8dbf086ac1705d5def9611523516462a5b2ad2ee594170e5",
+          "duplicatePayloadsIncluded": false,
+          "manifest": {
+            "bytes": 193057,
+            "path": "deliverables/final-audit-supplement/release-manifest.json",
+            "sha256": "c04840dd52b640ca0ed37458cb4dc3beba95fb42623707002078cc88198578fc"
+          },
+          "name": "H-verification-and-recovery-supplement",
+          "releaseIdentity": "44576af1d9a8e78baf71cbf1eabfe3778fbaf6571c3d11006034dad6492101ea"
+        },
+        {
+          "alreadyDelivered": true,
+          "archiveBytes": 102268413,
+          "archiveName": "semantic-v5-release.tar.gz",
+          "archiveSha256": "dd6097d6b309e630cab1088809fdfce71706eed650f5f2c57c40da396b42dddc",
+          "duplicatePayloadsIncluded": false,
+          "manifest": {
+            "bytes": 101745,
+            "path": "deliverables/release-F-requalification/package/release-manifest.json",
+            "sha256": "adc7c8554225077d48a2f647e42dbd5692be7dbd7f37e3d26f6b9190d8902648"
+          },
+          "name": "F-real-source-requalification",
+          "releaseIdentity": "9366a4142efdea954ea4a9ecd616e87278f0bbfef65f0b729128e6365a46deed"
+        }
+      ],
+      "name": "capture-grammar-consumer-preflight",
+      "scope": "Bounded consumer unit/environment and finite historical name scan; no historical source/native readmission, inference, training or I qualification.",
+      "status": "complete"
+    },
+    {
+      "completionReceipt": "release-evidence-I/integration-qualification-v2.json",
+      "consumerRevision": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+      "dependencies": [
+        {
+          "alreadyDelivered": true,
+          "archiveBytes": 67052493,
+          "archiveName": "semantic-audit-supplement.tar.gz",
+          "archiveSha256": "fab00bb4ec0a30bc8dbf086ac1705d5def9611523516462a5b2ad2ee594170e5",
+          "duplicatePayloadsIncluded": false,
+          "manifest": {
+            "bytes": 193057,
+            "path": "deliverables/final-audit-supplement/release-manifest.json",
+            "sha256": "c04840dd52b640ca0ed37458cb4dc3beba95fb42623707002078cc88198578fc"
+          },
+          "name": "H-verification-and-recovery-supplement",
+          "releaseIdentity": "44576af1d9a8e78baf71cbf1eabfe3778fbaf6571c3d11006034dad6492101ea"
+        },
+        {
+          "alreadyDelivered": true,
+          "archiveBytes": 678766391,
+          "archiveName": "tracing-js-self-optimization-evidence-2026-11-18.tar.gz",
+          "archiveSha256": "662d686473ca07cd81af5ae5e742eba484dfbc502b0a46ad225b932c73f6bce1",
+          "duplicatePayloadsIncluded": false,
+          "manifest": {
+            "bytes": 87568,
+            "path": "deliverables/optimization-evidence-complete/release-manifest.json",
+            "sha256": "6aaebadd45c289db9b353e7454b19d73183027a3f93c46c3d94d02f04f778bfa"
+          },
+          "name": "original-C-complete-model-evidence",
+          "purpose": "Reproduce the separate14 actual-artifact validator tests using I tool code against the original C checkpoint and original277 consumer/Python. No inference or optimization is attributed to these integrity tests.",
+          "releaseIdentity": "81c3e2bfd1cc2d6b01aa2b30b488d9c988f7482771e713c040c1f1abbaf5713f"
+        }
+      ],
+      "dependencyReceipt": "qualification-I-staging/dependency-references-I-final.json",
+      "name": "I-full-unit-and-integration",
+      "preservedPriorSummary": "release-evidence-I/integration-qualification.json",
+      "producerRevision": "c2a64424d052f9b90a340a59a8d74cf5564e47aa",
+      "scope": "Full unit/coordinator and Python/artifact-integrity gates. Synthetic learning-artifact fixture performs two parameter-sum updates per fixture; aggregate fixture counts are uninstrumented. No new optimization experiment, H/C payload change, or historical readmission. Fresh finite native49 ladder remains separate and pending.",
+      "status": "complete"
+    },
+    {
+      "completedAt": "2026-11-18T16:00:44.196350+00:00",
+      "completionReceipt": "release-evidence-I/qualification.json",
+      "consumerRevision": "6e27a7c6529aa0778c5ea818432461db7cd05ea7",
+      "cutoff": "Root I COMPLETE; all listed source bytes frozen before packaging.",
+      "dependencies": [
+        {
+          "alreadyDelivered": true,
+          "archiveBytes": 67052493,
+          "archiveName": "semantic-audit-supplement.tar.gz",
+          "archiveSha256": "fab00bb4ec0a30bc8dbf086ac1705d5def9611523516462a5b2ad2ee594170e5",
+          "duplicatePayloadsIncluded": false,
+          "manifest": {
+            "bytes": 193057,
+            "path": "deliverables/final-audit-supplement/release-manifest.json",
+            "sha256": "c04840dd52b640ca0ed37458cb4dc3beba95fb42623707002078cc88198578fc"
+          },
+          "name": "H-verification-and-recovery-supplement",
+          "releaseIdentity": "44576af1d9a8e78baf71cbf1eabfe3778fbaf6571c3d11006034dad6492101ea"
+        },
+        {
+          "alreadyDelivered": true,
+          "archiveBytes": 678766391,
+          "archiveName": "tracing-js-self-optimization-evidence-2026-11-18.tar.gz",
+          "archiveSha256": "662d686473ca07cd81af5ae5e742eba484dfbc502b0a46ad225b932c73f6bce1",
+          "duplicatePayloadsIncluded": false,
+          "manifest": {
+            "bytes": 87568,
+            "path": "deliverables/optimization-evidence-complete/release-manifest.json",
+            "sha256": "6aaebadd45c289db9b353e7454b19d73183027a3f93c46c3d94d02f04f778bfa"
+          },
+          "name": "original-C-complete-model-evidence",
+          "purpose": "Reproduce the separate14 actual-artifact validator tests using I tool code against the original C checkpoint and original277 consumer/Python. No inference or optimization is attributed to these integrity tests.",
+          "releaseIdentity": "81c3e2bfd1cc2d6b01aa2b30b488d9c988f7482771e713c040c1f1abbaf5713f"
+        }
+      ],
+      "dependencyReceipt": "qualification-I-staging/dependency-references-I-final.json",
+      "name": "I",
+      "outcome": "passed-with-explicit-profile-refusals",
+      "producerRevision": "c2a64424d052f9b90a340a59a8d74cf5564e47aa",
+      "producerTree": "8a862717d8f3ba17a1c2c904947abb86a6b4c198",
+      "scope": "Fresh integrated I unit/fixture/coordinator/Python and finite native gates. Feature-level model stages remain untested. Temporary synthetic unit-fixture optimizer work is recorded separately; no new semantic-learning experiment or historical dataset/model requalification is claimed. Resource maxima are per reported child scope, not aggregate process-tree quotas.",
+      "status": "complete"
+    }
+  ],
+  "reusedModelPayloads": {
+    "C": {
+      "bytes": 68389648,
+      "files": 10
+    },
+    "H": {
+      "bytes": 44833844,
+      "files": 10
+    },
+    "allBeforeAfterInventoriesEqual": true,
+    "allResolveToDeliveredArchives": true,
+    "modelBinariesCopiedIntoNewArchive": 0
+  },
+  "schema": "semantic-qualification-audit-delivery/1",
+  "scope": "Additive I source/native qualification audit, explicit external model dependencies and preserved summary corrections. Archive inclusion does not create a prepared dataset, requalify historical datasets, or claim useful model learning.",
+  "scopeCorrection": {
+    "canonicalIntegrationSummary": {
+      "bytes": 10116,
+      "path": "release-evidence-I/integration-qualification-v2.json",
+      "sha256": "658cda766d75aec907b3b4ae3f5a9521499623d90fd53fb9fe087806528f070c"
+    },
+    "clarification": {
+      "bytes": 2802,
+      "path": "release-evidence-I/integration-scope-clarification.json",
+      "sha256": "19521b4186dc86a800a2dc0f70313db03f15f6761c6b2a5364531cc175dd40bd"
+    },
+    "meaning": "Two parameter-sum optimizer updates per temporary synthetic fixture; aggregate initialization/update totals remain uninstrumented/null. H/C reused models are unchanged. This is integrity-unit-fixture work, not a semantic-learning experiment.",
+    "originalAndV2IndexesPreserved": true,
+    "originalHFilesAndArchiveModified": false,
+    "originalIntegrationSummaryPreserved": {
+      "bytes": 9035,
+      "path": "release-evidence-I/integration-qualification.json",
+      "sha256": "48ae2fb854da55a6d9d3b233b441cfa194322ad80fb6861e92d13615eb11c10b"
+    },
+    "retrospectiveHClarificationIncluded": true
+  },
+  "sourceCutoff": {
+    "completedAt": "2026-11-18T16:00:44.196350+00:00",
+    "lateHostedCiPolicy": "New057 CI remains separate from the historical438 snapshot and is outside this fixed source inventory.",
+    "qualification": "release-evidence-I/qualification.json",
+    "qualificationSha256": "f57fff63da32cfebb0d47f212a885c79c7d166ed96d63ddce4890d708a461616",
+    "rootCompletionSignal": "I COMPLETE"
+  },
+  "status": "verified"
+}

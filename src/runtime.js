@@ -12,6 +12,13 @@ import {supportsPinnedRegExp,testPinnedRegExp,scanPinnedReplacement} from './own
 
 class GuestFault extends Error {constructor(name,message){super(message);this.name=name;}}
 const guestFault=(name,message)=>{throw new GuestFault(name,message);};
+function bindingTdz(binding,name){
+  const error=new GuestFault('ReferenceError',`Cannot access '${name}' before initialization`);
+  // Parameter initialization additionally binds its fault to the actual
+  // uninitialized cell, checked independently before applying this event.
+  if(binding.cell.kind==='parameter')error.parameterTdz={environment:binding.env.id,name};
+  throw error;
+}
 const copy = value => structuredClone(value);
 const freezeJson = value => {
   if(value && typeof value==='object'){
@@ -795,7 +802,7 @@ export class Runtime {
           }
           f.envId=body;return {};
         }
-        case 'GET':{const b=lookup(s,f.envId,arg);if(!b.cell.initialized)guestFault('ReferenceError',`Cannot access '${arg}' before initialization`);this.stackPush(f,b.cell.token.value,eventId);return {result:b.cell.token.value,reads:[{kind:'binding',envId:b.env.id,name:arg,version:b.cell.version??0,
+        case 'GET':{const b=lookup(s,f.envId,arg);if(!b.cell.initialized)bindingTdz(b,arg);this.stackPush(f,b.cell.token.value,eventId);return {result:b.cell.token.value,reads:[{kind:'binding',envId:b.env.id,name:arg,version:b.cell.version??0,
             value:b.cell.token.value,supplyingEvent:b.cell.token.origin??null}],origins:[b.cell.token.origin]};}
         case 'TYPEOF_BINDING':{
           let current=f.envId,found=null;
@@ -808,7 +815,7 @@ export class Runtime {
           }
           if(!found)return result(['str','undefined']);
           if(!found.cell.initialized)
-            guestFault('ReferenceError',`Cannot access '${arg}' before initialization`);
+            bindingTdz(found,arg);
           const value=found.cell.token;
           const type=primitiveUnary('typeof',value.value,s.heap);
           this.stackPush(f,type,eventId);
@@ -828,11 +835,14 @@ export class Runtime {
               version:b.cell.version??0,value:b.cell.token.value,
               supplyingEvent:b.cell.token.origin??null}]};
         }
-        case 'SET':{const v=pop(),b=lookup(s,f.envId,arg);if(!b.cell.initialized)guestFault('ReferenceError',`${arg} is not initialized`);if(b.cell.kind==='const')guestFault('TypeError',`Assignment to constant ${arg}`);b.cell.token=v;b.cell.version=(b.cell.version??0)+1;this.stackPush(f,v.value,eventId);return {...operands(v),result:v.value};}
+        case 'SET':{const v=pop(),b=lookup(s,f.envId,arg);if(!b.cell.initialized){
+          if(b.cell.kind==='parameter')bindingTdz(b,arg);
+          guestFault('ReferenceError',`${arg} is not initialized`);
+        }if(b.cell.kind==='const')guestFault('TypeError',`Assignment to constant ${arg}`);b.cell.token=v;b.cell.version=(b.cell.version??0)+1;this.stackPush(f,v.value,eventId);return {...operands(v),result:v.value};}
         case 'UPDATE_BINDING':{
           const b=lookup(s,f.envId,arg.name);
           if(!b.cell.initialized)
-            guestFault('ReferenceError',`Cannot access '${arg.name}' before initialization`);
+            bindingTdz(b,arg.name);
           const before=b.cell.token,oldVersion=b.cell.version??0;
           // ToNumeric is distinct from Addition's string concatenation.
           const {next,oldNumeric}=scalarUpdate(before.value,arg.operator);
@@ -1402,7 +1412,7 @@ if(object.kind==='regexp'){
             // not coerced. Owned objects require a separate continuation and
             // must not reach native ToPrimitive or become catchable refusals.
             if(!['undefined','null','bool','str','num','bigint'].includes(value[0]))
-              throw new TypeError(callable[1]+' conversion of an owned object is outside the bounded scalar profile');
+              throw new TypeError(callable[1]+' conversion requires a primitive; owned object conversion is outside the bounded scalar profile');
             if(['str','bigint'].includes(value[0])&&value[1].length>10000)
               throw new RangeError('Primitive conversion input exceeds the bounded scalar budget');
             let converted;
@@ -2295,9 +2305,10 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
       }} catch(error) {
         if(!(error instanceof GuestFault))throw error;
         const completion={type:'throw',errorType:error.name,message:error.message,origin:eventId};
-        // Commit one owned exception identity at the faulting operation, even
-        // when it escapes synchronously. All callers, catches and finally
-        // blocks must see that same value rather than allocating on demand.
+        // Parameter faults retain their independently checked pre-state marker.
+        // Every actual GuestFault commits one owned exception identity at the
+        // faulting operation; callers, catches and finally use that same value.
+        if(error.parameterTdz)completion.parameterTdz=copy(error.parameterTdz);
         completion.value=this.caughtError(s,completion,eventId);
         this.routeCompletion(s,f,completion,eventId);
         return {completion};

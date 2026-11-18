@@ -160,28 +160,45 @@ class OptimizationMeasurementTests(unittest.TestCase):
             'fragments': [{'selectedEventId': 'failed', 'emittedTokenIds': [7], 'payloadHex': '07'}]}}
         self.assertTrue(SMOKE.generated_token_cost(profile)['complete'])
 
-    def run_rollout(self, root, *, rejected=False, timed_out=False, invalid_result=False):
+    def run_rollout(self, root, *, rejected=False, timed_out=False, invalid_result=False,
+                    missing_tokenizer=False, missing_cleanup=False, missing_profile=False):
         identity = 'a' * 64
+        tokenizer = 'b' * 64
+        inference = {'schema': 'semantic-inference-identity/4', 'seed': 17,
+                     'checkpointIdentity': identity, 'tokenizerIdentity': tokenizer}
         outcome = {'cleanup': {'pendingEffects': 0, 'pendingJobs': 0, 'openHandlers': 0},
-                   'completion': {'kind': 'return', 'value': 7}}
+                   'completion': {'kind': 'return', 'value': 7},
+                   'state': {}, 'effects': [], 'callbacks': []}
         case = {'index': 0, 'id': 'case', 'family': 'source', 'expected': outcome,
-                'envelope': {'seed': 17, 'request': {'source': 'public'}}}
-        profile = {'complete': True, 'droppedRecords': 0,
-                   'identity': {'modelSha256': identity},
+                'envelope': {'schema': 'semantic-evaluation-request/4', 'caseId': 'case',
+                             'representation': 'compact', 'seed': 17, 'request': {'source': 'public'}}}
+        profile = {'schema': 'semantic-serving-profile/1', 'complete': True,
+                   'runtimeClosed': True, 'optimizerSteps': 0, 'declaredOrigin': 'trained',
+                   'initialization': dict(inference), 'droppedRecords': 0,
+                   'identity': {'modelSha256': identity, 'tokenizerIdentity': tokenizer},
                    'records': [{'selectedEventId': 'one', 'emittedTokenIds': [7, 8]}]}
         actual = {'schema': 'semantic-evaluation-result/4', 'origin': 'trained',
-                  'checkpointIdentity': identity, 'inferenceIdentity': {'seed': 17},
-                  'failure': None, 'outcome': outcome, 'costs': {'computeSeconds': 1},
+                  'representation': 'compact',
+                  'checkpointIdentity': identity, 'inferenceIdentity': dict(inference),
+                  'episode': {'sidecar': {'sourceLineage': 'evaluation:case',
+                                          'selectionOrigin': 'actual-model-selected',
+                                          'evidenceKind': 'model-evaluation'}},
+                  'failure': None, 'outcome': json.loads(json.dumps(outcome)), 'costs': {'computeSeconds': 1},
                   'rejections': [{'phase': 'semantic-validation'}] if rejected else [],
                   'hardGates': {key: 0 for key in ['futureObservationLeaks', 'unauthorizedEffects',
                     'untrackedNativeFallback', 'falseAdmissions', 'replayNativeEffects']}}
+        if missing_tokenizer:
+            del actual['inferenceIdentity']['tokenizerIdentity']
+        if missing_cleanup:
+            del actual['outcome']['cleanup']['openHandlers']
 
         class FakeProcess:
             def __init__(self, argv, **kwargs):
                 self.pid, self.returncode = 123, 0
                 self.output = kwargs['stdout']
                 self.destination = Path(self.output.name).parent
-                (self.destination / 'serving-profile.json').write_text(json.dumps(profile))
+                if not missing_profile:
+                    (self.destination / 'serving-profile.json').write_text(json.dumps(profile))
 
             def communicate(self, request, timeout):
                 # No teacher expectation reaches this evaluator transport.
@@ -196,7 +213,8 @@ class OptimizationMeasurementTests(unittest.TestCase):
                 self.returncode = -15
 
         with patch.object(SMOKE.subprocess, 'Popen', FakeProcess), patch.object(SMOKE.os, 'killpg') as kill:
-            result = SMOKE.rollout(case, 'trained', {'bundle': '/bundle', 'model_sha256': identity},
+            result = SMOKE.rollout(case, 'trained', {'bundle': '/bundle', 'model_sha256': identity,
+                                                   'codec_fingerprint': tokenizer},
                                    Path('/consumer'), Path(root),
                                    SimpleNamespace(rollout_tokens=8, rollout_timeout=1), {})
             if timed_out:
@@ -232,6 +250,34 @@ class OptimizationMeasurementTests(unittest.TestCase):
             result = self.run_rollout(root)
             self.assertTrue(result['wholeTaskSuccess'])
             self.assertTrue(result['traceValid'])
+
+    def test_missing_tokenizer_binding_remains_a_failed_original_result(self):
+        with TemporaryDirectory() as root:
+            result = self.run_rollout(root, missing_tokenizer=True)
+            self.assertFalse(result['wholeTaskSuccess'])
+            self.assertFalse(result['traceValid'])
+            self.assertEqual(result['pipelineFailure'], 'invalid-evaluator-result')
+            self.assertIn('tokenizer', result['resultError'])
+            self.assertEqual(result['generatedTokenCost']['generatedTokens'], 2)
+
+    def test_missing_cleanup_counter_cannot_become_a_success(self):
+        with TemporaryDirectory() as root:
+            result = self.run_rollout(root, missing_cleanup=True)
+            self.assertFalse(result['wholeTaskSuccess'])
+            self.assertFalse(result['traceValid'])
+            self.assertEqual(result['pipelineFailure'], 'invalid-evaluator-result')
+            self.assertIn('Cleanup', result['resultError'])
+            self.assertEqual(result['generatedTokenCost']['generatedTokens'], 2)
+
+    def test_missing_native_profile_preserves_failed_summary_and_unknown_cost(self):
+        with TemporaryDirectory() as root:
+            result = self.run_rollout(root, missing_profile=True)
+            self.assertFalse(result['wholeTaskSuccess'])
+            self.assertFalse(result['traceValid'])
+            self.assertEqual(result['pipelineFailure'], 'invalid-evaluator-result')
+            self.assertIn('serving profile', result['resultError'])
+            self.assertIsNone(result['generatedTokenCost'])
+            self.assertTrue((Path(root) / 'trained/0000/summary.json').is_file())
 
 
 if __name__ == '__main__':

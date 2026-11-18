@@ -125,6 +125,18 @@ test('grains expectations retain exact pinned decimal bytes and require actual B
    assert.throws(()=>canonicalReturnMatches(1n,total.expected,binding,changed),/Invalid exact/);
 });
 
+test('exact grains expectations work without JSON.parse reviver source context',()=>{
+ const originalParse=JSON.parse;
+ try{
+  // Exercise the older two-argument reviver API used by the Node 20 CI gate.
+  JSON.parse=(text,reviver)=>originalParse(text,typeof reviver==='function'
+    ?function(key,value){return reviver.call(this,key,value);}:reviver);
+  const cases=extractCanonicalCases(loadPinnedPairs().find(x=>x.slug==='grains'));
+  assert.equal(cases.find(x=>x.property==='total').expectedBinding.decimal,'18446744073709551615');
+  assert.equal(cases.find(x=>x.args[0]===64).expectedBinding.decimal,'9223372036854775808');
+ }finally{JSON.parse=originalParse;}
+});
+
 test('deterministic generated variants stay distinct from canonical provenance',()=>{
  const pairs=loadPinnedPairs();
  const leap=pairs.find(p=>p.slug==='leap');

@@ -547,6 +547,64 @@ def export_checked(checkpoint, destination):
     return {**manifest, 'servedReloadExact': True}
 
 
+HARD_GATE_NAMES = frozenset({'futureObservationLeaks', 'unauthorizedEffects',
+                             'untrackedNativeFallback', 'falseAdmissions', 'replayNativeEffects'})
+CLEANUP_NAMES = frozenset({'pendingEffects', 'pendingJobs', 'openHandlers'})
+
+
+def require_counters(value, names, label):
+    if (not isinstance(value, dict) or set(value) != names or
+            any(type(count) is not int or count < 0 for count in value.values())):
+        raise ValueError(f'{label} must contain exactly the declared nonnegative integer counters')
+    return value
+
+
+def score_rollout(actual, case, origin, bundle, profile):
+    """Score complete, identity-bound evidence; absent gates never mean success."""
+    if not isinstance(actual, dict) or not isinstance(profile, dict):
+        raise ValueError('Diagnostic result and serving profile must be complete objects')
+    envelope = case['envelope']
+    if (origin not in {'trained', 'fixed-weights'} or envelope.get('caseId') != case['id'] or
+            envelope.get('schema') != 'semantic-evaluation-request/4' or
+            type(envelope.get('seed')) is not int):
+        raise ValueError('Malformed diagnostic case identity')
+    identity = {'schema': 'semantic-inference-identity/4', 'seed': envelope['seed'],
+                'checkpointIdentity': bundle['model_sha256'],
+                'tokenizerIdentity': bundle['codec_fingerprint']}
+    episode = actual.get('episode')
+    sidecar = episode.get('sidecar') if isinstance(episode, dict) else None
+    if not isinstance(sidecar, dict):
+        raise ValueError('Diagnostic result lacks its case identity sidecar')
+    if (actual.get('schema') != 'semantic-evaluation-result/4' or
+            actual.get('origin') != origin or actual.get('representation') != envelope['representation'] or
+            actual.get('checkpointIdentity') != bundle['model_sha256'] or
+            actual.get('inferenceIdentity') != identity or
+            sidecar.get('sourceLineage') != 'evaluation:' + case['id'] or
+            sidecar.get('selectionOrigin') != 'actual-model-selected' or
+            sidecar.get('evidenceKind') != ('model-evaluation' if origin == 'trained' else 'deterministic-engineering')):
+        raise ValueError('Diagnostic result case, origin, model, tokenizer, or seed identity differs')
+    gates = require_counters(actual.get('hardGates'), HARD_GATE_NAMES, 'Hard gates')
+    outcome = actual.get('outcome')
+    if not isinstance(outcome, dict) or set(outcome) != {'completion', 'state', 'effects', 'callbacks', 'cleanup'}:
+        raise ValueError('Diagnostic outcome evidence is incomplete')
+    cleanup = require_counters(outcome['cleanup'], CLEANUP_NAMES, 'Cleanup')
+    if 'failure' not in actual or (actual['failure'] is not None and
+            (not isinstance(actual['failure'], dict) or not isinstance(actual['failure'].get('category'), str))):
+        raise ValueError('Diagnostic failure evidence is incomplete')
+    if (profile.get('schema') != 'semantic-serving-profile/1' or profile.get('complete') is not True or
+            profile.get('runtimeClosed') is not True or type(profile.get('optimizerSteps')) is not int or
+            profile['optimizerSteps'] != 0 or profile.get('initialization') != identity or
+            profile.get('declaredOrigin') != ('trained' if origin == 'trained' else 'fixed') or
+            not isinstance(profile.get('identity'), dict) or
+            profile.get('identity', {}).get('modelSha256') != bundle['model_sha256'] or
+            profile.get('identity', {}).get('tokenizerIdentity') != bundle['codec_fingerprint']):
+        raise ValueError('Diagnostic serving profile is incomplete or has a different identity')
+    # Canonical JSON avoids Python's bool/int equality accepting malformed values.
+    exact_outcome = json.dumps(outcome, sort_keys=True, separators=(',', ':')) == json.dumps(
+        case['expected'], sort_keys=True, separators=(',', ':'))
+    return actual['failure'] is None and exact_outcome and not any(gates.values()) and not any(cleanup.values())
+
+
 def generated_token_cost(profile, actual=None, codec=None):
     """Count actual successful/failed decoder tokens once per native event.
 
@@ -672,19 +730,11 @@ def rollout(case, origin, bundle, consumer, root, args, env):
     if 'pipelineFailure' not in summary:
         try:
             actual = json.loads((destination / 'result.json').read_text())
-            if (actual['schema'] != 'semantic-evaluation-result/4' or actual['origin'] != origin or
-                    actual['checkpointIdentity'] != bundle['model_sha256'] or
-                    actual['inferenceIdentity']['seed'] != case['envelope']['seed']):
-                raise ValueError('Actual rollout identity differs from the frozen request')
-            if profile is None or profile['identity']['modelSha256'] != bundle['model_sha256']:
-                raise ValueError('Actual native serving identity is absent or differs')
+            success = score_rollout(actual, case, origin, bundle, profile)
             gates = actual['hardGates']
-            required = {'futureObservationLeaks', 'unauthorizedEffects', 'untrackedNativeFallback',
-                        'falseAdmissions', 'replayNativeEffects'}
-            if set(gates) != required or any(not isinstance(value, int) or isinstance(value, bool) or value < 0
-                                            for value in gates.values()):
-                raise ValueError('Incomplete or invalid integrity gate receipt')
             rejections = actual['rejections']
+            if not isinstance(rejections, list):
+                raise ValueError('Diagnostic rejection evidence must be a list')
             trace_valid = (actual['failure'] is None and not rejections and
                            actual.get('firstSemanticInconsistency') is None and not any(gates.values()))
             codec = None
@@ -693,7 +743,7 @@ def rollout(case, origin, bundle, consumer, root, args, env):
                 codec = ByteCodec.from_tokenizer_json(Path(bundle['bundle']) / bundle['codec_file'],
                                                       expected_sha256=bundle['tokenizer_sha256'])
             summary['generatedTokenCost'] = generated_token_cost(profile, actual, codec)
-            summary.update(wholeTaskSuccess=trace_valid and actual['outcome'] == case['expected'],
+            summary.update(wholeTaskSuccess=trace_valid and success,
                            traceValid=trace_valid, failure=actual['failure'],
                            rejections=rejections, firstSemanticInconsistency=actual.get('firstSemanticInconsistency'),
                            hardGates=gates, costs=actual['costs'], cleanup=actual['outcome']['cleanup'])

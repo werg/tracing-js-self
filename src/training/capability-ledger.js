@@ -14,7 +14,7 @@ const pure=(id,body,args=[])=>({id,feature:id,source:'"use strict";'+body,entry:
 export const CAPABILITY_CASES=Object.freeze([
   pure('scalar-arithmetic','function run(a,b){return (a+b)*(a-b);}',[7,3]),
   pure('coercion-and-signed-zero','function run(){return ["2"-1,1/(-0),0/0];}'),
-  pure('primitive-number-conversion','function run(){return [Number(),Number(undefined),Number(null),Number(true),Number(" 2.5 "),1/Number("-0"),Number(3n)];}'),
+  pure('primitive-number-conversion','function run(){return [Number(),Number(undefined),Number(null),Number(true),Number(" 2.5 "),Number("-0"),1/Number("-0"),Number("7.5"),Number(3n)];}'),
   pure('primitive-bigint-conversion','function run(){return [BigInt(3),BigInt(false),BigInt(" 9007199254740993 "),BigInt(3n)];}'),
   pure('primitive-string-conversion','function run(){return [String(),String(undefined),String(null),String(true),String(-0),String(NaN),String(9007199254740993n)];}'),
   pure('invalid-bigint-catch-and-throw','function run(){try{BigInt("invalid");}catch(error){if(error.name==="SyntaxError"){throw error;}return error.name;}}'),
@@ -27,6 +27,7 @@ export const CAPABILITY_CASES=Object.freeze([
   pure('parameter-camelcase-default-capture','function run(keyFn=()=>7){const get=()=>keyFn();return get();}'),
   pure('later-parameter-tdz','const b=9;function run(a=b,b=3){return a;}'),
   pure('async-helper-declaration','async function helper(){return 7;}async function run(){return typeof helper();}'),
+  pure('sync-root-async-helper-rejection','async function fail(){throw 7;}function run(){return fail().catch(e=>e);}'),
   pure('slice-undefined-end','function run(){return [1,2,3].slice(0,undefined);}'),
   pure('fill-undefined-end','function run(){return [1,2,3].fill(7,1,undefined);}'),
   pure('copy-within-undefined-end','function run(){return [1,2,3].copyWithin(0,1,undefined);}'),

@@ -1,0 +1,24 @@
+{
+  "accepted": 1,
+  "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+  "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+  "counts": {
+    "accepted_candidate": 1,
+    "admitted": 1,
+    "attempted": 1
+  },
+  "familySplits": {
+    "task:real-utilities-2ebfe51f48dad1a027958ec0": "train"
+  },
+  "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+  "maxHistory": 1024,
+  "maxPositions": 1024,
+  "optimizerSteps": 0,
+  "producerRevision": "d15ddca47854ebdb92b23598dd720ccd1a18c822",
+  "refusals": [],
+  "representation": "compact",
+  "schema": "semantic-preparation/4",
+  "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+  "splitSeed": "semantic-family/4",
+  "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+}
