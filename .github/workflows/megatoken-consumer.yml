@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: werg/megatoken
-          ref: 6206b33a55eba3e50f80498f906439221bc289b7 # isolate mutable replay state from immutable observed input graphs
+          ref: 3d7ffc701a3e692883819fb623a03b1942cd8b5c # immutable inputs, captured source cells and streamed native preparation
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -69,7 +69,7 @@ jobs:
         if: matrix.recipe == 'engineering'
         run: |
           node tools/generate-capability-ledger.mjs --out "$RUNNER_TEMP/native-capabilities.json" \
-            --cases scalar-arithmetic,slice-undefined-end,parameter-body-scope,later-parameter-tdz,synchronous-primitive-throw,synchronous-declared-error,alias-preserving-mutation,input-array-mutation \
+            --cases scalar-arithmetic,slice-undefined-end,parameter-body-scope,later-parameter-tdz,synchronous-primitive-throw,synchronous-declared-error,alias-preserving-mutation,input-array-mutation,array-some-short-circuit,array-for-each-owned-callback,sparse-array-fill,input-graph-mutation,parameter-camelcase-default-capture \
             --megatoken megatoken --python python --tokenizer "$RUNNER_TEMP/tokenizer.json" \
             --native-policy contracts/native-admission-policy-v5.json
       - name: Validate shared schemas and independently source-check every corpus family
@@ -154,9 +154,14 @@ jobs:
           PY
       - name: Package complete rechecked native release and rejection evidence
         run: |
+          training_caps=()
+          if [[ '${{ matrix.recipe }}' == 'real-source' || '${{ matrix.recipe }}' == 'generated-v1' ]]; then
+            training_caps=(--max-family-tokens 10000 --max-family-share 0.2)
+          fi
           python tools/package-semantic-release.py --corpus "$RUNNER_TEMP/corpus" \
             --tracer-root . --megatoken megatoken --tokenizer "$RUNNER_TEMP/tokenizer.json" \
-            --environment-receipt "$RUNNER_TEMP/native-environment.json" --out "$RUNNER_TEMP/release"
+            --environment-receipt "$RUNNER_TEMP/native-environment.json" --out "$RUNNER_TEMP/release" \
+            "${training_caps[@]}"
           python tools/package-semantic-release.py --verify "$RUNNER_TEMP/release/semantic-v5-release.tar.gz"
       - name: Reconcile all source dispositions and independent family counts
         run: |
