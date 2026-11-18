@@ -60,6 +60,17 @@ class SelectionIntegrity(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'different public bytes'):
                 smoke.choose_candidates([a, c], 32)
 
+    def test_prefers_bounded_examples_without_dropping_source_families(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            large, small, other = self.row('a-large', 'alpha'), self.row('z-small', 'alpha'), self.row('b', 'beta')
+            large['metrics'], small['metrics'], other['metrics'] = ({'generatedTokens': 1000},
+                                                                  {'generatedTokens': 5},
+                                                                  {'generatedTokens': 200})
+            corpus = self.make_corpus(root, 'a', [large, small, other])
+            _, selected = smoke.choose_candidates([corpus], 2)
+            self.assertEqual([row['id'] for row, _ in selected], ['z-small', 'b'])
+
     def test_refuses_paths_outside_the_materialized_corpus(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

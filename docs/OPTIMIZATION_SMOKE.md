@@ -27,6 +27,9 @@ PYTHONPATH=/path/to/megatoken/src /path/to/python tools/run-optimization-smoke.p
 
 The output directory must be new. Candidate selection cycles through source
 families, uses only the training split, and never relabels held-out examples.
+Within each family it selects the smallest measured generated-token example
+first, breaking ties by public bytes and identity. This is a deliberately bounded
+feasibility sample, not an estimate of the full training distribution.
 Repeat `--corpus` to combine materialized authored, generated, and real-source
 campaigns at the same producer revision. Identical public episodes are selected
 only once; a repeated candidate identity with different bytes is rejected.

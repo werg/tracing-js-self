@@ -86,8 +86,14 @@ def choose_candidates(corpora, maximum):
     if len(revisions) != 1:
         raise ValueError('All smoke corpora must use the same immutable producer revision')
     selected = []
+    def cost(pair):
+        item, _ = pair
+        tokens = item.get('metrics', {}).get('generatedTokens')
+        size = item.get('publicShard', {}).get('uncompressedBytes')
+        return (tokens if type(tokens) is int and tokens > 0 else float('inf'),
+                size if type(size) is int and size > 0 else float('inf'), item['id'])
     for family in groups:
-        groups[family].sort(key=lambda pair: pair[0]['id'])
+        groups[family].sort(key=cost)
     while groups and len(selected) < maximum:
         for family in sorted(list(groups)):
             if len(selected) == maximum:
@@ -313,6 +319,7 @@ def main():
               'evidenceKind': 'newly-initialized-cpu-optimization-diagnostic',
               'stage': 'P1', 'purpose': 'diagnostic', 'split': 'train',
               'generalizationClaim': False, 'injectedSelections': False,
+              'candidateSelection': 'round-robin families; smallest generated-token count then public bytes within each family',
               'requestedSteps': args.steps, 'seed': args.seed, 'optimizerSteps': 0}
 
     def record(**updates):
