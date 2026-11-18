@@ -33,7 +33,10 @@ the actual runner files, input files, and the resulting prepared corpus.
 
 Training is capped by `--steps` and `--train-timeout` (900 seconds by default).
 Rollouts are independently capped by `--rollout-timeout` (120 seconds by
-default) and `--rollout-tokens`. The underlying selected transport also retains
+default) and `--rollout-tokens` **per native fragment**. The pinned selected
+adapter may emit up to 64 fragments for one logical decision; this flag is not
+a whole-decision or whole-task token cap. All emitted tokens, including invalid
+fragments, enter measured cost. The underlying selected transport also retains
 its 30-second per-RPC limit. The standalone native diagnostic checkpoints every optimizer
 step. A frozen learning experiment instead retains its declared checkpoint
 schedule and binds exact training membership before optimization; see
@@ -59,6 +62,10 @@ partial runs retain checkpoints, logs, and the last completed phase.
    gradients. Training logs retain losses, denominators, token costs, and
    source-window exposure. A training-corpus member is not necessarily visited
    during a very short cap; the report retains the actual exposure receipt.
+   Before updates, `native-window-plan.json` records the pinned native packing,
+   first-epoch order, scored tokens, and windows for every prepared source.
+   `trainingExposure` distinguishes selected membership, actual visited sources,
+   and completion of every selected episode's windows.
 4. **Checkpoint and served identity.** The committed checkpoint is reloaded and
    every model tensor is compared. Both base and trained checkpoints are
    exported with the official served exporter. Reloaded served tensors must
@@ -90,7 +97,7 @@ training report independently records actual optimizer steps.
 
 `status: completed` means the measurement pipeline finished. The separate
 `optimizationSmokePassed` flag requires all checks, at least 32 admitted
-training examples, and successful complete selected executions for every
+training examples, actual complete exposure of every selected episode, and successful complete selected executions for every
 requested trained rollout. A failure to render a valid first record is a
 measured learning failure, even when optimization and checkpoint checks pass.
 Neither flag establishes generalization: these are held-in corpus examples.
@@ -101,6 +108,19 @@ masks, and exact checkpoint/served reloads. Both base and trained model
 rollouts failed on their first generated record. This is not evidence of
 learned execution. Run receipts, rather than this feasibility description,
 are authoritative for subsequent experiments.
+
+The native sampler permutes episodes deterministically, then visits every
+scored window of one episode before moving to the next. One-record windows can
+therefore spend a short run on only a few selected sources. A separately frozen
+full-episode diagnostic can use `--training-window-records 256
+--training-window-decisions 256` and at least one step per episode, provided the
+native plan confirms each episode fits in one window. These are supported
+native packing settings; no alternate optimizer or sampler is substituted.
+They increase per-step work and must fit the declared time and memory budget.
+The original 32-candidate/64-step sandbox run visited only **five** prepared
+source IDs and scored 1,743 lexical tokens. Its corpus membership is not evidence
+that all 32 episodes were trained. Original declarations and receipts remain
+unchanged when a follow-up experiment changes packing or budgets.
 
 The diagnostic uses the companion's P1 recurrent training engine over verified
 v5 records. Production SE/SC launch gates, frozen experiment receipts,

@@ -124,7 +124,8 @@ async function main(){
   }
   const allowed=new Set(['--out','--tracer-root','--name','--mode','--optimizer-seeds','--decoder-seed',
     '--rollout-tokens','--rollout-timeout','--initialization-seed','--checkpoint-steps','--minimum-improvement','--maximum-slice-regression','--bootstrap-replicates',
-    '--bootstrap-seed','--minimum-test-components','--train-examples','--validation-cases','--test-cases','--auxiliary-cases']);
+    '--bootstrap-seed','--minimum-test-components','--train-examples','--validation-cases','--test-cases','--auxiliary-cases',
+    '--training-window-records','--training-window-decisions','--train-timeout']);
   for(const key of flags.keys())if(!allowed.has(key))throw new TypeError('Unknown option '+key);
   if(!corpora.length||!flags.has('--out')||!flags.has('--minimum-improvement'))
     throw new TypeError('Usage: freeze-learning-experiment.mjs --corpus DIR [--corpus DIR] --out PRIVATE.json --minimum-improvement 0.05 [--checkpoint-steps 8,16 --train-examples 32 --validation-cases 16 --test-cases 32]');
@@ -183,8 +184,12 @@ async function main(){
     frozenAt:new Date().toISOString(),mode,baseOrigin:'newly-initialized',optimizerSeeds:seeds,decoderSeed,initializationSeed,checkpointSteps:steps,
     producerRevision:revision,nativePolicy,sourceRegistryDigest:candidates[0].registryDigest,
     corpusManifests:manifests,training,validation:selected.validation,test:selected.test,auxiliary:auxiliary.selected,
-    rolloutBudget:{tokensPerDecision:integer('--rollout-tokens',32,1,1024),
-      secondsPerCase:integer('--rollout-timeout',120,1,300)},
+    rolloutBudget:{nativeMaxTokensPerFragment:integer('--rollout-tokens',32,1,1024),
+      maximumFragmentsPerDecision:64,secondsPerCase:integer('--rollout-timeout',120,1,300)},
+    trainingBudget:{sampler:'native-sequential-permuted-episodes',
+      maxWindowRecords:integer('--training-window-records',1,1,1024),
+      maxScoredDecisions:integer('--training-window-decisions',2,1,1024),
+      maxWindowTokens:16384,seconds:integer('--train-timeout',900,1,86400)},
     policy:{minimumUsefulImprovement:numeric('--minimum-improvement',null,Number.EPSILON,1),
       maximumCriticalSliceRegression:numeric('--maximum-slice-regression',0.05,0,1),
       confidence:0.95,bootstrapReplicates:integer('--bootstrap-replicates',2000,100,100000),
