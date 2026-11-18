@@ -245,7 +245,8 @@ def max_tensor_difference(left: dict, right: dict) -> dict:
             "coordinates": len(diffs), "maximumAbsoluteDifference": max(diffs, default=0.0)}
 
 
-def optimizer_step_loss(model, state, train_kwargs, optimizer, config, seed: int):
+def optimizer_step_loss(model, state, train_kwargs, optimizer, config, seed: int,
+                        *, before_update=None):
     import torch
     from unittest.mock import patch
     from megatoken.model.multitrack import MultiTrackGenerator
@@ -253,17 +254,25 @@ def optimizer_step_loss(model, state, train_kwargs, optimizer, config, seed: int
 
     original_sample = MultiTrackGenerator._sample_policy
     original_prior = MultiTrackGenerator._prior
-    captured = {}
+    captured = {"sampleCalls": [], "priorCalls": []}
 
     def sample(distribution, names, generator):
         local = torch.Generator(device=distribution.mean.device).manual_seed(seed)
         value = original_sample(distribution, names, local)
-        captured["sample"] = {"sample": tensor_record(value), "eventIds": list(names)}
+        captured["sampleCalls"].append({
+            "sample": tensor_record(value), "eventIds": list(names),
+            "distributionMean": tensor_record(distribution.mean),
+            "distributionLogScale": tensor_record(distribution.log_scale),
+            "sourceDtype": str(distribution.mean.dtype),
+            "device": str(distribution.mean.device), "seed": seed,
+            "gradEnabled": torch.is_grad_enabled(),
+        })
+        captured["sample"] = captured["sampleCalls"][0]
         return value
 
     def prior(multi, mean, state, tracks, control=None):
         distribution = original_prior(multi, mean, state, tracks, control)
-        captured["prior"] = {
+        item = {
             "conditional": {"mean": tensor_record(distribution.mean),
                             "logScale": tensor_record(distribution.log_scale)},
             "recurrentState": recurrent_state_record(state, mean),
@@ -274,6 +283,8 @@ def optimizer_step_loss(model, state, train_kwargs, optimizer, config, seed: int
             "frontierEventIds": list(state.frontier_event_ids),
             "frontierTracks": list(state.frontier_tracks),
         }
+        captured["priorCalls"].append(item)
+        captured["prior"] = captured["priorCalls"][0]
         return distribution
 
     kwargs = dict(train_kwargs)
@@ -295,6 +306,8 @@ def optimizer_step_loss(model, state, train_kwargs, optimizer, config, seed: int
     loss = sum(terms)
     value = float(loss.detach())
     require(math.isfinite(value), "Native supervised objective became nonfinite")
+    if before_update is not None:
+        before_update(captured)
     loss.backward()
     update = optimizer.step(1.0)
     model.core.routing_aux_loss(clear=True)
@@ -327,37 +340,25 @@ def fit(model, codec, chunking, prefix, target, state, train_kwargs, optimizer, 
         "baseServiceSampleSha256": initial_service["samples"][0]["sample"]["float32Sha256"],
         "firstBoundaryAudit": first_boundary_audit,
     })
-    for step in range(1, max_steps + 1):
-        loss, components, captured, update = optimizer_step_loss(
-            model, state, train_kwargs, optimizer, config, seed)
+    def validate_boundary(captured):
+        nonlocal stable_sample, first_boundary_audit
         sample_hash = captured["sample"]["sample"]["float32Sha256"]
         if stable_sample is None:
-            stable_sample = sample_hash
-            require(sample_hash == initial_service["samples"][0]["sample"]["float32Sha256"],
-                    "Trainer and serving did not draw the same actual first-prefix facets")
+            from native_conditional_probe import compare_recurrent_states
             prior_diff = max_tensor_difference(
                 captured["prior"]["conditional"]["mean"],
                 baseline_service["conditional"]["mean"])
             scale_diff = max_tensor_difference(
                 captured["prior"]["conditional"]["logScale"],
                 baseline_service["conditional"]["logScale"])
-            require(prior_diff["status"] != "failed" and scale_diff["status"] != "failed",
-                    "Trainer and serving prior geometry differs")
-            require(prior_diff["maximumAbsoluteDifference"] <= 1e-6 and
-                    scale_diff["maximumAbsoluteDifference"] <= 1e-6,
-                    "Trainer and serving first-prefix prior conditionals diverged")
-            from native_conditional_probe import compare_recurrent_states
+            sample_diff = max_tensor_difference(
+                captured["sample"]["sample"], initial_service["samples"][0]["sample"])
             state_diff = compare_recurrent_states(
                 {"recurrentState": captured["prior"]["recurrentState"]},
                 {"recurrentState": baseline_service["recurrentState"]})
-            require(state_diff["status"] == "passed",
-                    "Actual trainer and serving recurrent states differ at the first boundary")
-            require(captured["prior"]["tracks"] == baseline_service["tracks"],
-                    "Actual native track addresses differ at the first boundary")
             first_boundary_audit = {
-                "priorMean": prior_diff,
-                "priorLogScale": scale_diff,
-                "recurrentState": state_diff,
+                "priorMean": prior_diff, "priorLogScale": scale_diff,
+                "sampleDifference": sample_diff, "recurrentState": state_diff,
                 "trainerTracks": captured["prior"]["tracks"],
                 "trainerEventIds": captured["sample"]["eventIds"],
                 "servingTracks": baseline_service["tracks"],
@@ -366,14 +367,48 @@ def fit(model, codec, chunking, prefix, target, state, train_kwargs, optimizer, 
                 "opaqueEventIdStringsEqual": captured["sample"]["eventIds"] == initial_service["samples"][0]["eventIds"],
                 "trainerTrackRegistry": captured["prior"]["trackRegistry"],
                 "servingTrackRegistry": baseline_service["trackRegistry"],
-                "trackRegistryStringsEqual":
-                    captured["prior"]["trackRegistry"] == baseline_service["trackRegistry"],
-                "sampleSha256": sample_hash,
-                "unmodifiedNativeSample": True,
+                "trackRegistryStringsEqual": captured["prior"]["trackRegistry"] == baseline_service["trackRegistry"],
+                "sampleSha256": sample_hash, "unmodifiedNativeSample": True,
+                "trainingSampleCalls": len(captured["sampleCalls"]),
+                "trainingPriorCalls": len(captured["priorCalls"]),
+                "servingSampleCalls": len(initial_service["samples"]),
+                "servingPriorCalls": len(initial_service["priors"]),
+                "optimizerStepsBeforeComparison": 0,
             }
+            # Persist the original tensors and diagnostics before any assertion or
+            # optimizer update, so a mismatch cannot hide its own cause.
+            atomic_json(progress_path.with_name("boundary-comparison.json"), {
+                "schema": "semantic-native-decoder-fit-boundary-comparison/1",
+                "optimizerSteps": 0, "comparison": first_boundary_audit,
+                "training": captured,
+                "serving": {"samples": initial_service["samples"],
+                            "priors": initial_service["priors"]},
+            })
+            require(len(captured["sampleCalls"]) == len(captured["priorCalls"]) ==
+                    len(initial_service["samples"]) == len(initial_service["priors"]) == 1,
+                    "First-boundary fit made more than one native prior or sample call")
+            require(prior_diff["status"] != "failed" and scale_diff["status"] != "failed",
+                    "Trainer and serving prior geometry differs")
+            require(prior_diff["maximumAbsoluteDifference"] <= 1e-6 and
+                    scale_diff["maximumAbsoluteDifference"] <= 1e-6,
+                    "Trainer and serving first-prefix prior conditionals diverged")
+            require(state_diff["status"] == "passed",
+                    "Actual trainer and serving recurrent states differ at the first boundary")
+            require(first_boundary_audit["nativeTrackAddressesEqual"] and
+                    first_boundary_audit["trackRegistryStringsEqual"],
+                    "Actual native track addresses differ at the first boundary")
+            require(sample_hash == initial_service["samples"][0]["sample"]["float32Sha256"],
+                    "Trainer and serving did not draw the same actual first-prefix facets")
+            stable_sample = sample_hash
         else:
             require(sample_hash == stable_sample,
                     "Frozen prior sample changed during decoder-only optimization")
+
+    for step in range(1, max_steps + 1):
+        loss, components, captured, update = optimizer_step_loss(
+            model, state, train_kwargs, optimizer, config, seed,
+            before_update=validate_boundary)
+        sample_hash = captured["sample"]["sample"]["float32Sha256"]
         row = {
             "step": step,
             "nativeTeacherLoss": loss,

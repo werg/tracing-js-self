@@ -22,6 +22,7 @@ FILES = (
     "native-conditionals/training-supervision-audit.json",
     "native-decoder-fit/report.json",
     "native-decoder-fit/trainer-boundary.json",
+    "native-decoder-fit/boundary-comparison.json",
     "native-decoder-fit/fit-progress.json",
     "native-decoder-fit/fit-failure.json",
     "native-two-boundaries/report.json",
