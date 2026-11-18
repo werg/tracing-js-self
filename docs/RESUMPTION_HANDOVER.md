@@ -1,9 +1,19 @@
 # Resumption implementation handover — 18 November 2026
 
-**Working checkpoint:** final D collection, release packaging, final CI and
-durable artifact links are still being completed. This report will be updated
-with their final results. All completed implementation increments have been
-pushed; historical failures remain in the evidence.
+**Release closeout in progress:** the complete D collection and F recovery are
+finished, and their original audit evidence is durably saved. Full D native
+preparation, a reconciled component-cap sampler, the final verification
+supplement and current-revision CI are still being completed. Two remaining
+parameter-projection cases are being investigated in a separate worktree.
+Completed implementation increments and compact receipts are committed and
+pushed immediately; historical failures remain intact.
+
+The implementation branch is `codex/resumption-20261118`, with current review in
+[producer PR #39](https://github.com/werg/tracing-js-self/pull/39) and
+[companion PR #30](https://github.com/werg/megatoken/pull/30). Earlier producer
+PRs #36 and #37 were merged externally during the work. The per-package
+[acceptance audit](PLAN_ACCEPTANCE_AUDIT.md) distinguishes code completion from
+measured acceptance; it does not grant a blanket pass to W01–W14.
 
 ## Outcome and acceptance
 
@@ -34,10 +44,13 @@ not a production SE/SC experiment.
 | Audited starting point | `55a53c4b884b7d536cfc06220d8838d8cead9236` | `277edd4a2983e81f5e2a71b34a7ce29348e4e7a0` | Original supplied audit. |
 | C | `c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39` | `277edd4a2983e81f5e2a71b34a7ce29348e4e7a0` | First broad native campaigns, 30 mutation regressions and actual model experiments. |
 | D | `83e0d5742e63dc4439b68d6296f323cb7a3aafdc` | `b88073dcb5a8e438a711d494a5fd592e773798f5` | Corrected runtime/canonical bindings, immutable graph replay, streaming preparation and larger real-source sweep. |
-| E | `1b391c19c3c8137d5b00c5412e53614a568b3704` | `1cee21dd07a687b0a824abff1bbd5ef9a13149ab` | Fresh full qualification of the twelve captured-binding failures. |
+| E | `1b391c19c3c8137d5b00c5412e53614a568b3704` | `1cee21dd07a687b0a824abff1bbd5ef9a13149ab` | Fresh qualification of twelve captured-binding failures. |
+| F | `22eaac6a46e262b00986c63b4fc66f6240016252` | `1cee21dd07a687b0a824abff1bbd5ef9a13149ab` | Exact canonical-input precision refusal, primitive Number conversion, 60-case fresh recovery, finite capability ledger and timeout review. |
 
-The E subset does not requalify all D rows. D's original capture-name refusals
-remain in D. Local tested companion commit `3e3d418…` and published `1cee21d…`
+E and F qualify their explicit subsets; neither requalifies every D row.
+D's original capture-name refusals remain in D. The initial two-step model
+feasibility run predates C and uses producer
+`3a2178252a370c3d91c85d42751b2a4f82376bd4`; later model attempts use C. Local tested companion commit `3e3d418…` and published `1cee21d…`
 have identical Git trees; the historical component receipt keeps its local
 commit identity, and E supplies new receipts at the published identity.
 
@@ -59,14 +72,29 @@ parser, locale, timezone, policy, tokenizer, producer and consumer identities ar
 recorded. No container-image digest was supplied, so the receipt does not claim
 one.
 
-The current capability report measures 42 finite `training-js/1` probes.
-Thirty-one reach native admission and all 31 pass; eleven remain untested at
-that stage because an earlier profile/gate stops them. Model evaluation is
-untested in this feature ledger. The other source profiles are explicitly
-untested there, even where separate regression suites exist. D's unit run has
-842 tests: 837 pass, zero fail, five external-environment skips. A fresh pinned
-engine262 comparison passes 1,958 finite arithmetic cases with reconstruction
-and replay. This is not full ECMAScript or Test262 conformance.
+The frozen F capability report measures **43** finite `training-js/1` probes.
+**32 reach native admission and all 32 pass**; eleven remain untested at that
+stage because an earlier profile/gate stops them. The independent-outcome
+column retains one deliberately refused callback-abrupt case. All 43
+feature-level model stages and the other source-profile ladders remain
+explicitly untested. Separate regression suites do not silently fill those
+columns.
+
+F's complete unit run has **858 tests: 853 pass, zero fail, five explicit
+external-environment skips**, followed by all eight reference-fixture checks
+passing. A fresh D/pinned-engine262 comparison passes 1,958 finite arithmetic
+cases with reconstruction and replay. The published Node 20/22/24 matrix passes
+at `4011c3c1ff3206bdb8a0ba96478514a9fcabdcf2`, confirming the Node 20 canonical
+lexeme compatibility repair. Final-revision CI is recorded separately below.
+These are bounded regression and probe populations, not full ECMAScript or
+Test262 conformance.
+
+The Python release/evidence regression run passes 67 cases with six
+artifact-dependent skips. A separate run with the actual retained final
+checkpoint passes all fourteen diagnostic-evidence tests, including those six
+artifact-dependent cases, with zero skips. Changed served tokenizer/config,
+transducer bank, model version and incomplete actual training inventory are
+rejected without altering originals or making new model calls.
 
 Semantic repairs include method-specific omitted/undefined array bounds, async
 declaration flags, ordered parameter initialization/TDZ and separate body scope,
@@ -113,11 +141,56 @@ its failed baseline remains unchanged and a recovery receipt records the
 successful continuation to 128. Do not relabel that first attempt as successful.
 
 D generated programs pass 64/64 across sixteen declared families/components,
-with 77,855 actual native generated tokens. D engineering and training-v4 pass
-25/25 and 50/50. D's benchmark wrapper reached its 900-second whole-check budget
-after 87 admissions and one cancelled case; the durable collector is being
-resumed with the original identities. The new baseline option records a larger
-declared bounded budget when needed.
+with 77,855 actual native generated tokens. Unchanged native deduplication
+retains 61 prepared examples and records three duplicates. D engineering,
+training-v4 and benchmark now qualify and prepare 25, 50 and 128 examples,
+respectively, with no preparation refusals. Their complete verified archives
+are saved.
+
+The original D benchmark wrapper hit its 900-second whole-check budget after
+87 admissions and one cancelled case. The exact-identity recovery reuses those
+87 receipts and finishes 41 fresh rows, reaching **128/128**. The final journal
+contains 129 attempt entries for 128 candidates. The failed original baseline
+and pre-resume manifest are preserved. Lifetime verification cost includes the
+cancelled attempt; the new baseline option supports an explicitly declared
+bounded whole-check budget instead of silently changing it.
+
+The full D real-source campaign is complete:
+
+| Source stream | Attempts | Native admissions | Admitted declared families | Frozen components | Native generated tokens |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Pinned utilities | 936 | 924 | 77 | 23 | 816,289 |
+| Active canonical Exercism inputs | 201 | 44 | 7 | 7 | 22,716 |
+| Production helpers | 34 | 19 | 5 | 2 | 2,528 |
+| Union | **1,171** | **987** | **89** | **32** | **841,533** |
+
+Its other 184 dispositions are 48 native capture-name refusals, 107 unsupported
+cases, two canonical mismatches, six worker timeouts, twelve projection
+refusals and nine source-unsupported cases. Every original disposition remains
+in the archive. The 987 admissions cover 372 executed path signatures, 5,958
+branch evaluations, 1,883 loop trips, 5,982 mutations, eight throws and maximum
+call depth eleven. They include zero awaits; authored async/effect data remains
+a separate necessary contribution.
+
+The full resumed collection takes 40.448 minutes in addition to the 1.604-minute
+pilot; it reuses sixteen pilot rows. Reported peak JavaScript-worker RSS is
+444,862,464 bytes. The complete CAS has 5,312 objects and 83,629,653 bytes.
+These JS-worker measurements are not whole-process-tree memory quotas.
+
+There are 965 distinct public traces among the 987 admissions. The selector
+retains 965 unchanged representatives and maps 22 exact aliases while keeping
+the full 1,171-case audit. An independent adapter comparison verifies equality
+of every native Episode field except `lineage.task_id` for all 22 aliases
+across sixteen groups. The first selection attempt used the wrong verifier
+context and is preserved as a failure; corrected selection explicitly routes
+through the immutable D producer at UTC. Native preparation can deduplicate
+further, so 965 must not be reported as the final prepared count.
+
+The qualification census is uncapped: its largest two training components
+contribute about 44.17% and 25.33% of original generated tokens. It is not a
+claimed balanced training release. A separate sampler will apply its
+predeclared 10,000-token/20% component cap to the actual final native accepted
+inventory, preserving evaluation membership and all exclusion reasons.
 
 E freshly admits all twelve selected `distinct` cases, representing one declared
 family/component and two executed paths, with 16,008 native generated tokens.
@@ -125,6 +198,37 @@ The run takes 46.03 seconds with two workers and peaks at 189,661,184 bytes of
 reported JavaScript-worker RSS. These twelve input variants are not twelve new
 algorithms. Source/oracle/replay/private evidence and fresh native receipts are
 all retained.
+
+E's twelve candidate admissions produce four exact-public representatives
+plus eight retained aliases. The unchanged native preparation then retains two
+examples and records two native duplicates, with no refusals. The earlier
+all-twelve preparation correctly refused immutable episode-ID collisions and
+is preserved separately; no native identity rule was weakened to make it pass.
+
+F freshly qualifies all **60** cases selected from D's 48 captured-binding and
+twelve darts/Number projection refusals. Its original run admits 58 and times
+out twice. A single serial retry of those two cases succeeds in 87.035 and
+100.700 seconds under the unchanged 120-second limit. All 287 old CAS objects,
+the original journal byte prefix, original selection and 58 cached admissions
+are checked unchanged. The final campaign has 60 candidates and 62 attempts.
+
+F's verified release retains **52 exact-public representatives**, with eight
+mapped aliases across four groups within one family. All 52 pass fresh native
+preparation; native deduplication retains **22 unique prepared examples** and
+records 30 duplicates, with zero refusals. The prepared split has two train
+and twenty test examples across all six families. These are targeted repaired
+cases, not a replacement census of all D rows. Preparation, packaging and
+member verification take 336.187 seconds and peak at 493,359,104 bytes of
+reported process RSS. The complete original 60-case/62-attempt audit is inside
+the verified archive.
+
+The six original D worker timeouts receive a separate bounded F review. Two
+fresh attempts (Collatz one million and sum-of-multiples 150) time out at
+240 seconds. Four others are not relaunched after frozen-compiler lower bounds
+prove that normal completion requires at least 45,760, 618,750, 21,978 and
+219,978 instructions, above the unchanged 20,000-step budget. Those four are
+static budget dispositions, not fabricated worker results. The full review
+takes 533.298 seconds; it creates no admissions or training targets.
 
 The native consumer corrections preserve input public graphs across replay,
 stream complete private audits rather than duplicating them in memory, and
@@ -185,9 +289,15 @@ retains evaluation rows. A selected release must also include its original
 audit campaign so rejected/excluded evidence is not lost.
 
 Refusal-driven additions include dense owned `Array.some` and `forEach`, early
-exit/current-heap reads, and sparse `fill`. Canonical bindings preserve exact
-integer type for grains, omitted arguments for two-fer, and active replacements
-for superseded Exercism cases. Unsupported BigInt execution remains refused.
+exit/current-heap reads, sparse `fill`, and primitive `Number` conversion.
+`Number()` distinguishes omitted from undefined arguments, evaluates extra
+arguments in order, and refuses object coercion outside the profile.
+Canonical bindings preserve exact integer type for grains, omitted arguments
+for two-fer, and active replacements for superseded Exercism cases. Exact raw
+integer lexemes detect two Armstrong inputs that cannot survive conversion to
+a JavaScript Number; fresh preflight refuses them before execution instead of
+rounding them into a different task. D's original mismatches stay unchanged.
+Unsupported general BigInt execution remains refused.
 These additions increase useful bounded-profile coverage without claiming
 unrestricted library or host compatibility.
 
@@ -238,11 +348,35 @@ For every completed release, run `tools/package-semantic-release.py --verify
 ARCHIVE` and compare the retained archive SHA-256 and identity digest. An audit
 archive and a freshly native-prepared release have separate schemas and claims.
 
-## Final artifact and CI index
+## Verified durable artifacts and current CI
 
-Final D real-source results, benchmark recovery, E package, complete model
-archives, durable download links and final revision CI are being appended here.
-The complete C audit archive is already verified: 2,909 files, 1,023,114,187 bytes,
-SHA-256 `1c48257bfb7713e332a17cb3cb1e5e2b3dc1ec1a4573ae9716981506254953ab`.
-It contains all 477 original attempts and is explicitly an audit bundle, not
-a newly native-prepared release.
+The following complete archives are verified and saved. Private download links
+are supplied with the delivery index; they are not embedded in the public
+repository. Every archive has a complete member inventory and identity digest.
+The C audit and complete model archive use the checksummed split parts in
+[ARCHIVE_PARTS.md](ARCHIVE_PARTS.md). All other listed archives fit in one file.
+
+| Archive | Bytes | Verified members | SHA-256 |
+| --- | ---: | ---: | --- |
+| C complete historical audit | 1,023,114,187 | 2,909 | `1c48257bfb7713e332a17cb3cb1e5e2b3dc1ec1a4573ae9716981506254953ab` |
+| Complete model evidence, all attempts | 678,766,391 | 425 | `662d686473ca07cd81af5ae5e742eba484dfbc502b0a46ad225b932c73f6bce1` |
+| D engineering native release | 42,959,698 | 190 | `cf1762e29356c76790edaffd45fde990352bdf08c4575e7c91a0144122300151` |
+| D training native release | 128,507,572 | 397 | `aaa61d2b95d4ba862c108120ce00d19f4ca986553d2b48632af05d855d708adb` |
+| D benchmark native release | 350,847,115 | 1,026 | `395f9efb6a5ae79066c9c65ec24bad522673ab3d575e88ad3080f3c800499dfd` |
+| D generated native release | 103,599,104 | 374 | `02a55c7e6dbc53df2a25479a786f67f3d41f4d982936016d025ae7fcdf6f0631` |
+| D complete original real-source audit checkpoint | 69,861,152 | 5,336 | `8fc95f764422b9062c119e46d7218be97e650b63ff04c645f07d33691d1245cc` |
+| E capture native release | 7,513,139 | 70 | `75d09e16491b71741a2d83705a3d74be101378962cf6e68cfdf7754ce169a65a` |
+| F targeted native release | 102,268,413 | 366 | `dd6097d6b309e630cab1088809fdfce71706eed650f5f2c57c40da396b42dddc` |
+
+The audit-only archives preserve original attempts and refusals. They do not
+claim a new native-preparation run. Native releases include the independently
+rechecked prepared data as well as their required original audits. The model
+archive includes checkpoints and served weights, not merely summaries of files
+that once existed.
+
+Full D real-source native packaging, its final accepted-inventory sampler,
+remaining verification logs and current-revision CI are being appended here.
+Queued, cancelled, skipped and historical checks remain separate from a pass at
+the final revision. The Node 20/22/24 regression matrix and browser/spec gates
+already have passing published-revision evidence; final CI must retain its
+own exact head and job links.
