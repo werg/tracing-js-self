@@ -39,3 +39,11 @@ outcomes, checkpoint files, logs, actual costs, and any interruption will be
 preserved in a later receipt. A lower training loss alone cannot pass the
 execution gate; one memorized input cannot pass the 32-example or generalization
 gates even if it completes.
+
+The actual [native preflight](preflight-verification.json) subsequently verified
+that the exported base and every initial parameter hash match the prior
+initialized base exactly. The [native window plan](native-window-plan.json)
+contains exactly one complete 48-token episode window; 256 updates would score
+12,288 lexical tokens. [train-config.json](train-config.json) preserves the
+unchanged resolved native settings. This preflight is not an optimizer or
+execution outcome.

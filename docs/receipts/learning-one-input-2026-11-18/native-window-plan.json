@@ -1,0 +1,28 @@
+{
+  "schema": "native-training-window-plan/1",
+  "sampler": "native-sequential-permuted-episodes",
+  "seed": 17,
+  "windowConfig": {
+    "max_window_tokens": 16384,
+    "max_decisions": 16,
+    "respect_dependencies": false,
+    "max_dependency_tokens": 16384,
+    "max_records": 32
+  },
+  "preparedIdentity": "4ea2319a7e9198abd900bed41d9a2109180321af4113029f96de0062ed4f1011",
+  "streamFingerprint": "9d78b4d821bb8c55fe1880380ea7f46aed997dd22b06b1b31fffef29f9d54775",
+  "sources": [
+    {
+      "sourceId": "semantic-harness:9193bd760d71e4e1",
+      "episodeId": "semantic:harness:9193bd760d71e4e101eed32649f4f40da51173913e99b6325bf195e33da18189",
+      "windows": 1,
+      "scoredTokens": 48,
+      "transcriptTokens": 682
+    }
+  ],
+  "firstEpochSourceOrder": [
+    "semantic-harness:9193bd760d71e4e1"
+  ],
+  "firstEpochWindows": 1,
+  "eachEpisodeIsOneWindow": true
+}
