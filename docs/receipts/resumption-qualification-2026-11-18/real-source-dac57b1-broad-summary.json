@@ -1,0 +1,504 @@
+{
+  "schema": "resumption-campaign-summary/1",
+  "derivation": "Aggregate extract from the complete pre-fix broad campaign, not a new admission receipt. Full case records remain in the private campaign. This population differs from the later210-attempt pilot.",
+  "sourceManifest": {
+    "path": "native-real-main/manifest.json",
+    "bytes": 6408392,
+    "sha256": "8029c2adf9637dd899d8fb305009b9f04a812e96735c54996d83e40fde862be4"
+  },
+  "producerRevision": "dac57b163f277085f1ee42f5d1fa0085eeecb556",
+  "nativePolicy": {
+    "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+  },
+  "recipe": {
+    "name": "real-source",
+    "sourceStreams": [
+      "utilities",
+      "exercism",
+      "production"
+    ],
+    "perFamily": 12,
+    "mutationsPerFamily": 0,
+    "authority": "fresh-original-transformed-owned-reference-native-gates",
+    "admittedByLocalFlag": false
+  },
+  "counts": {
+    "attempted": 1177,
+    "admitted": 873,
+    "locally_verified": 0,
+    "native_rejected": 138,
+    "unsupported": 102,
+    "canonical_mismatch": 12,
+    "worker_timeout": 1,
+    "projection_refused": 12,
+    "teacher_failed": 30,
+    "source_unsupported": 9
+  },
+  "caseStatusCounts": {
+    "admitted": 873,
+    "native_rejected": 138,
+    "unsupported": 102,
+    "canonical_mismatch": 12,
+    "worker_timeout": 1,
+    "projection_refused": 12,
+    "teacher_failed": 30,
+    "source_unsupported": 9
+  },
+  "sourceFamilies": 105,
+  "admittedSourceFamilies": 80,
+  "admittedSourceComponents": 31,
+  "sourceRegistry": {
+    "digest": "b67b1cf27d952fcec5380a6274bf46162c144c3eb1d78dc4d5f52d47f14edff4",
+    "sourceVariants": 508,
+    "sourceFamilies": 199,
+    "independentComponents": 135,
+    "nearPairs": 5,
+    "splitComponents": {
+      "train": 89,
+      "validation": 13,
+      "test": 33
+    }
+  },
+  "campaign": {
+    "schema": "semantic-generation-summary/1",
+    "identityDigest": "a91f4cc4be105041f524b1b9078953c03728eb6e03b7441385c78225d468e332",
+    "completed": 1177,
+    "planned": 1177,
+    "untestedLifecycle": 0,
+    "resumed": 0,
+    "cancelled": false,
+    "log": "campaign.jsonl",
+    "publicRecords": "objects/public",
+    "privateEvidence": "objects/private",
+    "compatibilityExports": true,
+    "limits": {
+      "memoryMb": 768,
+      "timeoutMs": 120000,
+      "maxOutputBytes": 268435456
+    },
+    "workers": 4,
+    "receiptCache": "full-source-profile-runtime-verifier-identity"
+  },
+  "throughput": {
+    "elapsedMs": 2416594.269573,
+    "totalVerificationMs": 9272761.975828988,
+    "peakWorkerRssBytes": 278171648,
+    "admittedGeneratedTokens": 726952,
+    "admittedLearnerTokensPerHour": 1082940.2489903346,
+    "newlyGeneratedCases": 1177,
+    "newlyAdmittedGeneratedTokens": 726952,
+    "freshVerificationMs": 9272761.975828988,
+    "verifiedFamiliesPerHour": 119.17598399787987,
+    "completedFamilies": 80,
+    "uniquePathsPerHour": 522.8846297906979,
+    "completedSourceClusters": 31,
+    "uniqueExecutedPaths": 351,
+    "publicBytes": 13759244,
+    "compressedPrivateBytes": 637768135,
+    "bytesPerAdmission": 746308.5670103093
+  },
+  "familyDispositions": {
+    "utility:vscode/numbers.ts/clamp": {
+      "admitted": 12
+    },
+    "utility:vscode/numbers.ts/rot": {
+      "admitted": 12
+    },
+    "utility:vscode/numbers.ts/formatTokenCount": {
+      "admitted": 12
+    },
+    "utility:vscode/arrays.ts/tail": {
+      "admitted": 12
+    },
+    "utility:vscode/arrays.ts/equals": {
+      "admitted": 12
+    },
+    "utility:vscode/arrays.ts/removeFastWithoutKeepingOrder": {
+      "native_rejected": 12
+    },
+    "utility:vscode/arrays.ts/concatArrays": {
+      "admitted": 12
+    },
+    "utility:vscode/arrays.ts/coalesce": {
+      "admitted": 12
+    },
+    "utility:vscode/arrays.ts/coalesceInPlace": {
+      "native_rejected": 12
+    },
+    "utility:vscode/arrays.ts/move": {
+      "native_rejected": 12
+    },
+    "utility:vscode/arrays.ts/isFalsyOrEmpty": {
+      "admitted": 12
+    },
+    "utility:vscode/arrays.ts/distinct": {
+      "native_rejected": 12
+    },
+    "utility:vscode/arrays.ts/commonPrefixLength": {
+      "admitted": 12
+    },
+    "utility:vscode/arrays.ts/range": {
+      "admitted": 12
+    },
+    "utility:vscode/arrays.ts/remove": {
+      "admitted": 6,
+      "native_rejected": 6
+    },
+    "utility:vscode/arrays.ts/arrayInsert": {
+      "admitted": 12
+    },
+    "utility:vscode/arrays.ts/pushToStart": {
+      "native_rejected": 12
+    },
+    "utility:vscode/arrays.ts/pushToEnd": {
+      "native_rejected": 12
+    },
+    "utility:vscode/arrays.ts/pushMany": {
+      "native_rejected": 12
+    },
+    "utility:vscode/arrays.ts/withoutDuplicates": {
+      "admitted": 12
+    },
+    "utility:vscode/arrays.ts/asArray": {
+      "admitted": 12
+    },
+    "utility:vscode/arrays.ts/insertInto": {
+      "native_rejected": 12
+    },
+    "utility:vscode/arrays.ts/splice": {
+      "native_rejected": 12
+    },
+    "utility:vscode/arrays.ts/sum": {
+      "admitted": 12
+    },
+    "utility:vscode/arrays.ts/sumBy": {
+      "admitted": 12
+    },
+    "utility:vscode/arrays.ts/mapFilter": {
+      "admitted": 12
+    },
+    "utility:vscode/arrays.ts/groupBy": {
+      "admitted": 12
+    },
+    "utility:vscode/arrays.ts/binarySearch": {
+      "admitted": 12
+    },
+    "utility:vscode/arrays.ts/mapArrayOrNot": {
+      "admitted": 12
+    },
+    "utility:vscode/arrays.ts/quickSelect": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/isFalsyOrWhitespace": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/format": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/format2": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/escape": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/escapeRegExpCharacters": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/count": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/trim": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/ltrim": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/rtrim": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/joinStrings": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/splitLines": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/splitLinesIncludeSeparators": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/firstNonWhitespaceIndex": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/getLeadingWhitespace": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/lastNonWhitespaceIndex": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/getIndentationLength": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/compare": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/compareSubstring": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/commonPrefixLength": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/commonSuffixLength": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/isBasicASCII": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/containsRTL": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/lcut": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/rcut": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/fuzzyContains": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/containsUppercaseCharacter": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/uppercaseFirstLetter": {
+      "admitted": 12
+    },
+    "utility:vscode/strings.ts/getNLines": {
+      "admitted": 12
+    },
+    "utility:lodash/_arrayEach.js/arrayEach": {
+      "admitted": 12
+    },
+    "utility:lodash/_arrayEachRight.js/arrayEachRight": {
+      "admitted": 12
+    },
+    "utility:lodash/_arrayEvery.js/arrayEvery": {
+      "admitted": 12
+    },
+    "utility:lodash/_arrayFilter.js/arrayFilter": {
+      "admitted": 12
+    },
+    "utility:lodash/_arrayIncludesWith.js/arrayIncludesWith": {
+      "admitted": 12
+    },
+    "utility:lodash/_arrayMap.js/arrayMap": {
+      "admitted": 12
+    },
+    "utility:lodash/_arrayPush.js/arrayPush": {
+      "native_rejected": 12
+    },
+    "utility:lodash/_arrayReduce.js/arrayReduce": {
+      "admitted": 12
+    },
+    "utility:lodash/_arrayReduceRight.js/arrayReduceRight": {
+      "admitted": 12
+    },
+    "utility:lodash/_arraySome.js/arraySome": {
+      "admitted": 12
+    },
+    "utility:lodash/_baseClamp.js/baseClamp": {
+      "admitted": 12
+    },
+    "utility:lodash/_baseRange.js/baseRange": {
+      "admitted": 12
+    },
+    "utility:lodash/_baseRepeat.js/baseRepeat": {
+      "admitted": 12
+    },
+    "utility:lodash/_baseTimes.js/baseTimes": {
+      "admitted": 12
+    },
+    "utility:lodash/_baseSum.js/baseSum": {
+      "admitted": 12
+    },
+    "utility:lodash/_baseGt.js/baseGt": {
+      "admitted": 12
+    },
+    "utility:lodash/_baseLt.js/baseLt": {
+      "admitted": 12
+    },
+    "utility:lodash/_strictIndexOf.js/strictIndexOf": {
+      "admitted": 12
+    },
+    "utility:lodash/_strictLastIndexOf.js/strictLastIndexOf": {
+      "admitted": 12
+    },
+    "utility:lodash/_baseFindIndex.js/baseFindIndex": {
+      "admitted": 12
+    },
+    "exercism/javascript:anagram": {
+      "unsupported": 12
+    },
+    "exercism/javascript:armstrong-numbers": {
+      "unsupported": 9,
+      "canonical_mismatch": 2
+    },
+    "exercism/javascript:binary-search": {
+      "admitted": 11
+    },
+    "exercism/javascript:collatz-conjecture": {
+      "admitted": 7,
+      "worker_timeout": 1
+    },
+    "exercism/javascript:darts": {
+      "projection_refused": 12
+    },
+    "exercism/javascript:grains": {
+      "canonical_mismatch": 8,
+      "unsupported": 3
+    },
+    "exercism/javascript:hamming": {
+      "unsupported": 12
+    },
+    "exercism/javascript:isogram": {
+      "unsupported": 12
+    },
+    "exercism/javascript:knapsack": {
+      "canonical_mismatch": 1,
+      "teacher_failed": 7
+    },
+    "exercism/javascript:largest-series-product": {
+      "unsupported": 9,
+      "admitted": 3
+    },
+    "exercism/javascript:leap": {
+      "admitted": 9
+    },
+    "exercism/javascript:luhn": {
+      "unsupported": 12
+    },
+    "exercism/javascript:matching-brackets": {
+      "unsupported": 12
+    },
+    "exercism/javascript:raindrops": {
+      "admitted": 12
+    },
+    "exercism/javascript:roman-numerals": {
+      "teacher_failed": 12
+    },
+    "exercism/javascript:run-length-encoding": {
+      "unsupported": 12
+    },
+    "exercism/javascript:sieve": {
+      "unsupported": 5
+    },
+    "exercism/javascript:space-age": {
+      "source_unsupported": 9
+    },
+    "exercism/javascript:sum-of-multiples": {
+      "admitted": 1,
+      "teacher_failed": 11
+    },
+    "exercism/javascript:two-fer": {
+      "canonical_mismatch": 1,
+      "admitted": 2
+    },
+    "production:axios/axios:axios/lib/core/InterceptorManager.js:countHandlers": {
+      "admitted": 3
+    },
+    "production:axios/axios:axios/lib/core/InterceptorManager.js:normalizeHandlerId": {
+      "unsupported": 4
+    },
+    "production:axios/axios:axios/lib/core/InterceptorManager.js:trimHandlers": {
+      "admitted": 2,
+      "native_rejected": 1
+    },
+    "production:axios/axios:axios/lib/utils.js:isUnsafeObjectKey": {
+      "admitted": 5
+    },
+    "production:axios/axios:axios/lib/utils.js:isObject": {
+      "admitted": 4
+    },
+    "production:axios/axios:axios/lib/utils.js:isBoolean": {
+      "admitted": 4
+    },
+    "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest": {
+      "native_rejected": 11
+    }
+  },
+  "refusalReasonCounts": [
+    {
+      "reason": "Generation process exceeded 120000 ms",
+      "count": 1
+    },
+    {
+      "reason": "Incomplete replayed invocation",
+      "count": 12
+    },
+    {
+      "reason": "Pinned original source disagrees with independent canonical expected result",
+      "count": 12
+    },
+    {
+      "reason": "Sparse array operation not modeled",
+      "count": 7
+    },
+    {
+      "reason": "Top-level non-function initialization is not owned",
+      "count": 9
+    },
+    {
+      "reason": "Traceback (most recent call last):\n  File \"/workspace/scratch/0c59f3502a6d/megatoken/scripts/admit_semantic_harness.py\", line 50, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"/workspace/scratch/0c59f3502a6d/megatoken/scripts/admit_semantic_harness.py\", line 36, in main\n    result = native_admission(\n             ^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/0c59f3502a6d/megatoken/src/megatoken/data/semantic_admission.py\", line 156, in native_admission\n    episode, receipt = adapt_selected_harness_v5(\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/0c59f3502a6d/megatoken/src/megatoken/data/semantic_harness_v5.py\", line 282, in adapt_selected_harness_v5\n    if validate_selected_context(item, timeline[:index]):\n       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/0c59f3502a6d/megatoken/src/megatoken/data/semantic_context.py\", line 120, in validate_selected_context\n    raise ValueError(\"Selected-state observation changed its committed realm prefix\")\nValueError: Selected-state observation changed its committed realm prefix\n",
+      "count": 60
+    },
+    {
+      "reason": "Traceback (most recent call last):\n  File \"/workspace/scratch/0c59f3502a6d/megatoken/scripts/admit_semantic_harness.py\", line 50, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"/workspace/scratch/0c59f3502a6d/megatoken/scripts/admit_semantic_harness.py\", line 36, in main\n    result = native_admission(\n             ^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/0c59f3502a6d/megatoken/src/megatoken/data/semantic_admission.py\", line 189, in native_admission\n    raise ValueError(\"Native transport changed exact selected or observed bytes\")\nValueError: Native transport changed exact selected or observed bytes\n",
+      "count": 55
+    },
+    {
+      "reason": "Traceback (most recent call last):\n  File \"/workspace/scratch/0c59f3502a6d/megatoken/src/megatoken/data/semantic_harness_v5.py\", line 213, in adapt_selected_harness_v5\n    validate_envelope_record(item)\n  File \"/workspace/scratch/0c59f3502a6d/megatoken/src/megatoken/data/semantic_contract.py\", line 93, in validate_envelope_record\n    parse_record(item[\"line\"])\n  File \"/workspace/scratch/0c59f3502a6d/megatoken/src/megatoken/data/witness_v5.py\", line 333, in parse_record\n    _fail(\"Malformed shared cell capture relation\")\n  File \"/workspace/scratch/0c59f3502a6d/megatoken/src/megatoken/data/witness_v5.py\", line 108, in _fail\n    raise WitnessV5Error(\"Invalid semantic-trace/5: \" + reason)\nmegatoken.data.witness_v5.WitnessV5Error: Invalid semantic-trace/5: Malformed shared cell capture relation\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/workspace/scratch/0c59f3502a6d/megatoken/scripts/admit_semantic_harness.py\", line 50, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"/workspace/scratch/0c59f3502a6d/megatoken/scripts/admit_semantic_harness.py\", line 36, in main\n    result = native_admission(\n             ^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/0c59f3502a6d/megatoken/src/megatoken/data/semantic_admission.py\", line 156, in native_admission\n    episode, receipt = adapt_selected_harness_v5(\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/0c59f3502a6d/megatoken/src/megatoken/data/semantic_harness_v5.py\", line 215, in adapt_selected_harness_v5\n    raise SelectedHarnessError(str(error)) from error\nmegatoken.data.semantic_harness_v5.SelectedHarnessError: Invalid semantic-trace/5: Malformed shared cell capture relation\n",
+      "count": 23
+    },
+    {
+      "reason": "Unmodeled ordinary [[Get]] or exotic property",
+      "count": 23
+    },
+    {
+      "reason": "Unsupported owned execution: RegExp execution requires owned matching semantics",
+      "count": 33
+    },
+    {
+      "reason": "Unsupported training-js/1 NewExpression at 353:383",
+      "count": 12
+    },
+    {
+      "reason": "Unsupported training-js/1 ThisExpression at 215:219",
+      "count": 5
+    },
+    {
+      "reason": "Unsupported training-js/1 sparse/spread array at 101:113",
+      "count": 12
+    },
+    {
+      "reason": "Unsupported training-js/1 sparse/spread array at 102:123",
+      "count": 9
+    },
+    {
+      "reason": "Unsupported training-js/1 sparse/spread array at 164:176",
+      "count": 12
+    },
+    {
+      "reason": "Unsupported training-js/1 sparse/spread array at 390:405",
+      "count": 12
+    },
+    {
+      "reason": "Unsupported training-js/1 unbound identifier BigInt at 135:141",
+      "count": 3
+    },
+    {
+      "reason": "Unsupported training-js/1 unbound identifier String at 93:99",
+      "count": 4
+    }
+  ],
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}

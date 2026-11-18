@@ -1,0 +1,36 @@
+{
+  "suite": {
+    "repository": "tc39/test262",
+    "commit": "d53ebc8b1931d9f1541e43d59650776e4b766248",
+    "files": 8,
+    "source": "pinned-commit-and-verified-git-blobs"
+  },
+  "summary": {
+    "files": 8,
+    "executedVariants": 6,
+    "passedVariants": 6,
+    "failedVariants": 0,
+    "unsupportedVariants": 2,
+    "omittedStrictVariants": 8,
+    "executedAssertions": 16
+  },
+  "oracle": {
+    "name": "engine262",
+    "revision": "2d7d8d988c77e94473ba0377122cdfccdfe243ba",
+    "packageVersion": "0.0.1-2d7d8d988c77e94473ba0377122cdfccdfe243ba",
+    "traceAuthority": false
+  },
+  "gaps": [
+    {
+      "path": "test/language/expressions/exponentiation/exp-operator.js",
+      "status": "unsupported",
+      "reason": "Unexpected token ++ at 466"
+    },
+    {
+      "path": "test/language/expressions/addition/bigint-and-number.js",
+      "status": "unsupported",
+      "reason": "Test body requires an unavailable assert helper"
+    }
+  ],
+  "baselineChanges": []
+}
