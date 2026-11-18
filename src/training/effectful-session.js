@@ -155,12 +155,14 @@ export async function recheckEffectfulSession(exported,{requireAdmitted=true,tim
     seed:side.sourceProvenance.seed,producerRevision:side.producerRevision,
     split:side.splitIdentity.split,splitIdentity:side.splitIdentity});
   if(!isDeepStrictEqual(rebuilt.public,exported.public)||
+    !isDeepStrictEqual(rebuilt.sidecar.identity,side.identity)||
+    rebuilt.sidecar.identityDigest!==side.identityDigest||
     !isDeepStrictEqual(rebuilt.sidecar.collection,collection)||
     !isDeepStrictEqual(rebuilt.sidecar.effects,side.effects)||
     !isDeepStrictEqual(rebuilt.sidecar.reference,side.reference)||
     ['sourceProvenance','ancestorIds','catalogDigest','split','sourceFamily','referenceInput','representation']
       .some(field=>!isDeepStrictEqual(rebuilt.sidecar[field],side[field])))
-    throw new Error('Repeated-ingress source certificates or public bytes changed');
+    throw new Error('Repeated-ingress source certificates, identity or public bytes changed');
   if(requireAdmitted){
     if(side.admission!=='admitted'||side.selectionOrigin!=='certified_teacher')throw new Error('Session not fully admitted');
     verifyNativeBinding(exported,nativePolicy);

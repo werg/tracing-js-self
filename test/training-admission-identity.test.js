@@ -81,6 +81,23 @@ test('session and component identities use the same lineage invariant',async()=>
   await assert.rejects(recheckEffectfulSession(altered,{requireAdmitted:false}),/identity evidence changed/);
 });
 
+test('rebuilding a session independently rejects coherently rehashed top-level metadata',async()=>{
+  const mutations={
+    task:side=>{side.taskId='different-task';},
+    fixture:side=>{side.fixtureFamily='different-fixture-family';},
+    limits:side=>{side.executionLimits[0].maxSteps++;},
+    seeds:side=>{side.seeds.input++;},
+  };
+  for(const [name,mutate] of Object.entries(mutations)){
+    const altered=structuredClone(session);mutate(altered.sidecar);
+    // A matching checksum alone cannot establish consistency with independently
+    // collected components. Rebuilding the entire identity supplies that check.
+    bindAdmissionIdentity(altered);
+    await assert.rejects(recheckEffectfulSession(altered,{requireAdmitted:false}),
+      /Repeated-ingress.*identity.*changed/,name);
+  }
+});
+
 test('frozen global source registry is rechecked with its exact source and holdout assignment',async()=>{
   const registry=buildSourceRegistry([{id:'source-1',family:fixture.family,source:fixture.source,
     ancestorIds:fixture.ancestorIds,project:'held-out-project'}],{holdoutProjects:['held-out-project']});
