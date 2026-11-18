@@ -79,8 +79,9 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
       stages.v5ProjectionAndPublicReplay=projected?'passed':result.status==='projection_refused'?'unsupported':'failed';
       if(projected){
         const referenced=success||result.phase==='native-consumer';
-        stages.independentOutcome=referenced?'passed':/timeout|limit/.test(result.status)?'resource_limited':'failed';
-        stages.independentIntermediate=referenced?'passed':'untested';
+        const intermediateMismatch=['reference_operation_mismatch','reference_branch_mismatch'].includes(result.status);
+        stages.independentOutcome=referenced||intermediateMismatch?'passed':/timeout|limit/.test(result.status)?'resource_limited':'failed';
+        stages.independentIntermediate=referenced?'passed':intermediateMismatch?'failed':'untested';
       }
     }
     if(result.status==='admitted')stages.nativeAdmission='passed';
@@ -93,8 +94,10 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
       continuation:'semantic-continuation/5',harness:'selected-harness/2'},
     environment:admissionEnvironment(),unit:'declared source/input/fixture probe',rows,
     totals:summarizeCapabilityRows(rows),
-    otherProfiles:['bounded-js-subset/2','static-module/1','evaluated-module/1','typescript-transform/1'].map(profile=>({
+    otherProfiles:['bounded-js-subset/2','static-module/1','evaluated-module/1'].map(profile=>({
       profile,status:'untested',reason:'This command measures the strict training path only; separate profile tests are not promoted to this ladder.'})),
+    otherAdapters:[{adapter:'typescript/5.9.3',targetProfile:'training-js/1',status:'untested',
+      reason:'Syntax lowering and source-map preservation require their separate adapter tests.'}],
     claims:{fullEcmaScript:false,fullTest262:false,optimizerSteps:0,learnedSuccess:null},
     limitation:'Finite probes measure distinctions, not exhaustive feature conformance. Native and model stages remain untested without executed evidence.'};
 }

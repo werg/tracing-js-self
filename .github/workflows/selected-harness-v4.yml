@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
       - run: npm ci
       - run: npm run contracts:check
       - name: Run selected invocation, model, callback, Natlang, Node and browser adapters

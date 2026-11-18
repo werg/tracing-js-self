@@ -64,19 +64,26 @@ if(options.has('--megatoken')||options.has('--tokenizer')){
   for(const key of ['--megatoken','--tokenizer'])native.push(key,resolve(options.get(key)));
   native.push('--python',options.get('--python')??'python3','--native-policy',resolve(options.get('--native-policy')??join(root,'contracts/native-admission-policy-v5.json')),'--require-native');
 }
+const registry=join(output,'source-registry.json');
+if(!options.has('--skip-recipes'))check('source-registry',process.execPath,[
+  'tools/freeze-source-registry.mjs','--out',registry,'--holdout-projects','exercism/javascript',
+  '--holdout-compositions','square/even/maximum/alias/return']);
 if(!options.has('--skip-recipes'))for(const recipe of ['engineering','training-v4','benchmark-v1']){
   const directory=join(output,recipe);
-  check('corpus-'+recipe,process.execPath,['tools/generate-effectful-training.mjs','--recipe',recipe,'--jobs',String(jobs),'--out',directory,...native]);
+  check('corpus-'+recipe,process.execPath,['tools/generate-effectful-training.mjs','--recipe',recipe,'--jobs',String(jobs),'--out',directory,'--registry',registry,...native]);
   const path=join(directory,'manifest.json');
   if(existsSync(path)){
     const manifest=JSON.parse(readFileSync(path,'utf8'));
     report.corpora.push({recipe,path:relative(output,path),sha256:sha(readFileSync(path)),counts:manifest.counts,
       families:new Set(manifest.cases.map(row=>row.family)).size,
       splitFamilies:Object.fromEntries(['train','validation','test'].map(split=>[split,new Set(manifest.cases.filter(row=>row.split===split).map(row=>row.family)).size])),
+      lifecycleDispositions:manifest.recipe?.lifecycleDispositions??manifest.lifecycleDispositions??[],
       evidenceStage:native.length?'native-admission':'local-verification'});
   }
 }
 report.status=report.checks.some(row=>row.status==='failed')?'failed':'passed';
+if(existsSync(registry))report.sourceRegistry={path:'source-registry.json',sha256:sha(readFileSync(registry)),
+  diagnostics:JSON.parse(readFileSync(registry,'utf8')).diagnostics};
 report.evidenceBoundaries={acquisition:'not measured here',nativeAdmission:native.length?'executed; inspect per-corpus counts':'untested',
   browser:'untested; run npm run test:browser separately',modelEvaluation:'untested',learningImprovement:'unmeasured'};
 writeFileSync(join(output,'baseline.json'),JSON.stringify(report,null,2)+'\n');
