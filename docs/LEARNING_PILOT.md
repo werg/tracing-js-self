@@ -21,7 +21,7 @@ node tools/freeze-learning-experiment.mjs \
   --minimum-improvement 0.05 --mode exploratory \
   --optimizer-seeds 17 --initialization-seed 17 --decoder-seed 17 \
   --checkpoint-steps 16,64 --rollout-tokens 32 --rollout-timeout 120 \
-  --train-examples 32 --validation-cases 16 --test-cases 32
+  --train-examples 32 --validation-cases 16 --test-cases 32 --auxiliary-cases 32
 ```
 
 Repeat `--corpus` to combine streams qualified against the same registry.
@@ -158,6 +158,36 @@ Statistical unit tests use clearly synthetic receipts. They verify grouping,
 denominators, leakage boundaries, deterministic uncertainty and checkpoint
 selection; their passing results are never reported as learned performance.
 
+
+## Frozen known-source input and schedule slices
+
+The freeze command also reserves up to `--auxiliary-cases` (default 32) eligible
+training-split candidates that were **not** selected for optimization. Their
+source component remains `train`; they never join the primary unseen-source
+score. They are bound to a specific selected training case with the same exact
+source, entry and invocation structure.
+
+- `new-inputs-known-source` requires an input graph or declared guest RNG seed
+  not present among any selected training case for that exact source.
+- `different-observations` keeps source and initial input fixed while changing
+  the canonical external fixture (values, outcomes or callback observations).
+- `different-schedules` keeps source and initial input fixed and changes the
+  normalized asynchronous settlement order. An explicit default order and its
+  omitted equivalent have the same identity.
+
+Exact source/input/observation/schedule duplicates are excluded. Different
+wrappers do not become "known source" merely because they share an ancestor
+component. Auxiliary IDs, membership, matching training case, input/fixture
+identities and slice classification are frozen before the optimizer report
+binds the experiment. Their private expectations stay outside the model.
+
+After validation selects and seals the checkpoint, the pilot evaluates these
+reserved cases with both actual models and the same inference caps. It writes
+separate `auxiliarySlices` metrics, preserves every failed case, and reports
+unavailable slices as `untested`. Primary held-out membership, scores and
+uncertainty remain unchanged. Older frozen declarations without auxiliary
+members continue to measure precisely their original scope; an in-flight
+experiment is never retroactively expanded.
 
 ## Separate pure-output transfer
 

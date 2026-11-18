@@ -80,6 +80,34 @@ def require_frozen_experiment(experiment):
                         'controlledSelectionsByRepresentation' in envelope['request'] or
                         'expected' in envelope or 'expected' in envelope['request']):
                     raise ValueError('Private teacher material or wrong identity in model envelope')
+    training = {row['id']: row for row in experiment['training']}
+    for row in experiment.get('auxiliary', []):
+        if row['id'] in identifiers or row.get('split') != 'train' or row.get('evaluationRole') != 'auxiliary-known-source':
+            raise ValueError('Auxiliary variants must remain distinct, reserved training-split inputs')
+        identifiers.add(row['id'])
+        matched = training.get(row.get('matchedTrainingId'))
+        if (matched is None or row['sourceCluster'] != matched['sourceCluster'] or
+                row['scenario']['sourceKey'] != matched['scenario']['sourceKey']):
+            raise ValueError('Auxiliary source differs from its declared training source')
+        same_source = [item for item in training.values() if item['sourceCluster'] == row['sourceCluster'] and
+                       item['scenario']['sourceKey'] == row['scenario']['sourceKey']]
+        if any(all(item['scenario'][key] == row['scenario'][key] for key in
+                   ('inputKey', 'observationKey', 'scheduleKey')) for item in same_source):
+            raise ValueError('Auxiliary case duplicates an optimized source/input/schedule')
+        if row['scenario']['inputKey'] != matched['scenario']['inputKey']:
+            if any(item['scenario']['inputKey'] == row['scenario']['inputKey'] for item in same_source):
+                raise ValueError('New-input slice includes an input already selected for training')
+            labels = ['new-inputs-known-source']
+        else:
+            labels = [label for key, label in [('observationKey', 'different-observations'), ('scheduleKey', 'different-schedules')]
+                      if row['scenario'][key] != matched['scenario'][key]]
+        if not labels or row.get('auxiliarySlices') != labels or 'new-source' in row['slices']:
+            raise ValueError('Auxiliary slice classification changed or entered the unseen-source score')
+        envelope = row['envelope']
+        if (envelope['seed'] != experiment['decoderSeed'] or envelope['caseId'] != row['id'] or
+                'controlledSelectionsByRepresentation' in envelope['request'] or 'expected' in envelope or
+                'expected' in envelope['request']):
+            raise ValueError('Private teacher material or wrong identity in auxiliary envelope')
     return experiment
 
 
@@ -217,6 +245,9 @@ def summarize_learning(experiment, runs):
             raise ValueError('Actual base and validation-selected trained identities required')
         for key, identity in [('base', run['baseIdentity']), ('trained', run['trainedIdentity'])]:
             validate_measured_rows(experiment['test'], run[key], checkpoint_identity=identity)
+        if experiment.get('auxiliary'):
+            for key, identity in [('base', run['baseIdentity']), ('trained', run['trainedIdentity'])]:
+                validate_measured_rows(experiment['auxiliary'], run.get('auxiliary', {}).get(key, []), checkpoint_identity=identity)
         base, trained = arm_metrics(experiment['test'], run['base']), arm_metrics(experiment['test'], run['trained'])
         by_seed[seed] = {'optimizerSeed': seed, 'optimizerSteps': run['optimizerSteps'],
                          'baseIdentity': run['baseIdentity'], 'trainedIdentity': run['trainedIdentity'],
@@ -246,6 +277,22 @@ def summarize_learning(experiment, runs):
         slices[label] = {'status': 'measured', 'episodes': len(cases),
                          'independentComponents': len({case['sourceCluster'] for case in cases}),
                          'meanImprovement': mean(row['improvement'] for row in per_seed), 'perSeed': per_seed}
+    auxiliary = {}
+    for label in ('new-inputs-known-source', 'different-observations', 'different-schedules'):
+        cases = [case for case in experiment.get('auxiliary', []) if label in case['auxiliarySlices']]
+        if not cases:
+            auxiliary[label] = {'status': 'untested', 'episodes': 0, 'independentComponents': 0}
+            continue
+        ids = {case['id'] for case in cases}
+        rows = []
+        for run in runs:
+            arms = {key: arm_metrics(cases, [row for row in run['auxiliary'][key] if row['id'] in ids]) for key in ('base', 'trained')}
+            rows.append({'optimizerSeed': run['optimizerSeed'], 'base': arms['base'], 'trained': arms['trained'],
+                         'improvement': arms['trained']['familyWeightedWholeTaskSuccess'] - arms['base']['familyWeightedWholeTaskSuccess']})
+        auxiliary[label] = {'status': 'measured', 'episodes': len(cases),
+            'independentComponents': len({case['sourceCluster'] for case in cases}), 'perSeed': rows,
+            'meanImprovement': mean(row['improvement'] for row in rows), 'includedInPrimaryHeldOutScore': False,
+            'scope': 'Reserved inputs or fixtures on exact known training sources; components remain in train.'}
     improvement = mean(row['improvement'] for row in by_seed.values())
     requirements = {
         'declaredConfirmatoryExperiment': experiment['mode'] == 'confirmatory',
@@ -268,10 +315,10 @@ def summarize_learning(experiment, runs):
             'baseFamilyWeightedSuccess': mean(row['base']['familyWeightedWholeTaskSuccess'] for row in by_seed.values()),
             'trainedFamilyWeightedSuccess': mean(row['trained']['familyWeightedWholeTaskSuccess'] for row in by_seed.values()),
             'uncertainty': uncertainty, 'seeds': [by_seed[seed] for seed in sorted(by_seed)],
-            'slices': slices, 'requirements': requirements,
+            'slices': slices, 'auxiliarySlices': auxiliary, 'requirements': requirements,
             'confirmatoryGatePassed': all(requirements.values()),
             'generalizationClaim': all(requirements.values()),
             'unmetRequirements': [key for key, passed in requirements.items() if not passed],
-            'pureOutcomeTransfer': {'status': 'untested', 'reason': 'Selected execution uses semantic continuations; pure code/input-to-outcome transfer needs its own declared adapter.'},
+            'pureOutcomeTransfer': {'status': 'untested', 'reason': 'Run the separate pure-output-transfer adapter and compare its own frozen report; selected execution cannot establish that score.'},
             'teacherForcedLossIsExecutionAccuracy': False,
             'seedScope': 'Optimizer seeds are reported individually; the family bootstrap does not manufacture independent optimizer runs.'}

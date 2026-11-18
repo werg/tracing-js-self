@@ -163,6 +163,7 @@ def main():
             run = {'optimizerSeed': seed, 'optimizerSteps': smoke['optimizerSteps'],
                    'baseIdentity': base['model_sha256'], 'trainedIdentity': trained['model_sha256'],
                    'selection': choice, 'validation': candidates, 'base': [], 'trained': [],
+                   'auxiliary': {'base': [], 'trained': []},
                    'trainingExposure': smoke['checkpointVerification']['sourceSampling'],
                    'trainingSupervisedTokens': smoke['supervisedLexicalTokens'],
                    'selectedCheckpointReceipt': selected_receipt,
@@ -174,6 +175,13 @@ def main():
                 for arm, origin, bundle in [('base', 'fixed-weights', base), ('trained', 'trained', trained)]:
                     run[arm].append(SMOKE.rollout(case, origin, bundle, consumer,
                         root / f'seed-{seed}' / 'test', args, env))
+                    SMOKE.write_json(root / 'measured-runs.json', runs)
+                    record(completedRollouts=report['completedRollouts'] + 1)
+            for index, frozen_case in enumerate(experiment.get('auxiliary', [])):
+                case = {**frozen_case, 'index': index}
+                for arm, origin, bundle in [('base', 'fixed-weights', base), ('trained', 'trained', trained)]:
+                    run['auxiliary'][arm].append(SMOKE.rollout(case, origin, bundle, consumer,
+                        root / f'seed-{seed}' / 'auxiliary', args, env))
                     SMOKE.write_json(root / 'measured-runs.json', runs)
                     record(completedRollouts=report['completedRollouts'] + 1)
         comparison = summarize_learning(experiment, runs)
