@@ -21,10 +21,12 @@ import {runGenerationProcess} from '../src/corpus/generation-process.mjs';
 import {loadNativeSettings,createNativeConsumer} from '../src/corpus/native-admission-client.mjs';
 import {buildSourceRegistry,verifySourceRegistry,frozenSplitIdentity,canonicalHash}
   from '../src/corpus/source-registry.mjs';
+import {trustedRealSourceCases} from '../src/corpus/trusted-source-candidates.mjs';
 
 const booleanFlags=new Set(['--require-native','--resume','--retry-failures','--compact-storage']);
 const valueFlags=new Set(['--out','--megatoken','--tokenizer','--python','--recipe','--jobs','--native-policy',
-  '--worker-memory-mb','--worker-timeout-ms','--max-output-bytes','--limit','--registry','--freeze-registry']);
+  '--worker-memory-mb','--worker-timeout-ms','--max-output-bytes','--limit','--registry','--freeze-registry',
+  '--source-stream','--per-family','--mutations-per-family']);
 const flags=new Map();
 for(let i=2;i<process.argv.length;i++){
   const name=process.argv[i];
@@ -35,7 +37,7 @@ for(let i=2;i<process.argv.length;i++){
 const root=fileURLToPath(new URL('..',import.meta.url));
 const output=resolve(flags.get('--out')??'corpus/out/semantic-v5');mkdirSync(output,{recursive:true});
 const recipe=flags.get('--recipe')??'engineering';
-if(!['engineering',SEMANTIC_RECIPE_NAME,BENCHMARK_RECIPE_NAME].includes(recipe))throw new Error('Unknown source recipe');
+if(!['engineering','real-source',SEMANTIC_RECIPE_NAME,BENCHMARK_RECIPE_NAME].includes(recipe))throw new Error('Unknown source recipe');
 const bounded=(flag,fallback,min,max)=>{const n=Number(flags.get(flag)??fallback);
   if(!Number.isSafeInteger(n)||n<min||n>max)throw new Error(flag+' must be '+min+'..'+max);return n;};
 const jobs=bounded('--jobs',1,1,8),limit=bounded('--limit',10000,1,10000);
@@ -61,6 +63,11 @@ if(recipe==='engineering'){
   for(const fixture of EFFECTFUL_ENGINEERING_FIXTURES)sourceTask(fixture);
   tasks.push({kind:'session',fixture:{id:'repeated-ingress',family:'async-counter',
     cases:EFFECTFUL_ENGINEERING_FIXTURES.slice(0,2)}});
+}else if(recipe==='real-source'){
+  for(const fixture of trustedRealSourceCases({root,
+    streams:(flags.get('--source-stream')??'utilities,exercism,production').split(','),
+    perFamily:bounded('--per-family',2,1,100),
+    mutationsPerFamily:bounded('--mutations-per-family',0,0,512)}))sourceTask(fixture);
 }else{
   const authoredFamilies=recipe===BENCHMARK_RECIPE_NAME?benchmarkFamiliesV1({representation}):semanticRecipeFamilies({representation});
   for(const family of authoredFamilies){
@@ -70,7 +77,9 @@ if(recipe==='engineering'){
 }
 const sourceInventory=tasks.flatMap(task=>(task.kind==='source'?[task.fixture]:task.fixture.cases).map((fixture,index)=>({
   id:task.fixture.id+'-source-'+index,family:task.fixture.family,source:fixture.source,
-  ancestorIds:fixture.ancestorIds??[],project:'repository-authored',upstreamRevision:producerRevision})));
+  ancestorIds:fixture.ancestorIds??[],project:fixture.provenance?.upstream?.repository??'repository-authored',
+  upstreamPath:fixture.provenance?.upstream?.path??null,
+  upstreamRevision:fixture.provenance?.upstream?.revision??producerRevision})));
 let registry=null;
 if(flags.has('--registry')&&flags.has('--freeze-registry'))throw new Error('Choose an existing registry or freeze a new one');
 if(flags.has('--registry')){registry=JSON.parse(readFileSync(resolve(flags.get('--registry')),'utf8'));verifySourceRegistry(registry);}
@@ -79,8 +88,8 @@ if(flags.has('--freeze-registry')){
 }
 if(registry)for(const task of tasks){
   const splitIdentity=frozenSplitIdentity(registry,task.fixture.family);
-  task.fixture={...task.fixture,splitIdentity};
-  if(task.kind==='session')task.fixture.cases=task.fixture.cases.map(fixture=>({...fixture,splitIdentity}));
+  task.fixture={...task.fixture,splitIdentity,seed:registry.seed};
+  if(task.kind==='session')task.fixture.cases=task.fixture.cases.map(fixture=>({...fixture,splitIdentity,seed:registry.seed}));
 }
 const selectedTasks=tasks.slice(0,limit);
 const campaign=new CampaignStore(output,generationIdentity(root,{producerRevision,recipe,native,
@@ -140,7 +149,7 @@ await Promise.all(Array.from({length:Math.min(jobs,selectedTasks.length)},async(
 }));
 for(const task of selectedTasks)if(summaryById.has(task.fixture.id))cases.push(summaryById.get(task.fixture.id));
 const lifecycleInputs=[];
-if(recipe!=='engineering'&&!abort.signal.aborted&&selectedTasks.length===tasks.length){
+if(!['engineering','real-source'].includes(recipe)&&!abort.signal.aborted&&selectedTasks.length===tasks.length){
   for(const split of ['train','validation']){
     let parent,exported;
     for(const item of cases){
@@ -177,7 +186,11 @@ for(const pair of [['counter-0','counter-1'],['branch-0','branch-1']])
     ...checkCounterfactualPrefixes(...pair.map(id=>campaign.exported(exportEntries.get(id))))});
 const counts={attempted:cases.length,admitted:0,locally_verified:0};
 for(const item of cases)counts[item.status]=(counts[item.status]??0)+1;
-const recipeMetadata=recipe==='engineering'?{name:recipe}:recipe===BENCHMARK_RECIPE_NAME?{
+const recipeMetadata=['engineering','real-source'].includes(recipe)?{name:recipe,
+  ...(recipe==='real-source'?{sourceStreams:(flags.get('--source-stream')??'utilities,exercism,production').split(','),
+    perFamily:Number(flags.get('--per-family')??2),mutationsPerFamily:Number(flags.get('--mutations-per-family')??0),
+    authority:'fresh-original-transformed-owned-reference-native-gates',
+    admittedByLocalFlag:false}:{} )}:recipe===BENCHMARK_RECIPE_NAME?{
   schema:BENCHMARK_RECIPE_VERSION,name:recipe,
   algorithms:BENCHMARK_ALGORITHMS.map(({name,body})=>({name,body,
     family:'semantic-benchmark-v1:'+name,ancestor:'source-algorithm-v1:'+name,
@@ -207,13 +220,13 @@ const manifest={schema:'semantic-corpus-manifest/4',execution:EXECUTION_VERSION,
   recipe:recipeMetadata,
   catalogDigest:hash(JSON.stringify(hostOperationContract(),null,2)+'\n'),
   counts,cases,counterfactuals,selectionOrigin:nativeConsumer?'certified_teacher':'owned-interpreter-teacher',
-  evidenceKind:'deterministic-engineering',optimizerSteps:0,learnedSuccess:null};
+  evidenceKind:recipe==='real-source'?'pinned-real-source':'deterministic-engineering',optimizerSteps:0,learnedSuccess:null};
 const elapsedMs=performance.now()-start;
 const generatedTokens=cases.reduce((sum,row)=>sum+(row.metrics?.generatedTokens??0),0);
 const fresh=cases.filter(row=>freshlyRun.has(row.id));
 const freshTokens=fresh.filter(row=>row.status==='admitted').reduce((sum,row)=>sum+(row.metrics?.generatedTokens??0),0);
 Object.assign(manifest,{campaign:{schema:'semantic-generation-summary/1',identityDigest:campaign.identityDigest,
-  completed:cases.length,planned:selectedTasks.length+(recipe!=='engineering'&&selectedTasks.length===tasks.length?2:0),
+  completed:cases.length,planned:selectedTasks.length+(!['engineering','real-source'].includes(recipe)&&selectedTasks.length===tasks.length?2:0),
   resumed,cancelled:abort.signal.aborted,log:'campaign.jsonl',publicRecords:'objects/public',
   privateEvidence:'objects/private',compatibilityExports:!flags.has('--compact-storage'),
   limits:bounds,workers:jobs,receiptCache:'full-source-profile-runtime-verifier-identity'},

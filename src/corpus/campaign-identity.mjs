@@ -14,6 +14,8 @@ export function generationIdentity(root,{producerRevision,recipe,native=null,bou
     }
   }
   for(const directory of ['src','tools','contracts','profiles'])walk(join(root,directory));
+  for(const entry of readdirSync(join(root,'corpus'),{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name)))
+    if(entry.isFile()&&/\.(?:mjs|json)$/.test(entry.name))files.push(['corpus/'+entry.name,sha256(readFileSync(join(root,'corpus',entry.name)))]);
   const dependencies=Object.fromEntries(['acorn','typescript'].map(name=>[name,
     JSON.parse(readFileSync(join(root,'node_modules',name,'package.json'),'utf8')).version]));
   let consumerEnvironment=null;

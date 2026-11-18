@@ -23,8 +23,8 @@ const helperNames={
   'strings.ts/isBasicASCII':['IS_BASIC_ASCII'],
   'strings.ts/containsRTL':['CONTAINS_RTL','makeContainsRtl']
 };
-export function original(spec){
-  const path=resolve('corpus/upstream',spec.project,spec.file);
+export function original(spec,{root=process.cwd()}={}){
+  const path=resolve(root,'corpus/upstream',spec.project,spec.file);
   if(!cache.has(path))cache.set(path,readFileSync(path,'utf8'));
   const text=cache.get(path);
   const source=sources[spec.project];
@@ -40,7 +40,7 @@ export function original(spec){
   for(const name of depends){
     let owner=file,document=text;
     if(name==='CharCode'){
-      const filename='corpus/upstream/vscode/charCode.ts';
+      const filename=resolve(root,'corpus/upstream/vscode/charCode.ts');
       document=readFileSync(filename,'utf8');
       owner=ts.createSourceFile(filename,document,ts.ScriptTarget.ES2022,true,ts.ScriptKind.TS);
     }
@@ -69,7 +69,7 @@ export function corpusSplit(key){
 // This transformer replaces *only verified enum member references* with their
 // original numeric compile-time values, leaving the production functions and
 // their actual runtime control flow intact. No runtime JS or host fallback.
-export function lowerPinnedCharCode(spec,source){
+export function lowerPinnedCharCode(spec,source,{root=process.cwd()}={}){
   const families=new Set(['firstNonWhitespaceIndex','getLeadingWhitespace',
     'lastNonWhitespaceIndex','getIndentationLength']);
   if(spec.project!=='vscode'||spec.file!=='strings.ts'||!families.has(spec.entry))
@@ -115,6 +115,6 @@ export function lowerPinnedCharCode(spec,source){
   return {text,lowering:{kind:'pinned-typescript-const-enum-inlining/1',
     sourceMember:'CharCode',
     pinnedDependencySha256:createHash('sha256').update(
-      readFileSync(resolve('corpus/upstream/vscode/charCode.ts'),'utf8')).digest('hex'),
+      readFileSync(resolve(root,'corpus/upstream/vscode/charCode.ts'),'utf8')).digest('hex'),
     constants:Object.fromEntries([...used].sort().map(x=>[x,values.get(x)]))}};
 }
