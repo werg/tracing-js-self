@@ -1,0 +1,47 @@
+{
+  "schema": "semantic-release-archive-parts/1",
+  "splitBytes": 419430400,
+  "archives": [
+    {
+      "archive": "tracing-js-self-release-C-audit-2026-11-18.tar.gz",
+      "bytes": 1023114187,
+      "sha256": "1c48257bfb7713e332a17cb3cb1e5e2b3dc1ec1a4573ae9716981506254953ab",
+      "parts": [
+        {
+          "file": "tracing-js-self-release-C-audit-2026-11-18.tar.gz.part-001.bin",
+          "bytes": 419430400,
+          "sha256": "5bddcc1a5a2b0131a05c9054c1f3f1428aac489480ecd0374a84b5b447fc1d88"
+        },
+        {
+          "file": "tracing-js-self-release-C-audit-2026-11-18.tar.gz.part-002.bin",
+          "bytes": 419430400,
+          "sha256": "f3e0b62f9374244e4e278a38be0f84b4ca2e5db3dc99187ac91bd8b62d5ad6a2"
+        },
+        {
+          "file": "tracing-js-self-release-C-audit-2026-11-18.tar.gz.part-003.bin",
+          "bytes": 184253387,
+          "sha256": "40d7cefe7b856387c8e0e59a081c3f08fa0155cd0ac95575c795c2c05727e8c4"
+        }
+      ],
+      "reassembly": "Concatenate the listed binary parts in order, then verify the complete SHA-256 before extracting."
+    },
+    {
+      "archive": "tracing-js-self-optimization-evidence-2026-11-18.tar.gz",
+      "bytes": 678766391,
+      "sha256": "662d686473ca07cd81af5ae5e742eba484dfbc502b0a46ad225b932c73f6bce1",
+      "parts": [
+        {
+          "file": "tracing-js-self-optimization-evidence-2026-11-18.tar.gz.part-001.bin",
+          "bytes": 419430400,
+          "sha256": "0ece2f07cbec211f166b94c87559a1d1007eb292432bff854687e141d914bac3"
+        },
+        {
+          "file": "tracing-js-self-optimization-evidence-2026-11-18.tar.gz.part-002.bin",
+          "bytes": 259335991,
+          "sha256": "c8bf0f3e51e32e1493fdb2013582e0c3f736d3f0071574849b7edee6257bdd73"
+        }
+      ],
+      "reassembly": "Concatenate the listed binary parts in order, then verify the complete SHA-256 before extracting."
+    }
+  ]
+}
