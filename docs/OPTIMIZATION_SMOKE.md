@@ -32,6 +32,11 @@ checks before preparation. The report pins both repositories, the tokenizer,
 the actual runner files, input files, and the resulting prepared corpus.
 
 Training is capped by `--steps` and `--train-timeout` (900 seconds by default).
+The runner reserves up to 30 seconds **inside** that cap for the native engine's
+SIGTERM handler to finish its current atomic update and save a paused checkpoint.
+If graceful checkpointing cannot finish by the cap, the process group is killed.
+Interrupted logged updates and the last durable checkpoint are reported
+separately. A paused run that did not reach its declared step count does not pass.
 Rollouts are independently capped by `--rollout-timeout` (120 seconds by
 default) and `--rollout-tokens` **per native fragment**. The pinned selected
 adapter may emit up to 64 fragments for one logical decision; this flag is not

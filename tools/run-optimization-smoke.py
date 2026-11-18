@@ -54,12 +54,37 @@ def require_clean_checkout(path):
         raise ValueError(f'Pinned source/consumer checkout has tracked changes: {path}')
 
 
-def run_logged(command, path, *, env, timeout, input_text=None):
+def run_logged(command, path, *, env, timeout, input_text=None, graceful_checkpoint=False):
+    """Honor the wall cap, reserving native SIGTERM checkpoint time inside it."""
+    grace = min(30, max(1, timeout // 10)) if graceful_checkpoint else 0
+    requested_stop = False
+    started = time.monotonic()
     with Path(path).open('w') as log:
-        result = subprocess.run(command, input=input_text, text=True, stdout=log,
-                                stderr=subprocess.STDOUT, env=env, timeout=timeout)
-    if result.returncode:
-        raise RuntimeError(f'Command exited {result.returncode}; retained log: {path}')
+        process = subprocess.Popen(command, stdin=subprocess.PIPE if input_text is not None else subprocess.DEVNULL,
+            text=True, stdout=log, stderr=subprocess.STDOUT, env=env, start_new_session=True)
+        try:
+            process.communicate(input=input_text, timeout=max(0.01, timeout - grace))
+        except subprocess.TimeoutExpired:
+            if graceful_checkpoint:
+                requested_stop = True
+                # The pinned native engine handles SIGTERM by finishing its
+                # current atomic update and saving a paused checkpoint. Let its
+                # worker processes finish too; kill the group only at the cap.
+                process.terminate()
+                try:
+                    process.communicate(timeout=max(0.01, timeout - (time.monotonic() - started)))
+                except subprocess.TimeoutExpired:
+                    os.killpg(process.pid, signal.SIGKILL)
+                    process.wait()
+                    raise
+            else:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait()
+                raise
+    if process.returncode:
+        raise RuntimeError(f'Command exited {process.returncode}; retained log: {path}')
+    return {'wallSeconds': time.monotonic() - started, 'wallCapSeconds': timeout,
+            'reservedCheckpointSeconds': grace, 'gracefulCheckpointStopRequested': requested_stop}
 
 
 def choose_candidates(corpus, maximum, experiment=None):
@@ -610,9 +635,10 @@ def main():
         base_bundle = export_checked(initial, root / 'served-base')
         record(phase='training', initialCheckpoint=str(initial), baseBundle=base_bundle)
         gc.collect()
-        run_logged([sys.executable, '-m', 'megatoken', 'train', '--config', str(config_path),
+        training_process = run_logged([sys.executable, '-m', 'megatoken', 'train', '--config', str(config_path),
                     '--resume', str(initial), '--phase-transition'], root / 'training.log',
-                   env=env, timeout=args.train_timeout)
+                   env=env, timeout=args.train_timeout, graceful_checkpoint=True)
+        record(trainingProcess=training_process)
         start_check = verify_training_start(initial, root / 'training/checkpoints/P1-000000000-phase-start')
         pointer = json.loads((root / 'training/checkpoints/latest.json').read_text())
         checkpoint = root / 'training/checkpoints' / pointer['checkpoint']
