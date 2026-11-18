@@ -1,0 +1,10 @@
+{
+  "schema": "semantic-ci-default-source-input-scan/1",
+  "producerRevision": "d15ddca47854ebdb92b23598dd720ccd1a18c822",
+  "recipe": "real-source",
+  "perFamily": 2,
+  "candidates": 210,
+  "duplicateGroups": [],
+  "scope": "Read-only same-family/source/entry/input-graph/fixture/seed identity scan; not native generation or a proof of all public-stream equivalences.",
+  "interpretation": "No duplicate source/input groups were found among the default210 candidates. The separate native collision probe uses exact registered inputs0/4 from the supported perFamily12 inventory; it does not establish that the default210-case lane already fails."
+}

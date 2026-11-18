@@ -1,0 +1,179 @@
+{
+  "schema": "semantic-ci-real-source-alias-integration/1",
+  "status": "verified",
+  "producerRevision": "d15ddca47854ebdb92b23598dd720ccd1a18c822",
+  "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+  "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+  "scope": "Fresh two-case registered real-source collision/preparation diagnostic and CI command routing; not H qualification, a full default 210 native run, or a balanced training release.",
+  "sourceCases": [
+    {
+      "id": "real-utilities-5a1fde95b4daab8314e03d36",
+      "family": "utility:vscode/arrays.ts/distinct",
+      "inputIndex": 0
+    },
+    {
+      "id": "real-utilities-2ebfe51f48dad1a027958ec0",
+      "family": "utility:vscode/arrays.ts/distinct",
+      "inputIndex": 4
+    }
+  ],
+  "individualNativeAdmissions": 2,
+  "rawNativePreparation": {
+    "attempted": 2,
+    "admitted": 1,
+    "rejected": 1,
+    "accepted": 1,
+    "refusals": [
+      {
+        "candidate": 1,
+        "reason": "An immutable episode ID was reused with changed bytes, masks, or metadata: semantic:harness:5f384c63e1748ef4d02421e529e94a0a173cb037f0fb195a409795b45c3f0373",
+        "status": "admission_rejected"
+      }
+    ],
+    "process": {
+      "schema": "semantic-qualification-process/1",
+      "kind": "raw-native-preparation",
+      "status": "failed",
+      "producerRevision": "d15ddca47854ebdb92b23598dd720ccd1a18c822",
+      "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+      "argv": [
+        "/workspace/scratch/23f61543c052/native-venv-merged/bin/python",
+        "../megatoken-merged/scripts/validate_semantic_corpus.py",
+        "--corpus",
+        "../release-evidence-ci-selection-2026-11-18/raw-input",
+        "--output",
+        "../release-evidence-ci-selection-2026-11-18/raw-prepared",
+        "--tracer-root",
+        ".",
+        "--tokenizer-json",
+        "../tokenizer.json"
+      ],
+      "cwd": "/workspace/scratch/23f61543c052/tracing-ci-selection-probe",
+      "startedAt": "2026-11-18T15:17:55.637095+00:00",
+      "environment": {
+        "TZ": "UTC",
+        "LC_ALL": "C.UTF-8",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "TMPDIR": "/workspace/scratch/23f61543c052/release-evidence-ci-selection-2026-11-18/tmp"
+      },
+      "exitCode": 1,
+      "completedAt": "2026-11-18T15:18:01.633673+00:00",
+      "wallSeconds": 5.996334724000917,
+      "peakRssBytes": 407388160,
+      "logBytes": 489,
+      "logSha256": "1bfc3083b1ae472926c72b8d1f83e1e17d4c69fd5d12f6335aa792c2a82c3225",
+      "producerTrackedFilesClean": true
+    }
+  },
+  "representativeSelection": {
+    "selected": 1,
+    "excludedAliases": 1,
+    "policy": "exact-public-within-frozen-component/2",
+    "groups": [
+      {
+        "episodeDigest": "c116e16d25bd0827e2a6ed4d1aac0020c38c0cae9f92b0b6e6fbe84af03a82ca",
+        "representativeId": "real-utilities-2ebfe51f48dad1a027958ec0",
+        "representativeIdentityDigest": "3bdeae5cbbffab1523ebff8af1758f2528a99c5719b0864e0a489a890cacafb4",
+        "componentId": "component:00c29ea794d8eedd0eb1282d361db202212b4aa25792ce18723a17ee837f2ca6",
+        "registryDigest": "4a68a123c8b1d04fa0f95ca4b5c9b45022c676bb43cbd4c9e39dbb183cb19733",
+        "split": "train",
+        "nativeContractDigest": "a8a6559dde51e99ecc35e0680c543a584f2b898b930a91728a16fe2569360329",
+        "nativeEpisodeMetadataDigest": "c8904c8846874efc8cb07a3e0a693adb47a9b485a3f8d1af9b4692f77657d706",
+        "declaredFamilies": [
+          "utility:vscode/arrays.ts/distinct"
+        ],
+        "aliases": [
+          "real-utilities-5a1fde95b4daab8314e03d36"
+        ]
+      }
+    ],
+    "originalCampaignRequiredForAudit": true
+  },
+  "selectedNativePreparation": {
+    "attempted": 1,
+    "admitted": 1,
+    "accepted": 1,
+    "refusals": [],
+    "process": {
+      "schema": "semantic-qualification-process/1",
+      "kind": "selected-native-preparation",
+      "status": "passed",
+      "producerRevision": "d15ddca47854ebdb92b23598dd720ccd1a18c822",
+      "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+      "argv": [
+        "/workspace/scratch/23f61543c052/native-venv-merged/bin/python",
+        "../megatoken-merged/scripts/validate_semantic_corpus.py",
+        "--corpus",
+        "../release-evidence-ci-selection-2026-11-18/selected-input",
+        "--output",
+        "../release-evidence-ci-selection-2026-11-18/selected-prepared",
+        "--tracer-root",
+        ".",
+        "--tokenizer-json",
+        "../tokenizer.json"
+      ],
+      "cwd": "/workspace/scratch/23f61543c052/tracing-ci-selection-probe",
+      "startedAt": "2026-11-18T15:18:01.079436+00:00",
+      "environment": {
+        "TZ": "UTC",
+        "LC_ALL": "C.UTF-8",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "TMPDIR": "/workspace/scratch/23f61543c052/release-evidence-ci-selection-2026-11-18/tmp"
+      },
+      "exitCode": 0,
+      "completedAt": "2026-11-18T15:18:05.648683+00:00",
+      "wallSeconds": 4.569097676998354,
+      "peakRssBytes": 395829248,
+      "logBytes": 900,
+      "logSha256": "987cddc4dc170ca312919b1fdda8b9bd81dc64e39f8cf2323d48db6db172b8f8",
+      "producerTrackedFilesClean": true
+    }
+  },
+  "finalNativeCapGuard": {
+    "unchangedCiPolicy": {
+      "enabled": true,
+      "maxFamilyTokens": 10000,
+      "maxFamilyShare": 0.2
+    },
+    "status": "violated",
+    "violations": [
+      "Native deduplication invalidated the component token share: component:00c29ea794d8eedd0eb1282d361db202212b4aa25792ce18723a17ee837f2ca6"
+    ],
+    "strictTokenBudgetStatus": "violated",
+    "unbudgetedControlStatus": "verified",
+    "balancedTrainingReleaseClaim": false
+  },
+  "defaultCiScan": {
+    "schema": "semantic-ci-default-source-input-scan/1",
+    "producerRevision": "d15ddca47854ebdb92b23598dd720ccd1a18c822",
+    "recipe": "real-source",
+    "perFamily": 2,
+    "candidates": 210,
+    "duplicateGroups": [],
+    "scope": "Read-only same-family/source/entry/input-graph/fixture/seed identity scan; not native generation or a proof of all public-stream equivalences.",
+    "interpretation": "No duplicate source/input groups were found among the default210 candidates. The separate native collision probe uses exact registered inputs0/4 from the supported perFamily12 inventory; it does not establish that the default210-case lane already fails."
+  },
+  "originalManifestBytesUnchanged": true,
+  "originalCampaignIntegrity": "Verified through the exact producer campaign reader and full audit hashes.",
+  "workflowFixCommit": "92526c619a2a6dcadc4c10fab8a117228f72f98d",
+  "workflowChanges": [
+    "Real-source selects exact-public representatives using the exact tracer root.",
+    "Selected input is packaged with the complete original --audit-campaign; all original admissions still undergo fresh qualification.",
+    "The original 10,000 generated tokens per component and 20% maximum component share remain unchanged, including the final native check.",
+    "Selected representative evidence is retained alongside the complete original campaign."
+  ],
+  "workflowRoutingTests": {
+    "passed": 4,
+    "failed": 0,
+    "log": "workflow-routing-tests.log",
+    "logSha256": "1cfa0f4125d1265713a73cf015a2bfff6809bdf0db45f76f4581f95725744cde",
+    "scope": "Execute actual workflow shell routing with command recorders, including failure propagation; semantic success comes from separate actual native runs."
+  },
+  "optimizerSteps": 0,
+  "modelInferenceCalls": 0,
+  "historicalEvidenceModified": false,
+  "evidenceRoot": "/workspace/scratch/23f61543c052/release-evidence-ci-selection-2026-11-18",
+  "localWorkflowFixCommit": "0174da4"
+}
