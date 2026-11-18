@@ -412,6 +412,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
         }
       }
     }
+    if(event.completion?.parameterTdz)allocations(row,owner,event);
     if(event.operation==='external.callback.enqueue'){
       const queue=event.stateChanges.find(change=>change.table==='control')?.after?.queue??[];
       const callback=queue.at(-1);

@@ -78,6 +78,7 @@ export function normalizeJournal(bundle) {
     // It is not modeled as a mysterious internal [[Get]] or [[Set]] step.
     const invoked=e.causes?.find(c=>c.kind==='invocation');
     if(invoked && e.operation!=='call.enter')op='call';
+    if(e.completion?.parameterTdz)op='throw';
     if(!op)continue;
     const args=inputs.operands??[];
     const source=sites.get(e.siteId);
@@ -188,7 +189,7 @@ export function normalizeJournal(bundle) {
       const frame=e.stateChanges.find(p=>p.table==='frames' && p.id===e.invocationId);
       r.destination=frame?.after?.callerFrameId??null;
     }
-    if(op==='alloc') {
+    if(op==='alloc'||e.completion?.parameterTdz) {
       const heap=e.stateChanges.filter(p=>p.table==='heap' && p.before===null);
       r.allocations=heap.map(allocation);
     }

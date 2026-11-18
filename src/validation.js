@@ -27,6 +27,27 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     }
     const job=e.operation==='job.enter'?state.control.a0.queue[0]:null;
     const queuedBefore=job?state.control.a0.queue.slice(1):null;
+    if(e.completion?.parameterTdz){
+      const c=e.completion,frame=state.frames[e.invocationId];
+      const instruction=bundle.programs[frame?.codeId]?.instructions[frame?.pc];
+      const name=typeof instruction?.arg==='string'?instruction.arg:instruction?.arg?.name;
+      let environment=frame?.envId;
+      while(environment&&!Object.hasOwn(state.envs[environment]?.bindings??{},name))
+        environment=state.envs[environment]?.parent;
+      const binding=state.envs[environment]?.bindings?.[name];
+      const value=c.value?.value,allocation=e.stateChanges.find(p=>
+        p.table==='heap'&&p.before===null&&p.id===value?.[1]);
+      if(!['GET','TYPEOF_BINDING','SET','UPDATE_BINDING'].includes(instruction?.op)||
+         instruction.siteId!==e.siteId||c.type!=='throw'||c.errorType!=='ReferenceError'||
+         c.origin!==e.eventId||c.value?.origin!==e.eventId||value?.[0]!=='ref'||
+         binding?.kind!=='parameter'||binding.initialized||
+         !eq(c.parameterTdz,{environment,name})||
+         c.message!==`Cannot access '${name}' before initialization`||
+         allocation?.after?.kind!=='object'||
+         !eq(allocation.after.properties,{name:{value:['str','ReferenceError'],origin:e.eventId},
+           message:{value:['str',c.message],origin:e.eventId}}))
+        fail('Invalid committed parameter TDZ exception',e.eventId);
+    }
     if(e.operation==='external.callback.enqueue'){
       const effect=e.causes.filter(c=>c.kind==='effect');
       const patch=e.stateChanges.find(p=>p.table==='control'&&p.id==='a0');
