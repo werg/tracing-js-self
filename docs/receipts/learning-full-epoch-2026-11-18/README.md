@@ -111,3 +111,16 @@ reproducibility, or broad held-out generalization. Valid-error, cleanup,
 alternate-observation, alternate-schedule, and matched known-source/new-input
 slices are absent in this frozen synthetic cohort. The separately frozen real
 source cohort retains its own provenance and prospective status.
+
+The completed follow-up archive is `learning-native-followup-2026-11-18.tar.gz`
+(334,503,326 bytes), SHA-256
+`321982e54da81cbd7d1de2d72b48053cddc7e4cf7db832088f74e832f04170ca`.
+[The archive verification](private-archive-verification.json) checked every one
+of its 252 original files (1,248,061,773 uncompressed bytes) against the
+[embedded index](private-archive-index.json). It includes both failed
+full-coverage attempts, all final checkpoints, prepared shards and original
+logs, the complete pilot and pure endpoint, the post-run authentication and
+optimizer audit, and the frozen declarations. Its explicit dependency is the
+previously retained original-run archive for the unchanged admitted source
+corpus; the prospective real-source corpus has its separate qualification and
+archive. No historical receipt is rebound to the final merged code.
