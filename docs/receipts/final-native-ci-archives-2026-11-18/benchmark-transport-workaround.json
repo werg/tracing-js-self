@@ -12,7 +12,7 @@
     "originalBytesReceived": 0
   },
   "workaround": {
-    "status": "published-awaiting-execution",
+    "status": "completed-original-bytes-preserved",
     "workflow": ".github/workflows/preserve-native-ci-artifact.yml",
     "script": "tools/preserve_ci_benchmark_artifact.py",
     "commit": "a2b74d47989a5354c87a950ebbc9d08ea0be00ba",
@@ -25,7 +25,19 @@
     ],
     "nativeRerun": false,
     "originalArtifactModified": false,
-    "learnedSuccessClaim": false
+    "learnedSuccessClaim": false,
+    "transportWorkflowRunId": 44326698336,
+    "transportWorkflowRunUrl": "https://github.com/werg/tracing-js-self/actions/runs/44326698336",
+    "transportWorkflowHead": "2c12e3d45d94c2413120da912ba883d9f43ddbea",
+    "transportJobConclusion": "success",
+    "originalReconstructionIndex": "benchmark-v1/transport/original-reconstruction.json",
+    "originalReconstructionIndexSha256": "f99bc4967d7809fed15428e2a8fb6b95bedd6e8054ce170ea42dbc8f47499d49",
+    "allTransportWrapperApiDigestsVerified": true,
+    "allEmbeddedPartCrcsVerified": true,
+    "allPartHashesVerified": true,
+    "reconstructedOriginalZipApiDigestVerified": true,
+    "allOriginalZipMemberCrcsAndHashesVerified": true,
+    "completeNativeVerification": "benchmark-v1/verification.json"
   },
   "privateConnectorIdentifiersOrSignedUrlsIncluded": false
 }

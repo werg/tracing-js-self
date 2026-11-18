@@ -26,7 +26,7 @@ from GitHub's 90-day CI artifact lifetime and outside public Git.
 | --- | ---: | ---: | ---: | ---: | --- |
 | [engineering](engineering/verification.json) | 106,834,065 | 215 | 25 / 25 | 20 | Original ZIP |
 | [training-v4](training-v4/verification.json) | 319,752,944 | 418 | 50 / 50 | 16 | Original ZIP |
-| benchmark-v1 | Pending | Pending | Pending | Pending | Successful lane artifact not yet preserved |
+| [benchmark-v1](benchmark-v1/verification.json) | 874,061,909 | 1,045 | 128 / 128 | 38 | Exact 400 MiB parts |
 | [real-source](real-source/verification.json) | 494,989,082 | 1,280 | 210 / 190 | 35 | Exact 400 MiB parts |
 | [generated-v1](generated-v1/verification.json) | 257,934,132 | 394 | 64 / 64 | 16 | Original ZIP |
 
@@ -43,13 +43,27 @@ native preparation; duplicate aliases remain in the original disposition files.
 | --- | ---: | ---: | ---: | ---: | --- | ---: |
 | [engineering](engineering/training-selection-summary.json) | 19 / 2 / 4 | 0 | 7,524 | 20.09569378% | Disabled | 0 |
 | [training-v4](training-v4/training-selection-summary.json) | 43 / 4 / 3 | 0 | 24,065 | 8.55599418% | Disabled | 0 |
+| [benchmark-v1](benchmark-v1/training-selection-summary.json) | 94 / 22 / 12 | 0 | 205,033 | 10.46270600% | Disabled | 0 |
 | [real-source](real-source/training-selection-summary.json) | 67 / 6 / 27 | 9 | 57,746 | 17.23582586% | 10,000 / 20% | 0 |
 | [generated-v1](generated-v1/training-selection-summary.json) | 43 / 7 / 11 | 3 | 54,117 | 11.58231240% | 10,000 / 20% | 0 |
 
 [index.json](index.json) binds every preserved archive to its original API
 digest, checked-out revisions, exact member inventory, and source dispositions.
-Pending rows mean this preservation task is still awaiting a successful lane's
-complete artifact; they do not represent a passed or failed qualification.
+The index reports each lane separately and identifies any incomplete archive
+preservation. Prepared-row totals sum distinct rows within each release;
+cross-recipe deduplication has not been measured.
+
+The benchmark ZIP exceeded the connector's 512 MiB download limit. The narrow
+[preservation workflow](https://github.com/werg/tracing-js-self/actions/runs/44326698336)
+retrieved that **same original ZIP**, verified its frozen API identity and whole
+SHA-256, and uploaded three exact binary parts in individual transport wrappers.
+Local verification checked each wrapper's API digest and member CRC, every part
+against the original reconstruction index, the reconstructed original ZIP's API
+SHA-256, and all original native ZIP members. The native source and consumer
+identities remain unchanged. [benchmark-transport-workaround.json](benchmark-transport-workaround.json)
+retains the original size-limit failure and its completed workaround; the
+unchanged CI reconstruction index and individual wrapper verification records
+are in [benchmark-v1/transport](benchmark-v1/transport/).
 
 These archives contain source/native qualification, prepared training data,
 release bundles, refusals, and engineering evaluation. Their native receipts
