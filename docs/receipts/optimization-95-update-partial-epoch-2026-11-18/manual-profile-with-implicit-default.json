@@ -1,0 +1,960 @@
+{
+  "schema": "optimization-window-plan/1",
+  "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+  "preparedManifest": "/workspace/scratch/23f61543c052/release-evidence/optimization-smoke-retry/prepared/manifest.json",
+  "seed": 17,
+  "maxWindowRecords": 128,
+  "maxWindowTokens": 16384,
+  "windows": [
+    {
+      "taskId": "unit-conversion-pure",
+      "sourceId": "semantic-harness:62bc2621b9a73985",
+      "family": "semantic-recipe:unit-conversion",
+      "records": 7,
+      "prefixRecords": 0,
+      "scoredTokens": 152,
+      "tokens": 829,
+      "last": false
+    },
+    {
+      "taskId": "unit-conversion-pure",
+      "sourceId": "semantic-harness:62bc2621b9a73985",
+      "family": "semantic-recipe:unit-conversion",
+      "records": 1,
+      "prefixRecords": 7,
+      "scoredTokens": 6,
+      "tokens": 6,
+      "last": true
+    },
+    {
+      "taskId": "promise-reaction",
+      "sourceId": "semantic-harness:827022c4f589483d",
+      "family": "promise-reaction",
+      "records": 9,
+      "prefixRecords": 0,
+      "scoredTokens": 107,
+      "tokens": 1348,
+      "last": false
+    },
+    {
+      "taskId": "promise-reaction",
+      "sourceId": "semantic-harness:827022c4f589483d",
+      "family": "promise-reaction",
+      "records": 5,
+      "prefixRecords": 9,
+      "scoredTokens": 92,
+      "tokens": 186,
+      "last": false
+    },
+    {
+      "taskId": "promise-reaction",
+      "sourceId": "semantic-harness:827022c4f589483d",
+      "family": "promise-reaction",
+      "records": 6,
+      "prefixRecords": 14,
+      "scoredTokens": 144,
+      "tokens": 301,
+      "last": false
+    },
+    {
+      "taskId": "promise-reaction",
+      "sourceId": "semantic-harness:827022c4f589483d",
+      "family": "promise-reaction",
+      "records": 4,
+      "prefixRecords": 20,
+      "scoredTokens": 82,
+      "tokens": 82,
+      "last": false
+    },
+    {
+      "taskId": "promise-reaction",
+      "sourceId": "semantic-harness:827022c4f589483d",
+      "family": "promise-reaction",
+      "records": 1,
+      "prefixRecords": 24,
+      "scoredTokens": 6,
+      "tokens": 6,
+      "last": true
+    },
+    {
+      "taskId": "semantic-recipe:absolute-distance",
+      "sourceId": "semantic-harness:b6ff96f3b21c026b",
+      "family": "semantic-recipe:absolute-distance",
+      "records": 9,
+      "prefixRecords": 0,
+      "scoredTokens": 95,
+      "tokens": 1360,
+      "last": false
+    },
+    {
+      "taskId": "semantic-recipe:absolute-distance",
+      "sourceId": "semantic-harness:b6ff96f3b21c026b",
+      "family": "semantic-recipe:absolute-distance",
+      "records": 5,
+      "prefixRecords": 9,
+      "scoredTokens": 120,
+      "tokens": 213,
+      "last": false
+    },
+    {
+      "taskId": "semantic-recipe:absolute-distance",
+      "sourceId": "semantic-harness:b6ff96f3b21c026b",
+      "family": "semantic-recipe:absolute-distance",
+      "records": 6,
+      "prefixRecords": 14,
+      "scoredTokens": 136,
+      "tokens": 295,
+      "last": false
+    },
+    {
+      "taskId": "semantic-recipe:absolute-distance",
+      "sourceId": "semantic-harness:b6ff96f3b21c026b",
+      "family": "semantic-recipe:absolute-distance",
+      "records": 6,
+      "prefixRecords": 20,
+      "scoredTokens": 50,
+      "tokens": 312,
+      "last": false
+    },
+    {
+      "taskId": "semantic-recipe:absolute-distance",
+      "sourceId": "semantic-harness:b6ff96f3b21c026b",
+      "family": "semantic-recipe:absolute-distance",
+      "records": 6,
+      "prefixRecords": 26,
+      "scoredTokens": 124,
+      "tokens": 282,
+      "last": false
+    },
+    {
+      "taskId": "semantic-recipe:absolute-distance",
+      "sourceId": "semantic-harness:b6ff96f3b21c026b",
+      "family": "semantic-recipe:absolute-distance",
+      "records": 4,
+      "prefixRecords": 32,
+      "scoredTokens": 126,
+      "tokens": 126,
+      "last": false
+    },
+    {
+      "taskId": "semantic-recipe:absolute-distance",
+      "sourceId": "semantic-harness:b6ff96f3b21c026b",
+      "family": "semantic-recipe:absolute-distance",
+      "records": 6,
+      "prefixRecords": 36,
+      "scoredTokens": 99,
+      "tokens": 258,
+      "last": true
+    },
+    {
+      "taskId": "modular-clock-pure",
+      "sourceId": "semantic-harness:cf566a052cac3ebb",
+      "family": "semantic-recipe:modular-clock",
+      "records": 7,
+      "prefixRecords": 0,
+      "scoredTokens": 142,
+      "tokens": 856,
+      "last": false
+    },
+    {
+      "taskId": "modular-clock-pure",
+      "sourceId": "semantic-harness:cf566a052cac3ebb",
+      "family": "semantic-recipe:modular-clock",
+      "records": 1,
+      "prefixRecords": 7,
+      "scoredTokens": 6,
+      "tokens": 6,
+      "last": true
+    },
+    {
+      "taskId": "native-result-graph",
+      "sourceId": "semantic-harness:cfa903d36c296f2d",
+      "family": "native-result-graph",
+      "records": 10,
+      "prefixRecords": 0,
+      "scoredTokens": 183,
+      "tokens": 1993,
+      "last": false
+    },
+    {
+      "taskId": "native-result-graph",
+      "sourceId": "semantic-harness:cfa903d36c296f2d",
+      "family": "native-result-graph",
+      "records": 4,
+      "prefixRecords": 10,
+      "scoredTokens": 93,
+      "tokens": 93,
+      "last": false
+    },
+    {
+      "taskId": "native-result-graph",
+      "sourceId": "semantic-harness:cfa903d36c296f2d",
+      "family": "native-result-graph",
+      "records": 6,
+      "prefixRecords": 14,
+      "scoredTokens": 276,
+      "tokens": 433,
+      "last": false
+    },
+    {
+      "taskId": "native-result-graph",
+      "sourceId": "semantic-harness:cfa903d36c296f2d",
+      "family": "native-result-graph",
+      "records": 6,
+      "prefixRecords": 20,
+      "scoredTokens": 124,
+      "tokens": 281,
+      "last": false
+    },
+    {
+      "taskId": "native-result-graph",
+      "sourceId": "semantic-harness:cfa903d36c296f2d",
+      "family": "native-result-graph",
+      "records": 2,
+      "prefixRecords": 26,
+      "scoredTokens": 24,
+      "tokens": 24,
+      "last": true
+    },
+    {
+      "taskId": "triangular-series-pure",
+      "sourceId": "semantic-harness:8d2e43bb4c5a0e67",
+      "family": "semantic-recipe:triangular-series",
+      "records": 7,
+      "prefixRecords": 0,
+      "scoredTokens": 163,
+      "tokens": 923,
+      "last": false
+    },
+    {
+      "taskId": "triangular-series-pure",
+      "sourceId": "semantic-harness:8d2e43bb4c5a0e67",
+      "family": "semantic-recipe:triangular-series",
+      "records": 1,
+      "prefixRecords": 7,
+      "scoredTokens": 6,
+      "tokens": 6,
+      "last": true
+    },
+    {
+      "taskId": "promise-rejection-finally",
+      "sourceId": "semantic-harness:e04aca8c0cc66eca",
+      "family": "promise-cleanup",
+      "records": 9,
+      "prefixRecords": 0,
+      "scoredTokens": 119,
+      "tokens": 1564,
+      "last": false
+    },
+    {
+      "taskId": "promise-rejection-finally",
+      "sourceId": "semantic-harness:e04aca8c0cc66eca",
+      "family": "promise-cleanup",
+      "records": 5,
+      "prefixRecords": 9,
+      "scoredTokens": 126,
+      "tokens": 225,
+      "last": false
+    },
+    {
+      "taskId": "promise-rejection-finally",
+      "sourceId": "semantic-harness:e04aca8c0cc66eca",
+      "family": "promise-cleanup",
+      "records": 6,
+      "prefixRecords": 14,
+      "scoredTokens": 109,
+      "tokens": 266,
+      "last": false
+    },
+    {
+      "taskId": "promise-rejection-finally",
+      "sourceId": "semantic-harness:e04aca8c0cc66eca",
+      "family": "promise-cleanup",
+      "records": 6,
+      "prefixRecords": 20,
+      "scoredTokens": 111,
+      "tokens": 268,
+      "last": false
+    },
+    {
+      "taskId": "promise-rejection-finally",
+      "sourceId": "semantic-harness:e04aca8c0cc66eca",
+      "family": "promise-cleanup",
+      "records": 4,
+      "prefixRecords": 26,
+      "scoredTokens": 82,
+      "tokens": 82,
+      "last": false
+    },
+    {
+      "taskId": "promise-rejection-finally",
+      "sourceId": "semantic-harness:e04aca8c0cc66eca",
+      "family": "promise-cleanup",
+      "records": 1,
+      "prefixRecords": 30,
+      "scoredTokens": 6,
+      "tokens": 6,
+      "last": true
+    },
+    {
+      "taskId": "branch-0",
+      "sourceId": "semantic-harness:e5c1a5415539754f",
+      "family": "observed-branch",
+      "records": 10,
+      "prefixRecords": 0,
+      "scoredTokens": 120,
+      "tokens": 1446,
+      "last": false
+    },
+    {
+      "taskId": "branch-0",
+      "sourceId": "semantic-harness:e5c1a5415539754f",
+      "family": "observed-branch",
+      "records": 6,
+      "prefixRecords": 10,
+      "scoredTokens": 145,
+      "tokens": 302,
+      "last": false
+    },
+    {
+      "taskId": "branch-0",
+      "sourceId": "semantic-harness:e5c1a5415539754f",
+      "family": "observed-branch",
+      "records": 2,
+      "prefixRecords": 16,
+      "scoredTokens": 24,
+      "tokens": 24,
+      "last": true
+    },
+    {
+      "taskId": "midpoint-pure",
+      "sourceId": "semantic-harness:50ccd8fac330f92f",
+      "family": "semantic-recipe:midpoint",
+      "records": 7,
+      "prefixRecords": 0,
+      "scoredTokens": 119,
+      "tokens": 790,
+      "last": false
+    },
+    {
+      "taskId": "midpoint-pure",
+      "sourceId": "semantic-harness:50ccd8fac330f92f",
+      "family": "semantic-recipe:midpoint",
+      "records": 1,
+      "prefixRecords": 7,
+      "scoredTokens": 6,
+      "tokens": 6,
+      "last": true
+    },
+    {
+      "taskId": "http-response-stream",
+      "sourceId": "semantic-harness:f0f289f7bc556737",
+      "family": "http-response-stream",
+      "records": 10,
+      "prefixRecords": 0,
+      "scoredTokens": 157,
+      "tokens": 1709,
+      "last": false
+    },
+    {
+      "taskId": "http-response-stream",
+      "sourceId": "semantic-harness:f0f289f7bc556737",
+      "family": "http-response-stream",
+      "records": 6,
+      "prefixRecords": 10,
+      "scoredTokens": 136,
+      "tokens": 298,
+      "last": false
+    },
+    {
+      "taskId": "http-response-stream",
+      "sourceId": "semantic-harness:f0f289f7bc556737",
+      "family": "http-response-stream",
+      "records": 6,
+      "prefixRecords": 16,
+      "scoredTokens": 134,
+      "tokens": 299,
+      "last": false
+    },
+    {
+      "taskId": "http-response-stream",
+      "sourceId": "semantic-harness:f0f289f7bc556737",
+      "family": "http-response-stream",
+      "records": 6,
+      "prefixRecords": 22,
+      "scoredTokens": 130,
+      "tokens": 287,
+      "last": false
+    },
+    {
+      "taskId": "http-response-stream",
+      "sourceId": "semantic-harness:f0f289f7bc556737",
+      "family": "http-response-stream",
+      "records": 3,
+      "prefixRecords": 28,
+      "scoredTokens": 45,
+      "tokens": 45,
+      "last": true
+    },
+    {
+      "taskId": "relative-growth-pure",
+      "sourceId": "semantic-harness:7c05614d5a35833c",
+      "family": "semantic-recipe:relative-growth",
+      "records": 7,
+      "prefixRecords": 0,
+      "scoredTokens": 145,
+      "tokens": 812,
+      "last": false
+    },
+    {
+      "taskId": "relative-growth-pure",
+      "sourceId": "semantic-harness:7c05614d5a35833c",
+      "family": "semantic-recipe:relative-growth",
+      "records": 1,
+      "prefixRecords": 7,
+      "scoredTokens": 6,
+      "tokens": 6,
+      "last": true
+    },
+    {
+      "taskId": "clock-console",
+      "sourceId": "semantic-harness:3a29c5a9aa613b2a",
+      "family": "platform-observation",
+      "records": 11,
+      "prefixRecords": 0,
+      "scoredTokens": 165,
+      "tokens": 1273,
+      "last": false
+    },
+    {
+      "taskId": "clock-console",
+      "sourceId": "semantic-harness:3a29c5a9aa613b2a",
+      "family": "platform-observation",
+      "records": 1,
+      "prefixRecords": 11,
+      "scoredTokens": 6,
+      "tokens": 6,
+      "last": true
+    },
+    {
+      "taskId": "checkpoint-source-reread",
+      "sourceId": "semantic-harness:fb87996a2ed8294c",
+      "family": "async-counter",
+      "records": 14,
+      "prefixRecords": 0,
+      "scoredTokens": 106,
+      "tokens": 1684,
+      "last": false
+    },
+    {
+      "taskId": "checkpoint-source-reread",
+      "sourceId": "semantic-harness:fb87996a2ed8294c",
+      "family": "async-counter",
+      "records": 6,
+      "prefixRecords": 14,
+      "scoredTokens": 152,
+      "tokens": 309,
+      "last": false
+    },
+    {
+      "taskId": "checkpoint-source-reread",
+      "sourceId": "semantic-harness:fb87996a2ed8294c",
+      "family": "async-counter",
+      "records": 3,
+      "prefixRecords": 20,
+      "scoredTokens": 42,
+      "tokens": 42,
+      "last": true
+    },
+    {
+      "taskId": "flag-union-pure",
+      "sourceId": "semantic-harness:ce24b3d371c9d028",
+      "family": "semantic-recipe:flag-union",
+      "records": 7,
+      "prefixRecords": 0,
+      "scoredTokens": 49,
+      "tokens": 683,
+      "last": true
+    },
+    {
+      "taskId": "dom-mutation-release",
+      "sourceId": "semantic-harness:9251f92f0cc9dd71",
+      "family": "dom-mutation-release",
+      "records": 10,
+      "prefixRecords": 0,
+      "scoredTokens": 127,
+      "tokens": 1551,
+      "last": false
+    },
+    {
+      "taskId": "dom-mutation-release",
+      "sourceId": "semantic-harness:9251f92f0cc9dd71",
+      "family": "dom-mutation-release",
+      "records": 6,
+      "prefixRecords": 10,
+      "scoredTokens": 138,
+      "tokens": 295,
+      "last": false
+    },
+    {
+      "taskId": "dom-mutation-release",
+      "sourceId": "semantic-harness:9251f92f0cc9dd71",
+      "family": "dom-mutation-release",
+      "records": 6,
+      "prefixRecords": 16,
+      "scoredTokens": 129,
+      "tokens": 290,
+      "last": false
+    },
+    {
+      "taskId": "dom-mutation-release",
+      "sourceId": "semantic-harness:9251f92f0cc9dd71",
+      "family": "dom-mutation-release",
+      "records": 6,
+      "prefixRecords": 22,
+      "scoredTokens": 132,
+      "tokens": 289,
+      "last": false
+    },
+    {
+      "taskId": "dom-mutation-release",
+      "sourceId": "semantic-harness:9251f92f0cc9dd71",
+      "family": "dom-mutation-release",
+      "records": 2,
+      "prefixRecords": 28,
+      "scoredTokens": 24,
+      "tokens": 24,
+      "last": true
+    },
+    {
+      "taskId": "rectangular-capacity-pure",
+      "sourceId": "semantic-harness:44bf4be458d27f62",
+      "family": "semantic-recipe:rectangular-capacity",
+      "records": 7,
+      "prefixRecords": 0,
+      "scoredTokens": 92,
+      "tokens": 721,
+      "last": false
+    },
+    {
+      "taskId": "rectangular-capacity-pure",
+      "sourceId": "semantic-harness:44bf4be458d27f62",
+      "family": "semantic-recipe:rectangular-capacity",
+      "records": 1,
+      "prefixRecords": 7,
+      "scoredTokens": 6,
+      "tokens": 6,
+      "last": true
+    },
+    {
+      "taskId": "owned-microtask",
+      "sourceId": "semantic-harness:31c67d32173a17df",
+      "family": "owned-microtask",
+      "records": 7,
+      "prefixRecords": 0,
+      "scoredTokens": 85,
+      "tokens": 848,
+      "last": false
+    },
+    {
+      "taskId": "owned-microtask",
+      "sourceId": "semantic-harness:31c67d32173a17df",
+      "family": "owned-microtask",
+      "records": 6,
+      "prefixRecords": 7,
+      "scoredTokens": 99,
+      "tokens": 252,
+      "last": true
+    },
+    {
+      "taskId": "two-pending-reversed",
+      "sourceId": "semantic-harness:3b94c35e35aafa43",
+      "family": "two-outstanding",
+      "records": 9,
+      "prefixRecords": 0,
+      "scoredTokens": 134,
+      "tokens": 1223,
+      "last": false
+    },
+    {
+      "taskId": "two-pending-reversed",
+      "sourceId": "semantic-harness:3b94c35e35aafa43",
+      "family": "two-outstanding",
+      "records": 6,
+      "prefixRecords": 9,
+      "scoredTokens": 91,
+      "tokens": 279,
+      "last": false
+    },
+    {
+      "taskId": "two-pending-reversed",
+      "sourceId": "semantic-harness:3b94c35e35aafa43",
+      "family": "two-outstanding",
+      "records": 4,
+      "prefixRecords": 15,
+      "scoredTokens": 119,
+      "tokens": 119,
+      "last": false
+    },
+    {
+      "taskId": "two-pending-reversed",
+      "sourceId": "semantic-harness:3b94c35e35aafa43",
+      "family": "two-outstanding",
+      "records": 1,
+      "prefixRecords": 19,
+      "scoredTokens": 6,
+      "tokens": 6,
+      "last": true
+    },
+    {
+      "taskId": "flag-intersection-pure",
+      "sourceId": "semantic-harness:9193bd760d71e4e1",
+      "family": "semantic-recipe:flag-intersection",
+      "records": 7,
+      "prefixRecords": 0,
+      "scoredTokens": 48,
+      "tokens": 682,
+      "last": true
+    },
+    {
+      "taskId": "compound-pure",
+      "sourceId": "semantic-harness:a1cae9dbd7fcf4b0",
+      "family": "compound-pure",
+      "records": 7,
+      "prefixRecords": 0,
+      "scoredTokens": 52,
+      "tokens": 874,
+      "last": false
+    },
+    {
+      "taskId": "compound-pure",
+      "sourceId": "semantic-harness:a1cae9dbd7fcf4b0",
+      "family": "compound-pure",
+      "records": 3,
+      "prefixRecords": 7,
+      "scoredTokens": 140,
+      "tokens": 140,
+      "last": true
+    },
+    {
+      "taskId": "rectangle-perimeter-pure",
+      "sourceId": "semantic-harness:2ec6688d67a231ce",
+      "family": "semantic-recipe:rectangle-perimeter",
+      "records": 7,
+      "prefixRecords": 0,
+      "scoredTokens": 117,
+      "tokens": 790,
+      "last": false
+    },
+    {
+      "taskId": "rectangle-perimeter-pure",
+      "sourceId": "semantic-harness:2ec6688d67a231ce",
+      "family": "semantic-recipe:rectangle-perimeter",
+      "records": 1,
+      "prefixRecords": 7,
+      "scoredTokens": 6,
+      "tokens": 6,
+      "last": true
+    },
+    {
+      "taskId": "callback-captured-write",
+      "sourceId": "semantic-harness:421b8b09eba5a3e2",
+      "family": "owned-callback",
+      "records": 10,
+      "prefixRecords": 0,
+      "scoredTokens": 128,
+      "tokens": 1527,
+      "last": false
+    },
+    {
+      "taskId": "callback-captured-write",
+      "sourceId": "semantic-harness:421b8b09eba5a3e2",
+      "family": "owned-callback",
+      "records": 14,
+      "prefixRecords": 10,
+      "scoredTokens": 146,
+      "tokens": 1325,
+      "last": false
+    },
+    {
+      "taskId": "callback-captured-write",
+      "sourceId": "semantic-harness:421b8b09eba5a3e2",
+      "family": "owned-callback",
+      "records": 11,
+      "prefixRecords": 24,
+      "scoredTokens": 88,
+      "tokens": 1039,
+      "last": false
+    },
+    {
+      "taskId": "callback-captured-write",
+      "sourceId": "semantic-harness:421b8b09eba5a3e2",
+      "family": "owned-callback",
+      "records": 11,
+      "prefixRecords": 35,
+      "scoredTokens": 102,
+      "tokens": 943,
+      "last": false
+    },
+    {
+      "taskId": "callback-captured-write",
+      "sourceId": "semantic-harness:421b8b09eba5a3e2",
+      "family": "owned-callback",
+      "records": 6,
+      "prefixRecords": 46,
+      "scoredTokens": 98,
+      "tokens": 255,
+      "last": true
+    },
+    {
+      "taskId": "sync-rejection",
+      "sourceId": "semantic-harness:181a8f0cf6ce5f50",
+      "family": "synchronous-error",
+      "records": 11,
+      "prefixRecords": 0,
+      "scoredTokens": 135,
+      "tokens": 1350,
+      "last": false
+    },
+    {
+      "taskId": "sync-rejection",
+      "sourceId": "semantic-harness:181a8f0cf6ce5f50",
+      "family": "synchronous-error",
+      "records": 1,
+      "prefixRecords": 11,
+      "scoredTokens": 6,
+      "tokens": 6,
+      "last": true
+    },
+    {
+      "taskId": "capped-budget-pure",
+      "sourceId": "semantic-harness:32db05b865768c4f",
+      "family": "semantic-recipe:capped-budget",
+      "records": 7,
+      "prefixRecords": 0,
+      "scoredTokens": 153,
+      "tokens": 938,
+      "last": false
+    },
+    {
+      "taskId": "capped-budget-pure",
+      "sourceId": "semantic-harness:32db05b865768c4f",
+      "family": "semantic-recipe:capped-budget",
+      "records": 2,
+      "prefixRecords": 7,
+      "scoredTokens": 23,
+      "tokens": 23,
+      "last": true
+    },
+    {
+      "taskId": "compound-effectful",
+      "sourceId": "semantic-harness:0626bdae1d923c5f",
+      "family": "compound-effectful",
+      "records": 9,
+      "prefixRecords": 0,
+      "scoredTokens": 109,
+      "tokens": 1426,
+      "last": false
+    },
+    {
+      "taskId": "compound-effectful",
+      "sourceId": "semantic-harness:0626bdae1d923c5f",
+      "family": "compound-effectful",
+      "records": 6,
+      "prefixRecords": 9,
+      "scoredTokens": 229,
+      "tokens": 386,
+      "last": false
+    },
+    {
+      "taskId": "compound-effectful",
+      "sourceId": "semantic-harness:0626bdae1d923c5f",
+      "family": "compound-effectful",
+      "records": 3,
+      "prefixRecords": 15,
+      "scoredTokens": 43,
+      "tokens": 43,
+      "last": true
+    },
+    {
+      "taskId": "parity-adjustment-pure",
+      "sourceId": "semantic-harness:34cd45445206c0fc",
+      "family": "semantic-recipe:parity-adjustment",
+      "records": 7,
+      "prefixRecords": 0,
+      "scoredTokens": 160,
+      "tokens": 990,
+      "last": false
+    },
+    {
+      "taskId": "parity-adjustment-pure",
+      "sourceId": "semantic-harness:34cd45445206c0fc",
+      "family": "semantic-recipe:parity-adjustment",
+      "records": 3,
+      "prefixRecords": 7,
+      "scoredTokens": 72,
+      "tokens": 72,
+      "last": true
+    },
+    {
+      "taskId": "branch-1",
+      "sourceId": "semantic-harness:07a269eea5d04b4a",
+      "family": "observed-branch",
+      "records": 10,
+      "prefixRecords": 0,
+      "scoredTokens": 120,
+      "tokens": 1446,
+      "last": false
+    },
+    {
+      "taskId": "branch-1",
+      "sourceId": "semantic-harness:07a269eea5d04b4a",
+      "family": "observed-branch",
+      "records": 6,
+      "prefixRecords": 10,
+      "scoredTokens": 144,
+      "tokens": 301,
+      "last": false
+    },
+    {
+      "taskId": "branch-1",
+      "sourceId": "semantic-harness:07a269eea5d04b4a",
+      "family": "observed-branch",
+      "records": 2,
+      "prefixRecords": 16,
+      "scoredTokens": 24,
+      "tokens": 24,
+      "last": true
+    },
+    {
+      "taskId": "weighted-average-pure",
+      "sourceId": "semantic-harness:586a0a823555038f",
+      "family": "semantic-recipe:weighted-average",
+      "records": 7,
+      "prefixRecords": 0,
+      "scoredTokens": 165,
+      "tokens": 920,
+      "last": false
+    },
+    {
+      "taskId": "weighted-average-pure",
+      "sourceId": "semantic-harness:586a0a823555038f",
+      "family": "semantic-recipe:weighted-average",
+      "records": 1,
+      "prefixRecords": 7,
+      "scoredTokens": 6,
+      "tokens": 6,
+      "last": true
+    },
+    {
+      "taskId": "absolute-distance-pure",
+      "sourceId": "semantic-harness:a41afcc81e031951",
+      "family": "semantic-recipe:absolute-distance",
+      "records": 7,
+      "prefixRecords": 0,
+      "scoredTokens": 126,
+      "tokens": 905,
+      "last": false
+    },
+    {
+      "taskId": "absolute-distance-pure",
+      "sourceId": "semantic-harness:a41afcc81e031951",
+      "family": "semantic-recipe:absolute-distance",
+      "records": 2,
+      "prefixRecords": 7,
+      "scoredTokens": 22,
+      "tokens": 22,
+      "last": true
+    },
+    {
+      "taskId": "counter-0",
+      "sourceId": "semantic-harness:dcaeefc92cff1a63",
+      "family": "async-counter",
+      "records": 9,
+      "prefixRecords": 0,
+      "scoredTokens": 106,
+      "tokens": 1275,
+      "last": false
+    },
+    {
+      "taskId": "counter-0",
+      "sourceId": "semantic-harness:dcaeefc92cff1a63",
+      "family": "async-counter",
+      "records": 6,
+      "prefixRecords": 9,
+      "scoredTokens": 152,
+      "tokens": 309,
+      "last": false
+    },
+    {
+      "taskId": "counter-0",
+      "sourceId": "semantic-harness:dcaeefc92cff1a63",
+      "family": "async-counter",
+      "records": 3,
+      "prefixRecords": 15,
+      "scoredTokens": 42,
+      "tokens": 42,
+      "last": true
+    },
+    {
+      "taskId": "overtime-rate-pure",
+      "sourceId": "semantic-harness:d2488b66f4b3be4b",
+      "family": "semantic-recipe:overtime-rate",
+      "records": 7,
+      "prefixRecords": 0,
+      "scoredTokens": 226,
+      "tokens": 1189,
+      "last": false
+    },
+    {
+      "taskId": "overtime-rate-pure",
+      "sourceId": "semantic-harness:d2488b66f4b3be4b",
+      "family": "semantic-recipe:overtime-rate",
+      "records": 2,
+      "prefixRecords": 7,
+      "scoredTokens": 23,
+      "tokens": 23,
+      "last": true
+    },
+    {
+      "taskId": "natlang-cell-call",
+      "sourceId": "semantic-harness:4396063bd00df69b",
+      "family": "natlang-cell-call",
+      "records": 10,
+      "prefixRecords": 0,
+      "scoredTokens": 150,
+      "tokens": 1482,
+      "last": false
+    },
+    {
+      "taskId": "natlang-cell-call",
+      "sourceId": "semantic-harness:4396063bd00df69b",
+      "family": "natlang-cell-call",
+      "records": 6,
+      "prefixRecords": 10,
+      "scoredTokens": 177,
+      "tokens": 333,
+      "last": false
+    },
+    {
+      "taskId": "natlang-cell-call",
+      "sourceId": "semantic-harness:4396063bd00df69b",
+      "family": "natlang-cell-call",
+      "records": 6,
+      "prefixRecords": 16,
+      "scoredTokens": 220,
+      "tokens": 380,
+      "last": false
+    },
+    {
+      "taskId": "natlang-cell-call",
+      "sourceId": "semantic-harness:4396063bd00df69b",
+      "family": "natlang-cell-call",
+      "records": 3,
+      "prefixRecords": 22,
+      "scoredTokens": 43,
+      "tokens": 43,
+      "last": true
+    }
+  ]
+}
