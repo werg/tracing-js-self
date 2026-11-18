@@ -119,6 +119,18 @@
       "kind": "private-failure-archive-metadata",
       "bytes": 3086,
       "sha256": "35e6c891fe375d139dc4a381a4b4fa8c21a3a26893de71fb3db2c6cd51cbd30a"
+    },
+    {
+      "path": "isolation-1e2e6a0.json",
+      "bytes": 1485,
+      "sha256": "26aa6015bacbb385739aac27f6e8a8b30968e1a0798d24ff768827213b28d904",
+      "kind": "unchanged-current-code-isolation-recheck"
+    },
+    {
+      "path": "isolation-1e2e6a0.log",
+      "bytes": 440,
+      "sha256": "d6e23bf02d0c99d38b37863897e61ad348e62ac3e2a9675f991ba9d0aeacca96",
+      "kind": "unchanged-current-code-isolation-recheck"
     }
   ]
 }

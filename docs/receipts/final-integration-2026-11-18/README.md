@@ -29,6 +29,22 @@ output, release packaging, learning artifacts, learning comparison and
 optimization selection. These are implementation regressions. They do not
 perform a new optimizer experiment or establish learned success.
 
+## Current-code local isolation check
+
+A separate exact clean `1e2e6a0de8952c4349edbeef46ab70c4a06f8157` checkout
+passed **3/3 isolation tests with zero skips**. The [receipt](isolation-1e2e6a0.json)
+binds the full command, Node version, environment, before/after tree state and
+[unchanged original log](isolation-1e2e6a0.log). It verifies environment
+sanitization, kernel confinement against direct filesystem/network/process
+APIs, and isolated original/instrumented source admission with its policy bound.
+
+This is separate from the hosted unit workflow for head `1e2e6a0`, whose Node24
+job tested synthetic merge `3497ee3454ea75715db1bc50c3e7cfc35ecc0fc2` and reported
+909 tests, 902 passes, seven skips and zero failures. Two hosted skips reflect
+that runner's UID-map `EPERM`; the other five require native orchestration
+configuration and ran in the separate engineering native lane. These separate
+executions are not added together to rewrite either unit-suite denominator.
+
 ## Preserved integration failure
 
 The first full Node24 attempt at `5769938824db6654c7a0254228a8a45af9c32581`
