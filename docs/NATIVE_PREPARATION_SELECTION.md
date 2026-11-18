@@ -99,6 +99,24 @@ Version-1 selections remain historical outputs. A later verification must compar
 complete actual native episode dictionaries, removing only `lineage.task_id`,
 and preserve the original selected corpus while recording its result separately.
 
+The independent equivalence checker authenticates every representative/alias
+against the immutable producer, verifies selected export bytes, and constructs
+the complete episodes with the actual native adapter and tokenizer. It compares
+all fields after removing only `lineage.task_id`, including payloads, masks,
+provenance, lineage, dependencies, tracks and supervision. It issues no new
+admission, optimization, or inference claim and writes a separate proof:
+
+```sh
+TZ=UTC LC_ALL=C.UTF-8 node tools/verify-exact-public-aliases.mjs \
+  --input /path/to/complete-campaign \
+  --selection /path/to/existing-selected-corpus \
+  --tracer-root /path/to/exact-producing-checkout \
+  --consumer-root /path/to/exact-native-checkout \
+  --tokenizer-json /path/to/tokenizer.json \
+  --python /path/to/pinned-native-python \
+  --out /path/to/new-alias-equivalence-proof
+```
+
 The original failed preparation and its explicit immutable-ID refusal report
 remain historical evidence. A new selected preparation belongs in a new output
 directory and receives its own manifest, fingerprint, and archive receipt.
