@@ -4,7 +4,8 @@ import {mkdtempSync,rmSync,readFileSync} from 'node:fs';
 import {join,resolve} from 'node:path';
 import {tmpdir} from 'node:os';
 import {spawnSync} from 'node:child_process';
-import {runGenerationProcess,generationEnvironment} from '../src/corpus/generation-process.mjs';
+import {runGenerationProcess,generationEnvironment,encodeGenerationTask,decodeGenerationTask} from '../src/corpus/generation-process.mjs';
+import {verifyEffectfulTrainingCase} from '../src/training/effectful-admit.js';
 
 const task={kind:'source',producerRevision:'a'.repeat(40),fixture:{id:'one',
   source:'"use strict";function run(x){return x+1;}',entry:'run',args:[1],fixture:{calls:[]},family:'increment'}};
@@ -29,6 +30,20 @@ test('times out or cancels workers and refuses oversized evidence with explicit 
   const controller=new AbortController();controller.abort();
   const cancelled=await runGenerationProcess(task,{outputDirectory,signal:controller.signal});
   assert.equal(cancelled.result.status,'cancelled');
+});
+test('worker transport preserves null prototypes and shared input identities',async t=>{
+  const value=Object.create(null);value.x=1;
+  const request={...task,fixture:{...task.fixture,args:[value,value],
+    source:'"use strict";function run(a,b){return Object.getPrototypeOf(a)===null&&a===b;}'}};
+  const decoded=decodeGenerationTask(encodeGenerationTask(request));
+  assert.equal(Object.getPrototypeOf(decoded.fixture.args[0]),null);
+  assert.equal(decoded.fixture.args[0],decoded.fixture.args[1]);
+  const direct=await verifyEffectfulTrainingCase(request.fixture);
+  const run=await runGenerationProcess(request,{outputDirectory:directory(t),timeoutMs:30000});
+  // The current public projection can refuse null-prototype graphs. A worker
+  // must preserve that exact input/refusal, not silently certify a plain object.
+  assert.equal(run.result.status,direct.status,run.result.reason);
+  assert.equal(run.result.reason,direct.reason);
 });
 test('collector resumes exact successful receipts without launching new attempts',t=>{
   const out=directory(t),tool=resolve('tools/generate-effectful-training.mjs');

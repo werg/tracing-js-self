@@ -4,8 +4,29 @@ import {randomUUID} from 'node:crypto';
 import {mkdirSync,readFileSync,rmSync,statSync} from 'node:fs';
 import {join,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {encodeNativeGraph,decodeOwnedGraph} from '../host/graph-codec.js';
+import {canonicalFixturePlan} from '../training/fixture-broker.js';
 
 const worker=fileURLToPath(new URL('../../tools/generation-worker.mjs',import.meta.url));
+// V8 serialization retains aliases and special numbers but discards null
+// prototypes. Use the canonical graph boundary for every semantic value.
+export function encodeGenerationTask(task){
+  const encodeFixture=fixture=>{
+    const {args,cases,...data}=fixture;
+    return {...data,argsGraph:encodeNativeGraph(args??[]),
+      ...(data.fixture?{fixture:canonicalFixturePlan(data.fixture)}:{}),
+      ...(cases?{cases:cases.map(encodeFixture)}:{})};
+  };
+  return {...task,fixture:encodeFixture(task.fixture)};
+}
+export function decodeGenerationTask(task){
+  const decodeFixture=fixture=>{
+    const {argsGraph,cases,...data}=fixture;
+    return {...data,args:decodeOwnedGraph(JSON.stringify(argsGraph)),
+      ...(cases?{cases:cases.map(decodeFixture)}:{})};
+  };
+  return {...task,fixture:decodeFixture(task.fixture)};
+}
 // Deliberately do not forward credentials or network proxy settings to trusted
 // reference workers. This is defense in depth, not an OS security boundary.
 export function generationEnvironment(){
@@ -21,6 +42,10 @@ export async function runGenerationProcess(task,{outputDirectory,timeoutMs=12000
   const directory=resolve(outputDirectory);mkdirSync(directory,{recursive:true});
   const output=join(directory,'worker-'+randomUUID()+'.json');
   if(signal?.aborted)return {result:{status:'cancelled',reason:'Campaign cancelled before launch'},durationMs:0,peakRssBytes:null};
+  let encodedTask;
+  try{encodedTask=encodeGenerationTask(task);}catch(error){
+    return {result:{status:'input_unportable',phase:'worker-input',reason:String(error.message)},durationMs:0,peakRssBytes:null};
+  }
   return new Promise(resolveRun=>{
     const start=performance.now(),child=spawn(process.execPath,
       ['--max-old-space-size='+memoryMb,worker],{stdio:['pipe','pipe','pipe'],
@@ -50,6 +75,6 @@ export async function runGenerationProcess(task,{outputDirectory,timeoutMs=12000
         finish(result,metadata.peakRssBytes);
       }catch(error){finish({status:'worker_failure',reason:String(error.message)});}
     });
-    child.stdin.end(serialize({task,output,maxOutputBytes}));
+    child.stdin.end(serialize({task:encodedTask,output,maxOutputBytes}));
   });
 }

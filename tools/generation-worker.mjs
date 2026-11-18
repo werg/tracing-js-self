@@ -9,11 +9,13 @@ import {createNativeConsumer} from '../src/corpus/native-admission-client.mjs';
 import {verifyEffectfulTrainingCase,independentEffectfulReference} from '../src/training/effectful-admit.js';
 import {verifyEffectfulSession} from '../src/training/effectful-session.js';
 import {encodeNativeGraph,decodeOwnedGraph} from '../src/host/graph-codec.js';
+import {decodeGenerationTask} from '../src/corpus/generation-process.mjs';
 
 const chunks=[];let inputBytes=0;
 for await(const chunk of process.stdin){inputBytes+=chunk.length;
   if(inputBytes>33554432)throw new RangeError('Generation worker input bound exceeded');chunks.push(chunk);}
-const {task,output,maxOutputBytes}=deserialize(Buffer.concat(chunks));
+const {task:encodedTask,output,maxOutputBytes}=deserialize(Buffer.concat(chunks));
+const task=decodeGenerationTask(encodedTask);
 let result,phase='candidate';
 try{
   const nativeConsumer=createNativeConsumer(task.native),options={...task.fixture,
