@@ -18,14 +18,12 @@ import {compileEffectfulWitness,verifyEffectfulProjection} from './effectful-com
 import {normalizeJournal} from '../semantic/normalize.js';
 import {decodeWitness} from './format.js';
 import {recheckEffectfulSession} from './effectful-session.js';
+import {effectfulFamilySplit,defaultSplitIdentity,validateSplitIdentity,normalizeSeeds,
+  admissionEnvironment,bindAdmissionIdentity,verifyAdmissionIdentity} from './admission-identity.js';
+export {effectfulFamilySplit} from './admission-identity.js';
 
 const hash=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
 const referenceWorker=fileURLToPath(new URL('../../tools/effectful-reference-worker.mjs',import.meta.url));
-export function effectfulFamilySplit(family,{seed=17}={}){
-  if(typeof family!=='string'||!family)throw new TypeError('A stable source/task family is required before expansion');
-  const bucket=Number.parseInt(hash(seed+':'+family).slice(0,8),16)%100;
-  return bucket<80?'train':bucket<90?'validation':'test';
-}
 export function independentEffectfulReference(input,{timeoutMs=5000,maxOutputBytes=4194304}={}){
   return new Promise((resolve,reject)=>{
     const child=spawn(process.execPath,[referenceWorker],{stdio:['pipe','pipe','pipe'],shell:false});
@@ -104,10 +102,12 @@ export function requireNativeAdmission(exported,receipt,{consumerRevision=null,t
 export async function verifyEffectfulTrainingCase({source,entry,args=[],fixture,
     family,license='repository-fixture',trustTier='repository-fixture',maxSteps=100000,
     timeoutMs=10000,nativeConsumer=null,seed=17,projectionOptions={},producerRevision=null,
-    ancestorIds=[],taskId=null,fixtureFamily=null}={}){
+    ancestorIds=[],taskId=null,fixtureFamily=null,provenance={},seeds={},splitIdentity=null}={}){
   if(typeof family!=='string'||!family||typeof license!=='string'||!license||
     !['repository-fixture','trusted-owned-source'].includes(trustTier))
     throw new TypeError('Effectful admission requires source family, license and declared trusted source tier');
+  splitIdentity=structuredClone(splitIdentity??defaultSplitIdentity(family,{seed}));
+  validateSplitIdentity(splitIdentity,{family,seed});
   fixture=canonicalFixturePlan(fixture);
   const broker=createFixtureBroker(fixture),abort=new AbortController();
   const timer=setTimeout(()=>{const error=new Error('Owned teacher deadline exceeded');
@@ -131,17 +131,23 @@ export async function verifyEffectfulTrainingCase({source,entry,args=[],fixture,
       branchReference.decisions);
     const exported=compiled.exported;
     Object.assign(exported.sidecar,{admission:'locally_verified',referenceStatus:'agreed',
-      split:effectfulFamilySplit(family,{seed}),sourceLineage:family,
+      split:splitIdentity.split,splitIdentity,sourceLineage:family,
       sourceFamily:family,fixtureFamily:fixtureFamily??family,ancestorIds:[...new Set([family,...ancestorIds])],
       taskId:taskId??family,producerRevision,license,trustTier,
       capabilityProfile:compiled.exported.sidecar.compiler.capabilities,
-      sourceProvenance:{family,license,trustTier,sourceDigest:hash(source),fixtureDigest:hash(fixture),seed},
+      sourceProvenance:{family,license,trustTier,sourceDigest:hash(source),fixtureDigest:hash(fixture),seed,
+        upstream:structuredClone(provenance)},
+      executionLimits:{maxSteps,timeoutMs,maxGenerated:projectionOptions.maxGenerated??16384,
+        maxOperators:projectionOptions.maxOperators??8},
+      seeds:normalizeSeeds(seeds,seed,bundle.initialState.control.a0.randomSeed??null),
+      environment:admissionEnvironment(),
       archive:bundle,projectionOptions:{sourceLineage:family,...projectionOptions},
       referenceInput:input,
       reference:{...reference,sourceChecks},effects,
       replay:verifyEffectfulProjection(bundle,exported,{sourceLineage:family,...projectionOptions}),
       catalogDigest:hash(JSON.stringify(hostOperationContract(),null,2)+'\n'),
       evidenceKind:'deterministic-engineering',optimizerSteps:0});
+    bindAdmissionIdentity(exported);
     if(nativeConsumer){
       phase='native-consumer';
       const receipt=await nativeConsumer(exported);requireNativeAdmission(exported,receipt);
@@ -157,10 +163,10 @@ export async function verifyEffectfulTrainingCase({source,entry,args=[],fixture,
   }finally{clearTimeout(timer);broker.abort();}
 }
 
-export async function recheckEffectfulAdmission(exported,{requireAdmitted=true,timeoutMs=10000}={}){
+export async function recheckEffectfulAdmission(exported,{requireAdmitted=true,timeoutMs=10000,expectedIdentityDigest=null}={}){
   const side=exported?.sidecar;
   if(side?.collection?.schema==='semantic-teacher-session/4')
-    return recheckEffectfulSession(exported,{requireAdmitted,timeoutMs});
+    return recheckEffectfulSession(exported,{requireAdmitted,timeoutMs,expectedIdentityDigest});
   if(!side?.archive||!side.referenceInput||side.referenceStatus!=='agreed'||
     requireAdmitted&&(side.admission!=='admitted'||side.selectionOrigin!=='certified_teacher'))
     throw new Error('Missing complete independent effectful admission evidence');
@@ -172,6 +178,7 @@ export async function recheckEffectfulAdmission(exported,{requireAdmitted=true,t
   if(!isDeepStrictEqual(input,side.referenceInput)||hash(source)!==side.sourceProvenance?.sourceDigest||
     hash(input.fixture)!==side.sourceProvenance?.fixtureDigest)
     throw new Error('Source/reference inputs differ from the owned initial context');
+  verifyAdmissionIdentity(exported,{expectedIdentityDigest});
   const references=[];
   for(const mode of [null,'operations','branches'])references.push(await independentEffectfulReference(
     mode?{...input,mode}:input,{timeoutMs}));
@@ -198,6 +205,7 @@ export async function recheckEffectfulAdmission(exported,{requireAdmitted=true,t
   }
   if(requireAdmitted)requireNativeAdmission(exported,side.nativeAdmission);
   return {schema:'semantic-source-admission/4',episodeDigest:projection.publicDigest,
+    identityDigest:side.identityDigest,identityValidated:true,
     producerRevision:side.producerRevision,catalogDigest:hash(JSON.stringify(hostOperationContract(),null,2)+'\n'),
     referenceStatus:'agreed',journalValidated:true,replayValidated:true,sourceValidated:true,
     effectsValidated:true,optimizerSteps:0};
