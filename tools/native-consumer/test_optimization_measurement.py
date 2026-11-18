@@ -15,6 +15,28 @@ SPEC.loader.exec_module(SMOKE)
 
 
 class OptimizationMeasurementTests(unittest.TestCase):
+    def test_native_training_time_cap_reserves_graceful_checkpoint_time(self):
+        class Process:
+            returncode = 0
+            pid = 123
+            def __init__(self):
+                self.calls = []
+                self.stopped = False
+            def communicate(self, **kwargs):
+                self.calls.append(kwargs['timeout'])
+                if len(self.calls) == 1:
+                    raise subprocess.TimeoutExpired('native', kwargs['timeout'])
+            def terminate(self):
+                self.stopped = True
+        process = Process()
+        with TemporaryDirectory() as root, patch.object(SMOKE.subprocess, 'Popen', return_value=process), \
+                patch.object(SMOKE.time, 'monotonic', side_effect=[0, 875, 880]):
+            receipt = SMOKE.run_logged(['native'], Path(root)/'log', env={}, timeout=900, graceful_checkpoint=True)
+        self.assertEqual(process.calls, [870, 25])
+        self.assertTrue(process.stopped)
+        self.assertTrue(receipt['gracefulCheckpointStopRequested'])
+        self.assertEqual(receipt['wallSeconds'], 880)
+
     def test_interrupted_optimizer_updates_are_not_a_restorable_checkpoint(self):
         with TemporaryDirectory() as root:
             directory = Path(root) / 'training'
