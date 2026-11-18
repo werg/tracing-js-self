@@ -84,6 +84,11 @@ predecessor before reuse. Cancelled work is incomplete and is retried by plain
 `--resume`; actual semantic refusals remain cached unless `--retry-failures` is
 explicitly requested. The manifest reports coordinator and worker peak RSS
 separately. Those individual peaks are not a simultaneous process-tree total.
+Generation throughput includes process startup, native-environment inspection,
+source construction and registry freezing. `preparationMs` and `collectionMs`
+partition that elapsed time; final manifest publication and process exit occur
+after the recorded measurement. Reused admissions do not count as newly
+generated learner tokens.
 
 Global source registries can be copied into verified, deeply immutable views.
 Only those internally branded views reuse their verified digest and indexed

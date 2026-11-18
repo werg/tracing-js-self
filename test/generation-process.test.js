@@ -59,4 +59,7 @@ test('collector resumes exact successful receipts without launching new attempts
   assert.equal(manifest.campaign.compatibilityExports,false);
   assert.ok(manifest.cases.every(row=>row.publicShard&&row.privateEvidence&&!row.path));
   assert.equal(manifest.throughput.admittedLearnerTokensPerHour,null);
+  assert.ok(manifest.throughput.preparationMs>0);assert.ok(manifest.throughput.collectionMs>=0);
+  assert.equal(manifest.throughput.elapsedMs,manifest.throughput.preparationMs+manifest.throughput.collectionMs);
+  assert.equal(manifest.throughput.timingScope,'process-start-through-final-manifest-measurement');
 });
