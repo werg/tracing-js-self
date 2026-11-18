@@ -1,0 +1,182 @@
+{
+  "schema": "semantic-evaluation-request/4",
+  "caseId": "semantic-recipe:squared-distance/semantic-recipe:squared-distance@ecf8fb1309c47089",
+  "request": {
+    "schema": "selected-evaluation-case/4",
+    "fixture": {
+      "calls": [
+        {
+          "operation": "demo.readAsync",
+          "status": "fulfilled",
+          "argumentGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "str",
+                "squared-distance"
+              ]
+            ],
+            "objects": []
+          },
+          "resultGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "num",
+                8
+              ]
+            ],
+            "objects": []
+          }
+        },
+        {
+          "operation": "demo.store",
+          "status": "fulfilled",
+          "argumentGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "str",
+                "squared-distance"
+              ],
+              [
+                "num",
+                73
+              ]
+            ],
+            "objects": []
+          },
+          "resultGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "undefined"
+              ]
+            ],
+            "objects": []
+          }
+        },
+        {
+          "operation": "demo.readAsync",
+          "status": "fulfilled",
+          "argumentGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "str",
+                "squared-distance"
+              ]
+            ],
+            "objects": []
+          },
+          "resultGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "num",
+                5
+              ]
+            ],
+            "objects": []
+          }
+        },
+        {
+          "operation": "demo.store",
+          "status": "fulfilled",
+          "argumentGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "str",
+                "squared-distance"
+              ],
+              [
+                "num",
+                29
+              ]
+            ],
+            "objects": []
+          },
+          "resultGraph": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "undefined"
+              ]
+            ],
+            "objects": []
+          }
+        }
+      ],
+      "settlementOrder": [
+        0,
+        2
+      ]
+    },
+    "programs": [
+      {
+        "programId": "program1",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);const answer=a*a+b*b;host.store(key,answer);return answer;}",
+        "entry": "run",
+        "capabilities": [
+          "demo.readAsync",
+          "demo.store"
+        ]
+      }
+    ],
+    "invocations": [
+      {
+        "programId": "program1",
+        "invocationId": "ingress1",
+        "trackId": "worker1",
+        "realmId": "realm1",
+        "triggerId": "outside1",
+        "inputGraph": {
+          "roots": [
+            [
+              "str",
+              "squared-distance"
+            ],
+            [
+              "num",
+              3
+            ]
+          ],
+          "objects": []
+        },
+        "realmPolicy": "fresh",
+        "completionPolicy": "await-returned-promise",
+        "receiverValue": [
+          "undefined"
+        ]
+      },
+      {
+        "programId": "program1",
+        "invocationId": "ingress2",
+        "trackId": "worker2",
+        "realmId": "realm2",
+        "triggerId": "outside2",
+        "inputGraph": {
+          "roots": [
+            [
+              "str",
+              "squared-distance"
+            ],
+            [
+              "num",
+              2
+            ]
+          ],
+          "objects": []
+        },
+        "realmPolicy": "fresh",
+        "completionPolicy": "await-returned-promise",
+        "receiverValue": [
+          "undefined"
+        ]
+      }
+    ]
+  },
+  "seed": 17,
+  "representation": "compact"
+}

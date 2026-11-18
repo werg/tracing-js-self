@@ -43,6 +43,28 @@ def run(expt, seed):
 
 
 class FrozenLearningTests(unittest.TestCase):
+    def test_native_fragment_budget_is_not_a_whole_decision_cap(self):
+        expt = experiment()
+        budget = learning.selected_rollout_budget(expt)
+        self.assertEqual(budget['nativeMaxTokensPerFragment'], 32)
+        self.assertEqual(budget['maximumFragmentsPerDecision'], 64)
+        self.assertEqual(budget['declaration'], 'legacy-tokensPerDecision-meant-per-fragment')
+        expt['rolloutBudget'] = {'nativeMaxTokensPerFragment': 16, 'maximumFragmentsPerDecision': 64,
+                                 'secondsPerCase': 30}
+        self.assertEqual(learning.selected_rollout_budget(expt)['declaration'], 'explicit-per-fragment')
+        expt['rolloutBudget']['maximumFragmentsPerDecision'] = 1
+        with self.assertRaisesRegex(ValueError, 'inference budget'):
+            learning.require_frozen_experiment(expt)
+
+    def test_training_window_policy_is_frozen_and_bounded(self):
+        expt = experiment()
+        expt['trainingBudget'] = {'sampler': 'native-sequential-permuted-episodes',
+            'maxWindowRecords': 256, 'maxScoredDecisions': 256, 'maxWindowTokens': 16384, 'seconds': 900}
+        learning.require_frozen_experiment(expt)
+        expt['trainingBudget']['sampler'] = 'undeclared-resampling'
+        with self.assertRaisesRegex(ValueError, 'sampling policy'):
+            learning.require_frozen_experiment(expt)
+
     def test_family_weighting_keeps_variants_from_dominating(self):
         cases = [case(f'variant-{index}', 'many') for index in range(100)] + [case('single', 'other')]
         rows = [measured(item['id'], item['family'] == 'many') for item in cases]

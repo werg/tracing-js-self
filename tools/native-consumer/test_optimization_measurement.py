@@ -15,6 +15,22 @@ SPEC.loader.exec_module(SMOKE)
 
 
 class OptimizationMeasurementTests(unittest.TestCase):
+    def test_prepared_membership_is_not_actual_optimizer_exposure(self):
+        plan = {'sources': [{'sourceId': 'long', 'windows': 64}, {'sourceId': 'short', 'windows': 1}]}
+        actual = {'source_windows': {'long': 64}, 'complete_history': True}
+        receipt = SMOKE.training_exposure(plan, actual)
+        self.assertEqual(receipt['selectedSources'], 2)
+        self.assertEqual(receipt['exposedSources'], 1)
+        self.assertEqual(receipt['unexposedSourceIds'], ['short'])
+        self.assertFalse(receipt['everySelectedSourceExposed'])
+        actual['source_windows']['short'] = 1
+        self.assertTrue(SMOKE.training_exposure(plan, actual)['everySelectedEpisodeVisitedAllWindows'])
+        actual['complete_history'] = False
+        self.assertFalse(SMOKE.training_exposure(plan, actual)['everySelectedSourceExposed'])
+        actual['source_windows']['foreign'] = 1
+        with self.assertRaisesRegex(ValueError, 'foreign'):
+            SMOKE.training_exposure(plan, actual)
+
     def test_original_decoder_tokens_are_counted_once_and_incomplete_is_explicit(self):
         event = {'selectedEventId': 'one', 'emittedTokenIds': [7, 8]}
         profile = {'complete': True, 'droppedRecords': 0, 'records': [event, {'failure': event}]}

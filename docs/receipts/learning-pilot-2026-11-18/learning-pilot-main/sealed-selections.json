@@ -1,0 +1,89 @@
+{
+  "experimentSha256": "d3fd66ec5ff889649d9e0f58bf107e0d6d76dc2625f462c6642b7f72e75b1ee5",
+  "testUsedForSelection": false,
+  "selections": [
+    {
+      "optimizerSeed": 17,
+      "selection": {
+        "schema": "semantic-validation-selection/1",
+        "selectionSplit": "validation",
+        "criterion": [
+          "familyWeightedWholeTaskSuccess",
+          "familyWeightedTraceValidity",
+          "earliestStep"
+        ],
+        "checkpointIdentity": "dd969f909f23feb82a651c03fe3d1fa4911642502fd6b7f8c0bbb0c271d4be29",
+        "step": 16,
+        "candidates": [
+          {
+            "step": 16,
+            "checkpointIdentity": "dd969f909f23feb82a651c03fe3d1fa4911642502fd6b7f8c0bbb0c271d4be29",
+            "metrics": {
+              "episodes": 4,
+              "sourceFamilies": 1,
+              "independentComponents": 1,
+              "successes": 0,
+              "familyWeightedWholeTaskSuccess": 0.0,
+              "episodeWeightedWholeTaskSuccess": 0.0,
+              "familyWeightedTraceValidity": 0.0,
+              "components": {
+                "component:f6b1003276dafd2946473bc7ff1540e65324b727d6a018e00b27f56393c4ffe4": 0.0
+              },
+              "failures": {
+                "TypeError": 4
+              },
+              "integrityFailures": {
+                "falseAdmissions": 0,
+                "futureObservationLeaks": 0,
+                "replayNativeEffects": 0,
+                "unauthorizedEffects": 0,
+                "untrackedNativeFallback": 0
+              },
+              "completeIntegrityGateReceipts": 4,
+              "wallSeconds": 26.738543741001195,
+              "wallSecondsPerCorrectTask": null,
+              "generatedTokens": 46,
+              "retainedGeneratedTokensLowerBound": 46,
+              "generatedTokenCostComplete": true,
+              "generatedTokensPerCorrectTask": null
+            }
+          },
+          {
+            "step": 64,
+            "checkpointIdentity": "6566b7a9e8fb0f614f92688f25e5591ec4088b75b734aeb206fe25aa9696da80",
+            "metrics": {
+              "episodes": 4,
+              "sourceFamilies": 1,
+              "independentComponents": 1,
+              "successes": 0,
+              "familyWeightedWholeTaskSuccess": 0.0,
+              "episodeWeightedWholeTaskSuccess": 0.0,
+              "familyWeightedTraceValidity": 0.0,
+              "components": {
+                "component:f6b1003276dafd2946473bc7ff1540e65324b727d6a018e00b27f56393c4ffe4": 0.0
+              },
+              "failures": {
+                "SemanticSelectionError": 4
+              },
+              "integrityFailures": {
+                "falseAdmissions": 0,
+                "futureObservationLeaks": 0,
+                "replayNativeEffects": 0,
+                "unauthorizedEffects": 0,
+                "untrackedNativeFallback": 0
+              },
+              "completeIntegrityGateReceipts": 4,
+              "wallSeconds": 25.85545302600076,
+              "wallSecondsPerCorrectTask": null,
+              "generatedTokens": 82,
+              "retainedGeneratedTokensLowerBound": 82,
+              "generatedTokenCostComplete": true,
+              "generatedTokensPerCorrectTask": null
+            }
+          }
+        ],
+        "testUsedForSelection": false
+      }
+    }
+  ]
+}
