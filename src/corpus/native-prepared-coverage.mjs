@@ -81,8 +81,8 @@ export function preparedBudgetGroups(rows){
 function featureInventory(rows){
   const features=new Map();
   for(const row of rows)for(const feature of row.coverage?.features??[]){
-    const detail=features.get(feature)??{feature,rows:0,components:new Set(),generatedTokens:0};
-    detail.rows++;detail.components.add(row.budgetComponent);detail.generatedTokens+=row.generatedTokens;
+    const detail=features.get(feature)??{feature,rows:0,components:new Set(),supportingEpisodeGeneratedTokens:0};
+    detail.rows++;detail.components.add(row.budgetComponent);detail.supportingEpisodeGeneratedTokens+=row.generatedTokens;
     features.set(feature,detail);
   }
   return [...features.values()].map(row=>({...row,components:row.components.size})).sort((a,b)=>a.feature.localeCompare(b.feature));
@@ -225,8 +225,19 @@ export function selectPreparedCoverage(sampler,sourceManifest,{policy=sampler.po
     limitations:['Coverage is a deterministic selection heuristic; conflicting budgets may lose rare features.',
       'Feature counts are measured from original admitted execution difficulty, not all JavaScript semantics.',
       'Prepared membership is not actual optimizer exposure. Historical receipts retain their original pins.']};
-  const census=population=>({...preparedCoverageInventory(population),
-    splits:Object.fromEntries(['train','validation','test'].map(split=>[split,preparedCoverageInventory(population.filter(row=>row.split===split))]))});
+  const census=population=>{
+    const training=population.filter(row=>row.split==='train'),groups=new Map();
+    const total=training.reduce((sum,row)=>sum+row.generatedTokens,0);
+    for(const row of training){const group=groups.get(row.budgetComponent)??[];group.push(row);groups.set(row.budgetComponent,group);}
+    const trainingComponents=[...groups].map(([budgetComponent,rows])=>({budgetComponent,
+      ...preparedCoverageInventory(rows),share:total?rows.reduce((sum,row)=>sum+row.generatedTokens,0)/total:0,
+      frozenComponents:sorted(rows.map(row=>row.frozenSourceComponent)),
+      nativeFamilies:sorted(rows.map(row=>row.nativeResolvedFamily))}))
+      .sort((a,b)=>b.nativeGeneratedTokens-a.nativeGeneratedTokens||a.budgetComponent.localeCompare(b.budgetComponent));
+    return {...preparedCoverageInventory(population),
+      splits:Object.fromEntries(['train','validation','test'].map(split=>[split,preparedCoverageInventory(population.filter(row=>row.split===split))])),
+      trainingComponents,maximumTrainingComponentShare:Math.max(0,...trainingComponents.map(row=>row.share))};
+  };
   const selectedSampler={...sampler,policy:{...sampler.policy,...balanced.policy},
     scope:'Coverage-aware membership over unchanged final native accepted episodes; no new admission or optimization.',
     before:census(rows),after:census(included),

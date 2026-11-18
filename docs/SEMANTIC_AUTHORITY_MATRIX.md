@@ -13,16 +13,23 @@ meaning; they must be regenerated to obtain the new gate.
 and inserts catch/finally/loop-transfer markers. It checks:
 
 - ordinary identifier declaration initializers and uninitialized lexical cells;
-- successful plain identifier/property assignments, including setter completion;
+- successful plain and arithmetic/bitwise compound identifier/property assignments, including setter completion;
 - normal source call completion, including owned callback and effect continuations;
 - expression-statement completion, explicit return/throw values and concise-arrow returns;
 - entry into catch/finally and executed break/continue statements;
-- scalar values and first-observed reference identity/alias relationships.
+- scalar values and reference identity/alias relationships anchored in the complete invocation input graph.
 
 The reference wrapper returns the original value. It does not reevaluate a
 receiver, property key, getter, coercion, function argument or assignment.
 Reference-valued observations inspect only JavaScript `typeof` and identity in
-a private WeakMap; they do not enumerate properties or invoke user code.
+a private WeakMap. Initial argument identities are seeded using data descriptors
+from the independently reconstructed input graph; getters are never invoked.
+The teacher comparison reconstructs committed cells and heap records across
+all events, so omitted write patches, incorrect catch bindings and numeric
+property keys cannot fall back to a reported expression result. Missing storage
+has an explicit mismatch marker. Runtime-created references are otherwise
+assigned identities in observation order; arbitrary transient heap snapshots
+are outside this gate.
 Top-level initialization belongs to the initial context and is not counted as
 an entry-function execution. Compiler-generated parameter and loop housekeeping
 is excluded by original source ranges.
@@ -83,6 +90,9 @@ reported initialization result, an overwritten lexical value, an overwritten
 property value and an overwritten helper return; it restores the original
 getter-only silent failure and skips a finally block. The original source is
 unchanged, journals are never edited, and owned replay uses the same mutant.
+It also corrupts numeric-key and compound-assignment storage, drops lexical and
+property writes entirely, changes a caught binding and substitutes a distinct
+equal-looking input object. The current campaign contains thirteen mutants.
 Each control must pass; each mutant must execute and preserve the final outcome
 yet fail specifically at independent completion certification. The receipt
 reports attempted/detected counts by category and the first divergence.

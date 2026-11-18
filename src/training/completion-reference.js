@@ -2,7 +2,7 @@
 // do not execute owned transition code and never inspect user properties.
 import {parse} from 'acorn';
 import {isDeepStrictEqual} from 'node:util';
-import {encode} from '../values.js';
+import {encode,decode} from '../values.js';
 
 export const COMPLETION_OBSERVATION_SCHEMA='source-completions/1';
 export const COMPLETION_HOOK='__tracingSourceCompletion';
@@ -30,7 +30,7 @@ export function completionObservationPlan(source){
           insertions.push({at:node.end,text:'='+COMPLETION_HOOK+'('+JSON.stringify(site(node))+',"initialize",void 0)'});
         }
       }
-      if(node.type==='AssignmentExpression'&&node.operator==='=')add(node,'assign',node,2);
+      if(node.type==='AssignmentExpression'&&!['&&=','||=','??='].includes(node.operator))add(node,'assign',node,2);
       if(node.type==='CallExpression'&&!node.optional)add(node,'call',node,3);
       if(node.type==='ArrowFunctionExpression'&&node.body.type!=='BlockStatement')add(node.body,'return',node.body,-1);
       if(node.type==='ExpressionStatement'&&!node.directive)add(node,'statement',node.expression,-1);
@@ -90,9 +90,22 @@ export function instrumentCompletionSource(source){
 
 // Only type and identity are observed for references. No property access,
 // serialization, coercion, iterator, getter or user function is invoked here.
-export function createCompletionCapture({limit=32768}={}){
+export function createCompletionCapture({limit=32768,initialValues=[]}={}){
   if(!Number.isSafeInteger(limit)||limit<1)throw new TypeError('Invalid observation limit');
   const observations=[],identities=new WeakMap();let next=0;
+  const seed=value=>{
+    if(value===null||!['object','function'].includes(typeof value)||identities.has(value))return;
+    identities.set(value,++next);
+    // Entry inputs were reconstructed from the declared data-only graph.
+    // Seed every reachable identity so swapping two equal-looking arguments
+    // cannot be hidden by first-observation renumbering. Never invoke a getter.
+    const descriptors=Object.getOwnPropertyDescriptors(value);
+    for(const key of Object.keys(descriptors).sort()){
+      if(!Object.hasOwn(descriptors[key],'value'))throw new TypeError('Accessor in source observation input graph');
+      seed(descriptors[key].value);
+    }
+  };
+  for(const input of initialValues)seed(input);
   const capture=(site,kind,value)=>{
     if(observations.length>=limit)throw new RangeError('Source completion observation cap');
     const row={site,kind};
@@ -110,9 +123,30 @@ export function createCompletionCapture({limit=32768}={}){
 export function ownedCompletionObservations(bundle,source){
   const plan=completionObservationPlan(source),siteById=new Map(bundle.sites.map(x=>[x.siteId,x]));
   const identities=new Map(),pending=new Map(),observations=[];let next=0;
+  const state={heap:{...bundle.initialState.heap},envs:{...bundle.initialState.envs},frames:{...bundle.initialState.frames}};
+  const seed=tag=>{
+    if(!Array.isArray(tag)||tag[0]!=='ref'||identities.has(JSON.stringify(tag)))return;
+    identities.set(JSON.stringify(tag),++next);
+    const object=state.heap[tag[1]];
+    if(!object||Object.keys(object.accessors??{}).length)throw new TypeError('Unobservable source input identity');
+    for(const key of Object.keys(object.properties??{}).sort())seed(object.properties[key].value);
+  };
+  for(const argument of bundle.entrySpec?.arguments??[])seed(argument);
+  const storedCell=(environment,name)=>{
+    const seen=new Set();
+    for(let id=environment;id!==null&&id!==undefined;id=state.envs[id]?.parent){
+      if(seen.has(id))break;seen.add(id);
+      const cell=state.envs[id]?.bindings?.[name];
+      if(cell){
+        if(!cell.initialized||!Array.isArray(cell.token?.value))return ['missing-storage'];
+        return cell.token.value;
+      }
+    }
+    throw new TypeError('Source binding has no committed cell');
+  };
   const value=tag=>{
     if(!Array.isArray(tag))throw new TypeError('Missing owned source completion value');
-    if(['undefined','null','bool','str','num','bigint'].includes(tag[0]))return tag;
+    if(['undefined','null','bool','str','num','bigint','missing-storage'].includes(tag[0]))return tag;
     const key=JSON.stringify(tag);
     if(!identities.has(key))identities.set(key,++next);
     const kind=tag[0]==='ref'?bundle.finalState.heap[tag[1]]?.kind==='function'?'function':'object':
@@ -122,14 +156,19 @@ export function ownedCompletionObservations(bundle,source){
   const emit=(key,kind,tag)=>observations.push({site:key,kind,
     ...(!['finally','break','continue'].includes(kind)?{value:value(tag)}:{})});
   for(const event of bundle.events){
+    const previousFrame=state.frames[event.invocationId];
+    for(const change of event.stateChanges){
+      if(!state[change.table])continue;
+      if(change.after===null)delete state[change.table][change.id];
+      else state[change.table][change.id]=change.after;
+    }
     const location=siteById.get(event.siteId),key=location?site(location):null;
     const patch=event.stateChanges.find(p=>p.table==='frames'&&p.id===event.invocationId);
     const instructions=bundle.programs[event.codeId]?.instructions;
     const instruction=instructions?.find(x=>x.siteId===event.siteId);
     const abrupt=event.completion?.type==='throw';
     if(!abrupt&&['binding.initialize','binding.write'].includes(event.operation)&&plan.sites.has('initialize:'+key)){
-      const env=event.stateChanges.find(p=>p.table==='envs'&&p.after?.bindings?.[instruction?.arg]);
-      emit(key,'initialize',env?.after.bindings[instruction.arg].token.value??event.result);
+      emit(key,'initialize',storedCell(previousFrame?.envId,instruction?.arg));
     }
     if(!abrupt&&['binding.write','property.write'].includes(event.operation)&&plan.sites.has('assign:'+key)){
       if(event.causes.some(c=>c.kind==='invocation'))
@@ -139,12 +178,17 @@ export function ownedCompletionObservations(bundle,source){
         // faulty teacher that stores a different value cannot hide behind a
         // correct assignment-expression result.
         let stored=event.result;
-        if(event.operation==='binding.write'){
-          const env=event.stateChanges.find(p=>p.table==='envs'&&p.after?.bindings?.[instruction?.arg]);
-          stored=env?.after.bindings[instruction.arg].token.value??stored;
-        }else if(event.operands?.[1]?.[0]==='str'){
-          const heap=event.stateChanges.find(p=>p.table==='heap'&&p.id===event.operands[0]?.[1]);
-          stored=heap?.after?.properties?.[event.operands[1][1]]?.value??stored;
+        if(event.operation==='binding.write')stored=storedCell(previousFrame?.envId,instruction?.arg);
+        else{
+          const [base,property]=event.operands??[];
+          if(base?.[0]!=='ref'||!['str','num','bool','null','undefined','bigint'].includes(property?.[0]))
+            throw new TypeError('Source assignment storage is outside the independently observed property profile');
+          const object=state.heap[base[1]];
+          if(!object||object.kind==='proxy')throw new TypeError('Source assignment storage requires an ordinary receiver');
+          const key=String(decode(property));
+          // A successful ordinary assignment must leave its stored value in
+          // the receiver. Looking only at changed patches misses dropped writes.
+          stored=object.properties?.[key]?.value??['missing-storage'];
         }
         emit(key,'assign',stored);
       }
@@ -158,7 +202,7 @@ export function ownedCompletionObservations(bundle,source){
     if(event.operation==='completion.throw'&&plan.sites.has('throw:'+key))emit(key,'throw',event.completion.value.value);
     if(event.operation==='completion.catch.bind'&&plan.sites.has('catch:'+key)){
       const node=plan.sites.get('catch:'+key);
-      emit(key,'catch',node.param?event.result:['undefined']);
+      emit(key,'catch',node.param?storedCell(state.frames[event.invocationId]?.envId,node.param.name):['undefined']);
     }
     if(event.operation==='completion.loop.jump'&&plan.sites.has(instruction?.arg+':'+key))emit(key,instruction.arg);
     for(const change of event.stateChanges.filter(p=>p.table==='frames'&&p.before&&p.after)){
@@ -187,6 +231,6 @@ export function compareCompletionObservations(expected,observed){
       status:'mismatch',checked:index,index,expected:expected[index]??null,observed:observed[index]??null};
   const counts={};for(const row of expected)counts[row.kind]=(counts[row.kind]??0)+1;
   return {schema:COMPLETION_OBSERVATION_SCHEMA,status:'agreed',checked:expected.length,counts,
-    referenceValues:'scalars-and-first-observed-reference-identity',
+    referenceValues:'scalars-and-input-rooted-reference-identity',
     uncovered:['intermediate-reference-property-snapshots','implicit-parameter-initialization','implicit-call-throws-without-a-catch-or-finally','Promise-job-internals']};
 }

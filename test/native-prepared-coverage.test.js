@@ -74,6 +74,8 @@ test('prepared selection preserves exact evaluation IDs and reports stage/covera
   assert(result.sampler.includedCandidateIds.includes('z-rare'));
   assert.equal(result.sampler.schema,sampler.schema,'existing native materializer schema remains usable');
   assert.equal(result.sampler.acceptedDecisions.length,sampler.acceptedDecisions.length);
+  assert.equal(result.sampler.after.trainingComponents.length,2);
+  assert.equal(result.sampler.after.maximumTrainingComponentShare,9/17);
   assert.equal(JSON.stringify({sampler,source}),original);
   assert.deepEqual(selectPreparedCoverage({...sampler,acceptedDecisions:[...sampler.acceptedDecisions].reverse()},
     {...source,cases:[...source.cases].reverse()}).sampler.includedEpisodeIds,result.sampler.includedEpisodeIds);

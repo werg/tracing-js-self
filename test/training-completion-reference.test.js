@@ -64,6 +64,6 @@ test('independent observation disagreement reports the first divergence and exac
 test('systematic teacher mutants with restored final outcomes fail independent certification',async()=>{
   const report=await auditTeacherMutations();
   assert.equal(report.passed,true,JSON.stringify(report,null,2));
-  assert.equal(report.attempted,6);assert.equal(report.detectedIndependently,6);
+  assert.equal(report.attempted,13);assert.equal(report.detectedIndependently,13);
   assert.equal(report.journalEdited,false);
 });

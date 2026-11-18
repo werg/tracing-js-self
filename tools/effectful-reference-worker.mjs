@@ -20,7 +20,6 @@ try{
     !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(input.entry??''))
     throw new TypeError('Invalid reference mode or entry identifier');
   const broker=createFixtureBroker(input.fixture),operations=[],decisions=[];
-  const completionCapture=createCompletionCapture();
   const callbackFailures=[],unhandledRejections=[],infrastructureFailures=[];
   process.on('unhandledRejection',error=>{
     try{unhandledRejections.push({kind:'throw',graph:describeCompletionGraph([],error,'throw')});}
@@ -62,6 +61,7 @@ try{
   for(const call of input.fixture.calls)if(call.operation.startsWith('demo.'))
     host[call.operation.slice(5)]=(...args)=>invoke(call.operation,args);
   const args=decodeOwnedGraph(JSON.stringify(input.inputGraph));
+  const completionCapture=createCompletionCapture({initialValues:args});
   const capture=(site,value)=>{
     if(operations.length>=16384)fail(new RangeError('Reference operation cap'),'reference_resource_limit');
     try{operations.push({site,value:encode(value)});}catch(error){fail(error,'reference_instrumentation_unsupported');}
