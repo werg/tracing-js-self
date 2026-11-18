@@ -191,3 +191,37 @@ The CPU trainer currently records zero for its GPU allocator peak-memory
 counter. That counter does not measure CPU training memory. The native serving
 profiles separately retain observed process memory; neither quantity is a
 claim that a larger training configuration fits in memory.
+
+### Completed 56-window full-coverage retry
+
+The independently frozen 1,500-second retry completed 56 native optimizer
+updates, 17,574 supervised lexical tokens, and every native window of all 32
+selected episodes (14 source components). Actual checksummed cursor state and
+the rebuilt prepared-stream fingerprint authenticate this coverage. Checkpoint
+and served-model reloads passed; 311 parameter tensors changed.
+
+Complete held-in execution remains 0/4 for each arm, so
+`optimizationSmokePassed` is false. The sealed checkpoint-56 pilot measured
+held-out execution 0/3 for each arm, with one independent test component. Its
+original decoder-token totals are 89 for the initialized base and 35 for the
+trained model. The separate source/input-only pure endpoint measured 0/1 for
+each arm with 32 versus 64 original decoder tokens. Every failure is retained;
+no generalization claim follows. See the [full-coverage receipt](receipts/learning-full-epoch-2026-11-18/README.md)
+for unchanged original reports, the explicit post-run authentication recheck,
+all 20 complete measurement artifacts, and the actual optimizer-settings audit.
+P1 used its full `0.0002` learning rate on all 56 updates with zero warmup; both
+decoder output owners have nonzero Adam moments and changed weights.
+
+### Separate one-input repeated-exposure diagnostic
+
+A subsequently frozen, single bounded attempt repeated the shortest admitted
+training episode (`flag-intersection-pure`, 48 native generated tokens) for 256
+native P1 updates from the same exact initialized base. It completed in 1,097.59
+seconds under a 1,200-second cap, supervised 12,288 lexical tokens, authenticated
+one source across 256 complete episode windows, and passed optimizer/checkpoint
+reload checks. Final free execution remained 0/1 for both arms: 171 original
+base decoder tokens and 59 trained tokens, all retained with original failures.
+A recorded training-loss decrease did not yield execution success. No held-out
+cohort was evaluated and no extension followed. The [one-input receipt](receipts/learning-one-input-2026-11-18/README.md)
+keeps this memorization diagnostic separate from the 32-source smoke and frozen
+held-out comparison.

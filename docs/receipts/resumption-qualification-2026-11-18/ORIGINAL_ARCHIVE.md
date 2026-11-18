@@ -1,6 +1,6 @@
 # Reconstruct the original corpus and baseline archive
 
-This is the original local baseline and pre-fix broad native campaign, **not a current dataset release**. The exact [archive receipt](tracing-js-original-corpus-evidence-2026-11-18-zstd.json) records 7,641 verified source files, 7,228,861,076 uncompressed file bytes, the compressed archive identity, the uncompressed tar-stream identity, and every part's size/hash. Archive creation and content verification are complete. **Private part uploads are pending confirmation at this receipt increment.** Download availability must be confirmed separately in the final delivery.
+This is the original local baseline and pre-fix broad native campaign, **not a current dataset release**. The exact [archive receipt](tracing-js-original-corpus-evidence-2026-11-18-zstd.json) records 7,641 verified source files, 7,228,861,076 uncompressed file bytes, the compressed archive identity, the uncompressed tar-stream identity, and every part's size/hash. Archive creation and content verification are complete. All four parts were successfully saved for private delivery on 18 November 2026. Download links are supplied separately; no private service identifiers are stored in this repository.
 
 The archive is a lossless Zstandard-compressed tar stream, split into four consecutive byte ranges. It is not a four-member tar or ZIP collection. Reassemble all four parts in their numbered order before extraction. Keep original producer/campaign identities and refusals unchanged after extraction.
 

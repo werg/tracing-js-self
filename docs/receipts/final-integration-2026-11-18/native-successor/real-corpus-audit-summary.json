@@ -1,0 +1,18 @@
+{
+  "schema": "semantic-diagnostic-ci-job-summary/1",
+  "runId": 44321402482,
+  "jobId": 134882052684,
+  "status": "completed",
+  "conclusion": "success",
+  "records": [
+    {
+      "invocations": 936,
+      "verified": 936,
+      "counts": {
+        "locally_verified": 936
+      },
+      "output": "/home/runner/work/tracing-js-self/tracing-js-self/corpus/full/owned-all-summary.json",
+      "review": "/home/runner/work/tracing-js-self/tracing-js-self/corpus/full/owned-all-review.md"
+    }
+  ]
+}

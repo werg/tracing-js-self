@@ -1,0 +1,56 @@
+{
+  "experimentSha256": "550f7d516d4f177067cd2c3d0d7324cd4ad1c8545f34d5d47515c54ed2960530",
+  "testUsedForSelection": false,
+  "selections": [
+    {
+      "optimizerSeed": 17,
+      "selection": {
+        "schema": "semantic-validation-selection/1",
+        "selectionSplit": "validation",
+        "criterion": [
+          "familyWeightedWholeTaskSuccess",
+          "familyWeightedTraceValidity",
+          "earliestStep"
+        ],
+        "checkpointIdentity": "eb8233dc60c56531acb2a6ba59e1a2aff50899ca65061d0d7243c7604f33a8bb",
+        "step": 56,
+        "candidates": [
+          {
+            "step": 56,
+            "checkpointIdentity": "eb8233dc60c56531acb2a6ba59e1a2aff50899ca65061d0d7243c7604f33a8bb",
+            "metrics": {
+              "episodes": 4,
+              "sourceFamilies": 1,
+              "independentComponents": 1,
+              "successes": 0,
+              "familyWeightedWholeTaskSuccess": 0.0,
+              "episodeWeightedWholeTaskSuccess": 0.0,
+              "familyWeightedTraceValidity": 0.0,
+              "components": {
+                "component:f6b1003276dafd2946473bc7ff1540e65324b727d6a018e00b27f56393c4ffe4": 0.0
+              },
+              "failures": {
+                "TypeError": 4
+              },
+              "integrityFailures": {
+                "falseAdmissions": 0,
+                "futureObservationLeaks": 0,
+                "replayNativeEffects": 0,
+                "unauthorizedEffects": 0,
+                "untrackedNativeFallback": 0
+              },
+              "completeIntegrityGateReceipts": 4,
+              "wallSeconds": 27.259853674004262,
+              "wallSecondsPerCorrectTask": null,
+              "generatedTokens": 102,
+              "retainedGeneratedTokensLowerBound": 102,
+              "generatedTokenCostComplete": true,
+              "generatedTokensPerCorrectTask": null
+            }
+          }
+        ],
+        "testUsedForSelection": false
+      }
+    }
+  ]
+}

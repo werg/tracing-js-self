@@ -1,0 +1,132 @@
+{
+  "schema": "semantic-native-ci-job-summary/1",
+  "runId": 44321402524,
+  "jobId": 134861001667,
+  "recipe": "real-source",
+  "status": "completed",
+  "conclusion": "success",
+  "records": [
+    {
+      "schema": "semantic-native-ci-identity/1",
+      "workflowRunId": "44321402524",
+      "workflowRunAttempt": "1",
+      "workflowTriggerRevision": "3497ee3454ea75715db1bc50c3e7cfc35ecc0fc2",
+      "workflowHeadRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+      "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+      "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b"
+    },
+    {
+      "status": "verified",
+      "receipt": "/home/runner/work/_temp/native-environment.json",
+      "packages": 47,
+      "consumerRevision": "6b4382b9af3bef120ca3a95ae24d35154d4cd66b",
+      "cudaAvailable": false
+    },
+    {
+      "schema": "semantic-harness-contract/5",
+      "digest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+      "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e"
+    },
+    {
+      "digest": "27f3b0e8b276a64d648b4cc56e8f069ea3194c46c32fd7d532db2e53b2979ba7",
+      "recipes": [
+        "engineering",
+        "training-v4",
+        "benchmark-v1",
+        "real-source",
+        "generated-v1"
+      ],
+      "sourceVariants": 508,
+      "sourceFamilies": 199,
+      "independentComponents": 135,
+      "nearPairs": 5,
+      "splitComponents": {
+        "train": 89,
+        "validation": 13,
+        "test": 33
+      },
+      "holdoutProjects": [
+        "exercism/javascript"
+      ],
+      "holdoutCompositions": [
+        "square/even/maximum/alias/return"
+      ]
+    },
+    {
+      "directory": "/home/runner/work/_temp/continuity",
+      "fixtures": [
+        {
+          "name": "async-pair",
+          "records": 17,
+          "selectionOrigin": "controlled-test-injected"
+        },
+        {
+          "name": "promise-finally",
+          "records": 14,
+          "selectionOrigin": "controlled-test-injected"
+        },
+        {
+          "name": "retained-events",
+          "records": 33,
+          "selectionOrigin": "controlled-test-injected"
+        },
+        {
+          "name": "checkpoint-recovery",
+          "records": 12,
+          "selectionOrigin": "controlled-test-injected"
+        }
+      ]
+    },
+    {
+      "schema": "semantic-release-verification/1",
+      "status": "verified",
+      "files": 1275,
+      "identityDigest": "cb70e2f63390fc3118ca44087fb72f16627260eb8a9d38192530e878b7f57a0a",
+      "archiveSha256": "7f5f2b03ca4b725fc5b40e3b18201986b4721c16cbaaeced1770d6282a36ab4c",
+      "archive": "/home/runner/work/_temp/release/semantic-v5-release.tar.gz",
+      "counts": {
+        "admitted": 190,
+        "unsupported": 18,
+        "source_unsupported": 2
+      },
+      "nativePrepared": 100,
+      "nativeQualified": 190,
+      "trainingSelected": 71,
+      "trainingExcluded": 81,
+      "heldOutSupplied": 38
+    },
+    {
+      "archiveSha256": "7f5f2b03ca4b725fc5b40e3b18201986b4721c16cbaaeced1770d6282a36ab4c",
+      "files": 1275,
+      "identityDigest": "cb70e2f63390fc3118ca44087fb72f16627260eb8a9d38192530e878b7f57a0a",
+      "schema": "semantic-release-verification/1",
+      "status": "verified"
+    },
+    {
+      "schema": "semantic-source-dispositions/1",
+      "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+      "recipe": {
+        "name": "real-source",
+        "sourceStreams": [
+          "utilities",
+          "exercism",
+          "production"
+        ],
+        "perFamily": 2,
+        "mutationsPerFamily": 0,
+        "authority": "fresh-original-transformed-owned-reference-native-gates",
+        "admittedByLocalFlag": false
+      },
+      "attempted": 210,
+      "dispositions": {
+        "admitted": 190,
+        "unsupported": 18,
+        "source_unsupported": 2
+      },
+      "admittedFamilies": 95,
+      "admittedComponents": 35,
+      "optimizerSteps": 0,
+      "learnedSuccess": null
+    }
+  ]
+}

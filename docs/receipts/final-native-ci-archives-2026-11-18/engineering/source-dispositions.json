@@ -1,0 +1,15 @@
+{
+  "schema": "semantic-source-dispositions/1",
+  "producerRevision": "1e2e6a0de8952c4349edbeef46ab70c4a06f8157",
+  "recipe": {
+    "name": "engineering"
+  },
+  "attempted": 25,
+  "dispositions": {
+    "admitted": 25
+  },
+  "admittedFamilies": 20,
+  "admittedComponents": 20,
+  "optimizerSteps": 0,
+  "learnedSuccess": null
+}

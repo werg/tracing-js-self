@@ -1,0 +1,38 @@
+{
+  "id": "semantic-recipe:squared-distance/squared-distance-pure@1fc153775bc3bb9c",
+  "family": "semantic-recipe:squared-distance",
+  "sourceCluster": "component:a1aca22a005b30bee347b92eb12ac5df8fe0cd43e6193d281902118660f96548",
+  "checkpointIdentity": "eb8233dc60c56531acb2a6ba59e1a2aff50899ca65061d0d7243c7604f33a8bb",
+  "wholeTaskSuccess": false,
+  "validOutput": false,
+  "generatedTokens": 64,
+  "retainedGeneratedTokensLowerBound": 64,
+  "artifacts": "/workspace/scratch/0c59f3502a6d/evidence/pure-output-trained-bounded-epoch-1500-main/0000",
+  "wallSeconds": 7.6774290340035805,
+  "originalPayloadSha256": "34c08070c75dfb257afde33f23857ecd04d3ed32e7008304e01e9e2c8436d452",
+  "nativeFailure": {
+    "category": "invalid-model-text-action",
+    "message": "Native model emitted an invalid text action"
+  },
+  "generation": {
+    "terminal": true,
+    "valid": false,
+    "maxTokens": 128,
+    "started": true,
+    "emissionsComplete": true
+  },
+  "emissionIdentity": "27f9e5c570dd8fb35f60a3f854927f1dfcfd5151ff3cfffe4d29a83b3fe0b92e",
+  "modelIdentityAuthority": "actual-native-model",
+  "firstDivergence": {
+    "path": "outcome",
+    "reason": "invalid-original-model-json",
+    "message": "'utf-8' codec can't decode bytes in position 42-43: invalid continuation byte"
+  },
+  "artifactsSha256": {
+    "generated.bin": "34c08070c75dfb257afde33f23857ecd04d3ed32e7008304e01e9e2c8436d452",
+    "model-response.bin": "69ee15ddb1d3ba141881a7c07fdf56c84ef64c4f8f06682703b3573fb517dee8",
+    "model-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "private-expected.json": "faa38c9bbf52501ce408164c498a5524dbfde2e1b3d3f43040d0b7e307baa0c0",
+    "request.json": "4ce73da52b3e1936fd4659139ab89f5314bce2b5497865380303a275a90f6013"
+  }
+}

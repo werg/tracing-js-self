@@ -1,0 +1,456 @@
+{
+  "accepted": [
+    {
+      "episodeId": "semantic:harness:dcaeefc92cff1a63ad6e9ba476065b387327a190c08628fdf8a700abba17b9c9",
+      "generatedTokens": 300,
+      "id": "counter-0",
+      "sourceCluster": "component:3119c1b837d02134acaccc9062edaa45456498c24db7137e7770cbaf44fd6c3b",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:d7a465233eb7ba8530ef9530bbce0154eb3cbfea55fb484fab1ba72d08f763bb",
+      "generatedTokens": 306,
+      "id": "counter-1",
+      "sourceCluster": "component:3119c1b837d02134acaccc9062edaa45456498c24db7137e7770cbaf44fd6c3b",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:fb87996a2ed8294c2969a8ffca90ab42a9fcd3eb5132053183770fffd7531a33",
+      "generatedTokens": 300,
+      "id": "checkpoint-source-reread",
+      "sourceCluster": "component:3119c1b837d02134acaccc9062edaa45456498c24db7137e7770cbaf44fd6c3b",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:3b94c35e35aafa434202c5adb507d5c1d3566636f1956360bb847c8e3a5381f1",
+      "generatedTokens": 350,
+      "id": "two-pending-reversed",
+      "sourceCluster": "component:e18671d68dff02cc0b6d3a543c776baf7be06832593ec7a2acad558fdcba9347",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:e5c1a5415539754fdf7194b581d4a5e756a6c3bebe2fe37441aca1b3b9c954fa",
+      "generatedTokens": 289,
+      "id": "branch-0",
+      "sourceCluster": "component:e41477e46dde44ee660078efa0bc365bb844c82a31efa01ec570ed01f100529b",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:07a269eea5d04b4ad3952e30a4cc2f006d623fd66053ddd053ac278bcce75a67",
+      "generatedTokens": 288,
+      "id": "branch-1",
+      "sourceCluster": "component:e41477e46dde44ee660078efa0bc365bb844c82a31efa01ec570ed01f100529b",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:888de083299549481bdf7e8f7e170dbd63ad8bddb1ee506008ee5222c22e1f42",
+      "generatedTokens": 315,
+      "id": "rejection-finally",
+      "sourceCluster": "component:0a861d93e28b084bc687b4d8ea24888598a08eb40504001fe33ec5d3ba1b14b0",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:04d5aba777e0f48f7ef562197562bb3c67457870812fd9050c1e090f663b30f3",
+      "generatedTokens": 219,
+      "id": "uncaught-rejection-finally",
+      "sourceCluster": "component:0a861d93e28b084bc687b4d8ea24888598a08eb40504001fe33ec5d3ba1b14b0",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:421b8b09eba5a3e23b8e570e14fb8608b5c59d74d2935c28b8dc58b6dc95258b",
+      "generatedTokens": 562,
+      "id": "callback-captured-write",
+      "sourceCluster": "component:026c2d4f8a128c8d356896f32bd63f8ddbf591f6d3da47694fe819c8caa4cf3c",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:02e66c45633b83b0ad9332777e48ce4741aa5629a33c7bfeadad7418f45a046b",
+      "generatedTokens": 6885,
+      "id": "long-callback-retained-tail",
+      "sourceCluster": "component:f9d5964a22ffd18a3755803a3cb0db5c3c6d37605183cbad8ef312527fbbb6df",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:0cfd30cc382a5682ebde13966387230e0543d4a6664c8bc130123b805577fa93",
+      "generatedTokens": 169,
+      "id": "sync-rejection",
+      "sourceCluster": "component:2acb7229c847f2f9770b05295de4bb95b419c43cb5f66122e9c449342fc06d3d",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:827022c4f589483d1c07fa7dc027677b0fc2f8ab614d200b1db94683d440367a",
+      "generatedTokens": 431,
+      "id": "promise-reaction",
+      "sourceCluster": "component:6bf3fa94d521eb9cf94f6b20bba89031b9abf55f2c3d63666d644c6cbe36c8f9",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:e04aca8c0cc66eca6f997a766fff6d2a396cd9049b97ae9e9a95589c38efd6c0",
+      "generatedTokens": 553,
+      "id": "promise-rejection-finally",
+      "sourceCluster": "component:e076559170391c4f51ee1c7e9b119c092d0d61e28266f5dcd5004fd993ec944b",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:31c67d32173a17dfe3b9e288fb5a43cb00cd9af1e153c9cfe67e8a42e22e4af0",
+      "generatedTokens": 184,
+      "id": "owned-microtask",
+      "sourceCluster": "component:4455e0880e021f857963b390d5cab3a3553375f135f87fe9679f4c8efb9d4158",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:3a29c5a9aa613b2ac7dc6bbc171064b94f398cc3ae5b04e92ec232c3a5e4c700",
+      "generatedTokens": 171,
+      "id": "clock-console",
+      "sourceCluster": "component:c7a095b760d104b46573e3142193a1b5573c2c61f4481bec88019ecf998fa86e",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:f0f289f7bc5567375f3da592f708c6df827f6d456a6daa09ed4c4b1cfdb565bb",
+      "generatedTokens": 602,
+      "id": "http-response-stream",
+      "sourceCluster": "component:1bb7b22b6c162147409575668945d1de13fbb81109765a4210f89ae3d7a0d7c3",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:d4d518d41be287bdb0306bbdffc7db1423aa46aa0c5302df02d90d8ffd3fc10a",
+      "generatedTokens": 799,
+      "id": "filesystem-stream-copy",
+      "sourceCluster": "component:56654d126c738776cbecffc2d61996b5f39f3df2c799b2862a3577ee72f2be64",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:93eca53f6b578fe9dd7379b8cf60631c14e90dd710c435399b9f96de7525482a",
+      "generatedTokens": 579,
+      "id": "socket-round-trip",
+      "sourceCluster": "component:6a4b9fb9bd6e1a127ba929a6c66b9b0ba7c7eba490a3eb0afde66349ab81bbb4",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:9251f92f0cc9dd713b888b40009c7cb66a6b1b4d0c70b5089caea601d342a3d4",
+      "generatedTokens": 550,
+      "id": "dom-mutation-release",
+      "sourceCluster": "component:bddb07b64c8188deec3c579939e54d1476ece57a4f96337a08b7e0fd351c2ab6",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:4396063bd00df69b5da4ba76185cb15160fa8934550ef96d93ff0c0a6d1636e1",
+      "generatedTokens": 590,
+      "id": "natlang-cell-call",
+      "sourceCluster": "component:aea268c42c7bda31e3043a92a90284c5c68163a21ec961652a403d2511d2cdca",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:cfa903d36c296f2d5d90cd23c85a3bef2dfdddd151155d137352d1736d43f14a",
+      "generatedTokens": 700,
+      "id": "native-result-graph",
+      "sourceCluster": "component:12e7dfd8463597ad7e736d84afe6b15fc72c41dcce788d56e78e5a603116f3e1",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:a1cae9dbd7fcf4b0e3eddaf89e6faa9d64b51ebb1eff1d125fc603e92ced340f",
+      "generatedTokens": 192,
+      "id": "compound-pure",
+      "sourceCluster": "component:7ae6ed9a9d6b79049846439215d807d5bbc7958202cc0159959f2bb50b3fea19",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:0626bdae1d923c5f41a0170d332929469bcab6d0434ce7c3538613d091b5459d",
+      "generatedTokens": 381,
+      "id": "compound-effectful",
+      "sourceCluster": "component:0748d252232434bb0fa3790cb81f4fdfa7c4f3a5d4a43cab16e8344726a7156f",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:182175a9a3f93cd85623a6db28ff3bc6889af92380bd8b9865cad8ef14250d74",
+      "generatedTokens": 751,
+      "id": "persistent-external-trigger",
+      "sourceCluster": "component:476ba8f1b2442f32be10eea61b816a6b871b3b54627b8fd0782485d4b61c53d3",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:4c2f1ba840f36ad83e471ddc62ad54e2c6e515462eb892edf0dab83fec7947ef",
+      "generatedTokens": 606,
+      "id": "repeated-ingress",
+      "sourceCluster": "component:3119c1b837d02134acaccc9062edaa45456498c24db7137e7770cbaf44fd6c3b",
+      "split": "train"
+    }
+  ],
+  "components": [
+    {
+      "generatedTokens": 562,
+      "sourceCluster": "component:026c2d4f8a128c8d356896f32bd63f8ddbf591f6d3da47694fe819c8caa4cf3c",
+      "tokenShare": 0.0746943115364168
+    },
+    {
+      "generatedTokens": 381,
+      "sourceCluster": "component:0748d252232434bb0fa3790cb81f4fdfa7c4f3a5d4a43cab16e8344726a7156f",
+      "tokenShare": 0.05063795853269538
+    },
+    {
+      "generatedTokens": 700,
+      "sourceCluster": "component:12e7dfd8463597ad7e736d84afe6b15fc72c41dcce788d56e78e5a603116f3e1",
+      "tokenShare": 0.09303561935140882
+    },
+    {
+      "generatedTokens": 602,
+      "sourceCluster": "component:1bb7b22b6c162147409575668945d1de13fbb81109765a4210f89ae3d7a0d7c3",
+      "tokenShare": 0.08001063264221159
+    },
+    {
+      "generatedTokens": 169,
+      "sourceCluster": "component:2acb7229c847f2f9770b05295de4bb95b419c43cb5f66122e9c449342fc06d3d",
+      "tokenShare": 0.022461456671982988
+    },
+    {
+      "generatedTokens": 1512,
+      "sourceCluster": "component:3119c1b837d02134acaccc9062edaa45456498c24db7137e7770cbaf44fd6c3b",
+      "tokenShare": 0.20095693779904306
+    },
+    {
+      "generatedTokens": 184,
+      "sourceCluster": "component:4455e0880e021f857963b390d5cab3a3553375f135f87fe9679f4c8efb9d4158",
+      "tokenShare": 0.024455077086656035
+    },
+    {
+      "generatedTokens": 431,
+      "sourceCluster": "component:6bf3fa94d521eb9cf94f6b20bba89031b9abf55f2c3d63666d644c6cbe36c8f9",
+      "tokenShare": 0.05728335991493886
+    },
+    {
+      "generatedTokens": 192,
+      "sourceCluster": "component:7ae6ed9a9d6b79049846439215d807d5bbc7958202cc0159959f2bb50b3fea19",
+      "tokenShare": 0.025518341307814992
+    },
+    {
+      "generatedTokens": 590,
+      "sourceCluster": "component:aea268c42c7bda31e3043a92a90284c5c68163a21ec961652a403d2511d2cdca",
+      "tokenShare": 0.07841573631047315
+    },
+    {
+      "generatedTokens": 550,
+      "sourceCluster": "component:bddb07b64c8188deec3c579939e54d1476ece57a4f96337a08b7e0fd351c2ab6",
+      "tokenShare": 0.07309941520467836
+    },
+    {
+      "generatedTokens": 171,
+      "sourceCluster": "component:c7a095b760d104b46573e3142193a1b5573c2c61f4481bec88019ecf998fa86e",
+      "tokenShare": 0.022727272727272728
+    },
+    {
+      "generatedTokens": 553,
+      "sourceCluster": "component:e076559170391c4f51ee1c7e9b119c092d0d61e28266f5dcd5004fd993ec944b",
+      "tokenShare": 0.07349813928761297
+    },
+    {
+      "generatedTokens": 350,
+      "sourceCluster": "component:e18671d68dff02cc0b6d3a543c776baf7be06832593ec7a2acad558fdcba9347",
+      "tokenShare": 0.04651780967570441
+    },
+    {
+      "generatedTokens": 577,
+      "sourceCluster": "component:e41477e46dde44ee660078efa0bc365bb844c82a31efa01ec570ed01f100529b",
+      "tokenShare": 0.07668793195108985
+    }
+  ],
+  "generatedTrainTokens": 7524,
+  "heldOutInputIds": [
+    "rejection-finally",
+    "uncaught-rejection-finally",
+    "long-callback-retained-tail",
+    "filesystem-stream-copy",
+    "socket-round-trip",
+    "persistent-external-trigger"
+  ],
+  "learnedSuccess": null,
+  "nativeAccepted": 25,
+  "nativeDispositions": [
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:dcaeefc92cff1a63ad6e9ba476065b387327a190c08628fdf8a700abba17b9c9",
+      "id": "counter-0",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:d7a465233eb7ba8530ef9530bbce0154eb3cbfea55fb484fab1ba72d08f763bb",
+      "id": "counter-1",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:fb87996a2ed8294c2969a8ffca90ab42a9fcd3eb5132053183770fffd7531a33",
+      "id": "checkpoint-source-reread",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:3b94c35e35aafa434202c5adb507d5c1d3566636f1956360bb847c8e3a5381f1",
+      "id": "two-pending-reversed",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:e5c1a5415539754fdf7194b581d4a5e756a6c3bebe2fe37441aca1b3b9c954fa",
+      "id": "branch-0",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:07a269eea5d04b4ad3952e30a4cc2f006d623fd66053ddd053ac278bcce75a67",
+      "id": "branch-1",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:888de083299549481bdf7e8f7e170dbd63ad8bddb1ee506008ee5222c22e1f42",
+      "id": "rejection-finally",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:04d5aba777e0f48f7ef562197562bb3c67457870812fd9050c1e090f663b30f3",
+      "id": "uncaught-rejection-finally",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:421b8b09eba5a3e23b8e570e14fb8608b5c59d74d2935c28b8dc58b6dc95258b",
+      "id": "callback-captured-write",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:02e66c45633b83b0ad9332777e48ce4741aa5629a33c7bfeadad7418f45a046b",
+      "id": "long-callback-retained-tail",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:0cfd30cc382a5682ebde13966387230e0543d4a6664c8bc130123b805577fa93",
+      "id": "sync-rejection",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:827022c4f589483d1c07fa7dc027677b0fc2f8ab614d200b1db94683d440367a",
+      "id": "promise-reaction",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:e04aca8c0cc66eca6f997a766fff6d2a396cd9049b97ae9e9a95589c38efd6c0",
+      "id": "promise-rejection-finally",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:31c67d32173a17dfe3b9e288fb5a43cb00cd9af1e153c9cfe67e8a42e22e4af0",
+      "id": "owned-microtask",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:3a29c5a9aa613b2ac7dc6bbc171064b94f398cc3ae5b04e92ec232c3a5e4c700",
+      "id": "clock-console",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:f0f289f7bc5567375f3da592f708c6df827f6d456a6daa09ed4c4b1cfdb565bb",
+      "id": "http-response-stream",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:d4d518d41be287bdb0306bbdffc7db1423aa46aa0c5302df02d90d8ffd3fc10a",
+      "id": "filesystem-stream-copy",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:93eca53f6b578fe9dd7379b8cf60631c14e90dd710c435399b9f96de7525482a",
+      "id": "socket-round-trip",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:9251f92f0cc9dd713b888b40009c7cb66a6b1b4d0c70b5089caea601d342a3d4",
+      "id": "dom-mutation-release",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:4396063bd00df69b5da4ba76185cb15160fa8934550ef96d93ff0c0a6d1636e1",
+      "id": "natlang-cell-call",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:cfa903d36c296f2d5d90cd23c85a3bef2dfdddd151155d137352d1736d43f14a",
+      "id": "native-result-graph",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:a1cae9dbd7fcf4b0e3eddaf89e6faa9d64b51ebb1eff1d125fc603e92ced340f",
+      "id": "compound-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:0626bdae1d923c5f41a0170d332929469bcab6d0434ce7c3538613d091b5459d",
+      "id": "compound-effectful",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:182175a9a3f93cd85623a6db28ff3bc6889af92380bd8b9865cad8ef14250d74",
+      "id": "persistent-external-trigger",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:4c2f1ba840f36ad83e471ddc62ad54e2c6e515462eb892edf0dab83fec7947ef",
+      "id": "repeated-ingress",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    }
+  ],
+  "optimizerSteps": 0,
+  "policy": {
+    "componentIdentity": "authenticated-frozen-source-components",
+    "enabled": false,
+    "maxFamilyShare": null,
+    "maxFamilyTokens": null,
+    "scope": "training-only",
+    "tokenMeasurement": "fresh-native-generatedTokens"
+  },
+  "schema": "semantic-prepared-training-selection/1",
+  "status": "verified",
+  "violations": []
+}

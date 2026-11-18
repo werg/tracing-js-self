@@ -1,0 +1,23 @@
+{
+  "schema": "exact-zip-parts/1",
+  "wholeFile": "semantic-v5-real-source-admission-and-evaluation.zip",
+  "wholeBytes": 494989082,
+  "wholeSha256": "d441754ecd7a195e72312e042288dfa808ffbecaca1d0d4f15d04db2078a663c",
+  "partSizeBytes": 419430400,
+  "parts": [
+    {
+      "file": "semantic-v5-real-source-admission-and-evaluation.zip.part001",
+      "bytes": 419430400,
+      "offset": 0,
+      "sha256": "b0b284360b9490c95a1028b869571470be3cddcd74587ee3b3fbab43e52984ad"
+    },
+    {
+      "file": "semantic-v5-real-source-admission-and-evaluation.zip.part002",
+      "bytes": 75558682,
+      "offset": 419430400,
+      "sha256": "8222a249e9a55b07a1421f3c82c407bb79597faf25f2cf627e5e6df1ca6f68ac"
+    }
+  ],
+  "concatenateInListedOrder": true,
+  "verifiedReconstructedSha256": "d441754ecd7a195e72312e042288dfa808ffbecaca1d0d4f15d04db2078a663c"
+}

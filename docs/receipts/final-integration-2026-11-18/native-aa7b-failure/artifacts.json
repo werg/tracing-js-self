@@ -1,0 +1,80 @@
+{
+  "artifacts": [
+    {
+      "id": 14434261552,
+      "name": "semantic-v5-real-source-admission-and-evaluation",
+      "size_in_bytes": 1759963,
+      "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14434261552",
+      "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14434261552/zip",
+      "expired": false,
+      "created_at": "2026-11-18T13:56:14Z",
+      "expires_at": "2027-02-16T13:47:45Z",
+      "updated_at": "2026-11-18T13:56:14Z",
+      "digest": "sha256:e5ef855876bdff06c825c4ce6fd8c906b2b86ae40dbff172da5ca07738ad91cc",
+      "workflow_run": {
+        "id": 44317350987,
+        "repository_id": 1429775465,
+        "head_repository_id": 1429775465,
+        "head_branch": "codex/resumption-completion-20261118",
+        "head_sha": "aa7b8432761df110df53fc95664b7d767b2eeba0"
+      }
+    },
+    {
+      "id": 14433926315,
+      "name": "semantic-v5-benchmark-v1-admission-and-evaluation",
+      "size_in_bytes": 1092572,
+      "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14433926315",
+      "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14433926315/zip",
+      "expired": false,
+      "created_at": "2026-11-18T13:54:32Z",
+      "expires_at": "2027-02-16T13:47:45Z",
+      "updated_at": "2026-11-18T13:54:32Z",
+      "digest": "sha256:33e608f9cc86673be52d8e16b0a38eeb4db5646dda92c10ed5a335a5b9bd88d6",
+      "workflow_run": {
+        "id": 44317350987,
+        "repository_id": 1429775465,
+        "head_repository_id": 1429775465,
+        "head_branch": "codex/resumption-completion-20261118",
+        "head_sha": "aa7b8432761df110df53fc95664b7d767b2eeba0"
+      }
+    },
+    {
+      "id": 14433018381,
+      "name": "semantic-v5-generated-v1-admission-and-evaluation",
+      "size_in_bytes": 1090915,
+      "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14433018381",
+      "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14433018381/zip",
+      "expired": false,
+      "created_at": "2026-11-18T13:56:20Z",
+      "expires_at": "2027-02-16T13:47:45Z",
+      "updated_at": "2026-11-18T13:56:20Z",
+      "digest": "sha256:654ec32827447c19a1bef9a488dcf7c7dce146f041cda20a8b53b25bf2a2ad6b",
+      "workflow_run": {
+        "id": 44317350987,
+        "repository_id": 1429775465,
+        "head_repository_id": 1429775465,
+        "head_branch": "codex/resumption-completion-20261118",
+        "head_sha": "aa7b8432761df110df53fc95664b7d767b2eeba0"
+      }
+    },
+    {
+      "id": 14432424572,
+      "name": "semantic-v5-training-v4-admission-and-evaluation",
+      "size_in_bytes": 2448467,
+      "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14432424572",
+      "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14432424572/zip",
+      "expired": false,
+      "created_at": "2026-11-18T13:54:01Z",
+      "expires_at": "2027-02-16T13:47:45Z",
+      "updated_at": "2026-11-18T13:54:01Z",
+      "digest": "sha256:9ed2e174f4d0faa99f1fd9c54c5e0e92ec3a5734ad874cf1c3f72f2e6d5008f8",
+      "workflow_run": {
+        "id": 44317350987,
+        "repository_id": 1429775465,
+        "head_repository_id": 1429775465,
+        "head_branch": "codex/resumption-completion-20261118",
+        "head_sha": "aa7b8432761df110df53fc95664b7d767b2eeba0"
+      }
+    }
+  ]
+}
