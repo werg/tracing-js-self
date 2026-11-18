@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from collections import Counter
 
 spec = importlib.util.spec_from_file_location(
     'optimization_smoke', Path(__file__).resolve().parents[1] / 'tools/run-optimization-smoke.py')
@@ -12,6 +13,20 @@ spec.loader.exec_module(smoke)
 
 
 class SelectionIntegrity(unittest.TestCase):
+    def test_registry_interning_is_lossless_and_only_combines_exact_equal_values(self):
+        registry = {'schema': 'semantic-source-registry/1', 'members': ['a', 'b']}
+        value = {'one': registry, 'two': json.loads(json.dumps(registry)),
+                 'different': {'schema': 'semantic-source-registry/1', 'members': ['a']},
+                 'ordinary': [{'number': -0.0}, ['undefined'], 'source text']}
+        before = json.dumps(value)
+        cache, counts = {}, Counter()
+        result = smoke.intern_registries(value, cache, counts)
+        self.assertEqual(json.dumps(result), before)
+        self.assertIs(result['one'], result['two'])
+        self.assertIsNot(result['one'], result['different'])
+        self.assertEqual(len(cache), 2)
+        self.assertEqual(counts['registryOccurrences'], 3)
+
     def make_corpus(self, root, name, rows, revision='1' * 40):
         directory = root / name
         directory.mkdir()

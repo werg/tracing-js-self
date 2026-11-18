@@ -14,6 +14,7 @@ import gc
 import hashlib
 import json
 import os
+import resource
 import subprocess
 import sys
 import time
@@ -111,6 +112,25 @@ def hashes(state):
 
 def state_identity(state):
     return hashlib.sha256(json.dumps(hashes(state), sort_keys=True).encode()).hexdigest()
+
+
+def intern_registries(value, cache, counts):
+    """Share only byte-identical decoded registry subtrees; preserve every field."""
+    if isinstance(value, dict):
+        if value.get('schema') == 'semantic-source-registry/1':
+            encoded = json.dumps(value, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
+            counts['registryOccurrences'] += 1
+            if encoded in cache:
+                counts['duplicateRegistrySerializedBytes'] += len(encoded.encode())
+            else:
+                cache[encoded] = value
+            return cache[encoded]
+        for key in value:
+            value[key] = intern_registries(value[key], cache, counts)
+    elif isinstance(value, list):
+        for index, item in enumerate(value):
+            value[index] = intern_registries(item, cache, counts)
+    return value
 
 
 def mask_receipt(prepared, codec):
@@ -309,12 +329,8 @@ def main():
         if manifest['producerRevision'] != producer_revision:
             raise ValueError('Corpus must match immutable source-verifier checkout')
         sys.path.insert(0, str(consumer / 'src'))
-        import torch
         from megatoken.data.semantic_corpus import prepare_semantic_corpus, source_verifier_for_checkout
         from megatoken.generation.codec import ByteCodec, LING_TOKENIZER_SHA256
-        from megatoken.training.config import TrainConfig
-
-        torch.set_num_threads(1)
         env = {**os.environ, 'PYTHONPATH': str(consumer / 'src'),
                'OMP_NUM_THREADS': '1', 'MKL_NUM_THREADS': '1'}
         codec = ByteCodec.from_tokenizer_json(args.tokenizer_json.resolve(), expected_sha256=LING_TOKENIZER_SHA256)
@@ -329,17 +345,33 @@ def main():
                examples=len(selected), families=sorted({item['family'] for item, _ in selected}),
                inputIdentities=[{'path': str(path), 'sha256': sha256(path)} for _, path in selected])
         prepared = root / 'prepared'
+        registries, loading_counts = {}, Counter()
         prepared_manifest, preparation = prepare_semantic_corpus(
-            (json.loads(path.read_text()) for _, path in selected), prepared, codec=codec,
+            (intern_registries(json.loads(path.read_text()), registries, loading_counts)
+             for _, path in selected), prepared, codec=codec,
             producer_revision=producer_revision, consumer_revision=consumer_revision,
             source_verifier=source_verifier_for_checkout(tracer, producer_revision),
             max_positions=1024, max_history=1024)
+        for encoded, registry in registries.items():
+            if json.dumps(registry, ensure_ascii=False, separators=(',', ':'), allow_nan=False) != encoded:
+                raise ValueError('Preparation mutated an immutable shared registry')
+        loading_counts['distinctRegistries'] = len(registries)
+        loading_counts['processPeakRssBytesBeforeModelRuntime'] = int(
+            resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == 'darwin' else 1024))
+        registries.clear()
+        gc.collect()
         if preparation['accepted'] != len(selected):
             raise ValueError('Smoke preparation refused/deduplicated candidates; inspect semantic-report.json')
         masks = mask_receipt(prepared, codec)
         write_json(root / 'loss-masks.json', masks)
         record(phase='initializing-checkpoint', preparedFingerprint=prepared_manifest['fingerprint'],
-               preparation=preparation, lossMaskCounts=masks['counts'])
+               preparation=preparation, lossMaskCounts=masks['counts'],
+               dataLoading={'losslessRegistryInterning': True, **dict(loading_counts)})
+        # Preparation and source verification do not need the model runtime.
+        # Avoid retaining its memory alongside repeated private audit sidecars.
+        import torch
+        from megatoken.training.config import TrainConfig
+        torch.set_num_threads(1)
         config = TrainConfig(purpose='diagnostic', phase='P1', model='tiny',
                              codec=str(args.tokenizer_json.resolve()), datasets=[str(prepared)],
                              output=str(root / 'training'), device='cpu', precision='fp32', seed=args.seed,

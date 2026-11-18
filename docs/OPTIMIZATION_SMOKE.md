@@ -33,6 +33,11 @@ only once; a repeated candidate identity with different bytes is rejected.
 Every candidate undergoes fresh source, journal, replay, and native-consumer
 checks before preparation. The report pins both repositories, the tokenizer,
 the actual runner files, input files, and the resulting prepared corpus.
+During streaming input reads, byte-identical decoded frozen-registry subtrees
+share memory; all original fields and serialized evidence are preserved and
+checked for mutation. The model runtime loads after preparation. This avoids
+holding its memory alongside repeated large private registries. The report
+records registry counts and the preparation process's measured peak RSS.
 
 Training is capped by `--steps` and `--train-timeout` (900 seconds by default).
 Rollouts are independently capped by `--rollout-timeout` (120 seconds by
