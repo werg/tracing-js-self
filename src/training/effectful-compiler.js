@@ -14,6 +14,7 @@ import {encodeWitness,decodeWitness,validateExpression} from './format.js';
 import {hostOperation,SUBSCRIPTION_CLOSERS} from '../host/operations.js';
 import {analyzeSemanticProgram} from './semantic-program.js';
 import {sourceLinkedComputation,sourceLinkedDecision} from './semantic-source.js';
+import {DECLARED_EXCEPTION_PROFILE} from './exception-profile.js';
 
 const copy=value=>structuredClone(value);
 const hash=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
@@ -70,8 +71,8 @@ export function ownedEffectfulOutcome(bundle){
   if(entry?.asyncPromiseId&&(frame?.asyncPromiseId!==entry.asyncPromiseId||
     !['completed','thrown'].includes(frame.status)))refuse('async root body has not completed');
   const root=entry?.asyncPromiseId?{kind:'return',value:['promise',entry.asyncPromiseId]}:
-    frame?.status==='thrown'&&frame.completion?.type==='throw'&&frame.completion.value?
-      {kind:'throw',value:frame.completion.value.value}:
+    ['completed','thrown'].includes(frame?.status)&&frame.completion?.value?
+      {kind:frame.completion.type,value:frame.completion.value.value}:
       bundle.finalState.control.a0.completion;
   if(!root)refuse('missing completed root outcome');
   let kind=root.kind,value=root.value;
@@ -652,14 +653,16 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
         invocation:frameId(fact.invocation)},event,'completion-transfer');handled=true;
     }else if(['return','throw','unhandled-throw'].includes(fact?.operation)){
       if(row)writes(row,owner,event);
-      const frame=state.frames[fact.invocation],asyncResult=frame?.asyncPromiseId;
-      const value=asyncResult?['ref',asyncResult]:tag(fact.value??event.operands?.[0]);
-      const kind=asyncResult?'return':fact.operation==='return'?'return':'throw';
-      emit(owner,kind,{value,invocation:frameId(fact.invocation)},event,'completion');
-      if(reactionFrames.has(fact.invocation)){
-        const job=reactionFrames.get(fact.invocation);
-        emit(owner,'job',{action:'complete',job:job.job,owner},event,'job-complete');
-      }else if(frames.get(fact.invocation)===owner)awaitingCompletion.set(owner,kind);
+      for(const exit of [fact,...(fact.unwound??[])]){
+        const frame=state.frames[exit.invocation],asyncResult=frame?.asyncPromiseId;
+        const value=asyncResult?['ref',asyncResult]:tag(exit.value??event.operands?.[0]);
+        const kind=asyncResult?'return':exit.operation==='return'?'return':'throw';
+        emit(owner,kind,{value,invocation:frameId(exit.invocation)},event,'completion');
+        if(reactionFrames.has(exit.invocation)){
+          const job=reactionFrames.get(exit.invocation);
+          emit(owner,'job',{action:'complete',job:job.job,owner},event,'job-complete');
+        }else if(frames.get(exit.invocation)===owner)awaitingCompletion.set(owner,kind);
+      }
       handled=true;
     }
     if(!handled&&row?.op!=='loop'){
@@ -690,6 +693,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   exported.sidecar.admission='projected';
   exported.sidecar.representation='compact';
   exported.sidecar.compiler={schema:'semantic-effectful-compiler/4',certificates,elided,checkpoints,
+    exceptionProfile:DECLARED_EXCEPTION_PROFILE,
     sourceDigest:hash(source),archiveDigest:hash(bundle),capabilities,
     representation:'compact',compaction:{maxOperators,maxNodes:32,removedComputations:fusedComputations,
       foldedConditions:foldedComputations,fusedBindings},

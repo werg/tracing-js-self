@@ -8,8 +8,7 @@ import {replayExact} from '../replay.js';
 import {referenceOutcome,ownedOutcome} from './reference.js';
 import {auditReferenceOperations} from './operation-reference.js';
 import {auditReferenceBranches} from './branch-reference.js';
-import {compileEffectfulWitness,verifyEffectfulProjection} from './effectful-compiler.js';
-import {realizeGraph,describeGraph} from './graph.js';
+import {compileEffectfulWitness,verifyEffectfulProjection,ownedEffectfulOutcome} from './effectful-compiler.js';
 import {validateSemantic} from '../semantic/normalize.js';
 
 function checkSource(bundle,source,entry,owned,reference){
@@ -33,7 +32,11 @@ export function verifyOwnedSourceCase({source,entry,args=[],seed=null,lineage=nu
   try{progress=runtime.drive();}
   catch(error){return {status:error instanceof RangeError?'profile_limit':'runtime_failure',
     reason:String(error.message)};}
-  if(progress.kind==='runtime.failure'){
+  const guestThrow=progress.kind==='runtime.failure'&&
+    runtime.state.control.a0.failure?.kind==='guest-abrupt'&&
+    runtime.state.control.a0.failure.completion?.type==='throw'&&
+    Array.isArray(runtime.state.control.a0.failure.completion?.value?.value);
+  if(progress.kind==='runtime.failure'&&!guestThrow){
     const failure=progress.failure??runtime.state.control.a0.failure;
     const completion=failure?.completion;
     return {status:completion?.message==='Not a callable guest function'?
@@ -41,9 +44,9 @@ export function verifyOwnedSourceCase({source,entry,args=[],seed=null,lineage=nu
       reason:completion?.message?'Owned guest '+(completion.errorType??'Error')+': '+completion.message:
         'Owned runtime terminated with '+(failure?.kind??'unknown failure')};
   }
-  if(progress.kind!=='terminated'||runtime.state.control.a0.completion?.kind!=='return'||
+  if((progress.kind!=='terminated'&&!guestThrow)||
      Object.keys(runtime.state.effects).length||Object.keys(runtime.state.promises).length||
-     Object.values(runtime.state.frames).some(frame=>frame.status!=='completed'))
+     Object.values(runtime.state.frames).some(frame=>!['completed','thrown'].includes(frame.status)))
     return {status:'unsupported',reason:'Only completed synchronous effect-free entries qualify'};
   const bundle=runtime.exportRun();
   let reference,owned;
@@ -95,10 +98,7 @@ export function recheckOwnedSourceEvidence(exported){
     if(typeof source!=='string')throw new Error('Missing original guest source');
     const reference=referenceOutcome({source,entry,args,initialHeap:bundle.initialState.heap,
       randomSeed:bundle.initialState.control.a0.randomSeed??null});
-    const finished=bundle.finalState.control.a0.completion;
-    if(finished?.kind!=='return')throw new Error('Missing completed source reference');
-    const owned={kind:'return',graph:describeGraph(realizeGraph(bundle.finalState.heap,
-      [...args,finished.value]))};
+    const owned=ownedEffectfulOutcome(bundle);
     if(!isDeepStrictEqual(reference,owned)||
        !isDeepStrictEqual(side.reference?.outcome,reference))
       throw new Error('Independent observable source outcome has changed');

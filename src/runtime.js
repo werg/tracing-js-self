@@ -125,6 +125,8 @@ function proxyRoute(heap,receiver,operation) {
   return {kind:'ordinary',target:['ref',obj.id],receiver};
 }
 function putOwn(obj,key,value,eventId) {
+  if(obj.declaredError)
+    throw new TypeError('Declared error mutation is outside the bounded error profile');
   if (key === '__proto__') throw new TypeError('Prototype mutation is not implemented by the bounded profile');
   if (obj.kind === 'array' && key === 'length') {
     if (value[0] !== 'num') throw new TypeError('Array length coercion is outside the profile');
@@ -345,6 +347,7 @@ export class Runtime {
   stackPush(frame,value,origin){frame.stack.push(token(value,origin));}
   completeFrame(draft,frame,value,origin) {
     frame.status='completed';
+    frame.completion={type:'return',value:token(value,origin)};
     if(frame.asyncPromiseId){this.resolvePromise(draft,frame.asyncPromiseId,value,origin);value=['promise',frame.asyncPromiseId];}
     if(frame.reactionPromiseId)this.resolvePromise(draft,frame.reactionPromiseId,value,origin);
     if(frame.callerFrameId){
@@ -971,6 +974,9 @@ export class Runtime {
           const b=pop(),a=pop();
           if(!isOwnedArithmetic(arg))return {...operands(a,b),...result(primitiveBinary(arg,a.value,b.value))};
           const id=this.next(s,'operation');
+          if([a,b].some(item=>item.value[0]==='ref'&&s.heap[item.value[1]]?.declaredError)&&
+             !['===','!==','==','!='].includes(arg))
+            throw new TypeError('Declared error coercion is outside the bounded error profile');
           s.operations[id]=createArithmetic({id,frameId:f.id,operator:arg,left:a,right:b,
             siteId:inst.siteId,sourceId:frame.codeId.split(':')[0],codeId:frame.codeId});
           f.operationId=id;
@@ -1021,6 +1027,18 @@ export class Runtime {
         case 'CONSTRUCT':{
           const args=[];for(let i=0;i<arg;i++)args.unshift(pop());
           const fn=pop();
+          if(fn.value[0]==='intrinsic'&&['Error','TypeError'].includes(fn.value[1])){
+            if(args.length>1)throw new TypeError('Error options are outside the bounded error profile');
+            const value=args[0]?.value??U;
+            if(!['undefined','null','bool','str','num','bigint'].includes(value[0]))
+              throw new TypeError('Error message requires owned scalar coercion');
+            const id=this.next(s,'obj');
+            s.heap[id]={id,kind:'object',declaredError:fn.value[1],properties:{
+              name:token(['str',fn.value[1]],eventId),
+              message:token(['str',value[0]==='undefined'?'':String(decode(value))],eventId)
+            },propertyVersions:{name:1,message:1},shapeVersion:2,version:0};
+            return {...operands(fn,...args),...result(['ref',id])};
+          }
           if(fn.value[0]==='intrinsic'&&fn.value[1]==='Promise'){
              if(args.length!==1||!this.callableGuest(s,args[0]?.value))
                guestFault('TypeError','Promise executor must be callable');
@@ -1180,6 +1198,8 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
            else if(base.value[0]==='ref'){
              const obj=s.heap[base.value[1]];
              if(!obj)throw new ReferenceError('Unknown guest identity');
+             if(obj.declaredError&&!['name','message'].includes(property))
+               throw new TypeError('Declared error exposes only name and message');
              if(obj.kind==='regexp'){
                if(property==='test'){
                  const method=['builtinfn','RegExp.prototype.test'];
@@ -1372,6 +1392,9 @@ if(object.kind==='regexp'){
           const fn=pop();let callable=fn.value;
           const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
+          if(callable[0]==='builtinfn'&&callable[1].startsWith('Object.')&&
+             callable[1]!=='Object.is'&&args.some(item=>item.value[0]==='ref'&&s.heap[item.value[1]]?.declaredError))
+            throw new TypeError('Object descriptor and prototype operations on declared errors are outside the bounded error profile');
           if(callable[0]==='intrinsic'&&callable[1]==='Promise')
              guestFault('TypeError','Promise must be constructed with new');
            if(callable[0]==='builtinfn' &&

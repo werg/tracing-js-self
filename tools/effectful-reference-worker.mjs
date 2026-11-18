@@ -6,7 +6,7 @@ import {readFileSync} from 'node:fs';
 import {createFixtureBroker} from '../src/training/fixture-broker.js';
 import {HOST_METHODS,hostOperation} from '../src/host/operations.js';
 import {decodeOwnedGraph} from '../src/host/graph-codec.js';
-import {describeGraph} from '../src/training/graph.js';
+import {describeCompletionGraph,DECLARED_EXCEPTION_PROFILE} from '../src/training/exception-profile.js';
 import {encode} from '../src/values.js';
 import {instrumentOperationSource} from '../src/training/operation-reference.js';
 import {instrumentBranchSource} from '../src/training/branch-reference.js';
@@ -21,7 +21,7 @@ try{
   const broker=createFixtureBroker(input.fixture),operations=[],decisions=[];
   const callbackFailures=[],unhandledRejections=[],infrastructureFailures=[];
   process.on('unhandledRejection',error=>{
-    try{unhandledRejections.push({kind:'throw',graph:describeGraph([error])});}
+    try{unhandledRejections.push({kind:'throw',graph:describeCompletionGraph([],error,'throw')});}
     catch(cause){infrastructureFailures.push({category:'reference_instrumentation_unsupported',
       message:'Unrepresentable unhandled rejection: '+String(cause.message)});}
   });
@@ -30,7 +30,7 @@ try{
     throw error;
   };
   const failure=error=>{
-    try{callbackFailures.push({kind:'throw',graph:describeGraph([error])});}
+    try{callbackFailures.push({kind:'throw',graph:describeCompletionGraph([],error,'throw')});}
     catch(cause){infrastructureFailures.push({category:'reference_instrumentation_unsupported',
       message:'Unrepresentable callback failure: '+String(cause.message)});}
   };
@@ -101,8 +101,8 @@ try{
     error.category=infrastructureFailures[0].category;throw error;
   }
   phase='observe';
-  const outcome={kind,graph:describeGraph([...args,value])};
-  process.stdout.write(JSON.stringify({schema:'effectful-reference/4',outcome,
+  const outcome={kind,graph:describeCompletionGraph(args,value,kind)};
+  process.stdout.write(JSON.stringify({schema:'effectful-reference/4',exceptionProfile:DECLARED_EXCEPTION_PROFILE,outcome,
     effects:broker.finish(),operations,decisions,callbackFailures,unhandledRejections})+'\n');
 }catch(error){
   const category=error.category??(error.code==='ERR_SCRIPT_EXECUTION_TIMEOUT'?
