@@ -35,13 +35,13 @@ test('worker transport preserves null prototypes and shared input identities',as
   const value=Object.create(null);value.x=1;
   const request={...task,fixture:{...task.fixture,args:[value,value],
     source:'"use strict";function run(a,b){return Object.getPrototypeOf(a)===null&&a===b;}'}};
-  const decoded=decodeGenerationTask(encodeGenerationTask(request));
+  const decoded=decodeGenerationTask(JSON.parse(JSON.stringify(encodeGenerationTask(request))));
   assert.equal(Object.getPrototypeOf(decoded.fixture.args[0]),null);
   assert.equal(decoded.fixture.args[0],decoded.fixture.args[1]);
   const direct=await verifyEffectfulTrainingCase(request.fixture);
   const run=await runGenerationProcess(request,{outputDirectory:directory(t),timeoutMs:30000});
-  // The current public projection can refuse null-prototype graphs. A worker
-  // must preserve that exact input/refusal, not silently certify a plain object.
+  // The worker and JSON campaign representation must preserve the exact input
+  // graph, rather than silently certifying a plain object with another meaning.
   assert.equal(run.result.status,direct.status,run.result.reason);
   assert.equal(run.result.reason,direct.reason);
 });
