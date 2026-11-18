@@ -1,10 +1,10 @@
 # Resumption implementation handover — 18 November 2026
 
-**Release closeout in progress:** the complete D collection and F recovery are
-finished, and their original audit evidence is durably saved. Full D native
-preparation, a reconciled component-cap sampler, the final verification
-supplement and current-revision CI are still being completed. Two remaining
-parameter-projection cases are being investigated in a separate worktree.
+**Release closeout in progress:** the complete D collection, native preparation,
+consumable capped dataset and F recovery are finished, and their complete
+archives are durably saved. The bounded parameter-projection and async replay
+repairs are published. Their final qualification, the supplemental verification
+archive and current-revision CI are being completed.
 Completed implementation increments and compact receipts are committed and
 pushed immediately; historical failures remain intact.
 
@@ -186,11 +186,42 @@ context and is preserved as a failure; corrected selection explicitly routes
 through the immutable D producer at UTC. Native preparation can deduplicate
 further, so 965 must not be reported as the final prepared count.
 
+All **965 representatives pass fresh source rechecking and native admission**.
+The unchanged native duplicate policy retains **541 prepared examples**, records
+**424 duplicates**, and introduces zero refusals or quarantines. Its split is
+462 train, 27 validation and 52 test, with 546,670 generated/scored tokens in
+total. Complete preparation, packaging and member verification take 2,055.309
+seconds; peak packager Python RSS is 446,980,096 bytes. The separate descendant
+resource measurements do not represent simultaneous process-tree memory.
+
 The qualification census is uncapped: its largest two training components
-contribute about 44.17% and 25.33% of original generated tokens. It is not a
-claimed balanced training release. A separate sampler will apply its
-predeclared 10,000-token/20% component cap to the actual final native accepted
-inventory, preserving evaluation membership and all exclusion reasons.
+contribute about 44.17% and 25.33% of original generated tokens. After native
+deduplication, the largest component contributes 44.5945% of training targets.
+The final sampler applies its predeclared **10,000-token per component / 20%
+training share** limits to that actual native accepted inventory. Conservative
+budget groups union frozen source components with actual native family joins.
+
+| Native prepared view | Train / validation / test | Training targets | Training declared families | Training components | Largest component share |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Complete census | 462 / 27 / 52 | 505,181 | 74 | 21 | 44.5945% |
+| Capped release | **132 / 27 / 52** | **139,145** | **47** | **21** | **7.1745%** |
+
+The capped release contains **211 native examples**, 180,634 generated/scored
+tokens and 673,322 complete transcript tokens. All 79 accepted evaluation rows
+remain; 330 accepted training examples are excluded by the caps. Every output
+Episode byte sequence, token ID, free mask, lineage and frozen split matches
+its authenticated parent. Native family labels also remain unchanged in this
+actual subset, with zero new duplicates or quarantines. All 21 training
+components remain represented; the reduction from 74 to 47 declared families
+is an explicit coverage tradeoff.
+
+The subset is materialized through the consumer's normal storage/dedup/export
+APIs and independently read through its ordinary train/validation/test reader.
+Three negative cases—changed parent checksum, repeated identity and removed
+evaluation member—fail before creating output. Materialization and full readback
+take 7.885 seconds. Its verified 77,464,260-byte archive retains every original
+1,171-case audit file and is ready to consume. It supplies data, not an optimizer
+or learned-accuracy result. See [the native selection runbook](REAL_SOURCE_D_TRAINING_SELECTION.md).
 
 E freshly admits all twelve selected `distinct` cases, representing one declared
 family/component and two executed paths, with 16,008 native generated tokens.
@@ -353,8 +384,9 @@ archive and a freshly native-prepared release have separate schemas and claims.
 The following complete archives are verified and saved. Private download links
 are supplied with the delivery index; they are not embedded in the public
 repository. Every archive has a complete member inventory and identity digest.
-The C audit and complete model archive use the checksummed split parts in
-[ARCHIVE_PARTS.md](ARCHIVE_PARTS.md). All other listed archives fit in one file.
+The C audit, complete model archive and complete D real-source native census use
+the checksummed split parts in [ARCHIVE_PARTS.md](ARCHIVE_PARTS.md). All other
+listed archives fit in one file.
 
 | Archive | Bytes | Verified members | SHA-256 |
 | --- | ---: | ---: | --- |
@@ -367,6 +399,8 @@ The C audit and complete model archive use the checksummed split parts in
 | D complete original real-source audit checkpoint | 69,861,152 | 5,336 | `8fc95f764422b9062c119e46d7218be97e650b63ff04c645f07d33691d1245cc` |
 | E capture native release | 7,513,139 | 70 | `75d09e16491b71741a2d83705a3d74be101378962cf6e68cfdf7754ce169a65a` |
 | F targeted native release | 102,268,413 | 366 | `dd6097d6b309e630cab1088809fdfce71706eed650f5f2c57c40da396b42dddc` |
+| D complete real-source native census | 1,688,252,285 | 6,474 | `ac4e88a3fba5f046ad44501e5751560806b1cdeaf701deb46fd6eea80aff9558` |
+| D consumable capped native release | 77,464,260 | 5,339 | `e59a167d4192efbdb499a382ee3108425503e6d268544d6dbb78cbe867eef25c` |
 
 The audit-only archives preserve original attempts and refusals. They do not
 claim a new native-preparation run. Native releases include the independently
@@ -374,8 +408,7 @@ rechecked prepared data as well as their required original audits. The model
 archive includes checkpoints and served weights, not merely summaries of files
 that once existed.
 
-Full D real-source native packaging, its final accepted-inventory sampler,
-remaining verification logs and current-revision CI are being appended here.
+Remaining verification logs and current-revision CI are being appended here.
 Queued, cancelled, skipped and historical checks remain separate from a pass at
 the final revision. The Node 20/22/24 regression matrix and browser/spec gates
 already have passing published-revision evidence; final CI must retain its
