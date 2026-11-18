@@ -138,10 +138,10 @@ slices without material regression, and complete zero-failure integrity receipts
 An exploratory pilot still reports all measurements but cannot pass that gate.
 These conditions are deliberate experiment rules, not proof of broad JS ability.
 
-Pure code/input-to-outcome transfer remains a distinct, untested endpoint in
-this runner. New inputs for known training sources and counterfactual observation
-schedules need explicitly frozen auxiliary cohorts. They must not be inferred
-from the unseen-source selected-execution score. Pretrained-contamination absence
+Pure code/input-to-outcome transfer has its own adapter and measured report,
+described below. It must never be inferred from the selected-execution score.
+New inputs for known training sources and counterfactual observation schedules
+use separately frozen auxiliary cohorts. Pretrained-contamination absence
 is not established by this repository's source registry.
 
 ## Checks
@@ -155,3 +155,91 @@ python -m unittest discover -s tools/native-consumer -p 'test_optimization_measu
 Statistical unit tests use clearly synthetic receipts. They verify grouping,
 denominators, leakage boundaries, deterministic uncertainty and checkpoint
 selection; their passing results are never reported as learned performance.
+
+
+## Separate pure-output transfer
+
+`pure-output-transfer.mjs` extracts only already frozen, independently qualified,
+effect-free single invocations. It explicitly refuses effects, multi-invocation
+sessions and bound receivers outside its positional-argument graph contract.
+The public request contains exact source, entry, initial input graph, declared
+random seed, decoder seed and completion policy. It contains no teacher trace,
+future fixture, expected result or final state.
+
+```sh
+node tools/pure-output-transfer.mjs freeze \
+  --experiment /path/to/private-experiment.json \
+  --out /path/to/private-pure-test.json --split test
+
+/path/to/python tools/run-pure-output-transfer.py run \
+  --cohort /path/to/private-pure-test.json \
+  --model-command /path/to/python \
+  --model-args '["/path/to/tracer/tools/native-pure-output-model.py","--consumer-root","/path/to/megatoken","--served","/path/to/served-base","--max-tokens","128"]' \
+  --checkpoint-identity ACTUAL_SERVED_MODEL_SHA256 --origin fixed-weights \
+  --consumer-root /path/to/megatoken --tokenizer-json /path/to/tokenizer.json \
+  --output /path/to/new-pure-base --max-tokens 128 --timeout 120
+```
+
+Run the identical frozen cohort and budget with the selected trained served
+bundle, its actual checkpoint identity and `--origin trained`. Compare the
+complete paired reports:
+
+```sh
+/path/to/python tools/run-pure-output-transfer.py compare \
+  --base /path/to/new-pure-base/report.json \
+  --trained /path/to/new-pure-trained/report.json \
+  --output /path/to/pure-comparison.json
+```
+
+The supplied native adapter uses the pinned `MultiTrackRuntime` with real loaded
+served weights. It observes only the public source/input request and uses the
+actual decoder to emit an outcome. It performs no JavaScript execution,
+controlled selection, inferred teacher substitution or post-generation repair.
+The same model can be evaluated on both endpoints without restoring an old
+production trace exporter. The separate task instruction and whole-output token
+budget are recorded scope differences; there is no claim of matched compute
+with multi-decision selected execution.
+
+An outcome is one JSON object with `kind` (`return` or `throw`) and `graph`.
+The graph's roots are the final mutated input arguments in original order,
+followed by the returned or thrown value. Nodes use the existing bounded data
+codec: canonical scalar tags and `{id, kind, properties}` objects, including
+explicit null prototypes and sparse array length. IDs may be renamed. The
+scorer establishes a rooted bijection, so it preserves aliasing and cycles and
+rejects both copied aliases and collapsed distinct objects. It also compares
+mutations, property order, sparse holes, signed zero, prototypes and throw kind.
+Only reachable data belongs in the output. Bounded declared Error throws use
+the already qualified name/message observation profile.
+
+### Model-command protocol
+
+A model command reads exactly one `semantic-pure-output-request/1` JSON document
+on stdin and writes one `semantic-pure-model-response/1` document. The wrapper
+contains the unchanged case ID and SHA-256 of the exact stdin bytes, actual
+checkpoint/tokenizer identities, decoder seed, `payloadHex` for original model
+bytes, and `emissions`. Each emission has a unique `selectedEventId`,
+`payloadHex` and original `emittedTokenIds`. It also declares native generation
+validity, terminal status, token cap, failure details, and that neither JavaScript
+execution nor teacher traces supplied the answer. The bundled native adapter
+fills those fields from the loaded bundle and real generation tape.
+
+The runner independently decodes original token IDs using the hash-pinned
+production tokenizer. Concatenated emissions must exactly equal original
+output bytes. Duplicate JSON keys, invalid UTF-8, malformed graph data,
+identity/seed/budget changes, incorrect decoder tokens and nonterminal or
+invalid native generations remain failures. The complete raw response and
+payload bytes are retained before scoring. Model process groups have time and
+output-file bounds, and receive a minimal environment. No inference retries
+occur. External model-command attestations are caller-provided protocol evidence;
+only the supplied native adapter binds them to this repository's inspected
+actual native runtime. Neither path grants dataset admission.
+
+Pure-output reports use component-weighted whole-task correctness and paired
+component uncertainty, retain every failed case in the denominator, and keep
+selected-execution results separate. A small newly initialized diagnostic is an
+exploratory measurement and cannot establish a confirmatory learning claim.
+
+```sh
+node --test test/training-pure-output-transfer.test.js
+python -m unittest discover -s tools/native-consumer -p 'test_pure_output_transfer.py'
+```
