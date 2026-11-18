@@ -18,7 +18,7 @@ import {compileEffectfulWitness,verifyEffectfulProjection} from './effectful-com
 import {normalizeJournal} from '../semantic/normalize.js';
 import {decodeWitness} from './format.js';
 import {recheckEffectfulSession} from './effectful-session.js';
-import {effectfulFamilySplit,defaultSplitIdentity,validateSplitIdentity,normalizeSeeds,
+import {effectfulFamilySplit,defaultSplitIdentity,validateSplitIdentity,cloneSplitIdentity,normalizeSeeds,
   admissionEnvironment,bindAdmissionIdentity,verifyAdmissionIdentity,identityDigest} from './admission-identity.js';
 export {effectfulFamilySplit} from './admission-identity.js';
 import {AdmissionFailure,createFailureRecord} from './failure-record.js';
@@ -171,7 +171,7 @@ export async function verifyEffectfulTrainingCase({source,entry,args=[],fixture,
   normalizeSeeds(seeds,seed,randomSeed);
   if(nativeConsumer||nativePolicy!==null)nativePolicy=validateNativePolicy(nativePolicy);
   if(nativeConsumer)validateNativeProducer(producerRevision);
-  splitIdentity=structuredClone(splitIdentity??defaultSplitIdentity(family,{seed}));
+  splitIdentity=cloneSplitIdentity(splitIdentity??defaultSplitIdentity(family,{seed}));
   validateSplitIdentity(splitIdentity,{family,seed});
   fixture=canonicalFixturePlan(fixture);
   const broker=createFixtureBroker(fixture),abort=new AbortController();
