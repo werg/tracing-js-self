@@ -343,6 +343,58 @@ def export_checked(checkpoint, destination):
     return {**manifest, 'servedReloadExact': True}
 
 
+HARD_GATE_NAMES = frozenset({'futureObservationLeaks', 'unauthorizedEffects',
+                             'untrackedNativeFallback', 'falseAdmissions', 'replayNativeEffects'})
+CLEANUP_NAMES = frozenset({'pendingEffects', 'pendingJobs', 'openHandlers'})
+
+
+def require_counters(value, names, label):
+    if (not isinstance(value, dict) or set(value) != names or
+            any(type(count) is not int or count < 0 for count in value.values())):
+        raise ValueError(f'{label} must contain exactly the declared nonnegative integer counters')
+    return value
+
+
+def score_rollout(actual, case, origin, bundle, profile):
+    """Score complete, identity-bound evidence; absent gates never mean success."""
+    envelope = case['envelope']
+    if (origin not in {'trained', 'fixed-weights'} or envelope.get('caseId') != case['id'] or
+            envelope.get('schema') != 'semantic-evaluation-request/4' or
+            type(envelope.get('seed')) is not int):
+        raise ValueError('Malformed diagnostic case identity')
+    identity = {'schema': 'semantic-inference-identity/4', 'seed': envelope['seed'],
+                'checkpointIdentity': bundle['model_sha256'],
+                'tokenizerIdentity': bundle['codec_fingerprint']}
+    sidecar = actual.get('episode', {}).get('sidecar', {})
+    if (actual.get('schema') != 'semantic-evaluation-result/4' or
+            actual.get('origin') != origin or actual.get('representation') != envelope['representation'] or
+            actual.get('checkpointIdentity') != bundle['model_sha256'] or
+            actual.get('inferenceIdentity') != identity or
+            sidecar.get('sourceLineage') != 'evaluation:' + case['id'] or
+            sidecar.get('selectionOrigin') != 'actual-model-selected' or
+            sidecar.get('evidenceKind') != ('model-evaluation' if origin == 'trained' else 'deterministic-engineering')):
+        raise ValueError('Diagnostic result case, origin, model, tokenizer, or seed identity differs')
+    gates = require_counters(actual.get('hardGates'), HARD_GATE_NAMES, 'Hard gates')
+    outcome = actual.get('outcome')
+    if not isinstance(outcome, dict) or set(outcome) != {'completion', 'state', 'effects', 'callbacks', 'cleanup'}:
+        raise ValueError('Diagnostic outcome evidence is incomplete')
+    cleanup = require_counters(outcome['cleanup'], CLEANUP_NAMES, 'Cleanup')
+    if 'failure' not in actual or (actual['failure'] is not None and
+            (not isinstance(actual['failure'], dict) or not isinstance(actual['failure'].get('category'), str))):
+        raise ValueError('Diagnostic failure evidence is incomplete')
+    if (profile.get('schema') != 'semantic-serving-profile/1' or profile.get('complete') is not True or
+            profile.get('runtimeClosed') is not True or type(profile.get('optimizerSteps')) is not int or
+            profile['optimizerSteps'] != 0 or profile.get('initialization') != identity or
+            profile.get('declaredOrigin') != ('trained' if origin == 'trained' else 'fixed') or
+            profile.get('identity', {}).get('modelSha256') != bundle['model_sha256'] or
+            profile.get('identity', {}).get('tokenizerIdentity') != bundle['codec_fingerprint']):
+        raise ValueError('Diagnostic serving profile is incomplete or has a different identity')
+    # Canonical JSON avoids Python's bool/int equality accepting malformed values.
+    exact_outcome = json.dumps(outcome, sort_keys=True, separators=(',', ':')) == json.dumps(
+        case['expected'], sort_keys=True, separators=(',', ':'))
+    return actual['failure'] is None and exact_outcome and not any(gates.values()) and not any(cleanup.values())
+
+
 def rollout(case, origin, bundle, consumer, root, args, env):
     destination = root / origin / f'{case["index"]:04d}'
     destination.mkdir(parents=True)
@@ -368,12 +420,11 @@ def rollout(case, origin, bundle, consumer, root, args, env):
                 'pipelineFailure': 'evaluator-process-exit', 'returnCode': process.returncode,
                 'artifacts': str(destination), 'wallSeconds': time.monotonic() - started}
     actual = json.loads((destination / 'result.json').read_text())
-    gates = actual['hardGates']
-    success = actual['failure'] is None and actual['outcome'] == case['expected'] and not any(gates.values())
     profile = json.loads((destination / 'serving-profile.json').read_text())
+    success = score_rollout(actual, case, origin, bundle, profile)
     return {'id': case['id'], 'origin': origin, 'wholeTaskSuccess': success,
             'checkpointIdentity': actual['checkpointIdentity'], 'failure': actual['failure'],
-            'hardGates': gates, 'costs': actual['costs'],
+            'hardGates': actual['hardGates'], 'costs': actual['costs'],
             'cleanup': actual['outcome']['cleanup'], 'servingProfile': profile,
             'artifacts': str(destination), 'wallSeconds': time.monotonic() - started}
 

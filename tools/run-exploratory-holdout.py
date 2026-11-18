@@ -22,25 +22,81 @@ smoke = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(smoke)
 
 
-def verify_bundle(info, checkpoint, expected_state):
-    from megatoken.loading import load_trained
-    from megatoken.served import ServedBundle
+def same_tensors(left, right):
+    import torch
+    if isinstance(left, torch.Tensor) or isinstance(right, torch.Tensor):
+        return isinstance(left, torch.Tensor) and isinstance(right, torch.Tensor) and left.dtype == right.dtype and torch.equal(left, right)
+    if type(left) is not type(right):
+        return False
+    if isinstance(left, dict):
+        return left.keys() == right.keys() and all(same_tensors(value, right[key]) for key, value in left.items())
+    if isinstance(left, (list, tuple)):
+        return len(left) == len(right) and all(same_tensors(a, b) for a, b in zip(left, right))
+    return left == right
+
+
+def verify_bundle(info, checkpoint, expected_state, tokenizer_sha256, tokenizer_identity):
+    """Bind every served attachment to both the actual checkpoint and cohort codec."""
+    import torch
+    from safetensors import safe_open
+    from megatoken.generation.codec import ByteCodec
+    from megatoken.model.config import ARCHITECTURE_VERSION
+    from megatoken.controls import CONTROL_SCHEMA_VERSION
+    from megatoken.lifecycle import LIFECYCLE_VERSION
+    from megatoken.model.multitrack import GROUP_TAPE_VERSION
     from megatoken.training.checkpoint import load_checkpoint
 
+    directory, checkpoint = Path(info['bundle']), Path(checkpoint)
     payload, metadata = load_checkpoint(checkpoint)
     if metadata['state_sha256'] != expected_state:
         raise ValueError('Diagnostic checkpoint bytes changed')
-    del payload
-    loaded = load_trained(checkpoint, device='cpu')
-    bundle = ServedBundle(info['bundle'], device='cpu')
-    if (bundle.manifest['model_sha256'] != info['model_sha256'] or
-            bundle.manifest['checkpoint_sha256'] != expected_state or
-            smoke.hashes(loaded.model.served_state_dict()) != smoke.hashes(bundle.model.served_state_dict())):
-        raise ValueError('Diagnostic served model does not match its actual checkpoint')
-    return {'modelSha256': bundle.manifest['model_sha256'],
+    manifest = json.loads((directory / 'manifest.json').read_text())
+    for filename, field in [('model.safetensors', 'model_sha256'), ('model_config.json', 'config_sha256'),
+                            ('transducer.pt', 'transducer_sha256'), ('tokenizer.json', 'tokenizer_sha256')]:
+        if smoke.sha256(directory / filename) != manifest.get(field):
+            raise ValueError(f'Diagnostic served {filename} bytes differ from its manifest')
+    for field, value in [('format_version', ARCHITECTURE_VERSION), ('control_schema_version', CONTROL_SCHEMA_VERSION),
+                         ('lifecycle_version', LIFECYCLE_VERSION), ('tape_version', GROUP_TAPE_VERSION),
+                         ('event_addressing', 'independent_peer_events'), ('codec_file', 'tokenizer.json')]:
+        if manifest.get(field) != value:
+            raise ValueError(f'Diagnostic served {field} is incompatible')
+    if (manifest.get('training_heads') is not False or manifest.get('model_sha256') != info['model_sha256'] or
+            manifest.get('checkpoint_sha256') != expected_state or
+            type(manifest.get('model_version')) is not int or
+            manifest['model_version'] != payload.get('global_step')):
+        raise ValueError('Diagnostic served model does not match its actual checkpoint version')
+    if (manifest.get('tokenizer_sha256') != tokenizer_sha256 or
+            manifest.get('codec_fingerprint') != tokenizer_identity or
+            payload.get('codec_fingerprint') != tokenizer_identity):
+        raise ValueError('Diagnostic served/checkpoint tokenizer differs from the frozen cohort')
+    codec = ByteCodec.from_tokenizer_json(directory / 'tokenizer.json', expected_sha256=tokenizer_sha256,
+                                         expected_vocab_size=payload['model_config']['vocab_size'])
+    if codec.fingerprint != tokenizer_identity:
+        raise ValueError('Actual diagnostic tokenizer identity differs')
+    expected_config = {**payload['model_config'], 'checkpoint_stages': False}
+    if json.loads((directory / 'model_config.json').read_text()) != expected_config:
+        raise ValueError('Diagnostic served model config differs from its actual checkpoint')
+    with safe_open(directory / 'model.safetensors', framework='pt', device='cpu') as saved:
+        if not saved.keys() or set(saved.keys()) != set(payload['model']):
+            raise ValueError('Diagnostic served tensor inventory differs from its checkpoint')
+        for name in saved.keys():
+            if not same_tensors(saved.get_tensor(name), payload['model'][name]):
+                raise ValueError('Diagnostic served tensor differs from its actual checkpoint: ' + name)
+    native_bank = torch.load(checkpoint / metadata['transducer_checkpoint']['file'], weights_only=True, map_location='cpu')
+    expected_bank = native_bank.get('bank')
+    if not isinstance(expected_bank, dict) or type(expected_bank.get('version')) is not int:
+        raise ValueError('Diagnostic checkpoint transducer bank is missing')
+    # Native export reload increments only the bank cache-invalidation version.
+    expected_bank = {**expected_bank, 'version': expected_bank['version'] + 1}
+    served_bank = torch.load(directory / 'transducer.pt', weights_only=True, map_location='cpu')
+    if set(served_bank) != {'bank'} or not same_tensors(served_bank['bank'], expected_bank):
+        raise ValueError('Diagnostic served transducer bank differs from its actual checkpoint')
+    return {'modelSha256': manifest['model_sha256'],
             'checkpointSha256': expected_state, 'tensorsExact': True,
-            'tokenizerIdentity': bundle.codec.fingerprint,
-            'manifestSha256': smoke.sha256(Path(info['bundle']) / 'manifest.json')}
+            'modelConfigExact': True, 'transducerBankExact': True,
+            'tokenizerIdentity': codec.fingerprint, 'tokenizerSha256': tokenizer_sha256,
+            'modelVersion': payload['global_step'],
+            'manifestSha256': smoke.sha256(directory / 'manifest.json')}
 
 
 def summarize(rows):
@@ -163,9 +219,11 @@ def main():
         import torch
         torch.set_num_threads(1)
         base = verify_bundle(training['baseBundle'], training['initialCheckpoint'],
-                             training['initialTrainingState']['baseCheckpointSha256'])
+                             training['initialTrainingState']['baseCheckpointSha256'],
+                             cohort['tokenizerSha256'], cohort['tokenizerIdentity'])
         trained = verify_bundle(training['trainedBundle'], training['checkpointVerification']['checkpoint'],
-                                training['checkpointVerification']['stateSha256'])
+                                training['checkpointVerification']['stateSha256'],
+                                cohort['tokenizerSha256'], cohort['tokenizerIdentity'])
         if base['modelSha256'] == trained['modelSha256']:
             raise ValueError('Actual trained and base models are identical')
         record(phase='evaluating', bundles={'fixed-weights': base, 'trained': trained})
