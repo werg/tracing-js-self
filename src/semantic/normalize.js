@@ -81,7 +81,8 @@ export function normalizeJournal(bundle) {
     // Implicit guest errors occur at reads/calls/updates, not a THROW opcode.
     // Their committed exception allocation and abrupt completion are still
     // part of the source execution and must precede any catch/rethrow use.
-    if(e.completion?.type==='throw'&&Array.isArray(e.completion.value?.value))op='throw';
+    if(e.completion?.type==='throw'&&e.completion.errorType&&
+       Array.isArray(e.completion.value?.value))op='throw';
     if(!op)continue;
     const args=inputs.operands??[];
     const source=sites.get(e.siteId);

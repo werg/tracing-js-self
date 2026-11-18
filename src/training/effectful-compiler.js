@@ -636,7 +636,11 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     // Promise resolution is generated exactly where the journal changes it;
     // externally caused settlements have already entered as observations.
     for(const change of promiseChanges){
-      if(event.operation==='external.input.deliver')continue;
+      // Observation settles only the Promise returned by that host effect.
+      // A synchronous rejection may independently reject an enclosing async
+      // function or reaction, whose owned settlement still needs a witness.
+      if(event.operation==='external.input.deliver'&&state.effects[
+        event.causes.find(cause=>cause.kind==='effect')?.effectId]?.promiseId===change.id)continue;
       if(privatePromises.has(change.id)||reactionTargets.has(change.id))continue;
       const publicPromise=controller(owner).heap.get(change.id);
       if(['fulfilled','rejected'].includes(change.after?.status)&&publicPromise?.state===change.after.status&&
