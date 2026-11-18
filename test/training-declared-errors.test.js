@@ -65,6 +65,10 @@ test('error extensions, prototypes, mutation and coercion remain explicit refusa
 test('exception observations never format lazy stacks or invoke error accessors',()=>{
   const prepareStackTrace=Object.getOwnPropertyDescriptor(Error,'prepareStackTrace');
   let formatted=0,messageReads=0,stackReads=0;
+  // Node 20 also materializes the previous stack when redefining it. Prepare
+  // that fixture before the hook so only the observation itself is measured.
+  const accessorStack=new Error('kept');
+  Object.defineProperty(accessorStack,'stack',{get(){stackReads++;throw new Error('stack getter must not execute');}});
   Object.defineProperty(Error,'prepareStackTrace',{configurable:true,writable:true,value(){
     formatted++;
     throw new Error('stack formatting must not execute');
@@ -73,8 +77,6 @@ test('exception observations never format lazy stacks or invoke error accessors'
     const expected={roots:[['ref','o0']],objects:[{id:'o0',kind:'object',
       properties:[['name',['str','Error']],['message',['str','kept']]]}]};
     assert.deepEqual(describeCompletionGraph([],new Error('kept'),'throw'),expected);
-    const accessorStack=new Error('kept');
-    Object.defineProperty(accessorStack,'stack',{get(){stackReads++;throw new Error('stack getter must not execute');}});
     assert.deepEqual(describeCompletionGraph([],accessorStack,'throw'),expected);
     const accessorMessage=new Error('kept');
     Object.defineProperty(accessorMessage,'message',{get(){messageReads++;throw new Error('message getter must not execute');}});
