@@ -1,0 +1,1880 @@
+{
+  "schema": "exploratory-heldout-diagnostic-cohort/1",
+  "createdAt": "2026-11-18T13:08:08.028Z",
+  "builderSha256": "963253df8f7e7ef420c5e01696c4d919b95ef9ec7727dc472e3abd8b59c8a759",
+  "purpose": "diagnostic",
+  "confirmatory": false,
+  "productionQualification": false,
+  "selectionPolicy": "One smallest generated-token example per frozen test component; then public bytes and ID. Alphabetical family order if capped.",
+  "seed": 17,
+  "representation": "compact",
+  "producerRevision": "c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39",
+  "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+  "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+  "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+  "trainingReport": {
+    "path": "/workspace/scratch/23f61543c052/release-evidence/optimization-full-epoch/report.json",
+    "sha256": "398d20fb1ccb7f38bb972c2c0a125038fe9eae937a919403a4b3ac91f241ca90",
+    "optimizerSteps": 49
+  },
+  "registry": {
+    "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/source-registry.json",
+    "fileSha256": "2e69a1c82338929be4ceefe6c6b5c29d356b2412c3c5fce9474a6e3c409140cd",
+    "digest": "e3ed761cc07fcc1c3490da8cad7253d2ec1c6e69dda113648faa934adeacea72"
+  },
+  "sourceCorpora": [
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering",
+      "manifestSha256": "9b2e1edec0897fca6d5757b42655181bdc56a0f6bb52be882ca04968ed987a21"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/training-v4",
+      "manifestSha256": "aef73b80a3a95ac047ba5d4d921e8c7e72017eb2a00cff2a439ad717865e7fa1"
+    },
+    {
+      "path": "/workspace/scratch/23f61543c052/release-evidence/baseline/benchmark-v1",
+      "manifestSha256": "1315da86a1b864c6e562d2c7512366c977980894227068a9cd568cadc660ae33"
+    }
+  ],
+  "trainingComponents": [
+    "component:026c2d4f8a128c8d356896f32bd63f8ddbf591f6d3da47694fe819c8caa4cf3c",
+    "component:0748d252232434bb0fa3790cb81f4fdfa7c4f3a5d4a43cab16e8344726a7156f",
+    "component:080454a79068cf56288f751b447e9ed260d3f72c6a1275a6d95876e645292f16",
+    "component:09875bb9e11053c27436acf6a1e1576e57c51984908be23967536cfe430976e9",
+    "component:106f9ee70d334ae990bbff58b91c339b3362b98ae0acbacd14c1e3900dbaebf3",
+    "component:12e7dfd8463597ad7e736d84afe6b15fc72c41dcce788d56e78e5a603116f3e1",
+    "component:1bb7b22b6c162147409575668945d1de13fbb81109765a4210f89ae3d7a0d7c3",
+    "component:2acb7229c847f2f9770b05295de4bb95b419c43cb5f66122e9c449342fc06d3d",
+    "component:3119c1b837d02134acaccc9062edaa45456498c24db7137e7770cbaf44fd6c3b",
+    "component:33caeae7ca931ac696eb5f275ba5009ee68a6b59c3e730fbed3f4a4a60a490a6",
+    "component:4455e0880e021f857963b390d5cab3a3553375f135f87fe9679f4c8efb9d4158",
+    "component:6303712fdfcd482742bc13c6d1e6109b6bb8153f0603d252565afc199d1ea22f",
+    "component:6bf3fa94d521eb9cf94f6b20bba89031b9abf55f2c3d63666d644c6cbe36c8f9",
+    "component:7ae6ed9a9d6b79049846439215d807d5bbc7958202cc0159959f2bb50b3fea19",
+    "component:a736c179c5d8cd0af33999cad5919ab763f4b3963c941f7e121deaa36c1bfab4",
+    "component:ac8ef5823fc273122acb2fabb68c86604e1aee56e408cd41459099fda0eea2c9",
+    "component:aea268c42c7bda31e3043a92a90284c5c68163a21ec961652a403d2511d2cdca",
+    "component:b260fdc736ef9b4a08e74ffc196402dc235c454e5910b784f92b6c983fdd0093",
+    "component:b2c1fea4c059f2aefcfdafc304a3cdb953788ddce66edb8b12d96593e8de32a1",
+    "component:bddb07b64c8188deec3c579939e54d1476ece57a4f96337a08b7e0fd351c2ab6",
+    "component:c7a095b760d104b46573e3142193a1b5573c2c61f4481bec88019ecf998fa86e",
+    "component:d0e516e1f60b02dbbceab3e53444a1002ca0b0d1eff8946500e841428a6b0aea",
+    "component:e076559170391c4f51ee1c7e9b119c092d0d61e28266f5dcd5004fd993ec944b",
+    "component:e18671d68dff02cc0b6d3a543c776baf7be06832593ec7a2acad558fdcba9347",
+    "component:e41477e46dde44ee660078efa0bc365bb844c82a31efa01ec570ed01f100529b",
+    "component:e4380665faad6b650dbf7c6e96ef7f5400ad9b6bbf9373378eac5e6d5ba68544",
+    "component:e9c677fe55677a0881b3aacb2f162dc282e0c72245b9adca5d59bfa87ca62b7d",
+    "component:fb2d044c0e59c89c33a9262602ff563214e85a24873e50974301a65a97b36015",
+    "component:fc95c781a8db6b73ae6c2b364e9a9899ecfef0e22a4ef68b5232be1e11fb2ba6"
+  ],
+  "trainingFamilies": [
+    "async-counter",
+    "compound-effectful",
+    "compound-pure",
+    "dom-mutation-release",
+    "http-response-stream",
+    "native-result-graph",
+    "natlang-cell-call",
+    "observed-branch",
+    "owned-callback",
+    "owned-microtask",
+    "platform-observation",
+    "promise-cleanup",
+    "promise-reaction",
+    "semantic-recipe:absolute-distance",
+    "semantic-recipe:capped-budget",
+    "semantic-recipe:flag-intersection",
+    "semantic-recipe:flag-union",
+    "semantic-recipe:midpoint",
+    "semantic-recipe:modular-clock",
+    "semantic-recipe:overtime-rate",
+    "semantic-recipe:parity-adjustment",
+    "semantic-recipe:rectangle-perimeter",
+    "semantic-recipe:rectangular-capacity",
+    "semantic-recipe:relative-growth",
+    "semantic-recipe:triangular-series",
+    "semantic-recipe:unit-conversion",
+    "semantic-recipe:weighted-average",
+    "synchronous-error",
+    "two-outstanding"
+  ],
+  "availableTestComponents": 8,
+  "testComponents": [
+    "component:0a861d93e28b084bc687b4d8ea24888598a08eb40504001fe33ec5d3ba1b14b0",
+    "component:56654d126c738776cbecffc2d61996b5f39f3df2c799b2862a3577ee72f2be64",
+    "component:476ba8f1b2442f32be10eea61b816a6b871b3b54627b8fd0782485d4b61c53d3",
+    "component:83df860a2aa8b8683242b86f1cbf4e20ed6b71ef75d51e631b4095bcde29477c",
+    "component:9591eb131f6a54054c15c9e25c1f0f8d2a1da1ef755072c23f82cfe5ce79ca4c",
+    "component:217cb2f5e7674871f0585e4674a3fb7dcb0517060c949e90089229977e301f32",
+    "component:539f86f91b1587fbfe935868addafee245246a634b0b643e80e8e13dc9eca6e1",
+    "component:a1aca22a005b30bee347b92eb12ac5df8fe0cd43e6193d281902118660f96548"
+  ],
+  "families": [
+    "async-cleanup",
+    "filesystem-stream-copy",
+    "persistent-external-trigger",
+    "semantic-benchmark-v1:fibonacci-iterative",
+    "semantic-benchmark-v1:modular-exponentiation",
+    "semantic-benchmark-v1:running-prefix-checksum",
+    "semantic-benchmark-v1:single-transaction-profit",
+    "semantic-recipe:squared-distance"
+  ],
+  "cases": [
+    {
+      "id": "uncaught-rejection-finally",
+      "family": "async-cleanup",
+      "split": "test",
+      "expected": {
+        "completion": {
+          "kind": "throw",
+          "value": [
+            "str",
+            "missing"
+          ]
+        },
+        "state": {
+          "roots": [
+            [
+              "str",
+              "missing"
+            ]
+          ],
+          "objects": []
+        },
+        "effects": [
+          {
+            "kind": "dispatch",
+            "call": 0,
+            "operation": "demo.readAsync",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "bad"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 0,
+            "status": "rejected",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "missing"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 1,
+            "operation": "demo.store",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "cleanup"
+                ],
+                [
+                  "num",
+                  1
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 1,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          }
+        ],
+        "callbacks": [],
+        "cleanup": {
+          "pendingEffects": 0,
+          "pendingJobs": 0,
+          "openHandlers": 0
+        }
+      },
+      "envelope": {
+        "schema": "semantic-evaluation-request/4",
+        "caseId": "uncaught-rejection-finally",
+        "request": {
+          "schema": "selected-evaluation-case/4",
+          "program": {
+            "programId": "program1",
+            "source": "\"use strict\";async function run(){try{return await host.readAsync(\"bad\");}finally{host.store(\"cleanup\",1);}}",
+            "entry": "run",
+            "capabilities": [
+              "demo.readAsync",
+              "demo.store"
+            ]
+          },
+          "invocation": {
+            "programId": "program1",
+            "invocationId": "invocation1",
+            "trackId": "worker1",
+            "realmId": "realm1",
+            "triggerId": "teacher-entry",
+            "inputGraph": {
+              "roots": [],
+              "objects": []
+            },
+            "realmPolicy": "retained",
+            "completionPolicy": "await-returned-promise",
+            "receiverValue": [
+              "undefined"
+            ]
+          },
+          "fixture": {
+            "calls": [
+              {
+                "operation": "demo.readAsync",
+                "status": "rejected",
+                "argumentGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "str",
+                      "bad"
+                    ]
+                  ],
+                  "objects": []
+                },
+                "resultGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "str",
+                      "missing"
+                    ]
+                  ],
+                  "objects": []
+                }
+              },
+              {
+                "operation": "demo.store",
+                "status": "fulfilled",
+                "argumentGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "str",
+                      "cleanup"
+                    ],
+                    [
+                      "num",
+                      1
+                    ]
+                  ],
+                  "objects": []
+                },
+                "resultGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "undefined"
+                    ]
+                  ],
+                  "objects": []
+                }
+              }
+            ],
+            "settlementOrder": null
+          }
+        },
+        "seed": 17,
+        "representation": "compact"
+      },
+      "sourceCluster": "component:0a861d93e28b084bc687b4d8ea24888598a08eb40504001fe33ec5d3ba1b14b0",
+      "componentMembers": [
+        "async-cleanup"
+      ],
+      "inputPath": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/uncaught-rejection-finally.json",
+      "inputSha256": "633da82b31b90b495fa23c2c49d6a6b366d5c22065a3e87645035ac33acaa4b0",
+      "identityDigest": "d0fa0f6db2f5ae64127adcb5f32fa83a31aa1f943b1f4520b7d048bbd38c61d8",
+      "episodeDigest": "b47014697f03e5c727b00cd304cc28eb4892f388700745ac891b08f13ee26d7d",
+      "generatedTokens": 219,
+      "publicBytes": 6077
+    },
+    {
+      "id": "filesystem-stream-copy",
+      "family": "filesystem-stream-copy",
+      "split": "test",
+      "expected": {
+        "completion": {
+          "kind": "return",
+          "value": [
+            "str",
+            "b2s="
+          ]
+        },
+        "state": {
+          "roots": [
+            [
+              "str",
+              "b2s="
+            ]
+          ],
+          "objects": []
+        },
+        "effects": [
+          {
+            "kind": "dispatch",
+            "call": 0,
+            "operation": "fs.openRead",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "input.txt"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 0,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "stream:read:1"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 1,
+            "operation": "fs.readChunk",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "stream:read:1"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 1,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "b2s="
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 2,
+            "operation": "fs.openWrite",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "output.txt"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 2,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "stream:write:1"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 3,
+            "operation": "fs.writeChunk",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "stream:write:1"
+                ],
+                [
+                  "str",
+                  "b2s="
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 3,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  2
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 4,
+            "operation": "fs.closeWrite",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "stream:write:1"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 4,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 5,
+            "operation": "fs.close",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "stream:read:1"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 5,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          }
+        ],
+        "callbacks": [],
+        "cleanup": {
+          "pendingEffects": 0,
+          "pendingJobs": 0,
+          "openHandlers": 0
+        }
+      },
+      "envelope": {
+        "schema": "semantic-evaluation-request/4",
+        "caseId": "filesystem-stream-copy",
+        "request": {
+          "schema": "selected-evaluation-case/4",
+          "program": {
+            "programId": "program1",
+            "source": "\"use strict\";async function run(){const reader=await host.openRead(\"input.txt\");const chunk=await host.readChunk(reader);const writer=await host.openWrite(\"output.txt\");await host.writeChunk(writer,chunk);await host.closeWrite(writer);await host.closeStream(reader);return chunk;}",
+            "entry": "run",
+            "capabilities": [
+              "fs.close",
+              "fs.closeWrite",
+              "fs.openRead",
+              "fs.openWrite",
+              "fs.readChunk",
+              "fs.writeChunk"
+            ]
+          },
+          "invocation": {
+            "programId": "program1",
+            "invocationId": "invocation1",
+            "trackId": "worker1",
+            "realmId": "realm1",
+            "triggerId": "teacher-entry",
+            "inputGraph": {
+              "roots": [],
+              "objects": []
+            },
+            "realmPolicy": "retained",
+            "completionPolicy": "await-returned-promise",
+            "receiverValue": [
+              "undefined"
+            ]
+          },
+          "fixture": {
+            "calls": [
+              {
+                "operation": "fs.openRead",
+                "status": "fulfilled",
+                "argumentGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "str",
+                      "input.txt"
+                    ]
+                  ],
+                  "objects": []
+                },
+                "resultGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "str",
+                      "stream:read:1"
+                    ]
+                  ],
+                  "objects": []
+                }
+              },
+              {
+                "operation": "fs.readChunk",
+                "status": "fulfilled",
+                "argumentGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "str",
+                      "stream:read:1"
+                    ]
+                  ],
+                  "objects": []
+                },
+                "resultGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "str",
+                      "b2s="
+                    ]
+                  ],
+                  "objects": []
+                }
+              },
+              {
+                "operation": "fs.openWrite",
+                "status": "fulfilled",
+                "argumentGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "str",
+                      "output.txt"
+                    ]
+                  ],
+                  "objects": []
+                },
+                "resultGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "str",
+                      "stream:write:1"
+                    ]
+                  ],
+                  "objects": []
+                }
+              },
+              {
+                "operation": "fs.writeChunk",
+                "status": "fulfilled",
+                "argumentGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "str",
+                      "stream:write:1"
+                    ],
+                    [
+                      "str",
+                      "b2s="
+                    ]
+                  ],
+                  "objects": []
+                },
+                "resultGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "num",
+                      2
+                    ]
+                  ],
+                  "objects": []
+                }
+              },
+              {
+                "operation": "fs.closeWrite",
+                "status": "fulfilled",
+                "argumentGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "str",
+                      "stream:write:1"
+                    ]
+                  ],
+                  "objects": []
+                },
+                "resultGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "undefined"
+                    ]
+                  ],
+                  "objects": []
+                }
+              },
+              {
+                "operation": "fs.close",
+                "status": "fulfilled",
+                "argumentGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "str",
+                      "stream:read:1"
+                    ]
+                  ],
+                  "objects": []
+                },
+                "resultGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "undefined"
+                    ]
+                  ],
+                  "objects": []
+                }
+              }
+            ],
+            "settlementOrder": null
+          }
+        },
+        "seed": 17,
+        "representation": "compact"
+      },
+      "sourceCluster": "component:56654d126c738776cbecffc2d61996b5f39f3df2c799b2862a3577ee72f2be64",
+      "componentMembers": [
+        "filesystem-stream-copy"
+      ],
+      "inputPath": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/filesystem-stream-copy.json",
+      "inputSha256": "323b6d4259bb15c30d1b2c27800fa45f28af53bb1a810fb8d1a9daa770cf0629",
+      "identityDigest": "2ae3a70ef7e3c3bd09684eeda67e5558af67aabd78297201bf12b7ead3a66417",
+      "episodeDigest": "6c8e496be5b07079b864153ae6736d27b5abe40a2a4f8a52cb90eeabaea44f20",
+      "generatedTokens": 799,
+      "publicBytes": 16378
+    },
+    {
+      "id": "persistent-external-trigger",
+      "family": "persistent-external-trigger",
+      "split": "test",
+      "expected": {
+        "completion": {
+          "kind": "return",
+          "value": [
+            "num",
+            5
+          ]
+        },
+        "state": {
+          "roots": [
+            [
+              "num",
+              5
+            ]
+          ],
+          "objects": []
+        },
+        "effects": [
+          {
+            "kind": "dispatch",
+            "call": 0,
+            "operation": "demo.listen",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "tick"
+                ],
+                [
+                  "ref",
+                  "o0"
+                ]
+              ],
+              "objects": [
+                {
+                  "id": "o0",
+                  "kind": "object",
+                  "properties": [
+                    {
+                      "key": "callback",
+                      "value": [
+                        "bool",
+                        true
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 0,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "callback1"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 1,
+            "operation": "demo.readAsync",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "events-complete"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "callback",
+            "call": 0,
+            "slot": 1,
+            "args": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  2
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "callback",
+            "call": 0,
+            "slot": 1,
+            "args": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  3
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 1,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 2,
+            "operation": "demo.store",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "event"
+                ],
+                [
+                  "num",
+                  2
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 2,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 3,
+            "operation": "demo.store",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "event"
+                ],
+                [
+                  "num",
+                  5
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 3,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "dispatch",
+            "call": 4,
+            "operation": "demo.unlisten",
+            "arguments": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "str",
+                  "callback1"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "settlement",
+            "call": 4,
+            "status": "fulfilled",
+            "result": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "undefined"
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "subscription-close",
+            "call": 4,
+            "subscriptionCall": 0
+          }
+        ],
+        "callbacks": [
+          {
+            "kind": "callback",
+            "call": 0,
+            "slot": 1,
+            "args": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  2
+                ]
+              ],
+              "objects": []
+            }
+          },
+          {
+            "kind": "callback",
+            "call": 0,
+            "slot": 1,
+            "args": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  3
+                ]
+              ],
+              "objects": []
+            }
+          }
+        ],
+        "cleanup": {
+          "pendingEffects": 0,
+          "pendingJobs": 0,
+          "openHandlers": 0
+        }
+      },
+      "envelope": {
+        "schema": "semantic-evaluation-request/4",
+        "caseId": "persistent-external-trigger",
+        "request": {
+          "schema": "selected-evaluation-case/4",
+          "program": {
+            "programId": "program1",
+            "source": "\"use strict\";async function run(){let seen=0;const token=await host.listen(\"tick\",n=>{seen+=n;host.store(\"event\",seen);});await host.readAsync(\"events-complete\");await host.unlisten(token);return seen;}",
+            "entry": "run",
+            "capabilities": [
+              "demo.listen",
+              "demo.readAsync",
+              "demo.store",
+              "demo.unlisten"
+            ]
+          },
+          "invocation": {
+            "programId": "program1",
+            "invocationId": "invocation1",
+            "trackId": "worker1",
+            "realmId": "realm1",
+            "triggerId": "teacher-entry",
+            "inputGraph": {
+              "roots": [],
+              "objects": []
+            },
+            "realmPolicy": "retained",
+            "completionPolicy": "await-returned-promise",
+            "receiverValue": [
+              "undefined"
+            ]
+          },
+          "fixture": {
+            "calls": [
+              {
+                "operation": "demo.listen",
+                "status": "fulfilled",
+                "argumentGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "str",
+                      "tick"
+                    ],
+                    [
+                      "ref",
+                      "o0"
+                    ]
+                  ],
+                  "objects": [
+                    {
+                      "id": "o0",
+                      "kind": "object",
+                      "properties": [
+                        {
+                          "key": "callback",
+                          "value": [
+                            "bool",
+                            true
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "resultGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "str",
+                      "callback1"
+                    ]
+                  ],
+                  "objects": []
+                }
+              },
+              {
+                "operation": "demo.readAsync",
+                "status": "fulfilled",
+                "argumentGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "str",
+                      "events-complete"
+                    ]
+                  ],
+                  "objects": []
+                },
+                "resultGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "undefined"
+                    ]
+                  ],
+                  "objects": []
+                },
+                "callbacks": [
+                  {
+                    "slot": 1,
+                    "call": 0,
+                    "argumentGraph": {
+                      "schema": "owned-graph/1",
+                      "roots": [
+                        [
+                          "num",
+                          2
+                        ]
+                      ],
+                      "objects": []
+                    }
+                  },
+                  {
+                    "slot": 1,
+                    "call": 0,
+                    "argumentGraph": {
+                      "schema": "owned-graph/1",
+                      "roots": [
+                        [
+                          "num",
+                          3
+                        ]
+                      ],
+                      "objects": []
+                    }
+                  }
+                ]
+              },
+              {
+                "operation": "demo.store",
+                "status": "fulfilled",
+                "argumentGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "str",
+                      "event"
+                    ],
+                    [
+                      "num",
+                      2
+                    ]
+                  ],
+                  "objects": []
+                },
+                "resultGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "undefined"
+                    ]
+                  ],
+                  "objects": []
+                }
+              },
+              {
+                "operation": "demo.store",
+                "status": "fulfilled",
+                "argumentGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "str",
+                      "event"
+                    ],
+                    [
+                      "num",
+                      5
+                    ]
+                  ],
+                  "objects": []
+                },
+                "resultGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "undefined"
+                    ]
+                  ],
+                  "objects": []
+                }
+              },
+              {
+                "operation": "demo.unlisten",
+                "status": "fulfilled",
+                "argumentGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "str",
+                      "callback1"
+                    ]
+                  ],
+                  "objects": []
+                },
+                "resultGraph": {
+                  "schema": "owned-graph/1",
+                  "roots": [
+                    [
+                      "undefined"
+                    ]
+                  ],
+                  "objects": []
+                }
+              }
+            ],
+            "settlementOrder": null
+          }
+        },
+        "seed": 17,
+        "representation": "compact"
+      },
+      "sourceCluster": "component:476ba8f1b2442f32be10eea61b816a6b871b3b54627b8fd0782485d4b61c53d3",
+      "componentMembers": [
+        "persistent-external-trigger"
+      ],
+      "inputPath": "/workspace/scratch/23f61543c052/release-evidence/baseline/engineering/persistent-external-trigger.json",
+      "inputSha256": "0fba6d22f4526f462da770644891da7cefb1527e1fd540739906eedd804477d7",
+      "identityDigest": "6389d77e17165ae2533fae34561c63f08e6a3c6e379543e74673e7a0e50c1144",
+      "episodeDigest": "19b71eb027c692f3df17ae2a65e6ffa393df5bf17f0261058c5707bfb8a51093",
+      "generatedTokens": 751,
+      "publicBytes": 23197
+    },
+    {
+      "id": "fibonacci-iterative-pure",
+      "family": "semantic-benchmark-v1:fibonacci-iterative",
+      "split": "test",
+      "expected": {
+        "completion": {
+          "kind": "return",
+          "value": [
+            "num",
+            22
+          ]
+        },
+        "state": {
+          "roots": [
+            [
+              "num",
+              8
+            ],
+            [
+              "num",
+              1
+            ],
+            [
+              "num",
+              22
+            ]
+          ],
+          "objects": []
+        },
+        "effects": [],
+        "callbacks": [],
+        "cleanup": {
+          "pendingEffects": 0,
+          "pendingJobs": 0,
+          "openHandlers": 0
+        }
+      },
+      "envelope": {
+        "schema": "semantic-evaluation-request/4",
+        "caseId": "fibonacci-iterative-pure",
+        "request": {
+          "schema": "selected-evaluation-case/4",
+          "program": {
+            "programId": "program1",
+            "source": "\"use strict\";function run(a,b){let n=a;let x=0;let y=1;while(n>0){const z=x+y;x=y;y=z;n=n-1;}return x+b;}",
+            "entry": "run",
+            "capabilities": []
+          },
+          "invocation": {
+            "programId": "program1",
+            "invocationId": "invocation1",
+            "trackId": "worker1",
+            "realmId": "realm1",
+            "triggerId": "teacher-entry",
+            "inputGraph": {
+              "roots": [
+                [
+                  "num",
+                  8
+                ],
+                [
+                  "num",
+                  1
+                ]
+              ],
+              "objects": []
+            },
+            "realmPolicy": "retained",
+            "completionPolicy": "await-returned-promise",
+            "receiverValue": [
+              "undefined"
+            ]
+          },
+          "fixture": {
+            "calls": [],
+            "settlementOrder": null
+          }
+        },
+        "seed": 17,
+        "representation": "compact"
+      },
+      "sourceCluster": "component:83df860a2aa8b8683242b86f1cbf4e20ed6b71ef75d51e631b4095bcde29477c",
+      "componentMembers": [
+        "semantic-benchmark-v1:fibonacci-iterative",
+        "source-algorithm-v1:fibonacci-iterative"
+      ],
+      "inputPath": "/workspace/scratch/23f61543c052/release-evidence/baseline/benchmark-v1/fibonacci-iterative-pure.json",
+      "inputSha256": "0b37d55c7736360b217c5c3fb887b16fb89b2e72c1a0a062e7869d2bdf97309b",
+      "identityDigest": "e4393478f934cbb207df3ed26ca9a0bdf0a164459ba64af4d6d9526754db6121",
+      "episodeDigest": "87587e5f946928b62823f3b4417ee0712eb50b30e9561b75c8c1616f63606587",
+      "generatedTokens": 1735,
+      "publicBytes": 21834
+    },
+    {
+      "id": "modular-exponentiation-pure",
+      "family": "semantic-benchmark-v1:modular-exponentiation",
+      "split": "test",
+      "expected": {
+        "completion": {
+          "kind": "return",
+          "value": [
+            "num",
+            38
+          ]
+        },
+        "state": {
+          "roots": [
+            [
+              "num",
+              7
+            ],
+            [
+              "num",
+              13
+            ],
+            [
+              "num",
+              38
+            ]
+          ],
+          "objects": []
+        },
+        "effects": [],
+        "callbacks": [],
+        "cleanup": {
+          "pendingEffects": 0,
+          "pendingJobs": 0,
+          "openHandlers": 0
+        }
+      },
+      "envelope": {
+        "schema": "semantic-evaluation-request/4",
+        "caseId": "modular-exponentiation-pure",
+        "request": {
+          "schema": "selected-evaluation-case/4",
+          "program": {
+            "programId": "program1",
+            "source": "\"use strict\";function run(a,b){let base=a;let exp=b;let out=1;while(exp>0){if(exp%2===1)out=(out*base)%97;base=(base*base)%97;exp=exp>>1;}return out;}",
+            "entry": "run",
+            "capabilities": []
+          },
+          "invocation": {
+            "programId": "program1",
+            "invocationId": "invocation1",
+            "trackId": "worker1",
+            "realmId": "realm1",
+            "triggerId": "teacher-entry",
+            "inputGraph": {
+              "roots": [
+                [
+                  "num",
+                  7
+                ],
+                [
+                  "num",
+                  13
+                ]
+              ],
+              "objects": []
+            },
+            "realmPolicy": "retained",
+            "completionPolicy": "await-returned-promise",
+            "receiverValue": [
+              "undefined"
+            ]
+          },
+          "fixture": {
+            "calls": [],
+            "settlementOrder": null
+          }
+        },
+        "seed": 17,
+        "representation": "compact"
+      },
+      "sourceCluster": "component:9591eb131f6a54054c15c9e25c1f0f8d2a1da1ef755072c23f82cfe5ce79ca4c",
+      "componentMembers": [
+        "semantic-benchmark-v1:modular-exponentiation",
+        "source-algorithm-v1:modular-exponentiation"
+      ],
+      "inputPath": "/workspace/scratch/23f61543c052/release-evidence/baseline/benchmark-v1/modular-exponentiation-pure.json",
+      "inputSha256": "968a2af73f763ca4b99a5e9815733f99ff46cbcdbdaec15b3f82013eaaf6ea0a",
+      "identityDigest": "c948cad14d1cf2df01d16e8f788e19ec89c43e03efa32457e18bc13c517f436c",
+      "episodeDigest": "d5293654fbab056115e49e88aacaad606e9b53979996afdf78d2341fd6475bbb",
+      "generatedTokens": 1510,
+      "publicBytes": 16654
+    },
+    {
+      "id": "running-prefix-checksum-pure",
+      "family": "semantic-benchmark-v1:running-prefix-checksum",
+      "split": "test",
+      "expected": {
+        "completion": {
+          "kind": "return",
+          "value": [
+            "num",
+            14
+          ]
+        },
+        "state": {
+          "roots": [
+            [
+              "ref",
+              "o0"
+            ],
+            [
+              "num",
+              1
+            ],
+            [
+              "num",
+              14
+            ]
+          ],
+          "objects": [
+            {
+              "id": "o0",
+              "kind": "array",
+              "properties": [
+                {
+                  "key": "0",
+                  "value": [
+                    "num",
+                    2
+                  ]
+                },
+                {
+                  "key": "1",
+                  "value": [
+                    "num",
+                    3
+                  ]
+                },
+                {
+                  "key": "2",
+                  "value": [
+                    "num",
+                    1
+                  ]
+                },
+                {
+                  "key": "length",
+                  "value": [
+                    "num",
+                    3
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "effects": [],
+        "callbacks": [],
+        "cleanup": {
+          "pendingEffects": 0,
+          "pendingJobs": 0,
+          "openHandlers": 0
+        }
+      },
+      "envelope": {
+        "schema": "semantic-evaluation-request/4",
+        "caseId": "running-prefix-checksum-pure",
+        "request": {
+          "schema": "selected-evaluation-case/4",
+          "program": {
+            "programId": "program1",
+            "source": "\"use strict\";function run(a,b){let i=0;let total=0;let checksum=0;while(i<a.length){total=total+a[i];checksum=checksum+total;i=i+1;}return checksum+b;}",
+            "entry": "run",
+            "capabilities": []
+          },
+          "invocation": {
+            "programId": "program1",
+            "invocationId": "invocation1",
+            "trackId": "worker1",
+            "realmId": "realm1",
+            "triggerId": "teacher-entry",
+            "inputGraph": {
+              "roots": [
+                [
+                  "ref",
+                  "o2"
+                ],
+                [
+                  "num",
+                  1
+                ]
+              ],
+              "objects": [
+                {
+                  "id": "o2",
+                  "kind": "array",
+                  "properties": [
+                    {
+                      "key": "0",
+                      "value": [
+                        "num",
+                        2
+                      ]
+                    },
+                    {
+                      "key": "1",
+                      "value": [
+                        "num",
+                        3
+                      ]
+                    },
+                    {
+                      "key": "2",
+                      "value": [
+                        "num",
+                        1
+                      ]
+                    },
+                    {
+                      "key": "length",
+                      "value": [
+                        "num",
+                        3
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "realmPolicy": "retained",
+            "completionPolicy": "await-returned-promise",
+            "receiverValue": [
+              "undefined"
+            ]
+          },
+          "fixture": {
+            "calls": [],
+            "settlementOrder": null
+          }
+        },
+        "seed": 17,
+        "representation": "compact"
+      },
+      "sourceCluster": "component:217cb2f5e7674871f0585e4674a3fb7dcb0517060c949e90089229977e301f32",
+      "componentMembers": [
+        "semantic-benchmark-v1:running-prefix-checksum",
+        "source-algorithm-v1:running-prefix-checksum"
+      ],
+      "inputPath": "/workspace/scratch/23f61543c052/release-evidence/baseline/benchmark-v1/running-prefix-checksum-pure.json",
+      "inputSha256": "833cb1cffe6868816011c12973dddb112bfdc5f524f3b48762e935566ce3769b",
+      "identityDigest": "8186ba59dbc72b873ec0213e0475018909ee7c7f1d39924abdd9d7ae9162916f",
+      "episodeDigest": "5c87843686208287a186fcc785e5d22be3d7ff563a2d40ffe28dd13e7e93a3c9",
+      "generatedTokens": 1022,
+      "publicBytes": 13969
+    },
+    {
+      "id": "single-transaction-profit-pure",
+      "family": "semantic-benchmark-v1:single-transaction-profit",
+      "split": "test",
+      "expected": {
+        "completion": {
+          "kind": "return",
+          "value": [
+            "num",
+            6
+          ]
+        },
+        "state": {
+          "roots": [
+            [
+              "ref",
+              "o0"
+            ],
+            [
+              "num",
+              1
+            ],
+            [
+              "num",
+              6
+            ]
+          ],
+          "objects": [
+            {
+              "id": "o0",
+              "kind": "array",
+              "properties": [
+                {
+                  "key": "0",
+                  "value": [
+                    "num",
+                    7
+                  ]
+                },
+                {
+                  "key": "1",
+                  "value": [
+                    "num",
+                    1
+                  ]
+                },
+                {
+                  "key": "2",
+                  "value": [
+                    "num",
+                    5
+                  ]
+                },
+                {
+                  "key": "3",
+                  "value": [
+                    "num",
+                    3
+                  ]
+                },
+                {
+                  "key": "4",
+                  "value": [
+                    "num",
+                    6
+                  ]
+                },
+                {
+                  "key": "5",
+                  "value": [
+                    "num",
+                    4
+                  ]
+                },
+                {
+                  "key": "length",
+                  "value": [
+                    "num",
+                    6
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "effects": [],
+        "callbacks": [],
+        "cleanup": {
+          "pendingEffects": 0,
+          "pendingJobs": 0,
+          "openHandlers": 0
+        }
+      },
+      "envelope": {
+        "schema": "semantic-evaluation-request/4",
+        "caseId": "single-transaction-profit-pure",
+        "request": {
+          "schema": "selected-evaluation-case/4",
+          "program": {
+            "programId": "program1",
+            "source": "\"use strict\";function run(a,b){let i=1;let low=a[0];let best=0;while(i<a.length){if(a[i]-low>best)best=a[i]-low;if(a[i]<low)low=a[i];i=i+1;}return best+b;}",
+            "entry": "run",
+            "capabilities": []
+          },
+          "invocation": {
+            "programId": "program1",
+            "invocationId": "invocation1",
+            "trackId": "worker1",
+            "realmId": "realm1",
+            "triggerId": "teacher-entry",
+            "inputGraph": {
+              "roots": [
+                [
+                  "ref",
+                  "o2"
+                ],
+                [
+                  "num",
+                  1
+                ]
+              ],
+              "objects": [
+                {
+                  "id": "o2",
+                  "kind": "array",
+                  "properties": [
+                    {
+                      "key": "0",
+                      "value": [
+                        "num",
+                        7
+                      ]
+                    },
+                    {
+                      "key": "1",
+                      "value": [
+                        "num",
+                        1
+                      ]
+                    },
+                    {
+                      "key": "2",
+                      "value": [
+                        "num",
+                        5
+                      ]
+                    },
+                    {
+                      "key": "3",
+                      "value": [
+                        "num",
+                        3
+                      ]
+                    },
+                    {
+                      "key": "4",
+                      "value": [
+                        "num",
+                        6
+                      ]
+                    },
+                    {
+                      "key": "5",
+                      "value": [
+                        "num",
+                        4
+                      ]
+                    },
+                    {
+                      "key": "length",
+                      "value": [
+                        "num",
+                        6
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "realmPolicy": "retained",
+            "completionPolicy": "await-returned-promise",
+            "receiverValue": [
+              "undefined"
+            ]
+          },
+          "fixture": {
+            "calls": [],
+            "settlementOrder": null
+          }
+        },
+        "seed": 17,
+        "representation": "compact"
+      },
+      "sourceCluster": "component:539f86f91b1587fbfe935868addafee245246a634b0b643e80e8e13dc9eca6e1",
+      "componentMembers": [
+        "semantic-benchmark-v1:single-transaction-profit",
+        "source-algorithm-v1:single-transaction-profit"
+      ],
+      "inputPath": "/workspace/scratch/23f61543c052/release-evidence/baseline/benchmark-v1/single-transaction-profit-pure.json",
+      "inputSha256": "7bbd2696079ed48f29000b1d1cc18eb2829b1109941e2bb892a5b7d256546e5d",
+      "identityDigest": "1bb332304fda9cd57c47f81a7c8b4309c39ca572aa633818c24dc75816fecfd9",
+      "episodeDigest": "11048c0efcf7edde9f79471247dc5c7af23d5f00112cfa7694b2a17bd95e13c9",
+      "generatedTokens": 1918,
+      "publicBytes": 25956
+    },
+    {
+      "id": "squared-distance-pure",
+      "family": "semantic-recipe:squared-distance",
+      "split": "test",
+      "expected": {
+        "completion": {
+          "kind": "return",
+          "value": [
+            "num",
+            73
+          ]
+        },
+        "state": {
+          "roots": [
+            [
+              "num",
+              8
+            ],
+            [
+              "num",
+              3
+            ],
+            [
+              "num",
+              73
+            ]
+          ],
+          "objects": []
+        },
+        "effects": [],
+        "callbacks": [],
+        "cleanup": {
+          "pendingEffects": 0,
+          "pendingJobs": 0,
+          "openHandlers": 0
+        }
+      },
+      "envelope": {
+        "schema": "semantic-evaluation-request/4",
+        "caseId": "squared-distance-pure",
+        "request": {
+          "schema": "selected-evaluation-case/4",
+          "program": {
+            "programId": "program1",
+            "source": "\"use strict\";function run(a,b){return a*a+b*b;}",
+            "entry": "run",
+            "capabilities": []
+          },
+          "invocation": {
+            "programId": "program1",
+            "invocationId": "invocation1",
+            "trackId": "worker1",
+            "realmId": "realm1",
+            "triggerId": "teacher-entry",
+            "inputGraph": {
+              "roots": [
+                [
+                  "num",
+                  8
+                ],
+                [
+                  "num",
+                  3
+                ]
+              ],
+              "objects": []
+            },
+            "realmPolicy": "retained",
+            "completionPolicy": "await-returned-promise",
+            "receiverValue": [
+              "undefined"
+            ]
+          },
+          "fixture": {
+            "calls": [],
+            "settlementOrder": null
+          }
+        },
+        "seed": 17,
+        "representation": "compact"
+      },
+      "sourceCluster": "component:a1aca22a005b30bee347b92eb12ac5df8fe0cd43e6193d281902118660f96548",
+      "componentMembers": [
+        "semantic-recipe:squared-distance",
+        "source-template:squared-distance"
+      ],
+      "inputPath": "/workspace/scratch/23f61543c052/release-evidence/baseline/training-v4/squared-distance-pure.json",
+      "inputSha256": "60f5523b58b95f8c3ecd2f7dd92196c74e1ae77f673a046062749c3dd4ee74f3",
+      "identityDigest": "307847ffe41b3ddcd49b0304438365693e8dd8140974a016f5b74627a3bc768d",
+      "episodeDigest": "a0773168195e9556438f3062d567cb06b2bc6b540a5dadd949e937be795208f1",
+      "generatedTokens": 141,
+      "publicBytes": 3622
+    }
+  ],
+  "limits": {
+    "modelTokens": 128,
+    "caseTimeoutSeconds": 120,
+    "cleanupTimeoutSeconds": 10
+  },
+  "limitations": [
+    "One optimizer seed and a newly initialized diagnostic model.",
+    "The cohort is frozen before held-out inference, after observing held-in diagnostic failures.",
+    "This bounded representative sample does not measure the full held-out distribution.",
+    "No production semantic experiment budget or SE/SC launch qualification is claimed."
+  ]
+}

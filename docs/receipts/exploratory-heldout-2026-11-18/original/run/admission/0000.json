@@ -1,0 +1,60 @@
+{
+  "id": "uncaught-rejection-finally",
+  "sourceCluster": "component:0a861d93e28b084bc687b4d8ea24888598a08eb40504001fe33ec5d3ba1b14b0",
+  "inputSha256": "633da82b31b90b495fa23c2c49d6a6b366d5c22065a3e87645035ac33acaa4b0",
+  "source": {
+    "schema": "semantic-source-admission/4",
+    "episodeDigest": "b47014697f03e5c727b00cd304cc28eb4892f388700745ac891b08f13ee26d7d",
+    "identityDigest": "d0fa0f6db2f5ae64127adcb5f32fa83a31aa1f943b1f4520b7d048bbd38c61d8",
+    "identityValidated": true,
+    "producerRevision": "c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39",
+    "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+    "referenceStatus": "agreed",
+    "journalValidated": true,
+    "replayValidated": true,
+    "sourceValidated": true,
+    "effectsValidated": true,
+    "optimizerSteps": 0
+  },
+  "native": {
+    "schema": "semantic-native-admission/4",
+    "componentGate": "native-consumer-only",
+    "episodeDigest": "b47014697f03e5c727b00cd304cc28eb4892f388700745ac891b08f13ee26d7d",
+    "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+    "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+    "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+    "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "generatedTokens": 219,
+    "observedTokens": 1152,
+    "physicalRecords": 15,
+    "contextTransportRecords": 1,
+    "logicalRecords": 14,
+    "actions": 2,
+    "lossMaskValidated": true,
+    "visibilityValidated": true,
+    "fragmentationValidated": true,
+    "admitted": true,
+    "optimizerSteps": 0,
+    "importReceipt": {
+      "records": 15,
+      "invocations": 1,
+      "tracks": 2,
+      "actions": 2,
+      "observations": 6,
+      "admission": "admitted",
+      "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "completions": [
+        {
+          "invocationId": "invocation1",
+          "kind": "throw",
+          "value": [
+            "str",
+            "missing"
+          ]
+        }
+      ]
+    }
+  }
+}

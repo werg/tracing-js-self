@@ -103,6 +103,9 @@ from the actual checkpoint inventory, authenticates each served bundle and
 original admission receipt, rescores the retained paired raw outputs, and binds
 the audit to their unchanged hashes. Historical raw artifacts stay intact even
 if verification fails; failures are not rewritten into successful measurements.
+Run in the original pinned source environment, including its timezone. The
+retained November 18 baseline uses `TZ=UTC LC_ALL=C.UTF-8`; the identity guard
+correctly refuses those source exports under a different resolved timezone.
 
 The standard Python tests exercise missing gates and substituted identities.
 Additional tests against actual retained checkpoint files are enabled with

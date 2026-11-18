@@ -1,0 +1,60 @@
+{
+  "id": "squared-distance-pure",
+  "sourceCluster": "component:a1aca22a005b30bee347b92eb12ac5df8fe0cd43e6193d281902118660f96548",
+  "inputSha256": "60f5523b58b95f8c3ecd2f7dd92196c74e1ae77f673a046062749c3dd4ee74f3",
+  "source": {
+    "schema": "semantic-source-admission/4",
+    "episodeDigest": "a0773168195e9556438f3062d567cb06b2bc6b540a5dadd949e937be795208f1",
+    "identityDigest": "307847ffe41b3ddcd49b0304438365693e8dd8140974a016f5b74627a3bc768d",
+    "identityValidated": true,
+    "producerRevision": "c4296c271eec32c2f2ab4cd34c30fd8b61e6ba39",
+    "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+    "referenceStatus": "agreed",
+    "journalValidated": true,
+    "replayValidated": true,
+    "sourceValidated": true,
+    "effectsValidated": true,
+    "optimizerSteps": 0
+  },
+  "native": {
+    "schema": "semantic-native-admission/4",
+    "componentGate": "native-consumer-only",
+    "episodeDigest": "a0773168195e9556438f3062d567cb06b2bc6b540a5dadd949e937be795208f1",
+    "consumerRevision": "277edd4a2983e81f5e2a71b34a7ce29348e4e7a0",
+    "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+    "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+    "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "generatedTokens": 141,
+    "observedTokens": 719,
+    "physicalRecords": 8,
+    "contextTransportRecords": 1,
+    "logicalRecords": 7,
+    "actions": 0,
+    "lossMaskValidated": true,
+    "visibilityValidated": true,
+    "fragmentationValidated": true,
+    "admitted": true,
+    "optimizerSteps": 0,
+    "importReceipt": {
+      "records": 8,
+      "invocations": 1,
+      "tracks": 2,
+      "actions": 0,
+      "observations": 2,
+      "admission": "admitted",
+      "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "completions": [
+        {
+          "invocationId": "invocation1",
+          "kind": "return",
+          "value": [
+            "num",
+            73
+          ]
+        }
+      ]
+    }
+  }
+}

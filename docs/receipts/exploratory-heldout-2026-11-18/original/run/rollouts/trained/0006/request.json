@@ -1,0 +1,100 @@
+{
+  "schema": "semantic-evaluation-request/4",
+  "caseId": "single-transaction-profit-pure",
+  "request": {
+    "schema": "selected-evaluation-case/4",
+    "program": {
+      "programId": "program1",
+      "source": "\"use strict\";function run(a,b){let i=1;let low=a[0];let best=0;while(i<a.length){if(a[i]-low>best)best=a[i]-low;if(a[i]<low)low=a[i];i=i+1;}return best+b;}",
+      "entry": "run",
+      "capabilities": []
+    },
+    "invocation": {
+      "programId": "program1",
+      "invocationId": "invocation1",
+      "trackId": "worker1",
+      "realmId": "realm1",
+      "triggerId": "teacher-entry",
+      "inputGraph": {
+        "roots": [
+          [
+            "ref",
+            "o2"
+          ],
+          [
+            "num",
+            1
+          ]
+        ],
+        "objects": [
+          {
+            "id": "o2",
+            "kind": "array",
+            "properties": [
+              {
+                "key": "0",
+                "value": [
+                  "num",
+                  7
+                ]
+              },
+              {
+                "key": "1",
+                "value": [
+                  "num",
+                  1
+                ]
+              },
+              {
+                "key": "2",
+                "value": [
+                  "num",
+                  5
+                ]
+              },
+              {
+                "key": "3",
+                "value": [
+                  "num",
+                  3
+                ]
+              },
+              {
+                "key": "4",
+                "value": [
+                  "num",
+                  6
+                ]
+              },
+              {
+                "key": "5",
+                "value": [
+                  "num",
+                  4
+                ]
+              },
+              {
+                "key": "length",
+                "value": [
+                  "num",
+                  6
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "realmPolicy": "retained",
+      "completionPolicy": "await-returned-promise",
+      "receiverValue": [
+        "undefined"
+      ]
+    },
+    "fixture": {
+      "calls": [],
+      "settlementOrder": null
+    }
+  },
+  "seed": 17,
+  "representation": "compact"
+}

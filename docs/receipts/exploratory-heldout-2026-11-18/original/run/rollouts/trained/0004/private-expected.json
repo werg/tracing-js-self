@@ -1,0 +1,33 @@
+{
+  "completion": {
+    "kind": "return",
+    "value": [
+      "num",
+      38
+    ]
+  },
+  "state": {
+    "roots": [
+      [
+        "num",
+        7
+      ],
+      [
+        "num",
+        13
+      ],
+      [
+        "num",
+        38
+      ]
+    ],
+    "objects": []
+  },
+  "effects": [],
+  "callbacks": [],
+  "cleanup": {
+    "pendingEffects": 0,
+    "pendingJobs": 0,
+    "openHandlers": 0
+  }
+}
