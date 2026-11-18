@@ -60,14 +60,16 @@ export function summarizeCapabilityRows(rows){
     return [stage,{total:rows.length,attempted:rows.length-counts.untested,...counts}];
   }));
 }
-export async function buildCapabilityLedger({producerRevision=null,cases=CAPABILITY_CASES}={}){
+export async function buildCapabilityLedger({producerRevision=null,cases=CAPABILITY_CASES,
+    nativeConsumer=null,nativePolicy=null}={}){
   const rows=[];
   for(const fixture of cases){
     const stages=Object.fromEntries(CAPABILITY_STAGES.map(stage=>[stage,'untested']));
     const row={id:fixture.id,feature:fixture.feature,profile:'training-js/1',stages};
     try{parseTraining(fixture.source);stages.frontend='passed';}
     catch(error){stages.frontend='unsupported';row.reason=error.message;rows.push(row);continue;}
-    const result=await verifyEffectfulTrainingCase({...fixture,family:'capability:'+fixture.id,producerRevision});
+    const result=await verifyEffectfulTrainingCase({...fixture,family:'capability:'+fixture.id,producerRevision,
+      nativeConsumer,nativePolicy});
     row.disposition=result.status;row.reason=result.reason??null;
     const success=['locally_verified','admitted'].includes(result.status);
     const afterTeacher=success||['projection','reference','native-consumer'].includes(result.phase);
@@ -87,12 +89,20 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
     if(result.status==='admitted')stages.nativeAdmission='passed';
     else if(result.phase==='native-consumer')stages.nativeAdmission='failed';
     if(result.exported)row.identityDigest=result.exported.sidecar.identityDigest;
+    if(result.exported?.sidecar.nativeAdmission){
+      const receipt=result.exported.sidecar.nativeAdmission;
+      row.nativeReceipt={episodeDigest:receipt.episodeDigest,consumerRevision:receipt.consumerRevision,
+        tokenizerIdentity:receipt.tokenizerIdentity,tokenizerSha256:receipt.tokenizerSha256,
+        generatedTokens:receipt.generatedTokens,observedTokens:receipt.observedTokens,
+        visibilityValidated:receipt.visibilityValidated,lossMaskValidated:receipt.lossMaskValidated,
+        fragmentationValidated:receipt.fragmentationValidated};
+    }
     rows.push(row);
   }
   return {schema:'semantic-capability-ledger/1',producerRevision,
     contracts:{execution:'semantic-execution/5',trace:'semantic-trace/5',context:'semantic-context/5',
       continuation:'semantic-continuation/5',harness:'selected-harness/2'},
-    environment:admissionEnvironment(),unit:'declared source/input/fixture probe',rows,
+    environment:admissionEnvironment(),nativePolicy,unit:'declared source/input/fixture probe',rows,
     totals:summarizeCapabilityRows(rows),
     otherProfiles:['bounded-js-subset/2','static-module/1','evaluated-module/1'].map(profile=>({
       profile,status:'untested',reason:'This command measures the strict training path only; separate profile tests are not promoted to this ladder.'})),

@@ -10,6 +10,21 @@ native admission and model evaluation separately. Totals retain the attempted
 denominator and distinguish unsupported, resource-limited and untested stages.
 Native and model evidence require their actual environments and executed gates.
 
+To measure native admission for the same feature probes, supply the pinned
+consumer, Python, tokenizer and policy to `tools/generate-capability-ledger.mjs`:
+
+```sh
+node tools/generate-capability-ledger.mjs --out /path/to/native-capabilities.json \
+  --megatoken /path/to/megatoken --python /path/to/python \
+  --tokenizer /path/to/tokenizer.json \
+  --native-policy contracts/native-admission-policy-v5.json
+```
+
+`--cases scalar-arithmetic,synchronous-primitive-throw` selects explicit probes
+without changing their denominator. Native failures retain the passing earlier
+stages and exit unsuccessfully; unsupported source is not counted as an
+attempted native admission. Model evaluation remains untested by this command.
+
 `npm run baseline:v5 -- --out /path/to/new-baseline --jobs 4` additionally
 captures unit results, explicit skips, contract checks, trace inspection,
 source registry and the three authored recipes. Its output binds the exact
