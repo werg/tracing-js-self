@@ -9,6 +9,20 @@ import {CampaignStore,atomicWrite,sha256} from '../src/corpus/campaign-store.mjs
 import {balanceFamilyTokens} from '../src/corpus/source-registry.mjs';
 import {verifyNativeBinding} from '../src/training/effectful-admit.js';
 
+// Every private input consumed by semantic_harness_v5, except lineage.task_id.
+// The complete public document and native codec/physical limits are bound
+// separately. Ancestor order is deliberately retained: the native Lineage
+// tuple preserves it, so sorting here would hide changed episode metadata.
+export function nativeEpisodeMetadata(side){
+  if(typeof side?.sourceFamily!=='string'||!side.sourceFamily||side.sourceLineage!==side.sourceFamily||
+    !Array.isArray(side.ancestorIds)||side.ancestorIds.some(value=>typeof value!=='string'||!value))
+    throw new Error('Exact-public selection requires explicit native family and ancestor metadata');
+  return {schema:side.schema,representation:side.representation,admission:side.admission,
+    referenceStatus:side.referenceStatus,selectionOrigin:side.selectionOrigin,
+    lineage:{familyId:side.sourceLineage,ancestorIds:[...side.ancestorIds],
+      parentEpisodeId:side.parentEpisodeId??null,split:side.split}};
+}
+
 // Exact public aliases can have distinct private task IDs. The native adapter
 // derives episode identity from the public stream, so feeding both unchanged
 // task lineages to its immutable episode store is correctly refused. Select a
@@ -23,21 +37,25 @@ export function exactPublicRepresentatives(rows){
   for(const [episodeDigest,group] of groups){
     const representative=group[0];
     if(group.length>1){
-      const fields=['componentPolicy','sourceCluster','registryDigest','split','nativeContractDigest'];
+      const fields=['componentPolicy','sourceCluster','registryDigest','split','nativeContractDigest',
+        'nativeEpisodeMetadataDigest'];
       if(representative.componentPolicy!=='source-components/1'||
         typeof representative.sourceCluster!=='string'||typeof representative.registryDigest!=='string'||
         typeof representative.nativeContractDigest!=='string'||
+        typeof representative.nativeEpisodeMetadataDigest!=='string'||
         group.some(row=>fields.some(field=>row[field]!==representative[field]))){
-        const error=new Error('Exact public aliases have incompatible frozen component, split, or native contract');
+        const error=new Error('Exact public aliases have incompatible frozen component, split, native episode metadata, or native contract');
         error.code='EXACT_PUBLIC_ALIAS_CONFLICT';
         error.details={episodeDigest,members:group.map(row=>({id:row.id,sourceCluster:row.sourceCluster,
-          split:row.split,registryDigest:row.registryDigest,nativeContractDigest:row.nativeContractDigest}))};
+          split:row.split,registryDigest:row.registryDigest,nativeContractDigest:row.nativeContractDigest,
+          nativeEpisodeMetadataDigest:row.nativeEpisodeMetadataDigest}))};
         throw error;
       }
       representatives.push({episodeDigest,representativeId:representative.id,
         representativeIdentityDigest:representative.identityDigest,componentId:representative.sourceCluster,
         registryDigest:representative.registryDigest,split:representative.split,
         nativeContractDigest:representative.nativeContractDigest,
+        nativeEpisodeMetadataDigest:representative.nativeEpisodeMetadataDigest,
         declaredFamilies:[...new Set(group.map(row=>row.family))].sort(),
         aliases:group.slice(1).map(row=>row.id)});
       for(const row of group.slice(1))aliases.push({row,representative});
@@ -84,20 +102,23 @@ export function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_
         row.episodeDigest!==sha256(JSON.stringify(exported.public))||row.identityDigest!==side.identityDigest)
         throw new Error('Manifest/public/private admission binding changed');
       verifyNativeBinding(exported,header.identity.nativePolicy);
-      const native=side.nativeAdmission;
+      const native=side.nativeAdmission,episodeMetadata=nativeEpisodeMetadata(side),
+        metadataDigest=sha256(JSON.stringify(episodeMetadata));
       eligible.push({id:entry.id,status:'admitted',sourceCluster:side.splitIdentity.componentId,
         componentPolicy:side.splitIdentity.policy,
         registryDigest:side.splitIdentity.registryDigest,episodeDigest:row.episodeDigest,
         identityDigest:side.identityDigest,taskId:side.taskId,ancestorIds:side.ancestorIds,
         provenanceDigest:sha256(JSON.stringify(side.sourceProvenance)),
         nativeReceiptDigest:side.nativeBinding.receiptDigest,
+        nativeEpisodeMetadataDigest:metadataDigest,
         nativeContractDigest:sha256(JSON.stringify({producerRevision:side.producerRevision,
           environment:side.environment,representation:side.representation,license:side.license,trustTier:side.trustTier,
           nativePolicyDigest:side.nativeBinding.policyDigest,consumerRevision:native.consumerRevision,
           tokenizerIdentity:native.tokenizerIdentity,tokenizerSha256:native.tokenizerSha256,
           contractDigest:native.contractDigest,schemaDigest:native.schemaDigest,fixtureDigest:native.fixtureDigest,
           generatedTokens:native.generatedTokens,observedTokens:native.observedTokens,
-          physicalRecords:native.physicalRecords,contextTransportRecords:native.contextTransportRecords})),
+          physicalRecords:native.physicalRecords,contextTransportRecords:native.contextTransportRecords,
+          episodeMetadata})),
         family:side.sourceFamily,split:side.split,generatedTokens:native.generatedTokens});
     }catch(error){exclude(entry,'admission_invalid',String(error.message));}
   }
@@ -118,7 +139,8 @@ export function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_
         episodeDigest:row.episodeDigest,identityDigest:row.identityDigest,taskId:row.taskId,
         sourceFamily:row.family,ancestorIds:row.ancestorIds,componentId:row.sourceCluster,
         registryDigest:row.registryDigest,split:row.split,provenanceDigest:row.provenanceDigest,
-        nativeReceiptDigest:row.nativeReceiptDigest,nativeContractDigest:row.nativeContractDigest});
+        nativeReceiptDigest:row.nativeReceiptDigest,nativeContractDigest:row.nativeContractDigest,
+        nativeEpisodeMetadataDigest:row.nativeEpisodeMetadataDigest});
   }
   // Inspect collisions before applying a requested split: a train/test alias
   // must not disappear from the conflict check because one side was filtered.
@@ -141,7 +163,8 @@ export function selectAdmittedCampaign({input,output,maxFamilyTokens=Number.MAX_
     sourceCandidates:sourceManifest.cases.length,selected:selected.length,excluded:exclusions.length,
     split,budgetScope:'train-only; evaluation tokens do not subsidize a training-family cap',
     exactPublicSelection:{enabled:deduplicateExactPublic,
-      policy:deduplicateExactPublic?'exact-public-within-frozen-component/1':null,
+      policy:deduplicateExactPublic?'exact-public-within-frozen-component/2':null,
+      nativeEpisodeDifferenceAllowed:['lineage.task_id'],
       representativeOrder:'lexicographic candidate ID; selected export bytes remain unchanged',
       excludedAliases:exclusions.filter(row=>row.status==='exact_public_alias').length,groups:representatives,
       nativeDedupUnchanged:true,rawAdmissionsUnchanged:true},

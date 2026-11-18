@@ -29,8 +29,13 @@ document; this is not a source-similarity or near-duplicate heuristic.
 Aliases must use the same authenticated source-component policy, frozen registry,
 component, and split. Their producer environment, native consumer, tokenizer,
 native policy, semantic contracts, representation, license/trust tier, token
-counts, and physical-record counts must agree. A collision across components,
-splits, or native contracts fails the selection and writes a separate
+counts, and physical-record counts must agree. Every private metadata input
+consumed by the v5 native adapter must also agree: source family/lineage,
+ancestor IDs in their actual native order, parent episode ID, frozen split,
+admission, reference status, representation, and selection provenance. The only
+permitted native episode difference is `lineage.task_id`. Different native
+families or ancestors are refused even inside the same frozen component.
+A collision across components, splits, native metadata, or native contracts fails the selection and writes a separate
 `selection-conflicts.json`; it cannot silently choose one side. Collision checks
 run before an optional train/validation/test filter so a hidden excluded split
 cannot bypass them.
@@ -46,8 +51,8 @@ survived a later token budget or split selection.
 Selected exports retain their original complete bytes. Aliases remain admitted
 in the original campaign; `exact_public_alias` is a selection exclusion, not a
 changed admission result. All source families and ancestry remain recoverable
-from the archived original campaign even when an identical stream has more than
-one private provenance record. Selected-family counts describe representatives
+from the archived original campaign when an identical stream has more than one
+private task/provenance record with the same native lineage. Selected-family counts describe representatives
 only and do not count excluded aliases as separate training exposure.
 
 The full original campaign is mandatory when packaging a selected corpus:
@@ -79,6 +84,11 @@ two of those four distinct streams as near duplicates with the same causal
 training contract, leaving two prepared rows. Report all three counts and the
 native dispositions; do not present twelve successful admissions as twelve
 unique prepared training examples.
+
+The strengthened rule is recorded as `exact-public-within-frozen-component/2`.
+Version-1 selections remain historical outputs. A later verification must compare
+complete actual native episode dictionaries, removing only `lineage.task_id`,
+and preserve the original selected corpus while recording its result separately.
 
 The original failed preparation and its explicit immutable-ID refusal report
 remain historical evidence. A new selected preparation belongs in a new output
