@@ -22,7 +22,7 @@ import {buildSourceRegistry,verifySourceRegistry,immutableSourceRegistry,frozenS
 import {trainingCandidateTasks,candidateSourceInventory,SOURCE_RECIPES} from '../src/corpus/training-candidates.mjs';
 import {measureExecutionDifficulty} from '../src/corpus/execution-difficulty.mjs';
 
-const booleanFlags=new Set(['--require-native','--resume','--retry-failures','--compact-storage']);
+const booleanFlags=new Set(['--require-native','--allow-refusals','--resume','--retry-failures','--compact-storage']);
 const valueFlags=new Set(['--out','--megatoken','--tokenizer','--python','--recipe','--jobs','--native-policy',
   '--worker-memory-mb','--worker-timeout-ms','--max-output-bytes','--limit','--registry','--freeze-registry',
   '--reference-isolation','--source-stream','--per-family','--mutations-per-family','--generated-families','--generation-seed','--input-seed']);
@@ -217,6 +217,7 @@ const manifest={schema:'semantic-corpus-manifest/4',execution:EXECUTION_VERSION,
   context:CONTEXT_VERSION,profile:HARNESS_PROFILE,producerRevision,
   representation:'compact',
   recipe:recipeMetadata,
+  refusalPolicy:flags.has('--allow-refusals')?'retain-all-dispositions':'fail-collection',
   catalogDigest:hash(JSON.stringify(hostOperationContract(),null,2)+'\n'),
   counts,cases,counterfactuals,selectionOrigin:nativeConsumer?'certified_teacher':'owned-interpreter-teacher',
   evidenceKind:recipe==='real-source'?'pinned-real-source':recipe==='generated-v1'?'bounded-generated-programs':'deterministic-engineering',optimizerSteps:0,learnedSuccess:null};
@@ -266,5 +267,5 @@ atomicWrite(join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
 campaign.close();
 process.removeListener('SIGINT',cancel);process.removeListener('SIGTERM',cancel);
 if(abort.signal.aborted)process.exitCode=130;
-else if(cases.some(item=>item.status!==(nativeConsumer?'admitted':'locally_verified')))
+else if(!flags.has('--allow-refusals')&&cases.some(item=>item.status!==(nativeConsumer?'admitted':'locally_verified')))
   process.exitCode=1;

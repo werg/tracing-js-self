@@ -90,7 +90,7 @@ jobs:
           if [[ '${{ matrix.recipe }}' == 'real-source' ]]; then
             # Real upstream candidates retain every unsupported/refused row;
             # the release step rechecks and prepares only actual admissions.
-            require_native=()
+            require_native+=(--allow-refusals)
           fi
           node tools/generate-effectful-training.mjs --recipe '${{ matrix.recipe }}' --jobs 3 --out "$RUNNER_TEMP/corpus" \
             --registry "$RUNNER_TEMP/source-registry.json" \
