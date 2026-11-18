@@ -40,7 +40,7 @@ const environmentMismatches=compareReleaseEnvironment(lockedEnvironment,actualEn
 const report={schema:'semantic-v5-baseline/1',producerRevision:git('rev-parse','HEAD'),
   producerTree:git('rev-parse','HEAD^{tree}'),workingTreeClean:git('status','--porcelain','--untracked-files=no')==='',
   environment:admissionEnvironment(),executionEnvironment:{timezone:env.TZ,locale:env.LC_ALL},
-  executionLimits:{checkTimeoutMs},
+  executionLimits:{checkTimeoutMs,testConcurrency:jobs},
   lockDigests:Object.fromEntries(['package-lock.json','tools/spec-oracle/package-lock.json',
     'tools/native-consumer/requirements.lock','profiles/release-environment.lock.json',
     'contracts/native-admission-policy-v5.json','contracts/semantic-harness-v5.json',
@@ -77,12 +77,16 @@ function check(name,command,args,{timeout=checkTimeoutMs}={}){
   return row;
 }
 if(!options.has('--skip-unit')){
-  check('unit',process.execPath,['--test','--test-reporter=tap',...readdirSync(join(root,'test')).filter(path=>path.endsWith('.test.js')).sort().map(path=>'test/'+path)]);
+  check('unit',process.execPath,['--test','--test-reporter=tap','--test-concurrency='+jobs,...readdirSync(join(root,'test')).filter(path=>path.endsWith('.test.js')).sort().map(path=>'test/'+path)]);
   check('reference-fixture',process.execPath,['fixtures/reference/reference-fixture.mjs']);
 }else report.checks.push({name:'unit',status:'untested',reason:'Explicit --skip-unit'});
 check('host-contract',process.execPath,['tools/generate-host-contract.mjs','--check']);
 check('semantic-contract',process.execPath,['tools/generate-semantic-contract.mjs','--check']);
 check('semantic-inspection',process.execPath,['tools/inspect-semantic-reasoning.mjs']);
+check('teacher-mutations',process.execPath,['tools/audit-teacher-mutations.mjs','--out',join(output,'teacher-mutations.json')]);
+check('target-gallery',process.execPath,['tools/semantic-trace-gallery.mjs','--out',join(output,'target-gallery')]);
+check('target-gallery-compact',process.execPath,['tools/semantic-trace-gallery.mjs','--out',join(output,'target-gallery-compact'),'--local-state-compaction']);
+check('summary-prototype',process.execPath,['tools/semantic-summary-experiment.mjs','--demo','--out',join(output,'summary-prototype')]);
 const native=[];
 if(options.has('--megatoken')||options.has('--tokenizer')){
   if(!options.has('--megatoken')||!options.has('--tokenizer'))throw new Error('Native checks require both --megatoken and --tokenizer');
@@ -119,6 +123,30 @@ if(existsSync(registry))report.sourceRegistry={path:'source-registry.json',sha25
   diagnostics:JSON.parse(readFileSync(registry,'utf8')).diagnostics};
 report.evidenceBoundaries={acquisition:'not measured here',nativeAdmission:native.length?'executed; inspect per-corpus counts':'untested',
   browser:'untested; run npm run test:browser separately',modelEvaluation:'untested',learningImprovement:'unmeasured'};
+report.activePolicy={publicRepresentation:'semantic-trace/5',sourceChecks:'effectful-source-checks/5',
+  defaultProjection:'frozen-v5-control',
+  nativePolicy:JSON.parse(readFileSync(join(root,'contracts/native-admission-policy-v5.json'),'utf8')),
+  nativePolicyExecuted:native.length>0,containerDigest:lockedEnvironment.containerDigest,
+  summaryPromotion:'experimental-only; native and learned behavior unmeasured'};
+report.historicalEvidence=['docs/evidence/qualification-I-2026-11-18.json',
+  'docs/evidence/semantic-v5/real-source-native-capped-release-D-2026-11-18.json',
+  'docs/evidence/learning-diagnostics-2026-11-18.json',
+  'docs/evidence/native-input-parity-2026-11-18.json'].filter(path=>existsSync(join(root,path))).map(path=>({
+    path,sha256:sha(readFileSync(join(root,path))),authority:'Original receipt identity only; not reattributed to this baseline'}));
+report.nextExperiment={name:'versioned-native-conditioning-parity-then-bounded-convergence',
+  gates:['identical native training and serving input evidence','same-checkpoint conditional parity',
+    'fresh prepared data and checkpoint after conditioning changes','declared bounded L1/L2 evaluation'],
+  modelExecutedByThisBaseline:false};
 writeFileSync(join(output,'baseline.json'),JSON.stringify(report,null,2)+'\n');
+const status=['# Execution-training baseline','',
+  'This receipt applies only to producer `'+report.producerRevision+'` (tree `'+report.producerTree+'`).',
+  'Overall local status: **'+report.status+'**. Native admission: **'+report.evidenceBoundaries.nativeAdmission+'**.',
+  'No model optimization or learned execution is asserted by this baseline.','',
+  '| Check | Result | Seconds |','| --- | --- | ---: |',
+  ...report.checks.map(row=>'| '+row.name+' | '+row.status+' | '+(row.wallSeconds?.toFixed(2)??'—')+' |'),'',
+  'Each check retains its own stdout/stderr hashes and the producer identity before and after execution in `baseline.json`.',
+  'Original I/D/learning receipts retain their original revisions; the manifest binds their current bytes without transferring their qualification.',
+  'The next model experiment must first pass the native input/conditional parity gates and use newly qualified artifacts after any conditioning change.',''];
+writeFileSync(join(output,'STATUS.md'),status.join('\n'));
 console.log(JSON.stringify({report:join(output,'baseline.json'),status:report.status,checks:report.checks.length,corpora:report.corpora}));
 if(report.status!=='passed')process.exitCode=1;
