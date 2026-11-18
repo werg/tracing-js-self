@@ -286,7 +286,10 @@ export function compile(ast) {
               expr(step.property);
               emit(n.steps[i+1]?.type==='call'?'GET_METHOD':'GET_PROP',null,step);
             }else{
-              for(const a of step.args)expr(a.type==='Spread'?a.argument:a);
+              for(const a of step.args){
+                expr(a.type==='Spread'?a.argument:a);
+                if(a.type==='Spread')emit('SPREAD',null,a);
+              }
               emit('CALL',step.args.some(a=>a.type==='Spread')?
                 {count:step.args.length,
                   spread:step.args.flatMap((a,j)=>a.type==='Spread'?[j]:[])}:
@@ -299,12 +302,31 @@ export function compile(ast) {
         case 'Member':expr(n.object);expr(n.property);emit('GET_PROP',null,n);break;
         case 'Call':
           if(n.callee.type==='Member'){expr(n.callee.object);expr(n.callee.property);emit('GET_METHOD',null,n.callee);}else expr(n.callee);
-          for(const a of n.args)expr(a.type==='Spread'?a.argument:a);
+          for(const a of n.args){
+            expr(a.type==='Spread'?a.argument:a);
+            if(a.type==='Spread')emit('SPREAD',null,a);
+          }
           emit('CALL',n.args.some(a=>a.type==='Spread')?
             {count:n.args.length,spread:n.args.flatMap((a,i)=>a.type==='Spread'?[i]:[])}:
             n.args.length,n);break;
         case 'Proxy':expr(n.target);expr(n.handler);emit('NEW_PROXY',null,n);break;
-        case 'Array':emit('NEW_ARRAY',null,n);for(let i=0;i<n.elements.length;i++){emit('DUP',null,n);emit('CONST',{value:['str',String(i)]},n);expr(n.elements[i]);emit('PUT_PROP',null,n);emit('POP',null,n);}break;
+        case 'Array':
+          emit('NEW_ARRAY',null,n);
+          if(n.elements.some(element=>element.type==='Spread')){
+            // Commit each spread before evaluating the following element.
+            // In particular, a later call may mutate the spread's source.
+            for(const element of n.elements){
+              emit('DUP',null,n);
+              expr(element.type==='Spread'?element.argument:element);
+              if(element.type==='Spread')emit('SPREAD',null,element);
+              emit('APPEND_ARRAY',{spread:element.type==='Spread'},n);
+              emit('POP',null,n);
+            }
+          }else for(let i=0;i<n.elements.length;i++){
+            emit('DUP',null,n);emit('CONST',{value:['str',String(i)]},n);
+            expr(n.elements[i]);emit('PUT_PROP',null,n);emit('POP',null,n);
+          }
+          break;
         case 'Object':emit('NEW_OBJECT',null,n);for(const item of n.properties){emit('DUP',null,n);emit('CONST',{value:['str',item.key]},n);expr(item.value);emit('PUT_PROP',null,n);emit('POP',null,n);}break;
         case 'Assign':
           if(['&&=','||=','??='].includes(n.operator)){

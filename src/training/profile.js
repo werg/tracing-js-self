@@ -173,8 +173,11 @@ export function parseTraining(source) {
           args:n.arguments.map(a=>a.type==='SpreadElement'?
             {...span(a),type:'Spread',argument:expr(a.argument)}:expr(a))};
       case 'ArrayExpression':
-        if(n.elements.some(e=>!e || e.type==='SpreadElement'))reject(n,'sparse/spread array');
-        return {...loc,type:'Array',elements:n.elements.map(expr)};
+        if(n.elements.some(e=>!e))reject(n,'sparse array literal');
+        if(n.elements.filter(e=>e.type==='SpreadElement').length>4)
+          reject(n,'array literal spread budget');
+        return {...loc,type:'Array',elements:n.elements.map(e=>e.type==='SpreadElement'?
+          {...span(e),type:'Spread',argument:expr(e.argument)}:expr(e))};
       case 'ObjectExpression':
         return {...loc,type:'Object',properties:n.properties.map(p=>{
           if(p.type!=='Property' || p.kind!=='init' || p.method || p.computed)
@@ -394,7 +397,7 @@ export function parseTraining(source) {
         case 'Construct':if(!has(n.callee,e))reject(n,'unbound constructor');
           n.args.forEach(x=>value(x,e));break;
         case 'DeferredRegExp':case 'OwnedPinnedRegExp':break;
-        case 'Array':n.elements.forEach(x=>value(x,e));break;
+        case 'Array':n.elements.forEach(x=>value(x.type==='Spread'?x.argument:x,e));break;
         case 'Object':n.properties.forEach(p=>value(p.value,e));break;
         case 'Assign':value(n.left,e);value(n.right,e);break;
         case 'Literal':break;

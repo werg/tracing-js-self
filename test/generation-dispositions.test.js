@@ -8,7 +8,7 @@ import {pathToFileURL} from 'node:url';
 
 function directory(t){const path=mkdtempSync(join(tmpdir(),'semantic-dispositions-'));
   t.after(()=>rmSync(path,{recursive:true,force:true}));return path;}
-test('explicit refusal collection retains exact failed candidates without relabeling or hiding them',t=>{
+test('explicit refusal collection retains failed and locally verified candidates without relabeling them',t=>{
   const out=directory(t),tool=resolve('tools/generate-effectful-training.mjs');
   const args=[tool,'--out',out,'--recipe','real-source','--source-stream','exercism',
     '--per-family','1','--limit','2','--jobs','2','--compact-storage'];
@@ -17,7 +17,10 @@ test('explicit refusal collection retains exact failed candidates without relabe
   const initial=JSON.parse(readFileSync(join(out,'manifest.json'),'utf8'));
   assert.equal(initial.refusalPolicy,'fail-collection');
   assert.equal(initial.counts.attempted,2);assert.equal(initial.counts.admitted,0);
-  assert.ok(initial.cases.every(row=>row.status==='unsupported'),JSON.stringify(initial.counts));
+  // Array spread now reaches the Armstrong implementation. Anagram still
+  // refuses the unowned string split; both dispositions must survive resume.
+  assert.deepEqual(initial.cases.map(row=>row.status),['teacher_failed','locally_verified']);
+  assert.match(initial.cases[0].reason,/Only owned line RegExp splitting is supported/);
   const log=readFileSync(join(out,'campaign.jsonl'),'utf8');
   const audited=spawnSync(process.execPath,[...args,'--allow-refusals','--resume'],
     {encoding:'utf8',timeout:90000,maxBuffer:1048576});
