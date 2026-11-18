@@ -9,7 +9,7 @@ import {identityDigest,admissionEnvironment} from './admission-identity.js';
 
 const sha=source=>createHash('sha256').update(source).digest('hex');
 const reproducible=new Set(['unsupported_source','teacher_execution_failed','projection_refused',
-  'reference_outcome_mismatch','reference_operation_mismatch','reference_branch_mismatch',
+  'reference_outcome_mismatch','reference_operation_mismatch','reference_branch_mismatch','reference_completion_mismatch',
   'reference_callback_failure','reference_unhandled_rejection']);
 function removableStatements(source,entry){
   const ranges=[];
