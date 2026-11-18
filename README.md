@@ -267,7 +267,7 @@ native consumer, visibility and loss gates. A locally verified result is not
 automatically admitted data or learned model success.
 
 The only supported model-facing training producer, controller and serializer are
-the v5 source-certified semantic witness. Independent V8 reference checks and
+the v6 source-certified semantic trace language. Independent V8 reference checks and
 private journal replay are verification authorities, not alternative trace
 formats. No diagnostic subpath, legacy exporter or representation selector exists.
 
