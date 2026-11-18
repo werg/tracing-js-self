@@ -1,0 +1,38 @@
+{
+  "schema": "semantic-package-process/1",
+  "status": "completed",
+  "startedAt": "2026-11-18T14:05:38.213284+00:00",
+  "argv": [
+    "/workspace/scratch/23f61543c052/native-venv-capture/bin/python",
+    "/workspace/scratch/23f61543c052/tracing-js-self/tools/package-semantic-release.py",
+    "--corpus",
+    "/workspace/scratch/23f61543c052/deliverables/release-F-requalification/selected",
+    "--audit-campaign",
+    "/workspace/scratch/23f61543c052/release-evidence-F/requalification",
+    "--tracer-root",
+    "/workspace/scratch/23f61543c052/tracing-release-F",
+    "--megatoken",
+    "/workspace/scratch/23f61543c052/megatoken-capture-bindings",
+    "--tokenizer",
+    "/workspace/scratch/23f61543c052/tokenizer.json",
+    "--environment-receipt",
+    "/workspace/scratch/23f61543c052/release-evidence-F/native-environment.json",
+    "--out",
+    "/workspace/scratch/23f61543c052/deliverables/release-F-requalification/package"
+  ],
+  "toolSha256": "1a55b8217b109d64cf82eab20a6398bcc340269e5bdc336971fd178a3e99836c",
+  "environment": {
+    "TZ": "UTC",
+    "LC_ALL": "C.UTF-8",
+    "TMPDIR": "/workspace/scratch/23f61543c052/test-temp",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "PYTHONPATH": "/workspace/scratch/23f61543c052/megatoken-capture-bindings/src"
+  },
+  "optimizerSteps": 0,
+  "modelInferenceCalls": 0,
+  "exitCode": 0,
+  "completedAt": "2026-11-18T14:11:14.401296+00:00",
+  "wallSeconds": 336.1866550500017,
+  "peakRssBytes": 493359104
+}

@@ -3,7 +3,7 @@
 All 60 frozen-F candidates were admitted after the separately recorded same-bound
 serial retry. The strengthened selector retained **52 unchanged representatives**
 and explicitly mapped eight private task aliases across four groups. These are
-the same four source-family groups from the twelve distinct-function candidates;
+four exact-public groups within the twelve distinct-function candidates;
 the remaining 48 candidates have distinct public execution streams.
 
 The retained split is four training examples from one source component and 48

@@ -1,0 +1,1358 @@
+{
+  "schema": "native-preparation-dispositions/1",
+  "source": "/workspace/scratch/23f61543c052/deliverables/release-F-requalification/package/prepared/semantic-dedup.sqlite",
+  "rows": [
+    {
+      "episode_id": "semantic:harness:ce80851ba8513d2572d4bf970d3a35724727b01e66c8bc81f16b05fc569d84b4",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "cd716dea631ccabaa24965e2150b839768a10c32313d9caaeb5ba84798dbe924",
+      "family_key": "exercism/javascript:sum-of-multiples",
+      "resolved_family": "exercism/javascript:sum-of-multiples",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:sum-of-multiples",
+          "upstream:exercism/javascript:exercises/practice/sum-of-multiples/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:sum-of-multiples",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "ce80851ba8513d2572d4bf970d3a35724727b01e66c8bc81f16b05fc569d84b4",
+        "source_id": "semantic-harness:ce80851ba8513d25",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-00d70507472cd3e5654fedfc"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:7c826fab45522511b79978b69b0411e97b17ff417432350c87a9fcafaab61483",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "0a9efa041715e34478d02b11d4a53594f8cd542bb2594444e730dee65e0d5160",
+      "family_key": "exercism/javascript:knapsack",
+      "resolved_family": "exercism/javascript:knapsack",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:knapsack",
+          "upstream:exercism/javascript:exercises/practice/knapsack/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:knapsack",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "7c826fab45522511b79978b69b0411e97b17ff417432350c87a9fcafaab61483",
+        "source_id": "semantic-harness:7c826fab45522511",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-0e73ec6590286b1234d675be"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:4bdd026bec1db7f63f921e7c5f2fb8b15018933d532fa16d87c44ced8cce26f7",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "7f18e1e42f505bb745822801f436e49d78a051fa0c66090e35d38ed3db9ac5dc",
+      "family_key": "exercism/javascript:roman-numerals",
+      "resolved_family": "exercism/javascript:roman-numerals",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:roman-numerals",
+          "upstream:exercism/javascript:exercises/practice/roman-numerals/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:roman-numerals",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "4bdd026bec1db7f63f921e7c5f2fb8b15018933d532fa16d87c44ced8cce26f7",
+        "source_id": "semantic-harness:4bdd026bec1db7f6",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-14d8c466c67d95aed4099e66"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:a1a9f309ab195c1edfc4cd162f4b9d32453043d525afeca0cc15281c957a7e1d",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "3fa5a3ca8edf99ba7fa05da6353c88b61f2d4bb1a9d2d816e87ab355c67d3275",
+      "family_key": "exercism/javascript:sum-of-multiples",
+      "resolved_family": "exercism/javascript:sum-of-multiples",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:sum-of-multiples",
+          "upstream:exercism/javascript:exercises/practice/sum-of-multiples/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:sum-of-multiples",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "a1a9f309ab195c1edfc4cd162f4b9d32453043d525afeca0cc15281c957a7e1d",
+        "source_id": "semantic-harness:a1a9f309ab195c1e",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-20f89c6919a79041f2adecdc"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:a8b6a753ed3af304342adce3edd6bfca1e5c9f3c1f82e1a5ba075e3a3023a331",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "603a38b3153830148e68f506210d110c5100afb09bff46f99a84a2820f066e5f",
+      "family_key": "exercism/javascript:darts",
+      "resolved_family": "exercism/javascript:darts",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:darts",
+          "upstream:exercism/javascript:exercises/practice/darts/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:darts",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "a8b6a753ed3af304342adce3edd6bfca1e5c9f3c1f82e1a5ba075e3a3023a331",
+        "source_id": "semantic-harness:a8b6a753ed3af304",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-29f476ea936cd967f65fcbb4"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:2cb67a9cfa4b60153e9c20cfa3807be3edf3bffaa98867c38d1ea4ad34447857",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "11f6e5063bf74cd822cf2bcda7c7acee7e07b0a16ca5d31f6bc691bb26c94140",
+      "family_key": "exercism/javascript:roman-numerals",
+      "resolved_family": "exercism/javascript:roman-numerals",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:roman-numerals",
+          "upstream:exercism/javascript:exercises/practice/roman-numerals/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:roman-numerals",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "2cb67a9cfa4b60153e9c20cfa3807be3edf3bffaa98867c38d1ea4ad34447857",
+        "source_id": "semantic-harness:2cb67a9cfa4b6015",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-2bc96a63c82599ea68cdc8b0"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:ebc7c2fa7870c54c3ac04e97503fa4368241b144998a4d1527acd3c6d83b5055",
+      "duplicate_of": "semantic:harness:a8b6a753ed3af304342adce3edd6bfca1e5c9f3c1f82e1a5ba075e3a3023a331",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "8514194de8f596ab723f0fcfb9fc86976fd4ced4302a3b5adbe8b2027907d41c",
+      "family_key": "exercism/javascript:darts",
+      "resolved_family": "exercism/javascript:darts",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:darts",
+          "upstream:exercism/javascript:exercises/practice/darts/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:darts",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "ebc7c2fa7870c54c3ac04e97503fa4368241b144998a4d1527acd3c6d83b5055",
+        "source_id": "semantic-harness:ebc7c2fa7870c54c",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-32b48e7be1e22c0906a6fd32"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:69f9d8bf070778a76d241a45717c9fe127a00142cfbfe76729c6693e8b522955",
+      "duplicate_of": "semantic:harness:a8b6a753ed3af304342adce3edd6bfca1e5c9f3c1f82e1a5ba075e3a3023a331",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "a02649c110a9a1eea07dbcfa7eb03e046e8e9144cfd9052d56bf545f687df9ec",
+      "family_key": "exercism/javascript:darts",
+      "resolved_family": "exercism/javascript:darts",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:darts",
+          "upstream:exercism/javascript:exercises/practice/darts/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:darts",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "69f9d8bf070778a76d241a45717c9fe127a00142cfbfe76729c6693e8b522955",
+        "source_id": "semantic-harness:69f9d8bf070778a7",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-3848a9ff69b1a5514147c9ab"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:8e2764050d87a56b5929edcdbba59d311c90526c8f37b6f6ba4dd1a37eb4b011",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "0525fd66459c846f81962070d5ef935963c7546c7d0e87f87de57517ddf1bf8b",
+      "family_key": "exercism/javascript:sum-of-multiples",
+      "resolved_family": "exercism/javascript:sum-of-multiples",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:sum-of-multiples",
+          "upstream:exercism/javascript:exercises/practice/sum-of-multiples/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:sum-of-multiples",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "8e2764050d87a56b5929edcdbba59d311c90526c8f37b6f6ba4dd1a37eb4b011",
+        "source_id": "semantic-harness:8e2764050d87a56b",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-3c9a48f11167051b31e20d6d"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:7a208344571fece6fca3540ff6d7279ae1300fbbb873f69bcaf30ba00479281c",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "590d8bb50965dae4a4f457bc884ba6198b2d0073f8d0b855eb492b415ebeca2a",
+      "family_key": "exercism/javascript:roman-numerals",
+      "resolved_family": "exercism/javascript:roman-numerals",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:roman-numerals",
+          "upstream:exercism/javascript:exercises/practice/roman-numerals/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:roman-numerals",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "7a208344571fece6fca3540ff6d7279ae1300fbbb873f69bcaf30ba00479281c",
+        "source_id": "semantic-harness:7a208344571fece6",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-45e8b0dde758d58d893cf67a"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:91c129efe9fe041d8c16f6fd73c84b506ddd3eef5da3e34d28e944caa7dd13c0",
+      "duplicate_of": "semantic:harness:a8b6a753ed3af304342adce3edd6bfca1e5c9f3c1f82e1a5ba075e3a3023a331",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "6e21b9a1c362d02f3574e8c0c2323663ac0da6867edeb82a06dc7d0e2f20ed0f",
+      "family_key": "exercism/javascript:darts",
+      "resolved_family": "exercism/javascript:darts",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:darts",
+          "upstream:exercism/javascript:exercises/practice/darts/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:darts",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "91c129efe9fe041d8c16f6fd73c84b506ddd3eef5da3e34d28e944caa7dd13c0",
+        "source_id": "semantic-harness:91c129efe9fe041d",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-595c65dfdeee5d419f8f7f55"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:e14044396b47b40536806cc2aed295311d23ba2ce3a264a7aa25f605a4fd5193",
+      "duplicate_of": "semantic:harness:7c826fab45522511b79978b69b0411e97b17ff417432350c87a9fcafaab61483",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "04b2a07909ab86120455a243939ce7c87325d77eae9dba99dd5712b5382b7dbb",
+      "family_key": "exercism/javascript:knapsack",
+      "resolved_family": "exercism/javascript:knapsack",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:knapsack",
+          "upstream:exercism/javascript:exercises/practice/knapsack/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:knapsack",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "e14044396b47b40536806cc2aed295311d23ba2ce3a264a7aa25f605a4fd5193",
+        "source_id": "semantic-harness:e14044396b47b405",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-5bde2c9a9a957ff0cc18af5e"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:94d291060a8155c77326781e3bdf8f4d2a6ec984af2ee5bf64378e500d120fbd",
+      "duplicate_of": "semantic:harness:a8b6a753ed3af304342adce3edd6bfca1e5c9f3c1f82e1a5ba075e3a3023a331",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "3f1af6e647118d520e3f935ecd7396cf8dce7ef479462d6242b5d17dc3cc1e1f",
+      "family_key": "exercism/javascript:darts",
+      "resolved_family": "exercism/javascript:darts",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:darts",
+          "upstream:exercism/javascript:exercises/practice/darts/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:darts",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "94d291060a8155c77326781e3bdf8f4d2a6ec984af2ee5bf64378e500d120fbd",
+        "source_id": "semantic-harness:94d291060a8155c7",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-5e860f0c4a37b4022b665f91"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:d41ba105c577e2217492295000d0b47e527f855eaca96972778f82b2732f7bd3",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "4ff0c29ab72193c5a06a0a8b2f41ae5d21d98b7cec2069b2ee277342f22a3710",
+      "family_key": "exercism/javascript:knapsack",
+      "resolved_family": "exercism/javascript:knapsack",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:knapsack",
+          "upstream:exercism/javascript:exercises/practice/knapsack/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:knapsack",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "d41ba105c577e2217492295000d0b47e527f855eaca96972778f82b2732f7bd3",
+        "source_id": "semantic-harness:d41ba105c577e221",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-613f11faeddd0496e9f7dedd"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:53ab3cb57fc288b944437720818066b10db1ec30b387ad6ca9db05610660667e",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "35d99d9d401823d5f5ae8790ca124994b5848f20618419b00c62ab650569fa1f",
+      "family_key": "exercism/javascript:sum-of-multiples",
+      "resolved_family": "exercism/javascript:sum-of-multiples",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:sum-of-multiples",
+          "upstream:exercism/javascript:exercises/practice/sum-of-multiples/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:sum-of-multiples",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "53ab3cb57fc288b944437720818066b10db1ec30b387ad6ca9db05610660667e",
+        "source_id": "semantic-harness:53ab3cb57fc288b9",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-61f47d9f35290e53fa03510e"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:5d2c8dfe25d830816702bb133478f6589b6ede6427c5068befc01d1b843ca44f",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "7282235fbe37f28033a1181bc97ba7689ecc7ae9b5533078276dbb4a53ff366c",
+      "family_key": "exercism/javascript:sum-of-multiples",
+      "resolved_family": "exercism/javascript:sum-of-multiples",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:sum-of-multiples",
+          "upstream:exercism/javascript:exercises/practice/sum-of-multiples/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:sum-of-multiples",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "5d2c8dfe25d830816702bb133478f6589b6ede6427c5068befc01d1b843ca44f",
+        "source_id": "semantic-harness:5d2c8dfe25d83081",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-76d32bc5bdcb55c58032d50f"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:eb3bc9989dc45cb0ed9c3402c5ee331c000a3c7965dd9a5a9d9dc98cf62044ab",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "1ce6aec032485d8886668b70b038970b11a620be2e5f536e46020dd7a741534a",
+      "family_key": "exercism/javascript:knapsack",
+      "resolved_family": "exercism/javascript:knapsack",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:knapsack",
+          "upstream:exercism/javascript:exercises/practice/knapsack/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:knapsack",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "eb3bc9989dc45cb0ed9c3402c5ee331c000a3c7965dd9a5a9d9dc98cf62044ab",
+        "source_id": "semantic-harness:eb3bc9989dc45cb0",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-7b3c16ff7bff18d54d705695"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:986f570f31787280338f93c9a5e7e7578fdf5ecd36f5930863f71a3c6f32b0b2",
+      "duplicate_of": "semantic:harness:2cb67a9cfa4b60153e9c20cfa3807be3edf3bffaa98867c38d1ea4ad34447857",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "de4f2cc3e8ed2df0bcbd979a41bc91c9f8981a060368d07e80070abe9d88d949",
+      "family_key": "exercism/javascript:roman-numerals",
+      "resolved_family": "exercism/javascript:roman-numerals",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:roman-numerals",
+          "upstream:exercism/javascript:exercises/practice/roman-numerals/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:roman-numerals",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "986f570f31787280338f93c9a5e7e7578fdf5ecd36f5930863f71a3c6f32b0b2",
+        "source_id": "semantic-harness:986f570f31787280",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-835d72ef2137a7c9b8d7ed39"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:79384d9e58dc28069cdeec8d1dfa0de8da5060f87d01923dc97d92f1eff67878",
+      "duplicate_of": "semantic:harness:7a208344571fece6fca3540ff6d7279ae1300fbbb873f69bcaf30ba00479281c",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "87dac67c98316bed206e8094eda749d01ed239be23e77e90e1bb9475d388297c",
+      "family_key": "exercism/javascript:roman-numerals",
+      "resolved_family": "exercism/javascript:roman-numerals",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:roman-numerals",
+          "upstream:exercism/javascript:exercises/practice/roman-numerals/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:roman-numerals",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "79384d9e58dc28069cdeec8d1dfa0de8da5060f87d01923dc97d92f1eff67878",
+        "source_id": "semantic-harness:79384d9e58dc2806",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-857171a9ddaf94b240ae8249"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:93fc01833dd0c25e3cbec68c497107709999a68f5f5a1802ae5f3dbdabc285c5",
+      "duplicate_of": "semantic:harness:2cb67a9cfa4b60153e9c20cfa3807be3edf3bffaa98867c38d1ea4ad34447857",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "9cc41bbdc42ecb5e69d2d7f18f5b164198281f6faa5549fe48b937c59710ed50",
+      "family_key": "exercism/javascript:roman-numerals",
+      "resolved_family": "exercism/javascript:roman-numerals",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:roman-numerals",
+          "upstream:exercism/javascript:exercises/practice/roman-numerals/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:roman-numerals",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "93fc01833dd0c25e3cbec68c497107709999a68f5f5a1802ae5f3dbdabc285c5",
+        "source_id": "semantic-harness:93fc01833dd0c25e",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-86949e51e08871ad40636a8d"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:6a2a724fa2e80832c6adeab7e2cdbf3d1650ecdea5bfe2b98fb1c2ab7f7ac2dd",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "db75ac9ed618f87a1122e9775333b0df369ca73ca02aef88349872cc6c9c3fb3",
+      "family_key": "exercism/javascript:darts",
+      "resolved_family": "exercism/javascript:darts",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:darts",
+          "upstream:exercism/javascript:exercises/practice/darts/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:darts",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "6a2a724fa2e80832c6adeab7e2cdbf3d1650ecdea5bfe2b98fb1c2ab7f7ac2dd",
+        "source_id": "semantic-harness:6a2a724fa2e80832",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-943a3cef2a9e1d9715771263"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:2d889b993c55114d82836f99d0c3b27fe83c1afacd7354156695ee9b9b0c0cc2",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "e3b1c31b16f522a85250deb388f719f925d2711c395c2fc1b2e8185f8a37643f",
+      "family_key": "exercism/javascript:roman-numerals",
+      "resolved_family": "exercism/javascript:roman-numerals",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:roman-numerals",
+          "upstream:exercism/javascript:exercises/practice/roman-numerals/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:roman-numerals",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "2d889b993c55114d82836f99d0c3b27fe83c1afacd7354156695ee9b9b0c0cc2",
+        "source_id": "semantic-harness:2d889b993c55114d",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-9d44174a4af9f2ee84801ae2"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:36590979d66b03f48eb7fb0a9934cea9c1a6fda7c263ec91aef64e45ef1d1a78",
+      "duplicate_of": "semantic:harness:2d889b993c55114d82836f99d0c3b27fe83c1afacd7354156695ee9b9b0c0cc2",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "40bad7e7b5f27cf034354285c2b125be2d80b7c4710d847dfcf50430e7675a55",
+      "family_key": "exercism/javascript:roman-numerals",
+      "resolved_family": "exercism/javascript:roman-numerals",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:roman-numerals",
+          "upstream:exercism/javascript:exercises/practice/roman-numerals/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:roman-numerals",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "36590979d66b03f48eb7fb0a9934cea9c1a6fda7c263ec91aef64e45ef1d1a78",
+        "source_id": "semantic-harness:36590979d66b03f4",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-a9324fef623d6da8ef61da0c"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:2d389f9adaa2f81f6d8f1845088766a532a54bc7d170260585112e23f1b33137",
+      "duplicate_of": "semantic:harness:7a208344571fece6fca3540ff6d7279ae1300fbbb873f69bcaf30ba00479281c",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "5dce17b2889445e049bf7b1583c3839279dc4e827c952fad5d20ac6b1eca679c",
+      "family_key": "exercism/javascript:roman-numerals",
+      "resolved_family": "exercism/javascript:roman-numerals",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:roman-numerals",
+          "upstream:exercism/javascript:exercises/practice/roman-numerals/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:roman-numerals",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "2d389f9adaa2f81f6d8f1845088766a532a54bc7d170260585112e23f1b33137",
+        "source_id": "semantic-harness:2d389f9adaa2f81f",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-bcea1781e1f183ce33021299"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:fb34f47909a56175a1b61ea73e034ac44097f1cb24a231e66e7f2dcd865aea69",
+      "duplicate_of": "semantic:harness:a8b6a753ed3af304342adce3edd6bfca1e5c9f3c1f82e1a5ba075e3a3023a331",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "cb50754615cea37da3cc688a13b5c8d68c0aabec45719d68498b6174e478a39e",
+      "family_key": "exercism/javascript:darts",
+      "resolved_family": "exercism/javascript:darts",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:darts",
+          "upstream:exercism/javascript:exercises/practice/darts/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:darts",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "fb34f47909a56175a1b61ea73e034ac44097f1cb24a231e66e7f2dcd865aea69",
+        "source_id": "semantic-harness:fb34f47909a56175",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-bf22c7a0c2c2b3d3f02a6a98"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:0b4c6da6f925e3886502797f31b9a163c7769a1e97efb08ee5b8e2beaa842823",
+      "duplicate_of": "semantic:harness:4bdd026bec1db7f63f921e7c5f2fb8b15018933d532fa16d87c44ced8cce26f7",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "1b6d69767265ab3aaab2ca0faf0a5ae392f6b2b77ce0b9b87140448e7ad936d2",
+      "family_key": "exercism/javascript:roman-numerals",
+      "resolved_family": "exercism/javascript:roman-numerals",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:roman-numerals",
+          "upstream:exercism/javascript:exercises/practice/roman-numerals/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:roman-numerals",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "0b4c6da6f925e3886502797f31b9a163c7769a1e97efb08ee5b8e2beaa842823",
+        "source_id": "semantic-harness:0b4c6da6f925e388",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-bfe6b1c518998eebcf58e151"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:752f8d9f878bab4a449159ada78a45c47eca206eb6aebad20aafe023e3024784",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "8bce441c5238f3290db880a67ed7947c50eeef85351c62cd4adee71c81c8bda0",
+      "family_key": "exercism/javascript:sum-of-multiples",
+      "resolved_family": "exercism/javascript:sum-of-multiples",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:sum-of-multiples",
+          "upstream:exercism/javascript:exercises/practice/sum-of-multiples/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:sum-of-multiples",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "752f8d9f878bab4a449159ada78a45c47eca206eb6aebad20aafe023e3024784",
+        "source_id": "semantic-harness:752f8d9f878bab4a",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-d53806291f5d5df9dc20dba8"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:48d3f4dafc90252da9fb17ac59ae6c892b8fccf257686a13079408b58555700d",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "b1f519b82f7902d62b4269cd6f55787f9e2bcf1ea409cbf3c009c7889d50cc04",
+      "family_key": "exercism/javascript:sum-of-multiples",
+      "resolved_family": "exercism/javascript:sum-of-multiples",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:sum-of-multiples",
+          "upstream:exercism/javascript:exercises/practice/sum-of-multiples/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:sum-of-multiples",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "48d3f4dafc90252da9fb17ac59ae6c892b8fccf257686a13079408b58555700d",
+        "source_id": "semantic-harness:48d3f4dafc90252d",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-d615bef907d658964d0ea824"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:1a3ddbce9246c04df8bc0bbdd8fa9cd5950e087da79d927bbd80a5b2d0065bc5",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "e94c2aa280634fb1fd4d83e31eeef126892f07b475e872b124ede63a6e45f435",
+      "family_key": "exercism/javascript:darts",
+      "resolved_family": "exercism/javascript:darts",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:darts",
+          "upstream:exercism/javascript:exercises/practice/darts/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:darts",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "1a3ddbce9246c04df8bc0bbdd8fa9cd5950e087da79d927bbd80a5b2d0065bc5",
+        "source_id": "semantic-harness:1a3ddbce9246c04d",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-d6a14e69693cf9ca259bdc50"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:51a749405a20c78aa4ca7d6f2e2046c5c8b07f40c79acba7082d7cc8954dbc24",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "73e2ff6c55310bd9272a957bd354daf090d84876f75d363d865cbe2f0cd9b5f2",
+      "family_key": "exercism/javascript:knapsack",
+      "resolved_family": "exercism/javascript:knapsack",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:knapsack",
+          "upstream:exercism/javascript:exercises/practice/knapsack/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:knapsack",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "51a749405a20c78aa4ca7d6f2e2046c5c8b07f40c79acba7082d7cc8954dbc24",
+        "source_id": "semantic-harness:51a749405a20c78a",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-db00e8c771fb596da49c9279"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:f1e7ecec94af65d2073e19b53273981f8843ad980025a57a24beafc1ee80e838",
+      "duplicate_of": "semantic:harness:6a2a724fa2e80832c6adeab7e2cdbf3d1650ecdea5bfe2b98fb1c2ab7f7ac2dd",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "c4d06e229e3f1e78c5da5c9be7aa7236e45a767918d87dcf3c9ff6de84419a53",
+      "family_key": "exercism/javascript:darts",
+      "resolved_family": "exercism/javascript:darts",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:darts",
+          "upstream:exercism/javascript:exercises/practice/darts/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:darts",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "f1e7ecec94af65d2073e19b53273981f8843ad980025a57a24beafc1ee80e838",
+        "source_id": "semantic-harness:f1e7ecec94af65d2",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-e33bacae301985b225a86865"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:eb602cc10b64ddc0a8ffcd85b47031420114cfde244798c37d15c0afca260359",
+      "duplicate_of": "semantic:harness:2cb67a9cfa4b60153e9c20cfa3807be3edf3bffaa98867c38d1ea4ad34447857",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "1ba20093d31de2f3585ddae211f4f28772d449a20f37151d8df7178a85dd1fd0",
+      "family_key": "exercism/javascript:roman-numerals",
+      "resolved_family": "exercism/javascript:roman-numerals",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:roman-numerals",
+          "upstream:exercism/javascript:exercises/practice/roman-numerals/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:roman-numerals",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "eb602cc10b64ddc0a8ffcd85b47031420114cfde244798c37d15c0afca260359",
+        "source_id": "semantic-harness:eb602cc10b64ddc0",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-e41348704c395818534e91f7"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:85675fdddb729f81e21f94e316e182fb711f8ad5e3e8127fc53743330ef82df9",
+      "duplicate_of": "semantic:harness:7a208344571fece6fca3540ff6d7279ae1300fbbb873f69bcaf30ba00479281c",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "f8797a9e6616f3398af7ebe536f16ba82af99bcebd3596fdd07a42983c42076b",
+      "family_key": "exercism/javascript:roman-numerals",
+      "resolved_family": "exercism/javascript:roman-numerals",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:roman-numerals",
+          "upstream:exercism/javascript:exercises/practice/roman-numerals/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:roman-numerals",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "85675fdddb729f81e21f94e316e182fb711f8ad5e3e8127fc53743330ef82df9",
+        "source_id": "semantic-harness:85675fdddb729f81",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-e547f504865c8d4e3109713e"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:bd94af0cebb19109074aa9a7f871612da4f37c7ca05116697b6ea5b802e8e9e3",
+      "duplicate_of": "semantic:harness:1a3ddbce9246c04df8bc0bbdd8fa9cd5950e087da79d927bbd80a5b2d0065bc5",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "bdc8bbcd289fe6143b80067002c0f947ac331e1ff27b60874c8060426d6dab58",
+      "family_key": "exercism/javascript:darts",
+      "resolved_family": "exercism/javascript:darts",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:darts",
+          "upstream:exercism/javascript:exercises/practice/darts/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:darts",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "bd94af0cebb19109074aa9a7f871612da4f37c7ca05116697b6ea5b802e8e9e3",
+        "source_id": "semantic-harness:bd94af0cebb19109",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-eac691fd9bd58251c399e018"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:17233efa75219bd9520f33406f0be757a363b7d14e725e3ce4ca843e107b55c2",
+      "duplicate_of": "semantic:harness:1a3ddbce9246c04df8bc0bbdd8fa9cd5950e087da79d927bbd80a5b2d0065bc5",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "0819fbbd45f4a464d2319a6a3bd874ba9d0e8d65aa9db97a21e606ad1b3dc16c",
+      "family_key": "exercism/javascript:darts",
+      "resolved_family": "exercism/javascript:darts",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:darts",
+          "upstream:exercism/javascript:exercises/practice/darts/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:darts",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "17233efa75219bd9520f33406f0be757a363b7d14e725e3ce4ca843e107b55c2",
+        "source_id": "semantic-harness:17233efa75219bd9",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-ef5f7bf36763b0ae5e979d72"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:a8eef568fc4c52e1f76fe518faf3b8385d7e365dc3c9df65cf0550e06422bf39",
+      "duplicate_of": "semantic:harness:a8b6a753ed3af304342adce3edd6bfca1e5c9f3c1f82e1a5ba075e3a3023a331",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "ad5550917a7f0113d0394e6499a1c244daf254d50d9e043f4ad538bf113da1c5",
+      "family_key": "exercism/javascript:darts",
+      "resolved_family": "exercism/javascript:darts",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:darts",
+          "upstream:exercism/javascript:exercises/practice/darts/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:darts",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "a8eef568fc4c52e1f76fe518faf3b8385d7e365dc3c9df65cf0550e06422bf39",
+        "source_id": "semantic-harness:a8eef568fc4c52e1",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-f2a2485aeb63a78c27378dda"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:dc0bff5ac5014c4544fd9aa75d8aba42c81501dfeaf9c55626a0150e61cb6eda",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "b7a7fb75e34cdeb578d6058aaf7a738e4fae805826b331f356e53953db06119c",
+      "family_key": "exercism/javascript:sum-of-multiples",
+      "resolved_family": "exercism/javascript:sum-of-multiples",
+      "lineage": {
+        "ancestor_ids": [
+          "exercism/javascript:sum-of-multiples",
+          "upstream:exercism/javascript:exercises/practice/sum-of-multiples/.meta/proof.ci.js"
+        ],
+        "created_at": null,
+        "family_id": "exercism/javascript:sum-of-multiples",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "dc0bff5ac5014c4544fd9aa75d8aba42c81501dfeaf9c55626a0150e61cb6eda",
+        "source_id": "semantic-harness:dc0bff5ac5014c45",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-exercism-fe0dd89240f3889d8392e714"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:fb702b5a3ee6b347bd7e7bc6596c5a86a553ef6b5f55c374c0b721a797fcd98d",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "058d72d1412b4021d60e97a143f284996e7b3241acd761d2bc0019c1b1214691",
+      "family_key": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "resolved_family": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "lineage": {
+        "ancestor_ids": [
+          "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+          "upstream:axios/axios:axios/lib/utils.js"
+        ],
+        "created_at": null,
+        "family_id": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "fb702b5a3ee6b347bd7e7bc6596c5a86a553ef6b5f55c374c0b721a797fcd98d",
+        "source_id": "semantic-harness:fb702b5a3ee6b347",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-production-089cf1c419a9484df6005d26"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:5616741dfbaa205a8b2eabca76d27ef15d0d78c4702eae485eca807f9948de75",
+      "duplicate_of": "semantic:harness:fb702b5a3ee6b347bd7e7bc6596c5a86a553ef6b5f55c374c0b721a797fcd98d",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "6741cf8c69e6881da7962a2a049870f8fd858c00fcf20fea517b326a34b8cda3",
+      "family_key": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "resolved_family": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "lineage": {
+        "ancestor_ids": [
+          "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+          "upstream:axios/axios:axios/lib/utils.js"
+        ],
+        "created_at": null,
+        "family_id": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "5616741dfbaa205a8b2eabca76d27ef15d0d78c4702eae485eca807f9948de75",
+        "source_id": "semantic-harness:5616741dfbaa205a",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-production-21c26badacafd9de8fbf9351"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:d53701fa270b9041cc42a85faae9e3272813d1af8746fe8347a5046cdf18ae8d",
+      "duplicate_of": "semantic:harness:fb702b5a3ee6b347bd7e7bc6596c5a86a553ef6b5f55c374c0b721a797fcd98d",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "f1185971ef5a6b4ea984ddbd824a9b81a31f18e1e784705695594a06e2f3f253",
+      "family_key": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "resolved_family": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "lineage": {
+        "ancestor_ids": [
+          "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+          "upstream:axios/axios:axios/lib/utils.js"
+        ],
+        "created_at": null,
+        "family_id": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "d53701fa270b9041cc42a85faae9e3272813d1af8746fe8347a5046cdf18ae8d",
+        "source_id": "semantic-harness:d53701fa270b9041",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-production-27950bd1682a664463e6a475"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:3e957743ffe167003c389497d374bacff56b03a55907a9ccc0bdce49aeb9a14e",
+      "duplicate_of": "semantic:harness:fb702b5a3ee6b347bd7e7bc6596c5a86a553ef6b5f55c374c0b721a797fcd98d",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "a75e52e6d3a2b4adff21e20ff1e0e9dbaf5265afd19626f0d250126c84374d2d",
+      "family_key": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "resolved_family": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "lineage": {
+        "ancestor_ids": [
+          "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+          "upstream:axios/axios:axios/lib/utils.js"
+        ],
+        "created_at": null,
+        "family_id": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "3e957743ffe167003c389497d374bacff56b03a55907a9ccc0bdce49aeb9a14e",
+        "source_id": "semantic-harness:3e957743ffe16700",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-production-2818e00c62b6b075514c8ba4"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:36c65d16f5ed5b7687ff55f978b10cdd986230837a8e60db4910e431c767d026",
+      "duplicate_of": "semantic:harness:fb702b5a3ee6b347bd7e7bc6596c5a86a553ef6b5f55c374c0b721a797fcd98d",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "e470854b8a1c8e0d8a0b884aee27488123f3e60f7d3ca239c4095d55db9bb9e1",
+      "family_key": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "resolved_family": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "lineage": {
+        "ancestor_ids": [
+          "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+          "upstream:axios/axios:axios/lib/utils.js"
+        ],
+        "created_at": null,
+        "family_id": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "36c65d16f5ed5b7687ff55f978b10cdd986230837a8e60db4910e431c767d026",
+        "source_id": "semantic-harness:36c65d16f5ed5b76",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-production-64a2d251257ecf004049a724"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:59fa328325fb1d4ba4806f80213887fb0c482588c73833a6845fa3a28b542473",
+      "duplicate_of": "semantic:harness:fb702b5a3ee6b347bd7e7bc6596c5a86a553ef6b5f55c374c0b721a797fcd98d",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "ab334cf938aca93bf3b68683077fd304025dd16e806c3e6af3f569d1a3ff1325",
+      "family_key": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "resolved_family": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "lineage": {
+        "ancestor_ids": [
+          "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+          "upstream:axios/axios:axios/lib/utils.js"
+        ],
+        "created_at": null,
+        "family_id": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "59fa328325fb1d4ba4806f80213887fb0c482588c73833a6845fa3a28b542473",
+        "source_id": "semantic-harness:59fa328325fb1d4b",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-production-66fdbe957c5128bdd4e7dd0b"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:7504788cf8ad8d36c520462bcb00546fe494a6324e202105260cc3c804161aca",
+      "duplicate_of": "semantic:harness:fb702b5a3ee6b347bd7e7bc6596c5a86a553ef6b5f55c374c0b721a797fcd98d",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "30987e3ad7bd4f9647c178f1565d64ec52f1196e7f58ea31bcaa555b55ba490a",
+      "family_key": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "resolved_family": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "lineage": {
+        "ancestor_ids": [
+          "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+          "upstream:axios/axios:axios/lib/utils.js"
+        ],
+        "created_at": null,
+        "family_id": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "7504788cf8ad8d36c520462bcb00546fe494a6324e202105260cc3c804161aca",
+        "source_id": "semantic-harness:7504788cf8ad8d36",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-production-7e7cbc62eeb4b7eb0132d387"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:da132c85fc28928b8b77de461e63e5d52aab43121ccfdbbdbc01a9997271be48",
+      "duplicate_of": "semantic:harness:fb702b5a3ee6b347bd7e7bc6596c5a86a553ef6b5f55c374c0b721a797fcd98d",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "d2399a417e3391f1bac598b089e3a7176c6379a35e1d9dd156390dc3f0b33c57",
+      "family_key": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "resolved_family": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "lineage": {
+        "ancestor_ids": [
+          "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+          "upstream:axios/axios:axios/lib/utils.js"
+        ],
+        "created_at": null,
+        "family_id": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "da132c85fc28928b8b77de461e63e5d52aab43121ccfdbbdbc01a9997271be48",
+        "source_id": "semantic-harness:da132c85fc28928b",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-production-ac6390737eac5e949058fcd8"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:bfb7fa9bb5c2e2bb7af37f346f78bd53b9c65b079d6577a39d41e2b99957f42c",
+      "duplicate_of": "semantic:harness:fb702b5a3ee6b347bd7e7bc6596c5a86a553ef6b5f55c374c0b721a797fcd98d",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "5fe1439220a6a41918056fca58d898d8558e46f468b2d5b3c5fc71954ba98221",
+      "family_key": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "resolved_family": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "lineage": {
+        "ancestor_ids": [
+          "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+          "upstream:axios/axios:axios/lib/utils.js"
+        ],
+        "created_at": null,
+        "family_id": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "bfb7fa9bb5c2e2bb7af37f346f78bd53b9c65b079d6577a39d41e2b99957f42c",
+        "source_id": "semantic-harness:bfb7fa9bb5c2e2bb",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-production-e948400cc0334b5a070f9d09"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:d8ea41a2f715316eccc0af55336565debd34adf6a1bcd95d3d57d1cb34266395",
+      "duplicate_of": "semantic:harness:fb702b5a3ee6b347bd7e7bc6596c5a86a553ef6b5f55c374c0b721a797fcd98d",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "825cff147e048d6767d15ebac522a6905d7e89f3e08ee46ee02b91ee6cc714bc",
+      "family_key": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "resolved_family": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "lineage": {
+        "ancestor_ids": [
+          "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+          "upstream:axios/axios:axios/lib/utils.js"
+        ],
+        "created_at": null,
+        "family_id": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "d8ea41a2f715316eccc0af55336565debd34adf6a1bcd95d3d57d1cb34266395",
+        "source_id": "semantic-harness:d8ea41a2f715316e",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-production-f57ce2638025219f98d65025"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:75ae0c74f9404498a771803d01c9629d130e83423b77d3b1c7ffe18c49d9bfee",
+      "duplicate_of": "semantic:harness:fb702b5a3ee6b347bd7e7bc6596c5a86a553ef6b5f55c374c0b721a797fcd98d",
+      "quarantine_reason": null,
+      "split": "test",
+      "content_sha256": "c2b5a72c03b068050e33e012d08b746db2849d603b176d3690fbe5e8a1779fe6",
+      "family_key": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "resolved_family": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+      "lineage": {
+        "ancestor_ids": [
+          "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+          "upstream:axios/axios:axios/lib/utils.js"
+        ],
+        "created_at": null,
+        "family_id": "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest",
+        "frozen_split": "test",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "75ae0c74f9404498a771803d01c9629d130e83423b77d3b1c7ffe18c49d9bfee",
+        "source_id": "semantic-harness:75ae0c74f9404498",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-production-fd199a2342f60cfcb79772a6"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:51875fb9dd97b1bbbde9021db4f101a8bf4ce80768334e9b8a5f49e9762014e6",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "train",
+      "content_sha256": "6f5521719e71211a862bb8b71775c2283e68f99f41bad92b4570dc04d437cade",
+      "family_key": "task:real-utilities-1ca447dc84aec4b73ec36c7e",
+      "resolved_family": "task:real-utilities-1ca447dc84aec4b73ec36c7e",
+      "lineage": {
+        "ancestor_ids": [
+          "utility:vscode/arrays.ts/distinct",
+          "upstream:microsoft/vscode:src/vs/base/common/arrays.ts"
+        ],
+        "created_at": null,
+        "family_id": "utility:vscode/arrays.ts/distinct",
+        "frozen_split": "train",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "51875fb9dd97b1bbbde9021db4f101a8bf4ce80768334e9b8a5f49e9762014e6",
+        "source_id": "semantic-harness:51875fb9dd97b1bb",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-utilities-1ca447dc84aec4b73ec36c7e"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:68c59b01ed79041c59d871ba3f536038ad8ebdc7afa1c4c54616b3807e2a8dff",
+      "duplicate_of": "semantic:harness:51875fb9dd97b1bbbde9021db4f101a8bf4ce80768334e9b8a5f49e9762014e6",
+      "quarantine_reason": null,
+      "split": "train",
+      "content_sha256": "1edf19dda14448d1c006b724ed474639e85783a8bc7c7586dcb9d73754ecc00d",
+      "family_key": "task:real-utilities-1ca447dc84aec4b73ec36c7e",
+      "resolved_family": "task:real-utilities-1ca447dc84aec4b73ec36c7e",
+      "lineage": {
+        "ancestor_ids": [
+          "utility:vscode/arrays.ts/distinct",
+          "upstream:microsoft/vscode:src/vs/base/common/arrays.ts"
+        ],
+        "created_at": null,
+        "family_id": "utility:vscode/arrays.ts/distinct",
+        "frozen_split": "train",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "68c59b01ed79041c59d871ba3f536038ad8ebdc7afa1c4c54616b3807e2a8dff",
+        "source_id": "semantic-harness:68c59b01ed79041c",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-utilities-1fa488b9e746edfaf512180b"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:5f384c63e1748ef4d02421e529e94a0a173cb037f0fb195a409795b45c3f0373",
+      "duplicate_of": null,
+      "quarantine_reason": null,
+      "split": "train",
+      "content_sha256": "457766ad3c2fb00756a1452dc6f07e3f3caefa27ace8727ba420473c1351f985",
+      "family_key": "task:real-utilities-1ca447dc84aec4b73ec36c7e",
+      "resolved_family": "task:real-utilities-1ca447dc84aec4b73ec36c7e",
+      "lineage": {
+        "ancestor_ids": [
+          "utility:vscode/arrays.ts/distinct",
+          "upstream:microsoft/vscode:src/vs/base/common/arrays.ts"
+        ],
+        "created_at": null,
+        "family_id": "utility:vscode/arrays.ts/distinct",
+        "frozen_split": "train",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "5f384c63e1748ef4d02421e529e94a0a173cb037f0fb195a409795b45c3f0373",
+        "source_id": "semantic-harness:5f384c63e1748ef4",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-utilities-2ebfe51f48dad1a027958ec0"
+      }
+    },
+    {
+      "episode_id": "semantic:harness:92ebc1d2de8ad1530a8c851ca647e7dda15770d583f06e2d800f995d550705d9",
+      "duplicate_of": "semantic:harness:5f384c63e1748ef4d02421e529e94a0a173cb037f0fb195a409795b45c3f0373",
+      "quarantine_reason": null,
+      "split": "train",
+      "content_sha256": "6dd079041457cd0cf98d44be7e54a0abd707ce23b15d8b90c7a513ddd9a52e8b",
+      "family_key": "task:real-utilities-1ca447dc84aec4b73ec36c7e",
+      "resolved_family": "task:real-utilities-1ca447dc84aec4b73ec36c7e",
+      "lineage": {
+        "ancestor_ids": [
+          "utility:vscode/arrays.ts/distinct",
+          "upstream:microsoft/vscode:src/vs/base/common/arrays.ts"
+        ],
+        "created_at": null,
+        "family_id": "utility:vscode/arrays.ts/distinct",
+        "frozen_split": "train",
+        "parent_episode_id": null,
+        "raw_sha256": "",
+        "repository": null,
+        "revision": "92ebc1d2de8ad1530a8c851ca647e7dda15770d583f06e2d800f995d550705d9",
+        "source_id": "semantic-harness:92ebc1d2de8ad153",
+        "source_row": null,
+        "source_uri": "https://github.com/werg/tracing-js-self",
+        "task_id": "real-utilities-86111448602711c38983cd0c"
+      }
+    }
+  ]
+}

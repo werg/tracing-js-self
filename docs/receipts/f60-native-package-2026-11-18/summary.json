@@ -1,0 +1,37 @@
+{
+  "schema": "semantic-release-outcome/1",
+  "status": "verified",
+  "archive": "/workspace/scratch/23f61543c052/deliverables/release-F-requalification/package/semantic-v5-release.tar.gz",
+  "archiveBytes": 102268413,
+  "archiveSha256": "dd6097d6b309e630cab1088809fdfce71706eed650f5f2c57c40da396b42dddc",
+  "files": 366,
+  "identityDigest": "9366a4142efdea954ea4a9ecd616e87278f0bbfef65f0b729128e6365a46deed",
+  "rawCandidates": 60,
+  "attemptRecords": 62,
+  "rawAdmissions": 60,
+  "selectedRepresentatives": 52,
+  "exactPublicAliases": 8,
+  "nativeReadmitted": 52,
+  "nativeAccepted": 22,
+  "nativeDuplicates": 30,
+  "nativeRefusals": 0,
+  "nativePreparedFingerprint": "1c3fc440c40bffd064fbd6aaa1a9054d92759b1d496ccee1b678fb2acd53413c",
+  "acceptedSplitCounts": {
+    "test": 20,
+    "train": 2
+  },
+  "acceptedFamilyCounts": {
+    "exercism/javascript:sum-of-multiples": 8,
+    "exercism/javascript:knapsack": 4,
+    "exercism/javascript:roman-numerals": 4,
+    "exercism/javascript:darts": 3,
+    "production:axios/axios:axios/lib/utils.js:ownedTypeOfTest": 1,
+    "utility:vscode/arrays.ts/distinct": 2
+  },
+  "originalAuditCampaign": "/workspace/scratch/23f61543c052/release-evidence-F/requalification",
+  "originalInitialSnapshot": "/workspace/scratch/23f61543c052/release-evidence-F/requalification-initial-snapshot",
+  "optimizerSteps": 0,
+  "modelInferenceCalls": 0,
+  "learnedSuccess": null,
+  "verificationSchema": "semantic-release-verification/1"
+}
