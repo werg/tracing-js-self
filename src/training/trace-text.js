@@ -4,7 +4,7 @@
 const own=(value,key)=>Object.hasOwn(value,key);
 const identifier=/^[$_\p{ID_Start}][$_\u200C\u200D\p{ID_Continue}]*/u;
 const symbol=/^[$_\p{ID_Start}][$_\u200C\u200D\p{ID_Continue}]*(?:\.[$_\p{ID_Start}][$_\u200C\u200D\p{ID_Continue}]*)*/u;
-const reserved=new Set(['undefined','null','true','false','NaN','Infinity']);
+const reserved=new Set(['undefined','null','true','false','NaN','Infinity','typeof','void']);
 const json=value=>{
   const result=JSON.stringify(value);
   if(typeof result!=='string')throw new TypeError('Unrepresentable trace data');

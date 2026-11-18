@@ -1128,6 +1128,227 @@
         ]
       },
       "line": "return 1.7976931348623157e+308"
+    },
+    {
+      "name": "lone high surrogate",
+      "kind": "return",
+      "fields": {
+        "value": [
+          "str",
+          "\ud800"
+        ]
+      },
+      "line": "return \"\\ud800\""
+    },
+    {
+      "name": "lone low surrogate",
+      "kind": "return",
+      "fields": {
+        "value": [
+          "str",
+          "\udfff"
+        ]
+      },
+      "line": "return \"\\udfff\""
+    },
+    {
+      "name": "string control escapes",
+      "kind": "return",
+      "fields": {
+        "value": [
+          "str",
+          "\b\t\n\f\r\u0000"
+        ]
+      },
+      "line": "return \"\\b\\t\\n\\f\\r\\u0000\""
+    },
+    {
+      "name": "literal Unicode line separator",
+      "kind": "return",
+      "fields": {
+        "value": [
+          "str",
+          "before after"
+        ]
+      },
+      "line": "return \"before after\""
+    },
+    {
+      "name": "unary keyword local typeof",
+      "kind": "compute",
+      "fields": {
+        "expr": {
+          "op": "binary",
+          "operator": "+",
+          "left": {
+            "op": "local",
+            "name": "typeof"
+          },
+          "right": {
+            "op": "literal",
+            "value": [
+              "num",
+              1
+            ]
+          }
+        },
+        "result": [
+          "num",
+          2
+        ]
+      },
+      "line": "compute (local(\"typeof\") + 1) => 2"
+    },
+    {
+      "name": "unary keyword local void",
+      "kind": "compute",
+      "fields": {
+        "expr": {
+          "op": "binary",
+          "operator": "+",
+          "left": {
+            "op": "local",
+            "name": "void"
+          },
+          "right": {
+            "op": "literal",
+            "value": [
+              "num",
+              1
+            ]
+          }
+        },
+        "result": [
+          "num",
+          2
+        ]
+      },
+      "line": "compute (local(\"void\") + 1) => 2"
+    },
+    {
+      "name": "negative decimal",
+      "kind": "return",
+      "fields": {
+        "value": [
+          "num",
+          -0.5
+        ]
+      },
+      "line": "return -0.5"
+    },
+    {
+      "name": "negative decimal threshold",
+      "kind": "return",
+      "fields": {
+        "value": [
+          "num",
+          -0.000001
+        ]
+      },
+      "line": "return -0.000001"
+    },
+    {
+      "name": "negative exponential",
+      "kind": "return",
+      "fields": {
+        "value": [
+          "num",
+          -1e-7
+        ]
+      },
+      "line": "return -1e-7"
+    },
+    {
+      "name": "ECMAScript ID_Start U+037A",
+      "kind": "compute",
+      "fields": {
+        "expr": {
+          "op": "local",
+          "name": "ͺ"
+        },
+        "result": [
+          "num",
+          1
+        ]
+      },
+      "line": "compute ͺ => 1"
+    },
+    {
+      "name": "ECMAScript ID_Start U+0E33",
+      "kind": "compute",
+      "fields": {
+        "expr": {
+          "op": "local",
+          "name": "ำ"
+        },
+        "result": [
+          "num",
+          1
+        ]
+      },
+      "line": "compute ำ => 1"
+    },
+    {
+      "name": "ECMAScript ID_Start U+0EB3",
+      "kind": "compute",
+      "fields": {
+        "expr": {
+          "op": "local",
+          "name": "ຳ"
+        },
+        "result": [
+          "num",
+          1
+        ]
+      },
+      "line": "compute ຳ => 1"
+    },
+    {
+      "name": "ECMAScript ID_Start U+309B",
+      "kind": "compute",
+      "fields": {
+        "expr": {
+          "op": "local",
+          "name": "゛"
+        },
+        "result": [
+          "num",
+          1
+        ]
+      },
+      "line": "compute ゛ => 1"
+    },
+    {
+      "name": "ECMAScript ID_Start U+309C",
+      "kind": "compute",
+      "fields": {
+        "expr": {
+          "op": "local",
+          "name": "゜"
+        },
+        "result": [
+          "num",
+          1
+        ]
+      },
+      "line": "compute ゜ => 1"
+    },
+    {
+      "name": "numeric JSON keys",
+      "kind": "transfer",
+      "fields": {
+        "kind": "cleanup",
+        "value": [
+          "undefined"
+        ],
+        "handler": {
+          "1": "first",
+          "2": "second",
+          "4294967295": "not an index",
+          "01": "not an index"
+        }
+      },
+      "line": "transfer cleanup undefined via {\"1\":\"first\",\"2\":\"second\",\"4294967295\":\"not an index\",\"01\":\"not an index\"}"
     }
   ],
   "invalid": [
@@ -1200,6 +1421,22 @@
     "part @r8 6",
     "close @r8 type \"semantic-record\"",
     "source \"main\" = \"x\" sites [{\"a\":1,\"a\":2}]",
-    "input {\"roots\":[], \"objects\":[]}"
+    "input {\"roots\":[], \"objects\":[]}",
+    "return \"\\uD800\"",
+    "return \"\\/\"",
+    "return \"\\u000a\"",
+    "compute typeof => 1",
+    "compute void => 1",
+    "source \"main\" = \"x\" sites [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]",
+    "transfer cleanup undefined via {\"2\":\"second\",\"1\":\"first\"}",
+    "call helper(-0n) this undefined -> @call1",
+    "call helper(@o:1) this undefined -> @call1",
+    "call helper() this @o:1 -> @call1",
+    "new @o_1 object {}",
+    "observe @e_1 fulfilled 1",
+    "record @r_1 type \"semantic-record\"",
+    "part @r_1 \"return 6\"",
+    "close @r_1",
+    "record @r1 type \"\""
   ]
 }

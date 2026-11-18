@@ -144,9 +144,9 @@ EXPR := VALUE
       | (EXPR BINARY EXPR)
 ```
 
-`local(STRING)` is canonical only for source names that are also scalar keywords:
-`undefined`, `null`, `true`, `false`, `NaN` and `Infinity`. Ordinary locals use
-their bare name. Unary operators are `!`, `+`, `-`, `~`, `typeof`, `void`; the
+`local(STRING)` is canonical only for names that are also scalar or unary keywords:
+`undefined`, `null`, `true`, `false`, `NaN`, `Infinity`, `typeof` and `void`.
+Ordinary locals use their bare name. Unary operators are `!`, `+`, `-`, `~`, `typeof`, `void`; the
 space after the operator is required. Thus `(- 1)` is a unary expression and
 `(-1 + 2)` has a negative numeric literal as its left operand.
 
@@ -271,3 +271,10 @@ alternative used by both JavaScript and the independent native parser.
 irrelevant fields, expression budgets, source-name ambiguity, no evaluation of
 untrusted text and transport restoration. The broader controller and source
 proof tests establish semantic authority beyond this codec contract.
+
+The conventional causal-LM syntax-only arm uses `syntaxOnlyV6Grammar()` from
+`trace-gbnf.js`. Its task-independent GBNF includes every generated record form
+and all region profiles, excludes observed/transport forms, and rejects old
+JSON envelopes. An independent grammar recognizer checks acceptance against the
+same golden corpus. The strict codec still checks canonical spellings and
+typed bounds after generation; grammar guidance supplies no expected values.

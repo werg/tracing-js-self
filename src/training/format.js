@@ -89,7 +89,8 @@ export function validateHarnessRecord(record){
      !Number.isSafeInteger(record.ownerSequence)||record.ownerSequence<1)
     throw new TypeError('Invalid harness sequence');
   if(record.kind==='program'&&Object.hasOwn(record,'randomSeed')&&
-     (!Number.isInteger(record.randomSeed)||record.randomSeed<0||record.randomSeed>0xffffffff))
+     (!Number.isInteger(record.randomSeed)||Object.is(record.randomSeed,-0)||
+      record.randomSeed<0||record.randomSeed>0xffffffff))
     throw new TypeError('Invalid program deterministic seed');
   if(record.kind==='model-context'){
     const stateFields=['selectedState','realmPrefixDigest','visibleThrough'];
@@ -131,7 +132,7 @@ const sourceIdentifier=/^[$_\p{ID_Start}][$_\u200C\u200D\p{ID_Continue}]*$/u;
 function fail(message){throw new TypeError('Invalid '+WITNESS_VERSION+': '+message);}
 function assertSite(site){
   if(!object(site)||Object.keys(site).sort().join(',')!=='end,start'||
-     !Number.isSafeInteger(site.start)||site.start<0||
+     !Number.isSafeInteger(site.start)||Object.is(site.start,-0)||site.start<0||
      !Number.isSafeInteger(site.end)||site.end<=site.start)fail('source site');
 }
 // Structured observed context and opaque host metadata must survive the JSON
@@ -251,7 +252,7 @@ export function validateWitness(kind,fields){
      typeof fields.source!=='string'||!fields.source.length||!Array.isArray(fields.sites)))
     fail('source context');
   if(kind==='code'&&fields.randomSeed!==undefined&&
-     (!Number.isInteger(fields.randomSeed)||fields.randomSeed<0||
+     (!Number.isInteger(fields.randomSeed)||Object.is(fields.randomSeed,-0)||fields.randomSeed<0||
       fields.randomSeed>0xffffffff))fail('unsupported deterministic seed');
   if(kind==='code')assertJSONData(fields.sites);
   if(kind==='compute'||kind==='choose'){
@@ -272,7 +273,7 @@ export function validateWitness(kind,fields){
          typeof property.key!=='string'||keys.has(property.key))fail('allocation property');
       keys.add(property.key);assertValue(property.value);
     }
-    if(has(fields,'length')&&(fields.kind!=='array'||!Number.isSafeInteger(fields.length)||
+    if(has(fields,'length')&&(fields.kind!=='array'||!Number.isSafeInteger(fields.length)||Object.is(fields.length,-0)||
        fields.length<0||fields.length>4096))fail('allocation length');
     if(has(fields,'code')&&(fields.kind!=='closure'||typeof fields.code!=='string'||!fields.code))
       fail('allocation source code');
@@ -324,7 +325,7 @@ export function validateWitness(kind,fields){
       }
     }
     if(fields.profile==='dense-array-sum/1'&&
-       (!Number.isSafeInteger(fields.iterations)||fields.iterations<0||fields.iterations>1024||
+       (!Number.isSafeInteger(fields.iterations)||Object.is(fields.iterations,-0)||fields.iterations<0||fields.iterations>1024||
         typeof fields.accumulator!=='string'||!sourceIdentifier.test(fields.accumulator)))
       fail('semantic region loop');
   }

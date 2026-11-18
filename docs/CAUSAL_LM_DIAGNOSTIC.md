@@ -1,7 +1,7 @@
 # Conventional pretrained causal-LM diagnostic bridge
 
 `src/training/causal-lm-bridge.js` adds a separate experimental conventional
-causal-LM arm over the unchanged `semantic-trace/5` records. It shares the
+causal-LM arm over the production `semantic-trace/6` records. It shares the
 existing source admission, public replay, selected controller, effect broker and
 complete-outcome scorer. It does not claim native Megatoken admission or a
 successful learning experiment.
@@ -73,7 +73,7 @@ reference result, fixture schedule or private admission data.
 
 Every original token sequence and byte payload is retained. Missing termination,
 invalid UTF-8, context overflow or a changed loaded identity fails explicitly.
-The bridge does not trim whitespace, repair JSON, fill fields, retry against the
+The bridge does not trim whitespace, repair records, fill fields, retry against the
 teacher or replace a wrong result. The original record reaches
 `SelectedModelDriver`, which applies the same semantic checker and effect
 boundaries. These selections use a distinct conventional-model authority and do
@@ -104,12 +104,14 @@ seeds and exact weights still need their own frozen experiment declaration.
 
 ## Syntax-only control
 
-`--arm syntax-only` supplies a GBNF grammar restricting generated record kinds,
-framing and JSON syntax. It includes every generated v5 semantic kind and
-arbitrary JSON values. It contains no source-specific next operation, value,
-branch or effect payload. Semantic schema details and canonical bytes remain the
-unchanged controller's responsibility, so grammar compatibility is not a
-semantic pass. The runtime must acknowledge the exact applied grammar digest;
+`--arm syntax-only` supplies `syntaxOnlyV6Grammar()`, a GBNF grammar for every
+generated production form, including primitive spellings, expressions, identity
+links, Promise/job transitions and all three `evaluate` region forms. It rejects
+the old kind-plus-JSON envelope and excludes observed context and transport
+frames. It contains no source-specific next operation, value, branch or effect
+payload. Canonical number rounding, exact Unicode identifier categories,
+action-specific field constraints, budgets and semantic truth remain the strict
+codec and controller's responsibility. The runtime must acknowledge the exact applied grammar digest;
 otherwise the constrained arm is refused. Unconstrained and syntax-only results
 are labeled separately and never pooled.
 
@@ -122,9 +124,15 @@ termination and identity drift, and complete-outcome failure scoring. These are
 infrastructure tests with an explicitly synthetic byte tokenizer and controlled
 runtime. They establish no pretrained or learned execution success.
 
+`node --test test/training-v6-decoder-grammar.test.js` independently parses the
+emitted GBNF text and checks that it accepts every generated record in the
+shared V6 golden corpus, including all summary profiles. It also rejects every
+old JSON envelope and all observed/transport examples. This checks the actual
+grammar language in addition to the bridge's digest acknowledgement.
+
 A pretrained runtime/weights/tokenizer is not present in the implementation
 workspace, so no actual checkpoint qualification, fine-tuning or base-versus-
-trained learning comparison was performed. The native frozen v5 arm and its
-negative results remain unchanged. Actual model execution and the L1/L2
+trained learning comparison was performed. Historical V5 results retain their
+original contract labels; V6 needs its own measured learning run. Actual model execution and the L1/L2
 convergence gates require available pinned assets and a separately declared
 compute budget; the bridge is ready for that controlled experiment.

@@ -59,10 +59,13 @@ test('every binary and unary expression operator has an unambiguous parse',()=>{
 });
 
 test('expression names and scalar keywords never share a spelling',()=>{
-  for(const name of ['undefined','null','true','false','NaN','Infinity']){
+  for(const name of ['undefined','null','true','false','NaN','Infinity','typeof','void']){
     const fields={expr:{op:'local',name},result:['num',1]};
     assert.equal(encodeWitness('compute',fields),'compute local('+JSON.stringify(name)+') => 1');
     assert.deepEqual(decodeWitness(encodeWitness('compute',fields)).fields,fields);
+    const binary={expr:{op:'binary',operator:'+',left:fields.expr,
+      right:{op:'literal',value:['num',1]}},result:['num',2]};
+    assert.deepEqual(decodeWitness(encodeWitness('compute',binary)).fields,binary);
   }
   for(const name of ['random','local','trueValue','NaNValue','éclair','$value']){
     const fields={expr:{op:'local',name},result:['num',1]};
@@ -95,6 +98,16 @@ test('opaque structured metadata cannot silently lose or change fields',()=>{
   assert.throws(()=>encodeWitness('transfer',{kind:'cleanup',value:['undefined'],handler:cyclic}));
   assert.throws(()=>encodeWitness('allocate',{name:'o1',kind:'object',
     properties:[{key:'x',value:['num',1],hidden:true}]}));
+});
+
+test('structural integers cannot silently erase negative zero',()=>{
+  for(const [kind,fields] of [
+    ['code',{entry:'main',source:'x',sites:[],randomSeed:-0}],
+    ['allocate',{name:'a1',kind:'array',properties:[],length:-0}],
+    ['compute',{expr:{op:'local',name:'x'},result:['num',1],site:{start:-0,end:1}}],
+    ['summarize',{entry:'sum',arguments:[['ref','a1']],result:['num',0],
+      profile:'dense-array-sum/1',iterations:-0,accumulator:'total'}]
+  ])assert.throws(()=>encodeWitness(kind,fields));
 });
 
 test('untrusted trace text is parsed as data without evaluation',()=>{
