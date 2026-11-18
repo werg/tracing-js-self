@@ -247,6 +247,33 @@ def verify_training_start(initial, phase_start):
             'modelTensorIdentity': state_identity(actual['model']), 'optimizerSteps': 0}
 
 
+def source_exposure_receipt(prepared, sampling):
+    """Report actual non-padding native windows, not prepared corpus membership."""
+    from megatoken.data.storage import PreparedCorpus
+
+    if sampling.get('complete_history') is not True:
+        raise ValueError('Actual sampled-source history is incomplete')
+    counts = sampling.get('source_windows', {})
+    if not counts or any(type(value) is not int or value <= 0 for value in counts.values()):
+        raise ValueError('Actual sampled-source windows must be positive integers')
+    inventory = {}
+    with PreparedCorpus([str(prepared)], split='train') as corpus:
+        for episode in corpus.iter_episodes():
+            lineage = episode.lineage
+            if lineage.source_id in inventory:
+                raise ValueError('Prepared source IDs are not unique')
+            inventory[lineage.source_id] = {'sourceId': lineage.source_id,
+                                            'episodeId': episode.episode_id,
+                                            'family': lineage.family_id,
+                                            'taskId': lineage.task_id}
+    if not set(counts).issubset(inventory):
+        raise ValueError('Checkpoint exposure names a source outside the prepared corpus')
+    rows = [{**inventory[source], 'windows': count} for source, count in sorted(counts.items())]
+    return {'completeHistory': True, 'examplesSampled': len(rows),
+            'familiesSampled': len({row['family'] for row in rows}),
+            'windowsSampled': sum(counts.values()), 'sources': rows}
+
+
 def export_checked(checkpoint, destination):
     from megatoken.loading import load_trained
     from megatoken.served import ServedBundle, export_served
@@ -303,6 +330,8 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--examples', type=int, default=32)
     parser.add_argument('--steps', type=int, default=16)
+    parser.add_argument('--max-window-records', type=int, default=1,
+                        help='Native atomic-window record cap; 16 covers the bounded 32-example corpus in 95 updates')
     parser.add_argument('--rollout-cases', type=int, default=4)
     parser.add_argument('--rollout-tokens', type=int, default=128)
     parser.add_argument('--rollout-timeout', type=int, default=120)
@@ -313,6 +342,8 @@ def main():
         parser.error('All caps must be positive')
     if not 1 <= args.rollout_timeout <= 300 or args.rollout_tokens > 1024:
         parser.error('Rollout timeout must be <=300 seconds and token cap <=1024')
+    if not 1 <= args.max_window_records <= 128:
+        parser.error('Native atomic-window record cap must be between 1 and 128')
     root = args.output.resolve()
     root.mkdir(parents=True, exist_ok=False)
     report = {'schema': 'optimization-smoke/1', 'status': 'running',
@@ -320,7 +351,8 @@ def main():
               'stage': 'P1', 'purpose': 'diagnostic', 'split': 'train',
               'generalizationClaim': False, 'injectedSelections': False,
               'candidateSelection': 'round-robin families; smallest generated-token count then public bytes within each family',
-              'requestedSteps': args.steps, 'seed': args.seed, 'optimizerSteps': 0}
+              'requestedSteps': args.steps, 'maxWindowRecords': args.max_window_records,
+              'seed': args.seed, 'optimizerSteps': 0}
 
     def record(**updates):
         report.update(updates)
@@ -384,7 +416,8 @@ def main():
                              output=str(root / 'training'), device='cpu', precision='fp32', seed=args.seed,
                              max_steps=args.steps, microbatch_episodes=1, max_accumulation_windows=1,
                              accumulate_scored=1, accumulate_ingested=16384, max_history_tokens=16384,
-                             max_window_records=1, max_record_bytes=16384, generated_capacity=1024,
+                             max_window_records=args.max_window_records,
+                             max_record_bytes=16384, generated_capacity=1024,
                              model_overrides={'vocab_size': codec.vocab_size, 'max_capacity': 1024,
                                               'max_history_chunks': 1024},
                              effort=1, gradient_checkpointing=False, checkpoint_every=1, eval_every=0,
@@ -406,6 +439,9 @@ def main():
         checkpoint_check = checkpoint_receipt(checkpoint, initial_parameters)
         if checkpoint_check['globalStep'] != args.steps:
             raise ValueError('Actual optimizer step count differs from the requested cap')
+        exposure = source_exposure_receipt(prepared, checkpoint_check['sourceSampling'])
+        if exposure['windowsSampled'] != args.steps:
+            raise ValueError('Actual source exposure differs from the atomic update count')
         metrics = [json.loads(line) for line in (root / 'training/metrics.jsonl').read_text().splitlines()]
         training = [row for row in metrics if row['event'] == 'train']
         write_json(root / 'optimizer-verification.json', checkpoint_check)
@@ -424,6 +460,7 @@ def main():
                                        if key not in {'changedParameters', 'updatedOptimizerOwners'}},
                changedParameterCount=len(checkpoint_check['changedParameters']),
                updatedOptimizerOwnerCount=len(checkpoint_check['updatedOptimizerOwners']),
+               sourceExposure=exposure,
                supervisedLexicalTokens=sum(row['denominators']['lexical'] for row in training),
                trainingSummary=[{'step': row['global_step'], 'gradientNorm': row['gradient_norm'],
                                  'gradientDomains': {domain: row['gradient_norm_' + domain]
@@ -446,7 +483,8 @@ def main():
                         'observedMasked': True, 'generatedSupervised': True,
                         'checkpointReloadExact': True, 'servedReloadExact': True,
                         'completeHeldInExecutions': all(row['wholeTaskSuccess'] for row in trained),
-                        'approximately32Examples': len(selected) >= 32}
+                        'approximately32Examples': len(selected) >= 32,
+                        'approximately32ExamplesSampled': exposure['examplesSampled'] >= 32}
         record(status='completed', phase='complete', requirements=requirements,
                optimizationSmokePassed=all(requirements.values()),
                remaining=[] if all(requirements.values()) else [

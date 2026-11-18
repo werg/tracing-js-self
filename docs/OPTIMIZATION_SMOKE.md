@@ -43,6 +43,17 @@ holding its memory alongside repeated large private registries. The report
 records registry counts and the preparation process's measured peak RSS.
 
 Training is capped by `--steps` and `--train-timeout` (900 seconds by default).
+`--max-window-records` controls the supported native atomic-window record cap
+(default 1, at most 128). The native sampler finishes all causal windows of one
+permuted episode before advancing to the next. With a one-record cap, a short
+run can repeatedly train a few sources. A larger record cap groups records
+within each atomic meridian, preserving the same records, targets, and causal
+boundaries. It does not interleave episodes or rewrite the training format.
+For the recorded 32-example release-C corpus, the native window plan requires
+320 updates for one epoch at cap 1 and 95 updates at cap 16. Those counts are
+specific to that exact prepared corpus. Do not assume 32 updates visit 32
+examples. `sourceExposure` maps actual checkpoint window counts to prepared
+source identities and families and refuses unknown or incomplete histories.
 Rollouts are independently capped by `--rollout-timeout` (120 seconds by
 default) and `--rollout-tokens`. The underlying selected transport also retains
 its 30-second per-RPC limit. The native trainer checkpoints every optimizer
@@ -90,7 +101,7 @@ training report independently records actual optimizer steps.
 
 `status: completed` means the measurement pipeline finished. The separate
 `optimizationSmokePassed` flag requires all checks, at least 32 admitted
-training examples, and successful complete selected executions for every
+training examples actually sampled, and successful complete selected executions for every
 requested trained rollout. A failure to render a valid first record is a
 measured learning failure, even when optimization and checkpoint checks pass.
 Neither flag establishes generalization: these are held-in corpus examples.
