@@ -1400,6 +1400,16 @@ if(object.kind==='regexp'){
             throw new TypeError('Object descriptor and prototype operations on declared errors are outside the bounded error profile');
           if(callable[0]==='intrinsic'&&callable[1]==='Promise')
              guestFault('TypeError','Promise must be constructed with new');
+          if(callable[0]==='intrinsic'&&callable[1]==='Number'){
+            // A declared primitive-only intrinsic leaf. Object ToPrimitive
+            // may invoke guest code and is deliberately outside this branch.
+            // Arguments were already evaluated in source order, including
+            // ignored trailing arguments. Omission differs from undefined.
+            const value=args[0]?.value;
+            if(value&&!['undefined','null','bool','str','num','bigint'].includes(value[0]))
+              throw new TypeError('Number conversion requires a primitive in the bounded profile');
+            return {...operands(fn,...args),...result(encode(args.length?Number(decode(value)):0))};
+          }
            if(callable[0]==='builtinfn' &&
               /^Promise[.]executor[.](resolve|reject):p[0-9]+$/.test(callable[1])){
              const [,mode,pid]=callable[1].match(/^Promise[.]executor[.](resolve|reject):(p[0-9]+)$/);
