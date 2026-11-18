@@ -95,6 +95,14 @@ The diagnostic uses the companion's P1 recurrent training engine over verified
 v5 records. Production SE/SC launch gates, frozen experiment receipts,
 donor/hindsight assets, and coordinator requirements remain intact. A larger
 production experiment still needs those assets and its own explicit budget.
+The diagnostic report is not a held-out evaluation report or a native semantic
+experiment budget receipt. It must not be submitted as base-versus-trained
+transfer evidence to the pilot comparator; that requires actual configured
+SE/SC experiment receipts and a separately frozen evaluation cohort.
 The current companion corpus preparer requires a physical capacity of at least
 768 because its default soft chunk limit is 768; this runner uses the supported
 1024-token capacity and 1024-event history without modifying that consumer.
+The CPU trainer currently records zero for its GPU allocator peak-memory
+counter. That counter does not measure CPU training memory. The native serving
+profiles separately retain observed process memory; neither quantity is a
+claim that a larger training configuration fits in memory.
