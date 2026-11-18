@@ -1,0 +1,289 @@
+{
+  "schema": "optimization-diagnostic-summary/1",
+  "interpretation": "all32 prepared members and their9379 targets consumed exactly once; actual complete-execution smoke failed",
+  "examplesPrepared": 32,
+  "familiesPrepared": 29,
+  "actualSourceExposure": {
+    "completeHistory": true,
+    "examplesSampled": 32,
+    "familiesSampled": 29,
+    "windowsSampled": 49,
+    "sources": [
+      {
+        "sourceId": "semantic-harness:0626bdae1d923c5f",
+        "episodeId": "semantic:harness:0626bdae1d923c5f41a0170d332929469bcab6d0434ce7c3538613d091b5459d",
+        "family": "compound-effectful",
+        "taskId": "compound-effectful",
+        "windows": 2
+      },
+      {
+        "sourceId": "semantic-harness:07a269eea5d04b4a",
+        "episodeId": "semantic:harness:07a269eea5d04b4ad3952e30a4cc2f006d623fd66053ddd053ac278bcce75a67",
+        "family": "observed-branch",
+        "taskId": "branch-1",
+        "windows": 2
+      },
+      {
+        "sourceId": "semantic-harness:181a8f0cf6ce5f50",
+        "episodeId": "semantic:harness:181a8f0cf6ce5f50ab5d7f8c32aa4a6e4f9363ed5083f5e6de1b519ea4e23957",
+        "family": "synchronous-error",
+        "taskId": "sync-rejection",
+        "windows": 1
+      },
+      {
+        "sourceId": "semantic-harness:2ec6688d67a231ce",
+        "episodeId": "semantic:harness:2ec6688d67a231cec9cc429be246dad41e3978ac5c0514b75bba9d3208cd71a1",
+        "family": "semantic-recipe:rectangle-perimeter",
+        "taskId": "rectangle-perimeter-pure",
+        "windows": 1
+      },
+      {
+        "sourceId": "semantic-harness:31c67d32173a17df",
+        "episodeId": "semantic:harness:31c67d32173a17dfe3b9e288fb5a43cb00cd9af1e153c9cfe67e8a42e22e4af0",
+        "family": "owned-microtask",
+        "taskId": "owned-microtask",
+        "windows": 1
+      },
+      {
+        "sourceId": "semantic-harness:32db05b865768c4f",
+        "episodeId": "semantic:harness:32db05b865768c4f84680cfcf2af9e099cb14ad39afe97fb52798947d67913fa",
+        "family": "semantic-recipe:capped-budget",
+        "taskId": "capped-budget-pure",
+        "windows": 1
+      },
+      {
+        "sourceId": "semantic-harness:34cd45445206c0fc",
+        "episodeId": "semantic:harness:34cd45445206c0fc45313e2c1923805253ab1f93d50e4d99479cdf5945cace80",
+        "family": "semantic-recipe:parity-adjustment",
+        "taskId": "parity-adjustment-pure",
+        "windows": 1
+      },
+      {
+        "sourceId": "semantic-harness:3a29c5a9aa613b2a",
+        "episodeId": "semantic:harness:3a29c5a9aa613b2ac7dc6bbc171064b94f398cc3ae5b04e92ec232c3a5e4c700",
+        "family": "platform-observation",
+        "taskId": "clock-console",
+        "windows": 1
+      },
+      {
+        "sourceId": "semantic-harness:3b94c35e35aafa43",
+        "episodeId": "semantic:harness:3b94c35e35aafa434202c5adb507d5c1d3566636f1956360bb847c8e3a5381f1",
+        "family": "two-outstanding",
+        "taskId": "two-pending-reversed",
+        "windows": 2
+      },
+      {
+        "sourceId": "semantic-harness:421b8b09eba5a3e2",
+        "episodeId": "semantic:harness:421b8b09eba5a3e23b8e570e14fb8608b5c59d74d2935c28b8dc58b6dc95258b",
+        "family": "owned-callback",
+        "taskId": "callback-captured-write",
+        "windows": 4
+      },
+      {
+        "sourceId": "semantic-harness:4396063bd00df69b",
+        "episodeId": "semantic:harness:4396063bd00df69b5da4ba76185cb15160fa8934550ef96d93ff0c0a6d1636e1",
+        "family": "natlang-cell-call",
+        "taskId": "natlang-cell-call",
+        "windows": 2
+      },
+      {
+        "sourceId": "semantic-harness:44bf4be458d27f62",
+        "episodeId": "semantic:harness:44bf4be458d27f62d27430206b7657eb02efa12ec76ec2eff7d098e4c1414f94",
+        "family": "semantic-recipe:rectangular-capacity",
+        "taskId": "rectangular-capacity-pure",
+        "windows": 1
+      },
+      {
+        "sourceId": "semantic-harness:50ccd8fac330f92f",
+        "episodeId": "semantic:harness:50ccd8fac330f92f264fd92a60df97a4dc61a673eed7a7c25dedfc8e5656a099",
+        "family": "semantic-recipe:midpoint",
+        "taskId": "midpoint-pure",
+        "windows": 1
+      },
+      {
+        "sourceId": "semantic-harness:586a0a823555038f",
+        "episodeId": "semantic:harness:586a0a823555038f7275af2d9911a90bfd84afd8f946869e658cbd2acf2d6ec9",
+        "family": "semantic-recipe:weighted-average",
+        "taskId": "weighted-average-pure",
+        "windows": 1
+      },
+      {
+        "sourceId": "semantic-harness:62bc2621b9a73985",
+        "episodeId": "semantic:harness:62bc2621b9a7398516190d23c80fa58d857f49e2ba13a0d7734272309eef4cf5",
+        "family": "semantic-recipe:unit-conversion",
+        "taskId": "unit-conversion-pure",
+        "windows": 1
+      },
+      {
+        "sourceId": "semantic-harness:7c05614d5a35833c",
+        "episodeId": "semantic:harness:7c05614d5a35833c18302d24a82b5d93cd16d609ce7487af51fc47ffe158b0ab",
+        "family": "semantic-recipe:relative-growth",
+        "taskId": "relative-growth-pure",
+        "windows": 1
+      },
+      {
+        "sourceId": "semantic-harness:827022c4f589483d",
+        "episodeId": "semantic:harness:827022c4f589483d1c07fa7dc027677b0fc2f8ab614d200b1db94683d440367a",
+        "family": "promise-reaction",
+        "taskId": "promise-reaction",
+        "windows": 2
+      },
+      {
+        "sourceId": "semantic-harness:8d2e43bb4c5a0e67",
+        "episodeId": "semantic:harness:8d2e43bb4c5a0e67ac9d109a2dabcbff60f53538ae6c437e9cfe04c2fe3363cb",
+        "family": "semantic-recipe:triangular-series",
+        "taskId": "triangular-series-pure",
+        "windows": 1
+      },
+      {
+        "sourceId": "semantic-harness:9193bd760d71e4e1",
+        "episodeId": "semantic:harness:9193bd760d71e4e101eed32649f4f40da51173913e99b6325bf195e33da18189",
+        "family": "semantic-recipe:flag-intersection",
+        "taskId": "flag-intersection-pure",
+        "windows": 1
+      },
+      {
+        "sourceId": "semantic-harness:9251f92f0cc9dd71",
+        "episodeId": "semantic:harness:9251f92f0cc9dd713b888b40009c7cb66a6b1b4d0c70b5089caea601d342a3d4",
+        "family": "dom-mutation-release",
+        "taskId": "dom-mutation-release",
+        "windows": 2
+      },
+      {
+        "sourceId": "semantic-harness:a1cae9dbd7fcf4b0",
+        "episodeId": "semantic:harness:a1cae9dbd7fcf4b0e3eddaf89e6faa9d64b51ebb1eff1d125fc603e92ced340f",
+        "family": "compound-pure",
+        "taskId": "compound-pure",
+        "windows": 1
+      },
+      {
+        "sourceId": "semantic-harness:a41afcc81e031951",
+        "episodeId": "semantic:harness:a41afcc81e031951d5e9b44cbba9df319ef0374ba2d3a89e98a07c341fb74186",
+        "family": "semantic-recipe:absolute-distance",
+        "taskId": "absolute-distance-pure",
+        "windows": 1
+      },
+      {
+        "sourceId": "semantic-harness:b6ff96f3b21c026b",
+        "episodeId": "semantic:harness:b6ff96f3b21c026bbf4812c4caae38415bce66fa62a807996c14a2b319903071",
+        "family": "semantic-recipe:absolute-distance",
+        "taskId": "semantic-recipe:absolute-distance",
+        "windows": 3
+      },
+      {
+        "sourceId": "semantic-harness:ce24b3d371c9d028",
+        "episodeId": "semantic:harness:ce24b3d371c9d0285b50204562302416ac6b77eb158eb605eb65ee2b15b350b6",
+        "family": "semantic-recipe:flag-union",
+        "taskId": "flag-union-pure",
+        "windows": 1
+      },
+      {
+        "sourceId": "semantic-harness:cf566a052cac3ebb",
+        "episodeId": "semantic:harness:cf566a052cac3ebb33719723204aa3ae598a064953781af09bee500edfc82298",
+        "family": "semantic-recipe:modular-clock",
+        "taskId": "modular-clock-pure",
+        "windows": 1
+      },
+      {
+        "sourceId": "semantic-harness:cfa903d36c296f2d",
+        "episodeId": "semantic:harness:cfa903d36c296f2d5d90cd23c85a3bef2dfdddd151155d137352d1736d43f14a",
+        "family": "native-result-graph",
+        "taskId": "native-result-graph",
+        "windows": 2
+      },
+      {
+        "sourceId": "semantic-harness:d2488b66f4b3be4b",
+        "episodeId": "semantic:harness:d2488b66f4b3be4bc332a37edb7e02988cc99ff05b9adb49cf6773e675a058aa",
+        "family": "semantic-recipe:overtime-rate",
+        "taskId": "overtime-rate-pure",
+        "windows": 1
+      },
+      {
+        "sourceId": "semantic-harness:dcaeefc92cff1a63",
+        "episodeId": "semantic:harness:dcaeefc92cff1a63ad6e9ba476065b387327a190c08628fdf8a700abba17b9c9",
+        "family": "async-counter",
+        "taskId": "counter-0",
+        "windows": 2
+      },
+      {
+        "sourceId": "semantic-harness:e04aca8c0cc66eca",
+        "episodeId": "semantic:harness:e04aca8c0cc66eca6f997a766fff6d2a396cd9049b97ae9e9a95589c38efd6c0",
+        "family": "promise-cleanup",
+        "taskId": "promise-rejection-finally",
+        "windows": 2
+      },
+      {
+        "sourceId": "semantic-harness:e5c1a5415539754f",
+        "episodeId": "semantic:harness:e5c1a5415539754fdf7194b581d4a5e756a6c3bebe2fe37441aca1b3b9c954fa",
+        "family": "observed-branch",
+        "taskId": "branch-0",
+        "windows": 2
+      },
+      {
+        "sourceId": "semantic-harness:f0f289f7bc556737",
+        "episodeId": "semantic:harness:f0f289f7bc5567375f3da592f708c6df827f6d456a6daa09ed4c4b1cfdb565bb",
+        "family": "http-response-stream",
+        "taskId": "http-response-stream",
+        "windows": 2
+      },
+      {
+        "sourceId": "semantic-harness:fb87996a2ed8294c",
+        "episodeId": "semantic:harness:fb87996a2ed8294c2969a8ffca90ab42a9fcd3eb5132053183770fffd7531a33",
+        "family": "async-counter",
+        "taskId": "checkpoint-source-reread",
+        "windows": 2
+      }
+    ]
+  },
+  "optimizerSteps": 49,
+  "supervisedLexicalTokens": 9379,
+  "nativeWindowPlanMatched": true,
+  "requirements": {
+    "optimizerUpdated": true,
+    "initialBaseLoadedExact": true,
+    "observedMasked": true,
+    "generatedSupervised": true,
+    "checkpointReloadExact": true,
+    "servedReloadExact": true,
+    "completeHeldInExecutions": false,
+    "approximately32Examples": true,
+    "approximately32ExamplesSampled": true
+  },
+  "baseCheckpointSha256": "1e72b5c00d2554a1c0d5c732d48b0cf8936ddb1c5185dc56a10959fcd34d62db",
+  "baseModelSha256": "4ee47430d82fc7e6065bf8319165faca3d4c0d759039a873ac5f0cdc5e469d67",
+  "trainedCheckpointSha256": "8a252dff697b1de7fa842c0370cc6a37626e4720be23858b39b82f100b93546c",
+  "trainedModelSha256": "853c12ec19ccd6add5850f76773fe4a781c923cfd4e7c226a1e7fc4071484103",
+  "changedParameterCount": 311,
+  "updatedOptimizerOwnerCount": 315,
+  "trainingWallSeconds": 636.9499350510014,
+  "stepMedianSeconds": 12.553708235998783,
+  "stepMinimumSeconds": 5.576270685000054,
+  "stepMaximumSeconds": 22.766923560000578,
+  "optimizerKernelSeconds": 1.7046752230053244,
+  "arms": {
+    "fixed-weights": {
+      "episodes": 4,
+      "wholeTaskSuccesses": 0,
+      "failureCategories": {
+        "SemanticSelectionError": 3,
+        "TypeError": 1
+      },
+      "allHardGatesZero": true,
+      "allCleanupZero": true,
+      "wallSeconds": 32.26736635599809
+    },
+    "trained": {
+      "episodes": 4,
+      "wholeTaskSuccesses": 0,
+      "failureCategories": {
+        "SemanticSelectionError": 1,
+        "TypeError": 3
+      },
+      "allHardGatesZero": true,
+      "allCleanupZero": true,
+      "wallSeconds": 30.909003035998467
+    }
+  },
+  "generalizationClaim": false,
+  "productionQualification": false
+}
