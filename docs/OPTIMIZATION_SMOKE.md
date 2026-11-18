@@ -44,14 +44,25 @@ records registry counts and the preparation process's measured peak RSS.
 
 Training is capped by `--steps` and `--train-timeout` (900 seconds by default).
 `--max-window-records` controls the supported native atomic-window record cap
-(default 1, at most 128). The native sampler finishes all causal windows of one
+(default 1, at most 128); `--scored-decisions` controls its decision cap (default
+2, at most 64). The native sampler finishes all causal windows of one
 permuted episode before advancing to the next. With a one-record cap, a short
 run can repeatedly train a few sources. A larger record cap groups records
-within each atomic meridian, preserving the same records, targets, and causal
+and complete atomic meridians, preserving the same records, targets, and causal
 boundaries. It does not interleave episodes or rewrite the training format.
-For the recorded 32-example release-C corpus, the native window plan requires
-320 updates for one epoch at cap 1 and 95 updates at cap 16. Those counts are
-specific to that exact prepared corpus. Do not assume 32 updates visit 32
+For the recorded 32-example release-C corpus, one epoch takes 320 updates at
+record cap 1 and decision cap 2; 170 at caps 16 and 2; 95 at caps 16 and 4; and
+49 at caps 16 and 32. An early manual profile used the packing helper's default
+decision cap 4 instead of the resolved diagnostic cap 2; it incorrectly forecast
+95 updates for the cap-16 run. That run and correction remain separate evidence.
+The runner now profiles the **fully resolved** native configuration before
+launch, retaining expected window indices, record IDs, source membership, scored
+targets, and final cursor. After training it requires exact native cursor,
+source-count, and scored-target agreement. Native per-window order is derived
+from its deterministic cursor contract; the engine does not independently log
+each window ID. `--require-full-epoch` refuses before launch unless every prepared
+target will be consumed once. These counts are specific to that exact prepared
+corpus. Do not assume 32 updates visit 32
 examples. `sourceExposure` maps actual checkpoint window counts to prepared
 source identities and families and refuses unknown or incomplete histories.
 Rollouts are independently capped by `--rollout-timeout` (120 seconds by
@@ -72,6 +83,9 @@ partial runs retain checkpoints, logs, and the last completed phase.
    loads that checkpoint through its supported phase-transition API. This
    binds the base weights directly; it does not infer their identity from a
    seed alone. The trainer also saves its phase-start checkpoint.
+   `--base-checkpoint` instead copies and loads the exact existing zero-update
+   base, allowing later diagnostic configurations to share identical checkpoint
+   bytes. A stepped checkpoint is refused for this option.
 3. **Real optimization.** The configured native training engine performs the
    requested updates. Committed weights must be finite, parameter ownership
    must match initialization, changed parameters must have optimizer moments,

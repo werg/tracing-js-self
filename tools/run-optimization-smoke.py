@@ -15,6 +15,7 @@ import hashlib
 import json
 import os
 import resource
+import shutil
 import subprocess
 import sys
 import time
@@ -230,6 +231,7 @@ def checkpoint_receipt(checkpoint, initial_parameters):
             'globalStep': payload['global_step'], 'reloadExact': True,
             'changedParameters': changed, 'updatedOptimizerOwners': updated,
             'allParametersFinite': True, 'counters': payload['counters'],
+            'nativeCursors': [rank['cursor'] for rank in payload['rank_state']],
             'sourceSampling': metadata['source_sampling']}
 
 
@@ -272,6 +274,61 @@ def source_exposure_receipt(prepared, sampling):
     return {'completeHistory': True, 'examplesSampled': len(rows),
             'familiesSampled': len({row['family'] for row in rows}),
             'windowsSampled': sum(counts.values()), 'sources': rows}
+
+
+def bind_initial_checkpoint(source, root, codec):
+    """Copy and load the same immutable zero-update base; do not reseed a substitute."""
+    from megatoken.loading import load_trained
+    from megatoken.training.checkpoint import load_checkpoint
+
+    payload, _ = load_checkpoint(source)
+    if (payload['global_step'] != 0 or payload['optimizer']['moments'] or
+            payload['codec_fingerprint'] != codec.fingerprint):
+        raise ValueError('Shared diagnostic base must have zero updates and the exact tokenizer')
+    del payload
+    destination = root / 'initialization/initialized-untrained'
+    shutil.copytree(source, destination)
+    trained = load_trained(destination, device='cpu')
+    if trained.codec.fingerprint != codec.fingerprint:
+        raise ValueError('Copied initial checkpoint tokenizer differs')
+    return destination, hashes(dict(trained.model.named_parameters()))
+
+
+def native_window_plan(config, codec):
+    """Freeze the real resolved native sampler's windows before optimizer launch."""
+    from megatoken.data.storage import PreparedCorpus
+    from megatoken.training.engine import window_config
+    from megatoken.training.stream import WindowStream
+
+    rows, first_epoch_windows, final_cursor = [], None, None
+    with PreparedCorpus(config.datasets) as corpus:
+        stream = WindowStream(corpus, codec, window_config(config), seed=config.seed)
+        while len(rows) < config.max_steps or first_epoch_windows is None:
+            item = stream.next()
+            if item is not None:
+                if item.episode.lineage.frozen_split != 'train':
+                    raise ValueError('Native diagnostic sampler selected a non-training example')
+                window = item.window
+                rows.append({'sourceId': item.episode.lineage.source_id,
+                             'family': item.episode.lineage.family_id,
+                             'episodeId': item.episode.episode_id,
+                             'windowIndex': window.index, 'start': window.start, 'end': window.end,
+                             'recordIds': [row.record.record_id for row in window.records],
+                             'scoredTokens': sum(sum(row.free_mask) for row in window.records)})
+            if len(rows) == config.max_steps and final_cursor is None:
+                final_cursor = stream.state_dict()
+            if stream.epoch > 0 and first_epoch_windows is None:
+                first_epoch_windows = len(rows)
+    selected = rows[:config.max_steps]
+    return {'schema': 'optimization-native-window-plan/1',
+            'resolvedWindowConfig': asdict(window_config(config)),
+            'seed': config.seed, 'requestedWindows': config.max_steps,
+            'windowsPerFirstEpoch': first_epoch_windows,
+            'expectedExamples': len({row['sourceId'] for row in selected}),
+            'expectedFamilies': len({row['family'] for row in selected}),
+            'expectedScoredTokens': sum(row['scoredTokens'] for row in selected),
+            'expectedSourceWindows': dict(Counter(row['sourceId'] for row in selected)),
+            'expectedFinalCursor': final_cursor, 'windows': selected}
 
 
 def export_checked(checkpoint, destination):
@@ -331,7 +388,13 @@ def main():
     parser.add_argument('--examples', type=int, default=32)
     parser.add_argument('--steps', type=int, default=16)
     parser.add_argument('--max-window-records', type=int, default=1,
-                        help='Native atomic-window record cap; 16 covers the bounded 32-example corpus in 95 updates')
+                        help='Native atomic-window record cap; all resolved bounds are profiled before launch')
+    parser.add_argument('--scored-decisions', type=int, default=2,
+                        help='Native causal-window decision cap; diagnostic default is 2')
+    parser.add_argument('--base-checkpoint', type=Path,
+                        help='Reuse this exact zero-update diagnostic base instead of initializing a new one')
+    parser.add_argument('--require-full-epoch', action='store_true',
+                        help='Refuse before launch unless the resolved plan visits every prepared target once')
     parser.add_argument('--rollout-cases', type=int, default=4)
     parser.add_argument('--rollout-tokens', type=int, default=128)
     parser.add_argument('--rollout-timeout', type=int, default=120)
@@ -344,6 +407,8 @@ def main():
         parser.error('Rollout timeout must be <=300 seconds and token cap <=1024')
     if not 1 <= args.max_window_records <= 128:
         parser.error('Native atomic-window record cap must be between 1 and 128')
+    if not 1 <= args.scored_decisions <= 64:
+        parser.error('Native scored-decision cap must be between 1 and 64')
     root = args.output.resolve()
     root.mkdir(parents=True, exist_ok=False)
     report = {'schema': 'optimization-smoke/1', 'status': 'running',
@@ -352,6 +417,8 @@ def main():
               'generalizationClaim': False, 'injectedSelections': False,
               'candidateSelection': 'round-robin families; smallest generated-token count then public bytes within each family',
               'requestedSteps': args.steps, 'maxWindowRecords': args.max_window_records,
+              'scoredDecisions': args.scored_decisions,
+              'fullEpochRequested': args.require_full_epoch,
               'seed': args.seed, 'optimizerSteps': 0}
 
     def record(**updates):
@@ -417,6 +484,7 @@ def main():
                              max_steps=args.steps, microbatch_episodes=1, max_accumulation_windows=1,
                              accumulate_scored=1, accumulate_ingested=16384, max_history_tokens=16384,
                              max_window_records=args.max_window_records,
+                             scored_decisions=args.scored_decisions,
                              max_record_bytes=16384, generated_capacity=1024,
                              model_overrides={'vocab_size': codec.vocab_size, 'max_capacity': 1024,
                                               'max_history_chunks': 1024},
@@ -424,7 +492,21 @@ def main():
                              deterministic=True, use_stage_mixture=False, use_effort_mixture=False)
         config_path = root / 'train-config.json'
         write_json(config_path, asdict(config))
-        initial, initial_parameters = create_initial_checkpoint(root, config, codec, masks['chunking'])
+        plan = native_window_plan(config, codec)
+        plan_path = root / 'native-window-plan.json'
+        write_json(plan_path, plan)
+        record(resolvedTrainingConfigSha256=sha256(config_path), nativeWindowPlanSha256=sha256(plan_path),
+               nativeWindowPlan={key: value for key, value in plan.items()
+                                 if key not in {'windows', 'expectedFinalCursor'}})
+        if args.require_full_epoch and (args.steps != plan['windowsPerFirstEpoch'] or
+                plan['expectedExamples'] != len(selected) or
+                plan['expectedScoredTokens'] != masks['counts']['generatedScoredTokens']):
+            raise ValueError('Resolved native window plan does not consume exactly one complete prepared epoch')
+        if args.base_checkpoint:
+            initial, initial_parameters = bind_initial_checkpoint(args.base_checkpoint.resolve(), root, codec)
+            record(initialCheckpointSource=str(args.base_checkpoint.resolve()))
+        else:
+            initial, initial_parameters = create_initial_checkpoint(root, config, codec, masks['chunking'])
         write_json(root / 'initial-parameter-identities.json', initial_parameters)
         gc.collect()
         base_bundle = export_checked(initial, root / 'served-base')
@@ -442,11 +524,16 @@ def main():
         exposure = source_exposure_receipt(prepared, checkpoint_check['sourceSampling'])
         if exposure['windowsSampled'] != args.steps:
             raise ValueError('Actual source exposure differs from the atomic update count')
+        if (checkpoint_check['sourceSampling']['source_windows'] != plan['expectedSourceWindows'] or
+                checkpoint_check['nativeCursors'] != [plan['expectedFinalCursor']]):
+            raise ValueError('Actual native source exposure/cursor differs from the frozen resolved window plan')
         metrics = [json.loads(line) for line in (root / 'training/metrics.jsonl').read_text().splitlines()]
         training = [row for row in metrics if row['event'] == 'train']
         write_json(root / 'optimizer-verification.json', checkpoint_check)
         if len(training) != args.steps or not all(row['gradient_norm'] > 0 for row in training):
             raise ValueError('Optimizer updates lack measured nonzero gradients')
+        if sum(row['denominators']['lexical'] for row in training) != plan['expectedScoredTokens']:
+            raise ValueError('Actual scored lexical targets differ from the frozen native window plan')
         gradient_domains = ['encoder', 'model', 'shared']
         if not all(any(row.get('gradient_norm_' + domain, 0) > 0 for row in training)
                    for domain in gradient_domains):
@@ -461,6 +548,7 @@ def main():
                changedParameterCount=len(checkpoint_check['changedParameters']),
                updatedOptimizerOwnerCount=len(checkpoint_check['updatedOptimizerOwners']),
                sourceExposure=exposure,
+               nativeWindowPlanMatched=True,
                supervisedLexicalTokens=sum(row['denominators']['lexical'] for row in training),
                trainingSummary=[{'step': row['global_step'], 'gradientNorm': row['gradient_norm'],
                                  'gradientDomains': {domain: row['gradient_norm_' + domain]
