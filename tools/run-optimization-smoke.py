@@ -14,6 +14,7 @@ import gc
 import hashlib
 import json
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -218,6 +219,38 @@ def export_checked(checkpoint, destination):
     return {**manifest, 'servedReloadExact': True}
 
 
+def generated_token_cost(profile):
+    """Count actual successful/failed decoder tokens once per native event.
+
+    The same failure evidence may be repeated in several receipts. Event IDs
+    identify the original decoder emission, not a retry or a rendered byte count.
+    Incomplete profiles remain lower bounds instead of invented exact costs.
+    """
+    events = {}
+
+    def visit(value):
+        if isinstance(value, dict):
+            event = value.get('selectedEventId')
+            tokens = value.get('emittedTokenIds')
+            if isinstance(event, str) and isinstance(tokens, list):
+                if any(not isinstance(token, int) or isinstance(token, bool) or token < 0 for token in tokens):
+                    raise ValueError('Invalid native emitted-token evidence')
+                if event in events and events[event] != tokens:
+                    raise ValueError('Conflicting native emitted-token evidence for one event')
+                events[event] = tokens
+            for child in value.values():
+                visit(child)
+        elif isinstance(value, list):
+            for child in value:
+                visit(child)
+
+    visit(profile)
+    complete = profile.get('complete') is True and profile.get('droppedRecords') == 0
+    return {'generatedTokens': sum(len(tokens) for tokens in events.values()),
+            'decoderEvents': len(events), 'complete': complete,
+            'scope': 'original-native-emitted-token-ids' if complete else 'retained-native-token-lower-bound'}
+
+
 def rollout(case, origin, bundle, consumer, root, args, env):
     destination = root / origin / f'{case["index"]:04d}'
     destination.mkdir(parents=True)
@@ -233,23 +266,65 @@ def rollout(case, origin, bundle, consumer, root, args, env):
                '--checkpoint-identity', bundle['model_sha256'],
                '--timeout-ms', str(args.rollout_timeout * 1000), '--cleanup-timeout-ms', '10000']
     started = time.monotonic()
+    summary = {'id': case['id'], 'family': case['family'], 'origin': origin,
+               'wholeTaskSuccess': False, 'traceValid': False,
+               'checkpointIdentity': bundle['model_sha256'],
+               'artifacts': str(destination), 'generatedTokenCost': None}
+    # A process group includes the evaluator's model child. A killed evaluator
+    # must not leave a decoder running after the declared case budget.
     with (destination / 'result.json').open('w') as output, (destination / 'stderr.log').open('w') as errors:
-        process = subprocess.run(command, input=json.dumps(case['envelope']), text=True,
-                                 stdout=output, stderr=errors, env=env,
-                                 timeout=args.rollout_timeout + 45)
-    if process.returncode:
-        return {'id': case['id'], 'origin': origin, 'wholeTaskSuccess': False,
-                'pipelineFailure': 'evaluator-process-exit', 'returnCode': process.returncode,
-                'artifacts': str(destination), 'wallSeconds': time.monotonic() - started}
-    actual = json.loads((destination / 'result.json').read_text())
-    gates = actual['hardGates']
-    success = actual['failure'] is None and actual['outcome'] == case['expected'] and not any(gates.values())
-    profile = json.loads((destination / 'serving-profile.json').read_text())
-    return {'id': case['id'], 'origin': origin, 'wholeTaskSuccess': success,
-            'checkpointIdentity': actual['checkpointIdentity'], 'failure': actual['failure'],
-            'hardGates': gates, 'costs': actual['costs'],
-            'cleanup': actual['outcome']['cleanup'], 'servingProfile': profile,
-            'artifacts': str(destination), 'wallSeconds': time.monotonic() - started}
+        process = subprocess.Popen(command, stdin=subprocess.PIPE, text=True, stdout=output,
+                                   stderr=errors, env=env, start_new_session=True)
+        try:
+            process.communicate(json.dumps(case['envelope']), timeout=args.rollout_timeout + 45)
+        except subprocess.TimeoutExpired:
+            os.killpg(process.pid, signal.SIGTERM)
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait()
+            summary.update(pipelineFailure='evaluator-timeout', returnCode=process.returncode)
+        else:
+            if process.returncode:
+                summary.update(pipelineFailure='evaluator-process-exit', returnCode=process.returncode)
+    summary['wallSeconds'] = time.monotonic() - started
+    profile = None
+    profile_path = destination / 'serving-profile.json'
+    if profile_path.exists():
+        try:
+            profile = json.loads(profile_path.read_text())
+            summary['servingProfile'] = profile
+            summary['generatedTokenCost'] = generated_token_cost(profile)
+        except (ValueError, TypeError) as error:
+            summary['pipelineFailure'] = 'invalid-native-profile'
+            summary['profileError'] = str(error)
+    if 'pipelineFailure' not in summary:
+        try:
+            actual = json.loads((destination / 'result.json').read_text())
+            if (actual['schema'] != 'semantic-evaluation-result/4' or actual['origin'] != origin or
+                    actual['checkpointIdentity'] != bundle['model_sha256'] or
+                    actual['inferenceIdentity']['seed'] != case['envelope']['seed']):
+                raise ValueError('Actual rollout identity differs from the frozen request')
+            if profile is None or profile['identity']['modelSha256'] != bundle['model_sha256']:
+                raise ValueError('Actual native serving identity is absent or differs')
+            gates = actual['hardGates']
+            required = {'futureObservationLeaks', 'unauthorizedEffects', 'untrackedNativeFallback',
+                        'falseAdmissions', 'replayNativeEffects'}
+            if set(gates) != required or any(not isinstance(value, int) or isinstance(value, bool) or value < 0
+                                            for value in gates.values()):
+                raise ValueError('Incomplete or invalid integrity gate receipt')
+            rejections = actual['rejections']
+            trace_valid = (actual['failure'] is None and not rejections and
+                           actual.get('firstSemanticInconsistency') is None and not any(gates.values()))
+            summary.update(wholeTaskSuccess=trace_valid and actual['outcome'] == case['expected'],
+                           traceValid=trace_valid, failure=actual['failure'],
+                           rejections=rejections, firstSemanticInconsistency=actual.get('firstSemanticInconsistency'),
+                           hardGates=gates, costs=actual['costs'], cleanup=actual['outcome']['cleanup'])
+        except (ValueError, TypeError, KeyError) as error:
+            summary.update(pipelineFailure='invalid-evaluator-result', resultError=str(error))
+    write_json(destination / 'summary.json', summary)
+    return summary
 
 
 def main():
