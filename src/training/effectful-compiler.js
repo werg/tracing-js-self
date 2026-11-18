@@ -89,8 +89,9 @@ export function ownedEffectfulOutcome(bundle){
 export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='program1',
     invocationId='invocation1',trackId='worker1',realmId='realm1',sourceLineage=null,
     maxGenerated=16384,realmPolicy='retained',triggerId='teacher-entry',checkpointAtFirstAwait=false,
-    representation='compact',maxOperators=8}={}){
+    representation='compact',maxOperators=8,localStateCompaction=false}={}){
   if(typeof checkpointAtFirstAwait!=='boolean')refuse('checkpointAtFirstAwait must be boolean');
+  if(typeof localStateCompaction!=='boolean')refuse('localStateCompaction must be boolean');
   if(representation!=='compact')refuse('Only the canonical semantic trace is supported');
   if(!Number.isInteger(maxOperators)||maxOperators<1||maxOperators>8)
     refuse('compact expressions require an operator bound from 1 through 8');
@@ -143,7 +144,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   const awaitingCompletion=new Map();
   const deferredClosures=new Map();
   const pendingComputations=[];
-  let fusedComputations=0,foldedComputations=0,fusedBindings=0;
+  let fusedComputations=0,foldedComputations=0,fusedBindings=0,removedCellWrites=0;
   let cellOrdinal=0,frameOrdinal=0,continuationOrdinal=0,eventOrdinal=0,generated=0,jobOrdinal=0;
   for(const program of Object.values(bundle.programs))for(const instruction of program.instructions)
     if(instruction.arg?.codeId&&['DEF_FN','MAKE_FUNCTION'].includes(instruction.op)){
@@ -237,6 +238,24 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     return {last,write};
   }
   function emit(owner,kind,fields,event=null,rule=kind){
+    // Versioned, opt-in experiment; the default v5 target remains byte-stable.
+    // A normal assignment to an already published lexical cell is idempotent
+    // only when the exact cell and tagged value already match. This cannot
+    // remove an initialization, property setter, iteration-cell identity link,
+    // computation, exception transfer or any call/effect. Captured closures
+    // retain the same public cell; equal-looking but distinct refs never match.
+    if(localStateCompaction&&kind==='bind'&&rule==='cell-write'&&
+       event?.operation==='binding.write'&&!Object.hasOwn(fields,'from')){
+      flushComputations();
+      const locals=controller(owner).locals;
+      if(locals.has(fields.name)&&isDeepStrictEqual(locals.get(fields.name),fields.value)){
+        elided.push({journalEvent:event.eventId,operation:event.operation,
+          reason:'idempotent-committed-cell-write',rule:'owned-idempotent-cell-write/1',
+          cell:fields.name,value:copy(fields.value)});
+        removedCellWrites++;
+        return null;
+      }
+    }
     const certificate={rule:'owned-'+rule+'/4',journalEvents:event?[event.eventId]:[],
       source:event?.siteId?{sourceId:event.sourceId,siteId:event.siteId}:null};
     // Only external requests need model-predicted source coordinates for
@@ -778,7 +797,8 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     exceptionProfile:DECLARED_EXCEPTION_PROFILE,
     sourceDigest:hash(source),archiveDigest:hash(bundle),capabilities,
     representation:'compact',compaction:{maxOperators,maxNodes:32,removedComputations:fusedComputations,
-      foldedConditions:foldedComputations,fusedBindings},
+      foldedConditions:foldedComputations,fusedBindings,...(localStateCompaction?{
+        experiment:'local-cell-idempotence/1',removedCellWrites}:{})},
     generatedRecords:generated,publicDigest:hash(exported.public)};
   const replayed=SelectedExecutionHarness.replay(exported);
   for(const activation of replayed.invocations.values())
