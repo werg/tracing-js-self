@@ -1,0 +1,42 @@
+{
+  "schema": "failed-native-optimization-index/1",
+  "sourceRoot": "/workspace/scratch/0c59f3502a6d/evidence/optimization-full-episode-32-main",
+  "files": [
+    {
+      "path": "report.json",
+      "bytes": 22512,
+      "sha256": "7ce83e561bb2097da2ccc961d75b45fc748ff4a8f44a82f57d83b014126cb5a7"
+    },
+    {
+      "path": "train-config.json",
+      "bytes": 2327,
+      "sha256": "d12598873ec2049e1955243997cb8c96ab967274b18a26427a8820d1c8d63a0a"
+    },
+    {
+      "path": "native-window-plan.json",
+      "bytes": 9794,
+      "sha256": "66706dd5c36818409ccf4ca3a120689e502d56fd5d13d6b4e38a8196c1499b44"
+    },
+    {
+      "path": "training/metrics.jsonl",
+      "bytes": 12567,
+      "sha256": "dfc5a31b3a59a7e646264e664e5fde79323a7865fbb36a71b9ece12d5ef3d333"
+    },
+    {
+      "path": "training.log",
+      "bytes": 12567,
+      "sha256": "dfc5a31b3a59a7e646264e664e5fde79323a7865fbb36a71b9ece12d5ef3d333"
+    },
+    {
+      "path": "partial-training-recheck.json",
+      "bytes": 1633,
+      "sha256": "77d49c085896fe3ef5cadb3023741cc345a4234a5e0a2bdb4cff02cf7b4d2e8b"
+    },
+    {
+      "path": "/workspace/scratch/0c59f3502a6d/evidence/learning-experiment-full-episode-main.json",
+      "bytes": 153660,
+      "sha256": "30d6fafb57dfa9a31c33dd9d960949274e5a0821c8f2735dee1dfc22752c187d",
+      "location": "private-run-archive"
+    }
+  ]
+}

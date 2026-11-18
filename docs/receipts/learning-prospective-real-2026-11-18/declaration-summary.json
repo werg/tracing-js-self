@@ -1,0 +1,1801 @@
+{
+  "schema": "semantic-learning-experiment/1",
+  "name": "prospective-native-real-transfer-with-reserved-inputs",
+  "frozenAt": "2026-11-18T13:00:59.502Z",
+  "mode": "exploratory",
+  "baseOrigin": "newly-initialized",
+  "optimizerSeeds": [
+    17
+  ],
+  "initializationSeed": 17,
+  "decoderSeed": 17,
+  "checkpointSteps": [
+    16,
+    64
+  ],
+  "producerRevision": "5753de14760b76754fd1bd49ca7c8bfc6de85831",
+  "nativePolicy": {
+    "consumerRevision": "6206b33a55eba3e50f80498f906439221bc289b7",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+  },
+  "sourceRegistryDigest": "ef251278a17c87b8a968944a17546b01bb2e24db2f318c08d6eeca102591481b",
+  "sourceVerification": {
+    "scope": "every-admitted-candidate",
+    "concurrency": 4
+  },
+  "rolloutBudget": {
+    "nativeMaxTokensPerFragment": 32,
+    "maximumFragmentsPerDecision": 64,
+    "secondsPerCase": 120
+  },
+  "trainingBudget": {
+    "sampler": "native-sequential-permuted-episodes",
+    "maxWindowRecords": 32,
+    "maxScoredDecisions": 16,
+    "maxWindowTokens": 16384,
+    "seconds": 900
+  },
+  "policy": {
+    "minimumUsefulImprovement": 0.05,
+    "maximumCriticalSliceRegression": 0.05,
+    "confidence": 0.95,
+    "bootstrapReplicates": 2000,
+    "bootstrapSeed": 101,
+    "minimumConfirmatoryTestComponents": 100
+  },
+  "population": {
+    "train": {
+      "available": {
+        "episodes": 148,
+        "sourceFamilies": 74,
+        "independentComponents": 21,
+        "learnerGeneratedTokens": 129039
+      },
+      "selected": {
+        "episodes": 32,
+        "sourceFamilies": 21,
+        "independentComponents": 21,
+        "learnerGeneratedTokens": 30595
+      }
+    },
+    "validation": {
+      "available": {
+        "episodes": 8,
+        "sourceFamilies": 4,
+        "independentComponents": 2,
+        "learnerGeneratedTokens": 1609
+      },
+      "selected": {
+        "episodes": 8,
+        "sourceFamilies": 4,
+        "independentComponents": 2,
+        "learnerGeneratedTokens": 1609
+      }
+    },
+    "test": {
+      "available": {
+        "episodes": 18,
+        "sourceFamilies": 10,
+        "independentComponents": 8,
+        "learnerGeneratedTokens": 8110
+      },
+      "selected": {
+        "episodes": 18,
+        "sourceFamilies": 10,
+        "independentComponents": 8,
+        "learnerGeneratedTokens": 8110
+      }
+    }
+  },
+  "auxiliaryPopulation": {
+    "available": 4,
+    "selected": {
+      "episodes": 4,
+      "sourceFamilies": 4,
+      "independentComponents": 4,
+      "learnerGeneratedTokens": 840
+    }
+  },
+  "selection": "deterministic-round-robin-by-authenticated-source-component",
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "limits": [
+    "Selected continuation execution is measured separately from pure output transfer.",
+    "Frozen source components do not establish absence from a pretrained model training corpus.",
+    "A small exploratory cohort does not support a confirmatory generalization claim."
+  ],
+  "scope": "Prospective frozen declaration only. No matching optimizer run or measured accuracy.",
+  "originalFrozenExperimentSha256": "531b5b14d0e55935cace2c66685e47ab2e8c1237329ece86be5860444312c5f3",
+  "originalFrozenExperimentBytes": 244043,
+  "originalFrozenExperimentPath": "/workspace/scratch/0c59f3502a6d/evidence/learning-experiment-prospective-real-fixed.json",
+  "training": [
+    {
+      "id": "utility:vscode/arrays.ts/arrayInsert/real-utilities-b26120a7204330667eeba607@77a3a9ca6911bb68",
+      "sourceTaskId": "real-utilities-b26120a7204330667eeba607",
+      "family": "utility:vscode/arrays.ts/arrayInsert",
+      "split": "train",
+      "sourceCluster": "component:00c29ea794d8eedd0eb1282d361db202212b4aa25792ce18723a17ee837f2ca6",
+      "ancestorIds": [
+        "utility:vscode/arrays.ts/arrayInsert",
+        "upstream:microsoft/vscode:src/vs/base/common/arrays.ts"
+      ],
+      "identityDigest": "77a3a9ca6911bb68199eaf3e0985351bccb4e2c9208599a523c1a53f707aaef9",
+      "fileSha256": "6b86b47eacc02e6a5d1d7559dfe73cfac9fb90edc82c786dc095ad05e1e9d2a5",
+      "generatedTokens": 353,
+      "scenario": {
+        "sourceKey": "ba758b0c967ca672e25f21f1dc04d1b9816fa857e9b7b6c941ccb2279cb0fe0a",
+        "inputKey": "2f68e644bf8a6adc9df9b622a425f594444286557b60e1ad12e68213a4488519",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:vscode/strings.ts/commonPrefixLength/real-utilities-5d1655d31780c6a6e7f5c16e@1e706e4168aecc2f",
+      "sourceTaskId": "real-utilities-5d1655d31780c6a6e7f5c16e",
+      "family": "utility:vscode/strings.ts/commonPrefixLength",
+      "split": "train",
+      "sourceCluster": "component:062d1de303ad4956805bd2ab9151370b621bde186acfe8f2f137f33bcc223af8",
+      "ancestorIds": [
+        "utility:vscode/strings.ts/commonPrefixLength",
+        "upstream:microsoft/vscode:src/vs/base/common/strings.ts"
+      ],
+      "identityDigest": "1e706e4168aecc2f63df8048377430204b98562e6e95cbdfa25dabcaa0ca0df4",
+      "fileSha256": "2bf0216ef0373dbd5c05ed9aacf316785957a5db4f8f53cee82f75d95c84d649",
+      "generatedTokens": 483,
+      "scenario": {
+        "sourceKey": "70d62bebaa949c612812630247a39c06215f21f0e3007975e2c8692bb26f4ea6",
+        "inputKey": "a8d2c2396adb2918d8e132ecfe3870566c6c33a8933de06d6b98a69c06b05282",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_arrayIncludesWith.js/arrayIncludesWith/real-utilities-0a18881f5c9c4d6e9d1e9dff@5e592ad79e3c084f",
+      "sourceTaskId": "real-utilities-0a18881f5c9c4d6e9d1e9dff",
+      "family": "utility:lodash/_arrayIncludesWith.js/arrayIncludesWith",
+      "split": "train",
+      "sourceCluster": "component:09f5097b95518796c2fc2306304879cd0b5335eadf1f001003cd0977eb584efe",
+      "ancestorIds": [
+        "utility:lodash/_arrayIncludesWith.js/arrayIncludesWith",
+        "upstream:lodash/lodash:_arrayIncludesWith.js"
+      ],
+      "identityDigest": "5e592ad79e3c084f11e3a317d2a2b70a12e7c8c7c82ad86b13f4825700403474",
+      "fileSha256": "ab7cb1063749d5a3774e2b45a719642a0d717c20a79f758c5bc8b9f585f1c9e4",
+      "generatedTokens": 1459,
+      "scenario": {
+        "sourceKey": "4a45256a0aefb537d4862f8e9525fba0c919da96e09b0caa1b825d42364db08c",
+        "inputKey": "9202e5893ed304816912fe9aaea6e327c95c20dc298841249c9c28e61129c3df",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_arrayMap.js/arrayMap/real-utilities-5dc0704f6b7fd0c03a22384e@eaa998c2aa1e5262",
+      "sourceTaskId": "real-utilities-5dc0704f6b7fd0c03a22384e",
+      "family": "utility:lodash/_arrayMap.js/arrayMap",
+      "split": "train",
+      "sourceCluster": "component:121abc475a217b361ed94ffed42c1a8414bdb9d8e1bc220335ef236b042b3fb3",
+      "ancestorIds": [
+        "utility:lodash/_arrayMap.js/arrayMap",
+        "upstream:lodash/lodash:_arrayMap.js"
+      ],
+      "identityDigest": "eaa998c2aa1e526271bdc994c8f1969d497d1fff3f3491b1aa726d403916bc61",
+      "fileSha256": "2dad33e49733e0f77da80f8a2e6aabb5fcc499ac1959f440eab3fdcb2db03057",
+      "generatedTokens": 1627,
+      "scenario": {
+        "sourceKey": "4102c0666e6a9cd4f3b656f71cf8377ce58abc4e51d0ef22faffbd18fbb68a9b",
+        "inputKey": "9202e5893ed304816912fe9aaea6e327c95c20dc298841249c9c28e61129c3df",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_arraySome.js/arraySome/real-utilities-2caf2ad7798deed030741c4a@f6902527ca0ff9f3",
+      "sourceTaskId": "real-utilities-2caf2ad7798deed030741c4a",
+      "family": "utility:lodash/_arraySome.js/arraySome",
+      "split": "train",
+      "sourceCluster": "component:129441d022dcc10cbcc5c3b0a15d5705755dc6dfa225117cd83a0cc31e5a2a05",
+      "ancestorIds": [
+        "utility:lodash/_arraySome.js/arraySome",
+        "upstream:lodash/lodash:_arraySome.js"
+      ],
+      "identityDigest": "f6902527ca0ff9f3c954f64bffb63a0f70ea77c67ee9bc5ce385cef9317f2f0e",
+      "fileSha256": "ec3c234de41ee42489e3addcdedb679d24b96cbbd4ad3d31fb04fbf3b88b09f9",
+      "generatedTokens": 1172,
+      "scenario": {
+        "sourceKey": "9a2c77920360282ad552026104c142bf8ab9dd5dc7510c2e7a3361db7be279ef",
+        "inputKey": "9202e5893ed304816912fe9aaea6e327c95c20dc298841249c9c28e61129c3df",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_strictIndexOf.js/strictIndexOf/real-utilities-931c8b245dcf332acf8c8243@e218a53beed23ffa",
+      "sourceTaskId": "real-utilities-931c8b245dcf332acf8c8243",
+      "family": "utility:lodash/_strictIndexOf.js/strictIndexOf",
+      "split": "train",
+      "sourceCluster": "component:1ba4d4a27211e0cf81b7696dfb90aab08b5d372bf7453a38caa08bda4797d2f4",
+      "ancestorIds": [
+        "utility:lodash/_strictIndexOf.js/strictIndexOf",
+        "upstream:lodash/lodash:_strictIndexOf.js"
+      ],
+      "identityDigest": "e218a53beed23ffa396c9506f64924d9841261b0956859525c9542834e4e55e0",
+      "fileSha256": "6854d8d5bc2499d0160d3302d2042b4d6f93b267d3e30f2bb44b8b2263b03dc8",
+      "generatedTokens": 641,
+      "scenario": {
+        "sourceKey": "64ce64f317649042ec098d065da32eedc9d7916b6793850d764bf4a71e76272c",
+        "inputKey": "eb707326912de9965dab21da67b28aa44f43b3c682bd974bdf68d784c8456014",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_arrayPush.js/arrayPush/real-utilities-940247cd3ed9d7873968ee1c@65990320650dd4b6",
+      "sourceTaskId": "real-utilities-940247cd3ed9d7873968ee1c",
+      "family": "utility:lodash/_arrayPush.js/arrayPush",
+      "split": "train",
+      "sourceCluster": "component:243015dc053f079d6c411e55b127d725a9b7e6d97644186acd684225091758ff",
+      "ancestorIds": [
+        "utility:lodash/_arrayPush.js/arrayPush",
+        "upstream:lodash/lodash:_arrayPush.js"
+      ],
+      "identityDigest": "65990320650dd4b6520854d442ebd91dcc9e302966ee709ce370cc63662b9978",
+      "fileSha256": "506be411ebba70840b67c9eb86ce70a56062c9cbc65bdeefbb4e4e36c3c8a1af",
+      "generatedTokens": 1029,
+      "scenario": {
+        "sourceKey": "4d1d2a4ced5a533b9296cb70894167adaa62b4eb4b36176d142a44afff851f6f",
+        "inputKey": "92fb26a9e003fa61f68538865de51657e124969dcb495a23c3a10109dcd17945",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "aliasing",
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_baseRange.js/baseRange/real-utilities-b6f100b06e42671f12d12e36@7a937d0e6a3cb245",
+      "sourceTaskId": "real-utilities-b6f100b06e42671f12d12e36",
+      "family": "utility:lodash/_baseRange.js/baseRange",
+      "split": "train",
+      "sourceCluster": "component:2ffd3e4a4b97a01a3402c17c14afae8cb7249affac6cc468f196a22efcbcb6da",
+      "ancestorIds": [
+        "utility:lodash/_baseRange.js/baseRange",
+        "upstream:lodash/lodash:_baseRange.js"
+      ],
+      "identityDigest": "7a937d0e6a3cb2459ef8789d2df4fcc1be8b56492ec3b31dda452ba79d728a15",
+      "fileSha256": "3406dcf6d80ab99d187df3ab552693adf29d6351443400d89c531ee0ea3bbd5c",
+      "generatedTokens": 1060,
+      "scenario": {
+        "sourceKey": "0e028a8a791bf579fde780694753f3af53f6788370e4ea80f62781f1c53d736e",
+        "inputKey": "fb062f8cbace49d5cf5101e3c6ae5898a5343e5ac09ee48f0204e6b1ed82eea1",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_baseRepeat.js/baseRepeat/real-utilities-88a6fc04485f5971957eeff6@bf9f674275201add",
+      "sourceTaskId": "real-utilities-88a6fc04485f5971957eeff6",
+      "family": "utility:lodash/_baseRepeat.js/baseRepeat",
+      "split": "train",
+      "sourceCluster": "component:5febf11c113e68506eae52f24954cb7d1a1321b4fc5be54c3c4aef1c45aa09cb",
+      "ancestorIds": [
+        "utility:lodash/_baseRepeat.js/baseRepeat",
+        "upstream:lodash/lodash:_baseRepeat.js"
+      ],
+      "identityDigest": "bf9f674275201addc12568afbebbe8aee0863fb7d2f1cfd2891a3f002216955e",
+      "fileSha256": "2cace35b3b724da4765dcc2ea0d64d1e6dcdbd2a1072b7b1b5151079d8029e1d",
+      "generatedTokens": 431,
+      "scenario": {
+        "sourceKey": "ca26067232c145c397d7d3236877fa645e9bfb85f1af310cafd0a1894a11ac1b",
+        "inputKey": "872a2ae39c2580a7c0550ff2b3a4c8784383b31a1d3bcb66b77c9d26ca15db60",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_arrayFilter.js/arrayFilter/real-utilities-95bc2684f0f6ed401fed6ebf@bb9ae7be2b7a4516",
+      "sourceTaskId": "real-utilities-95bc2684f0f6ed401fed6ebf",
+      "family": "utility:lodash/_arrayFilter.js/arrayFilter",
+      "split": "train",
+      "sourceCluster": "component:657cef692339f71d25f4ac9d4d4374b062588cc4069bbee13833a0df8cad6e9f",
+      "ancestorIds": [
+        "utility:lodash/_arrayFilter.js/arrayFilter",
+        "upstream:lodash/lodash:_arrayFilter.js"
+      ],
+      "identityDigest": "bb9ae7be2b7a4516554c0998cf94f11c79f9f883261bde3e7426cd1d179e4b4f",
+      "fileSha256": "73f343253c5430cf9d7db3c993f66f12cfc09a9a9091366112cc3b4a3f242b3d",
+      "generatedTokens": 1882,
+      "scenario": {
+        "sourceKey": "7a24442b53a858ee7158a136f6131d575c012c0ba3a101c9a98b731add90a180",
+        "inputKey": "9202e5893ed304816912fe9aaea6e327c95c20dc298841249c9c28e61129c3df",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_baseTimes.js/baseTimes/real-utilities-10fca60f6d553840f613a93b@9c8595db680003ff",
+      "sourceTaskId": "real-utilities-10fca60f6d553840f613a93b",
+      "family": "utility:lodash/_baseTimes.js/baseTimes",
+      "split": "train",
+      "sourceCluster": "component:aad2f20cc0e1c12560657a0507cde7b65cfc4ee3c7dee1d514fd7b5d2e618d18",
+      "ancestorIds": [
+        "utility:lodash/_baseTimes.js/baseTimes",
+        "upstream:lodash/lodash:_baseTimes.js"
+      ],
+      "identityDigest": "9c8595db680003ff5584912d6e52b50f6f6925153b75ddd6dcd96ed2ef9a6334",
+      "fileSha256": "b420b6b44338b6ab7f7b32b60da3d43b016eb8de6156214680c833f860f278d5",
+      "generatedTokens": 526,
+      "scenario": {
+        "sourceKey": "0a953fe600ec5d18ab40fac57e5b6e3913eddd295ec9451695521b4a717be8dc",
+        "inputKey": "9202e5893ed304816912fe9aaea6e327c95c20dc298841249c9c28e61129c3df",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_arrayReduceRight.js/arrayReduceRight/real-utilities-39eef9fe582680bd1e1b8352@7bd880f6883442fe",
+      "sourceTaskId": "real-utilities-39eef9fe582680bd1e1b8352",
+      "family": "utility:lodash/_arrayReduceRight.js/arrayReduceRight",
+      "split": "train",
+      "sourceCluster": "component:b18f8ffc2bdce495d40c336512f472633cc9f92b017c1acb640b03fd641febe8",
+      "ancestorIds": [
+        "utility:lodash/_arrayReduceRight.js/arrayReduceRight",
+        "upstream:lodash/lodash:_arrayReduceRight.js"
+      ],
+      "identityDigest": "7bd880f6883442fe1c83fffc68efa17c64ceef8d2352ca856aaf24b420a36e0b",
+      "fileSha256": "b138d4c9e64965e469ace5c0889653abc5099d72f3f30dfb9411d2a86b1b50dd",
+      "generatedTokens": 1762,
+      "scenario": {
+        "sourceKey": "c2d6fe82bd26c65208fb4a5356165f82e7a2fdf5e38099b483be5fb3f33b50f1",
+        "inputKey": "9202e5893ed304816912fe9aaea6e327c95c20dc298841249c9c28e61129c3df",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_baseLt.js/baseLt/real-utilities-b7b60e63bd3b8fe7acda0aad@56ef0361f330c1e4",
+      "sourceTaskId": "real-utilities-b7b60e63bd3b8fe7acda0aad",
+      "family": "utility:lodash/_baseLt.js/baseLt",
+      "split": "train",
+      "sourceCluster": "component:b73d2e6f9c4b8e62eb76bf4a87879fbebbe03fffc72f2862afa3db0fbf3f316b",
+      "ancestorIds": [
+        "utility:lodash/_baseLt.js/baseLt",
+        "upstream:lodash/lodash:_baseLt.js"
+      ],
+      "identityDigest": "56ef0361f330c1e468a56263641c1275525d9805113ac694a4f2d74ad612c1ce",
+      "fileSha256": "f792742d31ccc9876192e85ff52f237b001c261d5935a08c98b000dce3d1dc0e",
+      "generatedTokens": 50,
+      "scenario": {
+        "sourceKey": "28b0d9a5d38ce64ca063d82039840cf0ef2e8b2f73d611bc14a4c4747148a906",
+        "inputKey": "ef01817a24481bc5079e53634500d7973e17aea45809c99e9fa49034cf8cf44e",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_strictLastIndexOf.js/strictLastIndexOf/real-utilities-2524a4e6a9e9c2eb06f0eea0@98a98061d780f082",
+      "sourceTaskId": "real-utilities-2524a4e6a9e9c2eb06f0eea0",
+      "family": "utility:lodash/_strictLastIndexOf.js/strictLastIndexOf",
+      "split": "train",
+      "sourceCluster": "component:c19fc337d982191181738146a78107dee350e086f0c21e0b04c6ec2acbac8a16",
+      "ancestorIds": [
+        "utility:lodash/_strictLastIndexOf.js/strictLastIndexOf",
+        "upstream:lodash/lodash:_strictLastIndexOf.js"
+      ],
+      "identityDigest": "98a98061d780f082307bdee27b895a9544c9c61c39f0005dd717b6c286bf12f3",
+      "fileSha256": "f9bb77963c7930ad97d6626207eb1115bd2529a77c7c279f8942d1abb7d909fe",
+      "generatedTokens": 700,
+      "scenario": {
+        "sourceKey": "8780f97bc3f23aca1e1ed86bbe7d969d4cfc8f471d631dd09f46e4269203f769",
+        "inputKey": "e64e042ef672027c84213ae3e37222f7551d765d3d6cfd00f919a4a9d00bafaa",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "production:axios/axios:axios/lib/core/InterceptorManager.js:countHandlers/real-production-456cddb07f3871ecbf3bce88@5888acbb1563a2f3",
+      "sourceTaskId": "real-production-456cddb07f3871ecbf3bce88",
+      "family": "production:axios/axios:axios/lib/core/InterceptorManager.js:countHandlers",
+      "split": "train",
+      "sourceCluster": "component:cf5db81707059d7aa2ff96f057165078c38c149398cfcec9869d1db31262b887",
+      "ancestorIds": [
+        "production:axios/axios:axios/lib/core/InterceptorManager.js:countHandlers",
+        "upstream:axios/axios:axios/lib/core/InterceptorManager.js"
+      ],
+      "identityDigest": "5888acbb1563a2f3f4d031b0c1c822b4aa37bfd7579713e79d30c066316e1c85",
+      "fileSha256": "eb498f8e91acb5e6f2765a626f310f3172e7158084e25cf72536defaf2a08b3b",
+      "generatedTokens": 64,
+      "scenario": {
+        "sourceKey": "e1e3c26c9aec39b05185bbea8d69acf5df296d52c7091874ddc21936b1dfd3cd",
+        "inputKey": "f7a30aed583d2dfdc29c2f938ce8de826643fabcbc7ef2d83014076d9da8cabb",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_baseFindIndex.js/baseFindIndex/real-utilities-6a1451d3f8e2be755c5516fb@6998240459eaa739",
+      "sourceTaskId": "real-utilities-6a1451d3f8e2be755c5516fb",
+      "family": "utility:lodash/_baseFindIndex.js/baseFindIndex",
+      "split": "train",
+      "sourceCluster": "component:d46523aca401705d65e62c8ee92d92c67dad1c3655b0641d65ba0f53083c9bf5",
+      "ancestorIds": [
+        "utility:lodash/_baseFindIndex.js/baseFindIndex",
+        "upstream:lodash/lodash:_baseFindIndex.js"
+      ],
+      "identityDigest": "6998240459eaa739509eba9a989aafae9987b4922b676e63544861b6fb98f5a5",
+      "fileSha256": "172a55b1602546c034604613c6f834af8599d90ca4e4c8174f261c7cd0d05b22",
+      "generatedTokens": 944,
+      "scenario": {
+        "sourceKey": "6ca562002bb6cdb69b97ace676615a616debd53df1b617548d3e53e2eec1fcb7",
+        "inputKey": "9202e5893ed304816912fe9aaea6e327c95c20dc298841249c9c28e61129c3df",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_arrayEachRight.js/arrayEachRight/real-utilities-72c126889573f663db1d6608@70b512c38df29ae6",
+      "sourceTaskId": "real-utilities-72c126889573f663db1d6608",
+      "family": "utility:lodash/_arrayEachRight.js/arrayEachRight",
+      "split": "train",
+      "sourceCluster": "component:dce49523407be8743a060cef3e50ccb5d11ee6ad1e13362c31365b15b298c7b5",
+      "ancestorIds": [
+        "utility:lodash/_arrayEachRight.js/arrayEachRight",
+        "upstream:lodash/lodash:_arrayEachRight.js"
+      ],
+      "identityDigest": "70b512c38df29ae6107e4389f536c2ef543d249394b9155acfb0f68e6bd65db9",
+      "fileSha256": "3302dbd12691d62a6af3d1b750fe34f04a0a4245514fe8ed216d047f54165d56",
+      "generatedTokens": 1631,
+      "scenario": {
+        "sourceKey": "009bce4c0c09376a63c9b04558f90827e4405902a2ba7b7969b4545e471d09d8",
+        "inputKey": "9202e5893ed304816912fe9aaea6e327c95c20dc298841249c9c28e61129c3df",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "aliasing",
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_arrayEach.js/arrayEach/real-utilities-07cc8d398366ef2de1d521d1@9980aedf50619731",
+      "sourceTaskId": "real-utilities-07cc8d398366ef2de1d521d1",
+      "family": "utility:lodash/_arrayEach.js/arrayEach",
+      "split": "train",
+      "sourceCluster": "component:f247f11e67c84dde4dc8d53019e629cdf21e171d379f120005a3be3f1376d972",
+      "ancestorIds": [
+        "utility:lodash/_arrayEach.js/arrayEach",
+        "upstream:lodash/lodash:_arrayEach.js"
+      ],
+      "identityDigest": "9980aedf50619731bed8233c53af8eed74d849d18401ea6889ed949349626599",
+      "fileSha256": "4f0bf05baf8709b485ace7baff3eafb08eeba5e73d9b4f52d7419c3031733e58",
+      "generatedTokens": 1641,
+      "scenario": {
+        "sourceKey": "5d8528b75807c4d79ffc027403aadfc088d163238d4f1999e1fa43d71aeebd75",
+        "inputKey": "9202e5893ed304816912fe9aaea6e327c95c20dc298841249c9c28e61129c3df",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "aliasing",
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_arrayEvery.js/arrayEvery/real-utilities-412f0ed2207fef007bdfd0d9@64d9d17cca46c566",
+      "sourceTaskId": "real-utilities-412f0ed2207fef007bdfd0d9",
+      "family": "utility:lodash/_arrayEvery.js/arrayEvery",
+      "split": "train",
+      "sourceCluster": "component:f7140d69480122eba3f519f6415fd14eccea4687ddefb6b00f3089403002bcbd",
+      "ancestorIds": [
+        "utility:lodash/_arrayEvery.js/arrayEvery",
+        "upstream:lodash/lodash:_arrayEvery.js"
+      ],
+      "identityDigest": "64d9d17cca46c5668f3aa87d07e952771803269055a6803f7e24b8ed04775d05",
+      "fileSha256": "8d79dbd6dd3926939808065ba628eaad05cac18f8789be86da0c9fb4daac4219",
+      "generatedTokens": 1172,
+      "scenario": {
+        "sourceKey": "cb98a742f47b86245b1793bb890b49fc961b1762bee1c25b25b551063e46aada",
+        "inputKey": "9202e5893ed304816912fe9aaea6e327c95c20dc298841249c9c28e61129c3df",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_arrayReduce.js/arrayReduce/real-utilities-5d56371d5cd8295fec278069@9da11211e27b288d",
+      "sourceTaskId": "real-utilities-5d56371d5cd8295fec278069",
+      "family": "utility:lodash/_arrayReduce.js/arrayReduce",
+      "split": "train",
+      "sourceCluster": "component:f7faee3cd40e462f67b3ea5a318c2abb827fd0ec38b43bc1b399ac5b03ab5b65",
+      "ancestorIds": [
+        "utility:lodash/_arrayReduce.js/arrayReduce",
+        "upstream:lodash/lodash:_arrayReduce.js"
+      ],
+      "identityDigest": "9da11211e27b288dc29bfd1aae5f55359c381d8fbbd24557d52e9262a8b8ec1f",
+      "fileSha256": "8e9cff55b1f064ab099125636f8fdae752a74496fa22e5f37e1f3de68a0c532e",
+      "generatedTokens": 1775,
+      "scenario": {
+        "sourceKey": "492e928007b11a5467165ec3dc0288501d822e9fd970656516370c901a950cea",
+        "inputKey": "9202e5893ed304816912fe9aaea6e327c95c20dc298841249c9c28e61129c3df",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_baseGt.js/baseGt/real-utilities-61b4b4c012b0705b0a6b660a@9f4d38defceb6070",
+      "sourceTaskId": "real-utilities-61b4b4c012b0705b0a6b660a",
+      "family": "utility:lodash/_baseGt.js/baseGt",
+      "split": "train",
+      "sourceCluster": "component:fa4c3a87b88cb6d294e4968df10f46c16d5cfb6ba6c33b8ba168739f9479ab19",
+      "ancestorIds": [
+        "utility:lodash/_baseGt.js/baseGt",
+        "upstream:lodash/lodash:_baseGt.js"
+      ],
+      "identityDigest": "9f4d38defceb6070100bb7d046e3cc58e1bda50735a18895e78b2d179b4970f3",
+      "fileSha256": "ec285e18e00319c5fbacb3cfa2cc865c85ed7b73af14c00c5fda20e1f6735f17",
+      "generatedTokens": 49,
+      "scenario": {
+        "sourceKey": "6a96738d1c0ab8b3cc6c8b8c9e7262921bc874042b05b45d23d4ec0db3f1ff9f",
+        "inputKey": "75c8aaa1016a17eadc0c0a92fb4dc4111c325ddf78ea3bf12c9e3330172dbfc5",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:vscode/arrays.ts/arrayInsert/real-utilities-c18d302cbf1af844bdc09065@e03d500f9511a795",
+      "sourceTaskId": "real-utilities-c18d302cbf1af844bdc09065",
+      "family": "utility:vscode/arrays.ts/arrayInsert",
+      "split": "train",
+      "sourceCluster": "component:00c29ea794d8eedd0eb1282d361db202212b4aa25792ce18723a17ee837f2ca6",
+      "ancestorIds": [
+        "utility:vscode/arrays.ts/arrayInsert",
+        "upstream:microsoft/vscode:src/vs/base/common/arrays.ts"
+      ],
+      "identityDigest": "e03d500f9511a79579711cacba84c74b01b5465c9871cbc065a5171e098de15b",
+      "fileSha256": "11f3ae78dce69e198448a3d8228718a7edb565f09277a304987940f527e35100",
+      "generatedTokens": 351,
+      "scenario": {
+        "sourceKey": "ba758b0c967ca672e25f21f1dc04d1b9816fa857e9b7b6c941ccb2279cb0fe0a",
+        "inputKey": "519260485ab06f5725a2dc1a7c0b542a1330ab574eb90b8b41f826cb5f1888a4",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:vscode/strings.ts/commonPrefixLength/real-utilities-835bb2a1a3df529687bd1758@c4cf4292a70f6d77",
+      "sourceTaskId": "real-utilities-835bb2a1a3df529687bd1758",
+      "family": "utility:vscode/strings.ts/commonPrefixLength",
+      "split": "train",
+      "sourceCluster": "component:062d1de303ad4956805bd2ab9151370b621bde186acfe8f2f137f33bcc223af8",
+      "ancestorIds": [
+        "utility:vscode/strings.ts/commonPrefixLength",
+        "upstream:microsoft/vscode:src/vs/base/common/strings.ts"
+      ],
+      "identityDigest": "c4cf4292a70f6d778d6356a9a6119ca841a7b2fa73e8a181426d6380a55cfed8",
+      "fileSha256": "dde8f09136d6ca6fc3fce9dd7b06b62d3f179565cc3216497491683905c96c83",
+      "generatedTokens": 482,
+      "scenario": {
+        "sourceKey": "70d62bebaa949c612812630247a39c06215f21f0e3007975e2c8692bb26f4ea6",
+        "inputKey": "8df9bceab1aa0fcba880186404e510b71eda5ab7e114ff1445b3261010ed21de",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_arrayIncludesWith.js/arrayIncludesWith/real-utilities-46f0b12a202a860bb625d8de@d35a3beba003be61",
+      "sourceTaskId": "real-utilities-46f0b12a202a860bb625d8de",
+      "family": "utility:lodash/_arrayIncludesWith.js/arrayIncludesWith",
+      "split": "train",
+      "sourceCluster": "component:09f5097b95518796c2fc2306304879cd0b5335eadf1f001003cd0977eb584efe",
+      "ancestorIds": [
+        "utility:lodash/_arrayIncludesWith.js/arrayIncludesWith",
+        "upstream:lodash/lodash:_arrayIncludesWith.js"
+      ],
+      "identityDigest": "d35a3beba003be610e1dfde8d6402cb4419e2a641f3a04ef3ee602b10fe4f55f",
+      "fileSha256": "4b551994bd211596a5ca88788101736512f93771aebb8bb8c64bfbafabb86a31",
+      "generatedTokens": 1456,
+      "scenario": {
+        "sourceKey": "be22e0fca465419a2fe8a5d41a0c1e54498a7aea4ab04b0731ec39b83d29af0a",
+        "inputKey": "9202e5893ed304816912fe9aaea6e327c95c20dc298841249c9c28e61129c3df",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_arrayMap.js/arrayMap/real-utilities-fb291fd9b4e8721e4477f86d@d1e0df744ed6d3f5",
+      "sourceTaskId": "real-utilities-fb291fd9b4e8721e4477f86d",
+      "family": "utility:lodash/_arrayMap.js/arrayMap",
+      "split": "train",
+      "sourceCluster": "component:121abc475a217b361ed94ffed42c1a8414bdb9d8e1bc220335ef236b042b3fb3",
+      "ancestorIds": [
+        "utility:lodash/_arrayMap.js/arrayMap",
+        "upstream:lodash/lodash:_arrayMap.js"
+      ],
+      "identityDigest": "d1e0df744ed6d3f5c87a89ee55ad95ad49e35792d62e8382bfd662bca28bd636",
+      "fileSha256": "ff63f2285fd8186fe22867ff1c45fc458905b6a798c87248a176a7337bda225d",
+      "generatedTokens": 1632,
+      "scenario": {
+        "sourceKey": "0f15f93937984e9b7718e87eeee2a10299d2586ee46647a5e426602ba7b38018",
+        "inputKey": "9202e5893ed304816912fe9aaea6e327c95c20dc298841249c9c28e61129c3df",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_arraySome.js/arraySome/real-utilities-7c34578a8d6e9ad8d7709eb1@4b3acb74532daea7",
+      "sourceTaskId": "real-utilities-7c34578a8d6e9ad8d7709eb1",
+      "family": "utility:lodash/_arraySome.js/arraySome",
+      "split": "train",
+      "sourceCluster": "component:129441d022dcc10cbcc5c3b0a15d5705755dc6dfa225117cd83a0cc31e5a2a05",
+      "ancestorIds": [
+        "utility:lodash/_arraySome.js/arraySome",
+        "upstream:lodash/lodash:_arraySome.js"
+      ],
+      "identityDigest": "4b3acb74532daea721eabdd5b1828919cff7a7ddb2a8aedfbf9d58f8bf84e7a0",
+      "fileSha256": "fec5d76e243f88f31ff0165ab0f50c7f783149bc3182ad30262223aff4c31a5c",
+      "generatedTokens": 735,
+      "scenario": {
+        "sourceKey": "f14fb57760352f8de3a0ea75e4691a5924be8a4d7014adb8380041acc18544ae",
+        "inputKey": "9202e5893ed304816912fe9aaea6e327c95c20dc298841249c9c28e61129c3df",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_strictIndexOf.js/strictIndexOf/real-utilities-f935b1d12a23dd9eeb4b3524@ba84a7c5b6cf15d2",
+      "sourceTaskId": "real-utilities-f935b1d12a23dd9eeb4b3524",
+      "family": "utility:lodash/_strictIndexOf.js/strictIndexOf",
+      "split": "train",
+      "sourceCluster": "component:1ba4d4a27211e0cf81b7696dfb90aab08b5d372bf7453a38caa08bda4797d2f4",
+      "ancestorIds": [
+        "utility:lodash/_strictIndexOf.js/strictIndexOf",
+        "upstream:lodash/lodash:_strictIndexOf.js"
+      ],
+      "identityDigest": "ba84a7c5b6cf15d28e191c92b24d9a53bf7858e83663a962aca61a24b38b24a5",
+      "fileSha256": "3bdaa1fc99f60268acdd20d852ad81b9bcde314b1fe0ab29eabe2baa2ad6fa4c",
+      "generatedTokens": 747,
+      "scenario": {
+        "sourceKey": "64ce64f317649042ec098d065da32eedc9d7916b6793850d764bf4a71e76272c",
+        "inputKey": "9b0cf1e8c5c61ac9b06dceff6332e22abc2554d30226908bfd5dd10d568390af",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_arrayPush.js/arrayPush/real-utilities-a2ef371a50e566f497d06ecd@d2c83eda1dd1913b",
+      "sourceTaskId": "real-utilities-a2ef371a50e566f497d06ecd",
+      "family": "utility:lodash/_arrayPush.js/arrayPush",
+      "split": "train",
+      "sourceCluster": "component:243015dc053f079d6c411e55b127d725a9b7e6d97644186acd684225091758ff",
+      "ancestorIds": [
+        "utility:lodash/_arrayPush.js/arrayPush",
+        "upstream:lodash/lodash:_arrayPush.js"
+      ],
+      "identityDigest": "d2c83eda1dd1913ba286b65b727e7af01132936622dab3acb3f24f597b36ceae",
+      "fileSha256": "aeab1efa827a68639bee373efa3705f227e3ea75d350c19f98e5c57b5721728c",
+      "generatedTokens": 1033,
+      "scenario": {
+        "sourceKey": "4d1d2a4ced5a533b9296cb70894167adaa62b4eb4b36176d142a44afff851f6f",
+        "inputKey": "36c40c4eba4eef5ce57b155770b2d267573005ce6d65fc7ed00361de78a6189e",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "aliasing",
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_baseRange.js/baseRange/real-utilities-b9b878a4b95e422afb612a76@442bf2297510de13",
+      "sourceTaskId": "real-utilities-b9b878a4b95e422afb612a76",
+      "family": "utility:lodash/_baseRange.js/baseRange",
+      "split": "train",
+      "sourceCluster": "component:2ffd3e4a4b97a01a3402c17c14afae8cb7249affac6cc468f196a22efcbcb6da",
+      "ancestorIds": [
+        "utility:lodash/_baseRange.js/baseRange",
+        "upstream:lodash/lodash:_baseRange.js"
+      ],
+      "identityDigest": "442bf2297510de1399fe8e0d1bcfecb7f3cbc6bb7173f8c741eb7155f8773c7a",
+      "fileSha256": "8f6432a3756df8b59a841692707d7e3eb12138057766cf86c2c736167ec70396",
+      "generatedTokens": 1022,
+      "scenario": {
+        "sourceKey": "0e028a8a791bf579fde780694753f3af53f6788370e4ea80f62781f1c53d736e",
+        "inputKey": "560ab4994813f925e5fcb6e339cc530da06229ea77863ad810120b188415c94d",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_baseRepeat.js/baseRepeat/real-utilities-f1bf32c0d2d008617363a89a@b7f98e1738f76509",
+      "sourceTaskId": "real-utilities-f1bf32c0d2d008617363a89a",
+      "family": "utility:lodash/_baseRepeat.js/baseRepeat",
+      "split": "train",
+      "sourceCluster": "component:5febf11c113e68506eae52f24954cb7d1a1321b4fc5be54c3c4aef1c45aa09cb",
+      "ancestorIds": [
+        "utility:lodash/_baseRepeat.js/baseRepeat",
+        "upstream:lodash/lodash:_baseRepeat.js"
+      ],
+      "identityDigest": "b7f98e1738f765095ad5a66803dce569418a36ff73a2ca8d58d0f99b9dfb6d5c",
+      "fileSha256": "cf630092f810a5a194847b227fb7f6253485f123d3bf4edc14204c5a46a728cc",
+      "generatedTokens": 179,
+      "scenario": {
+        "sourceKey": "ca26067232c145c397d7d3236877fa645e9bfb85f1af310cafd0a1894a11ac1b",
+        "inputKey": "142853b92c30ba8bc7831fbd1839e95ef728753784f64b29cf7467fd2fce0360",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_arrayFilter.js/arrayFilter/real-utilities-a7ee138d053b5cd48da69981@dd8c31894b26299a",
+      "sourceTaskId": "real-utilities-a7ee138d053b5cd48da69981",
+      "family": "utility:lodash/_arrayFilter.js/arrayFilter",
+      "split": "train",
+      "sourceCluster": "component:657cef692339f71d25f4ac9d4d4374b062588cc4069bbee13833a0df8cad6e9f",
+      "ancestorIds": [
+        "utility:lodash/_arrayFilter.js/arrayFilter",
+        "upstream:lodash/lodash:_arrayFilter.js"
+      ],
+      "identityDigest": "dd8c31894b26299ad7fd5c58e71bc4c301922a99cce5d5d231c16d1fe4d804ac",
+      "fileSha256": "632e63d6ef615b50e4f42d5621ecc69c396cbb39a4ba592c4cf4834d718b238b",
+      "generatedTokens": 1814,
+      "scenario": {
+        "sourceKey": "10ed186221493a5ba9dead972ef35f324ae83df9664e892da0c3f7bacf3b68db",
+        "inputKey": "9202e5893ed304816912fe9aaea6e327c95c20dc298841249c9c28e61129c3df",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_baseTimes.js/baseTimes/real-utilities-4d248a0237b19503f26826a0@69e28a689b68bfc1",
+      "sourceTaskId": "real-utilities-4d248a0237b19503f26826a0",
+      "family": "utility:lodash/_baseTimes.js/baseTimes",
+      "split": "train",
+      "sourceCluster": "component:aad2f20cc0e1c12560657a0507cde7b65cfc4ee3c7dee1d514fd7b5d2e618d18",
+      "ancestorIds": [
+        "utility:lodash/_baseTimes.js/baseTimes",
+        "upstream:lodash/lodash:_baseTimes.js"
+      ],
+      "identityDigest": "69e28a689b68bfc1545366717932f4f09f8f1aa0674855b17b90e7d749f18adf",
+      "fileSha256": "0ec1bc2925c2668e196190a056c72ac8d845657585abc7f6ca811d09296e37c4",
+      "generatedTokens": 693,
+      "scenario": {
+        "sourceKey": "9eab0e02c731cfbdd680282bdfaabb22c265ba50920e6d1179446d1341bc3fde",
+        "inputKey": "9202e5893ed304816912fe9aaea6e327c95c20dc298841249c9c28e61129c3df",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    }
+  ],
+  "validation": [
+    {
+      "id": "utility:lodash/_baseClamp.js/baseClamp/real-utilities-de23ec98ed19dd25d763551e@ad202299a5464915",
+      "sourceTaskId": "real-utilities-de23ec98ed19dd25d763551e",
+      "family": "utility:lodash/_baseClamp.js/baseClamp",
+      "split": "validation",
+      "sourceCluster": "component:1801ec51586521d1659ef776aa065ffb758fc29d20d64a9b0fc1e02afdde6190",
+      "ancestorIds": [
+        "utility:lodash/_baseClamp.js/baseClamp",
+        "upstream:lodash/lodash:_baseClamp.js"
+      ],
+      "identityDigest": "ad202299a5464915ac1a942b8ee55ed10d07dad8ad4736fcf97b7c6ab8a0a88a",
+      "fileSha256": "acb8c9049f8033b91df33261baf419ee10d9fe722d0f0fa9fe8ebc9fa693e6fd",
+      "generatedTokens": 319,
+      "scenario": {
+        "sourceKey": "291f1af3add20a84115f72593f1d7699f4d4c1a113e0d84e8647688cfe864cdb",
+        "inputKey": "28bbb135394855511f89c95b428f521a8e7a7e437d4467c9b2d392480c7298dc",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:vscode/numbers.ts/clamp/real-utilities-9f613b92f1e790e1aa06e539@7211dcfe1af0a4b2",
+      "sourceTaskId": "real-utilities-9f613b92f1e790e1aa06e539",
+      "family": "utility:vscode/numbers.ts/clamp",
+      "split": "validation",
+      "sourceCluster": "component:ffe89fe8da33add5ab8e3d61b46e3a6bd0200134f56ee234465185a10eaa7454",
+      "ancestorIds": [
+        "utility:vscode/numbers.ts/clamp",
+        "upstream:microsoft/vscode:src/vs/base/common/numbers.ts"
+      ],
+      "identityDigest": "7211dcfe1af0a4b2c3b4b81a7c72d0f88b39204190c7ac8aa24b3033723ff9ea",
+      "fileSha256": "f9720f961e1920ede08d096cf7aca510dc3f467a5ad585995d5a03fbea62899a",
+      "generatedTokens": 64,
+      "scenario": {
+        "sourceKey": "5eb2ee2c5b73b4300669a61126c9ddc1fbd635612b0c62c38a142d042e3b6615",
+        "inputKey": "00679c659ad3fce146858df7e759ef46fa515ac85385984ad9c7d53f4eedea78",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:lodash/_baseClamp.js/baseClamp/real-utilities-eb07bec7ea6d38024d0b485a@c7dcc16676008465",
+      "sourceTaskId": "real-utilities-eb07bec7ea6d38024d0b485a",
+      "family": "utility:lodash/_baseClamp.js/baseClamp",
+      "split": "validation",
+      "sourceCluster": "component:1801ec51586521d1659ef776aa065ffb758fc29d20d64a9b0fc1e02afdde6190",
+      "ancestorIds": [
+        "utility:lodash/_baseClamp.js/baseClamp",
+        "upstream:lodash/lodash:_baseClamp.js"
+      ],
+      "identityDigest": "c7dcc16676008465b79a2d96e8c2b5eb2b8d12ee26fda6daf6a27e46d26f26b6",
+      "fileSha256": "6018d12db7f851976f21063e7c142ea82d2b81f1cf3e1b3841b3390ea8ab472d",
+      "generatedTokens": 315,
+      "scenario": {
+        "sourceKey": "291f1af3add20a84115f72593f1d7699f4d4c1a113e0d84e8647688cfe864cdb",
+        "inputKey": "7173762126eae7d5280b78b5d7ecb307987b43d0617fb6ded75a11c24e6d4e2f",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:vscode/numbers.ts/clamp/real-utilities-eede55fd4a41b0384086ac38@63dd87e234a4060b",
+      "sourceTaskId": "real-utilities-eede55fd4a41b0384086ac38",
+      "family": "utility:vscode/numbers.ts/clamp",
+      "split": "validation",
+      "sourceCluster": "component:ffe89fe8da33add5ab8e3d61b46e3a6bd0200134f56ee234465185a10eaa7454",
+      "ancestorIds": [
+        "utility:vscode/numbers.ts/clamp",
+        "upstream:microsoft/vscode:src/vs/base/common/numbers.ts"
+      ],
+      "identityDigest": "63dd87e234a4060b689a5d0a7c67e33443b8d118582193a2311db593c97ba0e8",
+      "fileSha256": "ce712de7388e8f3ae7959800201f328c726dd077e9407e46f662e67280acb846",
+      "generatedTokens": 62,
+      "scenario": {
+        "sourceKey": "5eb2ee2c5b73b4300669a61126c9ddc1fbd635612b0c62c38a142d042e3b6615",
+        "inputKey": "6b03f2ca24023d5437eeec1ffde75e1265de2ed020980a121c81a16d33084096",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:vscode/numbers.ts/formatTokenCount/real-utilities-87383620fe203af49fce8e48@295947725f64da1d",
+      "sourceTaskId": "real-utilities-87383620fe203af49fce8e48",
+      "family": "utility:vscode/numbers.ts/formatTokenCount",
+      "split": "validation",
+      "sourceCluster": "component:ffe89fe8da33add5ab8e3d61b46e3a6bd0200134f56ee234465185a10eaa7454",
+      "ancestorIds": [
+        "utility:vscode/numbers.ts/formatTokenCount",
+        "upstream:microsoft/vscode:src/vs/base/common/numbers.ts"
+      ],
+      "identityDigest": "295947725f64da1d8372aa2e0f93a224b3ab5af1805f847643f85e1f965dc006",
+      "fileSha256": "6f980b9cf02c68974b833d9474087eb78d881702b3e3b17315b4c6582d4dae62",
+      "generatedTokens": 283,
+      "scenario": {
+        "sourceKey": "c8e4e61373831487da5c6fb6fae82acd81725c5465f5a2ce534d416e9f8b8d3d",
+        "inputKey": "c363e54d021e2df2f4ad67aaf80938cb1dd999b4854c6746fa88a9e13b01c136",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:vscode/numbers.ts/formatTokenCount/real-utilities-d605fbaad806fafb91925464@b0e20b1712908e8d",
+      "sourceTaskId": "real-utilities-d605fbaad806fafb91925464",
+      "family": "utility:vscode/numbers.ts/formatTokenCount",
+      "split": "validation",
+      "sourceCluster": "component:ffe89fe8da33add5ab8e3d61b46e3a6bd0200134f56ee234465185a10eaa7454",
+      "ancestorIds": [
+        "utility:vscode/numbers.ts/formatTokenCount",
+        "upstream:microsoft/vscode:src/vs/base/common/numbers.ts"
+      ],
+      "identityDigest": "b0e20b1712908e8d2a8eb6c009da1e8252170fdd37160cb8008b4b820730ad05",
+      "fileSha256": "b38b8c532c74c9550fd90635cd0712a7b908c88bb97a8d5a6721eef852db206c",
+      "generatedTokens": 279,
+      "scenario": {
+        "sourceKey": "c8e4e61373831487da5c6fb6fae82acd81725c5465f5a2ce534d416e9f8b8d3d",
+        "inputKey": "c4f4274d2ba09fbab5d20e1f43697360e51f512daa81f02a84045314da28fd88",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:vscode/numbers.ts/rot/real-utilities-308a392a7d937ab9c0a866b1@26dcbfe18157d9d3",
+      "sourceTaskId": "real-utilities-308a392a7d937ab9c0a866b1",
+      "family": "utility:vscode/numbers.ts/rot",
+      "split": "validation",
+      "sourceCluster": "component:ffe89fe8da33add5ab8e3d61b46e3a6bd0200134f56ee234465185a10eaa7454",
+      "ancestorIds": [
+        "utility:vscode/numbers.ts/rot",
+        "upstream:microsoft/vscode:src/vs/base/common/numbers.ts"
+      ],
+      "identityDigest": "26dcbfe18157d9d3097baf849df0ae6ccc5cca58c7264caad985ad948d8ccc96",
+      "fileSha256": "aecdaf11430d3e2a869d1bbf00066a43028dd7d5894919b671e797f1a9e486c9",
+      "generatedTokens": 143,
+      "scenario": {
+        "sourceKey": "84ed2c12f08e085f20a949a27d0560b215a12d96476ac563a074229a29c1784e",
+        "inputKey": "ecdbd9c3202382bd312e019a70a8e441729a14b688495bf475ce26b4acc70e31",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "utility:vscode/numbers.ts/rot/real-utilities-4dd52bb7e01ee8083fe45cd2@1603d446443c86d0",
+      "sourceTaskId": "real-utilities-4dd52bb7e01ee8083fe45cd2",
+      "family": "utility:vscode/numbers.ts/rot",
+      "split": "validation",
+      "sourceCluster": "component:ffe89fe8da33add5ab8e3d61b46e3a6bd0200134f56ee234465185a10eaa7454",
+      "ancestorIds": [
+        "utility:vscode/numbers.ts/rot",
+        "upstream:microsoft/vscode:src/vs/base/common/numbers.ts"
+      ],
+      "identityDigest": "1603d446443c86d0b81ebad6cf1cec2e69646fcf2ec899934043d212053f6fff",
+      "fileSha256": "1a145e0b5f807e92fcdc21ee3e0d10d557352e97de2dea8b07488ac30528d9f2",
+      "generatedTokens": 144,
+      "scenario": {
+        "sourceKey": "84ed2c12f08e085f20a949a27d0560b215a12d96476ac563a074229a29c1784e",
+        "inputKey": "8cec1a8eb625c3d1664efb41efd087b9c3653ff84eb6c322420668802c452d22",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected"
+      ]
+    }
+  ],
+  "test": [
+    {
+      "id": "utility:lodash/_baseSum.js/baseSum/real-utilities-11cc4d45e70ba5a4388194d4@ccca8cf501f81d44",
+      "sourceTaskId": "real-utilities-11cc4d45e70ba5a4388194d4",
+      "family": "utility:lodash/_baseSum.js/baseSum",
+      "split": "test",
+      "sourceCluster": "component:17abecb5f8d8606350cb2b8988c87e004acc4c4bdd25a2ea2fb194039c2abebd",
+      "ancestorIds": [
+        "utility:lodash/_baseSum.js/baseSum",
+        "upstream:lodash/lodash:_baseSum.js"
+      ],
+      "identityDigest": "ccca8cf501f81d44ef936b6833feaf3ceb3c193619bad5ab008fe86119aa4cf3",
+      "fileSha256": "c6eb37b94eaa29a00269e642f002890e96e9d59ab1fa904d2cbbc3e6cee28525",
+      "generatedTokens": 1793,
+      "scenario": {
+        "sourceKey": "176830d3e1a0f3ca1636607572e308a413ad49107d41e7bbba0e363ea242367d",
+        "inputKey": "9202e5893ed304816912fe9aaea6e327c95c20dc298841249c9c28e61129c3df",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "exercism/javascript:collatz-conjecture/real-exercism-2ce2a45894aed9e415fdc646@45657588bfcf8d53",
+      "sourceTaskId": "real-exercism-2ce2a45894aed9e415fdc646",
+      "family": "exercism/javascript:collatz-conjecture",
+      "split": "test",
+      "sourceCluster": "component:79a479c3aa6ef301d6bc5129c4117388cec9b112c804d17046ae40a98d81cbcc",
+      "ancestorIds": [
+        "exercism/javascript:collatz-conjecture",
+        "upstream:exercism/javascript:exercises/practice/collatz-conjecture/.meta/proof.ci.js"
+      ],
+      "identityDigest": "45657588bfcf8d536292ca92061f1b4bd0fa815efcde4a1923360210b8c46e79",
+      "fileSha256": "5d1a767bd77ae68ee5e8f783a768cb4228efb6bf07c50212aade6c265d6a2576",
+      "generatedTokens": 218,
+      "scenario": {
+        "sourceKey": "1814cc6bc5de054599c7b7ae14936d96f9a295ff4d1b39f139aa51baf0710014",
+        "inputKey": "8ead1a163e67c7c21eda3a869ba78d841554b7eed603c140500304475ee5d957",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected",
+        "upstream-project"
+      ]
+    },
+    {
+      "id": "exercism/javascript:leap/real-exercism-7318d5be894edc26ed7ba925@5c57d16ffc4dc136",
+      "sourceTaskId": "real-exercism-7318d5be894edc26ed7ba925",
+      "family": "exercism/javascript:leap",
+      "split": "test",
+      "sourceCluster": "component:88b12f0f809fe8b632b4a92fa51479e89a5c249b821d55a5bf4479d6805112be",
+      "ancestorIds": [
+        "exercism/javascript:leap",
+        "upstream:exercism/javascript:exercises/practice/leap/.meta/proof.ci.js"
+      ],
+      "identityDigest": "5c57d16ffc4dc13639d2ddc0dba99160dfde1bea6ae1294e5871469896163516",
+      "fileSha256": "563922dc51229243297743a21c29c525b3acf75492209559a938c8ddb92e82d6",
+      "generatedTokens": 216,
+      "scenario": {
+        "sourceKey": "b97173e295d15e06545db1702c5a4f13a6cc5cd82887463437a76a807fa57d78",
+        "inputKey": "9dd29bb41fb1f1e0ed8dbc903234e1d85cad532271588014c705aed36b89ec11",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected",
+        "upstream-project"
+      ]
+    },
+    {
+      "id": "production:axios/axios:axios/lib/utils.js:isBoolean/real-production-0710e780182a7a2fbd381608@df3d78074c01b067",
+      "sourceTaskId": "real-production-0710e780182a7a2fbd381608",
+      "family": "production:axios/axios:axios/lib/utils.js:isBoolean",
+      "split": "test",
+      "sourceCluster": "component:8dea975f346a4efa42dcc5035feacdf66e47c59a58318d1dac57682e7e3d67c4",
+      "ancestorIds": [
+        "production:axios/axios:axios/lib/utils.js:isBoolean",
+        "upstream:axios/axios:axios/lib/utils.js"
+      ],
+      "identityDigest": "df3d78074c01b0675c9f0b1654a6d46b1922d4ff56f492c0eca1f11e056bceca",
+      "fileSha256": "dfeb57cc7a03f18fc884474ec311b730885976f1752015ccc16aacbd123ae90d",
+      "generatedTokens": 70,
+      "scenario": {
+        "sourceKey": "a593bb9ff374c188a84ee9795c019496390830db6d5da95499a4c803196691f5",
+        "inputKey": "3246ee71ddb8331e9d712d504ec715560db37f75c42dde2bfc62788114d1f607",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "exercism/javascript:binary-search/real-exercism-06ac329224dae9d6a1b8b3a2@d3ec5ee8a37aa55b",
+      "sourceTaskId": "real-exercism-06ac329224dae9d6a1b8b3a2",
+      "family": "exercism/javascript:binary-search",
+      "split": "test",
+      "sourceCluster": "component:b80394a2b2130dc5a796c5167e15810a37a416fa60909b83e7a2fe641b81f5ea",
+      "ancestorIds": [
+        "exercism/javascript:binary-search",
+        "upstream:exercism/javascript:exercises/practice/binary-search/.meta/proof.ci.js"
+      ],
+      "identityDigest": "d3ec5ee8a37aa55b7e609c51dbddca27b2fd9e4409a0e7a7dd4303e8cffcb990",
+      "fileSha256": "f6d8070a97cc6c616f7c428e4cb6ce5525a8e411bfdb453a9551537969922cd7",
+      "generatedTokens": 353,
+      "scenario": {
+        "sourceKey": "e135af88ec2ced66bb5ec47f57067bd5854e94a00e03705d8b550ce2db2a46ac",
+        "inputKey": "9c119c415756e4727f2fb33524aa2b56bad99802abd56bda4f1f7797ccedc227",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "mutation",
+        "new-source",
+        "pure-selected",
+        "upstream-project"
+      ]
+    },
+    {
+      "id": "exercism/javascript:two-fer/real-exercism-52edddd9698a074dd70b7208@8175368dd0bec7e3",
+      "sourceTaskId": "real-exercism-52edddd9698a074dd70b7208",
+      "family": "exercism/javascript:two-fer",
+      "split": "test",
+      "sourceCluster": "component:ed3163e3a99721157743e6649ee98eb323ecabf65d92c527320f7e461589d83c",
+      "ancestorIds": [
+        "exercism/javascript:two-fer",
+        "upstream:exercism/javascript:exercises/practice/two-fer/.meta/proof.ci.js"
+      ],
+      "identityDigest": "8175368dd0bec7e36dc289b531528e4dc5bdd37023db1de2ea45078a1121665b",
+      "fileSha256": "389c4485155fa72145e434801cb6e0c53509d0ea8717be25aa6389d32499a681",
+      "generatedTokens": 43,
+      "scenario": {
+        "sourceKey": "63580ab40173ce97903b43c92667ae8ec5537e2e136c87e75e24536bf30fc7ed",
+        "inputKey": "09b62fd1024fafaecc524a469f6ec189e771d8d2e9e3755530489261052567df",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected",
+        "upstream-project"
+      ]
+    },
+    {
+      "id": "exercism/javascript:raindrops/real-exercism-7a9f6f4fec79551263b2c5bd@b460c48a1b51f97b",
+      "sourceTaskId": "real-exercism-7a9f6f4fec79551263b2c5bd",
+      "family": "exercism/javascript:raindrops",
+      "split": "test",
+      "sourceCluster": "component:f89e0e9b045762bd799bcf3e94538ab9a094f1fd8aba9dc4e729ae69af009832",
+      "ancestorIds": [
+        "exercism/javascript:raindrops",
+        "upstream:exercism/javascript:exercises/practice/raindrops/.meta/proof.ci.js"
+      ],
+      "identityDigest": "b460c48a1b51f97b36b55b30edcdde083207045b7e2a6607d092955301ba2432",
+      "fileSha256": "d5fb37ebcf4376da686978f178dc0fd06fc7a7f08dc3b75cbf29ad5c5e21ca88",
+      "generatedTokens": 507,
+      "scenario": {
+        "sourceKey": "7ab3a9bfa2d9eb1c5e79a5f70d9ee8ca0d525658d7717b6e5aea094c7fe8c09d",
+        "inputKey": "8ead1a163e67c7c21eda3a869ba78d841554b7eed603c140500304475ee5d957",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected",
+        "upstream-project"
+      ]
+    },
+    {
+      "id": "exercism/javascript:sum-of-multiples/real-exercism-f46d81d029aad3add1894dbc@7706c2371b7a4aa6",
+      "sourceTaskId": "real-exercism-f46d81d029aad3add1894dbc",
+      "family": "exercism/javascript:sum-of-multiples",
+      "split": "test",
+      "sourceCluster": "component:ffb80b5af4cccbe25aa77c7ca76a77476d0a181290856ad31fec581ec382c146",
+      "ancestorIds": [
+        "exercism/javascript:sum-of-multiples",
+        "upstream:exercism/javascript:exercises/practice/sum-of-multiples/.meta/proof.ci.js"
+      ],
+      "identityDigest": "7706c2371b7a4aa668b0179ede262715d55ea61ec9aa43524794e3ded39dcd45",
+      "fileSha256": "ef5206f8ad6d645f03d5091d3f36f46c8bba7c4b452df21938466a4dc26aebed",
+      "generatedTokens": 150,
+      "scenario": {
+        "sourceKey": "df0a8538135e66a41e40e6c4c66c01c391b15b4efe7dc8dce1e993bfae461f30",
+        "inputKey": "3799b3cdf5551bae4551a29d10224975f236d1723a6bfe8253e28c1a38331a3b",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected",
+        "upstream-project"
+      ]
+    },
+    {
+      "id": "utility:lodash/_baseSum.js/baseSum/real-utilities-400601f972aaa2003f4b9010@73d4a17d20c4b953",
+      "sourceTaskId": "real-utilities-400601f972aaa2003f4b9010",
+      "family": "utility:lodash/_baseSum.js/baseSum",
+      "split": "test",
+      "sourceCluster": "component:17abecb5f8d8606350cb2b8988c87e004acc4c4bdd25a2ea2fb194039c2abebd",
+      "ancestorIds": [
+        "utility:lodash/_baseSum.js/baseSum",
+        "upstream:lodash/lodash:_baseSum.js"
+      ],
+      "identityDigest": "73d4a17d20c4b953ad32127e3691f05b27db07a74523ee93a13f18d524525b18",
+      "fileSha256": "1018a18d4db24ec0216bc102875e561b96071849900cd2d769dc05c59d1ad6cb",
+      "generatedTokens": 1785,
+      "scenario": {
+        "sourceKey": "58017fd0ddf0fb7fc0ad00ac8d6881c3fbb70691bbab3ac6ebf5d0f7cd3229e0",
+        "inputKey": "9202e5893ed304816912fe9aaea6e327c95c20dc298841249c9c28e61129c3df",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "exercism/javascript:collatz-conjecture/real-exercism-9826635001ec3f54d1281947@a325e67ac39bc242",
+      "sourceTaskId": "real-exercism-9826635001ec3f54d1281947",
+      "family": "exercism/javascript:collatz-conjecture",
+      "split": "test",
+      "sourceCluster": "component:79a479c3aa6ef301d6bc5129c4117388cec9b112c804d17046ae40a98d81cbcc",
+      "ancestorIds": [
+        "exercism/javascript:collatz-conjecture",
+        "upstream:exercism/javascript:exercises/practice/collatz-conjecture/.meta/proof.ci.js"
+      ],
+      "identityDigest": "a325e67ac39bc242f031a5496c0f09fa61ac366349ad1fec4c9e9738d17dc3ae",
+      "fileSha256": "dcb27a8d6576156d089c5e91e7e8cbb7d1e21ad6a8fd4207284b912ec18eb07d",
+      "generatedTokens": 1334,
+      "scenario": {
+        "sourceKey": "1814cc6bc5de054599c7b7ae14936d96f9a295ff4d1b39f139aa51baf0710014",
+        "inputKey": "eec8b1a418a5072e4966594b12c3e573b7b7f206f50f6c8ec3d7ce595236b17d",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "new-source",
+        "pure-selected",
+        "upstream-project"
+      ]
+    },
+    {
+      "id": "exercism/javascript:leap/real-exercism-bd296e5b2abe0bebda541903@0eadc5c6eed0352d",
+      "sourceTaskId": "real-exercism-bd296e5b2abe0bebda541903",
+      "family": "exercism/javascript:leap",
+      "split": "test",
+      "sourceCluster": "component:88b12f0f809fe8b632b4a92fa51479e89a5c249b821d55a5bf4479d6805112be",
+      "ancestorIds": [
+        "exercism/javascript:leap",
+        "upstream:exercism/javascript:exercises/practice/leap/.meta/proof.ci.js"
+      ],
+      "identityDigest": "0eadc5c6eed0352d36c5a5c3e6cf7e54d5516318e923376a8b3fe0921f1216b8",
+      "fileSha256": "5dbbcd748486794ff6a6d94d6ff9470541eb76874aa6b4804bbfbf6d2692aa50",
+      "generatedTokens": 215,
+      "scenario": {
+        "sourceKey": "b97173e295d15e06545db1702c5a4f13a6cc5cd82887463437a76a807fa57d78",
+        "inputKey": "37d76cd439813f055a2e3a9d626fd6960a45cf80dc501ab38614415c5031f7bc",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected",
+        "upstream-project"
+      ]
+    },
+    {
+      "id": "production:axios/axios:axios/lib/utils.js:isBoolean/real-production-6533b32e5dff394e59ab8ebb@ad8671e026d7d789",
+      "sourceTaskId": "real-production-6533b32e5dff394e59ab8ebb",
+      "family": "production:axios/axios:axios/lib/utils.js:isBoolean",
+      "split": "test",
+      "sourceCluster": "component:8dea975f346a4efa42dcc5035feacdf66e47c59a58318d1dac57682e7e3d67c4",
+      "ancestorIds": [
+        "production:axios/axios:axios/lib/utils.js:isBoolean",
+        "upstream:axios/axios:axios/lib/utils.js"
+      ],
+      "identityDigest": "ad8671e026d7d7891ad868b44162032e58394413374434a92fab0cc36ed4d153",
+      "fileSha256": "a5f3b6184ab652ab62eee2f8f73a717907283819a0c7b8f691148dcf51a2cbde",
+      "generatedTokens": 70,
+      "scenario": {
+        "sourceKey": "a593bb9ff374c188a84ee9795c019496390830db6d5da95499a4c803196691f5",
+        "inputKey": "9a31211fdba857b34105f17bc9ee7e2e31f0767edac842674026647da224f0ca",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "exercism/javascript:binary-search/real-exercism-7ff38e9fc82ca850e2cabfde@d36348b094d7f4c9",
+      "sourceTaskId": "real-exercism-7ff38e9fc82ca850e2cabfde",
+      "family": "exercism/javascript:binary-search",
+      "split": "test",
+      "sourceCluster": "component:b80394a2b2130dc5a796c5167e15810a37a416fa60909b83e7a2fe641b81f5ea",
+      "ancestorIds": [
+        "exercism/javascript:binary-search",
+        "upstream:exercism/javascript:exercises/practice/binary-search/.meta/proof.ci.js"
+      ],
+      "identityDigest": "d36348b094d7f4c9db115fa37a87d8517e4ccde3f122ba45da4e3726be972dcf",
+      "fileSha256": "6e7cf6c22049d2bc3fc4ad2084350a7aac63327d97d33b4e939bc0cbe45ba642",
+      "generatedTokens": 353,
+      "scenario": {
+        "sourceKey": "e135af88ec2ced66bb5ec47f57067bd5854e94a00e03705d8b550ce2db2a46ac",
+        "inputKey": "f99183cd682cab4e1a1657dc295cc42903e706a7e66f2e9714174dc77de2a2bf",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "mutation",
+        "new-source",
+        "pure-selected",
+        "upstream-project"
+      ]
+    },
+    {
+      "id": "exercism/javascript:raindrops/real-exercism-d19cf26190484d30ca2ba224@f354f88a5d3659c7",
+      "sourceTaskId": "real-exercism-d19cf26190484d30ca2ba224",
+      "family": "exercism/javascript:raindrops",
+      "split": "test",
+      "sourceCluster": "component:f89e0e9b045762bd799bcf3e94538ab9a094f1fd8aba9dc4e729ae69af009832",
+      "ancestorIds": [
+        "exercism/javascript:raindrops",
+        "upstream:exercism/javascript:exercises/practice/raindrops/.meta/proof.ci.js"
+      ],
+      "identityDigest": "f354f88a5d3659c74ab1dfa7a08206c600c785e30148576a7b492f929f843bae",
+      "fileSha256": "1fd149cbdf121e52e963df979ee553fdba5b617a02eb988d296ff6c8371b9282",
+      "generatedTokens": 578,
+      "scenario": {
+        "sourceKey": "7ab3a9bfa2d9eb1c5e79a5f70d9ee8ca0d525658d7717b6e5aea094c7fe8c09d",
+        "inputKey": "c3814a4c775d9732b5529c67f30f8e35818b6dc8dcc4298024bda898fda6047d",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-source",
+        "pure-selected",
+        "upstream-project"
+      ]
+    },
+    {
+      "id": "production:axios/axios:axios/lib/utils.js:isObject/real-production-a0b25a09b66aaa4d57441221@ec971879fa4bf447",
+      "sourceTaskId": "real-production-a0b25a09b66aaa4d57441221",
+      "family": "production:axios/axios:axios/lib/utils.js:isObject",
+      "split": "test",
+      "sourceCluster": "component:8dea975f346a4efa42dcc5035feacdf66e47c59a58318d1dac57682e7e3d67c4",
+      "ancestorIds": [
+        "production:axios/axios:axios/lib/utils.js:isObject",
+        "upstream:axios/axios:axios/lib/utils.js"
+      ],
+      "identityDigest": "ec971879fa4bf44784b73786569d782486a7aa901605cf23788adc4064e5704f",
+      "fileSha256": "6dbc2c9b215869f75fcea8c8fc1b34b44d8078fafbe6effcf4bc5faa8728197b",
+      "generatedTokens": 69,
+      "scenario": {
+        "sourceKey": "39acf7697437bfd7d2e1241108a2c76a141c6528f958c470c7186c856191a2f5",
+        "inputKey": "f7a30aed583d2dfdc29c2f938ce8de826643fabcbc7ef2d83014076d9da8cabb",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "production:axios/axios:axios/lib/utils.js:isObject/real-production-d2122307af1702a7eb1eba65@72a1f88099548353",
+      "sourceTaskId": "real-production-d2122307af1702a7eb1eba65",
+      "family": "production:axios/axios:axios/lib/utils.js:isObject",
+      "split": "test",
+      "sourceCluster": "component:8dea975f346a4efa42dcc5035feacdf66e47c59a58318d1dac57682e7e3d67c4",
+      "ancestorIds": [
+        "production:axios/axios:axios/lib/utils.js:isObject",
+        "upstream:axios/axios:axios/lib/utils.js"
+      ],
+      "identityDigest": "72a1f880995483537c667abbbb45fc69dbd5731ca26ce5f13c80bcba236652d9",
+      "fileSha256": "cb7b78b5ffcde0b7d5064abe811d6dbe8a0a1201054e4cdd4dbbb4db90794841",
+      "generatedTokens": 72,
+      "scenario": {
+        "sourceKey": "39acf7697437bfd7d2e1241108a2c76a141c6528f958c470c7186c856191a2f5",
+        "inputKey": "f87d0300023573e357876c4cdf1496f3de31f8ec892ae85dd06c711a9213921f",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "production:axios/axios:axios/lib/utils.js:isUnsafeObjectKey/real-production-70ff428978924687c9bcc492@59165f8f7708da73",
+      "sourceTaskId": "real-production-70ff428978924687c9bcc492",
+      "family": "production:axios/axios:axios/lib/utils.js:isUnsafeObjectKey",
+      "split": "test",
+      "sourceCluster": "component:8dea975f346a4efa42dcc5035feacdf66e47c59a58318d1dac57682e7e3d67c4",
+      "ancestorIds": [
+        "production:axios/axios:axios/lib/utils.js:isUnsafeObjectKey",
+        "upstream:axios/axios:axios/lib/utils.js"
+      ],
+      "identityDigest": "59165f8f7708da735e5d10909e49bc610a260e3fdd5bcbfebe514257b8b3b7a7",
+      "fileSha256": "e53f5d238fb2af77e4c055e2f0795e030bad513b131b9f4d81e76f42e1d73170",
+      "generatedTokens": 141,
+      "scenario": {
+        "sourceKey": "ddbe12387b1af75608158ee156b886a175a3df90a2d89adab325c161df5cdf33",
+        "inputKey": "16790f1cb10d20303224acbf4b35411e115667d3e4d4e4cad6e795f0fcb066ca",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected"
+      ]
+    },
+    {
+      "id": "production:axios/axios:axios/lib/utils.js:isUnsafeObjectKey/real-production-9947619456f3a9a4a356d5d7@548aa6dea59d3b26",
+      "sourceTaskId": "real-production-9947619456f3a9a4a356d5d7",
+      "family": "production:axios/axios:axios/lib/utils.js:isUnsafeObjectKey",
+      "split": "test",
+      "sourceCluster": "component:8dea975f346a4efa42dcc5035feacdf66e47c59a58318d1dac57682e7e3d67c4",
+      "ancestorIds": [
+        "production:axios/axios:axios/lib/utils.js:isUnsafeObjectKey",
+        "upstream:axios/axios:axios/lib/utils.js"
+      ],
+      "identityDigest": "548aa6dea59d3b26a71bdb09e649aa111bfe2ccb2ee6b7a18fce06756b1aa4d1",
+      "fileSha256": "90f01567880606851db7daf096a548a3ede1cfac2692ca6d84c2b0789baa2a54",
+      "generatedTokens": 143,
+      "scenario": {
+        "sourceKey": "ddbe12387b1af75608158ee156b886a175a3df90a2d89adab325c161df5cdf33",
+        "inputKey": "46f66557a716f8b09ac33061e83ab2897faf3423311bc967d2b54a02d8b607de",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-source",
+        "pure-selected"
+      ]
+    }
+  ],
+  "auxiliary": [
+    {
+      "id": "utility:lodash/_baseLt.js/baseLt/real-utilities-dc8253b0c731cc0ac50f9f04@0ad8c6624c2f83bf",
+      "sourceTaskId": "real-utilities-dc8253b0c731cc0ac50f9f04",
+      "family": "utility:lodash/_baseLt.js/baseLt",
+      "split": "train",
+      "sourceCluster": "component:b73d2e6f9c4b8e62eb76bf4a87879fbebbe03fffc72f2862afa3db0fbf3f316b",
+      "ancestorIds": [
+        "utility:lodash/_baseLt.js/baseLt",
+        "upstream:lodash/lodash:_baseLt.js"
+      ],
+      "identityDigest": "0ad8c6624c2f83bfa1e083747708fe65af41c49398d6293c027226e4a491be69",
+      "fileSha256": "a75f418569a4ac4146c7e76a7defb897f80158482c2135ce108e67b18fda28e5",
+      "generatedTokens": 49,
+      "scenario": {
+        "sourceKey": "28b0d9a5d38ce64ca063d82039840cf0ef2e8b2f73d611bc14a4c4747148a906",
+        "inputKey": "75c8aaa1016a17eadc0c0a92fb4dc4111c325ddf78ea3bf12c9e3330172dbfc5",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-inputs-known-source",
+        "pure-selected"
+      ],
+      "evaluationRole": "auxiliary-known-source",
+      "matchedTrainingId": "utility:lodash/_baseLt.js/baseLt/real-utilities-b7b60e63bd3b8fe7acda0aad@56ef0361f330c1e4",
+      "auxiliarySlices": [
+        "new-inputs-known-source"
+      ]
+    },
+    {
+      "id": "utility:lodash/_strictLastIndexOf.js/strictLastIndexOf/real-utilities-f9a6ae44ec164e430dfdf569@b0d0001b10567687",
+      "sourceTaskId": "real-utilities-f9a6ae44ec164e430dfdf569",
+      "family": "utility:lodash/_strictLastIndexOf.js/strictLastIndexOf",
+      "split": "train",
+      "sourceCluster": "component:c19fc337d982191181738146a78107dee350e086f0c21e0b04c6ec2acbac8a16",
+      "ancestorIds": [
+        "utility:lodash/_strictLastIndexOf.js/strictLastIndexOf",
+        "upstream:lodash/lodash:_strictLastIndexOf.js"
+      ],
+      "identityDigest": "b0d0001b1056768714edd9c097756df444876a00034c58f182bb8d768ea45f57",
+      "fileSha256": "9bd03fcb6cd45ee6bdf96603d8c713038cb789404165d3e65eece9b97fd1babf",
+      "generatedTokens": 649,
+      "scenario": {
+        "sourceKey": "8780f97bc3f23aca1e1ed86bbe7d969d4cfc8f471d631dd09f46e4269203f769",
+        "inputKey": "fdf6348a27b8aaa9161acefc9b69b9ffd68522346e692921c42553e0d6e9a137",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-medium",
+        "mutation",
+        "new-inputs-known-source",
+        "pure-selected"
+      ],
+      "evaluationRole": "auxiliary-known-source",
+      "matchedTrainingId": "utility:lodash/_strictLastIndexOf.js/strictLastIndexOf/real-utilities-2524a4e6a9e9c2eb06f0eea0@98a98061d780f082",
+      "auxiliarySlices": [
+        "new-inputs-known-source"
+      ]
+    },
+    {
+      "id": "production:axios/axios:axios/lib/core/InterceptorManager.js:countHandlers/real-production-def89e134165c25ed58ede86@2fc689cb6d66735f",
+      "sourceTaskId": "real-production-def89e134165c25ed58ede86",
+      "family": "production:axios/axios:axios/lib/core/InterceptorManager.js:countHandlers",
+      "split": "train",
+      "sourceCluster": "component:cf5db81707059d7aa2ff96f057165078c38c149398cfcec9869d1db31262b887",
+      "ancestorIds": [
+        "production:axios/axios:axios/lib/core/InterceptorManager.js:countHandlers",
+        "upstream:axios/axios:axios/lib/core/InterceptorManager.js"
+      ],
+      "identityDigest": "2fc689cb6d66735f3ba7b356b82d5759c2bbecce06f5a479de9abe5ec2534581",
+      "fileSha256": "29324f3893c58ba5a59061a2d00406d03c9d9669b883b7036e8e0d0ee282cd3e",
+      "generatedTokens": 92,
+      "scenario": {
+        "sourceKey": "e1e3c26c9aec39b05185bbea8d69acf5df296d52c7091874ddc21936b1dfd3cd",
+        "inputKey": "e94bc35bf77b9b0440fce63ba11be6ff341fa8f4255a7a1e4560cdacd219b8a5",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-inputs-known-source",
+        "pure-selected"
+      ],
+      "evaluationRole": "auxiliary-known-source",
+      "matchedTrainingId": "production:axios/axios:axios/lib/core/InterceptorManager.js:countHandlers/real-production-456cddb07f3871ecbf3bce88@5888acbb1563a2f3",
+      "auxiliarySlices": [
+        "new-inputs-known-source"
+      ]
+    },
+    {
+      "id": "utility:lodash/_baseGt.js/baseGt/real-utilities-fa6cb44fbe5198da95af82fe@86f72fce11434b52",
+      "sourceTaskId": "real-utilities-fa6cb44fbe5198da95af82fe",
+      "family": "utility:lodash/_baseGt.js/baseGt",
+      "split": "train",
+      "sourceCluster": "component:fa4c3a87b88cb6d294e4968df10f46c16d5cfb6ba6c33b8ba168739f9479ab19",
+      "ancestorIds": [
+        "utility:lodash/_baseGt.js/baseGt",
+        "upstream:lodash/lodash:_baseGt.js"
+      ],
+      "identityDigest": "86f72fce11434b523540e80c2bf874f623403c94f72b565a2d2c0bf26464a973",
+      "fileSha256": "0ec8fb61b1a44c06831dd7ed69ec546beaa71b4b5dacba543651c093ce9bbd50",
+      "generatedTokens": 50,
+      "scenario": {
+        "sourceKey": "6a96738d1c0ab8b3cc6c8b8c9e7262921bc874042b05b45d23d4ec0db3f1ff9f",
+        "inputKey": "ef01817a24481bc5079e53634500d7973e17aea45809c99e9fa49034cf8cf44e",
+        "observationKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "scheduleKey": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "slices": [
+        "heap-small",
+        "length-short",
+        "new-inputs-known-source",
+        "pure-selected"
+      ],
+      "evaluationRole": "auxiliary-known-source",
+      "matchedTrainingId": "utility:lodash/_baseGt.js/baseGt/real-utilities-61b4b4c012b0705b0a6b660a@9f4d38defceb6070",
+      "auxiliarySlices": [
+        "new-inputs-known-source"
+      ]
+    }
+  ]
+}
