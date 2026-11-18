@@ -36,13 +36,13 @@ failed free-running trained-model experiments.
 
 [index.json](index.json) binds all 18 unchanged copied files by size and
 SHA-256: the five complete native job logs and parsed summaries, the complete
-Node24 unit log and summary, and the complete Exercism diagnostic log and
+Node 24 unit log and summary, and the complete Exercism diagnostic log and
 summary, plus the complete real-world observation/audit logs and summaries. The logs preserve the original command lines, installation/runtime
 output, per-step results, source identities and release verification output.
 The GitHub artifact ZIPs and their member-level receipts are preserved
 separately; a copied successful log is not a replacement for its artifact.
 
-The Node24 job in [unit run 44321402701](https://github.com/werg/tracing-js-self/actions/runs/44321402701)
+The Node 24 job in [unit run 44321402701](https://github.com/werg/tracing-js-self/actions/runs/44321402701)
 tested synthetic merge `3497ee3`, with **909 tests: 902 passed, seven skipped,
 zero failed**. Two skips came from the hosted runner's UID-map `EPERM`; five
 required the native orchestration environment. The native lane executed those

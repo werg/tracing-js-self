@@ -8,7 +8,7 @@ clean tracked state were checked before and after qualification.
 
 | Check | Actual result |
 | --- | --- |
-| Full Node24 suite | 902 tests: **897 passed, zero failed, five explicitly skipped**, zero cancelled/todo |
+| Full Node 24 suite | 902 tests: **897 passed, zero failed, five explicitly skipped**, zero cancelled/todo |
 | Merged Python regressions | **108 passed** |
 | Deterministic reference fixture | Passed |
 | Host contract generation check | Passed |
@@ -18,8 +18,8 @@ clean tracked state were checked before and after qualification.
 The complete [qualification receipt](local-qualification.json) records the
 expanded argument lists, exact working directories, environment, runtime
 versions, return codes, log sizes and SHA-256 digests. The Node suite used
-Node24.22.3 / V8 13.6.233.17-node.63 with two test workers; the Python tests used
-Python3.12.14 and the explicitly selected current consumer. UTC, C.UTF-8,
+Node 24.22.3 / V8 13.6.233.17-node.63 with two test workers; the Python tests used
+Python 3.12.14 and the explicitly selected current consumer. UTC, C.UTF-8,
 one-thread BLAS/OpenMP settings and the workspace temporary directory are
 retained as measured. The receipt records the actual elapsed times rather than
 assuming the earlier baseline's duration.
@@ -38,7 +38,7 @@ binds the full command, Node version, environment, before/after tree state and
 sanitization, kernel confinement against direct filesystem/network/process
 APIs, and isolated original/instrumented source admission with its policy bound.
 
-This is separate from the hosted unit workflow for head `1e2e6a0`, whose Node24
+This is separate from the hosted unit workflow for head `1e2e6a0`, whose Node 24
 job tested synthetic merge `3497ee3454ea75715db1bc50c3e7cfc35ecc0fc2` and reported
 909 tests, 902 passes, seven skips and zero failures. Two hosted skips reflect
 that runner's UID-map `EPERM`; the other five require native orchestration
@@ -47,7 +47,7 @@ executions are not added together to rewrite either unit-suite denominator.
 
 ## Preserved integration failure
 
-The first full Node24 attempt at `5769938824db6654c7a0254228a8a45af9c32581`
+The first full Node 24 attempt at `5769938824db6654c7a0254228a8a45af9c32581`
 reported 896 passes, one failure and five skips. Its original log and exit code
 are retained under [earlier-attempt-5769938](earlier-attempt-5769938). The only
 failure was an obsolete expected helper-coverage count: the test expected
@@ -75,7 +75,7 @@ failed hosted result.
 All five lanes of [native run 44321402524](https://github.com/werg/tracing-js-self/actions/runs/44321402524)
 subsequently passed at actual producer `1e2e6a0` and consumer `6b4382b`.
 The [separate successor receipt](native-successor/README.md) retains all five
-complete successful logs, exact identity records, the Node24 integration log,
+complete successful logs, exact identity records, the Node 24 integration log,
 and the distinct Exercism diagnostic. It records 477 attempts, 457 native
 admissions and fresh qualifications, and a sum of 364 within-release distinct
 prepared rows; a cross-recipe deduplicated union was not measured. This is a
