@@ -9,6 +9,8 @@
   "beforeStatus": "rejected",
   "beforeReason": "Invalid semantic-trace/5: Malformed shared cell capture relation",
   "afterConsumerRevision": "3e3d418dab6ba268ce3f0948f57387c162de327b",
+  "publishedConsumerRevision": "1cee21dd07a687b0a824abff1bbd5ef9a13149ab",
+  "publishedRevisionRelation": "Identical Git tree to the tested local revision; publication assigns a new commit identity. Original component receipts remain bound to the local revision. Fresh producer/native qualification is recorded separately.",
   "afterStatus": "native-component-admitted",
   "newNativeReceipt": {
     "schema": "semantic-native-admission/4",
