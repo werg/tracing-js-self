@@ -18,12 +18,15 @@ export function describeCompletionGraph(args,value,kind){
     for(const key of Reflect.ownKeys(value)){
       if(key!=='stack'&&key!=='message')
         throw new TypeError('Unsupported exception boundary: Error extensions');
+      // Even querying a lazy stack descriptor can format the stack in V8,
+      // invoking message/name accessors or Error.prepareStackTrace. This field
+      // is outside the observation profile, so do not inspect it at all.
+      if(key==='stack')continue;
       const descriptor=Object.getOwnPropertyDescriptor(value,key);
-      // V8 may implement stack with an accessor. It is deliberately ignored
-      // and never invoked; every observed message must be an own data field.
-      if(key==='message'&&(!Object.hasOwn(descriptor,'value')||
+      // Every observed message must be an own data field.
+      if(!Object.hasOwn(descriptor,'value')||
         typeof descriptor.value!=='string'||descriptor.enumerable||
-        !descriptor.writable||!descriptor.configurable))
+        !descriptor.writable||!descriptor.configurable)
         throw new TypeError('Unsupported exception boundary: Error message descriptor');
     }
     const message=Object.getOwnPropertyDescriptor(value,'message')?.value??'';
