@@ -120,8 +120,9 @@ function composeEffectfulSession(components,{family,seed=17,producerRevision=nul
 export async function verifyEffectfulSession({cases,family,nativeConsumer=null,seed=17,
     producerRevision=null,sessionId='teachersession',splitIdentity=null,seeds={},provenance={},nativePolicy=null}={}){
   if(!Array.isArray(cases)||cases.length<2)throw new TypeError('At least two source invocations are required');
-  const {verifyEffectfulTrainingCase,bindNativeAdmission,validateNativePolicy}=await import('./effectful-admit.js');
+  const {verifyEffectfulTrainingCase,bindNativeAdmission,validateNativePolicy,validateNativeProducer}=await import('./effectful-admit.js');
   if(nativeConsumer||nativePolicy!==null)nativePolicy=validateNativePolicy(nativePolicy);
+  if(nativeConsumer)validateNativeProducer(producerRevision);
   splitIdentity=structuredClone(splitIdentity??defaultSplitIdentity(family,{seed}));
   const components=[],programs=new Map();let nextProgram=0;
   for(const [index,fixture] of cases.entries()){

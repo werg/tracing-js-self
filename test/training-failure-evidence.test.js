@@ -58,6 +58,16 @@ test('reference timeout, output cap and unsupported instrumentation have distinc
   await assert.rejects(independentEffectfulReference({...input,source:'"use strict";function run( {'}),
     error=>error.admissionCategory==='reference_instrumentation_unsupported');
 });
+test('the actual runtime step safety budget is a resource refusal, not an interpreter failure',async()=>{
+  const result=await verifyEffectfulTrainingCase({...fixture,maxSteps:1});
+  assert.equal(result.status,'profile_limit');
+  assert.equal(result.category,'teacher_resource_limit');
+  assert.match(result.reason,/Driver safety limit \(1 steps\)/);
+  assert.equal(result.failure.original.limits.maxSteps,1);
+  assert.equal(result.failure.original.error.name,'Error');
+  assert.equal(verifyFailureRecord(result.failure),true);
+  await assert.rejects(verifyEffectfulTrainingCase({...fixture,maxSteps:0}),/positive safe integers/);
+});
 test('callback failures cannot be silently discarded by otherwise-correct root qualification',async()=>{
   const result=await verifyEffectfulTrainingCase({...fixture,args:[],
     source:'"use strict";function run(){queueMicrotask(()=>{throw 7;});return 3;}'});

@@ -50,6 +50,9 @@ test('single-episode metadata tampering cannot pass source recheck',async()=>{
     limits:side=>{side.executionLimits.maxSteps++;},
     capability:side=>{side.capabilityProfile.push('invented');},
     producer:side=>{side.producerRevision='a'.repeat(40);},
+    evidenceKind:side=>{side.evidenceKind='optimizer-trained';},
+    optimizerSteps:side=>{side.optimizerSteps=1;},
+    learnedSuccess:side=>{side.learnedSuccess=1;},
     license:side=>{side.license='different-license';},
     payload:side=>{side.identity.lineage.ancestorIds.push('forged');},
     payloadDigest:side=>{side.identityDigest='0'.repeat(64);}
@@ -133,8 +136,12 @@ test('native API requires exact consumer and tokenizer policy before calling a c
   await assert.rejects(verifyEffectfulTrainingCase({...fixture,nativeConsumer}),/policy is incompatible/);
   await assert.rejects(verifyEffectfulTrainingCase({...fixture,nativeConsumer,
     nativePolicy:{consumerRevision:policy.consumerRevision,tokenizerIdentity:policy.tokenizerIdentity}}),/SHA-256/);
+  await assert.rejects(verifyEffectfulTrainingCase({...fixture,nativeConsumer,nativePolicy:policy}),/pinned producer/);
   assert.equal(calls,0);
-  const result=await verifyEffectfulTrainingCase({...fixture,nativeConsumer,nativePolicy:policy});
+  const unpinned=await verifyEffectfulTrainingCase({...fixture,nativePolicy:policy});
+  assert.equal(unpinned.status,'locally_verified');
+  assert.throws(()=>bindNativeAdmission(unpinned.exported,syntheticReceipt(unpinned.exported),policy),/pinned producer/);
+  const result=await verifyEffectfulTrainingCase({...fixture,nativeConsumer,nativePolicy:policy,producerRevision:'a'.repeat(40)});
   assert.equal(result.status,'admitted',result.reason);
   assert.equal(calls,1);
   assert.equal(result.exported.sidecar.nativeBinding.identityDigest,result.exported.sidecar.identityDigest);
@@ -152,7 +159,7 @@ test('native API requires exact consumer and tokenizer policy before calling a c
 
 test('native session policy binds each component and whole-session receipt',async()=>{
   const result=await verifyEffectfulSession({cases:[fixture,{...fixture,args:[8]}],family:fixture.family,
-    nativePolicy:policy,nativeConsumer:async exported=>syntheticReceipt(exported)});
+    nativePolicy:policy,producerRevision:'a'.repeat(40),nativeConsumer:async exported=>syntheticReceipt(exported)});
   assert.equal(result.status,'admitted',result.reason);
   assert(result.exported.sidecar.collection.components.every(item=>
     item.sidecar.identity.certification.nativePolicy.consumerRevision===policy.consumerRevision));

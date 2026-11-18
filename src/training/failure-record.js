@@ -18,7 +18,8 @@ export function classifyAdmissionFailure(error,phase){
   if(phase==='projection')return {status:'projection_refused',category:'projection_refused'};
   if(phase==='reference')return {status:'reference_process_failure',category:'reference_process_failure'};
   if(/deadline|timed out|timeout/i.test(message))return {status:'profile_limit',category:'teacher_timeout'};
-  if(error instanceof RangeError&&/cap|maximum|limit|budget|steps|bound|exceed/i.test(message))
+  if(/^Driver safety limit \(\d+ steps\)/.test(message)||
+    error instanceof RangeError&&/cap|maximum|limit|budget|steps|bound|exceed/i.test(message))
     return {status:'profile_limit',category:'teacher_resource_limit'};
   if(error instanceof SyntaxError||/unsupported|not supported|outside.*profile/i.test(message)||
     String(error.category??'').startsWith('unsupported'))return {status:'unsupported',category:'unsupported_source'};

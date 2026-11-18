@@ -85,6 +85,9 @@ export function normalizeSeeds(seeds={},split=17,guestRng=null){
 }
 function identityPayload(exported){
   const side=exported.sidecar;
+  if(side.evidenceKind!=='deterministic-engineering'||side.optimizerSteps!==0||
+    side.learnedSuccess!==undefined&&side.learnedSuccess!==null)
+    fail('teacher evidence kind, optimizer steps or unmeasured learned success');
   if(typeof side.sourceFamily!=='string'||!side.sourceFamily||side.sourceLineage!==side.sourceFamily||
     side.sourceProvenance?.family!==side.sourceFamily||side.sourceProvenance?.license!==side.license||
     side.sourceProvenance?.trustTier!==side.trustTier||
@@ -114,6 +117,7 @@ function identityPayload(exported){
       projectionOptions:side.projectionOptions??null,completionPolicy:'complete-root-and-observed-callbacks/1'},
     seeds:side.seeds,environment:side.environment,
     certification:{producerRevision:side.producerRevision,catalogDigest:side.catalogDigest,
+      evidenceKind:side.evidenceKind,optimizerSteps:side.optimizerSteps,learnedSuccess:null,
       schemaDigest:contract.digest,fixtureDigest:contract.fixtureDigest,
       archiveDigest:side.archive?exactHash(side.archive):null,
       referenceDigest:identityDigest(side.reference),effectsDigest:identityDigest(side.effects),

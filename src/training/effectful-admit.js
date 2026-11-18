@@ -109,8 +109,14 @@ export function validateNativePolicy(policy){
   return {consumerRevision:policy.consumerRevision,tokenizerIdentity:policy.tokenizerIdentity,
     tokenizerSha256:policy.tokenizerSha256};
 }
+export function validateNativeProducer(producerRevision){
+  if(!/^[0-9a-f]{40}$/.test(producerRevision??''))
+    throw new TypeError('Native admission requires an exact pinned producer revision');
+  return producerRevision;
+}
 export function requireNativeAdmission(exported,receipt,policy=null){
   const expected=validateNativePolicy(policy??exported?.sidecar?.nativePolicy);
+  validateNativeProducer(exported?.sidecar?.producerRevision);
   if(!isDeepStrictEqual(expected,exported?.sidecar?.nativePolicy))
     throw new Error('Native admission policy differs from the immutable candidate identity');
   verifyAdmissionIdentity(exported);
@@ -160,8 +166,11 @@ export async function verifyEffectfulTrainingCase({source,entry,args=[],fixture,
     throw new TypeError('Effectful admission requires source family, license and declared trusted source tier');
   if(randomSeed!==null&&(!Number.isInteger(randomSeed)||randomSeed<0||randomSeed>0xffffffff))
     throw new TypeError('The guest RNG fixture seed must be a uint32 or null');
+  if(!Number.isSafeInteger(maxSteps)||maxSteps<1||!Number.isSafeInteger(timeoutMs)||timeoutMs<1)
+    throw new TypeError('Teacher step and deadline limits must be positive safe integers');
   normalizeSeeds(seeds,seed,randomSeed);
   if(nativeConsumer||nativePolicy!==null)nativePolicy=validateNativePolicy(nativePolicy);
+  if(nativeConsumer)validateNativeProducer(producerRevision);
   splitIdentity=structuredClone(splitIdentity??defaultSplitIdentity(family,{seed}));
   validateSplitIdentity(splitIdentity,{family,seed});
   fixture=canonicalFixturePlan(fixture);

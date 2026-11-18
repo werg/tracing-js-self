@@ -22,6 +22,8 @@ qualification. Public semantic prediction records remain unchanged.
   worker bytes.
 - Producer revision, catalog/schema/fixture digests, private journal, replay,
   source-check/effect receipts and, for sessions, each component identity.
+- Deterministic engineering evidence kind, zero optimizer steps and the absence
+  of a learned-success measurement. Training results belong to separate runs.
 - The expected native consumer revision, tokenizer identity and tokenizer-file
   SHA-256 whenever native qualification is requested.
 
@@ -76,7 +78,8 @@ assertions immutable and auditably connected to the actual executed source.
 
 Supplying `nativeConsumer` requires `nativePolicy` with all three exact fields:
 `consumerRevision`, `tokenizerIdentity`, and `tokenizerSha256`. The producer
-rejects incomplete policies before calling the consumer. Tokenizer file hashes
+also requires an exact producer revision before native qualification or local
+promotion. It rejects incomplete policies before calling the consumer. Tokenizer file hashes
 and revision identities are compared exactly. Session components inherit the
 same policy; lifecycle children use `bindNativeAdmission` for promotion.
 
