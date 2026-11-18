@@ -1,0 +1,1991 @@
+{
+  "accepted": [
+    {
+      "episodeId": "semantic:harness:85607195346bcf90b660a708d4baa1b8069e1f760132bd5cd4f9cb914450f366",
+      "generatedTokens": 548,
+      "id": "euclidean-gcd-pure",
+      "sourceCluster": "component:4c200b30cab1031b6000d94f9e65f44413e053dc7f4d3dcc515f69c11c3e6ff9",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:9d4db97b8944d17b4b8eca729cb0b2c51066d8dd4ee0bedd0c78dd25e639d11b",
+      "generatedTokens": 1367,
+      "id": "euclidean-gcd-callbacks-recovery",
+      "sourceCluster": "component:4c200b30cab1031b6000d94f9e65f44413e053dc7f4d3dcc515f69c11c3e6ff9",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:a744189f9f0290e2b39db6d2c57636006c2ed94adb8dfe5782b5108f524a3c2b",
+      "generatedTokens": 1890,
+      "id": "euclidean-gcd-repeated",
+      "sourceCluster": "component:4c200b30cab1031b6000d94f9e65f44413e053dc7f4d3dcc515f69c11c3e6ff9",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:9fdd75073eb8f9dedc34568dd971bb87bfbf0bf00a8d0a4d6ecb60254e0ab9d6",
+      "generatedTokens": 652,
+      "id": "least-common-multiple-pure",
+      "sourceCluster": "component:dad5c12ada82421c8f97ad63fefa9d4b796c0918974a1eb838ece74dbe28c0b2",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:64c07c8b0e34cc3f23c8eda456050e3c26a4920a3359bfa0c69106879b9b3287",
+      "generatedTokens": 1474,
+      "id": "least-common-multiple-callbacks-recovery",
+      "sourceCluster": "component:dad5c12ada82421c8f97ad63fefa9d4b796c0918974a1eb838ece74dbe28c0b2",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:b49144044f24d7c533fd8fa4d294251ca4dc1051d023f319499c00bbd46c1816",
+      "generatedTokens": 2104,
+      "id": "least-common-multiple-repeated",
+      "sourceCluster": "component:dad5c12ada82421c8f97ad63fefa9d4b796c0918974a1eb838ece74dbe28c0b2",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:69e1d2f771f8dd5ab1391c4d731c35ada06f3949ca90505126147999640cf937",
+      "generatedTokens": 1009,
+      "id": "factorial-iterative-pure",
+      "sourceCluster": "component:a6d2eb8228c12dbe729dedfbef012d70da94e332e728d63cc60fd45b5ea8a096",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:62d51e5a118a3b3c9642ad5d1c9c422d332c5c2f5dfaf175a4fff35b984fccd9",
+      "generatedTokens": 1842,
+      "id": "factorial-iterative-callbacks-recovery",
+      "sourceCluster": "component:a6d2eb8228c12dbe729dedfbef012d70da94e332e728d63cc60fd45b5ea8a096",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:dec3783f361d4611dc22c3d9ddea2f5bc348e58bb338f17af85c444610fd1966",
+      "generatedTokens": 2658,
+      "id": "factorial-iterative-repeated",
+      "sourceCluster": "component:a6d2eb8228c12dbe729dedfbef012d70da94e332e728d63cc60fd45b5ea8a096",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:c0ef64a0c8984f06e4fc88ee20751729c6653334c45bf56057678b339f896e44",
+      "generatedTokens": 1735,
+      "id": "fibonacci-iterative-pure",
+      "sourceCluster": "component:83df860a2aa8b8683242b86f1cbf4e20ed6b71ef75d51e631b4095bcde29477c",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:7218cc68b5cb22641fd59ffff5f08b689e580d83b1e06c592cf8eecc199ede31",
+      "generatedTokens": 2550,
+      "id": "fibonacci-iterative-callbacks-recovery",
+      "sourceCluster": "component:83df860a2aa8b8683242b86f1cbf4e20ed6b71ef75d51e631b4095bcde29477c",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:e679b650e88cad0c9abd2cb76dbfff9c74dc92a551cb84b7db552d845dba3aef",
+      "generatedTokens": 4054,
+      "id": "fibonacci-iterative-repeated",
+      "sourceCluster": "component:83df860a2aa8b8683242b86f1cbf4e20ed6b71ef75d51e631b4095bcde29477c",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:b7f520a369e1c6e148f102b4b1b2b530a13981891f0d734773f41534bf427f40",
+      "generatedTokens": 1020,
+      "id": "power-squaring-pure",
+      "sourceCluster": "component:aa406e68b1db591abc86434a10cc75fac7fc922c98c82821cff5f0e473c6630e",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:3235927c5bf820dd1ece9645c18c5e192cf970b16960dd0f72641f32bd626648",
+      "generatedTokens": 1841,
+      "id": "power-squaring-callbacks-recovery",
+      "sourceCluster": "component:aa406e68b1db591abc86434a10cc75fac7fc922c98c82821cff5f0e473c6630e",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:a507e21af65aada4ae729080b39a77fa158b66c1b7906f40a33eb0d6b9bd3e63",
+      "generatedTokens": 2880,
+      "id": "power-squaring-repeated",
+      "sourceCluster": "component:aa406e68b1db591abc86434a10cc75fac7fc922c98c82821cff5f0e473c6630e",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:15717354a8794703dea13a539266135b0fc2a5b62651140eee86246514f36fb5",
+      "generatedTokens": 793,
+      "id": "sum-digits-pure",
+      "sourceCluster": "component:40bcfbe1b3a1e5715be89a168b2c90fee374fc1af6b4350d26092b20206920ba",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:32c7f758c75197f704c4067e9f2a93c0af6176f92620e5328e47af4ff5d3bc30",
+      "generatedTokens": 1607,
+      "id": "sum-digits-callbacks-recovery",
+      "sourceCluster": "component:40bcfbe1b3a1e5715be89a168b2c90fee374fc1af6b4350d26092b20206920ba",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:95a4dc8991716c28c035be48a048f43d697b9c8e4e2431c1216688f792a4f25d",
+      "generatedTokens": 2381,
+      "id": "sum-digits-repeated",
+      "sourceCluster": "component:40bcfbe1b3a1e5715be89a168b2c90fee374fc1af6b4350d26092b20206920ba",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:d7374f98279ec58292408f7fb87b9653d3e1d8e8201b1b926d699227303dc340",
+      "generatedTokens": 724,
+      "id": "count-digits-pure",
+      "sourceCluster": "component:6cdf405873c862ffd6fe1c91a9c2204df445b7059dd4f549a4ac5c882b7b5fa4",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:8eeafdedb105b5e017f0a90d6a8678a1cf0339371e6be9ed2838dab108adf430",
+      "generatedTokens": 1529,
+      "id": "count-digits-callbacks-recovery",
+      "sourceCluster": "component:6cdf405873c862ffd6fe1c91a9c2204df445b7059dd4f549a4ac5c882b7b5fa4",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:6a521d8d615f51b760439353089a5dd4a19ed4a4ecbf85a16a509e1e2273e2b6",
+      "generatedTokens": 2232,
+      "id": "count-digits-repeated",
+      "sourceCluster": "component:6cdf405873c862ffd6fe1c91a9c2204df445b7059dd4f549a4ac5c882b7b5fa4",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:1ef186862e3ac4f4c369dea16971c33c3ed1d1d58dc56fc4c6fbe294fc7ab7d1",
+      "generatedTokens": 875,
+      "id": "reverse-digits-pure",
+      "sourceCluster": "component:40bcfbe1b3a1e5715be89a168b2c90fee374fc1af6b4350d26092b20206920ba",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:04a0c51bd715f0032124870ccd366e5709a9f114f89f2cc369646303ce0108b4",
+      "generatedTokens": 1698,
+      "id": "reverse-digits-callbacks-recovery",
+      "sourceCluster": "component:40bcfbe1b3a1e5715be89a168b2c90fee374fc1af6b4350d26092b20206920ba",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:e11f4761921f95b6c0c821756fc9ea9d340cd6fd605a6119ae17266f019113ba",
+      "generatedTokens": 2554,
+      "id": "reverse-digits-repeated",
+      "sourceCluster": "component:40bcfbe1b3a1e5715be89a168b2c90fee374fc1af6b4350d26092b20206920ba",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:c8c75ac84584d96ae3e5684bbb3e65a3fa4e471821915daaa800640fc38e8f65",
+      "generatedTokens": 939,
+      "id": "population-count-pure",
+      "sourceCluster": "component:f25701ceef8e2422e6cccc5b10ad885befc172cdfda8ac527726d52065655aa7",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:d6f4fdf580dc3c594a22c730e338bab7e5de200f6e84f042d9fbb825bc12911c",
+      "generatedTokens": 1733,
+      "id": "population-count-callbacks-recovery",
+      "sourceCluster": "component:f25701ceef8e2422e6cccc5b10ad885befc172cdfda8ac527726d52065655aa7",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:45f05a19413e38630d2533699994dcac83505106745a7c0f1ce132c15874b675",
+      "generatedTokens": 2517,
+      "id": "population-count-repeated",
+      "sourceCluster": "component:f25701ceef8e2422e6cccc5b10ad885befc172cdfda8ac527726d52065655aa7",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:1dbc535dea3410a2ec631284a31fb6be5f4f10834976e80bff77ba59bb79181e",
+      "generatedTokens": 946,
+      "id": "trailing-zero-count-pure",
+      "sourceCluster": "component:b1a88ff216c61f7ce4c7e359807c77367de4e39bfb5ee6edaf071c8fc43cc539",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:6c3162f89e4c1160644ad259dd253a6fb7749a6981562cb5ae38ef0ac41997c6",
+      "generatedTokens": 1751,
+      "id": "trailing-zero-count-callbacks-recovery",
+      "sourceCluster": "component:b1a88ff216c61f7ce4c7e359807c77367de4e39bfb5ee6edaf071c8fc43cc539",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:89c2226fb8dcd468e108cd8559c4a2f9c384a99359993435022511b242789b59",
+      "generatedTokens": 2665,
+      "id": "trailing-zero-count-repeated",
+      "sourceCluster": "component:b1a88ff216c61f7ce4c7e359807c77367de4e39bfb5ee6edaf071c8fc43cc539",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:845745817d7871b4f6ea61071ebc4536709fbd93f5e4844d3f8a421977174603",
+      "generatedTokens": 892,
+      "id": "hamming-distance-pure",
+      "sourceCluster": "component:12372f544f155d807db4bd2f5165717dfa300ce72c25c818bbc70529403aa10f",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:403e86f1305ed4978fda8d559f4f47ed4c7bb2f4d11bb5d448f2045633e0ab2c",
+      "generatedTokens": 1691,
+      "id": "hamming-distance-callbacks-recovery",
+      "sourceCluster": "component:12372f544f155d807db4bd2f5165717dfa300ce72c25c818bbc70529403aa10f",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:abef2f1d45691bf5e7b91327bf1c8a363e691247062b1c128f558c578f02a6f7",
+      "generatedTokens": 2428,
+      "id": "hamming-distance-repeated",
+      "sourceCluster": "component:12372f544f155d807db4bd2f5165717dfa300ce72c25c818bbc70529403aa10f",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:65aac9f2032b207a1389727b29b1158989b40946b1c6feae8efacaf450e7eac7",
+      "generatedTokens": 103,
+      "id": "gray-code-pure",
+      "sourceCluster": "component:9e3410b6347abe21ec524ebba2d33be8232586527a97ae54c8ba3bea8585ced5",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:24cccd6ead2dcd85e60e40a566dbdbccb89f3966b0a28e6cb8913263e9bba118",
+      "generatedTokens": 915,
+      "id": "gray-code-callbacks-recovery",
+      "sourceCluster": "component:9e3410b6347abe21ec524ebba2d33be8232586527a97ae54c8ba3bea8585ced5",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:9d783fd11cde765baa47e5acf51b0a1f9fb788637e3879e99fff84fc4b0d8850",
+      "generatedTokens": 1006,
+      "id": "gray-code-repeated",
+      "sourceCluster": "component:9e3410b6347abe21ec524ebba2d33be8232586527a97ae54c8ba3bea8585ced5",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:c55e57e7fb101bead4011006de260237c8889ef79fddca802d5a816666c4303e",
+      "generatedTokens": 2844,
+      "id": "integer-square-root-pure",
+      "sourceCluster": "component:1b3ab19780458c96d73b5811a5102cba1701f024fda6a89cf5ffcd75db11f741",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:d7917e08a99f261210c7d939a425aef6ad757f5c5aebc0c8e9f521aff7408de0",
+      "generatedTokens": 2737,
+      "id": "integer-square-root-callbacks-recovery",
+      "sourceCluster": "component:1b3ab19780458c96d73b5811a5102cba1701f024fda6a89cf5ffcd75db11f741",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:25439ac4e655966b7dfe30dd17ebc15c2580372a319ac24653be311cb8fe1255",
+      "generatedTokens": 4446,
+      "id": "integer-square-root-repeated",
+      "sourceCluster": "component:1b3ab19780458c96d73b5811a5102cba1701f024fda6a89cf5ffcd75db11f741",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:9d192909054cd46e05937d44fe6f4ffb49b424f4b78e85cf7f156799d5cd3261",
+      "generatedTokens": 1338,
+      "id": "repeated-subtraction-division-pure",
+      "sourceCluster": "component:31297edf45962348ff368c58597a724ac02c44790b8fad777965a0f985a558fa",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:e00570a731c505e7daf057bfbc66f004fa12e14b015184410359f36f9385c8ef",
+      "generatedTokens": 2040,
+      "id": "repeated-subtraction-division-callbacks-recovery",
+      "sourceCluster": "component:31297edf45962348ff368c58597a724ac02c44790b8fad777965a0f985a558fa",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:647585cb5f64df7063f732a0c9718a636d1aff61e088dabe89e5665f2746f8ba",
+      "generatedTokens": 3215,
+      "id": "repeated-subtraction-division-repeated",
+      "sourceCluster": "component:31297edf45962348ff368c58597a724ac02c44790b8fad777965a0f985a558fa",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:3c0b23673a5f6206f4b95a43afd532ba830de807f71ce2d71048214c92da0026",
+      "generatedTokens": 1510,
+      "id": "modular-exponentiation-pure",
+      "sourceCluster": "component:9591eb131f6a54054c15c9e25c1f0f8d2a1da1ef755072c23f82cfe5ce79ca4c",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:0dec01116aa8fdeebc6b1928578f53754f314195e696ce0b1f0c5e000f3e32fc",
+      "generatedTokens": 2329,
+      "id": "modular-exponentiation-callbacks-recovery",
+      "sourceCluster": "component:9591eb131f6a54054c15c9e25c1f0f8d2a1da1ef755072c23f82cfe5ce79ca4c",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:812d4a63ea97bf83f897ff3b0fbcceb0aa6cb50710d51bc5f39eaa6ffbbf1dce",
+      "generatedTokens": 3803,
+      "id": "modular-exponentiation-repeated",
+      "sourceCluster": "component:9591eb131f6a54054c15c9e25c1f0f8d2a1da1ef755072c23f82cfe5ce79ca4c",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:deb1793eec26010760d60b0ce49a764e7add2fd058b9c5239d1a038a32f5a681",
+      "generatedTokens": 2842,
+      "id": "prime-count-to-bound-pure",
+      "sourceCluster": "component:01e06710165a114f1a98b81893dae4ab2acf5e149b0da425f8956d3e46cf9ee7",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:d9d12fa2bde0887f212388c6eaa3b12077f17a8ca6830c4af7f05d241365ef31",
+      "generatedTokens": 3619,
+      "id": "prime-count-to-bound-callbacks-recovery",
+      "sourceCluster": "component:01e06710165a114f1a98b81893dae4ab2acf5e149b0da425f8956d3e46cf9ee7",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:b35e0e13da94cdc4bcbbe4fd1448b90ce02181192918cee856d9d814e5fd7bb0",
+      "generatedTokens": 7082,
+      "id": "prime-count-to-bound-repeated",
+      "sourceCluster": "component:01e06710165a114f1a98b81893dae4ab2acf5e149b0da425f8956d3e46cf9ee7",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:0f9500649489dac8d86ec9b6160ce8a171a926eed6240be7005fd3ac4f6e7bfd",
+      "generatedTokens": 1058,
+      "id": "array-sum-pure",
+      "sourceCluster": "component:c6388e890fa37d03713a88c2d7dfec00394e86ab8c543efaa5d068c159126055",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:cc8e8a501564e501f238f8cf806b3f6b84a9e3416c41a16b81262be88192fe1e",
+      "generatedTokens": 1743,
+      "id": "array-sum-callbacks-recovery",
+      "sourceCluster": "component:c6388e890fa37d03713a88c2d7dfec00394e86ab8c543efaa5d068c159126055",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:16b4c3d26023fe3d63f3a24e81455b320cfd01365ba34a97bf99b6b46341037f",
+      "generatedTokens": 2475,
+      "id": "array-sum-repeated",
+      "sourceCluster": "component:c6388e890fa37d03713a88c2d7dfec00394e86ab8c543efaa5d068c159126055",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:a2252e26d47c94fdd3945193406e94814ecbd19cfe4f39077b2804b369127810",
+      "generatedTokens": 833,
+      "id": "array-minimum-pure",
+      "sourceCluster": "component:9dbe85e3296a8c695f488684fff531f6a3924259cbbb6959e7f3d46e8d3d6c54",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:db6180482364ad8033ef7af3d03aa1d60113e4bcf0c63321238a44a0528bce47",
+      "generatedTokens": 1545,
+      "id": "array-minimum-callbacks-recovery",
+      "sourceCluster": "component:9dbe85e3296a8c695f488684fff531f6a3924259cbbb6959e7f3d46e8d3d6c54",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:1a5e1ed60450d443775b7c0a62835099ebb1a599508612488fd0294a27cc4ead",
+      "generatedTokens": 2099,
+      "id": "array-minimum-repeated",
+      "sourceCluster": "component:9dbe85e3296a8c695f488684fff531f6a3924259cbbb6959e7f3d46e8d3d6c54",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:14ae426aa3a13363223d4194328265ddf2b22c222ed2eeb5ee9829aa1ae3ea93",
+      "generatedTokens": 855,
+      "id": "array-argmax-pure",
+      "sourceCluster": "component:541b31a63ff4c71c2e250e0b61ea9dba9df8814eb5109e60f9e83e22795b95f3",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:c0fabd490c4a422dd04a57b3d10301c27e191ef8cb052bab13323cad5166d30a",
+      "generatedTokens": 1577,
+      "id": "array-argmax-callbacks-recovery",
+      "sourceCluster": "component:541b31a63ff4c71c2e250e0b61ea9dba9df8814eb5109e60f9e83e22795b95f3",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:0674db89cc32202faf1999ba8eff6af32e1a47683fe6244acc24e6a6e4aa608d",
+      "generatedTokens": 2118,
+      "id": "array-argmax-repeated",
+      "sourceCluster": "component:541b31a63ff4c71c2e250e0b61ea9dba9df8814eb5109e60f9e83e22795b95f3",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:c1fc682594991f8c4d143739ea795262d90917be5c08861d100f42f2138e00fa",
+      "generatedTokens": 937,
+      "id": "array-dot-product-pure",
+      "sourceCluster": "component:5e64e19507eb4962b4badb3c3661fcd5b822f1c70ac5adc6000926a61a125192",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:b4e9556e873f4c9abbfc24b5aed8beb9473dc8a5e0debc0905b5cb1e875e0bcf",
+      "generatedTokens": 1668,
+      "id": "array-dot-product-callbacks-recovery",
+      "sourceCluster": "component:5e64e19507eb4962b4badb3c3661fcd5b822f1c70ac5adc6000926a61a125192",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:6a0d87a6fc51604a670bf9fd302d7cf5a53b844b70c89fcce4e249e13d552dd2",
+      "generatedTokens": 2492,
+      "id": "array-dot-product-repeated",
+      "sourceCluster": "component:5e64e19507eb4962b4badb3c3661fcd5b822f1c70ac5adc6000926a61a125192",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:5f4ae01dde689ae88eb80bec54c390d3c2b42448fc5d98d93b855d2720f397aa",
+      "generatedTokens": 1741,
+      "id": "count-in-range-pure",
+      "sourceCluster": "component:2337c9e9cfabff13c1befeced1968df5e830e675a441d24e68972a920c5ded02",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:62a9f2923744f6d307bfc3dffae40bdf977ac83c37d1a42c2ad7962550d12b4f",
+      "generatedTokens": 2393,
+      "id": "count-in-range-callbacks-recovery",
+      "sourceCluster": "component:2337c9e9cfabff13c1befeced1968df5e830e675a441d24e68972a920c5ded02",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:895cb82d1d87d6a3707d8e2dc826a568680a8b9ae0f4fc6d65bb5bd1b0e857ce",
+      "generatedTokens": 3419,
+      "id": "count-in-range-repeated",
+      "sourceCluster": "component:2337c9e9cfabff13c1befeced1968df5e830e675a441d24e68972a920c5ded02",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:44e9cb0a376aa53699f2fa40e3e35f129954b96b8b4b19a60700ef5399999dc4",
+      "generatedTokens": 1775,
+      "id": "longest-equal-run-pure",
+      "sourceCluster": "component:df8a34f85a9df09a2ef762e2c9915afe185e57318eae076d2020c81f975f3223",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:d6677ac1990d9d335acddfb374aa3d37d3a4ddb0c4f0f300833bc09ea277c8bc",
+      "generatedTokens": 2441,
+      "id": "longest-equal-run-callbacks-recovery",
+      "sourceCluster": "component:df8a34f85a9df09a2ef762e2c9915afe185e57318eae076d2020c81f975f3223",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:dc330473c30ee2b16facc1134cbb62cc976c8ca6d260e1143791fb05e45dcc10",
+      "generatedTokens": 3335,
+      "id": "longest-equal-run-repeated",
+      "sourceCluster": "component:df8a34f85a9df09a2ef762e2c9915afe185e57318eae076d2020c81f975f3223",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:8759383053674f86cfb27411570b10e2ff608d702435e11bfe6d422a1b936eac",
+      "generatedTokens": 1478,
+      "id": "array-palindrome-pure",
+      "sourceCluster": "component:f3cfef9126ea1a6de66671e1cbce41686c8b37ecbb36ec0c3564d3125f7bffd7",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:523260f29a87f5d106e32d6cd2a4430c2c1af2edc51687524b0c13d89186fb0a",
+      "generatedTokens": 2089,
+      "id": "array-palindrome-callbacks-recovery",
+      "sourceCluster": "component:f3cfef9126ea1a6de66671e1cbce41686c8b37ecbb36ec0c3564d3125f7bffd7",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:b74f0be9053263b9235cfd90781a5adacd000f0a5a76239f086d4d9a6bb9774e",
+      "generatedTokens": 2986,
+      "id": "array-palindrome-repeated",
+      "sourceCluster": "component:f3cfef9126ea1a6de66671e1cbce41686c8b37ecbb36ec0c3564d3125f7bffd7",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:d9c60ada6e221286b606017df4c73616e8ef49eee07188a5dde3c1f8fcf90663",
+      "generatedTokens": 846,
+      "id": "binary-search-index-pure",
+      "sourceCluster": "component:016e633e83b0ebb08d789e8916d9cdbc4408f0bf8c6a8d18dc47da62a59f7d71",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:5026cc81ec8adce91a57e0b8b859973dfccf89895980a136457e701a8ad18fb3",
+      "generatedTokens": 1643,
+      "id": "binary-search-index-callbacks-recovery",
+      "sourceCluster": "component:016e633e83b0ebb08d789e8916d9cdbc4408f0bf8c6a8d18dc47da62a59f7d71",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:fd0ef9c117aaf8ed74d200e7f1431c56610029cc502c5f72c7b7d18944a91669",
+      "generatedTokens": 2455,
+      "id": "binary-search-index-repeated",
+      "sourceCluster": "component:016e633e83b0ebb08d789e8916d9cdbc4408f0bf8c6a8d18dc47da62a59f7d71",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:74af91a21ca89da51cd99834050dd16955263b7ce688e6c398afcc5c61f68230",
+      "generatedTokens": 2815,
+      "id": "inversion-count-pure",
+      "sourceCluster": "component:3abceb3bc7fc167838a78c5f87806430481e077881ec3508ed8e268a20d626a3",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:27bddda64ba3d46acf4e1c5a4e926a74ccb88381de00007901331b55823566da",
+      "generatedTokens": 3237,
+      "id": "inversion-count-callbacks-recovery",
+      "sourceCluster": "component:3abceb3bc7fc167838a78c5f87806430481e077881ec3508ed8e268a20d626a3",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:1b40e675d2388972465d2387df9a2faecf7401db3014c1f2f6e6ae8b728dd169",
+      "generatedTokens": 4794,
+      "id": "inversion-count-repeated",
+      "sourceCluster": "component:3abceb3bc7fc167838a78c5f87806430481e077881ec3508ed8e268a20d626a3",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:b77a17f2256500f287f2e25515cb5926808c69fb72e0a08976c8786235121deb",
+      "generatedTokens": 1891,
+      "id": "kadane-maximum-subarray-pure",
+      "sourceCluster": "component:4f1726f747c2e13deafcdbc1062ece8c3cdfb71ea75c3e9741659b9329eaf20b",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:1e5bf3c5335f6678e8c011c17da4f3cf8bc9ac28da6e84fc6d2fa50861c78017",
+      "generatedTokens": 2578,
+      "id": "kadane-maximum-subarray-callbacks-recovery",
+      "sourceCluster": "component:4f1726f747c2e13deafcdbc1062ece8c3cdfb71ea75c3e9741659b9329eaf20b",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:6badb2b9e3dd9838285eaa2c230af11cd82b12b0a26ed77b81102aa83a211158",
+      "generatedTokens": 3991,
+      "id": "kadane-maximum-subarray-repeated",
+      "sourceCluster": "component:4f1726f747c2e13deafcdbc1062ece8c3cdfb71ea75c3e9741659b9329eaf20b",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:7cc6b9b2ba821fac32ca631ac2adcbac41b86fceb29752681bce75d7396315e3",
+      "generatedTokens": 1918,
+      "id": "single-transaction-profit-pure",
+      "sourceCluster": "component:539f86f91b1587fbfe935868addafee245246a634b0b643e80e8e13dc9eca6e1",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:aaed14db4720bb3ee425eaae04d1cd036916339ab8a1dc0a007d1b0db2f793df",
+      "generatedTokens": 2580,
+      "id": "single-transaction-profit-callbacks-recovery",
+      "sourceCluster": "component:539f86f91b1587fbfe935868addafee245246a634b0b643e80e8e13dc9eca6e1",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:23c4bd3c13bd2f7cc5b64526401dcdc763a104421618c49765077ce95128e211",
+      "generatedTokens": 3736,
+      "id": "single-transaction-profit-repeated",
+      "sourceCluster": "component:539f86f91b1587fbfe935868addafee245246a634b0b643e80e8e13dc9eca6e1",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:50d614ba6fb9e0725fb2e0f98a82fc84d9d2ed13df8aee6bd7cdacfbb3600ace",
+      "generatedTokens": 835,
+      "id": "array-maximum-pure",
+      "sourceCluster": "component:9dbe85e3296a8c695f488684fff531f6a3924259cbbb6959e7f3d46e8d3d6c54",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:0cf0f57c40b60accbc9d85f5e149564299055d226699e2501648d9c347746ffb",
+      "generatedTokens": 1556,
+      "id": "array-maximum-callbacks-recovery",
+      "sourceCluster": "component:9dbe85e3296a8c695f488684fff531f6a3924259cbbb6959e7f3d46e8d3d6c54",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:64c7d2d8f0f2dc2a222ed3622d56979020732c3c699a3dc7705967345aa8c3a0",
+      "generatedTokens": 2113,
+      "id": "array-maximum-repeated",
+      "sourceCluster": "component:9dbe85e3296a8c695f488684fff531f6a3924259cbbb6959e7f3d46e8d3d6c54",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:a9255de99b5f2b58f8939aa62ca8aaa226e40aff41c910826feff0197d8b474d",
+      "generatedTokens": 1336,
+      "id": "second-largest-distinct-pure",
+      "sourceCluster": "component:5e1cbd1bcae12dc997488eaea87352322ed5b3bd4a4ae956a2104d1c68ba1359",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:a9e2fff91934f7150b39e1b6a5a5c68c444d4745f438855cf22702d07c345626",
+      "generatedTokens": 2035,
+      "id": "second-largest-distinct-callbacks-recovery",
+      "sourceCluster": "component:5e1cbd1bcae12dc997488eaea87352322ed5b3bd4a4ae956a2104d1c68ba1359",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:d72353edc3071021e8cc2ecf693c4424c08c6d2171a37aa3da0a1f9a4ada1e11",
+      "generatedTokens": 2909,
+      "id": "second-largest-distinct-repeated",
+      "sourceCluster": "component:5e1cbd1bcae12dc997488eaea87352322ed5b3bd4a4ae956a2104d1c68ba1359",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:3952ffcdf8adb70cc03432301ef46616b842c01604580e3efea073b41d08f0e8",
+      "generatedTokens": 1080,
+      "id": "count-positive-pure",
+      "sourceCluster": "component:dd7e5a627a34a1b4b6d47a5dcabface15de04eb1b8ba2e86099d426938c065e6",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:708596b8fa323f88e8d56f4e3ffc1ef63bb2fc4c7e8d19a191f83159881eb93b",
+      "generatedTokens": 1754,
+      "id": "count-positive-callbacks-recovery",
+      "sourceCluster": "component:dd7e5a627a34a1b4b6d47a5dcabface15de04eb1b8ba2e86099d426938c065e6",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:83ecbdbe9b101370355a64d37ca6b69f082bbef57d51c4a65a99dd7568d7de5d",
+      "generatedTokens": 2527,
+      "id": "count-positive-repeated",
+      "sourceCluster": "component:dd7e5a627a34a1b4b6d47a5dcabface15de04eb1b8ba2e86099d426938c065e6",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:b6597d725bb08c93c63686ac8d392e345fc2038ce3c4e11f9666444234beeb64",
+      "generatedTokens": 1081,
+      "id": "count-negative-pure",
+      "sourceCluster": "component:dd7e5a627a34a1b4b6d47a5dcabface15de04eb1b8ba2e86099d426938c065e6",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:fcdd4de51238fe994d927e510ea74cfd7f5fd1054d882eadda1c4e3e9e363c1f",
+      "generatedTokens": 1755,
+      "id": "count-negative-callbacks-recovery",
+      "sourceCluster": "component:dd7e5a627a34a1b4b6d47a5dcabface15de04eb1b8ba2e86099d426938c065e6",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:e8cf4a18c0f42e17591a406349f09b51fcdc2902bcf64b1499ccc317c56b8145",
+      "generatedTokens": 2529,
+      "id": "count-negative-repeated",
+      "sourceCluster": "component:dd7e5a627a34a1b4b6d47a5dcabface15de04eb1b8ba2e86099d426938c065e6",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:061420fdcb6922857fe23f86c494350e2ba8dd09122f4d87a8f8dedde69c35ac",
+      "generatedTokens": 953,
+      "id": "array-mean-scaled-pure",
+      "sourceCluster": "component:9ffe6c9d6c99d92117513276541235d9d576190012e14b7e1bbd1716178031ca",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:b5ad836759d48250c5bbb4fc12eb1f012fbc3ebe67a0de9778067cec69f15cdf",
+      "generatedTokens": 1682,
+      "id": "array-mean-scaled-callbacks-recovery",
+      "sourceCluster": "component:9ffe6c9d6c99d92117513276541235d9d576190012e14b7e1bbd1716178031ca",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:cb8de359778493e5275275856ef062ec36091aeb090dfe60d9cf16b20eef6686",
+      "generatedTokens": 2710,
+      "id": "array-mean-scaled-repeated",
+      "sourceCluster": "component:9ffe6c9d6c99d92117513276541235d9d576190012e14b7e1bbd1716178031ca",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:503af51b1a08c4c8fa8602839758d771c5109831a3ef3a1e0b81321d3309efe6",
+      "generatedTokens": 1022,
+      "id": "running-prefix-checksum-pure",
+      "sourceCluster": "component:217cb2f5e7674871f0585e4674a3fb7dcb0517060c949e90089229977e301f32",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:219c3bfcd28f548f595c09170211cc8b60496eb39a7baa3c22b0420450750ae8",
+      "generatedTokens": 1750,
+      "id": "running-prefix-checksum-callbacks-recovery",
+      "sourceCluster": "component:217cb2f5e7674871f0585e4674a3fb7dcb0517060c949e90089229977e301f32",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:4858d983057fb415b1cff90ade20cfbdc19ecdc48e453062650db0ef839d3ff5",
+      "generatedTokens": 2656,
+      "id": "running-prefix-checksum-repeated",
+      "sourceCluster": "component:217cb2f5e7674871f0585e4674a3fb7dcb0517060c949e90089229977e301f32",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:50021623dfa66ba6d7431046c247758ef5d222c112c30451a9f76ad58acd5737",
+      "generatedTokens": 998,
+      "id": "is-nondecreasing-pure",
+      "sourceCluster": "component:6b7e73f312d7db90d2a062728f72be9f54c2bbbd85ca0eb1980a2313a7f52ae7",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:64b3fcc6a599787482ef6a0a0d99a53e6b7774ce1472ac7573f12cead294b13d",
+      "generatedTokens": 1727,
+      "id": "is-nondecreasing-callbacks-recovery",
+      "sourceCluster": "component:6b7e73f312d7db90d2a062728f72be9f54c2bbbd85ca0eb1980a2313a7f52ae7",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:ea2b0811052352a6b732e424c3c36faa7c8ced0b2a8ea746cad2ded2b70ceeb8",
+      "generatedTokens": 2383,
+      "id": "is-nondecreasing-repeated",
+      "sourceCluster": "component:6b7e73f312d7db90d2a062728f72be9f54c2bbbd85ca0eb1980a2313a7f52ae7",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:31f205840a5493b0d088bcc64762e0903c9800417e333c7ce7d3905fa1ac9614",
+      "generatedTokens": 1073,
+      "id": "first-match-index-pure",
+      "sourceCluster": "component:04817817ac95c635dd0309140b67c7a77dbc078252d5adc4e8559938fb69025d",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:de5b09ead6a746b53d9734a5459b388da3f78d9e1927795c5f0825d615daeffd",
+      "generatedTokens": 1752,
+      "id": "first-match-index-callbacks-recovery",
+      "sourceCluster": "component:04817817ac95c635dd0309140b67c7a77dbc078252d5adc4e8559938fb69025d",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:545b407e1acd32898844466d4940036f80cdd6dc7fb3a77931f86380299b6763",
+      "generatedTokens": 2479,
+      "id": "first-match-index-repeated",
+      "sourceCluster": "component:04817817ac95c635dd0309140b67c7a77dbc078252d5adc4e8559938fb69025d",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:88ca371d932853dd819ee9dfc59d9937822fe688da4ec02b172549bc4fdb0a1d",
+      "generatedTokens": 946,
+      "id": "last-match-index-pure",
+      "sourceCluster": "component:0a19f889f4b604b36de20aec112fe250c5b5a653f87be673a78542c578b2b4fa",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:75255b5b92b6764b60b3ec5d05481f0da8bb82b5d28f6dd9f2a1de4890a8e710",
+      "generatedTokens": 1629,
+      "id": "last-match-index-callbacks-recovery",
+      "sourceCluster": "component:0a19f889f4b604b36de20aec112fe250c5b5a653f87be673a78542c578b2b4fa",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:3c5e1d13fdb06d34f11ddd1b26234a10d85001c24a3352be541eb192ac689f1e",
+      "generatedTokens": 2267,
+      "id": "last-match-index-repeated",
+      "sourceCluster": "component:0a19f889f4b604b36de20aec112fe250c5b5a653f87be673a78542c578b2b4fa",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:80080d4f38059e31341ee8a7136322b4bb5348ef05d72c5052ba4f4f22c79525",
+      "generatedTokens": 885,
+      "id": "array-rotate-left-checksum-pure",
+      "sourceCluster": "component:294075b41a9e3229661ad8a8e3ced8dfd31cd9bb69654ecd2d39263bd324d08d",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:cd6cad105b8b240815b5488455f2c8daa9539d47275add53a634a4053d64ace3",
+      "generatedTokens": 1629,
+      "id": "array-rotate-left-checksum-callbacks-recovery",
+      "sourceCluster": "component:294075b41a9e3229661ad8a8e3ced8dfd31cd9bb69654ecd2d39263bd324d08d",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:05fb32c1de27e2be724e84f2ee2e14fe7a44371e154a995e8fbe02bd2b11e469",
+      "generatedTokens": 2603,
+      "id": "array-rotate-left-checksum-repeated",
+      "sourceCluster": "component:294075b41a9e3229661ad8a8e3ced8dfd31cd9bb69654ecd2d39263bd324d08d",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:29777d610d6213de815258efa2be4b9bc40e382c2e4261561447958600ea9c9d",
+      "generatedTokens": 1596,
+      "id": "alternating-array-sum-pure",
+      "sourceCluster": "component:c71f78a3dff17072c1fdf227e76d24c60ef853a79d66ede1812012e93a4c8e03",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:cc2657342ad2b4db5085d0d5e3593b3c040f01c6b1cba35e556a4460f722fb70",
+      "generatedTokens": 2289,
+      "id": "alternating-array-sum-callbacks-recovery",
+      "sourceCluster": "component:c71f78a3dff17072c1fdf227e76d24c60ef853a79d66ede1812012e93a4c8e03",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:c779488a765dbbcf6c91f0bd2329a6baf1b2912c7bc1a9e75e56f7228f6b1136",
+      "generatedTokens": 3420,
+      "id": "alternating-array-sum-repeated",
+      "sourceCluster": "component:c71f78a3dff17072c1fdf227e76d24c60ef853a79d66ede1812012e93a4c8e03",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:c7c3e925f26676c5e4e6c9502fc93e599d574ac8e6d99b46e45a610c86aee4ff",
+      "generatedTokens": 2759,
+      "id": "count-equal-pairs-pure",
+      "sourceCluster": "component:3abceb3bc7fc167838a78c5f87806430481e077881ec3508ed8e268a20d626a3",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:83cfc3744d51b73c81f97ce698e7f279d0a67ab575651832d040573ab27df74c",
+      "generatedTokens": 3198,
+      "id": "count-equal-pairs-callbacks-recovery",
+      "sourceCluster": "component:3abceb3bc7fc167838a78c5f87806430481e077881ec3508ed8e268a20d626a3",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:320cd49c23e1c0518b5ed64b6f74686b3b3b90874c2ec067fedfab53439735e5",
+      "generatedTokens": 4649,
+      "id": "count-equal-pairs-repeated",
+      "sourceCluster": "component:3abceb3bc7fc167838a78c5f87806430481e077881ec3508ed8e268a20d626a3",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:b46f5d6feaba5bf0344b3aee8c4d10f00fe9c1b72f3129d97d0c6b01b28ba0ba",
+      "generatedTokens": 1775,
+      "id": "array-unique-adjacent-count-pure",
+      "sourceCluster": "component:df8771c803871410f456aee14ef3d1646310b3e6862b50eb9fd8fcd2263d1245",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:6715dff781ec2ed92c49fce46983ad86e27833234113652ea0a86dfab816391d",
+      "generatedTokens": 2463,
+      "id": "array-unique-adjacent-count-callbacks-recovery",
+      "sourceCluster": "component:df8771c803871410f456aee14ef3d1646310b3e6862b50eb9fd8fcd2263d1245",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:b73c302cf310ac32c3fd335ef28daff1354732c108b25d5b2f8aab9c827ac193",
+      "generatedTokens": 3406,
+      "id": "array-unique-adjacent-count-repeated",
+      "sourceCluster": "component:df8771c803871410f456aee14ef3d1646310b3e6862b50eb9fd8fcd2263d1245",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:63ac7daa0c56fabdc137052e0110f9420f6e59d6e5026e9bf451a4d50998e006",
+      "generatedTokens": 981,
+      "id": "weighted-index-sum-pure",
+      "sourceCluster": "component:c44ca37ba3d63679956bf2f5f5e238cb6772b12fa06fc95bf53348f914e0ee0f",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:c67f05989bb6a74ee61012a351ceea975fadbfceb91ef221de678ec8ab4ff4fc",
+      "generatedTokens": 1702,
+      "id": "weighted-index-sum-callbacks-recovery",
+      "sourceCluster": "component:c44ca37ba3d63679956bf2f5f5e238cb6772b12fa06fc95bf53348f914e0ee0f",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:9aa8e89e8162c2791dbade13cced5a230b9572d0d627474788c7099c603dec75",
+      "generatedTokens": 2570,
+      "id": "weighted-index-sum-repeated",
+      "sourceCluster": "component:c44ca37ba3d63679956bf2f5f5e238cb6772b12fa06fc95bf53348f914e0ee0f",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:c59a403d95fd49f9f4285c781895deccb9f10df52a734c59287810fe35fd4d35",
+      "generatedTokens": 4033,
+      "id": "subarray-target-count-pure",
+      "sourceCluster": "component:67f2a74f4e2f81616a3931d327cc1cef0644d4d96a0046258e29dacbde54feef",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:49239fdf2903d4859b9c08450985ebd7c3a0c29c20a31b226c8e61ecd81c28ef",
+      "generatedTokens": 4141,
+      "id": "subarray-target-count-callbacks-recovery",
+      "sourceCluster": "component:67f2a74f4e2f81616a3931d327cc1cef0644d4d96a0046258e29dacbde54feef",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:00afe8d1c1d60ff4250b6779d9a33d9fb566a4a1b44af5d2eac9e247c2928d88",
+      "generatedTokens": 6292,
+      "id": "subarray-target-count-repeated",
+      "sourceCluster": "component:67f2a74f4e2f81616a3931d327cc1cef0644d4d96a0046258e29dacbde54feef",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:4218b553865900ac75b2a8a35a870f8eb7d87b3e5b57dd65ff65a3d8616cfd76",
+      "generatedTokens": 945,
+      "id": "euclidean-gcd-child",
+      "sourceCluster": "component:4c200b30cab1031b6000d94f9e65f44413e053dc7f4d3dcc515f69c11c3e6ff9",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:8058875edca46f4f8d46f2889987fd283a7cefe0ad048c2875944e9efb741d6e",
+      "generatedTokens": 1052,
+      "id": "least-common-multiple-child",
+      "sourceCluster": "component:dad5c12ada82421c8f97ad63fefa9d4b796c0918974a1eb838ece74dbe28c0b2",
+      "split": "validation"
+    }
+  ],
+  "components": [
+    {
+      "generatedTokens": 4944,
+      "sourceCluster": "component:016e633e83b0ebb08d789e8916d9cdbc4408f0bf8c6a8d18dc47da62a59f7d71",
+      "tokenShare": 0.024113191535021193
+    },
+    {
+      "generatedTokens": 13543,
+      "sourceCluster": "component:01e06710165a114f1a98b81893dae4ab2acf5e149b0da425f8956d3e46cf9ee7",
+      "tokenShare": 0.06605278174732848
+    },
+    {
+      "generatedTokens": 5011,
+      "sourceCluster": "component:12372f544f155d807db4bd2f5165717dfa300ce72c25c818bbc70529403aa10f",
+      "tokenShare": 0.024439968200240938
+    },
+    {
+      "generatedTokens": 10027,
+      "sourceCluster": "component:1b3ab19780458c96d73b5811a5102cba1701f024fda6a89cf5ffcd75db11f741",
+      "tokenShare": 0.048904322718781854
+    },
+    {
+      "generatedTokens": 7553,
+      "sourceCluster": "component:2337c9e9cfabff13c1befeced1968df5e830e675a441d24e68972a920c5ded02",
+      "tokenShare": 0.03683797242395127
+    },
+    {
+      "generatedTokens": 5117,
+      "sourceCluster": "component:294075b41a9e3229661ad8a8e3ced8dfd31cd9bb69654ecd2d39263bd324d08d",
+      "tokenShare": 0.024956958148200533
+    },
+    {
+      "generatedTokens": 6593,
+      "sourceCluster": "component:31297edf45962348ff368c58597a724ac02c44790b8fad777965a0f985a558fa",
+      "tokenShare": 0.03215579931035492
+    },
+    {
+      "generatedTokens": 21452,
+      "sourceCluster": "component:3abceb3bc7fc167838a78c5f87806430481e077881ec3508ed8e268a20d626a3",
+      "tokenShare": 0.1046270600342384
+    },
+    {
+      "generatedTokens": 9908,
+      "sourceCluster": "component:40bcfbe1b3a1e5715be89a168b2c90fee374fc1af6b4350d26092b20206920ba",
+      "tokenShare": 0.048323928343242305
+    },
+    {
+      "generatedTokens": 4750,
+      "sourceCluster": "component:4c200b30cab1031b6000d94f9e65f44413e053dc7f4d3dcc515f69c11c3e6ff9",
+      "tokenShare": 0.02316700238498193
+    },
+    {
+      "generatedTokens": 8460,
+      "sourceCluster": "component:4f1726f747c2e13deafcdbc1062ece8c3cdfb71ea75c3e9741659b9329eaf20b",
+      "tokenShare": 0.041261650563567814
+    },
+    {
+      "generatedTokens": 4550,
+      "sourceCluster": "component:541b31a63ff4c71c2e250e0b61ea9dba9df8814eb5109e60f9e83e22795b95f3",
+      "tokenShare": 0.02219154965298269
+    },
+    {
+      "generatedTokens": 5097,
+      "sourceCluster": "component:5e64e19507eb4962b4badb3c3661fcd5b822f1c70ac5adc6000926a61a125192",
+      "tokenShare": 0.02485941287500061
+    },
+    {
+      "generatedTokens": 14466,
+      "sourceCluster": "component:67f2a74f4e2f81616a3931d327cc1cef0644d4d96a0046258e29dacbde54feef",
+      "tokenShare": 0.07055449610550497
+    },
+    {
+      "generatedTokens": 5108,
+      "sourceCluster": "component:6b7e73f312d7db90d2a062728f72be9f54c2bbbd85ca0eb1980a2313a7f52ae7",
+      "tokenShare": 0.024913062775260567
+    },
+    {
+      "generatedTokens": 4485,
+      "sourceCluster": "component:6cdf405873c862ffd6fe1c91a9c2204df445b7059dd4f549a4ac5c882b7b5fa4",
+      "tokenShare": 0.02187452751508294
+    },
+    {
+      "generatedTokens": 2024,
+      "sourceCluster": "component:9e3410b6347abe21ec524ebba2d33be8232586527a97ae54c8ba3bea8585ced5",
+      "tokenShare": 0.0098715816478323
+    },
+    {
+      "generatedTokens": 5345,
+      "sourceCluster": "component:9ffe6c9d6c99d92117513276541235d9d576190012e14b7e1bbd1716178031ca",
+      "tokenShare": 0.026068974262679668
+    },
+    {
+      "generatedTokens": 5741,
+      "sourceCluster": "component:aa406e68b1db591abc86434a10cc75fac7fc922c98c82821cff5f0e473c6630e",
+      "tokenShare": 0.02800037067203816
+    },
+    {
+      "generatedTokens": 5362,
+      "sourceCluster": "component:b1a88ff216c61f7ce4c7e359807c77367de4e39bfb5ee6edaf071c8fc43cc539",
+      "tokenShare": 0.026151887744899602
+    },
+    {
+      "generatedTokens": 5253,
+      "sourceCluster": "component:c44ca37ba3d63679956bf2f5f5e238cb6772b12fa06fc95bf53348f914e0ee0f",
+      "tokenShare": 0.025620266005960016
+    },
+    {
+      "generatedTokens": 5276,
+      "sourceCluster": "component:c6388e890fa37d03713a88c2d7dfec00394e86ab8c543efaa5d068c159126055",
+      "tokenShare": 0.02573244307013993
+    },
+    {
+      "generatedTokens": 7305,
+      "sourceCluster": "component:c71f78a3dff17072c1fdf227e76d24c60ef853a79d66ede1812012e93a4c8e03",
+      "tokenShare": 0.03562841103627221
+    },
+    {
+      "generatedTokens": 10726,
+      "sourceCluster": "component:dd7e5a627a34a1b4b6d47a5dcabface15de04eb1b8ba2e86099d426938c065e6",
+      "tokenShare": 0.0523135300171192
+    },
+    {
+      "generatedTokens": 7644,
+      "sourceCluster": "component:df8771c803871410f456aee14ef3d1646310b3e6862b50eb9fd8fcd2263d1245",
+      "tokenShare": 0.03728180341701092
+    },
+    {
+      "generatedTokens": 7551,
+      "sourceCluster": "component:df8a34f85a9df09a2ef762e2c9915afe185e57318eae076d2020c81f975f3223",
+      "tokenShare": 0.03682821789663127
+    },
+    {
+      "generatedTokens": 5189,
+      "sourceCluster": "component:f25701ceef8e2422e6cccc5b10ad885befc172cdfda8ac527726d52065655aa7",
+      "tokenShare": 0.02530812113172026
+    },
+    {
+      "generatedTokens": 6553,
+      "sourceCluster": "component:f3cfef9126ea1a6de66671e1cbce41686c8b37ecbb36ec0c3564d3125f7bffd7",
+      "tokenShare": 0.03196070876395507
+    }
+  ],
+  "generatedTrainTokens": 205033,
+  "heldOutInputIds": [
+    "least-common-multiple-pure",
+    "least-common-multiple-callbacks-recovery",
+    "least-common-multiple-repeated",
+    "factorial-iterative-pure",
+    "factorial-iterative-callbacks-recovery",
+    "factorial-iterative-repeated",
+    "fibonacci-iterative-pure",
+    "fibonacci-iterative-callbacks-recovery",
+    "fibonacci-iterative-repeated",
+    "modular-exponentiation-pure",
+    "modular-exponentiation-callbacks-recovery",
+    "modular-exponentiation-repeated",
+    "array-minimum-pure",
+    "array-minimum-callbacks-recovery",
+    "array-minimum-repeated",
+    "single-transaction-profit-pure",
+    "single-transaction-profit-callbacks-recovery",
+    "single-transaction-profit-repeated",
+    "array-maximum-pure",
+    "array-maximum-callbacks-recovery",
+    "array-maximum-repeated",
+    "second-largest-distinct-pure",
+    "second-largest-distinct-callbacks-recovery",
+    "second-largest-distinct-repeated",
+    "running-prefix-checksum-pure",
+    "running-prefix-checksum-callbacks-recovery",
+    "running-prefix-checksum-repeated",
+    "first-match-index-pure",
+    "first-match-index-callbacks-recovery",
+    "first-match-index-repeated",
+    "last-match-index-pure",
+    "last-match-index-callbacks-recovery",
+    "last-match-index-repeated",
+    "least-common-multiple-child"
+  ],
+  "learnedSuccess": null,
+  "nativeAccepted": 128,
+  "nativeDispositions": [
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:85607195346bcf90b660a708d4baa1b8069e1f760132bd5cd4f9cb914450f366",
+      "id": "euclidean-gcd-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:9d4db97b8944d17b4b8eca729cb0b2c51066d8dd4ee0bedd0c78dd25e639d11b",
+      "id": "euclidean-gcd-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:a744189f9f0290e2b39db6d2c57636006c2ed94adb8dfe5782b5108f524a3c2b",
+      "id": "euclidean-gcd-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:9fdd75073eb8f9dedc34568dd971bb87bfbf0bf00a8d0a4d6ecb60254e0ab9d6",
+      "id": "least-common-multiple-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:64c07c8b0e34cc3f23c8eda456050e3c26a4920a3359bfa0c69106879b9b3287",
+      "id": "least-common-multiple-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:b49144044f24d7c533fd8fa4d294251ca4dc1051d023f319499c00bbd46c1816",
+      "id": "least-common-multiple-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:69e1d2f771f8dd5ab1391c4d731c35ada06f3949ca90505126147999640cf937",
+      "id": "factorial-iterative-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:62d51e5a118a3b3c9642ad5d1c9c422d332c5c2f5dfaf175a4fff35b984fccd9",
+      "id": "factorial-iterative-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:dec3783f361d4611dc22c3d9ddea2f5bc348e58bb338f17af85c444610fd1966",
+      "id": "factorial-iterative-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:c0ef64a0c8984f06e4fc88ee20751729c6653334c45bf56057678b339f896e44",
+      "id": "fibonacci-iterative-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:7218cc68b5cb22641fd59ffff5f08b689e580d83b1e06c592cf8eecc199ede31",
+      "id": "fibonacci-iterative-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:e679b650e88cad0c9abd2cb76dbfff9c74dc92a551cb84b7db552d845dba3aef",
+      "id": "fibonacci-iterative-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:b7f520a369e1c6e148f102b4b1b2b530a13981891f0d734773f41534bf427f40",
+      "id": "power-squaring-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:3235927c5bf820dd1ece9645c18c5e192cf970b16960dd0f72641f32bd626648",
+      "id": "power-squaring-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:a507e21af65aada4ae729080b39a77fa158b66c1b7906f40a33eb0d6b9bd3e63",
+      "id": "power-squaring-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:15717354a8794703dea13a539266135b0fc2a5b62651140eee86246514f36fb5",
+      "id": "sum-digits-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:32c7f758c75197f704c4067e9f2a93c0af6176f92620e5328e47af4ff5d3bc30",
+      "id": "sum-digits-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:95a4dc8991716c28c035be48a048f43d697b9c8e4e2431c1216688f792a4f25d",
+      "id": "sum-digits-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:d7374f98279ec58292408f7fb87b9653d3e1d8e8201b1b926d699227303dc340",
+      "id": "count-digits-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:8eeafdedb105b5e017f0a90d6a8678a1cf0339371e6be9ed2838dab108adf430",
+      "id": "count-digits-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:6a521d8d615f51b760439353089a5dd4a19ed4a4ecbf85a16a509e1e2273e2b6",
+      "id": "count-digits-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:1ef186862e3ac4f4c369dea16971c33c3ed1d1d58dc56fc4c6fbe294fc7ab7d1",
+      "id": "reverse-digits-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:04a0c51bd715f0032124870ccd366e5709a9f114f89f2cc369646303ce0108b4",
+      "id": "reverse-digits-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:e11f4761921f95b6c0c821756fc9ea9d340cd6fd605a6119ae17266f019113ba",
+      "id": "reverse-digits-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:c8c75ac84584d96ae3e5684bbb3e65a3fa4e471821915daaa800640fc38e8f65",
+      "id": "population-count-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:d6f4fdf580dc3c594a22c730e338bab7e5de200f6e84f042d9fbb825bc12911c",
+      "id": "population-count-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:45f05a19413e38630d2533699994dcac83505106745a7c0f1ce132c15874b675",
+      "id": "population-count-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:1dbc535dea3410a2ec631284a31fb6be5f4f10834976e80bff77ba59bb79181e",
+      "id": "trailing-zero-count-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:6c3162f89e4c1160644ad259dd253a6fb7749a6981562cb5ae38ef0ac41997c6",
+      "id": "trailing-zero-count-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:89c2226fb8dcd468e108cd8559c4a2f9c384a99359993435022511b242789b59",
+      "id": "trailing-zero-count-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:845745817d7871b4f6ea61071ebc4536709fbd93f5e4844d3f8a421977174603",
+      "id": "hamming-distance-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:403e86f1305ed4978fda8d559f4f47ed4c7bb2f4d11bb5d448f2045633e0ab2c",
+      "id": "hamming-distance-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:abef2f1d45691bf5e7b91327bf1c8a363e691247062b1c128f558c578f02a6f7",
+      "id": "hamming-distance-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:65aac9f2032b207a1389727b29b1158989b40946b1c6feae8efacaf450e7eac7",
+      "id": "gray-code-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:24cccd6ead2dcd85e60e40a566dbdbccb89f3966b0a28e6cb8913263e9bba118",
+      "id": "gray-code-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:9d783fd11cde765baa47e5acf51b0a1f9fb788637e3879e99fff84fc4b0d8850",
+      "id": "gray-code-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:c55e57e7fb101bead4011006de260237c8889ef79fddca802d5a816666c4303e",
+      "id": "integer-square-root-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:d7917e08a99f261210c7d939a425aef6ad757f5c5aebc0c8e9f521aff7408de0",
+      "id": "integer-square-root-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:25439ac4e655966b7dfe30dd17ebc15c2580372a319ac24653be311cb8fe1255",
+      "id": "integer-square-root-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:9d192909054cd46e05937d44fe6f4ffb49b424f4b78e85cf7f156799d5cd3261",
+      "id": "repeated-subtraction-division-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:e00570a731c505e7daf057bfbc66f004fa12e14b015184410359f36f9385c8ef",
+      "id": "repeated-subtraction-division-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:647585cb5f64df7063f732a0c9718a636d1aff61e088dabe89e5665f2746f8ba",
+      "id": "repeated-subtraction-division-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:3c0b23673a5f6206f4b95a43afd532ba830de807f71ce2d71048214c92da0026",
+      "id": "modular-exponentiation-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:0dec01116aa8fdeebc6b1928578f53754f314195e696ce0b1f0c5e000f3e32fc",
+      "id": "modular-exponentiation-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:812d4a63ea97bf83f897ff3b0fbcceb0aa6cb50710d51bc5f39eaa6ffbbf1dce",
+      "id": "modular-exponentiation-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:deb1793eec26010760d60b0ce49a764e7add2fd058b9c5239d1a038a32f5a681",
+      "id": "prime-count-to-bound-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:d9d12fa2bde0887f212388c6eaa3b12077f17a8ca6830c4af7f05d241365ef31",
+      "id": "prime-count-to-bound-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:b35e0e13da94cdc4bcbbe4fd1448b90ce02181192918cee856d9d814e5fd7bb0",
+      "id": "prime-count-to-bound-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:0f9500649489dac8d86ec9b6160ce8a171a926eed6240be7005fd3ac4f6e7bfd",
+      "id": "array-sum-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:cc8e8a501564e501f238f8cf806b3f6b84a9e3416c41a16b81262be88192fe1e",
+      "id": "array-sum-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:16b4c3d26023fe3d63f3a24e81455b320cfd01365ba34a97bf99b6b46341037f",
+      "id": "array-sum-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:a2252e26d47c94fdd3945193406e94814ecbd19cfe4f39077b2804b369127810",
+      "id": "array-minimum-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:db6180482364ad8033ef7af3d03aa1d60113e4bcf0c63321238a44a0528bce47",
+      "id": "array-minimum-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:1a5e1ed60450d443775b7c0a62835099ebb1a599508612488fd0294a27cc4ead",
+      "id": "array-minimum-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:14ae426aa3a13363223d4194328265ddf2b22c222ed2eeb5ee9829aa1ae3ea93",
+      "id": "array-argmax-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:c0fabd490c4a422dd04a57b3d10301c27e191ef8cb052bab13323cad5166d30a",
+      "id": "array-argmax-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:0674db89cc32202faf1999ba8eff6af32e1a47683fe6244acc24e6a6e4aa608d",
+      "id": "array-argmax-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:c1fc682594991f8c4d143739ea795262d90917be5c08861d100f42f2138e00fa",
+      "id": "array-dot-product-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:b4e9556e873f4c9abbfc24b5aed8beb9473dc8a5e0debc0905b5cb1e875e0bcf",
+      "id": "array-dot-product-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:6a0d87a6fc51604a670bf9fd302d7cf5a53b844b70c89fcce4e249e13d552dd2",
+      "id": "array-dot-product-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:5f4ae01dde689ae88eb80bec54c390d3c2b42448fc5d98d93b855d2720f397aa",
+      "id": "count-in-range-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:62a9f2923744f6d307bfc3dffae40bdf977ac83c37d1a42c2ad7962550d12b4f",
+      "id": "count-in-range-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:895cb82d1d87d6a3707d8e2dc826a568680a8b9ae0f4fc6d65bb5bd1b0e857ce",
+      "id": "count-in-range-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:44e9cb0a376aa53699f2fa40e3e35f129954b96b8b4b19a60700ef5399999dc4",
+      "id": "longest-equal-run-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:d6677ac1990d9d335acddfb374aa3d37d3a4ddb0c4f0f300833bc09ea277c8bc",
+      "id": "longest-equal-run-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:dc330473c30ee2b16facc1134cbb62cc976c8ca6d260e1143791fb05e45dcc10",
+      "id": "longest-equal-run-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:8759383053674f86cfb27411570b10e2ff608d702435e11bfe6d422a1b936eac",
+      "id": "array-palindrome-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:523260f29a87f5d106e32d6cd2a4430c2c1af2edc51687524b0c13d89186fb0a",
+      "id": "array-palindrome-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:b74f0be9053263b9235cfd90781a5adacd000f0a5a76239f086d4d9a6bb9774e",
+      "id": "array-palindrome-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:d9c60ada6e221286b606017df4c73616e8ef49eee07188a5dde3c1f8fcf90663",
+      "id": "binary-search-index-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:5026cc81ec8adce91a57e0b8b859973dfccf89895980a136457e701a8ad18fb3",
+      "id": "binary-search-index-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:fd0ef9c117aaf8ed74d200e7f1431c56610029cc502c5f72c7b7d18944a91669",
+      "id": "binary-search-index-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:74af91a21ca89da51cd99834050dd16955263b7ce688e6c398afcc5c61f68230",
+      "id": "inversion-count-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:27bddda64ba3d46acf4e1c5a4e926a74ccb88381de00007901331b55823566da",
+      "id": "inversion-count-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:1b40e675d2388972465d2387df9a2faecf7401db3014c1f2f6e6ae8b728dd169",
+      "id": "inversion-count-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:b77a17f2256500f287f2e25515cb5926808c69fb72e0a08976c8786235121deb",
+      "id": "kadane-maximum-subarray-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:1e5bf3c5335f6678e8c011c17da4f3cf8bc9ac28da6e84fc6d2fa50861c78017",
+      "id": "kadane-maximum-subarray-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:6badb2b9e3dd9838285eaa2c230af11cd82b12b0a26ed77b81102aa83a211158",
+      "id": "kadane-maximum-subarray-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:7cc6b9b2ba821fac32ca631ac2adcbac41b86fceb29752681bce75d7396315e3",
+      "id": "single-transaction-profit-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:aaed14db4720bb3ee425eaae04d1cd036916339ab8a1dc0a007d1b0db2f793df",
+      "id": "single-transaction-profit-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:23c4bd3c13bd2f7cc5b64526401dcdc763a104421618c49765077ce95128e211",
+      "id": "single-transaction-profit-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:50d614ba6fb9e0725fb2e0f98a82fc84d9d2ed13df8aee6bd7cdacfbb3600ace",
+      "id": "array-maximum-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:0cf0f57c40b60accbc9d85f5e149564299055d226699e2501648d9c347746ffb",
+      "id": "array-maximum-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:64c7d2d8f0f2dc2a222ed3622d56979020732c3c699a3dc7705967345aa8c3a0",
+      "id": "array-maximum-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:a9255de99b5f2b58f8939aa62ca8aaa226e40aff41c910826feff0197d8b474d",
+      "id": "second-largest-distinct-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:a9e2fff91934f7150b39e1b6a5a5c68c444d4745f438855cf22702d07c345626",
+      "id": "second-largest-distinct-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:d72353edc3071021e8cc2ecf693c4424c08c6d2171a37aa3da0a1f9a4ada1e11",
+      "id": "second-largest-distinct-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:3952ffcdf8adb70cc03432301ef46616b842c01604580e3efea073b41d08f0e8",
+      "id": "count-positive-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:708596b8fa323f88e8d56f4e3ffc1ef63bb2fc4c7e8d19a191f83159881eb93b",
+      "id": "count-positive-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:83ecbdbe9b101370355a64d37ca6b69f082bbef57d51c4a65a99dd7568d7de5d",
+      "id": "count-positive-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:b6597d725bb08c93c63686ac8d392e345fc2038ce3c4e11f9666444234beeb64",
+      "id": "count-negative-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:fcdd4de51238fe994d927e510ea74cfd7f5fd1054d882eadda1c4e3e9e363c1f",
+      "id": "count-negative-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:e8cf4a18c0f42e17591a406349f09b51fcdc2902bcf64b1499ccc317c56b8145",
+      "id": "count-negative-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:061420fdcb6922857fe23f86c494350e2ba8dd09122f4d87a8f8dedde69c35ac",
+      "id": "array-mean-scaled-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:b5ad836759d48250c5bbb4fc12eb1f012fbc3ebe67a0de9778067cec69f15cdf",
+      "id": "array-mean-scaled-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:cb8de359778493e5275275856ef062ec36091aeb090dfe60d9cf16b20eef6686",
+      "id": "array-mean-scaled-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:503af51b1a08c4c8fa8602839758d771c5109831a3ef3a1e0b81321d3309efe6",
+      "id": "running-prefix-checksum-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:219c3bfcd28f548f595c09170211cc8b60496eb39a7baa3c22b0420450750ae8",
+      "id": "running-prefix-checksum-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:4858d983057fb415b1cff90ade20cfbdc19ecdc48e453062650db0ef839d3ff5",
+      "id": "running-prefix-checksum-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:50021623dfa66ba6d7431046c247758ef5d222c112c30451a9f76ad58acd5737",
+      "id": "is-nondecreasing-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:64b3fcc6a599787482ef6a0a0d99a53e6b7774ce1472ac7573f12cead294b13d",
+      "id": "is-nondecreasing-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:ea2b0811052352a6b732e424c3c36faa7c8ced0b2a8ea746cad2ded2b70ceeb8",
+      "id": "is-nondecreasing-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:31f205840a5493b0d088bcc64762e0903c9800417e333c7ce7d3905fa1ac9614",
+      "id": "first-match-index-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:de5b09ead6a746b53d9734a5459b388da3f78d9e1927795c5f0825d615daeffd",
+      "id": "first-match-index-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:545b407e1acd32898844466d4940036f80cdd6dc7fb3a77931f86380299b6763",
+      "id": "first-match-index-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:88ca371d932853dd819ee9dfc59d9937822fe688da4ec02b172549bc4fdb0a1d",
+      "id": "last-match-index-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:75255b5b92b6764b60b3ec5d05481f0da8bb82b5d28f6dd9f2a1de4890a8e710",
+      "id": "last-match-index-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:3c5e1d13fdb06d34f11ddd1b26234a10d85001c24a3352be541eb192ac689f1e",
+      "id": "last-match-index-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:80080d4f38059e31341ee8a7136322b4bb5348ef05d72c5052ba4f4f22c79525",
+      "id": "array-rotate-left-checksum-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:cd6cad105b8b240815b5488455f2c8daa9539d47275add53a634a4053d64ace3",
+      "id": "array-rotate-left-checksum-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:05fb32c1de27e2be724e84f2ee2e14fe7a44371e154a995e8fbe02bd2b11e469",
+      "id": "array-rotate-left-checksum-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:29777d610d6213de815258efa2be4b9bc40e382c2e4261561447958600ea9c9d",
+      "id": "alternating-array-sum-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:cc2657342ad2b4db5085d0d5e3593b3c040f01c6b1cba35e556a4460f722fb70",
+      "id": "alternating-array-sum-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:c779488a765dbbcf6c91f0bd2329a6baf1b2912c7bc1a9e75e56f7228f6b1136",
+      "id": "alternating-array-sum-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:c7c3e925f26676c5e4e6c9502fc93e599d574ac8e6d99b46e45a610c86aee4ff",
+      "id": "count-equal-pairs-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:83cfc3744d51b73c81f97ce698e7f279d0a67ab575651832d040573ab27df74c",
+      "id": "count-equal-pairs-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:320cd49c23e1c0518b5ed64b6f74686b3b3b90874c2ec067fedfab53439735e5",
+      "id": "count-equal-pairs-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:b46f5d6feaba5bf0344b3aee8c4d10f00fe9c1b72f3129d97d0c6b01b28ba0ba",
+      "id": "array-unique-adjacent-count-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:6715dff781ec2ed92c49fce46983ad86e27833234113652ea0a86dfab816391d",
+      "id": "array-unique-adjacent-count-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:b73c302cf310ac32c3fd335ef28daff1354732c108b25d5b2f8aab9c827ac193",
+      "id": "array-unique-adjacent-count-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:63ac7daa0c56fabdc137052e0110f9420f6e59d6e5026e9bf451a4d50998e006",
+      "id": "weighted-index-sum-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:c67f05989bb6a74ee61012a351ceea975fadbfceb91ef221de678ec8ab4ff4fc",
+      "id": "weighted-index-sum-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:9aa8e89e8162c2791dbade13cced5a230b9572d0d627474788c7099c603dec75",
+      "id": "weighted-index-sum-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:c59a403d95fd49f9f4285c781895deccb9f10df52a734c59287810fe35fd4d35",
+      "id": "subarray-target-count-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:49239fdf2903d4859b9c08450985ebd7c3a0c29c20a31b226c8e61ecd81c28ef",
+      "id": "subarray-target-count-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:00afe8d1c1d60ff4250b6779d9a33d9fb566a4a1b44af5d2eac9e247c2928d88",
+      "id": "subarray-target-count-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:4218b553865900ac75b2a8a35a870f8eb7d87b3e5b57dd65ff65a3d8616cfd76",
+      "id": "euclidean-gcd-child",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:8058875edca46f4f8d46f2889987fd283a7cefe0ad048c2875944e9efb741d6e",
+      "id": "least-common-multiple-child",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    }
+  ],
+  "optimizerSteps": 0,
+  "policy": {
+    "componentIdentity": "authenticated-frozen-source-components",
+    "enabled": false,
+    "maxFamilyShare": null,
+    "maxFamilyTokens": null,
+    "scope": "training-only",
+    "tokenMeasurement": "fresh-native-generatedTokens"
+  },
+  "schema": "semantic-prepared-training-selection/1",
+  "status": "verified",
+  "violations": []
+}
