@@ -1,6 +1,6 @@
-# Owned base classes and private state
+# Owned classes and private state
 
-The strict training frontend accepts local base class declarations and class
+The strict training frontend accepts local class declarations and class
 expressions. Its class evaluation, construction, methods and field initializers
 execute owned bytecode. No class body runs through host `eval` or an opaque
 callback. `test/training-classes.test.js` compares returned graphs, thrown outcomes,
@@ -55,7 +55,9 @@ when the owned outcome is scalar. A projection must not qualify by dropping
 private or prototype state. The frontier records owned and independent evidence
 separately from public/native support.
 
-Derived classes, `super`, private accessors, optional private
+Ordinary derived classes and `super()` construction are described in
+`OWNED_CONSTRUCTION.md`; owned super property reads/calls and plain/compound
+writes are described in `OWNED_SUPER.md`. Private accessors, optional private
 chains, object-coercing computed keys and top-level class evaluation remain
 outside this profile. Top-level entry setup currently permits static data and
 function declarations; local classes execute inside their owned entry function.

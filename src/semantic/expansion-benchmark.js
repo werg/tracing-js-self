@@ -11,6 +11,7 @@ import {encodeNativeGraph} from '../host/graph-codec.js';
 import {compareObservableGraphs} from './observables.js';
 import {hashAlgorithmData,defineAlgorithmProgram} from './program.js';
 import {buildSemanticFamilyRegistry} from './family-registry.js';
+import {tryLowerJavaScriptV8} from './lower-v8.js';
 
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const status=row=>['return','throw'].includes(row?.kind);
@@ -84,7 +85,17 @@ export function expansionFamilyRegistry(){
   return buildSemanticFamilyRegistry(rows,{seed:17});
 }
 
-export function validateExpansionReferencePopulation(){
+export function validateExpansionReferencePopulation({traceVersion=7}={}){
+  if(![7,8].includes(traceVersion))throw new TypeError('Expansion normalization requires an explicit supported trace version');
+  const recognize=(source,entry)=>{
+    if(traceVersion===8){
+      const lowered=tryLowerJavaScriptV8({source,entry});
+      return lowered.status==='lowered'?{status:'passed',digest:hashAlgorithmData(lowered.core)}:
+        {status:'unsupported',reason:lowered.reason};
+    }
+    try{return {status:'passed',digest:defineAlgorithmProgram({source,entry}).program.coreDigest};}
+    catch(error){return {status:'unsupported',reason:error.message};}
+  };
   const families=[];
   for(const family of benchmark.families){
     const positives=[];
@@ -97,16 +108,13 @@ export function validateExpansionReferencePopulation(){
     const negatives=family.negatives.map(negative=>{
       const left=independentBenchmarkOutcome(family.variants[0].source,negative.args),
         right=independentBenchmarkOutcome(negative.source,negative.args);
-      const cores=[family.variants[0].source,negative.source].map(source=>{
-        try{return defineAlgorithmProgram({source,entry:family.entry}).program.coreDigest;}
-        catch{return null;}});
+      const cores=[family.variants[0].source,negative.source].map(source=>recognize(source,family.entry).digest??null);
       return {id:negative.label,status:!status(left)||!status(right)?'unsupported':semanticEqual(left,right)?'failed':'passed',
         distinction:negative.distinction,left,right,
         normalizationSeparation:{status:cores.every(Boolean)?cores[0]!==cores[1]?'passed':'failed':'unsupported',
           leftCore:cores[0],rightCore:cores[1],reason:cores.every(Boolean)?null:'At least one source is explicitly outside compact lowering'}};
     });
-    const lowered=family.variants.map(variant=>{try{return {status:'passed',digest:defineAlgorithmProgram({
-      source:variant.source,entry:family.entry}).program.coreDigest};}catch(error){return {status:'unsupported',reason:error.message};}});
+    const lowered=family.variants.map(variant=>recognize(variant.source,family.entry));
     const allLowered=lowered.every(row=>row.status==='passed');
     families.push({id:family.id,domain:family.domain,positiveReference:positives,distinguishingPairs:negatives,
       sourceRecognition:lowered,normalization:{status:!allLowered?'unsupported':
@@ -114,7 +122,8 @@ export function validateExpansionReferencePopulation(){
         scope:'Source-derived cores only; independently checked owned claims and actual-domain execution remain separate gates'}});
   }
   const positive=families.flatMap(row=>row.positiveReference),negative=families.flatMap(row=>row.distinguishingPairs);
-  return {schema:'semantic-expansion-reference-report/1',manifestDigest:expansionManifest().digest,
+  return {schema:'semantic-expansion-reference-report/1',manifestDigest:expansionManifest().digest,traceVersion,
+    normalizedCoreSchema:traceVersion===8?'semantic-algorithm/2':'semantic-algorithm/1',
     engine:process.version,scope:'Independent V8 execution of trusted frozen fixtures; not owned/runtime/native admission',
     totals:{families:families.length,positiveInputs:positive.length,positiveExecutions:positive.length*3,
       positivePassed:positive.filter(row=>row.status==='passed').length,

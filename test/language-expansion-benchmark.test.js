@@ -26,6 +26,19 @@ test('real-source strata retain refusal candidates and original TS provenance',(
   assert.throws(()=>validateExpansionManifest(changed),/Frozen/);
 });
 
+test('v8 reference reports check current /2 cores and preserve all executed distinguishing pairs',()=>{
+  const report=validateExpansionReferencePopulation({traceVersion:8});
+  assert.equal(report.normalizedCoreSchema,'semantic-algorithm/2');
+  assert.equal(report.traceVersion,8);
+  assert.equal(report.totals.positiveExecutions,624);
+  assert.equal(report.totals.positivePassed,208);
+  assert.equal(report.totals.distinguishingPassed,52);
+  assert(report.families.find(row=>row.id==='array-map-affine').sourceRecognition.some(row=>row.status==='passed'));
+  for(const family of report.families)for(const row of family.distinguishingPairs)
+    assert.notEqual(row.normalizationSeparation.status,'failed',family.id+' false merge '+row.id);
+  assert.throws(()=>validateExpansionReferencePopulation({traceVersion:6}),/supported trace version/);
+});
+
 test('source variants, negative relatives and transpiled source lineages cannot split',()=>{
   const registry=expansionFamilyRegistry();
   const family=registry.components.find(row=>row.members.includes('expansion:nullish-default'));

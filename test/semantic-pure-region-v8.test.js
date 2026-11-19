@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
+import {sharedRegionState} from '../src/semantic/regions.js';
 import {verifyRegionTrainingCase,recheckRegionEvidence} from '../src/semantic/compiler-v8.js';
 import {encodePureRegionRecord,decodePureRegionRecord} from '../src/semantic/pure-region-v8.js';
 import {SEMANTIC_GALLERY_FIXTURES} from '../src/training/semantic-trace-gallery.js';
@@ -58,4 +59,17 @@ test('mixed request dispatch restores without duplicate service calls',async()=>
   const restored=RegionExecutionHarness.restore(resumed.checkpoint(),options);
   await assert.rejects(restored.dispatch(rows[index].fields.invocationId,request.effect),/redispatch/);
   assert.equal(calls,1);
+});
+
+test('pure allocation output is checked against the continuation byte bound before any live mutation',()=>{
+  const h=fresh('"use strict";function run(){return ["'+'x'.repeat(1024)+'"];}',[]);
+  const candidate=h.previewAlgorithm('i'),before=h.exportEpisode(),state=sharedRegionState(h.controller);
+  // Both pre-existing packet encodings fit; the new array and string do not.
+  const entryBytes=Math.max(Buffer.byteLength(JSON.stringify(h.controller.segmentPacket()),'utf8'),
+    Buffer.byteLength(JSON.stringify(state),'utf8'));
+  h.controller.maxPacketBytes=entryBytes+1;
+  assert.throws(()=>h.select('i',candidate),/packet budget|continuation byte bound/);
+  assert.equal(h.controller.generated,0);
+  assert.deepEqual(sharedRegionState(h.controller),state);
+  assert.deepEqual(h.exportEpisode(),before);
 });

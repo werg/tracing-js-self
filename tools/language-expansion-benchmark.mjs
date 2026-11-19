@@ -46,7 +46,7 @@ write('comprehension-lock.json',{schema:'semantic-comprehension-lock/1',id:tasks
   digest:comprehensionTasksetDigest(taskset),tasks:taskset.tasks.length,
   families:new Set(taskset.tasks.map(row=>row.family)).size,measurement:'unmeasured',
   responseCount:0,model:null,reason:'No external evaluator responses have been collected; reference answer keys are not model responses'});
-const reference=validateExpansionReferencePopulation();write('reference-report.json',{producerRevision,...reference});
+const reference=validateExpansionReferencePopulation({traceVersion});write('reference-report.json',{producerRevision,...reference});
 let coverage=null,moduleResults=[];
 if(mode==='coverage'){
   let cases=population==='gallery'?SEMANTIC_GALLERY_FIXTURES:population==='real-source'?expansionRealSourceSlice().cases:

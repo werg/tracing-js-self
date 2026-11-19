@@ -95,3 +95,70 @@ test('serving checks original model bytes against shared state and counts reject
   assert.equal(metrics.promptTokens,2*Buffer.byteLength(causalLmV8Prompt(before)));
   assert.equal(metrics.nativeAdmissionClaim,false);
 });
+
+test('failed v8 checkpoint attestation invalidates earlier model selection',async()=>{
+  const context=example('ordered-map').contexts[0],
+    target=example('ordered-map').public.timeline.find(row=>row.kind==='algorithm').fields.line,
+    checkpointIdentity='c'.repeat(64);
+  let generated=0;
+  const runtime={
+    initialize:async request=>request.seed===2?{...request,checkpointIdentity:'f'.repeat(64)}:request,
+    generate:async()=>{generated++;return {tokenIds:[...Buffer.from(target),256],stopReason:'eos'};}
+  };
+  const selector=createCausalLmV8Selector({...options,runtime,checkpointIdentity,maxNewTokens:2048});
+  await selector.initialize({checkpointIdentity,seed:1});
+  await assert.rejects(selector.initialize({checkpointIdentity,seed:2}),/attestation/);
+  await assert.rejects(selector(context),/not attested/);
+  assert.equal(generated,0);
+  await selector.initialize({checkpointIdentity,seed:3});
+  assert.equal((await selector(context)).record,target);
+  assert.equal(generated,1);
+  await assert.rejects(selector.initialize({checkpointIdentity:'f'.repeat(64),seed:4}),/frozen weights/);
+  await assert.rejects(selector(context),/not attested/);
+});
+
+test('in-flight v8 model generation cannot cross a fresh checkpoint initialization',async()=>{
+  const context=example('ordered-map').contexts[0],
+    target=example('ordered-map').public.timeline.find(row=>row.kind==='algorithm').fields.line,
+    checkpointIdentity='c'.repeat(64);
+  let finishGeneration,signalStart;
+  const generation=new Promise(resolve=>{finishGeneration=resolve;});
+  const started=new Promise(resolve=>{signalStart=resolve;});
+  const runtime={
+    initialize:async request=>request,
+    generate:async()=>{signalStart();return generation;}
+  };
+  const selector=createCausalLmV8Selector({...options,runtime,checkpointIdentity,maxNewTokens:2048});
+  await selector.initialize({checkpointIdentity,seed:1});
+  const pending=selector(context);
+  await started;
+  await selector.initialize({checkpointIdentity,seed:2});
+  finishGeneration({tokenIds:[...Buffer.from(target),256],stopReason:'eos'});
+  await assert.rejects(pending,/initialization changed during generation/);
+  assert.equal(selector.metrics().failedAttempts,1);
+});
+
+test('v8 selector refuses otherwise valid tokens when the causal prefix changes during inference',async()=>{
+  const artifact=example('ordered-map'),target=artifact.public.timeline.find(row=>row.kind==='algorithm'),
+    prefix={...artifact.public,timeline:artifact.public.timeline.slice(0,target.sequence-1)},
+    harness=RegionExecutionHarness.replay(prefix,{requireTerminal:false}),
+    invocationId=target.fields.invocationId,checkpointIdentity='c'.repeat(64);
+  const before=harness.modelContext(invocationId);
+  const runtime={
+    initialize:async request=>request,
+    generate:async()=>{
+      // A concurrent producer commits the same valid record while the model
+      // is still selecting it. Replaying its bytes cannot authorize a second
+      // commit from a context that is no longer the actual public prefix.
+      harness.select(invocationId,target.fields.line,{entry:target.fields.entry});
+      return {tokenIds:[...Buffer.from(target.fields.line),256],stopReason:'eos'};
+    }
+  };
+  const selector=createCausalLmV8Selector({...options,runtime,checkpointIdentity,maxNewTokens:2048});
+  await selector.initialize({checkpointIdentity,seed:1});
+  await assert.rejects(selector.selectInto(harness,invocationId),/public context changed during generation/);
+  assert.notDeepEqual(harness.modelContext(invocationId),before);
+  assert.equal(harness.timeline.length,target.sequence);
+  assert.equal(selector.metrics().semanticallyAccepted,0);
+  assert.equal(selector.metrics().failedAttempts,1);
+});

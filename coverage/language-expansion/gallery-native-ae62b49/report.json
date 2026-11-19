@@ -1,0 +1,776 @@
+{
+  "schema": "semantic-v8-qualification/1",
+  "producerRevision": "4d6dace0446e743a80bc4770f59eec33fefd5730",
+  "population": "gallery",
+  "declared": 11,
+  "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+  "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+  "nativePolicy": {
+    "schema": "semantic-native-policy/8",
+    "consumerRepository": "werg/megatoken",
+    "consumerRevision": "ae62b491f14b3064fe69ee8c6d78ac7b17a597ce",
+    "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+  },
+  "preparationOnly": false,
+  "rows": [
+    {
+      "id": "compound-pure",
+      "family": "compound-pure",
+      "status": "admitted",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "passed",
+      "durationMs": 2417.4781900000003,
+      "peakRssBytes": 123613184,
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 1,
+        "compactRecords": 1,
+        "detailedRecords": 1,
+        "compactBytes": 193,
+        "detailedBytes": 48,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReceipt": {
+        "schema": "semantic-native-admission/8",
+        "traceFormat": "semantic-trace/8",
+        "contextFormat": "semantic-context/8",
+        "representation": "mixed",
+        "componentGate": "native-consumer-only",
+        "publicDigest": "6bfb2a872f64d91a4e37df0599928a9b82ce04388b0b9bf818dcc1c4692031e1",
+        "contextsDigest": "95c0a94b491eb1636a852b36eea363328b7a515da88517841adb2cc7d56de5ef",
+        "sourceArtifactDigest": "96a851026fb820f3a0b401ad2f859bda94a9163d7e96b8c18225732a89900591",
+        "datasetBindingDigest": null,
+        "consumerRevision": "ae62b491f14b3064fe69ee8c6d78ac7b17a597ce",
+        "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizer": {
+          "status": "passed",
+          "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+        },
+        "checks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        },
+        "counts": {
+          "records": 4,
+          "contexts": 2,
+          "generatedRecords": 2,
+          "generatedTokens": 77,
+          "observedTokens": 3432
+        },
+        "framing": {
+          "kind": "native-physical-record-boundaries/1",
+          "eosTokenId": null,
+          "terminalTokens": 0,
+          "physicalRecords": 9
+        },
+        "nativeTrainingDigest": "421037087c993af35e32bff848b769146474a46421c63bf994958e6637d60845",
+        "optimizerSteps": 0,
+        "learningClaim": null,
+        "admitted": true
+      }
+    },
+    {
+      "id": "branch-1",
+      "family": "observed-branch",
+      "status": "admitted",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "passed",
+      "durationMs": 1891.3809459999993,
+      "peakRssBytes": 126025728,
+      "regionCoverage": {
+        "compactRegions": 0,
+        "detailedRegions": 1,
+        "compactRecords": 0,
+        "detailedRecords": 10,
+        "compactBytes": 0,
+        "detailedBytes": 1230,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReceipt": {
+        "schema": "semantic-native-admission/8",
+        "traceFormat": "semantic-trace/8",
+        "contextFormat": "semantic-context/8",
+        "representation": "mixed",
+        "componentGate": "native-consumer-only",
+        "publicDigest": "03448d6a3b1c42bd32f6766724fd4cc849717a36850b4b88f96c4ade64e541fe",
+        "contextsDigest": "97466f5ebfde5024389ee3625bee057d57af3c6615ebed38ba8f5f822779d92e",
+        "sourceArtifactDigest": "38a71375d0c3625c61020af9e7b3c4ccba441bb481b00338a902c8ecd6c36d8e",
+        "datasetBindingDigest": null,
+        "consumerRevision": "ae62b491f14b3064fe69ee8c6d78ac7b17a597ce",
+        "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizer": {
+          "status": "passed",
+          "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+        },
+        "checks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        },
+        "counts": {
+          "records": 16,
+          "contexts": 10,
+          "generatedRecords": 10,
+          "generatedTokens": 356,
+          "observedTokens": 12718
+        },
+        "framing": {
+          "kind": "native-physical-record-boundaries/1",
+          "eosTokenId": null,
+          "terminalTokens": 0,
+          "physicalRecords": 35
+        },
+        "nativeTrainingDigest": "3cd4a13bc6f81de4848587e865987858ae8ae27d206902a3de6362ff58ea96e7",
+        "optimizerSteps": 0,
+        "learningClaim": null,
+        "admitted": true
+      }
+    },
+    {
+      "id": "object-alias",
+      "family": "trace-gallery-object-alias",
+      "status": "admitted",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "passed",
+      "durationMs": 2912.8710330000013,
+      "peakRssBytes": 124620800,
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 1,
+        "compactRecords": 1,
+        "detailedRecords": 1,
+        "compactBytes": 190,
+        "detailedBytes": 48,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReceipt": {
+        "schema": "semantic-native-admission/8",
+        "traceFormat": "semantic-trace/8",
+        "contextFormat": "semantic-context/8",
+        "representation": "mixed",
+        "componentGate": "native-consumer-only",
+        "publicDigest": "25e054b8c06f6663e05ddbf592ca8c9ed0e09f098dfe9c0ade0373ec7e7338a8",
+        "contextsDigest": "e8fb4bca0758f6ccadc8b1e22754a69dd225ff41459ac5cb050856675ccdebb6",
+        "sourceArtifactDigest": "a6379f28fdd38ef1c80221bafb5315bb4fa84b6314076517412ef432f8581a54",
+        "datasetBindingDigest": null,
+        "consumerRevision": "ae62b491f14b3064fe69ee8c6d78ac7b17a597ce",
+        "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizer": {
+          "status": "passed",
+          "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+        },
+        "checks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        },
+        "counts": {
+          "records": 4,
+          "contexts": 2,
+          "generatedRecords": 2,
+          "generatedTokens": 74,
+          "observedTokens": 2840
+        },
+        "framing": {
+          "kind": "native-physical-record-boundaries/1",
+          "eosTokenId": null,
+          "terminalTokens": 0,
+          "physicalRecords": 7
+        },
+        "nativeTrainingDigest": "3175b215ac351824ea45566bb2a3229d43a814b71e099c263d2732acffd04a32",
+        "optimizerSteps": 0,
+        "learningClaim": null,
+        "admitted": true
+      }
+    },
+    {
+      "id": "pure-helper",
+      "family": "trace-gallery-pure-helper",
+      "status": "admitted",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "passed",
+      "durationMs": 1200.4436139999998,
+      "peakRssBytes": 120864768,
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 1,
+        "compactRecords": 1,
+        "detailedRecords": 1,
+        "compactBytes": 190,
+        "detailedBytes": 48,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReceipt": {
+        "schema": "semantic-native-admission/8",
+        "traceFormat": "semantic-trace/8",
+        "contextFormat": "semantic-context/8",
+        "representation": "mixed",
+        "componentGate": "native-consumer-only",
+        "publicDigest": "3fb36078a255313085f496232fbb89bf16dc90d24234edbf2da7a2238e4bbf67",
+        "contextsDigest": "7234d90c90e6c2a6b947c5045e0c302464d881f746e12cfbdfcb5a3624ab290f",
+        "sourceArtifactDigest": "b89b6d96eb24cd12e8f56814fa51ea52415024b713cdee8991ed7d18a19c8919",
+        "datasetBindingDigest": null,
+        "consumerRevision": "ae62b491f14b3064fe69ee8c6d78ac7b17a597ce",
+        "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizer": {
+          "status": "passed",
+          "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+        },
+        "checks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        },
+        "counts": {
+          "records": 4,
+          "contexts": 2,
+          "generatedRecords": 2,
+          "generatedTokens": 74,
+          "observedTokens": 2760
+        },
+        "framing": {
+          "kind": "native-physical-record-boundaries/1",
+          "eosTokenId": null,
+          "terminalTokens": 0,
+          "physicalRecords": 7
+        },
+        "nativeTrainingDigest": "aa2d9884d9d9180c6e2ee5898bef256de6e187f6ce36748b2c9caba387c6a9bc",
+        "optimizerSteps": 0,
+        "learningClaim": null,
+        "admitted": true
+      }
+    },
+    {
+      "id": "dense-loop",
+      "family": "trace-gallery-dense-loop",
+      "status": "admitted",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "passed",
+      "durationMs": 1682.7992279999999,
+      "peakRssBytes": 127098880,
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 1,
+        "compactRecords": 1,
+        "detailedRecords": 1,
+        "compactBytes": 190,
+        "detailedBytes": 48,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReceipt": {
+        "schema": "semantic-native-admission/8",
+        "traceFormat": "semantic-trace/8",
+        "contextFormat": "semantic-context/8",
+        "representation": "mixed",
+        "componentGate": "native-consumer-only",
+        "publicDigest": "d8752c24fb2534bc5b878ac4e0422932220c2662900f4947d8b05f80dadaafb4",
+        "contextsDigest": "f7226d53745e7f927df7e0611916419c8c8b11e9a6fba18d52af01baaac470ac",
+        "sourceArtifactDigest": "570b8718d26d331d54d7eb857237b2896cdfe3d95a4c5f0e86095fab494d68a5",
+        "datasetBindingDigest": null,
+        "consumerRevision": "ae62b491f14b3064fe69ee8c6d78ac7b17a597ce",
+        "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizer": {
+          "status": "passed",
+          "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+        },
+        "checks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        },
+        "counts": {
+          "records": 4,
+          "contexts": 2,
+          "generatedRecords": 2,
+          "generatedTokens": 74,
+          "observedTokens": 3968
+        },
+        "framing": {
+          "kind": "native-physical-record-boundaries/1",
+          "eosTokenId": null,
+          "terminalTokens": 0,
+          "physicalRecords": 9
+        },
+        "nativeTrainingDigest": "a60e240a1f5c701a87a189b2d3d95bf2af57d7feed80560fd6b21f51a9d63812",
+        "optimizerSteps": 0,
+        "learningClaim": null,
+        "admitted": true
+      }
+    },
+    {
+      "id": "throw-finally",
+      "family": "trace-gallery-throw-finally",
+      "status": "admitted",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "passed",
+      "durationMs": 2278.267090000001,
+      "peakRssBytes": 125829120,
+      "regionCoverage": {
+        "compactRegions": 2,
+        "detailedRegions": 2,
+        "compactRecords": 2,
+        "detailedRecords": 5,
+        "compactBytes": 202,
+        "detailedBytes": 673,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReceipt": {
+        "schema": "semantic-native-admission/8",
+        "traceFormat": "semantic-trace/8",
+        "contextFormat": "semantic-context/8",
+        "representation": "mixed",
+        "componentGate": "native-consumer-only",
+        "publicDigest": "4ace3c2ecdacc043954c7f76a8266dd6229c072d965f75b980e80f10a2420611",
+        "contextsDigest": "09c95675049200e8b8b386cc5edabfbc0953e00974c51d59174b04a3b3cf93ae",
+        "sourceArtifactDigest": "d1cf8d7d0e9e25ec12999b7bae238ea6e27e83b51e5a28860ca9673d3ad4ae1b",
+        "datasetBindingDigest": null,
+        "consumerRevision": "ae62b491f14b3064fe69ee8c6d78ac7b17a597ce",
+        "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizer": {
+          "status": "passed",
+          "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+        },
+        "checks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        },
+        "counts": {
+          "records": 9,
+          "contexts": 7,
+          "generatedRecords": 7,
+          "generatedTokens": 255,
+          "observedTokens": 7568
+        },
+        "framing": {
+          "kind": "native-physical-record-boundaries/1",
+          "eosTokenId": null,
+          "terminalTokens": 0,
+          "physicalRecords": 17
+        },
+        "nativeTrainingDigest": "31ccf2c24dee9e54b0445ecf5bce71ff6080e451dbb5f9f9f9722266676aeeb3",
+        "optimizerSteps": 0,
+        "learningClaim": null,
+        "admitted": true
+      }
+    },
+    {
+      "id": "counter-0",
+      "family": "async-counter",
+      "status": "admitted",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "passed",
+      "durationMs": 2277.6537650000027,
+      "peakRssBytes": 126619648,
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 2,
+        "compactRecords": 1,
+        "detailedRecords": 10,
+        "compactBytes": 100,
+        "detailedBytes": 1099,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReceipt": {
+        "schema": "semantic-native-admission/8",
+        "traceFormat": "semantic-trace/8",
+        "contextFormat": "semantic-context/8",
+        "representation": "mixed",
+        "componentGate": "native-consumer-only",
+        "publicDigest": "819af419c28f5036c987f7f5d0751fc9e8f266dae6cb227de37f892a8b0c106e",
+        "contextsDigest": "6d219c184399343df4867665b9d908ae2f15f907a71e3bd172f04cc7a4f59885",
+        "sourceArtifactDigest": "1db1c40c0f2bc8b59ea11e0f07b5763b26ffd3df3bc74e8a77b2d66774a0ec84",
+        "datasetBindingDigest": null,
+        "consumerRevision": "ae62b491f14b3064fe69ee8c6d78ac7b17a597ce",
+        "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizer": {
+          "status": "passed",
+          "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+        },
+        "checks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        },
+        "counts": {
+          "records": 17,
+          "contexts": 11,
+          "generatedRecords": 11,
+          "generatedTokens": 343,
+          "observedTokens": 15983
+        },
+        "framing": {
+          "kind": "native-physical-record-boundaries/1",
+          "eosTokenId": null,
+          "terminalTokens": 0,
+          "physicalRecords": 40
+        },
+        "nativeTrainingDigest": "0efaa2568045a8dfb8bae6419b25a373a38bde929717403557ba11eed881c71a",
+        "optimizerSteps": 0,
+        "learningClaim": null,
+        "admitted": true
+      }
+    },
+    {
+      "id": "rejection-finally",
+      "family": "async-cleanup",
+      "status": "admitted",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "passed",
+      "durationMs": 1576.3887840000025,
+      "peakRssBytes": 127348736,
+      "regionCoverage": {
+        "compactRegions": 0,
+        "detailedRegions": 1,
+        "compactRecords": 0,
+        "detailedRecords": 11,
+        "compactBytes": 0,
+        "detailedBytes": 1369,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReceipt": {
+        "schema": "semantic-native-admission/8",
+        "traceFormat": "semantic-trace/8",
+        "contextFormat": "semantic-context/8",
+        "representation": "mixed",
+        "componentGate": "native-consumer-only",
+        "publicDigest": "3c6d320325daa68b9011c793811ce3236af95e7d8dee0e4f659619e65973f3ee",
+        "contextsDigest": "e06260c5fc4d541b4229de7f6dee54b92c11c2230b40e203bf2050ac37d557c1",
+        "sourceArtifactDigest": "ac7806dcd843c73bf9dee3b876778a118192e1c0b1a27d52126725b9a775c81f",
+        "datasetBindingDigest": null,
+        "consumerRevision": "ae62b491f14b3064fe69ee8c6d78ac7b17a597ce",
+        "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizer": {
+          "status": "passed",
+          "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+        },
+        "checks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        },
+        "counts": {
+          "records": 19,
+          "contexts": 11,
+          "generatedRecords": 11,
+          "generatedTokens": 389,
+          "observedTokens": 13305
+        },
+        "framing": {
+          "kind": "native-physical-record-boundaries/1",
+          "eosTokenId": null,
+          "terminalTokens": 0,
+          "physicalRecords": 42
+        },
+        "nativeTrainingDigest": "54bd54adc0177e4d760ea46e6bf6fbdbc1c9a524541f21921fcb834ed03ba21d",
+        "optimizerSteps": 0,
+        "learningClaim": null,
+        "admitted": true
+      }
+    },
+    {
+      "id": "callback-captured-write",
+      "family": "owned-callback",
+      "status": "admitted",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "passed",
+      "durationMs": 1926.2673609999983,
+      "peakRssBytes": 154316800,
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 2,
+        "compactRecords": 1,
+        "detailedRecords": 19,
+        "compactBytes": 100,
+        "detailedBytes": 2332,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReceipt": {
+        "schema": "semantic-native-admission/8",
+        "traceFormat": "semantic-trace/8",
+        "contextFormat": "semantic-context/8",
+        "representation": "mixed",
+        "componentGate": "native-consumer-only",
+        "publicDigest": "b357f2a6e4418f905d7fdd2ea443b50793fc61c4698c38ec1908006b1f9e3ee3",
+        "contextsDigest": "6c71d940905cbb7ab1c6c0a95ed1d6436eb8a8725e1d6fdd1eb8e432d53a4168",
+        "sourceArtifactDigest": "482c32da92a3169ffa77427d3667dc20ea8955100b18cd5077279e3ddf6ec9bc",
+        "datasetBindingDigest": null,
+        "consumerRevision": "ae62b491f14b3064fe69ee8c6d78ac7b17a597ce",
+        "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizer": {
+          "status": "passed",
+          "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+        },
+        "checks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        },
+        "counts": {
+          "records": 39,
+          "contexts": 20,
+          "generatedRecords": 20,
+          "generatedTokens": 709,
+          "observedTokens": 35742
+        },
+        "framing": {
+          "kind": "native-physical-record-boundaries/1",
+          "eosTokenId": null,
+          "terminalTokens": 0,
+          "physicalRecords": 93
+        },
+        "nativeTrainingDigest": "ecf43c6642c38b8fa4c098991c3708fccc4a666661c8249c7e90f6f8bd0ace9d",
+        "optimizerSteps": 0,
+        "learningClaim": null,
+        "admitted": true
+      }
+    },
+    {
+      "id": "persistent-external-trigger",
+      "family": "persistent-external-trigger",
+      "status": "admitted",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "passed",
+      "durationMs": 5095.198550000001,
+      "peakRssBytes": 154419200,
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 2,
+        "compactRecords": 1,
+        "detailedRecords": 27,
+        "compactBytes": 100,
+        "detailedBytes": 3220,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReceipt": {
+        "schema": "semantic-native-admission/8",
+        "traceFormat": "semantic-trace/8",
+        "contextFormat": "semantic-context/8",
+        "representation": "mixed",
+        "componentGate": "native-consumer-only",
+        "publicDigest": "ae152840c3c373fba955e7e0b640b5b754fba529c073ac0cab8c1c8939185c7f",
+        "contextsDigest": "97fdff8bf2c73d651ab4fc20e8d28a71f1ab13d054c5519517a4e8eb6eed9c4c",
+        "sourceArtifactDigest": "76859e033f8432c7261db5bef6e698b915bbc0638c035c8fc793348fc5d3b25b",
+        "datasetBindingDigest": null,
+        "consumerRevision": "ae62b491f14b3064fe69ee8c6d78ac7b17a597ce",
+        "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizer": {
+          "status": "passed",
+          "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+        },
+        "checks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        },
+        "counts": {
+          "records": 49,
+          "contexts": 28,
+          "generatedRecords": 28,
+          "generatedTokens": 953,
+          "observedTokens": 57098
+        },
+        "framing": {
+          "kind": "native-physical-record-boundaries/1",
+          "eosTokenId": null,
+          "terminalTokens": 0,
+          "physicalRecords": 141
+        },
+        "nativeTrainingDigest": "625470a5203ac3590da1b00e6e0c9d6e1d5d22794f0928c34799bfb81508648d",
+        "optimizerSteps": 0,
+        "learningClaim": null,
+        "admitted": true
+      }
+    },
+    {
+      "id": "redundant-cell-write",
+      "family": "trace-gallery-redundant-cell-write",
+      "status": "admitted",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "passed",
+      "durationMs": 2121.759416999994,
+      "peakRssBytes": 117964800,
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 1,
+        "compactRecords": 1,
+        "detailedRecords": 1,
+        "compactBytes": 190,
+        "detailedBytes": 48,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReceipt": {
+        "schema": "semantic-native-admission/8",
+        "traceFormat": "semantic-trace/8",
+        "contextFormat": "semantic-context/8",
+        "representation": "mixed",
+        "componentGate": "native-consumer-only",
+        "publicDigest": "713ba6bd0c058d3e92e0936599a8332a7cfadcddb5ee17e940a6b7593474e46a",
+        "contextsDigest": "914bf6657137a70734119689c90b207897ec0e52e2e0d5c8d37c44274696f2cd",
+        "sourceArtifactDigest": "1c0e337ac0ac463fb1431a7c4536a969fecf5f2ac849b5fc27c4b8c4871a5b80",
+        "datasetBindingDigest": null,
+        "consumerRevision": "ae62b491f14b3064fe69ee8c6d78ac7b17a597ce",
+        "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizer": {
+          "status": "passed",
+          "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+        },
+        "checks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        },
+        "counts": {
+          "records": 4,
+          "contexts": 2,
+          "generatedRecords": 2,
+          "generatedTokens": 74,
+          "observedTokens": 2760
+        },
+        "framing": {
+          "kind": "native-physical-record-boundaries/1",
+          "eosTokenId": null,
+          "terminalTokens": 0,
+          "physicalRecords": 7
+        },
+        "nativeTrainingDigest": "d4379ac7c10a7e1f50c609e1bd5b1d9b61a387cf510bae8179d8e83fd36e6c02",
+        "optimizerSteps": 0,
+        "learningClaim": null,
+        "admitted": true
+      }
+    }
+  ],
+  "artifacts": {
+    "compound-pure.source.json": "e32243952960b9e1dabf78df6733e6586d0b484cbf218e163a858c3e81f852cb",
+    "compound-pure.admitted.json": "072af8e8b0ff5fd6c17f968fd06c1e96614e12f988209f699e3218d3789fe8ae",
+    "compound-pure.native.json": "ef32a9e664a231142c827d7b27e5c8d65300ba2ec5c71db6144dc6b5c06b1421",
+    "branch-1.source.json": "e013bc753969b6ccac59ed4e6a040108ba292eff59cbbb8424b5746ccceffafb",
+    "branch-1.admitted.json": "e5927195927a506d33f969580b6a366d80056a6810392419dc017393377c6346",
+    "branch-1.native.json": "c1bf2816dcbd20e505395ba28aa18dc60038e4bdf29d4c5c85807865c8e5c17e",
+    "object-alias.source.json": "f3695c73f6718c3b47928f81689ded24a1e1367b49acc42677aad98b89bb36aa",
+    "object-alias.admitted.json": "cbae4afad553771fc243274f8ab53a573887fed5175dd7192923ec4d8bc21b9a",
+    "object-alias.native.json": "3ce7df6ab3d219911937ac5f520fd57356c9ac5a697296fcc8adbd68377b36c5",
+    "pure-helper.source.json": "17a03eeda5c4d08528d657f805af548d6c92887ef2c496371ecf6394401cafc7",
+    "pure-helper.admitted.json": "1c28f34f653a78ba8c9d0e5bbdd119c952968d074c4376b0f13c811e981e1c81",
+    "pure-helper.native.json": "50e9cf9904d3c9092b054b1a191ecebda39d77a7a63e61321fc9e7654a305dc7",
+    "dense-loop.source.json": "c5e1368fe87f5b17a0fd8f3707a53572e353d00333cc737e1cad04f99a36ed60",
+    "dense-loop.admitted.json": "35dedfa14337b454daf47e866e0cd464d904cd555cf195dcd5280d0fcb115aa8",
+    "dense-loop.native.json": "a98774f3aca928592c32872836d803fa72b010fa300387fb62dfcc4b23f2e714",
+    "throw-finally.source.json": "493efa8a19ffc47c252a60eec71b3da3083a1727705a7aa39e193de6959fd97d",
+    "throw-finally.admitted.json": "17708fcfc33c1f30d8be00df5b8a96acf7ab73823b3769a607b16781823bab90",
+    "throw-finally.native.json": "33ea446427783126d5ec9a707e59177a7f257622d24b416a3ff9ceeb680bb801",
+    "counter-0.source.json": "55621a0e23cf7110a6b1cead16cbe5af0bf4b93aae758743bcca9066987f55cf",
+    "counter-0.admitted.json": "1f72cecf1d26136e6910c472b2a7f7c3975647d6a5c089147d950e3192e3d97d",
+    "counter-0.native.json": "3f621c2799636132b895d0e733a90ae1e8da094c407ad6850099cfa6ce84814f",
+    "rejection-finally.source.json": "51252c15f6239726b166e56290b00279be490df358950b4a65d72515545e90b1",
+    "rejection-finally.admitted.json": "dbf8d2ff77ce149bea00a9c502fb9573a1bb90a5b27d8741381f0f5fee50749f",
+    "rejection-finally.native.json": "469ad41662660a8fc5609cbfe641b9e4ee8f1353551290b4a44d20e833d2c387",
+    "callback-captured-write.source.json": "d35bb9eb95069a44aa36ab6ab59a3f7c78929b557b5e9cc0ef9c396081cbcc56",
+    "callback-captured-write.admitted.json": "b59e30e81450a7ec0f6ee2fa13b3c8d2ea3a4528caae557a8f94f855152f9d84",
+    "callback-captured-write.native.json": "f4e6863bae05bb34cd28bb2e9593a6c2a2d5f6a273ced2312db7f5d59afbed39",
+    "persistent-external-trigger.source.json": "eaaf33abbf2c4b2b970b81baf7378993300532287570c9b9347c26b3dbc08b8e",
+    "persistent-external-trigger.admitted.json": "6684adb9c5eb68394660eac933de6f7f1b8d17f738fc998ca69c71c153f4e23d",
+    "persistent-external-trigger.native.json": "4357d256cb5097276b6c05e84d549049cc36dc54338351151d6a73c125adc284",
+    "redundant-cell-write.source.json": "8c6c886b1526d7b90dad0f0d225813c8fd260b403e308f54df4317255124c4b8",
+    "redundant-cell-write.admitted.json": "d85c1d115f010cc2f526dc1e69424e16867ed9fd97bc21035c52d8755cc10485",
+    "redundant-cell-write.native.json": "69ec46b809ae442d740a11d342ff56a077147e6dddce56f3874b638bded2db32"
+  },
+  "sourceQualified": 11,
+  "nativeAdmitted": 11,
+  "model": "untested",
+  "optimizerSteps": 0,
+  "defaultPromotion": "not-qualified",
+  "scope": "Source and native engineering qualification; no model-learning or native-serving success claim"
+}

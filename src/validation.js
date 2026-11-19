@@ -3,6 +3,9 @@ import {validatePrivateEvent} from './private-validation.js';
 import {validateTemplateEvent} from './template-validation.js';
 import {validateEnumerationEvent} from './enumeration-validation.js';
 import {validateReceiverEvent} from './receiver-validation.js';
+import {validateConstructionEvent} from './construction-validation.js';
+import {validateSuperEvent} from './super-validation.js';
+import {isBinaryMemoryKind,validateBinaryMemoryState,validateBinaryMemoryEvent} from './binary-memory-validation.js';
 // Read-only validation. Does not import the evaluator or call its mutation routines.
 import { readFileSync } from 'node:fs';
 import {validateSymbolReferences,validateSymbolAllocation} from './symbol-validation.js';
@@ -23,6 +26,8 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
   validateSymbolReferences(state,state.heap,fail);
   const generatorIds=new Set(Object.values(state.heap).filter(entity=>entity.kind==='generator').map(entity=>entity.id));
   validateGeneratorState(state,bundle.programs,fail,generatorIds);
+  const binaryIds=new Set(Object.values(state.heap).filter(entity=>isBinaryMemoryKind(entity.kind)).map(entity=>entity.id));
+  validateBinaryMemoryState(state,fail,binaryIds);
   const sites=new Set(bundle.sites.map(s=>s.siteId));
   const seen=new Set();
   const parameterTdzOrigins=new Map();
@@ -128,8 +133,8 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     const patched=new Set();
     if(e.completion && !['spec.operation.complete','completion.throw','external.input.deliver',
       'job.enter','binding.read','binding.write','binding.update','primitive.unary',
-      'property.read','property.write','property.update','primitive.binary','call.enter','proxy.allocate',
-      'object.construct','execution.unsupported','regexp.allocate'].includes(e.operation))
+      'property.read','property.write','property.update','primitive.binary','reference.this','call.return','call.enter','proxy.allocate',
+      'object.construct','completion.finally.end','execution.unsupported','regexp.allocate'].includes(e.operation))
       fail('Completion metadata without an owned completion operation',e.eventId);
     validateSpecEvent(state,e,fail);
     validateGeneratorEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
@@ -137,6 +142,9 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     validateTemplateEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validateEnumerationEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validateReceiverEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
+    validateConstructionEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
+    validateSuperEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
+    validateBinaryMemoryEvent(e,message=>fail(message,e.eventId));
     for(const p of e.stateChanges) {
       validateSymbolAllocation(p,e,message=>fail(message,e.eventId));
       if(patched.has(`${p.table}:${p.id}`))fail('Double application of mutation',e.eventId);
@@ -163,6 +171,8 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     }
     for(const patch of e.stateChanges)if(patch.table==='heap'&&patch.after?.kind==='generator')generatorIds.add(patch.id);
     validateGeneratorState(state,bundle.programs,message=>fail(message,e.eventId),generatorIds);
+    for(const patch of e.stateChanges)if(patch.table==='heap'&&isBinaryMemoryKind(patch.after?.kind))binaryIds.add(patch.id);
+    validateBinaryMemoryState(state,message=>fail(message,e.eventId),binaryIds);
     validateSymbolReferences({operands:e.operands,result:e.result,changed:e.stateChanges.map(p=>p.after??p.record??null)},state.heap,message=>fail(message,e.eventId));
     if(job && !eq(state.control.a0.queue.slice(0,queuedBefore.length),queuedBefore))
       fail('Guest job FIFO order changed during entry',e.eventId);

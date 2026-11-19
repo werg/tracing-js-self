@@ -13,7 +13,7 @@ const logical=new Set(['&&','||','??']);
 const assignments=new Set(['=','&&=','||=','??=','+=','-=','*=','/=','%=','**=',
   '&=','|=','^=','<<=','>>=','>>>=']);
 const unary=new Set(['!','-','+','typeof','void','~']);
-const ownedConstructors=new Set(['Set','Error','TypeError','Symbol','Promise','SharedArrayBuffer','DataView',
+const ownedConstructors=new Set(['Set','Error','TypeError','Symbol','Promise','ArrayBuffer','SharedArrayBuffer','DataView',
   'Int8Array','Uint8Array','Int16Array','Uint16Array','Int32Array','Uint32Array',
   'BigInt64Array','BigUint64Array','Float32Array','Float64Array']);
 const reject=(node,why) => {throw new SyntaxError(
@@ -70,7 +70,10 @@ export function parseTraining(source) {
       if(node.type==='Identifier'){
         names.push({...at,name:node.name});return {...at,type:'PatternName',name:node.name};
       }
-      if(assignment&&node.type==='MemberExpression')return {...at,type:'PatternMember',target:expr(node)};
+      if(assignment&&node.type==='MemberExpression'){
+        if(node.object.type==='Super')reject(node,'super destructuring assignment profile');
+        return {...at,type:'PatternMember',target:expr(node)};
+      }
       if(node.type==='AssignmentPattern')return {...at,type:'PatternDefault',
         target:pattern(node.left,depth+1),fallback:expr(node.right)};
       if(node.type==='ArrayPattern')return {...at,type:'PatternArray',elements:node.elements.map((item,index)=>
@@ -101,7 +104,6 @@ export function parseTraining(source) {
     });
   }
   function classExpression(n){
-    if(n.superClass)reject(n,'class inheritance requires the derived constructor profile');
     const elements=n.body.body.map(member=>{
       if(member.type==='StaticBlock')return {...span(member),kind:'block',static:true,body:member.body.map(stmt)};
       if(!['MethodDefinition','PropertyDefinition'].includes(member.type))reject(member,'class element');
@@ -113,7 +115,7 @@ export function parseTraining(source) {
         value:member.value?(member.type==='PropertyDefinition'?expr(member.value):{...expr(member.value),strict:true,nonConstructible:member.kind!=='constructor'}):
           {...span(member),type:'Literal',value:['undefined']}};
     });
-    return {...span(n),type:'ClassExpr',name:n.id?.name??null,elements};
+    return {...span(n),type:'ClassExpr',name:n.id?.name??null,superClass:n.superClass?expr(n.superClass):null,elements};
   }
   function expr(n) {
     if(!n)reject(parsed,'missing expression');
@@ -181,6 +183,7 @@ export function parseTraining(source) {
       case 'UpdateExpression':
         if(!['Identifier','MemberExpression'].includes(n.argument.type))
           reject(n,'update target');
+        if(n.argument.type==='MemberExpression'&&n.argument.object.type==='Super')reject(n,'super update continuation profile');
         return {...loc,type:'Update',operator:n.operator,prefix:n.prefix,
           ...(n.argument.type==='Identifier'
             ?{name:n.argument.name}:{argument:expr(n.argument)})};
@@ -216,7 +219,9 @@ export function parseTraining(source) {
       }
       case 'MemberExpression':
         if(n.property.type==='PrivateIdentifier')return {...loc,type:'PrivateMember',name:n.property.name,object:expr(n.object)};
-        if(n.optional || n.object.type==='Super')reject(n,'member receiver');
+        if(n.optional)reject(n,'member receiver');
+        if(n.object.type==='Super')return {...loc,type:'SuperMember',property:n.computed?expr(n.property):
+          {...span(n.property),type:'Literal',value:encode(n.property.name)}};
         return {...loc,type:'Member',object:expr(n.object),property:n.computed?expr(n.property):
           {...span(n.property),type:'Literal',value:encode(n.property.name)}};
       case 'NewExpression':
@@ -231,7 +236,7 @@ export function parseTraining(source) {
           reject(n,'spread/optional call');
         if(n.callee.type==='Identifier' && ['eval','Function','require'].includes(n.callee.name))
           reject(n,'dynamic source or host call');
-        return {...loc,type:'Call',callee:expr(n.callee),
+        return {...loc,type:n.callee.type==='Super'?'SuperCall':'Call',...(n.callee.type==='Super'?{}:{callee:expr(n.callee)}),
           args:n.arguments.map(a=>a.type==='SpreadElement'?
             {...span(a),type:'Spread',argument:expr(a.argument)}:expr(a))};
       case 'ArrayExpression':
@@ -257,6 +262,8 @@ export function parseTraining(source) {
         if(!assignments.has(n.operator) ||
            !['Identifier','MemberExpression'].includes(n.left.type))
           reject(n,'assignment form');
+        if(n.left.type==='MemberExpression'&&n.left.object.type==='Super'&&['&&=','||=','??='].includes(n.operator))
+          reject(n,'logical super assignment continuation profile');
         return {...loc,type:'Assign',operator:n.operator,left:expr(n.left),right:expr(n.right)};
       default:reject(n,n.type);
     }
@@ -371,6 +378,7 @@ export function parseTraining(source) {
           break;
         case 'ClassExpr':{
           const classEnv={names:new Set(n.name?[n.name]:[]),parent:e};
+          if(n.superClass)value(n.superClass,classEnv);
           for(const element of n.elements){
             if(element.computedKey)value(element.computedKey,classEnv);
             if(element.kind==='block')scope(element.body,classEnv,[],false,true);else value(element.value,classEnv);
@@ -409,7 +417,9 @@ export function parseTraining(source) {
           }
           break;
         case 'Member':value(n.object,e);value(n.property,e);break;
+        case 'SuperMember':value(n.property,e);break;
         case 'Call':value(n.callee,e);n.args.forEach(x=>value(x.type==='Spread'?x.argument:x,e));break;
+        case 'SuperCall':n.args.forEach(x=>value(x.type==='Spread'?x.argument:x,e));break;
         case 'Construct':value(n.callee,e);n.args.forEach(x=>value(x,e));break;
         case 'DeferredRegExp':case 'OwnedPinnedRegExp':break;
         case 'Array':n.elements.forEach(x=>{if(x)value(x.type==='Spread'?x.argument:x,e);});break;
@@ -518,6 +528,6 @@ export function parseTraining(source) {
       init:{type:'Literal'},pattern:parsed.pattern},{names:new Set(params),parent});
     statements.forEach(n=>statement(n,env));
   }
-  scope(body,{names:new Set(['undefined','Object','Array','Number','BigInt','String','Symbol','Reflect','Math','Promise','Set','Error','TypeError','Date','console','host','NaN','Infinity','parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval','SharedArrayBuffer','DataView',...ownedConstructors,'Atomics']),parent:null},[],false,true);
+  scope(body,{names:new Set(['undefined','Object','Array','Number','BigInt','String','Symbol','Reflect','Math','Promise','Set','Error','TypeError','Date','console','host','NaN','Infinity','parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval','ArrayBuffer','SharedArrayBuffer','DataView',...ownedConstructors,'Atomics']),parent:null},[],false,true);
   return {type:'Program',body,start:0,end:source.length,profile:TRAINING_PROFILE};
 }
