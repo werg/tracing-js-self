@@ -17,6 +17,8 @@ try{
   const input=JSON.parse(readFileSync(0,'utf8'));mode=input.mode??'original';
   if(!['original','operations','branches','completions'].includes(mode)||
     !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(input.entry??''))throw new TypeError('Invalid reference mode or entry');
+  if(input.awaitReturnedPromise!==undefined&&typeof input.awaitReturnedPromise!=='boolean')
+    throw new TypeError('Explicit returned Promise completion policy required');
   const args=decodeOwnedGraph(JSON.stringify(input.inputGraph)),operations=[],decisions=[],failures=[];
   const extensions=prepareProtocolObservationExtensionsV8({source:input.source,mode,side:'native'});
   const completion=createProtocolCompletionCapture({initialValues:args,adapters:extensions.metadataAdapters});
@@ -38,6 +40,12 @@ try{
     '.apply(undefined,__args); } catch (__guestThrown) { __kind="throw"; __result=__guestThrown; }',
     {filename:'independent-protocol-reference-v8.js'});
   phase='execute';script.runInContext(context,{timeout:input.timeoutMs??5000});
+  // The parent process enforces the same hard deadline for asynchronous work.
+  // Only a source profile explicitly requesting this completion policy awaits.
+  if(input.awaitReturnedPromise&&context.__kind==='return'){
+    try{context.__result=await context.__result;}
+    catch(error){context.__kind='throw';context.__result=error;}
+  }
   if(failures.length)throw new TypeError(failures[0]);
   phase='observe';
   const outcome={kind:context.__kind,graph:describeCompletionGraph(args,context.__result,context.__kind)};

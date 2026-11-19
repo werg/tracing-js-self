@@ -126,6 +126,8 @@ export function createOwnedProtocolMetadata(bundle,{adapters=[]}={}){
   const metadata=tracker({
     type(value){if(!Array.isArray(value))fail('missing owned observation value');
       if(value[0]==='symbol')return 'symbol';
+      const selected=extended(adapters,'ownedType',value,context);
+      if(selected!==null){if(!['reference','scalar'].includes(selected))fail('invalid extension observation type');return selected;}
       if(['ref','builtinfn','intrinsic'].includes(value[0]))return 'reference';return 'scalar';},
     identity:value=>JSON.stringify(value),scalar:value=>copy(value),
     symbol(value){if(value[1].startsWith('well-known:')){const name=value[1].slice(11);
