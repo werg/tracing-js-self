@@ -67,6 +67,8 @@ export const SEMANTIC_EQUIVALENCE_NEGATIVES=Object.freeze([
   {id:'helper-capture',source:source('function helper(x){return x+captured;}function run(x){const captured=1;return helper(x);}'),expect:'refused'},
   {id:'lexical-temporal-dead-zone',source:source('function run(){const x=1;{const x=x+1;return x;}}'),expect:'refused'},
   {id:'helper-temporal-dead-zone',source:source('function helper(){return 1;}function run(){const value=helper();const helper=2;return value;}'),expect:'refused'},
+  {id:'block-temporal-dead-zone',source:source('function run(x){{const y=x;let x=2;return y;}}'),expect:'refused'},
+  {id:'unreachable-lexical-shadow',source:source('function run(x){{return x;let x=2;}}'),expect:'refused'},
   {id:'lazy-private-write',source:source('function run(test,x){return test?(x=1):x;}'),expect:'refused'},
   {id:'short-circuit-private-write',source:source('function run(test,x){const y=test&&(x=1);return x;}'),expect:'refused'},
   {id:'selection-state-join',source:source('function run(test){let x=0;if(test){{x=1;return x;}}else{return x;}}'),expect:'refused'},
