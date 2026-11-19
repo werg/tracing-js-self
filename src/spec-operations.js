@@ -61,7 +61,7 @@ function numeric(operator, left, right) {
 // A null return is a fail-closed exotic/accessor/intrinsic operation.
 export function objectPrototype(obj) {
   return Object.hasOwn(obj,'prototype')?obj.prototype:
-    obj.kind==='array'?'Array.prototype':'Object.prototype';
+    obj.kind==='array'?'Array.prototype':obj.kind==='function'?'Function.prototype':'Object.prototype';
 }
 export function ordinaryGet(heap, receiver, name) {
   const original=receiver[0]==='ref'?heap[receiver[1]]:null;

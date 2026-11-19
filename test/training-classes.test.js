@@ -64,9 +64,8 @@ test('private assignment source receipts agree and public private state remains 
   const admitted=await verifyEffectfulTrainingCase({source,entry:'run',family:'base-classes-private-slots',fixture:{calls:[]}});
   assert.equal(admitted.status,'projection_refused');
 });
-test('derived classes private accessors and top-level class environment stay explicit refusals',()=>{
-  for(const source of ['"use strict";function run(){class C extends Object {}return new C();}',
-    '"use strict";function run(){class C {get #x(){return 1;}}return new C();}',
+test('private accessors and top-level class environment stay explicit refusals',()=>{
+  for(const source of ['"use strict";function run(){class C {get #x(){return 1;}}return new C();}',
     '"use strict";class C {}function run(){return new C();}'])
     assert.throws(()=>createRuntime().startEntry({text:source,functionName:'run'}),/Unsupported training/);
 });

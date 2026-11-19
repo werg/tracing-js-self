@@ -328,6 +328,10 @@ export function compile(ast) {
           break;
         }
         case 'Member':expr(n.object);expr(n.property);emit('GET_PROP',null,n);break;
+        case 'SuperCall':
+          for(const argument of n.args){expr(argument.type==='Spread'?argument.argument:argument);if(argument.type==='Spread')emit('SPREAD',null,argument);}
+          emit('SUPER_CALL',n.args.some(a=>a.type==='Spread')?{count:n.args.length,spread:n.args.flatMap((a,i)=>a.type==='Spread'?[i]:[])}:n.args.length,n);
+          emit('SUPER_BIND',null,n);break;
         case 'Call':
           if(n.callee.type==='PrivateMember'){expr(n.callee.object);emit('PRIVATE_GET_METHOD',{name:n.callee.name},n.callee);}else if(n.callee.type==='Member'){expr(n.callee.object);expr(n.callee.property);emit('GET_METHOD',null,n.callee);}else expr(n.callee);
           for(const a of n.args){
@@ -521,14 +525,17 @@ export function compile(ast) {
       emit('JUMP',top,n);instructions[end].arg=instructions.length;
     }
     function emitClass(n){
-      const salt=++forOfIndex,klass='[[class '+salt+']]',proto='[[class prototype '+salt+']]';
+      const salt=++forOfIndex,klass='[[class '+salt+']]',proto='[[class prototype '+salt+']]',heritage='[[class heritage '+salt+']]';
       emit('ENTER_SCOPE',null,n);
       if(n.name)emit('DECLARE',{name:n.name,kind:'const'},n);
       emit('DECLARE',{name:klass,kind:'const'},n);emit('DECLARE',{name:proto,kind:'const'},n);
+      if(n.superClass){emit('DECLARE',{name:heritage,kind:'const'},n);expr(n.superClass);emit('INIT',heritage,n);}
       const explicit=n.elements.find(element=>element.kind==='constructor');
-      const ctor=explicit?.value??{...n,type:'FunctionExpr',params:[],defaults:[],parameterSites:[],parameterPatterns:[],restIndex:-1,async:false,arrow:false,body:{...n,type:'Block',body:[]}};
+      const ctor=explicit?.value??{...n,type:'FunctionExpr',params:[],defaults:[],parameterSites:[],parameterPatterns:[],restIndex:-1,async:false,arrow:false,
+        body:{...n,type:'Block',body:n.superClass?[{...n,type:'DefaultSuper'}]:[]}};
       expr({...ctor,strict:true,classConstructor:true});emit('INIT',klass,n);emit('GET',klass,n);
-      emit('CLASS_CREATE',{privateNames:n.elements.filter(e=>e.privateName).map(e=>e.privateName)},n);emit('POP',null,n);
+      if(n.superClass)emit('GET',heritage,n);
+      emit('CLASS_CREATE',{derived:!!n.superClass,privateNames:n.elements.filter(e=>e.privateName).map(e=>e.privateName)},n);emit('POP',null,n);
       emit('GET',klass,n);emit('CONST',{value:['str','prototype']},n);emit('GET_PROP',null,n);emit('INIT',proto,n);
       const instanceMethods=[],staticMethods=[],instanceFields=[],staticFields=[];
       for(const element of n.elements){
@@ -668,6 +675,7 @@ export function compile(ast) {
           break;
         }
         case 'ClassBinding':expr(n.value);emit('INIT',n.id,n);break;
+        case 'DefaultSuper':emit('SUPER_FORWARD_CALL',null,n);emit('SUPER_BIND',null,n);emit('POP',null,n);break;
         case 'ClassField':
           emit('THIS',null,n);
           if(!n.privateName)expr(n.key);

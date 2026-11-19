@@ -268,6 +268,17 @@
       "native": "unsupported",
       "reason": "Lexical constructor receiver/newTarget linkage requires the public construction/capture interface",
       "tests": "test/training-new-target.test.js"
+    },
+    {
+      "id": "ordinary-derived-construction",
+      "domain": "local classes extending owned ordinary constructors/classes or null; live superclass constructor and prototype chains, static inheritance, actual newTarget forwarding, uninitialized lexical this, explicit/default super calls, field/private initialization order, arrow super, derived return completion and JSON continuation restoration; builtin/proxy heritage and super properties refused",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Derived receiver initialization, superclass identity and field continuations require the public construction/protocol representation",
+      "tests": "test/training-derived-construction.test.js"
     }
   ]
 }
