@@ -8,7 +8,9 @@ import {referenceCommand,referenceIsolationMode} from '../corpus/reference-isola
 import {normalizeJournal} from './normalize.js';
 import {compareOperationObservations} from '../training/operation-reference.js';
 import {compareBranchObservations} from '../training/branch-reference.js';
-import {ownedProtocolCompletionObservations,compareProtocolCompletionObservations} from './protocol-source-observations-v8.js';
+import {ownedProtocolSourceObservations,compareProtocolCompletionObservations} from './protocol-source-observations-v8.js';
+
+import {compareProtocolMetadata} from './protocol-metadata-v8.js';
 
 const worker=fileURLToPath(new URL('../../tools/protocol-reference-v8.mjs',import.meta.url));
 const fail=message=>{throw new TypeError('Protocol source reference: '+message);};
@@ -71,11 +73,13 @@ export async function auditProtocolSourceV8({bundle,referenceInput,outcome,timeo
       expectedOperations.push({site,value:row.result});
     if(event.operation==='control.branch'&&sites.branches.has(site))expectedBranches.push({site,decision:row.result});
   }
+  const ownedObservations=ownedProtocolSourceObservations(bundle,referenceInput.source);
   const operationAudit=compareOperationObservations(expectedOperations,operations.operations),
     branchAudit=compareBranchObservations(expectedBranches,branches.decisions),
-    completionAudit=compareProtocolCompletionObservations(ownedProtocolCompletionObservations(bundle,referenceInput.source),completions.completions);
-  if([operationAudit,branchAudit,completionAudit].some(result=>result.status!=='agreed'))
-    fail('independent operation/branch/completion observations differ: '+JSON.stringify({operationAudit,branchAudit,completionAudit}));
-  return {schema:'semantic-protocol-source-checks/1',status:'agreed',original,operationAudit,branchAudit,completionAudit,
-    observations:{operations:operations.operations,decisions:branches.decisions,completions:completions.completions}};
+    completionAudit=compareProtocolCompletionObservations(ownedObservations.completions,completions.completions),
+    metadataAudit=compareProtocolMetadata(ownedObservations.metadata,completions.metadata);
+  if([operationAudit,branchAudit,completionAudit,metadataAudit].some(result=>result.status!=='agreed'))
+    fail('independent operation/branch/completion observations differ: '+JSON.stringify({operationAudit,branchAudit,completionAudit,metadataAudit}));
+  return {schema:'semantic-protocol-source-checks/1',status:'agreed',original,operationAudit,branchAudit,completionAudit,metadataAudit,
+    observations:{operations:operations.operations,decisions:branches.decisions,completions:completions.completions,metadata:completions.metadata}};
 }
