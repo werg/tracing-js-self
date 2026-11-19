@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {execFileSync} from 'node:child_process';
 import {regionQualificationFixtures} from '../fixtures/semantic-regions/qualification.js';
 import {SEMANTIC_GALLERY_FIXTURES} from '../src/training/semantic-trace-gallery.js';
-import {LANGUAGE_EXPANSION_INTERACTIONS} from '../fixtures/language-expansion/benchmark.js';
+import {expansionInteractionCases} from '../src/semantic/expansion-benchmark.js';
 import {loadNativeV8Settings,createNativeV8Consumer} from '../src/corpus/native-admission-v8.mjs';
 import {runGenerationProcess} from '../src/corpus/generation-process.mjs';
 import {admitRegionEvidence} from '../src/semantic/compiler-v8.js';
@@ -21,7 +21,7 @@ for(let i=2;i<process.argv.length;i++){
 if(!flags.has('--out'))throw new Error('Usage: node tools/qualify-semantic-v8.mjs --out NEW_DIRECTORY [--population interoperability|gallery|interactions] [--prepare-only | --megatoken DIR --tokenizer FILE --python PYTHON --native-policy FILE]');
 const root=fileURLToPath(new URL('..',import.meta.url)),output=resolve(flags.get('--out')),
   population=flags.get('--population')??'interoperability',prepareOnly=flags.get('--prepare-only')===true;
-const populations={interoperability:regionQualificationFixtures(),gallery:SEMANTIC_GALLERY_FIXTURES,interactions:LANGUAGE_EXPANSION_INTERACTIONS};
+const populations={interoperability:regionQualificationFixtures(),gallery:SEMANTIC_GALLERY_FIXTURES,interactions:expansionInteractionCases()};
 if(!Object.hasOwn(populations,population))throw new Error('Unknown qualification population');
 let fixtures=populations[population];
 if(flags.has('--cases')){const ids=flags.get('--cases').split(',');

@@ -41,13 +41,20 @@ export function expansionRealSourceSlice({repositoryRoot=root,perStratum=8}={}){
       available:rows.length,selected:Math.min(rows.length,perStratum)})),cases:selected};
 }
 
+// The declaration inventory is deeply frozen to pin the benchmark. That is
+// metadata protection, not a request to pass frozen guest objects to run().
+// Materialize each interaction consistently for both coverage and admission.
+export function expansionInteractionCases(){
+  return benchmark.interactions.map(row=>structuredClone(row));
+}
+
 export function expansionSourceCases({allInputs=true,includeInteractions=true,includeRealSource=true}={}){
   const cases=benchmark.families.flatMap(family=>family.variants.flatMap(variant=>
     (allInputs?family.inputs:family.inputs.slice(0,1)).map((args,index)=>({
       id:variant.id+'-input-'+index,feature:family.id,family:family.family,domain:family.domain,
       source:variant.source,entry:family.entry,args:structuredClone(args),fixture:{calls:[]},
       ancestors:[family.family],sourceProfile:family.sourceProfile}))));
-  if(includeInteractions)cases.push(...benchmark.interactions.filter(row=>row.source).map(row=>structuredClone(row)));
+  if(includeInteractions)cases.push(...expansionInteractionCases().filter(row=>row.source));
   if(includeRealSource)cases.push(...expansionRealSourceSlice().cases);
   return cases;
 }

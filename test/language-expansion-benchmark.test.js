@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {LANGUAGE_EXPANSION_FAMILIES,LANGUAGE_EXPANSION_INTERACTIONS} from '../fixtures/language-expansion/benchmark.js';
 import {expansionManifest,validateExpansionManifest,validateExpansionReferencePopulation,expansionRealSourceSlice,
-  expansionFamilyRegistry} from '../src/semantic/expansion-benchmark.js';
+  expansionFamilyRegistry,expansionInteractionCases} from '../src/semantic/expansion-benchmark.js';
+import {encodeGenerationTask} from '../src/corpus/generation-process.mjs';
 
 test('frozen benchmark has semantic breadth and independent executable near misses',()=>{
   assert.ok(LANGUAGE_EXPANSION_FAMILIES.length>=20);assert.ok(LANGUAGE_EXPANSION_INTERACTIONS.length>=12);
@@ -24,6 +25,21 @@ test('real-source strata retain refusal candidates and original TS provenance',(
   const manifest=expansionManifest();assert.equal(validateExpansionManifest(manifest),true);
   const changed=structuredClone(manifest);changed.families[0].inputs[0].roots[0]=['num',7];
   assert.throws(()=>validateExpansionManifest(changed),/Frozen/);
+});
+
+test('interaction admission materializes mutable guest inputs from frozen declarations',()=>{
+  const cases=expansionInteractionCases(),again=expansionInteractionCases();
+  for(const id of ['iteration-break-finally','closure-alias-mutation']){
+    const declared=LANGUAGE_EXPANSION_INTERACTIONS.find(row=>row.id===id),fixture=cases.find(row=>row.id===id);
+    assert(Object.isFrozen(declared.args[0]));
+    assert(!Object.isFrozen(fixture.args[0]));
+    assert.deepEqual(fixture,declared);
+    assert.doesNotThrow(()=>encodeGenerationTask({kind:'source',traceVersion:8,fixture}));
+    fixture.args[0].changed=true;
+    assert.equal(declared.args[0].changed,undefined);
+    assert.equal(again.find(row=>row.id===id).args[0].changed,undefined);
+  }
+  assert.equal(cases.filter(row=>row.modules).length,2);
 });
 
 test('v8 reference reports check current /2 cores and preserve all executed distinguishing pairs',()=>{
