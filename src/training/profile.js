@@ -85,9 +85,9 @@ export function parseTraining(source) {
         }
         return {...loc,type:'Literal',value:encode(n.bigint!==undefined?BigInt(n.bigint):n.value),raw:n.raw};
       case 'Identifier':return {...loc,type:'Identifier',name:n.name};
+      case 'ThisExpression':return {...loc,type:'This'};
       case 'ArrowFunctionExpression':case 'FunctionExpression':{
-        if(n.generator ||
-           (n.type==='FunctionExpression' && n.id))
+        if(n.generator)
           reject(n,'function expression parameters or mode');
         const parsedParams=parameters(n);
         const body=n.body.type==='BlockStatement'?stmt(n.body):
@@ -95,6 +95,7 @@ export function parseTraining(source) {
             {...span(n.body),type:'Return',argument:expr(n.body)}]};
         return {...loc,type:'FunctionExpr',
           arrow:n.type==='ArrowFunctionExpression',async:n.async,
+          name:n.id?.name??null,
           params:parsedParams.map(p=>p.name),defaults:parsedParams.map(p=>p.default),
           parameterSites:parsedParams.map(span),
           restIndex:parsedParams.findIndex(p=>p.rest),body};
@@ -368,7 +369,8 @@ export function parseTraining(source) {
           if(!has(n.name,e))reject(n,'unbound identifier '+n.name);
           break;
         case 'Template':n.expressions.forEach(x=>value(x,e));break;
-        case 'FunctionExpr':scope(n.body.body,e,n.params,n.async,true,n.defaults);break;
+        case 'FunctionExpr':scope(n.body.body,n.name?{names:new Set([n.name]),parent:e}:e,
+          n.params,n.async,true,n.defaults);break;
         case 'Await':
           if(!asyncFunction)reject(n,'await outside async function');
           value(n.argument,e);break;
@@ -402,7 +404,7 @@ export function parseTraining(source) {
         case 'Array':n.elements.forEach(x=>value(x.type==='Spread'?x.argument:x,e));break;
         case 'Object':n.properties.forEach(p=>value(p.value,e));break;
         case 'Assign':value(n.left,e);value(n.right,e);break;
-        case 'Literal':break;
+        case 'Literal':case 'This':break;
         default:reject(n,'unhandled expression');
       }
     }

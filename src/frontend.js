@@ -105,11 +105,11 @@ export function parse(source) {
     if(x.value==='function'||(x.value==='async'&&peek().value==='function')){
       const async=x.value==='async';
       if(async)need('function');
-      if(peek().value!=='(')throw new SyntaxError('Named function expression not owned');
+      const localName=peek().value==='('?null:name();
       need('(');const params=[];
       if(!match(')')){do{params.push(name());}while(match(','));need(')');}
       const body=block();
-      return {type:'FunctionExpr',params,async,arrow:false,body,start:x.start,end:body.end};
+      return {type:'FunctionExpr',params,async,arrow:false,name:localName,body,start:x.start,end:body.end};
     }
     if (x.value === 'new') {
       const callee=take();
@@ -226,7 +226,7 @@ export function compile(ast) {
           emit('CONSTRUCT',n.args.length,n);break;
         case 'FunctionExpr':{
           const codeId=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites);
-          emit('MAKE_FUNCTION',{codeId,arrow:n.arrow,async:n.async},n);
+          emit('MAKE_FUNCTION',{codeId,arrow:n.arrow,async:n.async,...(n.name?{name:n.name}:{})},n);
           break;
         }
         case 'Template':

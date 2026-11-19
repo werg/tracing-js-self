@@ -815,7 +815,7 @@ export class Runtime {
       try { switch(op){
         case 'CONST':return result(arg.value);
         case 'THIS':
-          if(f.thisValue[0]==='undefined')
+          if(f.thisValue[0]==='undefined'&&!this.programs[f.codeId].strict)
             throw new TypeError('Global sloppy this is not modeled by the bounded object profile');
           return result(f.thisValue);
         case 'DECLARE':{const e=s.envs[f.envId];if(Object.hasOwn(e.bindings,arg.name))throw new SyntaxError(`Duplicate declaration ${arg.name}`);e.bindings[arg.name]={kind:arg.kind,initialized:false,token:null,version:0};return {};}
@@ -920,8 +920,14 @@ export class Runtime {
         }
         case 'MAKE_FUNCTION':{
           const id=this.next(s,'obj');
+          // A named expression owns an immutable self binding outside its
+          // parameter/body environments. It neither leaks nor captures an
+          // outer alias that a later assignment can replace.
+          const closureEnvId=arg.name?this.newEnv(s,f.envId):f.envId;
+          if(arg.name)s.envs[closureEnvId].bindings[arg.name]={kind:'const',
+            initialized:true,token:token(['ref',id],eventId),version:0};
           s.heap[id]={id,kind:'function',codeId:arg.codeId,
-            closureEnvId:f.envId,async:arg.async===true,arrow:arg.arrow===true,
+            closureEnvId,async:arg.async===true,arrow:arg.arrow===true,
             lexicalThis:arg.arrow?f.thisValue:null,version:0};
           return result(['ref',id]);
         }
