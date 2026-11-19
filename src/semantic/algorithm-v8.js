@@ -9,7 +9,7 @@ import {OPERATION_REGISTRY,evaluateTerm,encodeAlgorithmScalar as scalar,decodeAl
 export const ALGORITHM_V8_SCHEMA='semantic-algorithm/2';
 export const ALGORITHM_V8_PROFILE='ecmascript-pure-regions/1';
 export const ALGORITHM_V8_LIMITS=Object.freeze({steps:256,nodes:2048,depth:64,items:128,work:32768,allocations:1024});
-export const ALGORITHM_V8_INPUT_TYPES=Object.freeze(['scalar','number','dense-number-array','dense-primitive-array','data']);
+export const ALGORITHM_V8_INPUT_TYPES=Object.freeze(['value','scalar','number','dense-number-array','dense-primitive-array','data','nullable-data']);
 export const TRAVERSAL_MODES=Object.freeze(['fold','map','filter','find','find_index','some','every','scan']);
 const foldMode=mode=>['fold','scan'].includes(mode);
 const fail=message=>{const error=new TypeError('Invalid '+ALGORITHM_V8_SCHEMA+': '+message);
@@ -161,8 +161,8 @@ export function evaluateTermV8(term,{inputs=new Map(),values=new Map(),heap=new 
       fail('string property outside ordinary index profile');
     }
     if(object[0]!=='ref')fail('ordinary object projection requires identity');
-    const {properties}=algorithmHeapNode(heap,object[1]);
-    if(!properties.has(property)&&inheritedKeys.has(property))fail('inherited property requires a detailed access');
+    const {node,properties}=algorithmHeapNode(heap,object[1]);
+    if(!properties.has(property)&&(inheritedKeys.has(property)||node.kind==='array'&&!/^(?:0|[1-9][0-9]*)$/.test(property)))fail('inherited property requires a detailed access');
     return committed(properties.get(property)??['undefined']);
   }
   function visit(node,scope){
@@ -226,8 +226,10 @@ export function evaluateTermV8(term,{inputs=new Map(),values=new Map(),heap=new 
 
 export function evaluateAlgorithmV8(core,args,{heap=new Map(),inputGraph=null,allocator={prefix:'v8',next:0}}={}){
   validateAlgorithmV8(core);
-  if(inputGraph){fields(inputGraph,['roots','objects'],'input graph');args=inputGraph.roots;
-    heap=new Map(inputGraph.objects.map(node=>[node.id,node]));}
+  if(inputGraph){fields(inputGraph,['roots','objects'],'input graph');args=inputGraph.roots;array(inputGraph.objects);
+    const ids=new Set();heap=new Map(inputGraph.objects.map(node=>{if(!record(node))fail('input graph object');id(node.id);
+      if(ids.has(node.id))fail('duplicate input graph identity');ids.add(node.id);return [node.id,node];}));}
+  fields(allocator,['prefix','next'],'allocator');
   array(args);if(args.length!==core.inputs.length)fail('exact input arity required');
   const publicHeap=snapshotAlgorithmHeap(heap),inputs=new Map(),values=new Map(),claims=[],
     allocations=copy(allocator),budget={remaining:ALGORITHM_V8_LIMITS.work};
@@ -235,6 +237,8 @@ export function evaluateAlgorithmV8(core,args,{heap=new Map(),inputGraph=null,al
     const tag=args[index];value(tag);
     if(input.type==='scalar'&&tag[0]==='ref')fail('scalar input');
     if(input.type==='number'&&tag[0]!=='num')fail('number input');
+    if(input.type==='data'&&tag[0]!=='ref')fail('ordinary data identity input');
+    if(input.type==='nullable-data'&&!['ref','null','undefined'].includes(tag[0]))fail('nullable ordinary data input');
     if(input.type==='dense-number-array')validateDenseNumericArray(tag,{heap:publicHeap});
     if(input.type==='dense-primitive-array')validateDensePrimitiveArray(tag,{heap:publicHeap});
     if(tag[0]==='ref')algorithmHeapNode(publicHeap,tag[1]);inputs.set(input.id,copy(tag));

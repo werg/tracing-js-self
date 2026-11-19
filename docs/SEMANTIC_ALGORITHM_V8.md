@@ -8,8 +8,10 @@ agreement, native admission, and model qualification are separate gates.
 ## Core and evaluation interface
 
 A core contains exactly `schema`, `profile`, `inputs`, and `steps`. Inputs have
-`id` and `type`: `scalar`, `number`, `dense-number-array`,
-`dense-primitive-array`, or `data`. A pure core has ordered compute steps
+`id` and `type`: `value`, `scalar`, `number`, `dense-number-array`,
+`dense-primitive-array`, `data`, or `nullable-data`. `value` permits a scalar or
+ordinary anchored reference; `data` requires an ordinary reference;
+`nullable-data` additionally permits null and undefined. A pure core has ordered compute steps
 (`kind`, `id`, `term`), followed by return/throw (`kind`, `value`). Effects and
 continuation routing belong to the surrounding shared region controller.
 
@@ -86,3 +88,24 @@ nonobserving malformed-data rejection, and allocation/work bounds. Source
 lowering and source-correspondence tests are maintained with the recognizer.
 Native consumption and full model cost/comprehension require exact v8 receipts;
 this document alone does not admit data or promote the production default.
+
+
+## Source lowering and qualification boundaries
+
+`lowerJavaScriptV8({source, entry, inputTypes})` recognizes explicitly strict,
+closed synchronous functions. The recognizer covers arbitrary ordered numeric
+fold steps, multiple private accumulators, pure array callbacks, immutable
+captures/helpers, scalar mutable branch joins, logical assignment, defaults,
+ordinary property bindings, and lazy optional reads. It preserves live input
+aliases and fresh returned object identities through eager lexical bindings.
+Source names become input positions or lexical binder positions, not data keys.
+
+The source tests compare these cores to independent V8 execution over empty,
+signed-zero, rounding-sensitive, nullish, aliasing, and ordinary finite inputs.
+Owned-source admission is also required for supported runtime/frontend slices.
+Existing owned gaps (at this commit: find/findIndex/every, parameter patterns,
+logical-assignment source receipts, and a helper inside a retained array
+callback) remain separate admission failures; accepting source into a pure core
+does not bypass those checks. Shared mutation, accessors/proxies, arbitrary
+receivers, sparse traversal, uncaught callback control, and resource overflow
+retain detailed fallback dispositions.
