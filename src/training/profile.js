@@ -13,7 +13,7 @@ const logical=new Set(['&&','||','??']);
 const assignments=new Set(['=','&&=','||=','??=','+=','-=','*=','/=','%=','**=',
   '&=','|=','^=','<<=','>>=','>>>=']);
 const unary=new Set(['!','-','+','typeof','void','~']);
-const ownedConstructors=new Set(['Set','Error','TypeError','Promise','SharedArrayBuffer','DataView',
+const ownedConstructors=new Set(['Set','Error','TypeError','Symbol','Promise','SharedArrayBuffer','DataView',
   'Int8Array','Uint8Array','Int16Array','Uint16Array','Int32Array','Uint32Array',
   'BigInt64Array','BigUint64Array','Float32Array','Float64Array']);
 const reject=(node,why) => {throw new SyntaxError(
@@ -504,6 +504,6 @@ export function parseTraining(source) {
       init:{type:'Literal'},pattern:parsed.pattern},{names:new Set(params),parent});
     statements.forEach(n=>statement(n,env));
   }
-  scope(body,{names:new Set(['undefined','Object','Array','Number','BigInt','String','Math','Promise','Set','Error','TypeError','Date','console','host','NaN','Infinity','parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval','SharedArrayBuffer','DataView',...ownedConstructors,'Atomics']),parent:null},[],false,true);
+  scope(body,{names:new Set(['undefined','Object','Array','Number','BigInt','String','Symbol','Reflect','Math','Promise','Set','Error','TypeError','Date','console','host','NaN','Infinity','parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval','SharedArrayBuffer','DataView',...ownedConstructors,'Atomics']),parent:null},[],false,true);
   return {type:'Program',body,start:0,end:source.length,profile:TRAINING_PROFILE};
 }

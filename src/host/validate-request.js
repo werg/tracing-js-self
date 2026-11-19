@@ -1,3 +1,4 @@
+import {stringPropertyName,isSymbolPropertyKey} from '../property-keys.js';
 // Independent host-request audit. Operates only on reconstructed archive state;
 // neither the interpreter nor its request serializer runs in this validator.
 import {isDeepStrictEqual} from 'node:util';
@@ -52,6 +53,7 @@ export function validatePreparedRequest(heap,effect) {
           properties:{}};
         versions.push(snapshot);
         const properties=obj.properties;
+        checked(![...Object.keys(properties??{}),...Object.keys(obj.accessors??{})].some(isSymbolPropertyKey),'symbol property transport refused');
         checked(properties && typeof properties==='object','missing object property table');
         if(obj.kind==='array'){
           const len=properties.length?.value;
@@ -74,7 +76,7 @@ export function validatePreparedRequest(heap,effect) {
         for(const [key,member] of Object.entries(properties)){
           checked(key!=='__proto__','unregistered prototype encoding');
           snapshot.properties[key]=obj.propertyVersions?.[key]??0;
-          entries.push(JSON.stringify(key)+':'+encode(member.value,depth+1));
+          entries.push(JSON.stringify(stringPropertyName(key))+':'+encode(member.value,depth+1));
         }
         return '{'+entries.join(',')+'}';
       }
@@ -123,7 +125,7 @@ function validateGraphRequest(heap,effect,spec){
     for(const [key,member] of Object.entries(node.properties??{})){
       checked(++properties<=4096&&key!=='__proto__'&&member&&Array.isArray(member.value),'invalid graph property');
       version.properties[key]=node.propertyVersions?.[key]??0;
-      out.properties.push({key,value:value(member.value,depth+1,Boolean(spec.callbackGraph))});
+      out.properties.push({key:stringPropertyName(key),value:value(member.value,depth+1,Boolean(spec.callbackGraph))});
     }
     return ['ref',id];
   }

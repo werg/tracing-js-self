@@ -4,7 +4,7 @@
 import { encode, decode, token } from './values.js';
 import { ARITHMETIC_OPERATORS, specStep } from './spec-schema.js';
 
-const primitives = new Set(['undefined', 'null', 'bool', 'str', 'num', 'bigint']);
+const primitives = new Set(['undefined', 'null', 'bool', 'str', 'num', 'bigint', 'symbol']);
 export const isOwnedArithmetic = operator => ARITHMETIC_OPERATORS.includes(operator);
 
 export function createArithmetic({ id, frameId, operator, left, right, siteId, sourceId, codeId }) {
@@ -131,7 +131,7 @@ export function ordinaryBuiltin(heap, receiver, name) {
       const property=obj.properties[String(i)];
       if(!property)return null;
       const value=property.value;
-      if(!primitives.has(value[0]))return null;
+      if(!primitives.has(value[0])||value[0]==='symbol')return null;
       parts.push(['null','undefined'].includes(value[0])?'':String(decode(value)));
     }
     return ['str',parts.join(',')];
@@ -240,6 +240,9 @@ export function advanceArithmetic(record, eventId, {heap=null,invoke=null,takeRe
     case 'left-string': case 'right-string': {
       const left = record.phase === 'left-string';
       const input = left ? r.leftPrimitive : r.rightPrimitive; use(input);
+      if(input.value[0]==='symbol'){
+        complete({type:'throw',errorType:'TypeError',message:'Cannot convert a Symbol value to a string',origin:eventId});break;
+      }
       write(left ? 'leftString' : 'rightString', toString(input.value));
       record.phase = left ? 'right-string' : 'concatenate'; break;
     }
@@ -272,6 +275,9 @@ export function advanceArithmetic(record, eventId, {heap=null,invoke=null,takeRe
     case 'left-number': case 'right-number': {
       const left = record.phase === 'left-number';
       const input = left ? r.leftNumericPrimitive : r.rightNumericPrimitive; use(input);
+      if(input.value[0]==='symbol'){
+        complete({type:'throw',errorType:'TypeError',message:'Cannot convert a Symbol value to a number',origin:eventId});break;
+      }
       write(left ? 'leftNumeric' : 'rightNumeric', toNumber(input.value));
       record.phase = left ? 'right-numeric' : 'numeric-types'; break;
     }

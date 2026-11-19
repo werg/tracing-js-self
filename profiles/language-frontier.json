@@ -137,6 +137,17 @@
       "detailed": "passed",
       "native": "untested",
       "tests": "test/training-array-search.test.js"
+    },
+    {
+      "id": "owned-symbol-identities",
+      "domain": "fresh and registry symbols, well-known identities, scalar descriptions, ordinary symbol keys/getters/setters, copy/rest, own-key enumeration, primitive comparisons and conversion throws; no boxed symbols or host transport",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "New semantic-protocol-values/1 identity/key interface is validated separately; existing detailed/native scalar/ref contracts cannot encode Symbols",
+      "tests": "test/training-symbols.test.js"
     }
   ]
 }
