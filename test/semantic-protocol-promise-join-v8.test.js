@@ -87,8 +87,9 @@ test('scheduler capabilities are narrow and consume the outer lifecycle field sh
   assert.equal(allowsPromiseJoinWithoutStackV8(c,{kind:'promise.join.step',result:'joined',job:'j'}),false);
   c.heap.get('pending').state='fulfilled';c.heap.get('pending').result=['num',1];c.refreshReady();
   assert.equal(allowsPromiseJoinWithoutStackV8(c,{kind:'promise.join.step',result:'joined',job:'j'}),true);
-  assert.equal(allowsPromiseJoinDetailedCallV8(c,{kind:'call',fields:{callee:'function:1'}}),true);
+  c.source={source:'function helper() { return 1; }'};
+  assert.equal(allowsPromiseJoinDetailedCallV8(c,{kind:'call',fields:{callee:'helper'}}),true);
   assert.equal(allowsPromiseJoinDetailedCallV8(c,{kind:'call',fields:{callee:'oProtocol'}}),false);
   c.protocol.callFrames.push({});
-  assert.equal(allowsPromiseJoinDetailedCallV8(c,{kind:'call',fields:{callee:'function:1'}}),false);
+  assert.equal(allowsPromiseJoinDetailedCallV8(c,{kind:'call',fields:{callee:'helper'}}),false);
 });

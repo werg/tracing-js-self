@@ -1,5 +1,6 @@
 // Bounded Promise.all/race protocol transitions. The controller's existing
 // Promise heap, job table, ready queue and scheduler remain authoritative.
+import {analyzeSemanticProgram} from '../training/semantic-program.js';
 export const PROMISE_JOIN_PROFILE_V8='promise-join/1';
 export const PROMISE_JOIN_STATE_V8='semantic-promise-join-state/1';
 export const PROMISE_JOIN_RECORD_FIELDS=Object.freeze({
@@ -141,9 +142,16 @@ export function allowsPromiseJoinDetailedCallV8(controller,record){
   const callee=controller.heap?.get(identity);
   if(callee)return callee.kind==='closure'&&(callee.functionKind===undefined||callee.functionKind==='ordinary')&&
     callee.callable==null&&callee.constructorKind==null;
-  // Detailed-source lifecycle carries immutable source callable names; the
-  // source-bound compiler validates membership before this capability runs.
-  return /^(?:function|class):[A-Za-z0-9_$:.-]+$/.test(identity)&&!controller.callableMetadata?.[identity]?.richProtocol;
+  // Detailed-source lifecycle carries immutable source callable names. Match
+  // them against this invocation's analyzed source rather than accepting
+  // arbitrary names or any class constructor.
+  if(identity.startsWith('class:'))return false;
+  const source=controller.source?.source;
+  if(typeof source!=='string')return false;
+  let functions;
+  try{functions=analyzeSemanticProgram(source).functions;}catch{return false;}
+  const named=functions.some(fn=>fn.name===identity||identity==='function:'+fn.start);
+  return named&&!controller.callableMetadata?.[identity]?.richProtocol;
 }
 
 export function restorePromiseJoinStateV8(controller,api){
