@@ -3,6 +3,8 @@
 // replacement. Every record retains an audit pointer to the committed event.
 import {isDeepStrictEqual} from 'node:util';
 import {validateBundle} from '../validation.js';
+import {isSymbolPropertyKey,stringPropertyName} from '../property-keys.js';
+const visibleKey=key=>isSymbolPropertyKey(key)?key:stringPropertyName(key);
 
 const selection={
   'binding.initialize':'value','binding.write':'value','binding.update':'write',
@@ -22,7 +24,7 @@ function allocation(p) {
     codeId:obj.codeId??null,capture:obj.closureEnvId??null,
     shapeVersion:obj.shapeVersion??0,
     properties:Object.entries(obj.properties??{}).map(([key,record])=>({
-      key,version:obj.propertyVersions?.[key]??0,value:record.value
+      key:visibleKey(key),version:obj.propertyVersions?.[key]??0,value:record.value
     }))};
 }
 function changes(before,after) {
@@ -32,7 +34,7 @@ function changes(before,after) {
   for(const key of keys){
     const old=before?.properties?.[key],next=after.properties[key];
     if(isDeepStrictEqual(old,next))continue;
-    result.push({key,present:next!==undefined,oldVersion:before?.propertyVersions?.[key]??0,
+    result.push({key:visibleKey(key),present:next!==undefined,oldVersion:before?.propertyVersions?.[key]??0,
       version:after.propertyVersions?.[key]??0,value:next?.value??null,
       origin:next?.origin??null});
   }
@@ -222,7 +224,7 @@ export function normalizeJournal(bundle) {
           shapeBefore:p.before?.shapeVersion??0,shapeAfter:p.after?.shapeVersion??0});
       }
     }
-    if(e.readObservations?.length)r.reads=e.readObservations.map(x=>({...x}));
+    if(e.readObservations?.length)r.reads=e.readObservations.map(x=>({...x,...(x.kind==='property'?{key:visibleKey(x.key)}:{})}));
     if(e.operation==='external.input.deliver') {
       r.authority='environment';
       r.effect=e.causes.find(x=>x.kind==='effect')?.effectId??null;

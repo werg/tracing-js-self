@@ -7,8 +7,8 @@ import {auditReferenceOperations} from '../../src/training/operation-reference.j
 import {auditReferenceBranches} from '../../src/training/branch-reference.js';
 
 /** Owned/reference evidence only; this never claims public/native admission. */
-export function runtimeDifferential(body,{args=[],entry='run',maxSteps=10000}={}){
-  const text='"use strict";function '+entry+'(x){'+body+'}';
+export function runtimeDifferential(body,{args=[],entry='run',maxSteps=10000,source=null}={}){
+  const text=source??'"use strict";function '+entry+'(x){'+body+'}';
   const runtime=createRuntime({maxSteps}).startEntry({text,functionName:entry,args});
   const progress=runtime.drive();
   const bundle=runtime.exportRun();

@@ -14,6 +14,7 @@ function scalar(value) {
   switch (value[0]) {
     case 'bool': return typeof value[1] === 'boolean';
     case 'str': return typeof value[1] === 'string';
+    case 'symbol': return typeof value[1]==='string'&&value[1].length>0;
     case 'bigint': return typeof value[1] === 'string' && /^(0|-?[1-9]\d*)$/.test(value[1]);
     case 'num': return typeof value[1] === 'number'
       ? Number.isFinite(value[1]) && !Object.is(value[1], -0)
@@ -288,7 +289,7 @@ export function applySpecCommand(state, command, event, seen, fail) {
     } else if(command.to==='coercion-get'){
       if(!nextCoercion||nextCoercion.index!==oldCoercion.index+1||
          (r.phase==='coercion-return' &&
-           ['undefined','null','bool','num','str','bigint'].includes(event.operands[0]?.[0]))||
+           ['undefined','null','bool','num','str','bigint','symbol'].includes(event.operands[0]?.[0]))||
          nextCoercion.index!==1||nextCoercion.method!==null||
          nextCoercion.waitingFrameId!==null||
          !eq(nextCoercion.input,oldCoercion.input))
@@ -316,6 +317,8 @@ export function applySpecCommand(state, command, event, seen, fail) {
       } else if (!keys(completion,['type','errorType','message','origin']) || completion.origin !== event.eventId ||
           typeof completion.message !== 'string' ||
           !((r.phase === 'numeric-types' && completion.errorType === 'TypeError') ||
+            (['left-string','right-string','left-number','right-number'].includes(r.phase)&&
+              event.operands[0]?.[0]==='symbol'&&completion.errorType==='TypeError') ||
             (r.phase === 'apply' && completion.errorType === 'RangeError') ||
             (['coercion-call','coercion-return'].includes(r.phase) &&
               completion.errorType==='TypeError'))) bad('Invalid abrupt spec completion');

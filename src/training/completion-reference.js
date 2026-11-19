@@ -173,6 +173,12 @@ export function ownedCompletionObservations(bundle,source){
         throw new TypeError('Source initialization site names a different committed binding');
       emit(key,'initialize',storedCell(previousFrame?.envId,instruction?.arg));
     }
+    if(!abrupt&&event.operation==='binding.read'&&plan.sites.has('assign:'+key)){
+      const assignment=plan.sites.get('assign:'+key);
+      if(['ArrayPattern','ObjectPattern'].includes(assignment.left?.type)&&
+         instruction?.op==='GET'&&instruction.arg?.startsWith('[[pattern '))
+        emit(key,'assign',event.result);
+    }
     if(!abrupt&&['binding.write','property.write'].includes(event.operation)&&plan.sites.has('assign:'+key)){
       if(event.causes.some(c=>c.kind==='invocation'))
         pending.set(event.invocationId,{site:key,kind:'assign',depth:patch.after.stack.length,pc:patch.after.pc});
@@ -205,7 +211,7 @@ export function ownedCompletionObservations(bundle,source){
     if(event.operation==='completion.throw'&&plan.sites.has('throw:'+key))emit(key,'throw',event.completion.value.value);
     if(event.operation==='completion.catch.bind'&&plan.sites.has('catch:'+key)){
       const node=plan.sites.get('catch:'+key);
-      emit(key,'catch',node.param?storedCell(state.frames[event.invocationId]?.envId,node.param.name):['undefined']);
+      emit(key,'catch',node.param?.type==='Identifier'?storedCell(state.frames[event.invocationId]?.envId,node.param.name):['undefined']);
     }
     const jumpKind=typeof instruction?.arg==='string'?instruction.arg:instruction?.arg?.kind;
     if(event.operation==='completion.loop.jump'&&plan.sites.has(jumpKind+':'+key))emit(key,jumpKind);

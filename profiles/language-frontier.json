@@ -96,6 +96,58 @@
       "native": "unsupported",
       "reason": "Detailed committed heap does not encode prototype-chain transitions",
       "tests": "test/training-object-literals.test.js"
+    },
+    {
+      "id": "expanded-binding-patterns",
+      "domain": "bounded nested declaration/assignment/catch patterns; array elisions and rest; object rest and computed exclusions; lazy defaults and alias-preserving results; standard arrays only for positional bindings",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "passed",
+      "native": "untested",
+      "tests": "test/training-pattern-expansion.test.js"
+    },
+    {
+      "id": "parameter-binding-patterns",
+      "domain": "bounded object/array/default/rest parameter patterns; left-to-right initialization, TDZ and body-var isolation; standard arrays for positional bindings",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "passed",
+      "native": "untested",
+      "tests": "test/training-parameter-patterns.test.js"
+    },
+    {
+      "id": "forward-pattern-default-closures",
+      "domain": "earlier default closure captures a later destructured parameter binding",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Detailed closure publication cannot yet defer capture cells through pattern object allocation",
+      "tests": "test/training-parameter-patterns.test.js"
+    },
+    {
+      "id": "array-search-callbacks",
+      "domain": "ordinary arrays find/findIndex/some/every and sparse map/filter/reduce; fixed length with live reads, early completion, strict callback receivers and abrupt completion; inherited index accessors/custom prototypes and async callbacks refused",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "passed",
+      "native": "untested",
+      "tests": "test/training-array-search.test.js"
+    },
+    {
+      "id": "owned-symbol-identities",
+      "domain": "fresh and registry symbols, well-known identities, scalar descriptions, ordinary symbol keys/getters/setters, copy/rest, own-key enumeration, primitive comparisons and conversion throws; no boxed symbols or host transport",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "New semantic-protocol-values/1 identity/key interface is validated separately; existing detailed/native scalar/ref contracts cannot encode Symbols",
+      "tests": "test/training-symbols.test.js"
     }
   ]
 }

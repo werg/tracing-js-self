@@ -1,5 +1,6 @@
 // Descriptor-only, effect-free boundary inspection for the bounded data profile.
 // Never enumerate by reading guest values, coercing keys, or calling toJSON.
+import {isSymbolPropertyKey} from '../property-keys.js';
 import {isProxy} from '#owned-proxy-check';
 
 function ordinaryPrototype(proto,kind) {
@@ -53,6 +54,8 @@ export function inspectDataObject(value) {
 export function inspectOwnedDataEntity(entity) {
   if(!entity||!['array','object'].includes(entity.kind))
     throw new TypeError('Unsupported observable boundary: non-data identity');
+  if(Object.keys(entity.properties??{}).some(isSymbolPropertyKey))
+    throw new TypeError('Unsupported observable boundary: owned symbol property transport');
   if(Object.keys(entity.accessors??{}).length)
     throw new TypeError('Unsupported observable boundary: owned accessor');
   if(entity.kind==='array'&&entity.prototype!==undefined &&

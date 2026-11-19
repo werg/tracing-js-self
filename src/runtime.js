@@ -1,4 +1,5 @@
 import { encode, decode, U, token, truthy, primitiveBinary, primitiveUnary } from './values.js';
+import {WELL_KNOWN_SYMBOLS,wellKnownSymbol,stringPropertyKey,symbolPropertyKey,isSymbolPropertyKey,propertyKeyValue} from './property-keys.js';
 import {SHARED_TYPES,SHARED_TYPE_NAMES,newSharedBuffer,newSharedView,newSharedDataView,effectiveDataViewLength,DATA_VIEW_GETTERS,DATA_VIEW_SETTERS,readSharedDataView,writeSharedDataView,growSharedBuffer,effectiveSharedLength,readSharedElement,writeSharedElement,atomicSharedElement} from './owned-shared-memory.js';
 import { parse, compile } from './frontend.js';
 import { importGraph } from './training/graph.js';
@@ -42,7 +43,7 @@ const opNames = {
   DEFAULT_GUARD:'binding.default.guard', PARAM_INIT:'binding.initialize', ENTER_BODY_ENV:'environment.enter', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
   CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
-  GET_PROP:'property.read', GET_METHOD:'property.read', SPREAD:'property.read', PUT_PROP:'property.write', DEFINE_LITERAL_PROP:'property.write', COPY_KEYS:'array.allocate', HAS_ENUMERABLE_OWN:'property.read', APPEND_ARRAY:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
+  GET_PROP:'property.read', GET_METHOD:'property.read', SPREAD:'property.read', PUT_PROP:'property.write', DEFINE_LITERAL_PROP:'property.write', COPY_KEYS:'array.allocate', HAS_ENUMERABLE_OWN:'property.read', REQUIRE_COERCIBLE:'property.read', APPEND_ARRAY:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
   LEAVE_SCOPE:'environment.leave', CLONE_LOOP_ENV:'environment.iteration', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
   TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
   BIND_CATCH:'completion.catch.bind', END_FINALLY:'completion.finally.end',
@@ -67,9 +68,10 @@ function lookup(draft, envId, name) {
   guestFault('ReferenceError',`${name} is not defined`);
 }
 function valueKey(tagged) {
+  if(tagged[0]==='symbol')return symbolPropertyKey(tagged[1]);
   if (!['str','num','bool','null','undefined','bigint'].includes(tagged[0]))
     throw new TypeError('Property keys requiring guest coercion are unsupported');
-  return String(decode(tagged));
+  return stringPropertyKey(String(decode(tagged)));
 }
 function arrayIndex(key) {
   return /^(0|[1-9]\d*)$/.test(key) && Number(key) < 4294967295;
@@ -111,7 +113,7 @@ function spreadSnapshot(heap,source) {
 // ES SameValue/SameValueZero over the owned value codec. Never use JS object
 // equality for guest reference identities; they live in the serializable heap.
 const comparableTags=new Set(['undefined','null','bool','str','num','bigint',
-  'ref','promise','intrinsic','builtinfn','hostfn']);
+  'ref','promise','intrinsic','builtinfn','hostfn','symbol']);
 function ownedSameValue(a,b,zeroEqual=false) {
   if(!comparableTags.has(a?.[0])||!comparableTags.has(b?.[0]))
     throw new TypeError('Unmodeled guest equality value');
@@ -168,7 +170,7 @@ function proxyRoute(heap,receiver,operation) {
 function ownPropertyKeys(obj){
   const present=key=>Object.hasOwn(obj.properties??{},key)||Object.hasOwn(obj.accessors??{},key);
   const known=[...new Set([...(obj.propertyOrder??[]),...Object.keys(obj.properties??{}),...Object.keys(obj.accessors??{})])].filter(present);
-  return [...known.filter(arrayIndex).sort((a,b)=>Number(a)-Number(b)),...known.filter(key=>!arrayIndex(key))];
+  return [...known.filter(arrayIndex).sort((a,b)=>Number(a)-Number(b)),...known.filter(key=>!arrayIndex(key)&&!isSymbolPropertyKey(key)),...known.filter(isSymbolPropertyKey)];
 }
 function enumerableOwn(obj,key){
   return Object.hasOwn(obj.accessors??{},key)?obj.accessors[key].enumerable:
@@ -251,6 +253,22 @@ export class Runtime {
   }
   next(draft,kind) {const ids=draft.counters.ids;return `${kind==='operation'?'op':kind[0]}${++ids[kind]}`;}
   newEnv(draft,parent=null) {const id=this.next(draft,'env');draft.envs[id]={id,parent,bindings:{},version:0};return id;}
+  newSymbol(draft,description,eventId,registeredKey=undefined){
+    const id=this.next(draft,'obj');
+    draft.heap[id]={id,kind:'symbol',description:copy(description),
+      ...(registeredKey===undefined?{}:{registeredKey}),properties:{},propertyVersions:{},shapeVersion:0,version:0};
+    return ['symbol',id];
+  }
+  symbolDescription(draft,value){
+    if(value[1].startsWith('well-known:')){
+      const name=value[1].slice('well-known:'.length);
+      if(!WELL_KNOWN_SYMBOLS.includes(name))throw new TypeError('Unknown well-known symbol');
+      return ['str','Symbol.'+name];
+    }
+    const entity=draft.heap[value[1]];
+    if(entity?.kind!=='symbol')throw new TypeError('Unknown owned symbol');
+    return entity.description;
+  }
   newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,observers:[],adopters:[],adopting:null,resolverCalled:false,thenableSerial:0,thenableLocked:false,thenableSeen:[],version:0};return id;}
   newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[],thisValue=U) {
     const id=this.next(draft,'frame'),envId=this.newEnv(draft,parentEnv);
@@ -271,6 +289,8 @@ export class Runtime {
       draft.envs[envId].bindings[name]={kind:'parameter',
         initialized:!this.programs[codeId].parameterExpressions,token:binding,version:0};
     });
+    for(const name of this.programs[codeId].patternNames??[])
+      draft.envs[envId].bindings[name]={kind:'parameter',initialized:false,token:token(U),version:0};
     for(const name of this.programs[codeId].parameterExpressions?[]:(this.programs[codeId].varNames??[]))
       if(!Object.hasOwn(draft.envs[envId].bindings,name))
         draft.envs[envId].bindings[name]={kind:'var',initialized:true,
@@ -288,7 +308,7 @@ export class Runtime {
     for(const name of ['queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
-    for(const name of ['Object','Array','Number','BigInt','String','Math','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
+    for(const name of ['Object','Array','Number','BigInt','String','Symbol','Reflect','Math','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     s.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
@@ -332,7 +352,7 @@ export class Runtime {
     for(const name of ['parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
-    for(const name of ['Object','Array','Number','BigInt','String','Math','Promise','Set','Error','TypeError','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
+    for(const name of ['Object','Array','Number','BigInt','String','Symbol','Reflect','Math','Promise','Set','Error','TypeError','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     state.control.a0.globalEnvId=global;
@@ -438,15 +458,19 @@ export class Runtime {
           putOwn(out,String(decode(out.properties.length.value)),
             pending.currentValue,origin);
         else if(pending.method==='reduce')pending.accumulator=value;
-        const someMatched=pending.method==='some'&&truthy(value);
+        const matched=truthy(value),currentIndex=pending.index;
+        const stop=(['some','find','findIndex'].includes(pending.method)&&matched)||
+          pending.method==='every'&&!matched;
         pending.index++;
         pending.waitingFrameId=null;
-        if(!someMatched&&pending.index<pending.length){
+        if(!stop&&pending.index<pending.length){
           draft.control.a0.activeFrameId=caller.id;
           return;
         }
         value=pending.method==='reduce'?pending.accumulator:
-          pending.method==='forEach'?U:pending.method==='some'?['bool',someMatched]:['ref',pending.outputId];
+          pending.method==='forEach'?U:pending.method==='some'?['bool',stop]:
+          pending.method==='every'?['bool',!stop]:pending.method==='find'?(stop?pending.currentValue:U):
+          pending.method==='findIndex'?['num',stop?currentIndex:-1]:['ref',pending.outputId];
         delete caller.pendingArrayMethod;
         }
       }
@@ -552,16 +576,19 @@ export class Runtime {
       return true;
     }
     for(;p.index<p.length;p.index++){
+      if(![null,'Array.prototype','Object.prototype'].includes(objectPrototype(array)))
+        throw new TypeError('Array callback inherited index semantics outside profile');
       const index=String(p.index),slot=array.properties[index];
-      if(!slot||Object.hasOwn(array.accessors??{},index))
-        throw new TypeError('Array callback needs owned data slots');
-      const value=slot.value;
+      if(Object.hasOwn(array.accessors??{},index))
+        throw new TypeError('Array callback accessor continuation outside profile');
+      if(!slot&&!['find','findIndex'].includes(p.method))continue;
+      const value=slot?.value??U;
       const fn=draft.heap[p.callbackId];
       const params=p.method==='reduce'?
         [token(p.accumulator),token(value),token(['num',p.index]),token(['ref',p.arrayId])]:
         [token(value),token(['num',p.index]),token(['ref',p.arrayId])];
       const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,caller.id,null,params,
-        fn.arrow?fn.lexicalThis:U);
+        fn.arrow?fn.lexicalThis:p.thisArg??U);
       p.currentValue=value;
       p.waitingFrameId=child;
       draft.control.a0.activeFrameId=child;
@@ -810,8 +837,13 @@ export class Runtime {
       const siteId=frame.pendingArrayMethod.siteId;
       return this.commit('call.enter',(s,eventId)=>{
         const parent=s.frames[frame.id];
-        if(!this.advanceArrayCallback(s,parent,eventId))
-          throw new Error('Missing next owned array callback');
+        if(!this.advanceArrayCallback(s,parent,eventId)){
+          const p=parent.pendingArrayMethod;
+          const value=p.method==='reduce'?p.accumulator:p.method==='forEach'||p.method==='find'?U:
+            p.method==='findIndex'?['num',-1]:p.method==='some'?['bool',false]:
+            p.method==='every'?['bool',true]:['ref',p.outputId];
+          delete parent.pendingArrayMethod;this.stackPush(parent,value,eventId);return {result:value};
+        }
         return {causes:[{kind:'invocation',frameId:parent.pendingArrayMethod.waitingFrameId}]};
       },{siteId,sourceId:frame.codeId.split(':')[0],codeId:frame.codeId,invocationId:frame.id});
     }
@@ -1040,6 +1072,8 @@ export class Runtime {
         }
         case 'BINARY':{
           const b=pop(),a=pop();
+          if([a,b].some(value=>value.value[0]==='symbol')&&!isOwnedArithmetic(arg)&&!['===','!==','==','!='].includes(arg))
+            guestFault('TypeError','Cannot convert a Symbol value to a number');
           if(!isOwnedArithmetic(arg))return {...operands(a,b),...result(primitiveBinary(arg,a.value,b.value))};
           const id=this.next(s,'operation');
           if([a,b].some(item=>item.value[0]==='ref'&&s.heap[item.value[1]]?.declaredError)&&
@@ -1052,6 +1086,8 @@ export class Runtime {
         }
         case 'UNARY':{
           const a=pop();
+          if(a.value[0]==='symbol'&&!['typeof','!','void'].includes(arg))
+            guestFault('TypeError','Cannot convert a Symbol value to a number');
           if(arg==='+' && a.value[0]==='bigint')
             guestFault('TypeError','Cannot convert a BigInt value to a number');
           return {...operands(a),...result(primitiveUnary(arg,a.value,s.heap))};
@@ -1095,6 +1131,7 @@ export class Runtime {
         case 'CONSTRUCT':{
           const args=[];for(let i=0;i<arg;i++)args.unshift(pop());
           const fn=pop();
+          if(fn.value[0]==='intrinsic'&&fn.value[1]==='Symbol')guestFault('TypeError','Symbol is not a constructor');
           if(fn.value[0]==='intrinsic'&&['Error','TypeError'].includes(fn.value[1])){
             if(args.length>1)throw new TypeError('Error options are outside the bounded error profile');
             const value=args[0]?.value??U;
@@ -1252,8 +1289,20 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
                ['isFinite','isNaN','isInteger','isSafeInteger'].includes(property)) ||
               (base.value[1]==='Array' && ['isArray','from'].includes(property))))
             v=['builtinfn',base.value[1]+'.'+property];
+          else if(base.value[0]==='intrinsic'&&base.value[1]==='Symbol'){
+            if(WELL_KNOWN_SYMBOLS.includes(property))v=wellKnownSymbol(property);
+            else if(['for','keyFor'].includes(property))v=['builtinfn','Symbol.'+property];
+            else throw new TypeError('Unmodeled Symbol static property');
+          }
+          else if(base.value[0]==='intrinsic'&&base.value[1]==='Reflect'&&property==='ownKeys')v=['builtinfn','Reflect.ownKeys'];
+          else if(base.value[0]==='symbol'){
+            if(property==='description')v=this.symbolDescription(s,base.value);
+            else if(['toString','valueOf'].includes(property))v=['builtinfn','Symbol.prototype.'+property];
+            else if(property===symbolPropertyKey('well-known:toPrimitive'))v=['builtinfn','Symbol.prototype.valueOf'];
+            else v=U;
+          }
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' &&
-             ['create','setPrototypeOf','getPrototypeOf','defineProperty','hasOwn','keys','values','entries','assign','is'].includes(property))
+             ['create','setPrototypeOf','getPrototypeOf','defineProperty','hasOwn','keys','values','entries','assign','is','getOwnPropertySymbols','getOwnPropertyNames'].includes(property))
             v=['builtinfn',`Object.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' && property==='prototype')
             v=['intrinsic','Object.prototype'];
@@ -1392,6 +1441,11 @@ if(obj.kind==='set'){
           const output=op==='GET_METHOD'?['method',v,base.value]:v;
           return {...operands(base,key),...result(output),reads:read?[read]:[]};
         }
+        case 'REQUIRE_COERCIBLE':{
+          const value=pop();
+          if(['null','undefined'].includes(value.value[0]))guestFault('TypeError','Cannot destructure null or undefined');
+          return {...operands(value),...result(value.value)};
+        }
         case 'COPY_KEYS':{
           const exclusions=[];for(let i=0;i<arg.exclude;i++)exclusions.unshift(pop());
           const source=pop(),value=source.value,excluded=new Set(exclusions.map(item=>valueKey(item.value)));
@@ -1404,12 +1458,12 @@ if(obj.kind==='set'){
           }else if(value[0]==='str')keys=Array.from({length:value[1].length},(_,i)=>String(i));
           else if(['null','undefined'].includes(value[0])&&arg.required)
             guestFault('TypeError','Cannot destructure null or undefined');
-          else if(!['null','undefined','num','bool','bigint'].includes(value[0]))
+          else if(!['null','undefined','num','bool','bigint','symbol'].includes(value[0]))
             throw new TypeError('Property copying source outside profile');
           keys=keys.filter(key=>!excluded.has(key));
           if(keys.length>10000)throw new RangeError('Property copy key budget');
           const id=this.next(s,'obj'),obj=s.heap[id]={id,kind:'array',properties:{length:token(['num',keys.length],eventId)},propertyVersions:{length:0},shapeVersion:0,version:0};
-          keys.forEach((key,i)=>putOwn(obj,String(i),['str',key],eventId));
+          keys.forEach((key,i)=>putOwn(obj,String(i),propertyKeyValue(key),eventId));
           return {...operands(source,...exclusions),...result(['ref',id])};
         }
         case 'HAS_ENUMERABLE_OWN':{
@@ -1541,8 +1595,40 @@ if(object.kind==='regexp'){
           const fn=pop();let callable=fn.value;
           const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
+          if(callable[0]==='intrinsic'&&callable[1]==='Symbol'){
+            const value=args[0]?.value??U;
+            if(value[0]==='symbol')guestFault('TypeError','Cannot convert a Symbol value to a string');
+            if(!['undefined','null','bool','str','num','bigint'].includes(value[0]))
+              throw new TypeError('Symbol description requires owned scalar coercion');
+            const description=value[0]==='undefined'?U:['str',String(decode(value))];
+            return {...operands(fn,...args),...result(this.newSymbol(s,description,eventId))};
+          }
+          if(callable[0]==='builtinfn'&&['Symbol.for','Symbol.keyFor'].includes(callable[1])){
+            const value=args[0]?.value??U;
+            if(callable[1]==='Symbol.keyFor'){
+              if(value[0]!=='symbol')guestFault('TypeError','Symbol.keyFor requires a symbol');
+              const symbol=s.heap[value[1]];
+              return {...operands(fn,...args),...result(symbol?.registeredKey===undefined?U:['str',symbol.registeredKey])};
+            }
+            if(value[0]==='symbol')guestFault('TypeError','Cannot convert a Symbol value to a string');
+            if(!['undefined','null','bool','str','num','bigint'].includes(value[0]))
+              throw new TypeError('Symbol registry key requires owned scalar coercion');
+            const key=String(decode(value)),existing=Object.values(s.heap).find(entity=>entity.kind==='symbol'&&entity.registeredKey===key);
+            return {...operands(fn,...args),...result(existing?['symbol',existing.id]:this.newSymbol(s,['str',key],eventId,key))};
+          }
+          if(callable[0]==='builtinfn'&&callable[1].startsWith('Symbol.prototype.')){
+            if(receiver[0]!=='symbol')guestFault('TypeError','Symbol method requires a symbol receiver');
+            const description=this.symbolDescription(s,receiver);
+            return {...operands(fn,...args),...result(callable[1]==='Symbol.prototype.valueOf'?receiver:
+              ['str','Symbol('+(description[0]==='undefined'?'':description[1])+')'])};
+          }
           if(callable[0]==='intrinsic'&&['Number','BigInt','String'].includes(callable[1])){
             const value=args[0]?.value??U;
+            if(value[0]==='symbol'){
+              if(callable[1]!=='String')guestFault('TypeError','Cannot convert a Symbol value to a number');
+              const description=this.symbolDescription(s,value);
+              return {...operands(fn,...args),...result(['str','Symbol('+(description[0]==='undefined'?'':description[1])+')'])};
+            }
             // An explicit primitive-only intrinsic leaf. CALL has already
             // evaluated every argument in order; unused extra arguments are
             // not coerced. Owned objects require a separate continuation and
@@ -1743,7 +1829,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             return {...operands(fn,...args),result:['ref',callable[1]],causes:[{kind:'invocation',frameId:id}]};
           }
           if(callable[0]==='builtinfn' &&
-             ['filter','map','reduce','sort','some','forEach'].some(m=>callable[1]==='Array.prototype.'+m)){
+             ['filter','map','reduce','sort','some','every','find','findIndex','forEach'].some(m=>callable[1]==='Array.prototype.'+m)){
             const array=receiver[0]==='ref'?s.heap[receiver[1]]:null;
             if(!array||array.kind!=='array'||Object.keys(array.accessors??{}).length)
               throw new TypeError('Array callback needs owned array data');
@@ -1756,8 +1842,8 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             if(s.heap[callback[1]].async)
               throw new TypeError('Async array callback is outside the bounded profile');
             const method=callable[1].slice('Array.prototype.'.length);
-            if(method!=='reduce'&&args.length>1)
-              throw new TypeError('Unsupported callback thisArg');
+            if(args.length>(method==='sort'?1:2))
+              throw new TypeError('Array callback argument budget');
             if(method==='sort'&&length>64)
               throw new RangeError('Sort comparator budget exceeded');
             if(method==='reduce' && args.length>2)
@@ -1771,14 +1857,16 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               if(args.length>1)accumulator=args[1].value;
               else {
                 if(length===0)guestFault('TypeError','Reduce of empty array with no initial value');
-                const first=array.properties['0'];
-                if(!first)throw new TypeError('Sparse reduction first slot unmodeled');
-                accumulator=first.value;start=1;
+                if(![null,'Array.prototype','Object.prototype'].includes(objectPrototype(array)))
+                  throw new TypeError('Reduction inherited index semantics outside profile');
+                while(start<length&&!Object.hasOwn(array.properties,String(start)))start++;
+                if(start===length)guestFault('TypeError','Reduce of empty array with no initial value');
+                accumulator=array.properties[String(start)].value;start++;
               }
             }
             f.pendingArrayMethod={method,arrayId:array.id,callbackId:callback[1],
               outputId,length,index:start,accumulator,waitingFrameId:null,
-              siteId:inst.siteId,currentValue:U};
+              siteId:inst.siteId,currentValue:U,thisArg:method==='reduce'?U:args[1]?.value??U};
             if(method==='sort'){
               const slots=[];
               for(let i=0;i<length;i++){
@@ -1796,7 +1884,8 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               return {...operands(fn,...args),causes:[{kind:'invocation',frameId:f.pendingArrayMethod.waitingFrameId}]};
             delete f.pendingArrayMethod;
             return {...operands(fn,...args),...result(method==='reduce'?accumulator:
-              method==='forEach'?U:method==='some'?['bool',false]:['ref',outputId])};
+              method==='forEach'||method==='find'?U:method==='findIndex'?['num',-1]:
+              method==='some'?['bool',false]:method==='every'?['bool',true]:['ref',outputId])};
           }
           if(callable[0]==='builtinfn' && callable[1].startsWith('Number.prototype.')){
             const method=callable[1].slice('Number.prototype.'.length);
@@ -1990,7 +2079,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             for(const [key,value] of copies)putOwn(target,key,value,eventId);
             return {...operands(fn,...args),...result(ref)};
           }
-          if(callable[0]==='builtinfn' && ['Object.hasOwn','Object.keys','Object.values','Object.entries'].includes(callable[1])){
+          if(callable[0]==='builtinfn' && ['Object.hasOwn','Object.keys','Object.values','Object.entries','Object.getOwnPropertySymbols','Object.getOwnPropertyNames','Reflect.ownKeys'].includes(callable[1])){
             const base=args[0]?.value??U,obj=base[0]==='ref'?s.heap[base[1]]:null;
             if(!obj||!['object','array'].includes(obj.kind))
               throw new TypeError('Object builtin requires an owned ordinary reference');
@@ -2000,20 +2089,25 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                 Object.hasOwn(obj.properties,property) ||
                 Object.hasOwn(obj.accessors??{},property)])};
             }
-            if(callable[1]!=='Object.keys'&&Object.keys(obj.accessors??{}).length)
+            const keysOnly=['Object.keys','Object.getOwnPropertySymbols','Object.getOwnPropertyNames','Reflect.ownKeys'].includes(callable[1]);
+            if(!keysOnly&&Object.keys(obj.accessors??{}).length)
               throw new TypeError('Ordered accessor value enumeration is outside the bounded profile');
-            const keys=ownPropertyKeys(obj).filter(key=>enumerableOwn(obj,key));
+            const keys=ownPropertyKeys(obj).filter(key=>{
+              if(callable[1]==='Reflect.ownKeys')return true;
+              if(callable[1]==='Object.getOwnPropertySymbols')return isSymbolPropertyKey(key);
+              return !isSymbolPropertyKey(key)&&(callable[1]==='Object.getOwnPropertyNames'||enumerableOwn(obj,key));
+            });
             const id=this.next(s,'obj');
             const array=s.heap[id]={id,kind:'array',properties:{length:token(['num',0],eventId)},
               propertyVersions:{length:0},shapeVersion:0,version:0};
             keys.forEach((key,i)=>{
-              let member=callable[1]==='Object.keys'?['str',key]:obj.properties[key].value;
+              let member=keysOnly?propertyKeyValue(key):obj.properties[key].value;
               if(callable[1]==='Object.entries'){
                 const pairId=this.next(s,'obj');
                 const pair=s.heap[pairId]={id:pairId,kind:'array',
                   properties:{length:token(['num',0],eventId)},
                   propertyVersions:{length:0},shapeVersion:0,version:0};
-                putOwn(pair,'0',['str',key],eventId);
+                putOwn(pair,'0',propertyKeyValue(key),eventId);
                 putOwn(pair,'1',member,eventId);
                 member=['ref',pairId];
               }
@@ -2552,8 +2646,8 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
         for(const node of i.graph.objects){
           const id=identities.get(node.id),properties={},propertyVersions={};
           for(const member of node.properties){
-            properties[member.key]=token(value(member.value),eventId);
-            propertyVersions[member.key]=0;
+            properties[stringPropertyKey(member.key)]=token(value(member.value),eventId);
+            propertyVersions[stringPropertyKey(member.key)]=0;
           }
           s.heap[id]={id,kind:node.kind,...(node.prototype===null?{prototype:null}:{}),
             properties,propertyVersions,shapeVersion:0,version:0};
@@ -2803,6 +2897,7 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
     const bundle={manifest:{schema:'semantic-tracing-run/2',profile:this.entrySpec?'training-js/1':'bounded-js-subset/2',completeSemanticTrace:false,
       completeEcma262:false,completeHostIntegration:false,coverage:'docs/STATUS.md',chunkPolicy:'accumulate-until-wait/1',
       eventVersion:2,operationVersion:2,mutationSchema:'owned-spec-commands/2',
+      ownedSymbols:{revision:1,propertyKeys:'owned-property-key/1',hostTransport:'unsupported'},
       ownedArithmetic:{revision:2,referenceEngineRevision:ENGINE_REVISION,operators:['+','-','*','/','%','**'],domain:'primitives-and-bounded-ordinary-data-objects'},
       guestExecution:'owned-bytecode-and-spec-phase-machine',replay:'bounded-deterministic-reexecution/2'},
       sources:this.sources,sites:this.sites,programs:this.programs,entrySpec:this.entrySpec??null,initialState:this.initialState,finalState:this.state,

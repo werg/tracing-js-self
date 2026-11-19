@@ -1,5 +1,6 @@
 // Read-only validation. Does not import the evaluator or call its mutation routines.
 import { readFileSync } from 'node:fs';
+import {validateSymbolReferences,validateSymbolAllocation} from './symbol-validation.js';
 import { validateHostJournal } from './host-journal.js';
 import { validateSpecEvent, applySpecCommand } from './spec-validation.js';
 const clone = x => structuredClone(x);
@@ -14,6 +15,7 @@ function fail(message,eventId=null){throw new TraceValidationError(message,event
 export function reconstruct(bundle,{throughEventId=null}={}) {
   if(bundle.manifest?.schema!=='semantic-tracing-run/2')fail('Unknown run schema');
   const state=clone(bundle.initialState);
+  validateSymbolReferences(state,state.heap,fail);
   const sites=new Set(bundle.sites.map(s=>s.siteId));
   const seen=new Set();
   const parameterTdzOrigins=new Map();
@@ -124,6 +126,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
       fail('Completion metadata without an owned completion operation',e.eventId);
     validateSpecEvent(state,e,fail);
     for(const p of e.stateChanges) {
+      validateSymbolAllocation(p,e,message=>fail(message,e.eventId));
       if(patched.has(`${p.table}:${p.id}`))fail('Double application of mutation',e.eventId);
       patched.add(`${p.table}:${p.id}`);
       if(p.table==='operations') {
@@ -146,6 +149,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
       if(p.after && p.after.version!==(p.before?.version??0)+1)fail('Invalid record version',e.eventId);
       if(p.after===null)delete state[p.table][p.id];else state[p.table][p.id]=clone(p.after);
     }
+    validateSymbolReferences({operands:e.operands,result:e.result,changed:e.stateChanges.map(p=>p.after??p.record??null)},state.heap,message=>fail(message,e.eventId));
     if(job && !eq(state.control.a0.queue.slice(0,queuedBefore.length),queuedBefore))
       fail('Guest job FIFO order changed during entry',e.eventId);
     if(bundle.manifest.schema==='semantic-tracing-run/2') {

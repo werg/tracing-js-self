@@ -2,6 +2,7 @@
 // No user getter, toJSON, coercion hook, or guest code is invoked.
 import {inspectDataObject,inspectOwnedDataEntity} from './data-graph-contract.js';
 import {encode, decode, token} from '../values.js';
+import {stringPropertyKey,stringPropertyName} from '../property-keys.js';
 
 export function importGraph(state, roots, allocate, {maxNodes=256,maxProperties=4096}={}) {
   if (!Array.isArray(roots)) throw new TypeError('Entry arguments must be an array');
@@ -26,9 +27,9 @@ export function importGraph(state, roots, allocate, {maxNodes=256,maxProperties=
       if (array && key === 'length') {
         entity.properties.length=token(encode(value.length));
       } else {
-        entity.properties[key]=token(visit(descriptor.value));
+        entity.properties[stringPropertyKey(key)]=token(visit(descriptor.value));
       }
-      entity.propertyVersions[key]=0;
+      entity.propertyVersions[stringPropertyKey(key)]=0;
     }
     // Absent array indices are holes. Present undefined entries remain own
     // properties, including across cyclic and aliased imported graphs.
@@ -50,7 +51,7 @@ export function realizeGraph(heap, roots) {
     seen.set(id,result);
     for(const [key,record] of Object.entries(entity.properties)){
       if (entity.kind==='array' && key==='length') continue;
-      Object.defineProperty(result,key,{value:visit(record.value),writable:true,
+      Object.defineProperty(result,stringPropertyName(key),{value:visit(record.value),writable:true,
         configurable:true,enumerable:true});
     }
     return result;
@@ -95,7 +96,7 @@ export function describeOwnedGraph(heap,roots,{maxNodes=256}={}) {
       shapeVersion:entity.shapeVersion??0,properties:[]};
     objects.push(record);
     for(const [key,entry] of Object.entries(entity.properties)){
-      record.properties.push({key,value:visit(entry.value),
+      record.properties.push({key:stringPropertyName(key),value:visit(entry.value),
         version:entity.propertyVersions?.[key]??0});
     }
     return ['ref',id];
