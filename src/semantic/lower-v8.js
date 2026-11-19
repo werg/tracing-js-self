@@ -257,7 +257,11 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
     if(node.type==='UnaryExpression')return operation(node.operator,[expression(node.argument,scope,ctx)],node,true);
     if(node.type==='BinaryExpression')return operation(node.operator,[expression(node.left,scope,ctx),expression(node.right,scope,ctx)],node);
     if(node.type==='ConditionalExpression'||node.type==='LogicalExpression'){
-      const logical=node.type==='LogicalExpression',test=scalarValue(expression(logical?node.left:node.test,scope,ctx),node);
+      // A join may erase an equal-valued branch or an unused private update.
+      // Commit potentially throwing tests before the join, even when no value
+      // ultimately depends on which branch was selected. Nested lazy tests
+      // that cannot be pinned retain the existing local-boundary refusal.
+      const logical=node.type==='LogicalExpression',test=pin(scalarValue(expression(logical?node.left:node.test,scope,ctx),node),ctx,node);
       const left=fork(scope,ctx),right=fork(scope,ctx);
       let l,r,predicate=test;
       if(logical){
@@ -357,7 +361,7 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
       else if(node.type==='ReturnStatement')return {returned:true,value:scalarValue(node.argument?expression(node.argument,scope,ctx):literal(undefined),node)};
       else if(node.type==='BlockStatement'){const result=run(node.body,new Scope(scope),ctx);if(result)return result;}
       else if(node.type==='IfStatement'){
-        const test=scalarValue(expression(node.test,scope,ctx),node),left=fork(scope,ctx),right=fork(scope,ctx);
+        const test=pin(scalarValue(expression(node.test,scope,ctx),node),ctx,node),left=fork(scope,ctx),right=fork(scope,ctx);
         let l=run(statements(node.consequent),new Scope(left.scope),left.ctx),r=run(statements(node.alternate),new Scope(right.scope),right.ctx);
         if(l?.returned||r?.returned){
           const rest=list.slice(position+1);

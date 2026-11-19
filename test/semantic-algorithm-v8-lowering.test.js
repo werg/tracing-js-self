@@ -83,6 +83,45 @@ test('v8 scalar branch joins and lazy assignments preserve both values and priva
   assert.deepEqual(joined,direct);
 });
 
+test('v8 equal-branch and unused-state joins preserve potentially throwing predicate evaluation',()=>{
+  for(const body of [
+    'function run(){return null.x?1:1;}',
+    'function run(){if(null.x)return 1;else return 1;}',
+    'function run(){if(null.x){}return 1;}',
+    'function run(){let x=0;if(null.x)x=1;else x=1;return x;}',
+    'function run(){let x=0;if(null.x)x=1;return 1;}',
+    'function run(){const x=null.x?1:1;return 2;}',
+    'function run(){return (null.x?1:1),2;}',
+    'function run(){return (null.x&&1),2;}'
+  ]){
+    const text=source(body);
+    assert.throws(()=>vm.runInNewContext(text+';run()',{}, {timeout:1000}),error=>error.name==='TypeError');
+    const lowered=lowerJavaScriptV8({source:text,entry:'run'});
+    assert.throws(()=>evaluateAlgorithmV8(lowered.core,[]),/ordinary object projection requires identity/,body);
+  }
+  const body='function run(o){if(o.child.value){}return 1;}';
+  check(body,[{child:{value:0}}]);check(body,[{child:{value:7}}]);
+  const lowered=lowerJavaScriptV8({source:source(body),entry:'run'});
+  assert.throws(()=>evaluateAlgorithmV8(lowered.core,null,{inputGraph:graph([{child:null}])}),/ordinary object projection requires identity/);
+});
+
+test('v8 equal-branch simplification retains total predicates and refuses unrepresentable lazy throwing tests',()=>{
+  const direct=lowerJavaScriptV8({source:source('function run(p){return 1;}'),entry:'run'}).core;
+  for(const body of [
+    'function run(p){return p?1:1;}',
+    'function run(p){if(p)return 1;else return 1;}',
+    'function run(p){if(p){}return 1;}'
+  ])assert.deepEqual(check(body,[true]).core,direct,body);
+  for(const body of [
+    'function run(p){return p?(null.x?1:1):2;}',
+    'function run(p){if(p){if(null.x){}return 1;}return 2;}'
+  ]){
+    assert.equal(vm.runInNewContext(source(body)+';run(false)',{}, {timeout:1000}),2);
+    assert.throws(()=>vm.runInNewContext(source(body)+';run(true)',{}, {timeout:1000}),error=>error.name==='TypeError');
+    assert.equal(tryLowerJavaScriptV8({source:source(body),entry:'run'}).status,'refused',body);
+  }
+});
+
 test('v8 defaults, bindings, ordinary properties, aliases and optional reads retain their distinctions',()=>{
   for(const [body,args] of [
     ['function run(x=5){return x;}',[[undefined],[null],[0],[7]]],
