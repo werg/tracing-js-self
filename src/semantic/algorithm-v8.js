@@ -18,6 +18,14 @@ const inheritedKeys=new Set(['__proto__','constructor','toString','toLocaleStrin
   'isPrototypeOf','propertyIsEnumerable','__defineGetter__','__defineSetter__','__lookupGetter__','__lookupSetter__']);
 const truthy=tag=>tag[0]==='ref'||Boolean(native(tag));
 const copy=value=>structuredClone(value);
+// OrdinaryOwnPropertyKeys orders array-index strings numerically before other
+// string keys. Evaluate values before this ordering; allocation order is not
+// property evaluation order.
+const ownKeyOrder=entries=>{
+  const index=key=>/^(?:0|[1-9][0-9]*)$/.test(key)&&Number(key)<4294967295?Number(key):null;
+  return [...entries].sort(([a],[b])=>{const x=index(a),y=index(b);
+    return x===null?(y===null?0:1):y===null?-1:x-y;});
+};
 
 export const ALGORITHM_V8_OPERATION_METADATA=Object.freeze({
   ...Object.fromEntries(Object.entries(OPERATION_REGISTRY).map(([name,spec])=>[name,Object.freeze({
@@ -150,7 +158,7 @@ export function evaluateTermV8(term,{inputs=new Map(),values=new Map(),heap=new 
       if(allocator.next>=ALGORITHM_V8_LIMITS.allocations)fail('allocation budget');
       key=allocator.prefix+':'+allocator.next++;
     }while(Map.prototype.has.call(heap,key));
-    Map.prototype.set.call(heap,key,{id:key,kind,properties:new Map(properties)});return ['ref',key];
+    Map.prototype.set.call(heap,key,{id:key,kind,properties:new Map(ownKeyOrder(properties))});return ['ref',key];
   };
   function get(object,key){
     if(key[0]==='ref')fail('object property key requires conversion hooks');
@@ -251,7 +259,7 @@ export function evaluateAlgorithmV8(core,args,{heap=new Map(),inputGraph=null,al
   }
   const graph={roots:[...copy(args),copy(completion.value)],objects:[...publicHeap].map(([key,node])=>({
     id:key,kind:node.kind,...(node.prototype===null?{prototype:null}:{}),
-    properties:[...algorithmHeapNode(publicHeap,key).properties].map(([key,value])=>({key,value:copy(value)}))}))};
+    properties:ownKeyOrder(algorithmHeapNode(publicHeap,key).properties).map(([key,value])=>({key,value:copy(value)}))}))};
   return {completion,claims,inputs,values,heap:publicHeap,graph,allocator:allocations,work:ALGORITHM_V8_LIMITS.work-budget.remaining};
 }
 export function checkAlgorithmV8Claims(core,args,claims,options={}){

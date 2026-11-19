@@ -15,8 +15,8 @@ function graph(roots){
     if(seen.has(item))return ['ref',seen.get(item)];
     const id='o'+seen.size;seen.set(item,id);
     const node={id,kind:Array.isArray(item)?'array':'object',properties:[]};objects.push(node);
-    if(Array.isArray(item))node.properties.push({key:'length',value:scalar(item.length)});
     for(const key of Object.keys(item))node.properties.push({key,value:visit(item[key])});
+    if(Array.isArray(item))node.properties.push({key:'length',value:scalar(item.length)});
     return ['ref',id];
   }
   return {roots:roots.map(visit),objects};
@@ -77,7 +77,7 @@ test('v8 scalar branch joins and lazy assignments preserve both values and priva
     ['function run(x){x||=5;return x;}',[[null],[undefined],[0],[false],[7]]],
     ['function run(x){x&&=5;return x;}',[[null],[undefined],[0],[false],[7]]]
   ];
-  for(const [body,args] of cases)for(const values of args)check(body,values,{owned:values===args[0]&&!/[?&|]{2}=/.test(body)&&!body.includes('run({')&&!body.includes('b=(a=2)')&&!body.includes('o?.[++i]')&&!body.includes('o?.x.y')});
+  for(const [body,args] of cases)for(const values of args)check(body,values,{owned:values===args[0]&&!body.includes('run({')&&!body.includes('b=(a=2)')&&!body.includes('o?.[++i]')&&!body.includes('o?.x.y')});
   const joined=lowerJavaScriptV8({source:source(cases[0][0]),entry:'run'}).core;
   const direct=lowerJavaScriptV8({source:source('function run(p,x){return (p?x+1:x-1)*2;}'),entry:'run'}).core;
   assert.deepEqual(joined,direct);
@@ -95,7 +95,7 @@ test('v8 defaults, bindings, ordinary properties, aliases and optional reads ret
     ['function run(a,b=(a=2)){return a;}',[[1,undefined],[1,5]]],
     ['function run(o){const alias=o;return [o,alias];}',[[{x:3}]]],
     ['function run(p){const o=p?{x:1}:{x:2};return [o,o];}',[[true],[false]]]
-  ])for(const values of args)check(body,values,{owned:values===args[0]&&!/[?&|]{2}=/.test(body)&&!body.includes('run({')&&!body.includes('b=(a=2)')&&!body.includes('o?.[++i]')&&!body.includes('o?.x.y')});
+  ])for(const values of args)check(body,values,{owned:values===args[0]&&!body.includes('run({')&&!body.includes('b=(a=2)')&&!body.includes('o?.[++i]')&&!body.includes('o?.x.y')});
   const empty=lowerJavaScriptV8({source:source('function run(o){const {}=o;return 3;}'),entry:'run'}).core;
   assert.throws(()=>evaluateAlgorithmV8(empty,[['null']]),/identity/);
 });
