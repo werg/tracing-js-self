@@ -36,6 +36,7 @@ export {publicComprehensionTasks,scoreComprehensionResponses,validateComprehensi
 export {ALGORITHM_V8_SCHEMA,ALGORITHM_V8_PROFILE,ALGORITHM_V8_LIMITS,ALGORITHM_V8_OPERATION_METADATA,
   validateAlgorithmV8,validateTermV8,evaluateAlgorithmV8,evaluateTermV8,checkAlgorithmV8Claims} from './algorithm-v8.js';
 export {lowerJavaScriptV8,tryLowerJavaScriptV8} from './lower-v8.js';
+export {renderAlgorithmV8,renderAlgorithmV8Term,renderAlgorithmV8Record} from './render-v8.js';
 export {REGION_PROGRAM_VERSION,REGION_EXECUTION_VERSION,REGION_TRACE_VERSION,REGION_CONTEXT_VERSION,
   REGION_CONTINUATION_VERSION,REGION_PROFILE,defineRegionProgram,validateRegionProgram,
   analyzeRegionEffects,sharedRegionState,regionEntry,evaluateLocalRegion,encodeRegionRecord,decodeRegionRecord} from './regions.js';
@@ -48,5 +49,11 @@ export {CAUSAL_LM_V8_BRIDGE_VERSION,validateRegionContext,decodeCausalLmV8Target
 export {V8_CONTRACT_DIGEST,V8_FIXTURE_DIGEST,V8_NATIVE_CHECKS,validateV8NativePolicy,
   loadV8NativePolicy,validateV8NativeReceipt} from './native-v8.js';
 export {SEMANTIC_V8_DEFINITION,semanticV8Contract} from './contract-v8.js';
+export {buildRegionFamilyRegistry,verifyRegionFamilyRegistry,regionSplitIdentity,verifyRegionSplitIdentity,
+  verifyRegionDatasetBinding,validateRegionFamilyAssignments} from './family-registry-v8.js';
+export {regionFamilyMembership,prepareRegionFamilyRegistry,resolveRegionFamilyRegistry,bindRegionFamilySplit,
+  buildRegionDataset,exportRegionDatasetJSONL} from './dataset-v8.js';
+export {MODULE_REGION_PROFILE,independentModuleRegionReference,verifyRegionModuleTrainingCase,
+  recheckModuleRegionEvidence} from './module-v8.js';
 export {OPERATION_METADATA,OPERATION_METADATA_VERSION,operationMetadata} from './operation-metadata.js';
 export {auditFlatServingCosts} from './serving-costs.js';

@@ -86,6 +86,10 @@ try{
       else throw new Error('Unknown generation trace version');
     }
   }
+  else if(task.kind==='module'&&task.traceVersion===8){
+    phase='module-verification';const {verifyRegionModuleTrainingCase}=await import('../src/semantic/module-v8.js');
+    result=await verifyRegionModuleTrainingCase(options);
+  }
   else if(task.kind==='session')result=await verifyEffectfulSession(options);
   else throw new Error('Unknown generation task kind');
 }catch(error){result={status:phase==='original-reference'?'original_reference_failure':'collection_failed',
