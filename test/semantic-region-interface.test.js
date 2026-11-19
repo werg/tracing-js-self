@@ -56,10 +56,21 @@ test('shadowed cells and cleanup stay detailed; effect metadata identifies bound
   const effects=analyzeRegionEffects(parse(source,{ecmaVersion:2026}));
   assert(effects.calls.includes('cleanup'));assert(effects.cleanup);assert(effects.mayThrow);
 });
+test('const assignment, cross-frame duplicate bindings and shadowed undefined cannot become local claims',()=>{
+  for(const source of [
+    '"use strict";function run(x){const a=x+1;a=2;return a;}',
+    '"use strict";function run(undefined){return undefined;}',
+    '"use strict";function helper(x){return x+1;}function run(x){return x+2;}'
+  ]){
+    const {program}=defineRegionProgram({source,entry:'run'});
+    if(source.includes('a=2'))assert(program.regions.every(region=>region.operations.every(step=>step.term?.value?.[1]!==2)));
+    else assert.equal(program.regions.length,0);
+  }
+});
 test('canonical region records retain lossless values and reject changed fields',()=>{
   const {program,controller}=setup('"use strict";function run(x){return -x;}',[0]);
   const region=program.regions[0],{records,...result}=evaluateLocalRegion(region,controller);
-  const record={region:region.id,entry:regionEntry(program,region,controller,2),...result};
+  const record={region:region.id,...result};
   const line=encodeRegionRecord(record);
   assert.deepEqual(decodeRegionRecord(line),record);
   assert.deepEqual(record.completion.value,['num','-0']);

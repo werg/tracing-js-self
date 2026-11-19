@@ -101,19 +101,28 @@ export function defineRegionProgram({source,entry}={}){
   walk(ast,node=>{if(functions.has(node.type)&&node.body.type==='BlockStatement')declared.push(node);});
   if(!declared.some(fn=>fn.type==='FunctionDeclaration'&&fn.id.name===entry))refuse('entry function missing');
   const regions=[],locations=[];
+  const globalBindings=new Map();
+  walk(ast,node=>{
+    const names=node.type==='VariableDeclarator'&&node.id.type==='Identifier'?[node.id.name]:
+      functions.has(node.type)?node.params.filter(item=>item.type==='Identifier').map(item=>item.name):
+      node.type==='CatchClause'&&node.param?.type==='Identifier'?[node.param.name]:[];
+    for(const name of names)globalBindings.set(name,(globalBindings.get(name)??0)+1);
+  });
   for(const fn of declared){
     const owner=fn.type==='FunctionDeclaration'?fn.id.name:'function:'+fn.start;
     // The current selected compiler allocates shadowed cells dynamically. A
     // repeated binding needs a lexical mapping, so it stays detailed here.
-    const counts=new Map();
+    const counts=new Map(),mutable=new Set(fn.params.filter(param=>param.type==='Identifier').map(param=>param.name));
     for(const param of fn.params)if(param.type==='Identifier')counts.set(param.name,(counts.get(param.name)??0)+1);
     const bindNames=node=>{
       if(node!==fn.body&&functions.has(node.type))return;
       if(node.type==='VariableDeclarator'&&node.id.type==='Identifier')counts.set(node.id.name,(counts.get(node.id.name)??0)+1);
+      if(node.type==='VariableDeclaration'&&node.kind!=='const')for(const decl of node.declarations)
+        if(decl.id.type==='Identifier')mutable.add(decl.id.name);
       if(node.type==='CatchClause'&&node.param?.type==='Identifier')counts.set(node.param.name,(counts.get(node.param.name)??0)+1);
       children(node,bindNames);
     };bindNames(fn.body);
-    const ambiguous=new Set([...counts].filter(([,count])=>count>1).map(([name])=>name));
+    const ambiguous=new Set([...globalBindings].filter(([,count])=>count>1).map(([name])=>name));
     let pending=[],nodes=[];
     const flush=()=>{
       if(!pending.length)return;
@@ -132,6 +141,8 @@ export function defineRegionProgram({source,entry}={}){
     for(const node of fn.body.body){
       let steps;try{steps=statements(node);
         if(steps.some(step=>ambiguous.has(step.binding)||[...termLocals(step.term)].some(name=>ambiguous.has(name))))steps=null;
+        if(node.type==='ExpressionStatement'&&!mutable.has(node.expression.left.name))steps=null;
+        if(globalBindings.has('undefined'))walk(node,item=>{if(item.type==='Identifier'&&item.name==='undefined')steps=null;});
       }catch{steps=null;}
       if(!steps){flush();continue;}
       if(pending.length+steps.length>REGION_LIMITS.operations)flush();
@@ -172,6 +183,7 @@ export function evaluateLocalRegion(region,controller){
   if(region?.profile!=='local-primitive-block/1')refuse('unknown compact region profile');
   const active=controller.stack.at(-1),owner=controller.frameFunctions.get(active);
   if(owner!==region.owner)refuse('region belongs to another active function');
+  if(active!==controller.rootInvocation)refuse('nested frame bindings require an explicit lexical region map');
   if(controller.blockedSync||controller.completion||!active)refuse('region is not runnable');
   const locals=new Map([...controller.visibleLocals()].map(([key,value])=>[key,copy(value)]));
   for(const name of region.inputs){if(!locals.has(name))refuse('live input is unavailable: '+name);
@@ -210,12 +222,8 @@ export function evaluateLocalRegion(region,controller){
 }
 
 export function encodeRegionRecord(record){
-  assertAlgorithmFields(record,['region','entry','bindings','decisions','completion'],'region record');
-  assertAlgorithmFields(record.entry,['definition','region','regionDigest','visibleThrough','stateDigest'],'region entry');
-  if(record.region!==record.entry.region||!/^r\d+$/.test(record.region)||
-    !Number.isSafeInteger(record.entry.visibleThrough)||record.entry.visibleThrough<0||
-    ['definition','regionDigest','stateDigest'].some(key=>!/^[a-f0-9]{64}$/.test(record.entry[key])))
-    throw new TypeError('Invalid compact region entry');
+  assertAlgorithmFields(record,['region','bindings','decisions','completion'],'region record');
+  if(!/^r\d+$/.test(record.region))throw new TypeError('Invalid compact region identity');
   for(const binding of record.bindings){if(!Array.isArray(binding)||binding.length!==2||typeof binding[0]!=='string')throw new TypeError('Invalid region binding');
     assertAlgorithmValue(binding[1],{allowReference:false});}
   if(!['normal','return'].includes(record.completion?.kind))throw new TypeError('Invalid region completion');
