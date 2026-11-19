@@ -1,0 +1,105 @@
+{
+  "schema": "semantic-algorithm-verification/1",
+  "fullSuiteProducerRevision": "e96dd4e51d7977554f05dc1794272d5145c69663",
+  "checks": {
+    "fullSuite": {
+      "log": "npm-test.log",
+      "sha256": "b343fafc0c2d90b2f345824249c0b1a610925a7b36043ab38e9ba560ab7a5fdb",
+      "tests": 1212,
+      "pass": 1206,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 6,
+      "todo": 0,
+      "duration_ms": 367082.141115,
+      "command": "npm test",
+      "producerRevision": "e96dd4e51d7977554f05dc1794272d5145c69663",
+      "exitCode": 0,
+      "node": "24.22.3",
+      "referenceFixture": "8/8 checks passed after the test runner"
+    },
+    "focusedAlgorithm": {
+      "log": "algorithm-tests.log",
+      "sha256": "73b219292351eeb49522930c4be1b45ceaddce5f69efdbd81e2a9f9e09815a7b",
+      "tests": 76,
+      "pass": 76,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "duration_ms": 13312.222347,
+      "command": "npm run test:semantic-algorithm",
+      "scope": "Supplemental final candidate implementation run with the exact external tokenizer; performed before the documentation/export checkpoint. This log does not independently bind a producing Git revision."
+    },
+    "pinnedTokenizer": {
+      "log": "tokenizer-tests.log",
+      "sha256": "d702664f29ed9480df0c53df08c911f2d422922a69cadbb6b83a637822a56733",
+      "tests": 3,
+      "pass": 3,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "duration_ms": 15114.587284,
+      "command": "node --test test/semantic-algorithm-tokenizer.test.js",
+      "scope": "Supplemental exact external token-meter run. The clean producer identity and final token measurements are separately bound by the paired report."
+    }
+  },
+  "contracts": {
+    "command": "npm run contracts:check",
+    "exitCode": 0,
+    "scope": "Host, v6 semantic, and candidate v7 contracts",
+    "candidateDigest": "8b4aaf3c9c64cc2a51b57da31efc48aa8fe5fcd8895696fcf2089dea230056e9",
+    "candidateFixtureDigest": "12078b6b63853ac7ad1016a872480fa997ee90dd6afa7d216bdad91a92655d99"
+  },
+  "pairedComparison": {
+    "path": "../paired-e96dd4e/comparison.json",
+    "sha256": "159ee8650fa5e29975025ecf4299e49ee1ab189557221a0aac87169029af0031",
+    "producer": {
+      "revision": "e96dd4e51d7977554f05dc1794272d5145c69663",
+      "tree": "77c7c8d99ca7b68b211db0aa57f38a8d09f0ee37",
+      "trackedChanges": false,
+      "implementationStatus": "",
+      "implementationPatchDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "untrackedImplementation": []
+    },
+    "gates": {
+      "engineering": {
+        "status": "passed",
+        "baselineDrift": 0,
+        "unconvergedGroups": 0,
+        "failedExecutions": 0,
+        "falseMerges": 0,
+        "unsafeAdmissions": 0
+      },
+      "native": {
+        "status": "unavailable",
+        "reason": "No independent v7 companion consumer executed by this runner"
+      },
+      "tokenizer": {
+        "status": "measured"
+      },
+      "comprehension": {
+        "status": "unmeasured",
+        "reason": "Controlled renderer checks are not a reader study"
+      },
+      "learning": {
+        "status": "unmeasured",
+        "optimizerSteps": 0
+      },
+      "promotion": {
+        "status": "not-qualified",
+        "reason": "Native, complete native serving cost, and comprehension gates require separate evidence"
+      },
+      "producerIdentity": {
+        "status": "passed",
+        "changedDuringMeasurement": false
+      }
+    }
+  },
+  "limits": [
+    "Five live native orchestration tests were not run because the external native serving environment was not configured.",
+    "The full npm test invocation skipped its external tokenizer case; that case was executed in the supplemental focused runs, and the final paired run actually used the exact tokenizer.",
+    "No native v7 admission, full native serving-cost qualification, external comprehension study, or learning experiment is implied."
+  ]
+}

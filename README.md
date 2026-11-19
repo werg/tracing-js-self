@@ -58,11 +58,14 @@ observe r1 as v2: fulfilled undefined
 return 8
 ```
 
-Observations have zero prediction loss. The trusted source definition binds
+Observations are environment-supplied and excluded from generated targets;
+native loss-mask qualification remains open. The trusted source definition binds
 `b0` and `b1` to capability authorization; the selected request supplies evaluated
 arguments once, and the host codec derives its payload. Cleanup, callbacks,
 concurrent outstanding requests, escaping identities, and other unproved forms
-retain an explicit independently checked detailed disposition.
+retain an explicit independently checked detailed disposition. For these
+unsupported candidate profiles, `result.detailed` contains a separately
+versioned v6 artifact and `result.exported` is `null`.
 
 ```js
 import {verifyAlgorithmTrainingCase} from 'tracing-js-self/semantic';
@@ -101,6 +104,14 @@ production default changes. Existing source/replay verification remains in use;
 no old-format decoder or checkpoint migration was added. See the
 [implementation ledger](docs/SEMANTIC_ALGORITHM_IMPLEMENTATION.md) and
 [comparison evidence](docs/evidence/semantic-algorithm-v7/README.md).
+
+The [paired run](docs/evidence/semantic-algorithm-v7/paired-e96dd4e/MEASUREMENTS.md)
+retained all 98 declared executions: 93 normalized and five detailed fallbacks,
+with zero execution failures. All 87 equivalence-family executions converged
+and all 28 negative checks passed. On the unchanged eleven-case gallery,
+generated targets used 1,154 tokens versus 1,307 for v6 with the exact pinned
+tokenizer. These are generated-target counts; native serving cost and reader
+comprehension remain unqualified.
 
 ## Reproduce the current baseline
 

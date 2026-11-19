@@ -1,0 +1,94 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> tracing-js-self@0.3.0 test:semantic-algorithm
+> node --test test/semantic-algorithm-*.test.js
+
+✔ v7 algorithm records have canonical typed round trips and explicit meaning (32.554753ms)
+✔ scalar spellings preserve signed zero, nonfinite values, bigint, strings and identity (7.060385ms)
+✔ input, semantic value, object identity, and string dependencies are distinct (1.108094ms)
+✔ every registry operation uses the same arity in structured and textual claims (36.002951ms)
+✔ completed observations remain distinct from a fulfilled undefined value (3.979475ms)
+✔ observations cannot enter generated records and predictions cannot impersonate observations (8.420434ms)
+✔ malformed, alternate spellings and previous formats fail closed (0.925493ms)
+✔ record schema refuses source transport fields and malformed claims (0.722168ms)
+✔ parser budgets reject oversized or cyclic expressions before evaluation (3.20888ms)
+✔ controlled readings expose fold order, arithmetic structure and effect roles (3.571924ms)
+✔ program readings contain dependencies and causal waits without inventing future results (2.527109ms)
+✔ generated grammar excludes observations and shares operation names and arities (7.45137ms)
+✔ algorithm teacher preserves source checks and replay while exposing computation and private-state meaning (6103.63762ms)
+✔ counter compiles from committed journal interactions with observations excluded from generated roles (3376.057332ms)
+✔ unproved cleanup and callback profiles keep independently checked detailed artifacts under their actual identity (2002.147597ms)
+✔ regeneration rejects changed claims, role masks, regions, receipts and context before accepting evidence (922.8692ms)
+✔ predeclared source-free tasks cover meaning, dependencies, conditions, effects and wrong paraphrases (70.827576ms)
+✔ survey projection does not expose answer keys or scoring rationales (44.461455ms)
+✔ missing responses stay in the declared denominator and missing timing stays unavailable (55.401828ms)
+✔ incorrect paraphrases and changed effect order are scored as wrong even with plausible answers (14.566592ms)
+✔ duplicate and unknown tasks cannot inflate comprehension accuracy (30.086159ms)
+✔ strict IR refuses unknown fields, incorrect operation arity and future dependencies (37.252903ms)
+✔ malformed algorithm records and scalar tags never invoke getters or proxy traps (1.521252ms)
+✔ normalization is capture-free, deterministic, idempotent and retains an explicit computation (150.408572ms)
+✔ normalization does not merge value coincidences or remove potentially throwing dead work (12.630789ms)
+✔ primitive meanings preserve number/string addition, bigint failures, NaN and signed zero (1.038942ms)
+✔ selections and logical terms preserve lazy evaluation and primitive truth (0.520291ms)
+✔ ordered binary64 accumulation retains empty/singleton/signed-zero and rounding-sensitive behavior (12.485479ms)
+✔ ordered fold refuses holes, extra properties, hooks, nonordinary prototypes and overlong arrays (8.10973ms)
+✔ heap inspection rejects accessors and duplicate properties and bypasses Map subclass hooks (1.402812ms)
+✔ semantic values cannot invent a reference outside the committed heap (1.34386ms)
+✔ normalization retains reads across writes, eager throws, and order-sensitive algebra (10.410855ms)
+✔ false emitted intermediate claims fail even when the final result is correct (5.814816ms)
+✔ effect evaluation stops at unseen observations and respects dispatch/delivery order (17.536119ms)
+✔ normalization keeps effect boundaries and never propagates an observed value into an earlier prefix (4.452513ms)
+✔ observable graph comparison preserves cycles and aliases while ignoring private allocation labels (2.356596ms)
+✔ observable graphs distinguish absent from undefined, signed zero and input mutations (11.057832ms)
+✔ observation contract checks effect multiplicity/order, correlated delivery and completion category (14.322744ms)
+✔ private transformation receipts bind exact source, rule/domain/interface and both semantic fragments (29.802795ms)
+✔ paired cost accounting partitions exact bytes and keeps tokens unavailable (34.702905ms)
+✔ serving costs cannot be manufactured from missing contexts or unavailable definitions (6.218654ms)
+✔ v7 context input references require an immutable previously published exact graph (9.052032ms)
+✔ cost audits reject role confusion instead of assigning it prediction loss (3.927771ms)
+✔ frozen pairing rejects changed source, input and raw targets (1.008931ms)
+✔ statistics retain missing denominators and signed paired deltas (0.207696ms)
+✔ candidate contract is deterministic, checked in and rejects old formats and wrong roles (84.976555ms)
+✔ negative recognition failures are distinguished from safe explicit refusals (0.546352ms)
+✔ paired runner executes source verification, normalization and negative distinctions without claiming promotion (6735.871901ms)
+✔ the counter exposes read, observation, increment, store, observation and completion with exact effects (193.17372ms)
+✔ future observations cannot alter earlier public prefixes or source authorization (53.623645ms)
+✔ scalar observations preserve JavaScript concatenation instead of assuming numeric addition (26.591537ms)
+✔ authorization binds the next boundary, source, capability, argument values and observation role (118.422084ms)
+✔ a rejected strict request leaves a resumable committed prefix instead of an unrecorded violation (33.734544ms)
+✔ out-of-profile BigInt facts remain observations and produce an explicit unsupported disposition (44.309207ms)
+✔ a false intermediate remains visible and cannot authorize a later store even with a correct final answer (31.166074ms)
+✔ alternative valid subexpression claims are checked without requiring canonical teacher bytes (49.618701ms)
+✔ rejections complete as throws without issuing later effects and preserve observation authority across restore (44.69932ms)
+✔ concurrent dispatch, settled checkpoints and resume never duplicate a host effect (32.687989ms)
+✔ a durable intent makes an older selected checkpoint uncertain and requires explicit reconciliation (104.233786ms)
+✔ persisted checkpoints restore selected work and preserve settled dispatch deduplication (164.075364ms)
+✔ an in-flight checkpoint restores as uncertain and cannot silently redispatch (13.441922ms)
+✔ a selected checkpoint without durable dispatch evidence restores conservatively as uncertain (39.114327ms)
+✔ checkpoint lifecycle replay rejects dispatch downgrades, forged timeline authority and alternate codecs (241.9207ms)
+✔ checkpoint reconciliation evidence must agree with the observed timeline and settled intent (77.950978ms)
+✔ rehashed checkpoint edits cannot alter pending payloads, observation claims or request identities (83.489088ms)
+✔ unproved scheduling, cleanup, callbacks and out-of-order forms keep explicit detailed dispositions (8.081346ms)
+✔ declared equivalence families converge without source spelling or private allocation identities (523.64725ms)
+✔ ordered folds agree with independent native execution over exhaustive small inputs and numeric edges (1894.104864ms)
+✔ numeric fold guards reject sparse, coercing, hooked, custom, nonfinite, and oversized arrays (4.13848ms)
+✔ negative pairs keep changed computations, source effects, aliases, error paths, and captures distinct (23.415966ms)
+✔ private scalarization preserves the computational relation and explicit numeric domain (17.539436ms)
+✔ lexical shadowing and bounded helpers preserve bindings and argument evaluation (2.62198ms)
+✔ representative folds and private-state sources retain owned replay and independent source checks (3386.940092ms)
+✔ token meter policy rejects other assets, dirty consumers, and false native-qualification claims (12.793037ms)
+✔ token meter fails explicitly when an independently pinned consumer is unavailable (414.718348ms)
+✔ actual pinned ByteCodec reproduces the frozen gallery and meters exact v7/context bytes (6478.501341ms)
+ℹ tests 76
+ℹ suites 0
+ℹ pass 76
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13312.222347
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.3
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.3
+npm notice To update run: npm install -g npm@12.2.3
+npm notice

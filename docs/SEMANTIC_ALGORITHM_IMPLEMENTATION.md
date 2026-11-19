@@ -33,11 +33,17 @@ external comprehension or learning evidence.
 | --- | --- | --- |
 | 0: contract/baseline | Contract, assumption inventory, direction links, frozen eleven-case v6 and equivalence-family baselines | Implemented. `docs/evidence/semantic-algorithm-v7/baseline-v6.json` preserves the exact reviewed gallery; the comparison runner pairs all new source families with detailed execution. |
 | 1: typed core | Validation, operation registry/checker, observables, receipts, alpha/temp/helper normalization | Implemented in `src/semantic/`; strict data/identity guards, deterministic/idempotent normalization, truthful alternative claims, and source-evidence regeneration have regression tests. |
-| 2: ordered sum | Shared fold for indexed `for`, matching `while`, eligible helper/temp forms, certified `for...of` | Implemented with dense ordinary finite-number input guards, ascending binary64 accumulation, and exhaustive small/edge inputs. `reduce` remains explicitly unproved. |
+| 2: ordered sum | Shared fold for indexed `for`, matching `while`, eligible helper/temp forms, certified `for...of` | Implemented with dense ordinary finite-number input guards, ascending binary64 accumulation, and enumerated small/edge inputs. `reduce` remains explicitly unproved. |
 | 3: private state | Bounded def-use/liveness/escape analysis, object/scalar convergence | Implemented for private ordinary objects and aliases. Returned, captured, effect-exposed, retained, hooked, and input mutations are refused by the abstract profile. |
-| 4: counter | Regions across observations, trusted routing, derived payload, narrow async profile, durable resume | Implemented for `serial-scalar-effects/1`. Tests cover exact order/arguments, rejections, future-prefix isolation, false-claim blocking, durable checkpoints, stale intents, reconciliation, and dispatch deduplication. Cleanup/callback/concurrent-request forms retain detailed dispositions. |
+| 4: counter | Regions across observations, trusted routing, derived payload, narrow async profile, durable resume | Implemented for `serial-scalar-effects/1`. Tests cover exact order/arguments, rejections, future-prefix isolation, false-claim blocking, durable checkpoints, stale intents, reconciliation, and dispatch deduplication. Cleanup/callback/concurrent-request forms return a separately versioned, independently checked v6 detailed artifact. |
 | 5: consumers | Codec/GBNF/rendering, controller/harness, context/continuation, admission/contracts, native agreement | JavaScript candidate codec, controlled renderer, serving controller/harness, cached definitions/inputs, live state, contract generator and strict v7 version identities implemented. Independent production native v7 consumer remains a required companion change. |
 | 6: promotion | Paired full costs, coverage/refusals/false merges, comprehension, native qualification | Comparison runner and exact pinned-tokenizer meter implemented. Native serving qualification and external comprehension evidence remain open; production default is not promoted. |
+
+This is the bounded JavaScript candidate described by the plan's shadow phase.
+Phases 0–4 are implemented within the declared profiles. Phase 5 remains open
+for the independent native consumer, and phase 6 remains open for production
+data/serving integration, complete costs, comprehension qualification, and
+default promotion. No old-format decoder or checkpoint migration was added.
 
 Core modules are `src/semantic/ir.js`, `operations.js`, `observables.js`,
 `lower-js.js`, `provenance.js`, and `normalize-algorithm.js`. Names are
@@ -96,6 +102,19 @@ establish lower serving cost.
 
 ## Equivalence and adversarial checks
 
+The immutable [paired report](evidence/semantic-algorithm-v7/paired-e96dd4e/MEASUREMENTS.md)
+was produced from clean revision `e96dd4e51d7977554f05dc1794272d5145c69663`.
+It retains all 98 declared executions: 93 normalized, five detailed fallbacks,
+and zero verification failures. All 87 family executions converge in 19/19
+input groups; 28/28 negative checks pass (26 source-recognition refusals and
+two independently executed distinct pairs), with zero observed false merges
+or unsafe admissions. Every frozen gallery source, input, and v6 target matches.
+
+Actual pinned-tokenizer counts for the unchanged eleven-case gallery are
+1,307 → 1,154 generated tokens (−11.7%). The report includes explicit-expression
+increases, all fallbacks, public-envelope costs, and actual JavaScript context
+costs. It does not establish lower native serving cost or better comprehension.
+
 Versioned families declare source variants, transformation relationships,
 input/effect domains, expected structure, distinct provenance, and a shared
 family identity. Keep relatives together in dataset splits; held-out renaming
@@ -135,6 +154,12 @@ rechecking, comparison, and token-metering interfaces. `validateAlgorithmTrace`
 accepts checked subexpression decompositions without requiring teacher bytes;
 `verifyAlgorithmProjection` separately enforces exact artifact regeneration.
 
+For an unsupported candidate profile, `verifyAlgorithmTrainingCase()` returns
+`status: 'detailed-fallback'`, `exported: null`, and a separately versioned v6
+artifact in `detailed`. This disposition preserves independently checked
+evidence. A detailed fallback within a future production v7 contract is still
+rollout work; no old artifact is relabeled.
+
 The serving definition and immutable input graph are published once per
 consumer cache. Every later reference must resolve to an available definition.
 Context carries live committed values, needed alternative-expression
@@ -172,21 +197,42 @@ Python parser do not qualify the pinned production consumer. If the companion
 or tokenizer cannot run, record native admission/token costs as **unavailable**,
 continue available implementation and checks, and leave release gates open.
 
-`tools/tokenize-semantic-gallery.py` imports the companion's `ByteCodec` and
-pinned tokenizer. Native supervision must verify zero prediction loss on
-observations and exclude unseen future responses from model context. Old
+`tools/semantic-algorithm-tokenizer.py` and `src/semantic/tokenizer.js` import
+the companion's `ByteCodec` and verify the exact pinned tokenizer and clean
+consumer revision. Their qualification scope is byte-exact token metering,
+with `nativeAdmission: false`. `tools/tokenize-semantic-gallery.py` remains the
+historical gallery meter. Native supervision must verify zero prediction loss
+on observations and exclude unseen future responses from model context. Old
 receipts/checkpoints retain their original identities.
+
+## Remaining production integration
+
+The existing `src/training/causal-lm-bridge.js` and
+`tools/export-causal-lm-data.mjs` continue to target v6. The candidate fixtures
+declare semantic family identities, but integrating them into prepared/native
+datasets and enforcing those families across training splits is still phase-6
+work. It must follow the new consumer contract and fresh admission receipts.
+
+The paired report measures exact target/observed payloads, public JSONL
+envelopes, and supplied JavaScript context snapshots. It does not measure
+native model framing, cache/retrieval costs, or native prediction boundaries.
+Observed categories have byte breakdowns and aggregate token counts. Only
+total verification time is measured; separate lowering, normalization,
+checking, dispatch, and continuation timings remain unavailable. The run
+shared the host with the full test suite and is not an isolated latency study.
 
 ## Promotion gates and evidence limits
 
-- [ ] All declared positive/negative families pass.
-- [ ] Every emitted operation is checkable under its stated profile.
-- [ ] Independent source, alias, exception, cleanup, and causal checks pass.
+- [x] All declared positive/negative families pass in the finite paired suite.
+- [x] Emitted operations are checked under their stated JavaScript profiles.
+- [x] Independent source, alias, exception, cleanup, and causal regression checks pass.
 - [ ] Native and JavaScript consumers agree on valid/malformed records.
-- [ ] Continuations and generated/observed boundaries are qualified.
-- [ ] Full-cost measurements cover the unchanged baseline.
+- [x] JavaScript continuation and generated/observed boundary regressions pass.
+- [ ] Native continuations, visibility, and observation loss masks are qualified.
+- [ ] Full native serving-cost measurements cover the unchanged baseline.
 - [ ] Predeclared comprehension tasks show no material regression.
-- [ ] Unsupported cases have explicit faithful dispositions.
+- [x] Unsupported candidate cases have explicit, independently checked v6 dispositions.
+- [ ] Prepared/native/causal-LM data uses v7 and enforces semantic-family splits.
 - [ ] New artifacts are regenerated/admitted under actual identities.
 
 Comprehension covers algorithm identification, dependencies, selection, next
