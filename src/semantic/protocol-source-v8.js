@@ -135,7 +135,8 @@ export async function verifyProtocolRegionTrainingCase(fixture){
     phase='projection';const exported=projectProtocolRegionWitness(sourceArtifact);
     return {...identity,status:exported.sidecar.regionCoverage.compactRegions?'locally_verified':'detailed-fallback',
       representation:'mixed',profile:exported.sidecar.protocolProfile,exported,regionCoverage:exported.sidecar.regionCoverage};
-  }catch(error){return {...identity,status:error instanceof RangeError?'resource_limited':'unsupported',phase,
+  }catch(error){return {...identity,status:error instanceof RangeError||error.category==='resource_limited'?'resource_limited':
+    String(error.category??'').startsWith('reference_')?'failed':'unsupported',phase,
     category:error.category??'unsupported.protocol-source',reason:error.message,regionDisposition:'source-unqualified'};}
 }
 

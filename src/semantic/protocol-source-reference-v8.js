@@ -13,11 +13,12 @@ import {ownedProtocolSourceObservations,compareProtocolCompletionObservations} f
 import {compareProtocolMetadata} from './protocol-metadata-v8.js';
 
 const worker=fileURLToPath(new URL('../../tools/protocol-reference-v8.mjs',import.meta.url));
-const fail=message=>{throw new TypeError('Protocol source reference: '+message);};
+const fail=message=>{const error=new TypeError('Protocol source reference: '+message);
+  error.category='reference_mismatch';throw error;};
 export function independentProtocolSourceReference(input,{timeoutMs=10000,maxOutputBytes=8388608,
   isolation=referenceIsolationMode()}={}){
   if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||!Number.isSafeInteger(maxOutputBytes)||maxOutputBytes<1)
-    fail('positive deadline and byte bound required');
+    throw new TypeError('Protocol source reference: positive deadline and byte bound required');
   return new Promise((resolve,reject)=>{
     let command;try{command=referenceCommand(worker,{timeoutMs,isolation});}catch(error){reject(error);return;}
     const child=spawn(command.command,command.args,{stdio:['pipe','pipe','pipe'],shell:false,env:command.env});
@@ -31,10 +32,12 @@ export function independentProtocolSourceReference(input,{timeoutMs=10000,maxOut
     child.stdin.on('error',error=>finish(error));
     child.once('close',code=>{if(finished)return;
       try{const value=JSON.parse(Buffer.concat(chunks).toString('utf8'));
-        if(code!==0||value.error||value.schema!=='protocol-source-reference/1')
-          throw new TypeError(value.error??'Malformed independent result: '+stderr);
+        if(code!==0||value.error||value.schema!=='protocol-source-reference/1'){
+          const error=new TypeError(value.error??'Malformed independent result: '+stderr);
+          error.category=value.category??'reference_process_failure';throw error;
+        }
         finish(null,value);
-      }catch(error){finish(error);}
+      }catch(error){error.category??='reference_process_failure';finish(error);}
     });child.stdin.end(JSON.stringify({...input,timeoutMs}));
   });
 }

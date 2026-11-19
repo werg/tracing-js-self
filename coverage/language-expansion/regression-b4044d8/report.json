@@ -1,0 +1,15 @@
+{
+  "schema": "frozen-node-regression/1",
+  "producerRevision": "b4044d88dafb53be75093b525b00dca66b5e7be9",
+  "nodeVersion": "v24.22.3",
+  "command": "node --test --test-concurrency=4 test/*.test.js",
+  "tests": 1457,
+  "passes": 1451,
+  "failures": 0,
+  "skips": 6,
+  "durationMs": 383899.112413,
+  "log": "node-test.log",
+  "logBytes": 136992,
+  "logSha256": "5aab969f35220c71cb9d1874c4ebdf6fc1cf612e22c894151648772135e62e5b",
+  "scope": "Full test directory at the exact producer revision; subsequent protocol changes require another integrated run."
+}

@@ -23,6 +23,13 @@ export function completionObservationPlan(source){
       throw new TypeError('Reserved independent observation hook in source');
     const nested=depth+Number(['FunctionDeclaration','FunctionExpression','ArrowFunctionExpression'].includes(node.type));
     if(depth){
+      if(node.type==='ClassDeclaration'&&node.id){
+        const key=site(node);sites.set('initialize:'+key,node);
+        // Class evaluation (including all static initializers) finishes before
+        // the outer lexical binding is observed. Abrupt evaluation reaches no
+        // hook, and declarations keep their original lexical scope.
+        insertions.push({at:node.end,text:';'+COMPLETION_HOOK+'('+JSON.stringify(key)+',"initialize",'+node.id.name+');'});
+      }
       if(node.type==='VariableDeclarator'&&node.id.type==='Identifier'&&
         !['ForOfStatement','ForInStatement'].includes(parent?.parentType)){
         if(node.init)add(node,'initialize',node.init);
@@ -174,9 +181,15 @@ export function ownedCompletionObservations(bundle,source,{onObservation=null,as
     const abrupt=event.completion?.type==='throw';
     if(!abrupt&&['binding.initialize','binding.write'].includes(event.operation)&&plan.sites.has('initialize:'+key)){
       const declaration=plan.sites.get('initialize:'+key);
-      if(instruction?.arg!==declaration.id.name)
-        throw new TypeError('Source initialization site names a different committed binding');
-      emit(key,'initialize',storedCell(previousFrame?.envId,instruction?.arg));
+      // Class lowering initializes private compiler cells at the same source
+      // span. Only its named outer INIT is the declaration completion; the
+      // class's inner self binding is initialized by CLASS_FINISH instead.
+      const internalClassCell=declaration.type==='ClassDeclaration'&&instruction?.op==='INIT'&&instruction.arg?.startsWith('[[');
+      if(!internalClassCell){
+        if(instruction?.arg!==declaration.id.name)
+          throw new TypeError('Source initialization site names a different committed binding');
+        emit(key,'initialize',storedCell(previousFrame?.envId,instruction?.arg));
+      }
     }
     if(!abrupt&&event.operation==='binding.read'&&plan.sites.has('assign:'+key)){
       const assignment=plan.sites.get('assign:'+key);

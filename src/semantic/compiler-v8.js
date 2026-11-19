@@ -144,22 +144,46 @@ export function projectRegionWitness(sourceArtifact){
     {compactRegions:compactRecords,detailedRegions,compactRecords,detailedRecords,compactBytes,detailedBytes});
 }
 
+const projectionAttempt=(profile,result)=>({profile,status:result.status,phase:result.phase??null,
+  category:result.category??null,reason:result.reason??null,
+  failureDigest:result.failure?.failureDigest??null});
+async function tryDirectProtocolSource(fixture,prior){
+  const {verifyProtocolRegionTrainingCase}=await import('./protocol-source-v8.js');
+  const protocol=await verifyProtocolRegionTrainingCase(fixture),regionAttempts=[
+    projectionAttempt('selected-detailed/1',prior),projectionAttempt('direct-protocol-source/1',protocol)];
+  if(protocol.exported||['failed','resource_limited'].includes(protocol.status))return {...protocol,regionAttempts};
+  return {...prior,regionAttempts,protocolRefusal:projectionAttempt('direct-protocol-source/1',protocol)};
+}
 export async function verifyRegionTrainingCase(fixture){
   const identity=Object.fromEntries(['id','family','source','entry','ancestorIds','ancestors']
     .filter(key=>Object.hasOwn(fixture,key)).map(key=>[key,copy(fixture[key])]));
   const source=await verifyEffectfulTrainingCase({...fixture,nativeConsumer:null,nativePolicy:null,
     projectionOptions:{...fixture.projectionOptions,semanticRegions:false,localStateCompaction:false}});
-  if(!['locally_verified','admitted'].includes(source.status))return {...identity,...source,regionDisposition:'source-unqualified',exported:undefined};
+  if(!['locally_verified','admitted'].includes(source.status)){
+    const refused={...identity,...source,regionDisposition:'source-unqualified',exported:undefined};
+    // Only representation/observer capability refusals may try a separately
+    // qualified source path. Reference disagreement and resource failures keep
+    // their original evidence and never trigger a more permissive retry.
+    if(source.phase==='projection'&&source.status==='projection_refused'||
+      source.phase==='reference'&&source.status==='reference_completion_unsupported')
+      return tryDirectProtocolSource(fixture,refused);
+    return refused;
+  }
   try{
     const exported=projectRegionWitness(source.exported),count=exported.sidecar.regionCoverage.compactRegions;
     return {...identity,status:count?'locally_verified':'detailed-fallback',representation:'mixed',profile:'compositional-regions/1',
       exported,detailed:source.exported,regionCoverage:exported.sidecar.regionCoverage};
-  }catch(error){return {...identity,status:'unsupported',phase:'projection',sourceStatus:source.status,
-    category:error.category??'unsupported.region-projection',reason:error.message};}
+  }catch(error){const refused={...identity,status:error instanceof RangeError?'resource_limited':'unsupported',
+    phase:'projection',sourceStatus:source.status,category:error.category??'unsupported.region-projection',reason:error.message};
+    return refused.status==='unsupported'?tryDirectProtocolSource(fixture,refused):refused;}
 }
 
 export async function recheckRegionEvidence(exported,{nativeConsumer=null,nativePolicy=null,requireNative=false}={}){
   const side=exported?.sidecar;
+  if(side?.schema==='semantic-protocol-region-evidence/1'){
+    const {recheckProtocolRegionEvidence}=await import('./protocol-source-v8.js');
+    return recheckProtocolRegionEvidence(exported,{nativeConsumer,nativePolicy,requireNative});
+  }
   if(side?.schema!=='semantic-region-evidence/1'||side.representation!==REGION_TRACE_VERSION||
     side.referenceStatus!=='agreed'||side.sourceArtifactDigest!==digest(side.sourceArtifact)||
     side.optimizerSteps!==0||side.learningClaim!==null)fail('incompatible or altered source evidence');
