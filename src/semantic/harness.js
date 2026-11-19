@@ -11,7 +11,7 @@ import {defineAlgorithmProgram,hashAlgorithmData,ALGORITHM_EXECUTION_VERSION} fr
 import {encodeAlgorithmRecord,decodeAlgorithmRecord} from './trace-codec.js';
 
 const copy=value=>structuredClone(value);
-const checkpointVersion='semantic-algorithm-checkpoint/1';
+const checkpointVersion='semantic-algorithm-checkpoint/2';
 function reject(message){const error=new Error(message);error.category='algorithm-dispatch';throw error;}
 function inputGraphOf(args){const {schema,...graph}=encodeNativeGraph(args);return graph;}
 
@@ -95,7 +95,8 @@ export class AlgorithmExecutionHarness {
   }
   modelContext(){return this.controller.context({definitions:this.definitions});}
   exportEpisode(){
-    return {schema:ALGORITHM_EXECUTION_VERSION,traceFormat:'semantic-trace/7',
+    return {schema:ALGORITHM_EXECUTION_VERSION,traceFormat:'semantic-trace/7',contextFormat:'semantic-context/7',
+      representation:'algorithm',profile:'algorithm-execution/1',
       timeline:copy(this.timeline),completion:copy(this.controller.completion),
       claims:copy(this.controller.claims),firstViolation:copy(this.controller.firstViolation)};
   }

@@ -79,7 +79,8 @@ export async function auditAlgorithmCosts(episode,{contexts=null,tokenizer=null,
     let inputPublications=0,inputReferences=0,inputBytes=0;
     for(const context of contexts){
       if(!context||typeof context.definition!=='string')throw new TypeError('Context definition identity missing');
-      if(episode.traceFormat===ALGORITHM_TRACE_VERSION&&context.schema!==ALGORITHM_CONTEXT_VERSION)
+      if(episode.traceFormat===ALGORITHM_TRACE_VERSION&&
+        (context.schema!==ALGORITHM_CONTEXT_VERSION||context.representation!=='algorithm'))
         throw new TypeError('Algorithm context version missing or changed');
       if(context.program){
         if(context.program.definitionDigest!==context.definition)

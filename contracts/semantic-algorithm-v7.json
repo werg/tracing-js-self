@@ -422,9 +422,38 @@
       "recordBytes": 65536,
       "arguments": 128
     },
+    "execution": {
+      "fields": [
+        "schema",
+        "traceFormat",
+        "contextFormat",
+        "representation",
+        "profile",
+        "timeline",
+        "completion",
+        "claims",
+        "firstViolation"
+      ],
+      "representation": "algorithm",
+      "profile": "algorithm-execution/1",
+      "checkpoint": "semantic-algorithm-checkpoint/2",
+      "continuationFields": [
+        "schema",
+        "representation",
+        "program",
+        "inputGraph",
+        "capabilities",
+        "invocationId",
+        "sessionId",
+        "history",
+        "state",
+        "integrity"
+      ]
+    },
     "context": {
       "required": [
         "schema",
+        "representation",
         "definition",
         "input",
         "invocationId",
@@ -432,6 +461,7 @@
         "visibleThrough",
         "prefixDigest"
       ],
+      "representation": "algorithm",
       "optional": [
         "program",
         "inputGraph"
@@ -475,7 +505,7 @@
       "scope": "Syntax-only; strict value, binding, budget, capability, and causal checks still required"
     }
   },
-  "digest": "8b4aaf3c9c64cc2a51b57da31efc48aa8fe5fcd8895696fcf2089dea230056e9",
+  "digest": "dcb76c95605ac50b0648a83214111b7905347a79c7d57d4f4da9fa7fbf7a0eec",
   "fixtureDigest": "12078b6b63853ac7ad1016a872480fa997ee90dd6afa7d216bdad91a92655d99",
   "fixtures": {
     "scope": "Decoder fixtures test typed parsing; semantic examples separately test evaluation",

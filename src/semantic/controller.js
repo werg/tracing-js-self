@@ -174,23 +174,23 @@ export class AlgorithmController {
     const inputDigest=hashAlgorithmData(this.inputGraph),publishInput=!definitions.has(inputDigest);
     if(!publishInput&&!eq(definitions.get(inputDigest),this.inputGraph))fail('Consumer input cache mismatch');
     if(publishInput)definitions.set(inputDigest,clone(this.inputGraph));
-    return {schema:ALGORITHM_CONTEXT_VERSION,definition:digest,
+    return {schema:ALGORITHM_CONTEXT_VERSION,representation:'algorithm',definition:digest,
       ...(publish?{program:clone(this.program)}:{}),input:inputDigest,
       ...(publishInput?{inputGraph:clone(this.inputGraph)}:{}),
       invocationId:this.invocationId,state:this.liveState(),visibleThrough:this.history.length,
       prefixDigest:hashAlgorithmData(this.history)};
   }
   checkpoint(){
-    const body={schema:ALGORITHM_CONTINUATION_VERSION,program:clone(this.program),inputGraph:clone(this.inputGraph),
+    const body={schema:ALGORITHM_CONTINUATION_VERSION,representation:'algorithm',program:clone(this.program),inputGraph:clone(this.inputGraph),
       capabilities:[...this.capabilities],invocationId:this.invocationId,sessionId:this.sessionId,
       history:clone(this.history),state:this.liveState()};
     return {...body,integrity:hashAlgorithmData(body)};
   }
   static restore(packet){
-    assertAlgorithmFields(packet,['schema','program','inputGraph','capabilities','invocationId','sessionId',
+    assertAlgorithmFields(packet,['schema','representation','program','inputGraph','capabilities','invocationId','sessionId',
       'history','state','integrity'],'algorithm continuation');
     const {integrity,...body}=packet??{};
-    if(body.schema!==ALGORITHM_CONTINUATION_VERSION||hashAlgorithmData(body)!==integrity)
+    if(body.schema!==ALGORITHM_CONTINUATION_VERSION||body.representation!=='algorithm'||hashAlgorithmData(body)!==integrity)
       fail('Algorithm continuation version or integrity mismatch');
     const controller=new AlgorithmController(body);
     assertAlgorithmDataArray(body.history,'continuation history');

@@ -226,7 +226,7 @@ test('persisted checkpoints restore selected work and preserve settled dispatch 
   selectNext(harness);
   const selectedReceipt=await harness.persistCheckpoint();
   assert.match(selectedReceipt.key,/^[a-f0-9]{64}$/);
-  assert.equal(selectedReceipt.checkpointSchema,'semantic-algorithm-checkpoint/1');
+  assert.equal(selectedReceipt.checkpointSchema,'semantic-algorithm-checkpoint/2');
   assert(selectedReceipt.bytes>0);
   let calls=0;
   const selected=await AlgorithmExecutionHarness.restoreFromJournal({journal,key:selectedReceipt.key});
@@ -350,4 +350,20 @@ test('unproved scheduling, cleanup, callbacks and out-of-order forms keep explic
   ];
   for(const body of bodies)assert.throws(()=>defineAlgorithmProgram({source:'"use strict";'+body,entry:'run'}),
     error=>error.category==='unsupported.algorithm-profile');
+});
+
+test('v7 algorithm profiles reject earlier undifferentiated continuations and checkpoints',()=>{
+  const harness=fresh();
+  assert.equal(harness.exportEpisode().representation,'algorithm');
+  assert.equal(harness.exportEpisode().profile,'algorithm-execution/1');
+  assert.equal(harness.modelContext().representation,'algorithm');
+  const old=harness.controller.checkpoint();
+  delete old.representation;delete old.integrity;old.integrity=hashAlgorithmData(old);
+  assert.throws(()=>AlgorithmController.restore(old),/continuation|fields/);
+  const wrong=harness.controller.checkpoint();wrong.representation='detailed';
+  delete wrong.integrity;wrong.integrity=hashAlgorithmData(wrong);
+  assert.throws(()=>AlgorithmController.restore(wrong),/continuation/);
+  const checkpoint=harness.checkpoint();checkpoint.schema='semantic-algorithm-checkpoint/1';
+  delete checkpoint.integrity;checkpoint.integrity=hashAlgorithmData(checkpoint);
+  assert.throws(()=>AlgorithmExecutionHarness.restore(checkpoint),/checkpoint/);
 });
