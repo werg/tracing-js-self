@@ -64,7 +64,7 @@ export async function buildSemanticExecutionContract(){
       public:'hash(public)',contexts:'hash(contexts)',source:'separate fresh source/reference/journal replay receipt'},
     nativeAdmission:{schema:'semantic-native-admission/7',componentGate:'native-consumer-only',
       fields:['schema','componentGate','traceFormat','representation','episodeDigest','contextsDigest',
-        'consumerRevision','schemaDigest','fixtureDigest','contractDigest','tokenizerIdentity','tokenizerSha256',
+        'nativeTrainingDigest','consumerRevision','schemaDigest','fixtureDigest','contractDigest','tokenizerIdentity','tokenizerSha256',
         'generatedTokens','observedTokens','physicalRecords','actions','lossMaskValidated','visibilityValidated',
         'fragmentationValidated','contextValidated','continuationValidated','admitted','optimizerSteps'],
       sourceAuthority:'Never inferred from this native-only receipt'},

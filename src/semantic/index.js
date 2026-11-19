@@ -18,7 +18,15 @@ export {ALGORITHM_EXECUTION_VERSION,ALGORITHM_CONTEXT_VERSION,ALGORITHM_CONTINUA
 export {AlgorithmController,validateAlgorithmTrace} from './controller.js';
 export {AlgorithmExecutionHarness} from './harness.js';
 export {compileAlgorithmWitness,verifyAlgorithmProjection,verifyAlgorithmTrainingCase,
-  recheckAlgorithmEvidence,checkAlgorithmCounterfactualPrefixes} from './compiler.js';
+  recheckAlgorithmEvidence,admitAlgorithmEvidence,checkAlgorithmCounterfactualPrefixes} from './compiler.js';
+export {encodeDetailedRecord,decodeDetailedRecord,projectDetailedV7,verifyDetailedProjection,
+  validateDetailedProjection,detailedContextForSequence,DETAILED_PROFILE} from './detailed-v7.js';
+export {buildSemanticFamilyRegistry,verifySemanticFamilyRegistry,semanticSplitIdentity,
+  verifySemanticSplitIdentity,validateSemanticFamilyAssignments} from './family-registry.js';
+export {causalLmV7Prompt,encodeCausalLmV7Example,buildCausalLmV7Examples,
+  createCausalLmV7Selector,CAUSAL_LM_V7_BRIDGE_VERSION} from './causal-lm-v7.js';
+export {prepareSemanticFamilyRegistry,bindSemanticFamilySplit,buildSemanticV7Dataset} from './dataset-v7.js';
+export {loadV7NativePolicy,validateV7NativePolicy,validateV7NativeReceipt} from './native-v7.js';
 export {auditAlgorithmCosts,compareSemanticRepresentations} from './evaluation.js';
 export {createAlgorithmTokenizer,validateAlgorithmTokenizerEvidence} from './tokenizer.js';
 export {publicComprehensionTasks,scoreComprehensionResponses,validateComprehensionTaskset,

@@ -1,7 +1,6 @@
 // The algorithm teacher is a source-certified projection of a private owned
 // archive. Its serving controller never imports this module or that archive.
 import {isDeepStrictEqual} from 'node:util';
-import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {validateBundle} from '../validation.js';
@@ -22,7 +21,7 @@ import {validateV7NativeReceipt,loadV7NativePolicy} from './native-v7.js';
 
 const copy=value=>structuredClone(value);
 const eq=isDeepStrictEqual;
-const sourceArtifactDigest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
+const sourceArtifactDigest=value=>hashAlgorithmData(JSON.parse(JSON.stringify(value)));
 function refuse(message){const error=new Error('Algorithm teacher projection: '+message);
   error.category='unsupported.algorithm-projection';throw error;}
 const uniqueInputIds=roots=>[...new Set(roots.filter(value=>value[0]==='ref').map(value=>value[1]))];

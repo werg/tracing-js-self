@@ -1,7 +1,6 @@
 // Versioned detailed witnesses for the selected detailed execution profile.
 // This codec deliberately does not accept or emit the legacy source-shaped
 // witness grammar: every v7 detail is a canonical typed JSON record.
-import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {SelectedExecutionHarness} from '../training/harness-v4.js';
 import {SelectedModelDriver} from '../training/model-driver.js';
@@ -24,9 +23,9 @@ const own=(value,key)=>Object.hasOwn(value,key);
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&
   [Object.prototype,null].includes(Object.getPrototypeOf(value));
 const sha=value=>hashAlgorithmData(value);
-// Private source artifacts are evidence packets whose persisted identity is
-// their ordinary JSON representation, including omitted undefined fields.
-const privateDigest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
+// Hash persisted JSON data with the same canonical serializer used natively.
+// Optional undefined source fields are omitted before the identity is formed.
+const privateDigest=value=>hashAlgorithmData(JSON.parse(JSON.stringify(value)));
 const legacyForbidden=new Set(['code','input','observe','value-open','value-part','value-close']);
 const logicalFragments=new Set(['value-open','value-part','value-close']);
 const maxRecordBytes=65536;
@@ -126,51 +125,50 @@ function sourceInfo(timeline,invocationId){
     ['source-read','source-evict'].includes(row.kind)&&realmTracks.has(row.track)&&realmPrograms.has(row.programId);
 }
 
-function translatePrefix(prefix){
+function translatePrefix(prefix,projectedTimeline){
   if(prefix?.schema!=='selected-inference-prefix/2')fail('private source replay did not produce the expected v6 inference prefix');
   const translated=structuredClone(prefix);
   translated.schema=DETAILED_PREFIX_VERSION;
   translated.representation='detailed';
   translated.traceFormat=DETAILED_TRACE_VERSION;
-  translated.committed=prefix.committed.map(translatedRow);
-  translated.realmCommitted=prefix.realmCommitted.map(translatedRow);
-  const realmDigests=new Map();
-  const relevant=sourceInfo(prefix.realmCommitted,prefix.invocationId);
-  for(const row of translated.realmCommitted){
-    if(row.kind!=='model-context'||!own(row,'selectedState'))continue;
-    const prior=prefix.realmCommitted.filter(item=>item.sequence<=row.visibleThrough&&relevant(item))
-      .map(translatedRow);
-    row.realmPrefixDigest=hashAlgorithmData(prior);
-    realmDigests.set(row.sequence,row.realmPrefixDigest);
-  }
-  translated.committed=translated.committed.map(row=>
-    row.kind==='model-context'&&realmDigests.has(row.sequence)?
-      {...row,realmPrefixDigest:realmDigests.get(row.sequence)}:row);
+  translated.selectedState.schema=DETAILED_CONTINUATION_VERSION;
+  const bySequence=new Map(projectedTimeline.map(row=>[row.sequence,row]));
+  const exactPublicRow=row=>{
+    const projected=bySequence.get(row.sequence);
+    if(!projected||projected.kind!==row.kind||projected.mode!==row.mode)
+      fail('context row has no exact projected public counterpart');
+    return structuredClone(projected);
+  };
+  // Earlier receipts are immutable public bytes. Reuse their already checked
+  // causal digests even when a later callback joins the same realm.
+  translated.committed=prefix.committed.map(exactPublicRow);
+  translated.realmCommitted=prefix.realmCommitted.map(exactPublicRow);
   return translated;
 }
 
-function makeDetailedContext(prefix){
-  const translated=translatePrefix(prefix);
+function makeDetailedContext(prefix,projectedTimeline){
+  const translated=translatePrefix(prefix,projectedTimeline);
   const visibleThrough=Math.max(0,...translated.realmCommitted.map(row=>row.sequence));
   const context={schema:DETAILED_CONTEXT_VERSION,representation:'detailed',prefix:translated,
     visibleThrough,prefixDigest:hashAlgorithmData(translated)};
   return publicJSON(context);
 }
 
-function contextForTarget(sourceExport,targetIndex,target){
+function contextForTarget(sourceExport,targetIndex,target,projectedTimeline){
   const prior={...sourceExport.public,timeline:sourceExport.public.timeline.slice(0,targetIndex)};
   const harness=SelectedExecutionHarness.replay({public:prior},{requireTerminal:false});
   harness.prepareModelContext(target.invocationId);
   const driver=new SelectedModelDriver({harness,select:()=>{throw new Error('Context derivation cannot select a record');}});
-  try{return makeDetailedContext(driver.prefix(target.invocationId));}
+  try{return makeDetailedContext(driver.prefix(target.invocationId),projectedTimeline);}
   finally{driver.close();}
 }
 
 function recomputeDetailedModelContexts(timeline){
   for(const row of timeline){
     if(row.kind!=='model-context'||!own(row,'selectedState'))continue;
-    const relevant=sourceInfo(timeline,row.invocationId);
-    const prior=timeline.filter(item=>item.sequence<=row.visibleThrough&&relevant(item));
+    const available=timeline.filter(item=>item.sequence<=row.visibleThrough);
+    const relevant=sourceInfo(available,row.invocationId);
+    const prior=available.filter(relevant);
     row.realmPrefixDigest=hashAlgorithmData(prior);
   }
 }
@@ -215,6 +213,8 @@ function validateContext(context){
     'taskRevision','parentInvocationId','receiver','closureId','activation','selectedState'];
   if(Object.keys(prefix).length!==prefixFields.length||prefixFields.some(key=>!own(prefix,key)))
     fail('unexpected or missing inference prefix fields');
+  if(prefix.selectedState?.schema!==DETAILED_CONTINUATION_VERSION)
+    fail('detailed prefix requires a v7 selected continuation');
   if(context.visibleThrough!==Math.max(0,...prefix.realmCommitted.map(row=>row.sequence)))
     fail('context cutoff');
   if(hashAlgorithmData(prefix)!==context.prefixDigest)fail('context prefix digest');
@@ -257,7 +257,7 @@ export function projectDetailedV7(sourceArtifact,{fallback=null,maxTargets=4096}
     if(row.kind!=='semantic')continue;
     if(targets.length>=maxTargets)fail('target cap exceeded; partial episodes cannot be projected');
     targets.push(publicJSON({sequence:row.sequence,invocationId:row.invocationId,
-      context:contextForTarget(sourceArtifact,i,row)}));
+      context:contextForTarget(sourceArtifact,i,row,publicData.timeline)}));
   }
   if(!targets.length)fail('certified detailed episode has no generated semantic targets');
   const contexts=targets.map(item=>item.context);
