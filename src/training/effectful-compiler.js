@@ -16,6 +16,7 @@ import {analyzeSemanticProgram} from './semantic-program.js';
 import {sourceLinkedComputation,sourceLinkedDecision} from './semantic-source.js';
 import {DECLARED_EXCEPTION_PROFILE} from './exception-profile.js';
 import {inspectSemanticRegion,evaluateSemanticRegion,checkSemanticRegionClaim} from './semantic-regions.js';
+import {checkEffectfulProjectionState} from './projection-state-profile.js';
 
 const copy=value=>structuredClone(value);
 const hash=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
@@ -98,6 +99,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   if(!Number.isInteger(maxOperators)||maxOperators<1||maxOperators>8)
     refuse('compact expressions require an operator bound from 1 through 8');
   validateBundle(bundle);replayExact(bundle);
+  checkEffectfulProjectionState(bundle);
   const semantic=normalizeJournal(bundle);validateSemantic(bundle,semantic);
   const entry=bundle.entrySpec;
   if(entry?.kind!=='function')refuse('an explicit owned function entry is required');
@@ -208,6 +210,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   const reactionFrames=new Map(),reactionTargets=new Set(),microtasks=new Map(),privatePromises=new Set();
   const awaitingCompletion=new Map();
   const deferredClosures=new Map();
+  const publishingInitialClosures=new Set();
   const pendingComputations=[];
   let fusedComputations=0,foldedComputations=0,fusedBindings=0,removedCellWrites=0;
   let cellOrdinal=0,frameOrdinal=0,continuationOrdinal=0,eventOrdinal=0,generated=0,jobOrdinal=0;
@@ -303,6 +306,19 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     return {last,write};
   }
   function emit(owner,kind,fields,event=null,rule=kind){
+    // Top-level source declarations already exist at the owned entry, but are
+    // not ordinary input-graph objects. Publish a referenced initial closure
+    // before any public binding/operand can name its identity. This uses only
+    // the immutable entry entity and current lexical cells, never final state.
+    const publish=value=>{
+      if(!value||typeof value!=='object')return;
+      if(Array.isArray(value)&&value[0]==='ref'){
+        if(!(kind==='allocate'&&value[1]===fields.name)&&!controller(owner).heap.has(value[1]))
+          publishInitialClosure(value[1],owner,event);
+        return;
+      }
+      for(const child of Object.values(value))publish(child);
+    };publish(fields);
     // Canonical production reduction over an already committed local cell.
     // A normal assignment to an already published lexical cell is idempotent
     // only when the exact cell and tagged value already match. This cannot
@@ -404,7 +420,21 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       else refuse('unknown mutation family');
     }
   }
-  function allocations(row,owner,event){
+  function publishInitialClosure(id,owner,event){
+    const initial=bundle.initialState.heap[id],current=state.heap[id];
+    if(!initial)return; // The ordinary selected identity check remains final.
+    if(initial.kind!=='function'||!isDeepStrictEqual(initial,current)||
+      Object.keys(initial.properties??{}).length||initial.prototypeInitialized||initial.classConstructor||
+      initial.privateSlots||initial.instanceInitializer||initial.staticInitializer)
+      refuse('unpublished initial identity requires an explicit behavioral-state profile');
+    if(publishingInitialClosures.has(id))refuse('cyclic initial closure capture requires explicit cells');
+    publishingInitialClosures.add(id);
+    try{
+      allocations({allocations:[{identity:id,kind:'function',codeId:initial.codeId,
+        capture:initial.closureEnvId,properties:[]}]},owner,event,{initial});
+    }finally{publishingInitialClosures.delete(id);}
+  }
+  function allocations(row,owner,event,{initial=null}={}){
     for(const allocation of row.allocations??[]){
       if(controller(owner).heap.has(identity(allocation.identity)))continue;
       const fields={name:identity(allocation.identity),kind:allocation.kind==='function'?'closure':allocation.kind,
@@ -444,7 +474,9 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
           fields.captures.push({binding:relation.name,cell:relation.cell});
         }
       }
-      emit(owner,'allocate',fields,event,'allocate');
+      emit(owner,'allocate',fields,event,initial?'initial-source-closure':'allocate');
+      if(initial)certificates.at(-1).initialState={identity:initial.id,code:initial.codeId,
+        closureEnvironment:initial.closureEnvId,entityDigest:hash(initial)};
     }
   }
   function guardDeferredClosures(row,event){
