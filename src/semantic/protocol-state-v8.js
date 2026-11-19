@@ -95,18 +95,18 @@ function compatibleDefinition(node,key,descriptor){
   if(current.kind==='accessor')return eq(current.get,descriptor.get)&&eq(current.set,descriptor.set);
   return current.writable||!descriptor.writable&&eq(current.value,descriptor.value);
 }
+const objectIntrinsicNames=['constructor','__proto__','toString','toLocaleString','valueOf','hasOwnProperty','isPrototypeOf','propertyIsEnumerable',
+  '__defineGetter__','__defineSetter__','__lookupGetter__','__lookupSetter__'];
 function missingIntrinsic(node,key){
   if(key[0]==='symbol')return ['well-known:iterator','well-known:unscopables'].includes(key[1])&&node.kind==='array'||
     key[1]==='well-known:hasInstance'&&node.kind==='closure';
-  const objectNames=['constructor','__proto__','toString','toLocaleString','valueOf','hasOwnProperty','isPrototypeOf','propertyIsEnumerable',
-    '__defineGetter__','__defineSetter__','__lookupGetter__','__lookupSetter__'];
   const arrayNames=['at','concat','copyWithin','entries','every','fill','filter','find','findIndex','findLast','findLastIndex',
     'flat','flatMap','forEach','includes','indexOf','join','keys','lastIndexOf','map','pop','push','reduce','reduceRight',
     'reverse','shift','slice','some','sort','splice','toReversed','toSorted','toSpliced','unshift','values','with'];
-  return objectNames.includes(key[1])||node.kind==='array'&&arrayNames.includes(key[1])||
+  return objectIntrinsicNames.includes(key[1])||node.kind==='array'&&arrayNames.includes(key[1])||
     node.kind==='closure'&&['call','apply','bind','length','name','prototype','arguments','caller'].includes(key[1]);
 }
-function resolveProperty(controller,object,key){
+function resolveProperty(controller,object,key,{forSet=false}={}){
   const visited=new Set();let current=object;
   for(;;){
     require(!visited.has(current),'cyclic prototype chain');visited.add(current);
@@ -115,6 +115,11 @@ function resolveProperty(controller,object,key){
     const prototype=node.prototype===undefined?'ordinary':node.prototype;
     if(prototype===null)return {owner:null,node:null,descriptor:null};
     if(prototype==='ordinary'){
+      // OrdinarySet needs only writability here. Do not invent the inherited
+      // function's value or expose it through Get. __proto__ remains an
+      // accessor requiring its separately modeled invocation.
+      if(forSet&&key[0]==='str'&&key[1]!=='__proto__'&&objectIntrinsicNames.includes(key[1]))
+        return {owner:null,node:null,descriptor:{kind:'data',writable:true}};
       require(!missingIntrinsic(node,key),'inherited intrinsic property requires its callable protocol');
       return {owner:null,node:null,descriptor:null};
     }
@@ -191,7 +196,7 @@ function allocate(controller,record){
 function directSet(controller,record){
   known(controller,record.receiver);known(controller,record.value);
   require(record.receiver[0]==='ref','primitive receiver writes require an abrupt boundary');
-  const receiver=heapNode(controller,record.receiver[1]),resolved=resolveProperty(controller,record.object,record.key);
+  const receiver=heapNode(controller,record.receiver[1]),resolved=resolveProperty(controller,record.object,record.key,{forSet:true});
   require(resolved.descriptor?.kind!=='accessor'||resolved.descriptor.set[0]==='undefined','setter requires a checked call boundary');
   if(resolved.descriptor?.kind==='accessor'||resolved.descriptor?.writable===false)return false;
   const current=ownDescriptor(receiver,record.key);
