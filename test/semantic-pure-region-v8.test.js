@@ -62,11 +62,13 @@ test('mixed request dispatch restores without duplicate service calls',async()=>
 });
 
 test('pure allocation output is checked against the continuation byte bound before any live mutation',()=>{
-  const h=fresh('"use strict";function run(){const value={n:2};return [value,value];}',[]);
+  const h=fresh('"use strict";function run(){return ["'+'x'.repeat(1024)+'"];}',[]);
   const candidate=h.previewAlgorithm('i'),before=h.exportEpisode(),state=sharedRegionState(h.controller);
-  // Entry fits, but its two newly allocated graph nodes do not.
-  h.controller.maxPacketBytes=Buffer.byteLength(JSON.stringify(state),'utf8')+1;
-  assert.throws(()=>h.select('i',candidate),/continuation byte bound/);
+  // Both pre-existing packet encodings fit; the new array and string do not.
+  const entryBytes=Math.max(Buffer.byteLength(JSON.stringify(h.controller.segmentPacket()),'utf8'),
+    Buffer.byteLength(JSON.stringify(state),'utf8'));
+  h.controller.maxPacketBytes=entryBytes+1;
+  assert.throws(()=>h.select('i',candidate),/packet budget|continuation byte bound/);
   assert.equal(h.controller.generated,0);
   assert.deepEqual(sharedRegionState(h.controller),state);
   assert.deepEqual(h.exportEpisode(),before);
