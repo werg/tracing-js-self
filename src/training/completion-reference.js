@@ -238,7 +238,7 @@ export function ownedCompletionObservations(bundle,source,{onObservation=null,as
           if(base?.[0]!=='ref'||!['str','num','bool','null','undefined','bigint','symbol'].includes(property?.[0]))
             throw new TypeError('Source assignment storage is outside the independently observed property profile');
           const object=state.heap[base[1]];
-          if(!object||object.kind==='proxy')throw new TypeError('Source assignment storage requires an ordinary receiver');
+          if(!object)throw new TypeError('Source assignment storage requires a known receiver');
           const key=property[0]==='symbol'?symbolPropertyKey(property[1]):stringPropertyKey(String(decode(property)));
           // A successful ordinary assignment must leave its stored value in
           // the receiver. Looking only at changed patches misses dropped writes.
@@ -247,6 +247,8 @@ export function ownedCompletionObservations(bundle,source,{onObservation=null,as
           // separately qualified observer checks that storage in its metadata
           // receipts; ordinary writes retain this direct stored-value audit.
           const projected=assignmentValue?.({event,instruction,object,key,state});
+          if(object.kind==='proxy'&&(projected===undefined||projected===null))
+            throw new TypeError('Source Proxy assignment storage requires its independent target observer');
           stored=projected??object.properties?.[key]?.value??['missing-storage'];
         }
         emit(key,'assign',stored);

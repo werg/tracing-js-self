@@ -482,4 +482,4 @@ export function describeProtocolObjectV8(controller,id){
 
 /** Trusted component interface. Public records never carry options or adapters. */
 export const PROTOCOL_MACHINE_API_V8=Object.freeze({require,fail,copy,eq,state,known,knownKey,heapNode,
-  ownDescriptor,installDescriptor,order,fresh,call,complete,allocate,setLocal,truthy});
+  ownDescriptor,installDescriptor,resolveProperty,directSet,order,fresh,call,complete,allocate,setLocal,truthy});

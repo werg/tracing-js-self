@@ -102,6 +102,7 @@ test('the independent worker dependency graph cannot import producer protocol ex
     'protocol-source-compiler-v8.js','protocol-source-v8.js','protocol-memory-v8.js','protocol-construction-v8.js',
     'protocol-iterator-v8.js','protocol-iterator-source-v8.js',
     'owned-number-conversion.js','protocol-number-v8.js','protocol-number-source-v8.js',
+    'protocol-proxy-v8.js','protocol-proxy-source-v8.js',
     'protocol-machine-extensions-v8.js','protocol-source-extensions-v8.js','region-harness.js','regions.js']);
   async function visit(url){if(seen.has(url.href))return;seen.add(url.href);
     assert(!forbidden.has(url.pathname.split('/').at(-1)),`independent worker imports producer authority ${url.pathname}`);

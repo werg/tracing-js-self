@@ -14,6 +14,7 @@ import {NUMBER_RECORD_FIELDS,validateNumberRecordV8,applyNumberRecordV8,restoreN
 import {GENERATOR_PROFILE_V8,GENERATOR_RECORD_FIELDS,GENERATOR_INTRINSICS_V8,validateGeneratorRecordV8,
   applyGeneratorRecordV8,restoreGeneratorStateV8,hasGeneratorStateV8,assertGeneratorCallV8,
   assertGeneratorNextV8,resolveGeneratorIntrinsicV8} from './protocol-generator-v8.js';
+import {PROXY_PROFILE_V8,PROXY_RECORD_FIELDS,validateProxyRecordV8,applyProxyRecordV8,restoreProxyStateV8,hasProxyStateV8,assertProxyNextV8} from './protocol-proxy-v8.js';
 export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   id:MEMORY_PROFILE_V8,recordFields:MEMORY_RECORD_FIELDS,validateRecord:validateMemoryRecordV8,applyRecord:applyMemoryRecordV8,
   hasRichState:node=>isBinaryMemoryKind(node.kind),
@@ -43,4 +44,8 @@ export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   intrinsicPrototypes:GENERATOR_INTRINSICS_V8,resolveIntrinsicProperty:resolveGeneratorIntrinsicV8,
   assertNext:assertGeneratorNextV8,assertCall:assertGeneratorCallV8,
   restoreState:(controller,_snapshot,api)=>restoreGeneratorStateV8(controller,api)
+}),Object.freeze({
+  id:PROXY_PROFILE_V8,recordFields:PROXY_RECORD_FIELDS,validateRecord:validateProxyRecordV8,
+  applyRecord:applyProxyRecordV8,hasRichState:hasProxyStateV8,stateField:'proxyCalls',
+  restoreState:restoreProxyStateV8,assertNext:assertProxyNextV8
 })]);

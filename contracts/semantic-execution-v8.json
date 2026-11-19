@@ -721,6 +721,45 @@
             "kind",
             "object",
             "result"
+          ],
+          "proxy.create": [
+            "kind",
+            "name",
+            "target",
+            "handler"
+          ],
+          "proxy.get": [
+            "kind",
+            "object",
+            "key",
+            "result"
+          ],
+          "proxy.set": [
+            "kind",
+            "object",
+            "key",
+            "value",
+            "success"
+          ],
+          "proxy.get.call": [
+            "kind",
+            "id",
+            "object",
+            "key",
+            "child"
+          ],
+          "proxy.set.call": [
+            "kind",
+            "id",
+            "object",
+            "key",
+            "value",
+            "child"
+          ],
+          "proxy.finish": [
+            "kind",
+            "id",
+            "completion"
           ]
         },
         "profile": "symbols-ordinary-properties/1",
@@ -1548,7 +1587,8 @@
         "callFrames",
         "sequence",
         "construction",
-        "numberConversions"
+        "numberConversions",
+        "proxyCalls"
       ],
       "initial": null,
       "heap": "Existing heap nodes with property, descriptor and private-element Maps serialized as entry arrays; Symbol keys remain tagged pairs.",
@@ -1730,7 +1770,7 @@
       "default": "not promoted by engineering receipts alone"
     }
   },
-  "digest": "caab1742cb41653af4a6569e80b9012ea7b04c7a0948a8faf3c48b9d5d1dda5f",
+  "digest": "f91f67ae280bddc99b8dde278acc43b2754c40829e8ebccc0084c6a29f35bfe3",
   "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
   "fixtures": [
     {
@@ -1755,7 +1795,7 @@
       "reason": "old artifacts require their original contract"
     }
   ],
-  "interoperabilityDigest": "1a0ce55a80e40569577be8885d906e1c699edcd162ee658c6998f1d075e72127",
+  "interoperabilityDigest": "bd623249b218c69a822ab0a683cf265418c7fcac38f4c672ef2b379951ab116c",
   "interoperability": [
     {
       "id": "ordered-map",
@@ -1775,57 +1815,62 @@
     {
       "id": "protocol-machine",
       "schema": "semantic-protocol-fixtures/1",
-      "fixtureDigest": "6aa46b0a560d64a931888dc5f5b6b1b8a1c8b9fd2111d6c9162884965a70c434"
+      "fixtureDigest": "e8d6016182e1222184ec6d483eb4126c10922ffcf32497f68a11d6fc20d29071"
     },
     {
       "id": "iterator-machine",
       "schema": "semantic-protocol-fixtures/1",
-      "fixtureDigest": "d7b6039b6396e0a3dd814989e59f36b58782f10eb09c8c8293a75edfa5fb0ea9"
+      "fixtureDigest": "4f6739129e3ba47c8256fd73e04fdd9845ba7dcdc658f1d93895060660bcf730"
     },
     {
       "id": "protocol-region:source-symbol-getter-arithmetic",
-      "publicDigest": "26eae2e3a8dc66e0fd5f8caaa5a2b78be897a41f88418224a472a7f0a0b7e75d",
-      "contextDigest": "48df66aa2c4af26a31f4ed9cd46db2eba3e0f7e99a74902828b33c3ee23de12f"
+      "publicDigest": "25740fcc4c7a2dae1d185fd5e8250c2fb727e1db97a176d751bc74752d37d573",
+      "contextDigest": "34e498ac227f3cd7bf927f8361281e6ce5d47ef7f91b05b5c1fcb905c8b35674"
     },
     {
       "id": "protocol-region:typed-views-shared-backing",
       "publicDigest": "bf88479ca947f7ae6250c493e458db1edac052b1ecd3ebdb8f8fe4f8b52e86d9",
-      "contextDigest": "a66b479dce3e7d65fe12b1a198302d6708ed717de99cb6b52832a971d7366e58"
+      "contextDigest": "f0880fab0287c82b4b7c0ee5a712875f2770ed3483daf9c2352976da9b4a604e"
     },
     {
       "id": "protocol-region:source-derived-private-arithmetic",
-      "publicDigest": "c56274119db5df82f258278b140746ce4759513f1f8137062e04b69a0fbc324a",
-      "contextDigest": "04e3254248fe429e02d6eb93d36a97b18085b73e8737555d2b179426155b152c"
+      "publicDigest": "3bfe01e095d764ec1883a13260fc9ec4d61f4536161188bd9346de081dba92cb",
+      "contextDigest": "5616241138fb319d558defbace8d8e58900940b453972720a9e11bb641525abd"
     },
     {
       "id": "protocol-region:builtin-iterator-mixed-arithmetic",
-      "publicDigest": "81ff2fa30daea3949ef96e2351972f06238a165cee606c585aa281c8f098023d",
-      "contextDigest": "59e1101c459e1ea5f12a2d1e369d8adec1431edd01ef8a7d4a38f8c69f8bacfe"
+      "publicDigest": "923ae7d50aad887a9fc354de1dd8e2c71c810df562423fa0e5d3d243678a4939",
+      "contextDigest": "7aa559a57a0dbe36d07ae4aa1523f4c24f6b700dd32b1e96de8b2d990164bb30"
     },
     {
       "id": "protocol-region:source-promise-all-reaction-arithmetic",
-      "publicDigest": "15f12691999b7c8ab6ce72abc02e6a89f7f95eb3a52fe82d6df45baf2a37a52c",
-      "contextDigest": "9f75965ee24d6c1a970893f2c2577782213433ad8aef2dbe8993f5b74dc10e48"
+      "publicDigest": "c6f23bce85ea1aa0e7b51f71e5432fb2e1759b73fcb15d5bc553df60eb23b13c",
+      "contextDigest": "86f4fb0a8b0cfcd22e0f1c16cdaa2bf28303455948d3172b456a1470d66ecba6"
     },
     {
       "id": "protocol-region:source-promise-join-rejection-finally",
       "publicDigest": "7d7365fa0f71e2301434f05bc1da3766e09f85588b76d12f94fc4380d5687001",
-      "contextDigest": "e7c08310b7a7f3bcb65c37f7810d4db3a8602743b240a55864a90c18a9dc373b"
+      "contextDigest": "3f8b14c46aaf78eb4804e22f20a87afc2287ac277a9603f1d3ff7a88d0f1148d"
     },
     {
       "id": "protocol-region:source-number-private-arithmetic",
-      "publicDigest": "6547d546916967dcd983d3b4af8905b102e2f0a6f8106a598998d3db9a8ccdec",
-      "contextDigest": "5ddee894a3f56d223a0f4a0320df1240fedd2604cba0a02f5e9ab76c4e23b66f"
+      "publicDigest": "18e7a40509f398734e0e07410a0b90b556969ec99203fb37d3d51ddcf9b54116",
+      "contextDigest": "c4f7839118881a8f4a043e58eff87637a702fad7b83dfee940b7edeebe9e5a12"
     },
     {
       "id": "protocol-region:source-generator-cleanup-suspension",
       "publicDigest": "afd8010d455b42109bfd3bdc369a8011a6d2f463669125b19ba9cf0392cfd197",
-      "contextDigest": "3a748c68d975051a9fa4c5c694bafc21f27e61cb639b7e0cefb67eb03934b84e"
+      "contextDigest": "25fbee79668ac97d1130883c90b4c0392079771a3a5730c235189f86d82b5223"
     },
     {
       "id": "protocol-region:source-generator-delegated-cleanup",
       "publicDigest": "acd9ac1cf59ce1ef29c627872deae5a70f04a119704adea9637d718c97fd9c9d",
-      "contextDigest": "a522027455b1006dbe30016d5c80fc9ffee44071a257c8db8e236394527fcccf"
+      "contextDigest": "3a81ec76c01fbd27e79c0d479b42610056451f210e5402d38f26be0708b1b855"
+    },
+    {
+      "id": "protocol-region:source-proxy-traps-arithmetic",
+      "publicDigest": "8a7028de68baae6e315499727f843814ccfe340ec7ec13d78c2890be118a9952",
+      "contextDigest": "2e586831fb90d84958046b8093b090604816f82aec8738fa1b0463f492611610"
     }
   ]
 }

@@ -1,7 +1,7 @@
 {
   "schema": "semantic-v8-interoperability/1",
-  "contractDigest": "caab1742cb41653af4a6569e80b9012ea7b04c7a0948a8faf3c48b9d5d1dda5f",
-  "interoperabilityDigest": "1a0ce55a80e40569577be8885d906e1c699edcd162ee658c6998f1d075e72127",
+  "contractDigest": "f91f67ae280bddc99b8dde278acc43b2754c40829e8ebccc0084c6a29f35bfe3",
+  "interoperabilityDigest": "bd623249b218c69a822ab0a683cf265418c7fcac38f4c672ef2b379951ab116c",
   "examples": [
     {
       "id": "ordered-map",

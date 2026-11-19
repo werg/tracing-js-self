@@ -1,5 +1,5 @@
 // Private independent metadata receipts. Inspection is descriptor-only and
-// refuses Proxies before a single trap can run. No receipt is a model target.
+// refuses unregistered Proxies before a trap can run. No receipt is a model target.
 import {types,isDeepStrictEqual} from 'node:util';
 import {encode} from '../values.js';
 import {propertyKeyValue,WELL_KNOWN_SYMBOLS} from '../property-keys.js';
@@ -76,14 +76,15 @@ export function createNativeProtocolMetadata({initialValues=[],intrinsicPrototyp
   const context={defaultNode,intrinsicPrototype,fail};
   const metadata=tracker({
     type(value){if(value!==null&&['object','function'].includes(typeof value)){
-      if(types.isProxy(value))fail('Proxy metadata is outside the profile');return 'reference';}
+      if(types.isProxy(value)&&extended(adapters,'nativeProxyNode',value,context)===null)
+        fail('Proxy metadata is outside the registered profile');return 'reference';}
       return typeof value==='symbol'?'symbol':'scalar';},
     identity:value=>value,scalar:encode,
     symbol(value){const description=apply(descriptionGetter,value,[]),name=nativeWellKnown.get(value),key=symbolKeyFor(value);
       return name?{kind:'well-known',name,description:encode(description)}:
         key!==undefined?{kind:'registry',key,description:encode(description)}:{kind:'unique',description:encode(description)};},
     object(value){
-      if(types.isProxy(value))fail('Proxy metadata is outside the profile');
+      if(types.isProxy(value))return extended(adapters,'nativeProxyNode',value,context)??fail('Proxy metadata is outside the registered profile');
       return extended(adapters,'nativeNode',value,context)??defaultNode(value);
     }
   });
@@ -150,5 +151,6 @@ export function compareProtocolMetadata(expected,observed){
     return {schema:PROTOCOL_METADATA_SCHEMA,status:'mismatch',checked:index,index,expected:expected[index]??null,observed:observed[index]??null};
   return {schema:PROTOCOL_METADATA_SCHEMA,status:'agreed',checked:expected.length,
     coverage:['ordinary-own-key-order','data-descriptor-values-and-flags','accessor-identities-and-flags','prototype-identity','extensibility','Symbol-identity-description-registry'],
-    unsupported:['Proxy-metadata','function-own-state','private-brands','generator-continuations']};
+    extensionAnnotations:[...new Set(expected.flatMap(row=>row.objects??[]).flatMap(node=>node.annotations??[]).map(row=>row.name))].sort(),
+    scope:'Observed descriptors and declared extension annotations; unregistered exotic state is refused'};
 }

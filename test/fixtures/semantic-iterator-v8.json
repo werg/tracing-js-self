@@ -100,7 +100,8 @@
           "callFrames": [],
           "sequence": 0,
           "construction": null,
-          "numberConversions": null
+          "numberConversions": null,
+          "proxyCalls": null
         }
       },
       "lines": [
@@ -425,7 +426,8 @@
           "callFrames": [],
           "sequence": 12,
           "construction": null,
-          "numberConversions": null
+          "numberConversions": null,
+          "proxyCalls": null
         }
       }
     },
@@ -527,7 +529,8 @@
           "callFrames": [],
           "sequence": 0,
           "construction": null,
-          "numberConversions": null
+          "numberConversions": null,
+          "proxyCalls": null
         }
       },
       "lines": [
@@ -829,7 +832,8 @@
           "callFrames": [],
           "sequence": 7,
           "construction": null,
-          "numberConversions": null
+          "numberConversions": null,
+          "proxyCalls": null
         }
       }
     },
@@ -931,7 +935,8 @@
           "callFrames": [],
           "sequence": 0,
           "construction": null,
-          "numberConversions": null
+          "numberConversions": null,
+          "proxyCalls": null
         }
       },
       "lines": [
@@ -1163,7 +1168,8 @@
           "callFrames": [],
           "sequence": 8,
           "construction": null,
-          "numberConversions": null
+          "numberConversions": null,
+          "proxyCalls": null
         }
       }
     }

@@ -1,0 +1,121 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {applyProtocolRecordV8,createProtocolStateV8,PROTOCOL_MACHINE_API_V8} from '../src/semantic/protocol-state-v8.js';
+import {restoreProxyStateV8} from '../src/semantic/protocol-proxy-v8.js';
+const ref=id=>['ref',id],key=name=>['str',name];
+const restore=controller=>restoreProxyStateV8(controller,controller.protocol.proxyCalls,PROTOCOL_MACHINE_API_V8);
+function fixture(){
+  const controller={heap:new Map(),locals:new Map(),captureAliases:new Map(),receiver:['undefined'],stack:['root'],
+    frameFunctions:new Map([['root','run']]),pending:null,lastReturn:null,completion:null,protocol:createProtocolStateV8()};
+  const apply=record=>applyProtocolRecordV8(controller,record);
+  for(const name of ['target','handler'])apply({kind:'allocate',name,objectKind:'object',length:null,properties:[],code:null,
+    captures:[],functionKind:null,lexicalReceiver:null});
+  apply({kind:'property.set',object:'target',key:key('x'),receiver:ref('target'),value:['num',2],success:true});
+  apply({kind:'proxy.create',name:'proxy',target:ref('target'),handler:ref('handler')});return {controller,apply};
+}
+test('transparent Proxy reads and writes share target aliases and retain separate handler and proxy identities',()=>{
+  const {controller,apply}=fixture();
+  apply({kind:'proxy.get',object:'proxy',key:key('x'),result:['num',2]});
+  apply({kind:'property.set',object:'target',key:key('x'),receiver:ref('target'),value:['num',4],success:true});
+  apply({kind:'proxy.get',object:'proxy',key:key('x'),result:['num',4]});
+  apply({kind:'proxy.set',object:'proxy',key:key('x'),value:['num',7],success:true});
+  apply({kind:'proxy.set',object:'proxy',key:key('self'),value:ref('proxy'),success:true});
+  assert.deepEqual(controller.heap.get('target').properties.get('x'),['num',7]);
+  assert.deepEqual(controller.heap.get('target').properties.get('self'),ref('proxy'));
+  assert.equal(controller.heap.get('proxy').properties.size,0);
+  assert.equal(restore(controller).proxies,1);
+  const target={x:2},handler={},proxy=new Proxy(target,handler);target.x=4;assert.equal(proxy.x,4);proxy.x=7;proxy.self=proxy;
+  assert.equal(target.x,7);assert.equal(target.self,proxy);assert.notEqual(proxy,target);
+});
+test('Proxy descriptors and extensibility reuse ordinary assignment failure atomically',()=>{
+  const {controller,apply}=fixture();
+  apply({kind:'property.define',object:'target',key:key('x'),descriptor:{kind:'data',value:['num',2],
+    writable:false,enumerable:true,configurable:false},success:true});
+  apply({kind:'proxy.set',object:'proxy',key:key('x'),value:['num',7],success:false});
+  const before=structuredClone(controller.heap);
+  assert.throws(()=>apply({kind:'proxy.set',object:'proxy',key:key('x'),value:['num',7],success:true}),/false Proxy assignment/);
+  assert.deepEqual(controller.heap,before);
+  apply({kind:'property.preventExtensions',object:'target'});
+  apply({kind:'proxy.set',object:'proxy',key:key('new'),value:['num',1],success:false});
+  assert.throws(()=>apply({kind:'proxy.get',object:'proxy',key:key('x'),result:['num',7]}),/false Proxy data read/);
+});
+test('live handler traps, accessor targets, exotic chains and forged Proxy aliases are refused',()=>{
+  const {controller,apply}=fixture();
+  apply({kind:'property.set',object:'handler',key:key('get'),receiver:ref('handler'),value:['num',1],success:true});
+  const before=structuredClone(controller.heap);
+  assert.throws(()=>apply({kind:'proxy.get',object:'proxy',key:key('x'),result:['num',2]}),/explicit call boundary/);
+  assert.deepEqual(controller.heap,before);
+  assert.throws(()=>restore(controller),/explicit call boundary/);
+  const clean=fixture();clean.controller.heap.get('proxy').target=ref('proxy');
+  assert.throws(()=>restore(clean.controller),/ordinary object/);
+  const accessor=fixture();accessor.apply({kind:'property.define',object:'target',key:key('x'),
+    descriptor:{kind:'accessor',get:['undefined'],set:['undefined'],enumerable:true,configurable:true},success:true});
+  assert.throws(()=>accessor.apply({kind:'proxy.get',object:'proxy',key:key('x'),result:['undefined']}),/accessors/);
+  const forged=fixture();forged.controller.heap.get('proxy').properties.set('x',['num',2]);
+  assert.throws(()=>restore(forged.controller),/invented own storage/);
+});
+
+function trap(fixture,operation,{name=operation+'Trap',functionKind='ordinary',lexicalReceiver=null}={}){
+  fixture.apply({kind:'allocate',name,objectKind:'closure',length:null,properties:[],code:name,
+    captures:[],functionKind,lexicalReceiver});
+  fixture.apply({kind:'property.set',object:'handler',key:key(operation),receiver:ref('handler'),value:ref(name),success:true});
+  return name;
+}
+test('Proxy traps enter the shared call scope with live selection, arguments and exact receivers',()=>{
+  const f=fixture();trap(f,'get');trap(f,'set');
+  f.apply({kind:'proxy.get.call',id:'read',object:'proxy',key:key('x'),child:'reader'});
+  assert.deepEqual(f.controller.receiver,ref('handler'));
+  assert.deepEqual(f.controller.protocol.callFrames[0].arguments,[ref('target'),key('x'),ref('proxy')]);
+  assert.equal(restore(f.controller).calls,1);
+  // Mutation after entry must not replace the already selected callback.
+  f.apply({kind:'property.set',object:'handler',key:key('get'),receiver:ref('handler'),value:['null'],success:true});
+  assert.equal(restore(f.controller).calls,1);
+  f.apply({kind:'return',invocation:'reader',value:['num',3]});
+  assert.throws(()=>f.apply({kind:'bind',name:'skip',value:['num',3]}),/pending Proxy callback/);
+  assert.throws(()=>f.apply({kind:'proxy.finish',id:'read',completion:{kind:'normal',value:['num',2]}}),/false Proxy callback/);
+  f.apply({kind:'proxy.finish',id:'read',completion:{kind:'normal',value:['num',3]}});
+  assert.deepEqual(f.controller.receiver,['undefined']);
+  f.apply({kind:'proxy.set.call',id:'write',object:'proxy',key:key('x'),value:['num',7],child:'writer'});
+  assert.deepEqual(f.controller.protocol.callFrames[0].arguments,[ref('target'),key('x'),['num',7],ref('proxy')]);
+  f.apply({kind:'property.set',object:'target',key:key('x'),receiver:ref('target'),value:['num',8],success:true});
+  f.apply({kind:'return',invocation:'writer',value:ref('target')});
+  f.apply({kind:'proxy.finish',id:'write',completion:{kind:'normal',value:['num',7]}});
+  assert.deepEqual(f.controller.heap.get('target').properties.get('x'),['num',8]);
+  assert.equal(restore(f.controller).calls,0);
+});
+test('Proxy nested callbacks retain selected source identities, arrow receivers and thrown values',()=>{
+  const f=fixture();trap(f,'get',{functionKind:'arrow',lexicalReceiver:ref('target')});
+  f.apply({kind:'proxy.get.call',id:'outer',object:'proxy',key:key('x'),child:'outerTrap'});
+  assert.deepEqual(f.controller.receiver,ref('target'));
+  f.apply({kind:'proxy.get.call',id:'inner',object:'proxy',key:key('x'),child:'innerTrap'});
+  assert.equal(restore(f.controller).calls,2);
+  const forged=structuredClone(f.controller);forged.protocol.proxyCalls.pending[0].callee=ref('target');
+  assert.throws(()=>restore(forged),/source identity/);
+  f.apply({kind:'throw',invocation:'innerTrap',value:['str','thrown']});
+  f.apply({kind:'proxy.finish',id:'inner',completion:{kind:'throw',value:['str','thrown']}});
+  f.apply({kind:'throw',invocation:'outerTrap',value:['str','thrown']});
+  f.apply({kind:'proxy.finish',id:'outer',completion:{kind:'throw',value:['str','thrown']}});
+  assert.equal(restore(f.controller).calls,0);
+});
+test('Proxy completion checks reject false setters and honor SameValue for frozen live target data',()=>{
+  for(const value of [['num','-0'],['num','NaN'],ref('handler')]){
+    const f=fixture();trap(f,'get');
+    f.apply({kind:'proxy.get.call',id:'read',object:'proxy',key:key('x'),child:'reader'});
+    f.apply({kind:'property.define',object:'target',key:key('x'),descriptor:{kind:'data',value,
+      writable:false,enumerable:true,configurable:false},success:true});
+    f.apply({kind:'return',invocation:'reader',value});
+    f.apply({kind:'proxy.finish',id:'read',completion:{kind:'normal',value}});
+  }
+  const bad=fixture();trap(bad,'get');
+  bad.apply({kind:'proxy.get.call',id:'read',object:'proxy',key:key('x'),child:'reader'});
+  bad.apply({kind:'property.define',object:'target',key:key('x'),descriptor:{kind:'data',value:['num','-0'],
+    writable:false,enumerable:true,configurable:false},success:true});
+  bad.apply({kind:'return',invocation:'reader',value:['num',0]});
+  const before=structuredClone(bad.controller);
+  assert.throws(()=>bad.apply({kind:'proxy.finish',id:'read',completion:{kind:'normal',value:['num',0]}}),/frozen target/);
+  assert.deepEqual(bad.controller,before);
+  const falseSet=fixture();trap(falseSet,'set');
+  falseSet.apply({kind:'proxy.set.call',id:'write',object:'proxy',key:key('x'),value:['num',7],child:'writer'});
+  falseSet.apply({kind:'return',invocation:'writer',value:['bool',false]});
+  assert.throws(()=>falseSet.apply({kind:'proxy.finish',id:'write',completion:{kind:'normal',value:['num',7]}}),/abrupt completion/);
+});
