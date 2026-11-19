@@ -2694,9 +2694,14 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               throw new TypeError('Unsupported RegExp guest callback replacement');
             const pattern=decode(regex.properties['[[Source]]'].value);
             const flags=decode(regex.properties['[[Flags]]'].value);
-            if(decode(regex.properties.lastIndex.value)!==0)
-              throw new TypeError('Owned replacement requires initial RegExp.lastIndex = 0');
             const matches=scanPinnedReplacement(pattern,flags,receiver[1]);
+            // A global replacement collects matches from zero and finishes
+            // matching before invoking callbacks. Callback writes to lastIndex
+            // then remain visible to later callbacks and the caller.
+            if(regex.dataAttributes?.lastIndex?.writable===false)
+              guestFault('TypeError','Cannot assign to read only property');
+            if(!Object.is(decode(regex.properties.lastIndex.value),0))
+              putOwn(regex,'lastIndex',['num',0],eventId);
             if(!matches.length)return {...operands(fn,...args),...result(receiver)};
             f.pendingStringReplace={text:receiver[1],matches,index:0,lastEnd:0,
               output:'',callbackId:callback.id,waitingFrameId:null,siteId:inst.siteId};

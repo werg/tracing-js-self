@@ -1,9 +1,14 @@
 // Owned, deterministic bounded RegExp subset, not a native RegExp fallback.
-// The pattern/flag allowlist is intentionally exact and versionable.
+// Literal patterns and the additional pinned scanners are explicit profiles.
 import {RTL_PATTERN} from './owned-rtl-pattern.js';
 export const PINNED_ASCII_PATTERN=String.raw`^[\t\n\r\x20-\x7E]*$`;
+const literalExcluded=new Set('^$\\.*+?()[]{}|/\n\r\u2028\u2029');
+export function supportsLiteralRegExp(pattern,flags){
+  return typeof pattern==='string'&&pattern.length>0&&pattern.length<=256&&
+    (flags===''||flags==='g')&&[...pattern].every(character=>!literalExcluded.has(character));
+}
 export function supportsPinnedRegExp(pattern,flags){
-  return (flags==='' && [String.raw`\r\n|\r|\n`,
+  return supportsLiteralRegExp(pattern,flags)||(flags==='' && [String.raw`\r\n|\r|\n`,
     String.raw`(\r\n|\r|\n)`,PINNED_ASCII_PATTERN,RTL_PATTERN].includes(pattern)) ||
     (flags==='g' && [String.raw`\b`,String.raw`{(\d+)}`,String.raw`{([^}]+)}`,String.raw`[<>&]`,
       String.raw`[\\\{\}\*\+\?\|\^\$\.\[\]\(\)]`].includes(pattern));
@@ -12,6 +17,10 @@ export function testPinnedRegExp(pattern,flags,input,lastIndex=0){
   if(typeof input!=='string'||input.length>10000 ||
     !Number.isSafeInteger(lastIndex)||lastIndex<0||lastIndex>10001)
     throw new TypeError('Unsupported bounded RegExp.test operation');
+  if(supportsLiteralRegExp(pattern,flags)){
+    const index=input.indexOf(pattern,flags==='g'?lastIndex:0);
+    return {matched:index>=0,nextIndex:flags==='g'?(index<0?0:index+pattern.length):lastIndex};
+  }
   if(pattern===String.raw`\b` && flags==='g'){
     const word=i=>i>=0&&i<input.length&&(
       input.charCodeAt(i)>=65&&input.charCodeAt(i)<=90 ||
@@ -48,9 +57,20 @@ export function testPinnedRegExp(pattern,flags,input,lastIndex=0){
 // source-ordered matching, not from a host RegExp evaluation.
 export function scanPinnedReplacement(pattern,flags,input){
   if(flags!=='g'||typeof input!=='string'||input.length>10000||
+    !supportsLiteralRegExp(pattern,flags)&&
     ![String.raw`{(\d+)}`,String.raw`{([^}]+)}`,String.raw`[<>&]`].includes(pattern))
     throw new TypeError('Unsupported owned callback replacement pattern');
   const result=[];
+  if(supportsLiteralRegExp(pattern,flags)){
+    let start=0;
+    while((start=input.indexOf(pattern,start))>=0){
+      const end=start+pattern.length;
+      result.push({start,end,match:pattern,group:null});
+      if(result.length>1024)throw new RangeError('Owned replacement callback budget exceeded');
+      start=end;
+    }
+    return result;
+  }
   for(let i=0;i<input.length;i++){
     if(pattern===String.raw`[<>&]`){
       if(!'<>&'.includes(input[i]))continue;
