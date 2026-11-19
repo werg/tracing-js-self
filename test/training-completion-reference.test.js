@@ -42,6 +42,19 @@ test('reference identity observations preserve aliasing without reading user pro
   assert.deepEqual(observations.map(row=>row.value),[['identity','object',1],['identity','object',1],['identity','object',2]]);
 });
 
+test('class declaration observations use the outer binding after static completion and skip abrupt evaluation',async()=>{
+  const {createRuntime}=await import('../src/runtime.js');
+  const source='"use strict";function run(){let n=0;try{class C{static{n=1;throw 2;}}}catch(e){n+=e;}class D{static{n+=4;}}return n;}';
+  const capture=createCompletionCapture(),observed=vm.runInNewContext(instrumentCompletionSource(source)+';run()',
+    {[COMPLETION_HOOK]:capture.capture});
+  assert.equal(observed,vm.runInNewContext(source+';run()'));assert.equal(observed,7);
+  const runtime=createRuntime().startEntry({text:source,functionName:'run',args:[]});runtime.drive();
+  const expected=ownedCompletionObservations(runtime.exportRun(),source);
+  assert.equal(compareCompletionObservations(expected,capture.observations).status,'agreed');
+  const initialized=expected.filter(row=>row.kind==='initialize'&&source.slice(...row.site.split(':').map(Number)).startsWith('class'));
+  assert.equal(initialized.length,1);assert(source.slice(...initialized[0].site.split(':').map(Number)).startsWith('class D'));
+});
+
 test('observations preserve return ASI, bare returns, nested wrappers and loop transfers',async()=>{
   const cases=[
     '"use strict";function run(){return\n3;}',

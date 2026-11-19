@@ -38,7 +38,7 @@ function prototype(node){const p=node.prototype;
   refuse('unrecognized owned prototype representation');
 }
 function descriptor(node,key){
-  const accessor=node.accessors?.[key];
+  const accessor=Object.hasOwn(node.accessors??{},key)?node.accessors[key]:null;
   if(accessor)return {kind:'accessor',get:copy(accessor.get?.value??['undefined']),set:copy(accessor.set?.value??['undefined']),
     enumerable:accessor.enumerable,configurable:accessor.configurable};
   const value=node.properties?.[key]?.value;if(!value)return null;
@@ -66,7 +66,18 @@ function referencedNames(node){const names=new Set();
     if(value.type==='Identifier'&&!(parent?.type==='MemberExpression'&&field==='property'&&!parent.computed)&&
       !(parent?.type==='Property'&&field==='key'&&!parent.computed&&!parent.shorthand)&&!['id','params','label'].includes(field))names.add(value.name);
     for(const [key,child]of Object.entries(value))if(!['start','end','loc','raw'].includes(key))visit(child,value,key);
-  }visit(node.body);return names;
+  }visit(node.body);
+  // Parameters resolve in the call's own environment, even when an outer
+  // binding with the same spelling remains in its temporal dead zone.
+  function bound(pattern){
+    if(!pattern)return;
+    if(pattern.type==='Identifier')names.delete(pattern.name);
+    else if(pattern.type==='AssignmentPattern')bound(pattern.left);
+    else if(pattern.type==='RestElement')bound(pattern.argument);
+    else if(pattern.type==='ArrayPattern')pattern.elements.forEach(bound);
+    else if(pattern.type==='ObjectPattern')pattern.properties.forEach(property=>bound(property.type==='RestElement'?property.argument:property.value));
+  }
+  node.params?.forEach(bound);return names;
 }
 export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROTOCOL_SOURCE_ADAPTERS_V8}={}){
   if(validateBundle(bundle).valid!==true||replayExact(bundle).valid!==true)refuse('invalid owned archive');
@@ -159,7 +170,7 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       lexicalReceiver:node.kind==='function'&&node.arrow?tag(node.lexicalThis,event):null},event,'owned-source-allocation/1');
     published.add(node.id);publishing.delete(node.id);
     if(prototype(node)!=='ordinary')emit({kind:'property.prototype',object:node.id,prototype:prototype(node),success:true},event);
-    for(const key of orderedKeys(node))if(node.accessors?.[key]||node.dataAttributes?.[key])emit({kind:'property.define',object:node.id,key:propertyKeyValue(key),descriptor:descriptor(node,key),success:true},event);
+    for(const key of orderedKeys(node))if(Object.hasOwn(node.accessors??{},key)||Object.hasOwn(node.dataAttributes??{},key))emit({kind:'property.define',object:node.id,key:propertyKeyValue(key),descriptor:descriptor(node,key),success:true},event);
     if(node.extensible===false)emit({kind:'property.preventExtensions',object:node.id},event);
   }
   function resolve(name,frameId){for(let env=state.frames[frameId]?.envId;env;env=state.envs[env]?.parent)

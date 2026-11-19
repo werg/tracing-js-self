@@ -20,7 +20,7 @@ for(const row of input.cases){
   await recheckProtocolRegionEvidence(result.exported);
   outer.cases.push({id:row.id,fixture:row.fixture,artifact:result.exported});
   const source=result.exported.sidecar.sourceArtifact,reference=source.sidecar.reference;
-  inner.cases.push({id:row.id,qualification:'owned-and-independent-source-checked',profile:source.public.profile,
+  inner.cases.push({id:row.id,qualification:'owned-and-independent-source-checked',profile:source.sidecar.profile,
     extensions:result.exported.sidecar.protocolExtensions??[],
     source:row.fixture.source,entry:row.fixture.entry,args:row.fixture.args??[],
     inputGraph:source.public.inputGraph,claims:source.public.claims,expected:source.sidecar.outcome,
