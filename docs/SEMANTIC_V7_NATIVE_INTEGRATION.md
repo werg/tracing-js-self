@@ -45,16 +45,16 @@ the detailed profile does not pretend that an unresolved ID is accessible data.
 ## Implementation and acceptance checklist
 
 - [x] Explicit v7 representation and checkpoint boundaries.
-- [ ] Independent Python algorithm parser, canonical encoder and operation evaluator.
-- [ ] Native causal replay, cache/continuation validation, physical episode import,
+- [x] Independent Python algorithm parser, canonical encoder and operation evaluator.
+- [x] Native causal replay, cache/continuation validation, physical episode import,
   real model serving, and matching training/serving controls.
-- [ ] Detailed v7 source projection, decoder and independent native import.
-- [ ] New exact-revision source/native admission receipts and policies.
-- [ ] Versioned complete family registry; all relatives, identical cores and
+- [x] Detailed v7 source projection, decoder and independent native import.
+- [x] New exact-revision source/native admission receipts and policies.
+- [x] Versioned complete family registry; all relatives, identical cores and
   source aliases remain in one split; unknown or changed memberships are rejected.
-- [ ] V7 prepared data and causal-LM exports, generated-only labels, exact tokenizer
+- [x] V7 prepared data and causal-LM exports, generated-only labels, exact tokenizer
   round trips, and production refusal of unadmitted or old-version artifacts.
-- [ ] Cross-language valid/malformed fixtures, counterfactual future isolation,
+- [x] Cross-language valid/malformed fixtures, counterfactual future isolation,
   restored continuations, actual observation loss masks and source rechecks.
 - [ ] Pushed evidence and coordinated companion PR.
 

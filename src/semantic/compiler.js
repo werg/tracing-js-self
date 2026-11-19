@@ -210,6 +210,7 @@ export async function recheckAlgorithmEvidence(exported,{requireAdmitted=false,n
     episodeDigest:hashAlgorithmData(exported.public),contextsDigest:hashAlgorithmData(exported.contexts),
     sourceValidated:true,journalValidated:true,replayValidated:true,referenceStatus:'agreed',
     registryDigest:family?.registryDigest??null,sourceArtifactDigest:side.sourceArtifactDigest,optimizerSteps:0};
+  source.datasetBindingDigest=family?hashAlgorithmData(side.datasetBinding):null;
   let native=null;
   if(requireAdmitted||nativeConsumer){
     const policy=nativePolicy??loadV7NativePolicy();

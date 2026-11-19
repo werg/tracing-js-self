@@ -211,13 +211,16 @@ historical gallery meter. Native supervision must verify zero prediction loss
 on observations and exclude unseen future responses from model context. Old
 receipts/checkpoints retain their original identities.
 
-## Remaining production integration
+## Native and training integration
 
-The existing `src/training/causal-lm-bridge.js` and
-`tools/export-causal-lm-data.mjs` continue to target v6. The candidate fixtures
-declare semantic family identities, but integrating them into prepared/native
-datasets and enforcing those families across training splits is still phase-6
-work. It must follow the new consumer contract and fresh admission receipts.
+The existing v6 exporters remain historical production paths. New v7 consumers,
+prepared shards, and conventional causal-LM exports use the explicit algorithm
+or detailed representation, exact source/native receipts, and one complete
+frozen semantic-family registry. Re-exporting a subset preserves the original
+registry and split assignments. Training requires explicit producer, consumer,
+and registry pins; relabeled splits and stale receipts are rejected before a
+batch reaches the model. See [the integration ledger](SEMANTIC_V7_NATIVE_INTEGRATION.md)
+and [reproduction commands](SEMANTIC_V7_TRAINING.md).
 
 The paired report measures exact target/observed payloads, public JSONL
 envelopes, and supplied JavaScript context snapshots. It does not measure
@@ -232,13 +235,13 @@ shared the host with the full test suite and is not an isolated latency study.
 - [x] All declared positive/negative families pass in the finite paired suite.
 - [x] Emitted operations are checked under their stated JavaScript profiles.
 - [x] Independent source, alias, exception, cleanup, and causal regression checks pass.
-- [ ] Native and JavaScript consumers agree on valid/malformed records.
+- [x] Native and JavaScript consumers agree on valid/malformed records.
 - [x] JavaScript continuation and generated/observed boundary regressions pass.
-- [ ] Native continuations, visibility, and observation loss masks are qualified.
+- [x] Native continuations, visibility, and observation loss masks are checked on newly generated v7 data.
 - [ ] Full native serving-cost measurements cover the unchanged baseline.
 - [ ] Predeclared comprehension tasks show no material regression.
-- [x] Unsupported candidate cases have explicit, independently checked v6 dispositions.
-- [ ] Prepared/native/causal-LM data uses v7 and enforces semantic-family splits.
+- [x] Unsupported compact cases have an independently checked detailed representation inside v7.
+- [x] Prepared/native/causal-LM data uses v7 and enforces semantic-family splits.
 - [ ] New artifacts are regenerated/admitted under actual identities.
 
 Comprehension covers algorithm identification, dependencies, selection, next

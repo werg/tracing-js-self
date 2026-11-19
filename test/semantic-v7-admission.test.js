@@ -13,6 +13,7 @@ const receipt=()=>({schema:'semantic-native-admission/7',componentGate:'native-c
   traceFormat:'semantic-trace/7',representation:'detailed',episodeDigest:hashAlgorithmData(exported.public),
   contextsDigest:hashAlgorithmData(exported.contexts),consumerRevision:policy.consumerRevision,
   nativeTrainingDigest:'9'.repeat(64),
+  datasetBindingDigest:null,
   schemaDigest:policy.schemaDigest,fixtureDigest:policy.fixtureDigest,contractDigest:policy.contractDigest,
   tokenizerIdentity:policy.tokenizerIdentity,tokenizerSha256:policy.tokenizerSha256,admitted:true,
   lossMaskValidated:true,visibilityValidated:true,fragmentationValidated:true,contextValidated:true,

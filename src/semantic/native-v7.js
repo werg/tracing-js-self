@@ -29,6 +29,7 @@ export function validateV7NativeReceipt(exported,receipt,policy){
     receipt.traceFormat!=='semantic-trace/7'||receipt.representation!==exported.public.representation||
     receipt.episodeDigest!==hashAlgorithmData(exported.public)||
     receipt.contextsDigest!==hashAlgorithmData(exported.contexts)||receipt.optimizerSteps!==0||
+    receipt.datasetBindingDigest!==(exported.sidecar?.datasetBinding?hashAlgorithmData(exported.sidecar.datasetBinding):null)||
     !HASH.test(receipt.nativeTrainingDigest??'')||
     ['consumerRevision','schemaDigest','fixtureDigest','contractDigest','tokenizerIdentity','tokenizerSha256']
       .some(key=>receipt[key]!==policy[key])||

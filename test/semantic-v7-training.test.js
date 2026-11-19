@@ -11,7 +11,8 @@ import {buildSemanticFamilyRegistry,verifySemanticFamilyRegistry,
   validateSemanticFamilyAssignments,semanticSplitIdentity} from '../src/semantic/family-registry.js';
 import {buildSemanticV7Dataset,prepareSemanticFamilyRegistry,bindSemanticFamilySplit,
   semanticFamilyMembership} from '../src/semantic/dataset-v7.js';
-import {buildCausalLmV7Examples,causalLmV7Prompt,encodeCausalLmV7Example} from '../src/semantic/causal-lm-v7.js';
+import {buildCausalLmV7Examples,causalLmV7Prompt,encodeCausalLmV7Example,
+  createAlgorithmContextResolver,createCausalLmV7Selector} from '../src/semantic/causal-lm-v7.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
 
 const fixture=id=>structuredClone(SEMANTIC_GALLERY_FIXTURES.find(row=>row.id===id));
@@ -204,6 +205,59 @@ test('exact v7 segment encoding masks only public-context tokens',async()=>{
   await assert.rejects(encodeCausalLmV7Example(context,target.line,{tokenizer,eosTokenId,
     maxContextTokens:10,representation:'detailed'}),/budget exceeded/);
 });
+
+test('algorithm flat prompts resolve earlier public definition/input publications identically for training and serving',
+  {timeout:120000},async()=>{
+    const candidate=await verifyAlgorithmTrainingCase(fixture('counter-0'));
+    assert.equal(candidate.status,'locally_verified');
+    assert.equal(candidate.exported.public.representation,'algorithm');
+    const contexts=candidate.exported.contexts;
+    assert(contexts.length>1);
+    assert(Object.hasOwn(contexts[0],'program')&&Object.hasOwn(contexts[0],'inputGraph'));
+    assert(contexts.slice(1).every(context=>!Object.hasOwn(context,'program')&&!Object.hasOwn(context,'inputGraph')),
+      'later snapshots should exercise hash-only references');
+    const dataset=await buildSemanticV7Dataset([candidate],{seed:91,allowLocal:true,tokenizer,eosTokenId,
+      maxContextTokens:100000});
+    const examples=Object.values(dataset.examplesBySplit).flat();
+    assert.equal(examples.length,contexts.length);
+    const promptContexts=examples.map(row=>{
+      const start=row.prompt.indexOf('\n')+1,end=row.prompt.lastIndexOf('\nNext record:\n');
+      return JSON.parse(row.prompt.slice(start,end));
+    });
+    for(const context of promptContexts){
+      assert.equal(context.program.source,fixture('counter-0').source);
+      assert.equal(context.program.definitionDigest,context.definition);
+      assert.equal(context.program.coreDigest,candidate.exported.sidecar.coreDigest);
+      assert.deepEqual(context.inputGraph,contexts[0].inputGraph);
+      assert.equal(hashAlgorithmData(context.program),hashAlgorithmData(contexts[0].program));
+    }
+
+    const checkpointIdentity='d'.repeat(64),targets=candidate.exported.public.timeline.filter(row=>row.kind==='semantic');
+    const servingPrompts=[],runtime={
+      async initialize(request){return {checkpointIdentity,tokenizerIdentity:tokenizer.identity,seed:request.seed};},
+      async generate(request){
+        servingPrompts.push(request.inputIds);
+        const target=targets[servingPrompts.length-1].line;
+        return {tokenIds:[...tokenizer.encode(target),eosTokenId],stopReason:'eos'};
+      }
+    };
+    const selector=createCausalLmV7Selector({runtime,tokenizer,checkpointIdentity,eosTokenId,
+      maxContextTokens:100000,maxNewTokens:10000,representation:'algorithm'});
+    await selector.initialize({checkpointIdentity,seed:11});
+    for(const context of contexts)await selector(context);
+    assert.equal(servingPrompts.length,examples.length);
+    for(let index=0;index<examples.length;index++)
+      assert.deepEqual(servingPrompts[index],examples[index].inputIds.slice(0,examples[index].boundaries.promptTokens));
+
+    const resolver=createAlgorithmContextResolver();
+    resolver.resolve(contexts[0]);resolver.resolve(contexts[1]);
+    assert.throws(()=>resolver.resolve(contexts[0]),/moved backward/);
+    assert.throws(()=>createAlgorithmContextResolver().resolve(contexts[1]),/not publicly published/);
+    const changed=structuredClone(contexts[1]);changed.definition='a'.repeat(64);
+    assert.throws(()=>{
+      const isolated=createAlgorithmContextResolver();isolated.resolve(contexts[0]);isolated.resolve(changed);
+    },/not publicly published/);
+  });
 
 test('old v6 detailed exports cannot be passed through the v7 context projector',()=>{
   assert.ok(fallbacks,'fallback fixtures have not been prepared');

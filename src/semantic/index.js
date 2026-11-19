@@ -23,7 +23,7 @@ export {encodeDetailedRecord,decodeDetailedRecord,projectDetailedV7,verifyDetail
   validateDetailedProjection,detailedContextForSequence,DETAILED_PROFILE} from './detailed-v7.js';
 export {buildSemanticFamilyRegistry,verifySemanticFamilyRegistry,semanticSplitIdentity,
   verifySemanticSplitIdentity,validateSemanticFamilyAssignments} from './family-registry.js';
-export {causalLmV7Prompt,encodeCausalLmV7Example,buildCausalLmV7Examples,
+export {causalLmV7Prompt,createAlgorithmContextResolver,encodeCausalLmV7Example,buildCausalLmV7Examples,
   createCausalLmV7Selector,CAUSAL_LM_V7_BRIDGE_VERSION} from './causal-lm-v7.js';
 export {prepareSemanticFamilyRegistry,bindSemanticFamilySplit,buildSemanticV7Dataset} from './dataset-v7.js';
 export {loadV7NativePolicy,validateV7NativePolicy,validateV7NativeReceipt} from './native-v7.js';

@@ -1072,6 +1072,17 @@
         }
       }
     },
+    "nativeTransport": {
+      "schema": "semantic-native-transport/7",
+      "track": "assistant",
+      "ordering": "Public timeline order, exact current full context, then generated record",
+      "sourceOwnership": "Semantic track and invocation identities remain in checked public payloads",
+      "lifecycleAnnouncements": false,
+      "automaticContextWindows": false,
+      "fragmentation": "Byte-exact native physical records; no guest execution boundary",
+      "observationLoss": 0,
+      "generatedLoss": "Only the canonical selected record and its terminator"
+    },
     "identity": {
       "canonicalJSON": "stableAlgorithmJSON",
       "digest": "sha256-utf8",
@@ -1090,6 +1101,7 @@
         "episodeDigest",
         "contextsDigest",
         "nativeTrainingDigest",
+        "datasetBindingDigest",
         "consumerRevision",
         "schemaDigest",
         "fixtureDigest",
@@ -1117,6 +1129,7 @@
         "producerRevision",
         "episodeDigest",
         "contextsDigest",
+        "datasetBindingDigest",
         "sourceValidated",
         "journalValidated",
         "replayValidated",
@@ -1127,11 +1140,21 @@
     "datasets": {
       "familyRegistry": "semantic-family-registry/1",
       "splitIdentity": "semantic-split-identity/2",
+      "trainingPolicy": {
+        "schema": "semantic-training-policy/7",
+        "fields": [
+          "schema",
+          "producerRevision",
+          "consumerRevision",
+          "registryDigest"
+        ],
+        "authority": "Explicit training configuration pins; never inferred from incoming episodes"
+      },
       "rule": "Declared semantic relatives, identical normalized cores and exact source aliases share one split",
       "legacyArtifacts": "Rejected. Regenerate public records, native receipts, prepared data and model-bound indexes."
     }
   },
-  "digest": "3ed8d8d6aac07dd3a10032c8cb379e4f41e1d9802d81a9e5e5833b56ec951b81",
+  "digest": "55e7be0a4287be57a4165eaab106d131dcda027a65ed175d98f1a7ad8b47303c",
   "fixtureDigest": "2f34d35060fde7e15fdf8bb0f5fcc25429b0697fcc02df3d45b26968aad0e196",
   "fixtures": {
     "algorithm": {

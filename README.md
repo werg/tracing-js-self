@@ -58,14 +58,16 @@ observe r1 as v2: fulfilled undefined
 return 8
 ```
 
-Observations are environment-supplied and excluded from generated targets;
-native loss-mask qualification remains open. The trusted source definition binds
+Observations are environment-supplied and receive zero native prediction loss.
+The independent v7 consumer checks the actual encoded masks and visible context.
+The trusted source definition binds
 `b0` and `b1` to capability authorization; the selected request supplies evaluated
 arguments once, and the host codec derives its payload. Cleanup, callbacks,
 concurrent outstanding requests, escaping identities, and other unproved forms
-retain an explicit independently checked detailed disposition. For these
-unsupported candidate profiles, `result.detailed` contains a separately
-versioned v6 artifact and `result.exported` is `null`.
+use the independently checked detailed representation inside the same v7 contract.
+`result.exported` explicitly declares `representation: 'algorithm'` or
+`representation: 'detailed'`; unsupported compact lowering no longer drops a
+source-qualified example from v7 training.
 
 ```js
 import {verifyAlgorithmTrainingCase} from 'tracing-js-self/semantic';
@@ -98,14 +100,18 @@ observation, framing, and actual JavaScript context costs separate. Byte counts
 are never substituted for missing token measurements.
 
 The candidate uses `semantic-trace/7`, `semantic-execution/7`,
-`semantic-context/7`, and `semantic-continuation/7`. It is **not native-admitted**:
-the companion consumer must implement and qualify the new meanings before the
-production default changes. Existing source/replay verification remains in use;
-no old-format decoder or checkpoint migration was added. See the
+`semantic-context/7`, and `semantic-continuation/7`. The independent companion
+now implements both representations, native admission, model serving, and the
+prepared-training gate. Each production candidate still requires fresh source
+and native receipts under the exact committed policy. The production default
+remains v6 pending the separate serving-cost and comprehension qualification.
+No old-format decoder or checkpoint migration was added. See the
+[native integration](docs/SEMANTIC_V7_NATIVE_INTEGRATION.md),
+[v7 training and export commands](docs/SEMANTIC_V7_TRAINING.md),
 [implementation ledger](docs/SEMANTIC_ALGORITHM_IMPLEMENTATION.md) and
 [comparison evidence](docs/evidence/semantic-algorithm-v7/README.md).
 
-The [paired run](docs/evidence/semantic-algorithm-v7/paired-e96dd4e/MEASUREMENTS.md)
+The earlier [paired run](docs/evidence/semantic-algorithm-v7/paired-e96dd4e/MEASUREMENTS.md)
 retained all 98 declared executions: 93 normalized and five detailed fallbacks,
 with zero execution failures. All 87 equivalence-family executions converged
 and all 28 negative checks passed. On the unchanged eleven-case gallery,

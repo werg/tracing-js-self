@@ -37,6 +37,7 @@ if(!Number.isSafeInteger(maxContextTokens)||maxContextTokens<2||!Number.isSafeIn
 const inputPath=resolve(args.get('--input')),tokenizerPath=resolve(args.get('--tokenizer-module')),
   outputPath=resolve(args.get('--out'));
 const {tokenizer,eosTokenId,tokenizerEvidence}=await import(pathToFileURL(tokenizerPath));
+try{
 if(!tokenizer||typeof tokenizer.identity!=='string'||!/^[0-9a-f]{64}$/.test(tokenizer.identity)||
   typeof tokenizer.encode!=='function'||typeof tokenizer.decode!=='function'||
   !Number.isSafeInteger(eosTokenId)||eosTokenId<0)
@@ -142,3 +143,6 @@ process.stdout.write(JSON.stringify({output:outputPath,candidates:candidateCount
   registered:memberRows.length,trainExamples:streams.train.rows,validationExamples:streams.validation.rows,
   testExamples:streams.test.rows,refusals:streams.refusals.rows,failures:streams.failures.rows,
   tokenizerIdentity:tokenizer.identity,admitted,optimizerSteps:0})+'\n');
+}finally{
+  if(typeof tokenizer?.close==='function')await tokenizer.close();
+}

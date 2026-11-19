@@ -2,16 +2,17 @@
 // Training and generation share the same context serializer and independent
 // prompt/target token segments; only generated target and EOS tokens are loss.
 import {createHash} from 'node:crypto';
+import {isDeepStrictEqual} from 'node:util';
 import {TextDecoder} from 'node:util';
 import {decodeAlgorithmRecord,ALGORITHM_TRACE_VERSION} from './trace-codec.js';
 import {decodeDetailedRecord,DETAILED_CONTEXT_VERSION,DETAILED_TRACE_VERSION,
   validateDetailedProjection} from './detailed-v7.js';
-import {hashAlgorithmData} from './program.js';
+import {hashAlgorithmData,validateAlgorithmProgram} from './program.js';
 import {stableAlgorithmJSON} from './ir.js';
 import {recheckAlgorithmEvidence} from './compiler.js';
 import {verifySemanticSplitIdentity} from './family-registry.js';
 
-export const CAUSAL_LM_V7_BRIDGE_VERSION='semantic-causal-lm/2';
+export const CAUSAL_LM_V7_BRIDGE_VERSION='semantic-causal-lm/3';
 const HASH=/^[0-9a-f]{64}$/;
 const utf8=new TextDecoder('utf-8',{fatal:true});
 const sha=value=>createHash('sha256').update(typeof value==='string'||Buffer.isBuffer(value)?value:JSON.stringify(value)).digest('hex');
@@ -32,19 +33,49 @@ function validateAlgorithmContext(context){
     Object.hasOwn(context,'inputGraph')&&!plain(context.inputGraph))fail('algorithm context fields');
   if(Object.hasOwn(context,'program')&&context.program.definitionDigest!==context.definition)
     fail('program publication identity');
+  if(Object.hasOwn(context,'program')){
+    try{validateAlgorithmProgram(context.program);}catch{fail('published program source/core identity');}
+  }
   if(Object.hasOwn(context,'inputGraph')&&hashAlgorithmData(context.inputGraph)!==context.input)
     fail('input graph publication identity');
   return true;
 }
 
-function contextPayload(context,representation){
+/** Resolve only definitions observed in this invocation's current/prior contexts. */
+export function createAlgorithmContextResolver(){
+  const programs=new Map(),inputs=new Map(),prefixes=new Map();
+  return Object.freeze({resolve(context){
+    validateAlgorithmContext(context);
+    const prefix=prefixes.get(context.invocationId);
+    if(prefix&&(context.visibleThrough<prefix.visibleThrough||
+      context.visibleThrough===prefix.visibleThrough&&context.prefixDigest!==prefix.prefixDigest))
+      fail('algorithm contexts moved backward or changed at the same public prefix');
+    if(Object.hasOwn(context,'program')){
+      const existing=programs.get(context.definition);
+      if(existing&&!isDeepStrictEqual(existing,context.program))fail('published definition identity changed');
+      if(!existing)programs.set(context.definition,structuredClone(context.program));
+    }
+    if(Object.hasOwn(context,'inputGraph')){
+      const existing=inputs.get(context.input);
+      if(existing&&!isDeepStrictEqual(existing,context.inputGraph))fail('published input identity changed');
+      if(!existing)inputs.set(context.input,structuredClone(context.inputGraph));
+    }
+    const program=programs.get(context.definition),inputGraph=inputs.get(context.input);
+    if(!program||!inputGraph)fail('algorithm source or input reference was not publicly published before use');
+    if(program.definitionDigest!==context.definition||hashAlgorithmData(inputGraph)!==context.input)
+      fail('resolved algorithm publication differs from referenced identity');
+    prefixes.set(context.invocationId,{visibleThrough:context.visibleThrough,prefixDigest:context.prefixDigest});
+    return {...structuredClone(context),program:structuredClone(program),inputGraph:structuredClone(inputGraph)};
+  }});
+}
+
+function contextPayload(context,representation,resolver=null){
   if(representation==='detailed'){
     validateDetailedContext(context);
     return context;
   }
   if(representation==='algorithm'){
-    validateAlgorithmContext(context);
-    return context;
+    return (resolver??createAlgorithmContextResolver()).resolve(context);
   }
   fail('unknown public representation');
 }
@@ -71,8 +102,8 @@ function targetRecord(target,representation){
 }
 
 /** Full causal context prompt shared byte-for-byte by preparation and serving. */
-export function causalLmV7Prompt(context,{representation=context?.representation}={}){
-  const publicContext=contextPayload(context,representation);
+export function causalLmV7Prompt(context,{representation=context?.representation,resolver=null}={}){
+  const publicContext=contextPayload(context,representation,resolver);
   return `Predict one complete ${DETAILED_TRACE_VERSION} record from this public execution context.\n`+
     stableAlgorithmJSON(publicContext)+'\nNext record:\n';
 }
@@ -93,11 +124,11 @@ async function segment(tokenizer,text,eosTokenId){
 }
 
 export async function encodeCausalLmV7Example(context,target,{tokenizer,eosTokenId,maxContextTokens,
-    representation=context?.representation}={}){
+    representation=context?.representation,resolver=null}={}){
   tokenizerContract(tokenizer,eosTokenId);
   require(Number.isSafeInteger(maxContextTokens)&&maxContextTokens>1,'an explicit context budget is required');
   targetRecord(target,representation);
-  const prompt=causalLmV7Prompt(context,{representation});
+  const prompt=causalLmV7Prompt(context,{representation,resolver});
   const promptIds=await segment(tokenizer,prompt,eosTokenId),targetIds=await segment(tokenizer,target,eosTokenId);
   const inputIds=[...promptIds,...targetIds,eosTokenId];
   require(inputIds.length<=maxContextTokens,'flat context budget exceeded; truncation is forbidden');
@@ -161,9 +192,11 @@ export async function buildCausalLmV7Examples(exported,options={}){
   if(exported.sidecar.split!==expectedSplit)fail('dataset split cannot be moved or relabeled');
   tokenizerContract(tokenizer,eosTokenId);
   const contexts=trainingContextItems(exported,representation),rows=[];
+  const resolver=representation==='algorithm'?createAlgorithmContextResolver():null;
   for(const {target,context,targetOrdinal} of contexts){
     if(rows.length>=maxExamples)fail('example cap exceeded; partial episodes are not silently exported');
-    const encoded=await encodeCausalLmV7Example(context,target.line,{tokenizer,eosTokenId,maxContextTokens,representation});
+    const encoded=await encodeCausalLmV7Example(context,target.line,{tokenizer,eosTokenId,maxContextTokens,
+      representation,resolver});
     rows.push({...encoded,metadata:{identityDigest:exported.sidecar.identityDigest??null,
       sourceFamily:exported.sidecar.sourceFamily??exported.sidecar.sourceArtifact?.sidecar?.sourceFamily??null,
       sourceId:splitIdentity.sourceId,targetOrdinal,
@@ -188,10 +221,11 @@ export function createCausalLmV7Selector({runtime,tokenizer,checkpointIdentity,e
   require(['algorithm','detailed'].includes(representation),'unknown semantic-trace/7 representation');
   require(Number.isSafeInteger(maxNewTokens)&&maxNewTokens>0&&Number.isSafeInteger(maxContextTokens)&&
     maxContextTokens>maxNewTokens,'explicit generation and context budgets required');
-  const emissions=[];let initialized=false;
+  const emissions=[],resolver=representation==='algorithm'?createAlgorithmContextResolver():null;
+  let initialized=false;
   const select=async context=>{
     require(initialized,'runtime has not attested its loaded checkpoint');
-    const prompt=causalLmV7Prompt(context,{representation}),inputIds=await segment(tokenizer,prompt,eosTokenId);
+    const prompt=causalLmV7Prompt(context,{representation,resolver}),inputIds=await segment(tokenizer,prompt,eosTokenId);
     require(inputIds.length+maxNewTokens<=maxContextTokens,
       'generation exceeds context budget; truncation is forbidden');
     const response=await runtime.generate({schema:CAUSAL_LM_V7_BRIDGE_VERSION,representation,
