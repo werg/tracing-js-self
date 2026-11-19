@@ -25,7 +25,12 @@ test('binary scalar conversion and DataView failure ordering remain guest-visibl
   runtimeDifferential('const d=new DataView(new ArrayBuffer(16));d.setFloat64(undefined,-0,true);d.setFloat32(8,1.5);return [1/d.getFloat64(0,true),d.getFloat32(8),d.getUint8()];');
 });
 test('subarray aliases while ArrayBuffer.slice copies, with scalar clipping and buffer capabilities',()=>{
-  runtimeDifferential('const b=new ArrayBuffer(4),a=new Uint8Array(b);a[1]=7;const part=a.subarray("1",-1),copy=b.slice(1,-1),c=new Uint8Array(copy);part[0]=9;return [a[1],c[0],part.buffer===b,c.buffer===b,part.byteOffset,b.maxByteLength,b.resizable,b.detached,ArrayBuffer.isView(a),ArrayBuffer.isView(new DataView(b)),ArrayBuffer.isView(b)];');
+  // Node 20 lacks ArrayBuffer.prototype.detached in its V8 oracle, while
+  // newer engines expose it. Only compare capabilities actually present in
+  // that independent reference; an absent native feature cannot qualify
+  // the owned feature by returning a different observed value.
+  const detached=Object.getOwnPropertyDescriptor(ArrayBuffer.prototype,'detached')?'b.detached,':'';
+  runtimeDifferential('const b=new ArrayBuffer(4),a=new Uint8Array(b);a[1]=7;const part=a.subarray("1",-1),copy=b.slice(1,-1),c=new Uint8Array(copy);part[0]=9;return [a[1],c[0],part.buffer===b,c.buffer===b,part.byteOffset,b.maxByteLength,b.resizable,'+detached+'ArrayBuffer.isView(a),ArrayBuffer.isView(new DataView(b)),ArrayBuffer.isView(b)];');
   runtimeDifferential('const a=new Uint8Array(4),b=new ArrayBuffer(4);return [a.subarray(0/0).length,a.subarray(-1/0,1/0).length,b.slice(0/0).byteLength,b.slice(1/0).byteLength];');
 });
 test('binary views survive JSON restoration without losing backing aliases',()=>{
