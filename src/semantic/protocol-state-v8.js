@@ -8,9 +8,14 @@ import {validateProtocolSymbols} from './protocol-values.js';
 import {assertAlgorithmFields,assertAlgorithmDataArray,isAlgorithmDataRecord} from './ir.js';
 import {validateProtocolRecordV8,validateProtocolValueV8,validateProtocolKeyV8,
   validateProtocolDescriptorV8} from './protocol-codec-v8.js';
+import {PROTOCOL_MACHINE_ADAPTERS_V8} from './protocol-machine-extensions-v8.js';
 
 export const PROTOCOL_STATE_V8_SCHEMA='semantic-protocol-state/1';
-export const PROTOCOL_STATE_V8_FIELDS=Object.freeze(['schema','symbols','pendingCalls','callFrames','sequence']);
+const baseStateFields=['schema','symbols','pendingCalls','callFrames','sequence'];
+const extensionStateFields=PROTOCOL_MACHINE_ADAPTERS_V8.filter(adapter=>adapter.stateField!==undefined).map(adapter=>adapter.stateField);
+if(extensionStateFields.some(field=>typeof field!=='string'||!field||baseStateFields.includes(field))||
+  new Set(extensionStateFields).size!==extensionStateFields.length)throw new TypeError('Distinct protocol extension state fields required');
+export const PROTOCOL_STATE_V8_FIELDS=Object.freeze([...baseStateFields,...extensionStateFields]);
 export const PROTOCOL_V8_LIMITS=Object.freeze({symbols:4096,properties:4096,calls:64,steps:32768});
 const copy=structuredClone,eq=isDeepStrictEqual;
 const fail=message=>{const error=new TypeError('Protocol v8: '+message);error.category='unsupported.protocol-v8';throw error;};
@@ -23,10 +28,12 @@ const internalKey=key=>key[0]==='str'?key[1]:copy(key);
 const scalarDescription=row=>row.kind==='well-known'?['str','Symbol.'+row.name]:copy(row.description);
 
 export function createProtocolStateV8(){return {schema:PROTOCOL_STATE_V8_SCHEMA,
-  symbols:WELL_KNOWN_SYMBOLS.map(name=>({id:'well-known:'+name,kind:'well-known',name})),pendingCalls:[],callFrames:[],sequence:0};}
+  symbols:WELL_KNOWN_SYMBOLS.map(name=>({id:'well-known:'+name,kind:'well-known',name})),pendingCalls:[],callFrames:[],sequence:0,
+  ...Object.fromEntries(extensionStateFields.map(field=>[field,null]))};}
 function state(controller){return controller.protocol??=createProtocolStateV8();}
 export function protocolReservedIdentitiesV8(controller){
-  return new Set([...controller.heap.keys(),...state(controller).symbols.map(row=>row.id)]);
+  return new Set([...controller.heap.keys(),...state(controller).symbols.map(row=>row.id),
+    ...PROTOCOL_MACHINE_ADAPTERS_V8.flatMap(adapter=>adapter.reservedIdentities?.(controller)??[])]);
 }
 function symbol(controller,id){const result=state(controller).symbols.find(row=>row.id===id);
   require(result,'undeclared Symbol identity '+id);return result;}
@@ -146,7 +153,9 @@ function callable(controller,value){known(controller,value);require(value[0]==='
   }
   return node;
 }
-function call(controller,record){
+function call(controller,record,options={}){
+  for(const adapter of PROTOCOL_MACHINE_ADAPTERS_V8)if(adapter.assertCall)
+    require(adapter.assertCall(controller,record.callee,options,PROTOCOL_MACHINE_API_V8)===true,'extension callable guard: '+adapter.id);
   const node=callable(controller,record.callee);known(controller,record.receiver);record.arguments.forEach(value=>known(controller,value));
   require(!controller.frameFunctions.has(record.child),'duplicate invocation');
   const protocol=state(controller);require(protocol.callFrames.length<PROTOCOL_V8_LIMITS.calls,'call stack bound');
@@ -205,9 +214,13 @@ function directSet(controller,record){
 }
 function apply(controller,record){
   const protocol=state(controller),pending=protocol.pendingCalls.at(-1);
+  for(const adapter of PROTOCOL_MACHINE_ADAPTERS_V8)if(adapter.assertNext)
+    require(adapter.assertNext(controller,record,PROTOCOL_MACHINE_API_V8)===true,'extension continuation guard: '+adapter.id);
   if(pending&&!controller.stack.includes(pending.child))require(record.kind==='property.finish','property call completion must be consumed first');
   require(controller.completion===null||controller.completion===undefined,'record after terminal completion');
   require(controller.stack.length||record.kind==='end','protocol work requires an active invocation');
+  const adapter=PROTOCOL_MACHINE_ADAPTERS_V8.find(adapter=>Object.hasOwn(adapter.recordFields,record.kind));
+  if(adapter){require(adapter.applyRecord(controller,record,PROTOCOL_MACHINE_API_V8)===true,'extension did not apply its declared record');return;}
   if(record.kind==='symbol.create'||record.kind==='symbol.for'){
     if(record.kind==='symbol.for'){
       const existing=protocol.symbols.find(row=>row.kind==='registry'&&row.key===record.key);
@@ -352,7 +365,9 @@ export function restoreProtocolStateV8(controller,snapshot){
   }
   for(const row of snapshot.symbols)require(!controller.heap.has(row.id),'Symbol/object identity collision');
   for(const [id,node]of controller.heap){
-    if(!['object','array','closure'].includes(node.kind))continue;
+    if(!['object','array','closure'].includes(node.kind)){
+      require(PROTOCOL_MACHINE_ADAPTERS_V8.some(adapter=>adapter.hasRichState?.(node)),'undeclared protocol heap kind');continue;
+    }
     heapNode(temporary,id);const keys=[];
     for(const [key,value]of node.properties){knownKey(temporary,publicKey(key));known(temporary,value);
       require(!keys.some(other=>keyEqual(other,key)),'duplicate semantic property key');keys.push(key);}
@@ -376,11 +391,27 @@ export function restoreProtocolStateV8(controller,snapshot){
     const prototype=node.prototype===undefined?'ordinary':node.prototype;if(prototype!==null&&prototype!=='ordinary'){
       known(temporary,prototype);require(prototype[0]==='ref','prototype reference');heapNode(temporary,prototype[1]);}
   }
+  const extensionIdentities=new Set([...controller.heap.keys(),...snapshot.symbols.map(row=>row.id)]);
+  for(const adapter of PROTOCOL_MACHINE_ADAPTERS_V8){
+    const additional=adapter.stateField===undefined?null:snapshot[adapter.stateField];
+    if(adapter.stateField!==undefined&&additional===null){
+      require(![...controller.heap.values()].some(node=>adapter.hasRichState?.(node)),'extension heap state lacks its declared protocol state');
+    }else{
+      require(typeof adapter.restoreState==='function','extension requires complete restored-state validation');
+      require(adapter.restoreState(temporary,additional,PROTOCOL_MACHINE_API_V8)?.valid===true,'extension state validation failed');
+    }
+    for(const id of adapter.reservedIdentities?.(temporary)??[]){
+      require(typeof id==='string'&&id&&!extensionIdentities.has(id),'extension identity collision');extensionIdentities.add(id);
+    }
+  }
   controller.protocol=copy(snapshot);return {valid:true,symbols:snapshot.symbols.length,pendingCalls:snapshot.pendingCalls.length};
 }
 function rich(node){return [...(node.descriptors??[])].some(([key,metadata])=>metadata.kind!=='data'||!eq(metadata,defaultMetadata(node,key)))||node.extensible===false||
-  ![undefined,null,'ordinary'].includes(node.prototype)||[...node.properties.keys()].some(symbolic);}
+  ![undefined,null,'ordinary'].includes(node.prototype)||[...node.properties.keys()].some(symbolic)||
+  PROTOCOL_MACHINE_ADAPTERS_V8.some(adapter=>adapter.hasRichState?.(node));}
 export function assertProtocolDetailCompatible(controller,record){
+  for(const adapter of PROTOCOL_MACHINE_ADAPTERS_V8)if(adapter.assertNext)
+    require(adapter.assertNext(controller,record,PROTOCOL_MACHINE_API_V8)===true,'extension detailed continuation guard: '+adapter.id);
   const pending=controller.protocol?.pendingCalls.at(-1);
   if(pending&&!controller.stack.includes(pending.child))fail('pending property completion requires protocol finish');
   function inspect(value){
@@ -417,3 +448,7 @@ export function describeProtocolObjectV8(controller,id){
     properties:order(node).map(key=>({key:publicKey(key),descriptor:ownDescriptor(node,publicKey(key))})),
     ...(node.kind==='closure'?{code:node.code,functionKind:node.functionKind??'ordinary',lexicalReceiver:node.lexicalReceiver??null}:{})};
 }
+
+/** Trusted component interface. Public records never carry options or adapters. */
+export const PROTOCOL_MACHINE_API_V8=Object.freeze({require,fail,copy,eq,state,known,knownKey,heapNode,
+  ownDescriptor,installDescriptor,order,fresh,call,allocate,setLocal,truthy});

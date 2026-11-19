@@ -2,10 +2,11 @@
 // detailed grammar or admit Symbol values into semantic-algorithm/2.
 import {assertAlgorithmFields,assertAlgorithmDataArray,assertAlgorithmValue,
   stableAlgorithmJSON,isAlgorithmDataRecord} from './ir.js';
+import {PROTOCOL_MACHINE_ADAPTERS_V8} from './protocol-machine-extensions-v8.js';
 
 export const PROTOCOL_RECORD_V8_SCHEMA='semantic-protocol-record/1';
 export const PROTOCOL_RECORD_V8_PREFIX='protocol ';
-export const PROTOCOL_RECORD_V8_FIELDS=Object.freeze(Object.fromEntries(Object.entries({
+const baseFields={
   'symbol.create':['kind','id','description'],
   'symbol.for':['kind','id','key'],
   'symbol.read':['kind','symbol','operation','result','bind'],
@@ -26,7 +27,19 @@ export const PROTOCOL_RECORD_V8_FIELDS=Object.freeze(Object.fromEntries(Object.e
   'property.get.call':['kind','id','child','object','key','receiver'],
   'property.set.call':['kind','id','child','object','key','receiver','value'],
   'property.finish':['kind','id','completion']
-}).map(([kind,fields])=>[kind,Object.freeze(fields)])));
+};
+const extensionRecords=new Map();
+for(const adapter of PROTOCOL_MACHINE_ADAPTERS_V8){
+  if(typeof adapter.id!=='string'||!adapter.id||typeof adapter.validateRecord!=='function'||typeof adapter.applyRecord!=='function')
+    throw new TypeError('Protocol machine extension requires identity, validator and evaluator');
+  for(const [kind,fields]of Object.entries(adapter.recordFields)){
+    if(Object.hasOwn(baseFields,kind)||extensionRecords.has(kind))throw new TypeError('Duplicate protocol record '+kind);
+    assertAlgorithmDataArray(fields,'protocol extension fields');extensionRecords.set(kind,adapter);
+  }
+}
+export const PROTOCOL_RECORD_V8_FIELDS=Object.freeze(Object.fromEntries(Object.entries({...baseFields,
+  ...Object.fromEntries([...extensionRecords].map(([kind,adapter])=>[kind,adapter.recordFields[kind]]))
+}).map(([kind,fields])=>[kind,Object.freeze([...fields])])));
 const fail=message=>{throw new TypeError('Invalid '+PROTOCOL_RECORD_V8_SCHEMA+': '+message);};
 const id=value=>{if(typeof value!=='string'||!value||value.length>256)fail('identity');};
 const boolean=value=>{if(typeof value!=='boolean')fail('boolean');};
@@ -77,6 +90,8 @@ export function validateProtocolRecordV8(record){
   if(!isAlgorithmDataRecord(record))fail('record must be ordinary data');
   const fields=PROTOCOL_RECORD_V8_FIELDS[record?.kind];if(!fields)fail('record kind');
   assertAlgorithmFields(record,fields,'protocol record');
+  const adapter=extensionRecords.get(record.kind);
+  if(adapter){if(adapter.validateRecord(record,{value:validateProtocolValueV8})!==true)fail('extension record validation');return true;}
   for(const field of ['id','name','object','child','invocation'])if(Object.hasOwn(record,field))id(record[field]);
   if(Object.hasOwn(record,'bind')&&record.bind!==null)id(record.bind);
   for(const field of ['value','result','decision','receiver','callee','symbol'])

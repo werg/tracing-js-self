@@ -3,7 +3,7 @@
 import {createCompletionCapture,ownedCompletionObservations,compareCompletionObservations}
   from '../training/completion-reference.js';
 import {createNativeProtocolMetadata,createOwnedProtocolMetadata} from './protocol-metadata-v8.js';
-import {PROTOCOL_OBSERVATION_ADAPTERS_V8} from './protocol-extensions-v8.js';
+import {PROTOCOL_OBSERVATION_ADAPTERS_V8} from './protocol-observation-extensions-v8.js';
 export const PROTOCOL_COMPLETION_OBSERVATION_SCHEMA='source-protocol-completions/1';
 export const PROTOCOL_METADATA_LIMITS=Object.freeze({snapshots:8192,bytes:4194304,snapshotBytes:1048576});
 /** Trusted, statically registered producer extensions; never serving input. */

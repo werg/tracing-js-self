@@ -4,6 +4,8 @@ import {createRuntime} from '../src/runtime.js';
 import {compileProtocolSourceV8} from '../src/semantic/protocol-source-compiler-v8.js';
 import {createNativeProtocolMetadata,createOwnedProtocolMetadata} from '../src/semantic/protocol-metadata-v8.js';
 import {prepareProtocolObservationExtensionsV8} from '../src/semantic/protocol-source-observations-v8.js';
+import {applyProtocolRecordV8,createProtocolStateV8,PROTOCOL_MACHINE_API_V8,restoreProtocolStateV8} from '../src/semantic/protocol-state-v8.js';
+import {applyMemoryRecordV8,restoreMemoryStateV8} from '../src/semantic/protocol-memory-v8.js';
 
 function archive(source){const runtime=createRuntime().startEntry({text:source,functionName:'run',args:[]});runtime.drive();return runtime.exportRun();}
 
@@ -62,4 +64,34 @@ test('observation extensions only instrument completion mode and cannot overwrit
   assert.equal(completion.globals.__tracingProtocolRegister(),'native');assert.equal(completion.metadataAdapters.length,1);
   assert.throws(()=>prepareProtocolObservationExtensionsV8({adapters:[{id:'bad',globals:{__tracingCapture:()=>{}}}]}),/reserved name/);
   assert.throws(()=>prepareProtocolObservationExtensionsV8({adapters:[adapter,adapter]}),/Distinct observation extension/);
+});
+
+test('trusted machine components share the authoritative heap and reserved identity checks',()=>{
+  const c={heap:new Map(),locals:new Map(),captureAliases:new Map(),receiver:['undefined'],stack:['root'],
+    frameFunctions:new Map([['root','run']]),pending:null,lastReturn:null,completion:null,protocol:createProtocolStateV8()};
+  const api=PROTOCOL_MACHINE_API_V8;assert(Object.isFrozen(api));
+  applyProtocolRecordV8(c,{kind:'symbol.create',id:'o1',description:['str','reserved']});
+  assert.throws(()=>applyMemoryRecordV8(c,{kind:'memory.construct',constructor:'ArrayBuffer',name:'o1',backing:null,arguments:[['num',4]]},api),/duplicate allocation/);
+  applyMemoryRecordV8(c,{kind:'memory.construct',constructor:'ArrayBuffer',name:'buffer',backing:null,arguments:[['num',4]]},api);
+  applyMemoryRecordV8(c,{kind:'memory.construct',constructor:'Uint8Array',name:'bytes',backing:null,arguments:[['ref','buffer']]},api);
+  applyMemoryRecordV8(c,{kind:'memory.set',object:'bytes',key:['str','1'],value:['num',257]},api);
+  applyMemoryRecordV8(c,{kind:'memory.get',object:'bytes',key:['str','1'],result:['num',1]},api);
+  const expected=new Uint8Array(4);expected[1]=257;
+  assert.deepEqual(c.heap.get('buffer').bytes,[...expected]);assert.equal(restoreMemoryStateV8(c,api).valid,true);
+  const unrelated={...c,heap:new Map([['future',{kind:'hidden-state',properties:new Map()}]])};
+  assert.throws(()=>restoreProtocolStateV8(unrelated,createProtocolStateV8()),/undeclared protocol heap kind/);
+});
+
+test('the independent worker dependency graph cannot import producer protocol execution',async()=>{
+  const {readFile}=await import('node:fs/promises'),{parse}=await import('acorn');
+  const seen=new Set(),forbidden=new Set(['runtime.js','frontend.js','protocol-state-v8.js','protocol-codec-v8.js',
+    'protocol-source-compiler-v8.js','protocol-source-v8.js','protocol-memory-v8.js','protocol-construction-v8.js',
+    'protocol-machine-extensions-v8.js','protocol-source-extensions-v8.js','region-harness.js','regions.js']);
+  async function visit(url){if(seen.has(url.href))return;seen.add(url.href);
+    assert(!forbidden.has(url.pathname.split('/').at(-1)),`independent worker imports producer authority ${url.pathname}`);
+    const ast=parse(await readFile(url,'utf8'),{sourceType:'module',ecmaVersion:'latest'});
+    for(const statement of ast.body)if(['ImportDeclaration','ExportNamedDeclaration','ExportAllDeclaration'].includes(statement.type)&&statement.source?.value.startsWith('.'))
+      await visit(new URL(statement.source.value,url));
+  }
+  await visit(new URL('../tools/protocol-reference-v8.mjs',import.meta.url));assert(seen.size>5);
 });
