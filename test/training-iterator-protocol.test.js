@@ -17,6 +17,12 @@ test('ordinary and builtin iterators preserve live reads holes codepoints and co
   assert.equal(r.status,'locally_verified',r.reason);
   runtimeDifferential('let x=[1];try{for(let x of x){}}catch(e){return e.name;}',{source:'"use strict";function run(){let x=[1];try{for(let x of x){}}catch(e){return e.name;}}'});
 });
+test('builtin iterator own methods and values shadow intrinsics with their original receiver',()=>{
+  runtimeDifferential('const it=[1].values();it.next=function(){return {value:this.extra,done:false};};it.extra=9;return [it.next(),it.extra];');
+  runtimeDifferential('const it="ab"[Symbol.iterator]();it.next=undefined;it[Symbol.iterator]=function(){return this;};let error;try{it[Symbol.toStringTag]="custom";}catch(e){error=e.name;}return [it.next,it[Symbol.iterator]()===it,it[Symbol.toStringTag],error];');
+  runtimeDifferential('const it=[1].values();it.next=3;let error;try{it.next();}catch(e){error=e.name;}return [it.next,error];');
+  runtimeDifferential('const it=[1].values();let calls=0;it.next=function(){calls++;this.next=()=>{throw 9;};return {done:calls===3,value:calls};};const out=[];for(const value of it)out.push(value);return [out,calls];');
+});
 test('break return and nested labelled exits close active iterators once',()=>{
   runtimeDifferential('let out=[];function make(name){let i=0;return {[Symbol.iterator](){return this;},next(){return {done:false,value:i++};},return(){out.push(name);return {};}};}outer:for(const a of make("outer")){for(const b of make("inner")){out.push([a,b]);break outer;}}return out;');
   runtimeDifferential('let out=[];const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return(){out.push("close");return {};}};function f(){for(const x of it){try{return 3;}finally{out.push("finally");}}}return [f(),out];');

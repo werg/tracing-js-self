@@ -1741,12 +1741,16 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
              if(obj.declaredError&&!['name','message'].includes(property))
                throw new TypeError('Declared error exposes only name and message');
              if(obj.kind==='iterator'){
-               if(property==='next')v=['builtinfn','Iterator.next'];
+               const slot=Object.hasOwn(obj.properties,property)?obj.properties[property]:null;
+               if(slot)v=slot.value;
+               else if(property==='next')v=['builtinfn','Iterator.next'];
                else if(property===symbolPropertyKey('well-known:iterator'))v=['builtinfn','Iterator.identity'];
                else if(property===symbolPropertyKey('well-known:toStringTag'))v=['str',obj.iterationKind==='string'?'String Iterator':'Array Iterator'];
                else if(['constructor','__proto__','toString','valueOf'].includes(property))throw new TypeError('Unmodeled iterator prototype property');
                else v=U;
-               return {...operands(base,key),...result(op==='GET_METHOD'?['method',v,base.value]:v)};
+               return {...operands(base,key),...result(op==='GET_METHOD'?['method',v,base.value]:v),...(slot?{reads:[{
+                 kind:'property',objectId:obj.id,key:property,present:true,version:obj.propertyVersions[property]??0,
+                 shapeVersion:obj.shapeVersion,value:v,supplyingEvent:slot.origin??null}]}:{})};
              }
              if(obj.kind==='regexp'){
                if(property==='test'){
@@ -2122,6 +2126,9 @@ if(obj.kind==='set'){
              guestFault('TypeError',`Cannot set properties of ${base.value[0]}`);
            if(base.value[0]!=='ref'||!s.heap[base.value[1]])throw new TypeError('Not a writable guest object');
           const object=s.heap[base.value[1]];
+          if(object.kind==='iterator'&&property===symbolPropertyKey('well-known:toStringTag')&&
+             !Object.hasOwn(object.properties,property))
+            guestFault('TypeError','Cannot assign inherited readonly iterator property');
           if(object.kind==='function'){
             if(['arguments','caller'].includes(property)||['name','length'].includes(property)&&!Object.hasOwn(object.properties??{},property))throw new TypeError('Function descriptor assignment outside profile');
             this.functionProperties(s,object,eventId);

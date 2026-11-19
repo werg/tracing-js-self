@@ -26,6 +26,11 @@ test('generator prototype getters preserve receiver and iterator identity is sha
   runtimeDifferential('function* g(){}let result;try{new g();}catch(e){result=e.name;}let write;try{g.name="x";}catch(e){write=e.name;}return [result,write,g.name];');
 });
 
+test('generator own properties and method overrides precede inherited protocol methods',()=>{
+  runtimeDifferential('function* g(){yield 1;}const it=g();it.extra=9;it.next=function(){return {value:this.extra,done:false};};return [it.extra,it.next()];');
+  runtimeDifferential('function* g(){yield 1;}const it=g();it.return=undefined;it[Symbol.iterator]=function(){return this;};return [it.return,it[Symbol.iterator]()===it,it.next()];');
+});
+
 test('generator archive validation checks definition descriptors and callee prototype linkage',()=>{
   const {bundle,runtime}=runtimeDifferential('function* g(x){yield x;}const it=g(3);return [it.next(),it.next()];');
   const definition=bundle.events.find(event=>event.stateChanges.some(p=>p.after?.generatorFunction));
