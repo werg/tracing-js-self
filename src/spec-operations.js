@@ -124,7 +124,11 @@ export function ordinaryBuiltin(heap, receiver, name) {
   const obj=receiver[0]==='ref'?heap[receiver[1]]:null;
   if(!obj||!['object','array'].includes(obj.kind))return null;
   if(name==='Object.valueOf')return receiver;
-  if(name==='Object.toString')return ['str',obj.kind==='array'?'[object Array]':'[object Object]'];
+  if(name==='Object.toString'){
+    const tag=ordinaryGet(heap,receiver,symbolPropertyKey('well-known:toStringTag'));
+    if(!tag)return null;
+    return ['str','[object '+(tag.method.value[0]==='str'?tag.method.value[1]:obj.kind==='array'?'Array':'Object')+']'];
+  }
   if(name==='Array.toString') {
     if(obj.kind!=='array'||Object.hasOwn(obj.properties,'join'))return null;
     const length=decode(obj.properties.length.value);
@@ -163,7 +167,9 @@ export function advanceArithmetic(record, eventId, {heap=null,invoke=null,takeRe
        !['array','object'].includes(heap[input.value[1]].kind)) {
       unsupported();return;
     }
-    record.coercion={side:left?'left':'right',input,register,resume,index:0,
+    const protocol=ordinaryGet(heap,input.value,symbolPropertyKey('well-known:toPrimitive'));
+    const index=protocol&&['null','undefined'].includes(protocol.method.value[0])?0:-1;
+    record.coercion={side:left?'left':'right',input,register,resume,index,
       method:null,waitingFrameId:null};
     record.phase='coercion-get';
   };
@@ -174,6 +180,9 @@ export function advanceArithmetic(record, eventId, {heap=null,invoke=null,takeRe
       record.phase=c.resume;
       record.coercion=null;
     } else {
+      if(c.index===-1){
+        complete({type:'throw',errorType:'TypeError',message:'Symbol.toPrimitive must return a primitive',origin:eventId});return;
+      }
       c.index++;
       c.method=null;c.waitingFrameId=null;
       if(c.index===2)complete({type:'throw',errorType:'TypeError',
@@ -194,7 +203,7 @@ export function advanceArithmetic(record, eventId, {heap=null,invoke=null,takeRe
     }
     case 'coercion-get': {
       const c=record.coercion;use(c.input);
-      const name=c.index===0?'valueOf':'toString';
+      const name=c.index===-1?symbolPropertyKey('well-known:toPrimitive'):c.index===0?'valueOf':'toString';
       const obtained=ordinaryGet(heap,c.input.value,name);
       if(!obtained){unsupported();break;}
       c.method=obtained.method;
@@ -205,19 +214,27 @@ export function advanceArithmetic(record, eventId, {heap=null,invoke=null,takeRe
     case 'coercion-call': {
       const c=record.coercion;use(c.method,c.input);
       const v=c.method.value;
+      if(c.index===-1&&['null','undefined'].includes(v[0])){
+        c.index=0;c.method=null;c.waitingFrameId=null;record.phase='coercion-get';break;
+      }
       if(v[0]==='ref'&&heap[v[1]]?.kind==='function'){
         // An async valueOf returns a Promise object even before its first
         // suspension. Its asynchronous guest reaction behavior is not part
         // of this ordinary coercion subset.
         if(heap[v[1]].async){unsupported('AsyncToPrimitive');break;}
         if(!invoke)throw new Error('Missing owned conversion call dispatcher');
-        c.waitingFrameId=invoke(v,c.input.value);
+        c.waitingFrameId=invoke(v,c.input.value,c.index===-1?
+          [token(['str',['right-primitive','select'].includes(c.resume)?'default':'number'],eventId)]:[]);
         record.phase='coercion-return';
       }else if(v[0]==='builtinfn' && ['Object.valueOf','Object.toString','Array.toString'].includes(v[1])){
         const value=ordinaryBuiltin(heap,c.input.value,v[1]);
         if(value===null){unsupported('ArrayToString(complex)');break;}
         finishCoercion(value);
       }else{
+        if(c.index===-1){
+          if(['builtinfn','intrinsic','hostfn'].includes(v[0])){unsupported('UnownedToPrimitiveCallable');break;}
+          complete({type:'throw',errorType:'TypeError',message:'Symbol.toPrimitive is not callable',origin:eventId});break;
+        }
         // A non-callable property is skipped, as in OrdinaryToPrimitive.
         finishCoercion(c.input.value);
       }

@@ -180,6 +180,17 @@
       "native": "unsupported",
       "reason": "Generator identity, suspended cursor and completion obligations require a new public continuation representation; existing detailed contracts lack them",
       "tests": "test/training-generators.test.js"
+    },
+    {
+      "id": "symbol-conversion-protocol",
+      "domain": "ordinary own/inherited data Symbol.toPrimitive hooks with receiver and default/number hint; primitive result validation, nullish fallback, throws and Symbol.toStringTag data; accessor/async/unmodeled builtin hooks and species/concat overrides explicitly refused",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Symbol-keyed hook identities require the public protocol interface; old ordinary conversion path remains separately qualified",
+      "tests": "test/training-symbol-coercion.test.js"
     }
   ]
 }

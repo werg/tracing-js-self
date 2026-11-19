@@ -826,10 +826,10 @@ export class Runtime {
       const current=s.operations[operation.id],f=s.frames[frame.id];
       const detail=advanceArithmetic(current,eventId,{
         heap:s.heap,
-        invoke:(method,receiver)=>{
+        invoke:(method,receiver,args=[])=>{
           const target=s.heap[method[1]];
           const promiseId=target.async?this.newPromise(s):null;
-          const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,[],receiver);
+          const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,args,receiver);
           s.control.a0.activeFrameId=id;
           return id;
         },
@@ -1961,6 +1961,17 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             if(!singleLength)args.forEach((entry,i)=>
               putOwn(array,String(i),entry.value,eventId));
             return {...operands(fn,...args),...result(['ref',id])};
+          }
+          if(callable[0]==='builtinfn'&&['map','filter','slice','splice','concat'].some(method=>callable[1]==='Array.prototype.'+method)){
+            const array=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+            if(array?.kind==='array'&&(objectPrototype(array)!=='Array.prototype'||
+               Object.hasOwn(array.properties,'constructor')||Object.hasOwn(array.accessors??{},'constructor')))
+              throw new TypeError('Array species lookup is outside the default ordinary array profile');
+            if(callable[1]==='Array.prototype.concat')for(const input of [receiver,...args.map(arg=>arg.value)]){
+              if(input[0]!=='ref'||!['object','array'].includes(s.heap[input[1]]?.kind))continue;
+              const hook=ordinaryGet(s.heap,input,symbolPropertyKey('well-known:isConcatSpreadable'));
+              if(!hook||hook.method.value[0]!=='undefined')throw new TypeError('Symbol.isConcatSpreadable requires an owned concat protocol');
+            }
           }
           if(callable[0]==='ref' && s.heap[callable[1]]?.kind==='function'){
             const target=s.heap[callable[1]],promiseId=target.async?this.newPromise(s):null;
