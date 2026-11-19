@@ -101,7 +101,6 @@ export function parseTraining(source) {
     });
   }
   function classExpression(n){
-    if(n.superClass)reject(n,'class inheritance requires the derived constructor profile');
     const elements=n.body.body.map(member=>{
       if(member.type==='StaticBlock')return {...span(member),kind:'block',static:true,body:member.body.map(stmt)};
       if(!['MethodDefinition','PropertyDefinition'].includes(member.type))reject(member,'class element');
@@ -113,7 +112,7 @@ export function parseTraining(source) {
         value:member.value?(member.type==='PropertyDefinition'?expr(member.value):{...expr(member.value),strict:true,nonConstructible:member.kind!=='constructor'}):
           {...span(member),type:'Literal',value:['undefined']}};
     });
-    return {...span(n),type:'ClassExpr',name:n.id?.name??null,elements};
+    return {...span(n),type:'ClassExpr',name:n.id?.name??null,superClass:n.superClass?expr(n.superClass):null,elements};
   }
   function expr(n) {
     if(!n)reject(parsed,'missing expression');
@@ -231,7 +230,7 @@ export function parseTraining(source) {
           reject(n,'spread/optional call');
         if(n.callee.type==='Identifier' && ['eval','Function','require'].includes(n.callee.name))
           reject(n,'dynamic source or host call');
-        return {...loc,type:'Call',callee:expr(n.callee),
+        return {...loc,type:n.callee.type==='Super'?'SuperCall':'Call',...(n.callee.type==='Super'?{}:{callee:expr(n.callee)}),
           args:n.arguments.map(a=>a.type==='SpreadElement'?
             {...span(a),type:'Spread',argument:expr(a.argument)}:expr(a))};
       case 'ArrayExpression':
@@ -371,6 +370,7 @@ export function parseTraining(source) {
           break;
         case 'ClassExpr':{
           const classEnv={names:new Set(n.name?[n.name]:[]),parent:e};
+          if(n.superClass)value(n.superClass,classEnv);
           for(const element of n.elements){
             if(element.computedKey)value(element.computedKey,classEnv);
             if(element.kind==='block')scope(element.body,classEnv,[],false,true);else value(element.value,classEnv);
@@ -410,6 +410,7 @@ export function parseTraining(source) {
           break;
         case 'Member':value(n.object,e);value(n.property,e);break;
         case 'Call':value(n.callee,e);n.args.forEach(x=>value(x.type==='Spread'?x.argument:x,e));break;
+        case 'SuperCall':n.args.forEach(x=>value(x.type==='Spread'?x.argument:x,e));break;
         case 'Construct':value(n.callee,e);n.args.forEach(x=>value(x,e));break;
         case 'DeferredRegExp':case 'OwnedPinnedRegExp':break;
         case 'Array':n.elements.forEach(x=>{if(x)value(x.type==='Spread'?x.argument:x,e);});break;

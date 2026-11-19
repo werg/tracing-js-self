@@ -15,10 +15,10 @@ function expectedSnapshot(heap,source,fail){
     const ordered=[...candidates.filter(index).sort((a,b)=>Number(a)-Number(b)),...candidates.filter(key=>!index(key))];
     const own=ordered.map(key=>[key,!!(object.accessors?.[key]?object.accessors[key].enumerable:object.dataAttributes?.[key]?.enumerable!==false&&!(object.kind==='array'&&key==='length'))]);
     if(object.kind==='function')for(const key of ['name','length','prototype','caller','arguments'])if(!own.some(row=>row[0]===key))own.push([key,false]);
-    const prototype=Object.hasOwn(object,'prototype')?object.prototype:object.kind==='array'?'Array.prototype':'Object.prototype';
+    const prototype=Object.hasOwn(object,'prototype')?object.prototype:object.kind==='array'?'Array.prototype':object.kind==='function'?'Function.prototype':'Object.prototype';
     chain.push({id:object.id,prototype,keys:own});
     for(const [key,enumerable] of own)if(!seen.has(key)){seen.add(key);if(enumerable)keys.push(propertyKeyValue(key)[1]);}
-    if(prototype===null||['Object.prototype','Array.prototype'].includes(prototype))break;
+    if(prototype===null||['Object.prototype','Array.prototype','Function.prototype'].includes(prototype))break;
     object=heap[prototype];if(!object)fail('For-in snapshot has a missing prototype');
   }
   return {chain,keys};
