@@ -25,23 +25,23 @@ small increments so each checkpoint is recoverable.
 
 ## Phase ledger
 
-This table starts at the Phase 0 documentation checkpoint. Update rows with
-actual implementation and verification evidence as changes land; a planned
-module or test is not a completed gate.
+Implementation checkpoints below are executable. The paired comparison and
+verification receipts distinguish these checks from native promotion and
+external comprehension or learning evidence.
 
 | Phase | Required implementation | Checkpoint status / acceptance evidence |
 | --- | --- | --- |
-| 0: contract/baseline | Contract, assumption inventory, direction links, frozen eleven-case v6 and equivalence-family baselines | Contract/inventory documented here; baseline execution and receipt recorded separately. |
-| 1: typed core | Validation, operation registry/checker, observables, receipts, alpha/temp/helper normalization | Pending implementation and convergence/negative/idempotence checks. Development artifacts cannot be admitted as v6. |
-| 2: ordered sum | Shared fold for indexed `for`, matching `while`, eligible helper/temp forms, certified `for...of` | Pending domain/convergence/refusal evidence. `reduce` requires a separate rule. |
-| 3: private state | Bounded def-use/liveness/escape analysis, object/scalar convergence | Pending private-object positive and returned/captured/effect-exposed/retained negatives. |
-| 4: counter | Regions across observations, trusted routing, derived payload, narrow async profile, durable resume | Pending causal/order/rejection/callback/checkpoint evidence or explicit detailed dispositions. |
-| 5: consumers | Codec/GBNF/rendering, controller/harness, context/continuation, admission/contracts, native agreement | Pending coordinated producer and independent native verification. |
-| 6: promotion | Paired full costs, coverage/refusals/false merges, comprehension, native qualification | Not promoted by this checkpoint. Missing measurements remain unavailable. |
+| 0: contract/baseline | Contract, assumption inventory, direction links, frozen eleven-case v6 and equivalence-family baselines | Implemented. `docs/evidence/semantic-algorithm-v7/baseline-v6.json` preserves the exact reviewed gallery; the comparison runner pairs all new source families with detailed execution. |
+| 1: typed core | Validation, operation registry/checker, observables, receipts, alpha/temp/helper normalization | Implemented in `src/semantic/`; strict data/identity guards, deterministic/idempotent normalization, truthful alternative claims, and source-evidence regeneration have regression tests. |
+| 2: ordered sum | Shared fold for indexed `for`, matching `while`, eligible helper/temp forms, certified `for...of` | Implemented with dense ordinary finite-number input guards, ascending binary64 accumulation, and exhaustive small/edge inputs. `reduce` remains explicitly unproved. |
+| 3: private state | Bounded def-use/liveness/escape analysis, object/scalar convergence | Implemented for private ordinary objects and aliases. Returned, captured, effect-exposed, retained, hooked, and input mutations are refused by the abstract profile. |
+| 4: counter | Regions across observations, trusted routing, derived payload, narrow async profile, durable resume | Implemented for `serial-scalar-effects/1`. Tests cover exact order/arguments, rejections, future-prefix isolation, false-claim blocking, durable checkpoints, stale intents, reconciliation, and dispatch deduplication. Cleanup/callback/concurrent-request forms retain detailed dispositions. |
+| 5: consumers | Codec/GBNF/rendering, controller/harness, context/continuation, admission/contracts, native agreement | JavaScript candidate codec, controlled renderer, serving controller/harness, cached definitions/inputs, live state, contract generator and strict v7 version identities implemented. Independent production native v7 consumer remains a required companion change. |
+| 6: promotion | Paired full costs, coverage/refusals/false merges, comprehension, native qualification | Comparison runner and exact pinned-tokenizer meter implemented. Native serving qualification and external comprehension evidence remain open; production default is not promoted. |
 
-Intended modules are `src/semantic/ir.js`, `operations.js`, `observables.js`,
+Core modules are `src/semantic/ir.js`, `operations.js`, `observables.js`,
 `lower-js.js`, `provenance.js`, and `normalize-algorithm.js`. Names are
-implementation choices. `src/semantic/normalize.js` remains the journal evidence
+implemented interfaces. `src/semantic/normalize.js` remains the journal evidence
 adapter. The compiler orchestrates components; the controller checks claims and
 trusted routing without becoming another general JavaScript interpreter.
 
@@ -101,30 +101,61 @@ input/effect domains, expected structure, distinct provenance, and a shared
 family identity. Keep relatives together in dataset splits; held-out renaming
 does not establish a held-out algorithm.
 
-- [ ] Alpha/temp/helper variants converge without capture mistakes or
+- [x] Alpha/temp/helper variants converge without capture mistakes or
   value-coincidence substitutions.
-- [ ] Ordered folds converge across supported syntax for empty/singleton,
+- [x] Ordered folds converge across supported syntax for empty/singleton,
   signed-zero, large finite, and rounding-sensitive inputs.
-- [ ] Reverse traversal, holes, coercion, hooks, mutation, custom iteration,
+- [x] Reverse traversal, holes, coercion, hooks, mutation, custom iteration,
   and unproved built-ins are distinguished or refused.
-- [ ] Private object/scalar variants converge; returned, captured,
+- [x] Private object/scalar variants converge; returned, captured,
   effect-exposed, retained, and input identities are preserved.
-- [ ] Changed effect order/count/arguments, cleanup, callbacks, and rejection
+- [x] Changed effect order/count/arguments, cleanup, callbacks, and rejection
   remain visible even when terminal values match.
-- [ ] Every emitted intermediate claim is checked; false claims block strict
+- [x] Every emitted intermediate claim is checked; false claims block strict
   external requests despite correct terminal answers.
-- [ ] Throwing, relevant randomness-consuming, and diverging work is not
+- [x] Throwing, relevant randomness-consuming, and diverging work is not
   erased as dead private work.
-- [ ] Forged receipts, source correspondence, boundary IDs, fold order, values,
+- [x] Forged receipts, source correspondence, boundary IDs, fold order, values,
   and generated/observed roles fail closed.
-- [ ] Normalization is deterministic/idempotent, strict serialization
+- [x] Normalization is deterministic/idempotent, strict serialization
   round-trips, and independent source/exact replay checks pass.
-- [ ] Future responses cannot change earlier generated prefixes.
-- [ ] Checkpoint/resume preserves live state, pending obligations, and the
+- [x] Future responses cannot change earlier generated prefixes.
+- [x] Checkpoint/resume preserves live state, pending obligations, and the
   intent lifecycle without duplicate dispatch.
 
 The release suite requires zero observed false merges, with its finite domain
 and denominator reported.
+
+## Public candidate API and recovery
+
+`tracing-js-self/semantic` exports source lowering, core validation/evaluation,
+canonical text and controlled readings, `AlgorithmController`,
+`AlgorithmExecutionHarness`, teacher compilation, independent evidence
+rechecking, comparison, and token-metering interfaces. `validateAlgorithmTrace`
+accepts checked subexpression decompositions without requiring teacher bytes;
+`verifyAlgorithmProjection` separately enforces exact artifact regeneration.
+
+The serving definition and immutable input graph are published once per
+consumer cache. Every later reference must resolve to an available definition.
+Context carries live committed values, needed alternative-expression
+definitions, causal prefix identity, and pending/completion state. Checkpoint
+replay checks claims, observation roles, exact timeline fields, source/boundary
+authorization, dispatch order/multiplicity, and rederived host transport.
+
+`persistCheckpoint()` and `restoreFromJournal()` use the existing durable
+`SelectedIntentJournal` store. An intent is persisted before dispatch. A stale
+selected checkpoint with an existing durable intent becomes uncertain;
+restoration never retries it. A pending selected checkpoint without a durable
+journal also restores conservatively as uncertain. Reconciliation requires
+explicit external evidence. Settled observations can be restored without
+calling services again. Integrity hashes establish consistency, not a signature
+or a new authority to forge source or external facts.
+
+`fixtures/semantic-equivalence/comprehension.js` predeclares 12 source-free
+tasks and 24 paraphrases. `publicComprehensionTasks()` omits answer keys, while
+`scoreComprehensionResponses()` records the full denominator and available
+timing. Tests validate these materials; no external reader/model responses
+have been collected, so comprehension improvement remains unmeasured.
 
 ## Native companion dependency
 

@@ -40,7 +40,7 @@ obligations; see the [authority matrix](SEMANTIC_AUTHORITY_MATRIX.md).
 
 ## Observation contract
 
-The initial observation schema is `semantic-observables/1`. Implementations
+The initial observation schema is `semantic-observation/1`. Implementations
 preserve the following distinctions or explicitly refuse an unsupported profile.
 
 | Category | Required distinctions |
@@ -160,6 +160,15 @@ The private-object example may collapse to scalar computation only when its
 identity does not escape. The async counter exposes read, observed value,
 increment, store, and completion. Its narrow scheduling profile preserves order
 and resumability; `await` and `.then` are not assumed equivalent.
+
+The implemented `serial-scalar-effects/1` profile admits direct
+`demo.readAsync` calls that are immediately awaited and direct synchronous
+`demo.store` calls. Inputs and delivered values are non-BigInt primitives.
+Number and string addition retain their primitive meanings. A BigInt delivery
+remains an observed fact but stops with an explicit unsupported disposition;
+it does not invent a guest exception or authorize a later store. Broader
+exception objects, callback scheduling, cleanup, and concurrent requests need
+their detailed profile.
 
 ## Claims, causal regions, and authorized effects
 

@@ -34,6 +34,74 @@ implemented tools from the learning and release gates still awaiting evidence.
 See [owned arithmetic and evidence](docs/OWNED_ARITHMETIC.md) for the earlier
 spec-operation milestone.
 
+## Algorithm trace candidate
+
+The bounded algorithm pipeline is available through `tracing-js-self/semantic`.
+It lowers lexical renaming, private temporaries, bounded pure helpers, private
+ordinary-object state, pure selections, and certified ordered numeric folds to
+one typed core. Indexed `for`, matching `while`, and eligible `for...of` sums
+share this explanation:
+
+```text
+v0 = fold_left($a0, 0, add) => 9
+return 9
+```
+
+The serial counter profile exposes its actual interaction:
+
+```text
+request r0 b0: demo.readAsync("counter")
+observe r0 as v0: fulfilled 7
+v1 = add(%v0, 1) => 8
+request r1 b1: demo.store("counter", 8)
+observe r1 as v2: fulfilled undefined
+return 8
+```
+
+Observations have zero prediction loss. The trusted source definition binds
+`b0` and `b1` to capability authorization; the selected request supplies evaluated
+arguments once, and the host codec derives its payload. Cleanup, callbacks,
+concurrent outstanding requests, escaping identities, and other unproved forms
+retain an explicit independently checked detailed disposition.
+
+```js
+import {verifyAlgorithmTrainingCase} from 'tracing-js-self/semantic';
+
+const checked = await verifyAlgorithmTrainingCase({
+  family: 'ordered-sum-example', entry: 'run', args: [[2, 3, 4]],
+  source: '"use strict";function run(xs){let sum=0;for(const x of xs){sum+=x;}return sum;}',
+  fixture: {calls: []}
+});
+console.log(checked.status);
+console.log(checked.exported?.public.timeline);
+```
+
+`AlgorithmController` checks canonical or truthfully decomposed claims against
+committed state. `AlgorithmExecutionHarness` provides definition/input caching,
+live context, exact host routing, checkpoints, and durable intent handling.
+`persistCheckpoint()` and `restoreFromJournal()` use `SelectedIntentJournal`;
+restoration never dispatches automatically, and uncertain effects require
+explicit reconciliation.
+
+```sh
+npm run test:semantic-algorithm
+npm run semantic:contract
+npm run semantic:compare -- --out ../algorithm-comparison
+```
+
+For real pinned-tokenizer counts, add `--python PYTHON --consumer-root DIR
+--tokenizer-json FILE` to the comparison command. Reports keep target,
+observation, framing, and actual JavaScript context costs separate. Byte counts
+are never substituted for missing token measurements.
+
+The candidate uses `semantic-trace/7`, `semantic-execution/7`,
+`semantic-context/7`, and `semantic-continuation/7`. It is **not native-admitted**:
+the companion consumer must implement and qualify the new meanings before the
+production default changes. Existing source/replay verification remains in use;
+no old-format decoder or checkpoint migration was added. See the
+[implementation ledger](docs/SEMANTIC_ALGORITHM_IMPLEMENTATION.md) and
+[comparison evidence](docs/evidence/semantic-algorithm-v7/README.md).
+
 ## Reproduce the current baseline
 
 Use the Node version in `.nvmrc`, then install the committed dependency locks:
