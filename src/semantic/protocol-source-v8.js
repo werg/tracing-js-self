@@ -43,7 +43,8 @@ function executeOwned(input){
 async function buildSourceArtifact(input){
   const archive=executeOwned(input),projection=compileProtocolSourceV8(archive,{maxGenerated:input.limits.maxGenerated});
   if(!projection.claims.some(row=>row.kind==='protocol'&&
-    (row.record.kind.startsWith('symbol.')||row.record.kind.startsWith('property.'))))fail('no declared Symbol/property protocol boundary');
+    (row.record.kind.startsWith('symbol.')||row.record.kind.startsWith('property.')))&&!projection.extensions?.length)
+    fail('no declared source protocol boundary');
   const referenceInput={source:input.source,entry:input.entry,inputGraph:encodeNativeGraph(input.args)},
     reference=await auditProtocolSourceV8({bundle:archive,referenceInput,outcome:projection.outcome,timeoutMs:input.limits.timeoutMs});
   const publicData={schema:'semantic-protocol-source-target/1',sourceDigest:hashAlgorithmData(input.source),
@@ -53,7 +54,8 @@ async function buildSourceArtifact(input){
     producerRevision:input.producerRevision,license:input.license,trustTier:input.trustTier,
     sourceProvenance:{family:input.family,sourceDigest:hashAlgorithmData(input.source),upstream:input.provenance},
     executionLimits:input.limits,referenceInput,reference,
-    archive,archiveDigest:digest(archive),compiler:{schema:projection.schema,claims:projection.claims},
+    archive,archiveDigest:digest(archive),compiler:{schema:projection.schema,claims:projection.claims,
+      ...(projection.extensions.length?{extensions:projection.extensions}:{})},
     outcome:projection.outcome,optimizerSteps:0,learningClaim:null}});
 }
 
@@ -64,7 +66,8 @@ export function projectProtocolRegionWitness(sourceArtifact){
     fail('independently checked direct source evidence required');
   const projection=compileProtocolSourceV8(side.archive,{maxGenerated:side.executionLimits.maxGenerated}),
     harness=new RegionExecutionHarness({sessionId:'protocol-source',automaticDelivery:false,now:()=>-Infinity,maxGenerated:side.executionLimits.maxGenerated});
-  if(!eq(projection.claims,side.compiler.claims)||!eq(projection.outcome,side.outcome)||
+  if(!eq(projection.claims,side.compiler.claims)||!eq(projection.extensions,side.compiler.extensions??[])||
+    !eq(projection.outcome,side.outcome)||
     !eq({schema:'semantic-protocol-source-target/1',sourceDigest:hashAlgorithmData(projection.source),entry:projection.entry,
       inputGraph:projection.inputGraph,claims:projection.claims.map(({kind,line})=>({kind,line}))},sourceArtifact.public))
     fail('source target or projection certificate changed');
@@ -117,7 +120,8 @@ export function projectProtocolRegionWitness(sourceArtifact){
     compactRecords,detailedRecords,protocolRecords,compactBytes,detailedBytes,protocolBytes,
     detailTokenShare:null,tokenMeasurement:'untested'};
   return clean({public:publicData,contexts,sidecar:{schema:PROTOCOL_REGION_EVIDENCE_V8_SCHEMA,admission:'locally_verified',referenceStatus:'agreed',
-    representation:REGION_TRACE_VERSION,profile:'compositional-regions/1',protocolProfile:'symbols-ordinary-properties/1',
+    representation:REGION_TRACE_VERSION,profile:'compositional-regions/1',protocolProfile:projection.sourceProfile,
+    ...(projection.extensions.length?{protocolExtensions:projection.extensions}:{}),
     sourceFamily:side.sourceFamily,family:side.sourceFamily,sourceArtifact:copy(sourceArtifact),sourceArtifactDigest:digest(sourceArtifact),
     publicDigest:digest(publicData),contextDigest:digest(contexts),receipts,refusals,regionCoverage,
     producerRevision:side.producerRevision,nativeAdmission:null,optimizerSteps:0,learningClaim:null}});
@@ -130,7 +134,7 @@ export async function verifyProtocolRegionTrainingCase(fixture){
     const input=inputFixture(fixture);phase='owned-and-independent-source';const sourceArtifact=await buildSourceArtifact(input);
     phase='projection';const exported=projectProtocolRegionWitness(sourceArtifact);
     return {...identity,status:exported.sidecar.regionCoverage.compactRegions?'locally_verified':'detailed-fallback',
-      representation:'mixed',profile:'symbols-ordinary-properties/1',exported,regionCoverage:exported.sidecar.regionCoverage};
+      representation:'mixed',profile:exported.sidecar.protocolProfile,exported,regionCoverage:exported.sidecar.regionCoverage};
   }catch(error){return {...identity,status:error instanceof RangeError?'resource_limited':'unsupported',phase,
     category:error.category??'unsupported.protocol-source',reason:error.message,regionDisposition:'source-unqualified'};}
 }
@@ -150,7 +154,7 @@ export async function recheckProtocolRegionEvidence(exported,{nativeConsumer=nul
   if(!eq(fresh,side.sourceArtifact))fail('source, owned archive or independent observations changed');
   const rebuilt=projectProtocolRegionWitness(fresh);
   for(const key of ['public','contexts'])if(!eq(rebuilt[key],exported[key]))fail(key+' differs from the source-certified protocol projection');
-  for(const key of ['sourceFamily','family','receipts','refusals','regionCoverage','publicDigest','contextDigest'])
+  for(const key of ['sourceFamily','family','protocolProfile','protocolExtensions','receipts','refusals','regionCoverage','publicDigest','contextDigest'])
     if(!eq(rebuilt.sidecar[key],side[key]))fail('changed protocol evidence: '+key);
   const replay=RegionExecutionHarness.replay(exported);let native={status:'untested',admitted:false};
   if(nativeConsumer){validateV8NativePolicy(nativePolicy);native=await nativeConsumer(exported);validateV8NativeReceipt(exported,native,nativePolicy);}

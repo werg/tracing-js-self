@@ -3,6 +3,8 @@
 import {types,isDeepStrictEqual} from 'node:util';
 import {encode} from '../values.js';
 import {propertyKeyValue,WELL_KNOWN_SYMBOLS} from '../property-keys.js';
+import {assertAlgorithmFields,assertAlgorithmDataArray,stableAlgorithmJSON} from './ir.js';
+import {PROTOCOL_METADATA_ADAPTERS_V8} from './protocol-extensions-v8.js';
 export const PROTOCOL_METADATA_SCHEMA='source-protocol-metadata/1';
 const copy=structuredClone;
 const fail=message=>{throw new TypeError('Protocol metadata observation: '+message);};
@@ -27,12 +29,21 @@ function tracker(adapter){
   function snapshot(){const rows=[];
     for(let index=0;index<objects.length;index++){
       const {id,raw}=objects[index],node=adapter.object(raw);
-      if(node.kind==='function'){rows.push({id,kind:'function'});continue;}
+      if(node.kind==='function'&&!Array.isArray(node.properties)){rows.push({id,kind:'function'});continue;}
       const prototype=node.prototype===null||typeof node.prototype==='string'?node.prototype:value(node.prototype);
       const properties=node.properties.map(({key,descriptor:d})=>({key:value(key),descriptor:d.kind==='data'?
         {kind:'data',value:value(d.value),writable:d.writable,enumerable:d.enumerable,configurable:d.configurable}:
         {kind:'accessor',get:value(d.get),set:value(d.set),enumerable:d.enumerable,configurable:d.configurable}}));
-      rows.push({id,kind:node.kind,prototype,extensible:node.extensible,properties});
+      if(node.annotations!==undefined){assertAlgorithmDataArray(node.annotations,'metadata annotations');
+        if(node.annotations.length>cap)throw new RangeError('Metadata annotation bound');}
+      const annotations=node.annotations===undefined?null:node.annotations.map(annotation=>{
+        assertAlgorithmFields(annotation,['name','values','data'],'metadata annotation');
+        if(typeof annotation.name!=='string'||!annotation.name||annotation.name.length>128)fail('annotation name');
+        assertAlgorithmDataArray(annotation.values,'annotation references');
+        if(annotation.values.length>cap)throw new RangeError('Metadata annotation bound');
+        return {name:annotation.name,values:annotation.values.map(value),data:JSON.parse(stableAlgorithmJSON(annotation.data))};
+      });
+      rows.push({id,kind:node.kind,prototype,extensible:node.extensible,properties,...(annotations?{annotations}:{})});
     }
     return {objects:rows,symbols:copy(symbolRows)};
   }
@@ -41,10 +52,28 @@ function tracker(adapter){
 const descriptionGetter=Object.getOwnPropertyDescriptor(Symbol.prototype,'description').get;
 const symbolKeyFor=Symbol.keyFor,apply=Reflect.apply;
 const nativeWellKnown=new Map(WELL_KNOWN_SYMBOLS.map(name=>[Symbol[name],name]));
-export function createNativeProtocolMetadata({initialValues=[],intrinsicPrototypes=[]}={}){
+function instantiate(adapters,options){return adapters.map(adapter=>typeof adapter==='function'?adapter(options):adapter).filter(Boolean);}
+function extended(adapters,method,value,context){
+  for(const adapter of adapters){const result=adapter[method]?.(value,context);if(result!==undefined&&result!==null)return result;}return null;
+}
+export function createNativeProtocolMetadata({initialValues=[],intrinsicPrototypes=[],adapters=[]}={}){
   const names=['Object.prototype','Array.prototype','Function.prototype'];
   const ordinaryPrototypes=new Map([[Object.prototype,names[0]],[Array.prototype,names[1]],[Function.prototype,names[2]]]);
   intrinsicPrototypes.forEach((value,index)=>ordinaryPrototypes.set(value,names[index%3]));
+  adapters=instantiate([...PROTOCOL_METADATA_ADAPTERS_V8,...adapters],{side:'native'});
+  const intrinsicPrototype=value=>value===null?null:ordinaryPrototypes.get(value)??value;
+  function defaultNode(value,{includeFunctions=false}={}){
+    if(types.isProxy(value))fail('Proxy metadata is outside the profile');
+    if(typeof value==='function'&&!includeFunctions)return {kind:'function'};
+    const descriptors=Object.getOwnPropertyDescriptors(value),prototype=Object.getPrototypeOf(value);
+    return {kind:typeof value==='function'?'function':Array.isArray(value)?'array':'object',prototype:intrinsicPrototype(prototype),
+      extensible:Object.isExtensible(value),properties:Reflect.ownKeys(descriptors).map(key=>{
+        const d=descriptors[key];return {key,descriptor:Object.hasOwn(d,'value')?
+          {kind:'data',value:d.value,writable:d.writable,enumerable:d.enumerable,configurable:d.configurable}:
+          {kind:'accessor',get:d.get,set:d.set,enumerable:d.enumerable,configurable:d.configurable}};
+      })};
+  }
+  const context={defaultNode,intrinsicPrototype,fail};
   const metadata=tracker({
     type(value){if(value!==null&&['object','function'].includes(typeof value)){
       if(types.isProxy(value))fail('Proxy metadata is outside the profile');return 'reference';}
@@ -55,14 +84,7 @@ export function createNativeProtocolMetadata({initialValues=[],intrinsicPrototyp
         key!==undefined?{kind:'registry',key,description:encode(description)}:{kind:'unique',description:encode(description)};},
     object(value){
       if(types.isProxy(value))fail('Proxy metadata is outside the profile');
-      if(typeof value==='function')return {kind:'function'};
-      const descriptors=Object.getOwnPropertyDescriptors(value),prototype=Object.getPrototypeOf(value);
-      return {kind:Array.isArray(value)?'array':'object',prototype:prototype===null?null:ordinaryPrototypes.has(prototype)?ordinaryPrototypes.get(prototype):prototype,
-        extensible:Object.isExtensible(value),properties:Reflect.ownKeys(descriptors).map(key=>{
-          const d=descriptors[key];return {key,descriptor:Object.hasOwn(d,'value')?
-            {kind:'data',value:d.value,writable:d.writable,enumerable:d.enumerable,configurable:d.configurable}:
-            {kind:'accessor',get:d.get,set:d.set,enumerable:d.enumerable,configurable:d.configurable}};
-        })};
+      return extended(adapters,'nativeNode',value,context)??defaultNode(value);
     }
   });
   for(const value of initialValues)metadata.value(value);metadata.snapshot();
@@ -77,8 +99,30 @@ function ownedKeys(node){
   return [...keys.filter(integer).sort((a,b)=>Number(a)-Number(b)),
     ...keys.filter(key=>!integer(key)&&propertyKeyValue(key)[0]==='str'),...keys.filter(key=>propertyKeyValue(key)[0]==='symbol')];
 }
-export function createOwnedProtocolMetadata(bundle){
+export function createOwnedProtocolMetadata(bundle,{adapters=[]}={}){
   let currentState=bundle.initialState;
+  adapters=instantiate([...PROTOCOL_METADATA_ADAPTERS_V8,...adapters],{side:'owned',bundle});
+  function defaultNode(value,{includeFunctions=false}={}){
+    if(value[0]!=='ref')return {kind:'function'};
+    const node=currentState.heap[value[1]];if(!node||!['object','array','function'].includes(node.kind))fail('nonordinary owned object');
+    if(node.kind==='function'&&!includeFunctions){
+      if(Object.keys(node.properties??{}).length||Object.keys(node.accessors??{}).length||node.prototypeInitialized||node.classConstructor)
+        fail('function own-state observation requires the construction profile');
+      return {kind:'function'};
+    }
+    const prototype=node.prototype===undefined?(node.kind==='array'?'Array.prototype':node.kind==='function'?'Function.prototype':'Object.prototype'):
+      ['Object.prototype','Array.prototype','Function.prototype'].includes(node.prototype)?node.prototype:
+      node.prototype===null?null:typeof node.prototype==='string'?['ref',node.prototype]:fail('unmodeled owned prototype');
+    return {kind:node.kind,prototype,extensible:node.extensible!==false,properties:ownedKeys(node).map(key=>{
+      const accessor=node.accessors?.[key];
+      const descriptor=accessor?{kind:'accessor',get:accessor.get?.value??['undefined'],set:accessor.set?.value??['undefined'],
+        enumerable:accessor.enumerable,configurable:accessor.configurable}:
+        {kind:'data',value:node.properties[key].value,writable:true,enumerable:!(node.kind==='array'&&key==='length'),
+          configurable:!(node.kind==='array'&&key==='length'),...node.dataAttributes?.[key]};
+      return {key:propertyKeyValue(key),descriptor};
+    })};
+  }
+  const context={bundle,get state(){return currentState;},defaultNode,fail};
   const metadata=tracker({
     type(value){if(!Array.isArray(value))fail('missing owned observation value');
       if(value[0]==='symbol')return 'symbol';
@@ -91,24 +135,7 @@ export function createOwnedProtocolMetadata(bundle){
         {kind:'registry',key:symbol.registeredKey,description:copy(symbol.description)};
     },
     object(value){
-      if(value[0]!=='ref')return {kind:'function'};
-      const node=currentState.heap[value[1]];if(!node||!['object','array','function'].includes(node.kind))fail('nonordinary owned object');
-      if(node.kind==='function'){
-        if(Object.keys(node.properties??{}).length||Object.keys(node.accessors??{}).length||node.prototypeInitialized||node.classConstructor)
-          fail('function own-state observation requires the construction profile');
-        return {kind:'function'};
-      }
-      const prototype=node.prototype===undefined?(node.kind==='array'?'Array.prototype':'Object.prototype'):
-        ['Object.prototype','Array.prototype'].includes(node.prototype)?node.prototype:
-        node.prototype===null?null:typeof node.prototype==='string'?['ref',node.prototype]:fail('unmodeled owned prototype');
-      return {kind:node.kind,prototype,extensible:node.extensible!==false,properties:ownedKeys(node).map(key=>{
-        const accessor=node.accessors?.[key];
-        const descriptor=accessor?{kind:'accessor',get:accessor.get?.value??['undefined'],set:accessor.set?.value??['undefined'],
-          enumerable:accessor.enumerable,configurable:accessor.configurable}:
-          {kind:'data',value:node.properties[key].value,writable:true,enumerable:!(node.kind==='array'&&key==='length'),
-            configurable:!(node.kind==='array'&&key==='length'),...node.dataAttributes?.[key]};
-        return {key:propertyKeyValue(key),descriptor};
-      })};
+      return extended(adapters,'ownedNode',value,context)??defaultNode(value);
     }
   });
   for(const value of bundle.entrySpec.arguments)metadata.value(value);metadata.snapshot();
