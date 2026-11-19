@@ -249,6 +249,7 @@ export function compile(ast) {
           break;
         case 'Identifier':emit('GET',n.name,n);break;
         case 'This':emit('THIS',null,n);break;
+        case 'NewTarget':emit('NEW_TARGET',null,n);break;
         case 'Unary':
           // typeof of an identifier must inspect the binding without first
           // throwing on an unresolvable name. Owned TDZ remains observable.

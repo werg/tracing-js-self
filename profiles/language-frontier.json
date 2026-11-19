@@ -194,7 +194,7 @@
     },
     {
       "id": "ordinary-user-constructors",
-      "domain": "ordinary function constructors with live owned prototype identity, receivers, parameter defaults, inherited methods/accessors, explicit object returns and abrupt completion; nonconstructible functions reject; spread/new.target/prototype reflection outside this slice",
+      "domain": "ordinary function constructors with live owned prototype identity, receivers, parameter defaults, inherited methods/accessors, explicit object returns and abrupt completion; nonconstructible functions reject; spread/prototype reflection outside this slice; new.target covered separately",
       "frontend": "passed",
       "owned": "passed",
       "independent": "passed",
@@ -205,7 +205,7 @@
     },
     {
       "id": "base-classes-and-private-slots",
-      "domain": "local base class declarations/expressions; fresh private lexical identities, private fields/methods/in, public methods/accessors/fields, static fields/blocks/accessors, computed scalar/Symbol keys, initializer-before-parameter ordering and abrupt construction; no inheritance, private accessors, super/new.target or top-level class environment",
+      "domain": "local base class declarations/expressions; fresh private lexical identities, private fields/methods/in, public methods/accessors/fields, static fields/blocks/accessors, computed scalar/Symbol keys, initializer-before-parameter ordering and abrupt construction; no inheritance, private accessors, super or top-level class environment",
       "frontend": "passed",
       "owned": "passed",
       "independent": "passed",
@@ -257,6 +257,17 @@
       "native": "unsupported",
       "reason": "Owned enumerator identity and retained key/prototype snapshot require an explicit public enumeration representation",
       "tests": "test/training-for-in.test.js"
+    },
+    {
+      "id": "constructor-new-target",
+      "domain": "new.target in ordinary functions/base classes, constructor parameter defaults, lexical arrows/nested arrows after constructor return, owned callbacks/getters/proxy traps; field initializer new.target remains undefined; retained constructor frame identity validated",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Lexical constructor receiver/newTarget linkage requires the public construction/capture interface",
+      "tests": "test/training-new-target.test.js"
     }
   ]
 }

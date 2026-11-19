@@ -132,6 +132,9 @@ export function parseTraining(source) {
         return {...loc,type:'Literal',value:encode(n.bigint!==undefined?BigInt(n.bigint):n.value),raw:n.raw};
       case 'Identifier':return {...loc,type:'Identifier',name:n.name};
       case 'ThisExpression':return {...loc,type:'This'};
+      case 'MetaProperty':
+        if(n.meta.name!=='new'||n.property.name!=='target')reject(n,'meta property');
+        return {...loc,type:'NewTarget'};
       case 'ClassExpression':return classExpression(n);
       case 'ArrowFunctionExpression':case 'FunctionExpression':{
         if(n.generator&&n.async)reject(n,'async generator mode');
@@ -414,7 +417,7 @@ export function parseTraining(source) {
         case 'Object':n.properties.forEach(p=>{if(p.computedKey)value(p.computedKey,e);value(p.value,e);});break;
         case 'Assign':value(n.left,e);value(n.right,e);break;
         case 'PatternAssignment':statement(n,e);break;
-        case 'Literal':case 'This':break;
+        case 'Literal':case 'This':case 'NewTarget':break;
         default:reject(n,'unhandled expression');
       }
     }
