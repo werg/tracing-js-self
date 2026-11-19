@@ -114,7 +114,7 @@ export function parse(source) {
     }
     if (x.value === 'new') {
       const callee=take();
-      if(!['Proxy','Set','Promise','SharedArrayBuffer','DataView'].includes(callee.value)&&!SHARED_CONSTRUCTORS.has(callee.value))
+      if(!['Proxy','Set','Promise','ArrayBuffer','SharedArrayBuffer','DataView'].includes(callee.value)&&!SHARED_CONSTRUCTORS.has(callee.value))
         throw new SyntaxError('Unsupported bounded constructor');
       need('(');
       const args=[];if(!match(')')){do{args.push(expression(0,false));}while(match(','));need(')');}

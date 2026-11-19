@@ -148,10 +148,20 @@ export class RegionExecutionHarness {
     if(!eq(record,evaluated.record))fail('false algorithm value, allocation identity or completion');
     const staged=cloneRegionController(controller);
     for(const witness of evaluated.records)staged.commit(witness,{mode:'generated',track:activation.trackId});
+    if(staged.firstWitnessViolation)fail('pure region conflicts with earlier selected claims');
+    // Check the complete post-region continuation size before committing any
+    // allocations or completion. Oversized traces must fail atomically.
+    sharedRegionState(staged);
     for(const witness of evaluated.records)this.inner.selected(invocationId,witness);
+    const created=this.inner.timeline.slice(this.innerCursor);
     this.innerCursor=this.inner.timeline.length;
     this.consumed.push({invocationId,frame:controller.rootInvocation,region:'whole'});
     this.append('generated','algorithm',{session:this.inner.sessionId,track:activation.trackId,invocationId,entry:copy(entry),line});
+    // Just as for local regions, preserve host lifecycle observations emitted
+    // on the terminal boundary instead of dropping them with the inner cursor.
+    for(const raw of created)if(raw.mode==='observed'&&raw.kind!=='model-context'){
+      const {schema,sequence,ownerSequence,mode,kind,...fields}=raw;this.append(mode,kind,fields);
+    }
     return {status:'committed',region:'whole',state:sharedRegionState(controller)};
   }
   modelContext(invocationId){

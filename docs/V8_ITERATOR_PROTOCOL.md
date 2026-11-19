@@ -1,0 +1,74 @@
+# Shared builtin iterator protocol
+
+The first iterator component defines profile `builtin-iterator/1`. It operates
+on the same public heap as compact expressions, detailed records, Symbols,
+properties and construction. It does not install a second execution heap or
+serialize an owned VM frame. Source and native admission are separate gates;
+the component alone does not imply either has passed.
+
+## Exact records
+
+All records use the existing canonical `protocol ` line prefix.
+
+| Kind | Fields after `kind` | Meaning |
+| --- | --- | --- |
+| `iterator.lookup` | `receiver, key, method` | Check the exact selected builtin method without calling it. |
+| `iterator.create` | `name, iterated, iterationKind` | Allocate an array or primitive-string iterator. |
+| `iterator.next` | `object, name, entry, result, done` | Advance, check the yielded value/completion, allocate the result object and optional entry pair. |
+| `iterator.identity` | `object, result` | Check the iterator's inherited identity method result. |
+| `iterator.read` | `object, key, result` | Read the declared iterator tag or an absent ordinary property. |
+| `iterator.arrayGuard` | `iterated, result` | Check whether standard array iteration is selected. |
+
+`receiver`, `iterated`, and yielded `result` use ordinary protocol value tags.
+`key` is a tagged string/Symbol key. `done` and guard `result` are booleans.
+`name` is the fresh result-object identity in `iterator.next`; `entry` is a fresh
+pair-array identity for a nonterminal entries step, otherwise `null`.
+`method` is one of `Array.prototype.values`, `.keys`, `.entries`,
+`String.prototype.iterator`, `Iterator.next`, or `Iterator.identity` (the array
+names include the full `Array.prototype.` prefix). Builtin callable identities
+are not smuggled into ordinary reference values.
+
+## Shared state
+
+There is no additional top-level protocol field. An iterator heap node has
+exactly these fields:
+
+```js
+{
+  kind: 'iterator',
+  iterated: ['ref', arrayId], // or ['str', primitiveString]
+  iterationKind: 'values', // values | keys | entries | string
+  nextIndex: 0,
+  done: false,
+  properties: new Map()
+}
+```
+
+The ordinary property map must remain empty. Array length is read on each
+advance until exhaustion; later growth does not reactivate an exhausted
+iterator. Holes yield `undefined`, and keys do not read element values. Entry
+pairs and result objects are distinct fresh identities; element references
+retain their aliases. String positions count UTF-16 code units, advancing by
+two only for a valid surrogate pair. Lone surrogates are retained unchanged.
+The bounded profile admits at most 4096 array elements/string code units.
+
+Array index reads follow explicit ordinary prototype links. A nonempty getter
+requires a separate scoped continuation and is refused by this first component.
+Builtin method lookup rejects overridden properties and custom array prototypes
+rather than guessing the selected method. Custom iterator functions use the
+ordinary call/property model in a subsequent source/continuation slice.
+
+Restoration verifies exact fields, source identity, cursor bounds, empty own
+properties and valid string code-point boundaries. Public application stages
+the entire controller before evaluation, so an incorrect yielded value or
+identity claim cannot leave an advanced cursor or partial allocation behind.
+
+The component exports `ITERATOR_RECORD_FIELDS`, `validateIteratorRecordV8`,
+`applyIteratorRecordV8`, `restoreIteratorStateV8`, and `hasIteratorStateV8` for
+static registration. Its raw component API is `PROTOCOL_MACHINE_API_V8`.
+
+`test/fixtures/semantic-iterator-v8.json` supplies three complete canonical
+record sequences with initial and expected shared states. These are explicitly
+controller-contract fixtures, not source qualifications. Regenerate them with
+`node tools/generate-protocol-iterator-fixtures.mjs` after changing the registered
+protocol state schema, and recheck them in the independent native consumer.

@@ -3,7 +3,8 @@
 // object or be mistaken for a catchable guest TypeError.
 import {decode} from './values.js';
 
-export class BinaryProfileError extends TypeError {}
+export class BinaryProfileError extends TypeError {constructor(message){super(message);this.category='unsupported.binary-memory';}}
+export class BinaryResourceError extends RangeError {constructor(message){super(message);this.category='resource-limit';}}
 export function binaryNumber(value=['undefined']){
   if(['bigint','symbol'].includes(value[0]))throw new TypeError('Cannot convert this value to a Number');
   if(!['num','str','bool','null','undefined'].includes(value[0]))

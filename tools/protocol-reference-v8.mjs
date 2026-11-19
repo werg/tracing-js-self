@@ -29,6 +29,7 @@ try{
     [COMPLETION_HOOK]:(...values)=>{try{return completion.capture(...values);}catch(error){failures.push(error.message);throw error;}}
   },{codeGeneration:{strings:false,wasm:false}});
   completion.setIntrinsicPrototypes(vm.runInContext('[Object.prototype,Array.prototype,Function.prototype]',context));
+  extensions.initializeRealm(expression=>vm.runInContext(expression,context));
   phase='instrumentation';
   const source=mode==='operations'?instrumentOperationSource(input.source):
     mode==='branches'?instrumentBranchSource(input.source):

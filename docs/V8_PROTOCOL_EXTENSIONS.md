@@ -117,6 +117,14 @@ sites. Reserved observer globals must start `__tracingProtocol` and must be
 distinct. They cannot replace operation, branch, completion, argument, or result
 hooks. Source programs are already forbidden from naming the reserved namespace.
 
+An optional `initializeRealm(evaluate)` captures independent VM intrinsic
+identities before guest code runs. The callback is available only to statically
+registered trusted observer code. An optional
+`ownedAssignmentValue({event,instruction,object,key,state})` supplies exotic
+assignment-expression values when storage conversion changes the stored value;
+the adapter must independently observe and compare that storage in metadata.
+Ordinary assignments retain the existing direct stored-value check.
+
 This interface permits lexical private-field readers or backing-memory observers
 without adding guest object properties. Each extension still has to prove that
 its observer does not invoke guest getters/methods, and that the source gate
@@ -137,7 +145,8 @@ rejects a teacher metadata mutation with an unchanged final scalar result.
   reservedIdentities(controller), // optional extra identities, e.g. private brands
   hasRichState(node), // optional; excludes the node from ordinary compact/detail access
   assertNext(controller, record, api), // optional, true after continuation checks
-  assertCall(controller, callee, internalOptions, api) // optional, true after capability checks
+  assertCall(controller, callee, internalOptions, api), // optional, true after capability checks
+  hasSourceCallable(source, code) // optional exact source inventory for synthetic callables
 }
 ```
 
@@ -148,6 +157,10 @@ heap, cells, receiver, capture aliases and stack; a failure commits nothing.
 pending constructor or iterator continuation from being skipped. `assertCall`
 also runs for accessor calls and internal component calls. Its options are an
 internal interface only: no public record can inject a construction capability.
+`hasSourceCallable` supplements ordinary source function membership for explicit
+class constructor or field-initializer identities. It must parse the immutable
+source and check the exact declared code identity; it cannot consult teacher
+archives or treat an arbitrary code string as an executable function.
 
 `PROTOCOL_MACHINE_API_V8` supplies the existing raw operations, whose controller
 argument is explicit: `require`, `fail`, `copy`, `eq`, `state`, `known`,
