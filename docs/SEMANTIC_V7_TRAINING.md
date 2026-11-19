@@ -79,7 +79,7 @@ freeze additional test components. Specify holdouts before the registry is
 bound. Exporting an already-bound candidate reuses its complete registry; any
 holdout flags supplied to that export must exactly match the bound lists.
 
-The checked-in policy pins native consumer `032274e9b9314e6c8034d421d54d36d3bdac0e00`,
+The checked-in policy pins native consumer `d2abb1e83e3237bb851e38920326960357605c66`,
 the full v7 contract, and the exact Ling tokenizer identity and file digest.
 They are release inputs, not values to infer from a successful local run. The
 qualification output includes `family-registry.json`,
@@ -101,7 +101,7 @@ python scripts/prepare_semantic_v7.py \
   --output /path/to/new-native-prepared \
   --tracer-root /path/to/tracing-js-self \
   --producer-revision EXACT_PRODUCER_COMMIT \
-  --consumer-revision 032274e9b9314e6c8034d421d54d36d3bdac0e00 \
+  --consumer-revision d2abb1e83e3237bb851e38920326960357605c66 \
   --tokenizer-json /path/to/pinned-Ling-tokenizer.json \
   --max-positions 8192 --max-history 1024
 ```
