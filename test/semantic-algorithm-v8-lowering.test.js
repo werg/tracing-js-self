@@ -171,6 +171,25 @@ test('v8 unused or overwritten scalar folds retain throwing iteration work',()=>
   assert.throws(()=>evaluateAlgorithmV8(lowered.core,[]),/ordinary object projection requires identity/);
 });
 
+test('v8 search and filter normalization retain predicate sequencing and refuse conditional completion effects',()=>{
+  const body='function run(xs){for(const x of xs){if((null.x,x>0))return x;}return undefined;}';
+  check(body,[[]]);
+  assert.throws(()=>vm.runInNewContext(source(body)+';run([1])',{}, {timeout:1000}),error=>error.name==='TypeError');
+  const lowered=lowerJavaScriptV8({source:source(body),entry:'run'});
+  assert.throws(()=>evaluateAlgorithmV8(lowered.core,null,{inputGraph:graph([[1]])}),/ordinary object projection requires identity/);
+  for(const [body,args,expected] of [
+    ['function run(xs){for(const x of xs){if(x>0)return (null.x,x);}return undefined;}',[[-1]],undefined],
+    ['function run(xs){for(const x of xs){if(x>0)return x;}return (null.x,undefined);}',[[1]],1],
+    ['function run(xs){let flag=true;for(const x of xs){if(flag=!flag)return x;}return undefined;}',[[1,2]],2],
+    ['function run(xs){const out=[];for(const x of xs){if(x>0)out.push((null.x,x));}return out;}',[[-1]],[]]
+  ]){
+    const actual=vm.runInNewContext(source(body)+';run(...args)',{args}, {timeout:1000});
+    assert.deepEqual(structuredClone(actual),expected,body);
+    assert.equal(tryLowerJavaScriptV8({source:source(body),entry:'run'}).status,'refused',body);
+  }
+  check('function run(xs){for(const x of xs){if((x+1,x>0))return x;}return undefined;}',[[-1,2,3]]);
+});
+
 test('v8 source recognition refuses shared mutation, receivers, holes and unsupported completion',()=>{
   for(const body of [
     'function run(xs){let count=0;return xs.map(x=>{count++;return x;});}',

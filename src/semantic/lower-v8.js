@@ -409,8 +409,12 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
     const only=body.filter(x=>x.type!=='EmptyStatement');
     if(only.length===1&&only[0].type==='IfStatement'&&!only[0].alternate&&statements(only[0].consequent).length===1&&
       statements(only[0].consequent)[0].type==='ReturnStatement'&&remainder.length===1&&remainder[0].type==='ReturnStatement'){
-      const condition=expression(only[0].test,local,loopCtx),found=expression(statements(only[0].consequent)[0].argument,local,loopCtx),
-        absent=remainder[0].argument?expression(remainder[0].argument,scope,ctx):literal(undefined);
+      const before=new Map(bindings(local).map(binding=>[binding,binding.value]));
+      const condition=expression(only[0].test,local,loopCtx),
+        found=expression(statements(only[0].consequent)[0].argument,local,context({...loopCtx,bindings:[],names:[],conditional:true})),
+        absent=remainder[0].argument?expression(remainder[0].argument,scope,context({...ctx,bindings:[],names:[],conditional:true})):literal(undefined);
+      ensure([...before].every(([binding,value])=>binding.value===value),
+        'search predicates and completions cannot mutate retained private state',node);
       let mode,predicate=condition;
       if(equal(found.term,element.term)&&equal(absent.term,literal(undefined).term))mode='find';
       else if(equal(found.term,index.term)&&equal(absent.term,literal(-1).term))mode='find_index';
@@ -420,11 +424,12 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
       }
       ensure(mode,'early completion does not match a search/quantifier profile',node);
       const mapping=new Map([[params[1],params[0]],[params[2],params[1]],[params[3],params[2]]]);
-      const rename=term=>term.op==='lexical'?{...term,token:mapping.get(term.token)??term.token}:term.args?{...term,args:term.args.map(rename)}:
-        term.op==='project'?{...term,object:rename(term.object)}:term;
+      const rename=value=>Array.isArray(value)?value.map(rename):value&&typeof value==='object'?
+        value.op==='lexical'?{...value,token:mapping.get(value.token)??value.token}:
+          Object.fromEntries(Object.entries(value).map(([key,child])=>[key,rename(child)])):value;
       rule('ordered-'+mode,node,['Early return only on predicate match; matching absent result.','Ascending dense numeric traversal.']);
       return {returned:true,value:{term:{op:'traverse',mode,input:input.term,initial:null,
-        callback:{params:params.slice(0,3),body:rename(predicate.term)},profile:'dense-primitive-array/1',order:'ascending'},type:found.type}};
+        callback:{params:params.slice(0,3),body:rename(wrap(loopCtx,predicate.term))},profile:'dense-primitive-array/1',order:'ascending'},type:found.type}};
     }
     // Recognize fresh private output builders before considering a scalar fold.
     // The builder has no alias, escaped reference, earlier read, or captured
@@ -457,7 +462,8 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
       const accumulator=accumulators[0];
       if(accumulator){number(accumulator.value,node);accumulator.value={term:{op:'lexical',token:params[0]},type:'number',total:true};}
       ensure(!run(prelude,local,loopCtx),'builder step cannot complete early',node);
-      const predicate=filter?expression(filter.test,local,loopCtx):null,result=expression(push.arguments[0],local,loopCtx);
+      const predicate=filter?expression(filter.test,local,loopCtx):null,
+        result=expression(push.arguments[0],local,filter?context({...loopCtx,bindings:[],names:[],conditional:true}):loopCtx);
       let mode=filter?'filter':accumulator?'scan':'map',callback=result.term;
       if(filter){ensure(equal(result.term,element.term),'filter must retain the original element',push);callback=predicate.term;}
       if(accumulator)ensure(equal(result.term,accumulator.value.term),'scan pushes its updated accumulator',push);
