@@ -86,6 +86,7 @@ test('the independent worker dependency graph cannot import producer protocol ex
   const {readFile}=await import('node:fs/promises'),{parse}=await import('acorn');
   const seen=new Set(),forbidden=new Set(['runtime.js','frontend.js','protocol-state-v8.js','protocol-codec-v8.js',
     'protocol-source-compiler-v8.js','protocol-source-v8.js','protocol-memory-v8.js','protocol-construction-v8.js',
+    'protocol-iterator-v8.js','protocol-iterator-source-v8.js',
     'protocol-machine-extensions-v8.js','protocol-source-extensions-v8.js','region-harness.js','regions.js']);
   async function visit(url){if(seen.has(url.href))return;seen.add(url.href);
     assert(!forbidden.has(url.pathname.split('/').at(-1)),`independent worker imports producer authority ${url.pathname}`);

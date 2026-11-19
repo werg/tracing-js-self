@@ -72,3 +72,31 @@ record sequences with initial and expected shared states. These are explicitly
 controller-contract fixtures, not source qualifications. Regenerate them with
 `node tools/generate-protocol-iterator-fixtures.mjs` after changing the registered
 protocol state schema, and recheck them in the independent native consumer.
+
+## Independent source observations
+
+`createIteratorObservationAdapterV8` is an independent V8 observer. It imports
+no owned runtime, public iterator evaluator, or source projector. Before guest
+execution it captures the actual realm's iterator method and prototype
+identities. It also recognizes outer-realm array inputs decoded by the worker.
+
+Completion instrumentation wraps explicit iterator method calls with a curried
+lookup helper: the receiver and computed key are evaluated once, the original
+property lookup happens before arguments, and the selected function is applied
+once with the original receiver. Primitive boxing uses a function captured from
+the guest realm. Private references, `super` references and optional chains are
+left intact. The observer never calls `next` merely to inspect an iterator.
+
+The observer retains a private cursor receipt only for actual calls to the
+captured builtin factories and methods. Metadata snapshots compare its source
+alias, iteration kind, UTF-16 position and exhaustion flag against the owned
+observer, using the existing independent reference identity mapping. A native
+iterator obtained through an unobserved path is refused rather than described
+as an ordinary empty object. Ordinary result objects and entry pairs still pass
+through the descriptor/value observer.
+
+The source tests include a teacher cursor mutation that leaves ordinary source
+completion observations unchanged. Independent iterator metadata rejects it.
+These observer tests are distinct from full source/public/native admission;
+registration and source fixture checks are required before advertising that
+qualification.
