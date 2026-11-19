@@ -10,7 +10,7 @@ const innerPath=new URL('../test/fixtures/semantic-protocol-source-v8.json',impo
 const input=JSON.parse(await readFile(outerPath,'utf8'));
 if(input.schema!=='semantic-protocol-region-fixtures/1'||!Array.isArray(input.cases)||!input.cases.length)
   throw new Error('Missing declared protocol source fixtures');
-const outer={schema:input.schema,cases:[]},inner={schema:'semantic-protocol-source-fixtures/1',profile:'symbols-ordinary-properties/1',cases:[]};
+const outer={schema:input.schema,cases:[]},inner={schema:'semantic-protocol-source-fixtures/1',profile:'protocol-source-extensions/1',cases:[]};
 const ids=new Set();
 for(const row of input.cases){
   if(typeof row.id!=='string'||!row.id||ids.has(row.id)||row.id!==row.fixture?.id)throw new Error('Invalid fixture identity');
@@ -20,7 +20,8 @@ for(const row of input.cases){
   await recheckProtocolRegionEvidence(result.exported);
   outer.cases.push({id:row.id,fixture:row.fixture,artifact:result.exported});
   const source=result.exported.sidecar.sourceArtifact,reference=source.sidecar.reference;
-  inner.cases.push({id:row.id,qualification:'owned-and-independent-source-checked',
+  inner.cases.push({id:row.id,qualification:'owned-and-independent-source-checked',profile:source.public.profile,
+    extensions:result.exported.sidecar.protocolExtensions??[],
     source:row.fixture.source,entry:row.fixture.entry,args:row.fixture.args??[],
     inputGraph:source.public.inputGraph,claims:source.public.claims,expected:source.sidecar.outcome,
     audit:Object.fromEntries(['status','operationAudit','branchAudit','completionAudit','metadataAudit'].map(key=>[key,reference[key]]))});

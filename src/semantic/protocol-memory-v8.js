@@ -11,6 +11,14 @@ import {SHARED_TYPES,newArrayBuffer,newSharedBuffer,newSharedView,newSharedDataV
 import {isBinaryMemoryKind,validateBinaryMemoryState} from '../binary-memory-validation.js';
 
 export const MEMORY_PROFILE_V8='owned-binary-memory/1';
+export const MEMORY_HEAP_FIELDS_V8=Object.freeze({
+  'array-buffer':Object.freeze(['kind','byteLength','maxByteLength','resizable','detached','bytes','properties']),
+  'shared-int32-buffer':Object.freeze(['kind','byteLength','maxByteLength','growable','bytes','properties']),
+  'typed-array':Object.freeze(['kind','bufferId','elementType','byteOffset','length','lengthTracking','properties']),
+  'shared-int32-view':Object.freeze(['kind','bufferId','elementType','byteOffset','length','lengthTracking','properties']),
+  'data-view':Object.freeze(['kind','bufferId','byteOffset','byteLength','lengthTracking','properties']),
+  'shared-data-view':Object.freeze(['kind','bufferId','byteOffset','byteLength','lengthTracking','properties'])
+});
 export const MEMORY_RECORD_FIELDS=Object.freeze(Object.fromEntries(Object.entries({
   'memory.construct':['kind','constructor','name','backing','arguments'],
   'memory.get':['kind','object','key','result'],

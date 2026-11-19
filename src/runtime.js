@@ -1,7 +1,7 @@
 import { encode, decode, U, token, truthy, primitiveBinary, primitiveUnary } from './values.js';
 import {WELL_KNOWN_SYMBOLS,wellKnownSymbol,stringPropertyKey,symbolPropertyKey,isSymbolPropertyKey,propertyKeyValue} from './property-keys.js';
 import {SHARED_TYPES,SHARED_TYPE_NAMES,newArrayBuffer,isOwnedBuffer,isOwnedTypedView,isOwnedDataView,newSharedBuffer,newSharedView,newSharedDataView,effectiveDataViewLength,DATA_VIEW_GETTERS,DATA_VIEW_SETTERS,readSharedDataView,writeSharedDataView,growSharedBuffer,effectiveSharedLength,readSharedElement,writeSharedElement,atomicSharedElement} from './owned-shared-memory.js';
-import {BinaryProfileError,binaryIndex,binaryInteger,binaryElement,binaryNumericKey,binaryValidIndex} from './owned-binary-coercion.js';
+import {BinaryProfileError,BinaryResourceError,binaryIndex,binaryInteger,binaryElement,binaryNumericKey,binaryValidIndex} from './owned-binary-coercion.js';
 import { parse, compile } from './frontend.js';
 import { importGraph } from './training/graph.js';
 import { parseTraining, TRAINING_PARSER } from './training/profile.js';
@@ -1450,31 +1450,27 @@ export class Runtime {
            }
           if(fn.value[0]==='intrinsic'&&fn.value[1]==='ArrayBuffer'){
             const length=binaryGuest(()=>binaryIndex(args[0]?.value));
-            if(length>1024)throw new BinaryProfileError('ArrayBuffer exceeds the 1024-byte owned profile');
+            if(length>1024)throw new BinaryResourceError('ArrayBuffer exceeds the 1024-byte owned profile');
             if(args[1]?.value[0]!==undefined&&args[1].value[0]!=='undefined')
               throw new BinaryProfileError('Resizable ArrayBuffer options require their own profile');
             const id=this.next(s,'obj');s.heap[id]=newArrayBuffer(id,length);
             return {...operands(fn,...args),...result(['ref',id])};
           }
            if(fn.value[0]==='intrinsic'&&fn.value[1]==='SharedArrayBuffer'){
-  const length=args.length===0?0:args[0]?.value[0]==='num'?decode(args[0].value):NaN;
-  if(!Number.isSafeInteger(length)||length<0||length>1024)
-    guestFault('RangeError','SharedArrayBuffer byteLength out of bounds');
-  if(args.length>2)guestFault('TypeError','SAB takes at most two arguments');
+  const length=binaryGuest(()=>binaryIndex(args[0]?.value));
+  if(length>1024)throw new BinaryResourceError('SharedArrayBuffer exceeds the 1024-byte owned profile');
   let max;
-  if(args.length===2){
+  if(args[1]?.value[0]!==undefined&&args[1].value[0]!=='undefined'){
     const opts=args[1]?.value[0]==='ref'?s.heap[args[1].value[1]]:null;
     if(opts?.kind!=='object'||Object.keys(opts.accessors??{}).length)
-      guestFault('TypeError','SAB options require owned data object');
+      throw new BinaryProfileError('SAB options require an owned data-object profile');
     const supplied=opts.properties.maxByteLength?.value;
     if(supplied&&supplied[0]!=='undefined'){
-      if(supplied[0]!=='num'||!Number.isSafeInteger(decode(supplied)))
-        guestFault('RangeError','SAB maxByteLength requires bounded integer');
-      max=decode(supplied);
+      max=binaryGuest(()=>binaryIndex(supplied));
     }
   }
-  if(max!==undefined&&(max<length||max>1024))
-    guestFault('RangeError','Invalid maxByteLength');
+  if(max!==undefined&&max<length)guestFault('RangeError','Invalid maxByteLength');
+  if(max>1024)throw new BinaryResourceError('SharedArrayBuffer maximum exceeds the 1024-byte owned profile');
   const id=this.next(s,'obj');s.heap[id]=newSharedBuffer(id,length,max);
   return {...operands(fn,...args),...result(['ref',id])};
 }
@@ -1501,7 +1497,7 @@ if(fn.value[0]==='intrinsic'&&Object.hasOwn(SHARED_TYPES,fn.value[1])){
     if(input[0]==='ref')throw new BinaryProfileError('Typed-array iterable/array-like construction requires its own profile');
     length=binaryGuest(()=>binaryIndex(input));offset=0;
     const bytes=length*SHARED_TYPES[fn.value[1]].bytes;
-    if(bytes>1024)throw new BinaryProfileError('Typed-array storage exceeds the 1024-byte owned profile');
+    if(bytes>1024)throw new BinaryResourceError('Typed-array storage exceeds the 1024-byte owned profile');
     const bufferId=this.next(s,'obj');b=s.heap[bufferId]=newArrayBuffer(bufferId,bytes);
   }
   const id=this.next(s,'obj');
@@ -1717,7 +1713,7 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
     const method=['builtinfn','SharedArrayBuffer.prototype.slice'];
     return {...operands(base,key),...result(op==='GET_METHOD'?['method',method,base.value]:method)};
   }
-  guestFault('TypeError','Unmodeled SAB property');
+  throw new BinaryProfileError('Unmodeled SharedArrayBuffer property profile');
 }
 if(isOwnedDataView(obj)){
   const length=effectiveDataViewLength(s.heap[obj.bufferId],obj);
@@ -1728,7 +1724,7 @@ if(isOwnedDataView(obj)){
     const method=['builtinfn','DataView.prototype.'+property];
     return {...operands(base,key),...result(op==='GET_METHOD'?['method',method,base.value]:method)};
   }
-  guestFault('TypeError','Unmodeled shared DataView property');
+  throw new BinaryProfileError('Unmodeled DataView property profile');
 }
 if(isOwnedTypedView(obj)){
   const bytes=SHARED_TYPES[obj.elementType].bytes;
