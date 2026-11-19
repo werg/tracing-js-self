@@ -102,6 +102,8 @@
     "semantic:v7:admit": "node tools/qualify-semantic-v7.mjs",
     "semantic:v7:export": "node tools/export-algorithm-training.mjs",
     "semantic:v7:recheck": "node tools/verify-algorithm-admission.mjs",
+    "semantic:v8:contract": "node tools/generate-semantic-region-contract.mjs --check",
+    "test:semantic-v8": "node --test --test-concurrency=1 test/semantic-algorithm-v8-*.test.js test/semantic-region-*.test.js test/semantic-pure-region-v8.test.js",
     "test:semantic-algorithm": "node --test test/semantic-algorithm-*.test.js",
     "coverage:current": "node tools/generate-capability-ledger.mjs",
     "oracle:install": "npm ci --prefix tools/spec-oracle --ignore-scripts --no-audit --no-fund"

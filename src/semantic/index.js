@@ -31,3 +31,17 @@ export {auditAlgorithmCosts,compareSemanticRepresentations} from './evaluation.j
 export {createAlgorithmTokenizer,validateAlgorithmTokenizerEvidence} from './tokenizer.js';
 export {publicComprehensionTasks,scoreComprehensionResponses,validateComprehensionTaskset,
   comprehensionTasksetDigest} from './comprehension.js';
+// Explicit v8 candidate; historical v7 admission and production defaults retain
+// their original identities until the coordinated promotion gates pass.
+export {ALGORITHM_V8_SCHEMA,ALGORITHM_V8_PROFILE,ALGORITHM_V8_LIMITS,ALGORITHM_V8_OPERATION_METADATA,
+  validateAlgorithmV8,validateTermV8,evaluateAlgorithmV8,evaluateTermV8,checkAlgorithmV8Claims} from './algorithm-v8.js';
+export {lowerJavaScriptV8,tryLowerJavaScriptV8} from './lower-v8.js';
+export {REGION_PROGRAM_VERSION,REGION_EXECUTION_VERSION,REGION_TRACE_VERSION,REGION_CONTEXT_VERSION,
+  REGION_CONTINUATION_VERSION,REGION_PROFILE,defineRegionProgram,validateRegionProgram,
+  analyzeRegionEffects,sharedRegionState,regionEntry,evaluateLocalRegion,encodeRegionRecord,decodeRegionRecord} from './regions.js';
+export {RegionExecutionHarness} from './region-harness.js';
+export {encodePureRegionRecord,decodePureRegionRecord} from './pure-region-v8.js';
+export {verifyRegionTrainingCase,projectRegionWitness,recheckRegionEvidence,checkRegionCounterfactualPrefixes} from './compiler-v8.js';
+export {SEMANTIC_V8_DEFINITION,semanticV8Contract} from './contract-v8.js';
+export {OPERATION_METADATA,OPERATION_METADATA_VERSION,operationMetadata} from './operation-metadata.js';
+export {auditFlatServingCosts} from './serving-costs.js';
