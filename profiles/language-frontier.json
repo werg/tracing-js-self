@@ -235,6 +235,17 @@
       "native": "unsupported",
       "reason": "Requires public generator identity/retained continuation and Symbol iterator interfaces; old formats do not express delegated resume obligations",
       "tests": "test/training-yield-delegation.test.js"
+    },
+    {
+      "id": "instanceof-and-has-instance",
+      "domain": "owned ordinary constructor prototype identity, Object/Array chains, own/inherited/getter Symbol.hasInstance hooks with receiver/ToBoolean and throws, class static overrides; proxy/default exotic/bound-function prototype walks explicitly refused",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "General Symbol hook and constructor prototype state requires the public protocol/construction representation",
+      "tests": "test/training-instanceof.test.js"
     }
   ]
 }

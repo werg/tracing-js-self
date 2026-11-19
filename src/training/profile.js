@@ -8,7 +8,7 @@ import {supportsPinnedRegExp} from '../owned-pinned-regexp.js';
 export const TRAINING_PROFILE='training-js/1';
 export const TRAINING_PARSER='acorn/8.15.0:training-js/1';
 const binaries=new Set(['+','-','*','/','%','**','<','<=','>','>=','===','!==','==','!=',
-  '&','|','^','<<','>>','>>>']);
+  '&','|','^','<<','>>','>>>','instanceof']);
 const logical=new Set(['&&','||','??']);
 const assignments=new Set(['=','&&=','||=','??=','+=','-=','*=','/=','%=','**=',
   '&=','|=','^=','<<=','>>=','>>>=']);

@@ -282,6 +282,17 @@ export function compile(ast) {
         }
         case 'Await':expr(n.argument);emit('AWAIT',null,n);break;
         case 'Binary':
+          if(n.operator==='instanceof'){
+            const salt=++forOfIndex,left='[[instance value '+salt+']]',right='[[instance constructor '+salt+']]';
+            emit('ENTER_SCOPE',null,n);for(const name of [left,right])emit('DECLARE',{name,kind:'const'},n);
+            expr(n.left);emit('INIT',left,n);expr(n.right);emit('REQUIRE_OBJECT',null,n);emit('INIT',right,n);
+            emit('GET',right,n);emit('CONST',{value:['symbol','well-known:hasInstance']},n);emit('GET_METHOD',null,n);
+            const hook=emit('LOGICAL_JUMP',{operator:'??',to:null},n);emit('POP',null,n);
+            emit('GET',left,n);emit('GET',right,n);emit('INSTANCEOF_DEFAULT',null,n);
+            const done=emit('JUMP',null,n);instructions[hook].arg.to=instructions.length;
+            emit('GET',left,n);emit('CALL',1,n);emit('INSTANCEOF_RESULT',null,n);
+            instructions[done].arg=instructions.length;emit('LEAVE_SCOPE',null,n);break;
+          }
           if(['&&','||','??'].includes(n.operator)) {expr(n.left);const j=emit('LOGICAL_JUMP',{operator:n.operator,to:null},n);emit('POP',null,n);expr(n.right);instructions[j].arg.to=instructions.length;}
           else {expr(n.left);expr(n.right);emit('BINARY',n.operator,n);}break;
         case 'OptionalChain':{

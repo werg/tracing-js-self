@@ -45,6 +45,7 @@ const opNames = {
   CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', GENERATOR_START:'call.return', YIELD:'continuation.yield', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
   GET_TEMPLATE_OBJECT:'array.allocate', PROPERTY_KEY:'property.read', CLASS_CONSTRUCTOR_GUARD:'call.enter', CLASS_CREATE:'object.construct', CLASS_INITIALIZER:'property.write', CLASS_FINISH:'call.enter', PRIVATE_GET:'property.read', PRIVATE_GET_METHOD:'property.read', PRIVATE_HAS:'primitive.binary', PRIVATE_DEFINE:'property.write', PRIVATE_SET:'property.write', PRIVATE_UPDATE:'property.update',
   DELEGATE_YIELD:'continuation.yield', DELEGATE_RESUME_KIND:'completion.pending.read', DELEGATE_RESUME_VALUE:'completion.pending.read', ITERATOR_THROW_MISSING:'call.enter',
+  INSTANCEOF_DEFAULT:'primitive.binary', INSTANCEOF_RESULT:'primitive.binary',
   GET_PROP:'property.read', GET_METHOD:'property.read', SPREAD:'property.read', PUT_PROP:'property.write', DEFINE_LITERAL_PROP:'property.write', COPY_KEYS:'array.allocate', HAS_ENUMERABLE_OWN:'property.read', REQUIRE_COERCIBLE:'property.read', REQUIRE_OBJECT:'property.read', ITERATOR_ARRAY_GUARD:'property.read', PENDING_THROW:'completion.pending.read', APPEND_ARRAY:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
   LEAVE_SCOPE:'environment.leave', CLONE_LOOP_ENV:'environment.iteration', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
   TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
@@ -288,6 +289,40 @@ export class Runtime {
       propertyOrder:['constructor'],shapeVersion:1,version:0};
     putOwn(fn,'prototype',['ref',id],eventId);
     fn.dataAttributes??={};fn.dataAttributes.prototype={enumerable:false,writable:true,configurable:false};
+  }
+  ordinaryHasInstance(draft,constructor,candidate,eventId){
+    const target=constructor[0]==='ref'?draft.heap[constructor[1]]:null;
+    const intrinsic=constructor[0]==='intrinsic'&&!['Math','Reflect','Atomics','Object.prototype','Array.prototype'].includes(constructor[1]);
+    if(target?.kind!=='function'&&!intrinsic&&constructor[0]!=='builtinfn')return false;
+    if(!['ref','promise','intrinsic','builtinfn','hostfn'].includes(candidate[0]))return false;
+    let sought;
+    if(target?.kind==='function'){
+      this.functionProperties(draft,target,eventId,{prototype:true});
+      const prototype=target.properties.prototype?.value??U;
+      if(prototype[0]==='ref')sought=prototype[1];
+      else if(prototype[0]==='intrinsic'&&['Object.prototype','Array.prototype'].includes(prototype[1]))sought=prototype[1];
+      else if(['promise','builtinfn','hostfn','intrinsic'].includes(prototype[0]))throw new TypeError('Exotic constructor prototype outside ordinary instanceof profile');
+      else guestFault('TypeError','Function has non-object prototype in instanceof check');
+    }else if(intrinsic&&['Object','Array'].includes(constructor[1]))sought=constructor[1]+'.prototype';
+    else if(constructor[0]==='builtinfn')guestFault('TypeError','Function has non-object prototype in instanceof check');
+    else throw new TypeError('Intrinsic instanceof requires its owned prototype profile');
+    let current=candidate,seen=new Set();
+    while(true){
+      let prototype;
+      if(current[0]==='ref'){
+        const object=draft.heap[current[1]];
+        if(!object)throw new Error('Unknown instanceof identity');
+        if(object.kind==='proxy')throw new TypeError('Proxy GetPrototypeOf requires an owned instanceof continuation');
+        if(seen.has(object.id))throw new Error('Cyclic instanceof prototype');seen.add(object.id);
+        prototype=objectPrototype(object);
+      }else if(current[0]==='intrinsic'&&current[1]==='Object.prototype')prototype=null;
+      else prototype='Object.prototype';
+      if(prototype===null)return false;
+      if(prototype===sought)return true;
+      current=['intrinsic',prototype];
+      if(!['Object.prototype','Array.prototype'].includes(prototype))current=['ref',prototype];
+      else if(prototype==='Object.prototype')return false;
+    }
   }
   newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,observers:[],adopters:[],adopting:null,resolverCalled:false,thenableSerial:0,thenableLocked:false,thenableSeen:[],version:0};return id;}
   newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[],thisValue=U) {
@@ -916,6 +951,14 @@ export class Runtime {
       const operands=(...t)=>({operands:t.map(x=>x.value),origins:t.map(x=>x.origin)});
       try { switch(op){
         case 'CONST':return result(arg.value);
+        case 'INSTANCEOF_RESULT':{const value=pop();return {...operands(value),...result(['bool',truthy(value.value)])};}
+        case 'INSTANCEOF_DEFAULT':{
+          const constructor=pop(),value=pop(),target=constructor.value[0]==='ref'?s.heap[constructor.value[1]]:null;
+          if(target?.kind!=='function'&&!['builtinfn','hostfn'].includes(constructor.value[0])&&
+             !(constructor.value[0]==='intrinsic'&&!['Math','Reflect','Atomics','Object.prototype','Array.prototype'].includes(constructor.value[1])))
+            guestFault('TypeError','Right-hand side of instanceof is not callable');
+          return {...operands(value,constructor),...result(['bool',this.ordinaryHasInstance(s,constructor.value,value.value,eventId)])};
+        }
         case 'GET_TEMPLATE_OBJECT':{
           const known=s.control.a0.templateObjects?.[inst.siteId];
           if(known)return result(['ref',known]);
@@ -1390,6 +1433,8 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
             return {...operands(base,key),completion};
           }
           if(base.value[0]==='host')v=['hostfn',base.value[1]==='demo'?(HOST_METHODS[property]??`demo.${property}`):`${base.value[1]}.${property}`];
+          else if(['intrinsic','builtinfn','hostfn'].includes(base.value[0])&&property===symbolPropertyKey('well-known:hasInstance'))
+            v=base.value[0]==='intrinsic'&&['Math','Reflect','Atomics','Object.prototype','Array.prototype'].includes(base.value[1])?U:['builtinfn','Function.prototype.hasInstance'];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Date' &&
                   property==='now')v=['hostfn','platform.dateNow'];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Atomics' &&
@@ -1463,7 +1508,7 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
                  f.pendingProperty={kind:'get',receiver:base.value,method:op==='GET_METHOD',waitingFrameId:id};s.control.a0.activeFrameId=id;
                  return {...operands(base,key),causes:[{kind:'invocation',frameId:id}]};
                }
-               const slot=obj.properties[property];v=slot?.value??U;
+               const slot=obj.properties[property];v=slot?.value??(property===symbolPropertyKey('well-known:hasInstance')?['builtinfn','Function.prototype.hasInstance']:U);
                return {...operands(base,key),...result(op==='GET_METHOD'?['method',v,base.value]:v),reads:[{
                  kind:'property',objectId:obj.id,key:property,present:!!slot,version:obj.propertyVersions[property]??0,
                  shapeVersion:obj.shapeVersion,value:v,supplyingEvent:slot?.origin??null}]};
@@ -1745,6 +1790,8 @@ if(obj.kind==='set'){
           if(object.kind==='function'){
             if(['arguments','caller','name','length'].includes(property))throw new TypeError('Function descriptor assignment outside profile');
             this.functionProperties(s,object,eventId);
+            if(property===symbolPropertyKey('well-known:hasInstance')&&!Object.hasOwn(object.properties,property)&&!Object.hasOwn(object.accessors??{},property))
+              guestFault('TypeError','Cannot assign inherited readonly Symbol.hasInstance');
             const accessor=object.accessors?.[property];
             if(accessor){
               if(accessor.set.value[0]==='undefined')guestFault('TypeError','Cannot assign to getter only property');
@@ -1846,6 +1893,8 @@ if(object.kind==='regexp'){
           const fn=pop();let callable=fn.value;
           const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
+          if(callable[0]==='builtinfn'&&callable[1]==='Function.prototype.hasInstance')
+            return {...operands(fn,...args),...result(['bool',this.ordinaryHasInstance(s,receiver,args[0]?.value??U,eventId)])};
           if(callable[0]==='builtinfn'&&receiver[0]==='ref'&&s.heap[receiver[1]]?.extensible===false&&
              ['push','pop','shift','unshift','splice'].some(method=>callable[1]==='Array.prototype.'+method))
             guestFault('TypeError','Cannot mutate frozen template array');
