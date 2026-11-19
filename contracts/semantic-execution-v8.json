@@ -540,6 +540,25 @@
             "kind",
             "iterated",
             "result"
+          ],
+          "promise.join": [
+            "kind",
+            "mode",
+            "result",
+            "inputs",
+            "jobs",
+            "output",
+            "error"
+          ],
+          "promise.join.step": [
+            "kind",
+            "result",
+            "job",
+            "entry",
+            "output",
+            "error",
+            "status",
+            "value"
           ]
         },
         "profile": "symbols-ordinary-properties/1",
@@ -1420,6 +1439,39 @@
         ],
         "capabilities": "Builtin array keys/values/entries and Unicode string iteration, live array length, sticky exhaustion and explicit result/pair allocation identities."
       },
+      "promiseJoins": {
+        "profile": "promise-join/1",
+        "schema": "semantic-promise-join-state/1",
+        "modes": [
+          "all",
+          "race"
+        ],
+        "fields": [
+          "schema",
+          "mode",
+          "inputs",
+          "jobs",
+          "observed",
+          "values",
+          "settled",
+          "output",
+          "error"
+        ],
+        "jobFields": [
+          "status",
+          "owner",
+          "promise",
+          "reaction",
+          "closure",
+          "rejectionClosure",
+          "target",
+          "sequence",
+          "joinResult",
+          "joinIndex",
+          "readySequence"
+        ],
+        "capabilities": "Ordered Promise dependencies, FIFO internal jobs, first settlement and explicit late no-op steps; fresh result arrays are named only when allocated."
+      },
       "binaryMemory": {
         "profile": "owned-binary-memory/1",
         "heapFields": {
@@ -1480,7 +1532,7 @@
         "dataViewByteOrder": "explicit per operation",
         "capabilities": "Fixed ordinary buffers and fixed/growable shared buffers; scalar conversions; shared view identities; bounded single-agent atomic operations. No detach, transfer, host buffers or cross-agent scheduling."
       },
-      "lifecycle": "First protocol profile is one synchronous fresh invocation with no host work, jobs or asynchronous observations."
+      "lifecycle": "One fresh invocation without external host work. Declared Promise joins may use internal Promise, await, resume, job and transfer detail; join steps require an empty stack and the FIFO ready head. External observations remain outside protocol profiles."
     },
     "checkpoint": {
       "fields": [
@@ -1515,7 +1567,7 @@
       "default": "not promoted by engineering receipts alone"
     }
   },
-  "digest": "3adb1eab2d8b0d51472014bbfa9b7146d217cd6de2fcc7a9c63a3d9af1ae53d9",
+  "digest": "a21100d11a4b5a2c6da47905cff4ca9100edd01ce4e085b1557909c03fd21719",
   "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
   "fixtures": [
     {

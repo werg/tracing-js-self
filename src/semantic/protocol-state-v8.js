@@ -220,8 +220,9 @@ function apply(controller,record){
     require(adapter.assertNext(controller,record,PROTOCOL_MACHINE_API_V8)===true,'extension continuation guard: '+adapter.id);
   if(pending&&!controller.stack.includes(pending.child))require(record.kind==='property.finish','property call completion must be consumed first');
   require(controller.completion===null||controller.completion===undefined,'record after terminal completion');
-  require(controller.stack.length||record.kind==='end','protocol work requires an active invocation');
   const adapter=PROTOCOL_MACHINE_ADAPTERS_V8.find(adapter=>Object.hasOwn(adapter.recordFields,record.kind));
+  require(controller.stack.length||record.kind==='end'||adapter?.allowsWithoutStack?.(controller,record)===true,
+    'protocol work requires an active invocation or declared internal scheduler step');
   if(adapter){require(adapter.applyRecord(controller,record,PROTOCOL_MACHINE_API_V8)===true,'extension did not apply its declared record');return;}
   if(record.kind==='symbol.create'||record.kind==='symbol.for'){
     if(record.kind==='symbol.for'){
@@ -323,13 +324,18 @@ function apply(controller,record){
 export function applyProtocolRecordV8(controller,record){
   validateProtocolRecordV8(record);
   if(!controller.protocol)require(controller.stack.length===1,'first protocol transition cannot inherit an unmodeled nested call scope');
-  const fields=['heap','locals','receiver','captureAliases','stack','frameFunctions','pending','lastReturn','completion','protocol'];
+  const fields=['heap','locals','receiver','captureAliases','stack','frameFunctions','pending','lastReturn','completion','protocol',
+    'jobs','ready','scheduler','continuations'];
   const staged=Object.assign(Object.create(Object.getPrototypeOf(controller)),controller);
   for(const field of fields)staged[field]=copy(field==='protocol'?controller.protocol??createProtocolStateV8():controller[field]);
   require(staged.protocol.sequence<PROTOCOL_V8_LIMITS.steps,'protocol step bound');
   apply(staged,record);staged.protocol.sequence++;
   for(const field of fields)controller[field]=staged[field];
   return {status:'committed',kind:record.kind,sequence:controller.protocol.sequence,completion:copy(controller.completion??null)};
+}
+/** Static component capability, never a model-controlled profile switch. */
+export function allowsProtocolInternalSchedulerV8(controller,record=null){
+  return PROTOCOL_MACHINE_ADAPTERS_V8.some(adapter=>adapter.allowsInternalScheduler?.(controller,record)===true);
 }
 export function snapshotProtocolStateV8(controller){return copy(state(controller));}
 export function restoreProtocolStateV8(controller,snapshot){
@@ -423,8 +429,13 @@ export function assertProtocolDetailCompatible(controller,record){
     for(const child of Object.values(value))inspect(child);
   }
   if(controller.protocol&&record.kind==='allocate')require(!protocolReservedIdentitiesV8(controller).has(record.fields.name),'detailed allocation collides with a reserved Symbol/object identity');
-  if(controller.protocol&&(record.kind==='call'||['return','throw'].includes(record.kind)&&(controller.protocol.callFrames.length||controller.stack.length>1)))
-    fail('active protocol calls require scoped call/completion records');
+  if(controller.protocol&&(record.kind==='call'||['return','throw'].includes(record.kind)&&(controller.protocol.callFrames.length||controller.stack.length>1))){
+    const scheduler=allowsProtocolInternalSchedulerV8(controller,record)&&!controller.protocol.callFrames.length&&
+      !controller.protocol.pendingCalls.length;
+    const detailedCall=record.kind!=='call'||PROTOCOL_MACHINE_ADAPTERS_V8.some(adapter=>
+      adapter.allowsDetailedCall?.(controller,record)===true);
+    require(scheduler&&detailedCall,'active protocol calls require scoped call/completion records');
+  }
   inspect(record.fields);
   if(['read','write'].includes(record.kind))require(!rich(heapNode(controller,record.fields.object)),'detailed property transition bypasses rich state');
   if(record.kind==='end')require(!controller.protocol?.pendingCalls.length,'unfinished protocol call');

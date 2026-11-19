@@ -10,6 +10,7 @@ import {MEMORY_PROFILE_V8,MEMORY_HEAP_FIELDS_V8} from './protocol-memory-v8.js';
 import {CONSTRUCTION_STATE_V8_SCHEMA,CONSTRUCTION_STATE_V8_FIELDS,CALLABLE_STATE_V8_FIELDS,
   CONSTRUCTION_FRAME_V8_FIELDS} from './protocol-construction-v8.js';
 import {ITERATOR_PROFILE_V8,ITERATOR_HEAP_FIELDS} from './protocol-iterator-v8.js';
+import {PROMISE_JOIN_PROFILE_V8,PROMISE_JOIN_STATE_V8} from './protocol-promise-join-v8.js';
 
 export const SEMANTIC_V8_DEFINITION=Object.freeze({
   execution:REGION_EXECUTION_VERSION,trace:REGION_TRACE_VERSION,context:REGION_CONTEXT_VERSION,
@@ -45,10 +46,14 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
       continuations:'Owned base/derived constructor receivers, newTarget, field initializers and captured superclass selection; private fields and methods retain declaring-class identities.'},
     iterators:{profile:ITERATOR_PROFILE_V8,heapFields:ITERATOR_HEAP_FIELDS,
       capabilities:'Builtin array keys/values/entries and Unicode string iteration, live array length, sticky exhaustion and explicit result/pair allocation identities.'},
+    promiseJoins:{profile:PROMISE_JOIN_PROFILE_V8,schema:PROMISE_JOIN_STATE_V8,modes:['all','race'],
+      fields:['schema','mode','inputs','jobs','observed','values','settled','output','error'],
+      jobFields:['status','owner','promise','reaction','closure','rejectionClosure','target','sequence','joinResult','joinIndex','readySequence'],
+      capabilities:'Ordered Promise dependencies, FIFO internal jobs, first settlement and explicit late no-op steps; fresh result arrays are named only when allocated.'},
     binaryMemory:{profile:MEMORY_PROFILE_V8,heapFields:MEMORY_HEAP_FIELDS_V8,maxBufferBytes:1024,
       typedArrayByteOrder:'little-endian',dataViewByteOrder:'explicit per operation',
       capabilities:'Fixed ordinary buffers and fixed/growable shared buffers; scalar conversions; shared view identities; bounded single-agent atomic operations. No detach, transfer, host buffers or cross-agent scheduling.'},
-    lifecycle:'First protocol profile is one synchronous fresh invocation with no host work, jobs or asynchronous observations.'},
+    lifecycle:'One fresh invocation without external host work. Declared Promise joins may use internal Promise, await, resume, job and transfer detail; join steps require an empty stack and the FIFO ready head. External observations remain outside protocol profiles.'},
   checkpoint:{fields:['schema','profile','public','regionCursor','selected','integrity'],
     protocolSelected:{schema:'semantic-protocol-continuation/1',fields:['schema','invocations'],
       meaning:'Exact shared states and activation statuses independently reconstructed from the complete public v8 history.'},
