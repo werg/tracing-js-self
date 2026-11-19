@@ -100,6 +100,21 @@ export function parseTraining(source) {
       return {...span(parameter),name:'[[parameter '+i+']]',default:fallback,rest,...parsed};
     });
   }
+  function classExpression(n){
+    if(n.superClass)reject(n,'class inheritance requires the derived constructor profile');
+    const elements=n.body.body.map(member=>{
+      if(member.type==='StaticBlock')return {...span(member),kind:'block',static:true,body:member.body.map(stmt)};
+      if(!['MethodDefinition','PropertyDefinition'].includes(member.type))reject(member,'class element');
+      const privateName=member.key.type==='PrivateIdentifier'?member.key.name:null;
+      if(privateName&&['get','set'].includes(member.kind))reject(member,'private accessor profile');
+      const key=privateName?null:member.computed?null:member.key.type==='Identifier'?member.key.name:String(member.key.value);
+      return {...span(member),kind:member.type==='PropertyDefinition'?'field':member.kind,
+        static:member.static,privateName,key,computedKey:member.computed?expr(member.key):null,
+        value:member.value?(member.type==='PropertyDefinition'?expr(member.value):{...expr(member.value),strict:true,nonConstructible:member.kind!=='constructor'}):
+          {...span(member),type:'Literal',value:['undefined']}};
+    });
+    return {...span(n),type:'ClassExpr',name:n.id?.name??null,elements};
+  }
   function expr(n) {
     if(!n)reject(parsed,'missing expression');
     const loc=span(n);
@@ -117,6 +132,7 @@ export function parseTraining(source) {
         return {...loc,type:'Literal',value:encode(n.bigint!==undefined?BigInt(n.bigint):n.value),raw:n.raw};
       case 'Identifier':return {...loc,type:'Identifier',name:n.name};
       case 'ThisExpression':return {...loc,type:'This'};
+      case 'ClassExpression':return classExpression(n);
       case 'ArrowFunctionExpression':case 'FunctionExpression':{
         if(n.generator&&n.async)reject(n,'async generator mode');
         const parsedParams=parameters(n);
@@ -138,15 +154,19 @@ export function parseTraining(source) {
           reject(n,'unhandled template literal escape');
         return {...loc,type:'Template',quasis:n.quasis.map(q=>q.value.cooked),
           expressions:n.expressions.map(expr)};
+      case 'TaggedTemplateExpression':
+        return {...loc,type:'TaggedTemplate',tag:expr(n.tag),
+          cooked:n.quasi.quasis.map(q=>q.value.cooked===null?['undefined']:['str',q.value.cooked]),
+          raw:n.quasi.quasis.map(q=>q.value.raw),expressions:n.quasi.expressions.map(expr)};
       case 'YieldExpression':
-        if(n.delegate)reject(n,'yield delegation requires the delegated generator profile');
-        return {...loc,type:'Yield',argument:n.argument?expr(n.argument):{...loc,type:'Literal',value:['undefined']}};
+        return {...loc,type:n.delegate?'YieldDelegate':'Yield',argument:n.argument?expr(n.argument):{...loc,type:'Literal',value:['undefined']}};
       case 'AwaitExpression':
         return {...loc,type:'Await',argument:expr(n.argument)};
       case 'UnaryExpression':
         if(!unary.has(n.operator))reject(n,'unary operator');
         return {...loc,type:'Unary',operator:n.operator,argument:expr(n.argument)};
       case 'BinaryExpression':case 'LogicalExpression':
+        if(n.operator==='in'&&n.left.type==='PrivateIdentifier')return {...loc,type:'PrivateHas',name:n.left.name,object:expr(n.right)};
         if(!(n.type==='BinaryExpression'?binaries:logical).has(n.operator))reject(n,'binary operator');
         return {...loc,type:'Binary',operator:n.operator,left:expr(n.left),right:expr(n.right)};
       case 'SequenceExpression':
@@ -192,6 +212,7 @@ export function parseTraining(source) {
         return {...loc,type:'OptionalChain',base:expr(current),steps};
       }
       case 'MemberExpression':
+        if(n.property.type==='PrivateIdentifier')return {...loc,type:'PrivateMember',name:n.property.name,object:expr(n.object)};
         if(n.optional || n.object.type==='Super')reject(n,'member receiver');
         return {...loc,type:'Member',object:expr(n.object),property:n.computed?expr(n.property):
           {...span(n.property),type:'Literal',value:encode(n.property.name)}};
@@ -251,6 +272,7 @@ export function parseTraining(source) {
         });
         return declarations.length===1?declarations[0]:{...loc,type:'VariableGroup',declarations};
       }
+      case 'ClassDeclaration':return {...loc,type:'ClassBinding',id:n.id.name,kind:'let',value:classExpression(n)};
       case 'FunctionDeclaration':{
         if(!n.id || n.generator&&n.async)reject(n,'function form');
         const parsedParams=parameters(n);
@@ -330,7 +352,7 @@ export function parseTraining(source) {
     for(const n of statements){
       const entries=(n.type==='VariableGroup'?n.declarations:[n]).flatMap(d=>
         d.type==='PatternBinding'?d.bindings.map(binding=>({id:binding.name,kind:d.kind,...span(binding)})):
-        ['Variable','Function'].includes(d.type)?[d]:[]);
+        ['Variable','Function','ClassBinding'].includes(d.type)?[d]:[]);
       for(const d of entries){
         if(d.kind==='var')continue;
         if(names.has(d.id))reject(d,'duplicate lexical binding');
@@ -344,8 +366,18 @@ export function parseTraining(source) {
         case 'Identifier':
           if(!has(n.name,e))reject(n,'unbound identifier '+n.name);
           break;
+        case 'ClassExpr':{
+          const classEnv={names:new Set(n.name?[n.name]:[]),parent:e};
+          for(const element of n.elements){
+            if(element.computedKey)value(element.computedKey,classEnv);
+            if(element.kind==='block')scope(element.body,classEnv,[],false,true);else value(element.value,classEnv);
+          }
+          break;
+        }
+        case 'PrivateMember':case 'PrivateHas':value(n.object,e);break;
         case 'Template':n.expressions.forEach(x=>value(x,e));break;
-        case 'Yield':value(n.argument,e);break;
+        case 'TaggedTemplate':value(n.tag,e);n.expressions.forEach(x=>value(x,e));break;
+        case 'Yield':case 'YieldDelegate':value(n.argument,e);break;
         case 'FunctionExpr':scope(n.body.body,n.name?{names:new Set([n.name]),parent:e}:e,
           n.parameterNames??n.params,n.async,true,n.defaults,n.parameterPatterns);break;
         case 'Await':
@@ -389,6 +421,7 @@ export function parseTraining(source) {
     function statement(n,e){
       switch(n.type){
         case 'Variable':if(n.init)value(n.init,e);break;
+        case 'ClassBinding':value(n.value,e);break;
         case 'PatternBinding':case 'PatternAssignment':{
           // Guard the modeled Array.isArray intrinsic against lexical
           // shadowing even when the array occurs under an object pattern.

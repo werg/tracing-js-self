@@ -43,6 +43,8 @@ const opNames = {
   DEFAULT_GUARD:'binding.default.guard', PARAM_INIT:'binding.initialize', ENTER_BODY_ENV:'environment.enter', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
   CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', GENERATOR_START:'call.return', YIELD:'continuation.yield', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
+  GET_TEMPLATE_OBJECT:'array.allocate', PROPERTY_KEY:'property.read', CLASS_CONSTRUCTOR_GUARD:'call.enter', CLASS_CREATE:'object.construct', CLASS_INITIALIZER:'property.write', CLASS_FINISH:'call.enter', PRIVATE_GET:'property.read', PRIVATE_GET_METHOD:'property.read', PRIVATE_HAS:'primitive.binary', PRIVATE_DEFINE:'property.write', PRIVATE_SET:'property.write', PRIVATE_UPDATE:'property.update',
+  DELEGATE_YIELD:'continuation.yield', DELEGATE_RESUME_KIND:'completion.pending.read', DELEGATE_RESUME_VALUE:'completion.pending.read', ITERATOR_THROW_MISSING:'call.enter',
   GET_PROP:'property.read', GET_METHOD:'property.read', SPREAD:'property.read', PUT_PROP:'property.write', DEFINE_LITERAL_PROP:'property.write', COPY_KEYS:'array.allocate', HAS_ENUMERABLE_OWN:'property.read', REQUIRE_COERCIBLE:'property.read', REQUIRE_OBJECT:'property.read', ITERATOR_ARRAY_GUARD:'property.read', PENDING_THROW:'completion.pending.read', APPEND_ARRAY:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
   LEAVE_SCOPE:'environment.leave', CLONE_LOOP_ENV:'environment.iteration', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
   TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
@@ -178,6 +180,8 @@ function enumerableOwn(obj,key){
 }
 function putOwn(obj,key,value,eventId,{literal=false}={}) {
   if(!literal&&obj.dataAttributes?.[key]?.writable===false)guestFault('TypeError','Cannot assign to read only property');
+  if(obj.extensible===false&&!Object.hasOwn(obj.properties,key)&&!Object.hasOwn(obj.accessors??{},key))
+    guestFault('TypeError','Cannot add property to non-extensible object');
   if(obj.declaredError)
     throw new TypeError('Declared error mutation is outside the bounded error profile');
   if (key === '__proto__'&&!literal) throw new TypeError('Prototype mutation is not implemented by the bounded profile');
@@ -273,7 +277,7 @@ export class Runtime {
   functionProperties(draft,fn,eventId,{prototype=false}={}){
     fn.properties??={};fn.propertyVersions??={};fn.shapeVersion??=0;
     if(!prototype)return;
-    if(fn.arrow||fn.async)return;
+    if(fn.arrow||fn.async||fn.nonConstructible)return;
     if(this.programs[fn.codeId].generator)throw new TypeError('Generator function prototype reflection is outside the profile');
     if(fn.prototypeInitialized)return;
     fn.prototypeInitialized=true;
@@ -443,6 +447,13 @@ export class Runtime {
   completeFrame(draft,frame,value,origin) {
     frame.status='completed';
     frame.completion={type:'return',value:token(value,origin)};
+    if(frame.afterInstanceInitialization){
+      const pending=frame.afterInstanceInitialization,target=draft.heap[pending.constructorId];
+      const id=this.newFrame(draft,target.codeId,target.closureEnvId,frame.callerFrameId,null,pending.args,pending.receiver);
+      draft.frames[id].constructReceiver=pending.receiver;draft.frames[id].newTarget=pending.newTarget;
+      draft.control.a0.activeFrameId=id;return;
+    }
+    if(frame.classStaticResult)value=frame.classStaticResult;
     if(frame.constructReceiver&&!['ref','promise','intrinsic','builtinfn','hostfn'].includes(value[0]))value=frame.constructReceiver;
     if(frame.generatorId){
       draft.heap[frame.generatorId].state='completed';
@@ -456,12 +467,12 @@ export class Runtime {
       propertyVersions:{value:1,done:1},shapeVersion:2,version:0};
     return ['ref',id];
   }
-  suspendGenerator(draft,frame,value,origin,initial=false){
+  suspendGenerator(draft,frame,value,origin,initial=false,direct=false){
     const generator=draft.heap[frame.generatorId];
     if(generator?.kind!=='generator')throw new Error('Yield outside owned generator frame');
     generator.state=initial?'suspendedStart':'suspendedYield';
     frame.status='suspended-generator';
-    const output=initial?['ref',generator.id]:this.iteratorResult(draft,value,false,origin);
+    const output=initial?['ref',generator.id]:direct?value:this.iteratorResult(draft,value,false,origin);
     frame.completion={type:'return',value:token(output,origin)};
     this.deliverFrameValue(draft,frame,output,origin);frame.callerFrameId=null;
     return output;
@@ -905,6 +916,37 @@ export class Runtime {
       const operands=(...t)=>({operands:t.map(x=>x.value),origins:t.map(x=>x.origin)});
       try { switch(op){
         case 'CONST':return result(arg.value);
+        case 'GET_TEMPLATE_OBJECT':{
+          const known=s.control.a0.templateObjects?.[inst.siteId];
+          if(known)return result(['ref',known]);
+          const make=(values,raw=false)=>{
+            const id=this.next(s,'obj'),object=s.heap[id]={id,kind:'array',properties:{length:token(['num',values.length],eventId)},
+              propertyVersions:{length:1},dataAttributes:{length:{enumerable:false,writable:false,configurable:false}},shapeVersion:1,version:0};
+            values.forEach((value,index)=>{
+              putOwn(object,String(index),value,eventId);
+              object.dataAttributes[index]={enumerable:true,writable:false,configurable:false};
+            });
+            if(raw)object.extensible=false;
+            return object;
+          };
+          const raw=make(arg.raw.map(text=>['str',text]),true),cooked=make(arg.cooked);
+          putOwn(cooked,'raw',['ref',raw.id],eventId);cooked.dataAttributes.raw={enumerable:false,writable:false,configurable:false};
+          cooked.extensible=false;cooked.templateSite=inst.siteId;raw.templateRawOf=inst.siteId;
+          (s.control.a0.templateObjects??={})[inst.siteId]=cooked.id;
+          return result(['ref',cooked.id]);
+        }
+        case 'PROPERTY_KEY':{const value=pop();return {...operands(value),...result(propertyKeyValue(valueKey(value.value)))};}
+        case 'CLASS_CONSTRUCTOR_GUARD':
+          if(!f.newTarget)guestFault('TypeError','Class constructor cannot be invoked without new');
+          return {};
+        case 'ITERATOR_THROW_MISSING':guestFault('TypeError','Delegated iterator has no throw method');break;
+        case 'DELEGATE_RESUME_KIND':
+          if(!f.delegateResume)throw new Error('Missing delegated completion');
+          return result(['str',f.delegateResume.kind]);
+        case 'DELEGATE_RESUME_VALUE':{
+          if(!f.delegateResume)throw new Error('Missing delegated value');
+          const value=f.delegateResume.value;delete f.delegateResume;return {...operands(value),...result(value.value)};
+        }
         case 'THIS':
           if(f.thisValue[0]==='undefined'&&!this.programs[f.codeId].strict)
             throw new TypeError('Global sloppy this is not modeled by the bounded object profile');
@@ -1190,8 +1232,15 @@ export class Runtime {
               throw new TypeError('Constructor prototype outside owned ordinary object profile');
             const receiver=this.next(s,'obj');s.heap[receiver]={id:receiver,kind:'object',
               prototype:prototype?.id??'Object.prototype',properties:{},propertyVersions:{},shapeVersion:0,version:0};
-            const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,null,args,['ref',receiver]);
-            s.frames[id].constructReceiver=['ref',receiver];s.frames[id].newTarget=fn.value;
+            let id;
+            if(target.instanceInitializer){
+              const initializer=s.heap[target.instanceInitializer[1]];
+              id=this.newFrame(s,initializer.codeId,initializer.closureEnvId,f.id,null,[],['ref',receiver]);
+              s.frames[id].afterInstanceInitialization={constructorId:target.id,args,receiver:['ref',receiver],newTarget:fn.value};
+            }else{
+              id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,null,args,['ref',receiver]);
+              s.frames[id].constructReceiver=['ref',receiver];s.frames[id].newTarget=fn.value;
+            }
             s.control.a0.activeFrameId=id;
             return {...operands(fn,...args),causes:[{kind:'invocation',frameId:id}]};
           }
@@ -1367,7 +1416,7 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
             else v=U;
           }
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' &&
-             ['create','setPrototypeOf','getPrototypeOf','defineProperty','hasOwn','keys','values','entries','assign','is','getOwnPropertySymbols','getOwnPropertyNames'].includes(property))
+             ['create','setPrototypeOf','getPrototypeOf','defineProperty','getOwnPropertyDescriptor','isFrozen','hasOwn','keys','values','entries','assign','is','getOwnPropertySymbols','getOwnPropertyNames'].includes(property))
             v=['builtinfn',`Object.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' && property==='prototype')
             v=['intrinsic','Object.prototype'];
@@ -1405,6 +1454,15 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
                if(['name','length','constructor','__proto__','toString','valueOf','call','apply','bind'].includes(property)&&
                   !Object.hasOwn(obj.properties,property))throw new TypeError('Unmodeled function prototype reflection or call adapter');
                if(['arguments','caller'].includes(property))guestFault('TypeError','Restricted strict function property');
+               const accessor=obj.accessors?.[property];
+               if(accessor){
+                 if(accessor.get.value[0]==='undefined')return {...operands(base,key),...result(op==='GET_METHOD'?['method',U,base.value]:U)};
+                 const getter=s.heap[accessor.get.value[1]];
+                 if(getter?.kind!=='function'||getter.async)throw new TypeError('Unsupported function getter continuation');
+                 const id=this.newFrame(s,getter.codeId,getter.closureEnvId,f.id,null,[],base.value);
+                 f.pendingProperty={kind:'get',receiver:base.value,method:op==='GET_METHOD',waitingFrameId:id};s.control.a0.activeFrameId=id;
+                 return {...operands(base,key),causes:[{kind:'invocation',frameId:id}]};
+               }
                const slot=obj.properties[property];v=slot?.value??U;
                return {...operands(base,key),...result(op==='GET_METHOD'?['method',v,base.value]:v),reads:[{
                  kind:'property',objectId:obj.id,key:property,present:!!slot,version:obj.propertyVersions[property]??0,
@@ -1581,10 +1639,75 @@ if(obj.kind==='set'){
             value[0]==='ref'?enumerableOwn(s.heap[value[1]],name):false;
           return {...operands(source,key),...result(['bool',!!present])};
         }
+        case 'CLASS_CREATE':{
+          const value=pop(),klass=value.value[0]==='ref'?s.heap[value.value[1]]:null;
+          if(klass?.kind!=='function')throw new Error('Class constructor function missing');
+          klass.classConstructor=true;
+          this.functionProperties(s,klass,eventId,{prototype:true});
+          klass.dataAttributes.prototype.writable=false;
+          const environment=s.envs[f.envId];
+          [...new Set(arg.privateNames)].forEach((name,index)=>{
+            environment.bindings['[[private '+name+']]']={kind:'const',initialized:true,
+              token:token(['str','private:'+klass.id+':'+index],eventId),version:0};
+          });
+          return {...operands(value),...result(value.value)};
+        }
+        case 'CLASS_INITIALIZER':{
+          const initializer=pop(),value=pop(),klass=s.heap[value.value[1]];
+          if(klass?.classConstructor!==true||!this.callableGuest(s,initializer.value))
+            throw new Error('Invalid owned class initializer');
+          klass[arg.static?'staticInitializer':'instanceInitializer']=initializer.value;
+          return {...operands(value,initializer),...result(value.value)};
+        }
+        case 'CLASS_FINISH':{
+          const value=pop(),klass=s.heap[value.value[1]];
+          if(klass?.classConstructor!==true)throw new Error('Invalid owned class completion');
+          if(arg.name){
+            const binding=lookup(s,f.envId,arg.name).cell;
+            if(binding.initialized)throw new Error('Class inner name initialized twice');
+            binding.initialized=true;binding.token=value;binding.version++;
+          }
+          if(klass.staticInitializer){
+            const initializer=s.heap[klass.staticInitializer[1]],id=this.newFrame(s,initializer.codeId,initializer.closureEnvId,f.id,null,[],value.value);
+            s.frames[id].classStaticResult=value.value;s.control.a0.activeFrameId=id;
+            return {...operands(value),causes:[{kind:'invocation',frameId:id}]};
+          }
+          return {...operands(value),...result(value.value)};
+        }
+        case 'PRIVATE_GET':case 'PRIVATE_GET_METHOD':case 'PRIVATE_HAS':case 'PRIVATE_DEFINE':case 'PRIVATE_SET':case 'PRIVATE_UPDATE':{
+          const supplied=['PRIVATE_DEFINE','PRIVATE_SET'].includes(op)?pop():null,base=pop();
+          const binding=lookup(s,f.envId,'[[private '+arg.name+']]').cell;
+          if(!binding.initialized||binding.token?.value?.[0]!=='str')throw new Error('Missing lexical private name');
+          const key=binding.token.value[1],object=base.value[0]==='ref'?s.heap[base.value[1]]:null;
+          if(!object&&op==='PRIVATE_HAS'&&['promise','intrinsic','builtinfn','hostfn'].includes(base.value[0]))
+            return {...operands(base),...result(['bool',false])};
+          if(!object)guestFault('TypeError','Private member receiver is not an object');
+          const present=Object.hasOwn(object.privateSlots??{},key);
+          if(op==='PRIVATE_HAS')return {...operands(base),...result(['bool',present])};
+          if(op==='PRIVATE_DEFINE'){
+            if(present)guestFault('TypeError','Private member is already initialized');
+            object.privateSlots??={};object.privateKinds??={};object.privateVersions??={};
+            object.privateSlots[key]=token(supplied.value,eventId);object.privateKinds[key]=arg.kind;object.privateVersions[key]=1;
+            return {...operands(base,supplied),...result(supplied.value)};
+          }
+          if(!present)guestFault('TypeError','Receiver does not have this private member');
+          const old=object.privateSlots[key],read={kind:'private',objectId:object.id,key,
+            version:object.privateVersions[key],value:old.value,supplyingEvent:old.origin??null};
+          if(['PRIVATE_GET','PRIVATE_GET_METHOD'].includes(op))
+            return {...operands(base),...result(op==='PRIVATE_GET_METHOD'?['method',old.value,base.value]:old.value),reads:[read]};
+          if(object.privateKinds[key]!=='field')guestFault('TypeError','Private method is not writable');
+          const updated=op==='PRIVATE_UPDATE'?scalarUpdate(old.value,arg.operator):null;
+          const value=supplied?.value??updated.next;
+          object.privateSlots[key]=token(value,eventId);object.privateVersions[key]++;
+          return {...operands(base,...(supplied?[supplied]:[])),...result(updated&&!arg.prefix?updated.oldNumeric:value),reads:[read]};
+        }
         case 'DEFINE_LITERAL_PROP':{
           const value=pop(),key=pop(),base=pop(),name=valueKey(key.value);
           const obj=base.value[0]==='ref'?s.heap[base.value[1]]:null;
-          if(obj?.kind!=='object')throw new TypeError('Literal definitions require an owned ordinary object');
+          if(!['object','function'].includes(obj?.kind))throw new TypeError('Literal definitions require an owned ordinary object');
+          if(obj.kind==='function')this.functionProperties(s,obj,eventId);
+          if(arg.kind!=='prototype'&&(obj.dataAttributes?.[name]?.configurable===false||obj.accessors?.[name]?.configurable===false))
+            guestFault('TypeError','Cannot redefine non-configurable property');
           if(arg.kind==='prototype'){
             if(value.value[0]==='null')obj.prototype=null;
             else if(value.value[0]==='ref'){
@@ -1596,6 +1719,9 @@ if(obj.kind==='set'){
             // Object literal definitions never call a pre-existing setter.
             putOwn(obj,name,value.value,eventId,{literal:true});
             if(obj.accessors)delete obj.accessors[name];
+            if(arg.enumerable!==undefined||obj.dataAttributes?.[name]){
+              obj.dataAttributes??={};obj.dataAttributes[name]={enumerable:arg.enumerable??true,writable:true,configurable:true};
+            }
           }else if(['get','set'].includes(arg.kind)){
             if(!this.callableGuest(s,value.value))throw new TypeError('Literal accessor must be an owned function');
             const previous=obj.accessors?.[name];
@@ -1603,8 +1729,9 @@ if(obj.kind==='set'){
               (obj.propertyOrder??=Object.keys(obj.properties).concat(Object.keys(obj.accessors??{}))).push(name);
             obj.accessors??={};
             obj.accessors[name]={get:previous?.get??token(U),set:previous?.set??token(U),
-              [arg.kind]:value,enumerable:true,configurable:true};
+              [arg.kind]:value,enumerable:arg.enumerable??true,configurable:true};
             delete obj.properties[name];
+            if(obj.dataAttributes)delete obj.dataAttributes[name];
             obj.propertyVersions[name]=(obj.propertyVersions[name]??0)+1;obj.shapeVersion++;
           }else throw new TypeError('Unknown literal property kind');
           return {...operands(base,key,value),...result(value.value)};
@@ -1618,6 +1745,15 @@ if(obj.kind==='set'){
           if(object.kind==='function'){
             if(['arguments','caller','name','length'].includes(property))throw new TypeError('Function descriptor assignment outside profile');
             this.functionProperties(s,object,eventId);
+            const accessor=object.accessors?.[property];
+            if(accessor){
+              if(accessor.set.value[0]==='undefined')guestFault('TypeError','Cannot assign to getter only property');
+              const setter=s.heap[accessor.set.value[1]];
+              if(setter?.kind!=='function'||setter.async)throw new TypeError('Unsupported function setter continuation');
+              const id=this.newFrame(s,setter.codeId,setter.closureEnvId,f.id,null,[v],base.value);
+              f.pendingProperty={kind:'set',value:v.value,waitingFrameId:id};s.control.a0.activeFrameId=id;
+              return {...operands(base,key,v),causes:[{kind:'invocation',frameId:id}]};
+            }
             if(property==='prototype')object.prototypeInitialized=true;
             putOwn(object,property,v.value,eventId);return {...operands(base,key,v),...result(v.value)};
           }
@@ -1710,6 +1846,11 @@ if(object.kind==='regexp'){
           const fn=pop();let callable=fn.value;
           const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
+          if(callable[0]==='builtinfn'&&receiver[0]==='ref'&&s.heap[receiver[1]]?.extensible===false&&
+             ['push','pop','shift','unshift','splice'].some(method=>callable[1]==='Array.prototype.'+method))
+            guestFault('TypeError','Cannot mutate frozen template array');
+          if(callable[0]==='builtinfn'&&callable[1]==='Array.prototype.sort'&&receiver[0]==='ref'&&s.heap[receiver[1]]?.extensible===false)
+            throw new TypeError('Sorting a frozen array requires ordered readonly write completions');
           if(callable[0]==='builtinfn'&&callable[1].startsWith('Generator.')){
             const generator=receiver[0]==='ref'?s.heap[receiver[1]]:null;
             if(generator?.kind!=='generator')guestFault('TypeError','Generator receiver has no owned continuation');
@@ -1729,12 +1870,14 @@ if(object.kind==='regexp'){
             generator.state='executing';target.status='running';target.callerFrameId=f.id;delete target.completion;
             s.control.a0.activeFrameId=target.id;
             const completion=method==='return'?{type:'return',value:sent}:method==='throw'?{type:'throw',value:sent}:null;
-            if(completion)this.routeCompletion(s,target,completion,eventId);
+            const delegated=target.delegateYield===true;
+            if(delegated){target.delegateResume={kind:method,value:sent};delete target.delegateYield;}
+            else if(completion)this.routeCompletion(s,target,completion,eventId);
             else if(!initial)this.stackPush(target,sent.value,eventId);
             if(method==='return'&&s.control.a0.activeFrameId===f.id&&target.status==='completed')
               return {...operands(fn,...args),result:f.stack.at(-1).value};
             return {...operands(fn,...args),causes:[{kind:'invocation',frameId:target.id}],
-              ...(method==='throw'?{completion}:{})};
+              ...(method==='throw'&&!delegated?{completion}:{})};
           }
           if(callable[0]==='builtinfn'&&['Array.prototype.values','Array.prototype.keys','Array.prototype.entries','String.prototype.iterator'].includes(callable[1])){
             const string=callable[1]==='String.prototype.iterator';
@@ -2281,9 +2424,32 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             for(const [key,value] of copies)putOwn(target,key,value,eventId);
             return {...operands(fn,...args),...result(ref)};
           }
+          if(callable[0]==='builtinfn'&&['Object.isFrozen','Object.getOwnPropertyDescriptor'].includes(callable[1])){
+            const base=args[0]?.value??U,object=base[0]==='ref'?s.heap[base[1]]:null;
+            if(callable[1]==='Object.isFrozen'){
+              const primitive=!['ref','promise','intrinsic','builtinfn','hostfn'].includes(base[0]);
+              const frozen=primitive||object?.extensible===false&&ownPropertyKeys(object).every(key=>{
+                const accessor=object.accessors?.[key],data=object.dataAttributes?.[key];
+                return accessor?accessor.configurable===false:data?.configurable===false&&data.writable===false;
+              });
+              return {...operands(fn,...args),...result(['bool',!!frozen])};
+            }
+            if(!object||!['object','array'].includes(object.kind))
+              throw new TypeError('Own descriptor reflection requires owned ordinary storage');
+            const key=valueKey(args[1]?.value??U),accessor=object.accessors?.[key],slot=object.properties[key];
+            if(!accessor&&!slot)return {...operands(fn,...args),...result(U)};
+            const attributes=object.dataAttributes?.[key],arrayLength=object.kind==='array'&&key==='length';
+            const fields=accessor?{get:accessor.get.value,set:accessor.set.value,enumerable:['bool',accessor.enumerable],configurable:['bool',accessor.configurable]}:
+              {value:slot.value,writable:['bool',attributes?.writable??true],enumerable:['bool',attributes?.enumerable??!arrayLength],configurable:['bool',attributes?.configurable??!arrayLength]};
+            const id=this.next(s,'obj'),descriptor=s.heap[id]={id,kind:'object',properties:{},propertyVersions:{},shapeVersion:0,version:0};
+            for(const [name,value] of Object.entries(fields))putOwn(descriptor,name,value,eventId);
+            return {...operands(fn,...args),...result(['ref',id])};
+          }
           if(callable[0]==='builtinfn' && ['Object.hasOwn','Object.keys','Object.values','Object.entries','Object.getOwnPropertySymbols','Object.getOwnPropertyNames','Reflect.ownKeys'].includes(callable[1])){
             const base=args[0]?.value??U,obj=base[0]==='ref'?s.heap[base[1]]:null;
-            if(!obj||!['object','array'].includes(obj.kind))
+            if(obj?.kind==='function'&&!['Object.keys','Object.values','Object.entries'].includes(callable[1]))
+              throw new TypeError('Function descriptor reflection requires the complete Function profile');
+            if(!obj||!['object','array','function'].includes(obj.kind))
               throw new TypeError('Object builtin requires an owned ordinary reference');
             if(callable[1]==='Object.hasOwn'){
               const property=valueKey(args[1]?.value??U);
@@ -2422,8 +2588,10 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                const reversed=slots.slice().reverse();
                if(method==='toReversed')out=makeArray(reversed);
                else{
-                 for(let i=0;i<length;i++)
+                 for(let i=0;i<Math.floor(length/2);i++){
                    putOwn(obj,String(i),reversed[i],eventId);
+                   putOwn(obj,String(length-1-i),reversed[length-1-i],eventId);
+                 }
                  out=receiver;
                }
              }else if(method==='fill'){
@@ -2555,6 +2723,10 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               if(![null,'Object.prototype','Array.prototype'].includes(objectPrototype(descriptor)))
                 throw new TypeError('Inherited descriptor fields are outside the bounded profile');
               const previous=obj.accessors?.[name];
+              if(obj.extensible===false&&!Object.hasOwn(obj.properties,name)&&!previous)
+                guestFault('TypeError','Cannot define property on non-extensible object');
+              if(obj.dataAttributes?.[name]?.configurable===false&&(Object.hasOwn(d,'get')||Object.hasOwn(d,'set')))
+                guestFault('TypeError','Cannot redefine frozen data property');
               if(!Object.hasOwn(d,'get')&&!Object.hasOwn(d,'set')&&!previous)
                 throw new TypeError('Only accessor descriptors are modeled');
               if(Object.hasOwn(d,'value')||Object.hasOwn(d,'writable'))
@@ -2625,7 +2797,10 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                 throw new TypeError('Broken prototype identity');
               current=objectPrototype(next);
             }
-            if(objectPrototype(obj)!==proto){obj.prototype=proto;obj.shapeVersion++;}
+            if(objectPrototype(obj)!==proto){
+              if(obj.extensible===false)guestFault('TypeError','Cannot set prototype of non-extensible object');
+              obj.prototype=proto;obj.shapeVersion++;
+            }
             return {...operands(fn,...args),...result(v)};
           }
           if(callable[0]==='builtinfn' && ['Object.valueOf','Object.toString','Array.toString'].includes(callable[1])){
@@ -2734,6 +2909,11 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
         }
         case 'GENERATOR_START':{
           const output=this.suspendGenerator(s,f,U,eventId,true);return {result:output};
+        }
+        case 'DELEGATE_YIELD':{
+          const value=pop();f.delegateYield=true;
+          const output=this.suspendGenerator(s,f,value.value,eventId,false,true);
+          return {...operands(value),result:output};
         }
         case 'YIELD':{
           const value=pop(),output=this.suspendGenerator(s,f,value.value,eventId);

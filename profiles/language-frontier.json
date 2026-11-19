@@ -172,7 +172,7 @@
     },
     {
       "id": "synchronous-generator-continuations",
-      "domain": "ordinary generator declarations/expressions/methods; invocation-time parameters, retained yield operands/locals/captures, next(value)/return/throw, reentrancy, yielding finally cleanup and for-of close; no async generators or yield delegation",
+      "domain": "ordinary generator declarations/expressions/methods; invocation-time parameters, retained yield operands/locals/captures, next(value)/return/throw, reentrancy, yielding finally cleanup and for-of close; no async generators; delegated yield covered separately",
       "frontend": "passed",
       "owned": "passed",
       "independent": "passed",
@@ -202,6 +202,39 @@
       "native": "unsupported",
       "reason": "Function prototype state and construction receiver completion need a public construction representation",
       "tests": "test/training-constructors.test.js"
+    },
+    {
+      "id": "base-classes-and-private-slots",
+      "domain": "local base class declarations/expressions; fresh private lexical identities, private fields/methods/in, public methods/accessors/fields, static fields/blocks/accessors, computed scalar/Symbol keys, initializer-before-parameter ordering and abrupt construction; no inheritance, private accessors, super/new.target or top-level class environment",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Class descriptors/prototypes, field initializer continuations and private identities need an explicit public construction/private-state representation",
+      "tests": "test/training-classes.test.js"
+    },
+    {
+      "id": "tagged-template-sites",
+      "domain": "member/private/ordinary tags, source-site identity across calls and closures, raw/cooked strings including invalid cooked escapes, uncoerced substitutions, frozen descriptor-aware arrays and JSON-resumable realm template cache; frozen sort and general data descriptor definition remain explicit refusals",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Frozen descriptor state and template-site identity require an explicit public representation; scalar outcomes cannot justify dropping that state",
+      "tests": "test/training-tagged-templates.test.js"
+    },
+    {
+      "id": "synchronous-generator-delegation",
+      "domain": "yield* over owned synchronous iterators; cached next, exact yielded result identity, sent values, final expression values, return/throw forwarding including yielding cleanup and missing-throw IteratorClose precedence, JSON-restorable delegated resume completions; no async delegation",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Requires public generator identity/retained continuation and Symbol iterator interfaces; old formats do not express delegated resume obligations",
+      "tests": "test/training-yield-delegation.test.js"
     }
   ]
 }

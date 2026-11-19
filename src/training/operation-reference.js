@@ -14,16 +14,16 @@ const observedOperations=new Set([
 function sourceOperationNodes(source) {
   const ast=parseAcorn(source,{ecmaVersion:2022,sourceType:'script'});
   const nodes=[];
-  function visit(value){
-    if(Array.isArray(value)){for(const child of value)visit(child);return;}
+  function visit(value,parent=null){
+    if(Array.isArray(value)){for(const child of value)visit(child,parent);return;}
     if(!value||typeof value!=='object')return;
     if(value.type==='BinaryExpression'||value.type==='UnaryExpression'||
        (value.type==='AssignmentExpression'&&value.operator!=='=')||
-       value.type==='UpdateExpression'||value.type==='TemplateLiteral')
+       value.type==='UpdateExpression'||value.type==='TemplateLiteral'&&parent?.type!=='TaggedTemplateExpression')
       nodes.push({start:value.start,end:value.end,site:String(value.start)+':'+value.end,
         logicalAssignment:value.type==='AssignmentExpression'&&['&&=','||=','??='].includes(value.operator)});
     for(const [name,child] of Object.entries(value))
-      if(name!=='start'&&name!=='end'&&name!=='loc')visit(child);
+      if(name!=='start'&&name!=='end'&&name!=='loc')visit(child,value);
   }
   visit(ast);
   return nodes;

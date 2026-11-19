@@ -32,7 +32,7 @@ export function completionObservationPlan(source){
         }
       }
       if(node.type==='AssignmentExpression'&&!['&&=','||=','??='].includes(node.operator))add(node,'assign',node,2);
-      if(node.type==='CallExpression'&&!node.optional)add(node,'call',node,3);
+      if(['CallExpression','TaggedTemplateExpression'].includes(node.type)&&!node.optional)add(node,'call',node,3);
       if(node.type==='ArrowFunctionExpression'&&node.body.type!=='BlockStatement')add(node.body,'return',node.body,-1);
       if(node.type==='ExpressionStatement'&&!node.directive)add(node,'statement',node.expression,-1);
       if(node.type==='ReturnStatement'||node.type==='ThrowStatement'){
@@ -192,6 +192,11 @@ export function ownedCompletionObservations(bundle,source){
         // correct assignment-expression result.
         let stored=event.result;
         if(event.operation==='binding.write')stored=storedCell(previousFrame?.envId,instruction?.arg);
+        else if(instruction?.op==='PRIVATE_SET'){
+          const [base]=event.operands??[],brand=storedCell(previousFrame?.envId,'[[private '+instruction.arg.name+']]');
+          if(base?.[0]!=='ref'||brand?.[0]!=='str')throw new TypeError('Source private assignment has no committed lexical identity');
+          stored=state.heap[base[1]]?.privateSlots?.[brand[1]]?.value??['missing-storage'];
+        }
         else{
           const [base,property]=event.operands??[];
           if(base?.[0]!=='ref'||!['str','num','bool','null','undefined','bigint','symbol'].includes(property?.[0]))

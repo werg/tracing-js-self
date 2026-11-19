@@ -31,7 +31,7 @@ counter proving completed work was not repeated.
 `test/training-generators.test.js` also compares original and instrumented V8
 outcomes, source operations/branches, source completion identity receipts,
 callback use, reentrancy and generator cleanup. The runtime profile remains
-bounded: async generators and `yield*` are explicitly rejected; direct generator
+bounded: async generators are explicitly rejected; direct generator
 entry requires an ordinary consumer wrapper. General generator prototype
 reflection and host transport are not implemented.
 
@@ -45,3 +45,35 @@ Semantic reference: [ECMAScript 2026 Generator Objects](https://tc39.es/ecma262/
 including GeneratorResume, GeneratorResumeAbrupt, GeneratorStart and
 GeneratorYield. Cleanup uses the ordinary completion and IteratorClose
 semantics documented in [OWNED_ITERATORS.md](OWNED_ITERATORS.md).
+
+## Delegated synchronous yield
+
+`yield*` acquires the owned synchronous iterator, caches `next` once, and runs
+its protocol using visible property reads and calls. The first `next` receives
+one explicit `undefined` argument; later normal resumes forward the sent value.
+A done result supplies the yield expression value. A non-done result is yielded
+by its exact identity without eagerly reading `value` or manufacturing a
+replacement result object. Getter counts and identity are independently tested.
+
+A delegated suspension marks its retained frame. Generator next/return/throw
+resumption then records the requested kind and value in `delegateResume`,
+instead of prematurely unwinding the outer function. The bytecode consumes that
+record once, retrieves a fresh `return` or `throw` method when needed, and
+forwards the receiver and value. A return method can yield a non-done result and
+continue delegation. A done return result returns its value from the outer
+generator through ordinary finally handling.
+
+When `throw` is missing, the delegate is closed with a normal completion and
+then a guest TypeError is raised. A cleanup getter/call/nonobject-result failure
+takes precedence over that missing-method error. Missing `return` propagates the
+received return value. Iterator acquisition, next and done failures do not
+invent a close call. This follows
+[ECMAScript 2026 YieldExpression evaluation](https://tc39.es/ecma262/2026/multipage/ecmascript-language-functions-and-classes.html#sec-generator-function-definitions-runtime-semantics-evaluation).
+
+`test/training-yield-delegation.test.js` covers nested generators, arrays and
+Unicode strings, lazy result accessors, argument counts, cleanup precedence,
+source completion receipts and JSON restoration at a delegated suspension.
+The read-only generator event validator checks exact yielded result identity,
+unchanged suspended cursor/stack, intact forwarded completion and single
+consumption; a corrupted resume kind is rejected. This remains an owned/runtime
+capability, separately recorded from unsupported old detailed/native formats.
