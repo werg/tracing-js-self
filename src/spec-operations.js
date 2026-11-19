@@ -2,6 +2,7 @@
 // ApplyStringOrNumericBinaryOperator. No JS generators/closures hold guest work.
 // References and domain limits are recorded in docs/OWNED_ARITHMETIC.md.
 import { encode, decode, token } from './values.js';
+import {symbolPropertyKey} from './property-keys.js';
 import { ARITHMETIC_OPERATORS, specStep } from './spec-schema.js';
 
 const primitives = new Set(['undefined', 'null', 'bool', 'str', 'num', 'bigint', 'symbol']);
@@ -90,7 +91,11 @@ export function ordinaryGet(heap, receiver, name) {
       return {method,observation:observation(method)};
     }
     if(proto==='Array.prototype'){
-      if(['push','pop','includes','indexOf','lastIndexOf','slice','concat','join','splice','unshift','shift','at','filter','map','reduce','sort','some','every','find','findIndex','forEach','reverse','fill','copyWithin','toReversed','with'].includes(name)){
+      if(name===symbolPropertyKey('well-known:iterator')){
+        const method=token(['builtinfn','Array.prototype.values']);
+        return {method,observation:observation(method)};
+      }
+      if(['push','pop','includes','indexOf','lastIndexOf','slice','concat','join','splice','unshift','shift','at','filter','map','reduce','sort','some','every','find','findIndex','forEach','reverse','fill','copyWithin','toReversed','with','values','keys','entries'].includes(name)){
         const method=token(['builtinfn','Array.prototype.'+name]);
         return {method,observation:observation(method)};
       }

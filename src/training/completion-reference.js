@@ -3,6 +3,7 @@
 import {parse} from 'acorn';
 import {isDeepStrictEqual} from 'node:util';
 import {encode,decode} from '../values.js';
+import {stringPropertyKey,symbolPropertyKey} from '../property-keys.js';
 
 export const COMPLETION_OBSERVATION_SCHEMA='source-completions/1';
 export const COMPLETION_HOOK='__tracingSourceCompletion';
@@ -92,7 +93,7 @@ export function instrumentCompletionSource(source){
 // serialization, coercion, iterator, getter or user function is invoked here.
 export function createCompletionCapture({limit=32768,initialValues=[]}={}){
   if(!Number.isSafeInteger(limit)||limit<1)throw new TypeError('Invalid observation limit');
-  const observations=[],identities=new WeakMap();let next=0;
+  const observations=[],identities=new WeakMap(),symbolIdentities=new Map();let next=0;
   const seed=value=>{
     if(value===null||!['object','function'].includes(typeof value)||identities.has(value))return;
     identities.set(value,++next);
@@ -110,7 +111,10 @@ export function createCompletionCapture({limit=32768,initialValues=[]}={}){
     if(observations.length>=limit)throw new RangeError('Source completion observation cap');
     const row={site,kind};
     if(!['finally','break','continue'].includes(kind)){
-      if(value!==null&&['object','function'].includes(typeof value)){
+      if(typeof value==='symbol'){
+        if(!symbolIdentities.has(value))symbolIdentities.set(value,++next);
+        row.value=['identity','symbol',symbolIdentities.get(value)];
+      }else if(value!==null&&['object','function'].includes(typeof value)){
         if(!identities.has(value))identities.set(value,++next);
         row.value=['identity',typeof value,identities.get(value)];
       }else row.value=encode(value);
@@ -149,7 +153,7 @@ export function ownedCompletionObservations(bundle,source){
     if(['undefined','null','bool','str','num','bigint','missing-storage'].includes(tag[0]))return tag;
     const key=JSON.stringify(tag);
     if(!identities.has(key))identities.set(key,++next);
-    const kind=tag[0]==='ref'?bundle.finalState.heap[tag[1]]?.kind==='function'?'function':'object':
+    const kind=tag[0]==='symbol'?'symbol':tag[0]==='ref'?bundle.finalState.heap[tag[1]]?.kind==='function'?'function':'object':
       tag[0]==='builtinfn'||tag[0]==='intrinsic'&&tag[1]!=='Math'&&tag[1]!=='Atomics'?'function':'object';
     return ['identity',kind,identities.get(key)];
   };
@@ -190,11 +194,11 @@ export function ownedCompletionObservations(bundle,source){
         if(event.operation==='binding.write')stored=storedCell(previousFrame?.envId,instruction?.arg);
         else{
           const [base,property]=event.operands??[];
-          if(base?.[0]!=='ref'||!['str','num','bool','null','undefined','bigint'].includes(property?.[0]))
+          if(base?.[0]!=='ref'||!['str','num','bool','null','undefined','bigint','symbol'].includes(property?.[0]))
             throw new TypeError('Source assignment storage is outside the independently observed property profile');
           const object=state.heap[base[1]];
           if(!object||object.kind==='proxy')throw new TypeError('Source assignment storage requires an ordinary receiver');
-          const key=String(decode(property));
+          const key=property[0]==='symbol'?symbolPropertyKey(property[1]):stringPropertyKey(String(decode(property)));
           // A successful ordinary assignment must leave its stored value in
           // the receiver. Looking only at changed patches misses dropped writes.
           stored=object.properties?.[key]?.value??['missing-storage'];

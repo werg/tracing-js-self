@@ -148,6 +148,27 @@
       "native": "unsupported",
       "reason": "New semantic-protocol-values/1 identity/key interface is validated separately; existing detailed/native scalar/ref contracts cannot encode Symbols",
       "tests": "test/training-symbols.test.js"
+    },
+    {
+      "id": "owned-synchronous-iterators",
+      "domain": "custom synchronous for-of acquisition, cached next, receiver preserving getters/calls, IteratorClose on break/return/throw with completion precedence; builtin array/string iterators; nested lexical/var patterns; guarded standard-array path retains detailed qualification",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "General iterator identities and Symbol-keyed protocol methods need the new public protocol interface; existing detailed standard-array path is separately qualified",
+      "tests": "test/training-iterator-protocol.test.js"
+    },
+    {
+      "id": "for-of-expanded-bindings",
+      "domain": "standard-array iteration with nested object/array/default/rest bindings, var targets and lexical iterable TDZ",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "passed",
+      "native": "untested",
+      "tests": "test/training-iterator-protocol.test.js"
     }
   ]
 }

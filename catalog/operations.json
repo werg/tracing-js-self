@@ -288,6 +288,11 @@
       "operationId": "host.task.enter",
       "version": 1,
       "kind": "algorithm"
+    },
+    {
+      "operationId": "completion.pending.read",
+      "version": 1,
+      "kind": "algorithm"
     }
   ]
 }

@@ -294,26 +294,10 @@ export function parseTraining(source) {
            n.left.declarations.length!==1 ||n.left.declarations[0].init)
           reject(n,'for-of requires one simple declared binding');
         const target=n.left.declarations[0].id;
-        const array=target.type==='ArrayPattern'&&n.left.kind!=='var';
-        if(target.type!=='Identifier'&&!array)
-          reject(target,'for-of binding form');
-        let bindings=null;
-        if(array){
-          if(!target.elements.length||target.elements.length>32||
-             target.elements.some(x=>x?.type!=='Identifier'&&
-               !(x?.type==='AssignmentPattern'&&x.left.type==='Identifier')))
-            reject(target,'for-of array binding requires 1..32 identifiers');
-          bindings=target.elements.map((element,index)=>({
-            ...span(element),index,
-            name:element.type==='Identifier'?element.name:element.left.name,
-            fallback:element.type==='AssignmentPattern'?expr(element.right):null
-          }));
-          if(new Set(bindings.map(x=>x.name)).size!==bindings.length)
-            reject(target,'duplicate for-of array binding');
-        }
-        return {...loc,type:'ForOf',kind:n.left.kind,
-          id:bindings?null:target.name,bindings,
-          iterable:expr(n.right),body:stmt(n.body)};
+        if(!['Identifier','ArrayPattern','ObjectPattern'].includes(target.type))reject(target,'for-of binding form');
+        const parsedPattern=target.type==='Identifier'?null:patternTree(target);
+        return {...loc,type:'ForOf',kind:n.left.kind,id:parsedPattern?null:target.name,
+          ...(parsedPattern??{bindings:null}),iterable:expr(n.right),body:stmt(n.body)};
       }
       case 'ForStatement':{
         let init=null;
@@ -450,18 +434,12 @@ export function parseTraining(source) {
         case 'While':case 'DoWhile':
           value(n.test,e);statement(n.body,e);break;
         case 'ForOf':{
-          value(n.iterable,e);
           const loopEnv=n.kind==='var'?e:{
             names:new Set(n.bindings?n.bindings.map(x=>x.name):[n.id]),parent:e
           };
-          if(n.bindings)
-            for(let cursor=loopEnv;cursor?.parent;cursor=cursor.parent)
-              if(cursor.names.has('Array'))
-                reject(n,'for-of array binding requires unshadowed owned Array');
-          for(const binding of n.bindings??[])
-            if(binding.fallback)value(binding.fallback,loopEnv);
-          statement(n.body,loopEnv);
-          break;
+          value(n.iterable,loopEnv);
+          if(n.pattern)statement({...n,type:'PatternBinding',init:{type:'Literal'}},loopEnv);
+          statement(n.body,loopEnv);break;
         }
         case 'For':{
           const declarations=n.init?.type==='VariableGroup'?n.init.declarations:

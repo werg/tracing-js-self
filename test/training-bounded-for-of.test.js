@@ -55,11 +55,10 @@ test('array pair default expressions execute only for undefined per iteration',(
     for(const [a=++n,b=a+n] of rows)fs.push(()=>[a,b,n]);
     return [fs[0](),fs[1](),n];}`,[[[undefined,undefined],[undefined,undefined]]]);
 });
-test('for-of refuses non-array iterables, nested patterns and for-await',()=>{
+test('for-of keeps public protocol projection invalid nested inputs and for-await explicit',()=>{
   for(const [code,args] of [
     ['function f(s){let z="";for(const x of s)z+=x;return z;}', ['abc']],
     ['function f(xs){for(const [[x],y] of xs){}return 1;}',[[[1,2]]]],
-    ['function f(xs){for(var [x,y] of xs){}return 1;}',[[[1,2]]]],
     ['function f(xs){for(const [x,y] of xs){}return 1;}',[[1,2]]],
     ['async function f(xs){for await(const x of xs){}return 1;}',[[1,2]]]
   ]){

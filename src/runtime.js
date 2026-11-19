@@ -43,7 +43,7 @@ const opNames = {
   DEFAULT_GUARD:'binding.default.guard', PARAM_INIT:'binding.initialize', ENTER_BODY_ENV:'environment.enter', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
   CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
-  GET_PROP:'property.read', GET_METHOD:'property.read', SPREAD:'property.read', PUT_PROP:'property.write', DEFINE_LITERAL_PROP:'property.write', COPY_KEYS:'array.allocate', HAS_ENUMERABLE_OWN:'property.read', REQUIRE_COERCIBLE:'property.read', APPEND_ARRAY:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
+  GET_PROP:'property.read', GET_METHOD:'property.read', SPREAD:'property.read', PUT_PROP:'property.write', DEFINE_LITERAL_PROP:'property.write', COPY_KEYS:'array.allocate', HAS_ENUMERABLE_OWN:'property.read', REQUIRE_COERCIBLE:'property.read', REQUIRE_OBJECT:'property.read', ITERATOR_ARRAY_GUARD:'property.read', PENDING_THROW:'completion.pending.read', APPEND_ARRAY:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
   LEAVE_SCOPE:'environment.leave', CLONE_LOOP_ENV:'environment.iteration', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
   TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
   BIND_CATCH:'completion.catch.bind', END_FINALLY:'completion.finally.end',
@@ -1322,7 +1322,8 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
            else if(base.value[0]==='str'){
              // String primitive reads never consult the host object graph.
              const text=base.value[1];
-             if(property==='length')v=['num',text.length];
+             if(property===symbolPropertyKey('well-known:iterator'))v=['builtinfn','String.prototype.iterator'];
+             else if(property==='length')v=['num',text.length];
              else if(arrayIndex(property)&&Number(property)<text.length)
                v=['str',text[Number(property)]];
              else if(['charAt','charCodeAt','at','substring','substr','slice','indexOf','lastIndexOf','includes','startsWith','endsWith','toLowerCase','toUpperCase','trim','trimStart','trimEnd','split','replace'].includes(property))
@@ -1336,6 +1337,12 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
              if(!obj)throw new ReferenceError('Unknown guest identity');
              if(obj.declaredError&&!['name','message'].includes(property))
                throw new TypeError('Declared error exposes only name and message');
+             if(obj.kind==='iterator'){
+               if(property==='next')v=['builtinfn','Iterator.next'];
+               else if(property===symbolPropertyKey('well-known:iterator'))v=['builtinfn','Iterator.identity'];
+               else v=U;
+               return {...operands(base,key),...result(op==='GET_METHOD'?['method',v,base.value]:v)};
+             }
              if(obj.kind==='regexp'){
                if(property==='test'){
                  const method=['builtinfn','RegExp.prototype.test'];
@@ -1440,6 +1447,23 @@ if(obj.kind==='set'){
            else throw new TypeError('Unsupported property receiver (no host fallback)');
           const output=op==='GET_METHOD'?['method',v,base.value]:v;
           return {...operands(base,key),...result(output),reads:read?[read]:[]};
+        }
+        case 'PENDING_THROW':{
+          const handler=f.handlers.findLast(item=>item.phase==='finally');
+          if(!handler)throw new Error('Pending completion read outside finally');
+          return result(['bool',handler.pending?.type==='throw']);
+        }
+        case 'ITERATOR_ARRAY_GUARD':{
+          const source=pop(),obj=source.value[0]==='ref'?s.heap[source.value[1]]:null;
+          const key=symbolPropertyKey('well-known:iterator');
+          return {...operands(source),...result(['bool',obj?.kind==='array'&&objectPrototype(obj)==='Array.prototype'&&
+            !Object.hasOwn(obj.properties,key)&&!Object.hasOwn(obj.accessors??{},key)])};
+        }
+        case 'REQUIRE_OBJECT':{
+          const value=pop();
+          if(!['ref','promise','intrinsic','builtinfn','hostfn'].includes(value.value[0]))
+            guestFault('TypeError','Iterator result must be an object');
+          return {...operands(value),...result(value.value)};
         }
         case 'REQUIRE_COERCIBLE':{
           const value=pop();
@@ -1595,6 +1619,56 @@ if(object.kind==='regexp'){
           const fn=pop();let callable=fn.value;
           const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
+          if(callable[0]==='builtinfn'&&['Array.prototype.values','Array.prototype.keys','Array.prototype.entries','String.prototype.iterator'].includes(callable[1])){
+            const string=callable[1]==='String.prototype.iterator';
+            if(string?receiver[0]!=='str':receiver[0]!=='ref'||s.heap[receiver[1]]?.kind!=='array')
+              guestFault('TypeError','Iterator method requires its owned receiver');
+            const id=this.next(s,'obj');
+            s.heap[id]={id,kind:'iterator',iterated:copy(receiver),nextIndex:0,done:false,
+              iterationKind:string?'string':callable[1].slice('Array.prototype.'.length),
+              properties:{},propertyVersions:{},shapeVersion:0,version:0};
+            return {...operands(fn,...args),...result(['ref',id])};
+          }
+          if(callable[0]==='builtinfn'&&['Iterator.next','Iterator.identity'].includes(callable[1])){
+            const iterator=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+            if(iterator?.kind!=='iterator')guestFault('TypeError','Iterator receiver has no owned state');
+            if(callable[1]==='Iterator.identity')return {...operands(fn,...args),...result(receiver)};
+            let value=U;
+            if(!iterator.done){
+              const index=iterator.nextIndex;
+              if(index>10000)throw new RangeError('Owned iterator step budget');
+              if(iterator.iterationKind==='string'){
+                const text=iterator.iterated[1];
+                if(index>=text.length)iterator.done=true;
+                else{
+                  const code=text.charCodeAt(index),next=text.charCodeAt(index+1),width=
+                    code>=0xd800&&code<=0xdbff&&next>=0xdc00&&next<=0xdfff?2:1;
+                  value=['str',text.slice(index,index+width)];iterator.nextIndex+=width;
+                }
+              }else{
+                const array=s.heap[iterator.iterated[1]],length=decode(array.properties.length.value);
+                if(index>=length)iterator.done=true;
+                else{
+                  iterator.nextIndex++;
+                  if(iterator.iterationKind==='keys')value=['num',index];
+                  else{
+                    const property=ordinaryGet(s.heap,iterator.iterated,String(index));
+                    if(!property)throw new TypeError('Builtin iterator index getter requires an owned continuation');
+                    value=property.method.value;
+                    if(iterator.iterationKind==='entries'){
+                      const pair=this.next(s,'obj');s.heap[pair]={id:pair,kind:'array',properties:{
+                        0:token(['num',index],eventId),1:token(value,eventId),length:token(['num',2],eventId)},
+                        propertyVersions:{0:1,1:1,length:1},shapeVersion:3,version:0};value=['ref',pair];
+                    }
+                  }
+                }
+              }
+            }
+            const id=this.next(s,'obj');s.heap[id]={id,kind:'object',properties:{
+              value:token(value,eventId),done:token(['bool',iterator.done],eventId)},
+              propertyVersions:{value:1,done:1},shapeVersion:2,version:0};
+            return {...operands(fn,...args),...result(['ref',id])};
+          }
           if(callable[0]==='intrinsic'&&callable[1]==='Symbol'){
             const value=args[0]?.value??U;
             if(value[0]==='symbol')guestFault('TypeError','Cannot convert a Symbol value to a string');
