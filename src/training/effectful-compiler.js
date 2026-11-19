@@ -16,6 +16,8 @@ import {analyzeSemanticProgram} from './semantic-program.js';
 import {sourceLinkedComputation,sourceLinkedDecision} from './semantic-source.js';
 import {DECLARED_EXCEPTION_PROFILE} from './exception-profile.js';
 import {inspectSemanticRegion,evaluateSemanticRegion,checkSemanticRegionClaim} from './semantic-regions.js';
+import {checkEffectfulProjectionState} from './projection-state-profile.js';
+import {inspectOwnedDataEntity} from './data-graph-contract.js';
 
 const copy=value=>structuredClone(value);
 const hash=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
@@ -63,6 +65,18 @@ function closureReferences(source){
   visit(parse(source,{ecmaVersion:'latest'}));return result;
 }
 
+function parameterSourceRegions(source){
+  const result=new Map();
+  function visit(node){
+    if(!node||typeof node!=='object')return;
+    if(Array.isArray(node)){for(const child of node)visit(child);return;}
+    if(['FunctionDeclaration','FunctionExpression','ArrowFunctionExpression'].includes(node.type))
+      result.set(node.start,node.params.map(param=>({start:param.start,end:param.end})));
+    for(const value of Object.values(node))if(value&&typeof value==='object')visit(value);
+  }
+  visit(parse(source,{ecmaVersion:'latest'}));return result;
+}
+
 export function ownedEffectfulOutcome(bundle){
   // Async entry returns the Promise owned by the original entry frame. A
   // rejection does not complete the entire agent, and a later callback can
@@ -98,12 +112,14 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   if(!Number.isInteger(maxOperators)||maxOperators<1||maxOperators>8)
     refuse('compact expressions require an operator bound from 1 through 8');
   validateBundle(bundle);replayExact(bundle);
+  checkEffectfulProjectionState(bundle);
   const semantic=normalizeJournal(bundle);validateSemantic(bundle,semantic);
   const entry=bundle.entrySpec;
   if(entry?.kind!=='function')refuse('an explicit owned function entry is required');
   const source=bundle.sources.find(item=>item.sourceId===entry.sourceId)?.text;
   if(typeof source!=='string')refuse('exact source bytes are unavailable');
-  const sourceReferences=closureReferences(source),functionReferences=new Map();
+  const sourceReferences=closureReferences(source),functionReferences=new Map(),
+    sourceParameters=parameterSourceRegions(source),functionParameters=new Map();
   const binaryNodes=binarySourceNodes(source),operationStarts=new Map();
   const privateSites=new Map(bundle.sites.map(site=>[site.siteId,site]));
   for(const event of bundle.events)for(const change of event.stateChanges)
@@ -208,6 +224,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   const reactionFrames=new Map(),reactionTargets=new Set(),microtasks=new Map(),privatePromises=new Set();
   const awaitingCompletion=new Map();
   const deferredClosures=new Map();
+  const publishingInitialClosures=new Set();
   const pendingComputations=[];
   let fusedComputations=0,foldedComputations=0,fusedBindings=0,removedCellWrites=0;
   let cellOrdinal=0,frameOrdinal=0,continuationOrdinal=0,eventOrdinal=0,generated=0,jobOrdinal=0;
@@ -216,6 +233,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       functionNames.set(instruction.arg.codeId,instruction.op==='DEF_FN'?
         instruction.arg.name:'function:'+instruction.start);
       functionReferences.set(instruction.arg.codeId,sourceReferences.get(instruction.start)??new Set());
+      functionParameters.set(instruction.arg.codeId,sourceParameters.get(instruction.start)??[]);
     }
   const rootFor=frame=>roots.get(frame)??invocationId;
   const frameId=frame=>{if(!frames.has(frame))frames.set(frame,'guest'+(++frameOrdinal));return frames.get(frame);};
@@ -303,6 +321,19 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     return {last,write};
   }
   function emit(owner,kind,fields,event=null,rule=kind){
+    // Top-level source declarations already exist at the owned entry, but are
+    // not ordinary input-graph objects. Publish a referenced initial closure
+    // before any public binding/operand can name its identity. This uses only
+    // the immutable entry entity and current lexical cells, never final state.
+    const publish=value=>{
+      if(!value||typeof value!=='object')return;
+      if(Array.isArray(value)&&value[0]==='ref'){
+        if(!(kind==='allocate'&&value[1]===fields.name)&&!controller(owner).heap.has(value[1]))
+          publishInitialClosure(value[1],owner,event);
+        return;
+      }
+      for(const child of Object.values(value))publish(child);
+    };publish(fields);
     // Canonical production reduction over an already committed local cell.
     // A normal assignment to an already published lexical cell is idempotent
     // only when the exact cell and tagged value already match. This cannot
@@ -404,7 +435,21 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       else refuse('unknown mutation family');
     }
   }
-  function allocations(row,owner,event){
+  function publishInitialClosure(id,owner,event){
+    const initial=bundle.initialState.heap[id],current=state.heap[id];
+    if(!initial)return; // The ordinary selected identity check remains final.
+    if(initial.kind!=='function'||!isDeepStrictEqual(initial,current)||
+      Object.keys(initial.properties??{}).length||initial.prototypeInitialized||initial.classConstructor||
+      initial.privateSlots||initial.instanceInitializer||initial.staticInitializer)
+      refuse('unpublished initial identity requires an explicit behavioral-state profile');
+    if(publishingInitialClosures.has(id))refuse('cyclic initial closure capture requires explicit cells');
+    publishingInitialClosures.add(id);
+    try{
+      allocations({allocations:[{identity:id,kind:'function',codeId:initial.codeId,
+        capture:initial.closureEnvId,properties:[]}]},owner,event,{initial});
+    }finally{publishingInitialClosures.delete(id);}
+  }
+  function allocations(row,owner,event,{initial=null}={}){
     for(const allocation of row.allocations??[]){
       if(controller(owner).heap.has(identity(allocation.identity)))continue;
       const fields={name:identity(allocation.identity),kind:allocation.kind==='function'?'closure':allocation.kind,
@@ -434,7 +479,9 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
              allocation.capture!==parameterEnv||unresolved.some(relation=>relation.environment!==parameterEnv))
             refuse('closure has unsupported deferred parameter captures');
           deferredClosures.set(allocation.identity,{owner,fields,parameterEnv,
-            frame:event.invocationId,event,captureBindings,writes:[],events:[event.eventId]});
+            frame:event.invocationId,event,captureBindings,writes:[],events:[event.eventId],
+            parameterRegions:functionParameters.get(state.frames[event.invocationId]?.codeId)??[],
+            patternEnvironments:new Set([parameterEnv]),patternObjects:new Set(),patternProof:false});
           continue;
         }
         for(const relation of captureBindings){
@@ -444,7 +491,9 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
           fields.captures.push({binding:relation.name,cell:relation.cell});
         }
       }
-      emit(owner,'allocate',fields,event,'allocate');
+      emit(owner,'allocate',fields,event,initial?'initial-source-closure':'allocate');
+      if(initial)certificates.at(-1).initialState={identity:initial.id,code:initial.codeId,
+        closureEnvironment:initial.closureEnvId,entityDigest:hash(initial)};
     }
   }
   function guardDeferredClosures(row,event){
@@ -452,20 +501,87 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       // Only read-free, call-free parameter housekeeping can commute with an
       // unpublished allocation. This intentionally excludes other defaults,
       // heap writes/allocations, effects, exceptions, jobs and checkpoints.
-      if(event.invocationId!==pending.frame||event.completion||
+      const basic=!(event.invocationId!==pending.frame||event.completion||
          !['binding.default.guard','literal.materialize','control.jump','binding.initialize'].includes(event.operation)||
          event.stateChanges.some(change=>!['frames','envs'].includes(change.table)||
            change.table==='frames'&&change.id!==pending.frame||
-           change.table==='envs'&&(event.operation!=='binding.initialize'||change.id!==pending.parameterEnv)))
-        refuse('deferred parameter closure crosses an observable or unsupported operation: '+event.operation);
+           change.table==='envs'&&(event.operation!=='binding.initialize'||change.id!==pending.parameterEnv)));
+      let parameterInitialize=true;
       if(event.operation==='binding.initialize'){
         const write=row?.writes?.[0],binding=write&&state.envs[write.env]?.bindings?.[write.key];
-        if(row?.writes?.length!==1||write.kind!=='cell'||write.env!==pending.parameterEnv||
-           binding?.kind!=='parameter'||binding.initialized)
-          refuse('deferred closure crossed a non-parameter initialization');
+        parameterInitialize=row?.writes?.length===1&&write.kind==='cell'&&write.env===pending.parameterEnv&&
+          binding?.kind==='parameter'&&!binding.initialized;
       }
+      if(!basic||!parameterInitialize)guardDeferredParameterData(pending,row,event);
       pending.events.push(event.eventId);
     }
+  }
+  function guardDeferredParameterData(pending,row,event){
+    const reject=()=>refuse('deferred parameter closure crosses an observable or unsupported operation: '+event.operation);
+    const allowed=new Set(['binding.default.guard','literal.materialize','control.jump','binding.initialize',
+      'binding.read','binding.declare','binding.write','environment.enter','environment.leave',
+      'stack.pop','stack.duplicate','primitive.binary','control.branch','object.allocate','array.allocate',
+      'property.read','property.write']);
+    const site=privateSites.get(event.siteId);
+    if(event.invocationId!==pending.frame||event.completion||!allowed.has(event.operation)||!site||
+      !pending.parameterRegions.some(region=>site.start>=region.start&&site.end<=region.end))reject();
+    const unpublished=value=>Array.isArray(value)&&value[0]==='ref'&&deferredClosures.has(value[1]);
+    if((event.operands??[]).some(unpublished)||unpublished(event.result)||
+      (event.readObservations??[]).some(read=>unpublished(read.value)))reject();
+    const temporary=name=>/^\[\[pattern [0-9]+\]\]$/.test(name);
+    const createsEnvironment=event.operation==='environment.enter',createsObject=['object.allocate','array.allocate'].includes(event.operation);
+    const newEnvironments=[],newObjects=[];
+    for(const change of event.stateChanges){
+      if(change.table==='frames'){if(change.id!==pending.frame)reject();continue;}
+      if(change.table==='counters'){if(!createsEnvironment&&!createsObject)reject();continue;}
+      if(change.table==='envs'){
+        if(createsEnvironment){
+          if(change.before!==null||!change.after||!pending.patternEnvironments.has(change.after.parent)||
+            Object.keys(change.after.bindings??{}).length)reject();
+          newEnvironments.push(change.id);continue;
+        }
+        if(!pending.patternEnvironments.has(change.id)||!change.before||!change.after)reject();
+        if(event.operation==='binding.declare'){
+          const before=change.before.bindings,after=change.after.bindings;
+          if(change.id===pending.parameterEnv||Object.keys(before).some(name=>!isDeepStrictEqual(before[name],after[name])))reject();
+          const additions=Object.keys(after).filter(name=>!Object.hasOwn(before,name));
+          if(additions.length!==1||!temporary(additions[0])||after[additions[0]].initialized)reject();
+        }else if(['binding.initialize','binding.write'].includes(event.operation)){
+          const write=row?.writes?.[0],binding=write&&state.envs[write.env]?.bindings?.[write.key];
+          if(row?.writes?.length!==1||write.kind!=='cell'||write.env!==change.id||!binding||!graphValue(write.value))reject();
+          if(change.id===pending.parameterEnv){
+            if(event.operation!=='binding.initialize'||binding.kind!=='parameter'||binding.initialized)reject();
+          }else if(!temporary(write.key))reject();
+        }else reject();
+        continue;
+      }
+      if(change.table==='heap'){
+        if(createsObject){
+          if(change.before!==null||!['object','array'].includes(change.after?.kind)||
+            Object.keys(change.after.properties??{}).some(key=>key!=='length'))reject();
+          try{inspectOwnedDataEntity(change.after);}catch{reject();}
+          newObjects.push(change.id);continue;
+        }
+        if(event.operation!=='property.write'||!pending.patternObjects.has(change.id))reject();
+        try{inspectOwnedDataEntity(change.before);inspectOwnedDataEntity(change.after);}catch{reject();}
+        if(!row?.writes?.length||row.writes.some(write=>write.kind!=='property'||write.object!==change.id||
+          !write.present||!graphValue(write.value)||unpublished(write.value)))reject();
+        continue;
+      }
+      reject();
+    }
+    for(const read of event.readObservations??[]){
+      if(read.kind==='binding'){
+        if(!pending.patternEnvironments.has(read.envId)||!graphValue(read.value))reject();
+      }else if(read.kind==='property'){
+        try{inspectOwnedDataEntity(state.heap[read.objectId]);}catch{reject();}
+        if(!graphValue(read.value))reject();
+      }else reject();
+    }
+    if(event.operation==='primitive.binary'&&(event.operands??[]).some(value=>!graphValue(value)||['ref','promise'].includes(value[0])))reject();
+    for(const id of newEnvironments)pending.patternEnvironments.add(id);
+    for(const id of newObjects)pending.patternObjects.add(id);
+    pending.patternProof=true;
   }
   function flushDeferredClosures(event){
     for(const [identity,pending] of deferredClosures){
@@ -480,9 +596,11 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       const emitDeferred=(kind,fields)=>{
         flushComputations();
         return commitEmission(pending.owner,kind,fields,{
-          rule:'owned-deferred-parameter-closure/4',journalEvents:[...pending.events],
+          rule:pending.patternProof?'owned-deferred-parameter-initialization/1':'owned-deferred-parameter-closure/4',journalEvents:[...pending.events],
           allocationEvent:pending.event.eventId,initializationBoundary:event.eventId,
           capturedCells:copy(pending.captureBindings),
+          ...(pending.patternProof?{parameterDataProof:{regions:copy(pending.parameterRegions),
+            environments:[...pending.patternEnvironments],allocations:[...pending.patternObjects]}}:{}),
           source:{sourceId:pending.event.sourceId,siteId:pending.event.siteId}});
       };
       for(const {relation,binding} of captures){

@@ -7,6 +7,7 @@ import {resolve} from 'node:path';
 import {hashAlgorithmData} from './program.js';
 import {REGION_TRACE_VERSION,REGION_CONTEXT_VERSION,REGION_PROFILE} from './regions.js';
 import {V8_CONTRACT_DIGEST,V8_FIXTURE_DIGEST} from './native-v8.js';
+import {verifyFailureRecord} from '../training/failure-record.js';
 import {buildCausalLmV8Examples,CAUSAL_LM_V8_BRIDGE_VERSION} from './causal-lm-v8.js';
 import {buildRegionFamilyRegistry,verifyRegionFamilyRegistry,regionSplitIdentity,
   verifyRegionSplitIdentity,validateRegionFamilyAssignments,regionArtifactSource,
@@ -31,6 +32,8 @@ const splitCounts=()=>Object.fromEntries(REGION_DATASET_SPLITS.map(split=>[split
 export function regionFamilyMembership(candidate,index=0){
   const artifact=candidate?.exported??candidate,side=artifact?.sidecar;
   const hasArtifact=Boolean(artifact?.public&&side);
+  const failure=candidate?.failure;
+  if(failure!==undefined)verifyFailureRecord(failure);
   let source,entry,family,ancestors,coreDigest;
   if(hasArtifact){
     ({source,entry,family,ancestors,coreDigest}=regionArtifactSource(artifact));
@@ -40,8 +43,17 @@ export function regionFamilyMembership(candidate,index=0){
       !isDeepStrictEqual(normalizeAncestors(candidate[key],family),ancestors))
       fail('candidate changes independently checked source ancestry');
   }else{
-    source=candidate?.source;entry=candidate?.entry;family=candidate?.family??candidate?.sourceFamily;
-    ancestors=normalizeAncestors(candidate?.ancestors??candidate?.ancestorIds??[],family);
+    const original=failure?.original;
+    source=original?.source??candidate?.source;entry=original?.entry??candidate?.entry;
+    family=original?.family??candidate?.family??candidate?.sourceFamily;
+    ancestors=normalizeAncestors(original?.ancestorIds??candidate?.ancestors??candidate?.ancestorIds??[],family);
+    if(original){
+      for(const key of ['source','entry','family'])if(candidate?.[key]!==undefined&&candidate[key]!==original[key])
+        fail('candidate relabels its original source failure '+key);
+      for(const key of ['ancestors','ancestorIds'])if(candidate?.[key]!==undefined&&
+        !isDeepStrictEqual(normalizeAncestors(candidate[key],family),ancestors))
+        fail('candidate changes its original source failure ancestry');
+    }
     coreDigest=candidate?.coreDigest;
   }
   const existingIdentity=side?.splitIdentity??candidate?.splitIdentity;

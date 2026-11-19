@@ -194,6 +194,20 @@ test('dense array rest bindings and lazy defaults preserve source order and allo
   ])for(const args of cases)check(body,args);
 });
 
+test('function-valued defaults and callback results refuse the pure core without crashing region discovery',()=>{
+  for(const body of [
+    'function run(f=()=>n,n=7){return f();}',
+    'function run(o){const {f=()=>3}=o;return f();}',
+    'function run(xs){return xs.map(x=>()=>x);}',
+    'function run(xs){return xs.reduce((x,y)=>x,()=>1);}',
+    'function run(){const f=()=>1;return f.map(x=>x);}'
+  ]){
+    const result=tryLowerJavaScriptV8({source:source(body),entry:'run'});
+    assert.equal(result.status,'refused',body);assert.match(result.reason,/scalar\/data|function identity/);
+    assert.equal(result.disposition,'detailed-fallback');
+  }
+});
+
 test('pure source/resource guard failures are explicit dispositions',()=>{
   const explosive='function run(x){'+Array.from({length:14},()=> 'x=x+x;').join('')+'return x;}';
   const compact=lowerJavaScriptV8({source:source(explosive),entry:'run'});

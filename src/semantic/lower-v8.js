@@ -21,7 +21,8 @@ const UNINITIALIZED=Object.freeze({uninitialized:true});
 const fail=(message,node)=>{const error=new AlgorithmLoweringError('v8 '+message,node);
   if(/budget|limit|excessive/.test(message))error.category='resource_limited.algorithm-v8';throw error;};
 const ensure=(condition,message,node)=>{if(!condition)fail(message,node);};
-const scalarValue=(value,node)=>{ensure(value&&!value.fn&&!value.blocked&&(!value.induction||value.term),'scalar/data value required',node);return value;};
+const scalarValue=(value,node)=>{ensure(value&&!value.fn&&!value.blocked&&!value.uninitialized&&value.term,
+  'scalar/data value required; function identity needs a detailed boundary',node);return value;};
 function allocated(term,seen=new Set()){
   if(!term||typeof term!=='object'||seen.has(term))return false;seen.add(term);
   return ['array','object'].includes(term.op)||term.op==='traverse'&&['map','filter','scan'].includes(term.mode)||
@@ -101,7 +102,9 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
   const rule=(name,node,conditions)=>rules.push({rule:name,version:1,site:span(node),conditions});
   const context=extra=>({bindings:[],names:[],stack:[],conditional:false,scopeMap:new Map(),...extra});
   const pin=(value,ctx,node)=>{
-    if(value.fn||['literal','input','ref','lexical'].includes(value.term.op))return value;
+    if(value?.fn)return value;
+    scalarValue(value,node);
+    if(['literal','input','ref','lexical'].includes(value.term.op))return value;
     if((value.cost??0)<=64&&!allocated(value.term)&&(value.total===true||value.total!==false&&!mayThrow(value.term)))return value;
     ensure(!ctx.conditional,'allocating or potentially throwing branch work requires a local detailed boundary',node);
     const name=token();ctx.names.push(name);ctx.bindings.push(value.term);
@@ -164,11 +167,14 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
       return;
     }
     if(pattern.type==='AssignmentPattern'){
-      const skipped=fork(scope,ctx),selected=fork(scope,ctx),fallback=expression(pattern.right,selected.scope,selected.ctx);
+      scalarValue(value,pattern);
+      const skipped=fork(scope,ctx),selected=fork(scope,ctx),
+        fallback=scalarValue(expression(pattern.right,selected.scope,selected.ctx),pattern.right);
       const predicate={term:op('equal',value.term,literal(undefined).term),type:'boolean',total:true};
       join(scope,selected.ctx,skipped.ctx,predicate,pattern);
       return bind(pattern.left,{term:op('default_undefined',value.term,fallback.term),type:value.type===fallback.type?value.type:'scalar'},scope,ctx,{declare,mutable});
     }
+    scalarValue(value,pattern);
     if(pattern.type==='ObjectPattern'){
       constrain(value,'data',pattern);
       ensure(pattern.properties.length||value.term.op==='input'||value.type==='object','nested empty object pattern requires a boundary',pattern);
@@ -222,11 +228,12 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
     const callScope=new Scope(closure),params=target.fn.params;
     for(const param of params)for(const name of patternNames(param))callScope.declare(name,UNINITIALIZED,true,param);
     params.forEach((param,index)=>bind(param,args[index]??literal(undefined),callScope,callCtx,{declare:true}));
-    if(target.fn.body.type!=='BlockStatement')return {value:expression(target.fn.body,callScope,callCtx),ctx:callCtx};
+    if(target.fn.body.type!=='BlockStatement')return {value:scalarValue(expression(target.fn.body,callScope,callCtx),target.fn.body),ctx:callCtx};
     const result=run(target.fn.body.body,callScope,callCtx);ensure(result?.returned,'helper requires explicit return',target.fn);
     return {value:result.value,ctx:callCtx};
   }
   function traverse(mode,input,callback,initial,scope,ctx,node){
+    scalarValue(input,node);if(initial!==null)scalarValue(initial,node);
     constrain(input,'dense-primitive-array',node);
     const params=Array.from({length:mode==='fold'||mode==='scan'?4:3},token),isFold=params.length===4;
     const args=params.map((name,index)=>({term:{op:'lexical',token:name},

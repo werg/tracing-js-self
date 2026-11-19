@@ -26,6 +26,6 @@ test('default closures observe later pattern binding initialization',async()=>{
   const code='function run(f=()=>n,{n=7}={}){return f();}';
   runtimeDifferential('',{source:'"use strict";'+code});
   const r=await verifyEffectfulTrainingCase({source:'"use strict";'+code,entry:'run',family:'parameter-pattern-capture',fixture:{calls:[]}});
-  assert.equal(r.status,'projection_refused');
-  assert.match(r.reason,/deferred parameter closure/);
+  assert.equal(r.status,'locally_verified',r.reason);
+  assert(r.exported.sidecar.compiler.certificates.some(row=>row.rule==='owned-deferred-parameter-initialization/1'));
 });

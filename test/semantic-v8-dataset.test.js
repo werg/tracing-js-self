@@ -178,6 +178,22 @@ test('duplicate and entirely refused inventories keep every candidate and do not
   assert.equal(empty.manifest.admitted,false);assert.equal(empty.dispositions[1].family,'unchanged');
 });
 
+test('bare verified source failures retain their hashed original source and lineage in the inventory',async()=>{
+  const source='"use strict";function run( {';
+  const failure=await verifyRegionTrainingCase({source,entry:'run',family:'syntax-refusal',
+    ancestorIds:['malformed-source'],fixture:{calls:[]}});
+  assert(failure.failure,'fixture must produce a preserved source failure');
+  const dataset=await buildRegionDataset([failure],options);
+  assert.equal(dataset.registry.sources[0].source,source);
+  assert.equal(dataset.registry.sources[0].family,'syntax-refusal');
+  assert.deepEqual(dataset.registry.sources[0].ancestors,['malformed-source']);
+  assert.equal(dataset.dispositions[0].status,'source-refused');
+  assert.equal(dataset.manifest.registeredCandidates,1);
+  await assert.rejects(buildRegionDataset([{...failure,family:'renamed'}],options),/original source failure/);
+  const altered=structuredClone(failure);altered.failure.original.source=affine;
+  await assert.rejects(buildRegionDataset([altered],options),/failure evidence changed/);
+});
+
 test('JSONL export writes complete artifacts, all dispositions and verified file hashes without replacing a directory',async()=>{
   const parent=await mkdtemp(join(tmpdir(),'semantic-v8-dataset-'));
   try{
