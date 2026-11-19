@@ -157,12 +157,15 @@ records and restore checkpoints during constructor continuations. Qualified
 cases cover base and derived fields, explicit and default constructors,
 primitive-return receiver substitution, newTarget inheritance, private methods,
 same-spelled distinct private brands, static private fields, Symbol method keys,
-and class getter/setter calls. Unused class declarations still receive metadata
+class getter/setter calls, and scalar private prefix/postfix updates. Update
+lowering explicitly reads the private slot, checks scalar ToNumeric and typed
+increment/decrement, writes the new value and verifies expression completion.
+Unused class declarations still receive metadata
 evidence. This is local source/public qualification; native consumer admission
 is a separate required gate.
 
-The initial adapter explicitly refuses private accessors and private update
-conversion, constructor arrows, abrupt initializers, ordinary/exotic
+The initial adapter explicitly refuses private accessors and object-valued
+private update conversion, constructor arrows, abrupt initializers, ordinary/exotic
 constructors, uninitialized closure captures and super-property references.
 These refusals do not remove the corresponding owned runtime support. They
 identify the additional public continuation or source proof required before
