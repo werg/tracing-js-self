@@ -32,6 +32,16 @@ Runtime and archive tests alone do not qualify the public trace or native traini
 consumer. The new binary protocol must independently validate public operations,
 contexts, checkpoints, source metadata and native packing before admission.
 
+The `owned-binary-memory/1` public component declares four operation families:
+`memory.construct` names a new buffer or view and its input arguments;
+`memory.get` checks a size, backing identity, or indexed read;
+`memory.set` applies an indexed conversion and write; and `memory.call` checks a
+bounded DataView, subarray, slice, growth, or single-agent atomic operation.
+Buffers and views inhabit the same controller heap as ordinary objects. Fresh
+backing identities are explicit, false results are rejected transactionally,
+and public restoration rejects invalid bytes, aliases, bounds, and extra metadata.
+This component is not yet source/native-qualified by its isolated tests.
+
 The conversion and indexed-access rules follow the pinned
 [ECMAScript 2026 conversion operations](https://tc39.es/ecma262/2026/multipage/abstract-operations.html#sec-toindex),
 [typed-array exotic objects](https://tc39.es/ecma262/2026/multipage/ordinary-and-exotic-objects-behaviours.html#sec-typedarray-exotic-objects),
