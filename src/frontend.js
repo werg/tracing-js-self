@@ -238,6 +238,7 @@ export function compile(ast) {
         case 'YieldDelegate':emitYieldDelegate(n);break;
         case 'TaggedTemplate':
           if(n.tag.type==='PrivateMember'){expr(n.tag.object);emit('PRIVATE_GET_METHOD',{name:n.tag.name},n.tag);}
+          else if(n.tag.type==='SuperMember'){superReference(n.tag);emit('SUPER_GET_METHOD',null,n.tag);}
           else if(n.tag.type==='Member'){expr(n.tag.object);expr(n.tag.property);emit('GET_METHOD',null,n.tag);}
           else expr(n.tag);
           emit('GET_TEMPLATE_OBJECT',{cooked:n.cooked,raw:n.raw},n);
@@ -328,12 +329,15 @@ export function compile(ast) {
           break;
         }
         case 'Member':expr(n.object);expr(n.property);emit('GET_PROP',null,n);break;
+        case 'SuperMember':superReference(n);emit('SUPER_GET',null,n);break;
         case 'SuperCall':
+          emit('SUPER_CONSTRUCTOR',null,n);
           for(const argument of n.args){expr(argument.type==='Spread'?argument.argument:argument);if(argument.type==='Spread')emit('SPREAD',null,argument);}
           emit('SUPER_CALL',n.args.some(a=>a.type==='Spread')?{count:n.args.length,spread:n.args.flatMap((a,i)=>a.type==='Spread'?[i]:[])}:n.args.length,n);
           emit('SUPER_BIND',null,n);break;
         case 'Call':
-          if(n.callee.type==='PrivateMember'){expr(n.callee.object);emit('PRIVATE_GET_METHOD',{name:n.callee.name},n.callee);}else if(n.callee.type==='Member'){expr(n.callee.object);expr(n.callee.property);emit('GET_METHOD',null,n.callee);}else expr(n.callee);
+          if(n.callee.type==='SuperMember'){superReference(n.callee);emit('SUPER_GET_METHOD',null,n.callee);}
+          else if(n.callee.type==='PrivateMember'){expr(n.callee.object);emit('PRIVATE_GET_METHOD',{name:n.callee.name},n.callee);}else if(n.callee.type==='Member'){expr(n.callee.object);expr(n.callee.property);emit('GET_METHOD',null,n.callee);}else expr(n.callee);
           for(const a of n.args){
             expr(a.type==='Spread'?a.argument:a);
             if(a.type==='Spread')emit('SPREAD',null,a);
@@ -380,7 +384,9 @@ export function compile(ast) {
             if(spreads)emit('GET',saved,n);else emit('DUP',null,n);
             if(item.computedKey)expr(item.computedKey);
             else emit('CONST',{value:['str',item.key]},n);
-            expr(item.value);emit('DEFINE_LITERAL_PROP',{kind:item.kind??'init'},item.start===undefined?n:item);
+            expr(item.value);
+            if(item.value.nonConstructible&&containsSuperProperty(item.value))emit('SET_HOME_OBJECT',{offset:2},item);
+            emit('DEFINE_LITERAL_PROP',{kind:item.kind??'init'},item.start===undefined?n:item);
             emit('POP',null,n);
           }
           if(spreads){emit('GET',saved,n);emit('LEAVE_SCOPE',null,n);}
@@ -388,6 +394,12 @@ export function compile(ast) {
         }
         case 'PatternAssignment':emitPattern(n,true);break;
         case 'Assign':
+          if(n.left.type==='SuperMember'){
+            superReference(n.left);
+            if(n.operator!=='='){emit('DUP',null,n.left);emit('SUPER_GET',null,n.left);}
+            expr(n.right);if(n.operator!=='=')emit('BINARY',n.operator.slice(0,-1),n);
+            emit('SUPER_SET',null,n);break;
+          }
           if(n.left.type==='PrivateMember'){
             const name=n.left.name;
             if(['&&=','||=','??='].includes(n.operator)){
@@ -456,6 +468,11 @@ export function compile(ast) {
           }break;
         default:throw new SyntaxError(`Unsupported expression: ${n.type}`);
       }
+    }
+    function superReference(n){emit('THIS',null,n);expr(n.property);emit('SUPER_REFERENCE',null,n);}
+    function containsSuperProperty(node){
+      return node!==null&&typeof node==='object'&&(node.type==='SuperMember'||Object.values(node).some(value=>
+        Array.isArray(value)?value.some(containsSuperProperty):containsSuperProperty(value)));
     }
     // CopyDataProperties snapshots key identities, then rechecks each own
     // descriptor before reading. Each getter is an ordinary owned GET_PROP
@@ -553,10 +570,11 @@ export function compile(ast) {
         }
         if(element.privateName){
           const name='[[private method '+(++forOfIndex)+']]';emit('DECLARE',{name,kind:'const'},element);
-          expr(element.value);emit('INIT',name,element);
+          expr(element.value);emit('SET_HOME_OBJECT',{name:element.static?klass:proto},element);emit('INIT',name,element);
           (element.static?staticMethods:instanceMethods).push({...element,type:'ClassField',privateKind:'method',value:{...element,type:'Identifier',name}});
         }else{
           emit('GET',element.static?klass:proto,element);expr(key);expr(element.value);
+          emit('SET_HOME_OBJECT',{name:element.static?klass:proto},element);
           emit('DEFINE_LITERAL_PROP',{kind:element.kind==='method'?'init':element.kind,enumerable:false},element);emit('POP',null,element);
         }
       }
@@ -564,6 +582,7 @@ export function compile(ast) {
         if(!body.length)continue;
         const codeId=bodyProgram(body,[],false,[],-1,true);
         emit('GET',klass,n);emit('MAKE_FUNCTION',{codeId,arrow:false,async:false,nonConstructible:true},n);
+        emit('SET_HOME_OBJECT',{name:isStatic?klass:proto},n);
         emit('CLASS_INITIALIZER',{static:isStatic},n);emit('POP',null,n);
       }
       emit('GET',klass,n);emit('CLASS_FINISH',{name:n.name},n);emit('LEAVE_SCOPE',null,n);
