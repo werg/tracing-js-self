@@ -13,6 +13,9 @@ const logical=new Set(['&&','||','??']);
 const assignments=new Set(['=','&&=','||=','??=','+=','-=','*=','/=','%=','**=',
   '&=','|=','^=','<<=','>>=','>>>=']);
 const unary=new Set(['!','-','+','typeof','void','~']);
+const ownedConstructors=new Set(['Set','Error','TypeError','Promise','SharedArrayBuffer','DataView',
+  'Int8Array','Uint8Array','Int16Array','Uint16Array','Int32Array','Uint32Array',
+  'BigInt64Array','BigUint64Array','Float32Array','Float64Array']);
 const reject=(node,why) => {throw new SyntaxError(
   'Unsupported training-js/1 '+why+' at '+(node.start ?? '?')+':'+(node.end ?? '?'));};
 
@@ -85,9 +88,9 @@ export function parseTraining(source) {
         }
         return {...loc,type:'Literal',value:encode(n.bigint!==undefined?BigInt(n.bigint):n.value),raw:n.raw};
       case 'Identifier':return {...loc,type:'Identifier',name:n.name};
+      case 'ThisExpression':return {...loc,type:'This'};
       case 'ArrowFunctionExpression':case 'FunctionExpression':{
-        if(n.generator ||
-           (n.type==='FunctionExpression' && n.id))
+        if(n.generator)
           reject(n,'function expression parameters or mode');
         const parsedParams=parameters(n);
         const body=n.body.type==='BlockStatement'?stmt(n.body):
@@ -95,6 +98,7 @@ export function parseTraining(source) {
             {...span(n.body),type:'Return',argument:expr(n.body)}]};
         return {...loc,type:'FunctionExpr',
           arrow:n.type==='ArrowFunctionExpression',async:n.async,
+          name:n.id?.name??null,
           params:parsedParams.map(p=>p.name),defaults:parsedParams.map(p=>p.default),
           parameterSites:parsedParams.map(span),
           restIndex:parsedParams.findIndex(p=>p.rest),body};
@@ -160,10 +164,13 @@ export function parseTraining(source) {
         return {...loc,type:'Member',object:expr(n.object),property:n.computed?expr(n.property):
           {...span(n.property),type:'Literal',value:encode(n.property.name)}};
       case 'NewExpression':
-        if(n.callee.type!=='Identifier' ||
-           !['Set','Error','TypeError','SharedArrayBuffer','Int32Array'].includes(n.callee.name) ||
-           n.arguments.some(a=>a.type==='SpreadElement') || n.arguments.length>1)
-          reject(n,'NewExpression');
+        if(n.callee.type!=='Identifier'||n.arguments.some(a=>a.type==='SpreadElement')||
+           n.arguments.length>3)reject(n,'NewExpression');
+        if(n.callee.name==='Proxy'){
+          if(n.arguments.length!==2)reject(n,'Proxy requires target and handler');
+          return {...loc,type:'Proxy',target:expr(n.arguments[0]),handler:expr(n.arguments[1])};
+        }
+        if(!ownedConstructors.has(n.callee.name))reject(n,'NewExpression');
         return {...loc,type:'Construct',callee:n.callee.name,args:n.arguments.map(expr)};
       case 'CallExpression':
         if(n.optional || n.arguments.filter(a=>a.type==='SpreadElement').length>4)
@@ -174,19 +181,21 @@ export function parseTraining(source) {
           args:n.arguments.map(a=>a.type==='SpreadElement'?
             {...span(a),type:'Spread',argument:expr(a.argument)}:expr(a))};
       case 'ArrayExpression':
-        if(n.elements.some(e=>!e))reject(n,'sparse array literal');
-        if(n.elements.filter(e=>e.type==='SpreadElement').length>4)
+        if(n.elements.filter(e=>e?.type==='SpreadElement').length>4)
           reject(n,'array literal spread budget');
-        return {...loc,type:'Array',elements:n.elements.map(e=>e.type==='SpreadElement'?
+        return {...loc,type:'Array',elements:n.elements.map(e=>e===null?null:e.type==='SpreadElement'?
           {...span(e),type:'Spread',argument:expr(e.argument)}:expr(e))};
       case 'ObjectExpression':
         return {...loc,type:'Object',properties:n.properties.map(p=>{
-          if(p.type!=='Property' || p.kind!=='init' || p.method || p.computed)
+          if(p.type==='SpreadElement')return {...span(p),kind:'spread',value:expr(p.argument)};
+          if(p.type!=='Property'||!['init','get','set'].includes(p.kind))
             reject(p,'object property form');
-          const key=p.key.type==='Identifier'?p.key.name:
+          const key=p.computed?null:p.key.type==='Identifier'?p.key.name:
             p.key.type==='Literal'?String(p.key.value):null;
-          if(key===null || key==='__proto__')reject(p,'object property key');
-          return {key,value:expr(p.value)};
+          if(!p.computed&&key===null)reject(p,'object property key');
+          const kind=key==='__proto__'&&!p.computed&&!p.shorthand&&!p.method&&p.kind==='init'
+            ?'prototype':p.kind;
+          return {...span(p),key,computedKey:p.computed?expr(p.key):null,kind,value:expr(p.value)};
         })};
       case 'AssignmentExpression':
         if(!assignments.has(n.operator) ||
@@ -278,16 +287,12 @@ export function parseTraining(source) {
           finalizer:n.finalizer?stmt(n.finalizer):null};
       }
       case 'SwitchStatement':{
-        if(!n.cases.length||n.cases.length>12||
-           n.cases.some((c,i)=>c.consequent.length!==1||
-             c.consequent[0].type!=='ReturnStatement'||
-             (c.test&&!(c.test.type==='Literal'&&typeof c.test.value==='string'))||
-             (!c.test&&i!==n.cases.length-1)))
-          reject(n,'switch fallthrough or complex case');
+        if(n.cases.length>128)reject(n,'switch case budget');
         return {...loc,type:'Switch',discriminant:expr(n.discriminant),
-          cases:n.cases.map(c=>({test:c.test?expr(c.test):null,
-            body:stmt(c.consequent[0])}))};
+          cases:n.cases.map(c=>({...span(c),test:c.test?expr(c.test):null,
+            body:c.consequent.map(stmt)}))};
       }
+      case 'LabeledStatement':return {...loc,type:'Label',label:n.label.name,body:stmt(n.body)};
       case 'IfStatement':return {...loc,type:'If',test:expr(n.test),
         consequent:stmt(n.consequent),alternate:n.alternate?stmt(n.alternate):null};
       case 'WhileStatement':return {...loc,type:'While',test:expr(n.test),body:stmt(n.body)};
@@ -334,8 +339,7 @@ export function parseTraining(source) {
           update:n.update?expr(n.update):null,body};
       }
       case 'BreakStatement':case 'ContinueStatement':
-        if(n.label)reject(n,'labelled loop exit');
-        return {...loc,type:n.type==='BreakStatement'?'Break':'Continue'};
+        return {...loc,type:n.type==='BreakStatement'?'Break':'Continue',label:n.label?.name??null};
       case 'ExpressionStatement':return {...loc,type:'Expression',expr:expr(n.expression)};
       case 'EmptyStatement':return {...loc,type:'Empty'};
       default:reject(n,n.type);
@@ -368,7 +372,8 @@ export function parseTraining(source) {
           if(!has(n.name,e))reject(n,'unbound identifier '+n.name);
           break;
         case 'Template':n.expressions.forEach(x=>value(x,e));break;
-        case 'FunctionExpr':scope(n.body.body,e,n.params,n.async,true,n.defaults);break;
+        case 'FunctionExpr':scope(n.body.body,n.name?{names:new Set([n.name]),parent:e}:e,
+          n.params,n.async,true,n.defaults);break;
         case 'Await':
           if(!asyncFunction)reject(n,'await outside async function');
           value(n.argument,e);break;
@@ -399,10 +404,11 @@ export function parseTraining(source) {
         case 'Construct':if(!has(n.callee,e))reject(n,'unbound constructor');
           n.args.forEach(x=>value(x,e));break;
         case 'DeferredRegExp':case 'OwnedPinnedRegExp':break;
-        case 'Array':n.elements.forEach(x=>value(x.type==='Spread'?x.argument:x,e));break;
-        case 'Object':n.properties.forEach(p=>value(p.value,e));break;
+        case 'Array':n.elements.forEach(x=>{if(x)value(x.type==='Spread'?x.argument:x,e);});break;
+        case 'Proxy':value(n.target,e);value(n.handler,e);break;
+        case 'Object':n.properties.forEach(p=>{if(p.computedKey)value(p.computedKey,e);value(p.value,e);});break;
         case 'Assign':value(n.left,e);value(n.right,e);break;
-        case 'Literal':break;
+        case 'Literal':case 'This':break;
         default:reject(n,'unhandled expression');
       }
     }
@@ -439,10 +445,12 @@ export function parseTraining(source) {
         case 'VariableGroup':n.declarations.forEach(x=>statement(x,e));break;
         case 'Function':scope(n.body.body,e,n.params,n.async,true,n.defaults);break;
         case 'Block':scope(n.body,e,[],asyncFunction);break;
-        case 'Switch':
+        case 'Switch':{
           value(n.discriminant,e);
-          for(const c of n.cases){if(c.test)value(c.test,e);statement(c.body,e);}
+          scope(n.cases.flatMap(c=>[...(c.test?[{type:'Expression',expr:c.test}]:[]),...c.body]),e,[],asyncFunction);
           break;
+        }
+        case 'Label':statement(n.body,e);break;
         case 'If':
           value(n.test,e);statement(n.consequent,e);
           if(n.alternate)statement(n.alternate,e);
@@ -502,6 +510,6 @@ export function parseTraining(source) {
     });
     statements.forEach(n=>statement(n,env));
   }
-  scope(body,{names:new Set(['undefined','Object','Array','Number','BigInt','String','Math','Promise','Set','Error','TypeError','Date','console','host','NaN','Infinity','parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval','SharedArrayBuffer','Int32Array','Atomics']),parent:null},[],false,true);
+  scope(body,{names:new Set(['undefined','Object','Array','Number','BigInt','String','Math','Promise','Set','Error','TypeError','Date','console','host','NaN','Infinity','parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval','SharedArrayBuffer','DataView',...ownedConstructors,'Atomics']),parent:null},[],false,true);
   return {type:'Program',body,start:0,end:source.length,profile:TRAINING_PROFILE};
 }

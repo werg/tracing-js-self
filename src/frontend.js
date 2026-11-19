@@ -15,7 +15,8 @@ export function collectVarBindings(statements) {
       case 'If':visit(n.consequent);visit(n.alternate);break;
       case 'For':visit(n.init);visit(n.body);break;
       case 'ForOf':if(n.kind==='var')names.add(n.id);visit(n.body);break;
-      case 'While':case 'DoWhile':visit(n.body);break;
+      case 'While':case 'DoWhile':case 'Label':visit(n.body);break;
+      case 'Switch':for(const c of n.cases)c.body.forEach(visit);break;
       case 'Try':visit(n.block);visit(n.handler?.body);visit(n.finalizer);break;
       // Descendant functions own their separate environment.
       case 'Function':case 'FunctionExpr':break;
@@ -105,11 +106,11 @@ export function parse(source) {
     if(x.value==='function'||(x.value==='async'&&peek().value==='function')){
       const async=x.value==='async';
       if(async)need('function');
-      if(peek().value!=='(')throw new SyntaxError('Named function expression not owned');
+      const localName=peek().value==='('?null:name();
       need('(');const params=[];
       if(!match(')')){do{params.push(name());}while(match(','));need(')');}
       const body=block();
-      return {type:'FunctionExpr',params,async,arrow:false,body,start:x.start,end:body.end};
+      return {type:'FunctionExpr',params,async,arrow:false,name:localName,body,start:x.start,end:body.end};
     }
     if (x.value === 'new') {
       const callee=take();
@@ -196,8 +197,7 @@ export function compile(ast) {
     const id=`code${++next}`, instructions=[];let loopDepth=0,forOfIndex=0;
     const emit=(op,arg,node)=>{const inst={op,arg,siteId:`s${++site}`,start:node?.start??0,end:node?.end??0};instructions.push(inst);return instructions.length-1;};
     // Declarations are created before execution for a block's scope.
-    function statements(nodes,scoped=false) {
-      if(scoped) emit('ENTER_SCOPE',null,nodes[0]);
+    function predeclare(nodes) {
       for(const n of nodes){
         const declarations=n.type==='VariableGroup'?n.declarations:
           n.type==='PatternBinding'?n.bindings.map(b=>({
@@ -210,6 +210,10 @@ export function compile(ast) {
         const fid=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites);
         emit('DEF_FN',{name:n.id,codeId:fid,params:n.params,async:n.async},n);
       }
+    }
+    function statements(nodes,scoped=false) {
+      if(scoped)emit('ENTER_SCOPE',null,nodes[0]);
+      predeclare(nodes);
       for(const n of nodes)if(n.type!=='Function')stmt(n);
       if(scoped)emit('LEAVE_SCOPE',null,nodes.at(-1));
     }
@@ -226,7 +230,7 @@ export function compile(ast) {
           emit('CONSTRUCT',n.args.length,n);break;
         case 'FunctionExpr':{
           const codeId=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites);
-          emit('MAKE_FUNCTION',{codeId,arrow:n.arrow,async:n.async},n);
+          emit('MAKE_FUNCTION',{codeId,arrow:n.arrow,async:n.async,...(n.name?{name:n.name}:{})},n);
           break;
         }
         case 'Template':
@@ -311,23 +315,49 @@ export function compile(ast) {
             n.args.length,n);break;
         case 'Proxy':expr(n.target);expr(n.handler);emit('NEW_PROXY',null,n);break;
         case 'Array':
-          emit('NEW_ARRAY',null,n);
-          if(n.elements.some(element=>element.type==='Spread')){
+          emit('NEW_ARRAY',n.elements.includes(null)&&!n.elements.some(element=>element?.type==='Spread')?
+            {length:n.elements.length}:null,n);
+          if(n.elements.some(element=>element?.type==='Spread')){
             // Commit each spread before evaluating the following element.
             // In particular, a later call may mutate the spread's source.
             for(const element of n.elements){
               emit('DUP',null,n);
-              expr(element.type==='Spread'?element.argument:element);
-              if(element.type==='Spread')emit('SPREAD',null,element);
-              emit('APPEND_ARRAY',{spread:element.type==='Spread'},n);
+              if(element===null)emit('CONST',{value:['undefined']},n);
+              else expr(element.type==='Spread'?element.argument:element);
+              if(element?.type==='Spread')emit('SPREAD',null,element);
+              emit('APPEND_ARRAY',{spread:element?.type==='Spread',...(element===null?{hole:true}:{})},n);
               emit('POP',null,n);
             }
           }else for(let i=0;i<n.elements.length;i++){
+            if(n.elements[i]===null)continue;
             emit('DUP',null,n);emit('CONST',{value:['str',String(i)]},n);
             expr(n.elements[i]);emit('PUT_PROP',null,n);emit('POP',null,n);
           }
           break;
-        case 'Object':emit('NEW_OBJECT',null,n);for(const item of n.properties){emit('DUP',null,n);emit('CONST',{value:['str',item.key]},n);expr(item.value);emit('PUT_PROP',null,n);emit('POP',null,n);}break;
+        case 'Object':{
+          const spreads=n.properties.some(item=>item.kind==='spread');
+          let saved=null;
+          if(spreads){
+            emit('ENTER_SCOPE',null,n);saved='[[object '+(++forOfIndex)+']]';
+            emit('DECLARE',{name:saved,kind:'const'},n);
+          }
+          emit('NEW_OBJECT',null,n);
+          if(spreads)emit('INIT',saved,n);
+          for(const item of n.properties){
+            if(item.kind==='spread'){
+              const source='[[spread '+(++forOfIndex)+']]';
+              emit('DECLARE',{name:source,kind:'const'},item);
+              expr(item.value);emit('INIT',source,item);copyOwn(saved,source,[],item);continue;
+            }
+            if(spreads)emit('GET',saved,n);else emit('DUP',null,n);
+            if(item.computedKey)expr(item.computedKey);
+            else emit('CONST',{value:['str',item.key]},n);
+            expr(item.value);emit('DEFINE_LITERAL_PROP',{kind:item.kind??'init'},item.start===undefined?n:item);
+            emit('POP',null,n);
+          }
+          if(spreads){emit('GET',saved,n);emit('LEAVE_SCOPE',null,n);}
+          break;
+        }
         case 'Assign':
           if(['&&=','||=','??='].includes(n.operator)){
             const operator=n.operator.slice(0,-1);
@@ -380,6 +410,28 @@ export function compile(ast) {
           }break;
         default:throw new SyntaxError(`Unsupported expression: ${n.type}`);
       }
+    }
+    // CopyDataProperties snapshots key identities, then rechecks each own
+    // descriptor before reading. Each getter is an ordinary owned GET_PROP
+    // continuation, so later throws never replay already completed reads.
+    function copyOwn(target,source,excluded,node,{required=false}={}){
+      const salt=++forOfIndex,keys='[[copy keys '+salt+']]',index='[[copy index '+salt+']]',key='[[copy key '+salt+']]';
+      for(const name of [keys,index,key])emit('DECLARE',{name,kind:'let'},node);
+      emit('GET',source,node);for(const name of excluded)emit('GET',name,node);
+      emit('COPY_KEYS',{exclude:excluded.length,required},node);emit('INIT',keys,node);
+      emit('CONST',{value:['num',0]},node);emit('INIT',index,node);
+      emit('CONST',{value:['undefined']},node);emit('INIT',key,node);
+      const top=instructions.length;
+      emit('GET',keys,node);emit('CONST',{value:['str','length']},node);emit('GET_PROP',null,node);
+      emit('GET',index,node);emit('BINARY','>',node);const done=emit('JUMP_IF_FALSE',null,node);
+      emit('GET',keys,node);emit('GET',index,node);emit('GET_PROP',null,node);emit('SET',key,node);emit('POP',null,node);
+      emit('GET',source,node);emit('GET',key,node);emit('HAS_ENUMERABLE_OWN',null,node);
+      const skip=emit('JUMP_IF_FALSE',null,node);
+      emit('GET',target,node);emit('GET',key,node);emit('GET',source,node);emit('GET',key,node);
+      emit('GET_PROP',null,node);emit('DEFINE_LITERAL_PROP',{kind:'init'},node);emit('POP',null,node);
+      instructions[skip].arg=instructions.length;
+      emit('UPDATE_BINDING',{name:index,operator:'++',prefix:true},node);emit('POP',null,node);
+      emit('JUMP',top,node);instructions[done].arg=instructions.length;
     }
     function stmt(n){
       switch(n.type){
@@ -468,22 +520,45 @@ export function compile(ast) {
         case 'Return':if(n.argument)expr(n.argument);else emit('CONST',{value:['undefined']},n);emit('RETURN',null,n);break;
         case 'Throw':expr(n.argument);emit('THROW',null,n);break;
         case 'Block':statements(n.body,true);break;
+        case 'Label':{
+          const labels=[...(n.labels??[]),n.label];
+          if(['For','ForOf','While','DoWhile','Switch','Label'].includes(n.body.type)){
+            stmt({...n.body,labels});break;
+          }
+          const entry=emit('LOOP_ENTER',null,n);
+          loopDepth++;stmt(n.body);loopDepth--;
+          const end=instructions.length;emit('LOOP_EXIT',null,n);
+          instructions[entry].arg={breakPc:end,continuePc:null,labels};
+          break;
+        }
         case 'Switch':{
-          // Each declared arm returns: discriminant once and no fallthrough.
-          expr(n.discriminant);
-          const fallback=n.cases.find(c=>!c.test);
+          // Evaluate the discriminant outside the CaseBlock lexical scope.
+          // All cases share one scope; tests stop at the first match while
+          // bodies then fall through without evaluating later case tests.
+          expr(n.discriminant);emit('ENTER_SCOPE',null,n);
+          const saved='[[switch '+(++forOfIndex)+']]';
+          emit('DECLARE',{name:saved,kind:'const'},n);emit('INIT',saved,n);
+          predeclare(n.cases.flatMap(c=>c.body));
+          const entry=emit('LOOP_ENTER',null,n),jumps=new Map();
           for(const c of n.cases){
             if(!c.test)continue;
-            emit('DUP',null,c.test);
-            expr(c.test);
-            emit('BINARY','===',n);
-            const next=emit('JUMP_IF_FALSE',null,n);
-            emit('POP',null,c.test);
-            stmt(c.body);
-            instructions[next].arg=instructions.length;
+            emit('GET',saved,n);expr(c.test);emit('BINARY','===',n);
+            const skip=emit('JUMP_IF_FALSE',null,n);
+            jumps.set(c,emit('JUMP',null,n));
+            instructions[skip].arg=instructions.length;
           }
-          emit('POP',null,n);
-          if(fallback)stmt(fallback.body);
+          const noMatch=emit('JUMP',null,n);
+          loopDepth++;
+          for(const c of n.cases){
+            if(c.test)instructions[jumps.get(c)].arg=instructions.length;
+            else instructions[noMatch].arg=instructions.length;
+            for(const node of c.body)if(node.type!=='Function')stmt(node);
+          }
+          loopDepth--;
+          const end=instructions.length;emit('LOOP_EXIT',null,n);
+          instructions[entry].arg={breakPc:end,continuePc:null,labels:n.labels??[]};
+          if(instructions[noMatch].arg===null)instructions[noMatch].arg=end;
+          emit('LEAVE_SCOPE',null,n);
           break;
         }
         case 'If':{expr(n.test);const no=emit('JUMP_IF_FALSE',null,n.test);stmt(n.consequent);if(n.alternate){const end=emit('JUMP',null,n);instructions[no].arg=instructions.length;stmt(n.alternate);instructions[end].arg=instructions.length;}else instructions[no].arg=instructions.length;break;}
@@ -493,7 +568,7 @@ export function compile(ast) {
           loopDepth++;stmt(n.body);loopDepth--;
           emit('JUMP',top,n);
           const end=instructions.length;emit('LOOP_EXIT',null,n);
-          instructions[entry].arg={breakPc:end,continuePc:top};
+          instructions[entry].arg={breakPc:end,continuePc:top,labels:n.labels??[]};
           instructions[no].arg=end;break;
         }
         case 'DoWhile':{
@@ -505,7 +580,7 @@ export function compile(ast) {
           emit('JUMP',top,n);
           const end=instructions.length;
           emit('LOOP_EXIT',null,n);
-          instructions[entry].arg={breakPc:end,continuePc:testPc};
+          instructions[entry].arg={breakPc:end,continuePc:testPc,labels:n.labels??[]};
           instructions[no].arg=end;
           break;
         }
@@ -592,7 +667,7 @@ export function compile(ast) {
           emit('JUMP',top,n);
           const end=instructions.length;
           emit('LOOP_EXIT',null,n);
-          instructions[entry].arg={breakPc:end,continuePc:updatePc};
+          instructions[entry].arg={breakPc:end,continuePc:updatePc,labels:n.labels??[]};
           instructions[no].arg=end;
           emit('LEAVE_SCOPE',null,n);
           break;
@@ -623,14 +698,14 @@ export function compile(ast) {
           emit('JUMP',top,n);
           const end=instructions.length;
           emit('LOOP_EXIT',null,n);
-          instructions[entry].arg={breakPc:end,continuePc:updatePc};
+          instructions[entry].arg={breakPc:end,continuePc:updatePc,labels:n.labels??[]};
           if(no!==null)instructions[no].arg=end;
           if(lexical)emit('LEAVE_SCOPE',null,n);
           break;
         }
         case 'Break':case 'Continue':
           if(!loopDepth)throw new SyntaxError(n.type.toLowerCase()+' outside loop');
-          emit('LOOP_JUMP',n.type.toLowerCase(),n);break;
+          emit('LOOP_JUMP',n.label?{kind:n.type.toLowerCase(),label:n.label}:n.type.toLowerCase(),n);break;
         case 'Try':{
           const entry=emit('TRY_ENTER',null,n);
           stmt(n.block);emit('TRY_NORMAL',null,n.block);

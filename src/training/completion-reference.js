@@ -207,7 +207,8 @@ export function ownedCompletionObservations(bundle,source){
       const node=plan.sites.get('catch:'+key);
       emit(key,'catch',node.param?storedCell(state.frames[event.invocationId]?.envId,node.param.name):['undefined']);
     }
-    if(event.operation==='completion.loop.jump'&&plan.sites.has(instruction?.arg+':'+key))emit(key,instruction.arg);
+    const jumpKind=typeof instruction?.arg==='string'?instruction.arg:instruction?.arg?.kind;
+    if(event.operation==='completion.loop.jump'&&plan.sites.has(jumpKind+':'+key))emit(key,jumpKind);
     for(const change of event.stateChanges.filter(p=>p.table==='frames'&&p.before&&p.after)){
       const waiting=pending.get(change.id);
       if(waiting&&change.before.pc===waiting.pc){

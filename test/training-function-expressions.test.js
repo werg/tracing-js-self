@@ -25,9 +25,9 @@ test('per-iteration arrow captures retain distinct loop binding identities',()=>
 test('arrow property-call ignores method receiver and still closes over bound variables',()=>{
   verified('function f(n){const receiver={x:90,call:(m)=>m+n};return receiver.call(4);}',[5]);
 });
-test('named expressions still fail closed; rest arrows remain owned',()=>{
+test('named expressions own a local self binding; rest arrows remain owned',()=>{
   const body='function f(){const a=function self(x){return x;};return a(2);}';
-  assert.equal(verifyOwnedSourceCase({source:strict(body),entry:'f'}).status,'unsupported');
+  verified(body);
   verified('function f(){const a=(...x)=>x[0];return a(3);}');
 });
 test('natlang TS annotations on synchronous arrows lower to guest frames',()=>{
@@ -38,4 +38,17 @@ test('natlang TS annotations on synchronous arrows lower to guest frames',()=>{
     body:true,scope:{k:7},path:'natlang://arrow.ts'});
   assert.equal(result.result,10);
   assert.equal(archives.length,1);
+});
+
+// Strict receiver and lexical-this paths use the same frame machinery.
+test('strict methods preserve receivers while arrows retain lexical this',()=>{
+  verified('function f(){const obj={x:9,read:function(){const a=()=>this.x;return a();}};return obj.read();}');
+  verified('function f(){const obj={x:7,read:function(){return this===undefined;}};const read=obj.read;return [obj.read(),read()];}');
+  verified('function f(){return this===undefined;}');
+});
+test('named expressions recurse independently of aliases and do not leak',()=>{
+  verified('function f(){let recur=function fact(n){return n<2?1:n*fact(n-1);};const saved=recur;recur=0;return [saved(5),typeof fact];}');
+  verified('function f(){const fn=function own(own){return own;};return fn(7);}');
+  verified('function f(){const fn=function own(){let own=4;return own;};return fn();}');
+  verified('function f(){const fn=function own(){own=0;};try{fn();}catch(e){return e.name;}}');
 });
