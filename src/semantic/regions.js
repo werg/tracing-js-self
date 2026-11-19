@@ -7,6 +7,7 @@ import {evaluateWitnessExpression} from '../training/witness-check.js';
 import {encodeWitness} from '../training/format.js';
 import {hashAlgorithmData} from './program.js';
 import {assertAlgorithmFields,assertAlgorithmValue,stableAlgorithmJSON} from './ir.js';
+import {tryLowerJavaScriptV8} from './lower-v8.js';
 
 export const REGION_PROGRAM_VERSION='semantic-region-program/1';
 export const REGION_EXECUTION_VERSION='semantic-execution/8';
@@ -151,13 +152,14 @@ export function defineRegionProgram({source,entry}={}){
     flush();
   }
   if(regions.length>REGION_LIMITS.regions)refuse('region count bound');
+  const lowered=tryLowerJavaScriptV8({source,entry});
   const body={schema:REGION_PROGRAM_VERSION,traceFormat:REGION_TRACE_VERSION,profile:REGION_PROFILE,
-    source,entry,sourceDigest:hashAlgorithmData(source),regions};
+    source,entry,sourceDigest:hashAlgorithmData(source),regions,algorithm:lowered.status==='lowered'?lowered.core:null};
   return {program:freeze({...body,definitionDigest:hashAlgorithmData(body)}),
     provenance:{schema:'semantic-region-provenance/1',locations}};
 }
 export function validateRegionProgram(program){
-  assertAlgorithmFields(program,['schema','traceFormat','profile','source','entry','sourceDigest','regions','definitionDigest'],'region program');
+  assertAlgorithmFields(program,['schema','traceFormat','profile','source','entry','sourceDigest','regions','algorithm','definitionDigest'],'region program');
   const expected=defineRegionProgram(program).program;
   if(!isDeepStrictEqual(program,expected))throw new TypeError('Region source or immutable definition changed');
   return true;

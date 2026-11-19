@@ -8,6 +8,8 @@ import {encodeDetailedRecord} from './detailed-v7.js';
 import {RegionExecutionHarness} from './region-harness.js';
 import {defineRegionProgram,sharedRegionState,evaluateLocalRegion,REGION_TRACE_VERSION} from './regions.js';
 import {hashAlgorithmData} from './program.js';
+import {evaluatePureRegion} from './pure-region-v8.js';
+import {compareObservableGraphs} from './observables.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual;
 const clean=value=>JSON.parse(JSON.stringify(value));
@@ -32,11 +34,44 @@ function sourceLocations(sourceArtifact){
   };
 }
 function sameState(left,right){return eq(sharedRegionState(left),sharedRegionState(right));}
+function evidence(sourceArtifact,harness,contexts,receipts,refusals,regionCoverage){
+  const publicData=harness.exportEpisode(),sourceFamily=sourceArtifact.sidecar.sourceFamily;
+  return {public:publicData,contexts,sidecar:{schema:'semantic-region-evidence/1',
+    admission:'locally_verified',referenceStatus:'agreed',representation:REGION_TRACE_VERSION,
+    profile:'compositional-regions/1',sourceFamily,family:sourceFamily,
+    sourceArtifact:copy(sourceArtifact),sourceArtifactDigest:digest(sourceArtifact),
+    publicDigest:digest(publicData),contextDigest:digest(contexts),receipts,refusals,
+    regionCoverage:{...regionCoverage,detailTokenShare:null,tokenMeasurement:'untested'},
+    nativeAdmission:null,optimizerSteps:0,learningClaim:null}};
+}
+function projectWholePureWitness(sourceArtifact){
+  const rows=sourceArtifact.public.timeline,programs=rows.filter(row=>row.kind==='program'),invocations=rows.filter(row=>row.kind==='invocation');
+  if(programs.length!==1||invocations.length!==1||rows.some(row=>['request','dispatch','result','event'].includes(row.kind)))return null;
+  const harness=new RegionExecutionHarness({sessionId:rows[0].session,automaticDelivery:false,now:()=>-Infinity,maxGenerated:16384});
+  harness.importObserved(observedRow(programs[0]));harness.importObserved(observedRow(invocations[0]));
+  const invocationId=invocations[0].invocationId,program=harness.program(invocationId),controller=harness.activation(invocationId).controller;
+  if(!program.algorithm)return null;
+  let evaluated,candidate;try{evaluated=evaluatePureRegion(program,controller);candidate=harness.previewAlgorithm(invocationId);}catch{return null;}
+  const expected=sourceArtifact.sidecar.reference.outcome;
+  const inputIds=graph=>[...new Set(graph.roots.slice(0,controller.input.graph.roots.length).filter(value=>value[0]==='ref').map(value=>value[1]))];
+  const comparison=compareObservableGraphs(evaluated.graph,expected.graph,{leftInputIds:inputIds(evaluated.graph),rightInputIds:inputIds(expected.graph)});
+  if(expected.kind!==evaluated.record.completion.kind||!comparison.equal)return null;
+  const contexts=[harness.modelContext(invocationId)];harness.select(invocationId,candidate);
+  const algorithm=harness.timeline.at(-1);contexts.push(harness.modelContext(invocationId));
+  harness.select(invocationId,{kind:'end',fields:{kind:evaluated.record.completion.kind}});
+  RegionExecutionHarness.restore(harness.checkpoint());
+  return evidence(sourceArtifact,harness,contexts,[{sequence:algorithm.sequence,rule:'source-pure-algorithm/2',
+    coreDigest:hashAlgorithmData(program.algorithm),entry:candidate.entry,identityMap:evaluated.identityMap,
+    sourceSequences:rows.filter(row=>row.mode==='generated').map(row=>row.sequence)}],[],
+    {compactRegions:1,detailedRegions:1,compactRecords:1,detailedRecords:1,
+      compactBytes:Buffer.byteLength(algorithm.fields.line),detailedBytes:Buffer.byteLength(harness.timeline.at(-1).fields.line)});
+}
 
 export function projectRegionWitness(sourceArtifact){
   if(!sourceArtifact?.sidecar?.archive||!sourceArtifact?.public?.timeline)fail('owned source evidence missing');
   if(sourceArtifact.sidecar.referenceStatus!=='agreed'||!['locally_verified','admitted'].includes(sourceArtifact.sidecar.admission))
     fail('independently checked source evidence is required');
+  const pure=projectWholePureWitness(sourceArtifact);if(pure)return pure;
   const rows=sourceArtifact.public.timeline,harness=new RegionExecutionHarness({
     sessionId:rows[0].session,automaticDelivery:false,now:()=>-Infinity,maxGenerated:16384});
   const locate=sourceLocations(sourceArtifact),locations=new Map(),contexts=[],receipts=[],refusals=[];
@@ -104,15 +139,8 @@ export function projectRegionWitness(sourceArtifact){
   for(const row of publicData.timeline.filter(item=>item.mode==='generated')){
     const kind=row.kind==='region'?'compact':'detailed';if(kind==='detailed'&&prior!=='detailed')detailedRegions++;prior=kind;
   }
-  const sourceFamily=sourceArtifact.sidecar.sourceFamily;
-  return {public:publicData,contexts,sidecar:{schema:'semantic-region-evidence/1',
-    admission:'locally_verified',referenceStatus:'agreed',representation:REGION_TRACE_VERSION,
-    profile:'compositional-regions/1',sourceFamily,family:sourceFamily,
-    sourceArtifact:copy(sourceArtifact),sourceArtifactDigest:digest(sourceArtifact),
-    publicDigest:digest(publicData),contextDigest:digest(contexts),receipts,refusals,
-    regionCoverage:{compactRegions:compactRecords,detailedRegions,compactRecords,detailedRecords,
-      compactBytes,detailedBytes,detailTokenShare:null,tokenMeasurement:'untested'},
-    nativeAdmission:null,optimizerSteps:0,learningClaim:null}};
+  return evidence(sourceArtifact,harness,contexts,receipts,refusals,
+    {compactRegions:compactRecords,detailedRegions,compactRecords,detailedRecords,compactBytes,detailedBytes});
 }
 
 export async function verifyRegionTrainingCase(fixture){
@@ -123,7 +151,8 @@ export async function verifyRegionTrainingCase(fixture){
     const exported=projectRegionWitness(source.exported),count=exported.sidecar.regionCoverage.compactRegions;
     return {status:count?'locally_verified':'detailed-fallback',representation:'mixed',profile:'compositional-regions/1',
       exported,detailed:source.exported,regionCoverage:exported.sidecar.regionCoverage};
-  }catch(error){return {status:'unsupported',category:error.category??'unsupported.region-projection',reason:error.message};}
+  }catch(error){return {status:'unsupported',phase:'projection',sourceStatus:source.status,
+    category:error.category??'unsupported.region-projection',reason:error.message};}
 }
 
 export async function recheckRegionEvidence(exported,{nativeConsumer=null,requireNative=false}={}){

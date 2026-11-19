@@ -41,6 +41,17 @@ uses the existing strict typed `detail {"fields":...,"kind":...}` spelling and
 witness semantics. There is no parser that accepts an old episode under a new
 version label. Inputs and external deliveries remain observed data.
 
+An entire source-certified pure `semantic-algorithm/2` core can also be one
+region. Its `algorithm ` target contains independently evaluated claims,
+retained fresh allocations, and completion. The definition contains the actual
+ordered folds, callback bodies, projections, lazy selections and dependencies.
+The region only enters an untouched invocation. Existing input identities stay
+anchored; each new core identity maps once, in allocation order, to the first
+unused `oN` selected identity. Integer property keys follow ECMAScript own-key
+ordering. Allocation and return commit through the same detailed heap and
+completion operations, and alias mappings stay in private correspondence
+evidence. This permits array/object results without flattening references.
+
 V8 envelopes have exactly `sequence`, `mode`, `kind`, and `fields`. A compact
 envelope carries its trusted `entry` beside `line`; consumers supervise only
 the line. Definitions, all committed live values and alias-preserving state,

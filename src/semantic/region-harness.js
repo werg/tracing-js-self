@@ -11,6 +11,7 @@ import {stableAlgorithmJSON,assertAlgorithmFields} from './ir.js';
 import {defineRegionProgram,validateRegionProgram,sharedRegionState,regionEntry,evaluateLocalRegion,
   encodeRegionRecord,decodeRegionRecord,REGION_EXECUTION_VERSION,REGION_TRACE_VERSION,
   REGION_CONTEXT_VERSION,REGION_CONTINUATION_VERSION,REGION_PROFILE} from './regions.js';
+import {pureRegionEntry,evaluatePureRegion,encodePureRegionRecord,decodePureRegionRecord} from './pure-region-v8.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual;
 const clean=value=>JSON.parse(JSON.stringify(value));
@@ -60,18 +61,23 @@ export class RegionExecutionHarness {
     const {records,...result}=evaluateLocalRegion(this.region(invocationId,id),controller);
     return {region:id,entry,...result};
   }
+  previewAlgorithm(invocationId){
+    this.sync();const controller=this.activation(invocationId).controller,program=this.program(invocationId);
+    return {entry:pureRegionEntry(program,controller,this.timeline.length),...evaluatePureRegion(program,controller).record};
+  }
   select(invocationId,selected,{entry:providedEntry=null}={}){
     this.sync();
     if(typeof selected!=='string'&&Object.hasOwn(selected,'entry')){
       const {entry,...record}=selected;providedEntry=entry;selected=record;
     }
-    const line=typeof selected==='string'?selected:
+    const line=typeof selected==='string'?selected:Object.hasOwn(selected,'claims')?encodePureRegionRecord(selected):
       Object.hasOwn(selected,'region')?encodeRegionRecord(selected):encodeDetailedRecord(selected,{role:'generated'});
     if(line.startsWith('detail ')){
       const record=decodeDetailedRecord(line,{role:'generated'});
       const result=this.inner.selected(invocationId,encodeWitness(record.kind,record.fields));
       this.sync();return result;
     }
+    if(line.startsWith('algorithm '))return this.selectAlgorithm(invocationId,line,providedEntry);
     const record=decodeRegionRecord(line),activation=this.activation(invocationId),controller=activation.controller;
     const region=this.region(invocationId,record.region),entry=this.entry(invocationId,record.region);
     if(!eq(providedEntry,entry))fail('stale region entry, live state, identity, or causal cutoff');
@@ -98,6 +104,20 @@ export class RegionExecutionHarness {
     return {status:'committed',region:region.id,completion:copy(controller.completion),
       state:sharedRegionState(controller)};
   }
+  selectAlgorithm(invocationId,line,providedEntry){
+    const record=decodePureRegionRecord(line),activation=this.activation(invocationId),controller=activation.controller;
+    const program=this.program(invocationId),entry=pureRegionEntry(program,controller,this.timeline.length);
+    if(!eq(entry,providedEntry))fail('stale pure region entry');
+    const evaluated=evaluatePureRegion(program,controller);
+    if(!eq(record,evaluated.record))fail('false algorithm value, allocation identity or completion');
+    const staged=SemanticController.fromPacket(controller.segmentPacket());
+    for(const witness of evaluated.records)staged.commit(witness,{mode:'generated',track:activation.trackId});
+    for(const witness of evaluated.records)this.inner.selected(invocationId,witness);
+    this.innerCursor=this.inner.timeline.length;
+    this.consumed.push({invocationId,frame:controller.rootInvocation,region:'whole'});
+    this.append('generated','algorithm',{session:this.inner.sessionId,track:activation.trackId,invocationId,entry:copy(entry),line});
+    return {status:'committed',region:'whole',state:sharedRegionState(controller)};
+  }
   modelContext(invocationId){
     this.sync();const activation=this.activation(invocationId),controller=activation.controller;
     const state=sharedRegionState(controller);
@@ -113,7 +133,7 @@ export class RegionExecutionHarness {
     contextFormat:REGION_CONTEXT_VERSION,representation:'mixed',profile:REGION_PROFILE,timeline:copy(this.timeline)};}
   /** Import an observed receipt only. No model record can create observations. */
   importObserved(row){
-    if(row?.mode!=='observed'||['semantic','region'].includes(row.kind))fail('host receipt authority');
+    if(row?.mode!=='observed'||['semantic','region','algorithm'].includes(row.kind))fail('host receipt authority');
     this.sync();const fields=copy(row.fields),kind=row.kind;
     if(kind==='program'){
       validateRegionProgram(fields.regionProgram);
@@ -156,7 +176,7 @@ export class RegionExecutionHarness {
     for(const row of publicData.timeline){
       assertAlgorithmFields(row,['sequence','mode','kind','fields'],'region timeline row');
       if(row.sequence!==harness.timeline.length+1)fail('noncontiguous public cutoff');
-      if(row.mode==='generated'&&['semantic','region'].includes(row.kind))harness.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
+      if(row.mode==='generated'&&['semantic','region','algorithm'].includes(row.kind))harness.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
       else if(row.mode==='observed')harness.importObserved(row);else fail('invalid public role or record');
       if(!eq(harness.timeline.at(-1),row))fail('public record differs from checked replay');
     }
