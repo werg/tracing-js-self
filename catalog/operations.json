@@ -308,6 +308,11 @@
       "operationId": "continuation.yield",
       "version": 1,
       "kind": "algorithm"
+    },
+    {
+      "operationId": "intrinsic.number.resume",
+      "version": 1,
+      "kind": "algorithm"
     }
   ]
 }

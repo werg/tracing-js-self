@@ -50,6 +50,27 @@ Source projection, owned continuation integration and independent native
 consumer admission are separate gates; component tests alone do not establish
 those qualifications.
 
+## Owned runtime continuation
+
+The owned runtime stores an explicit `pendingNumberConversion` on the calling
+frame while a guest conversion callback runs. Its exact fields are `operation`,
+`input`, `siteId`, `index`, `method`, `phase`, `waitingFrameId`, and `result`.
+Committed phases are `waiting` and `returned`. A callback return retains the
+actual returned value without pushing it as the result of Number. A subsequent
+`intrinsic.number.resume` event converts that primitive or selects the live
+ordinary fallback method. Archive validation checks the selected function,
+receiver, child frame, return value and allowed transitions independently of the
+mutation helper. JSON restoration resumes either phase without repeating guest
+effects.
+
+Owned conversion currently accepts ordinary objects and bounded arrays, data
+conversion methods, synchronous owned callbacks, supported ordinary intrinsic
+fallbacks and primitive results. It distinguishes actual guest TypeErrors and
+callback throws from an unsupported accessor, exotic or asynchronous callback
+profile. Existing projection formats explicitly refuse the added continuation
+state; an identical final scalar does not establish those formats can preserve
+the operation.
+
 Pinned algorithms: [ECMAScript 2026 Number](https://tc39.es/ecma262/2026/multipage/numbers-and-dates.html#sec-number-constructor-number-value),
 [ToNumeric](https://tc39.es/ecma262/2026/multipage/abstract-operations.html#sec-tonumeric),
 and [ToPrimitive](https://tc39.es/ecma262/2026/multipage/abstract-operations.html#sec-toprimitive).
