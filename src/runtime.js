@@ -2129,9 +2129,11 @@ if(obj.kind==='set'){
           if(object.kind==='iterator'&&property===symbolPropertyKey('well-known:toStringTag')&&
              !Object.hasOwn(object.properties,property))
             guestFault('TypeError','Cannot assign inherited readonly iterator property');
-          if(object.kind==='function'){
-            if(['arguments','caller'].includes(property)||['name','length'].includes(property)&&!Object.hasOwn(object.properties??{},property))throw new TypeError('Function descriptor assignment outside profile');
-            this.functionProperties(s,object,eventId);
+          if(object.kind==='function'||object.kind==='generator'){
+            if(object.kind==='function'){
+              if(['arguments','caller'].includes(property)||['name','length'].includes(property)&&!Object.hasOwn(object.properties??{},property))throw new TypeError('Function descriptor assignment outside profile');
+              this.functionProperties(s,object,eventId);
+            }
             const found=functionProperty(s.heap,object,property);
             if(found.attributes?.writable===false)guestFault('TypeError','Cannot assign inherited readonly function property');
             const accessor=found.accessor;
@@ -2143,7 +2145,7 @@ if(obj.kind==='set'){
               f.pendingProperty={kind:'set',value:v.value,waitingFrameId:id};s.control.a0.activeFrameId=id;
               return {...operands(base,key,v),causes:[{kind:'invocation',frameId:id}]};
             }
-            if(property==='prototype')object.prototypeInitialized=true;
+            if(object.kind==='function'&&property==='prototype')object.prototypeInitialized=true;
             putOwn(object,property,v.value,eventId);return {...operands(base,key,v),...result(v.value)};
           }
           if(isOwnedTypedView(object)){

@@ -31,6 +31,12 @@ test('generator own properties and method overrides precede inherited protocol m
   runtimeDifferential('function* g(){yield 1;}const it=g();it.return=undefined;it[Symbol.iterator]=function(){return this;};return [it.return,it[Symbol.iterator]()===it,it.next()];');
 });
 
+test('generator writes honor inherited setters and readonly protocol descriptors',()=>{
+  runtimeDifferential('function* g(){}let seen=0;Object.defineProperty(g.prototype,"x",{set:function(v){seen=this===it?v:0;},get:function(){return seen;}});const it=g();it.x=7;return [it.x,seen,Object.hasOwn(it,"x")];');
+  runtimeDifferential('function* g(){}Object.defineProperty(g.prototype,"x",{get:function(){return 7;}});const it=g();let error;try{it.x=9;}catch(e){error=e.name;}return [it.x,error,Object.hasOwn(it,"x")];');
+  runtimeDifferential('function* g(){yield 1;}const it=g(),errors=[];try{it[Symbol.toStringTag]="changed";}catch(e){errors.push(e.name);}try{it.constructor=7;}catch(e){errors.push(e.name);}return [errors,it[Symbol.toStringTag],Object.hasOwn(it,"constructor"),it.next()];');
+});
+
 test('generator archive validation checks definition descriptors and callee prototype linkage',()=>{
   const {bundle,runtime}=runtimeDifferential('function* g(x){yield x;}const it=g(3);return [it.next(),it.next()];');
   const definition=bundle.events.find(event=>event.stateChanges.some(p=>p.after?.generatorFunction));
