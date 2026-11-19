@@ -284,16 +284,12 @@ export function parseTraining(source) {
           finalizer:n.finalizer?stmt(n.finalizer):null};
       }
       case 'SwitchStatement':{
-        if(!n.cases.length||n.cases.length>12||
-           n.cases.some((c,i)=>c.consequent.length!==1||
-             c.consequent[0].type!=='ReturnStatement'||
-             (c.test&&!(c.test.type==='Literal'&&typeof c.test.value==='string'))||
-             (!c.test&&i!==n.cases.length-1)))
-          reject(n,'switch fallthrough or complex case');
+        if(n.cases.length>128)reject(n,'switch case budget');
         return {...loc,type:'Switch',discriminant:expr(n.discriminant),
-          cases:n.cases.map(c=>({test:c.test?expr(c.test):null,
-            body:stmt(c.consequent[0])}))};
+          cases:n.cases.map(c=>({...span(c),test:c.test?expr(c.test):null,
+            body:c.consequent.map(stmt)}))};
       }
+      case 'LabeledStatement':return {...loc,type:'Label',label:n.label.name,body:stmt(n.body)};
       case 'IfStatement':return {...loc,type:'If',test:expr(n.test),
         consequent:stmt(n.consequent),alternate:n.alternate?stmt(n.alternate):null};
       case 'WhileStatement':return {...loc,type:'While',test:expr(n.test),body:stmt(n.body)};
@@ -340,8 +336,7 @@ export function parseTraining(source) {
           update:n.update?expr(n.update):null,body};
       }
       case 'BreakStatement':case 'ContinueStatement':
-        if(n.label)reject(n,'labelled loop exit');
-        return {...loc,type:n.type==='BreakStatement'?'Break':'Continue'};
+        return {...loc,type:n.type==='BreakStatement'?'Break':'Continue',label:n.label?.name??null};
       case 'ExpressionStatement':return {...loc,type:'Expression',expr:expr(n.expression)};
       case 'EmptyStatement':return {...loc,type:'Empty'};
       default:reject(n,n.type);
@@ -447,10 +442,12 @@ export function parseTraining(source) {
         case 'VariableGroup':n.declarations.forEach(x=>statement(x,e));break;
         case 'Function':scope(n.body.body,e,n.params,n.async,true,n.defaults);break;
         case 'Block':scope(n.body,e,[],asyncFunction);break;
-        case 'Switch':
+        case 'Switch':{
           value(n.discriminant,e);
-          for(const c of n.cases){if(c.test)value(c.test,e);statement(c.body,e);}
+          scope(n.cases.flatMap(c=>[...(c.test?[{type:'Expression',expr:c.test}]:[]),...c.body]),e,[],asyncFunction);
           break;
+        }
+        case 'Label':statement(n.body,e);break;
         case 'If':
           value(n.test,e);statement(n.consequent,e);
           if(n.alternate)statement(n.alternate,e);

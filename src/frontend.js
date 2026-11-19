@@ -15,7 +15,8 @@ export function collectVarBindings(statements) {
       case 'If':visit(n.consequent);visit(n.alternate);break;
       case 'For':visit(n.init);visit(n.body);break;
       case 'ForOf':if(n.kind==='var')names.add(n.id);visit(n.body);break;
-      case 'While':case 'DoWhile':visit(n.body);break;
+      case 'While':case 'DoWhile':case 'Label':visit(n.body);break;
+      case 'Switch':for(const c of n.cases)c.body.forEach(visit);break;
       case 'Try':visit(n.block);visit(n.handler?.body);visit(n.finalizer);break;
       // Descendant functions own their separate environment.
       case 'Function':case 'FunctionExpr':break;
@@ -196,8 +197,7 @@ export function compile(ast) {
     const id=`code${++next}`, instructions=[];let loopDepth=0,forOfIndex=0;
     const emit=(op,arg,node)=>{const inst={op,arg,siteId:`s${++site}`,start:node?.start??0,end:node?.end??0};instructions.push(inst);return instructions.length-1;};
     // Declarations are created before execution for a block's scope.
-    function statements(nodes,scoped=false) {
-      if(scoped) emit('ENTER_SCOPE',null,nodes[0]);
+    function predeclare(nodes) {
       for(const n of nodes){
         const declarations=n.type==='VariableGroup'?n.declarations:
           n.type==='PatternBinding'?n.bindings.map(b=>({
@@ -210,6 +210,10 @@ export function compile(ast) {
         const fid=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites);
         emit('DEF_FN',{name:n.id,codeId:fid,params:n.params,async:n.async},n);
       }
+    }
+    function statements(nodes,scoped=false) {
+      if(scoped)emit('ENTER_SCOPE',null,nodes[0]);
+      predeclare(nodes);
       for(const n of nodes)if(n.type!=='Function')stmt(n);
       if(scoped)emit('LEAVE_SCOPE',null,nodes.at(-1));
     }
@@ -471,22 +475,45 @@ export function compile(ast) {
         case 'Return':if(n.argument)expr(n.argument);else emit('CONST',{value:['undefined']},n);emit('RETURN',null,n);break;
         case 'Throw':expr(n.argument);emit('THROW',null,n);break;
         case 'Block':statements(n.body,true);break;
+        case 'Label':{
+          const labels=[...(n.labels??[]),n.label];
+          if(['For','ForOf','While','DoWhile','Switch','Label'].includes(n.body.type)){
+            stmt({...n.body,labels});break;
+          }
+          const entry=emit('LOOP_ENTER',null,n);
+          loopDepth++;stmt(n.body);loopDepth--;
+          const end=instructions.length;emit('LOOP_EXIT',null,n);
+          instructions[entry].arg={breakPc:end,continuePc:null,labels};
+          break;
+        }
         case 'Switch':{
-          // Each declared arm returns: discriminant once and no fallthrough.
-          expr(n.discriminant);
-          const fallback=n.cases.find(c=>!c.test);
+          // Evaluate the discriminant outside the CaseBlock lexical scope.
+          // All cases share one scope; tests stop at the first match while
+          // bodies then fall through without evaluating later case tests.
+          expr(n.discriminant);emit('ENTER_SCOPE',null,n);
+          const saved='[[switch '+(++forOfIndex)+']]';
+          emit('DECLARE',{name:saved,kind:'const'},n);emit('INIT',saved,n);
+          predeclare(n.cases.flatMap(c=>c.body));
+          const entry=emit('LOOP_ENTER',null,n),jumps=new Map();
           for(const c of n.cases){
             if(!c.test)continue;
-            emit('DUP',null,c.test);
-            expr(c.test);
-            emit('BINARY','===',n);
-            const next=emit('JUMP_IF_FALSE',null,n);
-            emit('POP',null,c.test);
-            stmt(c.body);
-            instructions[next].arg=instructions.length;
+            emit('GET',saved,n);expr(c.test);emit('BINARY','===',n);
+            const skip=emit('JUMP_IF_FALSE',null,n);
+            jumps.set(c,emit('JUMP',null,n));
+            instructions[skip].arg=instructions.length;
           }
-          emit('POP',null,n);
-          if(fallback)stmt(fallback.body);
+          const noMatch=emit('JUMP',null,n);
+          loopDepth++;
+          for(const c of n.cases){
+            if(c.test)instructions[jumps.get(c)].arg=instructions.length;
+            else instructions[noMatch].arg=instructions.length;
+            for(const node of c.body)if(node.type!=='Function')stmt(node);
+          }
+          loopDepth--;
+          const end=instructions.length;emit('LOOP_EXIT',null,n);
+          instructions[entry].arg={breakPc:end,continuePc:null,labels:n.labels??[]};
+          if(instructions[noMatch].arg===null)instructions[noMatch].arg=end;
+          emit('LEAVE_SCOPE',null,n);
           break;
         }
         case 'If':{expr(n.test);const no=emit('JUMP_IF_FALSE',null,n.test);stmt(n.consequent);if(n.alternate){const end=emit('JUMP',null,n);instructions[no].arg=instructions.length;stmt(n.alternate);instructions[end].arg=instructions.length;}else instructions[no].arg=instructions.length;break;}
@@ -496,7 +523,7 @@ export function compile(ast) {
           loopDepth++;stmt(n.body);loopDepth--;
           emit('JUMP',top,n);
           const end=instructions.length;emit('LOOP_EXIT',null,n);
-          instructions[entry].arg={breakPc:end,continuePc:top};
+          instructions[entry].arg={breakPc:end,continuePc:top,labels:n.labels??[]};
           instructions[no].arg=end;break;
         }
         case 'DoWhile':{
@@ -508,7 +535,7 @@ export function compile(ast) {
           emit('JUMP',top,n);
           const end=instructions.length;
           emit('LOOP_EXIT',null,n);
-          instructions[entry].arg={breakPc:end,continuePc:testPc};
+          instructions[entry].arg={breakPc:end,continuePc:testPc,labels:n.labels??[]};
           instructions[no].arg=end;
           break;
         }
@@ -595,7 +622,7 @@ export function compile(ast) {
           emit('JUMP',top,n);
           const end=instructions.length;
           emit('LOOP_EXIT',null,n);
-          instructions[entry].arg={breakPc:end,continuePc:updatePc};
+          instructions[entry].arg={breakPc:end,continuePc:updatePc,labels:n.labels??[]};
           instructions[no].arg=end;
           emit('LEAVE_SCOPE',null,n);
           break;
@@ -626,14 +653,14 @@ export function compile(ast) {
           emit('JUMP',top,n);
           const end=instructions.length;
           emit('LOOP_EXIT',null,n);
-          instructions[entry].arg={breakPc:end,continuePc:updatePc};
+          instructions[entry].arg={breakPc:end,continuePc:updatePc,labels:n.labels??[]};
           if(no!==null)instructions[no].arg=end;
           if(lexical)emit('LEAVE_SCOPE',null,n);
           break;
         }
         case 'Break':case 'Continue':
           if(!loopDepth)throw new SyntaxError(n.type.toLowerCase()+' outside loop');
-          emit('LOOP_JUMP',n.type.toLowerCase(),n);break;
+          emit('LOOP_JUMP',n.label?{kind:n.type.toLowerCase(),label:n.label}:n.type.toLowerCase(),n);break;
         case 'Try':{
           const entry=emit('TRY_ENTER',null,n);
           stmt(n.block);emit('TRY_NORMAL',null,n.block);

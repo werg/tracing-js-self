@@ -3,11 +3,78 @@
   "sourceProfile": "training-js/1",
   "semanticReference": "ECMAScript 2026",
   "features": [
-    {"id":"strict-receivers","domain":"strict functions and methods; lexical arrow this; no sloppy global object substitution","frontend":"passed","owned":"passed","independent":"passed","detailed":"passed","native":"untested","tests":"test/training-function-expressions.test.js"},
-    {"id":"named-function-expressions","domain":"ordinary and async function expressions with immutable local self binding; name shadowing and nonescape","frontend":"passed","owned":"passed","independent":"passed","detailed":"passed","native":"untested","tests":"test/training-function-expressions.test.js"},
-    {"id":"sparse-array-literals","domain":"holes retain absence, length and evaluation order; dense and string spread sources only","frontend":"passed","owned":"passed","independent":"passed","detailed":"passed","native":"untested","tests":"test/training-frontier-exposure.test.js"},
-    {"id":"promise-executors","domain":"owned synchronous/async executor execution, first resolution wins, throws, rejection and awaits","frontend":"passed","owned":"passed","independent":"passed","detailed":"unsupported","native":"unsupported","reason":"Detailed scalar/ref values do not encode owned resolving-function capabilities","tests":"test/training-frontier-exposure.test.js"},
-    {"id":"bounded-proxy","domain":"ordinary owned object/array target and handler; existing get/set trap profile; no callable or revocable proxy","frontend":"passed","owned":"passed","independent":"passed","detailed":"unsupported","native":"unsupported","reason":"Detailed allocation contract has no proxy identity/target/handler kind","tests":"test/training-frontier-exposure.test.js"},
-    {"id":"shared-typed-views","domain":"bounded owned SharedArrayBuffer, typed views and DataView; offsets, view aliasing and existing supported operations","frontend":"passed","owned":"passed","independent":"passed","detailed":"unsupported","native":"unsupported","reason":"Detailed allocation contract has no buffer/view representation","tests":"test/training-frontier-exposure.test.js"}
+    {
+      "id": "strict-receivers",
+      "domain": "strict functions and methods; lexical arrow this; no sloppy global object substitution",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "passed",
+      "native": "untested",
+      "tests": "test/training-function-expressions.test.js"
+    },
+    {
+      "id": "named-function-expressions",
+      "domain": "ordinary and async function expressions with immutable local self binding; name shadowing and nonescape",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "passed",
+      "native": "untested",
+      "tests": "test/training-function-expressions.test.js"
+    },
+    {
+      "id": "sparse-array-literals",
+      "domain": "holes retain absence, length and evaluation order; dense and string spread sources only",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "passed",
+      "native": "untested",
+      "tests": "test/training-frontier-exposure.test.js"
+    },
+    {
+      "id": "promise-executors",
+      "domain": "owned synchronous/async executor execution, first resolution wins, throws, rejection and awaits",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Detailed scalar/ref values do not encode owned resolving-function capabilities",
+      "tests": "test/training-frontier-exposure.test.js"
+    },
+    {
+      "id": "bounded-proxy",
+      "domain": "ordinary owned object/array target and handler; existing get/set trap profile; no callable or revocable proxy",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Detailed allocation contract has no proxy identity/target/handler kind",
+      "tests": "test/training-frontier-exposure.test.js"
+    },
+    {
+      "id": "shared-typed-views",
+      "domain": "bounded owned SharedArrayBuffer, typed views and DataView; offsets, view aliasing and existing supported operations",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Detailed allocation contract has no buffer/view representation",
+      "tests": "test/training-frontier-exposure.test.js"
+    },
+    {
+      "id": "switch-labelled-completion",
+      "domain": "ordered case tests, shared lexical CaseBlock, fallthrough, nested labelled blocks/loops, break/continue across finally",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "passed",
+      "native": "untested",
+      "tests": "test/training-switch-labels.test.js"
+    }
   ]
 }

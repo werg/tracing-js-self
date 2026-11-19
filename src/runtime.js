@@ -998,12 +998,16 @@ export class Runtime {
           if(!f.loops.length)throw new Error('No active loop');
           f.loops.pop();return {};
         case 'LOOP_JUMP':{
-          const loop=f.loops.at(-1);
-          if(!loop)throw new Error('No active loop for break/continue');
-          this.routeCompletion(s,f,{type:'jump',kind:arg,
-            targetPc:arg==='break'?loop.breakPc:loop.continuePc,
+          const kind=typeof arg==='string'?arg:arg.kind,label=typeof arg==='string'?null:arg.label;
+          const index=f.loops.findLastIndex(loop=>
+            (label?(loop.labels??[]).includes(label):true)&&
+            (kind==='break'||loop.continuePc!==null));
+          const loop=f.loops[index];
+          if(!loop)throw new Error('No active target for break/continue');
+          this.routeCompletion(s,f,{type:'jump',kind,
+            targetPc:kind==='break'?loop.breakPc:loop.continuePc,
             envId:loop.envId,stackDepth:loop.stackDepth,
-            handlerDepth:loop.handlerDepth,loopDepth:f.loops.length},eventId);
+            handlerDepth:loop.handlerDepth,loopDepth:index+1},eventId);
           return {};
         }
         case 'TEMPLATE':{
