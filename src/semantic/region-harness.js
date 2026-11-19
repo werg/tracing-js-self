@@ -106,6 +106,8 @@ export class RegionExecutionHarness {
       staged.commit(witness,{mode:'generated',track:activation.trackId});
     }
     if(staged.firstWitnessViolation)fail('compact transition conflicts with earlier selected claims');
+    // Check post-region shared state size before mutating any live cell.
+    sharedRegionState(staged);
     this.active={...cursor,entry:copy(entry)};
     for(const witness of records)this.inner.selected(invocationId,witness);
     // Preserve any host lifecycle receipts emitted on the return boundary.
