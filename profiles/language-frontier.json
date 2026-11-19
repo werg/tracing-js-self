@@ -301,6 +301,17 @@
       "native": "unsupported",
       "reason": "Node v24.22.3 V8 selects super parent/base after argument/RHS effects; pinned specification selects before. Independent oracle disagreement is retained, not qualified away.",
       "tests": "test/training-super-properties.test.js"
+    },
+    {
+      "id": "class-function-descriptors",
+      "domain": "actual class constructor and public/private method/accessor name and length descriptors; native flags and property order, default/rest arity, Symbol/private/getter names, anonymous class name inference before static initialization; unrelated ordinary/generator Function reflection remains bounded",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Class function descriptor state needs the public construction representation and independent metadata qualification",
+      "tests": "test/training-class-function-metadata.test.js"
     }
   ]
 }

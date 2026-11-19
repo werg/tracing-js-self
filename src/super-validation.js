@@ -12,6 +12,20 @@ const prototypeValue=parent=>parent===null?['null']:
 export function validateSuperEvent(state,event,programs,fail){
   const frame=state.frames[event.invocationId],instruction=programs[frame?.codeId]?.instructions[frame?.pc];
   const after=(table,id)=>event.stateChanges.find(p=>p.table===table&&p.id===id)?.after??state[table][id];
+  if(instruction?.op==='CLASS_CREATE'&&instruction.arg.named||instruction?.op==='SET_HOME_OBJECT'&&instruction.arg.methodName){
+    const isClass=instruction.op==='CLASS_CREATE',fnToken=frame.stack.at(isClass?(instruction.arg.derived?-3:-2):-1),fn=after('heap',fnToken.value[1]);
+    const naming=instruction.arg.methodName;
+    let name=isClass?frame.stack.at(-1).value:naming.privateName?['str',naming.privateName]:binding(state,frame.envId,naming.binding).value;
+    if(name[0]==='symbol'){
+      const description=name[1].startsWith('well-known:')?['str','Symbol.'+name[1].slice(11)]:state.heap[name[1]]?.description;
+      name=description?.[0]==='str'?'['+description[1]+']':'';
+    }else name=String(decode(name));
+    if(naming?.prefix)name=naming.prefix+' '+name;
+    const program=programs[fn.codeId],defaults=program.instructions.filter(i=>i.op==='DEFAULT_GUARD').map(i=>program.params.indexOf(i.arg.name)).filter(i=>i>=0);
+    const length=Math.min(program.params.length,program.restIndex>=0?program.restIndex:Infinity,...defaults);
+    for(const [key,value] of [['name',['str',name]],['length',['num',length]]])if(!eq(fn.properties?.[key]?.value,value)||
+      !eq(fn.dataAttributes?.[key],{writable:false,enumerable:false,configurable:true}))fail('Class function name/length descriptor disagrees with its definition');
+  }
   for(const patch of event.stateChanges)if(patch.table==='envs'&&patch.before?.bindings?.['[[home object]]']&&
     !eq(patch.before.bindings['[[home object]]'],patch.after?.bindings?.['[[home object]]']))fail('Method lexical home binding changed');
   for(const patch of event.stateChanges)if(patch.table==='heap'&&(patch.before?.homeObject||patch.after?.homeObject)){
