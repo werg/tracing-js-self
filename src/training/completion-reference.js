@@ -192,6 +192,11 @@ export function ownedCompletionObservations(bundle,source){
         // correct assignment-expression result.
         let stored=event.result;
         if(event.operation==='binding.write')stored=storedCell(previousFrame?.envId,instruction?.arg);
+        else if(instruction?.op==='PRIVATE_SET'){
+          const [base]=event.operands??[],brand=storedCell(previousFrame?.envId,'[[private '+instruction.arg.name+']]');
+          if(base?.[0]!=='ref'||brand?.[0]!=='str')throw new TypeError('Source private assignment has no committed lexical identity');
+          stored=state.heap[base[1]]?.privateSlots?.[brand[1]]?.value??['missing-storage'];
+        }
         else{
           const [base,property]=event.operands??[];
           if(base?.[0]!=='ref'||!['str','num','bool','null','undefined','bigint','symbol'].includes(property?.[0]))

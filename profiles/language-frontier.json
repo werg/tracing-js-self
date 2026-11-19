@@ -202,6 +202,17 @@
       "native": "unsupported",
       "reason": "Function prototype state and construction receiver completion need a public construction representation",
       "tests": "test/training-constructors.test.js"
+    },
+    {
+      "id": "base-classes-and-private-slots",
+      "domain": "local base class declarations/expressions; fresh private lexical identities, private fields/methods/in, public methods/accessors/fields, static fields/blocks/accessors, computed scalar/Symbol keys, initializer-before-parameter ordering and abrupt construction; no inheritance, private accessors, super/new.target or top-level class environment",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Class descriptors/prototypes, field initializer continuations and private identities need an explicit public construction/private-state representation",
+      "tests": "test/training-classes.test.js"
     }
   ]
 }

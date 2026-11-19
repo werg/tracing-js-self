@@ -183,7 +183,7 @@ export function parse(source) {
 let site=0;
 export function compile(ast) {
   site=0;const programs={};let next=0;
-  function bodyProgram(body,params=[],async=false,defaults=[],restIndex=-1,inheritedStrict=false,parameterSites=[],parameterPatterns=[],generator=false) {
+  function bodyProgram(body,params=[],async=false,defaults=[],restIndex=-1,inheritedStrict=false,parameterSites=[],parameterPatterns=[],generator=false,classConstructor=false) {
     // Strictness belongs to the lexical code, not to the caller. Only an
     // unescaped, unparenthesized string in the directive prologue enables it;
     // nested functions (including arrows/default initializers) inherit it.
@@ -201,7 +201,7 @@ export function compile(ast) {
       for(const n of nodes){
         const declarations=(n.type==='VariableGroup'?n.declarations:[n]).flatMap(d=>
           d.type==='PatternBinding'?d.bindings.map(b=>({id:b.name,kind:d.kind,start:b.start,end:b.end})):
-          d.type==='Variable'?[d]:[]);
+          ['Variable','ClassBinding'].includes(d.type)?[d]:[]);
         for(const d of declarations)if(d.kind!=='var')emit('DECLARE',{name:d.id,kind:d.kind},d);
       }
       for(const n of nodes)if(n.type==='Function'){
@@ -227,10 +227,13 @@ export function compile(ast) {
           for(const a of n.args)expr(a);
           emit('CONSTRUCT',n.args.length,n);break;
         case 'FunctionExpr':{
-          const codeId=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites,n.parameterPatterns,n.generator);
+          const codeId=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict||n.strict===true,n.parameterSites,n.parameterPatterns,n.generator,n.classConstructor===true);
           emit('MAKE_FUNCTION',{codeId,arrow:n.arrow,async:n.async,nonConstructible:n.nonConstructible===true,...(n.name?{name:n.name}:{})},n);
           break;
         }
+        case 'ClassExpr':emitClass(n);break;
+        case 'PrivateMember':expr(n.object);emit('PRIVATE_GET',{name:n.name},n);break;
+        case 'PrivateHas':expr(n.object);emit('PRIVATE_HAS',{name:n.name},n);break;
         case 'Yield':expr(n.argument);emit('YIELD',null,n);break;
         case 'Template':
           for(const expression of n.expressions)expr(expression);
@@ -246,7 +249,9 @@ export function compile(ast) {
           else {expr(n.argument);emit('UNARY',n.operator,n);}
           break;
         case 'Update':
-          if(n.argument){
+          if(n.argument?.type==='PrivateMember'){
+            expr(n.argument.object);emit('PRIVATE_UPDATE',{name:n.argument.name,operator:n.operator,prefix:n.prefix},n);
+          }else if(n.argument){
             expr(n.argument.object);expr(n.argument.property);
             emit('UPDATE_PROP',{operator:n.operator,prefix:n.prefix},n);
           }else emit('UPDATE_BINDING',{name:n.name,operator:n.operator,prefix:n.prefix},n);
@@ -304,7 +309,7 @@ export function compile(ast) {
         }
         case 'Member':expr(n.object);expr(n.property);emit('GET_PROP',null,n);break;
         case 'Call':
-          if(n.callee.type==='Member'){expr(n.callee.object);expr(n.callee.property);emit('GET_METHOD',null,n.callee);}else expr(n.callee);
+          if(n.callee.type==='PrivateMember'){expr(n.callee.object);emit('PRIVATE_GET_METHOD',{name:n.callee.name},n.callee);}else if(n.callee.type==='Member'){expr(n.callee.object);expr(n.callee.property);emit('GET_METHOD',null,n.callee);}else expr(n.callee);
           for(const a of n.args){
             expr(a.type==='Spread'?a.argument:a);
             if(a.type==='Spread')emit('SPREAD',null,a);
@@ -359,6 +364,23 @@ export function compile(ast) {
         }
         case 'PatternAssignment':emitPattern(n,true);break;
         case 'Assign':
+          if(n.left.type==='PrivateMember'){
+            const name=n.left.name;
+            if(['&&=','||=','??='].includes(n.operator)){
+              const saved='[[private receiver '+(++forOfIndex)+']]';
+              emit('ENTER_SCOPE',null,n);emit('DECLARE',{name:saved,kind:'const'},n);
+              expr(n.left.object);emit('INIT',saved,n);emit('GET',saved,n);emit('PRIVATE_GET',{name},n.left);
+              const guard=emit('LOGICAL_JUMP',{operator:n.operator.slice(0,-1),to:null},n);
+              emit('POP',null,n);emit('GET',saved,n);expr(n.right);emit('PRIVATE_SET',{name},n);
+              instructions[guard].arg.to=instructions.length;emit('LEAVE_SCOPE',null,n);
+            }else{
+              expr(n.left.object);
+              if(n.operator!=='='){emit('DUP',null,n);emit('PRIVATE_GET',{name},n.left);}
+              expr(n.right);if(n.operator!=='=')emit('BINARY',n.operator.slice(0,-1),n);
+              emit('PRIVATE_SET',{name},n);
+            }
+            break;
+          }
           if(['&&=','||=','??='].includes(n.operator)){
             const operator=n.operator.slice(0,-1);
             if(n.left.type==='Identifier'){
@@ -432,6 +454,47 @@ export function compile(ast) {
       instructions[skip].arg=instructions.length;
       emit('UPDATE_BINDING',{name:index,operator:'++',prefix:true},node);emit('POP',null,node);
       emit('JUMP',top,node);instructions[done].arg=instructions.length;
+    }
+    function emitClass(n){
+      const salt=++forOfIndex,klass='[[class '+salt+']]',proto='[[class prototype '+salt+']]';
+      emit('ENTER_SCOPE',null,n);
+      if(n.name)emit('DECLARE',{name:n.name,kind:'const'},n);
+      emit('DECLARE',{name:klass,kind:'const'},n);emit('DECLARE',{name:proto,kind:'const'},n);
+      const explicit=n.elements.find(element=>element.kind==='constructor');
+      const ctor=explicit?.value??{...n,type:'FunctionExpr',params:[],defaults:[],parameterSites:[],parameterPatterns:[],restIndex:-1,async:false,arrow:false,body:{...n,type:'Block',body:[]}};
+      expr({...ctor,strict:true,classConstructor:true});emit('INIT',klass,n);emit('GET',klass,n);
+      emit('CLASS_CREATE',{privateNames:n.elements.filter(e=>e.privateName).map(e=>e.privateName)},n);emit('POP',null,n);
+      emit('GET',klass,n);emit('CONST',{value:['str','prototype']},n);emit('GET_PROP',null,n);emit('INIT',proto,n);
+      const instanceMethods=[],staticMethods=[],instanceFields=[],staticFields=[];
+      for(const element of n.elements){
+        if(element.kind==='constructor')continue;
+        if(element.kind==='block'){staticFields.push({...element,type:'Block',body:element.body});continue;}
+        let key=null;
+        if(!element.privateName){
+          const name='[[class key '+(++forOfIndex)+']]';emit('DECLARE',{name,kind:'const'},element);
+          if(element.computedKey)expr(element.computedKey);else emit('CONST',{value:['str',element.key]},element);
+          emit('PROPERTY_KEY',null,element);
+          emit('INIT',name,element);key={...element,type:'Identifier',name};
+        }
+        if(element.kind==='field'){
+          (element.static?staticFields:instanceFields).push({...element,type:'ClassField',key,value:element.value});continue;
+        }
+        if(element.privateName){
+          const name='[[private method '+(++forOfIndex)+']]';emit('DECLARE',{name,kind:'const'},element);
+          expr(element.value);emit('INIT',name,element);
+          (element.static?staticMethods:instanceMethods).push({...element,type:'ClassField',privateKind:'method',value:{...element,type:'Identifier',name}});
+        }else{
+          emit('GET',element.static?klass:proto,element);expr(key);expr(element.value);
+          emit('DEFINE_LITERAL_PROP',{kind:element.kind==='method'?'init':element.kind,enumerable:false},element);emit('POP',null,element);
+        }
+      }
+      for(const [isStatic,body] of [[false,[...instanceMethods,...instanceFields]],[true,[...staticMethods,...staticFields]]]){
+        if(!body.length)continue;
+        const codeId=bodyProgram(body,[],false,[],-1,true);
+        emit('GET',klass,n);emit('MAKE_FUNCTION',{codeId,arrow:false,async:false,nonConstructible:true},n);
+        emit('CLASS_INITIALIZER',{static:isStatic},n);emit('POP',null,n);
+      }
+      emit('GET',klass,n);emit('CLASS_FINISH',{name:n.name},n);emit('LEAVE_SCOPE',null,n);
     }
     function emitPattern(n,result=false){
           // Every nested initializer/get/default remains an owned bytecode
@@ -539,6 +602,14 @@ export function compile(ast) {
           }
           break;
         }
+        case 'ClassBinding':expr(n.value);emit('INIT',n.id,n);break;
+        case 'ClassField':
+          emit('THIS',null,n);
+          if(!n.privateName)expr(n.key);
+          expr(n.value);
+          if(n.privateName)emit('PRIVATE_DEFINE',{name:n.privateName,kind:n.privateKind??'field'},n);
+          else emit('DEFINE_LITERAL_PROP',{kind:'init',enumerable:true},n);
+          emit('POP',null,n);break;
         case 'VariableGroup':for(const declaration of n.declarations)stmt(declaration);break;
         case 'PatternBinding':emitPattern(n);break;
         case 'Expression':expr(n.expr);emit('POP',null,n);break;
@@ -760,6 +831,7 @@ export function compile(ast) {
     // exist in TDZ before initialization, then initialize left to right;
     // body var/function declarations are introduced only afterwards.
     const parameterExpressions=defaults.some(Boolean)||parameterPatterns.some(Boolean);
+    if(classConstructor)emit('CLASS_CONSTRUCTOR_GUARD',null,body[0]??ast);
     if(parameterExpressions){
       params.forEach((name,i)=>{
         const initializer=defaults[i];
