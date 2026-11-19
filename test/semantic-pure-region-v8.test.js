@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
+import {sharedRegionState} from '../src/semantic/regions.js';
 import {verifyRegionTrainingCase,recheckRegionEvidence} from '../src/semantic/compiler-v8.js';
 import {encodePureRegionRecord,decodePureRegionRecord} from '../src/semantic/pure-region-v8.js';
 import {SEMANTIC_GALLERY_FIXTURES} from '../src/training/semantic-trace-gallery.js';
@@ -58,4 +59,15 @@ test('mixed request dispatch restores without duplicate service calls',async()=>
   const restored=RegionExecutionHarness.restore(resumed.checkpoint(),options);
   await assert.rejects(restored.dispatch(rows[index].fields.invocationId,request.effect),/redispatch/);
   assert.equal(calls,1);
+});
+
+test('pure allocation output is checked against the continuation byte bound before any live mutation',()=>{
+  const h=fresh('"use strict";function run(){const value={n:2};return [value,value];}',[]);
+  const candidate=h.previewAlgorithm('i'),before=h.exportEpisode(),state=sharedRegionState(h.controller);
+  // Entry fits, but its two newly allocated graph nodes do not.
+  h.controller.maxPacketBytes=Buffer.byteLength(JSON.stringify(state),'utf8')+1;
+  assert.throws(()=>h.select('i',candidate),/continuation byte bound/);
+  assert.equal(h.controller.generated,0);
+  assert.deepEqual(sharedRegionState(h.controller),state);
+  assert.deepEqual(h.exportEpisode(),before);
 });
