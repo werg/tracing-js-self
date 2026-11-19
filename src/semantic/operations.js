@@ -161,6 +161,8 @@ export function snapshotAlgorithmHeap(heap){
     result.set(id,{kind:node.kind,...(node.prototype===null?{prototype:null}:{}),
       properties:new Map([...properties].map(([key,value])=>[key,structuredClone(value)]))});
   }
+  for(const node of result.values())for(const value of node.properties.values())
+    if(value[0]==='ref'&&!result.has(value[1]))throw new TypeError('Dangling algorithm heap reference '+value[1]);
   return result;
 }
 
@@ -196,18 +198,22 @@ function primitiveOperation(name,values){
 
 export function evaluateTerm(term,{inputs=new Map(),values=new Map(),heap=new Map()}={}){
   validateTerm(term);
+  const committed=value=>{
+    if(value[0]==='ref')algorithmHeapNode(heap,value[1]);
+    return structuredClone(value);
+  };
   function visit(node){
-    if(node.op==='literal')return structuredClone(node.value);
+    if(node.op==='literal')return committed(node.value);
     if(node.op==='input'||node.op==='ref'){
       const value=lookup(node.op==='input'?inputs:values,node.id);
       if(value===undefined)throw new TypeError('Uncommitted algorithm dependency '+node.id);
-      assertAlgorithmValue(value);return structuredClone(value);
+      assertAlgorithmValue(value);return committed(value);
     }
     if(node.op==='project'){
       const object=visit(node.object);
       if(object[0]!=='ref')throw new TypeError('Data projection requires an object identity');
       const {properties}=algorithmHeapNode(heap,object[1]);
-      return structuredClone(properties.get(node.key)??['undefined']);
+      return committed(properties.get(node.key)??['undefined']);
     }
     if(node.op==='fold_left'){
       const collection=visit(node.input),initial=visit(node.initial);

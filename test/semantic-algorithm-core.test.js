@@ -141,6 +141,15 @@ test('heap inspection rejects accessors and duplicate properties and bypasses Ma
   assert.equal(hooks,0);
 });
 
+test('semantic values cannot invent a reference outside the committed heap',()=>{
+  assert.throws(()=>evaluateTerm({op:'literal',value:['ref','missing']}),/ordinary data object/);
+  assert.throws(()=>evaluateTerm(ref('selected'),{values:new Map([['selected',['ref','missing']]])}),/ordinary data object/);
+  const heap=new Map([['box',{kind:'object',properties:new Map([['child',['ref','missing']]])}]]);
+  const program=computed({op:'project',object:input('object'),key:'child'},[{id:'object',type:'data'}]);
+  assert.throws(()=>evaluateAlgorithm(program,[['ref','box']],{heap}),/Dangling/);
+  assert.throws(()=>evaluateTerm(program.steps[0].term,{inputs:new Map([['object',['ref','box']]]),heap}),/ordinary data object/);
+});
+
 test('normalization retains reads across writes, eager throws, and order-sensitive algebra',()=>{
   const program=core([{id:'object',type:'data'}],[
     {kind:'compute',id:'previous',term:{op:'project',object:input('object'),key:'n'}},

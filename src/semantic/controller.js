@@ -151,8 +151,18 @@ export class AlgorithmController {
     const step=this.nextStep();
     if(step?.kind==='compute')for(const [id,term] of this.symbols)
       if(subterms(this.expand(step.term)).some(child=>eq(child,this.expand(term))))needed.add(id);
+    // Canonical values already have immutable definitions in the core. Extra
+    // decompositions need their actual definitions and any live dependencies.
+    let expanded=true;
+    while(expanded){
+      expanded=false;
+      for(const id of [...needed])if(!this.declaredValues.has(id)&&this.symbols.has(id))
+        for(const dependency of references(this.symbols.get(id)))if(!needed.has(dependency)){
+          needed.add(dependency);expanded=true;
+        }
+    }
     return {cursor:this.cursor,values:[...this.values].filter(([id])=>needed.has(id)).map(clone),
-      symbols:[...this.symbols].filter(([id])=>needed.has(id)).map(clone),
+      symbols:[...this.symbols].filter(([id])=>needed.has(id)&&!this.declaredValues.has(id)).map(clone),
       pending:clone(this.pending),abrupt:clone(this.abrupt),completion:clone(this.completion),
       firstViolation:this.firstViolation?{index:this.firstViolation.index,kind:this.firstViolation.kind}:null};
   }
