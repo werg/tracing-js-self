@@ -1,6 +1,7 @@
 import { encode, decode, U, token, truthy, primitiveBinary, primitiveUnary } from './values.js';
 import {WELL_KNOWN_SYMBOLS,wellKnownSymbol,stringPropertyKey,symbolPropertyKey,isSymbolPropertyKey,propertyKeyValue} from './property-keys.js';
-import {SHARED_TYPES,SHARED_TYPE_NAMES,newSharedBuffer,newSharedView,newSharedDataView,effectiveDataViewLength,DATA_VIEW_GETTERS,DATA_VIEW_SETTERS,readSharedDataView,writeSharedDataView,growSharedBuffer,effectiveSharedLength,readSharedElement,writeSharedElement,atomicSharedElement} from './owned-shared-memory.js';
+import {SHARED_TYPES,SHARED_TYPE_NAMES,newArrayBuffer,isOwnedBuffer,isOwnedTypedView,isOwnedDataView,newSharedBuffer,newSharedView,newSharedDataView,effectiveDataViewLength,DATA_VIEW_GETTERS,DATA_VIEW_SETTERS,readSharedDataView,writeSharedDataView,growSharedBuffer,effectiveSharedLength,readSharedElement,writeSharedElement,atomicSharedElement} from './owned-shared-memory.js';
+import {BinaryProfileError,binaryIndex,binaryInteger,binaryElement,binaryNumericKey,binaryValidIndex} from './owned-binary-coercion.js';
 import { parse, compile } from './frontend.js';
 import { importGraph } from './training/graph.js';
 import { parseTraining, TRAINING_PARSER } from './training/profile.js';
@@ -13,6 +14,13 @@ import {supportsPinnedRegExp,testPinnedRegExp,scanPinnedReplacement} from './own
 
 class GuestFault extends Error {constructor(name,message){super(message);this.name=name;}}
 const guestFault=(name,message)=>{throw new GuestFault(name,message);};
+function binaryGuest(operation){
+  try{return operation();}catch(error){
+    if(error instanceof BinaryProfileError)throw error;
+    if(['TypeError','RangeError','SyntaxError'].includes(error.name))guestFault(error.name,error.message);
+    throw error;
+  }
+}
 function bindingTdz(binding,name){
   const error=new GuestFault('ReferenceError',`Cannot access '${name}' before initialization`);
   // Parameter initialization additionally binds its fault to the actual
@@ -480,7 +488,7 @@ export class Runtime {
     for(const name of ['queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
-    for(const name of ['Object','Array','Number','BigInt','String','Symbol','Reflect','Math','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
+    for(const name of ['Object','Array','Number','BigInt','String','Symbol','Reflect','Math','ArrayBuffer','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     s.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
@@ -525,7 +533,7 @@ export class Runtime {
     for(const name of ['parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
-    for(const name of ['Object','Array','Number','BigInt','String','Symbol','Reflect','Math','Promise','Set','Error','TypeError','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
+    for(const name of ['Object','Array','Number','BigInt','String','Symbol','Reflect','Math','Promise','Set','Error','TypeError','ArrayBuffer','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     state.control.a0.globalEnvId=global;
@@ -1440,6 +1448,14 @@ export class Runtime {
              return {...operands(fn,...args),causes:[{kind:'invocation',frameId:id}],
                result:['promise',p]};
            }
+          if(fn.value[0]==='intrinsic'&&fn.value[1]==='ArrayBuffer'){
+            const length=binaryGuest(()=>binaryIndex(args[0]?.value));
+            if(length>1024)throw new BinaryProfileError('ArrayBuffer exceeds the 1024-byte owned profile');
+            if(args[1]?.value[0]!==undefined&&args[1].value[0]!=='undefined')
+              throw new BinaryProfileError('Resizable ArrayBuffer options require their own profile');
+            const id=this.next(s,'obj');s.heap[id]=newArrayBuffer(id,length);
+            return {...operands(fn,...args),...result(['ref',id])};
+          }
            if(fn.value[0]==='intrinsic'&&fn.value[1]==='SharedArrayBuffer'){
   const length=args.length===0?0:args[0]?.value[0]==='num'?decode(args[0].value):NaN;
   if(!Number.isSafeInteger(length)||length<0||length>1024)
@@ -1464,25 +1480,32 @@ export class Runtime {
 }
 if(fn.value[0]==='intrinsic'&&fn.value[1]==='DataView'){
   const b=args[0]?.value[0]==='ref'?s.heap[args[0].value[1]]:null;
-  if(b?.kind!=='shared-int32-buffer'||args.length>3)
-    guestFault('TypeError','DataView needs an owned SharedArrayBuffer');
-  const offset=args.length<2?0:args[1]?.value[0]==='num'?decode(args[1].value):NaN;
-  const length=args.length<3?undefined:args[2]?.value[0]==='num'?decode(args[2].value):NaN;
-  if(!Number.isSafeInteger(offset)||offset<0||offset>b.byteLength||
-     (length!==undefined&&(!Number.isSafeInteger(length)||length<0||offset+length>b.byteLength)))
-    guestFault('RangeError','DataView length or offset outside buffer');
+  if(!isOwnedBuffer(b))guestFault('TypeError','DataView needs an owned ArrayBuffer or SharedArrayBuffer');
+  const offset=binaryGuest(()=>binaryIndex(args[1]?.value));
+  const length=args[2]?.value[0]===undefined||args[2].value[0]==='undefined'?undefined:
+    binaryGuest(()=>binaryIndex(args[2].value));
   const id=this.next(s,'obj');
-  s.heap[id]=newSharedDataView(id,b,offset,length);
+  s.heap[id]=binaryGuest(()=>newSharedDataView(id,b,offset,length));
   return {...operands(fn,...args),...result(['ref',id])};
 }
 if(fn.value[0]==='intrinsic'&&Object.hasOwn(SHARED_TYPES,fn.value[1])){
-  const b=args[0]?.value[0]==='ref'?s.heap[args[0].value[1]]:null;
-  if(args.length<1||b?.kind!=='shared-int32-buffer')
-    guestFault('TypeError','Shared typed-array constructor needs owned SAB');
-  const offset=args.length<2?0:args[1]?.value[0]==='num'?decode(args[1].value):NaN;
-  const length=args.length<3?undefined:args[2]?.value[0]==='num'?decode(args[2].value):NaN;
+  const input=args[0]?.value??U;
+  let b=input[0]==='ref'?s.heap[input[1]]:null,offset,length;
+  if(isOwnedBuffer(b)){
+    offset=binaryGuest(()=>binaryIndex(args[1]?.value));
+    // Alignment is checked before converting the optional length.
+    if(offset%SHARED_TYPES[fn.value[1]].bytes)guestFault('RangeError','Typed-array offset is not aligned');
+    length=args[2]?.value[0]===undefined||args[2].value[0]==='undefined'?undefined:
+      binaryGuest(()=>binaryIndex(args[2].value));
+  }else{
+    if(input[0]==='ref')throw new BinaryProfileError('Typed-array iterable/array-like construction requires its own profile');
+    length=binaryGuest(()=>binaryIndex(input));offset=0;
+    const bytes=length*SHARED_TYPES[fn.value[1]].bytes;
+    if(bytes>1024)throw new BinaryProfileError('Typed-array storage exceeds the 1024-byte owned profile');
+    const bufferId=this.next(s,'obj');b=s.heap[bufferId]=newArrayBuffer(bufferId,bytes);
+  }
   const id=this.next(s,'obj');
-  s.heap[id]=newSharedView(id,b,fn.value[1],offset,length);
+  s.heap[id]=binaryGuest(()=>newSharedView(id,b,fn.value[1],offset,length));
   return {...operands(fn,...args),...result(['ref',id])};
 }
 if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
@@ -1583,6 +1606,8 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
             else if(property===symbolPropertyKey('well-known:toPrimitive'))v=['builtinfn','Symbol.prototype.valueOf'];
             else v=U;
           }
+          else if(base.value[0]==='intrinsic'&&base.value[1]==='ArrayBuffer'&&property==='isView')
+            v=['builtinfn','ArrayBuffer.isView'];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' &&
              ['create','setPrototypeOf','getPrototypeOf','defineProperty','getOwnPropertyDescriptor','isFrozen','hasOwn','keys','values','entries','assign','is','getOwnPropertySymbols','getOwnPropertyNames'].includes(property))
             v=['builtinfn',`Object.${property}`];
@@ -1671,6 +1696,15 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
                }
                throw new TypeError('Unmodeled RegExp property '+property);
              }
+             if(obj.kind==='array-buffer'){
+  if(['byteLength','maxByteLength'].includes(property))return {...operands(base,key),...result(['num',obj.byteLength])};
+  if(['resizable','detached'].includes(property))return {...operands(base,key),...result(['bool',false])};
+  if(property==='slice'){
+    const method=['builtinfn','ArrayBuffer.prototype.slice'];
+    return {...operands(base,key),...result(op==='GET_METHOD'?['method',method,base.value]:method)};
+  }
+  throw new BinaryProfileError('ArrayBuffer property requires its own profile: '+String(property));
+}
              if(obj.kind==='shared-int32-buffer'){
   if(property==='byteLength')return {...operands(base,key),...result(['num',obj.byteLength])};
   if(property==='maxByteLength')return {...operands(base,key),...result(['num',obj.maxByteLength??obj.byteLength])};
@@ -1685,7 +1719,7 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
   }
   guestFault('TypeError','Unmodeled SAB property');
 }
-if(obj.kind==='shared-data-view'){
+if(isOwnedDataView(obj)){
   const length=effectiveDataViewLength(s.heap[obj.bufferId],obj);
   if(property==='byteLength')return {...operands(base,key),...result(['num',length])};
   if(property==='byteOffset')return {...operands(base,key),...result(['num',obj.byteOffset])};
@@ -1696,7 +1730,7 @@ if(obj.kind==='shared-data-view'){
   }
   guestFault('TypeError','Unmodeled shared DataView property');
 }
-if(obj.kind==='shared-int32-view'){
+if(isOwnedTypedView(obj)){
   const bytes=SHARED_TYPES[obj.elementType].bytes;
   const length=effectiveSharedLength(s.heap[obj.bufferId],obj);
   for(const [prop,v] of Object.entries({length,byteLength:length*bytes,
@@ -1707,9 +1741,9 @@ if(obj.kind==='shared-int32-view'){
     const method=['builtinfn','TypedArray.prototype.subarray'];
     return {...operands(base,key),...result(op==='GET_METHOD'?['method',method,base.value]:method)};
   }
-  if(!arrayIndex(property)||Number(property)>=length)
-    guestFault('TypeError','Unmodeled shared view property');
-  return {...operands(base,key),...result(readSharedElement(s.heap[obj.bufferId],obj,Number(property)))};
+  const index=binaryNumericKey(property);
+  if(index===undefined)throw new BinaryProfileError('Typed-array ordinary property needs its own profile');
+  return {...operands(base,key),...result(binaryValidIndex(index,length)?readSharedElement(s.heap[obj.bufferId],obj,index):U)};
 }
 if(obj.kind==='set'){
                if(['has','add'].includes(property)){
@@ -2032,10 +2066,12 @@ if(obj.kind==='set'){
             if(property==='prototype')object.prototypeInitialized=true;
             putOwn(object,property,v.value,eventId);return {...operands(base,key,v),...result(v.value)};
           }
-          if(object.kind==='shared-int32-view'){
-  if(!arrayIndex(property)||Number(property)>=effectiveSharedLength(s.heap[object.bufferId],object))
-    guestFault('TypeError','Unmodeled typed-array property assignment');
-  writeSharedElement(s.heap[object.bufferId],object,Number(property),v.value);
+          if(isOwnedTypedView(object)){
+  const index=binaryNumericKey(property);
+  if(index===undefined)throw new BinaryProfileError('Typed-array ordinary property assignment needs its own profile');
+  const converted=binaryGuest(()=>binaryElement(v.value,SHARED_TYPES[object.elementType]));
+  if(binaryValidIndex(index,effectiveSharedLength(s.heap[object.bufferId],object)))
+    writeSharedElement(s.heap[object.bufferId],object,index,encode(converted));
   return {...operands(base,key,v),...result(v.value)};
 }
 if(object.kind==='regexp'){
@@ -2046,8 +2082,8 @@ if(object.kind==='regexp'){
             putOwn(object,'lastIndex',v.value,eventId);
             return {...operands(base,key,v),...result(v.value)};
           }
-          if(['shared-int32-buffer','shared-int32-view','shared-data-view'].includes(object.kind))
-            guestFault('TypeError','Direct shared-memory writes are not owned; use Atomics');
+          if(isOwnedBuffer(object)||isOwnedTypedView(object)||isOwnedDataView(object))
+            throw new BinaryProfileError('Binary-memory ordinary property assignment needs its own profile');
           if(object.kind==='set')
             throw new TypeError('Owned intrinsic internal slots are not guest-writable properties');
           const route=object.kind==='proxy'?proxyRoute(s.heap,base.value,'set'):
@@ -2335,28 +2371,38 @@ if(callable[0]==='builtinfn' && callable[1]==='queueMicrotask'){
               putOwn(array,String(i),set.properties[String(i)].value,eventId);
             return {...operands(fn,...args),...result(['ref',id])};
           }
-          if(callable[0]==='builtinfn'&&callable[1].startsWith('DataView.prototype.')){
+          if(callable[0]==='builtinfn'&&callable[1]==='ArrayBuffer.isView'){
+  const node=args[0]?.value[0]==='ref'?s.heap[args[0].value[1]]:null;
+  return {...operands(fn,...args),...result(['bool',isOwnedTypedView(node)||isOwnedDataView(node)])};
+}
+if(callable[0]==='builtinfn'&&callable[1]==='ArrayBuffer.prototype.slice'){
+  const b=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+  if(b?.kind!=='array-buffer')guestFault('TypeError','Invalid ArrayBuffer slice receiver');
+  const clip=n=>n<0?Math.max(0,b.byteLength+n):Math.min(b.byteLength,n);
+  const begin=clip(binaryGuest(()=>binaryInteger(args[0]?.value)));
+  const end=args[1]?.value[0]===undefined||args[1].value[0]==='undefined'?b.byteLength:
+    clip(binaryGuest(()=>binaryInteger(args[1].value)));
+  const id=this.next(s,'obj'),length=Math.max(0,end-begin),out=newArrayBuffer(id,length);
+  out.bytes=b.bytes.slice(begin,begin+length);s.heap[id]=out;
+  return {...operands(fn,...args),...result(['ref',id])};
+}
+if(callable[0]==='builtinfn'&&callable[1].startsWith('DataView.prototype.')){
   const view=receiver[0]==='ref'?s.heap[receiver[1]]:null;
-  if(view?.kind!=='shared-data-view')
+  if(!isOwnedDataView(view))
     guestFault('TypeError','Invalid owned DataView receiver');
   const method=callable[1].slice('DataView.prototype.'.length);
   const getter=DATA_VIEW_GETTERS.includes(method),setter=DATA_VIEW_SETTERS.includes(method);
   if(!getter&&!setter)throw new Error('Invalid DataView method');
   const min=setter?2:1;
-  if(args.length<min||args.length>min+1)
-    guestFault('TypeError','Bounded DataView arity');
-  const offset=args[0]?.value[0]==='num'?decode(args[0].value):NaN;
+  const offset=binaryGuest(()=>binaryIndex(args[0]?.value));
   const width=SHARED_TYPES[method.slice(3)+'Array'].bytes;
   const length=effectiveDataViewLength(s.heap[view.bufferId],view);
-  if(!Number.isSafeInteger(offset)||offset<0||offset+width>length)
-    guestFault('RangeError','Owned DataView byte index out of bounds');
+  // SetViewValue converts the value before checking the view bounds.
+  const converted=setter?binaryGuest(()=>binaryElement(args[1]?.value??U,SHARED_TYPES[method.slice(3)+'Array'])):null;
+  if(offset+width>length)guestFault('RangeError','Owned DataView byte index out of bounds');
   const littleEndian=truthy(args[min]?.value??['bool',false]);
   if(setter){
-    const v=args[1]?.value;
-    if(SHARED_TYPES[method.slice(3)+'Array'].bigint?v?.[0]!=='bigint':
-      !['num','bool','str','null','undefined'].includes(v?.[0]))
-      guestFault('TypeError','Unowned DataView value coercion');
-    writeSharedDataView(s.heap[view.bufferId],view,method,offset,v,littleEndian);
+    writeSharedDataView(s.heap[view.bufferId],view,method,offset,encode(converted),littleEndian);
     return {...operands(fn,...args),...result(U)};
   }
   return {...operands(fn,...args),
@@ -2364,16 +2410,16 @@ if(callable[0]==='builtinfn' && callable[1]==='queueMicrotask'){
 }
 if(callable[0]==='builtinfn'&&callable[1]==='TypedArray.prototype.subarray'){
   const view=receiver[0]==='ref'?s.heap[receiver[1]]:null;
-  if(view?.kind!=='shared-int32-view'||args.length>2)guestFault('TypeError','Invalid subarray call');
+  if(!isOwnedTypedView(view))guestFault('TypeError','Invalid subarray receiver');
   const full=effectiveSharedLength(s.heap[view.bufferId],view);
   const clip=(n,otherwise)=>n===undefined?otherwise:
     n<0?Math.max(0,full+Math.trunc(n)):Math.min(full,Math.trunc(n));
-  const a=clip(args[0]?.value[0]==='num'?decode(args[0].value):undefined,0);
-  const b=clip(args[1]?.value[0]==='num'?decode(args[1].value):undefined,full);
+  const a=clip(binaryGuest(()=>binaryInteger(args[0]?.value)),0);
+  const b=args[1]?.value[0]===undefined||args[1].value[0]==='undefined'?full:clip(binaryGuest(()=>binaryInteger(args[1].value)),full);
   const id=this.next(s,'obj');
   s.heap[id]=newSharedView(id,s.heap[view.bufferId],view.elementType,
     view.byteOffset+a*SHARED_TYPES[view.elementType].bytes,
-    args.length<2&&view.lengthTracking?undefined:Math.max(0,b-a));
+    (args[1]?.value[0]===undefined||args[1].value[0]==='undefined')&&view.lengthTracking?undefined:Math.max(0,b-a));
   return {...operands(fn,...args),...result(['ref',id])};
 }
 if(callable[0]==='builtinfn'&&callable[1]==='SharedArrayBuffer.prototype.grow'){
@@ -3107,6 +3153,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
           if(callable[0]==='builtinfn' && callable[1].startsWith('Atomics.')){
   const method=callable[1].slice(8);
   const view=args[0]?.value[0]==='ref'?s.heap[args[0].value[1]]:null;
+  if(view?.kind==='typed-array')throw new BinaryProfileError('Non-shared Atomics require separate protocol qualification');
   if(view?.kind!=='shared-int32-view')
     guestFault('TypeError','Atomics requires owned integer shared view');
   const index=args[1]?.value[0]==='num'?decode(args[1].value):NaN;

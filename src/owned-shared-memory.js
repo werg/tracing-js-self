@@ -15,6 +15,15 @@ export const SHARED_TYPES=Object.freeze({
  Float64Array:{bytes:8,get:'getFloat64',set:'setFloat64',atomic:false}
 });
 export const SHARED_TYPE_NAMES=Object.freeze(Object.keys(SHARED_TYPES));
+export const isOwnedBuffer=buffer=>['array-buffer','shared-int32-buffer'].includes(buffer?.kind);
+export const isOwnedTypedView=view=>['typed-array','shared-int32-view'].includes(view?.kind);
+export const isOwnedDataView=view=>['data-view','shared-data-view'].includes(view?.kind);
+export function newArrayBuffer(id,length){
+ if(!Number.isSafeInteger(length)||length<0||length>1024)
+   throw new RangeError('ArrayBuffer length outside bounded profile');
+ return {id,kind:'array-buffer',byteLength:length,maxByteLength:length,
+   resizable:false,detached:false,bytes:Array(length).fill(0),version:0};
+}
 export function newSharedBuffer(id,length,maxByteLength=undefined){
  const max=maxByteLength===undefined?length:maxByteLength;
  if(!Number.isSafeInteger(length)||length<0||length>1024||
@@ -38,8 +47,8 @@ export function effectiveSharedLength(buffer,view){
 }
 export function newSharedView(id,buffer,type,offset=0,length=undefined){
  const spec=SHARED_TYPES[type];
- if(!spec||buffer?.kind!=='shared-int32-buffer')
-   throw new TypeError('Owned shared typed-array buffer expected');
+ if(!spec||!isOwnedBuffer(buffer))
+   throw new TypeError('Owned typed-array buffer expected');
  if(!Number.isSafeInteger(offset)||offset<0||offset%spec.bytes!==0||
    offset>buffer.byteLength)throw new RangeError('Invalid shared view byte offset');
  const available=buffer.byteLength-offset;
@@ -51,26 +60,27 @@ export function newSharedView(id,buffer,type,offset=0,length=undefined){
  }
  if(!Number.isSafeInteger(length)||length<0||length*spec.bytes>available)
    throw new RangeError('Shared view length exceeds buffer');
- return {id,kind:'shared-int32-view',bufferId:buffer.id,elementType:type,
+ return {id,kind:buffer.kind==='array-buffer'?'typed-array':'shared-int32-view',bufferId:buffer.id,elementType:type,
    byteOffset:offset,length,lengthTracking,version:0};
 }
-// DataView views alias the same owned serializable SAB byte storage.
+// All views alias the same owned serializable backing bytes. Ordinary and
+// shared buffers retain different identities and capabilities.
 const DV_TYPES=Object.freeze(Object.fromEntries(
  Object.entries(SHARED_TYPES).map(([type,spec])=>[type.slice(0,-5),spec])));
 export const DATA_VIEW_GETTERS=Object.freeze(Object.keys(DV_TYPES).map(n=>'get'+n));
 export const DATA_VIEW_SETTERS=Object.freeze(Object.keys(DV_TYPES).map(n=>'set'+n));
 export function newSharedDataView(id,buffer,byteOffset=0,byteLength=undefined){
- if(buffer?.kind!=='shared-int32-buffer')throw new TypeError('Owned SAB required');
+ if(!isOwnedBuffer(buffer))throw new TypeError('Owned buffer required');
  if(!Number.isSafeInteger(byteOffset)||byteOffset<0||byteOffset>buffer.byteLength)
    throw new RangeError('DataView offset');
  const lengthTracking=byteLength===undefined&&buffer.growable===true;
  const n=byteLength===undefined?buffer.byteLength-byteOffset:byteLength;
  if(!Number.isSafeInteger(n)||n<0||byteOffset+n>buffer.byteLength)
    throw new RangeError('DataView length');
- return {id,kind:'shared-data-view',bufferId:buffer.id,byteOffset,byteLength:n,lengthTracking,version:0};
+ return {id,kind:buffer.kind==='array-buffer'?'data-view':'shared-data-view',bufferId:buffer.id,byteOffset,byteLength:n,lengthTracking,version:0};
 }
 export function effectiveDataViewLength(buffer,view){
- if(buffer?.kind!=='shared-int32-buffer'||view?.kind!=='shared-data-view')
+ if(!isOwnedBuffer(buffer)||!isOwnedDataView(view)||view.bufferId!==buffer.id)
    throw new TypeError('Not an owned DataView');
  return view.lengthTracking?buffer.byteLength-view.byteOffset:view.byteLength;
 }
@@ -108,7 +118,7 @@ export function writeSharedDataView(buffer,view,method,index,value,littleEndian=
 }
 function data(buffer,view,index){
  const spec=SHARED_TYPES[view.elementType];
- if(!spec||buffer?.kind!=='shared-int32-buffer'||
+ if(!spec||!isOwnedBuffer(buffer)||!isOwnedTypedView(view)||view.bufferId!==buffer.id||
     !Array.isArray(buffer.bytes)||buffer.bytes.length!==buffer.byteLength)
    throw new TypeError('Corrupt owned shared-memory graph');
  if(!Number.isInteger(index)||index<0||index>=effectiveSharedLength(buffer,view))

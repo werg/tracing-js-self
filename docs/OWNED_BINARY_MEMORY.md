@@ -1,0 +1,38 @@
+# Owned binary-memory profile
+
+Ordinary `ArrayBuffer`, ten typed-array element types, and `DataView` use one
+serializable backing byte array per buffer. Each view retains its backing object
+identity, element type, offset, and fixed or tracking length. A `subarray` shares
+the original backing identity; `ArrayBuffer.prototype.slice` copies its selected
+bytes to a fresh identity. Ordinary and shared buffers have distinct kinds and
+capabilities.
+
+The ordinary profile supports fixed buffers up to 1,024 bytes, typed-array
+construction from a buffer or scalar length, indexed reads and writes,
+`subarray`, DataView getters/setters with explicit byte order, buffer/view size
+and offset properties, `ArrayBuffer.isView`, and fixed-buffer `slice`.
+Conversions implement scalar `ToIndex`, Number, and BigInt rules, including
+negative fractional lengths, signed zero, failed integer indices, and conversion
+before DataView write bounds checks. The typed-array byte order is little-endian,
+as declared by the existing owned memory profile; DataView byte order is explicit.
+
+Read-only archive validation checks exact fields, byte ranges, backing identities,
+view alignment and bounds, and immutable buffer/view capabilities at every
+transition. JSON checkpoints retain aliases without holding native buffer objects.
+Tests compare the resulting computation, primitive operations, and branches with
+independent V8, and preserve existing single-agent shared-memory behavior.
+
+Resizable/detached/transferred ordinary buffers, object conversion hooks in binary
+operations, iterable/array-like typed-array constructors, custom properties or
+species, non-shared Atomics, and cross-agent memory are outside this profile.
+These boundaries refuse source qualification; they must not masquerade as guest
+exceptions. Invalid supported arguments remain catchable guest errors.
+
+Runtime and archive tests alone do not qualify the public trace or native training
+consumer. The new binary protocol must independently validate public operations,
+contexts, checkpoints, source metadata and native packing before admission.
+
+The conversion and indexed-access rules follow the pinned
+[ECMAScript 2026 conversion operations](https://tc39.es/ecma262/2026/multipage/abstract-operations.html#sec-toindex),
+[typed-array exotic objects](https://tc39.es/ecma262/2026/multipage/ordinary-and-exotic-objects-behaviours.html#sec-typedarray-exotic-objects),
+and [structured data algorithms](https://tc39.es/ecma262/2026/multipage/structured-data.html).
