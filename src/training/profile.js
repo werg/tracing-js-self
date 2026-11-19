@@ -89,13 +89,15 @@ export function parseTraining(source) {
     return {pattern:pattern(root),bindings:names};
   }
   function parameters(n){
-    return n.params.map((p,i)=>{
-      if(p.type==='RestElement' && p.argument?.type==='Identifier' && i===n.params.length-1)
-        return {...span(p),name:p.argument.name,default:null,rest:true};
-      if(p.type==='Identifier')return {...span(p),name:p.name,default:null};
-      if(p.type==='AssignmentPattern'&&p.left.type==='Identifier')
-        return {...span(p),name:p.left.name,default:expr(p.right)};
-      reject(p,'parameter pattern (identifier or scalar default required)');
+    return n.params.map((parameter,i)=>{
+      const rest=parameter.type==='RestElement',p=rest?parameter.argument:parameter;
+      if(rest&&i!==n.params.length-1)reject(parameter,'rest parameter position');
+      const target=p.type==='AssignmentPattern'?p.left:p;
+      const fallback=p.type==='AssignmentPattern'?expr(p.right):null;
+      if(target.type==='Identifier')return {...span(parameter),name:target.name,default:fallback,rest};
+      if(!['ArrayPattern','ObjectPattern'].includes(target.type))reject(target,'parameter pattern');
+      const parsed=patternTree(target);
+      return {...span(parameter),name:'[[parameter '+i+']]',default:fallback,rest,...parsed};
     });
   }
   function expr(n) {
@@ -127,6 +129,8 @@ export function parseTraining(source) {
           name:n.id?.name??null,
           params:parsedParams.map(p=>p.name),defaults:parsedParams.map(p=>p.default),
           parameterSites:parsedParams.map(span),
+          parameterPatterns:parsedParams.map(p=>p.pattern?{pattern:p.pattern,bindings:p.bindings}:null),
+          parameterNames:parsedParams.flatMap(p=>[p.name,...(p.bindings??[]).map(b=>b.name)]),
           restIndex:parsedParams.findIndex(p=>p.rest),body};
       }
       case 'TemplateLiteral':
@@ -253,6 +257,8 @@ export function parseTraining(source) {
         return {...loc,type:'Function',id:n.id.name,
           params:parsedParams.map(x=>x.name),defaults:parsedParams.map(x=>x.default),
           parameterSites:parsedParams.map(span),
+          parameterPatterns:parsedParams.map(p=>p.pattern?{pattern:p.pattern,bindings:p.bindings}:null),
+          parameterNames:parsedParams.flatMap(p=>[p.name,...(p.bindings??[]).map(b=>b.name)]),
           restIndex:parsedParams.findIndex(p=>p.rest),async:n.async,body:stmt(n.body)};
       }
       case 'ReturnStatement':return {...loc,type:'Return',argument:n.argument?expr(n.argument):null};
@@ -333,7 +339,7 @@ export function parseTraining(source) {
   const body=parsed.body.map(stmt);
   // Resolve references against lexical scopes, including the per-loop let header.
   // Never silently turn an unknown identifier into an ambient Node global.
-  function scope(statements,parent,params=[],asyncFunction=false,functionScope=false,defaults=[]) {
+  function scope(statements,parent,params=[],asyncFunction=false,functionScope=false,defaults=[],patterns=[]) {
     const names=new Set(params);
     if(functionScope)
       for(const name of collectVarBindings(statements))names.add(name);
@@ -356,7 +362,7 @@ export function parseTraining(source) {
           break;
         case 'Template':n.expressions.forEach(x=>value(x,e));break;
         case 'FunctionExpr':scope(n.body.body,n.name?{names:new Set([n.name]),parent:e}:e,
-          n.params,n.async,true,n.defaults);break;
+          n.parameterNames??n.params,n.async,true,n.defaults,n.parameterPatterns);break;
         case 'Await':
           if(!asyncFunction)reject(n,'await outside async function');
           value(n.argument,e);break;
@@ -429,7 +435,7 @@ export function parseTraining(source) {
           value(n.init,e);defaults(n.pattern);break;
         }
         case 'VariableGroup':n.declarations.forEach(x=>statement(x,e));break;
-        case 'Function':scope(n.body.body,e,n.params,n.async,true,n.defaults);break;
+        case 'Function':scope(n.body.body,e,n.parameterNames??n.params,n.async,true,n.defaults,n.parameterPatterns);break;
         case 'Block':scope(n.body,e,[],asyncFunction);break;
         case 'Switch':{
           value(n.discriminant,e);
@@ -494,6 +500,8 @@ export function parseTraining(source) {
         names:new Set(params),parent
       });
     });
+    for(const parsed of patterns??[])if(parsed)statement({type:'PatternBinding',kind:'parameter',
+      init:{type:'Literal'},pattern:parsed.pattern},{names:new Set(params),parent});
     statements.forEach(n=>statement(n,env));
   }
   scope(body,{names:new Set(['undefined','Object','Array','Number','BigInt','String','Math','Promise','Set','Error','TypeError','Date','console','host','NaN','Infinity','parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval','SharedArrayBuffer','DataView',...ownedConstructors,'Atomics']),parent:null},[],false,true);

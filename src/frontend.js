@@ -183,7 +183,7 @@ export function parse(source) {
 let site=0;
 export function compile(ast) {
   site=0;const programs={};let next=0;
-  function bodyProgram(body,params=[],async=false,defaults=[],restIndex=-1,inheritedStrict=false,parameterSites=[]) {
+  function bodyProgram(body,params=[],async=false,defaults=[],restIndex=-1,inheritedStrict=false,parameterSites=[],parameterPatterns=[]) {
     // Strictness belongs to the lexical code, not to the caller. Only an
     // unescaped, unparenthesized string in the directive prologue enables it;
     // nested functions (including arrows/default initializers) inherit it.
@@ -205,7 +205,7 @@ export function compile(ast) {
         for(const d of declarations)if(d.kind!=='var')emit('DECLARE',{name:d.id,kind:d.kind},d);
       }
       for(const n of nodes)if(n.type==='Function'){
-        const fid=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites);
+        const fid=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites,n.parameterPatterns);
         emit('DEF_FN',{name:n.id,codeId:fid,params:n.params,async:n.async},n);
       }
     }
@@ -227,7 +227,7 @@ export function compile(ast) {
           for(const a of n.args)expr(a);
           emit('CONSTRUCT',n.args.length,n);break;
         case 'FunctionExpr':{
-          const codeId=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites);
+          const codeId=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites,n.parameterPatterns);
           emit('MAKE_FUNCTION',{codeId,arrow:n.arrow,async:n.async,...(n.name?{name:n.name}:{})},n);
           break;
         }
@@ -756,7 +756,7 @@ export function compile(ast) {
     // A parameter expression has its own environment. All parameter names
     // exist in TDZ before initialization, then initialize left to right;
     // body var/function declarations are introduced only afterwards.
-    const parameterExpressions=defaults.some(Boolean);
+    const parameterExpressions=defaults.some(Boolean)||parameterPatterns.some(Boolean);
     if(parameterExpressions){
       params.forEach((name,i)=>{
         const initializer=defaults[i];
@@ -765,7 +765,8 @@ export function compile(ast) {
         // Supplied arguments initialize at their parameter, never at the first
         // body declaration. A shared body span would invent a second source
         // declaration receipt for this implicit binding operation.
-        if(!initializer){emit('PARAM_INIT',name,parameter);return;}
+        if(!initializer)emit('PARAM_INIT',name,parameter);
+        else {
         const guard=emit('DEFAULT_GUARD',{name,skipPc:null},initializer);
         expr(initializer);
         emit('INIT',name,initializer);
@@ -773,12 +774,17 @@ export function compile(ast) {
         instructions[guard].arg.skipPc=instructions.length;
         emit('PARAM_INIT',name,parameter);
         instructions[done].arg=instructions.length;
+        }
+        const parsed=parameterPatterns[i];
+        if(parsed)emitPattern({...parameter,...parsed,kind:'parameter',
+          init:{...parameter,type:'Identifier',name}});
       });
       emit('ENTER_BODY_ENV',null,body[0]);
     }
     statements(body);
     emit('CONST',{value:['undefined']},ast);emit('RETURN',null,ast);
-    programs[id]={id,params,restIndex,async,strict,parameterExpressions,varNames:collectVarBindings(body),instructions};return id;
+    programs[id]={id,params,restIndex,async,strict,parameterExpressions,
+      patternNames:parameterPatterns.flatMap(p=>(p?.bindings??[]).map(b=>b.name)),varNames:collectVarBindings(body),instructions};return id;
   }
   const entry=bodyProgram(ast.body);
   return {entry,programs,sites:Object.values(programs).flatMap(x=>x.instructions.map(({siteId,start,end,op})=>({siteId,start,end,op,codeId:x.id})))};

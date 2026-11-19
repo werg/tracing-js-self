@@ -271,6 +271,8 @@ export class Runtime {
       draft.envs[envId].bindings[name]={kind:'parameter',
         initialized:!this.programs[codeId].parameterExpressions,token:binding,version:0};
     });
+    for(const name of this.programs[codeId].patternNames??[])
+      draft.envs[envId].bindings[name]={kind:'parameter',initialized:false,token:token(U),version:0};
     for(const name of this.programs[codeId].parameterExpressions?[]:(this.programs[codeId].varNames??[]))
       if(!Object.hasOwn(draft.envs[envId].bindings,name))
         draft.envs[envId].bindings[name]={kind:'var',initialized:true,
@@ -438,15 +440,19 @@ export class Runtime {
           putOwn(out,String(decode(out.properties.length.value)),
             pending.currentValue,origin);
         else if(pending.method==='reduce')pending.accumulator=value;
-        const someMatched=pending.method==='some'&&truthy(value);
+        const matched=truthy(value),currentIndex=pending.index;
+        const stop=(['some','find','findIndex'].includes(pending.method)&&matched)||
+          pending.method==='every'&&!matched;
         pending.index++;
         pending.waitingFrameId=null;
-        if(!someMatched&&pending.index<pending.length){
+        if(!stop&&pending.index<pending.length){
           draft.control.a0.activeFrameId=caller.id;
           return;
         }
         value=pending.method==='reduce'?pending.accumulator:
-          pending.method==='forEach'?U:pending.method==='some'?['bool',someMatched]:['ref',pending.outputId];
+          pending.method==='forEach'?U:pending.method==='some'?['bool',stop]:
+          pending.method==='every'?['bool',!stop]:pending.method==='find'?(stop?pending.currentValue:U):
+          pending.method==='findIndex'?['num',stop?currentIndex:-1]:['ref',pending.outputId];
         delete caller.pendingArrayMethod;
         }
       }
@@ -552,16 +558,19 @@ export class Runtime {
       return true;
     }
     for(;p.index<p.length;p.index++){
+      if(![null,'Array.prototype','Object.prototype'].includes(objectPrototype(array)))
+        throw new TypeError('Array callback inherited index semantics outside profile');
       const index=String(p.index),slot=array.properties[index];
-      if(!slot||Object.hasOwn(array.accessors??{},index))
-        throw new TypeError('Array callback needs owned data slots');
-      const value=slot.value;
+      if(Object.hasOwn(array.accessors??{},index))
+        throw new TypeError('Array callback accessor continuation outside profile');
+      if(!slot&&!['find','findIndex'].includes(p.method))continue;
+      const value=slot?.value??U;
       const fn=draft.heap[p.callbackId];
       const params=p.method==='reduce'?
         [token(p.accumulator),token(value),token(['num',p.index]),token(['ref',p.arrayId])]:
         [token(value),token(['num',p.index]),token(['ref',p.arrayId])];
       const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,caller.id,null,params,
-        fn.arrow?fn.lexicalThis:U);
+        fn.arrow?fn.lexicalThis:p.thisArg??U);
       p.currentValue=value;
       p.waitingFrameId=child;
       draft.control.a0.activeFrameId=child;
@@ -810,8 +819,13 @@ export class Runtime {
       const siteId=frame.pendingArrayMethod.siteId;
       return this.commit('call.enter',(s,eventId)=>{
         const parent=s.frames[frame.id];
-        if(!this.advanceArrayCallback(s,parent,eventId))
-          throw new Error('Missing next owned array callback');
+        if(!this.advanceArrayCallback(s,parent,eventId)){
+          const p=parent.pendingArrayMethod;
+          const value=p.method==='reduce'?p.accumulator:p.method==='forEach'||p.method==='find'?U:
+            p.method==='findIndex'?['num',-1]:p.method==='some'?['bool',false]:
+            p.method==='every'?['bool',true]:['ref',p.outputId];
+          delete parent.pendingArrayMethod;this.stackPush(parent,value,eventId);return {result:value};
+        }
         return {causes:[{kind:'invocation',frameId:parent.pendingArrayMethod.waitingFrameId}]};
       },{siteId,sourceId:frame.codeId.split(':')[0],codeId:frame.codeId,invocationId:frame.id});
     }
@@ -1748,7 +1762,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             return {...operands(fn,...args),result:['ref',callable[1]],causes:[{kind:'invocation',frameId:id}]};
           }
           if(callable[0]==='builtinfn' &&
-             ['filter','map','reduce','sort','some','forEach'].some(m=>callable[1]==='Array.prototype.'+m)){
+             ['filter','map','reduce','sort','some','every','find','findIndex','forEach'].some(m=>callable[1]==='Array.prototype.'+m)){
             const array=receiver[0]==='ref'?s.heap[receiver[1]]:null;
             if(!array||array.kind!=='array'||Object.keys(array.accessors??{}).length)
               throw new TypeError('Array callback needs owned array data');
@@ -1761,8 +1775,8 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             if(s.heap[callback[1]].async)
               throw new TypeError('Async array callback is outside the bounded profile');
             const method=callable[1].slice('Array.prototype.'.length);
-            if(method!=='reduce'&&args.length>1)
-              throw new TypeError('Unsupported callback thisArg');
+            if(args.length>(method==='sort'?1:2))
+              throw new TypeError('Array callback argument budget');
             if(method==='sort'&&length>64)
               throw new RangeError('Sort comparator budget exceeded');
             if(method==='reduce' && args.length>2)
@@ -1776,14 +1790,16 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               if(args.length>1)accumulator=args[1].value;
               else {
                 if(length===0)guestFault('TypeError','Reduce of empty array with no initial value');
-                const first=array.properties['0'];
-                if(!first)throw new TypeError('Sparse reduction first slot unmodeled');
-                accumulator=first.value;start=1;
+                if(![null,'Array.prototype','Object.prototype'].includes(objectPrototype(array)))
+                  throw new TypeError('Reduction inherited index semantics outside profile');
+                while(start<length&&!Object.hasOwn(array.properties,String(start)))start++;
+                if(start===length)guestFault('TypeError','Reduce of empty array with no initial value');
+                accumulator=array.properties[String(start)].value;start++;
               }
             }
             f.pendingArrayMethod={method,arrayId:array.id,callbackId:callback[1],
               outputId,length,index:start,accumulator,waitingFrameId:null,
-              siteId:inst.siteId,currentValue:U};
+              siteId:inst.siteId,currentValue:U,thisArg:method==='reduce'?U:args[1]?.value??U};
             if(method==='sort'){
               const slots=[];
               for(let i=0;i<length;i++){
@@ -1801,7 +1817,8 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               return {...operands(fn,...args),causes:[{kind:'invocation',frameId:f.pendingArrayMethod.waitingFrameId}]};
             delete f.pendingArrayMethod;
             return {...operands(fn,...args),...result(method==='reduce'?accumulator:
-              method==='forEach'?U:method==='some'?['bool',false]:['ref',outputId])};
+              method==='forEach'||method==='find'?U:method==='findIndex'?['num',-1]:
+              method==='some'?['bool',false]:method==='every'?['bool',true]:['ref',outputId])};
           }
           if(callable[0]==='builtinfn' && callable[1].startsWith('Number.prototype.')){
             const method=callable[1].slice('Number.prototype.'.length);

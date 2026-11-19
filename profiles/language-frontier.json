@@ -106,6 +106,37 @@
       "detailed": "passed",
       "native": "untested",
       "tests": "test/training-pattern-expansion.test.js"
+    },
+    {
+      "id": "parameter-binding-patterns",
+      "domain": "bounded object/array/default/rest parameter patterns; left-to-right initialization, TDZ and body-var isolation; standard arrays for positional bindings",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "passed",
+      "native": "untested",
+      "tests": "test/training-parameter-patterns.test.js"
+    },
+    {
+      "id": "forward-pattern-default-closures",
+      "domain": "earlier default closure captures a later destructured parameter binding",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Detailed closure publication cannot yet defer capture cells through pattern object allocation",
+      "tests": "test/training-parameter-patterns.test.js"
+    },
+    {
+      "id": "array-search-callbacks",
+      "domain": "ordinary arrays find/findIndex/some/every and sparse map/filter/reduce; fixed length with live reads, early completion, strict callback receivers and abrupt completion; inherited index accessors/custom prototypes and async callbacks refused",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "passed",
+      "native": "untested",
+      "tests": "test/training-array-search.test.js"
     }
   ]
 }
