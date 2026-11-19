@@ -31,6 +31,12 @@ well as the conditional probabilities passing their declared numeric bounds.
    probability. Actual native modality masks and output-mode support calls must
    separately show that both choices are singleton text with probability one.
 
+Both paths first apply the same native deterministic CPU policy, with one CPU
+thread, NNPACK disabled and float32 model tensors. The report captures the actual
+backend settings on each path and rejects missing or different settings. Applying
+this policy only when the trainer starts would leave an earlier serving capture
+using different CPU kernels, invalidating the comparison.
+
 For the decoder comparison, the training readout also scores the actual serving
 emission as a diagnostic label. This is a read-only calculation after generation,
 with zero optimizer updates. It preserves the original emitted token IDs and

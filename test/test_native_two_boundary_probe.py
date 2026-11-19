@@ -204,5 +204,30 @@ class ProbabilityToleranceTests(unittest.TestCase):
         self.assertEqual(row["status"], "failed")
 
 
+
+class ExecutionSettingsTests(unittest.TestCase):
+    def capture(self):
+        return {"executionSettings": {
+            "deterministicAlgorithms": True, "cpuThreads": 1, "nnpackEnabled": False,
+            "float32MatmulPrecision": "highest", "defaultDtype": "torch.float32"}}
+
+    def test_same_native_cpu_policy_is_required(self):
+        left, right = self.capture(), self.capture()
+        self.assertEqual(PROBE.compare_execution_settings(left, right)["status"], "passed")
+
+    def test_earlier_service_default_nnpack_cannot_pass(self):
+        left, right = self.capture(), self.capture()
+        right["executionSettings"]["nnpackEnabled"] = True
+        right["executionSettings"]["deterministicAlgorithms"] = False
+        self.assertEqual(PROBE.compare_execution_settings(left, right)["status"], "failed")
+
+    def test_same_undeclared_or_nondeterministic_settings_are_not_enough(self):
+        left, right = self.capture(), self.capture()
+        left["executionSettings"]["deterministicAlgorithms"] = False
+        right["executionSettings"]["deterministicAlgorithms"] = False
+        self.assertEqual(PROBE.compare_execution_settings(left, right)["status"], "failed")
+        self.assertEqual(PROBE.compare_execution_settings({}, {})["status"], "failed")
+
+
 if __name__ == "__main__":
     unittest.main()

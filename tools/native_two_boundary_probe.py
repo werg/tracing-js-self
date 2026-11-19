@@ -38,6 +38,30 @@ def require(condition, message):
         raise ValueError(message)
 
 
+def execution_settings():
+    """Read the actual native CPU arithmetic policy on each measured path."""
+    import torch
+
+    return {
+        "deterministicAlgorithms": torch.are_deterministic_algorithms_enabled(),
+        "cpuThreads": torch.get_num_threads(),
+        "nnpackEnabled": torch._C._get_nnpack_enabled(),
+        "float32MatmulPrecision": torch.get_float32_matmul_precision(),
+        "defaultDtype": str(torch.get_default_dtype()),
+    }
+
+
+def compare_execution_settings(training, serving):
+    left, right = training.get("executionSettings"), serving.get("executionSettings")
+    valid = (isinstance(left, dict) and isinstance(right, dict) and left == right and
+             left.get("deterministicAlgorithms") is True and
+             left.get("cpuThreads") == 1 and left.get("nnpackEnabled") is False and
+             left.get("defaultDtype") == "torch.float32")
+    return {"status": "passed" if valid else "failed",
+            "training": left, "serving": right,
+            "scope": "Same actual deterministic CPU arithmetic configuration, including NNPACK"}
+
+
 @contextmanager
 def coupled_samples(seed):
     """Keep the native draw; remove irrelevant differences in earlier RNG use."""
@@ -438,7 +462,7 @@ def _training_at(checkpoint, prepared, packet, *, identity, boundary, seed, emit
             boundaryIndex=boundary, coupledSamples=samples,
             preparedEpisodeId=episode.episode_id, preparedCorpusIdentity=corpus.identity,
             actualModelTensorIdentity=SMOKE.state_identity(model.served_state_dict()),
-            servedStateDictCompared=True,
+            servedStateDictCompared=True, executionSettings=execution_settings(),
             sameEmissionTrainingReadout={
                 "originalEmissionUsedWithoutRepair": True, "optimizerSteps": 0,
                 "capture": replay, "comparison": replay_comparison,
@@ -524,7 +548,8 @@ def _serving_pair(bundle_path, packet, *, identity, seed, max_tokens):
             "Read-only serving comparison changed model weights")
     for index, result in enumerate((first, second), 1):
         result.update(boundaryIndex=index, actualServedTensorIdentity=SMOKE.state_identity(model.served_state_dict()),
-                      modelStateUnchanged=True, runtimeClosed=True)
+                      modelStateUnchanged=True, runtimeClosed=True,
+                      executionSettings=execution_settings())
     return (first, second), actual, committed
 
 
@@ -546,7 +571,12 @@ def main():
     consumer = args.consumer_root.resolve()
     sys.path.insert(0, str(consumer / "src"))
     import torch
+    from megatoken.runtime import seed_everything
     torch.set_num_threads(1)
+    # Apply the same native backend policy before either model path runs.
+    # Calling this only inside _training_at left the earlier service on the
+    # default NNPACK/determinism settings and compared different CPU kernels.
+    seed_everything(args.seed, True)
     SMOKE.require_clean_checkout(tracer)
     SMOKE.require_clean_checkout(consumer)
     packet = json.loads(subprocess.check_output(
@@ -585,6 +615,7 @@ def main():
         prior = compare_priors(training, emitted)
         prior["scope"] = f"Actual native Gaussian at generated boundary {index}"
         recurrence = compare_recurrent_states(training, emitted)
+        backend = compare_execution_settings(training, emitted)
         tracks = compare_track_context(training, emitted)
         controls = compare_decision_controls(training, emitted)
         singletons = compare_singleton_text_choices(training, emitted)
@@ -592,13 +623,13 @@ def main():
         support = compare_output_support(training, emitted)
         decoder = training["sameEmissionTrainingReadout"]["comparison"]
         tensor_identity = training["actualModelTensorIdentity"] == emitted["actualServedTensorIdentity"]
-        passed = all(row["status"] == "passed" for row in (prior, recurrence, tracks, controls, singletons, samples, support, decoder))
+        passed = all(row["status"] == "passed" for row in (prior, recurrence, backend, tracks, controls, singletons, samples, support, decoder))
         passed &= tensor_identity
         prior["encoderCallAuditComparable"] = False
         prior["encoderCallAuditInterpretation"] = controls["encoderHookScopes"]
         comparisons.append({
             "boundary": index, "status": "passed" if passed else "failed",
-            "gaussian": prior, "recurrentState": recurrence, "tracks": tracks,
+            "gaussian": prior, "recurrentState": recurrence, "executionSettings": backend, "tracks": tracks,
             "decisionControls": controls, "singletonTextChoices": singletons,
             "actualSampledFacets": samples, "outputSupport": support, "sameEmissionDecoderConditionals": decoder,
             "loadedModelTensorsExactlyEqual": tensor_identity,
