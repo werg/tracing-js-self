@@ -51,6 +51,11 @@ test('top-level await completion and bounded unresolved promises',async()=>{
  const result=await run('await new Promise(()=>{})',meta(),{timeoutMs:15});
  assert.equal(result.status,'unsupported');
  assert.match(result.reason,/deadline/);
+ const cpu=await run('while(true){}',meta(),{timeoutMs:15});
+ assert.equal(cpu.status,'unsupported');
+ assert.match(cpu.reason,/deadline/);
+ const spoof=await run('throw {code:"ERR_SCRIPT_EXECUTION_TIMEOUT"}',meta());
+ assert.equal(spoof.status,'failed');
 });
 
 test('bounded asynchronous native ESM module completion remains non-owned',async()=>{
