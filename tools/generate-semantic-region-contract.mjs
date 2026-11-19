@@ -29,8 +29,13 @@ for(const fixture of fixtures){
     regionCoverage:result.exported.sidecar.regionCoverage});
 }
 const protocolFixtures=JSON.parse(await readFile(new URL('../test/fixtures/semantic-protocol-v8.json',import.meta.url),'utf8'));
+const protocolSources=JSON.parse(await readFile(new URL('../test/fixtures/semantic-protocol-region-v8.json',import.meta.url),'utf8'));
+if(protocolSources.schema!=='semantic-protocol-region-fixtures/1'||!Array.isArray(protocolSources.cases)||!protocolSources.cases.length)
+  throw new Error('Missing source-qualified protocol interoperability fixtures');
 const manifest=[...examples.map(row=>({id:row.id,publicDigest:hashAlgorithmData(row.public),contextDigest:hashAlgorithmData(row.contexts)})),
-  {id:'protocol-machine',schema:protocolFixtures.schema,fixtureDigest:hashAlgorithmData(protocolFixtures)}];
+  {id:'protocol-machine',schema:protocolFixtures.schema,fixtureDigest:hashAlgorithmData(protocolFixtures)},
+  ...protocolSources.cases.map(row=>({id:'protocol-region:'+row.id,
+    publicDigest:hashAlgorithmData(row.artifact.public),contextDigest:hashAlgorithmData(row.artifact.contexts)}))];
 const contract=semanticV8Contract(records,manifest),interop={schema:'semantic-v8-interoperability/1',
   contractDigest:contract.digest,interoperabilityDigest:contract.interoperabilityDigest,examples};
 for(const [relative,value] of [['../contracts/semantic-execution-v8.json',contract],['../test/fixtures/semantic-regions-v8.json',interop]]){
@@ -38,4 +43,5 @@ for(const [relative,value] of [['../contracts/semantic-execution-v8.json',contra
   if(check){if(await readFile(path,'utf8')!==bytes)throw new Error('Regenerate '+path);}
   else await writeFile(path,bytes);
 }
-process.stdout.write(JSON.stringify({valid:true,contractDigest:contract.digest,examples:examples.map(row=>({id:row.id,...row.regionCoverage})),mode:check?'checked':'generated'})+'\n');
+process.stdout.write(JSON.stringify({valid:true,contractDigest:contract.digest,interoperabilityDigest:contract.interoperabilityDigest,
+  examples:examples.map(row=>({id:row.id,...row.regionCoverage})),protocolSources:protocolSources.cases.map(row=>row.id),mode:check?'checked':'generated'})+'\n');
