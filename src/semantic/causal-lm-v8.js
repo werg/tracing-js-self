@@ -218,6 +218,9 @@ export function createCausalLmV8Selector({runtime,tokenizer,checkpointIdentity,e
       evidence=emissions[candidate.selection.attempt],started=performance.now();
     try{
       require(initialized&&epoch===initializationEpoch,'model initialization changed before semantic commit');
+      // The host may publish another transition while inference is awaiting
+      // tokens. A prediction for an older causal prefix cannot commit into it.
+      require(isDeepStrictEqual(context,harness.modelContext(invocationId)),'public context changed during generation');
       const decoded=decodeCausalLmV8Target(candidate.record),entry=decoded.kind==='region'?
         harness.entry(invocationId,decoded.record.region):decoded.kind==='algorithm'?
           pureRegionEntry(harness.program(invocationId),harness.activation(invocationId).controller,harness.timeline.length):null;
