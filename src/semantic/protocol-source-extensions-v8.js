@@ -2,4 +2,5 @@
 // install these adapters, and the independent worker never imports this file.
 import {memorySourceAdapterV8} from './protocol-memory-source-v8.js';
 import {createConstructionSourceAdapterV8} from './protocol-construction-source-v8.js';
-export const PROTOCOL_SOURCE_ADAPTERS_V8=Object.freeze([memorySourceAdapterV8,createConstructionSourceAdapterV8]);
+import {createIteratorSourceAdapterV8} from './protocol-iterator-source-v8.js';
+export const PROTOCOL_SOURCE_ADAPTERS_V8=Object.freeze([memorySourceAdapterV8,createConstructionSourceAdapterV8,createIteratorSourceAdapterV8]);

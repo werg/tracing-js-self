@@ -29,6 +29,7 @@ for(const fixture of fixtures){
     regionCoverage:result.exported.sidecar.regionCoverage});
 }
 const protocolFixtures=JSON.parse(await readFile(new URL('../test/fixtures/semantic-protocol-v8.json',import.meta.url),'utf8'));
+const iteratorFixtures=JSON.parse(await readFile(new URL('../test/fixtures/semantic-iterator-v8.json',import.meta.url),'utf8'));
 const protocolSources=JSON.parse(await readFile(new URL('../test/fixtures/semantic-protocol-region-v8.json',import.meta.url),'utf8'));
 if(protocolSources.schema!=='semantic-protocol-region-fixtures/1'||!Array.isArray(protocolSources.cases)||!protocolSources.cases.length)
   throw new Error('Missing source-qualified protocol interoperability fixtures');
@@ -36,7 +37,7 @@ if(protocolSources.schema!=='semantic-protocol-region-fixtures/1'||!Array.isArra
 // bytes, independently rebuild every source-bound artifact and every public
 // context; a stale or forged artifact must not become the release contract.
 const {recheckProtocolRegionEvidence}=await import('../src/semantic/protocol-source-v8.js');
-const ids=new Set(examples.map(row=>row.id).concat('protocol-machine'));
+const ids=new Set(examples.map(row=>row.id).concat('protocol-machine','iterator-machine'));
 for(const row of protocolSources.cases){
   const id='protocol-region:'+row?.id;
   if(typeof row?.id!=='string'||!row.id||ids.has(id))
@@ -48,6 +49,7 @@ for(const row of protocolSources.cases){
 }
 const manifest=[...examples.map(row=>({id:row.id,publicDigest:hashAlgorithmData(row.public),contextDigest:hashAlgorithmData(row.contexts)})),
   {id:'protocol-machine',schema:protocolFixtures.schema,fixtureDigest:hashAlgorithmData(protocolFixtures)},
+  {id:'iterator-machine',schema:iteratorFixtures.schema,fixtureDigest:hashAlgorithmData(iteratorFixtures)},
   ...protocolSources.cases.map(row=>({id:'protocol-region:'+row.id,
     publicDigest:hashAlgorithmData(row.artifact.public),contextDigest:hashAlgorithmData(row.artifact.contexts)}))];
 const contract=semanticV8Contract(records,manifest),interop={schema:'semantic-v8-interoperability/1',

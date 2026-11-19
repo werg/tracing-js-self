@@ -72,3 +72,46 @@ record sequences with initial and expected shared states. These are explicitly
 controller-contract fixtures, not source qualifications. Regenerate them with
 `node tools/generate-protocol-iterator-fixtures.mjs` after changing the registered
 protocol state schema, and recheck them in the independent native consumer.
+
+## Independent source observations
+
+`createIteratorObservationAdapterV8` is an independent V8 observer. It imports
+no owned runtime, public iterator evaluator, or source projector. Before guest
+execution it captures the actual realm's iterator method and prototype
+identities. It also recognizes outer-realm array inputs decoded by the worker.
+
+Completion instrumentation wraps explicit iterator method calls with a curried
+lookup helper: the receiver and computed key are evaluated once, the original
+property lookup happens before arguments, and the selected function is applied
+once with the original receiver. Primitive boxing uses a function captured from
+the guest realm. Private references, `super` references and optional chains are
+left intact. The observer never calls `next` merely to inspect an iterator.
+
+The observer retains a private cursor receipt only for actual calls to the
+captured builtin factories and methods. Metadata snapshots compare its source
+alias, iteration kind, UTF-16 position and exhaustion flag against the owned
+observer, using the existing independent reference identity mapping. A native
+iterator obtained through an unobserved path is refused rather than described
+as an ordinary empty object. Ordinary result objects and entry pairs still pass
+through the descriptor/value observer.
+
+The source tests include a teacher cursor mutation that leaves ordinary source
+completion observations unchanged. Independent iterator metadata rejects it.
+The registered source adapter now checks explicit values/keys/entries/string
+iteration, helper-returned iterators, ordinary input arrays, and the existing
+standard-array `for…of` path. It compares the complete selected cursor after
+each owned change and refuses hidden properties or unexplained allocations.
+The normal source gate runs the original and independently instrumented source,
+compares operation/branch/completion/metadata receipts, reconstructs every public
+context, and replays checkpoints. Fresh rechecking repeats all these steps.
+
+`test/fixtures/semantic-iterator-region-v8.json` is the complete source-qualified
+mixed fixture, with scalar arithmetic before and after iterator work. Regenerate
+it with `node tools/generate-protocol-iterator-source-fixtures.mjs`; `--check`
+requires exact stored bytes. Its local evidence is distinct from production
+native admission, which still requires the separately pinned native consumer.
+
+Captured builtin callable values, iterator objects escaping the ordinary data
+boundary, general custom-iterator cleanup, optional iterator calls, and builtin
+index getters remain explicit source refusals. The profile does not silently
+label those cases as supported.
