@@ -12,13 +12,14 @@ import {defineRegionProgram,validateRegionProgram,sharedRegionState,cloneRegionC
   REGION_CONTEXT_VERSION,REGION_CONTINUATION_VERSION,REGION_PROFILE} from './regions.js';
 import {pureRegionEntry,evaluatePureRegion,encodePureRegionRecord,decodePureRegionRecord} from './pure-region-v8.js';
 import {encodeProtocolRecordV8,decodeProtocolRecordV8} from './protocol-codec-v8.js';
-import {applyProtocolRecordV8,assertProtocolDetailCompatible,restoreProtocolStateV8} from './protocol-state-v8.js';
+import {applyProtocolRecordV8,assertProtocolDetailCompatible,restoreProtocolStateV8,allowsProtocolInternalSchedulerV8} from './protocol-state-v8.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual;
 const clean=value=>JSON.parse(JSON.stringify(value));
 const fail=message=>{const error=new TypeError('Region execution: '+message);error.category='region-authority';throw error;};
 const protocolCheckpointSchema='semantic-protocol-continuation/1';
 const protocolDetailKinds=new Set(['allocate','bind','compute','choose','read','write','call','return','throw','end']);
+const internalSchedulerDetailKinds=new Set(['promise','await','resume','job','transfer']);
 function oldEpisode(inner,timeline){return {public:{schema:HARNESS_ENVELOPE_VERSION,
   traceFormat:HARNESS_SELECTED_TRACE_VERSION,contextFormat:CONTEXT_VERSION,profile:HARNESS_PROFILE,timeline}};}
 
@@ -82,7 +83,8 @@ export class RegionExecutionHarness {
       const record=decodeDetailedRecord(line,{role:'generated'});
       const controller=this.activation(invocationId).controller;
       if(controller.protocol){
-        if(!protocolDetailKinds.has(record.kind))fail('asynchronous or external work requires an extended protocol profile');
+        if(!protocolDetailKinds.has(record.kind)&&!(internalSchedulerDetailKinds.has(record.kind)&&
+          allowsProtocolInternalSchedulerV8(controller,record)))fail('asynchronous or external work requires an extended protocol profile');
         assertProtocolDetailCompatible(controller,record);
       }
       const result=this.inner.selected(invocationId,encodeWitness(record.kind,record.fields));
@@ -125,11 +127,14 @@ export class RegionExecutionHarness {
     this.sync();const record=typeof line==='string'?decodeProtocolRecordV8(line):line;
     line=encodeProtocolRecordV8(record);
     const activation=this.activation(invocationId),controller=activation.controller,realm=this.realms.get(activation.realmId);
-    if(!['running','returned'].includes(activation.status)||controller.completion)fail('protocol invocation is not runnable');
+    if(!(['running','returned'].includes(activation.status)||activation.status==='suspended'&&
+      allowsProtocolInternalSchedulerV8(controller,record))||controller.completion)fail('protocol invocation is not runnable');
     if(activation.deadline!==null&&activation.deadline<=this.inner.now())fail('protocol invocation deadline expired');
-    if(this.invocations.size!==1||activation.realmPolicy!=='fresh'||controller.effects.size||controller.jobs.size||
-      controller.continuations.size||controller.activeJob||this.intents.size||this.handlers.size||this.inner.callbacks.size||
-      this.inner.closureQueue.length)fail('protocol profile requires one synchronous fresh invocation without host work');
+    if(this.invocations.size!==1||activation.realmPolicy!=='fresh'||controller.effects.size||this.intents.size||
+      this.handlers.size||this.inner.callbacks.size||this.inner.closureQueue.length)
+      fail('protocol profile requires one fresh invocation without external host work');
+    if((controller.jobs.size||controller.continuations.size||controller.activeJob)&&
+      !allowsProtocolInternalSchedulerV8(controller,record))fail('protocol profile requires a declared internal scheduler');
     if(!this.inner.sourceAvailability.get(activation.trackId)?.has(activation.programId))fail('protocol source is unavailable');
     if(controller.generated>=controller.maxGenerated)fail('protocol generated record bound');
     const staged=cloneRegionController(controller),result=applyProtocolRecordV8(staged,record);staged.generated++;
@@ -137,7 +142,7 @@ export class RegionExecutionHarness {
     Object.assign(controller,staged);
     realm.heap=controller.heap;realm.locals=controller.locals;realm.scheduler=controller.scheduler;
     if(controller.completion){activation.status='completed';realm.running=null;}
-    else if(!controller.stack.length){activation.status='returned';realm.running=null;}
+    else if(!controller.stack.length){activation.status=controller.pending?'returned':'suspended';realm.running=null;}
     else {activation.status='running';realm.running=invocationId;}
     this.append('generated','protocol',{session:this.inner.sessionId,track:activation.trackId,invocationId,line});
     return {...result,state};

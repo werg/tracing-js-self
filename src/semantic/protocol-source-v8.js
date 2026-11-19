@@ -34,10 +34,10 @@ function inputFixture(fixture){
     limits:{maxSteps,maxGenerated,timeoutMs},args:fixture.args??[]};
 }
 function executeOwned(input){
-  const runtime=createRuntime({maxSteps:input.limits.maxSteps}).startEntry({text:input.source,functionName:input.entry,args:input.args});
+  const runtime=createRuntime({maxSteps:input.limits.maxSteps}).startEntry({text:input.source,functionName:input.entry,args:input.args,allowAsync:true});
   const progress=runtime.drive(),bundle=runtime.exportRun();
   if(progress.kind!=='terminated'&&!(progress.kind==='runtime.failure'&&runtime.state.control.a0.failure?.kind==='guest-abrupt'))
-    fail('owned execution is not a completed synchronous source invocation');
+    fail('owned execution is not a completed source invocation');
   return bundle;
 }
 async function buildSourceArtifact(input){
@@ -45,10 +45,12 @@ async function buildSourceArtifact(input){
   if(!projection.claims.some(row=>row.kind==='protocol'&&
     (row.record.kind.startsWith('symbol.')||row.record.kind.startsWith('property.')))&&!projection.extensions?.length)
     fail('no declared source protocol boundary');
-  const referenceInput={source:input.source,entry:input.entry,inputGraph:encodeNativeGraph(input.args)},
+  const completionPolicy=projection.completionPolicy?{completionPolicy:projection.completionPolicy}:{},
+    referenceInput={source:input.source,entry:input.entry,inputGraph:encodeNativeGraph(input.args),
+      ...(projection.completionPolicy==='await-returned-promise'?{awaitReturnedPromise:true}:{})},
     reference=await auditProtocolSourceV8({bundle:archive,referenceInput,outcome:projection.outcome,timeoutMs:input.limits.timeoutMs});
   const publicData={schema:'semantic-protocol-source-target/1',sourceDigest:hashAlgorithmData(input.source),
-    entry:input.entry,inputGraph:projection.inputGraph,claims:projection.claims.map(({kind,line})=>({kind,line}))};
+    entry:input.entry,inputGraph:projection.inputGraph,...completionPolicy,claims:projection.claims.map(({kind,line})=>({kind,line}))};
   return clean({public:publicData,sidecar:{schema:PROTOCOL_SOURCE_ARTIFACT_V8_SCHEMA,admission:'locally_verified',referenceStatus:'agreed',
     profile:projection.sourceProfile,sourceFamily:input.family,sourceLineage:input.family,ancestorIds:input.ancestorIds,
     producerRevision:input.producerRevision,license:input.license,trustTier:input.trustTier,
@@ -69,11 +71,12 @@ export function projectProtocolRegionWitness(sourceArtifact){
   if(!eq(projection.claims,side.compiler.claims)||!eq(projection.extensions,side.compiler.extensions??[])||
     !eq(projection.outcome,side.outcome)||
     !eq({schema:'semantic-protocol-source-target/1',sourceDigest:hashAlgorithmData(projection.source),entry:projection.entry,
-      inputGraph:projection.inputGraph,claims:projection.claims.map(({kind,line})=>({kind,line}))},sourceArtifact.public))
+      inputGraph:projection.inputGraph,...(projection.completionPolicy?{completionPolicy:projection.completionPolicy}:{}),
+      claims:projection.claims.map(({kind,line})=>({kind,line}))},sourceArtifact.public))
     fail('source target or projection certificate changed');
   harness.publishProgram({programId:'program1',source:projection.source,entry:projection.entry,capabilities:[]});
   harness.admitInvocation({programId:'program1',invocationId:'invocation1',trackId:'worker1',realmId:'realm1',triggerId:'protocol-entry',
-    inputGraph:projection.inputGraph,realmPolicy:'fresh',completionPolicy:'call-return'});
+    inputGraph:projection.inputGraph,realmPolicy:'fresh',completionPolicy:projection.completionPolicy??'call-return'});
   const locations=defineRegionProgram({source:projection.source,entry:projection.entry}).provenance.locations,
     contexts=[],receipts=[],refusals=[];
   let compactRecords=0,detailedRecords=0,protocolRecords=0,compactBytes=0,detailedBytes=0,protocolBytes=0;

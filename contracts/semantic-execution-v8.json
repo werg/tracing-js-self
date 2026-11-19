@@ -540,6 +540,25 @@
             "kind",
             "iterated",
             "result"
+          ],
+          "promise.join": [
+            "kind",
+            "mode",
+            "result",
+            "inputs",
+            "jobs",
+            "output",
+            "error"
+          ],
+          "promise.join.step": [
+            "kind",
+            "result",
+            "job",
+            "entry",
+            "output",
+            "error",
+            "status",
+            "value"
           ]
         },
         "profile": "symbols-ordinary-properties/1",
@@ -1420,6 +1439,39 @@
         ],
         "capabilities": "Builtin array keys/values/entries and Unicode string iteration, live array length, sticky exhaustion and explicit result/pair allocation identities."
       },
+      "promiseJoins": {
+        "profile": "promise-join/1",
+        "schema": "semantic-promise-join-state/1",
+        "modes": [
+          "all",
+          "race"
+        ],
+        "fields": [
+          "schema",
+          "mode",
+          "inputs",
+          "jobs",
+          "observed",
+          "values",
+          "settled",
+          "output",
+          "error"
+        ],
+        "jobFields": [
+          "status",
+          "owner",
+          "promise",
+          "reaction",
+          "closure",
+          "rejectionClosure",
+          "target",
+          "sequence",
+          "joinResult",
+          "joinIndex",
+          "readySequence"
+        ],
+        "capabilities": "Ordered Promise dependencies, FIFO internal jobs, first settlement and explicit late no-op steps; fresh result arrays are named only when allocated."
+      },
       "binaryMemory": {
         "profile": "owned-binary-memory/1",
         "heapFields": {
@@ -1480,7 +1532,7 @@
         "dataViewByteOrder": "explicit per operation",
         "capabilities": "Fixed ordinary buffers and fixed/growable shared buffers; scalar conversions; shared view identities; bounded single-agent atomic operations. No detach, transfer, host buffers or cross-agent scheduling."
       },
-      "lifecycle": "First protocol profile is one synchronous fresh invocation with no host work, jobs or asynchronous observations."
+      "lifecycle": "One fresh invocation without external host work. Declared Promise joins may use internal Promise, await, resume, job and transfer detail; join steps require an empty stack and the FIFO ready head. External observations remain outside protocol profiles."
     },
     "checkpoint": {
       "fields": [
@@ -1515,7 +1567,7 @@
       "default": "not promoted by engineering receipts alone"
     }
   },
-  "digest": "3adb1eab2d8b0d51472014bbfa9b7146d217cd6de2fcc7a9c63a3d9af1ae53d9",
+  "digest": "a21100d11a4b5a2c6da47905cff4ca9100edd01ce4e085b1557909c03fd21719",
   "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
   "fixtures": [
     {
@@ -1540,7 +1592,7 @@
       "reason": "old artifacts require their original contract"
     }
   ],
-  "interoperabilityDigest": "bb357a86f10500d0633effad391437fa0ed14531b0ce92ac56c379e7e4228b59",
+  "interoperabilityDigest": "643a74ddb62cfd753b9e98fe848189300c2f28792e111ca243403a5a7b6cdba4",
   "interoperability": [
     {
       "id": "ordered-map",
@@ -1586,6 +1638,16 @@
       "id": "protocol-region:builtin-iterator-mixed-arithmetic",
       "publicDigest": "a2e355eed02c63c41850dbff17cac4d5c8fc07b71ae5fccf214ab4d4b9de5c33",
       "contextDigest": "9f0bc0d24903e7f3a1390745b5f59b6a41b76320d453709d677713bd76e03d8e"
+    },
+    {
+      "id": "protocol-region:source-promise-all-reaction-arithmetic",
+      "publicDigest": "9e08c5348024e3b613a5e4c6807d1c62d97f8603cde3ec8afdba0b3d99dc77dd",
+      "contextDigest": "6f6405581d606f69a712da43294329d9f353a9e04c8c33e8e217a4d11341bc6b"
+    },
+    {
+      "id": "protocol-region:source-promise-join-rejection-finally",
+      "publicDigest": "7d7365fa0f71e2301434f05bc1da3766e09f85588b76d12f94fc4380d5687001",
+      "contextDigest": "029c507d4a57126395c1b3cce6f516f51ed9d6614c93b1e3a556aafaeeb8629e"
     }
   ]
 }

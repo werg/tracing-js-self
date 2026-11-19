@@ -86,6 +86,9 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
   adapters=adapters.map(adapter=>typeof adapter==='function'?adapter({bundle,source}):adapter).filter(Boolean);
   if(adapters.some(adapter=>typeof adapter.id!=='string'||!adapter.id||adapter.id.length>128)||
     new Set(adapters.map(adapter=>adapter.id)).size!==adapters.length)refuse('distinct versioned extension identities required');
+  const projectors=adapters.filter(adapter=>typeof adapter.compile==='function');
+  if(projectors.length>1)refuse('source profile selects more than one complete event projector');
+  if(projectors.length)return projectors[0].compile({bundle,source,maxGenerated});
   const usedAdapters=new Set(),heapOwners=new Map(),frameOwners=new Map();
   const use=adapter=>{if(typeof adapter.id!=='string'||!adapter.id)refuse('extension requires a stable profile identity');usedAdapters.add(adapter.id);};
   function extension(method,...args){for(const adapter of adapters){const result=adapter[method]?.(...args);
