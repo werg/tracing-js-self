@@ -95,5 +95,22 @@ and repeated-super guest errors remain explicit unsupported continuation
 profiles here; the owned runtime supports them separately. Until their public
 records exist, the source adapter must refuse those executions.
 
+## Source identities for implicit callable bodies
+
+Explicit constructors and methods retain their ordinary `function:<start>`
+identity. Source-created bodies without a Function node use exactly
+`class:<classStart>:constructor`, `class:<classStart>:instance`, or
+`class:<classStart>:static`. The decimal offset is the Class node's start in the
+immutable original source, without leading zeroes. An explicit constructor
+precludes the synthetic constructor identity. An instance initializer exists
+only for instance fields or private instance methods; a static initializer
+exists only for static fields, private static methods, or static blocks.
+
+`hasConstructionSourceCallableV8` checks that membership using a source-only
+Acorn inventory. It neither grants constructor capabilities nor executes a
+body. Private accessor classes are excluded from synthetic membership until
+their separate protocol is implemented. The native consumer must check the same
+source membership in addition to ordinary call and constructor-state guards.
+
 Pinned semantics: [ECMAScript 2026 class evaluation](https://tc39.es/ecma262/2026/multipage/ecmascript-language-functions-and-classes.html#sec-runtime-semantics-classdefinitionevaluation)
 and [private element operations](https://tc39.es/ecma262/2026/multipage/abstract-operations.html#sec-privatefieldadd).
