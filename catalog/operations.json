@@ -45,6 +45,11 @@
       "kind": "algorithm"
     },
     {
+      "operationId": "function.home",
+      "version": 1,
+      "kind": "algorithm"
+    },
+    {
       "operationId": "primitive.binary",
       "version": 1,
       "kind": "primitive"
@@ -236,6 +241,11 @@
     },
     {
       "operationId": "reference.this",
+      "version": 1,
+      "kind": "algorithm"
+    },
+    {
+      "operationId": "reference.super",
       "version": 1,
       "kind": "algorithm"
     },
