@@ -14,7 +14,7 @@ export function collectVarBindings(statements) {
       case 'Block':n.body.forEach(visit);break;
       case 'If':visit(n.consequent);visit(n.alternate);break;
       case 'For':visit(n.init);visit(n.body);break;
-      case 'ForOf':if(n.kind==='var')for(const name of n.bindings?n.bindings.map(b=>b.name):[n.id])names.add(name);visit(n.body);break;
+      case 'ForIn':case 'ForOf':if(n.kind==='var')for(const name of n.bindings?n.bindings.map(b=>b.name):[n.id])names.add(name);visit(n.body);break;
       case 'While':case 'DoWhile':case 'Label':visit(n.body);break;
       case 'Switch':for(const c of n.cases)c.body.forEach(visit);break;
       case 'Try':visit(n.block);visit(n.handler?.body);visit(n.finalizer);break;
@@ -249,6 +249,7 @@ export function compile(ast) {
           break;
         case 'Identifier':emit('GET',n.name,n);break;
         case 'This':emit('THIS',null,n);break;
+        case 'NewTarget':emit('NEW_TARGET',null,n);break;
         case 'Unary':
           // typeof of an identifier must inspect the binding without first
           // throwing on an unresolvable name. Owned TDZ remains observable.
@@ -282,6 +283,17 @@ export function compile(ast) {
         }
         case 'Await':expr(n.argument);emit('AWAIT',null,n);break;
         case 'Binary':
+          if(n.operator==='instanceof'){
+            const salt=++forOfIndex,left='[[instance value '+salt+']]',right='[[instance constructor '+salt+']]';
+            emit('ENTER_SCOPE',null,n);for(const name of [left,right])emit('DECLARE',{name,kind:'const'},n);
+            expr(n.left);emit('INIT',left,n);expr(n.right);emit('REQUIRE_OBJECT',null,n);emit('INIT',right,n);
+            emit('GET',right,n);emit('CONST',{value:['symbol','well-known:hasInstance']},n);emit('GET_METHOD',null,n);
+            const hook=emit('LOGICAL_JUMP',{operator:'??',to:null},n);emit('POP',null,n);
+            emit('GET',left,n);emit('GET',right,n);emit('INSTANCEOF_DEFAULT',null,n);
+            const done=emit('JUMP',null,n);instructions[hook].arg.to=instructions.length;
+            emit('GET',left,n);emit('CALL',1,n);emit('INSTANCEOF_RESULT',null,n);
+            instructions[done].arg=instructions.length;emit('LEAVE_SCOPE',null,n);break;
+          }
           if(['&&','||','??'].includes(n.operator)) {expr(n.left);const j=emit('LOGICAL_JUMP',{operator:n.operator,to:null},n);emit('POP',null,n);expr(n.right);instructions[j].arg.to=instructions.length;}
           else {expr(n.left);expr(n.right);emit('BINARY',n.operator,n);}break;
         case 'OptionalChain':{
@@ -671,7 +683,7 @@ export function compile(ast) {
         case 'Block':statements(n.body,true);break;
         case 'Label':{
           const labels=[...(n.labels??[]),n.label];
-          if(['For','ForOf','While','DoWhile','Switch','Label'].includes(n.body.type)){
+          if(['For','ForIn','ForOf','While','DoWhile','Switch','Label'].includes(n.body.type)){
             stmt({...n.body,labels});break;
           }
           const entry=emit('LOOP_ENTER',null,n);
@@ -732,6 +744,30 @@ export function compile(ast) {
           instructions[entry].arg={breakPc:end,continuePc:testPc,labels:n.labels??[]};
           instructions[no].arg=end;
           break;
+        }
+        case 'ForIn':{
+          const salt=++forOfIndex,enumerator='[[for-in cursor '+salt+']]',step='[[for-in step '+salt+']]',
+            item=n.bindings?'[[for-in item '+salt+']]':n.id;
+          emit('ENTER_SCOPE',null,n);
+          for(const name of [enumerator,step])emit('DECLARE',{name,kind:'let'},n);
+          if(n.kind!=='var')for(const name of n.bindings?n.bindings.map(b=>b.name):[n.id])emit('DECLARE',{name,kind:n.kind},n);
+          expr(n.iterable);emit('FOR_IN_CREATE',null,n);emit('INIT',enumerator,n);
+          emit('CONST',{value:['undefined']},n);emit('INIT',step,n);
+          const entry=emit('LOOP_ENTER',null,n),top=instructions.length;
+          emit('GET',enumerator,n);emit('FOR_IN_NEXT',null,n);emit('SET',step,n);emit('POP',null,n);
+          emit('GET',step,n);emit('CONST',{value:['str','done']},n);emit('GET_PROP',null,n);
+          const body=emit('JUMP_IF_FALSE',null,n),done=emit('JUMP',null,n);
+          instructions[body].arg=instructions.length;
+          emit('ENTER_SCOPE',null,n);
+          if(n.bindings)emit('DECLARE',{name:item,kind:'const'},n);
+          if(n.kind!=='var')for(const name of n.bindings?n.bindings.map(b=>b.name):[n.id])emit('DECLARE',{name,kind:n.kind},n);
+          emit('GET',step,n);emit('CONST',{value:['str','value']},n);emit('GET_PROP',null,n);
+          emit(n.kind==='var'&&!n.bindings?'SET':'INIT',item,n);if(n.kind==='var'&&!n.bindings)emit('POP',null,n);
+          if(n.pattern)emitPattern({...n,type:'PatternBinding',init:{...n,type:'Identifier',name:item}});
+          loopDepth++;stmt(n.body);loopDepth--;emit('LEAVE_SCOPE',null,n);emit('JUMP',top,n);
+          const end=instructions.length;emit('LOOP_EXIT',null,n);
+          instructions[entry].arg={breakPc:end,continuePc:top,labels:n.labels??[]};instructions[done].arg=end;
+          emit('LEAVE_SCOPE',null,n);break;
         }
         case 'ForOf':{
           const salt=++forOfIndex,iterable='[[for-of iterable '+salt+']]';

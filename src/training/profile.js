@@ -8,7 +8,7 @@ import {supportsPinnedRegExp} from '../owned-pinned-regexp.js';
 export const TRAINING_PROFILE='training-js/1';
 export const TRAINING_PARSER='acorn/8.15.0:training-js/1';
 const binaries=new Set(['+','-','*','/','%','**','<','<=','>','>=','===','!==','==','!=',
-  '&','|','^','<<','>>','>>>']);
+  '&','|','^','<<','>>','>>>','instanceof']);
 const logical=new Set(['&&','||','??']);
 const assignments=new Set(['=','&&=','||=','??=','+=','-=','*=','/=','%=','**=',
   '&=','|=','^=','<<=','>>=','>>>=']);
@@ -132,6 +132,9 @@ export function parseTraining(source) {
         return {...loc,type:'Literal',value:encode(n.bigint!==undefined?BigInt(n.bigint):n.value),raw:n.raw};
       case 'Identifier':return {...loc,type:'Identifier',name:n.name};
       case 'ThisExpression':return {...loc,type:'This'};
+      case 'MetaProperty':
+        if(n.meta.name!=='new'||n.property.name!=='target')reject(n,'meta property');
+        return {...loc,type:'NewTarget'};
       case 'ClassExpression':return classExpression(n);
       case 'ArrowFunctionExpression':case 'FunctionExpression':{
         if(n.generator&&n.async)reject(n,'async generator mode');
@@ -310,15 +313,15 @@ export function parseTraining(source) {
         consequent:stmt(n.consequent),alternate:n.alternate?stmt(n.alternate):null};
       case 'WhileStatement':return {...loc,type:'While',test:expr(n.test),body:stmt(n.body)};
       case 'DoWhileStatement':return {...loc,type:'DoWhile',test:expr(n.test),body:stmt(n.body)};
-      case 'ForOfStatement':{
+      case 'ForInStatement':case 'ForOfStatement':{
         if(n.await || n.left?.type!=='VariableDeclaration' ||
            !['const','let','var'].includes(n.left.kind) ||
            n.left.declarations.length!==1 ||n.left.declarations[0].init)
-          reject(n,'for-of requires one simple declared binding');
+          reject(n,'for-in/of requires one declared binding');
         const target=n.left.declarations[0].id;
         if(!['Identifier','ArrayPattern','ObjectPattern'].includes(target.type))reject(target,'for-of binding form');
         const parsedPattern=target.type==='Identifier'?null:patternTree(target);
-        return {...loc,type:'ForOf',kind:n.left.kind,id:parsedPattern?null:target.name,
+        return {...loc,type:n.type==='ForInStatement'?'ForIn':'ForOf',kind:n.left.kind,id:parsedPattern?null:target.name,
           ...(parsedPattern??{bindings:null}),iterable:expr(n.right),body:stmt(n.body)};
       }
       case 'ForStatement':{
@@ -414,7 +417,7 @@ export function parseTraining(source) {
         case 'Object':n.properties.forEach(p=>{if(p.computedKey)value(p.computedKey,e);value(p.value,e);});break;
         case 'Assign':value(n.left,e);value(n.right,e);break;
         case 'PatternAssignment':statement(n,e);break;
-        case 'Literal':case 'This':break;
+        case 'Literal':case 'This':case 'NewTarget':break;
         default:reject(n,'unhandled expression');
       }
     }
@@ -466,7 +469,7 @@ export function parseTraining(source) {
           break;
         case 'While':case 'DoWhile':
           value(n.test,e);statement(n.body,e);break;
-        case 'ForOf':{
+        case 'ForIn':case 'ForOf':{
           const loopEnv=n.kind==='var'?e:{
             names:new Set(n.bindings?n.bindings.map(x=>x.name):[n.id]),parent:e
           };

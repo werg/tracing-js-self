@@ -194,7 +194,7 @@
     },
     {
       "id": "ordinary-user-constructors",
-      "domain": "ordinary function constructors with live owned prototype identity, receivers, parameter defaults, inherited methods/accessors, explicit object returns and abrupt completion; nonconstructible functions reject; spread/new.target/prototype reflection outside this slice",
+      "domain": "ordinary function constructors with live owned prototype identity, receivers, parameter defaults, inherited methods/accessors, explicit object returns and abrupt completion; nonconstructible functions reject; spread/prototype reflection outside this slice; new.target covered separately",
       "frontend": "passed",
       "owned": "passed",
       "independent": "passed",
@@ -205,7 +205,7 @@
     },
     {
       "id": "base-classes-and-private-slots",
-      "domain": "local base class declarations/expressions; fresh private lexical identities, private fields/methods/in, public methods/accessors/fields, static fields/blocks/accessors, computed scalar/Symbol keys, initializer-before-parameter ordering and abrupt construction; no inheritance, private accessors, super/new.target or top-level class environment",
+      "domain": "local base class declarations/expressions; fresh private lexical identities, private fields/methods/in, public methods/accessors/fields, static fields/blocks/accessors, computed scalar/Symbol keys, initializer-before-parameter ordering and abrupt construction; no inheritance, private accessors, super or top-level class environment",
       "frontend": "passed",
       "owned": "passed",
       "independent": "passed",
@@ -235,6 +235,39 @@
       "native": "unsupported",
       "reason": "Requires public generator identity/retained continuation and Symbol iterator interfaces; old formats do not express delegated resume obligations",
       "tests": "test/training-yield-delegation.test.js"
+    },
+    {
+      "id": "instanceof-and-has-instance",
+      "domain": "owned ordinary constructor prototype identity, Object/Array chains, own/inherited/getter Symbol.hasInstance hooks with receiver/ToBoolean and throws, class static overrides; proxy/default exotic/bound-function prototype walks explicitly refused",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "General Symbol hook and constructor prototype state requires the public protocol/construction representation",
+      "tests": "test/training-instanceof.test.js"
+    },
+    {
+      "id": "ordinary-for-in-enumeration",
+      "domain": "own/inherited enumerable string keys, integer index ordering, nonenumerable shadowing, symbol exclusion, primitives/string code-unit indices, fresh lexical/var/pattern bindings, labels/finally, stable key/descriptor/prototype graph with live value writes; no iterator hooks/close; exotic and shape mutations explicitly refused",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Owned enumerator identity and retained key/prototype snapshot require an explicit public enumeration representation",
+      "tests": "test/training-for-in.test.js"
+    },
+    {
+      "id": "constructor-new-target",
+      "domain": "new.target in ordinary functions/base classes, constructor parameter defaults, lexical arrows/nested arrows after constructor return, owned callbacks/getters/proxy traps; field initializer new.target remains undefined; retained constructor frame identity validated",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Lexical constructor receiver/newTarget linkage requires the public construction/capture interface",
+      "tests": "test/training-new-target.test.js"
     }
   ]
 }
