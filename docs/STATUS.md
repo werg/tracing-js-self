@@ -53,6 +53,31 @@ five explicit native-serving skips, zero failures, all thirteen teacher
 mutants detected, and 203 locally verified recipe examples. That source-only
 run does not assert native admission or model learning.
 
+The [completed hosted roadmap qualification](evidence/roadmap-hosted-53daa93/README.md)
+applies to producer `53daa939dba0a0202402dc980a17a6682e719b37` and companion
+`9a9dd3593c6887d63012dd5c953e914557dca386`. All six primary workflows passed,
+including the five source/native corpus jobs and a separate engineering
+archive restore. Each Node 20/22/24 suite passed 1,006 tests with seven skips;
+both companion CPU suites passed 2,906 tests with 50 skips. The receipt names
+the actual PR merge checkouts and verifies their source-tree equality.
+
+Prepared inventories contain engineering 25, training-v4 50, benchmark-v1
+128, real-source 100 and generated-v1 61 rows. These are separate recipe
+denominators. Every exclusion is accounted for; the larger benchmark and
+real-source archives exceed the available reader's size limit, so their
+detailed final coverage membership remains unavailable in the compact receipt.
+The separate restore verified 200 files and replayed all 25 positive attempts
+with the exact original producer and runtime. Native requalification during
+that restore remains untested.
+
+The same hosted run repeated the actual model measurement and again
+**failed Gaussian parity**, with maximum absolute difference 2.4304623.
+No optimizer updates or successful learned execution are claimed. The next
+native learning gate is to resolve the measured model-prefix and action-support
+differences, then execute the declared convergence experiments. The later
+commit containing these receipts adds documentation and compact artifact
+uploads; it does not reattribute the measurements to a new producer revision.
+
 The retained [I qualification](evidence/qualification-I-2026-11-18.json)
 is **historical evidence at its recorded producer and consumer**: 945 unit
 passes, eight reference fixtures and forty attempted native probes. Its

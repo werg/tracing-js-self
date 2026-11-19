@@ -1,0 +1,92 @@
+{
+  "schema": "roadmap-hosted-corpus-log-summary/1",
+  "recipe": "real-source",
+  "producerRevision": "53daa939dba0a0202402dc980a17a6682e719b37",
+  "consumerRevision": "9a9dd3593c6887d63012dd5c953e914557dca386",
+  "workflowRunId": "44390718053",
+  "jobId": 135107281997,
+  "jobConclusion": "success",
+  "evidenceScope": "Derived from original hosted job log JSON receipts; archive members unavailable because the download connector rejects artifacts over 512 MiB. Job metadata confirms the full native reconstruction/coverage/disposition steps succeeded.",
+  "source": {
+    "attempted": 210,
+    "dispositions": {
+      "admitted": 180,
+      "reference_completion_mismatch": 10,
+      "unsupported": 18,
+      "source_unsupported": 2
+    },
+    "admittedFamilies": 90,
+    "admittedComponents": 35
+  },
+  "nativePreparationStages": {
+    "originalAttempted": 210,
+    "originalNonAdmissions": 30,
+    "originalNativeAdmitted": 180,
+    "originalAdmissionsAbsentFromPreparation": 71,
+    "nativePreparedInputs": 109,
+    "nativeExcluded": 9,
+    "nativePreparedAccepted": 100
+  },
+  "stageAccounting": "210 attempts - 30 source refusals = 180 admitted; 180 admitted - 71 omissions before native preparation = 109 native inputs; 109 native inputs - 9 native exclusions = 100 prepared accepted. The 71 omissions are relative to the 180 admitted rows.",
+  "releaseSelectionBeforeNativeDeduplication": {
+    "trainingSelected": 71,
+    "trainingExcluded": 71,
+    "heldOutSupplied": 38
+  },
+  "coverage": {
+    "status": "measured",
+    "selectionCreated": true,
+    "trainingMembership": null,
+    "evaluationMembership": null,
+    "reason": "Full coverage report is retained in the remote artifact; not available in job log."
+  },
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "artifact": {
+    "id": 14468452972,
+    "name": "semantic-v5-real-source-admission-and-evaluation",
+    "size_in_bytes": 844662195,
+    "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14468452972",
+    "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14468452972/zip",
+    "expired": false,
+    "created_at": "2026-11-18T20:38:24Z",
+    "expires_at": "2027-02-16T20:24:35Z",
+    "updated_at": "2026-11-18T20:38:24Z",
+    "digest": "sha256:389368d6596345f75950ee1eb7a861653de484316ca76596eb729ce28d026f42",
+    "workflow_run": {
+      "id": 44390718053,
+      "repository_id": 1429775465,
+      "head_repository_id": 1429775465,
+      "head_branch": "codex/execution-training-roadmap-20261118",
+      "head_sha": "53daa939dba0a0202402dc980a17a6682e719b37"
+    }
+  },
+  "releaseArchiveSha256": "5955560f54e8d0534ca2f5a8c67eb7b35c3dbf8798247c4c631ae533ac766524",
+  "retainedFiles": [
+    {
+      "path": "artifact-metadata.json",
+      "bytes": 790,
+      "sha256": "815b2eec83a1f74bbd1be9dea75af9a5f2d13a3b04c60af97e18ba7054da9ccd"
+    },
+    {
+      "path": "artifact-retrieval.json",
+      "bytes": 375,
+      "sha256": "7e8a103eab3418ca1b5cd3848a4ae8ea595b77ecba5d3c2fb9fde4a5fc7497c0"
+    },
+    {
+      "path": "job.json",
+      "bytes": 4111,
+      "sha256": "ec7fd0443633cd7345c4cc11b8d096deac2fbf2afc9e72f99b8da21df4a8f38b"
+    },
+    {
+      "path": "job.log",
+      "bytes": 96403,
+      "sha256": "0bd4951c42db1256f11d6a72a0c7ab754cff3e5afd9bc30ffaa5b5bf41656717"
+    },
+    {
+      "path": "original-log-receipts.json",
+      "bytes": 6070,
+      "sha256": "0c5450ad06c0d1dee492156717017cfcc33fe081edd892de4e84d14b8c5293f2"
+    }
+  ]
+}

@@ -1,0 +1,2886 @@
+{
+  "schema": "semantic-native-prepared-coverage-report/1",
+  "status": "measured",
+  "policy": {
+    "strategy": "rare-component-feature-greedy/1",
+    "maxFamilyTokens": 10000,
+    "maxFamilyShare": 0.2,
+    "maxTrainingTokens": 9007199254740991,
+    "ranking": "uncovered inverse-component-support feature/family/component weight; shorter row; candidate ID",
+    "sharePruning": "least lost unique feature weight per removed token",
+    "optimal": false
+  },
+  "nativePreparedFingerprint": "bd465e65119eb75266f16c09b3394267b4c2ab63c7c074d36eacde858fb586b2",
+  "originalPolicy": {
+    "evaluationRows": "retain-all-native-accepted-validation-and-test",
+    "grouping": "transitive-union-of-frozen-source-components-and-native-resolved-families/1",
+    "maxFamilyShare": 0.2,
+    "maxFamilyTokens": 10000
+  },
+  "originalProducerRevision": "53daa939dba0a0202402dc980a17a6682e719b37",
+  "inventories": {
+    "candidates": {
+      "status": "measured",
+      "rows": 25,
+      "declaredFamilies": 20,
+      "sourceComponents": 20,
+      "measuredTokenRows": 25,
+      "generatedTokens": 17072,
+      "measuredFeatureRows": 25,
+      "unavailableFeatureRows": 0,
+      "features": [
+        {
+          "feature": "branch:falsy",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7174
+        },
+        {
+          "feature": "branch:truthy",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7173
+        },
+        {
+          "feature": "completion:return",
+          "rows": 24,
+          "components": 20,
+          "supportingEpisodeGeneratedTokens": 16853
+        },
+        {
+          "feature": "completion:throw",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 219
+        },
+        {
+          "feature": "effect:await",
+          "rows": 21,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 16356
+        },
+        {
+          "feature": "effect:callback",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "effect:pending",
+          "rows": 24,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16880
+        },
+        {
+          "feature": "interaction:branch:falsy & branch:truthy",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:branch:falsy & effect:await",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7174
+        },
+        {
+          "feature": "interaction:branch:falsy & effect:callback",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:branch:falsy & effect:pending",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7174
+        },
+        {
+          "feature": "interaction:branch:falsy & state:mutation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:branch:truthy & effect:await",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7173
+        },
+        {
+          "feature": "interaction:branch:truthy & effect:callback",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:branch:truthy & effect:pending",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7173
+        },
+        {
+          "feature": "interaction:branch:truthy & state:mutation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:effect:await & effect:callback",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "interaction:effect:await & effect:pending",
+          "rows": 21,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 16356
+        },
+        {
+          "feature": "interaction:effect:await & state:mutation",
+          "rows": 5,
+          "components": 5,
+          "supportingEpisodeGeneratedTokens": 9488
+        },
+        {
+          "feature": "interaction:effect:await & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "interaction:effect:await & state:repeated-invocation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 606
+        },
+        {
+          "feature": "interaction:effect:callback & effect:pending",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "interaction:effect:callback & state:mutation",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "interaction:effect:pending & state:mutation",
+          "rows": 5,
+          "components": 5,
+          "supportingEpisodeGeneratedTokens": 9488
+        },
+        {
+          "feature": "interaction:effect:pending & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "interaction:effect:pending & state:repeated-invocation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 606
+        },
+        {
+          "feature": "interaction:state:mutation & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "loop-trips:multiple",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:array.allocate",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 1290
+        },
+        {
+          "feature": "operation:async.await",
+          "rows": 21,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 16356
+        },
+        {
+          "feature": "operation:binding.declare",
+          "rows": 19,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 15440
+        },
+        {
+          "feature": "operation:binding.initialize",
+          "rows": 19,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 15440
+        },
+        {
+          "feature": "operation:binding.read",
+          "rows": 25,
+          "components": 20,
+          "supportingEpisodeGeneratedTokens": 17072
+        },
+        {
+          "feature": "operation:binding.update",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:binding.write",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "operation:call.enter",
+          "rows": 24,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16880
+        },
+        {
+          "feature": "operation:call.return",
+          "rows": 24,
+          "components": 20,
+          "supportingEpisodeGeneratedTokens": 16853
+        },
+        {
+          "feature": "operation:completion.catch.bind",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 484
+        },
+        {
+          "feature": "operation:completion.finally.end",
+          "rows": 2,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 534
+        },
+        {
+          "feature": "operation:completion.handler.enter",
+          "rows": 3,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 703
+        },
+        {
+          "feature": "operation:control.branch",
+          "rows": 3,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7462
+        },
+        {
+          "feature": "operation:control.jump",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:control.loop.enter",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:control.loop.exit",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:effect.dispatch",
+          "rows": 24,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16880
+        },
+        {
+          "feature": "operation:environment.enter",
+          "rows": 5,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 7876
+        },
+        {
+          "feature": "operation:environment.iteration",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:environment.leave",
+          "rows": 3,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7419
+        },
+        {
+          "feature": "operation:external.callback.enqueue",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "operation:external.input.arrive",
+          "rows": 24,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16880
+        },
+        {
+          "feature": "operation:external.input.deliver",
+          "rows": 24,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16880
+        },
+        {
+          "feature": "operation:function.define",
+          "rows": 6,
+          "components": 6,
+          "supportingEpisodeGeneratedTokens": 9366
+        },
+        {
+          "feature": "operation:job.enter",
+          "rows": 22,
+          "components": 17,
+          "supportingEpisodeGeneratedTokens": 16540
+        },
+        {
+          "feature": "operation:literal.materialize",
+          "rows": 25,
+          "components": 20,
+          "supportingEpisodeGeneratedTokens": 17072
+        },
+        {
+          "feature": "operation:primitive.binary",
+          "rows": 15,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 12931
+        },
+        {
+          "feature": "operation:property.read",
+          "rows": 24,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16880
+        },
+        {
+          "feature": "operation:property.write",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 1290
+        },
+        {
+          "feature": "operation:spec.binary.select",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:spec.numeric.apply",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:spec.numeric.same-type",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:spec.operation.complete",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:spec.to-number",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:spec.to-numeric",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:spec.to-primitive",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:stack.duplicate",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 590
+        },
+        {
+          "feature": "operation:stack.pop",
+          "rows": 23,
+          "components": 18,
+          "supportingEpisodeGeneratedTokens": 16530
+        },
+        {
+          "feature": "state:mutation",
+          "rows": 5,
+          "components": 5,
+          "supportingEpisodeGeneratedTokens": 9488
+        },
+        {
+          "feature": "state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "state:repeated-invocation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 606
+        }
+      ],
+      "dispositions": {
+        "admitted": 25
+      }
+    },
+    "admitted": {
+      "status": "measured",
+      "rows": 25,
+      "declaredFamilies": 20,
+      "sourceComponents": 20,
+      "measuredTokenRows": 25,
+      "generatedTokens": 17072,
+      "measuredFeatureRows": 25,
+      "unavailableFeatureRows": 0,
+      "features": [
+        {
+          "feature": "branch:falsy",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7174
+        },
+        {
+          "feature": "branch:truthy",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7173
+        },
+        {
+          "feature": "completion:return",
+          "rows": 24,
+          "components": 20,
+          "supportingEpisodeGeneratedTokens": 16853
+        },
+        {
+          "feature": "completion:throw",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 219
+        },
+        {
+          "feature": "effect:await",
+          "rows": 21,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 16356
+        },
+        {
+          "feature": "effect:callback",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "effect:pending",
+          "rows": 24,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16880
+        },
+        {
+          "feature": "interaction:branch:falsy & branch:truthy",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:branch:falsy & effect:await",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7174
+        },
+        {
+          "feature": "interaction:branch:falsy & effect:callback",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:branch:falsy & effect:pending",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7174
+        },
+        {
+          "feature": "interaction:branch:falsy & state:mutation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:branch:truthy & effect:await",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7173
+        },
+        {
+          "feature": "interaction:branch:truthy & effect:callback",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:branch:truthy & effect:pending",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7173
+        },
+        {
+          "feature": "interaction:branch:truthy & state:mutation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:effect:await & effect:callback",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "interaction:effect:await & effect:pending",
+          "rows": 21,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 16356
+        },
+        {
+          "feature": "interaction:effect:await & state:mutation",
+          "rows": 5,
+          "components": 5,
+          "supportingEpisodeGeneratedTokens": 9488
+        },
+        {
+          "feature": "interaction:effect:await & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "interaction:effect:await & state:repeated-invocation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 606
+        },
+        {
+          "feature": "interaction:effect:callback & effect:pending",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "interaction:effect:callback & state:mutation",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "interaction:effect:pending & state:mutation",
+          "rows": 5,
+          "components": 5,
+          "supportingEpisodeGeneratedTokens": 9488
+        },
+        {
+          "feature": "interaction:effect:pending & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "interaction:effect:pending & state:repeated-invocation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 606
+        },
+        {
+          "feature": "interaction:state:mutation & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "loop-trips:multiple",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:array.allocate",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 1290
+        },
+        {
+          "feature": "operation:async.await",
+          "rows": 21,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 16356
+        },
+        {
+          "feature": "operation:binding.declare",
+          "rows": 19,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 15440
+        },
+        {
+          "feature": "operation:binding.initialize",
+          "rows": 19,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 15440
+        },
+        {
+          "feature": "operation:binding.read",
+          "rows": 25,
+          "components": 20,
+          "supportingEpisodeGeneratedTokens": 17072
+        },
+        {
+          "feature": "operation:binding.update",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:binding.write",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "operation:call.enter",
+          "rows": 24,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16880
+        },
+        {
+          "feature": "operation:call.return",
+          "rows": 24,
+          "components": 20,
+          "supportingEpisodeGeneratedTokens": 16853
+        },
+        {
+          "feature": "operation:completion.catch.bind",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 484
+        },
+        {
+          "feature": "operation:completion.finally.end",
+          "rows": 2,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 534
+        },
+        {
+          "feature": "operation:completion.handler.enter",
+          "rows": 3,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 703
+        },
+        {
+          "feature": "operation:control.branch",
+          "rows": 3,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7462
+        },
+        {
+          "feature": "operation:control.jump",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:control.loop.enter",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:control.loop.exit",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:effect.dispatch",
+          "rows": 24,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16880
+        },
+        {
+          "feature": "operation:environment.enter",
+          "rows": 5,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 7876
+        },
+        {
+          "feature": "operation:environment.iteration",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:environment.leave",
+          "rows": 3,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7419
+        },
+        {
+          "feature": "operation:external.callback.enqueue",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "operation:external.input.arrive",
+          "rows": 24,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16880
+        },
+        {
+          "feature": "operation:external.input.deliver",
+          "rows": 24,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16880
+        },
+        {
+          "feature": "operation:function.define",
+          "rows": 6,
+          "components": 6,
+          "supportingEpisodeGeneratedTokens": 9366
+        },
+        {
+          "feature": "operation:job.enter",
+          "rows": 22,
+          "components": 17,
+          "supportingEpisodeGeneratedTokens": 16540
+        },
+        {
+          "feature": "operation:literal.materialize",
+          "rows": 25,
+          "components": 20,
+          "supportingEpisodeGeneratedTokens": 17072
+        },
+        {
+          "feature": "operation:primitive.binary",
+          "rows": 15,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 12931
+        },
+        {
+          "feature": "operation:property.read",
+          "rows": 24,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16880
+        },
+        {
+          "feature": "operation:property.write",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 1290
+        },
+        {
+          "feature": "operation:spec.binary.select",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:spec.numeric.apply",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:spec.numeric.same-type",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:spec.operation.complete",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:spec.to-number",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:spec.to-numeric",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:spec.to-primitive",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:stack.duplicate",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 590
+        },
+        {
+          "feature": "operation:stack.pop",
+          "rows": 23,
+          "components": 18,
+          "supportingEpisodeGeneratedTokens": 16530
+        },
+        {
+          "feature": "state:mutation",
+          "rows": 5,
+          "components": 5,
+          "supportingEpisodeGeneratedTokens": 9488
+        },
+        {
+          "feature": "state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "state:repeated-invocation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 606
+        }
+      ]
+    },
+    "nativePrepared": {
+      "episodes": 25,
+      "declaredFamilies": 20,
+      "frozenSourceComponents": 20,
+      "nativeResolvedFamilies": 20,
+      "budgetComponents": 20,
+      "nativeGeneratedTokens": 17072,
+      "scoredPositions": 17072,
+      "nativeObservedTokens": 52640,
+      "maximumComponentShare": 0.40329194001874413,
+      "measuredFeatureRows": 25,
+      "unavailableFeatureRows": 0,
+      "families": [
+        "async-cleanup",
+        "async-counter",
+        "compound-effectful",
+        "compound-pure",
+        "dom-mutation-release",
+        "filesystem-stream-copy",
+        "http-response-stream",
+        "long-callback-retained-tail",
+        "native-result-graph",
+        "natlang-cell-call",
+        "observed-branch",
+        "owned-callback",
+        "owned-microtask",
+        "persistent-external-trigger",
+        "platform-observation",
+        "promise-cleanup",
+        "promise-reaction",
+        "socket-round-trip",
+        "synchronous-error",
+        "two-outstanding"
+      ],
+      "features": [
+        {
+          "feature": "branch:falsy",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7174
+        },
+        {
+          "feature": "branch:truthy",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7173
+        },
+        {
+          "feature": "completion:return",
+          "rows": 24,
+          "components": 20,
+          "supportingEpisodeGeneratedTokens": 16853
+        },
+        {
+          "feature": "completion:throw",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 219
+        },
+        {
+          "feature": "effect:await",
+          "rows": 21,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 16356
+        },
+        {
+          "feature": "effect:callback",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "effect:pending",
+          "rows": 24,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16880
+        },
+        {
+          "feature": "interaction:branch:falsy & branch:truthy",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:branch:falsy & effect:await",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7174
+        },
+        {
+          "feature": "interaction:branch:falsy & effect:callback",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:branch:falsy & effect:pending",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7174
+        },
+        {
+          "feature": "interaction:branch:falsy & state:mutation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:branch:truthy & effect:await",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7173
+        },
+        {
+          "feature": "interaction:branch:truthy & effect:callback",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:branch:truthy & effect:pending",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7173
+        },
+        {
+          "feature": "interaction:branch:truthy & state:mutation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:effect:await & effect:callback",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "interaction:effect:await & effect:pending",
+          "rows": 21,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 16356
+        },
+        {
+          "feature": "interaction:effect:await & state:mutation",
+          "rows": 5,
+          "components": 5,
+          "supportingEpisodeGeneratedTokens": 9488
+        },
+        {
+          "feature": "interaction:effect:await & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "interaction:effect:await & state:repeated-invocation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 606
+        },
+        {
+          "feature": "interaction:effect:callback & effect:pending",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "interaction:effect:callback & state:mutation",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "interaction:effect:pending & state:mutation",
+          "rows": 5,
+          "components": 5,
+          "supportingEpisodeGeneratedTokens": 9488
+        },
+        {
+          "feature": "interaction:effect:pending & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "interaction:effect:pending & state:repeated-invocation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 606
+        },
+        {
+          "feature": "interaction:state:mutation & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "loop-trips:multiple",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:array.allocate",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 1290
+        },
+        {
+          "feature": "operation:async.await",
+          "rows": 21,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 16356
+        },
+        {
+          "feature": "operation:binding.declare",
+          "rows": 19,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 15440
+        },
+        {
+          "feature": "operation:binding.initialize",
+          "rows": 19,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 15440
+        },
+        {
+          "feature": "operation:binding.read",
+          "rows": 25,
+          "components": 20,
+          "supportingEpisodeGeneratedTokens": 17072
+        },
+        {
+          "feature": "operation:binding.update",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:binding.write",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "operation:call.enter",
+          "rows": 24,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16880
+        },
+        {
+          "feature": "operation:call.return",
+          "rows": 24,
+          "components": 20,
+          "supportingEpisodeGeneratedTokens": 16853
+        },
+        {
+          "feature": "operation:completion.catch.bind",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 484
+        },
+        {
+          "feature": "operation:completion.finally.end",
+          "rows": 2,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 534
+        },
+        {
+          "feature": "operation:completion.handler.enter",
+          "rows": 3,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 703
+        },
+        {
+          "feature": "operation:control.branch",
+          "rows": 3,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7462
+        },
+        {
+          "feature": "operation:control.jump",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:control.loop.enter",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:control.loop.exit",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:effect.dispatch",
+          "rows": 24,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16880
+        },
+        {
+          "feature": "operation:environment.enter",
+          "rows": 5,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 7876
+        },
+        {
+          "feature": "operation:environment.iteration",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:environment.leave",
+          "rows": 3,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7419
+        },
+        {
+          "feature": "operation:external.callback.enqueue",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "operation:external.input.arrive",
+          "rows": 24,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16880
+        },
+        {
+          "feature": "operation:external.input.deliver",
+          "rows": 24,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16880
+        },
+        {
+          "feature": "operation:function.define",
+          "rows": 6,
+          "components": 6,
+          "supportingEpisodeGeneratedTokens": 9366
+        },
+        {
+          "feature": "operation:job.enter",
+          "rows": 22,
+          "components": 17,
+          "supportingEpisodeGeneratedTokens": 16540
+        },
+        {
+          "feature": "operation:literal.materialize",
+          "rows": 25,
+          "components": 20,
+          "supportingEpisodeGeneratedTokens": 17072
+        },
+        {
+          "feature": "operation:primitive.binary",
+          "rows": 15,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 12931
+        },
+        {
+          "feature": "operation:property.read",
+          "rows": 24,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16880
+        },
+        {
+          "feature": "operation:property.write",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 1290
+        },
+        {
+          "feature": "operation:spec.binary.select",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:spec.numeric.apply",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:spec.numeric.same-type",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:spec.operation.complete",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:spec.to-number",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:spec.to-numeric",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:spec.to-primitive",
+          "rows": 13,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12354
+        },
+        {
+          "feature": "operation:stack.duplicate",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 590
+        },
+        {
+          "feature": "operation:stack.pop",
+          "rows": 23,
+          "components": 18,
+          "supportingEpisodeGeneratedTokens": 16530
+        },
+        {
+          "feature": "state:mutation",
+          "rows": 5,
+          "components": 5,
+          "supportingEpisodeGeneratedTokens": 9488
+        },
+        {
+          "feature": "state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "state:repeated-invocation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 606
+        }
+      ]
+    },
+    "plannedSelection": {
+      "episodes": 24,
+      "declaredFamilies": 20,
+      "frozenSourceComponents": 20,
+      "nativeResolvedFamilies": 20,
+      "budgetComponents": 20,
+      "nativeGeneratedTokens": 16766,
+      "scoredPositions": 16766,
+      "nativeObservedTokens": 51335,
+      "maximumComponentShare": 0.41065251103423595,
+      "measuredFeatureRows": 24,
+      "unavailableFeatureRows": 0,
+      "families": [
+        "async-cleanup",
+        "async-counter",
+        "compound-effectful",
+        "compound-pure",
+        "dom-mutation-release",
+        "filesystem-stream-copy",
+        "http-response-stream",
+        "long-callback-retained-tail",
+        "native-result-graph",
+        "natlang-cell-call",
+        "observed-branch",
+        "owned-callback",
+        "owned-microtask",
+        "persistent-external-trigger",
+        "platform-observation",
+        "promise-cleanup",
+        "promise-reaction",
+        "socket-round-trip",
+        "synchronous-error",
+        "two-outstanding"
+      ],
+      "features": [
+        {
+          "feature": "branch:falsy",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7174
+        },
+        {
+          "feature": "branch:truthy",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7173
+        },
+        {
+          "feature": "completion:return",
+          "rows": 23,
+          "components": 20,
+          "supportingEpisodeGeneratedTokens": 16547
+        },
+        {
+          "feature": "completion:throw",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 219
+        },
+        {
+          "feature": "effect:await",
+          "rows": 20,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 16050
+        },
+        {
+          "feature": "effect:callback",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "effect:pending",
+          "rows": 23,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16574
+        },
+        {
+          "feature": "interaction:branch:falsy & branch:truthy",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:branch:falsy & effect:await",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7174
+        },
+        {
+          "feature": "interaction:branch:falsy & effect:callback",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:branch:falsy & effect:pending",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7174
+        },
+        {
+          "feature": "interaction:branch:falsy & state:mutation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:branch:truthy & effect:await",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7173
+        },
+        {
+          "feature": "interaction:branch:truthy & effect:callback",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:branch:truthy & effect:pending",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7173
+        },
+        {
+          "feature": "interaction:branch:truthy & state:mutation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "interaction:effect:await & effect:callback",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "interaction:effect:await & effect:pending",
+          "rows": 20,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 16050
+        },
+        {
+          "feature": "interaction:effect:await & state:mutation",
+          "rows": 5,
+          "components": 5,
+          "supportingEpisodeGeneratedTokens": 9488
+        },
+        {
+          "feature": "interaction:effect:await & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "interaction:effect:await & state:repeated-invocation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 606
+        },
+        {
+          "feature": "interaction:effect:callback & effect:pending",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "interaction:effect:callback & state:mutation",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "interaction:effect:pending & state:mutation",
+          "rows": 5,
+          "components": 5,
+          "supportingEpisodeGeneratedTokens": 9488
+        },
+        {
+          "feature": "interaction:effect:pending & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "interaction:effect:pending & state:repeated-invocation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 606
+        },
+        {
+          "feature": "interaction:state:mutation & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "loop-trips:multiple",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:array.allocate",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 1290
+        },
+        {
+          "feature": "operation:async.await",
+          "rows": 20,
+          "components": 16,
+          "supportingEpisodeGeneratedTokens": 16050
+        },
+        {
+          "feature": "operation:binding.declare",
+          "rows": 18,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 15134
+        },
+        {
+          "feature": "operation:binding.initialize",
+          "rows": 18,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 15134
+        },
+        {
+          "feature": "operation:binding.read",
+          "rows": 24,
+          "components": 20,
+          "supportingEpisodeGeneratedTokens": 16766
+        },
+        {
+          "feature": "operation:binding.update",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:binding.write",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "operation:call.enter",
+          "rows": 23,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16574
+        },
+        {
+          "feature": "operation:call.return",
+          "rows": 23,
+          "components": 20,
+          "supportingEpisodeGeneratedTokens": 16547
+        },
+        {
+          "feature": "operation:completion.catch.bind",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 484
+        },
+        {
+          "feature": "operation:completion.finally.end",
+          "rows": 2,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 534
+        },
+        {
+          "feature": "operation:completion.handler.enter",
+          "rows": 3,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 703
+        },
+        {
+          "feature": "operation:control.branch",
+          "rows": 3,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7462
+        },
+        {
+          "feature": "operation:control.jump",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:control.loop.enter",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:control.loop.exit",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:effect.dispatch",
+          "rows": 23,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16574
+        },
+        {
+          "feature": "operation:environment.enter",
+          "rows": 5,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 7876
+        },
+        {
+          "feature": "operation:environment.iteration",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 6885
+        },
+        {
+          "feature": "operation:environment.leave",
+          "rows": 3,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 7419
+        },
+        {
+          "feature": "operation:external.callback.enqueue",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 8198
+        },
+        {
+          "feature": "operation:external.input.arrive",
+          "rows": 23,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16574
+        },
+        {
+          "feature": "operation:external.input.deliver",
+          "rows": 23,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16574
+        },
+        {
+          "feature": "operation:function.define",
+          "rows": 6,
+          "components": 6,
+          "supportingEpisodeGeneratedTokens": 9366
+        },
+        {
+          "feature": "operation:job.enter",
+          "rows": 21,
+          "components": 17,
+          "supportingEpisodeGeneratedTokens": 16234
+        },
+        {
+          "feature": "operation:literal.materialize",
+          "rows": 24,
+          "components": 20,
+          "supportingEpisodeGeneratedTokens": 16766
+        },
+        {
+          "feature": "operation:primitive.binary",
+          "rows": 14,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 12625
+        },
+        {
+          "feature": "operation:property.read",
+          "rows": 23,
+          "components": 19,
+          "supportingEpisodeGeneratedTokens": 16574
+        },
+        {
+          "feature": "operation:property.write",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 1290
+        },
+        {
+          "feature": "operation:spec.binary.select",
+          "rows": 12,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12048
+        },
+        {
+          "feature": "operation:spec.numeric.apply",
+          "rows": 12,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12048
+        },
+        {
+          "feature": "operation:spec.numeric.same-type",
+          "rows": 12,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12048
+        },
+        {
+          "feature": "operation:spec.operation.complete",
+          "rows": 12,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12048
+        },
+        {
+          "feature": "operation:spec.to-number",
+          "rows": 12,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12048
+        },
+        {
+          "feature": "operation:spec.to-numeric",
+          "rows": 12,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12048
+        },
+        {
+          "feature": "operation:spec.to-primitive",
+          "rows": 12,
+          "components": 10,
+          "supportingEpisodeGeneratedTokens": 12048
+        },
+        {
+          "feature": "operation:stack.duplicate",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 590
+        },
+        {
+          "feature": "operation:stack.pop",
+          "rows": 22,
+          "components": 18,
+          "supportingEpisodeGeneratedTokens": 16224
+        },
+        {
+          "feature": "state:mutation",
+          "rows": 5,
+          "components": 5,
+          "supportingEpisodeGeneratedTokens": 9488
+        },
+        {
+          "feature": "state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "state:repeated-invocation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 606
+        }
+      ]
+    },
+    "consumed": {
+      "status": "unavailable",
+      "scoredTargets": null,
+      "reason": "No authenticated optimizer exposure supplied"
+    }
+  },
+  "training": {
+    "before": {
+      "episodes": 19,
+      "declaredFamilies": 15,
+      "frozenSourceComponents": 15,
+      "nativeResolvedFamilies": 15,
+      "budgetComponents": 15,
+      "nativeGeneratedTokens": 7524,
+      "scoredPositions": 7524,
+      "nativeObservedTokens": 30966,
+      "maximumComponentShare": 0.20095693779904306,
+      "measuredFeatureRows": 19,
+      "unavailableFeatureRows": 0,
+      "families": [
+        "async-counter",
+        "compound-effectful",
+        "compound-pure",
+        "dom-mutation-release",
+        "http-response-stream",
+        "native-result-graph",
+        "natlang-cell-call",
+        "observed-branch",
+        "owned-callback",
+        "owned-microtask",
+        "platform-observation",
+        "promise-cleanup",
+        "promise-reaction",
+        "synchronous-error",
+        "two-outstanding"
+      ],
+      "features": [
+        {
+          "feature": "branch:falsy",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 289
+        },
+        {
+          "feature": "branch:truthy",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 288
+        },
+        {
+          "feature": "completion:return",
+          "rows": 19,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 7524
+        },
+        {
+          "feature": "effect:await",
+          "rows": 15,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 6808
+        },
+        {
+          "feature": "effect:callback",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 562
+        },
+        {
+          "feature": "effect:pending",
+          "rows": 18,
+          "components": 14,
+          "supportingEpisodeGeneratedTokens": 7332
+        },
+        {
+          "feature": "interaction:branch:falsy & effect:await",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 289
+        },
+        {
+          "feature": "interaction:branch:falsy & effect:pending",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 289
+        },
+        {
+          "feature": "interaction:branch:truthy & effect:await",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 288
+        },
+        {
+          "feature": "interaction:branch:truthy & effect:pending",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 288
+        },
+        {
+          "feature": "interaction:effect:await & effect:callback",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 562
+        },
+        {
+          "feature": "interaction:effect:await & effect:pending",
+          "rows": 15,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 6808
+        },
+        {
+          "feature": "interaction:effect:await & state:mutation",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 1852
+        },
+        {
+          "feature": "interaction:effect:await & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "interaction:effect:await & state:repeated-invocation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 606
+        },
+        {
+          "feature": "interaction:effect:callback & effect:pending",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 562
+        },
+        {
+          "feature": "interaction:effect:callback & state:mutation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 562
+        },
+        {
+          "feature": "interaction:effect:pending & state:mutation",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 1852
+        },
+        {
+          "feature": "interaction:effect:pending & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "interaction:effect:pending & state:repeated-invocation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 606
+        },
+        {
+          "feature": "interaction:state:mutation & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "operation:array.allocate",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 1290
+        },
+        {
+          "feature": "operation:async.await",
+          "rows": 15,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 6808
+        },
+        {
+          "feature": "operation:binding.declare",
+          "rows": 15,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 6426
+        },
+        {
+          "feature": "operation:binding.initialize",
+          "rows": 15,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 6426
+        },
+        {
+          "feature": "operation:binding.read",
+          "rows": 19,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 7524
+        },
+        {
+          "feature": "operation:binding.write",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 562
+        },
+        {
+          "feature": "operation:call.enter",
+          "rows": 18,
+          "components": 14,
+          "supportingEpisodeGeneratedTokens": 7332
+        },
+        {
+          "feature": "operation:call.return",
+          "rows": 19,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 7524
+        },
+        {
+          "feature": "operation:completion.catch.bind",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 169
+        },
+        {
+          "feature": "operation:completion.handler.enter",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 169
+        },
+        {
+          "feature": "operation:control.branch",
+          "rows": 2,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 577
+        },
+        {
+          "feature": "operation:effect.dispatch",
+          "rows": 18,
+          "components": 14,
+          "supportingEpisodeGeneratedTokens": 7332
+        },
+        {
+          "feature": "operation:environment.enter",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 457
+        },
+        {
+          "feature": "operation:external.callback.enqueue",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 562
+        },
+        {
+          "feature": "operation:external.input.arrive",
+          "rows": 18,
+          "components": 14,
+          "supportingEpisodeGeneratedTokens": 7332
+        },
+        {
+          "feature": "operation:external.input.deliver",
+          "rows": 18,
+          "components": 14,
+          "supportingEpisodeGeneratedTokens": 7332
+        },
+        {
+          "feature": "operation:function.define",
+          "rows": 4,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 1730
+        },
+        {
+          "feature": "operation:job.enter",
+          "rows": 16,
+          "components": 12,
+          "supportingEpisodeGeneratedTokens": 6992
+        },
+        {
+          "feature": "operation:literal.materialize",
+          "rows": 19,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 7524
+        },
+        {
+          "feature": "operation:primitive.binary",
+          "rows": 13,
+          "components": 9,
+          "supportingEpisodeGeneratedTokens": 5295
+        },
+        {
+          "feature": "operation:property.read",
+          "rows": 18,
+          "components": 14,
+          "supportingEpisodeGeneratedTokens": 7332
+        },
+        {
+          "feature": "operation:property.write",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 1290
+        },
+        {
+          "feature": "operation:spec.binary.select",
+          "rows": 11,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4718
+        },
+        {
+          "feature": "operation:spec.numeric.apply",
+          "rows": 11,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4718
+        },
+        {
+          "feature": "operation:spec.numeric.same-type",
+          "rows": 11,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4718
+        },
+        {
+          "feature": "operation:spec.operation.complete",
+          "rows": 11,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4718
+        },
+        {
+          "feature": "operation:spec.to-number",
+          "rows": 11,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4718
+        },
+        {
+          "feature": "operation:spec.to-numeric",
+          "rows": 11,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4718
+        },
+        {
+          "feature": "operation:spec.to-primitive",
+          "rows": 11,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4718
+        },
+        {
+          "feature": "operation:stack.duplicate",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 590
+        },
+        {
+          "feature": "operation:stack.pop",
+          "rows": 17,
+          "components": 13,
+          "supportingEpisodeGeneratedTokens": 6982
+        },
+        {
+          "feature": "state:mutation",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 1852
+        },
+        {
+          "feature": "state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "state:repeated-invocation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 606
+        }
+      ]
+    },
+    "after": {
+      "episodes": 18,
+      "declaredFamilies": 15,
+      "frozenSourceComponents": 15,
+      "nativeResolvedFamilies": 15,
+      "budgetComponents": 15,
+      "nativeGeneratedTokens": 7218,
+      "scoredPositions": 7218,
+      "nativeObservedTokens": 29661,
+      "maximumComponentShare": 0.16708229426433915,
+      "measuredFeatureRows": 18,
+      "unavailableFeatureRows": 0,
+      "families": [
+        "async-counter",
+        "compound-effectful",
+        "compound-pure",
+        "dom-mutation-release",
+        "http-response-stream",
+        "native-result-graph",
+        "natlang-cell-call",
+        "observed-branch",
+        "owned-callback",
+        "owned-microtask",
+        "platform-observation",
+        "promise-cleanup",
+        "promise-reaction",
+        "synchronous-error",
+        "two-outstanding"
+      ],
+      "features": [
+        {
+          "feature": "branch:falsy",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 289
+        },
+        {
+          "feature": "branch:truthy",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 288
+        },
+        {
+          "feature": "completion:return",
+          "rows": 18,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 7218
+        },
+        {
+          "feature": "effect:await",
+          "rows": 14,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 6502
+        },
+        {
+          "feature": "effect:callback",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 562
+        },
+        {
+          "feature": "effect:pending",
+          "rows": 17,
+          "components": 14,
+          "supportingEpisodeGeneratedTokens": 7026
+        },
+        {
+          "feature": "interaction:branch:falsy & effect:await",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 289
+        },
+        {
+          "feature": "interaction:branch:falsy & effect:pending",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 289
+        },
+        {
+          "feature": "interaction:branch:truthy & effect:await",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 288
+        },
+        {
+          "feature": "interaction:branch:truthy & effect:pending",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 288
+        },
+        {
+          "feature": "interaction:effect:await & effect:callback",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 562
+        },
+        {
+          "feature": "interaction:effect:await & effect:pending",
+          "rows": 14,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 6502
+        },
+        {
+          "feature": "interaction:effect:await & state:mutation",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 1852
+        },
+        {
+          "feature": "interaction:effect:await & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "interaction:effect:await & state:repeated-invocation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 606
+        },
+        {
+          "feature": "interaction:effect:callback & effect:pending",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 562
+        },
+        {
+          "feature": "interaction:effect:callback & state:mutation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 562
+        },
+        {
+          "feature": "interaction:effect:pending & state:mutation",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 1852
+        },
+        {
+          "feature": "interaction:effect:pending & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "interaction:effect:pending & state:repeated-invocation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 606
+        },
+        {
+          "feature": "interaction:state:mutation & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "operation:array.allocate",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 1290
+        },
+        {
+          "feature": "operation:async.await",
+          "rows": 14,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 6502
+        },
+        {
+          "feature": "operation:binding.declare",
+          "rows": 14,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 6120
+        },
+        {
+          "feature": "operation:binding.initialize",
+          "rows": 14,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 6120
+        },
+        {
+          "feature": "operation:binding.read",
+          "rows": 18,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 7218
+        },
+        {
+          "feature": "operation:binding.write",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 562
+        },
+        {
+          "feature": "operation:call.enter",
+          "rows": 17,
+          "components": 14,
+          "supportingEpisodeGeneratedTokens": 7026
+        },
+        {
+          "feature": "operation:call.return",
+          "rows": 18,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 7218
+        },
+        {
+          "feature": "operation:completion.catch.bind",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 169
+        },
+        {
+          "feature": "operation:completion.handler.enter",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 169
+        },
+        {
+          "feature": "operation:control.branch",
+          "rows": 2,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 577
+        },
+        {
+          "feature": "operation:effect.dispatch",
+          "rows": 17,
+          "components": 14,
+          "supportingEpisodeGeneratedTokens": 7026
+        },
+        {
+          "feature": "operation:environment.enter",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 457
+        },
+        {
+          "feature": "operation:external.callback.enqueue",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 562
+        },
+        {
+          "feature": "operation:external.input.arrive",
+          "rows": 17,
+          "components": 14,
+          "supportingEpisodeGeneratedTokens": 7026
+        },
+        {
+          "feature": "operation:external.input.deliver",
+          "rows": 17,
+          "components": 14,
+          "supportingEpisodeGeneratedTokens": 7026
+        },
+        {
+          "feature": "operation:function.define",
+          "rows": 4,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 1730
+        },
+        {
+          "feature": "operation:job.enter",
+          "rows": 15,
+          "components": 12,
+          "supportingEpisodeGeneratedTokens": 6686
+        },
+        {
+          "feature": "operation:literal.materialize",
+          "rows": 18,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 7218
+        },
+        {
+          "feature": "operation:primitive.binary",
+          "rows": 12,
+          "components": 9,
+          "supportingEpisodeGeneratedTokens": 4989
+        },
+        {
+          "feature": "operation:property.read",
+          "rows": 17,
+          "components": 14,
+          "supportingEpisodeGeneratedTokens": 7026
+        },
+        {
+          "feature": "operation:property.write",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 1290
+        },
+        {
+          "feature": "operation:spec.binary.select",
+          "rows": 10,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4412
+        },
+        {
+          "feature": "operation:spec.numeric.apply",
+          "rows": 10,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4412
+        },
+        {
+          "feature": "operation:spec.numeric.same-type",
+          "rows": 10,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4412
+        },
+        {
+          "feature": "operation:spec.operation.complete",
+          "rows": 10,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4412
+        },
+        {
+          "feature": "operation:spec.to-number",
+          "rows": 10,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4412
+        },
+        {
+          "feature": "operation:spec.to-numeric",
+          "rows": 10,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4412
+        },
+        {
+          "feature": "operation:spec.to-primitive",
+          "rows": 10,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4412
+        },
+        {
+          "feature": "operation:stack.duplicate",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 590
+        },
+        {
+          "feature": "operation:stack.pop",
+          "rows": 16,
+          "components": 13,
+          "supportingEpisodeGeneratedTokens": 6676
+        },
+        {
+          "feature": "state:mutation",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 1852
+        },
+        {
+          "feature": "state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "state:repeated-invocation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 606
+        }
+      ]
+    },
+    "identityOrderedControl": {
+      "episodes": 18,
+      "declaredFamilies": 15,
+      "frozenSourceComponents": 15,
+      "nativeResolvedFamilies": 15,
+      "budgetComponents": 15,
+      "nativeGeneratedTokens": 6918,
+      "scoredPositions": 6918,
+      "nativeObservedTokens": 29107,
+      "maximumComponentShare": 0.13096270598438856,
+      "measuredFeatureRows": 18,
+      "unavailableFeatureRows": 0,
+      "families": [
+        "async-counter",
+        "compound-effectful",
+        "compound-pure",
+        "dom-mutation-release",
+        "http-response-stream",
+        "native-result-graph",
+        "natlang-cell-call",
+        "observed-branch",
+        "owned-callback",
+        "owned-microtask",
+        "platform-observation",
+        "promise-cleanup",
+        "promise-reaction",
+        "synchronous-error",
+        "two-outstanding"
+      ],
+      "features": [
+        {
+          "feature": "branch:falsy",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 289
+        },
+        {
+          "feature": "branch:truthy",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 288
+        },
+        {
+          "feature": "completion:return",
+          "rows": 18,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 6918
+        },
+        {
+          "feature": "effect:await",
+          "rows": 14,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 6202
+        },
+        {
+          "feature": "effect:callback",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 562
+        },
+        {
+          "feature": "effect:pending",
+          "rows": 17,
+          "components": 14,
+          "supportingEpisodeGeneratedTokens": 6726
+        },
+        {
+          "feature": "interaction:branch:falsy & effect:await",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 289
+        },
+        {
+          "feature": "interaction:branch:falsy & effect:pending",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 289
+        },
+        {
+          "feature": "interaction:branch:truthy & effect:await",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 288
+        },
+        {
+          "feature": "interaction:branch:truthy & effect:pending",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 288
+        },
+        {
+          "feature": "interaction:effect:await & effect:callback",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 562
+        },
+        {
+          "feature": "interaction:effect:await & effect:pending",
+          "rows": 14,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 6202
+        },
+        {
+          "feature": "interaction:effect:await & state:mutation",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 1852
+        },
+        {
+          "feature": "interaction:effect:await & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "interaction:effect:callback & effect:pending",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 562
+        },
+        {
+          "feature": "interaction:effect:callback & state:mutation",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 562
+        },
+        {
+          "feature": "interaction:effect:pending & state:mutation",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 1852
+        },
+        {
+          "feature": "interaction:effect:pending & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "interaction:state:mutation & state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        },
+        {
+          "feature": "operation:array.allocate",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 1290
+        },
+        {
+          "feature": "operation:async.await",
+          "rows": 14,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 6202
+        },
+        {
+          "feature": "operation:binding.declare",
+          "rows": 14,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 5820
+        },
+        {
+          "feature": "operation:binding.initialize",
+          "rows": 14,
+          "components": 11,
+          "supportingEpisodeGeneratedTokens": 5820
+        },
+        {
+          "feature": "operation:binding.read",
+          "rows": 18,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 6918
+        },
+        {
+          "feature": "operation:binding.write",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 562
+        },
+        {
+          "feature": "operation:call.enter",
+          "rows": 17,
+          "components": 14,
+          "supportingEpisodeGeneratedTokens": 6726
+        },
+        {
+          "feature": "operation:call.return",
+          "rows": 18,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 6918
+        },
+        {
+          "feature": "operation:completion.catch.bind",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 169
+        },
+        {
+          "feature": "operation:completion.handler.enter",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 169
+        },
+        {
+          "feature": "operation:control.branch",
+          "rows": 2,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 577
+        },
+        {
+          "feature": "operation:effect.dispatch",
+          "rows": 17,
+          "components": 14,
+          "supportingEpisodeGeneratedTokens": 6726
+        },
+        {
+          "feature": "operation:environment.enter",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 457
+        },
+        {
+          "feature": "operation:external.callback.enqueue",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 562
+        },
+        {
+          "feature": "operation:external.input.arrive",
+          "rows": 17,
+          "components": 14,
+          "supportingEpisodeGeneratedTokens": 6726
+        },
+        {
+          "feature": "operation:external.input.deliver",
+          "rows": 17,
+          "components": 14,
+          "supportingEpisodeGeneratedTokens": 6726
+        },
+        {
+          "feature": "operation:function.define",
+          "rows": 4,
+          "components": 4,
+          "supportingEpisodeGeneratedTokens": 1730
+        },
+        {
+          "feature": "operation:job.enter",
+          "rows": 15,
+          "components": 12,
+          "supportingEpisodeGeneratedTokens": 6386
+        },
+        {
+          "feature": "operation:literal.materialize",
+          "rows": 18,
+          "components": 15,
+          "supportingEpisodeGeneratedTokens": 6918
+        },
+        {
+          "feature": "operation:primitive.binary",
+          "rows": 12,
+          "components": 9,
+          "supportingEpisodeGeneratedTokens": 4689
+        },
+        {
+          "feature": "operation:property.read",
+          "rows": 17,
+          "components": 14,
+          "supportingEpisodeGeneratedTokens": 6726
+        },
+        {
+          "feature": "operation:property.write",
+          "rows": 2,
+          "components": 2,
+          "supportingEpisodeGeneratedTokens": 1290
+        },
+        {
+          "feature": "operation:spec.binary.select",
+          "rows": 10,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4112
+        },
+        {
+          "feature": "operation:spec.numeric.apply",
+          "rows": 10,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4112
+        },
+        {
+          "feature": "operation:spec.numeric.same-type",
+          "rows": 10,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4112
+        },
+        {
+          "feature": "operation:spec.operation.complete",
+          "rows": 10,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4112
+        },
+        {
+          "feature": "operation:spec.to-number",
+          "rows": 10,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4112
+        },
+        {
+          "feature": "operation:spec.to-numeric",
+          "rows": 10,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4112
+        },
+        {
+          "feature": "operation:spec.to-primitive",
+          "rows": 10,
+          "components": 8,
+          "supportingEpisodeGeneratedTokens": 4112
+        },
+        {
+          "feature": "operation:stack.duplicate",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 590
+        },
+        {
+          "feature": "operation:stack.pop",
+          "rows": 16,
+          "components": 13,
+          "supportingEpisodeGeneratedTokens": 6376
+        },
+        {
+          "feature": "state:mutation",
+          "rows": 3,
+          "components": 3,
+          "supportingEpisodeGeneratedTokens": 1852
+        },
+        {
+          "feature": "state:output-alias",
+          "rows": 1,
+          "components": 1,
+          "supportingEpisodeGeneratedTokens": 700
+        }
+      ]
+    },
+    "lostFeatures": [],
+    "lostFamilies": []
+  },
+  "evaluation": {
+    "policy": "retain-all-native-accepted-validation-and-test",
+    "beforeEpisodeIds": [
+      "semantic:harness:01aa13672dbe6ab38202fea835f9bb518821606ab93d860a0ad99e0cccc0e928",
+      "semantic:harness:52c380f4546b4c64029f8de6a319460ae60094802a86ba8ae7c600cfc4387f5e",
+      "semantic:harness:5345e93af88ff4bea1ae8c862be0ec61dab40a2ecaea3a226d73d13c8b7a128f",
+      "semantic:harness:8d8e04211298b05126ec3f0d89d4393743c4fb2c81a70742ddad21b6c81c5492",
+      "semantic:harness:9c94917081dedcd5008581ee96dbe0c600c202ba9e4313c1a9d4970b85ffa8b3",
+      "semantic:harness:ea9702bd290761f1eb99147fe3bc1a20363b06c650c34e7e5caa3a852aa8d771"
+    ],
+    "afterEpisodeIds": [
+      "semantic:harness:01aa13672dbe6ab38202fea835f9bb518821606ab93d860a0ad99e0cccc0e928",
+      "semantic:harness:52c380f4546b4c64029f8de6a319460ae60094802a86ba8ae7c600cfc4387f5e",
+      "semantic:harness:5345e93af88ff4bea1ae8c862be0ec61dab40a2ecaea3a226d73d13c8b7a128f",
+      "semantic:harness:8d8e04211298b05126ec3f0d89d4393743c4fb2c81a70742ddad21b6c81c5492",
+      "semantic:harness:9c94917081dedcd5008581ee96dbe0c600c202ba9e4313c1a9d4970b85ffa8b3",
+      "semantic:harness:ea9702bd290761f1eb99147fe3bc1a20363b06c650c34e7e5caa3a852aa8d771"
+    ],
+    "unchanged": true
+  },
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "limitations": [
+    "Coverage is a deterministic selection heuristic; conflicting budgets may lose rare features.",
+    "Feature counts are measured from original admitted execution difficulty, not all JavaScript semantics.",
+    "Prepared membership is not actual optimizer exposure. Historical receipts retain their original pins."
+  ],
+  "sourceManifestSha256": "de3ddbb4ff1b0157ae12b6d2cd6e7f4b540ea448fee843656dbdf9874989c9e5",
+  "parentSamplerSha256": "a65353d3841db95af0144a3b94a022e4cd41afb489965b895a01a35ce5302073"
+}

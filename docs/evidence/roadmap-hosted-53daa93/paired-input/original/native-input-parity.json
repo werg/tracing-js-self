@@ -1,0 +1,560 @@
+{
+  "schema": "semantic-native-input-parity/1",
+  "status": "passed",
+  "scope": "Actual data and serving adapter call arguments before neural execution",
+  "sourceIdentityDigest": "b65790ffeb0da181e4b11e3ff7ee286c7c912e78765eda85afffad7a69eff71b",
+  "sourceAdmission": {
+    "schema": "semantic-source-admission/4",
+    "episodeDigest": "52d4be351b978aeaef49138a0f81c12e087969391aa7fc10af392032a71da48a",
+    "identityDigest": "b65790ffeb0da181e4b11e3ff7ee286c7c912e78765eda85afffad7a69eff71b",
+    "identityValidated": true,
+    "producerRevision": null,
+    "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+    "referenceStatus": "agreed",
+    "journalValidated": true,
+    "replayValidated": true,
+    "sourceValidated": true,
+    "effectsValidated": true,
+    "optimizerSteps": 0
+  },
+  "sourceCandidateAdmission": "locally_verified",
+  "nativeAdmissionClaim": false,
+  "freshDirectCall": true,
+  "controlBytesMatch": true,
+  "observedRecordBytesMatch": true,
+  "trackPurposeMatch": true,
+  "trainingTrackPurpose": "Execute program1.run",
+  "servingTrackPurpose": "Execute program1.run",
+  "observedRecordComparisons": [
+    {
+      "index": 0,
+      "sameBytes": true,
+      "sameJsonValue": true,
+      "trainingSha256": "05ee08dbbbabc534a6c2433471cf6a0fd83ac2b3a3838e5913c1d5204171daa2",
+      "servingSha256": "05ee08dbbbabc534a6c2433471cf6a0fd83ac2b3a3838e5913c1d5204171daa2"
+    },
+    {
+      "index": 1,
+      "sameBytes": true,
+      "sameJsonValue": true,
+      "trainingSha256": "66e8982fdd4e7dcb53b1d759c0b7d7ddfffa19a7fd709241eab0f3b24177aa1c",
+      "servingSha256": "66e8982fdd4e7dcb53b1d759c0b7d7ddfffa19a7fd709241eab0f3b24177aa1c"
+    }
+  ],
+  "training": {
+    "control": {
+      "hex": "0a3c747261636b3e0a7b22696e737472756374696f6e223a22456d69742065786163746c79206f6e6520636f6d706c6574652063616e6f6e6963616c2073656d616e7469632d74726163652f35207769746e6573732e20557365206f6e6c7920746865206f6273657276656420736f757263652c207468697320696e766f636174696f6e20616e64207072696f722073656c65637465642073656d616e746963732e20416e2065787465726e616c2063616c6c20697320612076616c6964617465642072657175657374207769746820616c7265616479206576616c756174656420617267756d656e747320616e6420736f75726365207370616e2e204e657665722070726564696374206f62736572766174696f6e732c206576656e74732c206e617469766520726573756c7473206f722066757475726520746f6f6c2072656365697074732e2055736520736f757263652d67726f756e6465642c2074656d706f72616c6c79206576616c756174656420707572652065787072657373696f6e733a206174206d6f73742038206f70657261746f727320616e642033322065787072657373696f6e206e6f6465732e205072657365727665207265616c206c65786963616c20736f757263652062696e64696e67732c20616c69617365732c20656666656374732c206d75746174696f6e732c2063616c6c6261636b732c20617761697420626f756e64617269657320616e6420636f6d706c6574696f6e2e2041766f696420616e6f6e796d6f75732074656d706f726172792063656c6c732e227d",
+      "text": "\n<track>\n{\"instruction\":\"Emit exactly one complete canonical semantic-trace/5 witness. Use only the observed source, this invocation and prior selected semantics. An external call is a validated request with already evaluated arguments and source span. Never predict observations, events, native results or future tool receipts. Use source-grounded, temporally evaluated pure expressions: at most 8 operators and 32 expression nodes. Preserve real lexical source bindings, aliases, effects, mutations, callbacks, await boundaries and completion. Avoid anonymous temporary cells.\"}",
+      "sha256": "f95c8d6b8b8caa8e065fabeeccfc42a003d8dac46a08f0d119f51513fbab9f1c",
+      "bytes": 580
+    },
+    "observedRecords": [
+      {
+        "recordId": "semantic:r1",
+        "role": "user",
+        "payloadHex": "7b226361706162696c6974696573223a5b5d2c22646570656e64656e63696573223a5b5d2c22646967657374223a2233326334383462336136303739316434376633346439303433383033653961383330656536396238386531666538653231383531376433626637393438366139222c22656e747279223a2272756e222c2266756e6374696f6e73223a5b7b22656e64223a34332c226e616d65223a2272756e222c22706172616d73223a5b2261222c2262225d2c227374617274223a31337d5d2c226b696e64223a2270726f6772616d222c226c616e677561676550726f66696c65223a226f776e65642d6a6176617363726970742f31222c226d6f6465223a226f62736572766564222c226d6f64756c65223a66616c73652c226f776e657253657175656e6365223a312c2270726f6772616d4964223a2270726f6772616d31222c22736368656d61223a2273656d616e7469632d657865637574696f6e2f35222c2273657175656e6365223a312c2273657373696f6e223a227465616368657231222c227369746573223a5b7b22656e64223a31322c226964223a227331222c22726f6c65223a224c69746572616c222c227374617274223a307d2c7b22656e64223a34332c226964223a227332222c22726f6c65223a2246756e6374696f6e4465636c61726174696f6e222c227374617274223a31337d2c7b22656e64223a32352c226964223a227333222c22726f6c65223a224964656e746966696572222c227374617274223a32327d2c7b22656e64223a32372c226964223a227334222c22726f6c65223a224964656e746966696572222c227374617274223a32367d2c7b22656e64223a32392c226964223a227335222c22726f6c65223a224964656e746966696572222c227374617274223a32387d2c7b22656e64223a34322c226964223a227336222c22726f6c65223a2252657475726e53746174656d656e74222c227374617274223a33317d2c7b22656e64223a33392c226964223a227337222c22726f6c65223a224964656e746966696572222c227374617274223a33387d2c7b22656e64223a34312c226964223a227338222c22726f6c65223a2242696e61727945787072657373696f6e222c227374617274223a33387d2c7b22656e64223a34312c226964223a227339222c22726f6c65223a224964656e746966696572222c227374617274223a34307d5d2c22736f75726365223a225c22757365207374726963745c223b66756e6374696f6e2072756e28612c62297b72657475726e206126623b7d222c22736f757263654d6170223a6e756c6c2c22736f757263654d65746164617461223a6e756c6c2c22747261636b223a22686f7374227d",
+        "payloadText": "{\"capabilities\":[],\"dependencies\":[],\"digest\":\"32c484b3a60791d47f34d9043803e9a830ee69b88e1fe8e218517d3bf79486a9\",\"entry\":\"run\",\"functions\":[{\"end\":43,\"name\":\"run\",\"params\":[\"a\",\"b\"],\"start\":13}],\"kind\":\"program\",\"languageProfile\":\"owned-javascript/1\",\"mode\":\"observed\",\"module\":false,\"ownerSequence\":1,\"programId\":\"program1\",\"schema\":\"semantic-execution/5\",\"sequence\":1,\"session\":\"teacher1\",\"sites\":[{\"end\":12,\"id\":\"s1\",\"role\":\"Literal\",\"start\":0},{\"end\":43,\"id\":\"s2\",\"role\":\"FunctionDeclaration\",\"start\":13},{\"end\":25,\"id\":\"s3\",\"role\":\"Identifier\",\"start\":22},{\"end\":27,\"id\":\"s4\",\"role\":\"Identifier\",\"start\":26},{\"end\":29,\"id\":\"s5\",\"role\":\"Identifier\",\"start\":28},{\"end\":42,\"id\":\"s6\",\"role\":\"ReturnStatement\",\"start\":31},{\"end\":39,\"id\":\"s7\",\"role\":\"Identifier\",\"start\":38},{\"end\":41,\"id\":\"s8\",\"role\":\"BinaryExpression\",\"start\":38},{\"end\":41,\"id\":\"s9\",\"role\":\"Identifier\",\"start\":40}],\"source\":\"\\\"use strict\\\";function run(a,b){return a&b;}\",\"sourceMap\":null,\"sourceMetadata\":null,\"track\":\"host\"}",
+        "sha256": "05ee08dbbbabc534a6c2433471cf6a0fd83ac2b3a3838e5913c1d5204171daa2"
+      },
+      {
+        "recordId": "semantic:r2",
+        "role": "user",
+        "payloadHex": "7b2261637469766174696f6e223a2263616c6c222c2262696e64696e6773223a7b7d2c22636c6f737572654964223a6e756c6c2c22636f6d706c6574696f6e506f6c696379223a2261776169742d72657475726e65642d70726f6d697365222c22646561646c696e65223a6e756c6c2c22656e747279223a2272756e222c22696e67726573734b6579223a22746561636865722d656e747279222c22696e7075744772617068223a7b226f626a65637473223a5b5d2c22726f6f7473223a5b5b226e756d222c365d2c5b226e756d222c335d5d7d2c22696e766f636174696f6e4964223a22696e766f636174696f6e31222c226b696e64223a22696e766f636174696f6e222c226d6f6465223a226f62736572766564222c226f776e657253657175656e6365223a312c22706172656e74496e766f636174696f6e4964223a6e756c6c2c2270726f6772616d4964223a2270726f6772616d31222c227265616c6d4964223a227265616c6d31222c227265616c6d506f6c696379223a2272657461696e6564222c227265636569766572223a5b22756e646566696e6564225d2c22736368656d61223a2273656d616e7469632d657865637574696f6e2f35222c2273657175656e6365223a322c2273657373696f6e223a227465616368657231222c22736f75726365446967657374223a2233326334383462336136303739316434376633346439303433383033653961383330656536396238386531666538653231383531376433626637393438366139222c227461736b5265766973696f6e223a312c22747261636b223a22776f726b657231222c22747269676765724964223a22746561636865722d656e747279227d",
+        "payloadText": "{\"activation\":\"call\",\"bindings\":{},\"closureId\":null,\"completionPolicy\":\"await-returned-promise\",\"deadline\":null,\"entry\":\"run\",\"ingressKey\":\"teacher-entry\",\"inputGraph\":{\"objects\":[],\"roots\":[[\"num\",6],[\"num\",3]]},\"invocationId\":\"invocation1\",\"kind\":\"invocation\",\"mode\":\"observed\",\"ownerSequence\":1,\"parentInvocationId\":null,\"programId\":\"program1\",\"realmId\":\"realm1\",\"realmPolicy\":\"retained\",\"receiver\":[\"undefined\"],\"schema\":\"semantic-execution/5\",\"sequence\":2,\"session\":\"teacher1\",\"sourceDigest\":\"32c484b3a60791d47f34d9043803e9a830ee69b88e1fe8e218517d3bf79486a9\",\"taskRevision\":1,\"track\":\"worker1\",\"triggerId\":\"teacher-entry\"}",
+        "sha256": "66e8982fdd4e7dcb53b1d759c0b7d7ddfffa19a7fd709241eab0f3b24177aa1c"
+      }
+    ],
+    "event": {
+      "record_id": "semantic:r3",
+      "track_id": "worker1",
+      "modality": "text",
+      "meridian_id": 2,
+      "role": "assistant",
+      "alignment_id": null,
+      "media_span": null,
+      "asset_sha256": null,
+      "request": "",
+      "request_revision": 0,
+      "instruction": "Emit exactly one complete canonical semantic-trace/5 witness. Use only the observed source, this invocation and prior selected semantics. An external call is a validated request with already evaluated arguments and source span. Never predict observations, events, native results or future tool receipts. Use source-grounded, temporally evaluated pure expressions: at most 8 operators and 32 expression nodes. Preserve real lexical source bindings, aliases, effects, mutations, callbacks, await boundaries and completion. Avoid anonymous temporary cells.",
+      "settings_json": "{}",
+      "reference_event_ids": [],
+      "speaker": "",
+      "direction": "",
+      "available_at_ns": null,
+      "source_revision": ""
+    },
+    "tracks": [
+      {
+        "track_id": "host",
+        "role": "assistant",
+        "default_modality": "text",
+        "description": "",
+        "settings_json": "{}"
+      },
+      {
+        "track_id": "worker1",
+        "role": "assistant",
+        "default_modality": "text",
+        "description": "Execute program1.run",
+        "settings_json": "{}"
+      }
+    ],
+    "firstTarget": {
+      "sequence": 3,
+      "record": "bind {\"name\":\"a\",\"value\":[\"num\",6]}"
+    },
+    "dataAdapterReceipt": {
+      "records": 6,
+      "invocations": 1,
+      "tracks": 2,
+      "actions": 0,
+      "observations": 2,
+      "admission": "locally_verified",
+      "codec_fingerprint": null,
+      "completions": [
+        {
+          "invocationId": "invocation1",
+          "kind": "return",
+          "value": [
+            "num",
+            2
+          ]
+        }
+      ]
+    },
+    "physicalChunking": "unmeasured: codec not loaded"
+  },
+  "serving": {
+    "observedRecords": [
+      {
+        "track": "track:0",
+        "role": "user",
+        "payloadHex": "7b226361706162696c6974696573223a5b5d2c22646570656e64656e63696573223a5b5d2c22646967657374223a2233326334383462336136303739316434376633346439303433383033653961383330656536396238386531666538653231383531376433626637393438366139222c22656e747279223a2272756e222c2266756e6374696f6e73223a5b7b22656e64223a34332c226e616d65223a2272756e222c22706172616d73223a5b2261222c2262225d2c227374617274223a31337d5d2c226b696e64223a2270726f6772616d222c226c616e677561676550726f66696c65223a226f776e65642d6a6176617363726970742f31222c226d6f6465223a226f62736572766564222c226d6f64756c65223a66616c73652c226f776e657253657175656e6365223a312c2270726f6772616d4964223a2270726f6772616d31222c22736368656d61223a2273656d616e7469632d657865637574696f6e2f35222c2273657175656e6365223a312c2273657373696f6e223a227465616368657231222c227369746573223a5b7b22656e64223a31322c226964223a227331222c22726f6c65223a224c69746572616c222c227374617274223a307d2c7b22656e64223a34332c226964223a227332222c22726f6c65223a2246756e6374696f6e4465636c61726174696f6e222c227374617274223a31337d2c7b22656e64223a32352c226964223a227333222c22726f6c65223a224964656e746966696572222c227374617274223a32327d2c7b22656e64223a32372c226964223a227334222c22726f6c65223a224964656e746966696572222c227374617274223a32367d2c7b22656e64223a32392c226964223a227335222c22726f6c65223a224964656e746966696572222c227374617274223a32387d2c7b22656e64223a34322c226964223a227336222c22726f6c65223a2252657475726e53746174656d656e74222c227374617274223a33317d2c7b22656e64223a33392c226964223a227337222c22726f6c65223a224964656e746966696572222c227374617274223a33387d2c7b22656e64223a34312c226964223a227338222c22726f6c65223a2242696e61727945787072657373696f6e222c227374617274223a33387d2c7b22656e64223a34312c226964223a227339222c22726f6c65223a224964656e746966696572222c227374617274223a34307d5d2c22736f75726365223a225c22757365207374726963745c223b66756e6374696f6e2072756e28612c62297b72657475726e206126623b7d222c22736f757263654d6170223a6e756c6c2c22736f757263654d65746164617461223a6e756c6c2c22747261636b223a22686f7374227d",
+        "payloadText": "{\"capabilities\":[],\"dependencies\":[],\"digest\":\"32c484b3a60791d47f34d9043803e9a830ee69b88e1fe8e218517d3bf79486a9\",\"entry\":\"run\",\"functions\":[{\"end\":43,\"name\":\"run\",\"params\":[\"a\",\"b\"],\"start\":13}],\"kind\":\"program\",\"languageProfile\":\"owned-javascript/1\",\"mode\":\"observed\",\"module\":false,\"ownerSequence\":1,\"programId\":\"program1\",\"schema\":\"semantic-execution/5\",\"sequence\":1,\"session\":\"teacher1\",\"sites\":[{\"end\":12,\"id\":\"s1\",\"role\":\"Literal\",\"start\":0},{\"end\":43,\"id\":\"s2\",\"role\":\"FunctionDeclaration\",\"start\":13},{\"end\":25,\"id\":\"s3\",\"role\":\"Identifier\",\"start\":22},{\"end\":27,\"id\":\"s4\",\"role\":\"Identifier\",\"start\":26},{\"end\":29,\"id\":\"s5\",\"role\":\"Identifier\",\"start\":28},{\"end\":42,\"id\":\"s6\",\"role\":\"ReturnStatement\",\"start\":31},{\"end\":39,\"id\":\"s7\",\"role\":\"Identifier\",\"start\":38},{\"end\":41,\"id\":\"s8\",\"role\":\"BinaryExpression\",\"start\":38},{\"end\":41,\"id\":\"s9\",\"role\":\"Identifier\",\"start\":40}],\"source\":\"\\\"use strict\\\";function run(a,b){return a&b;}\",\"sourceMap\":null,\"sourceMetadata\":null,\"track\":\"host\"}",
+        "sha256": "05ee08dbbbabc534a6c2433471cf6a0fd83ac2b3a3838e5913c1d5204171daa2"
+      },
+      {
+        "track": "track:0",
+        "role": "user",
+        "payloadHex": "7b2261637469766174696f6e223a2263616c6c222c2262696e64696e6773223a7b7d2c22636c6f737572654964223a6e756c6c2c22636f6d706c6574696f6e506f6c696379223a2261776169742d72657475726e65642d70726f6d697365222c22646561646c696e65223a6e756c6c2c22656e747279223a2272756e222c22696e67726573734b6579223a22746561636865722d656e747279222c22696e7075744772617068223a7b226f626a65637473223a5b5d2c22726f6f7473223a5b5b226e756d222c365d2c5b226e756d222c335d5d7d2c22696e766f636174696f6e4964223a22696e766f636174696f6e31222c226b696e64223a22696e766f636174696f6e222c226d6f6465223a226f62736572766564222c226f776e657253657175656e6365223a312c22706172656e74496e766f636174696f6e4964223a6e756c6c2c2270726f6772616d4964223a2270726f6772616d31222c227265616c6d4964223a227265616c6d31222c227265616c6d506f6c696379223a2272657461696e6564222c227265636569766572223a5b22756e646566696e6564225d2c22736368656d61223a2273656d616e7469632d657865637574696f6e2f35222c2273657175656e6365223a322c2273657373696f6e223a227465616368657231222c22736f75726365446967657374223a2233326334383462336136303739316434376633346439303433383033653961383330656536396238386531666538653231383531376433626637393438366139222c227461736b5265766973696f6e223a312c22747261636b223a22776f726b657231222c22747269676765724964223a22746561636865722d656e747279227d",
+        "payloadText": "{\"activation\":\"call\",\"bindings\":{},\"closureId\":null,\"completionPolicy\":\"await-returned-promise\",\"deadline\":null,\"entry\":\"run\",\"ingressKey\":\"teacher-entry\",\"inputGraph\":{\"objects\":[],\"roots\":[[\"num\",6],[\"num\",3]]},\"invocationId\":\"invocation1\",\"kind\":\"invocation\",\"mode\":\"observed\",\"ownerSequence\":1,\"parentInvocationId\":null,\"programId\":\"program1\",\"realmId\":\"realm1\",\"realmPolicy\":\"retained\",\"receiver\":[\"undefined\"],\"schema\":\"semantic-execution/5\",\"sequence\":2,\"session\":\"teacher1\",\"sourceDigest\":\"32c484b3a60791d47f34d9043803e9a830ee69b88e1fe8e218517d3bf79486a9\",\"taskRevision\":1,\"track\":\"worker1\",\"triggerId\":\"teacher-entry\"}",
+        "sha256": "66e8982fdd4e7dcb53b1d759c0b7d7ddfffa19a7fd709241eab0f3b24177aa1c"
+      }
+    ],
+    "generation": {
+      "tracks": [
+        "track:0"
+      ],
+      "effort": 1,
+      "specs": [
+        {
+          "allow_text": true,
+          "text_kind": "utf8",
+          "schemas": [],
+          "copy_sources": [],
+          "min_tokens": 1,
+          "max_tokens": 128,
+          "require_terminal": null
+        }
+      ],
+      "controls": [
+        {
+          "hex": "0a3c747261636b3e0a7b22696e737472756374696f6e223a22456d69742065786163746c79206f6e6520636f6d706c6574652063616e6f6e6963616c2073656d616e7469632d74726163652f35207769746e6573732e20557365206f6e6c7920746865206f6273657276656420736f757263652c207468697320696e766f636174696f6e20616e64207072696f722073656c65637465642073656d616e746963732e20416e2065787465726e616c2063616c6c20697320612076616c6964617465642072657175657374207769746820616c7265616479206576616c756174656420617267756d656e747320616e6420736f75726365207370616e2e204e657665722070726564696374206f62736572766174696f6e732c206576656e74732c206e617469766520726573756c7473206f722066757475726520746f6f6c2072656365697074732e2055736520736f757263652d67726f756e6465642c2074656d706f72616c6c79206576616c756174656420707572652065787072657373696f6e733a206174206d6f73742038206f70657261746f727320616e642033322065787072657373696f6e206e6f6465732e205072657365727665207265616c206c65786963616c20736f757263652062696e64696e67732c20616c69617365732c20656666656374732c206d75746174696f6e732c2063616c6c6261636b732c20617761697420626f756e64617269657320616e6420636f6d706c6574696f6e2e2041766f696420616e6f6e796d6f75732074656d706f726172792063656c6c732e227d",
+          "text": "\n<track>\n{\"instruction\":\"Emit exactly one complete canonical semantic-trace/5 witness. Use only the observed source, this invocation and prior selected semantics. An external call is a validated request with already evaluated arguments and source span. Never predict observations, events, native results or future tool receipts. Use source-grounded, temporally evaluated pure expressions: at most 8 operators and 32 expression nodes. Preserve real lexical source bindings, aliases, effects, mutations, callbacks, await boundaries and completion. Avoid anonymous temporary cells.\"}",
+          "sha256": "f95c8d6b8b8caa8e065fabeeccfc42a003d8dac46a08f0d119f51513fbab9f1c",
+          "bytes": 580
+        }
+      ],
+      "trackDescriptions": [
+        {
+          "address": "track:0",
+          "purpose": "Execute program1.run",
+          "label": "",
+          "parent": null,
+          "completion": "Invocation invocation1 completion",
+          "capabilities": [
+            "text"
+          ],
+          "budget": 4096,
+          "revision": 0,
+          "status": "active",
+          "prerequisites": [],
+          "progress": "",
+          "execution": {
+            "program_id": "program1",
+            "source_digest": "32c484b3a60791d47f34d9043803e9a830ee69b88e1fe8e218517d3bf79486a9",
+            "entry": "run",
+            "invocation_id": "invocation1",
+            "realm_id": "realm1",
+            "trigger_id": "teacher-entry",
+            "input_ref": "a9b1c2f9488d4d5752ecc7007d085985211246134dc00f2517f1db5759559d20",
+            "realm_policy": "retained",
+            "completion_mode": "await-returned-promise",
+            "capability_grants": [],
+            "completion_target": "",
+            "schema": "semantic-execution-binding/4"
+          },
+          "bootstrap_ready": true
+        }
+      ]
+    },
+    "openParameters": {
+      "metadata": {
+        "task": "semantic-execution/5",
+        "modality": "text"
+      },
+      "effort": 1,
+      "memory_writes": false
+    }
+  },
+  "unmeasured": [
+    "actual tokenizer IDs",
+    "recurrent history and track-state equivalence",
+    "checkpoint identity and conditional logits",
+    "effect of the mismatch on learning"
+  ],
+  "visibilityVerification": "not executed: neural context is outside this input-byte probe",
+  "modelSelections": 0,
+  "optimizerSteps": 0,
+  "interpretation": "An input-byte mismatch is a conditioning-path defect to investigate. It is not proof that the mismatch is the only cause of failed learning.",
+  "consumerRevision": "9a9dd3593c6887d63012dd5c953e914557dca386",
+  "episodeSha256": "14827b58de074842fc515ffd8b94f92cd6fdc8422f63f9d6a6df8416ff47faf1",
+  "firstPublicPrefix": {
+    "schema": "selected-inference-prefix/2",
+    "programId": "program1",
+    "entry": "run",
+    "source": "\"use strict\";function run(a,b){return a&b;}",
+    "sourceDigest": "32c484b3a60791d47f34d9043803e9a830ee69b88e1fe8e218517d3bf79486a9",
+    "invocationId": "invocation1",
+    "trackId": "worker1",
+    "realmId": "realm1",
+    "committed": [
+      {
+        "schema": "semantic-execution/5",
+        "session": "teacher1",
+        "sequence": 1,
+        "ownerSequence": 1,
+        "track": "host",
+        "mode": "observed",
+        "kind": "program",
+        "programId": "program1",
+        "digest": "32c484b3a60791d47f34d9043803e9a830ee69b88e1fe8e218517d3bf79486a9",
+        "entry": "run",
+        "source": "\"use strict\";function run(a,b){return a&b;}",
+        "sites": [
+          {
+            "id": "s1",
+            "start": 0,
+            "end": 12,
+            "role": "Literal"
+          },
+          {
+            "id": "s2",
+            "start": 13,
+            "end": 43,
+            "role": "FunctionDeclaration"
+          },
+          {
+            "id": "s3",
+            "start": 22,
+            "end": 25,
+            "role": "Identifier"
+          },
+          {
+            "id": "s4",
+            "start": 26,
+            "end": 27,
+            "role": "Identifier"
+          },
+          {
+            "id": "s5",
+            "start": 28,
+            "end": 29,
+            "role": "Identifier"
+          },
+          {
+            "id": "s6",
+            "start": 31,
+            "end": 42,
+            "role": "ReturnStatement"
+          },
+          {
+            "id": "s7",
+            "start": 38,
+            "end": 39,
+            "role": "Identifier"
+          },
+          {
+            "id": "s8",
+            "start": 38,
+            "end": 41,
+            "role": "BinaryExpression"
+          },
+          {
+            "id": "s9",
+            "start": 40,
+            "end": 41,
+            "role": "Identifier"
+          }
+        ],
+        "functions": [
+          {
+            "start": 13,
+            "end": 43,
+            "name": "run",
+            "params": [
+              "a",
+              "b"
+            ]
+          }
+        ],
+        "capabilities": [],
+        "dependencies": [],
+        "sourceMap": null,
+        "languageProfile": "owned-javascript/1",
+        "module": false,
+        "sourceMetadata": null
+      },
+      {
+        "schema": "semantic-execution/5",
+        "session": "teacher1",
+        "sequence": 2,
+        "ownerSequence": 1,
+        "track": "worker1",
+        "mode": "observed",
+        "kind": "invocation",
+        "programId": "program1",
+        "invocationId": "invocation1",
+        "realmId": "realm1",
+        "triggerId": "teacher-entry",
+        "completionPolicy": "await-returned-promise",
+        "realmPolicy": "retained",
+        "inputGraph": {
+          "roots": [
+            [
+              "num",
+              6
+            ],
+            [
+              "num",
+              3
+            ]
+          ],
+          "objects": []
+        },
+        "entry": "run",
+        "sourceDigest": "32c484b3a60791d47f34d9043803e9a830ee69b88e1fe8e218517d3bf79486a9",
+        "receiver": [
+          "undefined"
+        ],
+        "closureId": null,
+        "activation": "call",
+        "parentInvocationId": null,
+        "taskRevision": 1,
+        "deadline": null,
+        "bindings": {},
+        "ingressKey": "teacher-entry"
+      }
+    ],
+    "realmCommitted": [
+      {
+        "schema": "semantic-execution/5",
+        "session": "teacher1",
+        "sequence": 1,
+        "ownerSequence": 1,
+        "track": "host",
+        "mode": "observed",
+        "kind": "program",
+        "programId": "program1",
+        "digest": "32c484b3a60791d47f34d9043803e9a830ee69b88e1fe8e218517d3bf79486a9",
+        "entry": "run",
+        "source": "\"use strict\";function run(a,b){return a&b;}",
+        "sites": [
+          {
+            "id": "s1",
+            "start": 0,
+            "end": 12,
+            "role": "Literal"
+          },
+          {
+            "id": "s2",
+            "start": 13,
+            "end": 43,
+            "role": "FunctionDeclaration"
+          },
+          {
+            "id": "s3",
+            "start": 22,
+            "end": 25,
+            "role": "Identifier"
+          },
+          {
+            "id": "s4",
+            "start": 26,
+            "end": 27,
+            "role": "Identifier"
+          },
+          {
+            "id": "s5",
+            "start": 28,
+            "end": 29,
+            "role": "Identifier"
+          },
+          {
+            "id": "s6",
+            "start": 31,
+            "end": 42,
+            "role": "ReturnStatement"
+          },
+          {
+            "id": "s7",
+            "start": 38,
+            "end": 39,
+            "role": "Identifier"
+          },
+          {
+            "id": "s8",
+            "start": 38,
+            "end": 41,
+            "role": "BinaryExpression"
+          },
+          {
+            "id": "s9",
+            "start": 40,
+            "end": 41,
+            "role": "Identifier"
+          }
+        ],
+        "functions": [
+          {
+            "start": 13,
+            "end": 43,
+            "name": "run",
+            "params": [
+              "a",
+              "b"
+            ]
+          }
+        ],
+        "capabilities": [],
+        "dependencies": [],
+        "sourceMap": null,
+        "languageProfile": "owned-javascript/1",
+        "module": false,
+        "sourceMetadata": null
+      },
+      {
+        "schema": "semantic-execution/5",
+        "session": "teacher1",
+        "sequence": 2,
+        "ownerSequence": 1,
+        "track": "worker1",
+        "mode": "observed",
+        "kind": "invocation",
+        "programId": "program1",
+        "invocationId": "invocation1",
+        "realmId": "realm1",
+        "triggerId": "teacher-entry",
+        "completionPolicy": "await-returned-promise",
+        "realmPolicy": "retained",
+        "inputGraph": {
+          "roots": [
+            [
+              "num",
+              6
+            ],
+            [
+              "num",
+              3
+            ]
+          ],
+          "objects": []
+        },
+        "entry": "run",
+        "sourceDigest": "32c484b3a60791d47f34d9043803e9a830ee69b88e1fe8e218517d3bf79486a9",
+        "receiver": [
+          "undefined"
+        ],
+        "closureId": null,
+        "activation": "call",
+        "parentInvocationId": null,
+        "taskRevision": 1,
+        "deadline": null,
+        "bindings": {},
+        "ingressKey": "teacher-entry"
+      }
+    ],
+    "completionPolicy": "await-returned-promise",
+    "maxOutstanding": 64,
+    "taskRevision": 1,
+    "parentInvocationId": null,
+    "receiver": [
+      "undefined"
+    ],
+    "closureId": null,
+    "activation": "call",
+    "selectedState": {
+      "schema": "semantic-continuation/5",
+      "heap": [],
+      "locals": [
+        [
+          "a0b0",
+          [
+            "num",
+            6
+          ]
+        ],
+        [
+          "a0b1",
+          [
+            "num",
+            3
+          ]
+        ]
+      ],
+      "captureAliases": [
+        [
+          "a",
+          "a0b0"
+        ],
+        [
+          "b",
+          "a0b1"
+        ]
+      ],
+      "stack": [
+        "invocation1"
+      ],
+      "continuations": [],
+      "ready": [],
+      "callReturn": null,
+      "pending": null,
+      "completion": null,
+      "randomState": null
+    }
+  },
+  "inputBindings": [
+    {
+      "path": "src/megatoken/data/semantic_harness_v5.py",
+      "sha256": "d20ea6e7108f3b06aef9188bcd16f22972aee34e655396153d05730f6936e20d"
+    },
+    {
+      "path": "src/megatoken/data/semantic_physical.py",
+      "sha256": "aaabf2ff6c4ee55f0ff0e99e3227cdc97a155985c35f9f46433684a7731b577c"
+    },
+    {
+      "path": "src/megatoken/controls.py",
+      "sha256": "fd0fd088dadaa335d17e1c3e632e710c4b55783fe2bb71a81e0bfbc3421c4064"
+    },
+    {
+      "path": "src/megatoken/semantic_model_adapter.py",
+      "sha256": "b6c4234cde2f10deb43d89d06ab00815796039b8d71c88c007bafe7e5f4c40be"
+    },
+    {
+      "path": "src/megatoken/data/schema.py",
+      "sha256": "839a4fb01cd043d3d3b40dd6e81f7c655b691533e7e1b70afe7a288645257cd5"
+    }
+  ],
+  "probeImplementationSha256": "c822272e4a8835c7713380da5ecb6cf1ecec49447d3c0faf760656ec55579554",
+  "prefixBuilderSha256": "70b5446305be27baf35cd3ea8566034d90978720e039e61997a39b5ac8ce17c7"
+}

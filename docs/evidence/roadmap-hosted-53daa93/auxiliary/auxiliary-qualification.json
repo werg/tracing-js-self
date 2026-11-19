@@ -1,0 +1,108 @@
+{
+  "schema": "semantic-hosted-auxiliary-qualification/1",
+  "repository": "werg/tracing-js-self",
+  "headCommit": "53daa939dba0a0202402dc980a17a6682e719b37",
+  "baseCommit": "9ab2b75a58d744265ff5dd9f4d00450a9286c00e",
+  "executedPrMergeCommit": "6b9acf98e14f73a5865b4b38ac0390f119f101ab",
+  "savedAtUtc": "2026-11-18 20:27:30 UTC",
+  "jobs": [
+    {
+      "name": "spec-reference",
+      "runId": 44390718113,
+      "jobId": 135107281448,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/werg/tracing-js-self/actions/runs/44390718113/job/135107281448",
+      "provenance": "spec-reference.provenance.json",
+      "resultsDerivedFromOriginalLog": {
+        "scalarReference": {
+          "cases": 12,
+          "passed": 12
+        },
+        "arithmeticDifferential": {
+          "cases": 1958,
+          "passed": 1958,
+          "normal": 1433,
+          "abrupt": 525,
+          "reconstructed": 1958,
+          "replayed": 1958
+        },
+        "test262ScalarVariants": {
+          "passedVariants": 6,
+          "unsupportedVariants": 2,
+          "omittedStrictVariants": 8,
+          "executedAssertions": 16
+        },
+        "test262SelectedExecution": {
+          "selected": 11,
+          "executed": 9,
+          "passed": 4,
+          "knownFailed": 5,
+          "skipped": 2,
+          "unexpected": 0
+        }
+      }
+    },
+    {
+      "name": "selected-harness",
+      "runId": 44390717993,
+      "jobId": 135107280852,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/werg/tracing-js-self/actions/runs/44390717993/job/135107280852",
+      "provenance": "selected-harness.provenance.json",
+      "resultsDerivedFromOriginalLog": {
+        "adapterTests": {
+          "passed": 94,
+          "failed": 0,
+          "skipped": 0
+        },
+        "actualChromiumTests": {
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0
+        }
+      }
+    },
+    {
+      "name": "semantic-inspection",
+      "runId": 44390718021,
+      "jobId": 135107280870,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/werg/tracing-js-self/actions/runs/44390718021/job/135107280870",
+      "provenance": "semantic-inspection.provenance.json",
+      "resultsDerivedFromOriginalLog": {
+        "nodeBatches": [
+          {
+            "passed": 15,
+            "failed": 0,
+            "skipped": 0
+          },
+          {
+            "passed": 56,
+            "failed": 0,
+            "skipped": 0
+          }
+        ],
+        "pythonBatches": [
+          {
+            "tests": 10,
+            "result": "OK"
+          },
+          {
+            "tests": 9,
+            "result": "OK"
+          }
+        ],
+        "teacherMutants": {
+          "attempted": 13,
+          "detectedIndependently": 13
+        },
+        "inspectedSourceFixtures": 8
+      }
+    }
+  ],
+  "scope": "Bounded auxiliary engineering checks only. Expected Test262 failures, unsupported variants and omitted strict variants remain explicit; workflow success is not general conformance or learned execution.",
+  "preservation": "Job logs retain exact decoded UTF-8 content returned by GitHub connector, losslessly gzip compressed. API files serialize complete connector tool responses; they are not claimed to be raw HTTP wire bytes."
+}
