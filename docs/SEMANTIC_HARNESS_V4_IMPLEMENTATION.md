@@ -1,5 +1,10 @@
 # Semantic execution v5: implementation and operation
 
+> **Historical v5 implementation guide.** References to “current” apply to its
+> recorded implementation. See the [v6 baseline language](PRODUCTION_TRACE_V6.md)
+> and [algorithm implementation ledger](SEMANTIC_ALGORITHM_IMPLEMENTATION.md)
+> for subsequent work. This guide does not qualify successor artifacts.
+
 This is the implementation guide for the [current semantic execution profile](STATUS.md).
 Engineering verification uses source-certified teachers, independent Node/browser references,
 controlled selected actions and initialized fixed-weight inference. It does not run an optimizer

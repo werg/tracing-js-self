@@ -1,7 +1,9 @@
 > **Immutable historical engineering evidence.** This document and its hash-pinned
 > evidence describe the specific frozen M0–M8 experiment revisions, including
 > comparisons that are **no longer executable as current training modes**.
-> The sole active trace is [source-grounded semantic-trace/5](SEMANTIC_REASONING_TRACE.md).
+> Current direction and version gates are in the
+> [algorithm implementation ledger](SEMANTIC_ALGORITHM_IMPLEMENTATION.md);
+> the pre-refactor language is [semantic-trace/6](PRODUCTION_TRACE_V6.md).
 > Historical artifacts here are retained only to substantiate the published
 > engineering receipt; do not import them as today's training data.
 

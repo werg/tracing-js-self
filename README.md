@@ -4,6 +4,14 @@ An **experimental, owned-machine JavaScript semantic tracing runtime**, bootstra
 
 This is a working **bounded prototype**, **not** a complete JavaScript interpreter or complete Node/browser runtime. Unsupported language features fail explicitly rather than running guest JavaScript outside the tracer. See [current semantic-execution scope](docs/SEMANTIC_REASONING_TRACE.md) and [coverage ledger](coverage/required.json).
 
+The [algorithm representation refactor](docs/SEMANTIC_ALGORITHM_IMPLEMENTATION.md)
+builds on the v6 baseline: several certified source forms should share a typed
+core that states the computation and relevant effects. Its
+[semantic and observation contract](docs/SEMANTIC_ALGORITHM_CONTRACT.md)
+defines the bounded equivalences, causal boundaries, and qualification gates.
+The ledger separates completed work from release evidence; historical artifacts
+keep their original versions.
+
 The current v6 pipeline includes bounded synchronous and asynchronous
 execution, explicit guest throws, independent source verification, immutable
 candidate identities, frozen source components, resumable generation and
