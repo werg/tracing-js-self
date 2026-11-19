@@ -2,8 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildRegionFamilyRegistry,deriveRegionCoreIdentity,regionSplitIdentity,
   verifyRegionFamilyRegistry,verifyRegionSplitIdentity,validateRegionFamilyAssignments,
-  REGION_FAMILY_REGISTRY_SCHEMA} from '../src/semantic/family-registry-v8.js';
+  verifyRegionDatasetBinding,REGION_FAMILY_REGISTRY_SCHEMA} from '../src/semantic/family-registry-v8.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
+import {verifyRegionTrainingCase} from '../src/semantic/compiler-v8.js';
+import {buildRegionDataset,exportRegionDatasetJSONL} from '../src/semantic/dataset-v8.js';
+import {V8_CONTRACT_DIGEST,V8_FIXTURE_DIGEST,V8_NATIVE_CHECKS} from '../src/semantic/native-v8.js';
+import {mkdtemp,readFile,writeFile,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {createHash} from 'node:crypto';
+import {promisify} from 'node:util';
+import {execFile} from 'node:child_process';
 
 const affine='"use strict";function run(x){const y=x+1;return y*2;}';
 const alias='"use strict";function run(value){let next=value+1;return next*2;}';
@@ -11,6 +20,20 @@ const detailA='"use strict";function run(o){o.x=1;return o;}';
 const detailB='"use strict";function run(o){o.y=2;return o;}';
 const row=(id,family,source,ancestors=[])=>({id,family,source,entry:'run',ancestors});
 const resign=registry=>{const {digest,...body}=registry;registry.digest=hashAlgorithmData(body);return registry;};
+const tokenizer={identity:'e'.repeat(64),encode:text=>[...Buffer.from(text)],decode:ids=>Buffer.from(ids)};
+const options={tokenizer,eosTokenId:256,maxContextTokens:1000000,allowLocal:true,seed:17};
+let fixturePromise;
+async function qualified(){
+  fixturePromise??=(async()=>{
+    const fixture={id:'affine-source',family:'affine-source',ancestorIds:['original-affine'],
+      source:affine,entry:'run',args:[3],fixture:{calls:[]}};
+    const result=await verifyRegionTrainingCase(fixture);assert(result.exported,JSON.stringify(result));
+    return {...fixture,...result};
+  })();
+  return structuredClone(await fixturePromise);
+}
+const refused={id:'refused-write',family:'refused-write',ancestors:['original-affine'],source:detailA,
+  entry:'run',status:'unsupported',category:'unsupported.fixture',phase:'source',reason:'retained source refusal'};
 
 test('v8 source, /2 core and declared ancestry edges are frozen together before holdout',()=>{
   assert.equal(deriveRegionCoreIdentity(affine,'run').coreDigest,deriveRegionCoreIdentity(alias,'run').coreDigest);
@@ -55,4 +78,138 @@ test('rehashing cannot relabel a frozen member, change a component, substitute v
   assert.throws(()=>verifyRegionFamilyRegistry(resign(legacy)),/unsupported/);
   assert.throws(()=>validateRegionFamilyAssignments(registry,[{...source,split:'train'}]),/forged/);
   assert.throws(()=>buildRegionFamilyRegistry([source],{seed:7,coreDigests:['0'.repeat(64)]}),/unknown/);
+});
+
+test('whole local artifacts, lazy causal masks and original source refusal denominator are exported together',async()=>{
+  const result=await buildRegionDataset([await qualified(),refused,
+    {id:'no-source',family:'original-missing-family',status:'unsupported',reason:'no exact source'}],
+    {...options,families:['original-affine']});
+  assert.equal(result.manifest.inputCandidates,3);assert.equal(result.dispositions.length,3);
+  assert.equal(result.manifest.refusalCount,2);assert.equal(result.manifest.exactSourceVariants,2);
+  assert.equal(result.manifest.admitted,false);assert.equal(result.manifest.nativeRequired,false);
+  assert.equal(result.manifest.optimizerSteps,0);assert.equal(result.manifest.learnedSuccess,null);
+  assert.equal(result.registry.components.length,1,'refused lineage participates before splitting');
+  assert.equal(result.artifactsBySplit.test.length,1);assert.equal(result.examplesBySplit.test.length,2);
+  assert.equal(result.dispositions[1].family,'refused-write');assert.equal(result.dispositions[1].split,'test');
+  assert.equal(result.dispositions[2].family,'original-missing-family');assert.equal(result.dispositions[2].split,null);
+  const artifact=result.artifactsBySplit.test[0].exported;
+  assert.equal(verifyRegionDatasetBinding(artifact,{expectedSplit:'test'}).valid,true);
+  assert.equal(artifact.sidecar.sourceArtifact.sidecar.referenceInput.source,affine);
+  assert.deepEqual(artifact.sidecar.splitIdentity.ancestors,['original-affine']);
+  for(const example of result.examplesBySplit.test){
+    assert.equal(example.metadata.split,'test');assert.equal(example.metadata.nativeAdmission,false);
+    assert.deepEqual(example.labels.slice(0,example.boundaries.promptTokens),
+      Array(example.boundaries.promptTokens).fill(-100));
+    assert.deepEqual(example.labels.slice(example.boundaries.promptTokens),[...Buffer.from(example.target),256]);
+    assert.equal(example.prompt.includes('splitIdentity'),false);assert.equal(example.prompt.includes('sourceArtifact'),false);
+  }
+});
+
+test('production export rejects absent native admission and never emits part of a refused episode',async()=>{
+  const candidate=await qualified();
+  const production=await buildRegionDataset([candidate],{...options,allowLocal:false});
+  assert.equal(production.manifest.nativeRequired,true);assert.equal(production.manifest.admitted,false);
+  assert.equal(production.dispositions[0].status,'export-refused');
+  assert.match(production.dispositions[0].reason,/pinned consumer|native/i);
+  assert.equal(Object.values(production.examplesBySplit).flat().length,0);
+  assert.equal(Object.values(production.artifactsBySplit).flat().length,0);
+  const budget=await buildRegionDataset([candidate],{...options,maxExamplesPerEpisode:1});
+  assert.equal(budget.dispositions[0].status,'export-refused');assert.match(budget.dispositions[0].reason,/partial episodes/);
+  assert.equal(Object.values(budget.examplesBySplit).flat().length,0);
+  const context=await buildRegionDataset([candidate],{...options,maxContextTokens:64});
+  assert.equal(context.dispositions[0].status,'export-refused');assert.match(context.dispositions[0].reason,/truncation is forbidden/);
+  assert.equal(context.manifest.registeredCandidates,1);
+});
+
+test('bound artifact reexport preserves the complete registry and rejects seed, holdout, family and byte changes',async()=>{
+  const original=await buildRegionDataset([await qualified(),refused],{...options,families:['original-affine']});
+  const item=original.artifactsBySplit.test[0];
+  const {seed,...withoutSeed}=options;
+  const reused=await buildRegionDataset([item],withoutSeed);
+  assert.deepEqual(reused.registry,original.registry);assert.equal(reused.manifest.registryMembers,2);
+  assert.deepEqual(reused.artifactsBySplit.test[0].exported,item.exported);
+  await assert.rejects(buildRegionDataset([item],{...options,seed:18}),/frozen split seed/);
+  await assert.rejects(buildRegionDataset([item],{...options,families:[]}),/frozen holdouts/);
+  await assert.rejects(buildRegionDataset([{...item,family:'renamed'}],options),/relabels/);
+  await assert.rejects(buildRegionDataset([item,refused],options),/bound and unbound/);
+  const artifact=structuredClone(item.exported);artifact.contexts[0].state.locals.push(['future',['num',9]]);
+  assert.throws(()=>verifyRegionDatasetBinding(artifact),/binding|bytes/);
+  const target=structuredClone(item.exported);target.public.timeline.at(-1).fields.line+=' ';
+  assert.throws(()=>verifyRegionDatasetBinding(target),/binding|bytes/);
+  const source=structuredClone(item.exported);source.sidecar.sourceArtifact.sidecar.ancestorIds=['changed'];
+  assert.throws(()=>verifyRegionDatasetBinding(source),/source member/);
+});
+
+test('native receipt transport retains the validated receipt and isolates consumer mutation (unit fixture only)',async()=>{
+  // This exercises the receipt transport contract, not an independent native
+  // execution. No resulting artifact or admission claim is written to disk.
+  const nativePolicy={schema:'semantic-native-policy/8',consumerRepository:'werg/megatoken',
+    consumerRevision:'a'.repeat(40),contractDigest:V8_CONTRACT_DIGEST,fixtureDigest:V8_FIXTURE_DIGEST,
+    tokenizerIdentity:tokenizer.identity,tokenizerSha256:'b'.repeat(64)};
+  let receipt;
+  const result=await buildRegionDataset([await qualified()],{...options,allowLocal:false,nativePolicy,
+    nativeConsumer:async artifact=>{
+      receipt={schema:'semantic-native-admission/8',componentGate:'native-consumer-only',
+        traceFormat:'semantic-trace/8',contextFormat:'semantic-context/8',representation:'mixed',admitted:true,
+        consumerRevision:nativePolicy.consumerRevision,contractDigest:V8_CONTRACT_DIGEST,fixtureDigest:V8_FIXTURE_DIGEST,
+        publicDigest:hashAlgorithmData(artifact.public),contextsDigest:hashAlgorithmData(artifact.contexts),
+        sourceArtifactDigest:artifact.sidecar.sourceArtifactDigest,datasetBindingDigest:hashAlgorithmData(artifact.sidecar.datasetBinding),
+        nativeTrainingDigest:'c'.repeat(64),optimizerSteps:0,learningClaim:null,
+        tokenizer:{status:'passed',identity:tokenizer.identity,sha256:nativePolicy.tokenizerSha256},
+        checks:Object.fromEntries(V8_NATIVE_CHECKS.map(key=>[key,'passed'])),
+        counts:{records:artifact.public.timeline.length,contexts:artifact.contexts.length,
+          generatedRecords:artifact.contexts.length,generatedTokens:100,observedTokens:1000}};
+      artifact.sidecar.consumerMutation='must not escape transport copy';return receipt;
+    }});
+  assert.equal(result.dispositions[0].status,'exported',result.dispositions[0].reason);
+  const artifact=Object.values(result.artifactsBySplit).flat()[0].exported;
+  assert.deepEqual(artifact.sidecar.nativeAdmission,receipt);assert.equal(artifact.sidecar.admission,'admitted');
+  assert.equal(Object.hasOwn(artifact.sidecar,'consumerMutation'),false);
+  assert.equal(verifyRegionDatasetBinding(artifact).valid,true);
+});
+
+test('duplicate and entirely refused inventories keep every candidate and do not fabricate admitted rows',async()=>{
+  const candidate=await qualified(),duplicates=await buildRegionDataset([candidate,candidate],options);
+  assert.equal(duplicates.manifest.inputCandidates,2);assert.equal(duplicates.manifest.duplicateCount,1);
+  assert.equal(duplicates.manifest.registryMembers,1);assert.equal(duplicates.dispositions[1].duplicateOf,0);
+  const empty=await buildRegionDataset([{status:'invalid-jsonl',reason:'parse failed'},
+    {status:'unsupported',family:'unchanged',reason:'missing source'}],options);
+  assert.equal(empty.registry,null);assert.equal(empty.manifest.refusalCount,2);
+  assert.equal(empty.manifest.admitted,false);assert.equal(empty.dispositions[1].family,'unchanged');
+});
+
+test('JSONL export writes complete artifacts, all dispositions and verified file hashes without replacing a directory',async()=>{
+  const parent=await mkdtemp(join(tmpdir(),'semantic-v8-dataset-'));
+  try{
+    const result=await exportRegionDatasetJSONL([await qualified(),refused],
+      {...options,outputDirectory:join(parent,'corpus')});
+    const manifest=JSON.parse(await readFile(join(result.directory,'manifest.json'),'utf8'));
+    assert.equal(manifest.dispositionRows,2);assert.equal(manifest.inputCandidates,2);
+    for(const file of Object.values(manifest.files)){
+      const bytes=await readFile(join(result.directory,file.file));
+      assert.equal(bytes.length,file.bytes);
+      assert.equal(createHash('sha256').update(bytes).digest('hex'),file.sha256);
+      assert.equal(bytes.toString().split('\n').filter(Boolean).length,file.rows);
+    }
+    const split=Object.entries(result.artifactsBySplit).find(([,items])=>items.length)[0];
+    const artifact=JSON.parse(await readFile(join(result.directory,split+'-artifacts.jsonl'),'utf8'));
+    assert.equal(verifyRegionDatasetBinding(artifact.exported,{expectedSplit:split}).valid,true);
+    await assert.rejects(exportRegionDatasetJSONL([await qualified()],{...options,outputDirectory:result.directory}),/EEXIST/);
+  }finally{await rm(parent,{recursive:true,force:true});}
+});
+
+test('CLI retains malformed JSONL as a refusal beside source-qualified artifacts',async()=>{
+  const parent=await mkdtemp(join(tmpdir(),'semantic-v8-cli-'));
+  try{
+    const input=join(parent,'input.jsonl'),module=join(parent,'tokenizer.mjs'),output=join(parent,'corpus');
+    await writeFile(input,JSON.stringify(await qualified())+'\n{invalid-json}\n'+JSON.stringify(refused)+'\n');
+    await writeFile(module,'export const tokenizer={identity:"'+tokenizer.identity+'",encode:s=>[...Buffer.from(s)],decode:ids=>Buffer.from(ids)};export const eosTokenId=256;');
+    const {stdout}=await promisify(execFile)(process.execPath,['tools/export-semantic-v8.mjs','--input',input,
+      '--tokenizer-module',module,'--max-context','1000000','--seed','17','--out',output,'--allow-local'],
+      {cwd:new URL('..',import.meta.url),maxBuffer:1000000});
+    const report=JSON.parse(stdout);assert.equal(report.inputCandidates,3);assert.equal(report.admitted,false);
+    const dispositions=(await readFile(join(output,'dispositions.jsonl'),'utf8')).trim().split('\n').map(JSON.parse);
+    assert.equal(dispositions.length,3);assert.equal(dispositions[1].category,'invalid-jsonl');
+    assert.match(dispositions[1].reason,/Line 2/);assert.equal(dispositions[2].family,'refused-write');
+  }finally{await rm(parent,{recursive:true,force:true});}
 });

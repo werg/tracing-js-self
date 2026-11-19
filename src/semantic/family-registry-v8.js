@@ -179,9 +179,12 @@ export function regionArtifactSource(artifact){
     ...(side.coreDigest!==undefined?{coreDigest:side.coreDigest}:{})};
 }
 export function regionDatasetBinding(artifact,identity){
+  // Source evidence may contain in-memory optional undefined fields. Bind the
+  // exact JSON representation that survives transport, as the compiler does.
+  const digest=value=>hashAlgorithmData(JSON.parse(JSON.stringify(value)));
   return {schema:REGION_DATASET_BINDING_SCHEMA,traceFormat:REGION_TRACE_VERSION,
-    episodeDigest:hashAlgorithmData(artifact.public),contextsDigest:hashAlgorithmData(artifact.contexts),
-    sourceArtifactDigest:hashAlgorithmData(artifact.sidecar.sourceArtifact),
+    episodeDigest:digest(artifact.public),contextsDigest:digest(artifact.contexts),
+    sourceArtifactDigest:digest(artifact.sidecar.sourceArtifact),
     registryDigest:identity.registryDigest,componentId:identity.componentId,split:identity.split,
     sourceId:identity.sourceId,family:identity.family,sourceDigest:identity.sourceDigest,
     coreDigest:identity.coreDigest};
