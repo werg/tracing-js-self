@@ -1,0 +1,551 @@
+{
+  "schema": "semantic-v8-qualification/1",
+  "producerRevision": "4d6dace0446e743a80bc4770f59eec33fefd5730",
+  "population": "gallery",
+  "declared": 11,
+  "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+  "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+  "nativePolicy": {
+    "schema": "semantic-native-policy/8",
+    "consumerRepository": "werg/megatoken",
+    "consumerRevision": "2e87ac4d7908a462dc9b97aaf5d0de9cebeeed17",
+    "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+  },
+  "preparationOnly": false,
+  "rows": [
+    {
+      "id": "compound-pure",
+      "family": "compound-pure",
+      "status": "admitted",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "passed",
+      "durationMs": 2402.602874,
+      "peakRssBytes": 123916288,
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 1,
+        "compactRecords": 1,
+        "detailedRecords": 1,
+        "compactBytes": 193,
+        "detailedBytes": 48,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReceipt": {
+        "schema": "semantic-native-admission/8",
+        "traceFormat": "semantic-trace/8",
+        "contextFormat": "semantic-context/8",
+        "representation": "mixed",
+        "componentGate": "native-consumer-only",
+        "publicDigest": "6bfb2a872f64d91a4e37df0599928a9b82ce04388b0b9bf818dcc1c4692031e1",
+        "contextsDigest": "95c0a94b491eb1636a852b36eea363328b7a515da88517841adb2cc7d56de5ef",
+        "sourceArtifactDigest": "96a851026fb820f3a0b401ad2f859bda94a9163d7e96b8c18225732a89900591",
+        "datasetBindingDigest": null,
+        "consumerRevision": "2e87ac4d7908a462dc9b97aaf5d0de9cebeeed17",
+        "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizer": {
+          "status": "passed",
+          "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+        },
+        "checks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        },
+        "counts": {
+          "records": 4,
+          "contexts": 2,
+          "generatedRecords": 2,
+          "generatedTokens": 77,
+          "observedTokens": 3432
+        },
+        "framing": {
+          "kind": "native-physical-record-boundaries/1",
+          "eosTokenId": null,
+          "terminalTokens": 0,
+          "physicalRecords": 9
+        },
+        "nativeTrainingDigest": "421037087c993af35e32bff848b769146474a46421c63bf994958e6637d60845",
+        "optimizerSteps": 0,
+        "learningClaim": null,
+        "admitted": true
+      }
+    },
+    {
+      "id": "branch-1",
+      "family": "observed-branch",
+      "status": "native-failed",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "failed",
+      "durationMs": 1810.492386,
+      "peakRssBytes": 125222912,
+      "regionCoverage": {
+        "compactRegions": 0,
+        "detailedRegions": 1,
+        "compactRecords": 0,
+        "detailedRecords": 10,
+        "compactBytes": 0,
+        "detailedBytes": 1230,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReason": "Traceback (most recent call last):\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/scripts/admit_semantic_v8.py\", line 82, in <module>\n    if __name__==\"__main__\": raise SystemExit(main())\n                                              ^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/scripts/admit_semantic_v8.py\", line 37, in main\n    result=validate_v8_artifact(document)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 100, in validate_v8_artifact\n    final_restored=_replay_shared_state(timeline,contexts,programs,roundtrip=True)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 285, in _replay_shared_state\n    k,payload=parse_record(fields[\"line\"]); _apply_detail(state,k,payload,row,obligations,program,task_revisions)\n                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 411, in _apply_detail\n    else: _fail(\"Unsupported detailed transition kind: \"+kind)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 28, in _fail\n    def _fail(msg): raise NativeV8Error(msg)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^\nmegatoken.data.native_v8.NativeV8Error: Unsupported detailed transition kind: choose\n"
+    },
+    {
+      "id": "object-alias",
+      "family": "trace-gallery-object-alias",
+      "status": "admitted",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "passed",
+      "durationMs": 2170.1643330000006,
+      "peakRssBytes": 124370944,
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 1,
+        "compactRecords": 1,
+        "detailedRecords": 1,
+        "compactBytes": 190,
+        "detailedBytes": 48,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReceipt": {
+        "schema": "semantic-native-admission/8",
+        "traceFormat": "semantic-trace/8",
+        "contextFormat": "semantic-context/8",
+        "representation": "mixed",
+        "componentGate": "native-consumer-only",
+        "publicDigest": "25e054b8c06f6663e05ddbf592ca8c9ed0e09f098dfe9c0ade0373ec7e7338a8",
+        "contextsDigest": "e8fb4bca0758f6ccadc8b1e22754a69dd225ff41459ac5cb050856675ccdebb6",
+        "sourceArtifactDigest": "a6379f28fdd38ef1c80221bafb5315bb4fa84b6314076517412ef432f8581a54",
+        "datasetBindingDigest": null,
+        "consumerRevision": "2e87ac4d7908a462dc9b97aaf5d0de9cebeeed17",
+        "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizer": {
+          "status": "passed",
+          "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+        },
+        "checks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        },
+        "counts": {
+          "records": 4,
+          "contexts": 2,
+          "generatedRecords": 2,
+          "generatedTokens": 74,
+          "observedTokens": 2840
+        },
+        "framing": {
+          "kind": "native-physical-record-boundaries/1",
+          "eosTokenId": null,
+          "terminalTokens": 0,
+          "physicalRecords": 7
+        },
+        "nativeTrainingDigest": "3175b215ac351824ea45566bb2a3229d43a814b71e099c263d2732acffd04a32",
+        "optimizerSteps": 0,
+        "learningClaim": null,
+        "admitted": true
+      }
+    },
+    {
+      "id": "pure-helper",
+      "family": "trace-gallery-pure-helper",
+      "status": "admitted",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "passed",
+      "durationMs": 4586.1520390000005,
+      "peakRssBytes": 121135104,
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 1,
+        "compactRecords": 1,
+        "detailedRecords": 1,
+        "compactBytes": 190,
+        "detailedBytes": 48,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReceipt": {
+        "schema": "semantic-native-admission/8",
+        "traceFormat": "semantic-trace/8",
+        "contextFormat": "semantic-context/8",
+        "representation": "mixed",
+        "componentGate": "native-consumer-only",
+        "publicDigest": "3fb36078a255313085f496232fbb89bf16dc90d24234edbf2da7a2238e4bbf67",
+        "contextsDigest": "7234d90c90e6c2a6b947c5045e0c302464d881f746e12cfbdfcb5a3624ab290f",
+        "sourceArtifactDigest": "b89b6d96eb24cd12e8f56814fa51ea52415024b713cdee8991ed7d18a19c8919",
+        "datasetBindingDigest": null,
+        "consumerRevision": "2e87ac4d7908a462dc9b97aaf5d0de9cebeeed17",
+        "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizer": {
+          "status": "passed",
+          "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+        },
+        "checks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        },
+        "counts": {
+          "records": 4,
+          "contexts": 2,
+          "generatedRecords": 2,
+          "generatedTokens": 74,
+          "observedTokens": 2760
+        },
+        "framing": {
+          "kind": "native-physical-record-boundaries/1",
+          "eosTokenId": null,
+          "terminalTokens": 0,
+          "physicalRecords": 7
+        },
+        "nativeTrainingDigest": "aa2d9884d9d9180c6e2ee5898bef256de6e187f6ce36748b2c9caba387c6a9bc",
+        "optimizerSteps": 0,
+        "learningClaim": null,
+        "admitted": true
+      }
+    },
+    {
+      "id": "dense-loop",
+      "family": "trace-gallery-dense-loop",
+      "status": "admitted",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "passed",
+      "durationMs": 2148.460696000002,
+      "peakRssBytes": 133611520,
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 1,
+        "compactRecords": 1,
+        "detailedRecords": 1,
+        "compactBytes": 190,
+        "detailedBytes": 48,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReceipt": {
+        "schema": "semantic-native-admission/8",
+        "traceFormat": "semantic-trace/8",
+        "contextFormat": "semantic-context/8",
+        "representation": "mixed",
+        "componentGate": "native-consumer-only",
+        "publicDigest": "d8752c24fb2534bc5b878ac4e0422932220c2662900f4947d8b05f80dadaafb4",
+        "contextsDigest": "f7226d53745e7f927df7e0611916419c8c8b11e9a6fba18d52af01baaac470ac",
+        "sourceArtifactDigest": "570b8718d26d331d54d7eb857237b2896cdfe3d95a4c5f0e86095fab494d68a5",
+        "datasetBindingDigest": null,
+        "consumerRevision": "2e87ac4d7908a462dc9b97aaf5d0de9cebeeed17",
+        "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizer": {
+          "status": "passed",
+          "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+        },
+        "checks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        },
+        "counts": {
+          "records": 4,
+          "contexts": 2,
+          "generatedRecords": 2,
+          "generatedTokens": 74,
+          "observedTokens": 3968
+        },
+        "framing": {
+          "kind": "native-physical-record-boundaries/1",
+          "eosTokenId": null,
+          "terminalTokens": 0,
+          "physicalRecords": 9
+        },
+        "nativeTrainingDigest": "a60e240a1f5c701a87a189b2d3d95bf2af57d7feed80560fd6b21f51a9d63812",
+        "optimizerSteps": 0,
+        "learningClaim": null,
+        "admitted": true
+      }
+    },
+    {
+      "id": "throw-finally",
+      "family": "trace-gallery-throw-finally",
+      "status": "native-failed",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "failed",
+      "durationMs": 2111.6508879999965,
+      "peakRssBytes": 125427712,
+      "regionCoverage": {
+        "compactRegions": 2,
+        "detailedRegions": 2,
+        "compactRecords": 2,
+        "detailedRecords": 5,
+        "compactBytes": 202,
+        "detailedBytes": 673,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReason": "Traceback (most recent call last):\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/scripts/admit_semantic_v8.py\", line 82, in <module>\n    if __name__==\"__main__\": raise SystemExit(main())\n                                              ^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/scripts/admit_semantic_v8.py\", line 37, in main\n    result=validate_v8_artifact(document)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 100, in validate_v8_artifact\n    final_restored=_replay_shared_state(timeline,contexts,programs,roundtrip=True)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 285, in _replay_shared_state\n    k,payload=parse_record(fields[\"line\"]); _apply_detail(state,k,payload,row,obligations,program,task_revisions)\n                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 411, in _apply_detail\n    else: _fail(\"Unsupported detailed transition kind: \"+kind)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 28, in _fail\n    def _fail(msg): raise NativeV8Error(msg)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^\nmegatoken.data.native_v8.NativeV8Error: Unsupported detailed transition kind: transfer\n"
+    },
+    {
+      "id": "counter-0",
+      "family": "async-counter",
+      "status": "admitted",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "passed",
+      "durationMs": 1818.8278229999996,
+      "peakRssBytes": 126619648,
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 2,
+        "compactRecords": 1,
+        "detailedRecords": 10,
+        "compactBytes": 100,
+        "detailedBytes": 1099,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReceipt": {
+        "schema": "semantic-native-admission/8",
+        "traceFormat": "semantic-trace/8",
+        "contextFormat": "semantic-context/8",
+        "representation": "mixed",
+        "componentGate": "native-consumer-only",
+        "publicDigest": "819af419c28f5036c987f7f5d0751fc9e8f266dae6cb227de37f892a8b0c106e",
+        "contextsDigest": "6d219c184399343df4867665b9d908ae2f15f907a71e3bd172f04cc7a4f59885",
+        "sourceArtifactDigest": "1db1c40c0f2bc8b59ea11e0f07b5763b26ffd3df3bc74e8a77b2d66774a0ec84",
+        "datasetBindingDigest": null,
+        "consumerRevision": "2e87ac4d7908a462dc9b97aaf5d0de9cebeeed17",
+        "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizer": {
+          "status": "passed",
+          "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+        },
+        "checks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        },
+        "counts": {
+          "records": 17,
+          "contexts": 11,
+          "generatedRecords": 11,
+          "generatedTokens": 343,
+          "observedTokens": 15983
+        },
+        "framing": {
+          "kind": "native-physical-record-boundaries/1",
+          "eosTokenId": null,
+          "terminalTokens": 0,
+          "physicalRecords": 40
+        },
+        "nativeTrainingDigest": "0efaa2568045a8dfb8bae6419b25a373a38bde929717403557ba11eed881c71a",
+        "optimizerSteps": 0,
+        "learningClaim": null,
+        "admitted": true
+      }
+    },
+    {
+      "id": "rejection-finally",
+      "family": "async-cleanup",
+      "status": "native-failed",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "failed",
+      "durationMs": 1944.2771309999953,
+      "peakRssBytes": 127078400,
+      "regionCoverage": {
+        "compactRegions": 0,
+        "detailedRegions": 1,
+        "compactRecords": 0,
+        "detailedRecords": 11,
+        "compactBytes": 0,
+        "detailedBytes": 1369,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReason": "Traceback (most recent call last):\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/scripts/admit_semantic_v8.py\", line 82, in <module>\n    if __name__==\"__main__\": raise SystemExit(main())\n                                              ^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/scripts/admit_semantic_v8.py\", line 37, in main\n    result=validate_v8_artifact(document)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 100, in validate_v8_artifact\n    final_restored=_replay_shared_state(timeline,contexts,programs,roundtrip=True)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 285, in _replay_shared_state\n    k,payload=parse_record(fields[\"line\"]); _apply_detail(state,k,payload,row,obligations,program,task_revisions)\n                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 411, in _apply_detail\n    else: _fail(\"Unsupported detailed transition kind: \"+kind)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 28, in _fail\n    def _fail(msg): raise NativeV8Error(msg)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^\nmegatoken.data.native_v8.NativeV8Error: Unsupported detailed transition kind: transfer\n"
+    },
+    {
+      "id": "callback-captured-write",
+      "family": "owned-callback",
+      "status": "native-failed",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "failed",
+      "durationMs": 4617.214614000004,
+      "peakRssBytes": 157876224,
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 2,
+        "compactRecords": 1,
+        "detailedRecords": 19,
+        "compactBytes": 100,
+        "detailedBytes": 2332,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReason": "Traceback (most recent call last):\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/scripts/admit_semantic_v8.py\", line 82, in <module>\n    if __name__==\"__main__\": raise SystemExit(main())\n                                              ^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/scripts/admit_semantic_v8.py\", line 37, in main\n    result=validate_v8_artifact(document)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 100, in validate_v8_artifact\n    final_restored=_replay_shared_state(timeline,contexts,programs,roundtrip=True)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 285, in _replay_shared_state\n    k,payload=parse_record(fields[\"line\"]); _apply_detail(state,k,payload,row,obligations,program,task_revisions)\n                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 374, in _apply_detail\n    if delivered!=decoded: _fail(\"Host request payload differs from its tagged arguments\")\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 28, in _fail\n    def _fail(msg): raise NativeV8Error(msg)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^\nmegatoken.data.native_v8.NativeV8Error: Host request payload differs from its tagged arguments\n"
+    },
+    {
+      "id": "persistent-external-trigger",
+      "family": "persistent-external-trigger",
+      "status": "native-failed",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "failed",
+      "durationMs": 3059.2251810000016,
+      "peakRssBytes": 155533312,
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 2,
+        "compactRecords": 1,
+        "detailedRecords": 27,
+        "compactBytes": 100,
+        "detailedBytes": 3220,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReason": "Traceback (most recent call last):\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/scripts/admit_semantic_v8.py\", line 82, in <module>\n    if __name__==\"__main__\": raise SystemExit(main())\n                                              ^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/scripts/admit_semantic_v8.py\", line 37, in main\n    result=validate_v8_artifact(document)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 100, in validate_v8_artifact\n    final_restored=_replay_shared_state(timeline,contexts,programs,roundtrip=True)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 285, in _replay_shared_state\n    k,payload=parse_record(fields[\"line\"]); _apply_detail(state,k,payload,row,obligations,program,task_revisions)\n                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 374, in _apply_detail\n    if delivered!=decoded: _fail(\"Host request payload differs from its tagged arguments\")\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/242b677c0109/native-v8-consumer/src/megatoken/data/native_v8.py\", line 28, in _fail\n    def _fail(msg): raise NativeV8Error(msg)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^\nmegatoken.data.native_v8.NativeV8Error: Host request payload differs from its tagged arguments\n"
+    },
+    {
+      "id": "redundant-cell-write",
+      "family": "trace-gallery-redundant-cell-write",
+      "status": "admitted",
+      "reason": null,
+      "sourceProfile": "training-js/1",
+      "source": "passed",
+      "native": "passed",
+      "durationMs": 5581.114053999991,
+      "peakRssBytes": 117571584,
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 1,
+        "compactRecords": 1,
+        "detailedRecords": 1,
+        "compactBytes": 190,
+        "detailedBytes": 48,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "nativeReceipt": {
+        "schema": "semantic-native-admission/8",
+        "traceFormat": "semantic-trace/8",
+        "contextFormat": "semantic-context/8",
+        "representation": "mixed",
+        "componentGate": "native-consumer-only",
+        "publicDigest": "713ba6bd0c058d3e92e0936599a8332a7cfadcddb5ee17e940a6b7593474e46a",
+        "contextsDigest": "914bf6657137a70734119689c90b207897ec0e52e2e0d5c8d37c44274696f2cd",
+        "sourceArtifactDigest": "1c0e337ac0ac463fb1431a7c4536a969fecf5f2ac849b5fc27c4b8c4871a5b80",
+        "datasetBindingDigest": null,
+        "consumerRevision": "2e87ac4d7908a462dc9b97aaf5d0de9cebeeed17",
+        "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizer": {
+          "status": "passed",
+          "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+          "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+        },
+        "checks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        },
+        "counts": {
+          "records": 4,
+          "contexts": 2,
+          "generatedRecords": 2,
+          "generatedTokens": 74,
+          "observedTokens": 2760
+        },
+        "framing": {
+          "kind": "native-physical-record-boundaries/1",
+          "eosTokenId": null,
+          "terminalTokens": 0,
+          "physicalRecords": 7
+        },
+        "nativeTrainingDigest": "d4379ac7c10a7e1f50c609e1bd5b1d9b61a387cf510bae8179d8e83fd36e6c02",
+        "optimizerSteps": 0,
+        "learningClaim": null,
+        "admitted": true
+      }
+    }
+  ],
+  "artifacts": {
+    "compound-pure.source.json": "e32243952960b9e1dabf78df6733e6586d0b484cbf218e163a858c3e81f852cb",
+    "compound-pure.admitted.json": "3a1c2806323079cccba90e332562034658abe9cd8d18c9a96a676177860ba459",
+    "compound-pure.native.json": "b1b3a8df530cad6ef8a6b4de26818bb963a1a56e6f5f8d6ea01661072b799735",
+    "branch-1.source.json": "e013bc753969b6ccac59ed4e6a040108ba292eff59cbbb8424b5746ccceffafb",
+    "object-alias.source.json": "f3695c73f6718c3b47928f81689ded24a1e1367b49acc42677aad98b89bb36aa",
+    "object-alias.admitted.json": "01340ec43faad302b40fd67ba9565569f9f9b9a161efd3c1c647bf94c22252e7",
+    "object-alias.native.json": "3f45728148027c3af599f28d7b24565e6d6eb2c5309f179a5c8408b2ce6bd361",
+    "pure-helper.source.json": "17a03eeda5c4d08528d657f805af548d6c92887ef2c496371ecf6394401cafc7",
+    "pure-helper.admitted.json": "14aa1c1c587173de82c7f32391fa0f921978dcaffcab47212b5ed11c2a2a31f9",
+    "pure-helper.native.json": "412229c2a49440ce327d08c0cba0303c4a8245eba57f4fe367a8378aa1821e11",
+    "dense-loop.source.json": "c5e1368fe87f5b17a0fd8f3707a53572e353d00333cc737e1cad04f99a36ed60",
+    "dense-loop.admitted.json": "9445a5893c1f6fa81ad60b2caafecc37ee3ef7c97101c2485f6aa43aaee298e9",
+    "dense-loop.native.json": "dd7e2204a72468a099b439fbf9a9437ae2f8d5cf3258e50b2431333009de1967",
+    "throw-finally.source.json": "493efa8a19ffc47c252a60eec71b3da3083a1727705a7aa39e193de6959fd97d",
+    "counter-0.source.json": "55621a0e23cf7110a6b1cead16cbe5af0bf4b93aae758743bcca9066987f55cf",
+    "counter-0.admitted.json": "3d94d68c2d273c8ffe2cd37b99c9d1265810ef0ca60ba7d94fc939784c8da553",
+    "counter-0.native.json": "59f00c37f416b9a803a61b3ccb948de95fc57fac1d36fe83cd49571ad2c0a099",
+    "rejection-finally.source.json": "51252c15f6239726b166e56290b00279be490df358950b4a65d72515545e90b1",
+    "callback-captured-write.source.json": "d35bb9eb95069a44aa36ab6ab59a3f7c78929b557b5e9cc0ef9c396081cbcc56",
+    "persistent-external-trigger.source.json": "eaaf33abbf2c4b2b970b81baf7378993300532287570c9b9347c26b3dbc08b8e",
+    "redundant-cell-write.source.json": "8c6c886b1526d7b90dad0f0d225813c8fd260b403e308f54df4317255124c4b8",
+    "redundant-cell-write.admitted.json": "7b900b70ee1754d725812889d6bc27393ef2b4568301aeacf5e55a0673019c72",
+    "redundant-cell-write.native.json": "b6a939785d1e2adaea45e4f4cde4afb4522bf859ad70710a12bb3dedad4c9272"
+  },
+  "sourceQualified": 11,
+  "nativeAdmitted": 6,
+  "model": "untested",
+  "optimizerSteps": 0,
+  "defaultPromotion": "not-qualified",
+  "scope": "Source and native engineering qualification; no model-learning or native-serving success claim"
+}
