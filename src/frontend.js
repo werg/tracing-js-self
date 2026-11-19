@@ -199,11 +199,9 @@ export function compile(ast) {
     // Declarations are created before execution for a block's scope.
     function predeclare(nodes) {
       for(const n of nodes){
-        const declarations=n.type==='VariableGroup'?n.declarations:
-          n.type==='PatternBinding'?n.bindings.map(b=>({
-            id:b.name,kind:n.kind,start:b.start,end:b.end
-          })):
-          n.type==='Variable'?[n]:[];
+        const declarations=(n.type==='VariableGroup'?n.declarations:[n]).flatMap(d=>
+          d.type==='PatternBinding'?d.bindings.map(b=>({id:b.name,kind:d.kind,start:b.start,end:b.end})):
+          d.type==='Variable'?[d]:[]);
         for(const d of declarations)if(d.kind!=='var')emit('DECLARE',{name:d.id,kind:d.kind},d);
       }
       for(const n of nodes)if(n.type==='Function'){
@@ -358,6 +356,7 @@ export function compile(ast) {
           if(spreads){emit('GET',saved,n);emit('LEAVE_SCOPE',null,n);}
           break;
         }
+        case 'PatternAssignment':emitPattern(n,true);break;
         case 'Assign':
           if(['&&=','||=','??='].includes(n.operator)){
             const operator=n.operator.slice(0,-1);
@@ -433,19 +432,7 @@ export function compile(ast) {
       emit('UPDATE_BINDING',{name:index,operator:'++',prefix:true},node);emit('POP',null,node);
       emit('JUMP',top,node);instructions[done].arg=instructions.length;
     }
-    function stmt(n){
-      switch(n.type){
-        case 'Variable':{
-          if(n.kind==='var'){
-            if(n.init){expr(n.init);emit('SET',n.id,n);emit('POP',null,n);}
-          }else{
-            if(n.init)expr(n.init);else emit('CONST',{value:['undefined']},n);
-            emit('INIT',n.id,n);
-          }
-          break;
-        }
-        case 'VariableGroup':for(const declaration of n.declarations)stmt(declaration);break;
-        case 'PatternBinding':{
+    function emitPattern(n,result=false){
           // Every nested initializer/get/default remains an owned bytecode
           // effect. Hidden generated names are inaccessible to guest syntax.
           // The temporary scope is distinct from the lexical declarations.
@@ -458,9 +445,14 @@ export function compile(ast) {
           function bindPattern(pattern,variable){
             if(pattern.type==='PatternName'){
               emit('GET',variable,pattern);
-              emit(n.kind==='var'?'SET':'INIT',pattern.name,pattern);
-              if(n.kind==='var')emit('POP',null,pattern);
+              emit(['var','assignment'].includes(n.kind)?'SET':'INIT',pattern.name,pattern);
+              if(['var','assignment'].includes(n.kind))emit('POP',null,pattern);
               return;
+            }
+            if(pattern.type==='PatternSkip')return;
+            if(pattern.type==='PatternMember'){
+              expr(pattern.target.object);expr(pattern.target.property);emit('GET',variable,pattern);
+              emit('PUT_PROP',null,pattern);emit('POP',null,pattern);return;
             }
             if(pattern.type==='PatternDefault'){
               emit('GET',variable,pattern);
@@ -488,6 +480,17 @@ export function compile(ast) {
               instructions[accepted].arg=instructions.length;
               for(const entry of pattern.elements){
                 const child=temporary(entry);
+                if(entry.rest){
+                  emit('NEW_ARRAY',null,entry);emit('INIT',child,entry);
+                  const index=temporary(entry);emit('CONST',{value:['num',entry.index]},entry);emit('INIT',index,entry);
+                  const top=instructions.length;
+                  emit('GET',variable,entry);emit('CONST',{value:['str','length']},entry);emit('GET_PROP',null,entry);
+                  emit('GET',index,entry);emit('BINARY','>',entry);const end=emit('JUMP_IF_FALSE',null,entry);
+                  emit('GET',child,entry);emit('GET',variable,entry);emit('GET',index,entry);emit('GET_PROP',null,entry);
+                  emit('APPEND_ARRAY',{spread:false},entry);emit('POP',null,entry);
+                  emit('UPDATE_BINDING',{name:index,operator:'++',prefix:true},entry);emit('POP',null,entry);emit('JUMP',top,entry);
+                  instructions[end].arg=instructions.length;bindPattern(entry.target,child);continue;
+                }
                 emit('GET',variable,entry);
                 emit('CONST',{value:['num',entry.index]},entry);
                 emit('GET_PROP',null,entry);
@@ -497,13 +500,21 @@ export function compile(ast) {
               return;
             }
             if(pattern.type==='PatternObject'){
+              emit('GET',variable,pattern);emit('REQUIRE_COERCIBLE',null,pattern);emit('POP',null,pattern);
+              const excluded=[];
               for(const entry of pattern.entries){
                 const child=temporary(entry);
-                emit('GET',variable,entry);
-                if(entry.computedKey)expr(entry.computedKey);
-                else emit('CONST',{value:['str',entry.key]},entry);
-                emit('GET_PROP',null,entry);
-                emit('INIT',child,entry);
+                if(entry.rest){
+                  emit('NEW_OBJECT',null,entry);emit('INIT',child,entry);
+                  copyOwn(child,variable,excluded,entry,{required:true});
+                }else{
+                  const key=temporary(entry);excluded.push(key);
+                  emit('GET',variable,entry);
+                  if(entry.computedKey)expr(entry.computedKey);
+                  else emit('CONST',{value:['str',entry.key]},entry);
+                  emit('DUP',null,entry);emit('INIT',key,entry);
+                  emit('GET_PROP',null,entry);emit('INIT',child,entry);
+                }
                 bindPattern(entry.target,child);
               }
               return;
@@ -513,9 +524,22 @@ export function compile(ast) {
           const root=temporary(n);
           expr(n.init);emit('INIT',root,n);
           bindPattern(n.pattern,root);
+          if(result)emit('GET',root,n);
           emit('LEAVE_SCOPE',null,n);
+    }
+    function stmt(n){
+      switch(n.type){
+        case 'Variable':{
+          if(n.kind==='var'){
+            if(n.init){expr(n.init);emit('SET',n.id,n);emit('POP',null,n);}
+          }else{
+            if(n.init)expr(n.init);else emit('CONST',{value:['undefined']},n);
+            emit('INIT',n.id,n);
+          }
           break;
         }
+        case 'VariableGroup':for(const declaration of n.declarations)stmt(declaration);break;
+        case 'PatternBinding':emitPattern(n);break;
         case 'Expression':expr(n.expr);emit('POP',null,n);break;
         case 'Return':if(n.argument)expr(n.argument);else emit('CONST',{value:['undefined']},n);emit('RETURN',null,n);break;
         case 'Throw':expr(n.argument);emit('THROW',null,n);break;

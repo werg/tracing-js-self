@@ -95,7 +95,6 @@ test('nested binding failures never publish successful traces',()=>{
       ['const {a:[x]}=self;return x;', {a:'string'}],
       ['const {x:a,y:a}=self;return a;',{}],
       ['const {a:{b:{c:{d:{e}}}}}=self;return e;',{}],
-      ['const {x,...rest}=self;return rest;',{}],
       ['const {Array: Array, a:[x]}=self;return x;',{}]
     ])
       assert.throws(()=>env.execute({code,scope,body:true,
@@ -119,9 +118,6 @@ test('unsupported array patterns and non-array iterators fail before trace publi
     onTrace:bundle=>traces.push(bundle)});
   try{
     for(const [code,scope] of [
-      ['const [a,...b]=self.items;return b;',{items:[2,3]}],
-      ['const [,b]=self.items;return b;',{items:[2,3]}],
-      ['const [a]=self.items,b=1;return a+b;',{items:[2]}],
       ['const [a,a]=self.items;return a;',{items:[2,3]}],
       ['const [a]=self.items;return a;',{items:'a'}],
       ['const Array={isArray:()=>true};const [a]=self.items;return a;',{items:[1]}],
@@ -133,4 +129,11 @@ test('unsupported array patterns and non-array iterators fail before trace publi
     }
     assert.equal(traces.length,0);
   }finally{env.close();}
+});
+
+test('TS rest elisions and mixed pattern declarations are owned',()=>{
+  assert.deepEqual(differential('const [a,...b]=self.items;return [a,b];',{items:[2,3,4]}),[2,[3,4]]);
+  assert.equal(differential('const [,b]=self.items;return b;',{items:[2,3]}),3);
+  assert.equal(differential('const [a]=self.items,b=1;return a+b;',{items:[2]}),3);
+  assert.deepEqual(differential('const {x,...rest}=self;return rest;',{x:1,y:2}),{y:2});
 });

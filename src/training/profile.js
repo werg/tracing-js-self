@@ -62,6 +62,32 @@ export function parseTraining(source) {
   requireDirectRandom(parsed);
 
   const span=n=>({start:n.start,end:n.end});
+  function patternTree(root,{assignment=false}={}){
+    const names=[],budget={count:0};
+    function pattern(node,depth=0){
+      if(++budget.count>32||depth>4)reject(node,'destructuring shape exceeds bounded depth/nodes');
+      const at=span(node);
+      if(node.type==='Identifier'){
+        names.push({...at,name:node.name});return {...at,type:'PatternName',name:node.name};
+      }
+      if(assignment&&node.type==='MemberExpression')return {...at,type:'PatternMember',target:expr(node)};
+      if(node.type==='AssignmentPattern')return {...at,type:'PatternDefault',
+        target:pattern(node.left,depth+1),fallback:expr(node.right)};
+      if(node.type==='ArrayPattern')return {...at,type:'PatternArray',elements:node.elements.map((item,index)=>
+        item===null?{...at,index,target:{...at,type:'PatternSkip'}}:
+        {...span(item),index,rest:item.type==='RestElement',target:pattern(item.type==='RestElement'?item.argument:item,depth+1)})};
+      if(node.type==='ObjectPattern')return {...at,type:'PatternObject',entries:node.properties.map(item=>{
+        if(item.type==='RestElement')return {...span(item),rest:true,target:pattern(item.argument,depth+1)};
+        if(item.type!=='Property'||item.kind!=='init'||item.method)reject(item,'object binding property form');
+        const key=item.computed?null:item.key.type==='Identifier'?item.key.name:
+          item.key.type==='Literal'?String(item.key.value):null;
+        if(!item.computed&&key===null)reject(item,'object binding key');
+        return {...span(item),key,computedKey:item.computed?expr(item.key):null,target:pattern(item.value,depth+1)};
+      })};
+      reject(node,'destructuring target');
+    }
+    return {pattern:pattern(root),bindings:names};
+  }
   function parameters(n){
     return n.params.map((p,i)=>{
       if(p.type==='RestElement' && p.argument?.type==='Identifier' && i===n.params.length-1)
@@ -198,6 +224,8 @@ export function parseTraining(source) {
           return {...span(p),key,computedKey:p.computed?expr(p.key):null,kind,value:expr(p.value)};
         })};
       case 'AssignmentExpression':
+        if(n.operator==='='&&['ArrayPattern','ObjectPattern'].includes(n.left.type))
+          return {...loc,type:'PatternAssignment',kind:'assignment',init:expr(n.right),...patternTree(n.left,{assignment:true})};
         if(!assignments.has(n.operator) ||
            !['Identifier','MemberExpression'].includes(n.left.type))
           reject(n,'assignment form');
@@ -209,62 +237,16 @@ export function parseTraining(source) {
     const loc=span(n);
     switch(n.type) {
       case 'BlockStatement':return {...loc,type:'Block',body:n.body.map(stmt)};
-      case 'VariableDeclaration':
-        if(['let','const','var'].includes(n.kind) && n.declarations.length===1 &&
-           ['ArrayPattern','ObjectPattern'].includes(n.declarations[0].id.type)){
-          const d=n.declarations[0];
-          if(!d.init)reject(n,'destructuring requires an initializer');
-          const names=[],budget={count:0};
-          function pattern(node,depth=0){
-            if(++budget.count>32||depth>4)
-              reject(node,'destructuring shape exceeds bounded depth/nodes');
-            const at=span(node);
-            if(node.type==='Identifier'){
-              names.push({...at,name:node.name});
-              return {...at,type:'PatternName',name:node.name};
-            }
-            if(node.type==='AssignmentPattern')
-              return {...at,type:'PatternDefault',
-                target:pattern(node.left,depth+1),fallback:expr(node.right)};
-            if(node.type==='ArrayPattern'){
-              if(!node.elements.length||node.elements.some(item=>item===null))
-                reject(node,'array binding needs dense nonempty elements');
-              return {...at,type:'PatternArray',elements:
-                node.elements.map((item,index)=>({
-                  ...span(item),index,target:pattern(item,depth+1)
-                }))};
-            }
-            if(node.type==='ObjectPattern'){
-              if(!node.properties.length)
-                reject(node,'object binding needs properties');
-              return {...at,type:'PatternObject',entries:node.properties.map(item=>{
-                if(item.type!=='Property'||item.kind!=='init'||item.method)
-                  reject(item,'object binding property form');
-                const key=item.computed?null:item.key.type==='Identifier'?item.key.name:
-                  item.key.type==='Literal'?String(item.key.value):null;
-                if(!item.computed&&(key===null||key==='__proto__'))
-                  reject(item,'unsafe object binding key');
-                return {...span(item),key,
-                  computedKey:item.computed?expr(item.key):null,
-                  target:pattern(item.value,depth+1)};
-              })};
-            }
-            reject(node,'destructuring target');
-          }
-          const tree=pattern(d.id);
-          if(!names.length)reject(d.id,'destructuring requires a bound identifier');
-          return {...loc,type:'PatternBinding',kind:n.kind,init:expr(d.init),
-            pattern:tree,bindings:names};
-        }
-        if(!['let','const','var'].includes(n.kind)||!n.declarations.length ||
-           n.declarations.some(d=>d.id.type!=='Identifier'))
-          reject(n,'declaration form');
-        const declarations=n.declarations.map(d=>({
-          ...span(d),type:'Variable',kind:n.kind,id:d.id.name,
-          init:d.init?expr(d.init):null
-        }));
-        return declarations.length===1?declarations[0]:
-          {...loc,type:'VariableGroup',declarations};
+      case 'VariableDeclaration':{
+        if(!['let','const','var'].includes(n.kind)||!n.declarations.length)reject(n,'declaration form');
+        const declarations=n.declarations.map(d=>{
+          if(d.id.type==='Identifier')return {...span(d),type:'Variable',kind:n.kind,
+            id:d.id.name,init:d.init?expr(d.init):null};
+          if(!d.init)reject(d,'destructuring requires an initializer');
+          return {...span(d),type:'PatternBinding',kind:n.kind,init:expr(d.init),...patternTree(d.id)};
+        });
+        return declarations.length===1?declarations[0]:{...loc,type:'VariableGroup',declarations};
+      }
       case 'FunctionDeclaration':{
         if(!n.id || n.generator)reject(n,'function form');
         const parsedParams=parameters(n);
@@ -281,8 +263,11 @@ export function parseTraining(source) {
           param:n.handler.param?.type==='Identifier'?n.handler.param.name:null,
           body:stmt(n.handler.body)
         }:null;
-        if(n.handler?.param && n.handler.param.type!=='Identifier')
-          reject(n.handler,'destructured catch parameter');
+        if(n.handler?.param&&n.handler.param.type!=='Identifier'){
+          handler.param='[[catch '+n.handler.start+']]';
+          handler.body.body.unshift({...span(n.handler.param),type:'PatternBinding',kind:'let',
+            init:{...span(n.handler.param),type:'Identifier',name:handler.param},...patternTree(n.handler.param)});
+        }
         return {...loc,type:'Try',block:stmt(n.block),handler,
           finalizer:n.finalizer?stmt(n.finalizer):null};
       }
@@ -353,11 +338,9 @@ export function parseTraining(source) {
     if(functionScope)
       for(const name of collectVarBindings(statements))names.add(name);
     for(const n of statements){
-      const entries=n.type==='VariableGroup'?n.declarations:
-        n.type==='PatternBinding'?n.bindings.map(binding=>({
-          id:binding.name,kind:n.kind,start:binding.start,end:binding.end
-        })):
-        ['Variable','Function'].includes(n.type)?[n]:[];
+      const entries=(n.type==='VariableGroup'?n.declarations:[n]).flatMap(d=>
+        d.type==='PatternBinding'?d.bindings.map(binding=>({id:binding.name,kind:d.kind,...span(binding)})):
+        ['Variable','Function'].includes(d.type)?[d]:[]);
       for(const d of entries){
         if(d.kind==='var')continue;
         if(names.has(d.id))reject(d,'duplicate lexical binding');
@@ -408,6 +391,7 @@ export function parseTraining(source) {
         case 'Proxy':value(n.target,e);value(n.handler,e);break;
         case 'Object':n.properties.forEach(p=>{if(p.computedKey)value(p.computedKey,e);value(p.value,e);});break;
         case 'Assign':value(n.left,e);value(n.right,e);break;
+        case 'PatternAssignment':statement(n,e);break;
         case 'Literal':case 'This':break;
         default:reject(n,'unhandled expression');
       }
@@ -415,7 +399,7 @@ export function parseTraining(source) {
     function statement(n,e){
       switch(n.type){
         case 'Variable':if(n.init)value(n.init,e);break;
-        case 'PatternBinding':{
+        case 'PatternBinding':case 'PatternAssignment':{
           // Guard the modeled Array.isArray intrinsic against lexical
           // shadowing even when the array occurs under an object pattern.
           function hasArray(node){
@@ -430,7 +414,9 @@ export function parseTraining(source) {
               if(cursor.names.has('Array'))
                 reject(n,'array pattern requires unshadowed owned Array intrinsic');
           function defaults(node){
-            if(node.type==='PatternDefault'){
+            if(node.type==='PatternName'&&n.kind==='assignment'){if(!has(node.name,e))reject(node,'unbound assignment '+node.name);}
+            else if(node.type==='PatternMember')value(node.target,e);
+            else if(node.type==='PatternDefault'){
               value(node.fallback,e);defaults(node.target);
             }else if(node.type==='PatternObject')
               node.entries.forEach(item=>{

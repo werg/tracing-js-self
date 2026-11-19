@@ -96,6 +96,16 @@
       "native": "unsupported",
       "reason": "Detailed committed heap does not encode prototype-chain transitions",
       "tests": "test/training-object-literals.test.js"
+    },
+    {
+      "id": "expanded-binding-patterns",
+      "domain": "bounded nested declaration/assignment/catch patterns; array elisions and rest; object rest and computed exclusions; lazy defaults and alias-preserving results; standard arrays only for positional bindings",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "passed",
+      "native": "untested",
+      "tests": "test/training-pattern-expansion.test.js"
     }
   ]
 }
