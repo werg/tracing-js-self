@@ -137,3 +137,20 @@ test('CLI creates a new receipt and refuses to overwrite any existing evidence',
   assert.match(second.stderr,/must be a new file/);
   assert.equal(readFileSync(input,'utf8'),bytes);
 });
+
+test('literal definitions and private initialization are classified separately from ordinary Set',()=>{
+  for(const body of ['const box={x:1,get y(){return 2;}};return box.x;',
+    'class C {#x=1;x=2;set(v){this.#x=v;}}const c=new C();c.set(3);return c.x;']){
+    const row=auditAffectedAssignments(archive(body));
+    assert.equal(row.status,'no_affected_path_observed');
+    assert.deepEqual(row.uncertainEvents,[]);
+  }
+});
+test('Symbol and escaped string keys retain exact descriptor identity in the audit',()=>{
+  for(const key of ['Symbol("x")','"\\0symbol:x"','"\\0string:x"']){
+    const bundle=archive('const key='+key+';const box={};Object.defineProperty(box,key,{get:()=>1});try{box[key]=2;}catch(e){}return 0;');
+    const row=auditAffectedAssignments(bundle);
+    assert.equal(row.status,'affected_path_observed');
+    assert.equal(row.affectedEvents.length,1);assert.deepEqual(row.uncertainEvents,[]);
+  }
+});
