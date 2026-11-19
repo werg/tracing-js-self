@@ -97,6 +97,21 @@ through the descriptor/value observer.
 
 The source tests include a teacher cursor mutation that leaves ordinary source
 completion observations unchanged. Independent iterator metadata rejects it.
-These observer tests are distinct from full source/public/native admission;
-registration and source fixture checks are required before advertising that
-qualification.
+The registered source adapter now checks explicit values/keys/entries/string
+iteration, helper-returned iterators, ordinary input arrays, and the existing
+standard-array `for…of` path. It compares the complete selected cursor after
+each owned change and refuses hidden properties or unexplained allocations.
+The normal source gate runs the original and independently instrumented source,
+compares operation/branch/completion/metadata receipts, reconstructs every public
+context, and replays checkpoints. Fresh rechecking repeats all these steps.
+
+`test/fixtures/semantic-iterator-region-v8.json` is the complete source-qualified
+mixed fixture, with scalar arithmetic before and after iterator work. Regenerate
+it with `node tools/generate-protocol-iterator-source-fixtures.mjs`; `--check`
+requires exact stored bytes. Its local evidence is distinct from production
+native admission, which still requires the separately pinned native consumer.
+
+Captured builtin callable values, iterator objects escaping the ordinary data
+boundary, general custom-iterator cleanup, optional iterator calls, and builtin
+index getters remain explicit source refusals. The profile does not silently
+label those cases as supported.
