@@ -42,8 +42,8 @@ const opNames = {
   CONST:'literal.materialize', GET:'binding.read',
   DEFAULT_GUARD:'binding.default.guard', PARAM_INIT:'binding.initialize', ENTER_BODY_ENV:'environment.enter', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
-  CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
-  GET_PROP:'property.read', GET_METHOD:'property.read', SPREAD:'property.read', PUT_PROP:'property.write', DEFINE_LITERAL_PROP:'property.write', COPY_KEYS:'array.allocate', HAS_ENUMERABLE_OWN:'property.read', REQUIRE_COERCIBLE:'property.read', APPEND_ARRAY:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
+  CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', GENERATOR_START:'call.return', YIELD:'continuation.yield', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
+  GET_PROP:'property.read', GET_METHOD:'property.read', SPREAD:'property.read', PUT_PROP:'property.write', DEFINE_LITERAL_PROP:'property.write', COPY_KEYS:'array.allocate', HAS_ENUMERABLE_OWN:'property.read', REQUIRE_COERCIBLE:'property.read', REQUIRE_OBJECT:'property.read', ITERATOR_ARRAY_GUARD:'property.read', PENDING_THROW:'completion.pending.read', APPEND_ARRAY:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
   LEAVE_SCOPE:'environment.leave', CLONE_LOOP_ENV:'environment.iteration', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
   TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
   BIND_CATCH:'completion.catch.bind', END_FINALLY:'completion.finally.end',
@@ -174,9 +174,10 @@ function ownPropertyKeys(obj){
 }
 function enumerableOwn(obj,key){
   return Object.hasOwn(obj.accessors??{},key)?obj.accessors[key].enumerable:
-    Object.hasOwn(obj.properties??{},key)&&!(obj.kind==='array'&&key==='length');
+    Object.hasOwn(obj.properties??{},key)&&obj.dataAttributes?.[key]?.enumerable!==false&&!(obj.kind==='array'&&key==='length');
 }
 function putOwn(obj,key,value,eventId,{literal=false}={}) {
+  if(!literal&&obj.dataAttributes?.[key]?.writable===false)guestFault('TypeError','Cannot assign to read only property');
   if(obj.declaredError)
     throw new TypeError('Declared error mutation is outside the bounded error profile');
   if (key === '__proto__'&&!literal) throw new TypeError('Prototype mutation is not implemented by the bounded profile');
@@ -269,6 +270,21 @@ export class Runtime {
     if(entity?.kind!=='symbol')throw new TypeError('Unknown owned symbol');
     return entity.description;
   }
+  functionProperties(draft,fn,eventId,{prototype=false}={}){
+    fn.properties??={};fn.propertyVersions??={};fn.shapeVersion??=0;
+    if(!prototype)return;
+    if(fn.arrow||fn.async)return;
+    if(this.programs[fn.codeId].generator)throw new TypeError('Generator function prototype reflection is outside the profile');
+    if(fn.prototypeInitialized)return;
+    fn.prototypeInitialized=true;
+    if(Object.hasOwn(fn.properties,'prototype'))return;
+    const id=this.next(draft,'obj');
+    draft.heap[id]={id,kind:'object',properties:{constructor:token(['ref',fn.id],eventId)},
+      propertyVersions:{constructor:1},dataAttributes:{constructor:{enumerable:false,writable:true,configurable:true}},
+      propertyOrder:['constructor'],shapeVersion:1,version:0};
+    putOwn(fn,'prototype',['ref',id],eventId);
+    fn.dataAttributes??={};fn.dataAttributes.prototype={enumerable:false,writable:true,configurable:false};
+  }
   newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,observers:[],adopters:[],adopting:null,resolverCalled:false,thenableSerial:0,thenableLocked:false,thenableSeen:[],version:0};return id;}
   newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[],thisValue=U) {
     const id=this.next(draft,'frame'),envId=this.newEnv(draft,parentEnv);
@@ -296,6 +312,12 @@ export class Runtime {
         draft.envs[envId].bindings[name]={kind:'var',initialized:true,
           token:token(U),version:0};
     draft.frames[id]={id,codeId,pc:0,stack:[],envId,callerFrameId,asyncPromiseId,status:'running',blockedOn:null,awaiting:null,operationId:null,pendingCoercionThrow:null,handlers:[],loops:[],thisValue,version:0};
+    if(this.programs[codeId].generator){
+      const generatorId=this.next(draft,'obj');
+      draft.heap[generatorId]={id:generatorId,kind:'generator',frameId:id,state:'initializing',
+        properties:{},propertyVersions:{},shapeVersion:0,version:0};
+      draft.frames[id].generatorId=generatorId;
+    }
     return id;
   }
   start(source) {
@@ -336,6 +358,7 @@ export class Runtime {
       throw new SyntaxError('Duplicate function declaration');
     const selected=definitions.find(x=>x.arg.name===functionName);
     if(!selected)throw new ReferenceError('Unknown entry function');
+    if(this.programs[selected.arg.codeId].generator)throw new SyntaxError('Generator entry requires an ordinary consumer wrapper');
     const state=this.state, global=this.newEnv(state);
     state.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
     state.envs[global].bindings.NaN={kind:'const',initialized:true,token:token(['num','NaN']),version:0};
@@ -420,6 +443,30 @@ export class Runtime {
   completeFrame(draft,frame,value,origin) {
     frame.status='completed';
     frame.completion={type:'return',value:token(value,origin)};
+    if(frame.constructReceiver&&!['ref','promise','intrinsic','builtinfn','hostfn'].includes(value[0]))value=frame.constructReceiver;
+    if(frame.generatorId){
+      draft.heap[frame.generatorId].state='completed';
+      value=this.iteratorResult(draft,value,true,origin);
+    }
+    this.deliverFrameValue(draft,frame,value,origin);
+  }
+  iteratorResult(draft,value,done,origin){
+    const id=this.next(draft,'obj');
+    draft.heap[id]={id,kind:'object',properties:{value:token(value,origin),done:token(['bool',done],origin)},
+      propertyVersions:{value:1,done:1},shapeVersion:2,version:0};
+    return ['ref',id];
+  }
+  suspendGenerator(draft,frame,value,origin,initial=false){
+    const generator=draft.heap[frame.generatorId];
+    if(generator?.kind!=='generator')throw new Error('Yield outside owned generator frame');
+    generator.state=initial?'suspendedStart':'suspendedYield';
+    frame.status='suspended-generator';
+    const output=initial?['ref',generator.id]:this.iteratorResult(draft,value,false,origin);
+    frame.completion={type:'return',value:token(output,origin)};
+    this.deliverFrameValue(draft,frame,output,origin);frame.callerFrameId=null;
+    return output;
+  }
+  deliverFrameValue(draft,frame,value,origin){
     if(frame.asyncPromiseId){this.resolvePromise(draft,frame.asyncPromiseId,value,origin);value=['promise',frame.asyncPromiseId];}
     if(frame.reactionPromiseId)this.resolvePromise(draft,frame.reactionPromiseId,value,origin);
     if(frame.callerFrameId){
@@ -741,6 +788,7 @@ export class Runtime {
       this.completeFrame(draft,frame,completion.value.value,completion.value.origin);
     }else if(completion.type==='throw'){
       frame.status='thrown';frame.completion=copy(completion);
+      if(frame.generatorId)draft.heap[frame.generatorId].state='completed';
       if(frame.thenableJob&&!frame.asyncPromiseId){
          const p=draft.promises[frame.thenableJob.promiseId];
          if(p?.status==='pending'&&!p.thenableLocked){
@@ -795,15 +843,15 @@ export class Runtime {
       const current=s.operations[operation.id],f=s.frames[frame.id];
       const detail=advanceArithmetic(current,eventId,{
         heap:s.heap,
-        invoke:(method,receiver)=>{
+        invoke:(method,receiver,args=[])=>{
           const target=s.heap[method[1]];
           const promiseId=target.async?this.newPromise(s):null;
-          const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,[],receiver);
+          const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,args,receiver);
           s.control.a0.activeFrameId=id;
           return id;
         },
         takeReturn:waitingId=>{
-          if(s.frames[waitingId]?.status!=='completed'||!f.stack.length)
+          if(!['completed','suspended-generator'].includes(s.frames[waitingId]?.status)||!f.stack.length)
             throw new Error('Missing owned conversion call result');
           return f.stack.pop();
         },
@@ -970,7 +1018,7 @@ export class Runtime {
           if(arg.name)s.envs[closureEnvId].bindings[arg.name]={kind:'const',
             initialized:true,token:token(['ref',id],eventId),version:0};
           s.heap[id]={id,kind:'function',codeId:arg.codeId,
-            closureEnvId,async:arg.async===true,arrow:arg.arrow===true,
+            closureEnvId,async:arg.async===true,arrow:arg.arrow===true,nonConstructible:arg.nonConstructible===true,
             lexicalThis:arg.arrow?f.thisValue:null,version:0};
           return result(['ref',id]);
         }
@@ -1131,6 +1179,22 @@ export class Runtime {
         case 'CONSTRUCT':{
           const args=[];for(let i=0;i<arg;i++)args.unshift(pop());
           const fn=pop();
+          if(fn.value[0]==='ref'&&s.heap[fn.value[1]]?.kind==='function'){
+            const target=s.heap[fn.value[1]];
+            if(target.arrow||target.async||this.programs[target.codeId].generator||target.nonConstructible)
+              guestFault('TypeError','Function is not a constructor');
+            this.functionProperties(s,target,eventId,{prototype:true});
+            const supplied=target.properties.prototype?.value??U;
+            const prototype=supplied[0]==='ref'?s.heap[supplied[1]]:null;
+            if(prototype&&!['object','array'].includes(prototype.kind))
+              throw new TypeError('Constructor prototype outside owned ordinary object profile');
+            const receiver=this.next(s,'obj');s.heap[receiver]={id:receiver,kind:'object',
+              prototype:prototype?.id??'Object.prototype',properties:{},propertyVersions:{},shapeVersion:0,version:0};
+            const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,null,args,['ref',receiver]);
+            s.frames[id].constructReceiver=['ref',receiver];s.frames[id].newTarget=fn.value;
+            s.control.a0.activeFrameId=id;
+            return {...operands(fn,...args),causes:[{kind:'invocation',frameId:id}]};
+          }
           if(fn.value[0]==='intrinsic'&&fn.value[1]==='Symbol')guestFault('TypeError','Symbol is not a constructor');
           if(fn.value[0]==='intrinsic'&&['Error','TypeError'].includes(fn.value[1])){
             if(args.length>1)throw new TypeError('Error options are outside the bounded error profile');
@@ -1207,6 +1271,7 @@ if(fn.value[0]==='intrinsic'&&Object.hasOwn(SHARED_TYPES,fn.value[1])){
   return {...operands(fn,...args),...result(['ref',id])};
 }
 if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
+            if(!['ref','intrinsic'].includes(fn.value[0])||fn.value[0]==='ref'&&s.heap[fn.value[1]]?.kind!=='proxy')guestFault('TypeError','Value is not a constructor');
             const completion={type:'unsupported',feature:'Constructor requires owned semantics: '+String(fn.value[1])};
             this.failFrame(s,f,completion);return {...operands(fn,...args),completion};
           }
@@ -1322,7 +1387,8 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
            else if(base.value[0]==='str'){
              // String primitive reads never consult the host object graph.
              const text=base.value[1];
-             if(property==='length')v=['num',text.length];
+             if(property===symbolPropertyKey('well-known:iterator'))v=['builtinfn','String.prototype.iterator'];
+             else if(property==='length')v=['num',text.length];
              else if(arrayIndex(property)&&Number(property)<text.length)
                v=['str',text[Number(property)]];
              else if(['charAt','charCodeAt','at','substring','substr','slice','indexOf','lastIndexOf','includes','startsWith','endsWith','toLowerCase','toUpperCase','trim','trimStart','trimEnd','split','replace'].includes(property))
@@ -1334,8 +1400,34 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
            else if(base.value[0]==='ref'){
              const obj=s.heap[base.value[1]];
              if(!obj)throw new ReferenceError('Unknown guest identity');
+             if(obj.kind==='function'){
+               this.functionProperties(s,obj,eventId,{prototype:property==='prototype'});
+               if(['name','length','constructor','__proto__','toString','valueOf','call','apply','bind'].includes(property)&&
+                  !Object.hasOwn(obj.properties,property))throw new TypeError('Unmodeled function prototype reflection or call adapter');
+               if(['arguments','caller'].includes(property))guestFault('TypeError','Restricted strict function property');
+               const slot=obj.properties[property];v=slot?.value??U;
+               return {...operands(base,key),...result(op==='GET_METHOD'?['method',v,base.value]:v),reads:[{
+                 kind:'property',objectId:obj.id,key:property,present:!!slot,version:obj.propertyVersions[property]??0,
+                 shapeVersion:obj.shapeVersion,value:v,supplyingEvent:slot?.origin??null}]};
+             }
              if(obj.declaredError&&!['name','message'].includes(property))
                throw new TypeError('Declared error exposes only name and message');
+             if(obj.kind==='generator'){
+               if(['next','return','throw'].includes(property))v=['builtinfn','Generator.'+property];
+               else if(property===symbolPropertyKey('well-known:iterator'))v=['builtinfn','Generator.identity'];
+               else if(property===symbolPropertyKey('well-known:toStringTag'))v=['str','Generator'];
+               else if(['constructor','__proto__','toString','valueOf'].includes(property))throw new TypeError('Unmodeled generator prototype property');
+               else v=U;
+               return {...operands(base,key),...result(op==='GET_METHOD'?['method',v,base.value]:v)};
+             }
+             if(obj.kind==='iterator'){
+               if(property==='next')v=['builtinfn','Iterator.next'];
+               else if(property===symbolPropertyKey('well-known:iterator'))v=['builtinfn','Iterator.identity'];
+               else if(property===symbolPropertyKey('well-known:toStringTag'))v=['str',obj.iterationKind==='string'?'String Iterator':'Array Iterator'];
+               else if(['constructor','__proto__','toString','valueOf'].includes(property))throw new TypeError('Unmodeled iterator prototype property');
+               else v=U;
+               return {...operands(base,key),...result(op==='GET_METHOD'?['method',v,base.value]:v)};
+             }
              if(obj.kind==='regexp'){
                if(property==='test'){
                  const method=['builtinfn','RegExp.prototype.test'];
@@ -1441,6 +1533,23 @@ if(obj.kind==='set'){
           const output=op==='GET_METHOD'?['method',v,base.value]:v;
           return {...operands(base,key),...result(output),reads:read?[read]:[]};
         }
+        case 'PENDING_THROW':{
+          const handler=f.handlers.findLast(item=>item.phase==='finally');
+          if(!handler)throw new Error('Pending completion read outside finally');
+          return result(['bool',handler.pending?.type==='throw']);
+        }
+        case 'ITERATOR_ARRAY_GUARD':{
+          const source=pop(),obj=source.value[0]==='ref'?s.heap[source.value[1]]:null;
+          const key=symbolPropertyKey('well-known:iterator');
+          return {...operands(source),...result(['bool',obj?.kind==='array'&&objectPrototype(obj)==='Array.prototype'&&
+            !Object.hasOwn(obj.properties,key)&&!Object.hasOwn(obj.accessors??{},key)])};
+        }
+        case 'REQUIRE_OBJECT':{
+          const value=pop();
+          if(!['ref','promise','intrinsic','builtinfn','hostfn'].includes(value.value[0]))
+            guestFault('TypeError','Iterator result must be an object');
+          return {...operands(value),...result(value.value)};
+        }
         case 'REQUIRE_COERCIBLE':{
           const value=pop();
           if(['null','undefined'].includes(value.value[0]))guestFault('TypeError','Cannot destructure null or undefined');
@@ -1504,8 +1613,14 @@ if(obj.kind==='set'){
           const v=pop(),key=pop(),base=pop(),property=valueKey(key.value);
           if(['null','undefined'].includes(base.value[0]))
              guestFault('TypeError',`Cannot set properties of ${base.value[0]}`);
-           if(base.value[0]!=='ref'||!s.heap[base.value[1]]||s.heap[base.value[1]].kind==='function')throw new TypeError('Not a writable guest object');
+           if(base.value[0]!=='ref'||!s.heap[base.value[1]])throw new TypeError('Not a writable guest object');
           const object=s.heap[base.value[1]];
+          if(object.kind==='function'){
+            if(['arguments','caller','name','length'].includes(property))throw new TypeError('Function descriptor assignment outside profile');
+            this.functionProperties(s,object,eventId);
+            if(property==='prototype')object.prototypeInitialized=true;
+            putOwn(object,property,v.value,eventId);return {...operands(base,key,v),...result(v.value)};
+          }
           if(object.kind==='shared-int32-view'){
   if(!arrayIndex(property)||Number(property)>=effectiveSharedLength(s.heap[object.bufferId],object))
     guestFault('TypeError','Unmodeled typed-array property assignment');
@@ -1595,6 +1710,82 @@ if(object.kind==='regexp'){
           const fn=pop();let callable=fn.value;
           const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
+          if(callable[0]==='builtinfn'&&callable[1].startsWith('Generator.')){
+            const generator=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+            if(generator?.kind!=='generator')guestFault('TypeError','Generator receiver has no owned continuation');
+            const method=callable[1].slice('Generator.'.length),sent=args[0]??token(U,eventId);
+            if(method==='identity')return {...operands(fn,...args),...result(receiver)};
+            if(['initializing','executing'].includes(generator.state))guestFault('TypeError','Generator is already running');
+            const target=s.frames[generator.frameId],initial=generator.state==='suspendedStart';
+            if(generator.state==='completed'||initial&&method!=='next'){
+              generator.state='completed';target.status='completed';
+              if(method==='throw'){
+                const completion={type:'throw',value:sent};
+                this.routeCompletion(s,f,completion,eventId);return {...operands(fn,...args),completion};
+              }
+              return {...operands(fn,...args),...result(this.iteratorResult(s,method==='return'?sent.value:U,true,eventId))};
+            }
+            if(!['suspendedStart','suspendedYield'].includes(generator.state))throw new Error('Invalid generator suspension state');
+            generator.state='executing';target.status='running';target.callerFrameId=f.id;delete target.completion;
+            s.control.a0.activeFrameId=target.id;
+            const completion=method==='return'?{type:'return',value:sent}:method==='throw'?{type:'throw',value:sent}:null;
+            if(completion)this.routeCompletion(s,target,completion,eventId);
+            else if(!initial)this.stackPush(target,sent.value,eventId);
+            if(method==='return'&&s.control.a0.activeFrameId===f.id&&target.status==='completed')
+              return {...operands(fn,...args),result:f.stack.at(-1).value};
+            return {...operands(fn,...args),causes:[{kind:'invocation',frameId:target.id}],
+              ...(method==='throw'?{completion}:{})};
+          }
+          if(callable[0]==='builtinfn'&&['Array.prototype.values','Array.prototype.keys','Array.prototype.entries','String.prototype.iterator'].includes(callable[1])){
+            const string=callable[1]==='String.prototype.iterator';
+            if(string?receiver[0]!=='str':receiver[0]!=='ref'||s.heap[receiver[1]]?.kind!=='array')
+              guestFault('TypeError','Iterator method requires its owned receiver');
+            const id=this.next(s,'obj');
+            s.heap[id]={id,kind:'iterator',iterated:copy(receiver),nextIndex:0,done:false,
+              iterationKind:string?'string':callable[1].slice('Array.prototype.'.length),
+              properties:{},propertyVersions:{},shapeVersion:0,version:0};
+            return {...operands(fn,...args),...result(['ref',id])};
+          }
+          if(callable[0]==='builtinfn'&&['Iterator.next','Iterator.identity'].includes(callable[1])){
+            const iterator=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+            if(iterator?.kind!=='iterator')guestFault('TypeError','Iterator receiver has no owned state');
+            if(callable[1]==='Iterator.identity')return {...operands(fn,...args),...result(receiver)};
+            let value=U;
+            if(!iterator.done){
+              const index=iterator.nextIndex;
+              if(index>10000)throw new RangeError('Owned iterator step budget');
+              if(iterator.iterationKind==='string'){
+                const text=iterator.iterated[1];
+                if(index>=text.length)iterator.done=true;
+                else{
+                  const code=text.charCodeAt(index),next=text.charCodeAt(index+1),width=
+                    code>=0xd800&&code<=0xdbff&&next>=0xdc00&&next<=0xdfff?2:1;
+                  value=['str',text.slice(index,index+width)];iterator.nextIndex+=width;
+                }
+              }else{
+                const array=s.heap[iterator.iterated[1]],length=decode(array.properties.length.value);
+                if(index>=length)iterator.done=true;
+                else{
+                  iterator.nextIndex++;
+                  if(iterator.iterationKind==='keys')value=['num',index];
+                  else{
+                    const property=ordinaryGet(s.heap,iterator.iterated,String(index));
+                    if(!property)throw new TypeError('Builtin iterator index getter requires an owned continuation');
+                    value=property.method.value;
+                    if(iterator.iterationKind==='entries'){
+                      const pair=this.next(s,'obj');s.heap[pair]={id:pair,kind:'array',properties:{
+                        0:token(['num',index],eventId),1:token(value,eventId),length:token(['num',2],eventId)},
+                        propertyVersions:{0:1,1:1,length:1},shapeVersion:3,version:0};value=['ref',pair];
+                    }
+                  }
+                }
+              }
+            }
+            const id=this.next(s,'obj');s.heap[id]={id,kind:'object',properties:{
+              value:token(value,eventId),done:token(['bool',iterator.done],eventId)},
+              propertyVersions:{value:1,done:1},shapeVersion:2,version:0};
+            return {...operands(fn,...args),...result(['ref',id])};
+          }
           if(callable[0]==='intrinsic'&&callable[1]==='Symbol'){
             const value=args[0]?.value??U;
             if(value[0]==='symbol')guestFault('TypeError','Cannot convert a Symbol value to a string');
@@ -1820,6 +2011,17 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             if(!singleLength)args.forEach((entry,i)=>
               putOwn(array,String(i),entry.value,eventId));
             return {...operands(fn,...args),...result(['ref',id])};
+          }
+          if(callable[0]==='builtinfn'&&['map','filter','slice','splice','concat'].some(method=>callable[1]==='Array.prototype.'+method)){
+            const array=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+            if(array?.kind==='array'&&(objectPrototype(array)!=='Array.prototype'||
+               Object.hasOwn(array.properties,'constructor')||Object.hasOwn(array.accessors??{},'constructor')))
+              throw new TypeError('Array species lookup is outside the default ordinary array profile');
+            if(callable[1]==='Array.prototype.concat')for(const input of [receiver,...args.map(arg=>arg.value)]){
+              if(input[0]!=='ref'||!['object','array'].includes(s.heap[input[1]]?.kind))continue;
+              const hook=ordinaryGet(s.heap,input,symbolPropertyKey('well-known:isConcatSpreadable'));
+              if(!hook||hook.method.value[0]!=='undefined')throw new TypeError('Symbol.isConcatSpreadable requires an owned concat protocol');
+            }
           }
           if(callable[0]==='ref' && s.heap[callable[1]]?.kind==='function'){
             const target=s.heap[callable[1]],promiseId=target.async?this.newPromise(s):null;
@@ -2529,6 +2731,13 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
            if(v[0]!=='promise')this.resolvePromise(s,promiseId,v,a.origin);
           f.awaiting=promiseId;this.observePromise(s,promiseId,{kind:'await',frameId:f.id});
           this.suspendAsync(s,f);return {...operands(a),causes:[{kind:'promise',promiseId}]};
+        }
+        case 'GENERATOR_START':{
+          const output=this.suspendGenerator(s,f,U,eventId,true);return {result:output};
+        }
+        case 'YIELD':{
+          const value=pop(),output=this.suspendGenerator(s,f,value.value,eventId);
+          return {...operands(value),result:output};
         }
         case 'RETURN':{const v=pop();this.routeCompletion(s,f,{type:'return',value:v},eventId);return {...operands(v),result:v.value};}
         case 'THROW':{const v=pop(),completion={type:'throw',value:v};this.routeCompletion(s,f,completion,eventId);return {...operands(v),completion};}

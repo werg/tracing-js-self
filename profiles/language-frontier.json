@@ -148,6 +148,60 @@
       "native": "unsupported",
       "reason": "New semantic-protocol-values/1 identity/key interface is validated separately; existing detailed/native scalar/ref contracts cannot encode Symbols",
       "tests": "test/training-symbols.test.js"
+    },
+    {
+      "id": "owned-synchronous-iterators",
+      "domain": "custom synchronous for-of acquisition, cached next, receiver preserving getters/calls, IteratorClose on break/return/throw with completion precedence; builtin array/string iterators; nested lexical/var patterns; guarded standard-array path retains detailed qualification",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "General iterator identities and Symbol-keyed protocol methods need the new public protocol interface; existing detailed standard-array path is separately qualified",
+      "tests": "test/training-iterator-protocol.test.js"
+    },
+    {
+      "id": "for-of-expanded-bindings",
+      "domain": "standard-array iteration with nested object/array/default/rest bindings, var targets and lexical iterable TDZ",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "passed",
+      "native": "untested",
+      "tests": "test/training-iterator-protocol.test.js"
+    },
+    {
+      "id": "synchronous-generator-continuations",
+      "domain": "ordinary generator declarations/expressions/methods; invocation-time parameters, retained yield operands/locals/captures, next(value)/return/throw, reentrancy, yielding finally cleanup and for-of close; no async generators or yield delegation",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Generator identity, suspended cursor and completion obligations require a new public continuation representation; existing detailed contracts lack them",
+      "tests": "test/training-generators.test.js"
+    },
+    {
+      "id": "symbol-conversion-protocol",
+      "domain": "ordinary own/inherited data Symbol.toPrimitive hooks with receiver and default/number hint; primitive result validation, nullish fallback, throws and Symbol.toStringTag data; accessor/async/unmodeled builtin hooks and species/concat overrides explicitly refused",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Symbol-keyed hook identities require the public protocol interface; old ordinary conversion path remains separately qualified",
+      "tests": "test/training-symbol-coercion.test.js"
+    },
+    {
+      "id": "ordinary-user-constructors",
+      "domain": "ordinary function constructors with live owned prototype identity, receivers, parameter defaults, inherited methods/accessors, explicit object returns and abrupt completion; nonconstructible functions reject; spread/new.target/prototype reflection outside this slice",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Function prototype state and construction receiver completion need a public construction representation",
+      "tests": "test/training-constructors.test.js"
     }
   ]
 }

@@ -118,14 +118,13 @@ export function parseTraining(source) {
       case 'Identifier':return {...loc,type:'Identifier',name:n.name};
       case 'ThisExpression':return {...loc,type:'This'};
       case 'ArrowFunctionExpression':case 'FunctionExpression':{
-        if(n.generator)
-          reject(n,'function expression parameters or mode');
+        if(n.generator&&n.async)reject(n,'async generator mode');
         const parsedParams=parameters(n);
         const body=n.body.type==='BlockStatement'?stmt(n.body):
           {...span(n.body),type:'Block',body:[
             {...span(n.body),type:'Return',argument:expr(n.body)}]};
         return {...loc,type:'FunctionExpr',
-          arrow:n.type==='ArrowFunctionExpression',async:n.async,
+          arrow:n.type==='ArrowFunctionExpression',async:n.async,generator:n.generator===true,
           name:n.id?.name??null,
           params:parsedParams.map(p=>p.name),defaults:parsedParams.map(p=>p.default),
           parameterSites:parsedParams.map(span),
@@ -139,6 +138,9 @@ export function parseTraining(source) {
           reject(n,'unhandled template literal escape');
         return {...loc,type:'Template',quasis:n.quasis.map(q=>q.value.cooked),
           expressions:n.expressions.map(expr)};
+      case 'YieldExpression':
+        if(n.delegate)reject(n,'yield delegation requires the delegated generator profile');
+        return {...loc,type:'Yield',argument:n.argument?expr(n.argument):{...loc,type:'Literal',value:['undefined']}};
       case 'AwaitExpression':
         return {...loc,type:'Await',argument:expr(n.argument)};
       case 'UnaryExpression':
@@ -194,14 +196,12 @@ export function parseTraining(source) {
         return {...loc,type:'Member',object:expr(n.object),property:n.computed?expr(n.property):
           {...span(n.property),type:'Literal',value:encode(n.property.name)}};
       case 'NewExpression':
-        if(n.callee.type!=='Identifier'||n.arguments.some(a=>a.type==='SpreadElement')||
-           n.arguments.length>3)reject(n,'NewExpression');
-        if(n.callee.name==='Proxy'){
+        if(n.arguments.some(a=>a.type==='SpreadElement')||n.arguments.length>64)reject(n,'constructor spread/argument budget');
+        if(n.callee.type==='Identifier'&&n.callee.name==='Proxy'){
           if(n.arguments.length!==2)reject(n,'Proxy requires target and handler');
           return {...loc,type:'Proxy',target:expr(n.arguments[0]),handler:expr(n.arguments[1])};
         }
-        if(!ownedConstructors.has(n.callee.name))reject(n,'NewExpression');
-        return {...loc,type:'Construct',callee:n.callee.name,args:n.arguments.map(expr)};
+        return {...loc,type:'Construct',callee:expr(n.callee),args:n.arguments.map(expr)};
       case 'CallExpression':
         if(n.optional || n.arguments.filter(a=>a.type==='SpreadElement').length>4)
           reject(n,'spread/optional call');
@@ -225,7 +225,7 @@ export function parseTraining(source) {
           if(!p.computed&&key===null)reject(p,'object property key');
           const kind=key==='__proto__'&&!p.computed&&!p.shorthand&&!p.method&&p.kind==='init'
             ?'prototype':p.kind;
-          return {...span(p),key,computedKey:p.computed?expr(p.key):null,kind,value:expr(p.value)};
+          return {...span(p),key,computedKey:p.computed?expr(p.key):null,kind,value:{...expr(p.value),...(p.method||p.kind==='get'||p.kind==='set'?{nonConstructible:true}:{})}};
         })};
       case 'AssignmentExpression':
         if(n.operator==='='&&['ArrayPattern','ObjectPattern'].includes(n.left.type))
@@ -252,14 +252,14 @@ export function parseTraining(source) {
         return declarations.length===1?declarations[0]:{...loc,type:'VariableGroup',declarations};
       }
       case 'FunctionDeclaration':{
-        if(!n.id || n.generator)reject(n,'function form');
+        if(!n.id || n.generator&&n.async)reject(n,'function form');
         const parsedParams=parameters(n);
         return {...loc,type:'Function',id:n.id.name,
           params:parsedParams.map(x=>x.name),defaults:parsedParams.map(x=>x.default),
           parameterSites:parsedParams.map(span),
           parameterPatterns:parsedParams.map(p=>p.pattern?{pattern:p.pattern,bindings:p.bindings}:null),
           parameterNames:parsedParams.flatMap(p=>[p.name,...(p.bindings??[]).map(b=>b.name)]),
-          restIndex:parsedParams.findIndex(p=>p.rest),async:n.async,body:stmt(n.body)};
+          restIndex:parsedParams.findIndex(p=>p.rest),async:n.async,generator:n.generator===true,body:stmt(n.body)};
       }
       case 'ReturnStatement':return {...loc,type:'Return',argument:n.argument?expr(n.argument):null};
       case 'ThrowStatement':
@@ -294,26 +294,10 @@ export function parseTraining(source) {
            n.left.declarations.length!==1 ||n.left.declarations[0].init)
           reject(n,'for-of requires one simple declared binding');
         const target=n.left.declarations[0].id;
-        const array=target.type==='ArrayPattern'&&n.left.kind!=='var';
-        if(target.type!=='Identifier'&&!array)
-          reject(target,'for-of binding form');
-        let bindings=null;
-        if(array){
-          if(!target.elements.length||target.elements.length>32||
-             target.elements.some(x=>x?.type!=='Identifier'&&
-               !(x?.type==='AssignmentPattern'&&x.left.type==='Identifier')))
-            reject(target,'for-of array binding requires 1..32 identifiers');
-          bindings=target.elements.map((element,index)=>({
-            ...span(element),index,
-            name:element.type==='Identifier'?element.name:element.left.name,
-            fallback:element.type==='AssignmentPattern'?expr(element.right):null
-          }));
-          if(new Set(bindings.map(x=>x.name)).size!==bindings.length)
-            reject(target,'duplicate for-of array binding');
-        }
-        return {...loc,type:'ForOf',kind:n.left.kind,
-          id:bindings?null:target.name,bindings,
-          iterable:expr(n.right),body:stmt(n.body)};
+        if(!['Identifier','ArrayPattern','ObjectPattern'].includes(target.type))reject(target,'for-of binding form');
+        const parsedPattern=target.type==='Identifier'?null:patternTree(target);
+        return {...loc,type:'ForOf',kind:n.left.kind,id:parsedPattern?null:target.name,
+          ...(parsedPattern??{bindings:null}),iterable:expr(n.right),body:stmt(n.body)};
       }
       case 'ForStatement':{
         let init=null;
@@ -361,6 +345,7 @@ export function parseTraining(source) {
           if(!has(n.name,e))reject(n,'unbound identifier '+n.name);
           break;
         case 'Template':n.expressions.forEach(x=>value(x,e));break;
+        case 'Yield':value(n.argument,e);break;
         case 'FunctionExpr':scope(n.body.body,n.name?{names:new Set([n.name]),parent:e}:e,
           n.parameterNames??n.params,n.async,true,n.defaults,n.parameterPatterns);break;
         case 'Await':
@@ -390,8 +375,7 @@ export function parseTraining(source) {
           break;
         case 'Member':value(n.object,e);value(n.property,e);break;
         case 'Call':value(n.callee,e);n.args.forEach(x=>value(x.type==='Spread'?x.argument:x,e));break;
-        case 'Construct':if(!has(n.callee,e))reject(n,'unbound constructor');
-          n.args.forEach(x=>value(x,e));break;
+        case 'Construct':value(n.callee,e);n.args.forEach(x=>value(x,e));break;
         case 'DeferredRegExp':case 'OwnedPinnedRegExp':break;
         case 'Array':n.elements.forEach(x=>{if(x)value(x.type==='Spread'?x.argument:x,e);});break;
         case 'Proxy':value(n.target,e);value(n.handler,e);break;
@@ -450,18 +434,12 @@ export function parseTraining(source) {
         case 'While':case 'DoWhile':
           value(n.test,e);statement(n.body,e);break;
         case 'ForOf':{
-          value(n.iterable,e);
           const loopEnv=n.kind==='var'?e:{
             names:new Set(n.bindings?n.bindings.map(x=>x.name):[n.id]),parent:e
           };
-          if(n.bindings)
-            for(let cursor=loopEnv;cursor?.parent;cursor=cursor.parent)
-              if(cursor.names.has('Array'))
-                reject(n,'for-of array binding requires unshadowed owned Array');
-          for(const binding of n.bindings??[])
-            if(binding.fallback)value(binding.fallback,loopEnv);
-          statement(n.body,loopEnv);
-          break;
+          value(n.iterable,loopEnv);
+          if(n.pattern)statement({...n,type:'PatternBinding',init:{type:'Literal'}},loopEnv);
+          statement(n.body,loopEnv);break;
         }
         case 'For':{
           const declarations=n.init?.type==='VariableGroup'?n.init.declarations:

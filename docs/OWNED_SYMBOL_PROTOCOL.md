@@ -81,3 +81,17 @@ The semantic checklist uses the pinned ECMAScript 2026 edition:
 
 General boxed Symbol objects, cross-realm registries, host Symbol transport,
 and protocol consumers not separately qualified remain outside this slice.
+
+## Arithmetic conversion protocol followup
+
+Arithmetic now checks ordinary own/inherited `Symbol.toPrimitive` data hooks
+before ordinary valueOf/toString conversion. The hook receives the original
+receiver and the `default` or `number` hint, must return a primitive, and may
+throw through the owned continuation. Null/undefined falls back; noncallable
+hooks and object results throw TypeError. An independent archive validator
+checks that a producer cannot skip a present hook or forge its receiver/hint.
+`Object.prototype.toString` observes a data `Symbol.toStringTag`. Getter hooks,
+async hooks, and builtin callbacks outside the owned conversion dispatcher
+remain explicit refusals. Array species overrides and `isConcatSpreadable`
+overrides are guarded rather than silently ignored. See
+`test/training-symbol-coercion.test.js` for independent V8/replay evidence.
