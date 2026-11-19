@@ -56,7 +56,8 @@ private or prototype state. The frontier records owned and independent evidence
 separately from public/native support.
 
 Ordinary derived classes and `super()` construction are described in
-`OWNED_CONSTRUCTION.md`. Super property access, private accessors, optional private
+`OWNED_CONSTRUCTION.md`; owned super property reads/calls and plain/compound
+writes are described in `OWNED_SUPER.md`. Private accessors, optional private
 chains, object-coercing computed keys and top-level class evaluation remain
 outside this profile. Top-level entry setup currently permits static data and
 function declarations; local classes execute inside their owned entry function.

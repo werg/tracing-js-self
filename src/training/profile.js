@@ -70,7 +70,10 @@ export function parseTraining(source) {
       if(node.type==='Identifier'){
         names.push({...at,name:node.name});return {...at,type:'PatternName',name:node.name};
       }
-      if(assignment&&node.type==='MemberExpression')return {...at,type:'PatternMember',target:expr(node)};
+      if(assignment&&node.type==='MemberExpression'){
+        if(node.object.type==='Super')reject(node,'super destructuring assignment profile');
+        return {...at,type:'PatternMember',target:expr(node)};
+      }
       if(node.type==='AssignmentPattern')return {...at,type:'PatternDefault',
         target:pattern(node.left,depth+1),fallback:expr(node.right)};
       if(node.type==='ArrayPattern')return {...at,type:'PatternArray',elements:node.elements.map((item,index)=>
@@ -180,6 +183,7 @@ export function parseTraining(source) {
       case 'UpdateExpression':
         if(!['Identifier','MemberExpression'].includes(n.argument.type))
           reject(n,'update target');
+        if(n.argument.type==='MemberExpression'&&n.argument.object.type==='Super')reject(n,'super update continuation profile');
         return {...loc,type:'Update',operator:n.operator,prefix:n.prefix,
           ...(n.argument.type==='Identifier'
             ?{name:n.argument.name}:{argument:expr(n.argument)})};
@@ -215,7 +219,9 @@ export function parseTraining(source) {
       }
       case 'MemberExpression':
         if(n.property.type==='PrivateIdentifier')return {...loc,type:'PrivateMember',name:n.property.name,object:expr(n.object)};
-        if(n.optional || n.object.type==='Super')reject(n,'member receiver');
+        if(n.optional)reject(n,'member receiver');
+        if(n.object.type==='Super')return {...loc,type:'SuperMember',property:n.computed?expr(n.property):
+          {...span(n.property),type:'Literal',value:encode(n.property.name)}};
         return {...loc,type:'Member',object:expr(n.object),property:n.computed?expr(n.property):
           {...span(n.property),type:'Literal',value:encode(n.property.name)}};
       case 'NewExpression':
@@ -256,6 +262,8 @@ export function parseTraining(source) {
         if(!assignments.has(n.operator) ||
            !['Identifier','MemberExpression'].includes(n.left.type))
           reject(n,'assignment form');
+        if(n.left.type==='MemberExpression'&&n.left.object.type==='Super'&&['&&=','||=','??='].includes(n.operator))
+          reject(n,'logical super assignment continuation profile');
         return {...loc,type:'Assign',operator:n.operator,left:expr(n.left),right:expr(n.right)};
       default:reject(n,n.type);
     }
@@ -409,6 +417,7 @@ export function parseTraining(source) {
           }
           break;
         case 'Member':value(n.object,e);value(n.property,e);break;
+        case 'SuperMember':value(n.property,e);break;
         case 'Call':value(n.callee,e);n.args.forEach(x=>value(x.type==='Spread'?x.argument:x,e));break;
         case 'SuperCall':n.args.forEach(x=>value(x.type==='Spread'?x.argument:x,e));break;
         case 'Construct':value(n.callee,e);n.args.forEach(x=>value(x,e));break;

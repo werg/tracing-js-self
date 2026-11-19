@@ -44,6 +44,7 @@ const opNames = {
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
   CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', GENERATOR_START:'call.return', YIELD:'continuation.yield', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
   GET_TEMPLATE_OBJECT:'array.allocate', PROPERTY_KEY:'property.read', CLASS_CONSTRUCTOR_GUARD:'call.enter', CLASS_CREATE:'object.construct', CLASS_INITIALIZER:'property.write', CLASS_FINISH:'call.enter', PRIVATE_GET:'property.read', PRIVATE_GET_METHOD:'property.read', PRIVATE_HAS:'primitive.binary', PRIVATE_DEFINE:'property.write', PRIVATE_SET:'property.write', PRIVATE_UPDATE:'property.update',
+  SET_HOME_OBJECT:'function.home', SUPER_REFERENCE:'reference.super', SUPER_GET:'property.read', SUPER_GET_METHOD:'property.read', SUPER_SET:'property.write', SUPER_CONSTRUCTOR:'property.read',
   DELEGATE_YIELD:'continuation.yield', DELEGATE_RESUME_KIND:'completion.pending.read', DELEGATE_RESUME_VALUE:'completion.pending.read', ITERATOR_THROW_MISSING:'call.enter',
   INSTANCEOF_DEFAULT:'primitive.binary', INSTANCEOF_RESULT:'primitive.binary',
   FOR_IN_CREATE:'object.allocate', FOR_IN_NEXT:'property.read', NEW_TARGET:'reference.this',
@@ -216,6 +217,35 @@ function functionProperty(heap,object,key){
     if(proto===null||['Object.prototype','Array.prototype'].includes(proto))return {};
     object=heap[proto];if(!object)throw new Error('Function prototype identity missing');
   }
+  return {};
+}
+function superProperty(heap,base,key){
+  let current=base[0]==='ref'?base[1]:base[0]==='intrinsic'?base[1]:null;
+  if(current===null)guestFault('TypeError','Super base is null');
+  const seen=new Set();
+  while(!['Object.prototype','Array.prototype','Function.prototype'].includes(current)){
+    const object=heap[current];
+    if(!object||!['object','array','function'].includes(object.kind)||seen.has(current))
+      throw new TypeError('Super property requires an owned ordinary prototype chain');
+    seen.add(current);
+    if(Object.hasOwn(object.properties??{},key))return {owner:object,slot:object.properties[key],attributes:object.dataAttributes?.[key]};
+    if(Object.hasOwn(object.accessors??{},key))return {owner:object,accessor:object.accessors[key]};
+    current=objectPrototype(object);if(current===null)return {};
+  }
+  if(current==='Function.prototype'){
+    if(key===symbolPropertyKey('well-known:hasInstance'))return {slot:token(['builtinfn','Function.prototype.hasInstance']),attributes:{writable:false}};
+    if(['call','apply','bind','caller','arguments','constructor'].includes(key))throw new TypeError('Super Function intrinsic property is outside profile');
+    if(key==='length'||key==='name')return {slot:token(key==='length'?['num',0]:['str','']),attributes:{writable:false}};
+  }
+  if(current==='Array.prototype'){
+    if(key==='length')return {slot:token(['num',0])};
+    if(key===symbolPropertyKey('well-known:iterator'))return {slot:token(['builtinfn','Array.prototype.values'])};
+    if(['push','pop','includes','indexOf','lastIndexOf','slice','concat','join','splice','unshift','shift','at','filter','map','reduce','sort','some','every','find','findIndex','forEach','reverse','fill','copyWithin','toReversed','with','values','keys','entries'].includes(key))return {slot:token(['builtinfn','Array.prototype.'+key])};
+    if(key==='toString')return {slot:token(['builtinfn','Array.toString'])};
+    if(key in Array.prototype&&key!=='valueOf')throw new TypeError('Super Array intrinsic property is outside profile');
+  }
+  if(key==='toString'||key==='valueOf')return {slot:token(['builtinfn',key==='toString'?'Object.toString':'Object.valueOf'])};
+  if(key in Object.prototype)throw new TypeError('Super Object intrinsic property is outside profile');
   return {};
 }
 function putOwn(obj,key,value,eventId,{literal=false}={}) {
@@ -391,6 +421,14 @@ export class Runtime {
   newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,observers:[],adopters:[],adopting:null,resolverCalled:false,thenableSerial:0,thenableLocked:false,thenableSeen:[],version:0};return id;}
   functionThis(fn,receiver=U){
     return !fn.arrow?receiver:fn.lexicalThisFrameId?['thisbinding',fn.lexicalThisFrameId]:fn.lexicalThis;
+  }
+  setHomeObject(draft,fn,home,eventId){
+    if(fn.kind!=='function'||fn.arrow||home[0]!=='ref'||!['object','array','function'].includes(draft.heap[home[1]]?.kind))
+      throw new Error('Invalid owned method home object');
+    if(fn.homeObject)throw new Error('Method home object initialized twice');
+    fn.homeObject=home;
+    fn.closureEnvId=this.newEnv(draft,fn.closureEnvId);
+    draft.envs[fn.closureEnvId].bindings['[[home object]]']={kind:'const',initialized:true,token:token(home,eventId),version:0};
   }
   newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[],thisValue=U) {
     const thisBindingFrameId=thisValue[0]==='thisbinding'?thisValue[1]:null;
@@ -1771,6 +1809,58 @@ if(obj.kind==='set'){
             value[0]==='ref'?enumerableOwn(s.heap[value[1]],name):false;
           return {...operands(source,key),...result(['bool',!!present])};
         }
+        case 'SET_HOME_OBJECT':{
+          const value=pop(),home=arg.name?lookup(s,f.envId,arg.name).cell.token:f.stack.at(-arg.offset);
+          this.setHomeObject(s,s.heap[value.value[1]],home.value,eventId);
+          return {...operands(value,home),...result(value.value)};
+        }
+        case 'SUPER_REFERENCE':{
+          const key=pop(),receiver=pop(),home=lookup(s,f.envId,'[[home object]]').cell.token;
+          const parent=objectPrototype(s.heap[home.value[1]]),base=parent===null?['null']:
+            ['Object.prototype','Array.prototype','Function.prototype'].includes(parent)?['intrinsic',parent]:['ref',parent];
+          return {...operands(receiver,key,home),...result(['superreference',base,receiver.value,key.value])};
+        }
+        case 'SUPER_GET':case 'SUPER_GET_METHOD':case 'SUPER_SET':{
+          const assigned=op==='SUPER_SET'?pop():null,reference=pop();
+          if(reference.value[0]!=='superreference')throw new Error('Super property lost its reference');
+          const [,base,receiver,key]=reference.value,property=valueKey(key),found=superProperty(s.heap,base,property);
+          const inputs=[token(receiver,reference.origin),token(key,reference.origin),...(assigned?[assigned]:[])];
+          if(assigned){
+            if(found.accessor){
+              const setter=found.accessor.set.value;
+              if(setter[0]==='undefined')guestFault('TypeError','Cannot assign to a super getter without a setter');
+              const fn=s.heap[setter[1]];
+              if(fn?.kind!=='function'||fn.async)throw new TypeError('Super setter requires a synchronous owned continuation');
+              const id=this.newFrame(s,fn.codeId,fn.closureEnvId,f.id,null,[assigned],this.functionThis(fn,receiver));
+              f.pendingProperty={kind:'set',value:assigned.value,waitingFrameId:id};s.control.a0.activeFrameId=id;
+              return {...operands(...inputs),causes:[{kind:'invocation',frameId:id}]};
+            }
+            if(found.attributes?.writable===false)guestFault('TypeError','Cannot assign to a readonly super property');
+            const object=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+            if(!object)guestFault('TypeError','Super assignment receiver is not an object');
+            if(!['object','array','function'].includes(object.kind))throw new TypeError('Super assignment requires owned ordinary receiver internal methods');
+            if(object.kind==='function')this.functionProperties(s,object,eventId,{prototype:property==='prototype'});
+            if(Object.hasOwn(object.accessors??{},property)||object.dataAttributes?.[property]?.writable===false)
+              guestFault('TypeError','Super assignment receiver property is not writable data');
+            putOwn(object,property,assigned.value,eventId);
+            return {...operands(...inputs),...result(assigned.value)};
+          }
+          if(found.accessor&&found.accessor.get.value[0]!=='undefined'){
+            const getter=s.heap[found.accessor.get.value[1]];
+            if(getter?.kind!=='function'||getter.async)throw new TypeError('Super getter requires a synchronous owned continuation');
+            const id=this.newFrame(s,getter.codeId,getter.closureEnvId,f.id,null,[],this.functionThis(getter,receiver));
+            f.pendingProperty={kind:'get',receiver,method:op==='SUPER_GET_METHOD',waitingFrameId:id};s.control.a0.activeFrameId=id;
+            return {...operands(...inputs),causes:[{kind:'invocation',frameId:id}]};
+          }
+          const value=found.slot?.value??U;
+          return {...operands(...inputs),...result(op==='SUPER_GET_METHOD'?['method',value,receiver]:value)};
+        }
+        case 'SUPER_CONSTRUCTOR':{
+          const owner=f.thisBindingFrameId?s.frames[f.thisBindingFrameId]:f;
+          if(owner.constructKind!=='derived')throw new Error('Super call has no derived constructor context');
+          const parent=s.heap[owner.constructorId].prototype;
+          return result(parent==='Function.prototype'?U:['ref',parent]);
+        }
         case 'SUPER_CALL':case 'SUPER_FORWARD_CALL':{
           const owner=f.thisBindingFrameId?s.frames[f.thisBindingFrameId]:f;
           if(owner.constructKind!=='derived')throw new Error('Super call has no derived constructor context');
@@ -1781,7 +1871,7 @@ if(obj.kind==='set'){
           }
           if(args.length>10000)throw new RangeError('Owned super argument budget exceeded');
           const parent=s.heap[owner.constructorId].prototype;
-          const constructor=parent==='Function.prototype'?U:['ref',parent];
+          const constructor=op==='SUPER_CALL'?pop().value:parent==='Function.prototype'?U:['ref',parent];
           const id=this.beginConstruction(s,constructor,args,f.id,eventId,owner.newTarget);s.control.a0.activeFrameId=id;
           return {operands:[constructor,...args.map(x=>x.value)],origins:[null,...args.map(x=>x.origin)],causes:[{kind:'invocation',frameId:id}]};
         }
@@ -1803,6 +1893,7 @@ if(obj.kind==='set'){
           if(klass?.kind!=='function')throw new Error('Class constructor function missing');
           klass.classConstructor=true;
           this.functionProperties(s,klass,eventId,{prototype:true});
+          this.setHomeObject(s,klass,klass.properties.prototype.value,eventId);
           klass.dataAttributes.prototype.writable=false;
           if(heritage){
             let parentPrototype=null,parent='Function.prototype';

@@ -279,6 +279,28 @@
       "native": "unsupported",
       "reason": "Derived receiver initialization, superclass identity and field continuations require the public construction/protocol representation",
       "tests": "test/training-derived-construction.test.js"
+    },
+    {
+      "id": "ordinary-super-properties",
+      "domain": "owned class/object method home identities; inherited method/getter/setter receiver, static fields/blocks and private methods, arrows, live home prototype changes, Symbol keys, plain/arithmetic compound writes and tagged calls; stable base across RHS/argument evaluation for independently qualified cases; update/logical/optional/destructuring forms refused",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Home object and captured super-reference identity require the public construction/protocol representation",
+      "tests": "test/training-super-properties.test.js"
+    },
+    {
+      "id": "super-prototype-mutation-order",
+      "domain": "changing a derived constructor parent while evaluating super arguments, or changing a method home prototype during a super assignment RHS; owned order follows pinned ECMAScript 2026",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "reference_mismatch",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Node v24.22.3 V8 selects super parent/base after argument/RHS effects; pinned specification selects before. Independent oracle disagreement is retained, not qualified away.",
+      "tests": "test/training-super-properties.test.js"
     }
   ]
 }

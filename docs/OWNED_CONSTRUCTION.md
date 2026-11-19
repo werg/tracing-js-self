@@ -89,7 +89,8 @@ completion receipts, restores a suspended initializer, and rejects a forged
 super binding. This is an owned execution profile, not old-format public/native
 qualification.
 
-Super property reads/writes, builtin or Proxy heritage, private accessors and
+Super properties have their bounded profile in `OWNED_SUPER.md`. Builtin or
+Proxy heritage, private accessors and
 top-level class evaluation remain outside this slice. Intrinsic heritage is
 explicitly refused instead of misreported as a guest error. Spreads with an
 overridden iterator are refused before a bounded-array shortcut can bypass the

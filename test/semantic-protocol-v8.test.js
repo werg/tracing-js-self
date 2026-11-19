@@ -192,3 +192,15 @@ test('versioned protocol fixtures replay through canonical bytes and retain chec
     assert.deepEqual(wire(c),row.expected,row.id);
   }
 });
+
+
+test('null prototypes have no intrinsic fallback and detail allocation cannot steal a Symbol identity',()=>{
+  const c=controller();apply(c,{kind:'symbol.create',id:'o1',description:['str','key']},allocation('object'),
+    {kind:'property.prototype',object:'object',prototype:null,success:true},
+    read('object',['str','toString'],['undefined']),read('object',['str','constructor'],['undefined']));
+  assert.equal(restore(wire(c)).heap.get('object').prototype,null);
+  assert.throws(()=>assertProtocolDetailCompatible(c,{kind:'allocate',fields:{name:'o1'}}),/reserved Symbol/);
+  assert.throws(()=>assertProtocolDetailCompatible(c,{kind:'call',fields:{child:'child',callee:'unknown',receiver:['undefined'],arguments:[]}}),/scoped/);
+  const nested=controller();delete nested.protocol;nested.stack.push('legacyChild');
+  assert.throws(()=>apply(nested,{kind:'symbol.create',id:'o2',description:['str','key']}),/unmodeled nested/);
+});
