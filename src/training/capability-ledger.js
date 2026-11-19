@@ -117,7 +117,7 @@ function regionCoverage(exported){
  * create a measured v8 receipt. */
 export async function buildCapabilityLedger({producerRevision=null,cases=CAPABILITY_CASES,
     nativeConsumer=null,nativePolicy=null,traceVersion=7,verifyCase=null,contracts=null,
-    population='capabilities',modelEvidence=null}={}){
+    population='capabilities',modelEvidence=null,onProgress=()=>{}}={}){
   if(![6,7,8].includes(traceVersion))throw new TypeError('Capability traceVersion must be 6, 7 or 8');
   if(traceVersion===8&&(typeof verifyCase!=='function'||!contracts||
     contracts.execution!=='semantic-execution/8'||contracts.trace!=='semantic-trace/8'))
@@ -132,10 +132,10 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
   for(const fixture of cases){
     const stages=Object.fromEntries(stageNames.map(stage=>[stage,'untested']));
     const row={id:fixture.id,feature:fixture.feature??fixture.family??fixture.id,
-      profile:'training-js/1',traceVersion,sourceDigest:hashAlgorithmData(fixture.source),stages};
+      profile:fixture.sourceProfile??'training-js/1',traceVersion,sourceDigest:hashAlgorithmData(fixture.source),stages};
     try{parseTraining(fixture.source);stages.frontend='passed';}
     catch(error){stages.frontend='unsupported';row.disposition='frontend-refused';
-      row.reason=error.message;rows.push(row);continue;}
+      row.reason=error.message;rows.push(row);await onProgress(row,{fixture,result:null});continue;}
     let result;
     try{result=await verifier({...fixture,family:fixture.family??'capability:'+fixture.id,producerRevision,
       nativeConsumer:legacy?nativeConsumer:null,nativePolicy:legacy?nativePolicy:null});}
@@ -167,7 +167,7 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
       const artifact=result.exported,side=artifact.sidecar;
       row.identityDigest=side.identityDigest??side.definitionDigest??side.sourceArtifactDigest;
       row.representation=artifact.public.representation??'detailed';
-      row.executionProfile=side.profile??(legacy?'selected-detailed/1':null);
+      row.executionProfile=side.protocolProfile??side.profile??(legacy?'selected-detailed/1':null);
       row.sourceEvidence=side.sourceEvidence?.sourceChecks??side.reference?.sourceChecks??
         side.sourceArtifact?.sidecar?.reference?.sourceChecks??null;
       if(!legacy){
@@ -179,6 +179,7 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
         row.domain=side.provenance?.inputGuards??side.provenance?.preconditions??null;
         const records=generatedRows(artifact),allBytes=records.reduce((n,item)=>n+Buffer.byteLength(targetLine(item)),0);
         const detailBytes=records.filter(item=>row.representation==='detailed'||item.representation==='detailed'||
+          traceVersion===8&&['semantic','protocol'].includes(item.kind)||
           targetLine(item).startsWith('detail ')).reduce((n,item)=>n+Buffer.byteLength(targetLine(item)),0);
         row.publicCost={generatedRecords:records.length,generatedBytes:allBytes,detailedBytes:detailBytes,
           detailedByteShare:allBytes?detailBytes/allBytes:0,generatedTokens:null,detailedTokenShare:null,
@@ -195,6 +196,7 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
       if(result.status==='admitted')row.nativeReceipt=side.nativeAdmission;
     }
     rows.push(row);
+    await onProgress(row,{fixture,result});
   }
   const measured=rows.filter(row=>row.regions?.status==='passed'),compact=measured.reduce((n,row)=>n+row.regions.compact,0),
     detailed=measured.reduce((n,row)=>n+row.regions.detailed,0);

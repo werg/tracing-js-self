@@ -98,3 +98,42 @@ test('v8 ledger uses real shared-region projection and retains source agreement 
   assert.equal(refused.rows[0].stages.independentIntermediate,'passed');
   assert.equal(refused.rows[0].stages.projectionAndPublicReplay,'unsupported');
 });
+
+test('v8 protocol detail contributes to the same byte denominator as the actual serving path',async()=>{
+  const {verifyRegionTrainingCase}=await import('../src/semantic/compiler-v8.js');
+  const {auditRegionServingCosts}=await import('../src/semantic/causal-lm-v8.js');
+  const contracts={execution:'semantic-execution/8',trace:'semantic-trace/8'};
+  const fixture={id:'protocol-bytes',family:'protocol-bytes',sourceProfile:'training-js/1',entry:'run',args:[],fixture:{calls:[]},
+    source:'"use strict";function run(){const key=Symbol("key");const object={};object[key]=3;return object[key];}'};
+  const verified=await verifyRegionTrainingCase(fixture);
+  assert(verified.exported,verified.reason);
+  assert(verified.exported.public.timeline.some(row=>row.kind==='protocol'));
+  const costs=await auditRegionServingCosts(verified.exported);
+  const report=await buildCapabilityLedger({traceVersion:8,contracts,cases:[fixture],verifyCase:async()=>verified});
+  assert.equal(report.rows[0].executionProfile,verified.exported.sidecar.protocolProfile);
+  assert.equal(report.rows[0].publicCost.generatedBytes,costs.bytes.generated);
+  assert.equal(report.rows[0].publicCost.detailedBytes,costs.bytes.detailed);
+  assert.equal(report.rows[0].publicCost.detailedByteShare,1);
+  assert.equal(report.rows[0].publicCost.generatedTokens,null);
+});
+
+test('progress includes frontend refusals exactly once in declared population order',async()=>{
+  const calls=[],progress=[],cases=[
+    {id:'refused',source:'"use strict";with({}){}',entry:'run',args:[],fixture:{calls:[]}},
+    {...CAPABILITY_CASES[0],id:'accepted'},
+    {...CAPABILITY_CASES[0],id:'verifier-failed'}
+  ];
+  const report=await buildCapabilityLedger({cases,verifyCase:async fixture=>{
+    calls.push(fixture.id);
+    if(fixture.id==='verifier-failed')throw new Error('deliberate source verification failure');
+    return {status:'unsupported',phase:'projection',reason:'outside profile'};
+  },onProgress:async(row,{fixture,result})=>{
+    progress.push({id:row.id,fixtureId:fixture.id,disposition:row.disposition,result:result?.status??null});
+  }});
+  assert.deepEqual(calls,['accepted','verifier-failed']);
+  assert.deepEqual(progress.map(row=>row.id),cases.map(row=>row.id));
+  assert.deepEqual(progress.map(row=>row.fixtureId),cases.map(row=>row.id));
+  assert.deepEqual(progress.map(row=>row.disposition),report.rows.map(row=>row.disposition));
+  assert.equal(progress[0].result,null);
+  assert.equal(progress[2].result,'failed');
+});
