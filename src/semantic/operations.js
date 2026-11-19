@@ -1,7 +1,8 @@
 // Independent algorithm semantics. This module never executes source, consults
 // a sealed teacher archive, or dispatches an external operation.
-import {isDeepStrictEqual} from 'node:util';
-import {assertAlgorithmValue,validateAlgorithm,validateTerm,ALGORITHM_LIMITS} from './ir.js';
+import {isDeepStrictEqual,types} from 'node:util';
+import {assertAlgorithmValue,validateAlgorithm,validateTerm,ALGORITHM_LIMITS,
+  isAlgorithmDataRecord,assertAlgorithmDataArray,assertAlgorithmId} from './ir.js';
 
 export const BINARY_OPERATIONS=Object.freeze({
   '+':'add','-':'subtract','*':'multiply','/':'divide','%':'remainder','**':'power',
@@ -20,15 +21,38 @@ const descriptions={add:'add',subtract:'subtract',multiply:'multiply',divide:'di
   shift_left:'shift left',shift_right:'shift right',unsigned_shift_right:'shift right unsigned',
   not:'negate the truth value',positive:'convert to a number',negate:'negate',bit_not:'invert bits',
   type_of:'inspect primitive type',void:'produce undefined'};
+// Controlled readings describe the same ordered operands as the evaluator.
+// They are presentation templates, never executable prose or proof authority.
+const readings={
+  add:'the sum or primitive concatenation of {0} and {1}',
+  subtract:'{0} minus {1}',multiply:'the product of {0} and {1}',
+  divide:'{0} divided by {1}',remainder:'the remainder of {0} divided by {1}',
+  power:'{0} raised to {1}',less:'whether {0} is less than {1}',
+  less_equal:'whether {0} is less than or equal to {1}',
+  greater:'whether {0} is greater than {1}',greater_equal:'whether {0} is greater than or equal to {1}',
+  equal:'whether {0} strictly equals {1}',not_equal:'whether {0} does not strictly equal {1}',
+  loose_equal:'whether {0} equals {1} under primitive coercion',
+  loose_not_equal:'whether {0} differs from {1} under primitive coercion',
+  bit_and:'the bitwise AND of {0} and {1}',bit_or:'the bitwise OR of {0} and {1}',
+  bit_xor:'the bitwise exclusive OR of {0} and {1}',shift_left:'{0} shifted left by {1}',
+  shift_right:'{0} shifted right by {1}',unsigned_shift_right:'{0} shifted right by {1} with zero fill',
+  not:'the negation of the truth value of {0}',positive:'{0} converted to a Number',
+  negate:'the numeric negation of {0}',bit_not:'the bitwise inversion of {0}',
+  type_of:'the primitive type of {0}',void:'undefined after evaluating {0}',
+  select:'{1} when {0} is truthy, otherwise {2}; evaluate only the selected branch',
+  and:'{1} only when {0} is truthy, otherwise {0}',
+  or:'{1} only when {0} is falsy, otherwise {0}',
+  coalesce:'{1} only when {0} is null or undefined, otherwise {0}'
+};
 export const OPERATION_REGISTRY=Object.freeze(Object.fromEntries([
   ...Object.entries(BINARY_OPERATIONS).map(([operator,name])=>[name,Object.freeze({arity:2,operator,
-    description:descriptions[name],lazy:false})]),
+    description:descriptions[name],reading:readings[name],lazy:false})]),
   ...Object.entries(UNARY_OPERATIONS).map(([operator,name])=>[name,Object.freeze({arity:1,operator,
-    description:descriptions[name],lazy:false})]),
-  ['select',Object.freeze({arity:3,operator:'?:',description:'choose a value from the condition',lazy:true})],
-  ['and',Object.freeze({arity:2,operator:'&&',description:'use the right value only when the left is truthy',lazy:true})],
-  ['or',Object.freeze({arity:2,operator:'||',description:'use the right value only when the left is falsy',lazy:true})],
-  ['coalesce',Object.freeze({arity:2,operator:'??',description:'use the fallback only for null or undefined',lazy:true})]
+    description:descriptions[name],reading:readings[name],lazy:false})]),
+  ['select',Object.freeze({arity:3,operator:'?:',description:'choose a value from the condition',reading:readings.select,lazy:true})],
+  ['and',Object.freeze({arity:2,operator:'&&',description:'use the right value only when the left is truthy',reading:readings.and,lazy:true})],
+  ['or',Object.freeze({arity:2,operator:'||',description:'use the right value only when the left is falsy',reading:readings.or,lazy:true})],
+  ['coalesce',Object.freeze({arity:2,operator:'??',description:'use the fallback only for null or undefined',reading:readings.coalesce,lazy:true})]
 ]));
 
 export function encodeAlgorithmScalar(value){
@@ -50,23 +74,42 @@ export function decodeAlgorithmScalar(value){
 export const encodeScalar=encodeAlgorithmScalar;
 export const decodeScalar=decodeAlgorithmScalar;
 const truthy=value=>value[0]==='ref'||Boolean(decodeAlgorithmScalar(value));
-const lookup=(map,id)=>map instanceof Map?map.get(id):map?.[id];
+const lookup=(map,id)=>{
+  if(types.isProxy(map))throw new TypeError('Proxy algorithm state is outside the data profile');
+  if(map instanceof Map)return Map.prototype.get.call(map,id);
+  if(!isAlgorithmDataRecord(map))throw new TypeError('Algorithm state must be an ordinary data record or map');
+  return Object.hasOwn(map,id)?map[id]:undefined;
+};
 
 /** Only descriptor-certified, ordinary public data may be projected or folded. */
 export function algorithmHeapNode(heap,id){
   const node=lookup(heap,id);
-  if(!node||!['array','object'].includes(node.kind)||
-    Object.keys(node.accessors??{}).length||node.proxy||node.iterator||
+  if(!isAlgorithmDataRecord(node)||!['array','object'].includes(node.kind)||
+    node.accessors!==undefined&&(!isAlgorithmDataRecord(node.accessors)||Object.keys(node.accessors).length)||
+    Object.hasOwn(node,'proxy')||Object.hasOwn(node,'iterator')||
     node.prototype!==undefined&&node.prototype!==null&&
       node.prototype!==(node.kind==='array'?'Array.prototype':'Object.prototype'))
     throw new TypeError('Algorithm needs an ordinary data object');
   if(node.kind==='array'&&node.prototype===null)throw new TypeError('Array prototype is outside the dense profile');
   let properties;
-  if(node.properties instanceof Map)properties=node.properties;
-  else if(Array.isArray(node.properties))properties=new Map(node.properties.map(prop=>
-    Array.isArray(prop)?prop:[prop.key,prop.value]));
-  else if(node.properties&&typeof node.properties==='object')properties=new Map(Object.entries(node.properties)
-    .map(([key,value])=>[key,Array.isArray(value)?value:value?.value]));
+  if(types.isProxy(node.properties))throw new TypeError('Proxy data properties are outside the algorithm profile');
+  if(node.properties instanceof Map)properties=new Map(Map.prototype.entries.call(node.properties));
+  else if(Array.isArray(node.properties)){
+    assertAlgorithmDataArray(node.properties,'data properties');
+    properties=new Map();
+    for(const prop of node.properties){
+      let key,value;
+      if(Array.isArray(prop)){assertAlgorithmDataArray(prop,'data property');
+        if(prop.length!==2)throw new TypeError('Algorithm data property pair');[key,value]=prop;}
+      else if(isAlgorithmDataRecord(prop)&&Object.hasOwn(prop,'key')&&Object.hasOwn(prop,'value')){
+        key=prop.key;value=prop.value;
+      }else throw new TypeError('Algorithm data property descriptor');
+      if(properties.has(key))throw new TypeError('Duplicate algorithm data property');
+      properties.set(key,value);
+    }
+  }else if(isAlgorithmDataRecord(node.properties))properties=new Map(Object.entries(node.properties)
+    .map(([key,value])=>[key,Array.isArray(value)?value:
+      isAlgorithmDataRecord(value)&&Object.hasOwn(value,'value')?value.value:undefined]));
   else throw new TypeError('Algorithm needs committed data properties');
   for(const [key,value] of properties){
     if(typeof key!=='string'||key==='__proto__')throw new TypeError('Algorithm data property key');
@@ -92,7 +135,8 @@ export function validateDenseNumericArray(value,{heap=new Map()}={}){
 }
 export function validateAlgorithmInputs(core,args,{heap=new Map()}={}){
   validateAlgorithm(core);
-  if(!Array.isArray(args)||args.length!==core.inputs.length)throw new TypeError('Exact algorithm input arity required');
+  assertAlgorithmDataArray(args,'input values');
+  if(args.length!==core.inputs.length)throw new TypeError('Exact algorithm input arity required');
   const inputs=new Map();
   for(let i=0;i<args.length;i++){
     const value=args[i],input=core.inputs[i];assertAlgorithmValue(value);
@@ -103,6 +147,21 @@ export function validateAlgorithmInputs(core,args,{heap=new Map()}={}){
     inputs.set(input.id,structuredClone(value));
   }
   return inputs;
+}
+
+export function snapshotAlgorithmHeap(heap){
+  if(types.isProxy(heap))throw new TypeError('Proxy algorithm heap is outside the data profile');
+  const entries=heap instanceof Map?[...Map.prototype.entries.call(heap)]:
+    isAlgorithmDataRecord(heap)?Object.entries(heap):null;
+  if(!entries||entries.length>256)throw new TypeError('Algorithm heap shape or node budget');
+  const result=new Map();
+  for(const [id] of entries){
+    assertAlgorithmId(id,'heap identity');
+    const {node,properties}=algorithmHeapNode(heap,id);
+    result.set(id,{kind:node.kind,...(node.prototype===null?{prototype:null}:{}),
+      properties:new Map([...properties].map(([key,value])=>[key,structuredClone(value)]))});
+  }
+  return result;
 }
 
 function primitiveOperation(name,values){
@@ -180,7 +239,8 @@ export function checkAlgorithmClaim(term,claimed,environment={}){
 }
 
 export function evaluateAlgorithm(core,args,{heap=new Map(),observations=[]}={}){
-  const publicHeap=structuredClone(heap),inputs=validateAlgorithmInputs(core,args,{heap:publicHeap});
+  assertAlgorithmDataArray(observations,'observations');
+  const publicHeap=snapshotAlgorithmHeap(heap),inputs=validateAlgorithmInputs(core,args,{heap:publicHeap});
   const values=new Map(),requests=[],delivered=[],claims=[];
   const environment={inputs,values,heap:publicHeap};
   let completion=null,cursor=0;
@@ -196,7 +256,7 @@ export function evaluateAlgorithm(core,args,{heap=new Map(),observations=[]}={})
     }else if(step.kind==='observe'){
       const observation=observations[cursor];
       if(!observation){completion={kind:'suspend',requests:[step.request],live:[...values.keys()],step:index};break;}
-      if(typeof observation!=='object'||Array.isArray(observation)||
+      if(!isAlgorithmDataRecord(observation)||
         Object.keys(observation).some(key=>!['request','status','result','mode'].includes(key))||
         observation.request!==step.request||!['fulfilled','rejected','completed'].includes(observation.status)||
         observation.mode!==undefined&&observation.mode!=='observed'||

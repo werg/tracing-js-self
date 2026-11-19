@@ -1,20 +1,23 @@
 // Rooted observable graphs preserve aliases, absence, property order and input
 // identity, while irrelevant private allocations and their labels disappear.
 import {isDeepStrictEqual} from 'node:util';
-import {assertAlgorithmValue,assertAlgorithmId,stableAlgorithmJSON} from './ir.js';
+import {assertAlgorithmValue,assertAlgorithmId,stableAlgorithmJSON,isAlgorithmDataRecord,
+  assertAlgorithmDataArray} from './ir.js';
 
 export const OBSERVATION_CONTRACT_VERSION='semantic-observation/1';
 const copy=value=>structuredClone(value);
-const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
+const plain=isAlgorithmDataRecord;
 
 function canonicalGraph(graph,{inputIds=[]}={}){
   if(!plain(graph)||!Array.isArray(graph.roots)||!Array.isArray(graph.objects)||
     Object.keys(graph).some(key=>!['roots','objects'].includes(key)))throw new TypeError('Observable graph schema');
+  assertAlgorithmDataArray(graph.roots,'observable roots');assertAlgorithmDataArray(graph.objects,'observable objects');
   const source=new Map(),ids=new Map(),objects=[],active=new Set();
   for(const node of graph.objects){
     if(!plain(node)||!['object','array'].includes(node.kind)||!Array.isArray(node.properties)||
       Object.keys(node).some(key=>!['id','kind','prototype','properties','shapeVersion'].includes(key)))
       throw new TypeError('Observable object schema');
+    assertAlgorithmDataArray(node.properties,'observable properties');
     assertAlgorithmId(node.id);
     if(source.has(node.id))throw new TypeError('Duplicate observable identity');
     if(node.prototype!==undefined&&node.prototype!==null)throw new TypeError('Observable prototype profile');
@@ -23,6 +26,7 @@ function canonicalGraph(graph,{inputIds=[]}={}){
   }
   if(!Array.isArray(inputIds)||new Set(inputIds).size!==inputIds.length)
     throw new TypeError('Observable input identity anchors');
+  assertAlgorithmDataArray(inputIds,'input identity anchors');
   inputIds.forEach((id,i)=>{if(!source.has(id))throw new TypeError('Missing input identity anchor');ids.set(id,'i'+i);});
   let fresh=0;
   function value(tag){
@@ -38,7 +42,7 @@ function canonicalGraph(graph,{inputIds=[]}={}){
       const keys=new Set();
       for(const prop of node.properties){
         let key,child;
-        if(Array.isArray(prop)&&prop.length===2)[key,child]=prop;
+        if(Array.isArray(prop)&&prop.length===2){assertAlgorithmDataArray(prop,'observable property');[key,child]=prop;}
         else if(plain(prop)&&Object.hasOwn(prop,'key')&&Object.hasOwn(prop,'value')&&
           Object.keys(prop).every(field=>['key','value','version'].includes(field))){key=prop.key;child=prop.value;}
         else throw new TypeError('Observable data property');
@@ -76,13 +80,19 @@ export function canonicalObservables(observation,{inputIds=[]}={}){
     !Object.hasOwn(observation,'continuation')||
     Object.keys(observation).some(key=>!['schema','completion','graph','effects','observations','continuation'].includes(key)))
     throw new TypeError('Observation contract schema');
+  assertAlgorithmDataArray(observation.effects,'observable effects');
+  assertAlgorithmDataArray(observation.observations,'observable deliveries');
   const graph=canonicalGraph(observation.graph,{inputIds}),effectIds=new Map();
   function rewrite(value){
     if(Array.isArray(value)){
+      assertAlgorithmDataArray(value,'observable data');
       if(['undefined','null','bool','str','num','bigint','ref'].includes(value[0]))return graph.rewrite(value);
       return value.map(rewrite);
     }
-    if(plain(value))return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,rewrite(item)]));
+    if(value!==null&&typeof value==='object'){
+      if(!plain(value))throw new TypeError('Observable data must have no hooks');
+      return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,rewrite(item)]));
+    }
     return value;
   }
   const completion=observation.completion;

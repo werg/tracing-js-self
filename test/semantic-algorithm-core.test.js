@@ -31,6 +31,22 @@ test('strict IR refuses unknown fields, incorrect operation arity and future dep
   assert.throws(()=>validateTerm({op:'literal',value:['num',Infinity]}),/noncanonical/);
 });
 
+test('malformed algorithm records and scalar tags never invoke getters or proxy traps',()=>{
+  let hooks=0;
+  const term={args:[lit(1),lit(2)]};
+  Object.defineProperty(term,'op',{enumerable:true,get(){hooks++;return 'add';}});
+  assert.throws(()=>validateTerm(term));
+  const tagged=['num',1];Object.defineProperty(tagged,'1',{enumerable:true,get(){hooks++;return 1;}});
+  assert.throws(()=>evaluateTerm({op:'literal',value:tagged}));
+  const proxy=new Proxy({op:'literal',value:num(1)},{getPrototypeOf(){hooks++;return Object.prototype;},
+    ownKeys(){hooks++;return ['op','value'];},get(){hooks++;return 'literal';}});
+  assert.throws(()=>validateTerm(proxy));
+  const inherited=Object.create({op:'literal',value:num(1)});assert.throws(()=>validateTerm(inherited));
+  const iteration=[lit(1),lit(2)];iteration[Symbol.iterator]=()=>{hooks++;throw Error('must not iterate');};
+  assert.throws(()=>validateTerm({op:'add',args:iteration}));
+  assert.equal(hooks,0,'refusing malformed data must itself be effect-free');
+});
+
 test('normalization is capture-free, deterministic, idempotent and retains an explicit computation',()=>{
   const original=core([{id:'left',type:'number'},{id:'right',type:'number'}],[
     {kind:'compute',id:'first',term:op('add',input('left'),input('right'))},
@@ -103,6 +119,48 @@ test('ordered fold refuses holes, extra properties, hooks, nonordinary prototype
     heap=>heap.get('array').iterator='custom'
   ]){const heap=array([2,3]);mutate(heap);assert.throws(()=>outcome(sum(),[['ref','array']],{heap}));}
   assert.throws(()=>outcome(sum(),[['ref','array']],{heap:array(Array(129).fill(1))}),/bound/);
+});
+
+test('heap inspection rejects accessors and duplicate properties and bypasses Map subclass hooks',()=>{
+  let hooks=0;
+  const node={kind:'array'};Object.defineProperty(node,'properties',{enumerable:true,
+    get(){hooks++;return new Map([['length',num(0)]]);}});
+  assert.throws(()=>evaluateAlgorithm(sum(),[['ref','array']],{heap:new Map([['array',node]])}));
+  const properties={length:num(1)};Object.defineProperty(properties,'0',{enumerable:true,
+    get(){hooks++;return {value:num(2)};}});
+  assert.throws(()=>evaluateAlgorithm(sum(),[['ref','array']],{heap:new Map([['array',{kind:'array',properties}]])}));
+  const duplicated=new Map([['array',{kind:'array',properties:[['length',num(1)],['0',num(1)],['0',num(2)]]}]]);
+  assert.throws(()=>evaluateAlgorithm(sum(),[['ref','array']],{heap:duplicated}),/Duplicate/);
+  class HookedMap extends Map {
+    get(){hooks++;throw Error('must use the intrinsic Map operation');}
+    entries(){hooks++;throw Error('must use the intrinsic Map operation');}
+    [Symbol.iterator](){hooks++;throw Error('must use the intrinsic Map operation');}
+  }
+  const hooked=new HookedMap([['array',{kind:'array',properties:new HookedMap([['length',num(1)],['0',num(9)]])}]]);
+  assert.deepEqual(outcome(sum(),[['ref','array']],{heap:hooked}),num(9));
+  assert.equal(hooks,0);
+});
+
+test('normalization retains reads across writes, eager throws, and order-sensitive algebra',()=>{
+  const program=core([{id:'object',type:'data'}],[
+    {kind:'compute',id:'previous',term:{op:'project',object:input('object'),key:'n'}},
+    {kind:'write',object:input('object'),key:'n',value:lit(9),present:true},
+    {kind:'return',value:ref('previous')}
+  ]);
+  const normalized=normalizeAlgorithm(program);
+  assert.deepEqual(normalized.steps.map(step=>step.kind),['compute','write','return']);
+  assert.deepEqual(outcome(normalized,[['ref','box']],{heap:new Map([['box',{kind:'object',
+    properties:new Map([['n',num(2)]])}]])}),num(2));
+  const eager=core([{id:'x',type:'scalar'}],[{kind:'compute',id:'risk',term:op('divide',input('x'),lit(0n))},
+    {kind:'compute',id:'chosen',term:op('select',lit(false),ref('risk'),lit(7))},
+    {kind:'return',value:ref('chosen')}]);
+  assert.throws(()=>evaluateAlgorithm(normalizeAlgorithm(eager),[num(1n)]),RangeError);
+  const inputX=[{id:'x',type:'number'}];
+  for(const term of [op('add',input('x'),lit(0)),op('multiply',input('x'),lit(0))])
+    assert.notEqual(algorithmDigest(normalizeAlgorithm(computed(term,inputX))),
+      algorithmDigest(normalizeAlgorithm(computed(input('x'),inputX))));
+  assert.deepEqual(outcome(normalizeAlgorithm(computed(op('add',input('x'),lit(0)),inputX)),[num(-0)]),num(0));
+  assert.deepEqual(outcome(normalizeAlgorithm(computed(op('multiply',input('x'),lit(0)),inputX)),[num(Infinity)]),num(NaN));
 });
 
 test('false emitted intermediate claims fail even when the final result is correct',()=>{

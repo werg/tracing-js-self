@@ -1,6 +1,7 @@
 // The algorithm core contains meanings and causal identities, never source sites.
 // Runtime values use the same lossless scalar tags as execution evidence.
 import {createHash} from 'node:crypto';
+import {types} from 'node:util';
 import {OPERATION_REGISTRY} from './operations.js';
 
 export const ALGORITHM_VERSION='semantic-algorithm/1';
@@ -10,8 +11,15 @@ export const ALGORITHM_INPUT_TYPES=Object.freeze(['scalar','number','dense-numbe
 const identifier=/^[A-Za-z_$][A-Za-z0-9_$:-]*$/;
 const specialNumbers=new Set(['-0','NaN','+Infinity','-Infinity']);
 const own=(value,key)=>Object.hasOwn(value,key);
-const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&
-  [Object.prototype,null].includes(Object.getPrototypeOf(value));
+// Validation of untrusted records must itself be effect-free. Inspect own
+// descriptors before accessing fields; a Proxy is refused before any traps.
+export function isAlgorithmDataRecord(value){
+  if(value===null||typeof value!=='object'||types.isProxy(value)||Array.isArray(value)||
+    ![Object.prototype,null].includes(Object.getPrototypeOf(value)))return false;
+  const descriptors=Object.getOwnPropertyDescriptors(value),keys=Reflect.ownKeys(descriptors);
+  return keys.every(key=>typeof key==='string'&&own(descriptors[key],'value')&&descriptors[key].enumerable);
+}
+const plain=isAlgorithmDataRecord;
 
 export function algorithmError(message){throw new TypeError('Invalid '+ALGORITHM_VERSION+': '+message);}
 export function assertAlgorithmFields(value,fields,label='record'){
@@ -22,9 +30,19 @@ export function assertAlgorithmId(id,label='identity'){
   if(typeof id!=='string'||!identifier.test(id))algorithmError(label);
   return id;
 }
+export function assertAlgorithmDataArray(value,label='array'){
+  if(!Array.isArray(value)||types.isProxy(value)||Object.getPrototypeOf(value)!==Array.prototype)
+    algorithmError(label+' must be an ordinary data array');
+  const descriptors=Object.getOwnPropertyDescriptors(value),keys=Reflect.ownKeys(descriptors);
+  if(keys.length!==value.length+1||keys.some(key=>typeof key!=='string')||
+    Array.from({length:value.length},(_,i)=>String(i)).some(key=>
+      !own(descriptors,key)||!own(descriptors[key],'value')))
+    algorithmError(label+' must be dense data without hooks or extra properties');
+  return value;
+}
 export function assertAlgorithmValue(value,{allowReference=true}={}){
-  if(!Array.isArray(value)||Object.keys(value).length!==value.length)algorithmError('tagged value');
-  const [tag,arg]=value;
+  assertAlgorithmDataArray(value,'tagged value');
+  const tag=value[0],arg=value[1];
   if(['undefined','null'].includes(tag)&&value.length===1)return value;
   if(value.length!==2)algorithmError('value arity');
   if(tag==='bool'&&typeof arg==='boolean'||tag==='str'&&typeof arg==='string')return value;
@@ -63,8 +81,8 @@ export function validateTerm(term,{inputs=null,values=null,maxNodes=ALGORITHM_LI
       const operation=own(OPERATION_REGISTRY,node.op)?OPERATION_REGISTRY[node.op]:null;
       if(!operation)algorithmError('unknown operation '+String(node.op));
       assertAlgorithmFields(node,['op','args'],'operation');
-      if(!Array.isArray(node.args)||node.args.length!==operation.arity||
-        Object.keys(node.args).length!==node.args.length)algorithmError('operation arity');
+      assertAlgorithmDataArray(node.args,'operation arguments');
+      if(node.args.length!==operation.arity)algorithmError('operation arity');
       for(const arg of node.args)visit(arg,depth+1);
     }
     ancestors.delete(node);
@@ -77,7 +95,8 @@ export function validateAlgorithm(core){
   assertAlgorithmFields(core,['schema','profile','inputs','steps'],'core');
   if(core.schema!==ALGORITHM_VERSION||core.profile!==ALGORITHM_PROFILE)
     algorithmError('version or semantic profile');
-  if(!Array.isArray(core.inputs)||core.inputs.length>128||!Array.isArray(core.steps)||
+  assertAlgorithmDataArray(core.inputs,'inputs');assertAlgorithmDataArray(core.steps,'steps');
+  if(core.inputs.length>128||
     !core.steps.length||core.steps.length>ALGORITHM_LIMITS.steps)algorithmError('core budget');
   const inputs=new Set(),values=new Set(),requests=new Set(),observed=new Set(),all=new Set();
   const declare=(id,scope)=>{assertAlgorithmId(id);if(all.has(id))algorithmError('duplicate identity '+id);
@@ -99,6 +118,7 @@ export function validateAlgorithm(core){
         assertAlgorithmId(step.boundary,'effect boundary');
         if(typeof step.operation!=='string'||!step.operation||step.operation.length>256||
           !Array.isArray(step.arguments)||step.arguments.length>128)algorithmError('effect operation or arguments');
+        assertAlgorithmDataArray(step.arguments,'effect arguments');
         step.arguments.forEach(term);declare(step.id,requests);break;
       case 'observe':
         assertAlgorithmFields(step,['kind','id','request'],'observation');
@@ -113,8 +133,8 @@ export function validateAlgorithm(core){
         assertAlgorithmFields(step,['kind','value'],'completion');term(step.value);terminated=true;break;
       case 'suspend':
         assertAlgorithmFields(step,['kind','requests','live'],'suspension');
-        if(!Array.isArray(step.requests)||!Array.isArray(step.live)||
-          !step.requests.length||new Set(step.requests).size!==step.requests.length||
+        assertAlgorithmDataArray(step.requests,'pending requests');assertAlgorithmDataArray(step.live,'live values');
+        if(!step.requests.length||new Set(step.requests).size!==step.requests.length||
           new Set(step.live).size!==step.live.length||
           step.requests.some(id=>!requests.has(id)||observed.has(id))||
           step.live.some(id=>!values.has(id)))algorithmError('live suspension interface');
@@ -136,7 +156,7 @@ export function stableAlgorithmJSON(value){
     seen.add(node);
     let result;
     if(Array.isArray(node)){
-      if(Object.keys(node).length!==node.length)algorithmError('sparse JSON data');
+      assertAlgorithmDataArray(node,'JSON array');
       result=node.map(order);
     }else{
       if(!plain(node))algorithmError('non-data JSON object');
