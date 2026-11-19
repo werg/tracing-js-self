@@ -148,6 +148,126 @@
       "native": "unsupported",
       "reason": "New semantic-protocol-values/1 identity/key interface is validated separately; existing detailed/native scalar/ref contracts cannot encode Symbols",
       "tests": "test/training-symbols.test.js"
+    },
+    {
+      "id": "owned-synchronous-iterators",
+      "domain": "custom synchronous for-of acquisition, cached next, receiver preserving getters/calls, IteratorClose on break/return/throw with completion precedence; builtin array/string iterators; nested lexical/var patterns; guarded standard-array path retains detailed qualification",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "General iterator identities and Symbol-keyed protocol methods need the new public protocol interface; existing detailed standard-array path is separately qualified",
+      "tests": "test/training-iterator-protocol.test.js"
+    },
+    {
+      "id": "for-of-expanded-bindings",
+      "domain": "standard-array iteration with nested object/array/default/rest bindings, var targets and lexical iterable TDZ",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "passed",
+      "native": "untested",
+      "tests": "test/training-iterator-protocol.test.js"
+    },
+    {
+      "id": "synchronous-generator-continuations",
+      "domain": "ordinary generator declarations/expressions/methods; invocation-time parameters, retained yield operands/locals/captures, next(value)/return/throw, reentrancy, yielding finally cleanup and for-of close; no async generators; delegated yield covered separately",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Generator identity, suspended cursor and completion obligations require a new public continuation representation; existing detailed contracts lack them",
+      "tests": "test/training-generators.test.js"
+    },
+    {
+      "id": "symbol-conversion-protocol",
+      "domain": "ordinary own/inherited data Symbol.toPrimitive hooks with receiver and default/number hint; primitive result validation, nullish fallback, throws and Symbol.toStringTag data; accessor/async/unmodeled builtin hooks and species/concat overrides explicitly refused",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Symbol-keyed hook identities require the public protocol interface; old ordinary conversion path remains separately qualified",
+      "tests": "test/training-symbol-coercion.test.js"
+    },
+    {
+      "id": "ordinary-user-constructors",
+      "domain": "ordinary function constructors with live owned prototype identity, receivers, parameter defaults, inherited methods/accessors, explicit object returns and abrupt completion; nonconstructible functions reject; spread/prototype reflection outside this slice; new.target covered separately",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Function prototype state and construction receiver completion need a public construction representation",
+      "tests": "test/training-constructors.test.js"
+    },
+    {
+      "id": "base-classes-and-private-slots",
+      "domain": "local base class declarations/expressions; fresh private lexical identities, private fields/methods/in, public methods/accessors/fields, static fields/blocks/accessors, computed scalar/Symbol keys, initializer-before-parameter ordering and abrupt construction; no inheritance, private accessors, super or top-level class environment",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Class descriptors/prototypes, field initializer continuations and private identities need an explicit public construction/private-state representation",
+      "tests": "test/training-classes.test.js"
+    },
+    {
+      "id": "tagged-template-sites",
+      "domain": "member/private/ordinary tags, source-site identity across calls and closures, raw/cooked strings including invalid cooked escapes, uncoerced substitutions, frozen descriptor-aware arrays and JSON-resumable realm template cache; frozen sort and general data descriptor definition remain explicit refusals",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Frozen descriptor state and template-site identity require an explicit public representation; scalar outcomes cannot justify dropping that state",
+      "tests": "test/training-tagged-templates.test.js"
+    },
+    {
+      "id": "synchronous-generator-delegation",
+      "domain": "yield* over owned synchronous iterators; cached next, exact yielded result identity, sent values, final expression values, return/throw forwarding including yielding cleanup and missing-throw IteratorClose precedence, JSON-restorable delegated resume completions; no async delegation",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Requires public generator identity/retained continuation and Symbol iterator interfaces; old formats do not express delegated resume obligations",
+      "tests": "test/training-yield-delegation.test.js"
+    },
+    {
+      "id": "instanceof-and-has-instance",
+      "domain": "owned ordinary constructor prototype identity, Object/Array chains, own/inherited/getter Symbol.hasInstance hooks with receiver/ToBoolean and throws, class static overrides; proxy/default exotic/bound-function prototype walks explicitly refused",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "General Symbol hook and constructor prototype state requires the public protocol/construction representation",
+      "tests": "test/training-instanceof.test.js"
+    },
+    {
+      "id": "ordinary-for-in-enumeration",
+      "domain": "own/inherited enumerable string keys, integer index ordering, nonenumerable shadowing, symbol exclusion, primitives/string code-unit indices, fresh lexical/var/pattern bindings, labels/finally, stable key/descriptor/prototype graph with live value writes; no iterator hooks/close; exotic and shape mutations explicitly refused",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Owned enumerator identity and retained key/prototype snapshot require an explicit public enumeration representation",
+      "tests": "test/training-for-in.test.js"
+    },
+    {
+      "id": "constructor-new-target",
+      "domain": "new.target in ordinary functions/base classes, constructor parameter defaults, lexical arrows/nested arrows after constructor return, owned callbacks/getters/proxy traps; field initializer new.target remains undefined; retained constructor frame identity validated",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Lexical constructor receiver/newTarget linkage requires the public construction/capture interface",
+      "tests": "test/training-new-target.test.js"
     }
   ]
 }

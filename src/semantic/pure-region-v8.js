@@ -8,6 +8,7 @@ import {encodeWitness} from '../training/format.js';
 import {algorithmHeapNode} from './operations.js';
 import {hashAlgorithmData} from './program.js';
 import {regionEntry} from './regions.js';
+import {protocolOrdinaryHeapViewV8,protocolReservedIdentitiesV8} from './protocol-state-v8.js';
 
 export const PURE_REGION_PROFILE='pure-algorithm-region/1';
 const copy=structuredClone;
@@ -20,12 +21,13 @@ export function evaluatePureRegion(program,controller){
   if(!program.algorithm)fail('source has no certified pure core');validateAlgorithmV8(program.algorithm);
   if(controller.generated!==0||controller.stack.length!==1||controller.stack[0]!==controller.rootInvocation||
     controller.completion||controller.pending||controller.effects.size||controller.jobs.size||controller.continuations.size||
-    controller.input.retained?.length)fail('whole pure core requires the untouched invocation entry');
+    controller.input.retained?.length||controller.protocol?.sequence)fail('whole pure core requires the untouched invocation entry');
+  protocolOrdinaryHeapViewV8(controller,{roots:controller.input.graph.roots});
   const result=evaluateAlgorithmV8(program.algorithm,null,{inputGraph:controller.input.graph});
   // Algorithm-local allocations and detailed allocations have different
   // lexical namespaces. Anchor existing objects, then allocate one fresh
   // detailed identity per new core identity in allocation order.
-  const mapping=new Map(),reserved=new Set(controller.heap.keys());let next=0;
+  const mapping=new Map(),reserved=controller.protocol?protocolReservedIdentitiesV8(controller):new Set(controller.heap.keys());let next=0;
   for(const node of result.graph.objects)if(!reserved.has(node.id)){
     let identity;do{identity='o'+next++;}while(reserved.has(identity));
     reserved.add(identity);mapping.set(node.id,identity);

@@ -145,14 +145,16 @@ export function projectRegionWitness(sourceArtifact){
 }
 
 export async function verifyRegionTrainingCase(fixture){
+  const identity=Object.fromEntries(['id','family','source','entry','ancestorIds','ancestors']
+    .filter(key=>Object.hasOwn(fixture,key)).map(key=>[key,copy(fixture[key])]));
   const source=await verifyEffectfulTrainingCase({...fixture,nativeConsumer:null,nativePolicy:null,
     projectionOptions:{...fixture.projectionOptions,semanticRegions:false,localStateCompaction:false}});
-  if(!['locally_verified','admitted'].includes(source.status))return {...source,regionDisposition:'source-unqualified',exported:undefined};
+  if(!['locally_verified','admitted'].includes(source.status))return {...identity,...source,regionDisposition:'source-unqualified',exported:undefined};
   try{
     const exported=projectRegionWitness(source.exported),count=exported.sidecar.regionCoverage.compactRegions;
-    return {status:count?'locally_verified':'detailed-fallback',representation:'mixed',profile:'compositional-regions/1',
+    return {...identity,status:count?'locally_verified':'detailed-fallback',representation:'mixed',profile:'compositional-regions/1',
       exported,detailed:source.exported,regionCoverage:exported.sidecar.regionCoverage};
-  }catch(error){return {status:'unsupported',phase:'projection',sourceStatus:source.status,
+  }catch(error){return {...identity,status:'unsupported',phase:'projection',sourceStatus:source.status,
     category:error.category??'unsupported.region-projection',reason:error.message};}
 }
 
@@ -162,6 +164,11 @@ export async function recheckRegionEvidence(exported,{nativeConsumer=null,native
     side.referenceStatus!=='agreed'||side.sourceArtifactDigest!==digest(side.sourceArtifact)||
     side.optimizerSteps!==0||side.learningClaim!==null)fail('incompatible or altered source evidence');
   const source=await recheckEffectfulAdmission(side.sourceArtifact,{requireAdmitted:false});
+  let moduleReference={status:'untested',applicable:false};
+  if(side.sourceArtifact.sidecar?.sourceProvenance?.upstream?.moduleEvidence){
+    const {recheckModuleRegionEvidence}=await import('./module-v8.js');
+    moduleReference=await recheckModuleRegionEvidence(side.sourceArtifact);
+  }
   const rebuilt=projectRegionWitness(side.sourceArtifact);
   for(const key of ['public','contexts'])if(!eq(rebuilt[key],exported[key]))fail(key+' differs from source-certified projection');
   for(const key of ['receipts','refusals','regionCoverage','publicDigest','contextDigest'])
@@ -173,7 +180,7 @@ export async function recheckRegionEvidence(exported,{nativeConsumer=null,native
     validateV8NativeReceipt(exported,native,nativePolicy);
   }else if(requireNative)fail('exact v8 native admission must be rechecked by the pinned consumer');
   return {valid:true,sourceValidated:true,projectionValidated:true,replayValidated:true,
-    source,native,regionCoverage:copy(side.regionCoverage),completed:replay.invocations.size};
+    source,moduleReference,native,regionCoverage:copy(side.regionCoverage),completed:replay.invocations.size};
 }
 
 export async function admitRegionEvidence(exported,{nativeConsumer,nativePolicy}={}){

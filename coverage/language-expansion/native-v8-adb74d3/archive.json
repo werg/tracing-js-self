@@ -1,0 +1,17 @@
+{
+  "schema": "retained-native-artifacts/1",
+  "sha256": "388d00f6488034c78d6b1bfd0497c65bff2d738975e48ed55d4b680abb826736",
+  "bytes": 38880,
+  "files": [
+    "causal-counter.admitted.json",
+    "causal-counter.native.json",
+    "causal-counter.source.json",
+    "ordered-map.admitted.json",
+    "ordered-map.native.json",
+    "ordered-map.source.json",
+    "report.json",
+    "shared-getter.admitted.json",
+    "shared-getter.native.json",
+    "shared-getter.source.json"
+  ]
+}

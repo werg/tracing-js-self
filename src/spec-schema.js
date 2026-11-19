@@ -37,7 +37,8 @@ export function specStep(record) {
   let operation, algorithm, clause, step;
   const phase = record.phase;
   if (phase==='coercion-get'||phase==='coercion-call'||phase==='coercion-return'){
-    algorithm='OrdinaryToPrimitive';clause='sec-ordinarytoprimitive';
+    const protocol=record.coercion?.index===-1;
+    algorithm=protocol?'ToPrimitive':'OrdinaryToPrimitive';clause=protocol?'sec-toprimitive':'sec-ordinarytoprimitive';
     operation=phase==='coercion-get'?'spec.internal.get':
       phase==='coercion-call'?'spec.internal.call':'spec.internal.return';
     step=phase==='coercion-get'?'Get conversion method':

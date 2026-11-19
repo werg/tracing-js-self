@@ -7,15 +7,28 @@ import {validateBundle} from '../src/validation.js';
 import {replayExact} from '../src/replay.js';
 import {verifyEffectfulTrainingCase} from '../src/training/effectful-admit.js';
 import {decodeWitness} from '../src/training/format.js';
+import {runtimeDifferential} from './helpers/runtime-frontier.js';
+import {independentEffectfulReference} from '../src/training/effectful-admit.js';
+import {ownedCompletionObservations,compareCompletionObservations} from '../src/training/completion-reference.js';
+import {encodeNativeGraph} from '../src/host/graph-codec.js';
 
 const strict=body=>'"use strict";function run(){'+body+'}';
 const declaration=inherited=>inherited?
   'const parent={};Object.defineProperty(parent,"x",{get:()=>1});const box=Object.create(parent);':
   'const box={};Object.defineProperty(box,"x",{get:()=>1});';
 
-async function certified(source){
+async function certified(source,{inherited=false}={}){
   const result=await verifyEffectfulTrainingCase({source,entry:'run',
     family:'strict-accessor-assignment',fixture:{calls:[]}});
+  if(inherited){
+    assert.equal(result.status,'projection_refused',result.reason);
+    assert.match(result.reason,/prototype.*(?:state|profile)|(?:state|profile).*prototype/i);
+    const {bundle,reference}=runtimeDifferential('',{source});
+    const observed=await independentEffectfulReference({source,entry:'run',inputGraph:encodeNativeGraph([]),fixture:{calls:[]},mode:'completions'});
+    const completions=compareCompletionObservations(ownedCompletionObservations(bundle,source),observed.completions);
+    assert.equal(completions.status,'agreed',JSON.stringify(completions));
+    return {public:null,sidecar:{archive:bundle,reference:{outcome:reference}}};
+  }
   assert.equal(result.status,'locally_verified',result.reason);
   const bundle=result.exported.sidecar.archive;
   assert.equal(validateBundle(bundle).valid,true);
@@ -27,11 +40,15 @@ const records=exported=>exported.public.timeline.filter(x=>x.line).map(x=>{
   return {kind,...fields};
 });
 
+const bindingValues=(exported,name)=>exported.public?records(exported).filter(x=>x.kind==='bind'&&x.name===name).map(x=>x.value):
+  exported.sidecar.archive.events.filter(event=>['binding.initialize','binding.write'].includes(event.operation)&&
+    exported.sidecar.archive.programs[event.codeId]?.instructions.find(i=>i.siteId===event.siteId)?.arg===name).map(event=>event.result);
+
 test('strict own and inherited getter-only writes enter catch before returning',async()=>{
   for(const inherited of [false,true]){
     const source=strict(declaration(inherited)+
       'try{box.x=2;}catch(e){return 7;}return box.x;');
-    const exported=await certified(source);
+    const exported=await certified(source,{inherited});
     assert.deepEqual(exported.sidecar.reference.outcome.graph.roots,[['num',7]]);
     const failure=exported.sidecar.archive.events.find(event=>
       event.operation==='property.write'&&event.completion?.errorType==='TypeError');
@@ -44,10 +61,11 @@ test('overwriting the final answer does not invent an intermediate successful as
   for(const inherited of [false,true]){
     const source=strict(declaration(inherited)+
       'let answer=0;try{answer=(box.x=2);}catch(e){answer=7;}answer=0;return answer;');
-    const exported=await certified(source),steps=records(exported);
-    assert.deepEqual(steps.filter(x=>x.kind==='bind'&&x.name==='answer').map(x=>x.value),
+    const exported=await certified(source,{inherited}),steps=exported.public?records(exported):[];
+    assert.deepEqual(bindingValues(exported,'answer'),
       [['num',0],['num',7],['num',0]]);
-    assert(steps.some(x=>x.kind==='throw'||x.kind==='transfer'&&x.handler==='catch-or-finally'));
+    if(exported.public)assert(steps.some(x=>x.kind==='throw'||x.kind==='transfer'&&x.handler==='catch-or-finally'));
+    else assert(exported.sidecar.archive.events.some(e=>e.operation==='property.write'&&e.completion?.errorType==='TypeError'));
     assert.deepEqual(exported.sidecar.reference.outcome.graph.roots,[['num',0]]);
   }
 });
@@ -60,11 +78,10 @@ test('strict setter success preserves the RHS and throwing setters preserve catc
         (inherited?'const box=Object.create(parent);':'const box=parent;')+
         'let assigned=0;try{assigned=(box.x=2);}catch(e){assigned=e;}finally{seen+=10;}'+
         'return assigned+seen;';
-      const exported=await certified(strict(body));
+      const exported=await certified(strict(body),{inherited});
       const expected=vm.runInNewContext(strict(body)+';run();');
       assert.deepEqual(exported.sidecar.reference.outcome.graph.roots,[encode(expected)]);
-      assert.deepEqual(records(exported).filter(x=>x.kind==='bind'&&x.name==='assigned')
-        .map(x=>x.value),[['num',0],['num',setter.includes('throw')?8:2]]);
+      assert.deepEqual(bindingValues(exported,'assigned'),[['num',0],['num',setter.includes('throw')?8:2]]);
     }
   }
 });
@@ -81,7 +98,7 @@ test('finally can replace a failed strict assignment completion',async()=>{
 
 test('an escaping strict getter-only failure retains its declared TypeError outcome',async()=>{
   for(const inherited of [false,true]){
-    const exported=await certified(strict(declaration(inherited)+'box.x=2;return 0;'));
+    const exported=await certified(strict(declaration(inherited)+'box.x=2;return 0;'),{inherited});
     assert.equal(exported.sidecar.reference.outcome.kind,'throw');
     const error=exported.sidecar.reference.outcome.graph.objects[0];
     assert.deepEqual(error.properties.find(([name])=>name==='name')[1],['str','TypeError']);

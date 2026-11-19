@@ -5,6 +5,8 @@ import {causalLmV8Prompt,encodeCausalLmV8Example,validateRegionTrainingContexts,
   createCausalLmV8Selector,auditRegionServingCosts} from '../src/semantic/causal-lm-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {encodePureRegionRecord,decodePureRegionRecord} from '../src/semantic/pure-region-v8.js';
+import {verifyRegionTrainingCase} from '../src/semantic/compiler-v8.js';
+import {SEMANTIC_GALLERY_FIXTURES} from '../src/training/semantic-trace-gallery.js';
 
 const fixtures=JSON.parse(await readFile(new URL('./fixtures/semantic-regions-v8.json',import.meta.url)));
 const example=id=>fixtures.examples.find(row=>row.id===id);
@@ -54,6 +56,23 @@ test('v8 cost meter measures expanded physical prompts and targets including rep
   for(const row of measured.rows)assert.match(row.prompt,/semantic-algorithm\/2/);
   assert.equal(measured.rows[0].detail,false);assert.equal(measured.rows[1].detail,true);
   assert.equal(measured.model.status,'untested');assert.equal(measured.native.status,'untested');
+});
+
+test('retained callback inputs are public context identities and remain fully metered',async()=>{
+  for(const id of ['callback-captured-write','persistent-external-trigger']){
+    const result=await verifyRegionTrainingCase(SEMANTIC_GALLERY_FIXTURES.find(row=>row.id===id));
+    assert(result.exported,result.reason);
+    const artifact=result.exported,context=artifact.contexts.find(row=>row.input.retained?.length);
+    assert(context,'fixture must exercise retained invocation inputs');
+    assert.match(causalLmV8Prompt(context),/"retained"/);
+    const cost=await auditRegionServingCosts(artifact);
+    assert.equal(cost.predictions,artifact.contexts.length);
+    assert(cost.bytes.cumulativeContext>0);
+    const missing=structuredClone(context);missing.input.retained.push('unavailable-object');
+    assert.throws(()=>causalLmV8Prompt(missing),/retained input identities/);
+    const future=structuredClone(context);future.input.future=['num',999];
+    assert.throws(()=>causalLmV8Prompt(future),/immutable input fields/);
+  }
 });
 
 test('serving checks original model bytes against shared state and counts rejected attempts and retries',async()=>{

@@ -94,7 +94,7 @@
     "training:recheck": "node tools/verify-effectful-admission.mjs",
     "training:inspect": "node tools/inspect-selected-harness.mjs",
     "training:session-campaign": "node tools/semantic-session-campaign.mjs",
-    "contracts:check": "node tools/generate-host-contract.mjs --check && node tools/generate-semantic-contract.mjs --check && node tools/generate-semantic-algorithm-contract.mjs --check && node tools/generate-semantic-execution-contract.mjs --check",
+    "contracts:check": "node tools/generate-host-contract.mjs --check && node tools/generate-semantic-contract.mjs --check && node tools/generate-semantic-algorithm-contract.mjs --check && node tools/generate-semantic-execution-contract.mjs --check && node tools/generate-semantic-region-contract.mjs --check",
     "test:browser": "node --test test/browser/selected-dom.test.mjs",
     "baseline:v6": "node tools/current-v6-baseline.mjs",
     "semantic:compare": "node tools/compare-semantic-representations.mjs",
@@ -103,10 +103,13 @@
     "semantic:v7:export": "node tools/export-algorithm-training.mjs",
     "semantic:v7:recheck": "node tools/verify-algorithm-admission.mjs",
     "semantic:v8:contract": "node tools/generate-semantic-region-contract.mjs --check",
-    "test:semantic-v8": "node --test --test-concurrency=1 test/semantic-algorithm-v8-*.test.js test/semantic-region-*.test.js test/semantic-pure-region-v8.test.js",
+    "test:semantic-v8": "node --test --test-concurrency=1 test/semantic-*v8*.test.js test/semantic-region-*.test.js",
     "test:semantic-algorithm": "node --test test/semantic-algorithm-*.test.js",
     "coverage:current": "node tools/generate-capability-ledger.mjs",
-    "oracle:install": "npm ci --prefix tools/spec-oracle --ignore-scripts --no-audit --no-fund"
+    "oracle:install": "npm ci --prefix tools/spec-oracle --ignore-scripts --no-audit --no-fund",
+    "semantic:v8:export": "node tools/export-semantic-v8.mjs",
+    "coverage:v8": "node tools/generate-capability-ledger.mjs --version 8",
+    "semantic:v8:admit": "node tools/qualify-semantic-v8.mjs"
   },
   "bin": {
     "tracing-js-self": "./bin/tracing.js"

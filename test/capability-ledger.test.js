@@ -9,8 +9,10 @@ test('capability ladder preserves untested stages and exact attempted denominato
   const byId=Object.fromEntries(report.rows.map(row=>[row.id,row]));
   assert.equal(byId['scalar-arithmetic'].stages.independentIntermediate,'passed');
   assert.equal(byId['scalar-arithmetic'].stages.nativeAdmission,'untested');
-  assert.equal(byId['class-declaration'].stages.frontend,'unsupported');
-  assert.equal(byId['class-declaration'].stages.ownedEvaluation,'untested');
+  assert.equal(byId['class-declaration'].stages.frontend,'passed');
+  assert.equal(byId['class-declaration'].stages.ownedEvaluation,'passed');
+  assert.equal(byId['class-declaration'].stages.v6ProjectionAndPublicReplay,'unsupported');
+  assert.match(byId['class-declaration'].reason,/class\/private state/);
   assert.equal(byId['object-create-descriptors'].stages.frontend,'passed');
   assert.equal(byId['object-create-descriptors'].stages.ownedEvaluation,'unsupported');
   for(const counts of Object.values(report.totals)){
@@ -79,4 +81,20 @@ test('v8 coverage cannot be manufactured by relabeling a v7 artifact',async()=>{
       const {verifyAlgorithmTrainingCase}=await import('../src/semantic/compiler.js');
       return verifyAlgorithmTrainingCase(fixture);
     }}),/declared execution\/trace/);
+});
+
+test('v8 ledger uses real shared-region projection and retains source agreement across local refusal',async()=>{
+  const {verifyRegionTrainingCase}=await import('../src/semantic/compiler-v8.js');
+  const contracts={execution:'semantic-execution/8',trace:'semantic-trace/8',context:'semantic-context/8',continuation:'semantic-continuation/8'};
+  const report=await buildCapabilityLedger({traceVersion:8,contracts,verifyCase:verifyRegionTrainingCase,
+    cases:[CAPABILITY_CASES[0]]});
+  assert.equal(report.rows[0].stages.compactRecognition,'passed');
+  assert.equal(report.rows[0].stages.independentIntermediate,'passed');
+  assert.equal(report.rows[0].stages.nativeAdmission,'untested');
+  assert.equal(report.rows[0].regions.compact,1);
+  const refused=await buildCapabilityLedger({traceVersion:8,contracts,cases:[CAPABILITY_CASES[0]],
+    verifyCase:async()=>({status:'unsupported',phase:'projection',sourceStatus:'locally_verified',reason:'deliberate local refusal'})});
+  assert.equal(refused.rows[0].stages.independentOutcome,'passed');
+  assert.equal(refused.rows[0].stages.independentIntermediate,'passed');
+  assert.equal(refused.rows[0].stages.projectionAndPublicReplay,'unsupported');
 });

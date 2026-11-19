@@ -125,6 +125,28 @@ Shared-state serialization must encode `heap` Maps and nested descriptor Maps
 as entry arrays. Symbol keys need no stringification. Reconstruction creates Maps
 and then invokes the protocol restoration validator.
 
+`RegionExecutionHarness.select()` now accepts canonical protocol lines and
+commits them into the same controller used by compact and detailed records.
+Every v8 shared state has `protocol: null` before the first protocol operation.
+The harness serializes nested descriptors explicitly, stages the complete state
+before enforcing the continuation byte bound, and updates the existing realm's
+heap and cells only after validation. The causal serializer supervises protocol
+target bytes exactly and counts these records in the remaining detailed share.
+
+The first integrated lifecycle allows one fresh synchronous invocation. Host
+work, asynchronous observations, and new invocations after a protocol operation
+are explicit refusals. A protocol checkpoint uses
+`semantic-protocol-continuation/1` inside the v8 envelope. Restoration replays the
+complete public history, compares every stored shared-state field, and validates
+the retained protocol scope; it never passes incomplete protocol history to the
+old selected checkpoint parser. Existing host lifecycle checkpoints keep their
+own checked path.
+
+The contract also pins `interoperabilityDigest`, covering the exact valid public
+executions/contexts and the independent protocol-machine fixture corpus. A native
+receipt must match this digest in addition to the malformed-fixture digest. The
+historical base admission receipt does not qualify this changed contract.
+
 The bounded contract allows 4,096 Symbols, properties per record, and array
 length, 64 active calls, and 32,768 protocol operations. The canonical line bound
 is 65,536 UTF-8 bytes. Resource limits and unsupported operations are explicit
