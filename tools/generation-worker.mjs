@@ -76,7 +76,15 @@ try{
         originalReferenceDigest:identityHash(original),transformedReferenceDigest:identityHash(transformed),
         ...(canonicalExpectation?{canonicalExpectation}:{})}};
     }
-    if(!result){phase='owned-verification';result=await verifyEffectfulTrainingCase(options);}
+    if(!result){
+      phase='owned-verification';
+      if(task.traceVersion===8){const {verifyRegionTrainingCase}=await import('../src/semantic/compiler-v8.js');
+        result=await verifyRegionTrainingCase(options);}
+      else if(task.traceVersion===7){const {verifyAlgorithmTrainingCase}=await import('../src/semantic/compiler.js');
+        result=await verifyAlgorithmTrainingCase(options);}
+      else if(task.traceVersion===undefined||task.traceVersion===6)result=await verifyEffectfulTrainingCase(options);
+      else throw new Error('Unknown generation trace version');
+    }
   }
   else if(task.kind==='session')result=await verifyEffectfulSession(options);
   else throw new Error('Unknown generation task kind');

@@ -80,3 +80,19 @@ test('v8 coverage cannot be manufactured by relabeling a v7 artifact',async()=>{
       return verifyAlgorithmTrainingCase(fixture);
     }}),/declared execution\/trace/);
 });
+
+test('v8 ledger uses real shared-region projection and retains source agreement across local refusal',async()=>{
+  const {verifyRegionTrainingCase}=await import('../src/semantic/compiler-v8.js');
+  const contracts={execution:'semantic-execution/8',trace:'semantic-trace/8',context:'semantic-context/8',continuation:'semantic-continuation/8'};
+  const report=await buildCapabilityLedger({traceVersion:8,contracts,verifyCase:verifyRegionTrainingCase,
+    cases:[CAPABILITY_CASES[0]]});
+  assert.equal(report.rows[0].stages.compactRecognition,'passed');
+  assert.equal(report.rows[0].stages.independentIntermediate,'passed');
+  assert.equal(report.rows[0].stages.nativeAdmission,'untested');
+  assert.equal(report.rows[0].regions.compact,1);
+  const refused=await buildCapabilityLedger({traceVersion:8,contracts,cases:[CAPABILITY_CASES[0]],
+    verifyCase:async()=>({status:'unsupported',phase:'projection',sourceStatus:'locally_verified',reason:'deliberate local refusal'})});
+  assert.equal(refused.rows[0].stages.independentOutcome,'passed');
+  assert.equal(refused.rows[0].stages.independentIntermediate,'passed');
+  assert.equal(refused.rows[0].stages.projectionAndPublicReplay,'unsupported');
+});

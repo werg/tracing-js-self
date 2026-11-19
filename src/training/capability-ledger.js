@@ -5,6 +5,7 @@ import {verifyEffectfulTrainingCase} from './effectful-admit.js';
 import {EFFECTFUL_ENGINEERING_FIXTURES} from './engineering-fixtures.js';
 import {admissionEnvironment} from './admission-identity.js';
 import {verifyAlgorithmTrainingCase,admitAlgorithmEvidence} from '../semantic/compiler.js';
+import {admitRegionEvidence} from '../semantic/compiler-v8.js';
 import {hashAlgorithmData} from '../semantic/program.js';
 import {encodeNativeGraph} from '../host/graph-codec.js';
 
@@ -155,6 +156,11 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
         stages.independentIntermediate=referenced?'passed':intermediateMismatch?'failed':'untested';
       }
     }
+    // The v8 compiler runs independent source admission before attempting its
+    // new projection. A local projection refusal must not erase that evidence.
+    if(traceVersion===8&&['locally_verified','admitted'].includes(result.sourceStatus)){
+      stages.ownedEvaluation='passed';stages.independentOutcome='passed';stages.independentIntermediate='passed';
+    }
     if(result.status==='admitted')stages.nativeAdmission='passed';
     else if(result.phase==='native-consumer')stages.nativeAdmission=disposition(result);
     if(result.exported){
@@ -179,10 +185,10 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
           tokenStatus:'untested',reason:'No actual serving tokenizer measurement is supplied to this ledger'};
         if(nativeConsumer&&success){
           try{
-            if(traceVersion!==7)throw new TypeError('V8 native admission requires its versioned admission adapter');
-            const admitted=await admitAlgorithmEvidence(artifact,{nativeConsumer,nativePolicy});
+            const admitted=await (traceVersion===8?admitRegionEvidence:admitAlgorithmEvidence)(artifact,{nativeConsumer,nativePolicy});
             stages.nativeAdmission='passed';row.nativeReceipt=admitted.native;
-          }catch(error){stages.nativeAdmission=/limit|timeout|deadline/.test(error.message)?'resource_limited':'failed';
+          }catch(error){stages.nativeAdmission=CAPABILITY_STATUSES.includes(error.disposition)?error.disposition:
+            /limit|timeout|deadline/.test(error.message)?'resource_limited':'failed';
             row.nativeReason=error.message;row.reason=error.message;}
         }
       }

@@ -145,14 +145,16 @@ export function projectRegionWitness(sourceArtifact){
 }
 
 export async function verifyRegionTrainingCase(fixture){
+  const identity=Object.fromEntries(['id','family','source','entry','ancestorIds','ancestors']
+    .filter(key=>Object.hasOwn(fixture,key)).map(key=>[key,copy(fixture[key])]));
   const source=await verifyEffectfulTrainingCase({...fixture,nativeConsumer:null,nativePolicy:null,
     projectionOptions:{...fixture.projectionOptions,semanticRegions:false,localStateCompaction:false}});
-  if(!['locally_verified','admitted'].includes(source.status))return {...source,regionDisposition:'source-unqualified',exported:undefined};
+  if(!['locally_verified','admitted'].includes(source.status))return {...identity,...source,regionDisposition:'source-unqualified',exported:undefined};
   try{
     const exported=projectRegionWitness(source.exported),count=exported.sidecar.regionCoverage.compactRegions;
-    return {status:count?'locally_verified':'detailed-fallback',representation:'mixed',profile:'compositional-regions/1',
+    return {...identity,status:count?'locally_verified':'detailed-fallback',representation:'mixed',profile:'compositional-regions/1',
       exported,detailed:source.exported,regionCoverage:exported.sidecar.regionCoverage};
-  }catch(error){return {status:'unsupported',phase:'projection',sourceStatus:source.status,
+  }catch(error){return {...identity,status:'unsupported',phase:'projection',sourceStatus:source.status,
     category:error.category??'unsupported.region-projection',reason:error.message};}
 }
 
