@@ -29,6 +29,15 @@ test('independent class metadata observes actual descriptors prototypes and priv
   assert(objects.some(node=>node.annotations?.some(row=>row.name==='home-object/1')));
 });
 
+test('unused declared classes still root static private and function metadata after evaluation',()=>{
+  const checked=observe('"use strict";function run(){class C{static #x=3;m(){return 1;}}return 7;}');
+  assert.equal(checked.audit.status,'agreed',JSON.stringify(checked.audit));
+  assert.equal(checked.owned.completions[0].kind,'initialize');
+  const classes=checked.native.at(-1).objects.filter(node=>node.annotations?.some(row=>row.name==='class/1'));
+  assert.equal(classes.length,1);
+  assert(classes[0].annotations.some(row=>row.name==='private-element/1'&&row.data.name==='x'&&row.values[1][1]===3));
+});
+
 test('same-spelled private brands and private methods preserve distinct lexical owners',()=>{
   const checked=observe('"use strict";function run(){class A{#x=1;#m(){return this.#x;}a(){return this.#m();}}class B extends A{#x=2;b(){return this.#x;}}const o=new B();return o.a()+o.b();}');
   assert.equal(checked.result,3);assert.equal(checked.audit.status,'agreed',JSON.stringify(checked.audit));

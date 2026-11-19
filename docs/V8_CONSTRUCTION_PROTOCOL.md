@@ -122,6 +122,9 @@ Proxy receivers are refused. Ordinary descriptor inspection still reports the
 actual native key order, flags, values, prototype and extensibility; it does not
 invent missing names, lengths or prototype identities. Anonymous declarator
 class names are preserved through NamedEvaluation before static initialization.
+Named class declarations are observed after their outer lexical binding is
+initialized, including unused classes followed by a scalar return. Static
+evaluation that throws never emits a successful declaration observation.
 
 Class, home-object and private-element annotations share the same independent
 identity table as ordinary descriptor values. Each private element records its
