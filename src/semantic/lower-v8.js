@@ -4,19 +4,29 @@ import {parse} from 'acorn';
 import {createHash} from 'node:crypto';
 import {encodeAlgorithmScalar as scalar,BINARY_OPERATIONS,UNARY_OPERATIONS} from './operations.js';
 import {lowerJavaScript,AlgorithmLoweringError} from './lower-js.js';
-import {ALGORITHM_V8_SCHEMA,ALGORITHM_V8_PROFILE,validateAlgorithmV8,ALGORITHM_V8_INPUT_TYPES} from './algorithm-v8.js';
+import {ALGORITHM_V8_SCHEMA,ALGORITHM_V8_PROFILE,validateAlgorithmV8,ALGORITHM_V8_INPUT_TYPES,ALGORITHM_V8_LIMITS} from './algorithm-v8.js';
 
 const literal=value=>({term:{op:'literal',value:scalar(value)},type:value===null?'null':typeof value,total:true});
 const op=(name,...args)=>({op:name,args});
 const named=(node,name)=>node?.type==='Identifier'&&node.name===name;
 const statements=node=>node?.type==='BlockStatement'?node.body:node?[node]:[];
 const span=node=>({start:node.start,end:node.end});
-const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+function equal(a,b,pairs=new Map()){
+  if(a===b)return true;if(!a||!b||typeof a!=='object'||typeof b!=='object')return false;
+  if(pairs.get(a)?.has(b))return true;
+  if(!pairs.has(a))pairs.set(a,new Set());pairs.get(a).add(b);
+  const keys=Object.keys(a);return keys.length===Object.keys(b).length&&keys.every(key=>Object.hasOwn(b,key)&&equal(a[key],b[key],pairs));
+}
 const UNINITIALIZED=Object.freeze({uninitialized:true});
-const fail=(message,node)=>{throw new AlgorithmLoweringError('v8 '+message,node);};
+const fail=(message,node)=>{const error=new AlgorithmLoweringError('v8 '+message,node);
+  if(/budget|limit|excessive/.test(message))error.category='resource_limited.algorithm-v8';throw error;};
 const ensure=(condition,message,node)=>{if(!condition)fail(message,node);};
 const scalarValue=(value,node)=>{ensure(value&&!value.fn&&!value.blocked&&(!value.induction||value.term),'scalar/data value required',node);return value;};
-const allocated=term=>term&&typeof term==='object'&&(['array','object'].includes(term.op)||term.op==='traverse'&&['map','filter','scan'].includes(term.mode)||Object.values(term).some(child=>Array.isArray(child)?child.some(allocated):child&&typeof child==='object'&&allocated(child)));
+function allocated(term,seen=new Set()){
+  if(!term||typeof term!=='object'||seen.has(term))return false;seen.add(term);
+  return ['array','object'].includes(term.op)||term.op==='traverse'&&['map','filter','scan'].includes(term.mode)||
+    Object.values(term).some(child=>Array.isArray(child)?child.some(item=>allocated(item,seen)):allocated(child,seen));
+}
 function mayThrow(term){
   if(['input','ref','lexical','literal'].includes(term.op))return false;
   if(['get','project','traverse','fold_left'].includes(term.op))return true;
@@ -44,23 +54,25 @@ function patternNames(pattern){
   if(pattern.type==='RestElement')return patternNames(pattern.argument);
   fail('unsupported binding pattern',pattern);
 }
-function finalize(term,scopes=[]){
+function finalize(term,scopes=[],budget={remaining:ALGORITHM_V8_LIMITS.nodes}){
+  if(--budget.remaining<0)fail('composed term budget exceeded');
+  const next=(value,environment=scopes)=>finalize(value,environment,budget);
   if(term.op==='lexical'){
     for(let depth=0;depth<scopes.length;depth++){
       const index=scopes[depth].indexOf(term.token);if(index!==-1)return {op:'bound',depth,index};
     }
     fail('unresolved lexical identity');
   }
-  if(term.op==='let')return {op:'let',bindings:term.bindings.map((binding,i)=>finalize(binding,[term.names.slice(0,i),...scopes])),
-    body:finalize(term.body,[term.names,...scopes])};
-  if(term.op==='traverse')return {...term,input:finalize(term.input,scopes),initial:term.initial===null?null:finalize(term.initial,scopes),
-    callback:{arity:term.callback.params.length,body:finalize(term.callback.body,[term.callback.params,...scopes])}};
-  if(term.op==='project')return {...term,object:finalize(term.object,scopes)};
-  if(term.op==='get')return {...term,object:finalize(term.object,scopes),key:finalize(term.key,scopes)};
-  if(term.op==='array')return {...term,items:term.items.map(child=>finalize(child,scopes))};
-  if(term.op==='object')return {...term,properties:term.properties.map(p=>({key:p.key,value:finalize(p.value,scopes)}))};
-  if(term.op==='fold_left')return {...term,input:finalize(term.input,scopes),initial:finalize(term.initial,scopes)};
-  return term.args?{...term,args:term.args.map(child=>finalize(child,scopes))}:{...term};
+  if(term.op==='let')return {op:'let',bindings:term.bindings.map((binding,i)=>next(binding,[term.names.slice(0,i),...scopes])),
+    body:next(term.body,[term.names,...scopes])};
+  if(term.op==='traverse')return {...term,input:next(term.input),initial:term.initial===null?null:next(term.initial),
+    callback:{arity:term.callback.params.length,body:next(term.callback.body,[term.callback.params,...scopes])}};
+  if(term.op==='project')return {...term,object:next(term.object)};
+  if(term.op==='get')return {...term,object:next(term.object),key:next(term.key)};
+  if(term.op==='array')return {...term,items:term.items.map(child=>next(child))};
+  if(term.op==='object')return {...term,properties:term.properties.map(p=>({key:p.key,value:next(p.value)}))};
+  if(term.op==='fold_left')return {...term,input:next(term.input),initial:next(term.initial)};
+  return term.args?{...term,args:term.args.map(child=>next(child))}:{...term};
 }
 function wrap(context,term){
   if(!context.bindings.length)return term;
@@ -72,6 +84,7 @@ function wrap(context,term){
 export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=1024,maxHelperDepth=8}={}){
   ensure(typeof source==='string'&&typeof entry==='string','source and explicit named entry required');
   ensure(Number.isSafeInteger(maxOperations)&&maxOperations>0&&maxOperations<=4096,'operation budget');
+  ensure(Number.isSafeInteger(maxHelperDepth)&&maxHelperDepth>0&&maxHelperDepth<=16,'helper depth budget');
   let ast;try{ast=parse(source,{ecmaVersion:'latest',sourceType:'script'});}catch(error){fail('parse: '+error.message);}
   ensure(ast.body[0]?.directive==='use strict','explicit strict source required',ast);
   ensure(ast.body.every(n=>n.type==='FunctionDeclaration'||n.directive==='use strict'),'top-level effects require regions',ast);
@@ -89,10 +102,10 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
   const context=extra=>({bindings:[],names:[],stack:[],conditional:false,scopeMap:new Map(),...extra});
   const pin=(value,ctx,node)=>{
     if(value.fn||['literal','input','ref','lexical'].includes(value.term.op))return value;
-    if(!allocated(value.term)&&(value.total===true||value.total!==false&&!mayThrow(value.term)))return value;
+    if((value.cost??0)<=64&&!allocated(value.term)&&(value.total===true||value.total!==false&&!mayThrow(value.term)))return value;
     ensure(!ctx.conditional,'allocating or potentially throwing branch work requires a local detailed boundary',node);
     const name=token();ctx.names.push(name);ctx.bindings.push(value.term);
-    return {...value,term:{op:'lexical',token:name}};
+    return {...value,term:{op:'lexical',token:name},cost:1};
   };
   function constrain(value,type,node){
     if(value.term?.op==='input'){
@@ -120,7 +133,7 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
     }else if(['===','!==','==','!=','<','<=','>','>='].includes(operator))type='boolean';
     else if(operator==='+'&&args.some(x=>x.type==='string'))type='string';
     else {args.forEach(x=>number(x,node));type='number';}
-    sites.push({kind:'operation',operation:name,site:span(node)});return {term:op(name,...args.map(x=>x.term)),type,total:args.every(x=>x.total!==false)&&args.every(x=>!['scalar','object','array'].includes(x.type))};
+    sites.push({kind:'operation',operation:name,site:span(node)});return {term:op(name,...args.map(x=>x.term)),type,cost:1+args.reduce((sum,value)=>sum+(value.cost??1),0),total:args.every(x=>x.total!==false)&&args.every(x=>!['scalar','object','array'].includes(x.type))};
   }
   function select(test,left,right){return {term:equal(left.term,right.term)?left.term:op('select',test.term,left.term,right.term),
     type:left.type===right.type?left.type:'scalar',total:test.total!==false&&left.total!==false&&right.total!==false};}
@@ -130,8 +143,9 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
     for(const binding of bindings(scope)){
       const l=left.scopeMap.get(findScope(scope,binding))?.bindings.get(binding.name)?.value??binding.value,
         r=right.scopeMap.get(findScope(scope,binding))?.bindings.get(binding.name)?.value??binding.value;
-      if(l===r||equal(l,r)){binding.value=l;continue;}
+      if(l===r){binding.value=l;continue;}
       ensure(!l?.fn&&!r?.fn&&!l?.uninitialized&&!r?.uninitialized,'branch join of unavailable/function identity',node);
+      if(equal(l,r)){binding.value=l;continue;}
       scalarValue(l,node);scalarValue(r,node);binding.value=select(test,l,r);
     }
   }
@@ -167,8 +181,16 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
     }
     if(pattern.type==='ArrayPattern'){
       constrain(value,'dense-primitive-array',pattern);
-      pattern.elements.forEach((element,index)=>{if(element){ensure(element.type!=='RestElement','array rest needs a sliced allocation',element);
-        bind(element,readProperty(value,literal(String(index)),element),scope,ctx,{declare,mutable});}});return;
+      pattern.elements.forEach((element,index)=>{if(element){
+        if(element.type==='RestElement'){
+          ensure(index===pattern.elements.length-1,'array rest must be last',element);
+          const params=Array.from({length:3},token),rest={term:{op:'traverse',mode:'filter',input:value.term,initial:null,
+            callback:{params,body:op('greater_equal',{op:'lexical',token:params[1]},literal(index).term)},
+            profile:'dense-primitive-array/1',order:'ascending'},type:'array'};
+          bind(element.argument,rest,scope,ctx,{declare,mutable});
+          rule('dense-array-rest-binding',element,['Dense primitive iteration without hooks.','Consume in ascending order and allocate a distinct tail array.']);
+        }else bind(element,readProperty(value,literal(String(index)),element),scope,ctx,{declare,mutable});
+      }});return;
     }
     fail('unsupported binding pattern',pattern);
   }
@@ -267,7 +289,7 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
     }
     if(node.type==='ArrayExpression'){
       ensure(node.elements.every(x=>x&&x.type!=='SpreadElement'),'dense literals without spread required',node);
-      return {term:{op:'array',items:node.elements.map(x=>scalarValue(expression(x,scope,ctx),x).term)},type:'array'};
+      return {term:{op:'array',items:node.elements.map(x=>scalarValue(expression(x,scope,ctx),x).term)},type:'array',emptyArray:node.elements.length===0};
     }
     if(node.type==='ObjectExpression'){
       const properties=[],keys=new Set();
@@ -393,6 +415,67 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
       return {returned:true,value:{term:{op:'traverse',mode,input:input.term,initial:null,
         callback:{params:params.slice(0,3),body:rename(predicate.term)},profile:'dense-primitive-array/1',order:'ascending'},type:found.type}};
     }
+    // Recognize fresh private output builders before considering a scalar fold.
+    // The builder has no alias, escaped reference, earlier read, or captured
+    // observer, so its allocation/push bookkeeping can become one traversal.
+    const pushNode=statement=>statement?.type==='ExpressionStatement'&&statement.expression.type==='CallExpression'&&
+      !statement.expression.optional&&statement.expression.callee.type==='MemberExpression'&&
+      !statement.expression.callee.computed&&named(statement.expression.callee.property,'push')&&
+      statement.expression.callee.object.type==='Identifier'&&statement.expression.arguments.length===1?
+        statement.expression:null;
+    const filter=only.length===1&&only[0].type==='IfStatement'&&!only[0].alternate&&
+      statements(only[0].consequent).length===1?only[0]:null;
+    const push=pushNode(filter?statements(filter.consequent)[0]:only.at(-1));
+    const output=push?scope.resolve(push.callee.object.name):null;
+    if(output?.value.emptyArray){
+      const builder=output.value,allocationIndex=builder.term.op==='lexical'?ctx.names.indexOf(builder.term.token):-1,
+        aliases=bindings(scope).filter(binding=>binding!==output&&binding.value.term&&equal(binding.value.term,builder.term));
+      const mentions=(term,name)=>term&&typeof term==='object'&&(term.op==='lexical'&&term.token===name||
+        Object.values(term).some(child=>Array.isArray(child)?child.some(item=>mentions(item,name)):mentions(child,name)));
+      ensure(allocationIndex>=0&&!aliases.length&&!bindings(scope).some(binding=>binding.value.fn)&&
+        ctx.bindings.every((term,index)=>index===allocationIndex||!mentions(term,builder.term.token)),
+        'array builder escaped, aliased, captured or was observed before traversal',node);
+      const before=new Map(bindings(scope).map(binding=>[binding,binding.value])),prelude=filter?[]:only.slice(0,-1);
+      const assigned=new Set();
+      const scan=n=>{if(!n||typeof n!=='object')return;
+        if(['AssignmentExpression','UpdateExpression'].includes(n.type)&&(n.left??n.argument).type==='Identifier')assigned.add((n.left??n.argument).name);
+        for(const child of Object.values(n))if(Array.isArray(child))child.forEach(scan);else if(child&&typeof child==='object')scan(child);};
+      prelude.forEach(scan);
+      const accumulators=bindings(scope).filter(binding=>binding.mutable&&binding.name!==indexName&&assigned.has(binding.name));
+      ensure(accumulators.length<=1,'scan needs one scalar accumulator',node);
+      const accumulator=accumulators[0];
+      if(accumulator){number(accumulator.value,node);accumulator.value={term:{op:'lexical',token:params[0]},type:'number',total:true};}
+      ensure(!run(prelude,local,loopCtx),'builder step cannot complete early',node);
+      const predicate=filter?expression(filter.test,local,loopCtx):null,result=expression(push.arguments[0],local,loopCtx);
+      let mode=filter?'filter':accumulator?'scan':'map',callback=result.term;
+      if(filter){ensure(equal(result.term,element.term),'filter must retain the original element',push);callback=predicate.term;}
+      if(accumulator)ensure(equal(result.term,accumulator.value.term),'scan pushes its updated accumulator',push);
+      for(const [binding,value] of before)ensure(binding===accumulator||binding.value===value,
+        'builder callback changes an external private binding',node);
+      const initial=accumulator?before.get(accumulator).term:null;
+      for(const [binding,value] of before)binding.value=value;
+      let callbackParams=params;
+      if(mode!=='scan'){
+        const mapping=new Map([[params[1],params[0]],[params[2],params[1]],[params[3],params[2]]]);
+        const rename=value=>Array.isArray(value)?value.map(rename):value&&typeof value==='object'?
+          value.op==='lexical'?{...value,token:mapping.get(value.token)??value.token}:
+            Object.fromEntries(Object.entries(value).map(([key,child])=>[key,rename(child)])):value;
+        callback=rename(wrap(loopCtx,callback));callbackParams=params.slice(0,3);
+      }else callback=wrap(loopCtx,callback);
+      const traversal={term:{op:'traverse',mode,input:input.term,initial,
+        callback:{params:callbackParams,body:callback},profile:'dense-primitive-array/1',order:'ascending'},type:'array'};
+      ctx.names.splice(allocationIndex,1);ctx.bindings.splice(allocationIndex,1);
+      output.value=pin(traversal,ctx,node);
+      if(accumulator){
+        const length={op:'project',object:output.value.term,key:'length'};
+        accumulator.value={term:op('select',length,
+          {op:'get',object:output.value.term,key:op('subtract',length,literal(1).term)},initial),type:'number',total:true};
+      }
+      if(node.type==='WhileStatement')scope.resolve(indexName).value={term:{op:'project',object:input.term,key:'length'},type:'number',total:true};
+      rule('ordered-'+mode+'-builder',node,['Fresh unaliased output array; no earlier observations or captures.',
+        'Ascending dense numeric input; pure checked step.','Canonical traversal preserves result allocation and final accumulator.']);
+      return null;
+    }
     const original=bindings(scope).filter(binding=>binding.mutable&&binding.name!==indexName&&binding.value.term),
       before=new Map(original.map(binding=>[binding,binding.value]));
     const assigned=new Set();
@@ -426,7 +509,8 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
     const result=run(fn.body.body,rootScope,rootCtx);ensure(result?.returned,'explicit completion required',fn);
     const term=finalize(wrap(rootCtx,result.value.term));
     const core={schema:ALGORITHM_V8_SCHEMA,profile:ALGORITHM_V8_PROFILE,inputs,
-      steps:[{kind:'compute',id:'v0',term},{kind:'return',value:{op:'ref',id:'v0'}}]};validateAlgorithmV8(core);
+      steps:[{kind:'compute',id:'v0',term},{kind:'return',value:{op:'ref',id:'v0'}}]};
+    try{validateAlgorithmV8(core);}catch(error){fail('normalized core: '+error.message,fn);}
     return {core,provenance:{schema:'semantic-javascript-lowering/2',sourceDigest:createHash('sha256').update(source).digest('hex'),
       entry,region:span(fn),rules,sourceSites:sites,inputGuards:inputs.map(x=>({...x})),effectBoundaries:[],
       liveInputs:inputs.map(x=>x.id),liveOutputs:['v0'],budget:{visitedExpressions:nodes,helperExpansions:helpers,maxOperations,maxHelperDepth},

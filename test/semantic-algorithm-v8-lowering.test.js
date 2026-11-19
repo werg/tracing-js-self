@@ -15,8 +15,8 @@ function graph(roots){
     if(seen.has(item))return ['ref',seen.get(item)];
     const id='o'+seen.size;seen.set(item,id);
     const node={id,kind:Array.isArray(item)?'array':'object',properties:[]};objects.push(node);
-    if(Array.isArray(item))node.properties.push({key:'length',value:scalar(item.length)});
     for(const key of Object.keys(item))node.properties.push({key,value:visit(item[key])});
+    if(Array.isArray(item))node.properties.push({key:'length',value:scalar(item.length)});
     return ['ref',id];
   }
   return {roots:roots.map(visit),objects};
@@ -77,7 +77,7 @@ test('v8 scalar branch joins and lazy assignments preserve both values and priva
     ['function run(x){x||=5;return x;}',[[null],[undefined],[0],[false],[7]]],
     ['function run(x){x&&=5;return x;}',[[null],[undefined],[0],[false],[7]]]
   ];
-  for(const [body,args] of cases)for(const values of args)check(body,values,{owned:values===args[0]&&!/[?&|]{2}=/.test(body)&&!body.includes('run({')&&!body.includes('b=(a=2)')&&!body.includes('o?.[++i]')&&!body.includes('o?.x.y')});
+  for(const [body,args] of cases)for(const values of args)check(body,values,{owned:values===args[0]&&!body.includes('run({')&&!body.includes('b=(a=2)')&&!body.includes('o?.[++i]')&&!body.includes('o?.x.y')});
   const joined=lowerJavaScriptV8({source:source(cases[0][0]),entry:'run'}).core;
   const direct=lowerJavaScriptV8({source:source('function run(p,x){return (p?x+1:x-1)*2;}'),entry:'run'}).core;
   assert.deepEqual(joined,direct);
@@ -95,7 +95,7 @@ test('v8 defaults, bindings, ordinary properties, aliases and optional reads ret
     ['function run(a,b=(a=2)){return a;}',[[1,undefined],[1,5]]],
     ['function run(o){const alias=o;return [o,alias];}',[[{x:3}]]],
     ['function run(p){const o=p?{x:1}:{x:2};return [o,o];}',[[true],[false]]]
-  ])for(const values of args)check(body,values,{owned:values===args[0]&&!/[?&|]{2}=/.test(body)&&!body.includes('run({')&&!body.includes('b=(a=2)')&&!body.includes('o?.[++i]')&&!body.includes('o?.x.y')});
+  ])for(const values of args)check(body,values,{owned:values===args[0]&&!body.includes('run({')&&!body.includes('b=(a=2)')&&!body.includes('o?.[++i]')&&!body.includes('o?.x.y')});
   const empty=lowerJavaScriptV8({source:source('function run(o){const {}=o;return 3;}'),entry:'run'}).core;
   assert.throws(()=>evaluateAlgorithmV8(empty,[['null']]),/identity/);
 });
@@ -124,4 +124,82 @@ test('v8 source recognition refuses shared mutation, receivers, holes and unsupp
     'function run(x){return this.x+x;}',
     'function run(xs){let s=0;for(const x of xs){try{s+=x;}finally{s++;}}return s;}'
   ])assert.equal(tryLowerJavaScriptV8({source:source(body),entry:'run'}).status,'refused',body);
+});
+
+test('v8 map, filter and scan builders converge across builtin, for-of, indexed and while idioms',()=>{
+  const families=[
+    [
+      'function run(xs){return xs.map(x=>x*2);}',
+      'function run(xs){const out=[];for(const x of xs)out.push(x*2);return out;}',
+      'function run(xs){const out=[];for(let i=0;i<xs.length;i++){const x=xs[i];out.push(x*2);}return out;}',
+      'function run(xs){const out=[];let i=0;while(i<xs.length){out.push(xs[i]*2);i++;}return out;}'
+    ],[
+      'function run(xs){return xs.filter(x=>x>2);}',
+      'function run(xs){const out=[];for(const x of xs)if(x>2)out.push(x);return out;}',
+      'function run(xs){const out=[];for(let i=0;i<xs.length;i++)if(xs[i]>2)out.push(xs[i]);return out;}',
+      'function run(xs){const out=[];let i=0;while(i<xs.length){if(xs[i]>2)out.push(xs[i]);i++;}return out;}'
+    ],[
+      'function run(xs){let sum=0;const out=[];for(const x of xs){sum+=x;out.push(sum);}return out;}',
+      'function run(xs){let sum=0;const out=[];for(let i=0;i<xs.length;i++){sum+=xs[i];out.push(sum);}return out;}',
+      'function run(xs){let sum=0;const out=[];let i=0;while(i<xs.length){sum+=xs[i];out.push(sum);i++;}return out;}'
+    ]
+  ];
+  for(const variants of families){
+    const cores=variants.map(body=>check(body,[[2,3,4]],{owned:true,inputTypes:['dense-number-array']}).core);
+    assert.equal(new Set(cores.map(canonicalAlgorithmV8)).size,1);
+    for(const body of variants)for(const xs of [[],[-0],[1e16,1,-1e16]])check(body,[xs],{inputTypes:['dense-number-array']});
+  }
+  for(const xs of [[],[2,3],[-0]])check('function run(xs){let s=-0;const out=[];for(const x of xs){s+=x;out.push(s);}return [s,out];}',[xs]);
+});
+
+test('new traversal normalizations keep two executed distinguishing pairs per rule separate',()=>{
+  const map='function run(xs){return xs.map(x=>x*2);}',filter='function run(xs){return xs.filter(x=>x>2);}',
+    scan='function run(xs){let s=0;const out=[];for(const x of xs){s+=x;out.push(s);}return out;}';
+  const pairs=[
+    [map,'function run(xs){return xs.map((x,i)=>x*2+i);}'],
+    [map,'function run(xs){const out=[];for(let i=xs.length-1;i>=0;i--)out.push(xs[i]*2);return out;}'],
+    [filter,'function run(xs){return xs.map(x=>x>2);}'],
+    [filter,'function run(xs){return xs.filter(x=>x>=2);}'],
+    [scan,'function run(xs){let s=0;const out=[];for(const x of xs){out.push(s);s+=x;}return out;}'],
+    [scan,'function run(xs){let s=0;const out=[];for(let i=xs.length-1;i>=0;i--){s+=xs[i];out.push(s);}return out;}']
+  ];
+  for(const [left,right] of pairs){
+    const native=body=>JSON.stringify(vm.runInNewContext(source(body)+';run([2,3,4])',{}, {timeout:1000}));
+    assert.notEqual(native(left),native(right));
+    const a=tryLowerJavaScriptV8({source:source(left),entry:'run'}),b=tryLowerJavaScriptV8({source:source(right),entry:'run'});
+    assert(a.status==='refused'||b.status==='refused'||canonicalAlgorithmV8(a.core)!==canonicalAlgorithmV8(b.core));
+    for(const body of [left,right]){
+      const checked=verifyOwnedSourceCase({source:source(body),entry:'run',args:[[2,3,4]],maxSteps:25000,maxGenerated:2048});
+      assert.equal(checked.status,'locally_verified',body+' '+checked.reason);
+    }
+  }
+});
+
+test('builder normalization refuses earlier observers and escaping aliases',()=>{
+  for(const body of [
+    'function run(xs){const out=[];const alias=out;for(const x of xs)out.push(x*2);return [out,alias];}',
+    'function run(xs){const out=[];const n=out.length;for(const x of xs)out.push(x*2);return [out,n];}',
+    'function run(xs){const out=[];function size(){return out.length;}for(const x of xs)out.push(x*2);return size();}',
+    'function run(xs){const out=[];for(const x of xs)out.push(out.length);return out;}'
+  ])assert.equal(tryLowerJavaScriptV8({source:source(body),entry:'run'}).status,'refused',body);
+});
+
+test('dense array rest bindings and lazy defaults preserve source order and allocate a distinct tail',()=>{
+  for(const [body,cases] of [
+    ['function run(xs){const [x=3,...rest]=xs;return [x,rest,rest===xs];}',[[[]],[[undefined,2,3]],[[null,2]]]],
+    ['function run(xs){let x=0,rest=[];[x,...rest]=xs;return [x,rest];}',[[[2,3,4]],[[]]]],
+    ['function run(o){let n=0;const {x=(++n),y=(++n)}=o;return [x,y,n];}',[[{}],[{x:5}],[{y:7}],[{x:0,y:null}]]],
+    ['function run(p,x){let a=x,b=2;if(p){a+=b;b=a*2;}else{b+=a;a=b-1;}return [a,b];}',[[true,3],[false,3]]],
+    ['function run(x){let y=3;x&&=(y++);return [x,y];}',[[0],[2]]]
+  ])for(const args of cases)check(body,args);
+});
+
+test('pure source/resource guard failures are explicit dispositions',()=>{
+  const explosive='function run(x){'+Array.from({length:14},()=> 'x=x+x;').join('')+'return x;}';
+  const compact=lowerJavaScriptV8({source:source(explosive),entry:'run'});
+  assert.equal(compact.core.steps[0].term.op,'let','reused expressions retain bounded named intermediates');
+  assert.deepEqual(evaluateAlgorithmV8(compact.core,[scalar(1)]).completion.value,scalar(16384));
+  const result=tryLowerJavaScriptV8({source:source(explosive),entry:'run',maxOperations:1});
+  assert.equal(result.status,'refused');assert.match(result.category,/resource_limited/);
+  assert.equal(tryLowerJavaScriptV8({source:source('function run(x){return x;}'),entry:'run',maxHelperDepth:0}).status,'refused');
 });

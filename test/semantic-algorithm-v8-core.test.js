@@ -79,3 +79,29 @@ test('v8 budget failure does not mutate the caller owned heap and fresh identiti
   assert.deepEqual(heap,before);assert.deepEqual(out.completion.value,['ref','v8:1']);
   assert.throws(()=>evaluateTermV8(op('add',lit(1),lit(2)),{budget:{remaining:1}}),/budget/);
 });
+
+test('v8 allocated graphs use ECMAScript own-key order without reordering value evaluation',()=>{
+  const arrayProgram={...core({op:'array',items:[lit(4),lit(5)]}),inputs:[]};
+  const arrayOut=evaluateAlgorithmV8(arrayProgram,[]);
+  assert.deepEqual(arrayOut.graph.objects[0].properties.map(p=>p.key),['0','1','length']);
+  const objectProgram={...core({op:'object',properties:[
+    {key:'2',value:{op:'array',items:[lit(2)]}},
+    {key:'1',value:{op:'array',items:[lit(1)]}},
+    {key:'last',value:lit(3)}]}),inputs:[]};
+  const objectOut=evaluateAlgorithmV8(objectProgram,[]),object=objectOut.graph.objects.find(o=>o.id===objectOut.completion.value[1]);
+  assert.deepEqual(object.properties.map(p=>p.key),['1','2','last']);
+  assert.deepEqual(object.properties.slice(0,2).map(p=>p.value),[['ref','v8:1'],['ref','v8:0']],
+    'values were evaluated in source order before integer-key enumeration');
+});
+
+test('v8 lexical environments, work budgets and graph identities fail closed without observing hooks',()=>{
+  let hooks=0;
+  const scope=[scalar(3)];Object.defineProperty(scope,'0',{enumerable:true,get(){hooks++;return scalar(3);}});
+  assert.throws(()=>evaluateTermV8({op:'bound',depth:0,index:0},{scopes:[scope]}));
+  const budget={};Object.defineProperty(budget,'remaining',{enumerable:true,get(){hooks++;return 10;}});
+  assert.throws(()=>evaluateTermV8(lit(3),{budget}));
+  assert.throws(()=>evaluateTermV8(lit(3),{budget:{remaining:Infinity}}),/budget/);
+  const duplicate=graph([1]);duplicate.objects.push(structuredClone(duplicate.objects[0]));
+  assert.throws(()=>evaluateAlgorithmV8(core(input),null,{inputGraph:duplicate}),/duplicate input graph identity/);
+  assert.equal(hooks,0);
+});

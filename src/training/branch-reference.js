@@ -15,6 +15,8 @@ function sourceBranchNodes(source) {
       'ForStatement','ConditionalExpression'].includes(node.type)&&node.test)
       nodes.push({start:node.test.start,end:node.test.end,
         site:String(node.test.start)+':'+node.test.end,kind:'test'});
+    if(node.type==='AssignmentExpression'&&['&&=','||=','??='].includes(node.operator))
+      nodes.push({start:node.start,end:node.end,site:String(node.start)+':'+node.end,kind:'assignment',operator:node.operator.slice(0,-1),node});
     if(node.type==='LogicalExpression')
       nodes.push({start:node.left.start,end:node.left.end,
         site:String(node.start)+':'+node.end,kind:'logical',operator:node.operator});
@@ -25,25 +27,45 @@ function sourceBranchNodes(source) {
   return nodes;
 }
 export function instrumentBranchSource(source) {
-  const nodes=sourceBranchNodes(source);
-  const starts=new Map(),ends=new Map();
-  for(const n of nodes){
-    if(!starts.has(n.start))starts.set(n.start,[]);
-    if(!ends.has(n.end))ends.set(n.end,[]);
-    starts.get(n.start).push(n);ends.get(n.end).push(n);
+  const nodes=sourceBranchNodes(source),assignments=nodes.filter(n=>n.kind==='assignment');
+  const usedNames=new Set(source.match(/[A-Za-z_$][A-Za-z0-9_$]*/g)??[]);let serial=0;
+  const fresh=()=>{let name;do{name='__tracingAssign'+serial++;}while(usedNames.has(name));usedNames.add(name);return name;};
+  function render(start,end){
+    const captures=nodes.filter(n=>n.kind!=='assignment'&&n.start>=start&&n.end<=end);
+    const starts=new Map(),ends=new Map();
+    for(const n of captures){
+      if(!starts.has(n.start))starts.set(n.start,[]);if(!ends.has(n.end))ends.set(n.end,[]);
+      starts.get(n.start).push(n);ends.get(n.end).push(n);
+    }
+    let text='';
+    for(let i=start;i<=end;i++){
+      for(const n of (ends.get(i)??[]).sort((a,b)=>b.start-a.start))text+='))';
+      for(const n of (starts.get(i)??[]).sort((a,b)=>b.end-a.end))
+        text+=n.kind==='test'?'globalThis.__tracingBranch('+JSON.stringify(n.site)+',(':
+          'globalThis.__tracingLogical('+JSON.stringify(n.site)+','+JSON.stringify(n.operator)+',(';
+      if(i===end)break;
+      const replacement=assignments.filter(n=>n.start===i&&n.end<=end).sort((a,b)=>b.end-a.end)[0];
+      if(replacement){
+        const {node,operator,site}=replacement,left=node.left,right=render(node.right.start,node.right.end),
+          capture=target=>'globalThis.__tracingLogical('+JSON.stringify(site)+','+JSON.stringify(operator)+','+target+')';
+        if(left.type==='Identifier'){
+          const name=source.slice(left.start,left.end);
+          text+='('+capture(name)+' '+operator+' ('+name+'=('+right+')))';
+        }else if(left.type==='MemberExpression'&&!left.optional&&left.property.type!=='PrivateIdentifier'&&left.object.type!=='Super'){
+          const receiver=fresh(),key=fresh(),raw=fresh(),object=render(left.object.start,left.object.end),
+            property=left.computed?render(left.property.start,left.property.end):JSON.stringify(left.property.name),target=receiver+'['+key+']';
+          // Preserve evaluation of the receiver/key expressions once. Native
+          // Get/Put retain their own key conversion semantics. Arrow wrappers
+          // keep lexical this; generated bindings cannot shadow source names.
+          const converted=raw;
+          text+='(('+receiver+','+raw+')=>(('+key+')=>('+capture(target)+' '+operator+' ('+target+'=('+right+'))))('+converted+'))(('+object+'),('+property+'))';
+        }else throw new TypeError('Unsupported logical assignment reference instrumentation');
+        i=replacement.end-1;
+      }else text+=source[i];
+    }
+    return text;
   }
-  let text='';
-  for(let i=0;i<=source.length;i++){
-    // Close nested captures first; open outer captures first.
-    for(const n of (ends.get(i)??[]).sort((a,b)=>b.start-a.start))text+='))';
-    for(const n of (starts.get(i)??[]).sort((a,b)=>b.end-a.end))
-      text+=n.kind==='test'
-        ?'globalThis.__tracingBranch('+JSON.stringify(n.site)+',('
-        :'globalThis.__tracingLogical('+JSON.stringify(n.site)+','+
-          JSON.stringify(n.operator)+',(';
-    if(i<source.length)text+=source[i];
-  }
-  return text;
+  return render(0,source.length);
 }
 
 export function compareBranchObservations(expected,observed) {

@@ -73,8 +73,11 @@ test('typed natlang logical assignment executes entirely in owned interpreter',(
 });
 
 
-test('logical assignments cannot be admitted before independent operation/branch audit support',()=>{
-  const report=verifyOwnedSourceCase({source:'"use strict";\nfunction f(x){x ||= 7; return x;}',entry:'f',args:[0]});
-  assert.notEqual(report.status,'locally_verified',
-    'whole-graph V8 equivalence cannot substitute for source-operation receipts');
+test('logical assignments have independent source result and decision receipts',()=>{
+  for(const operator of ['&&=','||=','??='])for(const value of [undefined,null,false,0,2,'']){
+    const report=verifyOwnedSourceCase({source:'"use strict";\nfunction f(x){x '+operator+' 7; return x;}',entry:'f',args:[value]});
+    assert.equal(report.status,'locally_verified',operator+' '+String(value)+' '+report.reason);
+    assert.equal(report.exported.sidecar.operationAudit.checked,1);
+    assert.equal(report.exported.sidecar.branchAudit.checked,1);
+  }
 });
