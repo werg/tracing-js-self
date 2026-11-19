@@ -228,14 +228,24 @@ export function createCausalLmV7Selector({runtime,tokenizer,checkpointIdentity,e
     const prompt=causalLmV7Prompt(context,{representation,resolver}),inputIds=await segment(tokenizer,prompt,eosTokenId);
     require(inputIds.length+maxNewTokens<=maxContextTokens,
       'generation exceeds context budget; truncation is forbidden');
-    const response=await runtime.generate({schema:CAUSAL_LM_V7_BRIDGE_VERSION,representation,
-      inputIds,maxNewTokens,eosTokenId,doSample:false});
-    const ids=response?.tokenIds;
+    const started=performance.now(),promptSha256=sha(prompt);
+    const previous=emissions.findLast(row=>row.promptSha256===promptSha256&&row.status!=='accepted');
     const evidence={adapter:CAUSAL_LM_V7_BRIDGE_VERSION,representation,checkpointIdentity,
-      tokenizerIdentity:tokenizer.identity,promptSha256:sha(prompt),emittedTokenIds:structuredClone(ids??null),
-      stopReason:response?.stopReason??null,payloadHex:null};
+      tokenizerIdentity:tokenizer.identity,promptSha256,emittedTokenIds:null,
+      promptTokens:inputIds.length,promptBytes:Buffer.byteLength(prompt,'utf8'),
+      attempt:emissions.length,retryOf:previous?.attempt??null,status:'submitted',
+      generationMs:null,verificationMs:null,stopReason:null,payloadHex:null};
     emissions.push(evidence);
-    const refuse=message=>{const error=new Error('Causal LM v7: '+message);
+    let response;
+    try{response=await runtime.generate({schema:CAUSAL_LM_V7_BRIDGE_VERSION,representation,
+      inputIds,maxNewTokens,eosTokenId,doSample:false});}
+    catch(error){evidence.generationMs=performance.now()-started;evidence.status='runtime-failed';
+      evidence.failure=String(error.message);throw error;}
+    evidence.generationMs=performance.now()-started;
+    const verifying=performance.now(),ids=response?.tokenIds;
+    evidence.emittedTokenIds=structuredClone(ids??null);evidence.stopReason=response?.stopReason??null;
+    const refuse=message=>{evidence.status='rejected';evidence.verificationMs=performance.now()-verifying;
+      evidence.failure=message;const error=new Error('Causal LM v7: '+message);
       error.category='causal-lm-emission';error.evidence=structuredClone(evidence);throw error;};
     if(!Array.isArray(ids)||!ids.length||ids.length>maxNewTokens||
       ids.some(id=>!Number.isSafeInteger(id)||id<0))refuse('invalid original emitted token sequence');
@@ -246,6 +256,7 @@ export function createCausalLmV7Selector({runtime,tokenizer,checkpointIdentity,e
       refuse('record did not end at its declared generated terminator');
     let record;try{record=utf8.decode(payload);targetRecord(record,representation);}
     catch{refuse('emitted original bytes are not a canonical generated v7 record');}
+    evidence.status='accepted';evidence.verificationMs=performance.now()-verifying;
     return {record,selection:{causalLmSelected:true,...structuredClone(evidence)}};
   };
   select.representation=representation;
@@ -262,7 +273,14 @@ export function createCausalLmV7Selector({runtime,tokenizer,checkpointIdentity,e
   select.metrics=()=>({adapter:CAUSAL_LM_V7_BRIDGE_VERSION,representation,
     emissions:structuredClone(emissions),
     generatedTokens:emissions.reduce((total,row)=>total+(row.emittedTokenIds?.length??0),0),
-    contextAccounting:'flat-token-sequences',nativeAdmissionClaim:false});
+    promptTokens:emissions.reduce((total,row)=>total+row.promptTokens,0),
+    peakContextTokens:emissions.length?Math.max(...emissions.map(row=>row.promptTokens)):0,
+    predictionAttempts:emissions.length,retries:emissions.filter(row=>row.retryOf!==null).length,
+    failedAttempts:emissions.filter(row=>row.status!=='accepted').length,
+    generationMs:emissions.reduce((total,row)=>total+(row.generationMs??0),0),
+    verificationMs:emissions.reduce((total,row)=>total+(row.verificationMs??0),0),
+    unknownGenerationCostAttempts:emissions.filter(row=>row.emittedTokenIds===null).length,
+    contextAccounting:'submitted-flat-token-sequences',nativeAdmissionClaim:false});
   if(typeof runtime.close==='function')select.close=()=>runtime.close();
   return select;
 }
