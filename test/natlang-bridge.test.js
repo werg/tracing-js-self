@@ -72,7 +72,7 @@ test('TypeScript annotations and assertions lower to replayed owned JS with a so
 test('natlang EvalFailure identity is retained for unsupported TS-emitted JavaScript',()=>{
   const {env,traces}=setup();
   assert.throws(()=>env.execute(req(
-    'class C { x: number = 4; } return new C().x;',
+    'const answer: number = eval("4"); return answer;',
     {body:true})),e=>e instanceof EvalFailure && e.events[0].status==='failed');
   assert.throws(()=>env.execute(req('const y: number = ;',{body:true})),EvalFailure);
   assert.equal(traces.length,0);

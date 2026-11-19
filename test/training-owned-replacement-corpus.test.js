@@ -41,13 +41,13 @@ test('pinned Unicode RTL includes BMP and surrogate ranges',()=>{
   verified(source,'f',['\u05D0\u05D1']);
   verified(source,'f',['\uD802\uDC00']);
 });
-test('unmodeled patterns and fallthrough switches fail closed',()=>{
+test('unmodeled replacement patterns fail closed while ordinary switch exits are owned',()=>{
   for(const source of [
     String.raw`function f(s){return s.replace(/\w+/g,m=>m+'!');}`,
-    String.raw`function f(s){switch(s){case 'a':break;default:return 2;}return 1;}`,
     String.raw`function f(s){return s.replace(/[<>&]/i,m=>m);}`
   ]){
     const r=verifyOwnedSourceCase({source:'"use strict";\n'+source,entry:'f',args:['a']});
     assert.notEqual(r.status,'locally_verified');
   }
+  for(const input of ['a','b'])verified('function f(s){switch(s){case "a":break;default:return 2;}return 1;}','f',[input]);
 });

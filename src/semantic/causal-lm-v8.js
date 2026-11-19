@@ -38,7 +38,10 @@ export function validateRegionContext(context){
     require(typeof row.id==='string'&&row.id.length>0&&!ids.has(row.id),'duplicate or invalid program identity');
     ids.add(row.id);validateRegionProgram(row.program);
   }
-  assertAlgorithmFields(context.input,['graph'],'immutable input');
+  assertAlgorithmFields(context.input,Object.hasOwn(context.input??{},'retained')?['graph','retained']:['graph'],'immutable input');
+  if(Object.hasOwn(context.input,'retained'))require(Array.isArray(context.input.retained)&&
+    context.input.retained.every(id=>typeof id==='string'&&context.state?.heap?.some(row=>row[0]===id))&&
+    new Set(context.input.retained).size===context.input.retained.length,'retained input identities must exist in the shared heap');
   require(plain(context.input.graph)&&Array.isArray(context.input.graph.roots)&&
     Array.isArray(context.input.graph.objects),'input graph');
   assertAlgorithmFields(context.state,SEMANTIC_V8_DEFINITION.sharedStateFields,'shared region state');

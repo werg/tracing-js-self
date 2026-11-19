@@ -30,7 +30,7 @@ test('missing and inconsistent guest seeds fail explicitly and unsupported cases
   assert.match(unseeded.reason,/seed/);
   await assert.rejects(verifyEffectfulTrainingCase({...fixture,randomSeed:2,seeds:{guestRng:1}}),/must match/);
   await assert.rejects(verifyEffectfulTrainingCase({...fixture,randomSeed:-1}),/uint32/);
-  const unsupported=await verifyEffectfulTrainingCase({...fixture,source:'"use strict";function run(){return this;}',
+  const unsupported=await verifyEffectfulTrainingCase({...fixture,source:'"use strict";function run(){return eval("1");}',
     randomSeed:7,seeds:{guestRng:7}});
   assert.equal(unsupported.status,'unsupported');
   assert.equal(unsupported.failure.original.seeds.guestRng,7);

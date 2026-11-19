@@ -9,8 +9,10 @@ test('capability ladder preserves untested stages and exact attempted denominato
   const byId=Object.fromEntries(report.rows.map(row=>[row.id,row]));
   assert.equal(byId['scalar-arithmetic'].stages.independentIntermediate,'passed');
   assert.equal(byId['scalar-arithmetic'].stages.nativeAdmission,'untested');
-  assert.equal(byId['class-declaration'].stages.frontend,'unsupported');
-  assert.equal(byId['class-declaration'].stages.ownedEvaluation,'untested');
+  assert.equal(byId['class-declaration'].stages.frontend,'passed');
+  assert.equal(byId['class-declaration'].stages.ownedEvaluation,'passed');
+  assert.equal(byId['class-declaration'].stages.v6ProjectionAndPublicReplay,'unsupported');
+  assert.match(byId['class-declaration'].reason,/class\/private state/);
   assert.equal(byId['object-create-descriptors'].stages.frontend,'passed');
   assert.equal(byId['object-create-descriptors'].stages.ownedEvaluation,'unsupported');
   for(const counts of Object.values(report.totals)){

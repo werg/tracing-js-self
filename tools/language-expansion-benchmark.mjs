@@ -67,10 +67,10 @@ if(mode==='coverage'){
       catch(error){
         // A measurement limit cannot erase an independently qualified source.
         const limited=/context budget|example cap|record byte bound/i.test(error.message);
-        if(!limited)throw error;
         cost={schema:'semantic-serving-cost-refusal/1',representation:result.exported.public.representation,
-          status:'resource_limited',reason:error.message,predictions:result.exported.contexts.length,
-          bytes:null,tokens:null,measurement:{bytes:'untested',tokens:'resource_limited'}};
+          status:limited?'resource_limited':'failed',reason:error.message,predictions:result.exported.contexts.length,
+          bytes:null,tokens:null,measurement:{bytes:'untested',tokens:limited?'resource_limited':'failed'}};
+        if(!limited)process.exitCode=1;
       }
       // Preserve exact serializer bytes separately, avoiding giant duplicate
       // prompt/definition fields inside the small aggregate coverage report.
@@ -104,7 +104,9 @@ if(mode==='coverage'){
   write('module-coverage.json',{producerRevision,traceVersion,declared:moduleResults.length,rows:moduleResults,
     scope:'Original module graphs are checked by the evaluated-module adapter, separately from strict script parsing'});
   write('coverage.json',coverage);write('serving-costs.json',{producerRevision,manifestDigest:manifest.digest,
-    path:traceVersion===8?'actual-semantic-causal-lm/4':'actual-semantic-causal-lm/3',tokenStatus:tokenModule?'passed':'untested',
+    path:traceVersion===8?'actual-semantic-causal-lm/4':'actual-semantic-causal-lm/3',
+    tokenStatus:!tokenModule?'untested':costs.some(row=>row.status==='failed')?'failed':
+      costs.some(row=>row.status==='resource_limited')?'resource_limited':'passed',
     tokenizerEvidence:tokenModule?.tokenizerEvidence??null,rows:costs});
   write('notation.json',{producerRevision,manifestDigest:manifest.digest,arms:['canonical','formal','hybrid','prose'],
     scope:'Same certified operations and public facts; rendering does not change abstraction',tokenStatus:'untested',rows:notation});
