@@ -183,3 +183,23 @@ test('builder normalization refuses earlier observers and escaping aliases',()=>
     'function run(xs){const out=[];for(const x of xs)out.push(out.length);return out;}'
   ])assert.equal(tryLowerJavaScriptV8({source:source(body),entry:'run'}).status,'refused',body);
 });
+
+test('dense array rest bindings and lazy defaults preserve source order and allocate a distinct tail',()=>{
+  for(const [body,cases] of [
+    ['function run(xs){const [x=3,...rest]=xs;return [x,rest,rest===xs];}',[[[]],[[undefined,2,3]],[[null,2]]]],
+    ['function run(xs){let x=0,rest=[];[x,...rest]=xs;return [x,rest];}',[[[2,3,4]],[[]]]],
+    ['function run(o){let n=0;const {x=(++n),y=(++n)}=o;return [x,y,n];}',[[{}],[{x:5}],[{y:7}],[{x:0,y:null}]]],
+    ['function run(p,x){let a=x,b=2;if(p){a+=b;b=a*2;}else{b+=a;a=b-1;}return [a,b];}',[[true,3],[false,3]]],
+    ['function run(x){let y=3;x&&=(y++);return [x,y];}',[[0],[2]]]
+  ])for(const args of cases)check(body,args);
+});
+
+test('pure source/resource guard failures are explicit dispositions',()=>{
+  const explosive='function run(x){'+Array.from({length:14},()=> 'x=x+x;').join('')+'return x;}';
+  const compact=lowerJavaScriptV8({source:source(explosive),entry:'run'});
+  assert.equal(compact.core.steps[0].term.op,'let','reused expressions retain bounded named intermediates');
+  assert.deepEqual(evaluateAlgorithmV8(compact.core,[scalar(1)]).completion.value,scalar(16384));
+  const result=tryLowerJavaScriptV8({source:source(explosive),entry:'run',maxOperations:1});
+  assert.equal(result.status,'refused');assert.match(result.category,/resource_limited/);
+  assert.equal(tryLowerJavaScriptV8({source:source('function run(x){return x;}'),entry:'run',maxHelperDepth:0}).status,'refused');
+});

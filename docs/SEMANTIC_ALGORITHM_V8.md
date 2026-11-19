@@ -138,3 +138,12 @@ value; a completed assignment records the committed RHS. Member receiver/key
 expressions are evaluated once, and native Get/Put retain native conversion
 behavior. Incomplete setter/trap completions remain unverified rather than
 being inferred from the final returned scalar.
+
+
+The dense array binding profile now supports a rest tail using the same ordered
+traversal meaning and a new array identity. Parameter rest and object-rest key
+enumeration remain outside this pure recognizer. Work/term/allocation budgets
+produce explicit resource-limited categories; malformed/unbound state and
+unsupported array shapes remain unsupported categories. Pure scalar
+propagation retains named intermediates once repeated terms would grow beyond
+the composition threshold, and finalization itself has a bounded visit budget.

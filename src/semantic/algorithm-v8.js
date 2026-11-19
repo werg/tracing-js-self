@@ -13,7 +13,7 @@ export const ALGORITHM_V8_INPUT_TYPES=Object.freeze(['value','scalar','number','
 export const TRAVERSAL_MODES=Object.freeze(['fold','map','filter','find','find_index','some','every','scan']);
 const foldMode=mode=>['fold','scan'].includes(mode);
 const fail=message=>{const error=new TypeError('Invalid '+ALGORITHM_V8_SCHEMA+': '+message);
-  error.category='unsupported.algorithm-v8';throw error;};
+  error.category=/budget/.test(message)?'resource_limited.algorithm-v8':'unsupported.algorithm-v8';throw error;};
 const inheritedKeys=new Set(['__proto__','constructor','toString','toLocaleString','valueOf','hasOwnProperty',
   'isPrototypeOf','propertyIsEnumerable','__defineGetter__','__defineSetter__','__lookupGetter__','__lookupSetter__']);
 const truthy=tag=>tag[0]==='ref'||Boolean(native(tag));
@@ -133,8 +133,9 @@ export function canonicalAlgorithmV8(core){validateAlgorithmV8(core);return stab
 export function validateDensePrimitiveArray(tag,{heap=new Map()}={}){
   value(tag);if(tag[0]!=='ref')fail('dense array identity required');
   const {node,properties}=algorithmHeapNode(heap,tag[1]),length=properties.get('length');
-  if(node.kind!=='array'||length?.[0]!=='num'||!Number.isSafeInteger(length[1])||
-    length[1]<0||length[1]>ALGORITHM_V8_LIMITS.items||properties.size!==length[1]+1)fail('dense array bound, holes or properties');
+  if(node.kind!=='array'||length?.[0]!=='num'||!Number.isSafeInteger(length[1])||length[1]<0)fail('dense array shape');
+  if(length[1]>ALGORITHM_V8_LIMITS.items)fail('dense array item budget');
+  if(properties.size!==length[1]+1)fail('dense array holes or extra properties');
   return Array.from({length:length[1]},(_,i)=>{
     const item=properties.get(String(i));if(!item||item[0]==='ref')fail('dense primitive elements required');
     value(item);return item;
@@ -147,6 +148,9 @@ function read(map,key){
 }
 export function evaluateTermV8(term,{inputs=new Map(),values=new Map(),heap=new Map(),
   allocator={prefix:'v8',next:0},scopes=[],budget={remaining:ALGORITHM_V8_LIMITS.work}}={}){
+  array(scopes,'lexical scopes');for(const scope of scopes){array(scope,'lexical values');scope.forEach(tag=>value(tag));}
+  fields(budget,['remaining'],'work budget');
+  if(!Number.isSafeInteger(budget.remaining)||budget.remaining<0||budget.remaining>ALGORITHM_V8_LIMITS.work)fail('semantic work budget');
   validateTermV8(term,{scopes:scopes.map(row=>row.length)});
   if(types.isProxy(heap)||!(heap instanceof Map))fail('mutable ordinary Map heap required');
   fields(allocator,['prefix','next'],'allocator');id(allocator.prefix);

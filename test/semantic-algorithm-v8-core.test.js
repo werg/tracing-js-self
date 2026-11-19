@@ -93,3 +93,15 @@ test('v8 allocated graphs use ECMAScript own-key order without reordering value 
   assert.deepEqual(object.properties.slice(0,2).map(p=>p.value),[['ref','v8:1'],['ref','v8:0']],
     'values were evaluated in source order before integer-key enumeration');
 });
+
+test('v8 lexical environments, work budgets and graph identities fail closed without observing hooks',()=>{
+  let hooks=0;
+  const scope=[scalar(3)];Object.defineProperty(scope,'0',{enumerable:true,get(){hooks++;return scalar(3);}});
+  assert.throws(()=>evaluateTermV8({op:'bound',depth:0,index:0},{scopes:[scope]}));
+  const budget={};Object.defineProperty(budget,'remaining',{enumerable:true,get(){hooks++;return 10;}});
+  assert.throws(()=>evaluateTermV8(lit(3),{budget}));
+  assert.throws(()=>evaluateTermV8(lit(3),{budget:{remaining:Infinity}}),/budget/);
+  const duplicate=graph([1]);duplicate.objects.push(structuredClone(duplicate.objects[0]));
+  assert.throws(()=>evaluateAlgorithmV8(core(input),null,{inputGraph:duplicate}),/duplicate input graph identity/);
+  assert.equal(hooks,0);
+});

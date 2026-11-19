@@ -4,19 +4,29 @@ import {parse} from 'acorn';
 import {createHash} from 'node:crypto';
 import {encodeAlgorithmScalar as scalar,BINARY_OPERATIONS,UNARY_OPERATIONS} from './operations.js';
 import {lowerJavaScript,AlgorithmLoweringError} from './lower-js.js';
-import {ALGORITHM_V8_SCHEMA,ALGORITHM_V8_PROFILE,validateAlgorithmV8,ALGORITHM_V8_INPUT_TYPES} from './algorithm-v8.js';
+import {ALGORITHM_V8_SCHEMA,ALGORITHM_V8_PROFILE,validateAlgorithmV8,ALGORITHM_V8_INPUT_TYPES,ALGORITHM_V8_LIMITS} from './algorithm-v8.js';
 
 const literal=value=>({term:{op:'literal',value:scalar(value)},type:value===null?'null':typeof value,total:true});
 const op=(name,...args)=>({op:name,args});
 const named=(node,name)=>node?.type==='Identifier'&&node.name===name;
 const statements=node=>node?.type==='BlockStatement'?node.body:node?[node]:[];
 const span=node=>({start:node.start,end:node.end});
-const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+function equal(a,b,pairs=new Map()){
+  if(a===b)return true;if(!a||!b||typeof a!=='object'||typeof b!=='object')return false;
+  if(pairs.get(a)?.has(b))return true;
+  if(!pairs.has(a))pairs.set(a,new Set());pairs.get(a).add(b);
+  const keys=Object.keys(a);return keys.length===Object.keys(b).length&&keys.every(key=>Object.hasOwn(b,key)&&equal(a[key],b[key],pairs));
+}
 const UNINITIALIZED=Object.freeze({uninitialized:true});
-const fail=(message,node)=>{throw new AlgorithmLoweringError('v8 '+message,node);};
+const fail=(message,node)=>{const error=new AlgorithmLoweringError('v8 '+message,node);
+  if(/budget|limit|excessive/.test(message))error.category='resource_limited.algorithm-v8';throw error;};
 const ensure=(condition,message,node)=>{if(!condition)fail(message,node);};
 const scalarValue=(value,node)=>{ensure(value&&!value.fn&&!value.blocked&&(!value.induction||value.term),'scalar/data value required',node);return value;};
-const allocated=term=>term&&typeof term==='object'&&(['array','object'].includes(term.op)||term.op==='traverse'&&['map','filter','scan'].includes(term.mode)||Object.values(term).some(child=>Array.isArray(child)?child.some(allocated):child&&typeof child==='object'&&allocated(child)));
+function allocated(term,seen=new Set()){
+  if(!term||typeof term!=='object'||seen.has(term))return false;seen.add(term);
+  return ['array','object'].includes(term.op)||term.op==='traverse'&&['map','filter','scan'].includes(term.mode)||
+    Object.values(term).some(child=>Array.isArray(child)?child.some(item=>allocated(item,seen)):allocated(child,seen));
+}
 function mayThrow(term){
   if(['input','ref','lexical','literal'].includes(term.op))return false;
   if(['get','project','traverse','fold_left'].includes(term.op))return true;
@@ -44,23 +54,25 @@ function patternNames(pattern){
   if(pattern.type==='RestElement')return patternNames(pattern.argument);
   fail('unsupported binding pattern',pattern);
 }
-function finalize(term,scopes=[]){
+function finalize(term,scopes=[],budget={remaining:ALGORITHM_V8_LIMITS.nodes}){
+  if(--budget.remaining<0)fail('composed term budget exceeded');
+  const next=(value,environment=scopes)=>finalize(value,environment,budget);
   if(term.op==='lexical'){
     for(let depth=0;depth<scopes.length;depth++){
       const index=scopes[depth].indexOf(term.token);if(index!==-1)return {op:'bound',depth,index};
     }
     fail('unresolved lexical identity');
   }
-  if(term.op==='let')return {op:'let',bindings:term.bindings.map((binding,i)=>finalize(binding,[term.names.slice(0,i),...scopes])),
-    body:finalize(term.body,[term.names,...scopes])};
-  if(term.op==='traverse')return {...term,input:finalize(term.input,scopes),initial:term.initial===null?null:finalize(term.initial,scopes),
-    callback:{arity:term.callback.params.length,body:finalize(term.callback.body,[term.callback.params,...scopes])}};
-  if(term.op==='project')return {...term,object:finalize(term.object,scopes)};
-  if(term.op==='get')return {...term,object:finalize(term.object,scopes),key:finalize(term.key,scopes)};
-  if(term.op==='array')return {...term,items:term.items.map(child=>finalize(child,scopes))};
-  if(term.op==='object')return {...term,properties:term.properties.map(p=>({key:p.key,value:finalize(p.value,scopes)}))};
-  if(term.op==='fold_left')return {...term,input:finalize(term.input,scopes),initial:finalize(term.initial,scopes)};
-  return term.args?{...term,args:term.args.map(child=>finalize(child,scopes))}:{...term};
+  if(term.op==='let')return {op:'let',bindings:term.bindings.map((binding,i)=>next(binding,[term.names.slice(0,i),...scopes])),
+    body:next(term.body,[term.names,...scopes])};
+  if(term.op==='traverse')return {...term,input:next(term.input),initial:term.initial===null?null:next(term.initial),
+    callback:{arity:term.callback.params.length,body:next(term.callback.body,[term.callback.params,...scopes])}};
+  if(term.op==='project')return {...term,object:next(term.object)};
+  if(term.op==='get')return {...term,object:next(term.object),key:next(term.key)};
+  if(term.op==='array')return {...term,items:term.items.map(child=>next(child))};
+  if(term.op==='object')return {...term,properties:term.properties.map(p=>({key:p.key,value:next(p.value)}))};
+  if(term.op==='fold_left')return {...term,input:next(term.input),initial:next(term.initial)};
+  return term.args?{...term,args:term.args.map(child=>next(child))}:{...term};
 }
 function wrap(context,term){
   if(!context.bindings.length)return term;
@@ -72,6 +84,7 @@ function wrap(context,term){
 export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=1024,maxHelperDepth=8}={}){
   ensure(typeof source==='string'&&typeof entry==='string','source and explicit named entry required');
   ensure(Number.isSafeInteger(maxOperations)&&maxOperations>0&&maxOperations<=4096,'operation budget');
+  ensure(Number.isSafeInteger(maxHelperDepth)&&maxHelperDepth>0&&maxHelperDepth<=16,'helper depth budget');
   let ast;try{ast=parse(source,{ecmaVersion:'latest',sourceType:'script'});}catch(error){fail('parse: '+error.message);}
   ensure(ast.body[0]?.directive==='use strict','explicit strict source required',ast);
   ensure(ast.body.every(n=>n.type==='FunctionDeclaration'||n.directive==='use strict'),'top-level effects require regions',ast);
@@ -89,10 +102,10 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
   const context=extra=>({bindings:[],names:[],stack:[],conditional:false,scopeMap:new Map(),...extra});
   const pin=(value,ctx,node)=>{
     if(value.fn||['literal','input','ref','lexical'].includes(value.term.op))return value;
-    if(!allocated(value.term)&&(value.total===true||value.total!==false&&!mayThrow(value.term)))return value;
+    if((value.cost??0)<=64&&!allocated(value.term)&&(value.total===true||value.total!==false&&!mayThrow(value.term)))return value;
     ensure(!ctx.conditional,'allocating or potentially throwing branch work requires a local detailed boundary',node);
     const name=token();ctx.names.push(name);ctx.bindings.push(value.term);
-    return {...value,term:{op:'lexical',token:name}};
+    return {...value,term:{op:'lexical',token:name},cost:1};
   };
   function constrain(value,type,node){
     if(value.term?.op==='input'){
@@ -120,7 +133,7 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
     }else if(['===','!==','==','!=','<','<=','>','>='].includes(operator))type='boolean';
     else if(operator==='+'&&args.some(x=>x.type==='string'))type='string';
     else {args.forEach(x=>number(x,node));type='number';}
-    sites.push({kind:'operation',operation:name,site:span(node)});return {term:op(name,...args.map(x=>x.term)),type,total:args.every(x=>x.total!==false)&&args.every(x=>!['scalar','object','array'].includes(x.type))};
+    sites.push({kind:'operation',operation:name,site:span(node)});return {term:op(name,...args.map(x=>x.term)),type,cost:1+args.reduce((sum,value)=>sum+(value.cost??1),0),total:args.every(x=>x.total!==false)&&args.every(x=>!['scalar','object','array'].includes(x.type))};
   }
   function select(test,left,right){return {term:equal(left.term,right.term)?left.term:op('select',test.term,left.term,right.term),
     type:left.type===right.type?left.type:'scalar',total:test.total!==false&&left.total!==false&&right.total!==false};}
@@ -130,8 +143,9 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
     for(const binding of bindings(scope)){
       const l=left.scopeMap.get(findScope(scope,binding))?.bindings.get(binding.name)?.value??binding.value,
         r=right.scopeMap.get(findScope(scope,binding))?.bindings.get(binding.name)?.value??binding.value;
-      if(l===r||equal(l,r)){binding.value=l;continue;}
+      if(l===r){binding.value=l;continue;}
       ensure(!l?.fn&&!r?.fn&&!l?.uninitialized&&!r?.uninitialized,'branch join of unavailable/function identity',node);
+      if(equal(l,r)){binding.value=l;continue;}
       scalarValue(l,node);scalarValue(r,node);binding.value=select(test,l,r);
     }
   }
@@ -167,8 +181,16 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
     }
     if(pattern.type==='ArrayPattern'){
       constrain(value,'dense-primitive-array',pattern);
-      pattern.elements.forEach((element,index)=>{if(element){ensure(element.type!=='RestElement','array rest needs a sliced allocation',element);
-        bind(element,readProperty(value,literal(String(index)),element),scope,ctx,{declare,mutable});}});return;
+      pattern.elements.forEach((element,index)=>{if(element){
+        if(element.type==='RestElement'){
+          ensure(index===pattern.elements.length-1,'array rest must be last',element);
+          const params=Array.from({length:3},token),rest={term:{op:'traverse',mode:'filter',input:value.term,initial:null,
+            callback:{params,body:op('greater_equal',{op:'lexical',token:params[1]},literal(index).term)},
+            profile:'dense-primitive-array/1',order:'ascending'},type:'array'};
+          bind(element.argument,rest,scope,ctx,{declare,mutable});
+          rule('dense-array-rest-binding',element,['Dense primitive iteration without hooks.','Consume in ascending order and allocate a distinct tail array.']);
+        }else bind(element,readProperty(value,literal(String(index)),element),scope,ctx,{declare,mutable});
+      }});return;
     }
     fail('unsupported binding pattern',pattern);
   }
@@ -487,7 +509,8 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
     const result=run(fn.body.body,rootScope,rootCtx);ensure(result?.returned,'explicit completion required',fn);
     const term=finalize(wrap(rootCtx,result.value.term));
     const core={schema:ALGORITHM_V8_SCHEMA,profile:ALGORITHM_V8_PROFILE,inputs,
-      steps:[{kind:'compute',id:'v0',term},{kind:'return',value:{op:'ref',id:'v0'}}]};validateAlgorithmV8(core);
+      steps:[{kind:'compute',id:'v0',term},{kind:'return',value:{op:'ref',id:'v0'}}]};
+    try{validateAlgorithmV8(core);}catch(error){fail('normalized core: '+error.message,fn);}
     return {core,provenance:{schema:'semantic-javascript-lowering/2',sourceDigest:createHash('sha256').update(source).digest('hex'),
       entry,region:span(fn),rules,sourceSites:sites,inputGuards:inputs.map(x=>({...x})),effectBoundaries:[],
       liveInputs:inputs.map(x=>x.id),liveOutputs:['v0'],budget:{visitedExpressions:nodes,helperExpansions:helpers,maxOperations,maxHelperDepth},
