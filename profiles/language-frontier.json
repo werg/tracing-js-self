@@ -169,6 +169,17 @@
       "detailed": "passed",
       "native": "untested",
       "tests": "test/training-iterator-protocol.test.js"
+    },
+    {
+      "id": "synchronous-generator-continuations",
+      "domain": "ordinary generator declarations/expressions/methods; invocation-time parameters, retained yield operands/locals/captures, next(value)/return/throw, reentrancy, yielding finally cleanup and for-of close; no async generators or yield delegation",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Generator identity, suspended cursor and completion obligations require a new public continuation representation; existing detailed contracts lack them",
+      "tests": "test/training-generators.test.js"
     }
   ]
 }

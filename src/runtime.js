@@ -42,7 +42,7 @@ const opNames = {
   CONST:'literal.materialize', GET:'binding.read',
   DEFAULT_GUARD:'binding.default.guard', PARAM_INIT:'binding.initialize', ENTER_BODY_ENV:'environment.enter', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
-  CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
+  CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', GENERATOR_START:'call.return', YIELD:'continuation.yield', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
   GET_PROP:'property.read', GET_METHOD:'property.read', SPREAD:'property.read', PUT_PROP:'property.write', DEFINE_LITERAL_PROP:'property.write', COPY_KEYS:'array.allocate', HAS_ENUMERABLE_OWN:'property.read', REQUIRE_COERCIBLE:'property.read', REQUIRE_OBJECT:'property.read', ITERATOR_ARRAY_GUARD:'property.read', PENDING_THROW:'completion.pending.read', APPEND_ARRAY:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
   LEAVE_SCOPE:'environment.leave', CLONE_LOOP_ENV:'environment.iteration', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
   TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
@@ -296,6 +296,12 @@ export class Runtime {
         draft.envs[envId].bindings[name]={kind:'var',initialized:true,
           token:token(U),version:0};
     draft.frames[id]={id,codeId,pc:0,stack:[],envId,callerFrameId,asyncPromiseId,status:'running',blockedOn:null,awaiting:null,operationId:null,pendingCoercionThrow:null,handlers:[],loops:[],thisValue,version:0};
+    if(this.programs[codeId].generator){
+      const generatorId=this.next(draft,'obj');
+      draft.heap[generatorId]={id:generatorId,kind:'generator',frameId:id,state:'initializing',
+        properties:{},propertyVersions:{},shapeVersion:0,version:0};
+      draft.frames[id].generatorId=generatorId;
+    }
     return id;
   }
   start(source) {
@@ -336,6 +342,7 @@ export class Runtime {
       throw new SyntaxError('Duplicate function declaration');
     const selected=definitions.find(x=>x.arg.name===functionName);
     if(!selected)throw new ReferenceError('Unknown entry function');
+    if(this.programs[selected.arg.codeId].generator)throw new SyntaxError('Generator entry requires an ordinary consumer wrapper');
     const state=this.state, global=this.newEnv(state);
     state.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
     state.envs[global].bindings.NaN={kind:'const',initialized:true,token:token(['num','NaN']),version:0};
@@ -420,6 +427,29 @@ export class Runtime {
   completeFrame(draft,frame,value,origin) {
     frame.status='completed';
     frame.completion={type:'return',value:token(value,origin)};
+    if(frame.generatorId){
+      draft.heap[frame.generatorId].state='completed';
+      value=this.iteratorResult(draft,value,true,origin);
+    }
+    this.deliverFrameValue(draft,frame,value,origin);
+  }
+  iteratorResult(draft,value,done,origin){
+    const id=this.next(draft,'obj');
+    draft.heap[id]={id,kind:'object',properties:{value:token(value,origin),done:token(['bool',done],origin)},
+      propertyVersions:{value:1,done:1},shapeVersion:2,version:0};
+    return ['ref',id];
+  }
+  suspendGenerator(draft,frame,value,origin,initial=false){
+    const generator=draft.heap[frame.generatorId];
+    if(generator?.kind!=='generator')throw new Error('Yield outside owned generator frame');
+    generator.state=initial?'suspendedStart':'suspendedYield';
+    frame.status='suspended-generator';
+    const output=initial?['ref',generator.id]:this.iteratorResult(draft,value,false,origin);
+    frame.completion={type:'return',value:token(output,origin)};
+    this.deliverFrameValue(draft,frame,output,origin);frame.callerFrameId=null;
+    return output;
+  }
+  deliverFrameValue(draft,frame,value,origin){
     if(frame.asyncPromiseId){this.resolvePromise(draft,frame.asyncPromiseId,value,origin);value=['promise',frame.asyncPromiseId];}
     if(frame.reactionPromiseId)this.resolvePromise(draft,frame.reactionPromiseId,value,origin);
     if(frame.callerFrameId){
@@ -741,6 +771,7 @@ export class Runtime {
       this.completeFrame(draft,frame,completion.value.value,completion.value.origin);
     }else if(completion.type==='throw'){
       frame.status='thrown';frame.completion=copy(completion);
+      if(frame.generatorId)draft.heap[frame.generatorId].state='completed';
       if(frame.thenableJob&&!frame.asyncPromiseId){
          const p=draft.promises[frame.thenableJob.promiseId];
          if(p?.status==='pending'&&!p.thenableLocked){
@@ -803,7 +834,7 @@ export class Runtime {
           return id;
         },
         takeReturn:waitingId=>{
-          if(s.frames[waitingId]?.status!=='completed'||!f.stack.length)
+          if(!['completed','suspended-generator'].includes(s.frames[waitingId]?.status)||!f.stack.length)
             throw new Error('Missing owned conversion call result');
           return f.stack.pop();
         },
@@ -1337,9 +1368,19 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
              if(!obj)throw new ReferenceError('Unknown guest identity');
              if(obj.declaredError&&!['name','message'].includes(property))
                throw new TypeError('Declared error exposes only name and message');
+             if(obj.kind==='generator'){
+               if(['next','return','throw'].includes(property))v=['builtinfn','Generator.'+property];
+               else if(property===symbolPropertyKey('well-known:iterator'))v=['builtinfn','Generator.identity'];
+               else if(property===symbolPropertyKey('well-known:toStringTag'))v=['str','Generator'];
+               else if(['constructor','__proto__','toString','valueOf'].includes(property))throw new TypeError('Unmodeled generator prototype property');
+               else v=U;
+               return {...operands(base,key),...result(op==='GET_METHOD'?['method',v,base.value]:v)};
+             }
              if(obj.kind==='iterator'){
                if(property==='next')v=['builtinfn','Iterator.next'];
                else if(property===symbolPropertyKey('well-known:iterator'))v=['builtinfn','Iterator.identity'];
+               else if(property===symbolPropertyKey('well-known:toStringTag'))v=['str',obj.iterationKind==='string'?'String Iterator':'Array Iterator'];
+               else if(['constructor','__proto__','toString','valueOf'].includes(property))throw new TypeError('Unmodeled iterator prototype property');
                else v=U;
                return {...operands(base,key),...result(op==='GET_METHOD'?['method',v,base.value]:v)};
              }
@@ -1619,6 +1660,32 @@ if(object.kind==='regexp'){
           const fn=pop();let callable=fn.value;
           const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
+          if(callable[0]==='builtinfn'&&callable[1].startsWith('Generator.')){
+            const generator=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+            if(generator?.kind!=='generator')guestFault('TypeError','Generator receiver has no owned continuation');
+            const method=callable[1].slice('Generator.'.length),sent=args[0]??token(U,eventId);
+            if(method==='identity')return {...operands(fn,...args),...result(receiver)};
+            if(['initializing','executing'].includes(generator.state))guestFault('TypeError','Generator is already running');
+            const target=s.frames[generator.frameId],initial=generator.state==='suspendedStart';
+            if(generator.state==='completed'||initial&&method!=='next'){
+              generator.state='completed';target.status='completed';
+              if(method==='throw'){
+                const completion={type:'throw',value:sent};
+                this.routeCompletion(s,f,completion,eventId);return {...operands(fn,...args),completion};
+              }
+              return {...operands(fn,...args),...result(this.iteratorResult(s,method==='return'?sent.value:U,true,eventId))};
+            }
+            if(!['suspendedStart','suspendedYield'].includes(generator.state))throw new Error('Invalid generator suspension state');
+            generator.state='executing';target.status='running';target.callerFrameId=f.id;delete target.completion;
+            s.control.a0.activeFrameId=target.id;
+            const completion=method==='return'?{type:'return',value:sent}:method==='throw'?{type:'throw',value:sent}:null;
+            if(completion)this.routeCompletion(s,target,completion,eventId);
+            else if(!initial)this.stackPush(target,sent.value,eventId);
+            if(method==='return'&&s.control.a0.activeFrameId===f.id&&target.status==='completed')
+              return {...operands(fn,...args),result:f.stack.at(-1).value};
+            return {...operands(fn,...args),causes:[{kind:'invocation',frameId:target.id}],
+              ...(method==='throw'?{completion}:{})};
+          }
           if(callable[0]==='builtinfn'&&['Array.prototype.values','Array.prototype.keys','Array.prototype.entries','String.prototype.iterator'].includes(callable[1])){
             const string=callable[1]==='String.prototype.iterator';
             if(string?receiver[0]!=='str':receiver[0]!=='ref'||s.heap[receiver[1]]?.kind!=='array')
@@ -2603,6 +2670,13 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
            if(v[0]!=='promise')this.resolvePromise(s,promiseId,v,a.origin);
           f.awaiting=promiseId;this.observePromise(s,promiseId,{kind:'await',frameId:f.id});
           this.suspendAsync(s,f);return {...operands(a),causes:[{kind:'promise',promiseId}]};
+        }
+        case 'GENERATOR_START':{
+          const output=this.suspendGenerator(s,f,U,eventId,true);return {result:output};
+        }
+        case 'YIELD':{
+          const value=pop(),output=this.suspendGenerator(s,f,value.value,eventId);
+          return {...operands(value),result:output};
         }
         case 'RETURN':{const v=pop();this.routeCompletion(s,f,{type:'return',value:v},eventId);return {...operands(v),result:v.value};}
         case 'THROW':{const v=pop(),completion={type:'throw',value:v};this.routeCompletion(s,f,completion,eventId);return {...operands(v),completion};}

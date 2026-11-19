@@ -183,7 +183,7 @@ export function parse(source) {
 let site=0;
 export function compile(ast) {
   site=0;const programs={};let next=0;
-  function bodyProgram(body,params=[],async=false,defaults=[],restIndex=-1,inheritedStrict=false,parameterSites=[],parameterPatterns=[]) {
+  function bodyProgram(body,params=[],async=false,defaults=[],restIndex=-1,inheritedStrict=false,parameterSites=[],parameterPatterns=[],generator=false) {
     // Strictness belongs to the lexical code, not to the caller. Only an
     // unescaped, unparenthesized string in the directive prologue enables it;
     // nested functions (including arrows/default initializers) inherit it.
@@ -205,7 +205,7 @@ export function compile(ast) {
         for(const d of declarations)if(d.kind!=='var')emit('DECLARE',{name:d.id,kind:d.kind},d);
       }
       for(const n of nodes)if(n.type==='Function'){
-        const fid=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites,n.parameterPatterns);
+        const fid=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites,n.parameterPatterns,n.generator);
         emit('DEF_FN',{name:n.id,codeId:fid,params:n.params,async:n.async},n);
       }
     }
@@ -227,10 +227,11 @@ export function compile(ast) {
           for(const a of n.args)expr(a);
           emit('CONSTRUCT',n.args.length,n);break;
         case 'FunctionExpr':{
-          const codeId=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites,n.parameterPatterns);
+          const codeId=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites,n.parameterPatterns,n.generator);
           emit('MAKE_FUNCTION',{codeId,arrow:n.arrow,async:n.async,...(n.name?{name:n.name}:{})},n);
           break;
         }
+        case 'Yield':expr(n.argument);emit('YIELD',null,n);break;
         case 'Template':
           for(const expression of n.expressions)expr(expression);
           emit('TEMPLATE',{quasis:n.quasis,count:n.expressions.length},n);
@@ -783,9 +784,10 @@ export function compile(ast) {
       });
       emit('ENTER_BODY_ENV',null,body[0]);
     }
+    if(generator)emit('GENERATOR_START',null,ast);
     statements(body);
     emit('CONST',{value:['undefined']},ast);emit('RETURN',null,ast);
-    programs[id]={id,params,restIndex,async,strict,parameterExpressions,
+    programs[id]={id,params,restIndex,async,generator:generator===true,strict,parameterExpressions,
       patternNames:parameterPatterns.flatMap(p=>(p?.bindings??[]).map(b=>b.name)),varNames:collectVarBindings(body),instructions};return id;
   }
   const entry=bodyProgram(ast.body);

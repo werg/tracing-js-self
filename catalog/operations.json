@@ -293,6 +293,11 @@
       "operationId": "completion.pending.read",
       "version": 1,
       "kind": "algorithm"
+    },
+    {
+      "operationId": "continuation.yield",
+      "version": 1,
+      "kind": "algorithm"
     }
   ]
 }

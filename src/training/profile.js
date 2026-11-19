@@ -118,14 +118,13 @@ export function parseTraining(source) {
       case 'Identifier':return {...loc,type:'Identifier',name:n.name};
       case 'ThisExpression':return {...loc,type:'This'};
       case 'ArrowFunctionExpression':case 'FunctionExpression':{
-        if(n.generator)
-          reject(n,'function expression parameters or mode');
+        if(n.generator&&n.async)reject(n,'async generator mode');
         const parsedParams=parameters(n);
         const body=n.body.type==='BlockStatement'?stmt(n.body):
           {...span(n.body),type:'Block',body:[
             {...span(n.body),type:'Return',argument:expr(n.body)}]};
         return {...loc,type:'FunctionExpr',
-          arrow:n.type==='ArrowFunctionExpression',async:n.async,
+          arrow:n.type==='ArrowFunctionExpression',async:n.async,generator:n.generator===true,
           name:n.id?.name??null,
           params:parsedParams.map(p=>p.name),defaults:parsedParams.map(p=>p.default),
           parameterSites:parsedParams.map(span),
@@ -139,6 +138,9 @@ export function parseTraining(source) {
           reject(n,'unhandled template literal escape');
         return {...loc,type:'Template',quasis:n.quasis.map(q=>q.value.cooked),
           expressions:n.expressions.map(expr)};
+      case 'YieldExpression':
+        if(n.delegate)reject(n,'yield delegation requires the delegated generator profile');
+        return {...loc,type:'Yield',argument:n.argument?expr(n.argument):{...loc,type:'Literal',value:['undefined']}};
       case 'AwaitExpression':
         return {...loc,type:'Await',argument:expr(n.argument)};
       case 'UnaryExpression':
@@ -252,14 +254,14 @@ export function parseTraining(source) {
         return declarations.length===1?declarations[0]:{...loc,type:'VariableGroup',declarations};
       }
       case 'FunctionDeclaration':{
-        if(!n.id || n.generator)reject(n,'function form');
+        if(!n.id || n.generator&&n.async)reject(n,'function form');
         const parsedParams=parameters(n);
         return {...loc,type:'Function',id:n.id.name,
           params:parsedParams.map(x=>x.name),defaults:parsedParams.map(x=>x.default),
           parameterSites:parsedParams.map(span),
           parameterPatterns:parsedParams.map(p=>p.pattern?{pattern:p.pattern,bindings:p.bindings}:null),
           parameterNames:parsedParams.flatMap(p=>[p.name,...(p.bindings??[]).map(b=>b.name)]),
-          restIndex:parsedParams.findIndex(p=>p.rest),async:n.async,body:stmt(n.body)};
+          restIndex:parsedParams.findIndex(p=>p.rest),async:n.async,generator:n.generator===true,body:stmt(n.body)};
       }
       case 'ReturnStatement':return {...loc,type:'Return',argument:n.argument?expr(n.argument):null};
       case 'ThrowStatement':
@@ -345,6 +347,7 @@ export function parseTraining(source) {
           if(!has(n.name,e))reject(n,'unbound identifier '+n.name);
           break;
         case 'Template':n.expressions.forEach(x=>value(x,e));break;
+        case 'Yield':value(n.argument,e);break;
         case 'FunctionExpr':scope(n.body.body,n.name?{names:new Set([n.name]),parent:e}:e,
           n.parameterNames??n.params,n.async,true,n.defaults,n.parameterPatterns);break;
         case 'Await':

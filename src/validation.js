@@ -1,3 +1,4 @@
+import {validateGeneratorState} from './generator-validation.js';
 // Read-only validation. Does not import the evaluator or call its mutation routines.
 import { readFileSync } from 'node:fs';
 import {validateSymbolReferences,validateSymbolAllocation} from './symbol-validation.js';
@@ -16,6 +17,8 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
   if(bundle.manifest?.schema!=='semantic-tracing-run/2')fail('Unknown run schema');
   const state=clone(bundle.initialState);
   validateSymbolReferences(state,state.heap,fail);
+  const generatorIds=new Set(Object.values(state.heap).filter(entity=>entity.kind==='generator').map(entity=>entity.id));
+  validateGeneratorState(state,bundle.programs,fail,generatorIds);
   const sites=new Set(bundle.sites.map(s=>s.siteId));
   const seen=new Set();
   const parameterTdzOrigins=new Map();
@@ -149,6 +152,8 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
       if(p.after && p.after.version!==(p.before?.version??0)+1)fail('Invalid record version',e.eventId);
       if(p.after===null)delete state[p.table][p.id];else state[p.table][p.id]=clone(p.after);
     }
+    for(const patch of e.stateChanges)if(patch.table==='heap'&&patch.after?.kind==='generator')generatorIds.add(patch.id);
+    validateGeneratorState(state,bundle.programs,message=>fail(message,e.eventId),generatorIds);
     validateSymbolReferences({operands:e.operands,result:e.result,changed:e.stateChanges.map(p=>p.after??p.record??null)},state.heap,message=>fail(message,e.eventId));
     if(job && !eq(state.control.a0.queue.slice(0,queuedBefore.length),queuedBefore))
       fail('Guest job FIFO order changed during entry',e.eventId);
@@ -163,6 +168,11 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
           if(hostThrow ? !eq(c.value,{value:delivered.value,origin:e.eventId}) :
              !eq(e.operands,[c.value?.value]) || !eq(e.operandOrigins,[c.value?.origin]))
             fail('Throw completion value/provenance mismatch',e.eventId);
+        }else if(e.operation==='call.enter'&&e.operands[0]?.[0]==='method'&&
+          eq(e.operands[0][1],['builtinfn','Generator.throw'])&&
+          state.heap[e.operands[0][2]?.[1]]?.kind==='generator'&&c.errorType===undefined){
+          const expected={value:e.operands[1]??['undefined'],origin:e.operandOrigins[1]??e.eventId};
+          if(!eq(c.value,expected))fail('Generator throw value/provenance mismatch',e.eventId);
         }else if(e.operation==='job.enter'){
           const p=state.promises[e.causes.find(x=>x.kind==='promise')?.promiseId];
           if(p?.status!=='rejected'||!eq(c.value,p.value)||
