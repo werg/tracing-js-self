@@ -12,16 +12,25 @@ export const CONSTRUCTION_RECORD_FIELDS=Object.freeze(Object.fromEntries(Object.
   'private.define':['kind','object','privateId','elementKind','value'],
   'private.get':['kind','object','privateId','result'],
   'private.set':['kind','object','privateId','value'],
-  'private.has':['kind','object','privateId','result']
+  'private.has':['kind','object','privateId','result'],
+  'construct.enter':['kind','id','child','callee','newTarget','arguments','receiver','mode','owner'],
+  'construct.body':['kind','id','child'],
+  'construct.finish':['kind','id','completion'],
+  'construct.target':['kind','invocation','result'],
+  'construct.this':['kind','invocation','result'],
+  'super.select':['kind','owner','callee'],
+  'super.bind':['kind','owner','receiver','child'],
+  'super.finish':['kind','owner','result']
 }).map(([kind,fields])=>[kind,Object.freeze(fields)])));
 export const CONSTRUCTION_STATE_V8_FIELDS=Object.freeze(['schema','privateNames','frames','lastCompletion']);
 export const CALLABLE_STATE_V8_FIELDS=Object.freeze(['constructorKind','classConstructor','homeObject','instanceInitializer','staticInitializer']);
+export const CONSTRUCTION_FRAME_V8_FIELDS=Object.freeze(['id','parent','bodyInvocation','activeChild','callee','newTarget','arguments','receiver','initialized','phase','superParent','selectedSuper']);
 const id=value=>{if(typeof value!=='string'||!value||value.length>256)throw new TypeError('Construction identity must be a bounded string');};
 const ref=(value,validate)=>{validate(value);if(value[0]!=='ref')throw new TypeError('Construction requires an owned reference');};
 export function validateConstructionRecordV8(record,{value:validateValue}){
   const fields=CONSTRUCTION_RECORD_FIELDS[record?.kind];if(!fields)return false;
   assertAlgorithmFields(record,fields,'construction protocol record');
-  for(const field of ['object','id','owner','privateId'])if(Object.hasOwn(record,field))id(record[field]);
+  for(const field of ['object','id','owner','privateId','child','invocation'])if(Object.hasOwn(record,field)&&record[field]!==null)id(record[field]);
   if(record.kind==='callable.define'){
     if(![null,'base','derived'].includes(record.constructorKind)||typeof record.classConstructor!=='boolean'||
        record.classConstructor&&record.constructorKind===null||!record.classConstructor&&record.constructorKind==='derived')
@@ -40,7 +49,17 @@ export function validateConstructionRecordV8(record,{value:validateValue}){
     if(record.elementKind==='method')ref(record.value,validateValue);
   }else if(record.kind==='private.has'){
     if(typeof record.result!=='boolean')throw new TypeError('Invalid private brand test');
-  }else validateValue(record.kind==='private.get'?record.result:record.value);
+  }else if(record.kind==='construct.enter'){
+    ref(record.callee,validateValue);ref(record.newTarget,validateValue);validateValue(record.receiver);
+    if(!['ref','undefined'].includes(record.receiver[0])||!['ordinary','super'].includes(record.mode)||
+       (record.mode==='super')!==(record.owner!==null))throw new TypeError('Invalid constructor entry linkage');
+    assertAlgorithmDataArray(record.arguments,'constructor arguments');if(record.arguments.length>4096)throw new TypeError('Constructor argument bound');record.arguments.forEach(validateValue);
+  }else if(record.kind==='construct.finish'){
+    assertAlgorithmFields(record.completion,['kind','value'],'constructor completion');
+    if(!['normal','throw'].includes(record.completion.kind))throw new TypeError('Constructor completion kind');validateValue(record.completion.value);
+  }else if(record.kind==='super.select')validateValue(record.callee);
+  else if(record.kind==='super.bind')ref(record.receiver,validateValue);
+  else if(record.kind!=='construct.body')validateValue(record.kind==='private.set'?record.value:record.result);
   return true;
 }
 export function createConstructionStateV8(){return {schema:CONSTRUCTION_STATE_V8_SCHEMA,privateNames:[],frames:[],lastCompletion:null};}
@@ -49,10 +68,127 @@ function callable(controller,object,api){const node=api.heapNode(controller,obje
 function metadata(controller,object,api){const node=callable(controller,object,api);api.require(node.callable,'callable capability must be declared');return node.callable;}
 function privateName(controller,id,api){const name=state(controller,api).privateNames.find(row=>row.id===id);api.require(name,'undeclared private identity');return name;}
 function descriptor(value,attributes={}){return {kind:'data',value,writable:true,enumerable:false,configurable:true,...attributes};}
+function frame(controller,id,api){const entry=state(controller,api).frames.find(row=>row.id===id);api.require(entry,'unknown construction continuation');return entry;}
+function invokeConstructorBody(controller,entry,child,api){
+  api.call(controller,{child,callee:entry.callee,receiver:entry.receiver,arguments:entry.arguments},{construction:true});
+  entry.phase='body';entry.activeChild=child;entry.bodyInvocation=child;
+}
+function returnedToParent(controller,entry,api){
+  api.require(controller.stack.at(-1)===entry.parent&&!controller.stack.includes(entry.activeChild)&&controller.lastReturn,
+    'constructor continuation has not returned to its caller');
+  return controller.lastReturn;
+}
+
+/** Prevent ordinary records from bypassing a pending constructor continuation. */
+export function assertConstructionNextV8(controller,record,api){
+  const construction=controller.protocol?.construction;if(!construction)return true;
+  const pending=construction.frames.findLast(row=>row.phase!=='complete'&&!controller.stack.includes(row.activeChild));
+  if(pending){
+    const expected=pending.phase==='initialize-base'?'construct.body':pending.phase==='initialize-derived'?'super.finish':'construct.finish';
+    api.require(record.kind===expected&&(record.id??record.owner)===pending.id,'pending constructor continuation requires '+expected);
+  }
+  const completed=construction.lastCompletion;
+  if(completed?.superParent!==null&&completed?.completion.kind==='normal')
+    api.require(record.kind==='super.bind'&&record.owner===completed.superParent,'super result must bind its derived receiver');
+  return true;
+}
+export function assertConstructionCallV8(controller,callee,{construction=false}={},api){
+  const info=api.heapNode(controller,callee[1]).callable;
+  api.require(!info?.classConstructor||construction,'class constructor cannot be called without construction');
+  return true;
+}
+
+function applyContinuation(controller,record,api){
+  const {require,copy,eq,known,heapNode,ownDescriptor}=api,construction=state(controller,api);
+  if(record.kind==='construct.enter'){
+    known(controller,record.callee);known(controller,record.newTarget);record.arguments.forEach(value=>known(controller,value));
+    const info=metadata(controller,record.callee[1],api),target=metadata(controller,record.newTarget[1],api);
+    require(info.constructorKind!==null&&target.constructorKind!==null,'construction requires constructible targets');
+    require(construction.frames.length<4096&&!construction.frames.some(row=>row.id===record.id),'construction identity or frame bound');
+    const parent=controller.stack.at(-1);require(parent,'construction requires an active caller');
+    if(record.mode==='super'){
+      const owner=frame(controller,record.owner,api);
+      require(owner.phase==='body'&&owner.bodyInvocation===parent&&metadata(controller,owner.callee[1],api).constructorKind==='derived',
+        'super call has no active derived owner');
+      require(eq(owner.selectedSuper,record.callee)&&eq(owner.newTarget,record.newTarget),'super constructor or newTarget changed after selection');
+      owner.selectedSuper=null;
+    }
+    const derived=info.constructorKind==='derived';
+    if(derived)require(record.receiver[0]==='undefined','derived this must begin uninitialized');
+    else{
+      require(record.receiver[0]==='ref','base constructor requires a fresh receiver identity');api.fresh(controller,record.receiver[1]);
+      const prototype=ownDescriptor(heapNode(controller,record.newTarget[1]),['str','prototype']);
+      require(!prototype||prototype.kind==='data','newTarget prototype accessor requires its own continuation');
+      let parent='ordinary';if(prototype?.value[0]==='ref'){
+        known(controller,prototype.value);require(['object','array'].includes(heapNode(controller,prototype.value[1]).kind),'unsupported exotic constructor prototype');parent=copy(prototype.value);
+      }
+      api.allocate(controller,{name:record.receiver[1],objectKind:'object',length:null,properties:[],code:null,captures:[],functionKind:null,lexicalReceiver:null});
+      heapNode(controller,record.receiver[1]).prototype=parent;
+    }
+    const entry={id:record.id,parent,bodyInvocation:null,activeChild:record.child,callee:copy(record.callee),newTarget:copy(record.newTarget),
+      arguments:copy(record.arguments),receiver:copy(record.receiver),initialized:!derived,phase:'body',superParent:record.owner,selectedSuper:null};
+    construction.frames.push(entry);construction.lastCompletion=null;
+    if(!derived&&info.instanceInitializer){
+      entry.phase='initialize-base';api.call(controller,{child:record.child,callee:info.instanceInitializer,receiver:entry.receiver,arguments:[]});
+    }else invokeConstructorBody(controller,entry,record.child,api);
+  }else if(record.kind==='construct.body'){
+    const entry=frame(controller,record.id,api),returned=returnedToParent(controller,entry,api);
+    require(entry.phase==='initialize-base'&&returned.kind==='return','base initializer must return before body entry');
+    invokeConstructorBody(controller,entry,record.child,api);
+  }else if(record.kind==='construct.finish'){
+    const entry=frame(controller,record.id,api),returned=returnedToParent(controller,entry,api);
+    require(entry.phase==='body','constructor body is not complete');known(controller,record.completion.value);
+    let expected;
+    if(returned.kind==='throw')expected={kind:'throw',value:returned.value};
+    else{
+      const kind=metadata(controller,entry.callee[1],api).constructorKind;
+      if(returned.value[0]==='ref')expected={kind:'normal',value:returned.value};
+      else{
+        require(kind==='base'||returned.value[0]==='undefined'&&entry.initialized,'derived primitive/uninitialized return requires a guest abrupt-construction record');
+        expected={kind:'normal',value:entry.receiver};
+      }
+    }
+    require(eq(expected,record.completion),'false constructor completion');entry.phase='complete';
+    construction.lastCompletion={id:entry.id,parent:entry.parent,superParent:entry.superParent,completion:copy(expected)};
+    controller.lastReturn={kind:expected.kind==='normal'?'return':'throw',value:copy(expected.value)};
+  }else if(record.kind==='construct.target'||record.kind==='construct.this'){
+    require(controller.stack.at(-1)===record.invocation,'receiver/newTarget read has wrong active invocation');
+    const entry=construction.frames.findLast(row=>row.bodyInvocation===record.invocation&&row.phase!=='complete');
+    const expected=record.kind==='construct.target'?entry?.newTarget??['undefined']:controller.receiver;
+    if(record.kind==='construct.this')require(!entry||entry.initialized,'uninitialized this requires a guest abrupt-construction record');
+    known(controller,record.result);require(eq(record.result,expected),'false receiver/newTarget read');
+  }else if(record.kind==='super.select'){
+    const owner=frame(controller,record.owner,api);
+    require(owner.phase==='body'&&owner.bodyInvocation===controller.stack.at(-1)&&metadata(controller,owner.callee[1],api).constructorKind==='derived'&&owner.selectedSuper===null,
+      'super selection requires an active derived constructor');
+    const parent=heapNode(controller,owner.callee[1]).prototype,expected=Array.isArray(parent)?parent:['undefined'];
+    known(controller,record.callee);require(eq(record.callee,expected),'false super constructor selection');owner.selectedSuper=copy(expected);
+  }else if(record.kind==='super.bind'){
+    const owner=frame(controller,record.owner,api),completed=construction.lastCompletion;
+    require(owner.phase==='body'&&owner.bodyInvocation===controller.stack.at(-1)&&!owner.initialized&&
+      completed?.superParent===owner.id&&completed.parent===owner.bodyInvocation&&completed.completion.kind==='normal'&&eq(completed.completion.value,record.receiver),
+      'super binding has no unique successful superclass result');
+    known(controller,record.receiver);owner.receiver=copy(record.receiver);owner.initialized=true;construction.lastCompletion=null;
+    controller.receiver=copy(record.receiver);controller.locals.set(owner.bodyInvocation+':this',copy(record.receiver));
+    const initializer=metadata(controller,owner.callee[1],api).instanceInitializer;
+    if(initializer){
+      require(record.child!==null,'derived initializer requires its invocation');owner.phase='initialize-derived';owner.activeChild=record.child;
+      api.call(controller,{child:record.child,callee:initializer,receiver:record.receiver,arguments:[]});
+    }else require(record.child===null,'class without derived fields cannot invent an initializer');
+  }else if(record.kind==='super.finish'){
+    const owner=frame(controller,record.owner,api);
+    require(owner.phase==='initialize-derived'&&controller.stack.at(-1)===owner.bodyInvocation&&!controller.stack.includes(owner.activeChild)&&controller.lastReturn?.kind==='return',
+      'derived initializer has not normally completed');
+    require(eq(record.result,owner.receiver)&&eq(controller.receiver,owner.receiver),'derived initialization lost its receiver');
+    owner.phase='body';owner.activeChild=owner.bodyInvocation;
+  }else return false;
+  return true;
+}
 
 /** Called only inside the shared machine's transactional staging boundary. */
 export function applyConstructionRecordV8(controller,record,api){
   if(!CONSTRUCTION_RECORD_FIELDS[record.kind])return false;
+  if(applyContinuation(controller,record,api))return true;
   const {require,copy,eq,known,heapNode,ownDescriptor,installDescriptor}=api,construction=state(controller,api);
   if(record.kind==='private.declare'){
     api.fresh(controller,record.id);require(!construction.privateNames.some(row=>row.id===record.id),'duplicate private identity');
@@ -131,7 +267,7 @@ export function restoreConstructionStateV8(controller,snapshot,api){
   assertAlgorithmFields(snapshot,CONSTRUCTION_STATE_V8_FIELDS,'construction protocol state');
   api.require(snapshot.schema===CONSTRUCTION_STATE_V8_SCHEMA,'construction state schema');
   assertAlgorithmDataArray(snapshot.privateNames,'private identities');assertAlgorithmDataArray(snapshot.frames,'construction frames');
-  api.require(snapshot.privateNames.length<=4096&&!snapshot.frames.length&&snapshot.lastCompletion===null,'construction state bound or unsupported active continuation');
+  api.require(snapshot.privateNames.length<=4096&&snapshot.frames.length<=4096,'construction state bound');
   const declared=new Map(),names=new Set();
   for(const row of snapshot.privateNames){
     assertAlgorithmFields(row,['id','owner','name'],'private identity');id(row.id);id(row.owner);id(row.name);
@@ -163,6 +299,39 @@ export function restoreConstructionStateV8(controller,snapshot,api){
         if(element.kind==='method')api.require(element.value[0]==='ref'&&element.version===1&&metadata(controller,element.value[1],api).constructorKind===null,'invalid private method storage');
       }
     }
+  }
+  const frames=new Map();
+  for(const entry of snapshot.frames){
+    assertAlgorithmFields(entry,CONSTRUCTION_FRAME_V8_FIELDS,'construction frame');
+    for(const key of ['id','parent','activeChild'])id(entry[key]);
+    if(entry.bodyInvocation!==null)id(entry.bodyInvocation);
+    api.require(!frames.has(entry.id),'duplicate construction continuation');frames.set(entry.id,entry);
+    api.known(controller,entry.callee);api.known(controller,entry.newTarget);api.known(controller,entry.receiver);
+    api.require(entry.callee[0]==='ref'&&entry.newTarget[0]==='ref','constructor identities must be references');
+    const info=metadata(controller,entry.callee[1],api);
+    api.require(info.constructorKind!==null&&metadata(controller,entry.newTarget[1],api).constructorKind!==null,'frame has nonconstructible target');
+    assertAlgorithmDataArray(entry.arguments,'retained constructor arguments');api.require(entry.arguments.length<=4096,'retained constructor argument bound');entry.arguments.forEach(value=>api.known(controller,value));
+    api.require(typeof entry.initialized==='boolean'&&['initialize-base','body','initialize-derived','complete'].includes(entry.phase),'receiver initialization phase');
+    api.require(entry.initialized?entry.receiver[0]==='ref':info.constructorKind==='derived'&&entry.receiver[0]==='undefined','invalid retained receiver');
+    api.require(controller.frameFunctions.has(entry.parent)&&controller.frameFunctions.has(entry.activeChild),'constructor invocation identity is absent');
+    if(entry.bodyInvocation!==null)api.require(controller.frameFunctions.get(entry.bodyInvocation)===controller.heap.get(entry.callee[1]).code,'constructor body identity mismatch');
+    if(entry.phase==='initialize-base')api.require(info.constructorKind==='base'&&entry.bodyInvocation===null&&info.instanceInitializer!==null,'invalid base initializer continuation');
+    if(entry.phase==='initialize-derived')api.require(info.constructorKind==='derived'&&entry.bodyInvocation!==null&&entry.initialized&&info.instanceInitializer!==null,'invalid derived initializer continuation');
+    if(entry.phase==='body')api.require(entry.bodyInvocation===entry.activeChild,'constructor active body mismatch');
+    if(entry.phase==='complete')api.require(!controller.stack.includes(entry.activeChild)&&!controller.stack.includes(entry.bodyInvocation),'completed constructor remains active');
+    else if(controller.stack.includes(entry.activeChild)){
+      const parent=entry.phase==='initialize-derived'?entry.bodyInvocation:entry.parent;
+      api.require(controller.stack.indexOf(entry.activeChild)===controller.stack.indexOf(parent)+1,'constructor continuation stack mismatch');
+    }
+    if(entry.selectedSuper!==null){api.known(controller,entry.selectedSuper);api.require(info.constructorKind==='derived'&&entry.phase==='body','super selection outside derived body');}
+  }
+  for(const entry of snapshot.frames)if(entry.superParent!==null){
+    const owner=frames.get(entry.superParent);api.require(owner&&owner.bodyInvocation===entry.parent&&api.eq(owner.newTarget,entry.newTarget),'super constructor owner/newTarget mismatch');
+  }
+  if(snapshot.lastCompletion!==null){
+    const completed=snapshot.lastCompletion;assertAlgorithmFields(completed,['id','parent','superParent','completion'],'last constructor completion');
+    const entry=frames.get(completed.id);api.require(entry?.phase==='complete'&&entry.parent===completed.parent&&entry.superParent===completed.superParent,'last constructor completion identity mismatch');
+    assertAlgorithmFields(completed.completion,['kind','value'],'last constructor result');api.require(['normal','throw'].includes(completed.completion.kind),'last constructor completion kind');api.known(controller,completed.completion.value);
   }
   return {valid:true,privateNames:declared.size};
 }

@@ -46,11 +46,54 @@ the production shared machine supplies its own transactional staging.
 
 This first component is not yet a source/native qualification claim. The shared
 codec/state dispatch hooks, source compiler handlers, independent source metadata
-audit and C++ consumer must all be wired and exercised. Constructor execution,
-super binding, retained constructor/newTarget context and initializer completion
-transitions are the next component slice. Private accessor continuations and
-guest brand-error completions also require their own checked operations; failed
+audit and C++ consumer must all be wired and exercised. Private accessor
+continuations and guest brand-error completions require their own checked operations; failed
 component preconditions are not substituted for guest exceptions.
+
+## Constructor continuation component
+
+`construct.enter` checks declared constructor capabilities, arguments, caller,
+newTarget, and receiver identity. A base constructor allocates its receiver from
+the actual newTarget's own prototype. A derived constructor starts with an
+uninitialized receiver. The operation enters either the base field initializer
+or the constructor body through the shared call scope. `construct.body` advances
+only after a base initializer has returned to its caller.
+
+`super.select` captures the live parent before argument effects.
+`construct.enter` in super mode must use that captured parent and the derived
+owner's newTarget. `super.bind` accepts only that completed superclass result,
+initializes the lexical receiver once, and runs the derived field initializer
+if present. `super.finish` proves that initialization returned with the same
+receiver before the super call can complete. These operations retain frame and
+call identities, never VM stack snapshots.
+
+`construct.finish` checks the raw body completion against the constructor kind.
+Base primitive returns select the allocated receiver; explicit object returns
+select that object. Derived undefined returns require initialized this. The
+normal result or the body's thrown value is then delivered to the parent.
+`construct.target` and `construct.this` validate reads from the active invocation.
+Ordinary nested calls and field initializers observe undefined newTarget.
+
+The construction state retains frames with `id`, `parent`, `bodyInvocation`,
+`activeChild`, `callee`, `newTarget`, `arguments`, `receiver`, `initialized`,
+`phase`, `superParent`, and `selectedSuper`. Phases are `initialize-base`, `body`,
+`initialize-derived`, or `complete`. The exact last constructor completion is
+kept for super binding. All identities, phase/stack relationships, capabilities,
+arguments and receiver states are checked on restoration.
+
+The shared machine must call `assertConstructionNextV8` before every transition
+so other records cannot skip a pending initializer/body/super continuation. Its
+ordinary call helper must call `assertConstructionCallV8`; only this component
+may enter a class constructor with the internal `{construction:true}` option.
+This option is never a generated public record field.
+
+The component tests cover actual-newTarget prototype selection, primitive return
+substitution, base and derived initializer ordering, retained arguments,
+checkpoint validation and rollback of false claims. Arrow lexical constructor
+contexts, abrupt initializer propagation, derived invalid-return guest errors
+and repeated-super guest errors remain explicit unsupported continuation
+profiles here; the owned runtime supports them separately. Until their public
+records exist, the source adapter must refuse those executions.
 
 Pinned semantics: [ECMAScript 2026 class evaluation](https://tc39.es/ecma262/2026/multipage/ecmascript-language-functions-and-classes.html#sec-runtime-semantics-classdefinitionevaluation)
 and [private element operations](https://tc39.es/ecma262/2026/multipage/abstract-operations.html#sec-privatefieldadd).
