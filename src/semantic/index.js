@@ -63,3 +63,9 @@ export {PROTOCOL_RECORD_V8_SCHEMA,PROTOCOL_RECORD_V8_FIELDS,encodeProtocolRecord
 export {PROTOCOL_STATE_V8_SCHEMA,PROTOCOL_STATE_V8_FIELDS,PROTOCOL_V8_LIMITS,createProtocolStateV8,
   applyProtocolRecordV8,snapshotProtocolStateV8,restoreProtocolStateV8,protocolReservedIdentitiesV8,
   assertProtocolDetailCompatible,protocolOrdinaryHeapViewV8} from './protocol-state-v8.js';
+export {PROTOCOL_SOURCE_ARTIFACT_V8_SCHEMA,PROTOCOL_REGION_EVIDENCE_V8_SCHEMA,
+  verifyProtocolRegionTrainingCase,projectProtocolRegionWitness,recheckProtocolRegionEvidence} from './protocol-source-v8.js';
+export {MEMORY_PROFILE_V8,MEMORY_RECORD_FIELDS,MEMORY_HEAP_FIELDS_V8} from './protocol-memory-v8.js';
+export {ITERATOR_PROFILE_V8,ITERATOR_RECORD_FIELDS,ITERATOR_HEAP_FIELDS} from './protocol-iterator-v8.js';
+export {CONSTRUCTION_STATE_V8_SCHEMA,CONSTRUCTION_RECORD_FIELDS,CONSTRUCTION_STATE_V8_FIELDS,
+  CALLABLE_STATE_V8_FIELDS,CONSTRUCTION_FRAME_V8_FIELDS} from './protocol-construction-v8.js';
