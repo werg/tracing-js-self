@@ -42,7 +42,7 @@ const opNames = {
   DEFAULT_GUARD:'binding.default.guard', PARAM_INIT:'binding.initialize', ENTER_BODY_ENV:'environment.enter', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
   CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
-  GET_PROP:'property.read', GET_METHOD:'property.read', SPREAD:'property.read', PUT_PROP:'property.write', APPEND_ARRAY:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
+  GET_PROP:'property.read', GET_METHOD:'property.read', SPREAD:'property.read', PUT_PROP:'property.write', DEFINE_LITERAL_PROP:'property.write', COPY_KEYS:'array.allocate', HAS_ENUMERABLE_OWN:'property.read', APPEND_ARRAY:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
   LEAVE_SCOPE:'environment.leave', CLONE_LOOP_ENV:'environment.iteration', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
   TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
   BIND_CATCH:'completion.catch.bind', END_FINALLY:'completion.finally.end',
@@ -165,10 +165,19 @@ function proxyRoute(heap,receiver,operation) {
     throw new TypeError('Unmodeled proxy target internal method');
   return {kind:'ordinary',target:['ref',obj.id],receiver};
 }
-function putOwn(obj,key,value,eventId) {
+function ownPropertyKeys(obj){
+  const present=key=>Object.hasOwn(obj.properties??{},key)||Object.hasOwn(obj.accessors??{},key);
+  const known=[...new Set([...(obj.propertyOrder??[]),...Object.keys(obj.properties??{}),...Object.keys(obj.accessors??{})])].filter(present);
+  return [...known.filter(arrayIndex).sort((a,b)=>Number(a)-Number(b)),...known.filter(key=>!arrayIndex(key))];
+}
+function enumerableOwn(obj,key){
+  return Object.hasOwn(obj.accessors??{},key)?obj.accessors[key].enumerable:
+    Object.hasOwn(obj.properties??{},key)&&!(obj.kind==='array'&&key==='length');
+}
+function putOwn(obj,key,value,eventId,{literal=false}={}) {
   if(obj.declaredError)
     throw new TypeError('Declared error mutation is outside the bounded error profile');
-  if (key === '__proto__') throw new TypeError('Prototype mutation is not implemented by the bounded profile');
+  if (key === '__proto__'&&!literal) throw new TypeError('Prototype mutation is not implemented by the bounded profile');
   if (obj.kind === 'array' && key === 'length') {
     if (value[0] !== 'num') throw new TypeError('Array length coercion is outside the profile');
     const length = decode(value);
@@ -186,6 +195,8 @@ function putOwn(obj,key,value,eventId) {
     return;
   }
   const existed = Object.hasOwn(obj.properties,key);
+  if(!existed&&!Object.hasOwn(obj.accessors??{},key))
+    (obj.propertyOrder??=Object.keys(obj.properties).concat(Object.keys(obj.accessors??{}))).push(key);
   Object.defineProperty(obj.properties,key,{value:token(value,eventId),enumerable:true,configurable:true,writable:true});
   obj.propertyVersions[key] = (Object.hasOwn(obj.propertyVersions,key) ? obj.propertyVersions[key] : 0) + 1;
   if (!existed) obj.shapeVersion++;
@@ -1381,6 +1392,60 @@ if(obj.kind==='set'){
           const output=op==='GET_METHOD'?['method',v,base.value]:v;
           return {...operands(base,key),...result(output),reads:read?[read]:[]};
         }
+        case 'COPY_KEYS':{
+          const exclusions=[];for(let i=0;i<arg.exclude;i++)exclusions.unshift(pop());
+          const source=pop(),value=source.value,excluded=new Set(exclusions.map(item=>valueKey(item.value)));
+          let keys=[];
+          if(value[0]==='ref'){
+            const obj=s.heap[value[1]];
+            if(!obj||!['object','array'].includes(obj.kind))
+              throw new TypeError('Property copying requires ordinary owned keys');
+            keys=ownPropertyKeys(obj);
+          }else if(value[0]==='str')keys=Array.from({length:value[1].length},(_,i)=>String(i));
+          else if(['null','undefined'].includes(value[0])&&arg.required)
+            guestFault('TypeError','Cannot destructure null or undefined');
+          else if(!['null','undefined','num','bool','bigint'].includes(value[0]))
+            throw new TypeError('Property copying source outside profile');
+          keys=keys.filter(key=>!excluded.has(key));
+          if(keys.length>10000)throw new RangeError('Property copy key budget');
+          const id=this.next(s,'obj'),obj=s.heap[id]={id,kind:'array',properties:{length:token(['num',keys.length],eventId)},propertyVersions:{length:0},shapeVersion:0,version:0};
+          keys.forEach((key,i)=>putOwn(obj,String(i),['str',key],eventId));
+          return {...operands(source,...exclusions),...result(['ref',id])};
+        }
+        case 'HAS_ENUMERABLE_OWN':{
+          const key=pop(),source=pop(),name=valueKey(key.value),value=source.value;
+          const present=value[0]==='str'?arrayIndex(name)&&Number(name)<value[1].length:
+            value[0]==='ref'?enumerableOwn(s.heap[value[1]],name):false;
+          return {...operands(source,key),...result(['bool',!!present])};
+        }
+        case 'DEFINE_LITERAL_PROP':{
+          const value=pop(),key=pop(),base=pop(),name=valueKey(key.value);
+          const obj=base.value[0]==='ref'?s.heap[base.value[1]]:null;
+          if(obj?.kind!=='object')throw new TypeError('Literal definitions require an owned ordinary object');
+          if(arg.kind==='prototype'){
+            if(value.value[0]==='null')obj.prototype=null;
+            else if(value.value[0]==='ref'){
+              if(!['object','array'].includes(s.heap[value.value[1]]?.kind))
+                throw new TypeError('Literal prototype is outside the ordinary object profile');
+              obj.prototype=value.value[1];
+            }
+          }else if(arg.kind==='init'){
+            // Object literal definitions never call a pre-existing setter.
+            putOwn(obj,name,value.value,eventId,{literal:true});
+            if(obj.accessors)delete obj.accessors[name];
+          }else if(['get','set'].includes(arg.kind)){
+            if(!this.callableGuest(s,value.value))throw new TypeError('Literal accessor must be an owned function');
+            const previous=obj.accessors?.[name];
+            if(!previous&&!Object.hasOwn(obj.properties,name))
+              (obj.propertyOrder??=Object.keys(obj.properties).concat(Object.keys(obj.accessors??{}))).push(name);
+            obj.accessors??={};
+            obj.accessors[name]={get:previous?.get??token(U),set:previous?.set??token(U),
+              [arg.kind]:value,enumerable:true,configurable:true};
+            delete obj.properties[name];
+            obj.propertyVersions[name]=(obj.propertyVersions[name]??0)+1;obj.shapeVersion++;
+          }else throw new TypeError('Unknown literal property kind');
+          return {...operands(base,key,value),...result(value.value)};
+        }
         case 'PUT_PROP':{
           const v=pop(),key=pop(),base=pop(),property=valueKey(key.value);
           if(['null','undefined'].includes(base.value[0]))
@@ -1935,9 +2000,9 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                 Object.hasOwn(obj.properties,property) ||
                 Object.hasOwn(obj.accessors??{},property)])};
             }
-            if(Object.keys(obj.accessors??{}).length)
-              throw new TypeError('Ordered accessor enumeration is outside the bounded profile');
-            const keys=Object.keys(obj.properties).filter(k=>obj.kind!=='array'||k!=='length');
+            if(callable[1]!=='Object.keys'&&Object.keys(obj.accessors??{}).length)
+              throw new TypeError('Ordered accessor value enumeration is outside the bounded profile');
+            const keys=ownPropertyKeys(obj).filter(key=>enumerableOwn(obj,key));
             const id=this.next(s,'obj');
             const array=s.heap[id]={id,kind:'array',properties:{length:token(['num',0],eventId)},
               propertyVersions:{length:0},shapeVersion:0,version:0};
@@ -2226,6 +2291,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                   !ownedSameValue(getter.value,previous.get.value)||
                   !ownedSameValue(setter.value,previous.set.value)))
                 guestFault('TypeError','Cannot redefine a non-configurable property');
+              if(!previous&&!existingData)(obj.propertyOrder??=ownPropertyKeys(obj)).push(name);
               obj.accessors??={};
               obj.accessors[name]={get:getter,set:setter,enumerable,configurable};
               delete obj.properties[name];

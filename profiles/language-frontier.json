@@ -75,6 +75,27 @@
       "detailed": "passed",
       "native": "untested",
       "tests": "test/training-switch-labels.test.js"
+    },
+    {
+      "id": "object-literals-copy",
+      "domain": "computed scalar keys, methods, accessors, ordinary object spread with key snapshot and per-key descriptor recheck; hooks execute exactly once; proxy key enumeration refused",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "passed",
+      "native": "untested",
+      "tests": "test/training-object-literals.test.js"
+    },
+    {
+      "id": "literal-prototype",
+      "domain": "null or ordinary owned object/array literal prototype; computed __proto__ remains data",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Detailed committed heap does not encode prototype-chain transitions",
+      "tests": "test/training-object-literals.test.js"
     }
   ]
 }

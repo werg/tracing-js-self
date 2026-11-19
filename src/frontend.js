@@ -334,7 +334,30 @@ export function compile(ast) {
             expr(n.elements[i]);emit('PUT_PROP',null,n);emit('POP',null,n);
           }
           break;
-        case 'Object':emit('NEW_OBJECT',null,n);for(const item of n.properties){emit('DUP',null,n);emit('CONST',{value:['str',item.key]},n);expr(item.value);emit('PUT_PROP',null,n);emit('POP',null,n);}break;
+        case 'Object':{
+          const spreads=n.properties.some(item=>item.kind==='spread');
+          let saved=null;
+          if(spreads){
+            emit('ENTER_SCOPE',null,n);saved='[[object '+(++forOfIndex)+']]';
+            emit('DECLARE',{name:saved,kind:'const'},n);
+          }
+          emit('NEW_OBJECT',null,n);
+          if(spreads)emit('INIT',saved,n);
+          for(const item of n.properties){
+            if(item.kind==='spread'){
+              const source='[[spread '+(++forOfIndex)+']]';
+              emit('DECLARE',{name:source,kind:'const'},item);
+              expr(item.value);emit('INIT',source,item);copyOwn(saved,source,[],item);continue;
+            }
+            if(spreads)emit('GET',saved,n);else emit('DUP',null,n);
+            if(item.computedKey)expr(item.computedKey);
+            else emit('CONST',{value:['str',item.key]},n);
+            expr(item.value);emit('DEFINE_LITERAL_PROP',{kind:item.kind??'init'},item.start===undefined?n:item);
+            emit('POP',null,n);
+          }
+          if(spreads){emit('GET',saved,n);emit('LEAVE_SCOPE',null,n);}
+          break;
+        }
         case 'Assign':
           if(['&&=','||=','??='].includes(n.operator)){
             const operator=n.operator.slice(0,-1);
@@ -387,6 +410,28 @@ export function compile(ast) {
           }break;
         default:throw new SyntaxError(`Unsupported expression: ${n.type}`);
       }
+    }
+    // CopyDataProperties snapshots key identities, then rechecks each own
+    // descriptor before reading. Each getter is an ordinary owned GET_PROP
+    // continuation, so later throws never replay already completed reads.
+    function copyOwn(target,source,excluded,node,{required=false}={}){
+      const salt=++forOfIndex,keys='[[copy keys '+salt+']]',index='[[copy index '+salt+']]',key='[[copy key '+salt+']]';
+      for(const name of [keys,index,key])emit('DECLARE',{name,kind:'let'},node);
+      emit('GET',source,node);for(const name of excluded)emit('GET',name,node);
+      emit('COPY_KEYS',{exclude:excluded.length,required},node);emit('INIT',keys,node);
+      emit('CONST',{value:['num',0]},node);emit('INIT',index,node);
+      emit('CONST',{value:['undefined']},node);emit('INIT',key,node);
+      const top=instructions.length;
+      emit('GET',keys,node);emit('CONST',{value:['str','length']},node);emit('GET_PROP',null,node);
+      emit('GET',index,node);emit('BINARY','>',node);const done=emit('JUMP_IF_FALSE',null,node);
+      emit('GET',keys,node);emit('GET',index,node);emit('GET_PROP',null,node);emit('SET',key,node);emit('POP',null,node);
+      emit('GET',source,node);emit('GET',key,node);emit('HAS_ENUMERABLE_OWN',null,node);
+      const skip=emit('JUMP_IF_FALSE',null,node);
+      emit('GET',target,node);emit('GET',key,node);emit('GET',source,node);emit('GET',key,node);
+      emit('GET_PROP',null,node);emit('DEFINE_LITERAL_PROP',{kind:'init'},node);emit('POP',null,node);
+      instructions[skip].arg=instructions.length;
+      emit('UPDATE_BINDING',{name:index,operator:'++',prefix:true},node);emit('POP',null,node);
+      emit('JUMP',top,node);instructions[done].arg=instructions.length;
     }
     function stmt(n){
       switch(n.type){

@@ -53,5 +53,5 @@ test('Object.assign rejects unsafe exotic sources without returning successful g
   assert.throws(()=>createRuntime().startEntry({
     text:'"use strict";function f(){return Object.assign({},new Proxy({x:2},{}));}',
     functionName:'f',args:[]
-  }),/Unsupported training-js\/1 NewExpression/);
+  }).drive(),/Object.assign source requires an owned data object/);
 });

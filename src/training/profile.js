@@ -187,12 +187,15 @@ export function parseTraining(source) {
           {...span(e),type:'Spread',argument:expr(e.argument)}:expr(e))};
       case 'ObjectExpression':
         return {...loc,type:'Object',properties:n.properties.map(p=>{
-          if(p.type!=='Property' || p.kind!=='init' || p.method || p.computed)
+          if(p.type==='SpreadElement')return {...span(p),kind:'spread',value:expr(p.argument)};
+          if(p.type!=='Property'||!['init','get','set'].includes(p.kind))
             reject(p,'object property form');
-          const key=p.key.type==='Identifier'?p.key.name:
+          const key=p.computed?null:p.key.type==='Identifier'?p.key.name:
             p.key.type==='Literal'?String(p.key.value):null;
-          if(key===null || key==='__proto__')reject(p,'object property key');
-          return {key,value:expr(p.value)};
+          if(!p.computed&&key===null)reject(p,'object property key');
+          const kind=key==='__proto__'&&!p.computed&&!p.shorthand&&!p.method&&p.kind==='init'
+            ?'prototype':p.kind;
+          return {...span(p),key,computedKey:p.computed?expr(p.key):null,kind,value:expr(p.value)};
         })};
       case 'AssignmentExpression':
         if(!assignments.has(n.operator) ||
@@ -403,7 +406,7 @@ export function parseTraining(source) {
         case 'DeferredRegExp':case 'OwnedPinnedRegExp':break;
         case 'Array':n.elements.forEach(x=>{if(x)value(x.type==='Spread'?x.argument:x,e);});break;
         case 'Proxy':value(n.target,e);value(n.handler,e);break;
-        case 'Object':n.properties.forEach(p=>value(p.value,e));break;
+        case 'Object':n.properties.forEach(p=>{if(p.computedKey)value(p.computedKey,e);value(p.value,e);});break;
         case 'Assign':value(n.left,e);value(n.right,e);break;
         case 'Literal':case 'This':break;
         default:reject(n,'unhandled expression');
