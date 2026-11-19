@@ -182,8 +182,8 @@ original source, executed operation observations, branch observations, and
 completion observations. The last has its own
 `source-protocol-completions/1` identity vocabulary. Distinct Symbols with equal
 descriptions remain distinct, and rereading the same Symbol preserves its
-observation identity. The historical completion observer remains unchanged and
-still refuses Symbol values. Instrumented outcomes must equal the original
+observation identity. The historical public trace grammars still refuse Symbol values; the shared
+source observation helpers do not grant public admission. Instrumented outcomes must equal the original
 outcome, and the owned operation, decision, and completion receipts must match
 independently observed receipts.
 
@@ -200,3 +200,35 @@ canonical claims for a Symbol-keyed getter bracketed by arithmetic. Its
 qualification is owned execution plus independent source checking. Full v8
 context/continuation/native admission is represented by the outer region
 artifact and remains independently required.
+
+## Complete source-bound region artifacts
+
+`verifyProtocolRegionTrainingCase(fixture)` now builds an outer v8 execution with
+schema `semantic-protocol-region-evidence/1`. Its private `sourceArtifact` uses
+`semantic-protocol-source-evidence/1`, distinct from older admission evidence.
+The public program, input graph, generated protocol/detailed/compact records,
+and one causal context per generated record replay through
+`RegionExecutionHarness`. Source proof and owned archive data are never included
+in generated target lines.
+
+A local replacement is accepted only if replaying its original detailed records
+and evaluating the candidate compact region produce equal complete shared
+states, including descriptor Maps, Symbol identity, capture aliases, receiver,
+completion obligations, and protocol sequence. Pure scalar regions can therefore
+appear before and after a Symbol-keyed getter without forgetting its rich state.
+
+`recheckProtocolRegionEvidence(artifact, options)` reconstructs the owned run from
+the exact source and observed input graph, repeats all four independent source
+runs, rebuilds the source projection and every context, and restores the public
+checkpoint. Changes to source, a descriptor, a pending accessor, a capture cell,
+or a context are rejected even if the attacker recomputes ordinary transport
+hashes. The ordinary observable completion graph must agree with independent
+execution. Native production remains unadmitted until the pinned independent
+consumer validates its own exact receipt; `requireNative: true` cannot be
+satisfied by an earlier bare `admitted` flag.
+
+The first protocol row cannot inherit a nested legacy call scope. Once protocol
+state exists, generic calls use protocol records; root-level detailed completion
+is still valid after all scoped calls have ended, which permits an ordinary
+compact return. Detailed allocations cannot reuse a Symbol identity. An explicit
+null prototype remains null across lookup, description and JSON checkpointing.

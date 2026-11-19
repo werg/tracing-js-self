@@ -4,7 +4,7 @@ import {createRuntime} from '../src/runtime.js';
 import {encodeNativeGraph} from '../src/host/graph-codec.js';
 import {compileProtocolSourceV8} from '../src/semantic/protocol-source-compiler-v8.js';
 import {auditProtocolSourceV8} from '../src/semantic/protocol-source-reference-v8.js';
-import {createCompletionCapture} from '../src/training/completion-reference.js';
+import {encodeDetailedRecord} from '../src/semantic/detailed-v7.js';
 import {createProtocolCompletionCapture} from '../src/semantic/protocol-source-observations-v8.js';
 
 const getter='"use strict";function run(x){const before=x+2;const s=Symbol("key");const o={};let calls=0;Object.defineProperty(o,s,{get:()=>{calls++;return x+3;}});const a=o[s];return before+a+calls;}';
@@ -44,11 +44,11 @@ test('source setter has dynamic this, a live capture, and assignment completion 
   assert(compiled.claims.some(row=>row.record.kind==='allocate'&&row.record.functionKind==='ordinary'));
 });
 
-test('new source observation identity protocol does not silently widen historical completions',()=>{
+test('new source observation identity protocol does not widen historical public values',()=>{
   const a=Symbol('x'),b=Symbol('x'),capture=createProtocolCompletionCapture();
   capture.capture('one','initialize',a);capture.capture('two','initialize',b);capture.capture('three','return',a);
   assert.deepEqual(capture.observations.map(row=>row.value),[['identity','symbol',1],['identity','symbol',2],['identity','symbol',1]]);
-  assert.throws(()=>createCompletionCapture().capture('old','return',a),/primitive values/);
+  assert.throws(()=>encodeDetailedRecord({kind:'bind',fields:{name:'s',value:['symbol','o1']}},{role:'generated'}),/value|scalar|Symbol|tag/i);
 });
 
 test('source projection refuses unmodeled hidden state even when the final scalar would match',()=>{
@@ -59,4 +59,61 @@ test('source projection refuses unmodeled hidden state even when the final scala
     '"use strict";async function run(){const s=Symbol("x");return 3;}',
     '"use strict";function run(){const s=Symbol("x");const o={};o[s]=3;return o;}'
   ])assert.throws(()=>build(source),/protocol|boundary|Symbol|primitive|Unsupported|source|data|strict owned/i);
+});
+
+test('direct protocol region artifacts mix compact arithmetic, retain causal contexts and recheck exact source',async()=>{
+  const {verifyProtocolRegionTrainingCase,recheckProtocolRegionEvidence}=await import('../src/semantic/protocol-source-v8.js');
+  const {RegionExecutionHarness}=await import('../src/semantic/region-harness.js');
+  const {sharedRegionState}=await import('../src/semantic/regions.js');
+  const fixture={source:getter,entry:'run',args:[4],family:'protocol-getter'},result=await verifyProtocolRegionTrainingCase(fixture);
+  assert(result.exported,result.reason);assert.equal(result.exported.sidecar.schema,'semantic-protocol-region-evidence/1');
+  const artifact=result.exported,replayed=RegionExecutionHarness.replay(artifact);
+  assert.equal(artifact.contexts[0].state.protocol,null);
+  assert(artifact.contexts.some(context=>context.state.protocol?.pendingCalls.length));
+  assert.equal(artifact.contexts.length,artifact.public.timeline.filter(row=>row.mode==='generated').length);
+  const generated=artifact.public.timeline.filter(row=>row.mode==='generated'),first=generated.findIndex(row=>row.kind==='protocol'),last=generated.findLastIndex(row=>row.kind==='protocol'&&row.fields.line.includes('property.finish'));
+  assert(generated.slice(0,first).some(row=>row.kind==='region'));
+  assert(generated.slice(last+1).some(row=>row.kind==='region'));
+  assert.deepEqual(replayed.controller.completion,{kind:'return',value:['num',14]});
+  const resumed=RegionExecutionHarness.restore(replayed.checkpoint());
+  assert.deepEqual(sharedRegionState(resumed.controller),sharedRegionState(replayed.controller));
+  const checked=await recheckProtocolRegionEvidence(artifact);
+  assert(checked.sourceValidated&&checked.projectionValidated&&checked.replayValidated);
+  assert.equal(checked.native.admitted,false);
+  await assert.rejects(()=>recheckProtocolRegionEvidence(artifact,{requireNative:true}),/pinned consumer/);
+});
+
+test('source context, descriptor and completion tampering cannot survive a fresh source recheck',async()=>{
+  const {verifyProtocolRegionTrainingCase,recheckProtocolRegionEvidence}=await import('../src/semantic/protocol-source-v8.js');
+  const {hashAlgorithmData}=await import('../src/semantic/program.js');
+  const {exported}=await verifyProtocolRegionTrainingCase({source:getter,entry:'run',args:[4],family:'protocol-tamper'});
+  const context=structuredClone(exported);context.contexts.at(-1).state.protocol.symbols.find(row=>row.kind==='unique').description=['str','changed'];
+  context.sidecar.contextDigest=hashAlgorithmData(context.contexts);
+  await assert.rejects(()=>recheckProtocolRegionEvidence(context),/contexts differs/);
+  const target=structuredClone(exported);target.sidecar.sourceArtifact.public.claims.find(row=>row.line.includes('property.define')).line+=' ';
+  target.sidecar.sourceArtifactDigest=hashAlgorithmData(target.sidecar.sourceArtifact);
+  await assert.rejects(()=>recheckProtocolRegionEvidence(target),/source, owned archive|target|projection/);
+  const source=structuredClone(exported);source.sidecar.sourceArtifact.sidecar.referenceInput.source=getter.replace('return x+3','return x+9');
+  source.sidecar.sourceArtifactDigest=hashAlgorithmData(source.sidecar.sourceArtifact);
+  await assert.rejects(()=>recheckProtocolRegionEvidence(source),/source, owned archive|source target|source-certified/);
+});
+
+test('source null-prototype reads and abrupt setters preserve protocol distinctions',async()=>{
+  const {verifyProtocolRegionTrainingCase}=await import('../src/semantic/protocol-source-v8.js');
+  const {RegionExecutionHarness}=await import('../src/semantic/region-harness.js');
+  for(const [source,completion]of [
+    ['"use strict";function run(){const s=Symbol("x");const o=Object.create(null);o[s]=3;return o.toString;}',{kind:'return',value:['undefined']}],
+    ['"use strict";function run(){const s=Symbol("x");const o={};Object.defineProperty(o,s,{set:function(v){throw "no";}});o[s]=7;return 1;}',{kind:'throw',value:['str','no']}]
+  ]){
+    const result=await verifyProtocolRegionTrainingCase({source,entry:'run',family:'protocol-completion'});
+    assert(result.exported,result.reason);assert.deepEqual(RegionExecutionHarness.replay(result.exported).controller.completion,completion);
+  }
+});
+
+test('committed source-region fixture rechecks its full public contexts and private source evidence',async()=>{
+  const {readFileSync}=await import('node:fs');
+  const {recheckProtocolRegionEvidence}=await import('../src/semantic/protocol-source-v8.js');
+  const fixtures=JSON.parse(readFileSync(new URL('./fixtures/semantic-protocol-region-v8.json',import.meta.url),'utf8'));
+  assert.equal(fixtures.schema,'semantic-protocol-region-fixtures/1');
+  for(const row of fixtures.cases)assert.equal((await recheckProtocolRegionEvidence(row.artifact)).valid,true,row.id);
 });

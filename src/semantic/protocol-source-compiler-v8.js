@@ -20,13 +20,14 @@ const copy=structuredClone,eq=isDeepStrictEqual,lit=value=>({op:'literal',value:
 function refuse(message){const error=new TypeError('Protocol source projection: '+message);error.category='unsupported.protocol-source';throw error;}
 const valueTag=value=>Array.isArray(value)&&['undefined','null','bool','str','num','bigint','ref','symbol'].includes(value[0]);
 const ordinaryFields=new Set(['id','kind','properties','propertyVersions','shapeVersion','version','propertyOrder','prototype','accessors','dataAttributes','extensible']);
-const functionFields=new Set([...ordinaryFields,'codeId','closureEnvId','async','arrow','lexicalThis']);
+const functionFields=new Set([...ordinaryFields,'codeId','closureEnvId','async','arrow','lexicalThis','nonConstructible']);
 const symbolFields=new Set(['id','kind','description','registeredKey','properties','propertyVersions','shapeVersion','version']);
 const frameFields=new Set(['id','codeId','pc','stack','envId','callerFrameId','asyncPromiseId','status','blockedOn','awaiting','operationId','pendingCoercionThrow','handlers','loops','thisValue','version','pendingProperty','completion']);
 function guardHeap(node){
   const fields=node.kind==='symbol'?symbolFields:node.kind==='function'?functionFields:
     ['object','array'].includes(node.kind)?ordinaryFields:null;
   if(!fields||Object.keys(node).some(key=>!fields.has(key)))refuse('heap kind or metadata needs a declared protocol: '+node.kind);
+  if(node.nonConstructible===true&&!node.arrow)refuse('method construction capability requires explicit function metadata');
   if(node.kind==='function'&&node.async)refuse('async function state needs the scheduler protocol');
 }
 function prototype(node){const p=node.prototype;
