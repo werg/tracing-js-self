@@ -111,8 +111,54 @@ test('generator call observation composes with builtin iterator observation with
   assert.equal(compareProtocolMetadata(owned.metadata,observed.capture.metadata).status,'agreed');
 });
 
-test('unrepresented delegation and own-property extensions retain explicit source refusals',async()=>{
-  for(const body of ['function* g(){yield* [1,2];}const it=g();return it.next().value;']){
+test('independent yield delegation observes implicit generator resumes and original result identities',()=>{
+  const text=source('function* inner(){try{yield 2;}finally{yield 3;}}function* g(){return yield* inner();}const it=g();const a=it.next();const b=it.return(7);const c=it.next();return [a.value,b.value,c.value];'),
+    observed=native(text),owned=ownedProtocolSourceObservations(archive(text),text);
+  assert.deepEqual([...observed.result],[2,3,7]);
+  assert.deepEqual(owned.completions,observed.capture.observations);
+  assert.deepEqual(owned.extensionObservations,observed.extensionObservations);
+  assert.equal(compareProtocolMetadata(owned.metadata,observed.capture.metadata).status,'agreed');
+});
+
+test('delegation observation caches next once and preserves lookup order receiver and result identity',()=>{
+  const text=source('let log="";const first={value:1,done:false};const iterator={'+
+    '[Symbol.iterator](){log+="i";return this;},get next(){log+="g";return function(v){log+=(this===iterator?"r":"x")+v;return first;};},'+
+    'get return(){log+="t";return function(v){log+=(this===iterator?"r":"x")+v;return {value:v,done:true};};}};'+
+    'function* g(){yield* iterator;}const it=g();const a=it.next(9);Object.defineProperty(iterator,"next",{value:()=>{throw 99;}});'+
+    'const b=it.next(3);const c=it.return(7);return [log,a===first,b===first,c.value,c.done];');
+  const plain=vm.runInNewContext(text+';run();'),extensions=prepareProtocolObservationExtensionsV8({source:text}),
+    context=vm.createContext({...extensions.globals});extensions.initializeRealm(expression=>vm.runInContext(expression,context));
+  const observed=vm.runInContext(extensions.instrument(text)+';run();',context);
+  assert.deepEqual([...observed],[...plain]);assert.deepEqual([...observed],['igrundefinedr3tr7',true,true,7,true]);
+});
+
+test('source delegation qualifies arrays strings and generator cleanup through every public checkpoint',async()=>{
+  for(const body of [
+    'function* g(){yield* [1,2];}const it=g();const a=it.next();const b=it.next(7);return a.value+b.value+it.next().done;',
+    'function* g(){yield* "a😀";}const it=g();const a=it.next();const b=it.next();return a.value+b.value+it.next().done;',
+    'function* g(){try{yield* [1,2];}finally{yield 3;}}const it=g();const a=it.next();const b=it.return(7);return a.value+b.value+it.next().value;',
+    'function* inner(){try{yield 2;}finally{yield 3;}}function* g(){return yield* inner();}const it=g();const a=it.next();const b=it.return(7);return a.value+b.value+it.next().value;'
+  ]){
+    const artifact=await qualified(body);
+    assert(artifact.contexts.some(row=>row.state.heap.some(([,node])=>node.kind==='generator'&&node.delegation?.phase==='yielded')));
+    assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
+  }
+});
+
+test('delegated throw is consumed by the inner catch outer catch or exact terminal completion',async()=>{
+  await qualified('function* inner(){try{yield 1;}catch(e){yield e;return 4;}}function* g(){return yield* inner();}const it=g();const a=it.next();const b=it.throw(7);return a.value+b.value+it.next().value;',
+    {expected:{kind:'return',value:['num',12]}});
+  await qualified('function* inner(){yield 1;throw 4;}function* g(){try{yield* inner();}catch(e){yield e;return 9;}}const it=g();const a=it.next();const b=it.next();return a.value+b.value+it.next().value;',
+    {expected:{kind:'return',value:['num',14]}});
+  await qualified('function* inner(){yield 1;}function* g(){yield* inner();}const it=g();it.next();it.throw(7);',
+    {expected:{kind:'throw',value:['num',7]}});
+});
+
+test('custom delegation missing-throw errors and own-property extensions retain explicit source refusals',async()=>{
+  for(const body of [
+    'function* g(){yield* {[Symbol.iterator](){return {next(){return {done:true,value:1};}};}};}const it=g();return it.next().value;',
+    'function* g(){yield* [1,2];}const it=g();it.next();it.throw(7);'
+  ]){
     const result=await verifyProtocolRegionTrainingCase({source:source(body),entry:'run',args:[2],family:'generator-refusal'});
     assert.equal(result.status,'unsupported');assert(!result.exported);
   }

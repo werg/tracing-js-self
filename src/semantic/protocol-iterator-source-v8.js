@@ -41,7 +41,7 @@ export function createIteratorSourceAdapterV8(){const arrayLoops=new Set();retur
       }
       const node=row.operands[0]?.[0]==='ref'?ctx.state.heap[row.operands[0][1]]:null;
       if(node?.kind==='iterator'){
-        ctx.emit({kind:'iterator.read',object:node.id,key:ctx.key(row.operands[1]),result:ctx.tag(row.result,event)},event,'source-iterator-property/1');return true;
+        ctx.emit({kind:'iterator.read',object:node.id,key:ctx.key(row.operands[1]),result:ctx.tag(output,event)},event,'source-iterator-property/1');return true;
       }
     }
     if(event.operation!=='call.enter'||row.child)return false;

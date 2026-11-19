@@ -645,6 +645,47 @@
             "object",
             "name"
           ],
+          "generator.delegate.enter": [
+            "kind",
+            "object",
+            "iterator",
+            "next"
+          ],
+          "generator.delegate.call": [
+            "kind",
+            "object",
+            "method",
+            "call"
+          ],
+          "generator.delegate.result": [
+            "kind",
+            "object",
+            "result",
+            "done"
+          ],
+          "generator.delegate.yield": [
+            "kind",
+            "object",
+            "result"
+          ],
+          "generator.delegate.receive": [
+            "kind",
+            "object"
+          ],
+          "generator.delegate.end": [
+            "kind",
+            "object"
+          ],
+          "generator.delegate.absent": [
+            "kind",
+            "object",
+            "method"
+          ],
+          "generator.delegate.abrupt": [
+            "kind",
+            "object",
+            "value"
+          ],
           "generator.yield": [
             "kind",
             "object",
@@ -1689,7 +1730,7 @@
       "default": "not promoted by engineering receipts alone"
     }
   },
-  "digest": "84dc778917b6f58c9c1e4383b1ff3daa3c07548be11e18638e87425465cbe4d4",
+  "digest": "caab1742cb41653af4a6569e80b9012ea7b04c7a0948a8faf3c48b9d5d1dda5f",
   "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
   "fixtures": [
     {
@@ -1714,7 +1755,7 @@
       "reason": "old artifacts require their original contract"
     }
   ],
-  "interoperabilityDigest": "442046accf41e8680887451176271911fec68f7817afe9b9471e266e6f4f86aa",
+  "interoperabilityDigest": "1a0ce55a80e40569577be8885d906e1c699edcd162ee658c6998f1d075e72127",
   "interoperability": [
     {
       "id": "ordered-map",
@@ -1780,6 +1821,11 @@
       "id": "protocol-region:source-generator-cleanup-suspension",
       "publicDigest": "afd8010d455b42109bfd3bdc369a8011a6d2f463669125b19ba9cf0392cfd197",
       "contextDigest": "3a748c68d975051a9fa4c5c694bafc21f27e61cb639b7e0cefb67eb03934b84e"
+    },
+    {
+      "id": "protocol-region:source-generator-delegated-cleanup",
+      "publicDigest": "acd9ac1cf59ce1ef29c627872deae5a70f04a119704adea9637d718c97fd9c9d",
+      "contextDigest": "a522027455b1006dbe30016d5c80fc9ffee44071a257c8db8e236394527fcccf"
     }
   ]
 }

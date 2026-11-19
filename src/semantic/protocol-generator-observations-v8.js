@@ -7,7 +7,7 @@ import {propertyKeyValue} from '../property-keys.js';
 import {encode} from '../values.js';
 
 export const GENERATOR_OBSERVATION_PROFILE_V8='synchronous-generator-metadata/1';
-const directHook='__tracingProtocolGeneratorCallee',memberHook='__tracingProtocolGeneratorMember';
+const directHook='__tracingProtocolGeneratorCallee',memberHook='__tracingProtocolGeneratorMember',delegateHook='__tracingProtocolGeneratorDelegate';
 const intrinsicNames=['GeneratorFunction.prototype','Generator.prototype','Iterator.prototype'];
 const apply=Reflect.apply,getPrototype=Object.getPrototypeOf;
 const fail=message=>{throw new TypeError('Independent generator observation: '+message);};
@@ -30,6 +30,10 @@ function instrument(source){
       }
     }
     for(const [key,value]of Object.entries(node))if(!['start','end','loc','raw'].includes(key))visit(value,inChain);
+    if(node.type==='YieldExpression'&&node.delegate){
+      edits.push({start:node.argument.start,end:node.argument.start,text:delegateHook+'(('});
+      edits.push({start:node.argument.end,end:node.argument.end,text:'))'});
+    }
   }
   visit(parse(source,{ecmaVersion:'latest',sourceType:'script'}));edits.sort((a,b)=>b.start-a.start||b.end-a.end);
   let end=source.length;
@@ -124,8 +128,21 @@ export function createGeneratorObservationAdapterV8({source,side='native',bundle
   }
   let invoke=call=>observeCall(call,()=>apply(call.callee,call.receiver,call.arguments));
   function selected(callee,receiver){return (...args)=>invoke({callee,receiver,arguments:args});}
+  function delegated(iterable){
+    if(!lookup)fail('guest-realm lookup is unavailable');
+    const iteratorMethod=apply(lookup,undefined,[iterable,Symbol.iterator]),
+      iterator=invoke({callee:iteratorMethod,receiver:iterable,arguments:[]});
+    if(iterator===null||!['object','function'].includes(typeof iterator)||types.isProxy(iterator))fail('ordinary delegated iterator required');
+    const next=apply(lookup,undefined,[iterator,'next']);
+    // This forwarding shell is private instrumentation. It preserves the
+    // original iterator receiver, cached next function, lazy abrupt-method
+    // lookup and exact result objects. It never performs an extra step.
+    const abrupt=key=>{const method=apply(lookup,undefined,[iterator,key]);return method==null?method:selected(method,iterator);};
+    return {[Symbol.iterator](){return this;},next:(...args)=>invoke({callee:next,receiver:iterator,arguments:args}),
+      get return(){return abrupt('return');},get throw(){return abrupt('throw');}};
+  }
   const adapter={id:GENERATOR_OBSERVATION_PROFILE_V8,instrument,observeCall,observations:()=>structuredClone(rows),setCallObserver(value){invoke=value;},
-    globals:{[directHook]:callee=>selected(callee,undefined),[memberHook]:(receiver,key)=>{
+    globals:{[delegateHook]:delegated,[directHook]:callee=>selected(callee,undefined),[memberHook]:(receiver,key)=>{
       if(!lookup)fail('guest-realm lookup is unavailable');return selected(apply(lookup,undefined,[receiver,key]),receiver);
     }},initializeRealm(evaluate){
       const captured=evaluate('(()=>{const g=function*(){},p=Object.getPrototypeOf(g.prototype);return '+

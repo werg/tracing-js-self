@@ -12,10 +12,25 @@ const require=(ctx,condition,message)=>{if(!condition)ctx.refuse('generator: '+m
 
 export function createGeneratorSourceAdapterV8({bundle}){
   if(!Object.values(bundle.programs).some(program=>program.generator))return null;
-  const creations=new Map(),yields=new Map(),completed=new Set(),handlerDefinitions=new Map();let handlerCounter=0;
+  const creations=new Map(),yields=new Map(),completed=new Set(),handlerDefinitions=new Map(),delegations=new Map(),delegateSites=new Set();let handlerCounter=0;
   const emit=(ctx,record,event)=>ctx.emit(record,event,'owned-generator-protocol/1');
   const instruction=(ctx,event)=>{const frame=ctx.getOwnedFrame(event.invocationId),candidate=bundle.programs[event.codeId]?.instructions[frame?.pc];
     return candidate?.siteId===event.siteId?candidate:null;};
+  const delegateSite=inst=>inst&&delegateSites.has(inst.start+':'+inst.end);
+  function delegatedCall(ctx,event,inst,current,record){
+    const owner=current?.generatorId&&ctx.controller.heap.get(current.generatorId),delegate=owner?.delegation;
+    if(delegate&&delegateSite(inst)){
+      const raw=event.operands[0];require(ctx,raw?.[0]==='method'&&ctx.eq(raw[2],delegate.iterator)&&event.operands.length===2&&
+        ctx.eq(event.operands[1],delegate.request.value),'delegated call changed its exact receiver or sent input');
+      emit(ctx,{kind:'generator.delegate.call',object:current.generatorId,method:delegate.request.kind,call:record},event);
+    }else emit(ctx,record,event);
+  }
+  function settleDelegatedThrow(ctx,event){
+    const active=[...ctx.controller.heap].find(([,node])=>node.kind==='generator'&&node.invocation===ctx.publicInvocation&&node.delegation?.phase==='calling');
+    if(active&&ctx.controller.lastReturn?.kind==='throw'){
+      emit(ctx,{kind:'generator.delegate.abrupt',object:active[0],value:ctx.controller.lastReturn.value},event);delegations.delete(active[0]);
+    }
+  }
   function bindFrame(ctx,event,frame){
     const env=after(ctx,event,'envs',frame.envId);
     for(const [name,binding]of Object.entries(env?.bindings??{}))if(binding.initialized&&scalar(binding.token?.value))
@@ -47,15 +62,15 @@ export function createGeneratorSourceAdapterV8({bundle}){
     require(ctx,object&&scalar(value)&&object.invocation===ctx.publicInvocation,'generator completion invocation/value');
     let result=null;if(kind==='return')result=resultObject(ctx,event,true);
     emit(ctx,{kind:'generator.finish',object:frame.generatorId,completion:{kind,value:ctx.tag(value,event)},name:result?.id??null},event);
-    if(result)ctx.markPublished(result.id);completed.add(event.eventId+':'+change.id);return true;
+    if(result)ctx.markPublished(result.id);completed.add(event.eventId+':'+change.id);settleDelegatedThrow(ctx,event);return true;
   }
   return {id:GENERATOR_SOURCE_PROFILE_V8,
     syntax(node){if(node.type!=='YieldExpression')return false;
-      if(node.delegate)throw new TypeError('Generator delegation requires its checked continuation extension');return true;},
+      if(node.delegate)delegateSites.add(node.start+':'+node.end);return true;},
     program(program){return program.generator===true&&program.strict&&!program.async&&!program.parameterExpressions&&program.restIndex<0;},
     heapFields(node){return node.kind==='generator'?instanceFields:node.generatorFunction?['generatorFunction','prototypeInitialized']:
       GENERATOR_INTRINSICS_V8.includes(node.prototype)?[]:null;},
-    frameFields(node){return node.generatorId?['generatorId']:null;},
+    frameFields(node){return node.generatorId?['generatorId','delegateYield','delegateResume']:null;},
     allocate(ctx,node,event){
       if(ctx.published.has(node.id))return true;
       if(node.kind==='generator')ctx.refuse('generator allocation must follow its exact called function');
@@ -70,6 +85,60 @@ export function createGeneratorSourceAdapterV8({bundle}){
     },
     event(ctx,event,row){
       const inst=instruction(ctx,event),current=ctx.getOwnedFrame(event.invocationId);
+      if(current?.generatorId&&delegateSite(inst)){
+        const object=ctx.controller.heap.get(current.generatorId),delegate=object.delegation;
+        if(inst.op==='INIT'&&/^\[\[delegate next /.test(inst.arg)){
+          const method=event.result;require(ctx,method?.[0]==='method'&&method[1]?.[0]==='builtinfn'&&
+            ['Iterator.next','Generator.next'].includes(method[1][1]),'delegation requires a qualified builtin iterator or generator next method');
+          const frame=after(ctx,event,'frames',current.id);
+          delegations.set(current.generatorId,{env:frame.envId,next:inst.arg,iterator:inst.arg.replace('delegate next ','delegate ')});
+          emit(ctx,{kind:'generator.delegate.enter',object:current.generatorId,iterator:ctx.tag(method[2],event),next:method[1][1]},event);return true;
+        }
+        if(inst.op==='GET'&&/^\[\[delegate next /.test(inst.arg)){
+          require(ctx,delegate&&ctx.eq(event.result,['method',['builtinfn',delegate.next],delegate.iterator]),'cached delegate next changed');return true;
+        }
+        if(inst.op==='REQUIRE_OBJECT'){
+          require(ctx,event.result?.[0]==='ref'&&ctx.eq(event.result,event.operands[0]),'delegate call returned no ordinary object');
+          if(delegate){
+            const result=ctx.state.heap[event.result[1]];require(ctx,result?.properties?.done?.value?.[0]==='bool','delegate result needs its checked done value');
+            emit(ctx,{kind:'generator.delegate.result',object:current.generatorId,result:event.result,done:result.properties.done.value[1]},event);
+          }else require(ctx,['iterator','generator'].includes(ctx.state.heap[event.result[1]]?.kind),'custom iterable delegation requires its callable continuation');
+          return true;
+        }
+        if(inst.op==='BINARY'){
+          require(ctx,inst.arg==='==='&&event.operands.every(scalar),'delegate dispatch comparison');
+          ctx.emit({kind:'compute',fields:{expr:{op:'binary',operator:'===',left:{op:'literal',value:event.operands[0]},
+            right:{op:'literal',value:event.operands[1]}},result:event.result}},event,'source-generator-delegate-selection/1',{detail:true});return true;
+        }
+        if(['DELEGATE_RESUME_KIND','DELEGATE_RESUME_VALUE'].includes(inst.op)){
+          require(ctx,delegate&&ctx.eq(event.result,inst.op==='DELEGATE_RESUME_KIND'?['str',delegate.request.kind]:delegate.request.value),
+            'delegation changed its resumed completion input');return true;
+        }
+        if(inst.op==='DELEGATE_YIELD'){
+          emit(ctx,{kind:'generator.delegate.yield',object:current.generatorId,result:ctx.tag(event.result,event)},event);
+          yields.set(current.generatorId,(yields.get(current.generatorId)??0)+1);return true;
+        }
+        if(inst.op==='LEAVE_SCOPE'){
+          emit(ctx,{kind:'generator.delegate.end',object:current.generatorId},event);delegations.delete(current.generatorId);return true;
+        }
+        if(inst.op==='RETURN'){
+          require(ctx,delegate?.request.kind==='return','delegate return has no abrupt input');
+          emit(ctx,delegate.phase==='complete'?{kind:'generator.delegate.end',object:current.generatorId}:
+            {kind:'generator.delegate.absent',object:current.generatorId,method:'return'},event);delegations.delete(current.generatorId);return true;
+        }
+        if(inst.op==='ITERATOR_THROW_MISSING')ctx.refuse('generator: absent delegate throw requires its checked TypeError continuation');
+        if(event.operation==='call.enter'&&event.operands[0]?.[1]?.[1]==='Iterator.next'){
+          const changes=event.stateChanges.filter(change=>change.table==='heap'),result=changes.find(change=>change.id===event.result?.[1])?.after,
+            iterator=delegate&&ctx.state.heap[delegate.iterator[1]];
+          require(ctx,iterator?.kind==='iterator'&&result?.kind==='object'&&result.properties.done?.value[0]==='bool','delegate builtin step result');
+          const done=result.properties.done.value[1],value=result.properties.value.value,pair=!done&&iterator.iterationKind==='entries'?
+            changes.find(change=>change.before===null&&change.id===value[1])?.after:null;
+          require(ctx,(!pair||pair.kind==='array')&&changes.every(change=>[iterator.id,result.id,pair?.id].includes(change.id)),
+            'delegate builtin step has an undeclared allocation/effect');
+          delegatedCall(ctx,event,inst,current,{kind:'iterator.next',object:iterator.id,name:result.id,entry:pair?.id??null,result:value,done});
+          if(pair)ctx.markPublished(pair.id);ctx.markPublished(result.id);return true;
+        }
+      }
       if(current?.generatorId&&inst?.op==='TRY_ENTER'){
         const next=after(ctx,event,'frames',current.id).handlers.at(-1),name='handler'+(++handlerCounter);
         require(ctx,next&&next.catchPc===inst.arg.catchPc&&next.finallyPc===inst.arg.finallyPc&&next.afterPc===inst.arg.afterPc,
@@ -135,11 +204,13 @@ export function createGeneratorSourceAdapterV8({bundle}){
       const method=callee[1].slice('Generator.'.length),argument=ctx.tag(event.operands[1]??U,event);
       if(node.state==='completed'||node.state==='suspendedStart'&&method!=='next'){
         const result=method==='throw'?null:resultObject(ctx,event,true);
-        emit(ctx,{kind:'generator.completed',object:node.id,method,argument,name:result?.id??null},event);
+        delegatedCall(ctx,event,inst,current,{kind:'generator.completed',object:node.id,method,argument,name:result?.id??null});
         if(result)ctx.markPublished(result.id);completed.add(event.eventId+':'+node.frameId);
+        settleDelegatedThrow(ctx,event);
       }else{
-        emit(ctx,{kind:'generator.resume',object:node.id,method,argument},event);
-        if(method==='next')emit(ctx,{kind:'generator.receive',object:node.id,bind:null},event);
+        delegatedCall(ctx,event,inst,current,{kind:'generator.resume',object:node.id,method,argument});
+        if(ctx.controller.heap.get(node.id).delegation)emit(ctx,{kind:'generator.delegate.receive',object:node.id},event);
+        else if(method==='next')emit(ctx,{kind:'generator.receive',object:node.id,bind:null},event);
         else if(ctx.getOwnedFrame(node.frameId).handlers.length)emit(ctx,{kind:'generator.handler.route',object:node.id,
           completion:{kind:method,value:argument}},event);
       }
@@ -155,12 +226,12 @@ export function createGeneratorSourceAdapterV8({bundle}){
         const saved=creations.get(node.id);require(ctx,saved&&actual.kind==='generator'&&actual.invocation===ctx.frame(node.frameId)&&
           ctx.eq(actual.callee,ref(node.functionId))&&ctx.eq(actual.callee,saved.callee)&&ctx.eq(actual.receiver,saved.receiver)&&
           ctx.eq(actual.arguments,saved.args)&&actual.phase===node.state&&actual.yielded===yields.get(node.id)&&
-          actual.delegation===null&&actual.resume===null&&actual.pending===null,'retained generator identity, phase or arguments differ');
+          Boolean(actual.delegation)===delegations.has(node.id)&&actual.resume===null&&actual.pending===null,'retained generator identity, phase or arguments differ');
         checkOrdinary(ctx,node);
       }
       return true;
     },
-    checkFrame(ctx,node){
+    checkFrame(ctx,node,event){
       require(ctx,!node.awaiting&&!node.asyncPromiseId,'generator async continuation needs its own profile');
       const object=ctx.controller.heap.get(node.generatorId),saved=creations.get(node.generatorId);
       require(ctx,object&&saved&&ctx.controller.frameFunctions.get(ctx.frame(node.id))===ctx.functionCodes.get(node.codeId)&&
@@ -168,6 +239,17 @@ export function createGeneratorSourceAdapterV8({bundle}){
       const expected=node.status==='suspended-generator'?object.phase.startsWith('suspended'):
         ['completed','thrown'].includes(node.status)?object.phase==='completed':['initializing','executing'].includes(object.phase);
       require(ctx,expected,'retained generator status differs');
+      const definition=delegations.get(node.generatorId),delegate=object.delegation;
+      require(ctx,Boolean(definition)===Boolean(delegate),'retained generator delegation differs');
+      if(delegate){
+        const env=after(ctx,event,'envs',definition.env),next=env?.bindings?.[definition.next]?.token?.value,
+          iterator=env?.bindings?.[definition.iterator]?.token?.value;
+        require(ctx,ctx.eq(next,['method',['builtinfn',delegate.next],delegate.iterator])&&ctx.eq(iterator,delegate.iterator),
+          'retained delegate iterator or cached method differs');
+        if(node.delegateResume)require(ctx,ctx.eq({kind:node.delegateResume.kind,value:node.delegateResume.value.value},delegate.request),
+          'retained delegate resume input differs');
+      }
+      require(ctx,!node.delegateYield||delegate?.phase==='yielded'&&node.status==='suspended-generator','retained delegated suspension differs');
       require(ctx,node.handlers.length===object.handlers.length,'generator handler depth differs');
       for(let i=0;i<node.handlers.length;i++){
         const owned=node.handlers[i],selected=object.handlers[i],definition=handlerDefinitions.get(selected.name);

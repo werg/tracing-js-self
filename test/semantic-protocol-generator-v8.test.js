@@ -118,6 +118,49 @@ test('generator handler selection consumes a thrown value and preserves outer ob
   f.apply({kind:'generator.handler.route',object:'it',completion:{kind:'return',value:num(4)}});
   f.apply({kind:'generator.handler.leave',object:'it',name:'outer'});f.finish(num(4));
 });
+
+test('delegated builtin steps preserve exact result identity and require the pending resume input',()=>{
+  const f=fixture();f.define();f.create();f.start();f.resume();
+  f.detail({kind:'allocate',name:'source',objectKind:'array',length:1,properties:[{key:['str','0'],value:num(3)}],code:null,captures:[],functionKind:null,lexicalReceiver:null});
+  f.detail({kind:'iterator.create',name:'delegate',iterated:ref('source'),iterationKind:'values'});
+  f.apply({kind:'generator.delegate.enter',object:'it',iterator:ref('delegate'),next:'Iterator.next'});
+  const step={kind:'iterator.next',object:'delegate',name:'r0',entry:null,result:num(3),done:false};
+  f.apply({kind:'generator.delegate.call',object:'it',method:'next',call:step});
+  const before=structuredClone(f.controller);
+  assert.throws(()=>f.apply({kind:'generator.delegate.result',object:'it',result:ref('source'),done:false}),/identity/);assert.deepEqual(f.controller,before);
+  assert.throws(()=>f.finish(num(3)),/exact result/);
+  f.apply({kind:'generator.delegate.result',object:'it',result:ref('r0'),done:false});
+  f.apply({kind:'generator.delegate.yield',object:'it',result:ref('r0')});
+  assert.deepEqual(f.controller.lastReturn,{kind:'return',value:ref('r0')});
+  f.apply({kind:'generator.resume',object:'it',method:'next',argument:num(8)});
+  assert.throws(()=>f.apply({kind:'generator.receive',object:'it',bind:null}),/exact input/);
+  f.apply({kind:'generator.delegate.receive',object:'it'});
+  f.apply({kind:'generator.delegate.call',object:'it',method:'next',call:{...step,name:'r1',result:U,done:true}});
+  f.apply({kind:'generator.delegate.result',object:'it',result:ref('r1'),done:true});
+  f.apply({kind:'generator.delegate.end',object:'it'});f.finish(U);
+});
+
+test('delegation retains the cached generator next and rejects changed receivers or sent values atomically',()=>{
+  const f=fixture();f.define();f.define('inner');f.create();f.start();f.resume();f.create('delegate','inner',[]);f.start('delegate');
+  f.apply({kind:'generator.delegate.enter',object:'it',iterator:ref('delegate'),next:'Generator.next'});
+  const call={kind:'generator.resume',object:'delegate',method:'next',argument:U};
+  f.apply({kind:'generator.delegate.call',object:'it',method:'next',call});
+  f.apply({kind:'generator.receive',object:'delegate',bind:null});f.yielded(num(2),'r0','delegate');
+  f.apply({kind:'generator.delegate.result',object:'it',result:ref('r0'),done:false});
+  f.apply({kind:'generator.delegate.yield',object:'it',result:ref('r0')});
+  f.detail({kind:'property.define',object:'inner-prototype',key:['str','next'],
+    descriptor:{kind:'data',value:U,writable:true,enumerable:true,configurable:true},success:true});
+  f.apply({kind:'generator.resume',object:'it',method:'next',argument:num(7)});f.apply({kind:'generator.delegate.receive',object:'it'});
+  const before=structuredClone(f.controller);
+  for(const mutation of [{...call,argument:num(9)},{...call,object:'it',argument:num(7)}]){
+    assert.throws(()=>f.apply({kind:'generator.delegate.call',object:'it',method:'next',call:mutation}));assert.deepEqual(f.controller,before);
+  }
+  f.apply({kind:'generator.delegate.call',object:'it',method:'next',call:{...call,argument:num(7)}});
+  f.apply({kind:'generator.receive',object:'delegate',bind:'sent'});f.finish(num(7),'inner-result','return','delegate');
+  f.apply({kind:'generator.delegate.result',object:'it',result:ref('inner-result'),done:true});
+  f.apply({kind:'generator.delegate.end',object:'it'});f.finish(num(7));
+});
+
 test('generator checkpoint restoration rejects fabricated continuation and unknown state fields',()=>{
   const f=fixture();f.define();f.create();f.start();f.resume();f.yielded(num(1));
   for(const mutate of [node=>node.invocation='invented',node=>node.phase='executing',node=>node.resume={kind:'next',from:'suspendedYield',value:num(3)},node=>node.pc=42,

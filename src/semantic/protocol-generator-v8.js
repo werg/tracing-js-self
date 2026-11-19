@@ -1,6 +1,7 @@
 // Explicit synchronous generator continuation semantics. Ordinary properties,
 // lexical cells and scoped calls remain in the same authoritative controller.
 import {assertAlgorithmFields,assertAlgorithmDataArray,isAlgorithmDataRecord} from './ir.js';
+import {validateIteratorRecordV8,applyIteratorRecordV8} from './protocol-iterator-v8.js';
 
 export const GENERATOR_PROFILE_V8='synchronous-generator/1';
 export const GENERATOR_INTRINSICS_V8=Object.freeze(['GeneratorFunction.prototype','Generator.prototype','Iterator.prototype']);
@@ -14,6 +15,14 @@ export const GENERATOR_RECORD_FIELDS=Object.freeze(Object.fromEntries(Object.ent
   'generator.handler.route':['kind','object','completion'],
   'generator.handler.catch':['kind','object','name','bind'],
   'generator.handler.leave':['kind','object','name'],
+  'generator.delegate.enter':['kind','object','iterator','next'],
+  'generator.delegate.call':['kind','object','method','call'],
+  'generator.delegate.result':['kind','object','result','done'],
+  'generator.delegate.yield':['kind','object','result'],
+  'generator.delegate.receive':['kind','object'],
+  'generator.delegate.end':['kind','object'],
+  'generator.delegate.absent':['kind','object','method'],
+  'generator.delegate.abrupt':['kind','object','value'],
   'generator.yield':['kind','object','value','name'],
   'generator.finish':['kind','object','completion','name'],
   'generator.completed':['kind','object','method','argument','name'],
@@ -35,7 +44,7 @@ export function validateGeneratorRecordV8(record,{value}){
   if(!isAlgorithmDataRecord(record))throw new TypeError('Generator record must be ordinary data');
   const fields=GENERATOR_RECORD_FIELDS[record?.kind];if(!fields)return false;assertAlgorithmFields(record,fields,'generator record');
   for(const field of ['object','child','name','prototype','bind'])if(Object.hasOwn(record,field)&&record[field]!==null&&!(field==='name'&&record.kind==='generator.function'))id(record[field]);
-  for(const field of ['callee','receiver','argument','result'])if(Object.hasOwn(record,field))value(record[field]);
+  for(const field of ['callee','receiver','argument','result','iterator'])if(Object.hasOwn(record,field))value(record[field]);
   if(Object.hasOwn(record,'value'))value(record.value);if(Object.hasOwn(record,'key'))key(record.key);
   if(record.kind==='generator.function'){
     if(typeof record.name!=='string'||record.name.length>bound||!Number.isSafeInteger(record.length)||record.length<0||record.length>bound)throw new TypeError('Generator function metadata');
@@ -44,12 +53,20 @@ export function validateGeneratorRecordV8(record,{value}){
     if(record.callee[0]!=='ref')throw new TypeError('Generator callable identity');assertAlgorithmDataArray(record.arguments,'generator arguments');
     if(record.arguments.length>bound)throw new TypeError('Generator argument bound');record.arguments.forEach(value);
   }
-  if(['generator.resume','generator.completed'].includes(record.kind)&&!methods.has(record.method))throw new TypeError('Generator resume kind');
+  if(['generator.resume','generator.completed','generator.delegate.call','generator.delegate.absent'].includes(record.kind)&&!methods.has(record.method))throw new TypeError('Generator resume kind');
   if(record.kind==='generator.lookup'&&!builtins.has(record.method))throw new TypeError('Generator builtin selection');
   if(record.kind==='generator.finish')completion(record.completion,value);
   if(record.kind==='generator.handler.route')completion(record.completion,value,{normal:true});
   if(record.kind==='generator.handler.enter'&&(typeof record.catch!=='boolean'||typeof record.finally!=='boolean'||!record.catch&&!record.finally))
     throw new TypeError('Generator handler needs catch or finally');
+  if(record.kind==='generator.delegate.enter'&&(!['Iterator.next','Generator.next'].includes(record.next)||record.iterator[0]!=='ref'))
+    throw new TypeError('Generator delegate requires an exact iterator and cached next');
+  if(record.kind==='generator.delegate.result'&&typeof record.done!=='boolean')throw new TypeError('Generator delegated completion boolean');
+  if(record.kind==='generator.delegate.call'){
+    if(record.call?.kind==='iterator.next')validateIteratorRecordV8(record.call,{value});
+    else if(['generator.resume','generator.completed'].includes(record.call?.kind))validateGeneratorRecordV8(record.call,{value});
+    else throw new TypeError('Generator delegate call needs its iterator or generator operation');
+  }
   return true;
 }
 const data=(value,{writable=true,enumerable=false,configurable=true}={})=>({kind:'data',value,writable,enumerable,configurable});
@@ -109,10 +126,14 @@ export function assertGeneratorNextV8(controller,record,api){
   const current=[...controller.heap.values()].find(object=>object.kind==='generator'&&object.invocation===controller.stack.at(-1));
   if(!current)return true;
   api.require(!['return','throw'].includes(record.kind),'generator completion requires its retained continuation protocol');
-  if(current.resume?.kind==='next')api.require(record.kind==='generator.receive'&&record.object===currentId(controller,current),
+  if(current.resume&&current.delegation)api.require(record.kind==='generator.delegate.receive'&&record.object===currentId(controller,current),
+    'delegated generator resume must preserve its exact input');
+  else if(current.resume?.kind==='next')api.require(record.kind==='generator.receive'&&record.object===currentId(controller,current),
     'normal generator resume input must be consumed before body work');
-  if(current.resume&&current.resume.kind!=='next')api.require(['generator.finish','generator.handler.route'].includes(record.kind)&&record.object===currentId(controller,current),
+  else if(current.resume&&current.resume.kind!=='next')api.require(['generator.finish','generator.handler.route'].includes(record.kind)&&record.object===currentId(controller,current),
     'abrupt generator resume requires its handler continuation or completion');
+  if(current.delegation?.phase==='calling')api.require(['generator.delegate.result','generator.delegate.abrupt'].includes(record.kind)&&record.object===currentId(controller,current),
+    'delegated call must consume its exact result before continuation');
   if(current.pending)api.require(record.kind==='generator.finish'&&record.object===currentId(controller,current),
     'generator pending terminal completion cannot be discarded');
   if(current.handlers.at(-1)?.caught!==null&&current.handlers.at(-1)?.caught!==undefined)
@@ -141,6 +162,75 @@ function route(controller,object,completion,api){
   }
   object.pending=api.copy(completion);
 }
+function delegateMethod(controller,iterator,method,api){
+  api.known(controller,iterator);api.require(iterator[0]==='ref','generator delegate identity');
+  const target=controller.heap.get(iterator[1]);
+  if(target?.kind==='iterator')return method==='next'?'Iterator.next':null;
+  api.require(target?.kind==='generator','generator delegate requires its declared iterator profile');
+  const selected=lookup(controller,iterator,['str',method],api);
+  if(selected.builtin)return selected.builtin;
+  api.require(!selected.unsupported&&(!selected.descriptor||selected.descriptor.kind==='data'&&['undefined','null'].includes(selected.descriptor.value[0])),
+    'custom delegate methods need their callable continuation');return null;
+}
+function delegatedResult(controller,value,api){
+  api.known(controller,value);api.require(value?.[0]==='ref','delegate result must be an ordinary object');
+  const result=controller.heap.get(value[1]);api.require(result?.kind==='object','delegate result needs ordinary storage');
+  const done=api.ownDescriptor(result,['str','done']);
+  api.require(done?.kind==='data'&&done.value[0]==='bool','delegate done getter/conversion requires its continuation');
+  return {object:result,done:done.value[1]};
+}
+function applyDelegation(controller,object,record,api){
+  active(controller,object,api);api.require(object.phase==='executing'&&!object.pending,'generator delegation is not executing');
+  if(record.kind==='generator.delegate.enter'){
+    api.require(!object.delegation&&!object.resume&&record.iterator[1]!==record.object,'generator already delegates or has an unconsumed resume');
+    api.require(delegateMethod(controller,record.iterator,'next',api)===record.next,'false cached delegate next');
+    object.delegation={iterator:api.copy(record.iterator),next:record.next,request:{kind:'next',value:U()},phase:'ready',result:null};return;
+  }
+  const delegate=object.delegation;api.require(delegate,'generator has no delegate');
+  if(record.kind==='generator.delegate.receive'){
+    api.require(delegate.phase==='yielded'&&object.resume?.from==='suspendedYield','generator has no suspended delegate input');
+    delegate.request={kind:object.resume.kind,value:api.copy(object.resume.value)};object.resume=null;delegate.phase='ready';delegate.result=null;return;
+  }
+  api.require(!object.resume,'delegation input must be consumed first');
+  if(record.kind==='generator.delegate.call'){
+    api.require(delegate.phase==='ready'&&record.method===delegate.request.kind,'delegate call changed its pending method');
+    const selected=record.method==='next'?delegate.next:delegateMethod(controller,delegate.iterator,record.method,api),call=record.call;
+    api.require(call.object===delegate.iterator[1],'delegate call changed its iterator receiver');
+    delegate.phase='calling';
+    if(selected==='Iterator.next'){
+      api.require(record.method==='next'&&call.kind==='iterator.next','delegate cached next requires its builtin iterator step');
+      applyIteratorRecordV8(controller,call,api);delegate.result=ref(call.name);
+    }else{
+      api.require(selected==='Generator.'+record.method&&['generator.resume','generator.completed'].includes(call.kind)&&
+        call.method===record.method&&api.eq(call.argument,delegate.request.value),'delegate call changed its selected generator method or sent value');
+      applyGeneratorRecordV8(controller,call,api);
+    }
+  }else if(record.kind==='generator.delegate.result'){
+    api.require(delegate.phase==='calling','delegate result has no pending call');
+    const expected=delegate.result??(controller.lastReturn?.kind==='return'?controller.lastReturn.value:null);
+    api.require(expected&&api.eq(expected,record.result),'delegate result changed its exact call-result identity');
+    const selected=delegatedResult(controller,record.result,api);api.require(selected.done===record.done,'delegate completion changed');
+    delegate.result=api.copy(record.result);delegate.phase=record.done?'complete':'result';
+  }else if(record.kind==='generator.delegate.yield'){
+    api.require(delegate.phase==='result'&&api.eq(delegate.result,record.result)&&!delegatedResult(controller,record.result,api).done,
+      'delegated yield changed its result or done state');api.require(object.yielded<bound,'generator yield bound');
+    object.phase='suspendedYield';object.yielded++;delegate.phase='yielded';
+    api.complete(controller,{kind:'return',invocation:object.invocation,value:record.result});
+  }else if(record.kind==='generator.delegate.end'){
+    api.require(delegate.phase==='complete','delegate has no completed result');const selected=delegatedResult(controller,delegate.result,api);
+    api.require(selected.done,'delegate completion changed before continuation');const value=api.ownDescriptor(selected.object,['str','value']);
+    api.require(!value||value.kind==='data','delegate value getter requires its continuation');object.delegation=null;
+    if(delegate.request.kind==='return')route(controller,object,{kind:'return',value:value?.value??U()},api);
+  }else if(record.kind==='generator.delegate.absent'){
+    api.require(delegate.phase==='ready'&&record.method==='return'&&delegate.request.kind==='return'&&
+      delegateMethod(controller,delegate.iterator,'return',api)===null,'delegate return is not absent');object.delegation=null;
+    route(controller,object,{kind:'return',value:delegate.request.value},api);
+  }else if(record.kind==='generator.delegate.abrupt'){
+    api.require(delegate.phase==='calling'&&delegate.result===null&&controller.heap.get(delegate.iterator[1])?.kind==='generator'&&
+      controller.lastReturn?.kind==='throw'&&api.eq(controller.lastReturn.value,record.value),
+      'delegate throw changed its exact abrupt completion');object.delegation=null;route(controller,object,{kind:'throw',value:record.value},api);
+  }
+}
 export function applyGeneratorRecordV8(controller,record,api){
   if(!Object.hasOwn(GENERATOR_RECORD_FIELDS,record.kind))return false;
   if(record.kind==='generator.function'){
@@ -161,7 +251,8 @@ export function applyGeneratorRecordV8(controller,record,api){
     api.require(lookup(controller,record.receiver,record.key,api).builtin===record.method,'false generator builtin selection');
   }else{
     const object=node(controller,record.object,api);
-    if(record.kind==='generator.read'){
+    if(record.kind.startsWith('generator.delegate.'))applyDelegation(controller,object,record,api);
+    else if(record.kind==='generator.read'){
       const selected=lookup(controller,ref(record.object),record.key,api);api.require(!selected.builtin&&!selected.unsupported,'generator property needs its callable profile');
       const descriptor=selected.descriptor;api.require(!descriptor||descriptor.kind==='data'||descriptor.get[0]==='undefined','generator getter requires a scoped call');
       api.known(controller,record.result);api.require(api.eq(record.result,descriptor?.kind==='data'?descriptor.value:U()),'false generator property read');
@@ -239,7 +330,7 @@ export function restoreGeneratorStateV8(controller,api){let count=0;const invoca
     api.require(object.arguments.length<=bound&&typeof object.invocation==='string'&&!invocations.has(object.invocation)&&
       controller.frameFunctions.get(object.invocation)===controller.heap.get(object.callee[1]).code,'generator retained invocation');invocations.add(object.invocation);
     api.require(phases.has(object.phase)&&Number.isSafeInteger(object.yielded)&&object.yielded>=0&&object.yielded<=bound&&object.properties instanceof Map,'generator state or yield bound');
-    assertAlgorithmDataArray(object.handlers,'generator handlers');api.require(object.handlers.length<=64&&object.delegation===null,'generator handler bound/delegation profile');
+    assertAlgorithmDataArray(object.handlers,'generator handlers');api.require(object.handlers.length<=64,'generator handler bound');
     const handlerNames=new Set();
     for(const handler of object.handlers){
       assertAlgorithmFields(handler,['name','catch','finally','phase','caught','pending'],'generator handler');
@@ -252,7 +343,25 @@ export function restoreGeneratorStateV8(controller,api){let count=0;const invoca
       api.require(handler.phase==='finally'?handler.pending!==null:handler.pending===null,'generator handler completion state');
     }
     if(object.pending!==null){completion(object.pending,value=>api.known(controller,value));
-      api.require(object.phase==='executing'&&object.handlers.length===0&&object.resume===null,'generator terminal completion state');}
+      api.require(object.phase==='executing'&&object.handlers.length===0&&object.resume===null&&object.delegation===null,'generator terminal completion state');}
+    if(object.delegation!==null){
+      const delegate=object.delegation;assertAlgorithmFields(delegate,['iterator','next','request','phase','result'],'generator delegation');
+      api.known(controller,delegate.iterator);const target=delegate.iterator[0]==='ref'?controller.heap.get(delegate.iterator[1]):null;
+      api.require(delegate.iterator[1]!==id&&['iterator','generator'].includes(target?.kind)&&
+        delegate.next===(target.kind==='iterator'?'Iterator.next':'Generator.next'),'generator cached delegate capability');
+      assertAlgorithmFields(delegate.request,['kind','value'],'generator delegate request');
+      api.require(methods.has(delegate.request.kind),'generator delegate resume kind');api.known(controller,delegate.request.value);
+      api.require(['ready','calling','result','complete','yielded'].includes(delegate.phase)&&['executing','suspendedYield'].includes(object.phase),
+        'generator delegate phase');
+      if(delegate.phase==='ready')api.require(delegate.result===null&&object.resume===null,'generator delegate request state');
+      if(delegate.phase==='calling'&&target.kind==='generator')api.require(delegate.result===null,'generator delegate cannot predeclare its call result');
+      if(delegate.phase==='yielded')api.require(object.phase==='suspendedYield'&&object.resume===null||
+        object.phase==='executing'&&object.resume?.from==='suspendedYield','generator suspended delegate state');
+      else api.require(object.phase==='executing'&&object.resume===null,'generator active delegate state');
+      if(delegate.result!==null){const result=delegatedResult(controller,delegate.result,api);
+        if(['result','yielded','complete'].includes(delegate.phase))api.require(result.done===(delegate.phase==='complete'),'generator saved delegate completion');}
+      else api.require(['ready','calling'].includes(delegate.phase),'generator delegate lacks its result identity');
+    }
     api.require(!['suspendedStart','completed'].includes(object.phase)||object.handlers.length===0,'inactive generator has entered handler obligations');
     const isActive=controller.stack.includes(object.invocation);api.require(isActive===['initializing','executing'].includes(object.phase),'generator suspension and shared call stack disagree');
     if(object.resume!==null){assertAlgorithmFields(object.resume,['kind','from','value'],'generator resume');

@@ -42,7 +42,7 @@ function ownedNode(tag,ctx){
 export function createIteratorObservationAdapterV8({side}={}){
   if(side==='owned')return {id:profile,metadataAdapter:{ownedNode}};
   const cursors=new WeakMap(),factories=new Map(),iteratorPrototypes=new Map(),nextMethods=new Set(),identityMethods=new Set();let lookup=null;
-  let invoke=call=>apply(call.callee,call.receiver,call.arguments);
+  let invoke=call=>observeCall(call,()=>apply(call.callee,call.receiver,call.arguments));
   function require(condition,message){if(!condition)throw new TypeError('Independent iterator observation: '+message);}
   function readCursor(value){
     require(value!==null&&['object','function'].includes(typeof value)&&!types.isProxy(value),'ordinary iterator receiver');
@@ -52,11 +52,13 @@ export function createIteratorObservationAdapterV8({side}={}){
     require(lookup,'guest-realm lookup has not been initialized');
     // Primitive boxing must use the guest realm's intrinsic prototypes.
     const method=apply(lookup,undefined,[receiver,key]);
-    return (...args)=>{
-      const kind=factories.get(method);
+    return (...args)=>invoke({callee:method,receiver,arguments:args});
+  }
+  function observeCall(call,next){
+      const {callee:method,receiver}=call,kind=factories.get(method);
       if(kind){
         require(kind==='string'?typeof receiver==='string':Array.isArray(receiver)&&!types.isProxy(receiver),'declared iterator source');
-        const result=invoke({callee:method,receiver,arguments:args});require(result!==null&&typeof result==='object'&&!types.isProxy(result),'builtin iterator result');
+        const result=next();require(result!==null&&typeof result==='object'&&!types.isProxy(result),'builtin iterator result');
         cursors.set(result,{iterated:receiver,iterationKind:kind,nextIndex:0,done:false});return result;
       }
       if(nextMethods.has(method)){
@@ -73,13 +75,14 @@ export function createIteratorObservationAdapterV8({side}={}){
             if(index>=length.value)cursor.done=true;else cursor.nextIndex++;
           }
         }
-        return invoke({callee:method,receiver,arguments:args});
+        return next();
       }
-      if(identityMethods.has(method)){readCursor(receiver);return invoke({callee:method,receiver,arguments:args});}
-      return invoke({callee:method,receiver,arguments:args});
-    };
+      // Iterator.prototype's identity method is also inherited by generators
+      // and custom iterators; their registered observer owns hidden state.
+      if(identityMethods.has(method)&&cursors.has(receiver))readCursor(receiver);
+      return next();
   }
-  return {id:profile,instrument,globals:{[hook]:selected},setCallObserver(value){invoke=value;},
+  return {id:profile,instrument,observeCall,globals:{[hook]:selected},setCallObserver(value){invoke=value;},
     initializeRealm(evaluate){
       const captured=evaluate('(()=>{const a=[][Symbol.iterator](),s=""[Symbol.iterator]();return '+
         '{values:Array.prototype.values,keys:Array.prototype.keys,entries:Array.prototype.entries,'+
