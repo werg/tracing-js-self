@@ -1,8 +1,11 @@
 # Refactoring tracing-js-self toward compact algorithmic traces
 
-**Review date:** 19 November 2026  
-**Repository:** [werg/tracing-js-self](https://github.com/werg/tracing-js-self)  
-**Reviewed revision:** [`8d11f38619b8443c988f79b177908649338b3897`](https://github.com/werg/tracing-js-self/commit/8d11f38619b8443c988f79b177908649338b3897) on `main`  
+**Review date:** 19 November 2026
+
+**Repository:** [werg/tracing-js-self](https://github.com/werg/tracing-js-self)
+
+**Reviewed revision:** [`8d11f38619b8443c988f79b177908649338b3897`](https://github.com/werg/tracing-js-self/commit/8d11f38619b8443c988f79b177908649338b3897) on `main`
+
 **Deliverable:** a proposed refactoring plan, based on source, tests, documentation, and checked-in evidence. The review did not rerun the unit suite, native consumer, or training experiments. All proposed syntax and module names below are design sketches.
 
 ## Recommendation
@@ -598,4 +601,3 @@ All links below are pinned to the reviewed revision. Repository measurements are
 [S10]: https://github.com/werg/tracing-js-self/blob/8d11f38619b8443c988f79b177908649338b3897/docs/evidence/native-v6-qualification-20261118/TOKEN_AUDIT.md
 [S11]: https://github.com/werg/tracing-js-self/blob/8d11f38619b8443c988f79b177908649338b3897/test/training-trace-v6.test.js
 [S12]: https://github.com/werg/tracing-js-self/blob/8d11f38619b8443c988f79b177908649338b3897/tools/current-v6-baseline.mjs
-

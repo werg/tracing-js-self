@@ -115,6 +115,12 @@ Actual pinned-tokenizer counts for the unchanged eleven-case gallery are
 increases, all fallbacks, public-envelope costs, and actual JavaScript context
 costs. It does not establish lower native serving cost or better comprehension.
 
+The [verification receipts](evidence/semantic-algorithm-v7/verification/README.md)
+record the full frozen-producer suite: 1,206 passes, zero failures, and six
+explicit skips out of 1,212 tests, followed by eight passing reference checks.
+Supplemental algorithm tests passed 76/76 with the exact tokenizer. Skipped
+native checks and the scope of each executed run remain explicit.
+
 Versioned families declare source variants, transformation relationships,
 input/effect domains, expected structure, distinct provenance, and a shared
 family identity. Keep relatives together in dataset splits; held-out renaming
