@@ -11,6 +11,8 @@ const pins=process.env.SEMANTIC_V8_TOKENIZER_POLICY?
 const policy=Object.fromEntries(['consumerRevision','tokenizerIdentity','tokenizerSha256'].map(key=>[key,pins[key]]));
 const meter=await createAlgorithmTokenizer({python:process.env.MEGATOKEN_PYTHON??'python3',consumerRoot,tokenizerJson,policy});
 export const tokenizerEvidence={identity:meter.identity,qualification:meter.qualification};
+export const algorithmTokenizer=meter;
+export const tokenizerPolicy=policy;
 export const tokenizer={identity:meter.identity.fingerprint,encode:text=>meter.encode(text),
   decode:ids=>meter.decode(ids),close:()=>meter.close()};
 export const eosTokenId=156892;

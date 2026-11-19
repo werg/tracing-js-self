@@ -43,8 +43,8 @@ const producerRevision=execFileSync('git',['-C',root,'rev-parse','HEAD'],{encodi
 const sourceChanges=execFileSync('git',['-C',root,'status','--porcelain','--untracked-files=no'],{encoding:'utf8'}).trim();
 if(sourceChanges)throw new Error('Retained benchmark evidence requires a committed producer; commit source changes first');
 const tokenModule=flags.has('--tokenizer-module')?await import(pathToFileURL(resolve(flags.get('--tokenizer-module'))).href):null;
-if(tokenModule&&(traceVersion!==8||!tokenModule.tokenizer||!Number.isSafeInteger(tokenModule.eosTokenId)))
-  throw new Error('This runner requires an exact v8 tokenizer module with tokenizer and eosTokenId exports');
+if(tokenModule&&(!(traceVersion===8?tokenModule.tokenizer:tokenModule.algorithmTokenizer)||!Number.isSafeInteger(tokenModule.eosTokenId)))
+  throw new Error('An exact tokenizer module with the selected format adapter and eosTokenId is required');
 const manifest=expansionManifest(),registry=expansionFamilyRegistry();
 try {
 write('manifest.json',manifest);write('family-registry.json',registry);
@@ -81,7 +81,9 @@ if(mode==='coverage'){
     if(result.exported){
       let cost;
       try {cost=traceVersion===8?await auditRegionServingCosts(result.exported,{tokenizer:tokenModule?.tokenizer??null,
-        eosTokenId:tokenModule?.eosTokenId??null,maxContextTokens}):await auditFlatServingCosts(result.exported);}
+        eosTokenId:tokenModule?.eosTokenId??null,maxContextTokens}):await auditFlatServingCosts(result.exported,{
+          tokenizer:tokenModule?.algorithmTokenizer??null,tokenizerPolicy:tokenModule?.tokenizerPolicy??null,
+          eosTokenId:tokenModule?.eosTokenId??null,maxContextTokens});}
       catch(error){
         // A measurement limit cannot erase an independently qualified source.
         const limited=/context budget|example cap|record byte bound/i.test(error.message);
@@ -150,4 +152,7 @@ console.log(JSON.stringify({output,producerRevision,reference:reference.totals,
   tasks:taskset.tasks.length,coverage:report.coverage}));
 if(reference.totals.positivePassed!==reference.totals.positiveInputs||reference.totals.distinguishingPassed!==reference.totals.distinguishingPairs||
   reference.families.some(family=>family.distinguishingPairs.some(row=>row.normalizationSeparation.status==='failed')))process.exitCode=1;
-} finally {if(tokenModule?.tokenizer?.close)await tokenModule.tokenizer.close();}
+} finally {
+  const meter=tokenModule?.tokenizer??tokenModule?.algorithmTokenizer;
+  if(meter?.close)await meter.close();
+}

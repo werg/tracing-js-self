@@ -44,6 +44,13 @@ export function validateV8NativeReceipt(exported,receipt,policy){
   for(const key of ['consumerRevision','contractDigest','fixtureDigest','interoperabilityDigest'])
     if(receipt[key]!==policy[key])fail('receipt differs from pinned '+key);
   if(V8_NATIVE_CHECKS.some(key=>receipt.checks?.[key]!=='passed'))fail('all independent native gates must pass');
+  const source=receipt.sourceVerification;
+  if(source?.schema!=='semantic-native-source-recheck/1'||source.producerTreeClean!==true||
+    !REVISION.test(source.producerRevision??'')||source.sourceValidated!==true||
+    source.projectionValidated!==true||source.replayValidated!==true||
+    !HASH.test(source.artifactSha256??'')||source.sourceArtifactDigest!==hashAlgorithmData(exported.sidecar.sourceArtifact)||
+    source.publicDigest!==hashAlgorithmData(exported.public)||source.contextDigest!==hashAlgorithmData(exported.contexts))
+    fail('receipt is missing fresh independent source correspondence verification');
   if(receipt.tokenizer?.status!=='passed'||receipt.tokenizer.identity!==policy.tokenizerIdentity||
     receipt.tokenizer.sha256!==policy.tokenizerSha256)fail('tokenizer bytes or identity changed');
   const counts=receipt.counts;

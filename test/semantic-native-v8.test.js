@@ -18,6 +18,10 @@ function unitReceipt(){return {schema:'semantic-native-admission/8',componentGat
   consumerRevision:policy.consumerRevision,contractDigest:policy.contractDigest,fixtureDigest:policy.fixtureDigest,interoperabilityDigest:policy.interoperabilityDigest,
   publicDigest:hashAlgorithmData(artifact.public),contextsDigest:hashAlgorithmData(artifact.contexts),
   sourceArtifactDigest:artifact.sidecar.sourceArtifactDigest,datasetBindingDigest:null,
+  sourceVerification:{schema:'semantic-native-source-recheck/1',producerRevision:'f'.repeat(40),producerTreeClean:true,
+    artifactSha256:'e'.repeat(64),sourceArtifactDigest:hashAlgorithmData(artifact.sidecar.sourceArtifact),
+    publicDigest:hashAlgorithmData(artifact.public),contextDigest:hashAlgorithmData(artifact.contexts),
+    sourceValidated:true,projectionValidated:true,replayValidated:true},
   nativeTrainingDigest:'d'.repeat(64),optimizerSteps:0,learningClaim:null,
   tokenizer:{status:'passed',identity:policy.tokenizerIdentity,sha256:policy.tokenizerSha256},
   checks:Object.fromEntries(V8_NATIVE_CHECKS.map(key=>[key,'passed'])),
@@ -29,6 +33,12 @@ test('v8 receipt validator requires exact contract, source, contexts, tokenizer 
   for(const field of ['consumerRevision','contractDigest','fixtureDigest','interoperabilityDigest','publicDigest','contextsDigest','sourceArtifactDigest','nativeTrainingDigest']){
     const bad=unitReceipt();bad[field]='bad';assert.throws(()=>validateV8NativeReceipt(artifact,bad,policy),/Native v8/);
   }
+  for(const field of ['producerRevision','artifactSha256','sourceArtifactDigest','publicDigest','contextDigest']){
+    const bad=unitReceipt();bad.sourceVerification[field]='bad';
+    assert.throws(()=>validateV8NativeReceipt(artifact,bad,policy),/source correspondence/);
+  }
+  const missingSource=unitReceipt();delete missingSource.sourceVerification;
+  assert.throws(()=>validateV8NativeReceipt(artifact,missingSource,policy),/source correspondence/);
   for(const gate of V8_NATIVE_CHECKS){const bad=unitReceipt();bad.checks[gate]='untested';
     assert.throws(()=>validateV8NativeReceipt(artifact,bad,policy),/gates/);}
   const badTokenizer=unitReceipt();badTokenizer.tokenizer.sha256='e'.repeat(64);
