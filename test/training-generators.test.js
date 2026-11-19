@@ -54,8 +54,7 @@ test('independent generator source completions agree while old public formats re
   const admission=await verifyEffectfulTrainingCase({source,entry:'run',family:'generator-continuation',fixture:{calls:[]}});
   assert.equal(admission.status,'projection_refused');
 });
-test('async generators and delegation remain explicitly outside this slice',()=>{
-  for(const source of ['"use strict";function run(){function* g(){yield* [1,2];}return g().next();}',
-    '"use strict";function run(){async function* g(){yield 1;}return g().next();}'])
+test('async generators remain explicitly outside this slice',()=>{
+  for(const source of ['"use strict";function run(){async function* g(){yield 1;}return g().next();}'])
     assert.throws(()=>createRuntime().startEntry({text:source,functionName:'run'}),/Unsupported training/);
 });

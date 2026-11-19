@@ -44,6 +44,7 @@ const opNames = {
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
   CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', GENERATOR_START:'call.return', YIELD:'continuation.yield', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
   GET_TEMPLATE_OBJECT:'array.allocate', PROPERTY_KEY:'property.read', CLASS_CONSTRUCTOR_GUARD:'call.enter', CLASS_CREATE:'object.construct', CLASS_INITIALIZER:'property.write', CLASS_FINISH:'call.enter', PRIVATE_GET:'property.read', PRIVATE_GET_METHOD:'property.read', PRIVATE_HAS:'primitive.binary', PRIVATE_DEFINE:'property.write', PRIVATE_SET:'property.write', PRIVATE_UPDATE:'property.update',
+  DELEGATE_YIELD:'continuation.yield', DELEGATE_RESUME_KIND:'completion.pending.read', DELEGATE_RESUME_VALUE:'completion.pending.read', ITERATOR_THROW_MISSING:'call.enter',
   GET_PROP:'property.read', GET_METHOD:'property.read', SPREAD:'property.read', PUT_PROP:'property.write', DEFINE_LITERAL_PROP:'property.write', COPY_KEYS:'array.allocate', HAS_ENUMERABLE_OWN:'property.read', REQUIRE_COERCIBLE:'property.read', REQUIRE_OBJECT:'property.read', ITERATOR_ARRAY_GUARD:'property.read', PENDING_THROW:'completion.pending.read', APPEND_ARRAY:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
   LEAVE_SCOPE:'environment.leave', CLONE_LOOP_ENV:'environment.iteration', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
   TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
@@ -466,12 +467,12 @@ export class Runtime {
       propertyVersions:{value:1,done:1},shapeVersion:2,version:0};
     return ['ref',id];
   }
-  suspendGenerator(draft,frame,value,origin,initial=false){
+  suspendGenerator(draft,frame,value,origin,initial=false,direct=false){
     const generator=draft.heap[frame.generatorId];
     if(generator?.kind!=='generator')throw new Error('Yield outside owned generator frame');
     generator.state=initial?'suspendedStart':'suspendedYield';
     frame.status='suspended-generator';
-    const output=initial?['ref',generator.id]:this.iteratorResult(draft,value,false,origin);
+    const output=initial?['ref',generator.id]:direct?value:this.iteratorResult(draft,value,false,origin);
     frame.completion={type:'return',value:token(output,origin)};
     this.deliverFrameValue(draft,frame,output,origin);frame.callerFrameId=null;
     return output;
@@ -938,6 +939,14 @@ export class Runtime {
         case 'CLASS_CONSTRUCTOR_GUARD':
           if(!f.newTarget)guestFault('TypeError','Class constructor cannot be invoked without new');
           return {};
+        case 'ITERATOR_THROW_MISSING':guestFault('TypeError','Delegated iterator has no throw method');break;
+        case 'DELEGATE_RESUME_KIND':
+          if(!f.delegateResume)throw new Error('Missing delegated completion');
+          return result(['str',f.delegateResume.kind]);
+        case 'DELEGATE_RESUME_VALUE':{
+          if(!f.delegateResume)throw new Error('Missing delegated value');
+          const value=f.delegateResume.value;delete f.delegateResume;return {...operands(value),...result(value.value)};
+        }
         case 'THIS':
           if(f.thisValue[0]==='undefined'&&!this.programs[f.codeId].strict)
             throw new TypeError('Global sloppy this is not modeled by the bounded object profile');
@@ -1861,12 +1870,14 @@ if(object.kind==='regexp'){
             generator.state='executing';target.status='running';target.callerFrameId=f.id;delete target.completion;
             s.control.a0.activeFrameId=target.id;
             const completion=method==='return'?{type:'return',value:sent}:method==='throw'?{type:'throw',value:sent}:null;
-            if(completion)this.routeCompletion(s,target,completion,eventId);
+            const delegated=target.delegateYield===true;
+            if(delegated){target.delegateResume={kind:method,value:sent};delete target.delegateYield;}
+            else if(completion)this.routeCompletion(s,target,completion,eventId);
             else if(!initial)this.stackPush(target,sent.value,eventId);
             if(method==='return'&&s.control.a0.activeFrameId===f.id&&target.status==='completed')
               return {...operands(fn,...args),result:f.stack.at(-1).value};
             return {...operands(fn,...args),causes:[{kind:'invocation',frameId:target.id}],
-              ...(method==='throw'?{completion}:{})};
+              ...(method==='throw'&&!delegated?{completion}:{})};
           }
           if(callable[0]==='builtinfn'&&['Array.prototype.values','Array.prototype.keys','Array.prototype.entries','String.prototype.iterator'].includes(callable[1])){
             const string=callable[1]==='String.prototype.iterator';
@@ -2898,6 +2909,11 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
         }
         case 'GENERATOR_START':{
           const output=this.suspendGenerator(s,f,U,eventId,true);return {result:output};
+        }
+        case 'DELEGATE_YIELD':{
+          const value=pop();f.delegateYield=true;
+          const output=this.suspendGenerator(s,f,value.value,eventId,false,true);
+          return {...operands(value),result:output};
         }
         case 'YIELD':{
           const value=pop(),output=this.suspendGenerator(s,f,value.value,eventId);

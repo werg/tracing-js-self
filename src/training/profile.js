@@ -159,8 +159,7 @@ export function parseTraining(source) {
           cooked:n.quasi.quasis.map(q=>q.value.cooked===null?['undefined']:['str',q.value.cooked]),
           raw:n.quasi.quasis.map(q=>q.value.raw),expressions:n.quasi.expressions.map(expr)};
       case 'YieldExpression':
-        if(n.delegate)reject(n,'yield delegation requires the delegated generator profile');
-        return {...loc,type:'Yield',argument:n.argument?expr(n.argument):{...loc,type:'Literal',value:['undefined']}};
+        return {...loc,type:n.delegate?'YieldDelegate':'Yield',argument:n.argument?expr(n.argument):{...loc,type:'Literal',value:['undefined']}};
       case 'AwaitExpression':
         return {...loc,type:'Await',argument:expr(n.argument)};
       case 'UnaryExpression':
@@ -378,7 +377,7 @@ export function parseTraining(source) {
         case 'PrivateMember':case 'PrivateHas':value(n.object,e);break;
         case 'Template':n.expressions.forEach(x=>value(x,e));break;
         case 'TaggedTemplate':value(n.tag,e);n.expressions.forEach(x=>value(x,e));break;
-        case 'Yield':value(n.argument,e);break;
+        case 'Yield':case 'YieldDelegate':value(n.argument,e);break;
         case 'FunctionExpr':scope(n.body.body,n.name?{names:new Set([n.name]),parent:e}:e,
           n.parameterNames??n.params,n.async,true,n.defaults,n.parameterPatterns);break;
         case 'Await':

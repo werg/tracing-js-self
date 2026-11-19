@@ -1,4 +1,4 @@
-import {validateGeneratorState} from './generator-validation.js';
+import {validateGeneratorState,validateGeneratorEvent} from './generator-validation.js';
 import {validatePrivateEvent} from './private-validation.js';
 import {validateTemplateEvent} from './template-validation.js';
 // Read-only validation. Does not import the evaluator or call its mutation routines.
@@ -130,6 +130,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
       'object.construct','execution.unsupported','regexp.allocate'].includes(e.operation))
       fail('Completion metadata without an owned completion operation',e.eventId);
     validateSpecEvent(state,e,fail);
+    validateGeneratorEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validatePrivateEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validateTemplateEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     for(const p of e.stateChanges) {

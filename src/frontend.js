@@ -235,6 +235,7 @@ export function compile(ast) {
         case 'PrivateMember':expr(n.object);emit('PRIVATE_GET',{name:n.name},n);break;
         case 'PrivateHas':expr(n.object);emit('PRIVATE_HAS',{name:n.name},n);break;
         case 'Yield':expr(n.argument);emit('YIELD',null,n);break;
+        case 'YieldDelegate':emitYieldDelegate(n);break;
         case 'TaggedTemplate':
           if(n.tag.type==='PrivateMember'){expr(n.tag.object);emit('PRIVATE_GET_METHOD',{name:n.tag.name},n.tag);}
           else if(n.tag.type==='Member'){expr(n.tag.object);expr(n.tag.property);emit('GET_METHOD',null,n.tag);}
@@ -461,6 +462,51 @@ export function compile(ast) {
       instructions[skip].arg=instructions.length;
       emit('UPDATE_BINDING',{name:index,operator:'++',prefix:true},node);emit('POP',null,node);
       emit('JUMP',top,node);instructions[done].arg=instructions.length;
+    }
+    function emitYieldDelegate(n){
+      const salt=++forOfIndex,iterator='[[delegate '+salt+']]',next='[[delegate next '+salt+']]',
+        kind='[[delegate kind '+salt+']]',sent='[[delegate sent '+salt+']]',step='[[delegate step '+salt+']]';
+      emit('ENTER_SCOPE',null,n);
+      for(const name of [iterator,next,kind,sent,step])emit('DECLARE',{name,kind:'let'},n);
+      expr(n.argument);emit('CONST',{value:['symbol','well-known:iterator']},n);emit('GET_METHOD',null,n);emit('CALL',0,n);
+      emit('REQUIRE_OBJECT',null,n);emit('INIT',iterator,n);
+      emit('GET',iterator,n);emit('CONST',{value:['str','next']},n);emit('GET_METHOD',null,n);emit('INIT',next,n);
+      emit('CONST',{value:['str','next']},n);emit('INIT',kind,n);
+      for(const name of [sent,step]){emit('CONST',{value:['undefined']},n);emit('INIT',name,n);}
+      const top=instructions.length;
+      emit('GET',kind,n);emit('CONST',{value:['str','next']},n);emit('BINARY','===',n);
+      const abrupt=emit('JUMP_IF_FALSE',null,n);
+      emit('GET',next,n);emit('GET',sent,n);emit('CALL',1,n);emit('REQUIRE_OBJECT',null,n);emit('SET',step,n);emit('POP',null,n);
+      const nextResult=emit('JUMP',null,n);
+      instructions[abrupt].arg=instructions.length;
+      emit('GET',iterator,n);emit('GET',kind,n);emit('GET_METHOD',null,n);
+      const provided=emit('LOGICAL_JUMP',{operator:'??',to:null},n);emit('POP',null,n);
+      emit('GET',kind,n);emit('CONST',{value:['str','return']},n);emit('BINARY','===',n);
+      const missingThrow=emit('JUMP_IF_FALSE',null,n);
+      emit('GET',sent,n);emit('RETURN',null,n);
+      instructions[missingThrow].arg=instructions.length;
+      // A missing throw method closes with a normal completion. A cleanup
+      // failure wins; otherwise the missing-throw TypeError is raised.
+      emit('GET',iterator,n);emit('CONST',{value:['str','return']},n);emit('GET_METHOD',null,n);
+      const close=emit('LOGICAL_JUMP',{operator:'??',to:null},n);emit('POP',null,n);
+      const noClose=emit('JUMP',null,n);instructions[close].arg.to=instructions.length;
+      emit('CALL',0,n);emit('REQUIRE_OBJECT',null,n);emit('POP',null,n);
+      instructions[noClose].arg=instructions.length;emit('ITERATOR_THROW_MISSING',null,n);
+      instructions[provided].arg.to=instructions.length;
+      emit('GET',sent,n);emit('CALL',1,n);emit('REQUIRE_OBJECT',null,n);emit('SET',step,n);emit('POP',null,n);
+      instructions[nextResult].arg=instructions.length;
+      emit('GET',step,n);emit('CONST',{value:['str','done']},n);emit('GET_PROP',null,n);
+      const yielded=emit('JUMP_IF_FALSE',null,n);
+      emit('GET',step,n);emit('CONST',{value:['str','value']},n);emit('GET_PROP',null,n);
+      emit('GET',kind,n);emit('CONST',{value:['str','return']},n);emit('BINARY','===',n);
+      const normal=emit('JUMP_IF_FALSE',null,n);emit('RETURN',null,n);
+      instructions[normal].arg=instructions.length;emit('LEAVE_SCOPE',null,n);
+      const end=emit('JUMP',null,n);
+      instructions[yielded].arg=instructions.length;
+      emit('GET',step,n);emit('DELEGATE_YIELD',null,n);
+      emit('DELEGATE_RESUME_KIND',null,n);emit('SET',kind,n);emit('POP',null,n);
+      emit('DELEGATE_RESUME_VALUE',null,n);emit('SET',sent,n);emit('POP',null,n);
+      emit('JUMP',top,n);instructions[end].arg=instructions.length;
     }
     function emitClass(n){
       const salt=++forOfIndex,klass='[[class '+salt+']]',proto='[[class prototype '+salt+']]';
