@@ -12,6 +12,8 @@ function inspectHeap(node,before,{boundary=false}={}){
     reject('class/private state requires an explicit v8 behavioral-state profile');
   if(node.prototypeInitialized||Object.keys(node.dataAttributes??{}).length)
     reject('constructor/prototype descriptors require an explicit v8 behavioral-state profile');
+  if(node.extensible===false||node.templateSite||node.templateRawOf)
+    reject('frozen template identity and descriptors require an explicit v8 behavioral-state profile');
   if(Object.hasOwn(node,'prototype')){
     const ordinary=node.kind==='array'?'Array.prototype':node.kind==='object'?'Object.prototype':
       node.kind==='function'?'Function.prototype':undefined;
@@ -28,13 +30,20 @@ export function checkEffectfulProjectionState(bundle){
   let snapshots=0;
   for(const node of Object.values(bundle.initialState?.heap??{})){inspectHeap(node,null,{boundary:true});snapshots++;}
   for(const frame of Object.values(bundle.initialState?.frames??{}))
-    if(frame.constructReceiver||frame.newTarget)reject('construction completion state requires an explicit v8 protocol profile');
+    if(frame.constructReceiver||frame.newTarget||frame.afterInstanceInitialization||frame.classStaticResult)
+      reject('construction completion state requires an explicit v8 protocol profile');
+  for(const control of Object.values(bundle.initialState?.control??{}))
+    if(Object.keys(control.templateObjects??{}).length)
+      reject('template site identity cache requires an explicit v8 protocol profile');
   for(const event of bundle.events??[])for(const change of event.stateChanges??[]){
     if(change.table==='heap'&&change.after){
       inspectHeap(change.after,change.before,{boundary:change.before===null&&event.operation==='external.input.deliver'});snapshots++;
     }
-    if(change.table==='frames'&&change.after&&(change.after.constructReceiver||change.after.newTarget))
+    if(change.table==='frames'&&change.after&&(change.after.constructReceiver||change.after.newTarget||
+      change.after.afterInstanceInitialization||change.after.classStaticResult))
       reject('construction completion state requires an explicit v8 protocol profile');
+    if(change.table==='control'&&Object.keys(change.after?.templateObjects??{}).length)
+      reject('template site identity cache requires an explicit v8 protocol profile');
   }
   return {valid:true,checkedHeapSnapshots:snapshots};
 }
