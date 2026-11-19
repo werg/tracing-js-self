@@ -170,7 +170,17 @@ export function sharedRegionState(controller){
   const fields=['heap','locals','stack','effects','jobs','ready','randomState','pending','lastReturn','completion',
     'receiver','captureAliases','continuations','reactionSequence','blockedSync','callReturn','activeJob','scheduler',
     'frameFunctions','jobErrors'];
-  return Object.fromEntries(fields.map(key=>[key,copy(packet[key])]));
+  const result=Object.fromEntries(fields.map(key=>[key,copy(packet[key])]));
+  result.heap=[...controller.heap].map(([id,node])=>[id,{...copy(node),properties:copy([...node.properties]),
+    ...(node.descriptors instanceof Map?{descriptors:copy([...node.descriptors])}:{})}]);
+  result.protocol=copy(controller.protocol??null);
+  if(Buffer.byteLength(JSON.stringify(result),'utf8')>controller.maxPacketBytes)
+    throw new RangeError('Shared region state exceeds the committed continuation byte bound');
+  return result;
+}
+/** Transactional staging preserves the same value types as the live machine. */
+export function cloneRegionController(controller){
+  return Object.assign(Object.create(Object.getPrototypeOf(controller)),copy(controller));
 }
 export function regionEntry(program,region,controller,cutoff){
   return {definition:program.definitionDigest,region:region.id,regionDigest:region.digest,

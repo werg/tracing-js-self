@@ -6,7 +6,7 @@ import {mkdir,open} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {hashAlgorithmData} from './program.js';
 import {REGION_TRACE_VERSION,REGION_CONTEXT_VERSION,REGION_PROFILE} from './regions.js';
-import {V8_CONTRACT_DIGEST,V8_FIXTURE_DIGEST} from './native-v8.js';
+import {V8_CONTRACT_DIGEST,V8_FIXTURE_DIGEST,V8_INTEROPERABILITY_DIGEST} from './native-v8.js';
 import {verifyFailureRecord} from '../training/failure-record.js';
 import {buildCausalLmV8Examples,CAUSAL_LM_V8_BRIDGE_VERSION} from './causal-lm-v8.js';
 import {buildRegionFamilyRegistry,verifyRegionFamilyRegistry,regionSplitIdentity,
@@ -236,7 +236,7 @@ export async function buildRegionDataset(candidates,options={}){
   const tokenizerQualification=tokenizer.qualification??tokenizerEvidence?.qualification??null;
   const manifest={schema:REGION_DATASET_SCHEMA,traceFormat:REGION_TRACE_VERSION,contextFormat:REGION_CONTEXT_VERSION,
     representation:'mixed',profile:REGION_PROFILE,adapter:CAUSAL_LM_V8_BRIDGE_VERSION,
-    contractDigest:V8_CONTRACT_DIGEST,fixtureDigest:V8_FIXTURE_DIGEST,
+    contractDigest:V8_CONTRACT_DIGEST,fixtureDigest:V8_FIXTURE_DIGEST,interoperabilityDigest:V8_INTEROPERABILITY_DIGEST,
     seed:prepared.registry?.seed??registryOptions.seed,registrySchema:REGION_FAMILY_REGISTRY_SCHEMA,
     registryDigest:prepared.registry?.digest??null,registryMembers:prepared.registry?.sources.length??0,
     registryComponents:prepared.registry?.components.length??0,holdouts:structuredClone(prepared.registry?.holdouts??

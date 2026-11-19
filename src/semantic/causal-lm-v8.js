@@ -7,6 +7,7 @@ import {validateRegionProgram,decodeRegionRecord,REGION_CONTEXT_VERSION,
   REGION_TRACE_VERSION,REGION_PROFILE} from './regions.js';
 import {decodePureRegionRecord,pureRegionEntry} from './pure-region-v8.js';
 import {decodeDetailedRecord} from './detailed-v7.js';
+import {decodeProtocolRecordV8} from './protocol-codec-v8.js';
 import {RegionExecutionHarness} from './region-harness.js';
 import {recheckRegionEvidence} from './compiler-v8.js';
 import {SEMANTIC_V8_DEFINITION} from './contract-v8.js';
@@ -60,6 +61,7 @@ export function decodeCausalLmV8Target(target){
   if(target.startsWith('algorithm '))return {kind:'algorithm',record:decodePureRegionRecord(target)};
   if(target.startsWith('region '))return {kind:'region',record:decodeRegionRecord(target)};
   if(target.startsWith('detail '))return {kind:'semantic',record:decodeDetailedRecord(target,{role:'generated'})};
+  if(target.startsWith('protocol '))return {kind:'protocol',record:decodeProtocolRecordV8(target)};
   fail('unknown generated record or observation in loss');
 }
 
@@ -241,7 +243,7 @@ export async function auditRegionServingCosts(exported,{tokenizer=null,eosTokenI
     const encoded=tokenizer?await encodeCausalLmV8Example(context,target,{tokenizer,eosTokenId,maxContextTokens}):null;
     rows.push({prediction:targetOrdinal,invocationId:context.invocationId,visibleThrough:context.visibleThrough,
       prompt,target,promptSha256:sha(prompt),targetSha256:sha(target),promptBytes:bytes(prompt),targetBytes:bytes(target),
-      snapshotBytes:bytes(JSON.stringify(context)),detail:row.kind==='semantic',recordKind:row.kind,
+      snapshotBytes:bytes(JSON.stringify(context)),detail:['semantic','protocol'].includes(row.kind),recordKind:row.kind,
       promptTokens:encoded?.boundaries.promptTokens??null,generatedTokens:encoded?.boundaries.targetTokens??null,
       terminalTokens:encoded?.boundaries.terminalTokens??null,totalTokens:encoded?.costs.flatContextTokens??null,
       ...(encoded&&retainTokenIds?{inputIds:encoded.inputIds,labels:encoded.labels}:{})});

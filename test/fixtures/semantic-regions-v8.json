@@ -1,6 +1,7 @@
 {
   "schema": "semantic-v8-interoperability/1",
-  "contractDigest": "fe1eed56bafa5c0012354b29ebb3b40bbe33f085f063d6990fcb3f26cb261cc2",
+  "contractDigest": "e34317197f4daa123e2fa02d84347801dbff5d93868670b76f5902917949cf80",
+  "interoperabilityDigest": "ffe91c3265e22a792dbb80d5a4b80faa22561c7143eb9ac8819e7a9f9432af33",
   "examples": [
     {
       "id": "ordered-map",
@@ -282,7 +283,7 @@
                 "region": "whole",
                 "regionDigest": "5e109014554279cb9e5f8b10fbb1d6b02204fa8a98a34ac56fba32b1acdbdd48",
                 "visibleThrough": 2,
-                "stateDigest": "3b153d72a560be72ce776593c4ed15186ee1eb5359de440d0ff986a4c06451b8"
+                "stateDigest": "308d17d44878c9bd195ab83d2f8c0ff988e862fa01e06f4d36f6e9640f48e7cc"
               },
               "line": "algorithm {\"allocations\":[{\"id\":\"o0\",\"kind\":\"array\",\"properties\":[{\"key\":\"0\",\"value\":[\"num\",4]},{\"key\":\"1\",\"value\":[\"num\",6]},{\"key\":\"2\",\"value\":[\"num\",8]},{\"key\":\"length\",\"value\":[\"num\",3]}]}],\"claims\":[{\"id\":\"v0\",\"kind\":\"compute\",\"result\":[\"ref\",\"o0\"],\"step\":0},{\"kind\":\"return\",\"step\":1,\"value\":[\"ref\",\"o0\"]}],\"completion\":{\"kind\":\"return\",\"value\":[\"ref\",\"o0\"]}}"
             }
@@ -504,7 +505,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -765,7 +767,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -784,7 +787,7 @@
             "closureQueue": []
           },
           "visibleThrough": 3,
-          "prefixDigest": "379eb76924d9fb0e02162bfbf8b26784bc3e48be479a8ad831e672d05e3327a1"
+          "prefixDigest": "2fb1c8f8849c21fbf296de4c9c847124a28815e752d6983844161cdfc01072c5"
         }
       ],
       "sourceCheck": "agreed",
@@ -1355,7 +1358,7 @@
                 "region": "r0",
                 "regionDigest": "984efe3a4559084715942e0734183f65593584c24fb293b7e62880cdabe163ad",
                 "visibleThrough": 3,
-                "stateDigest": "fcbd0b8aba28738d204df5cd178bd9352b4e5f7ed78038d1b3071c3fc9b2989e"
+                "stateDigest": "b8901e4cae9adca1c45c325fcd0554f2a25db8d90b739be1514971ddd43bc26c"
               },
               "line": "region {\"bindings\":[[\"a\",[\"num\",4]],[\"b\",[\"num\",8]],[\"reads\",[\"num\",0]]],\"completion\":{\"kind\":\"normal\"},\"decisions\":[],\"region\":\"r0\"}"
             }
@@ -1423,7 +1426,7 @@
               "session": "teacher1",
               "track": "worker1",
               "invocationId": "invocation1",
-              "line": "detail {\"fields\":{\"arguments\":[],\"callee\":\"function:109\",\"child\":\"guest1\",\"receiver\":[\"ref\",\"o2\"]},\"kind\":\"call\"}"
+              "line": "detail {\"fields\":{\"arguments\":[],\"callee\":\"function:109\",\"child\":\"guest1\",\"receiver\":[\"undefined\"]},\"kind\":\"call\"}"
             }
           },
           {
@@ -1472,7 +1475,7 @@
                 "region": "r1",
                 "regionDigest": "2fece1a6c99dbbd062707d0341c30b969c80d6e39f657ad4ef686d745a60edad",
                 "visibleThrough": 13,
-                "stateDigest": "c55eca39e6eaff109a020ec6f82b97040f129c64960c146d98d14029a2fd4d8c"
+                "stateDigest": "f534ca25626bf223cbf4922024a5a4d690d2f3c0f61f9824054f8b95bacce0f7"
               },
               "line": "region {\"bindings\":[],\"completion\":{\"kind\":\"return\",\"value\":[\"num\",29]},\"decisions\":[],\"region\":\"r1\"}"
             }
@@ -1743,7 +1746,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -2010,7 +2014,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -2298,7 +2303,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -2317,7 +2323,7 @@
             "closureQueue": []
           },
           "visibleThrough": 4,
-          "prefixDigest": "0b4c1fb5b0ed3727bfbae94a37ec6134e8abe394674b5a31ea7c859d5a726288"
+          "prefixDigest": "c296f911463e5be6f0a774eca4bbce9ada8d7806e866d915cb1a58721f1b0d6e"
         },
         {
           "schema": "semantic-context/8",
@@ -2603,7 +2609,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -2622,7 +2629,7 @@
             "closureQueue": []
           },
           "visibleThrough": 5,
-          "prefixDigest": "01e98a20cd95a12468326292f9bf717de32f71ea1c137c845a41558ee74268ca"
+          "prefixDigest": "7f54e28487a54c4be70d227ba8689edc9d0e03db3f6d0c71eede0d06065e04ad"
         },
         {
           "schema": "semantic-context/8",
@@ -2915,7 +2922,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -2934,7 +2942,7 @@
             "closureQueue": []
           },
           "visibleThrough": 6,
-          "prefixDigest": "01e493f2814142137bb9911a8ead11877d31f83e96a3d8406baca9da2559ab88"
+          "prefixDigest": "6045eeda7033e9839f5df531f5f57b2f58abaa6e9f8e217569bb56d1be20176f"
         },
         {
           "schema": "semantic-context/8",
@@ -3237,7 +3245,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -3256,7 +3265,7 @@
             "closureQueue": []
           },
           "visibleThrough": 7,
-          "prefixDigest": "8daf7f3b5c73b19326a5d9550036370bb3d93444533ae38dd9826d7f7e7d91a6"
+          "prefixDigest": "b1ac74e9ad33c9106d4cda661d897a5cd4b9d97905ac95c73a394534af0baeaa"
         },
         {
           "schema": "semantic-context/8",
@@ -3574,7 +3583,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -3593,7 +3603,7 @@
             "closureQueue": []
           },
           "visibleThrough": 8,
-          "prefixDigest": "dd0a5cd2a0b18c20d7e16e272c890400e6cca08cb6f672b8625505bf4eae6e2a"
+          "prefixDigest": "753d683b3810cbbda7d1f4a6597a62f77960f9e855815f834121960f7a49a38d"
         },
         {
           "schema": "semantic-context/8",
@@ -3919,7 +3929,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -3938,7 +3949,7 @@
             "closureQueue": []
           },
           "visibleThrough": 9,
-          "prefixDigest": "f26a4dcfc971355fbac94f3c373cfe506c06e5e525528e0198450d0d7cb0d4c6"
+          "prefixDigest": "cbec008bd77f86b1ce036d534ddaec31fb98902e4b82b80c0e470c860db060d8"
         },
         {
           "schema": "semantic-context/8",
@@ -4269,7 +4280,8 @@
                 "function:109"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -4288,7 +4300,7 @@
             "closureQueue": []
           },
           "visibleThrough": 10,
-          "prefixDigest": "2f62af5b15e95b503bc8d115dc499908302c59d5ba8fe41c17805d6fe54b6def"
+          "prefixDigest": "114e032fb25739598cf65e5a2db9ab33563a6eada34f355d5307844aae80aa18"
         },
         {
           "schema": "semantic-context/8",
@@ -4619,7 +4631,8 @@
                 "function:109"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -4638,7 +4651,7 @@
             "closureQueue": []
           },
           "visibleThrough": 11,
-          "prefixDigest": "c165977d02d12181591dcc834f7448f4c54427288efc142249f4ad0ff8b40e67"
+          "prefixDigest": "d8edfb8807a55979f485d8f3d5767924a775c163943341662226f7ec25fb44df"
         },
         {
           "schema": "semantic-context/8",
@@ -4974,7 +4987,8 @@
                 "function:109"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -4993,7 +5007,7 @@
             "closureQueue": []
           },
           "visibleThrough": 12,
-          "prefixDigest": "1a42b178cb42762cdb0bbb28b97db45fc7e6416d4580b62e864b8c0e8574e8aa"
+          "prefixDigest": "25ed29951035e076455d5db161bc402253cb5907b34e93b65a10892d78d2094a"
         },
         {
           "schema": "semantic-context/8",
@@ -5336,7 +5350,8 @@
                 "function:109"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -5355,7 +5370,7 @@
             "closureQueue": []
           },
           "visibleThrough": 13,
-          "prefixDigest": "6eb77be365c18178013ea6e6bd03e0207579822619179096e68a7894622fff54"
+          "prefixDigest": "d46c526b78b8c52b30a81f5f2767d9037f045c7f00870287fe3b5ae0d6d63930"
         },
         {
           "schema": "semantic-context/8",
@@ -5702,7 +5717,8 @@
                 "function:109"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -5726,7 +5742,7 @@
             "closureQueue": []
           },
           "visibleThrough": 14,
-          "prefixDigest": "f27093481a6714eb6ab9ff75509a7a5d6abe7da3f20a049489c7afc20ee97159"
+          "prefixDigest": "e7efa3b1b2d77f98535357c95809de73974377a32353ee0380fc38495554850a"
         }
       ],
       "sourceCheck": "agreed",
@@ -5736,7 +5752,7 @@
         "compactRecords": 2,
         "detailedRecords": 11,
         "compactBytes": 234,
-        "detailedBytes": 907,
+        "detailedBytes": 908,
         "detailTokenShare": null,
         "tokenMeasurement": "untested"
       }
@@ -6180,7 +6196,7 @@
                 "region": "r0",
                 "regionDigest": "f4d8806b701090b3f0a0195dcdc45f95fd4100f4b07b29592ba3f13625bcd9c0",
                 "visibleThrough": 10,
-                "stateDigest": "0a3b0ccc548d6ad4686a9ac41c5328e1bb89b3bf4e96924b4eeac2351d3836aa"
+                "stateDigest": "fd8494e57394f679b649eaaa13166ec7ea2fb02fce2c02c1442386248a6eb021"
               },
               "line": "region {\"bindings\":[[\"next\",[\"num\",8]]],\"completion\":{\"kind\":\"normal\"},\"decisions\":[],\"region\":\"r0\"}"
             }
@@ -6426,7 +6442,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -6618,7 +6635,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -6810,7 +6828,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -7034,7 +7053,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -7305,7 +7325,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -7593,7 +7614,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -7888,7 +7910,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -8190,7 +8213,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -8242,7 +8266,7 @@
             "closureQueue": []
           },
           "visibleThrough": 11,
-          "prefixDigest": "c3ea2aada29f74f30e47d7b9d96866e8641166dced546365220f8e8e8b9bf0cc"
+          "prefixDigest": "86886cc7fcdb9524599b954e0d2b4e7ceec185a0c493e69183a10e6246b72b84"
         },
         {
           "schema": "semantic-context/8",
@@ -8521,7 +8545,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -8604,7 +8629,7 @@
             "closureQueue": []
           },
           "visibleThrough": 14,
-          "prefixDigest": "ded7ca199253c903f1144088d3769f143fc2082f7f2f3f871f97ad2ba308dfe5"
+          "prefixDigest": "03d51e6ccc76e49bc1540bc65720fa0487437b745ab380a67d284c69313ff77e"
         },
         {
           "schema": "semantic-context/8",
@@ -8886,7 +8911,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -8969,7 +8995,7 @@
             "closureQueue": []
           },
           "visibleThrough": 15,
-          "prefixDigest": "4b4d58ed7cd87f06dd932ce1c7574d9148061143cd392608f593d01659a04e09"
+          "prefixDigest": "13d5640c8c57ba41c8d3b11cb40fd9e4d04faae91715ea13c422ffb8b290e6b9"
         },
         {
           "schema": "semantic-context/8",
@@ -9255,7 +9281,8 @@
                 "run"
               ]
             ],
-            "jobErrors": []
+            "jobErrors": [],
+            "protocol": null
           },
           "regionCursor": {
             "active": null,
@@ -9338,7 +9365,7 @@
             "closureQueue": []
           },
           "visibleThrough": 16,
-          "prefixDigest": "984062c26b97b2544d28a10aa1ba3740ea2daa6965ec51fefd9bf35411338f84"
+          "prefixDigest": "ee4a93a1ca95d0271d9a2b915bb6a9d39fcaf12a63628c71755d28f0221a391b"
         }
       ],
       "sourceCheck": "agreed",

@@ -9,7 +9,7 @@ import {LANGUAGE_EXPANSION_INTERACTIONS} from '../fixtures/language-expansion/be
 import {loadNativeV8Settings,createNativeV8Consumer} from '../src/corpus/native-admission-v8.mjs';
 import {runGenerationProcess} from '../src/corpus/generation-process.mjs';
 import {admitRegionEvidence} from '../src/semantic/compiler-v8.js';
-import {V8_CONTRACT_DIGEST,V8_FIXTURE_DIGEST} from '../src/semantic/native-v8.js';
+import {V8_CONTRACT_DIGEST,V8_FIXTURE_DIGEST,V8_INTEROPERABILITY_DIGEST} from '../src/semantic/native-v8.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
 
 const valued=new Set(['--out','--megatoken','--tokenizer','--python','--native-policy','--population','--cases','--worker-timeout-ms']),flags=new Map();
@@ -54,7 +54,7 @@ for(const fixture of fixtures){
   rows.push(row);process.stderr.write(JSON.stringify({id:row.id,status:row.status,native:row.native})+'\n');
 }
 const report={schema:'semantic-v8-qualification/1',producerRevision,population,declared:fixtures.length,
-  contractDigest:V8_CONTRACT_DIGEST,fixtureDigest:V8_FIXTURE_DIGEST,nativePolicy:settings?.policy??null,
+  contractDigest:V8_CONTRACT_DIGEST,fixtureDigest:V8_FIXTURE_DIGEST,interoperabilityDigest:V8_INTEROPERABILITY_DIGEST,nativePolicy:settings?.policy??null,
   preparationOnly:prepareOnly,rows,artifacts,sourceQualified:rows.filter(row=>row.source==='passed').length,
   nativeAdmitted:rows.filter(row=>row.native==='passed').length,model:'untested',optimizerSteps:0,
   defaultPromotion:'not-qualified',scope:'Source and native engineering qualification; no model-learning or native-serving success claim'};

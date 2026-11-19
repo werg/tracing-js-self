@@ -6,7 +6,7 @@ import {buildRegionFamilyRegistry,deriveRegionCoreIdentity,regionSplitIdentity,
 import {hashAlgorithmData} from '../src/semantic/program.js';
 import {verifyRegionTrainingCase} from '../src/semantic/compiler-v8.js';
 import {buildRegionDataset,exportRegionDatasetJSONL} from '../src/semantic/dataset-v8.js';
-import {V8_CONTRACT_DIGEST,V8_FIXTURE_DIGEST,V8_NATIVE_CHECKS} from '../src/semantic/native-v8.js';
+import {V8_CONTRACT_DIGEST,V8_FIXTURE_DIGEST,V8_INTEROPERABILITY_DIGEST,V8_NATIVE_CHECKS} from '../src/semantic/native-v8.js';
 import {mkdtemp,readFile,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -144,14 +144,14 @@ test('native receipt transport retains the validated receipt and isolates consum
   // This exercises the receipt transport contract, not an independent native
   // execution. No resulting artifact or admission claim is written to disk.
   const nativePolicy={schema:'semantic-native-policy/8',consumerRepository:'werg/megatoken',
-    consumerRevision:'a'.repeat(40),contractDigest:V8_CONTRACT_DIGEST,fixtureDigest:V8_FIXTURE_DIGEST,
+    consumerRevision:'a'.repeat(40),contractDigest:V8_CONTRACT_DIGEST,fixtureDigest:V8_FIXTURE_DIGEST,interoperabilityDigest:V8_INTEROPERABILITY_DIGEST,
     tokenizerIdentity:tokenizer.identity,tokenizerSha256:'b'.repeat(64)};
   let receipt;
   const result=await buildRegionDataset([await qualified()],{...options,allowLocal:false,nativePolicy,
     nativeConsumer:async artifact=>{
       receipt={schema:'semantic-native-admission/8',componentGate:'native-consumer-only',
         traceFormat:'semantic-trace/8',contextFormat:'semantic-context/8',representation:'mixed',admitted:true,
-        consumerRevision:nativePolicy.consumerRevision,contractDigest:V8_CONTRACT_DIGEST,fixtureDigest:V8_FIXTURE_DIGEST,
+        consumerRevision:nativePolicy.consumerRevision,contractDigest:V8_CONTRACT_DIGEST,fixtureDigest:V8_FIXTURE_DIGEST,interoperabilityDigest:V8_INTEROPERABILITY_DIGEST,
         publicDigest:hashAlgorithmData(artifact.public),contextsDigest:hashAlgorithmData(artifact.contexts),
         sourceArtifactDigest:artifact.sidecar.sourceArtifactDigest,datasetBindingDigest:hashAlgorithmData(artifact.sidecar.datasetBinding),
         nativeTrainingDigest:'c'.repeat(64),optimizerSteps:0,learningClaim:null,
