@@ -1,6 +1,9 @@
 // The algorithm teacher is a source-certified projection of a private owned
 // archive. Its serving controller never imports this module or that archive.
 import {isDeepStrictEqual} from 'node:util';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {validateBundle} from '../validation.js';
 import {replayExact} from '../replay.js';
 import {normalizeJournal,validateSemantic} from './normalize.js';
@@ -13,9 +16,13 @@ import {createTransformationReceipt} from './provenance.js';
 import {AlgorithmExecutionHarness} from './harness.js';
 import {defineAlgorithmProgram,hashAlgorithmData} from './program.js';
 import {decodeAlgorithmRecord} from './trace-codec.js';
+import {projectDetailedV7,verifyDetailedProjection,DETAILED_EVIDENCE_SCHEMA,DETAILED_PROFILE} from './detailed-v7.js';
+import {verifySemanticSplitIdentity} from './family-registry.js';
+import {validateV7NativeReceipt,loadV7NativePolicy} from './native-v7.js';
 
 const copy=value=>structuredClone(value);
 const eq=isDeepStrictEqual;
+const sourceArtifactDigest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 function refuse(message){const error=new Error('Algorithm teacher projection: '+message);
   error.category='unsupported.algorithm-projection';throw error;}
 const uniqueInputIds=roots=>[...new Set(roots.filter(value=>value[0]==='ref').map(value=>value[1]))];
@@ -108,8 +115,9 @@ export function compileAlgorithmWitness(bundle,{sessionId='algorithm1',invocatio
     liveInputs:program.core.inputs.map(input=>input.id),
     liveOutputs:program.core.steps.filter(step=>step.kind==='compute').map(step=>step.id),
     effectBoundaries:copy(program.boundaries)});
-  const exported={public:publicEpisode,contexts,sidecar:{schema:'semantic-algorithm-evidence/1',
+  const exported={public:publicEpisode,contexts,sidecar:{schema:DETAILED_EVIDENCE_SCHEMA,
     admission:'projected',referenceStatus:'unverified',selectionOrigin:'owned-interpreter-teacher',
+    profile:'algorithm-execution/1',
     representation:'semantic-trace/7',sourceDigest:program.sourceDigest,archiveDigest:hashAlgorithmData(bundle),
     definitionDigest:program.definitionDigest,coreDigest:program.coreDigest,provenance,receipt,certificates,
     publicDigest:hashAlgorithmData(publicEpisode),contextDigest:hashAlgorithmData(contexts),
@@ -141,29 +149,93 @@ export async function verifyAlgorithmTrainingCase(fixture){
   try{
     const compiled=compileAlgorithmWitness(detailed.exported.sidecar.archive);
     const exported=compiled.exported;
-    Object.assign(exported.sidecar,{admission:'locally_verified',referenceStatus:'agreed',
+    Object.assign(exported.sidecar,{schema:DETAILED_EVIDENCE_SCHEMA,
+      admission:'locally_verified',referenceStatus:'agreed',representation:'semantic-trace/7',
+      sourceArtifact:copy(detailed.exported),
+      sourceArtifactDigest:sourceArtifactDigest(detailed.exported),
       sourceEvidence:{identityDigest:detailed.exported.sidecar.identityDigest,
         sourceChecks:copy(detailed.exported.sidecar.reference.sourceChecks),
         referenceOutcome:copy(detailed.exported.sidecar.reference.outcome)},
-      family:fixture.family,fixtureDigest:detailed.exported.sidecar.sourceProvenance.fixtureDigest});
+      family:detailed.exported.sidecar.sourceFamily,sourceFamily:detailed.exported.sidecar.sourceFamily,
+      fixtureDigest:detailed.exported.sidecar.sourceProvenance.fixtureDigest});
     return {status:'locally_verified',exported,detailed:detailed.exported,core:compiled.core};
   }catch(error){
+    const fallback={status:'detailed-fallback',category:error.category??'unsupported.algorithm-profile',
+      reason:error.message,profile:DETAILED_PROFILE};
+    const exported=projectDetailedV7(detailed.exported,{fallback});
+    Object.assign(exported.sidecar,{sourceFamily:detailed.exported.sidecar.sourceFamily,
+      family:detailed.exported.sidecar.sourceFamily,selectionOrigin:'owned-interpreter-teacher',
+      sourceIdentityDigest:detailed.exported.sidecar.identityDigest,
+      sourceArtifactDigest:sourceArtifactDigest(detailed.exported)});
     return {status:'detailed-fallback',disposition:'certified-detailed-trace',
       reason:error.message,category:error.category??'unsupported.algorithm-profile',
-      detailed:detailed.exported,exported:null};
+      representation:'detailed',profile:DETAILED_PROFILE,detailed:detailed.exported,exported};
   }
 }
 
-export async function recheckAlgorithmEvidence(exported,detailed){
-  const source=await recheckEffectfulAdmission(detailed,{requireAdmitted:false});
-  if(exported.sidecar?.admission!=='locally_verified'||exported.sidecar.referenceStatus!=='agreed'||
-    exported.sidecar.sourceEvidence?.identityDigest!==detailed.sidecar.identityDigest||
-    !eq(exported.sidecar.sourceEvidence.sourceChecks,detailed.sidecar.reference.sourceChecks)||
-    !eq(exported.sidecar.sourceEvidence.referenceOutcome,detailed.sidecar.reference.outcome))
-    throw new Error('Algorithm source evidence is missing or changed');
-  const projection=verifyAlgorithmProjection(detailed.sidecar.archive,exported);
-  return {valid:true,admitted:false,source,projection,
-    native:{status:'unavailable',reason:'No qualified semantic-trace/7 native consumer receipt'}};
+export async function recheckAlgorithmEvidence(exported,{requireAdmitted=false,nativePolicy=null,nativeConsumer=null}={}){
+  const side=exported?.sidecar,detailed=side?.sourceArtifact,representation=exported?.public?.representation;
+  if(!['algorithm','detailed'].includes(representation)||side?.schema!==DETAILED_EVIDENCE_SCHEMA||
+    side.representation!=='semantic-trace/7'||!['locally_verified','admitted'].includes(side.admission)||
+    side.referenceStatus!=='agreed'||side.optimizerSteps!==0||side.learningClaim!==null||
+    !detailed||side.sourceArtifactDigest!==sourceArtifactDigest(detailed))
+    throw new Error('V7 source evidence is missing, changed, or incompatible');
+  const checkedSource=await recheckEffectfulAdmission(detailed,{requireAdmitted:false});
+  if(side.sourceFamily!==detailed.sidecar.sourceFamily||side.family!==detailed.sidecar.sourceFamily)
+    throw new Error('V7 source family differs from independently checked source evidence');
+  let projection;
+  if(representation==='algorithm'){
+    if(side.sourceEvidence?.identityDigest!==detailed.sidecar.identityDigest||
+      !eq(side.sourceEvidence.sourceChecks,detailed.sidecar.reference.sourceChecks)||
+      !eq(side.sourceEvidence.referenceOutcome,detailed.sidecar.reference.outcome))
+      throw new Error('Algorithm source evidence is missing or changed');
+    projection=verifyAlgorithmProjection(detailed.sidecar.archive,exported);
+  }else projection=verifyDetailedProjection(exported);
+  let family=null;
+  if(side.splitIdentity!==undefined||side.datasetBinding!==undefined){
+    const input=detailed.sidecar.referenceInput;
+    family=verifySemanticSplitIdentity(side.splitIdentity,{id:side.splitIdentity?.sourceId,
+      family:side.sourceFamily,source:input.source,entry:input.entry,coreDigest:side.coreDigest});
+    const identity=side.splitIdentity;
+    const binding={schema:'semantic-dataset-binding/1',representation,
+      episodeDigest:hashAlgorithmData(exported.public),contextsDigest:hashAlgorithmData(exported.contexts),
+      registryDigest:identity.registryDigest,componentId:identity.componentId,split:identity.split,
+      sourceId:identity.sourceId,sourceDigest:identity.sourceDigest,coreDigest:identity.coreDigest};
+    if(side.split!==identity.split||side.sourceComponent!==identity.componentId||
+      side.familyRegistryDigest!==identity.registryDigest||!eq(side.datasetBinding,binding))
+      throw new Error('V7 dataset source, context, registry, or split binding changed');
+  }
+  const producerRevision=execFileSync('git',['rev-parse','HEAD'],{
+    cwd:fileURLToPath(new URL('../../',import.meta.url)),encoding:'utf8'}).trim();
+  const source={schema:'semantic-source-admission/7',producerRevision,
+    episodeDigest:hashAlgorithmData(exported.public),contextsDigest:hashAlgorithmData(exported.contexts),
+    sourceValidated:true,journalValidated:true,replayValidated:true,referenceStatus:'agreed',
+    registryDigest:family?.registryDigest??null,sourceArtifactDigest:side.sourceArtifactDigest,optimizerSteps:0};
+  let native=null;
+  if(requireAdmitted||nativeConsumer){
+    const policy=nativePolicy??loadV7NativePolicy();
+    if(requireAdmitted){
+      if(side.admission!=='admitted')throw new Error('V7 artifact has not been independently admitted');
+      validateV7NativeReceipt(exported,side.nativeAdmission,policy);
+    }
+    native=nativeConsumer?await nativeConsumer(exported):side.nativeAdmission;
+    validateV7NativeReceipt(exported,native,policy);
+    if(requireAdmitted&&nativeConsumer&&!eq(native,side.nativeAdmission))
+      throw new Error('Fresh v7 native receipt differs from the saved admission');
+  }
+  return {valid:true,admitted:requireAdmitted&&native?.admitted===true,source,projection,
+    family,native:native??{status:'not-requested'},sourceChecks:checkedSource};
+}
+
+export async function admitAlgorithmEvidence(exported,{nativeConsumer,nativePolicy=null}={}){
+  if(typeof nativeConsumer!=='function')throw new TypeError('Fresh independent v7 native admission is required');
+  const candidate=copy(exported),policy=nativePolicy??loadV7NativePolicy();
+  const checked=await recheckAlgorithmEvidence(candidate,{nativeConsumer,nativePolicy:policy});
+  candidate.sidecar.nativeAdmission=checked.native;
+  candidate.sidecar.sourceAdmission=checked.source;
+  candidate.sidecar.admission='admitted';
+  candidate.sidecar.nativeAdmissionStatus='admitted';
+  return {status:'admitted',exported:candidate,source:checked.source,native:checked.native};
 }
 
 export function checkAlgorithmCounterfactualPrefixes(left,right){

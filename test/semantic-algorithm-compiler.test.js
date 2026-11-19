@@ -38,7 +38,7 @@ test('counter compiles from committed journal interactions with observations exc
   assert.equal(other.status,'locally_verified',other.reason);
   assert.equal(checkAlgorithmCounterfactualPrefixes(result.exported,other.exported).valid,true);
   assert.deepEqual(result.exported.contexts[0],other.exported.contexts[0]);
-  const rechecked=await recheckAlgorithmEvidence(result.exported,result.detailed);
+  const rechecked=await recheckAlgorithmEvidence(result.exported);
   assert.equal(rechecked.valid,true);assert.equal(rechecked.admitted,false);
 });
 
@@ -46,7 +46,9 @@ test('unproved cleanup and callback profiles keep independently checked detailed
   for(const id of ['rejection-finally','callback-captured-write']){
     const result=await verifyAlgorithmTrainingCase(fixture(id));
     assert.equal(result.status,'detailed-fallback',result.reason);
-    assert.equal(result.exported,null);assert.equal(result.detailed.public.schema,'semantic-execution/6');
+    assert.equal(result.exported.public.schema,'semantic-execution/7');
+    assert.equal(result.exported.public.representation,'detailed');
+    assert.equal(result.exported.sidecar.sourceArtifact.public.schema,'semantic-execution/6');
     assert.equal(result.detailed.sidecar.referenceStatus,'agreed');
     assert.match(result.reason,/profile|control flow|callbacks|cleanup/);
   }
