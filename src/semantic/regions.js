@@ -172,7 +172,8 @@ export function sharedRegionState(controller){
     'frameFunctions','jobErrors'];
   const result=Object.fromEntries(fields.map(key=>[key,copy(packet[key])]));
   result.heap=[...controller.heap].map(([id,node])=>[id,{...copy(node),properties:copy([...node.properties]),
-    ...(node.descriptors instanceof Map?{descriptors:copy([...node.descriptors])}:{})}]);
+    ...(node.descriptors instanceof Map?{descriptors:copy([...node.descriptors])}:{}),
+    ...(node.privateElements instanceof Map?{privateElements:copy([...node.privateElements])}:{})}]);
   result.protocol=copy(controller.protocol??null);
   if(Buffer.byteLength(JSON.stringify(result),'utf8')>controller.maxPacketBytes)
     throw new RangeError('Shared region state exceeds the committed continuation byte bound');

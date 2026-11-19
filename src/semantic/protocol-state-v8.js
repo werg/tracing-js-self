@@ -149,7 +149,9 @@ function callable(controller,value){known(controller,value);require(value[0]==='
   const node=heapNode(controller,value[1]);require(node.kind==='closure'&&typeof node.code==='string','owned closure required');
   if(controller.strictRequests&&controller.source?.source){
     const functions=analyzeSemanticProgram(controller.source.source).functions;
-    require(functions.some(fn=>fn.name===node.code||'function:'+fn.start===node.code),'callee is absent from immutable source');
+    require(functions.some(fn=>fn.name===node.code||'function:'+fn.start===node.code)||
+      PROTOCOL_MACHINE_ADAPTERS_V8.some(adapter=>adapter.hasSourceCallable?.(controller.source.source,node.code)===true),
+      'callee is absent from immutable source');
   }
   return node;
 }

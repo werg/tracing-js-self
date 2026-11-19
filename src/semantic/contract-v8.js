@@ -7,6 +7,9 @@ import {hashAlgorithmData} from './program.js';
 import {PROTOCOL_RECORD_V8_SCHEMA,PROTOCOL_RECORD_V8_FIELDS} from './protocol-codec-v8.js';
 import {PROTOCOL_STATE_V8_SCHEMA,PROTOCOL_STATE_V8_FIELDS,PROTOCOL_V8_LIMITS} from './protocol-state-v8.js';
 import {MEMORY_PROFILE_V8,MEMORY_HEAP_FIELDS_V8} from './protocol-memory-v8.js';
+import {CONSTRUCTION_STATE_V8_SCHEMA,CONSTRUCTION_STATE_V8_FIELDS,CALLABLE_STATE_V8_FIELDS,
+  CONSTRUCTION_FRAME_V8_FIELDS} from './protocol-construction-v8.js';
+import {ITERATOR_PROFILE_V8,ITERATOR_HEAP_FIELDS} from './protocol-iterator-v8.js';
 
 export const SEMANTIC_V8_DEFINITION=Object.freeze({
   execution:REGION_EXECUTION_VERSION,trace:REGION_TRACE_VERSION,context:REGION_CONTEXT_VERSION,
@@ -34,7 +37,14 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
   sharedStateFields:['heap','locals','stack','effects','jobs','ready','randomState','pending','lastReturn','completion',
     'receiver','captureAliases','continuations','reactionSequence','blockedSync','callReturn','activeJob','scheduler','frameFunctions','jobErrors','protocol'],
   protocolState:{schema:PROTOCOL_STATE_V8_SCHEMA,fields:PROTOCOL_STATE_V8_FIELDS,initial:null,
-    heap:'Existing heap nodes with property and descriptor Maps serialized as entry arrays; Symbol keys remain tagged pairs.',
+    heap:'Existing heap nodes with property, descriptor and private-element Maps serialized as entry arrays; Symbol keys remain tagged pairs.',
+    construction:{schema:CONSTRUCTION_STATE_V8_SCHEMA,fields:CONSTRUCTION_STATE_V8_FIELDS,initial:null,
+      callableFields:CALLABLE_STATE_V8_FIELDS,frameFields:CONSTRUCTION_FRAME_V8_FIELDS,
+      privateElementFields:['kind','value','version'],
+      sourceCallables:'Explicit function source offsets and source-inventoried class:<offset>:constructor|instance|static bodies.',
+      continuations:'Owned base/derived constructor receivers, newTarget, field initializers and captured superclass selection; private fields and methods retain declaring-class identities.'},
+    iterators:{profile:ITERATOR_PROFILE_V8,heapFields:ITERATOR_HEAP_FIELDS,
+      capabilities:'Builtin array keys/values/entries and Unicode string iteration, live array length, sticky exhaustion and explicit result/pair allocation identities.'},
     binaryMemory:{profile:MEMORY_PROFILE_V8,heapFields:MEMORY_HEAP_FIELDS_V8,maxBufferBytes:1024,
       typedArrayByteOrder:'little-endian',dataViewByteOrder:'explicit per operation',
       capabilities:'Fixed ordinary buffers and fixed/growable shared buffers; scalar conversions; shared view identities; bounded single-agent atomic operations. No detach, transfer, host buffers or cross-agent scheduling.'},

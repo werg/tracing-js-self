@@ -215,7 +215,7 @@ export function compile(ast) {
       for(const n of nodes)if(n.type!=='Function')stmt(n);
       if(scoped)emit('LEAVE_SCOPE',null,nodes.at(-1));
     }
-    function expr(n) {
+    function expr(n,inferredName=null) {
       switch(n.type){
         case 'Literal': emit('CONST',{value:n.value,raw:n.raw},n);break;
         case 'OwnedPinnedRegExp':
@@ -231,7 +231,7 @@ export function compile(ast) {
           emit('MAKE_FUNCTION',{codeId,arrow:n.arrow,async:n.async,nonConstructible:n.nonConstructible===true,...(n.name?{name:n.name}:{})},n);
           break;
         }
-        case 'ClassExpr':emitClass(n);break;
+        case 'ClassExpr':emitClass(n,inferredName);break;
         case 'PrivateMember':expr(n.object);emit('PRIVATE_GET',{name:n.name},n);break;
         case 'PrivateHas':expr(n.object);emit('PRIVATE_HAS',{name:n.name},n);break;
         case 'Yield':expr(n.argument);emit('YIELD',null,n);break;
@@ -384,7 +384,7 @@ export function compile(ast) {
             if(spreads)emit('GET',saved,n);else emit('DUP',null,n);
             if(item.computedKey)expr(item.computedKey);
             else emit('CONST',{value:['str',item.key]},n);
-            expr(item.value);
+            expr(item.value,item.kind==='prototype'?null:{stack:true});
             if(item.value.nonConstructible&&containsSuperProperty(item.value))emit('SET_HOME_OBJECT',{offset:2},item);
             emit('DEFINE_LITERAL_PROP',{kind:item.kind??'init'},item.start===undefined?n:item);
             emit('POP',null,n);
@@ -423,7 +423,7 @@ export function compile(ast) {
               emit('GET',n.left.name,n.left);
               const guard=emit('LOGICAL_JUMP',{operator,to:null},n);
               emit('POP',null,n);
-              expr(n.right);
+              expr(n.right,n.left.name);
               emit('SET',n.left.name,n);
               instructions[guard].arg.to=instructions.length;
             }else{
@@ -453,7 +453,7 @@ export function compile(ast) {
           }
           if(n.left.type==='Identifier') {
             if(n.operator!=='=')emit('GET',n.left.name,n.left);
-            expr(n.right);if(n.operator!== '=')emit('BINARY',n.operator.slice(0,-1),n);
+            expr(n.right,n.operator==='='?n.left.name:null);if(n.operator!== '=')emit('BINARY',n.operator.slice(0,-1),n);
             emit('SET',n.left.name,n);
           }else{
             expr(n.left.object);expr(n.left.property);
@@ -541,9 +541,12 @@ export function compile(ast) {
       emit('DELEGATE_RESUME_VALUE',null,n);emit('SET',sent,n);emit('POP',null,n);
       emit('JUMP',top,n);instructions[end].arg=instructions.length;
     }
-    function emitClass(n){
-      const salt=++forOfIndex,klass='[[class '+salt+']]',proto='[[class prototype '+salt+']]',heritage='[[class heritage '+salt+']]';
+    function emitClass(n,inferredName){
+      const salt=++forOfIndex,klass='[[class '+salt+']]',proto='[[class prototype '+salt+']]',heritage='[[class heritage '+salt+']]',className='[[class name '+salt+']]';
       emit('ENTER_SCOPE',null,n);
+      emit('DECLARE',{name:className,kind:'const'},n);
+      if(!n.name&&inferredName?.stack)emit('DUP',null,n);else emit('CONST',{value:['str',n.name??(typeof inferredName==='string'?inferredName:'')]},n);
+      emit('INIT',className,n);
       if(n.name)emit('DECLARE',{name:n.name,kind:'const'},n);
       emit('DECLARE',{name:klass,kind:'const'},n);emit('DECLARE',{name:proto,kind:'const'},n);
       if(n.superClass){emit('DECLARE',{name:heritage,kind:'const'},n);expr(n.superClass);emit('INIT',heritage,n);}
@@ -552,7 +555,8 @@ export function compile(ast) {
         body:{...n,type:'Block',body:n.superClass?[{...n,type:'DefaultSuper'}]:[]}};
       expr({...ctor,strict:true,classConstructor:true});emit('INIT',klass,n);emit('GET',klass,n);
       if(n.superClass)emit('GET',heritage,n);
-      emit('CLASS_CREATE',{derived:!!n.superClass,privateNames:n.elements.filter(e=>e.privateName).map(e=>e.privateName)},n);emit('POP',null,n);
+      emit('GET',className,n);
+      emit('CLASS_CREATE',{named:true,derived:!!n.superClass,privateNames:n.elements.filter(e=>e.privateName).map(e=>e.privateName)},n);emit('POP',null,n);
       emit('GET',klass,n);emit('CONST',{value:['str','prototype']},n);emit('GET_PROP',null,n);emit('INIT',proto,n);
       const instanceMethods=[],staticMethods=[],instanceFields=[],staticFields=[];
       for(const element of n.elements){
@@ -570,11 +574,11 @@ export function compile(ast) {
         }
         if(element.privateName){
           const name='[[private method '+(++forOfIndex)+']]';emit('DECLARE',{name,kind:'const'},element);
-          expr(element.value);emit('SET_HOME_OBJECT',{name:element.static?klass:proto},element);emit('INIT',name,element);
+          expr(element.value);emit('SET_HOME_OBJECT',{name:element.static?klass:proto,methodName:{privateName:'#'+element.privateName}},element);emit('INIT',name,element);
           (element.static?staticMethods:instanceMethods).push({...element,type:'ClassField',privateKind:'method',value:{...element,type:'Identifier',name}});
         }else{
           emit('GET',element.static?klass:proto,element);expr(key);expr(element.value);
-          emit('SET_HOME_OBJECT',{name:element.static?klass:proto},element);
+          emit('SET_HOME_OBJECT',{name:element.static?klass:proto,methodName:{binding:key.name,prefix:['get','set'].includes(element.kind)?element.kind:null}},element);
           emit('DEFINE_LITERAL_PROP',{kind:element.kind==='method'?'init':element.kind,enumerable:false},element);emit('POP',null,element);
         }
       }
@@ -614,7 +618,7 @@ export function compile(ast) {
               emit('CONST',{value:['undefined']},pattern);
               emit('BINARY','===',pattern);
               const skip=emit('JUMP_IF_FALSE',null,pattern);
-              expr(pattern.fallback);
+              expr(pattern.fallback,pattern.target.type==='PatternName'?pattern.target.name:null);
               emit('SET',variable,pattern);
               emit('POP',null,pattern);
               instructions[skip].arg=instructions.length;
@@ -686,9 +690,9 @@ export function compile(ast) {
       switch(n.type){
         case 'Variable':{
           if(n.kind==='var'){
-            if(n.init){expr(n.init);emit('SET',n.id,n);emit('POP',null,n);}
+            if(n.init){expr(n.init,n.id);emit('SET',n.id,n);emit('POP',null,n);}
           }else{
-            if(n.init)expr(n.init);else emit('CONST',{value:['undefined']},n);
+            if(n.init)expr(n.init,n.id);else emit('CONST',{value:['undefined']},n);
             emit('INIT',n.id,n);
           }
           break;
@@ -698,7 +702,7 @@ export function compile(ast) {
         case 'ClassField':
           emit('THIS',null,n);
           if(!n.privateName)expr(n.key);
-          expr(n.value);
+          expr(n.value,n.privateName?'#'+n.privateName:{stack:true});
           if(n.privateName)emit('PRIVATE_DEFINE',{name:n.privateName,kind:n.privateKind??'field'},n);
           else emit('DEFINE_LITERAL_PROP',{kind:'init',enumerable:true},n);
           emit('POP',null,n);break;
@@ -959,7 +963,7 @@ export function compile(ast) {
         if(!initializer)emit('PARAM_INIT',name,parameter);
         else {
         const guard=emit('DEFAULT_GUARD',{name,skipPc:null},initializer);
-        expr(initializer);
+        expr(initializer,name.startsWith('[[')?null:name);
         emit('INIT',name,initializer);
         const done=emit('JUMP',null,initializer);
         instructions[guard].arg.skipPc=instructions.length;
@@ -975,7 +979,8 @@ export function compile(ast) {
     if(generator)emit('GENERATOR_START',null,ast);
     statements(body);
     emit('CONST',{value:['undefined']},ast);emit('RETURN',null,ast);
-    programs[id]={id,params,restIndex,async,generator:generator===true,strict,parameterExpressions,
+    const firstDefault=defaults.findIndex(Boolean),functionLength=Math.min(params.length,restIndex<0?Infinity:restIndex,firstDefault<0?Infinity:firstDefault);
+    programs[id]={id,params,restIndex,async,generator:generator===true,strict,parameterExpressions,functionLength,
       patternNames:parameterPatterns.flatMap(p=>(p?.bindings??[]).map(b=>b.name)),varNames:collectVarBindings(body),instructions};return id;
   }
   const entry=bodyProgram(ast.body);
