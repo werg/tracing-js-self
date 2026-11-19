@@ -1,12 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import {mkdtempSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
+import {join,resolve} from 'node:path';
 import {SEMANTIC_GALLERY_FIXTURES} from '../src/training/semantic-trace-gallery.js';
 import {verifyAlgorithmTrainingCase} from '../src/semantic/compiler.js';
 import {encodeDetailedRecord,decodeDetailedRecord,projectDetailedV7,verifyDetailedProjection,
-  validateDetailedProjection} from '../src/semantic/detailed-v7.js';
+  validateDetailedProjection,DETAILED_CONTINUATION_VERSION} from '../src/semantic/detailed-v7.js';
 import {buildSemanticFamilyRegistry,verifySemanticFamilyRegistry,
   validateSemanticFamilyAssignments,semanticSplitIdentity} from '../src/semantic/family-registry.js';
-import {buildSemanticV7Dataset} from '../src/semantic/dataset-v7.js';
+import {buildSemanticV7Dataset,prepareSemanticFamilyRegistry,bindSemanticFamilySplit,
+  semanticFamilyMembership} from '../src/semantic/dataset-v7.js';
 import {buildCausalLmV7Examples,causalLmV7Prompt,encodeCausalLmV7Example} from '../src/semantic/causal-lm-v7.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
 
@@ -64,9 +68,81 @@ test('all five existing unsupported gallery cases now export independently repla
       assert.equal(result.exported.public.representation,'detailed');
       assert.equal(result.exported.sidecar.schema,'semantic-algorithm-evidence/2');
       assert.equal(result.exported.sidecar.profile,'selected-detailed/1');
+      for(const row of result.exported.public.timeline){
+        if(row.kind==='model-context')assert.equal(row.selectedState?.schema,DETAILED_CONTINUATION_VERSION,id);
+      }
+      for(const context of result.exported.contexts){
+        if(context.prefix.selectedState)assert.equal(context.prefix.selectedState.schema,DETAILED_CONTINUATION_VERSION,id);
+      }
       assert.equal(verifyDetailedProjection(result.exported).valid,true);
       fallbacks.set(id,result.exported);
     }
+  });
+
+test('pre-bound family assignment and complete holdout registry cannot be re-seeded, stripped, or subsetted',()=>{
+  assert.ok(fallbacks,'fallback fixtures have not been prepared');
+  const packets=['branch-1','throw-finally'].map(id=>({id,status:'detailed-fallback',
+    exported:fallbacks.get(id)}));
+  const freshMembers=packets.map((packet,index)=>semanticFamilyMembership(packet,index));
+  const family=freshMembers[0].family,seed=73;
+  const initial=prepareSemanticFamilyRegistry(packets,{seed,families:[family]});
+  const original=bindSemanticFamilySplit(packets[0],initial.members[0],initial.registry);
+  const boundPacket={id:packets[0].id,status:packets[0].status,exported:original};
+  const reboundMember=semanticFamilyMembership(boundPacket);
+  assert.equal(reboundMember.id,initial.members[0].id);
+  const subset=prepareSemanticFamilyRegistry([boundPacket]);
+  assert.equal(subset.registry.digest,initial.registry.digest);
+  assert.equal(subset.registry.sources.length,2,'a subset must retain the complete source inventory');
+  assert.equal(subset.identityById.get(reboundMember.id).split,'test','the family holdout must survive re-export');
+  assert.throws(()=>prepareSemanticFamilyRegistry([boundPacket],{seed:seed+1}),/seed/);
+  assert.throws(()=>prepareSemanticFamilyRegistry([boundPacket],{seed,families:[]}),/holdout/);
+  assert.throws(()=>prepareSemanticFamilyRegistry([boundPacket,packets[1]],{seed}),/bound and unbound/);
+  const again=bindSemanticFamilySplit(boundPacket,subset.members[0],subset.registry);
+  assert.equal(again.sidecar.splitIdentity.sourceId,original.sidecar.splitIdentity.sourceId);
+  assert.equal(again.sidecar.datasetBinding.registryDigest,original.sidecar.datasetBinding.registryDigest);
+  assert.equal(hashAlgorithmData(again.public),hashAlgorithmData(original.public));
+  assert.equal(hashAlgorithmData(again.contexts),hashAlgorithmData(original.contexts));
+});
+
+test('causal exporter reuses a pre-bound holdout registry across subsets and repeated exports',
+  {timeout:120000},()=>{
+    assert.ok(fallbacks,'fallback fixtures have not been prepared');
+    const sourcePackets=['branch-1','throw-finally'].map(id=>({id,status:'detailed-fallback',
+      exported:fallbacks.get(id)}));
+    const fresh=prepareSemanticFamilyRegistry(sourcePackets,{seed:83,families:[
+      semanticFamilyMembership(sourcePackets[0]).family]});
+    const bound=bindSemanticFamilySplit(sourcePackets[0],fresh.members[0],fresh.registry);
+    const temporary=mkdtempSync(join(process.cwd(),'semantic-v7-prebound-'));
+    try{
+      const input=join(temporary,'candidate.jsonl'),adapter=join(temporary,'tokenizer.mjs');
+      writeFileSync(input,JSON.stringify({id:sourcePackets[0].id,status:sourcePackets[0].status,exported:bound})+'\n');
+      writeFileSync(adapter,`export const tokenizer={identity:'${'a'.repeat(64)}',encode:text=>[...Buffer.from(text,'utf8')],decode:ids=>Buffer.from(ids)};\n`+
+        `export const eosTokenId=256;\n`+
+        `export const tokenizerEvidence={identity:{fingerprint:'${'a'.repeat(64)}',tokenizerSha256:'${'b'.repeat(64)}'},qualification:{schema:'semantic-codec-meter/1',status:'qualified',scope:'byte-exact-token-meter-only',nativeAdmission:false,consumerRevision:'${'c'.repeat(40)}'}};\n`);
+      const exportCorpus=directory=>execFileSync(process.execPath,[resolve('tools/export-algorithm-training.mjs'),
+        '--input',input,'--tokenizer-module',adapter,'--max-context','100000','--seed','83','--allow-local',
+        '--out',directory],{cwd:process.cwd(),encoding:'utf8'});
+      const first=join(temporary,'out-one'),second=join(temporary,'out-two');
+      exportCorpus(first);exportCorpus(second);
+      const registryOne=JSON.parse(readFileSync(join(first,'family-registry.json'),'utf8'));
+      const registryTwo=JSON.parse(readFileSync(join(second,'family-registry.json'),'utf8'));
+      assert.equal(registryOne.digest,fresh.registry.digest);
+      assert.equal(registryTwo.digest,registryOne.digest);
+      assert.equal(registryOne.sources.length,2,'the omitted source must remain in the frozen registry');
+      assert.deepEqual(registryOne.holdouts,fresh.registry.holdouts,
+        'omitting holdout flags must not clear a pre-bound holdout');
+      assert.ok(readFileSync(join(first,'test.jsonl'),'utf8').trim().length>0);
+      assert.equal(readFileSync(join(first,'train.jsonl'),'utf8'),readFileSync(join(second,'train.jsonl'),'utf8'));
+      assert.equal(readFileSync(join(first,'test.jsonl'),'utf8'),readFileSync(join(second,'test.jsonl'),'utf8'));
+      assert.throws(()=>execFileSync(process.execPath,[resolve('tools/export-algorithm-training.mjs'),
+        '--input',input,'--tokenizer-module',adapter,'--max-context','100000','--seed','84','--allow-local',
+        '--out',join(temporary,'changed-seed')],{cwd:process.cwd(),encoding:'utf8',stdio:'pipe'}),
+        /seed cannot replace/);
+      assert.throws(()=>execFileSync(process.execPath,[resolve('tools/export-algorithm-training.mjs'),
+        '--input',input,'--tokenizer-module',adapter,'--max-context','100000','--seed','83','--allow-local',
+        '--holdout-family','different-family','--out',join(temporary,'changed-holdout')],
+        {cwd:process.cwd(),encoding:'utf8',stdio:'pipe'}),/holdouts cannot replace/);
+    }finally{rmSync(temporary,{recursive:true,force:true});}
   });
 
 test('source replay rejects wrong observations and v7 context validation rejects future observations',()=>{
@@ -114,18 +190,18 @@ test('v7 prepared contexts hide private future data until the observation is com
     assert.equal(dataset.manifest.scope,'candidate-local-diagnostic');
   });
 
-test('exact v7 segment encoding masks only public-context tokens',()=>{
+test('exact v7 segment encoding masks only public-context tokens',async()=>{
   assert.ok(fallbacks,'fallback fixtures have not been prepared');
   const exported=fallbacks.get('throw-finally'),target=exported.public.timeline.find(row=>row.kind==='semantic');
   const context=exported.contexts[0];
-  const encoded=encodeCausalLmV7Example(context,target.line,{tokenizer,eosTokenId,
+  const encoded=await encodeCausalLmV7Example(context,target.line,{tokenizer,eosTokenId,
     maxContextTokens:100000,representation:'detailed'});
   assert.deepEqual(encoded.inputIds.slice(0,encoded.boundaries.promptTokens),
     tokenizer.encode(causalLmV7Prompt(context)));
   assert(encoded.labels.slice(0,encoded.boundaries.promptTokens).every(id=>id===-100));
   assert.deepEqual(encoded.labels.slice(encoded.boundaries.promptTokens),
     [...tokenizer.encode(target.line),eosTokenId]);
-  assert.throws(()=>encodeCausalLmV7Example(context,target.line,{tokenizer,eosTokenId,
+  await assert.rejects(encodeCausalLmV7Example(context,target.line,{tokenizer,eosTokenId,
     maxContextTokens:10,representation:'detailed'}),/budget exceeded/);
 });
 

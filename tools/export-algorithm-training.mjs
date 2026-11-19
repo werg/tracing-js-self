@@ -7,10 +7,15 @@ import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {once} from 'node:events';
 import {createInterface} from 'node:readline';
-import {semanticFamilyMembership,bindSemanticFamilySplit} from '../src/semantic/dataset-v7.js';
-import {buildSemanticFamilyRegistry,semanticSplitIdentity} from '../src/semantic/family-registry.js';
+import {semanticFamilyMembership,bindSemanticFamilySplit,resolveSemanticFamilyRegistry} from '../src/semantic/dataset-v7.js';
 import {buildCausalLmV7Examples,CAUSAL_LM_V7_BRIDGE_VERSION} from '../src/semantic/causal-lm-v7.js';
 import {DETAILED_TRACE_VERSION} from '../src/semantic/detailed-v7.js';
+
+if(process.argv.slice(2).includes('--help')||process.argv.slice(2).includes('-h')){
+  process.stdout.write(`Usage: node tools/export-algorithm-training.mjs --input CANDIDATES.jsonl --tokenizer-module MODULE.mjs --max-context N --seed N --out NEW_DIRECTORY [--allow-local] [--holdout-family NAME] [--holdout-source SHA256] [--holdout-core SHA256]\n\n`+
+    'Input rows are verified v7 candidate packets (or source-qualified refusal packets). The exporter freezes the complete source-family registry before assigning splits, rechecks source evidence, requires a pinned tokenizer, and writes train/validation/test, refusals, failures, registry, and manifest files. `--allow-local` creates an explicitly unadmitted diagnostic corpus; production exports require a bound semantic-native-admission/7 receipt.\n');
+  process.exit(0);
+}
 
 const args=new Map(),holdoutFamilies=[],holdoutSources=[],holdoutCores=[];
 const valued=new Set(['--input','--tokenizer-module','--max-context','--seed','--out']);
@@ -31,11 +36,19 @@ if(!Number.isSafeInteger(maxContextTokens)||maxContextTokens<2||!Number.isSafeIn
   throw new TypeError('Context budget must be positive and split seed must be a safe integer');
 const inputPath=resolve(args.get('--input')),tokenizerPath=resolve(args.get('--tokenizer-module')),
   outputPath=resolve(args.get('--out'));
-const {tokenizer,eosTokenId}=await import(pathToFileURL(tokenizerPath));
+const {tokenizer,eosTokenId,tokenizerEvidence}=await import(pathToFileURL(tokenizerPath));
 if(!tokenizer||typeof tokenizer.identity!=='string'||!/^[0-9a-f]{64}$/.test(tokenizer.identity)||
   typeof tokenizer.encode!=='function'||typeof tokenizer.decode!=='function'||
   !Number.isSafeInteger(eosTokenId)||eosTokenId<0)
   throw new TypeError('A real pinned lossless tokenizer and EOS token are required');
+if(!tokenizerEvidence?.identity||tokenizerEvidence.identity.fingerprint!==tokenizer.identity||
+  !/^[0-9a-f]{64}$/.test(tokenizerEvidence.identity.tokenizerSha256??'')||
+  !/^[0-9a-f]{40}$/.test(tokenizerEvidence.qualification?.consumerRevision??'')||
+  tokenizerEvidence.qualification?.schema!=='semantic-codec-meter/1'||
+  tokenizerEvidence.qualification?.status!=='qualified'||
+  tokenizerEvidence.qualification?.scope!=='byte-exact-token-meter-only'||
+  tokenizerEvidence.qualification?.nativeAdmission!==false)
+  throw new TypeError('A pinned Ling byte-codec identity and qualification are required');
 
 async function* candidateLines(){
   const input=createInterface({input:createReadStream(inputPath),crlfDelay:Infinity});let index=0;
@@ -47,21 +60,30 @@ async function* candidateLines(){
     yield {index:index++,candidate};
   }
 }
-const memberRows=[],unregistered=[];let candidateCount=0;
+const memberRows=[],unregistered=[],duplicateIndices=new Set(),memberIndexById=new Map();let candidateCount=0;
 for await(const item of candidateLines()){
   candidateCount++;
   if(item.parseError){unregistered.push({index:item.index,reason:'invalid-jsonl',detail:item.parseError});continue;}
   const member=semanticFamilyMembership(item.candidate,item.index);
   if(!member.source||!member.entry||!member.family){unregistered.push({index:item.index,id:member.id,
     family:member.family,status:member.status,reason:member.reason??'source membership is incomplete'});continue;}
-  const {id,family,source,entry,coreDigest,qualified,status,reason}=member;
-  memberRows.push({index:item.index,id,family,source,entry,coreDigest,qualified,status,reason});
+  if(memberIndexById.has(member.id)){
+    duplicateIndices.add(item.index);
+    unregistered.push({index:item.index,id:member.id,family:member.family,status:member.status,
+      reason:'duplicate exact candidate identity; retained as a failure instead of double-counting'});
+    continue;
+  }
+  memberIndexById.set(member.id,item.index);
+  const {id,family,source,entry,coreDigest,qualified,status,reason,splitIdentity}=member;
+  memberRows.push({index:item.index,id,family,source,entry,coreDigest,qualified,status,reason,splitIdentity});
 }
 if(candidateCount===0)throw new TypeError('Input candidate stream is empty');
 if(memberRows.length===0)throw new TypeError('No exact source memberships were available for the v7 family registry');
-const registry=buildSemanticFamilyRegistry(memberRows,{seed,families:holdoutFamilies,
-  sourceDigests:holdoutSources,coreDigests:holdoutCores});
-const identityById=new Map(memberRows.map(row=>[row.id,semanticSplitIdentity(registry,row)]));
+const registryOptions={seed};
+if(holdoutFamilies.length)registryOptions.families=holdoutFamilies;
+if(holdoutSources.length)registryOptions.sourceDigests=holdoutSources;
+if(holdoutCores.length)registryOptions.coreDigests=holdoutCores;
+const {registry,identityById}=resolveSemanticFamilyRegistry(memberRows,registryOptions);
 
 mkdirSync(outputPath,{recursive:false});
 const streamNames=['train','validation','test','refusals','failures'];
@@ -73,11 +95,11 @@ async function writeRow(name,row){
   entry.hash.update(bytes);entry.bytes+=bytes.length;entry.rows++;
   if(!entry.stream.write(bytes))await once(entry.stream,'drain');
 }
-for(const row of unregistered)await writeRow('failures',row);
-
 for await(const item of candidateLines()){
   if(item.parseError){await writeRow('failures',{index:item.index,status:'invalid-jsonl',reason:item.parseError});continue;}
   const candidate=item.candidate,member=semanticFamilyMembership(candidate,item.index);
+  if(duplicateIndices.has(item.index)){await writeRow('failures',{index:item.index,id:member.id,
+    family:member.family,status:member.status,reason:'duplicate exact candidate identity'});continue;}
   if(!member.source||!member.entry||!member.family){await writeRow('failures',{index:item.index,id:member.id,
     family:member.family,status:member.status,reason:member.reason??'source membership is incomplete'});continue;}
   const identity=identityById.get(member.id);
@@ -111,7 +133,8 @@ const manifest={schema:'semantic-training-dataset/7',traceFormat:DETAILED_TRACE_
   registeredSourceMembers:memberRows.length,registry:{file:'family-registry.json',digest:registry.digest,
     sha256:createHash('sha256').update(registryBytes).digest('hex'),components:registry.components.length,
     holdouts:registry.holdouts},tokenizerModuleSha256:createHash('sha256').update(readFileSync(tokenizerPath)).digest('hex'),
-  tokenizerIdentity:tokenizer.identity,eosTokenId,maxContextTokens,seed,allowLocal:local,admitted,
+  tokenizerIdentity:tokenizer.identity,tokenizerEvidence,tokenizerQualification:tokenizerEvidence.qualification,
+  eosTokenId,maxContextTokens,seed,allowLocal:local,admitted,
   optimizerSteps:0,learnedSuccess:null,unregisteredFailures:unregistered,
   files:fileManifest,scope:local?'candidate-local-diagnostic':'native-admitted-v7-training'};
 writeFileSync(resolve(outputPath,'manifest.json'),JSON.stringify(manifest,null,2)+'\n',{flag:'wx'});

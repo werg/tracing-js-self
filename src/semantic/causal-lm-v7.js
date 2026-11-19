@@ -82,23 +82,23 @@ function tokenizerContract(tokenizer,eosTokenId){
     typeof tokenizer.decode==='function','a pinned lossless tokenizer is required');
   require(Number.isSafeInteger(eosTokenId)&&eosTokenId>=0,'an explicit record terminator token ID is required');
 }
-function segment(tokenizer,text,eosTokenId){
-  const ids=tokenizer.encode(text);
+async function segment(tokenizer,text,eosTokenId){
+  const ids=await tokenizer.encode(text);
   require(Array.isArray(ids)&&ids.length>0&&ids.every(id=>Number.isSafeInteger(id)&&id>=0),
     'tokenizer must emit nonempty exact integer sequences');
-  let decoded;try{decoded=Buffer.from(tokenizer.decode(ids));}catch{fail('tokenizer decode failed');}
+  let decoded;try{decoded=Buffer.from(await tokenizer.decode(ids));}catch{fail('tokenizer decode failed');}
   require(decoded.equals(Buffer.from(text,'utf8')),'tokenizer does not reproduce exact input bytes');
   require(!ids.includes(eosTokenId),'public text cannot inject the EOS token');
   return ids;
 }
 
-export function encodeCausalLmV7Example(context,target,{tokenizer,eosTokenId,maxContextTokens,
+export async function encodeCausalLmV7Example(context,target,{tokenizer,eosTokenId,maxContextTokens,
     representation=context?.representation}={}){
   tokenizerContract(tokenizer,eosTokenId);
   require(Number.isSafeInteger(maxContextTokens)&&maxContextTokens>1,'an explicit context budget is required');
   targetRecord(target,representation);
   const prompt=causalLmV7Prompt(context,{representation});
-  const promptIds=segment(tokenizer,prompt,eosTokenId),targetIds=segment(tokenizer,target,eosTokenId);
+  const promptIds=await segment(tokenizer,prompt,eosTokenId),targetIds=await segment(tokenizer,target,eosTokenId);
   const inputIds=[...promptIds,...targetIds,eosTokenId];
   require(inputIds.length<=maxContextTokens,'flat context budget exceeded; truncation is forbidden');
   return {schema:CAUSAL_LM_V7_BRIDGE_VERSION,traceFormat:DETAILED_TRACE_VERSION,representation,
@@ -121,7 +121,7 @@ function trainingContextItems(exported,representation){
         context.visibleThrough!==exported.public.timeline.slice(0,
           exported.public.timeline.indexOf(target)).filter(row=>['semantic','observation'].includes(row.kind)).length))
       fail('context does not match target cutoff and invocation');
-    return {target,context};
+    return {target,context,targetOrdinal:index};
   });
 }
 
@@ -161,14 +161,17 @@ export async function buildCausalLmV7Examples(exported,options={}){
   if(exported.sidecar.split!==expectedSplit)fail('dataset split cannot be moved or relabeled');
   tokenizerContract(tokenizer,eosTokenId);
   const contexts=trainingContextItems(exported,representation),rows=[];
-  for(const {target,context} of contexts){
+  for(const {target,context,targetOrdinal} of contexts){
     if(rows.length>=maxExamples)fail('example cap exceeded; partial episodes are not silently exported');
-    const encoded=encodeCausalLmV7Example(context,target.line,{tokenizer,eosTokenId,maxContextTokens,representation});
+    const encoded=await encodeCausalLmV7Example(context,target.line,{tokenizer,eosTokenId,maxContextTokens,representation});
     rows.push({...encoded,metadata:{identityDigest:exported.sidecar.identityDigest??null,
       sourceFamily:exported.sidecar.sourceFamily??exported.sidecar.sourceArtifact?.sidecar?.sourceFamily??null,
+      sourceId:splitIdentity.sourceId,targetOrdinal,
       sourceComponent:splitIdentity.componentId,
       splitPolicy:splitIdentity.policy,split:exported.sidecar.split,
-      sequence:target.sequence,invocationId:target.invocationId,
+      sequence:target.sequence??null,
+      invocationId:target.invocationId??context.prefix?.invocationId??context.invocationId,
+      contextVisibleThrough:context.visibleThrough,
       sourceAdmission:check.source,nativeAdmission:check.admitted}});
   }
   if(!rows.length)fail('certified episode has no generated targets');
@@ -188,7 +191,7 @@ export function createCausalLmV7Selector({runtime,tokenizer,checkpointIdentity,e
   const emissions=[];let initialized=false;
   const select=async context=>{
     require(initialized,'runtime has not attested its loaded checkpoint');
-    const prompt=causalLmV7Prompt(context,{representation}),inputIds=segment(tokenizer,prompt,eosTokenId);
+    const prompt=causalLmV7Prompt(context,{representation}),inputIds=await segment(tokenizer,prompt,eosTokenId);
     require(inputIds.length+maxNewTokens<=maxContextTokens,
       'generation exceeds context budget; truncation is forbidden');
     const response=await runtime.generate({schema:CAUSAL_LM_V7_BRIDGE_VERSION,representation,
@@ -202,7 +205,7 @@ export function createCausalLmV7Selector({runtime,tokenizer,checkpointIdentity,e
       error.category='causal-lm-emission';error.evidence=structuredClone(evidence);throw error;};
     if(!Array.isArray(ids)||!ids.length||ids.length>maxNewTokens||
       ids.some(id=>!Number.isSafeInteger(id)||id<0))refuse('invalid original emitted token sequence');
-    let payload;try{payload=Buffer.from(tokenizer.decode(ids.at(-1)===eosTokenId?ids.slice(0,-1):ids));}
+    let payload;try{payload=Buffer.from(await tokenizer.decode(ids.at(-1)===eosTokenId?ids.slice(0,-1):ids));}
     catch{refuse('original emitted tokens could not be decoded');}
     evidence.payloadHex=payload.toString('hex');
     if(ids.at(-1)!==eosTokenId||ids.slice(0,-1).includes(eosTokenId)||response.stopReason!=='eos')
