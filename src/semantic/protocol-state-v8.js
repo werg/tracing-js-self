@@ -105,7 +105,7 @@ function resolveProperty(controller,object,key){
     require(!visited.has(current),'cyclic prototype chain');visited.add(current);
     const node=heapNode(controller,current),descriptor=ownDescriptor(node,key);
     if(descriptor)return {owner:current,node,descriptor};
-    const prototype=node.prototype??'ordinary';
+    const prototype=node.prototype===undefined?'ordinary':node.prototype;
     if(prototype===null)return {owner:null,node:null,descriptor:null};
     if(prototype==='ordinary'){
       require(!missingIntrinsic(node,key),'inherited intrinsic property requires its callable protocol');
@@ -282,7 +282,7 @@ function apply(controller,record){
       allocate(controller,{name:record.name,objectKind:'array',length:keys.length,code:null,captures:[],
         properties:keys.map((value,index)=>({key:['str',String(index)],value}))});
     }else if(record.kind==='property.prototype'){
-      let success=true;const before=node.prototype??'ordinary';
+      let success=true;const before=node.prototype===undefined?'ordinary':node.prototype;
       if(!eq(before,record.prototype)&&node.extensible===false)success=false;
       if(Array.isArray(record.prototype)){
         known(controller,record.prototype);let id=record.prototype[1],visited=new Set();
@@ -307,6 +307,7 @@ function apply(controller,record){
 /** Commit exactly the supplied claim after all preconditions pass on a copy. */
 export function applyProtocolRecordV8(controller,record){
   validateProtocolRecordV8(record);
+  if(!controller.protocol)require(controller.stack.length===1,'first protocol transition cannot inherit an unmodeled nested call scope');
   const fields=['heap','locals','receiver','captureAliases','stack','frameFunctions','pending','lastReturn','completion','protocol'];
   const staged=Object.assign(Object.create(Object.getPrototypeOf(controller)),controller);
   for(const field of fields)staged[field]=copy(field==='protocol'?controller.protocol??createProtocolStateV8():controller[field]);
@@ -372,12 +373,12 @@ export function restoreProtocolStateV8(controller,snapshot){
         require(!ordered.some(other=>keyEqual(other,key))&&ownDescriptor(node,publicKey(key)),'invalid or duplicate property order');ordered.push(key);}
       require([...keys,...described].every(key=>ordered.some(other=>keyEqual(other,key))),'property creation order is incomplete');}
     if(node.extensible!==undefined)require(typeof node.extensible==='boolean','extensible flag');
-    const prototype=node.prototype??'ordinary';if(prototype!==null&&prototype!=='ordinary'){
+    const prototype=node.prototype===undefined?'ordinary':node.prototype;if(prototype!==null&&prototype!=='ordinary'){
       known(temporary,prototype);require(prototype[0]==='ref','prototype reference');heapNode(temporary,prototype[1]);}
   }
   controller.protocol=copy(snapshot);return {valid:true,symbols:snapshot.symbols.length,pendingCalls:snapshot.pendingCalls.length};
 }
-function rich(node){return node.descriptors?.size||node.extensible===false||
+function rich(node){return [...(node.descriptors??[])].some(([key,metadata])=>metadata.kind!=='data'||!eq(metadata,defaultMetadata(node,key)))||node.extensible===false||
   ![undefined,null,'ordinary'].includes(node.prototype)||[...node.properties.keys()].some(symbolic);}
 export function assertProtocolDetailCompatible(controller,record){
   const pending=controller.protocol?.pendingCalls.at(-1);
@@ -388,8 +389,9 @@ export function assertProtocolDetailCompatible(controller,record){
     if(value.op==='read')require(!rich(heapNode(controller,value.object)),'detailed read bypasses descriptor/prototype protocol');
     for(const child of Object.values(value))inspect(child);
   }
-  if(['call','return','throw'].includes(record.kind)&&controller.protocol?.callFrames.length)
-    fail('active protocol call requires its scoped call/completion record');
+  if(controller.protocol&&record.kind==='allocate')require(!protocolReservedIdentitiesV8(controller).has(record.fields.name),'detailed allocation collides with a reserved Symbol/object identity');
+  if(controller.protocol&&(record.kind==='call'||['return','throw'].includes(record.kind)&&(controller.protocol.callFrames.length||controller.stack.length>1)))
+    fail('active protocol calls require scoped call/completion records');
   inspect(record.fields);
   if(['read','write'].includes(record.kind))require(!rich(heapNode(controller,record.fields.object)),'detailed property transition bypasses rich state');
   if(record.kind==='end')require(!controller.protocol?.pendingCalls.length,'unfinished protocol call');
@@ -406,4 +408,12 @@ export function protocolOrdinaryHeapViewV8(controller,{roots=null}={}){
       require(value[0]!=='symbol','compact data may not contain Symbols');if(value[0]==='ref')queue.push(value[1]);}
   }
   return controller.heap;
+}
+
+/** Descriptor-only inspection for source certification and state diagnostics. */
+export function describeProtocolObjectV8(controller,id){
+  const node=heapNode(controller,id);
+  return {kind:node.kind,prototype:copy(node.prototype===undefined?'ordinary':node.prototype),extensible:node.extensible!==false,
+    properties:order(node).map(key=>({key:publicKey(key),descriptor:ownDescriptor(node,publicKey(key))})),
+    ...(node.kind==='closure'?{code:node.code,functionKind:node.functionKind??'ordinary',lexicalReceiver:node.lexicalReceiver??null}:{})};
 }
