@@ -134,9 +134,16 @@ export function allowsPromiseJoinWithoutStackV8(controller,record){
     controller.ready?.[0]===record.job;
 }
 export function allowsPromiseJoinDetailedCallV8(controller,record){
+  const fields=record?.fields??record;
   if(record?.kind!=='call'||controller.protocol?.pendingCalls?.length||controller.protocol?.callFrames?.length)return false;
-  const callee=Array.isArray(record.callee)&&record.callee[0]==='ref'?controller.heap?.get(record.callee[1]):null;
-  return callee?.kind==='closure'&&(callee.functionKind===undefined||callee.functionKind==='ordinary')&&callee.callable==null;
+  const identity=fields.callee;
+  if(typeof identity!=='string'||!identity||identity.length>256)return false;
+  const callee=controller.heap?.get(identity);
+  if(callee)return callee.kind==='closure'&&(callee.functionKind===undefined||callee.functionKind==='ordinary')&&
+    callee.callable==null&&callee.constructorKind==null;
+  // Detailed-source lifecycle carries immutable source callable names; the
+  // source-bound compiler validates membership before this capability runs.
+  return /^(?:function|class):[A-Za-z0-9_$:.-]+$/.test(identity)&&!controller.callableMetadata?.[identity]?.richProtocol;
 }
 
 export function restorePromiseJoinStateV8(controller,api){

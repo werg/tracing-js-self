@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createProtocolStateV8,applyProtocolRecordV8,snapshotProtocolStateV8,restoreProtocolStateV8} from '../src/semantic/protocol-state-v8.js';
-import {validatePromiseJoinRecordV8,restorePromiseJoinStateV8,assertPromiseJoinNextV8} from '../src/semantic/protocol-promise-join-v8.js';
+import {validatePromiseJoinRecordV8,restorePromiseJoinStateV8,assertPromiseJoinNextV8,
+  allowsPromiseJoinDetailedCallV8,allowsPromiseJoinInternalSchedulerV8,allowsPromiseJoinWithoutStackV8}
+  from '../src/semantic/protocol-promise-join-v8.js';
 import {PROTOCOL_MACHINE_API_V8 as api} from '../src/semantic/protocol-state-v8.js';
 
 function controller(){
@@ -75,4 +77,18 @@ test('false join claims, wrong IDs, bypass dispatches and unsupported modes are 
   c.stack=[];
   assert.equal(assertPromiseJoinNextV8(c,{kind:'job',fields:{action:'dispatch',job:'j'}}),false);
   assert.throws(()=>join(controller(),'any','p',[],[]),/unsupported mode/);
+});
+
+test('scheduler capabilities are narrow and consume the outer lifecycle field shape',()=>{
+  const c=controller();promise(c,'pending');promise(c,'joined');
+  assert.equal(allowsPromiseJoinInternalSchedulerV8(c,{kind:'promise.join'}),true);
+  assert.equal(allowsPromiseJoinInternalSchedulerV8(c,{kind:'await'}),false);
+  join(c,'race','joined',['pending'],['j']);c.stack=[];
+  assert.equal(allowsPromiseJoinWithoutStackV8(c,{kind:'promise.join.step',result:'joined',job:'j'}),false);
+  c.heap.get('pending').state='fulfilled';c.heap.get('pending').result=['num',1];c.refreshReady();
+  assert.equal(allowsPromiseJoinWithoutStackV8(c,{kind:'promise.join.step',result:'joined',job:'j'}),true);
+  assert.equal(allowsPromiseJoinDetailedCallV8(c,{kind:'call',fields:{callee:'function:1'}}),true);
+  assert.equal(allowsPromiseJoinDetailedCallV8(c,{kind:'call',fields:{callee:'oProtocol'}}),false);
+  c.protocol.callFrames.push({});
+  assert.equal(allowsPromiseJoinDetailedCallV8(c,{kind:'call',fields:{callee:'function:1'}}),false);
 });
