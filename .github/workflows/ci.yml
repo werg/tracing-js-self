@@ -22,6 +22,8 @@ jobs:
       - run: npm test
       - name: Verify typed algorithm contract and decoder fixtures
         run: npm run semantic:contract
+      - name: Recheck v8 source-bound interoperability and contract snapshot
+        run: npm run semantic:v8:contract
       - name: Verify canonical semantic reasoning fixtures
         run: node tools/inspect-semantic-reasoning.mjs
       - run: node bin/tracing.js demo --output "${RUNNER_TEMP}/demo.trace.json"
