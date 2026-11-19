@@ -151,9 +151,11 @@ The source adapter explicitly refuses custom delegated callables/accessors,
 the absent-throw TypeError continuation of builtin iterators, loop-target cleanup,
 generator own-property mutation, parameter expressions and async generators.
 Implicit exotic failures require their separately checked abrupt continuations.
-Hoisted captures which are still uninitialized at publication keep
-the common source compiler's explicit refusal; an initialized lexical closure
-can retain live capture cells across suspension.
+Hoisted closures may retain declared capture cells before initialization. The
+source projection publishes no placeholder or future value for those cells;
+generator creation and resumption require their initializers to have committed.
+An early call with an uninitialized capture remains an explicit source refusal.
+Initialized lexical closures retain the same live cells across suspension.
 
 The public machine is bounded to 4,096 generator allocations, yields and
 arguments, with the enclosing protocol's call-depth and record-count limits.

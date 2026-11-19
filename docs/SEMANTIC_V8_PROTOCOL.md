@@ -89,7 +89,15 @@ invocations, object, tagged key, receiver, callee, and assignment value (null fo
 a getter). There is no future result in this state.
 
 Each active call frame records `child`, `parent`, `priorReceiver`, `priorAliases`,
-and `arguments`. Entering a call changes `receiver` and capture aliases. Argument
+and `arguments`. A closure may retain a declared capture-cell identity before
+its initializer commits. Such a cell is absent from `locals`; it has no public
+placeholder value. Entering or resuming any shared call requires all captured
+cells to be initialized, so an early TDZ call remains an explicit refusal until
+its abrupt boundary is modeled. An initialized `undefined` value is distinct
+from an absent cell. Checkpoints retain the cell reference without exposing a
+future value, and active capture aliases must point to initialized cells.
+
+Entering a call changes `receiver` and capture aliases. Argument
 values are available in explicit cells named `child:argument:N`; the receiver is
 also stored at `child:this`. Closure allocation explicitly distinguishes
 `ordinary` functions from `arrow` functions, with the latter storing their
@@ -165,7 +173,7 @@ and independent consumer revisions.
 
 The new compiler `protocol-source-compiler-v8.js` consumes the owned archive
 without using the historical v6 projection. It publishes source-known closures,
-initialized live capture cells, Symbol declarations, ordinary tagged-key reads
+live capture-cell identities and their committed initializers, Symbol declarations, ordinary tagged-key reads
 and writes, descriptors, reflective key enumeration, prototype changes, and
 scoped accessor calls. After every published heap transition it compares the
 complete descriptor/prototype/key-order view with the committed owned state.

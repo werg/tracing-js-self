@@ -171,6 +171,8 @@ function call(controller,record,options={}){
   for(const adapter of PROTOCOL_MACHINE_ADAPTERS_V8)if(adapter.assertCall)
     require(adapter.assertCall(controller,record.callee,options,PROTOCOL_MACHINE_API_V8)===true,'extension callable guard: '+adapter.id);
   const node=callable(controller,record.callee);known(controller,record.receiver);record.arguments.forEach(value=>known(controller,value));
+  for(const capture of node.captures)require(controller.locals.has(capture.cell),
+    'closure capture is not initialized: '+capture.cell);
   if(options.resume===true)require(controller.frameFunctions.get(record.child)===node.code&&!controller.stack.includes(record.child),
     'resumed invocation must be inactive and retain the same source callable');
   else require(!controller.frameFunctions.has(record.child),'duplicate invocation');
@@ -210,7 +212,8 @@ function allocate(controller,record){
     if(node.kind==='array'&&index(key))require(Number(key)<record.length,'array index exceeds initial length');
     node.properties.set(key,copy(property.value));
   }
-  for(const capture of node.captures)require(controller.locals.has(controller.captureAliases?.get(capture.cell)??capture.cell),'capture cell is unavailable');
+  // A closure may retain a declared cell before its initializer commits. An
+  // absent local is uninitialized; call() checks it before entering any body.
   if(node.kind==='closure'){require(!record.properties.length,'closure properties require explicit descriptors');
     if(node.functionKind==='arrow')known(controller,node.lexicalReceiver);}
   controller.heap.set(record.name,node);
@@ -369,6 +372,10 @@ export function restoreProtocolStateV8(controller,snapshot){
   assertAlgorithmDataArray(snapshot.pendingCalls,'pending protocol calls');
   require(snapshot.pendingCalls.length<=PROTOCOL_V8_LIMITS.calls,'pending call bound');
   const temporary={...controller,protocol:copy(snapshot)},seen=new Set();
+  for(const [name,cell]of controller.captureAliases??[]){
+    require(typeof name==='string'&&typeof cell==='string'&&controller.locals.has(cell),'active closure capture is not initialized');
+    known(temporary,controller.locals.get(cell));
+  }
   for(const pending of snapshot.pendingCalls){
     assertAlgorithmFields(pending,['id','operation','child','parent','object','key','receiver','callee','value'],'pending property call');
     require(typeof pending.id==='string'&&!seen.has(pending.id)&&['get','set'].includes(pending.operation),'pending call identity');seen.add(pending.id);

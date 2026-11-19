@@ -161,9 +161,11 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       const wanted=referencedNames(functionNodes.get(node.codeId)),seen=new Set();
       for(let env=node.closureEnvId;env;env=state.envs[env]?.parent)for(const [name,binding]of Object.entries(state.envs[env]?.bindings??{})){
         if(!wanted.has(name)||seen.has(name))continue;seen.add(name);
-        if(!binding.initialized)refuse('closure capture requires an initialized owned cell');
-        if(!valueTag(binding.token?.value))continue; // Immutable builtins remain source operations, never fake closures.
-        const nameOfCell=cell(env,name);if(!controller.locals.has(nameOfCell))bind(nameOfCell,binding.token.value,event);
+        if(binding.initialized&&!valueTag(binding.token?.value))continue; // Immutable builtins remain source operations, never fake closures.
+        // Hoisted functions capture the declared cell before a later lexical
+        // initializer runs. Retain its identity without exposing the owned
+        // placeholder token or a value from a future transition.
+        const nameOfCell=cell(env,name);if(binding.initialized&&!controller.locals.has(nameOfCell))bind(nameOfCell,binding.token.value,event);
         captures.push({binding:name,cell:nameOfCell});
       }
     }
