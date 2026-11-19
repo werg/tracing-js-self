@@ -145,6 +145,29 @@ constructed examples for that episode are not exported as a partial success.
 
 ## Native admission
 
+The admission command runs bounded source workers and the exact pinned native
+consumer, retaining every declared case and its disposition:
+
+```sh
+PYTHONPATH=/absolute/path/megatoken/src npm run semantic:v8:admit -- \
+  --out /absolute/path/new-native-report \
+  --population interoperability \
+  --megatoken /absolute/path/megatoken \
+  --python /absolute/path/venv/bin/python \
+  --tokenizer /absolute/path/tokenizer.json
+```
+
+`--population gallery` and `--population interactions` select the frozen
+broader inventories. Module interactions go through original ESM reference
+execution and the evaluated-module adapter. `--prepare-only` explicitly
+collects source-qualified artifacts without native admission. A non-preparation
+run exits unsuccessfully when any declared case is not admitted.
+
+The [retained base run](../coverage/language-expansion/native-v8-adb74d3/README.md)
+admitted all three interoperability fixtures using the pinned independent
+consumer. These receipts cover their exact producer, consumer, contract, and
+tokenizer revisions. They do not qualify later protocol extensions.
+
 `allowLocal` defaults to `false`. Production export runs the
 [v8 evidence gate](../src/semantic/compiler-v8.js), then invokes the supplied
 native consumer against the already bound artifact. The

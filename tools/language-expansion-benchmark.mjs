@@ -40,32 +40,43 @@ const tokenModule=flags.has('--tokenizer-module')?await import(pathToFileURL(res
 if(tokenModule&&(traceVersion!==8||!tokenModule.tokenizer||!Number.isSafeInteger(tokenModule.eosTokenId)))
   throw new Error('This runner requires an exact v8 tokenizer module with tokenizer and eosTokenId exports');
 const manifest=expansionManifest(),registry=expansionFamilyRegistry();
+try {
 write('manifest.json',manifest);write('family-registry.json',registry);
 write('comprehension-lock.json',{schema:'semantic-comprehension-lock/1',id:taskset.id,version:taskset.version,
   digest:comprehensionTasksetDigest(taskset),tasks:taskset.tasks.length,
   families:new Set(taskset.tasks.map(row=>row.family)).size,measurement:'unmeasured',
   responseCount:0,model:null,reason:'No external evaluator responses have been collected; reference answer keys are not model responses'});
 const reference=validateExpansionReferencePopulation();write('reference-report.json',{producerRevision,...reference});
-let coverage=null;
+let coverage=null,moduleResults=[];
 if(mode==='coverage'){
   let cases=population==='gallery'?SEMANTIC_GALLERY_FIXTURES:population==='real-source'?expansionRealSourceSlice().cases:
     expansionSourceCases({allInputs:inputs==='all',includeInteractions:population==='all'||population==='interactions',
       includeRealSource:population==='all'});
   if(population==='interactions')cases=cases.filter(row=>row.family.startsWith('interaction:'));
   const costs=[],notation=[],verifier=async fixture=>{
-    const execution=await runGenerationProcess({kind:'source',fixture,traceVersion,producerRevision},
+    const execution=await runGenerationProcess({kind:fixture.modules?'module':'source',fixture,traceVersion,producerRevision},
       {outputDirectory:join(output,'workers'),timeoutMs:workerTimeoutMs,memoryMb:workerMemoryMb});
     const result=execution.result;
     appendFileSync(join(output,'attempts.jsonl'),JSON.stringify({id:fixture.id,status:result.status,phase:result.phase??null,
       reason:result.reason??null,durationMs:execution.durationMs,peakRssBytes:execution.peakRssBytes,
       identityDigest:result.exported?.sidecar?.sourceArtifactDigest??result.exported?.sidecar?.identityDigest??null})+'\n');
     if(result.exported){
-      const cost=traceVersion===8?await auditRegionServingCosts(result.exported,{tokenizer:tokenModule?.tokenizer??null,
-        eosTokenId:tokenModule?.eosTokenId??null,maxContextTokens}):await auditFlatServingCosts(result.exported);
+      let cost;
+      try {cost=traceVersion===8?await auditRegionServingCosts(result.exported,{tokenizer:tokenModule?.tokenizer??null,
+        eosTokenId:tokenModule?.eosTokenId??null,maxContextTokens}):await auditFlatServingCosts(result.exported);}
+      catch(error){
+        // A measurement limit cannot erase an independently qualified source.
+        const limited=/context budget|example cap|record byte bound/i.test(error.message);
+        if(!limited)throw error;
+        cost={schema:'semantic-serving-cost-refusal/1',representation:result.exported.public.representation,
+          status:'resource_limited',reason:error.message,predictions:result.exported.contexts.length,
+          bytes:null,tokens:null,measurement:{bytes:'untested',tokens:'resource_limited'}};
+      }
       // Preserve exact serializer bytes separately, avoiding giant duplicate
       // prompt/definition fields inside the small aggregate coverage report.
       write('serving-'+fixture.id+'.json',cost);
-      costs.push({id:fixture.id,representation:cost.representation,predictions:cost.predictions,
+      costs.push({id:fixture.id,sourceProfile:fixture.sourceProfile??'training-js/1',
+        representation:cost.representation,status:cost.status??'passed',reason:cost.reason??null,predictions:cost.predictions,
         bytes:cost.bytes,tokens:cost.tokens,measurement:cost.measurement});
       if(result.exported.public.representation==='algorithm'){
         const records=result.exported.public.timeline.filter(row=>row.mode==='generated'||row.kind==='observation')
@@ -82,6 +93,16 @@ if(mode==='coverage'){
   coverage=await buildCapabilityLedger({producerRevision,cases,verifyCase:verifier,traceVersion,
     contracts:traceVersion===8?Object.fromEntries(['execution','trace','context','continuation'].map(key=>[key,SEMANTIC_V8_DEFINITION[key]])):null,
     population:'expansion-v1:'+population+':inputs-'+inputs});
+  if(['all','interactions'].includes(population))for(const fixture of LANGUAGE_EXPANSION_BENCHMARK.interactions.filter(row=>row.modules)){
+    if(traceVersion!==8){moduleResults.push({id:fixture.id,profile:fixture.sourceProfile,status:'unsupported',
+      reason:'The module source adapter publishes the versioned v8 region contract only',native:'untested'});continue;}
+    const result=await verifier(fixture);
+    moduleResults.push({id:fixture.id,profile:result.sourceProfile??fixture.sourceProfile,status:result.status,
+      reason:result.reason??null,source:result.exported?'passed':result.status,
+      regionCoverage:result.exported?.sidecar.regionCoverage??null,native:'untested'});
+  }
+  write('module-coverage.json',{producerRevision,traceVersion,declared:moduleResults.length,rows:moduleResults,
+    scope:'Original module graphs are checked by the evaluated-module adapter, separately from strict script parsing'});
   write('coverage.json',coverage);write('serving-costs.json',{producerRevision,manifestDigest:manifest.digest,
     path:traceVersion===8?'actual-semantic-causal-lm/4':'actual-semantic-causal-lm/3',tokenStatus:tokenModule?'passed':'untested',
     tokenizerEvidence:tokenModule?.tokenizerEvidence??null,rows:costs});
@@ -92,13 +113,15 @@ const report={schema:'semantic-expansion-run/1',producerRevision,traceVersion,mo
   workerBounds:{timeoutMs:workerTimeoutMs,memoryMb:workerMemoryMb},
   registryDigest:registry.digest,families:manifest.families.length,interactionGroups:manifest.interactions.length,
   realSource:manifest.realSource,reference:reference.totals,
-  moduleAdapters:LANGUAGE_EXPANSION_BENCHMARK.interactions.filter(row=>!row.source).map(row=>({id:row.id,
-    profile:row.sourceProfile,status:'untested',reason:'This runner has no module-source adapter; strict script results cannot qualify module cells or asynchronous graphs'})),
+  moduleAdapters:moduleResults.length?moduleResults:LANGUAGE_EXPANSION_BENCHMARK.interactions.filter(row=>!row.source).map(row=>({id:row.id,
+    profile:row.sourceProfile,status:'untested',reason:'This run did not select the module interaction population'})),
+  populationDenominators:{script:coverage?.coverage?.episodes?.declared??null,modules:moduleResults.length,
+    declaredInteractionGroups:manifest.interactions.length},
   coverage:coverage?.coverage??null,comprehension:{tasks:taskset.tasks.length,status:scoreComprehensionResponses(taskset,[]).status},
   native:'untested',modelExecution:'untested',standardPromotion:'not-qualified'};
 write('report.json',report);console.log(JSON.stringify({output,producerRevision,reference:reference.totals,
   families:report.families,interactions:report.interactionGroups,realSources:manifest.realSource.selectedDenominator,
   tasks:taskset.tasks.length,coverage:report.coverage}));
-if(tokenModule?.tokenizer?.close)await tokenModule.tokenizer.close();
 if(reference.totals.positivePassed!==reference.totals.positiveInputs||reference.totals.distinguishingPassed!==reference.totals.distinguishingPairs||
   reference.families.some(family=>family.distinguishingPairs.some(row=>row.normalizationSeparation.status==='failed')))process.exitCode=1;
+} finally {if(tokenModule?.tokenizer?.close)await tokenModule.tokenizer.close();}
