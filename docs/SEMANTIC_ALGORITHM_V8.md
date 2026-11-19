@@ -94,7 +94,7 @@ this document alone does not admit data or promote the production default.
 
 `lowerJavaScriptV8({source, entry, inputTypes})` recognizes explicitly strict,
 closed synchronous functions. The recognizer covers arbitrary ordered numeric
-fold steps, multiple private accumulators, pure array callbacks, immutable
+fold steps, multiple private accumulators, map/filter/scan builders, pure array callbacks, immutable
 captures/helpers, scalar mutable branch joins, logical assignment, defaults,
 ordinary property bindings, and lazy optional reads. It preserves live input
 aliases and fresh returned object identities through eager lexical bindings.
@@ -103,9 +103,38 @@ Source names become input positions or lexical binder positions, not data keys.
 The source tests compare these cores to independent V8 execution over empty,
 signed-zero, rounding-sensitive, nullish, aliasing, and ordinary finite inputs.
 Owned-source admission is also required for supported runtime/frontend slices.
-Existing owned gaps (at this commit: find/findIndex/every, parameter patterns,
-logical-assignment source receipts, and a helper inside a retained array
-callback) remain separate admission failures; accepting source into a pure core
+Owned gaps observed before the coordinated runtime integration: find/findIndex/every, parameter patterns,
+and a helper inside a retained array
+callback remain separate admission failures; accepting source into a pure core
 does not bypass those checks. Shared mutation, accessors/proxies, arbitrary
 receivers, sparse traversal, uncaught callback control, and resource overflow
 retain detailed fallback dispositions.
+
+
+## Rendering and normalized source families
+
+`render-v8.js` provides canonical, formal, hybrid, and prose views. The views
+retain the exact core and input domains. Ordered traversal displays its profile
+and direction; callbacks show explicit lexical parameters; eager local bindings
+make alias sharing visible; search readings include their stopping rule and
+absent result. An unreviewed record envelope falls back to canonical JSON rather
+than silently omitting fields. Only the execution contract's canonical codec
+accepts predictions.
+
+Fresh output builders have a separate source rule. An unaliased empty array,
+followed by an ascending loop that only appends a pure transform, becomes map.
+A guarded append of the original element becomes filter. A scalar accumulator
+update followed by appending that value becomes scan. The rule checks for prior
+reads, aliases, retained captures, other writes, and changed element order.
+For-of, indexed for, and while variants converge under the same numeric input
+domain; map and filter also converge with their intrinsic callback forms.
+Tests independently execute two distinguishing pairs for each builder rule and
+cover empty arrays, signed zero, rounding-sensitive inputs, and scan's final
+accumulator outside the loop.
+
+Logical-assignment source admission now observes both the branch decision and
+the expression result independently. A skipped assignment records its prior
+value; a completed assignment records the committed RHS. Member receiver/key
+expressions are evaluated once, and native Get/Put retain native conversion
+behavior. Incomplete setter/trap completions remain unverified rather than
+being inferred from the final returned scalar.
