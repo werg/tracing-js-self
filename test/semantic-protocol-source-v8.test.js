@@ -54,7 +54,6 @@ test('new source observation identity protocol does not widen historical public 
 test('source projection refuses unmodeled hidden state even when the final scalar would match',()=>{
   for(const source of [
     '"use strict";function run(){const s=Symbol("x");const o=new Proxy({x:3},{});return 3;}',
-    '"use strict";function run(){class C{};return 3;}',
     '"use strict";function run(){const s=Symbol("x");return s;}',
     '"use strict";async function run(){const s=Symbol("x");return 3;}',
     '"use strict";function run(){const s=Symbol("x");const o={};o[s]=3;return o;}'

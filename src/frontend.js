@@ -228,7 +228,7 @@ export function compile(ast) {
           emit('CONSTRUCT',n.args.length,n);break;
         case 'FunctionExpr':{
           const codeId=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict||n.strict===true,n.parameterSites,n.parameterPatterns,n.generator,n.classConstructor===true);
-          emit('MAKE_FUNCTION',{codeId,arrow:n.arrow,async:n.async,nonConstructible:n.nonConstructible===true,...(n.name?{name:n.name}:{})},n);
+          emit('MAKE_FUNCTION',{codeId,arrow:n.arrow,async:n.async,nonConstructible:n.nonConstructible===true,...(n.name?{name:n.name}:n.generator&&inferredName!==null?{inferredName}:{})},n);
           break;
         }
         case 'ClassExpr':emitClass(n,inferredName);break;

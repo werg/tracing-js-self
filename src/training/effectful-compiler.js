@@ -104,10 +104,14 @@ export function ownedEffectfulOutcome(bundle){
 export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='program1',
     invocationId='invocation1',trackId='worker1',realmId='realm1',sourceLineage=null,
     maxGenerated=16384,realmPolicy='retained',triggerId='teacher-entry',checkpointAtFirstAwait=false,
-    representation='compact',maxOperators=8,localStateCompaction=true,semanticRegions=true}={}){
+    representation='compact',maxOperators=8,localStateCompaction=true,semanticRegions=true,regionAdapter=null}={}){
   if(typeof checkpointAtFirstAwait!=='boolean')refuse('checkpointAtFirstAwait must be boolean');
   if(typeof localStateCompaction!=='boolean')refuse('localStateCompaction must be boolean');
   if(typeof semanticRegions!=='boolean')refuse('semanticRegions must be boolean');
+  if(regionAdapter!==null&&(regionAdapter.schema!=='semantic-region-teacher-adapter/1'||
+    typeof regionAdapter.createHarness!=='function'||typeof regionAdapter.replay!=='function'||
+    typeof regionAdapter.encodeProtocol!=='function'||semanticRegions))
+    refuse('region adapter requires a checked harness and explicit detailed source projection');
   if(representation!=='compact')refuse('Only the canonical semantic trace is supported');
   if(!Number.isInteger(maxOperators)||maxOperators<1||maxOperators>8)
     refuse('compact expressions require an operator bound from 1 through 8');
@@ -126,7 +130,8 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     if(change.kind==='operation.create')operationStarts.set(change.id,{event,operation:change.record});
   const capabilities=[...new Set(analyzeSemanticProgram(source).sites.map(site=>site.operation).filter(Boolean))].sort();
   for(const operation of capabilities)hostOperation(operation);
-  let harness=new SelectedExecutionHarness({sessionId,maxGenerated,automaticDelivery:false});
+  let harness=regionAdapter?regionAdapter.createHarness({sessionId,maxGenerated,automaticDelivery:false}):
+    new SelectedExecutionHarness({sessionId,maxGenerated,automaticDelivery:false});
   harness.publishProgram({programId,source,entry:entry.functionName,capabilities,
     randomSeed:bundle.initialState.control.a0.randomSeed??null});
   // Rest parameters are ordinary arrays already created at the *entry*
@@ -297,7 +302,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   };
   function commitEmission(owner,kind,fields,certificate){
     if(++generated>maxGenerated)throw new RangeError('Effectful teacher record budget');
-    const line=encodeWitness(kind,fields);
+    const line=kind==='protocol'&&regionAdapter?regionAdapter.encodeProtocol(fields):encodeWitness(kind,fields);
     harness.prepareModelContext(owner);
     harness.selected(owner,line);
     const receipt=harness.timeline.findLast(item=>item.kind==='semantic'&&item.invocationId===owner);
@@ -307,6 +312,12 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   function flushComputations(){
     for(const item of pendingComputations)commitEmission(item.owner,'compute',item.fields,item.certificate);
     pendingComputations.length=0;
+  }
+  function emitProtocol(owner,record,event=null,rule='source-protocol/1'){
+    if(!regionAdapter)refuse('protocol source emission requires the v8 region adapter');
+    flushComputations();
+    return commitEmission(owner,'protocol',record,{rule,journalEvents:event?[event.eventId]:[],
+      source:event?.siteId?{sourceId:event.sourceId,siteId:event.siteId}:null});
   }
   function pendingBinding(row,event){
     if(!['binding.initialize','binding.write'].includes(event.operation)||
@@ -616,6 +627,12 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       deferredClosures.delete(identity);
     }
   }
+  const extensionContext={bundle,source,semantic,state,controller,identity,tag,frameId,rootFor,cell,
+    emit,emitProtocol,allocations,writes,refuse,copy,
+    get harness(){return harness;},
+    claimDataIdentity(id){certifiedDataIdentities.add(identity(id));},
+    get rootInvocation(){return invocationId;}};
+  regionAdapter?.setup?.(extensionContext);
   // Initial owned result Promises are part of entering an async function, not
   // external observations or values taken from its eventual final heap.
   for(const id of Object.keys(bundle.initialState.promises))promise(id,invocationId);
@@ -687,7 +704,8 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
         }
       }
     }
-    if(event.operation==='external.callback.enqueue'){
+    if(regionAdapter?.event?.(extensionContext,event,row)===true){handled=true;
+    }else if(event.operation==='external.callback.enqueue'){
       const queue=event.stateChanges.find(change=>change.table==='control')?.after?.queue??[];
       const callback=queue.at(-1);
       if(callback?.kind!=='external-callback')refuse('callback lacks owned queue receipt');
@@ -770,7 +788,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
         if([...harness.handlers.values()].some(handler=>handler.state!=='closed'))
           refuse('native listener checkpoint needs explicit reattachment evidence absent from this source journal');
         const packet=JSON.parse(JSON.stringify(harness.checkpoint()));
-        harness=SelectedExecutionHarness.restore(packet);
+        harness=regionAdapter?regionAdapter.restore(packet):SelectedExecutionHarness.restore(packet);
         harness.evictSource(trackId,programId);
         harness.restoreSource(trackId,programId,{digest:harness.programs.get(programId).digest});
         checkpoints.push({schema:'semantic-checkpoint-evidence/4',journalEvent:event.eventId,
@@ -952,6 +970,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       if(row)refuse('unprojected semantic family '+row.op);
       elided.push({journalEvent:event.eventId,operation:event.operation,reason:'private-machine-transition'});
     }
+    regionAdapter?.checkEvent?.(extensionContext,event,row);
     for(const change of event.stateChanges){
       if(change.after===null)delete state[change.table][change.id];
       else state[change.table][change.id]=copy(change.after);
@@ -984,7 +1003,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       foldedConditions:foldedComputations,fusedBindings,...(localStateCompaction?{
         rule:'local-cell-idempotence/1',removedCellWrites}:{})},
     generatedRecords:generated,publicDigest:hash(exported.public)};
-  const replayed=SelectedExecutionHarness.replay(exported);
+  const replayed=regionAdapter?regionAdapter.replay(exported):SelectedExecutionHarness.replay(exported);
   for(const activation of replayed.invocations.values())
     if(activation.controller.firstWitnessViolation)refuse('selected replay has an inconsistent computation');
   const expected=ownedEffectfulOutcome(bundle),selected=replayed.invocations.get(invocationId).controller;

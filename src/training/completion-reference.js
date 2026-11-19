@@ -140,7 +140,8 @@ export function ownedCompletionObservations(bundle,source,{onObservation=null,as
     if(node.type==='ChainExpression'||node.optional===true)return true;
     return hasOptionalChain(node.callee)||hasOptionalChain(node.object);
   };
-  const state={heap:{...bundle.initialState.heap},envs:{...bundle.initialState.envs},frames:{...bundle.initialState.frames}};
+  const state={heap:{...bundle.initialState.heap},envs:{...bundle.initialState.envs},frames:{...bundle.initialState.frames},
+    promises:{...bundle.initialState.promises}};
   const seed=tag=>{
     if(!Array.isArray(tag)||tag[0]!=='ref'||identities.has(JSON.stringify(tag)))return;
     identities.set(JSON.stringify(tag),++next);

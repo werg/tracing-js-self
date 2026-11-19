@@ -3,6 +3,7 @@ import {WELL_KNOWN_SYMBOLS,wellKnownSymbol,stringPropertyKey,symbolPropertyKey,i
 import {SHARED_TYPES,SHARED_TYPE_NAMES,newArrayBuffer,isOwnedBuffer,isOwnedTypedView,isOwnedDataView,newSharedBuffer,newSharedView,newSharedDataView,effectiveDataViewLength,DATA_VIEW_GETTERS,DATA_VIEW_SETTERS,readSharedDataView,writeSharedDataView,growSharedBuffer,effectiveSharedLength,readSharedElement,writeSharedElement,atomicSharedElement} from './owned-shared-memory.js';
 import {BinaryProfileError,BinaryResourceError,binaryIndex,binaryInteger,binaryElement,binaryNumericKey,binaryValidIndex} from './owned-binary-coercion.js';
 import { parse, compile } from './frontend.js';
+import {GENERATOR_INTRINSIC_PROTOTYPES,generatorIntrinsicParent,generatorIntrinsicProperty,generatorInstancePrototype} from './owned-generator-objects.js';
 import { importGraph } from './training/graph.js';
 import { parseTraining, TRAINING_PARSER } from './training/profile.js';
 import { createArithmetic, advanceArithmetic, isOwnedArithmetic, ordinaryGet, ordinaryBuiltin, objectPrototype } from './spec-operations.js';
@@ -207,7 +208,7 @@ function enumerationSnapshot(heap,source){
       visited.add(key);if(enumerable)keys.push(propertyKeyValue(key)[1]);
       if(visited.size>10000)throw new RangeError('For-in key budget exceeded');
     }
-    if(prototype===null||['Object.prototype','Array.prototype','Function.prototype'].includes(prototype))break;
+    if(prototype===null||['Object.prototype','Array.prototype','Function.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(prototype))break;
     object=heap[prototype];if(!object)throw new Error('For-in prototype identity missing');
   }
   return {chain,keys};
@@ -215,11 +216,14 @@ function enumerationSnapshot(heap,source){
 function functionProperty(heap,object,key){
   const seen=new Set();
   while(object){
-    if(!['object','array','function'].includes(object.kind)||seen.has(object.id))throw new TypeError('Unmodeled function prototype chain');
+    if(!['object','array','function','generator'].includes(object.kind)||seen.has(object.id))throw new TypeError('Unmodeled function prototype chain');
     seen.add(object.id);
     if(Object.hasOwn(object.properties??{},key))return {owner:object,slot:object.properties[key],attributes:object.dataAttributes?.[key]};
     if(Object.hasOwn(object.accessors??{},key))return {owner:object,accessor:object.accessors[key]};
     const proto=objectPrototype(object);
+    if(GENERATOR_INTRINSIC_PROTOTYPES.includes(proto)){
+      const found=generatorIntrinsicProperty(proto,key);return {slot:token(found.value),attributes:found.attributes};
+    }
     if(proto==='Function.prototype')return key===symbolPropertyKey('well-known:hasInstance')?
       {slot:token(['builtinfn','Function.prototype.hasInstance']),attributes:{writable:false}}:{};
     if(proto===null||['Object.prototype','Array.prototype'].includes(proto))return {};
@@ -356,7 +360,10 @@ export class Runtime {
     fn.properties??={};fn.propertyVersions??={};fn.shapeVersion??=0;
     if(!prototype)return;
     if(fn.arrow||fn.async)return;
-    if(this.programs[fn.codeId].generator)throw new TypeError('Generator function prototype reflection is outside the profile');
+    if(this.programs[fn.codeId].generator){
+      if(!fn.generatorFunction)throw new Error('Generator function metadata missing');
+      return;
+    }
     if(fn.nonConstructible)return;
     if(fn.prototypeInitialized)return;
     fn.prototypeInitialized=true;
@@ -368,6 +375,23 @@ export class Runtime {
     putOwn(fn,'prototype',['ref',id],eventId);
     fn.dataAttributes??={};fn.dataAttributes.prototype={enumerable:false,writable:true,configurable:false};
   }
+  generatorFunctionProperties(draft,fn,name,eventId){
+    if(!this.programs[fn.codeId].generator)return;
+    if(fn.generatorFunction)throw new Error('Generator function metadata initialized twice');
+    fn.generatorFunction=true;fn.nonConstructible=true;fn.prototype='GeneratorFunction.prototype';
+    this.functionProperties(draft,fn,eventId);
+    if(name[0]==='symbol'){
+      const description=this.symbolDescription(draft,name);name=['str',description[0]==='undefined'?'':'['+description[1]+']'];
+    }else if(['str','num','bool','null','undefined','bigint'].includes(name[0]))name=['str',String(decode(name))];
+    else throw new TypeError('Generator inferred name requires an owned property key');
+    for(const [key,value] of [['length',['num',this.programs[fn.codeId].functionLength??this.programs[fn.codeId].params.length]],['name',name]]){
+      putOwn(fn,key,value,eventId);(fn.dataAttributes??={})[key]={writable:false,enumerable:false,configurable:true};
+    }
+    const id=this.next(draft,'obj');
+    draft.heap[id]={id,kind:'object',prototype:'Generator.prototype',properties:{},propertyVersions:{},shapeVersion:0,version:0};
+    putOwn(fn,'prototype',['ref',id],eventId);
+    fn.dataAttributes.prototype={writable:true,enumerable:false,configurable:false};
+  }
   classFunctionProperties(draft,fn,name,eventId,prefix=null){
     this.functionProperties(draft,fn,eventId);
     if(name[0]==='symbol'){
@@ -375,13 +399,14 @@ export class Runtime {
     }else name=['str',String(decode(name))];
     if(prefix!==null)name=['str',prefix+' '+name[1]];
     for(const [key,value] of [['length',['num',this.programs[fn.codeId].functionLength??this.programs[fn.codeId].params.length]],['name',name]]){
-      if(Object.hasOwn(fn.properties,key))throw new Error('Class function metadata initialized twice');
-      putOwn(fn,key,value,eventId);(fn.dataAttributes??={})[key]={writable:false,enumerable:false,configurable:true};
+      if(Object.hasOwn(fn.properties,key)&&!fn.generatorFunction)throw new Error('Class function metadata initialized twice');
+      if(fn.generatorFunction&&key==='length')continue;
+      putOwn(fn,key,value,eventId,{literal:fn.generatorFunction===true});(fn.dataAttributes??={})[key]={writable:false,enumerable:false,configurable:true};
     }
   }
   ordinaryHasInstance(draft,constructor,candidate,eventId){
     const target=constructor[0]==='ref'?draft.heap[constructor[1]]:null;
-    const intrinsic=constructor[0]==='intrinsic'&&!['Math','Reflect','Atomics','Object.prototype','Array.prototype'].includes(constructor[1]);
+    const intrinsic=constructor[0]==='intrinsic'&&!['Math','Reflect','Atomics','Object.prototype','Array.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(constructor[1]);
     if(target?.kind!=='function'&&!intrinsic&&constructor[0]!=='builtinfn')return false;
     if(!['ref','promise','intrinsic','builtinfn','hostfn'].includes(candidate[0]))return false;
     let sought;
@@ -404,12 +429,13 @@ export class Runtime {
         if(object.kind==='proxy')throw new TypeError('Proxy GetPrototypeOf requires an owned instanceof continuation');
         if(seen.has(object.id))throw new Error('Cyclic instanceof prototype');seen.add(object.id);
         prototype=objectPrototype(object);
-      }else if(current[0]==='intrinsic'&&current[1]==='Object.prototype')prototype=null;
+      }else if(current[0]==='intrinsic'&&GENERATOR_INTRINSIC_PROTOTYPES.includes(current[1]))prototype=generatorIntrinsicParent(current[1]);
+      else if(current[0]==='intrinsic'&&current[1]==='Object.prototype')prototype=null;
       else prototype='Object.prototype';
       if(prototype===null)return false;
       if(prototype===sought)return true;
       current=['intrinsic',prototype];
-      if(!['Object.prototype','Array.prototype','Function.prototype'].includes(prototype))current=['ref',prototype];
+      if(!['Object.prototype','Array.prototype','Function.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(prototype))current=['ref',prototype];
       else if(prototype==='Object.prototype')return false;
     }
   }
@@ -418,7 +444,7 @@ export class Runtime {
     if(target?.kind!=='function'||target.arrow||target.async||this.programs[target.codeId].generator||target.nonConstructible)
       guestFault('TypeError','Function is not a constructor');
     if(target.derivedConstructor){
-      const id=this.newFrame(draft,target.codeId,target.closureEnvId,callerFrameId,null,args,U),frame=draft.frames[id];
+      const id=this.newFrame(draft,target.codeId,target.closureEnvId,callerFrameId,null,args,U,target.id),frame=draft.frames[id];
       frame.constructKind='derived';frame.constructorId=target.id;frame.thisInitialized=false;
       frame.newTarget=newTarget;frame.constructorArguments=copy(args);return id;
     }
@@ -431,10 +457,10 @@ export class Runtime {
     const receiver=this.next(draft,'obj');draft.heap[receiver]={id:receiver,kind:'object',
       prototype:prototype?.id??intrinsicPrototype??'Object.prototype',properties:{},propertyVersions:{},shapeVersion:0,version:0};
     if(target.instanceInitializer){
-      const initializer=draft.heap[target.instanceInitializer[1]],id=this.newFrame(draft,initializer.codeId,initializer.closureEnvId,callerFrameId,null,[],['ref',receiver]);
+      const initializer=draft.heap[target.instanceInitializer[1]],id=this.newFrame(draft,initializer.codeId,initializer.closureEnvId,callerFrameId,null,[],['ref',receiver],initializer.id);
       draft.frames[id].afterInstanceInitialization={constructorId:target.id,args,receiver:['ref',receiver],newTarget};return id;
     }
-    const id=this.newFrame(draft,target.codeId,target.closureEnvId,callerFrameId,null,args,['ref',receiver]);
+    const id=this.newFrame(draft,target.codeId,target.closureEnvId,callerFrameId,null,args,['ref',receiver],target.id);
     draft.frames[id].constructReceiver=['ref',receiver];draft.frames[id].newTarget=newTarget;
     draft.frames[id].constructorId=target.id;draft.frames[id].constructKind='base';draft.frames[id].thisInitialized=true;return id;
   }
@@ -450,7 +476,7 @@ export class Runtime {
     fn.closureEnvId=this.newEnv(draft,fn.closureEnvId);
     draft.envs[fn.closureEnvId].bindings['[[home object]]']={kind:'const',initialized:true,token:token(home,eventId),version:0};
   }
-  newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[],thisValue=U) {
+  newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[],thisValue=U,functionId=null) {
     const thisBindingFrameId=thisValue[0]==='thisbinding'?thisValue[1]:null;
     if(thisBindingFrameId){
       if(!draft.frames[thisBindingFrameId])throw new Error('Lexical receiver frame is missing');
@@ -484,7 +510,9 @@ export class Runtime {
     if(thisBindingFrameId)draft.frames[id].thisBindingFrameId=thisBindingFrameId;
     if(this.programs[codeId].generator){
       const generatorId=this.next(draft,'obj');
-      draft.heap[generatorId]={id:generatorId,kind:'generator',frameId:id,state:'initializing',
+      const target=draft.heap[functionId];
+      if(target?.codeId!==codeId||target.closureEnvId!==parentEnv)throw new Error('Generator frame lost its callee identity');
+      draft.heap[generatorId]={id:generatorId,kind:'generator',frameId:id,functionId,prototype:generatorInstancePrototype(draft.heap,target),state:'initializing',
         properties:{},propertyVersions:{},shapeVersion:0,version:0};
       draft.frames[id].generatorId=generatorId;
     }
@@ -582,6 +610,7 @@ export class Runtime {
       const id=this.next(state,'obj');
       state.heap[id]={id,kind:'function',codeId:def.arg.codeId,
         closureEnvId:global,async:!!def.arg.async,version:0};
+      this.generatorFunctionProperties(state,state.heap[id],['str',def.arg.name],null);
       state.envs[global].bindings[def.arg.name]={kind:'function',initialized:true,token:token(['ref',id]),version:0};
     }
     const imported=importGraph(state,args,kind=>this.next(state,kind));
@@ -615,7 +644,7 @@ export class Runtime {
     frame.completion={type:'return',value:token(value,origin)};
     if(frame.afterInstanceInitialization){
       const pending=frame.afterInstanceInitialization,target=draft.heap[pending.constructorId];
-      const id=this.newFrame(draft,target.codeId,target.closureEnvId,frame.callerFrameId,null,pending.args,pending.receiver);
+      const id=this.newFrame(draft,target.codeId,target.closureEnvId,frame.callerFrameId,null,pending.args,pending.receiver,target.id);
       draft.frames[id].constructReceiver=pending.receiver;draft.frames[id].newTarget=pending.newTarget;
       draft.frames[id].constructorId=pending.constructorId;draft.frames[id].constructKind='base';draft.frames[id].thisInitialized=true;
       draft.control.a0.activeFrameId=id;return;
@@ -783,7 +812,7 @@ export class Runtime {
     if(match.group!==null)params.push(token(['str',match.group]));
     params.push(token(['num',match.start]),token(['str',p.text]));
     const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,caller.id,null,
-      params,this.functionThis(fn));
+      params,this.functionThis(fn),fn.id);
     p.waitingFrameId=child;
     draft.control.a0.activeFrameId=child;
     return child;
@@ -801,7 +830,7 @@ export class Runtime {
         throw new TypeError('Sort comparator mutated target array');
       const fn=draft.heap[p.callbackId];
       const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,caller.id,null,
-        p.pair.map(v=>token(v)),this.functionThis(fn));
+        p.pair.map(v=>token(v)),this.functionThis(fn),fn.id);
       p.waitingFrameId=child;
       draft.control.a0.activeFrameId=child;
       return true;
@@ -819,7 +848,7 @@ export class Runtime {
         [token(p.accumulator),token(value),token(['num',p.index]),token(['ref',p.arrayId])]:
         [token(value),token(['num',p.index]),token(['ref',p.arrayId])];
       const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,caller.id,null,params,
-        this.functionThis(fn,p.thisArg??U));
+        this.functionThis(fn,p.thisArg??U),fn.id);
       p.currentValue=value;
       p.waitingFrameId=child;
       draft.control.a0.activeFrameId=child;
@@ -1030,7 +1059,7 @@ export class Runtime {
         invoke:(method,receiver,args=[])=>{
           const target=s.heap[method[1]];
           const promiseId=target.async?this.newPromise(s):null;
-          const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,args,this.functionThis(target,receiver));
+          const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,args,this.functionThis(target,receiver),target.id);
           s.control.a0.activeFrameId=id;
           return id;
         },
@@ -1108,7 +1137,7 @@ export class Runtime {
         case 'INSTANCEOF_DEFAULT':{
           const constructor=pop(),value=pop(),target=constructor.value[0]==='ref'?s.heap[constructor.value[1]]:null;
           if(target?.kind!=='function'&&!['builtinfn','hostfn'].includes(constructor.value[0])&&
-             !(constructor.value[0]==='intrinsic'&&!['Math','Reflect','Atomics','Object.prototype','Array.prototype'].includes(constructor.value[1])))
+             !(constructor.value[0]==='intrinsic'&&!['Math','Reflect','Atomics','Object.prototype','Array.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(constructor.value[1])))
             guestFault('TypeError','Right-hand side of instanceof is not callable');
           return {...operands(value,constructor),...result(['bool',this.ordinaryHasInstance(s,constructor.value,value.value,eventId)])};
         }
@@ -1266,9 +1295,10 @@ export class Runtime {
             closureEnvId,async:arg.async===true,arrow:arg.arrow===true,nonConstructible:arg.nonConstructible===true,
             lexicalThis:arg.arrow?f.thisValue:null,
             ...(arg.arrow&&(f.thisBindingFrameId||f.newTarget)?{lexicalThisFrameId:f.thisBindingFrameId??f.id}:{}),version:0};
+          this.generatorFunctionProperties(s,s.heap[id],arg.name?['str',arg.name]:arg.inferredName?.stack?f.stack.at(-1).value:['str',arg.inferredName??''],eventId);
           return result(['ref',id]);
         }
-        case 'DEF_FN':{const e=s.envs[f.envId],id=this.next(s,'obj');s.heap[id]={id,kind:'function',codeId:arg.codeId,closureEnvId:f.envId,async:arg.async,version:0};e.bindings[arg.name]={kind:'function',initialized:true,token:token(['ref',id],eventId),version:0};return {result:['ref',id]};}
+        case 'DEF_FN':{const e=s.envs[f.envId],id=this.next(s,'obj');s.heap[id]={id,kind:'function',codeId:arg.codeId,closureEnvId:f.envId,async:arg.async,version:0};this.generatorFunctionProperties(s,s.heap[id],['str',arg.name],eventId);e.bindings[arg.name]={kind:'function',initialized:true,token:token(['ref',id],eventId),version:0};return {result:['ref',id]};}
         case 'ENTER_SCOPE':f.envId=this.newEnv(s,f.envId);return {};
         case 'LEAVE_SCOPE':f.envId=s.envs[f.envId].parent;return {};
         case 'CLONE_LOOP_ENV':{
@@ -1453,7 +1483,7 @@ export class Runtime {
              const inner=executor.async?this.newPromise(s):null;
               const id=this.newFrame(s,executor.codeId,executor.closureEnvId,f.id,inner,
                [token(resolve,eventId),token(reject,eventId)],
-               this.functionThis(executor));
+               this.functionThis(executor),executor.id);
              s.frames[id].promiseExecutorTarget=p;
              f.pendingPromiseExecutor={waitingFrameId:id,promiseId:p};
              s.control.a0.activeFrameId=id;
@@ -1587,6 +1617,8 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
             return {...operands(base,key),completion};
           }
           if(base.value[0]==='host')v=['hostfn',base.value[1]==='demo'?(HOST_METHODS[property]??`demo.${property}`):`${base.value[1]}.${property}`];
+          else if(base.value[0]==='intrinsic'&&GENERATOR_INTRINSIC_PROTOTYPES.includes(base.value[1]))
+            v=generatorIntrinsicProperty(base.value[1],property).value;
           else if(['intrinsic','builtinfn','hostfn'].includes(base.value[0])&&property===symbolPropertyKey('well-known:hasInstance'))
             v=base.value[0]==='intrinsic'&&['Math','Reflect','Atomics','Object.prototype','Array.prototype'].includes(base.value[1])?U:['builtinfn','Function.prototype.hasInstance'];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Date' &&
@@ -1650,19 +1682,19 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
            else if(base.value[0]==='ref'){
              const obj=s.heap[base.value[1]];
              if(!obj)throw new ReferenceError('Unknown guest identity');
-             if(obj.kind==='function'){
-               this.functionProperties(s,obj,eventId,{prototype:property==='prototype'});
+             if(obj.kind==='function'||obj.kind==='generator'){
+               if(obj.kind==='function')this.functionProperties(s,obj,eventId,{prototype:property==='prototype'});
                const found=functionProperty(s.heap,obj,property);
-               if(['name','length'].includes(property)&&!Object.hasOwn(obj.properties,property)&&!Object.hasOwn(obj.accessors??{},property)||
+               if(obj.kind==='function'&&['name','length'].includes(property)&&!Object.hasOwn(obj.properties,property)&&!Object.hasOwn(obj.accessors??{},property)||
                   ['constructor','__proto__','toString','valueOf','call','apply','bind'].includes(property)&&!found.slot&&!found.accessor)
                  throw new TypeError('Unmodeled function prototype reflection or call adapter');
-               if(['arguments','caller'].includes(property)&&!found.slot&&!found.accessor)guestFault('TypeError','Restricted strict function property');
+               if(obj.kind==='function'&&['arguments','caller'].includes(property)&&!found.slot&&!found.accessor)guestFault('TypeError','Restricted strict function property');
                const accessor=found.accessor;
                if(accessor){
                  if(accessor.get.value[0]==='undefined')return {...operands(base,key),...result(op==='GET_METHOD'?['method',U,base.value]:U)};
                  const getter=s.heap[accessor.get.value[1]];
                  if(getter?.kind!=='function'||getter.async)throw new TypeError('Unsupported function getter continuation');
-                 const id=this.newFrame(s,getter.codeId,getter.closureEnvId,f.id,null,[],this.functionThis(getter,base.value));
+                 const id=this.newFrame(s,getter.codeId,getter.closureEnvId,f.id,null,[],this.functionThis(getter,base.value),getter.id);
                  f.pendingProperty={kind:'get',receiver:base.value,method:op==='GET_METHOD',waitingFrameId:id};s.control.a0.activeFrameId=id;
                  return {...operands(base,key),causes:[{kind:'invocation',frameId:id}]};
                }
@@ -1673,14 +1705,6 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
              }
              if(obj.declaredError&&!['name','message'].includes(property))
                throw new TypeError('Declared error exposes only name and message');
-             if(obj.kind==='generator'){
-               if(['next','return','throw'].includes(property))v=['builtinfn','Generator.'+property];
-               else if(property===symbolPropertyKey('well-known:iterator'))v=['builtinfn','Generator.identity'];
-               else if(property===symbolPropertyKey('well-known:toStringTag'))v=['str','Generator'];
-               else if(['constructor','__proto__','toString','valueOf'].includes(property))throw new TypeError('Unmodeled generator prototype property');
-               else v=U;
-               return {...operands(base,key),...result(op==='GET_METHOD'?['method',v,base.value]:v)};
-             }
              if(obj.kind==='iterator'){
                if(property==='next')v=['builtinfn','Iterator.next'];
                else if(property===symbolPropertyKey('well-known:iterator'))v=['builtinfn','Iterator.identity'];
@@ -1772,7 +1796,7 @@ if(obj.kind==='set'){
                  throw new TypeError('Proxy get trap must be synchronous guest function');
                const fn=s.heap[trap[1]];
                const id=this.newFrame(s,fn.codeId,fn.closureEnvId,
-                 f.id,null,[token(route.target),key,token(base.value)],this.functionThis(fn,route.handler));
+                 f.id,null,[token(route.target),key,token(base.value)],this.functionThis(fn,route.handler),fn.id);
                f.pendingProperty={kind:'get',receiver:base.value,method:op==='GET_METHOD',waitingFrameId:id};
                s.control.a0.activeFrameId=id;
                return {...operands(base,key),causes:[{kind:'invocation',frameId:id}],
@@ -1786,7 +1810,7 @@ if(obj.kind==='set'){
                  if(!this.callableGuest(s,getter)||s.heap[getter[1]].async)
                    throw new TypeError('Unsupported accessor getter continuation');
                  const target=s.heap[getter[1]];
-                 const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,null,[],this.functionThis(target,base.value));
+                 const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,null,[],this.functionThis(target,base.value),target.id);
                  f.pendingProperty={kind:'get',receiver:base.value,method:op==='GET_METHOD',waitingFrameId:id};
                  s.control.a0.activeFrameId=id;
                  return {...operands(base,key),causes:[{kind:'invocation',frameId:id}]};
@@ -1878,7 +1902,7 @@ if(obj.kind==='set'){
               if(setter[0]==='undefined')guestFault('TypeError','Cannot assign to a super getter without a setter');
               const fn=s.heap[setter[1]];
               if(fn?.kind!=='function'||fn.async)throw new TypeError('Super setter requires a synchronous owned continuation');
-              const id=this.newFrame(s,fn.codeId,fn.closureEnvId,f.id,null,[assigned],this.functionThis(fn,receiver));
+              const id=this.newFrame(s,fn.codeId,fn.closureEnvId,f.id,null,[assigned],this.functionThis(fn,receiver),fn.id);
               f.pendingProperty={kind:'set',value:assigned.value,waitingFrameId:id};s.control.a0.activeFrameId=id;
               return {...operands(...inputs),causes:[{kind:'invocation',frameId:id}]};
             }
@@ -1895,7 +1919,7 @@ if(obj.kind==='set'){
           if(found.accessor&&found.accessor.get.value[0]!=='undefined'){
             const getter=s.heap[found.accessor.get.value[1]];
             if(getter?.kind!=='function'||getter.async)throw new TypeError('Super getter requires a synchronous owned continuation');
-            const id=this.newFrame(s,getter.codeId,getter.closureEnvId,f.id,null,[],this.functionThis(getter,receiver));
+            const id=this.newFrame(s,getter.codeId,getter.closureEnvId,f.id,null,[],this.functionThis(getter,receiver),getter.id);
             f.pendingProperty={kind:'get',receiver,method:op==='SUPER_GET_METHOD',waitingFrameId:id};s.control.a0.activeFrameId=id;
             return {...operands(...inputs),causes:[{kind:'invocation',frameId:id}]};
           }
@@ -1929,7 +1953,7 @@ if(obj.kind==='set'){
           owner.thisValue=value.value;owner.thisInitialized=true;
           const klass=s.heap[owner.constructorId];
           if(klass.instanceInitializer){
-            const initializer=s.heap[klass.instanceInitializer[1]],id=this.newFrame(s,initializer.codeId,initializer.closureEnvId,f.id,null,[],value.value);
+            const initializer=s.heap[klass.instanceInitializer[1]],id=this.newFrame(s,initializer.codeId,initializer.closureEnvId,f.id,null,[],value.value,initializer.id);
             s.frames[id].superInitializedResult=value.value;s.control.a0.activeFrameId=id;
             return {...operands(value),causes:[{kind:'invocation',frameId:id}]};
           }
@@ -1986,7 +2010,7 @@ if(obj.kind==='set'){
             binding.initialized=true;binding.token=value;binding.version++;
           }
           if(klass.staticInitializer){
-            const initializer=s.heap[klass.staticInitializer[1]],id=this.newFrame(s,initializer.codeId,initializer.closureEnvId,f.id,null,[],value.value);
+            const initializer=s.heap[klass.staticInitializer[1]],id=this.newFrame(s,initializer.codeId,initializer.closureEnvId,f.id,null,[],value.value,initializer.id);
             s.frames[id].classStaticResult=value.value;s.control.a0.activeFrameId=id;
             return {...operands(value),causes:[{kind:'invocation',frameId:id}]};
           }
@@ -2073,7 +2097,7 @@ if(obj.kind==='set'){
               if(accessor.set.value[0]==='undefined')guestFault('TypeError','Cannot assign to getter only property');
               const setter=s.heap[accessor.set.value[1]];
               if(setter?.kind!=='function'||setter.async)throw new TypeError('Unsupported function setter continuation');
-              const id=this.newFrame(s,setter.codeId,setter.closureEnvId,f.id,null,[v],this.functionThis(setter,base.value));
+              const id=this.newFrame(s,setter.codeId,setter.closureEnvId,f.id,null,[v],this.functionThis(setter,base.value),setter.id);
               f.pendingProperty={kind:'set',value:v.value,waitingFrameId:id};s.control.a0.activeFrameId=id;
               return {...operands(base,key,v),causes:[{kind:'invocation',frameId:id}]};
             }
@@ -2110,7 +2134,7 @@ if(object.kind==='regexp'){
               throw new TypeError('Proxy set trap must be synchronous guest function');
             const fn=s.heap[route.method[1]];
             const id=this.newFrame(s,fn.codeId,fn.closureEnvId,
-              f.id,null,[token(route.target),key,v,token(base.value)],this.functionThis(fn,route.handler));
+              f.id,null,[token(route.target),key,v,token(base.value)],this.functionThis(fn,route.handler),fn.id);
             f.pendingProperty={kind:'set',value:v.value,waitingFrameId:id};
             s.control.a0.activeFrameId=id;
             return {...operands(base,key,v),causes:[{kind:'invocation',frameId:id}],
@@ -2135,7 +2159,7 @@ if(object.kind==='regexp'){
             if(!this.callableGuest(s,setter)||s.heap[setter[1]].async)
               throw new TypeError('Unsupported accessor setter continuation');
             const target=s.heap[setter[1]];
-            const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,null,[v],this.functionThis(target,base.value));
+            const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,null,[v],this.functionThis(target,base.value),target.id);
             f.pendingProperty={kind:'set',value:v.value,waitingFrameId:id};
             s.control.a0.activeFrameId=id;
             return {...operands(base,key,v),causes:[{kind:'invocation',frameId:id}]};
@@ -2218,8 +2242,8 @@ if(object.kind==='regexp'){
           }
           if(callable[0]==='builtinfn'&&['Iterator.next','Iterator.identity'].includes(callable[1])){
             const iterator=receiver[0]==='ref'?s.heap[receiver[1]]:null;
-            if(iterator?.kind!=='iterator')guestFault('TypeError','Iterator receiver has no owned state');
             if(callable[1]==='Iterator.identity')return {...operands(fn,...args),...result(receiver)};
+            if(iterator?.kind!=='iterator')guestFault('TypeError','Iterator receiver has no owned state');
             let value=U;
             if(!iterator.done){
               const index=iterator.nextIndex;
@@ -2506,7 +2530,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
           if(callable[0]==='ref' && s.heap[callable[1]]?.kind==='function'){
             const target=s.heap[callable[1]],promiseId=target.async?this.newPromise(s):null;
             const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,args,
-              this.functionThis(target,receiver));
+              this.functionThis(target,receiver),target.id);
             s.control.a0.activeFrameId=id;
             return {...operands(fn,...args),result:['ref',callable[1]],causes:[{kind:'invocation',frameId:id}]};
           }
@@ -2771,7 +2795,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               });
               return {...operands(fn,...args),...result(['bool',!!frozen])};
             }
-            if(!object||!['object','array'].includes(object.kind)&&!(object.kind==='function'&&object.properties?.name&&object.properties?.length&&!this.programs[object.codeId].generator))
+            if(!object||!['object','array','generator'].includes(object.kind)&&!(object.kind==='function'&&object.properties?.name&&object.properties?.length))
               throw new TypeError('Own descriptor reflection requires owned ordinary storage');
             const key=valueKey(args[1]?.value??U),accessor=object.accessors?.[key],slot=object.properties[key];
             if(!accessor&&!slot)return {...operands(fn,...args),...result(U)};
@@ -2785,9 +2809,9 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
           if(callable[0]==='builtinfn' && ['Object.hasOwn','Object.keys','Object.values','Object.entries','Object.getOwnPropertySymbols','Object.getOwnPropertyNames','Reflect.ownKeys'].includes(callable[1])){
             const base=args[0]?.value??U,obj=base[0]==='ref'?s.heap[base[1]]:null;
             if(obj?.kind==='function'&&!['Object.keys','Object.values','Object.entries'].includes(callable[1])&&
-               !(obj.properties?.name&&obj.properties?.length&&!this.programs[obj.codeId].generator))
+               !(obj.properties?.name&&obj.properties?.length))
               throw new TypeError('Function descriptor reflection requires the complete Function profile');
-            if(!obj||!['object','array','function'].includes(obj.kind))
+            if(!obj||!['object','array','function','generator'].includes(obj.kind))
               throw new TypeError('Object builtin requires an owned ordinary reference');
             if(callable[1]==='Object.hasOwn'){
               const property=valueKey(args[1]?.value??U);
@@ -3039,8 +3063,8 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
            if(callable[0]==='builtinfn' && ['Object.create','Object.setPrototypeOf','Object.getPrototypeOf','Object.defineProperty'].includes(callable[1])){
             const primitiveProto=v=>{
               if(v?.[0]==='null')return null;
-              if(v?.[0]==='intrinsic' && ['Object.prototype','Array.prototype','Function.prototype'].includes(v[1]))return v[1];
-              if(v?.[0]==='ref' && ['object','array','function'].includes(s.heap[v[1]]?.kind))return v[1];
+              if(v?.[0]==='intrinsic' && ['Object.prototype','Array.prototype','Function.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(v[1]))return v[1];
+              if(v?.[0]==='ref' && ['object','array','function','generator'].includes(s.heap[v[1]]?.kind))return v[1];
               guestFault('TypeError','Prototype must be null or an owned ordinary object');
             };
             const v=args[0]?.value??U, obj=v[0]==='ref'?s.heap[v[1]]:null;
@@ -3116,22 +3140,26 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                 shapeVersion:0,version:0};
               return {...operands(fn,...args),...result(['ref',id])};
             }
-            if(!obj||!['object','array','function'].includes(obj.kind))
+            if(callable[1]==='Object.getPrototypeOf'&&v[0]==='intrinsic'&&GENERATOR_INTRINSIC_PROTOTYPES.includes(v[1]))
+              return {...operands(fn,...args),...result(['intrinsic',generatorIntrinsicParent(v[1])])};
+            if(callable[1]==='Object.getPrototypeOf'&&v[0]==='intrinsic'&&['Object.prototype','Array.prototype','Function.prototype'].includes(v[1]))
+              return {...operands(fn,...args),...result(v[1]==='Object.prototype'?['null']:['intrinsic','Object.prototype'])};
+            if(!obj||!['object','array','function','generator'].includes(obj.kind))
               guestFault('TypeError','Prototype operation requires an owned ordinary object');
             if(callable[1]==='Object.getPrototypeOf'){
               const proto=objectPrototype(obj);
               const out=proto===null?['null']:
-                ['Object.prototype','Array.prototype','Function.prototype'].includes(proto)?['intrinsic',proto]:['ref',proto];
+                ['Object.prototype','Array.prototype','Function.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(proto)?['intrinsic',proto]:['ref',proto];
               return {...operands(fn,...args),...result(out)};
             }
             const proto=primitiveProto(args[1]?.value??U);
             const visited=new Set([obj.id]);
             let current=proto;
-            while(current!==null && !['Object.prototype','Array.prototype','Function.prototype'].includes(current)){
+            while(current!==null && !['Object.prototype','Array.prototype','Function.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(current)){
               if(visited.has(current))guestFault('TypeError','Cyclic prototype value');
               visited.add(current);
               const next=s.heap[current];
-              if(!next||!['object','array','function'].includes(next.kind))
+              if(!next||!['object','array','function','generator'].includes(next.kind))
                 throw new TypeError('Broken prototype identity');
               current=objectPrototype(next);
             }
@@ -3428,7 +3456,7 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
          const reject=['builtinfn','Promise.thenable.reject:'+p.id+':'+job.serial];
          const inner=fn.async?this.newPromise(s):null;
          const id=this.newFrame(s,fn.codeId,fn.closureEnvId,null,inner,
-           [token(resolve,eventId),token(reject,eventId)],this.functionThis(fn,['ref',job.thenableId]));
+           [token(resolve,eventId),token(reject,eventId)],this.functionThis(fn,['ref',job.thenableId]),fn.id);
          s.frames[id].thenableJob={promiseId:p.id,serial:job.serial};
          s.control.a0.activeFrameId=id;
          return {causes:[{kind:'promise',promiseId:p.id},{kind:'invocation',frameId:id}],
@@ -3442,7 +3470,7 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
              effect.args[i]?.[0]==='ref'&&effect.args[i][1]===job.functionId))
           throw new Error('External callback has no owned registered function');
         const id=this.newFrame(s,fn.codeId,fn.closureEnvId,null,null,
-          job.args.map(v=>token(v,eventId)),this.functionThis(fn));
+          job.args.map(v=>token(v,eventId)),this.functionThis(fn),fn.id);
         s.frames[id].reactionJob=true;
         s.control.a0.activeFrameId=id;
         return {causes:[{kind:'effect',effectId:job.effectId},
@@ -3454,7 +3482,7 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
           throw new Error('Queued microtask lacks owned function identity');
         const inner=callback.async?this.newPromise(s):null;
         const id=this.newFrame(s,callback.codeId,callback.closureEnvId,null,inner,[],
-          this.functionThis(callback));
+          this.functionThis(callback),callback.id);
         s.frames[id].reactionJob=true;
         s.control.a0.activeFrameId=id;
         return {causes:[{kind:'invocation',frameId:id}],result:U};
@@ -3531,7 +3559,7 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
         const fn=s.heap[callback[1]];
         const args=isFinally?[]:[original];
         const inner=fn.async?this.newPromise(s):null;
-        const id=this.newFrame(s,fn.codeId,fn.closureEnvId,null,inner,args,this.functionThis(fn));
+        const id=this.newFrame(s,fn.codeId,fn.closureEnvId,null,inner,args,this.functionThis(fn),fn.id);
         const child=s.frames[id];
         child.reactionJob=true;
         if(inner)this.resolvePromise(s,targetPromiseId,['promise',inner],eventId);
@@ -3574,7 +3602,7 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
       if(fn?.kind!=='function')throw new Error('Virtual timer callback identity missing');
       const inner=fn.async?this.newPromise(s):null;
       const id=this.newFrame(s,fn.codeId,fn.closureEnvId,null,inner,[],
-        this.functionThis(fn));
+        this.functionThis(fn),fn.id);
       s.frames[id].reactionJob=true;
       clock.activeFrameId=id;
       return {causes:[{kind:'invocation',frameId:id}],result:['num',clock.now]};
