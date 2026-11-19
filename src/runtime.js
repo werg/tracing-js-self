@@ -43,7 +43,7 @@ const opNames = {
   DEFAULT_GUARD:'binding.default.guard', PARAM_INIT:'binding.initialize', ENTER_BODY_ENV:'environment.enter', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
   CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', GENERATOR_START:'call.return', YIELD:'continuation.yield', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
-  PROPERTY_KEY:'property.read', CLASS_CONSTRUCTOR_GUARD:'call.enter', CLASS_CREATE:'object.construct', CLASS_INITIALIZER:'property.write', CLASS_FINISH:'call.enter', PRIVATE_GET:'property.read', PRIVATE_GET_METHOD:'property.read', PRIVATE_HAS:'primitive.binary', PRIVATE_DEFINE:'property.write', PRIVATE_SET:'property.write', PRIVATE_UPDATE:'property.update',
+  GET_TEMPLATE_OBJECT:'array.allocate', PROPERTY_KEY:'property.read', CLASS_CONSTRUCTOR_GUARD:'call.enter', CLASS_CREATE:'object.construct', CLASS_INITIALIZER:'property.write', CLASS_FINISH:'call.enter', PRIVATE_GET:'property.read', PRIVATE_GET_METHOD:'property.read', PRIVATE_HAS:'primitive.binary', PRIVATE_DEFINE:'property.write', PRIVATE_SET:'property.write', PRIVATE_UPDATE:'property.update',
   GET_PROP:'property.read', GET_METHOD:'property.read', SPREAD:'property.read', PUT_PROP:'property.write', DEFINE_LITERAL_PROP:'property.write', COPY_KEYS:'array.allocate', HAS_ENUMERABLE_OWN:'property.read', REQUIRE_COERCIBLE:'property.read', REQUIRE_OBJECT:'property.read', ITERATOR_ARRAY_GUARD:'property.read', PENDING_THROW:'completion.pending.read', APPEND_ARRAY:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
   LEAVE_SCOPE:'environment.leave', CLONE_LOOP_ENV:'environment.iteration', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
   TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
@@ -179,6 +179,8 @@ function enumerableOwn(obj,key){
 }
 function putOwn(obj,key,value,eventId,{literal=false}={}) {
   if(!literal&&obj.dataAttributes?.[key]?.writable===false)guestFault('TypeError','Cannot assign to read only property');
+  if(obj.extensible===false&&!Object.hasOwn(obj.properties,key)&&!Object.hasOwn(obj.accessors??{},key))
+    guestFault('TypeError','Cannot add property to non-extensible object');
   if(obj.declaredError)
     throw new TypeError('Declared error mutation is outside the bounded error profile');
   if (key === '__proto__'&&!literal) throw new TypeError('Prototype mutation is not implemented by the bounded profile');
@@ -913,6 +915,25 @@ export class Runtime {
       const operands=(...t)=>({operands:t.map(x=>x.value),origins:t.map(x=>x.origin)});
       try { switch(op){
         case 'CONST':return result(arg.value);
+        case 'GET_TEMPLATE_OBJECT':{
+          const known=s.control.a0.templateObjects?.[inst.siteId];
+          if(known)return result(['ref',known]);
+          const make=(values,raw=false)=>{
+            const id=this.next(s,'obj'),object=s.heap[id]={id,kind:'array',properties:{length:token(['num',values.length],eventId)},
+              propertyVersions:{length:1},dataAttributes:{length:{enumerable:false,writable:false,configurable:false}},shapeVersion:1,version:0};
+            values.forEach((value,index)=>{
+              putOwn(object,String(index),value,eventId);
+              object.dataAttributes[index]={enumerable:true,writable:false,configurable:false};
+            });
+            if(raw)object.extensible=false;
+            return object;
+          };
+          const raw=make(arg.raw.map(text=>['str',text]),true),cooked=make(arg.cooked);
+          putOwn(cooked,'raw',['ref',raw.id],eventId);cooked.dataAttributes.raw={enumerable:false,writable:false,configurable:false};
+          cooked.extensible=false;cooked.templateSite=inst.siteId;raw.templateRawOf=inst.siteId;
+          (s.control.a0.templateObjects??={})[inst.siteId]=cooked.id;
+          return result(['ref',cooked.id]);
+        }
         case 'PROPERTY_KEY':{const value=pop();return {...operands(value),...result(propertyKeyValue(valueKey(value.value)))};}
         case 'CLASS_CONSTRUCTOR_GUARD':
           if(!f.newTarget)guestFault('TypeError','Class constructor cannot be invoked without new');
@@ -1386,7 +1407,7 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
             else v=U;
           }
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' &&
-             ['create','setPrototypeOf','getPrototypeOf','defineProperty','hasOwn','keys','values','entries','assign','is','getOwnPropertySymbols','getOwnPropertyNames'].includes(property))
+             ['create','setPrototypeOf','getPrototypeOf','defineProperty','getOwnPropertyDescriptor','isFrozen','hasOwn','keys','values','entries','assign','is','getOwnPropertySymbols','getOwnPropertyNames'].includes(property))
             v=['builtinfn',`Object.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' && property==='prototype')
             v=['intrinsic','Object.prototype'];
@@ -1816,6 +1837,11 @@ if(object.kind==='regexp'){
           const fn=pop();let callable=fn.value;
           const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
+          if(callable[0]==='builtinfn'&&receiver[0]==='ref'&&s.heap[receiver[1]]?.extensible===false&&
+             ['push','pop','shift','unshift','splice'].some(method=>callable[1]==='Array.prototype.'+method))
+            guestFault('TypeError','Cannot mutate frozen template array');
+          if(callable[0]==='builtinfn'&&callable[1]==='Array.prototype.sort'&&receiver[0]==='ref'&&s.heap[receiver[1]]?.extensible===false)
+            throw new TypeError('Sorting a frozen array requires ordered readonly write completions');
           if(callable[0]==='builtinfn'&&callable[1].startsWith('Generator.')){
             const generator=receiver[0]==='ref'?s.heap[receiver[1]]:null;
             if(generator?.kind!=='generator')guestFault('TypeError','Generator receiver has no owned continuation');
@@ -2387,6 +2413,27 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             for(const [key,value] of copies)putOwn(target,key,value,eventId);
             return {...operands(fn,...args),...result(ref)};
           }
+          if(callable[0]==='builtinfn'&&['Object.isFrozen','Object.getOwnPropertyDescriptor'].includes(callable[1])){
+            const base=args[0]?.value??U,object=base[0]==='ref'?s.heap[base[1]]:null;
+            if(callable[1]==='Object.isFrozen'){
+              const primitive=!['ref','promise','intrinsic','builtinfn','hostfn'].includes(base[0]);
+              const frozen=primitive||object?.extensible===false&&ownPropertyKeys(object).every(key=>{
+                const accessor=object.accessors?.[key],data=object.dataAttributes?.[key];
+                return accessor?accessor.configurable===false:data?.configurable===false&&data.writable===false;
+              });
+              return {...operands(fn,...args),...result(['bool',!!frozen])};
+            }
+            if(!object||!['object','array'].includes(object.kind))
+              throw new TypeError('Own descriptor reflection requires owned ordinary storage');
+            const key=valueKey(args[1]?.value??U),accessor=object.accessors?.[key],slot=object.properties[key];
+            if(!accessor&&!slot)return {...operands(fn,...args),...result(U)};
+            const attributes=object.dataAttributes?.[key],arrayLength=object.kind==='array'&&key==='length';
+            const fields=accessor?{get:accessor.get.value,set:accessor.set.value,enumerable:['bool',accessor.enumerable],configurable:['bool',accessor.configurable]}:
+              {value:slot.value,writable:['bool',attributes?.writable??true],enumerable:['bool',attributes?.enumerable??!arrayLength],configurable:['bool',attributes?.configurable??!arrayLength]};
+            const id=this.next(s,'obj'),descriptor=s.heap[id]={id,kind:'object',properties:{},propertyVersions:{},shapeVersion:0,version:0};
+            for(const [name,value] of Object.entries(fields))putOwn(descriptor,name,value,eventId);
+            return {...operands(fn,...args),...result(['ref',id])};
+          }
           if(callable[0]==='builtinfn' && ['Object.hasOwn','Object.keys','Object.values','Object.entries','Object.getOwnPropertySymbols','Object.getOwnPropertyNames','Reflect.ownKeys'].includes(callable[1])){
             const base=args[0]?.value??U,obj=base[0]==='ref'?s.heap[base[1]]:null;
             if(obj?.kind==='function'&&!['Object.keys','Object.values','Object.entries'].includes(callable[1]))
@@ -2530,8 +2577,10 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                const reversed=slots.slice().reverse();
                if(method==='toReversed')out=makeArray(reversed);
                else{
-                 for(let i=0;i<length;i++)
+                 for(let i=0;i<Math.floor(length/2);i++){
                    putOwn(obj,String(i),reversed[i],eventId);
+                   putOwn(obj,String(length-1-i),reversed[length-1-i],eventId);
+                 }
                  out=receiver;
                }
              }else if(method==='fill'){
@@ -2663,6 +2712,10 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               if(![null,'Object.prototype','Array.prototype'].includes(objectPrototype(descriptor)))
                 throw new TypeError('Inherited descriptor fields are outside the bounded profile');
               const previous=obj.accessors?.[name];
+              if(obj.extensible===false&&!Object.hasOwn(obj.properties,name)&&!previous)
+                guestFault('TypeError','Cannot define property on non-extensible object');
+              if(obj.dataAttributes?.[name]?.configurable===false&&(Object.hasOwn(d,'get')||Object.hasOwn(d,'set')))
+                guestFault('TypeError','Cannot redefine frozen data property');
               if(!Object.hasOwn(d,'get')&&!Object.hasOwn(d,'set')&&!previous)
                 throw new TypeError('Only accessor descriptors are modeled');
               if(Object.hasOwn(d,'value')||Object.hasOwn(d,'writable'))
@@ -2733,7 +2786,10 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                 throw new TypeError('Broken prototype identity');
               current=objectPrototype(next);
             }
-            if(objectPrototype(obj)!==proto){obj.prototype=proto;obj.shapeVersion++;}
+            if(objectPrototype(obj)!==proto){
+              if(obj.extensible===false)guestFault('TypeError','Cannot set prototype of non-extensible object');
+              obj.prototype=proto;obj.shapeVersion++;
+            }
             return {...operands(fn,...args),...result(v)};
           }
           if(callable[0]==='builtinfn' && ['Object.valueOf','Object.toString','Array.toString'].includes(callable[1])){

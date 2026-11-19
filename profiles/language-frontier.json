@@ -213,6 +213,17 @@
       "native": "unsupported",
       "reason": "Class descriptors/prototypes, field initializer continuations and private identities need an explicit public construction/private-state representation",
       "tests": "test/training-classes.test.js"
+    },
+    {
+      "id": "tagged-template-sites",
+      "domain": "member/private/ordinary tags, source-site identity across calls and closures, raw/cooked strings including invalid cooked escapes, uncoerced substitutions, frozen descriptor-aware arrays and JSON-resumable realm template cache; frozen sort and general data descriptor definition remain explicit refusals",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Frozen descriptor state and template-site identity require an explicit public representation; scalar outcomes cannot justify dropping that state",
+      "tests": "test/training-tagged-templates.test.js"
     }
   ]
 }

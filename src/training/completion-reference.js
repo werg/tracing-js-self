@@ -32,7 +32,7 @@ export function completionObservationPlan(source){
         }
       }
       if(node.type==='AssignmentExpression'&&!['&&=','||=','??='].includes(node.operator))add(node,'assign',node,2);
-      if(node.type==='CallExpression'&&!node.optional)add(node,'call',node,3);
+      if(['CallExpression','TaggedTemplateExpression'].includes(node.type)&&!node.optional)add(node,'call',node,3);
       if(node.type==='ArrowFunctionExpression'&&node.body.type!=='BlockStatement')add(node.body,'return',node.body,-1);
       if(node.type==='ExpressionStatement'&&!node.directive)add(node,'statement',node.expression,-1);
       if(node.type==='ReturnStatement'||node.type==='ThrowStatement'){

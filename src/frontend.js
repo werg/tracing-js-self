@@ -235,6 +235,13 @@ export function compile(ast) {
         case 'PrivateMember':expr(n.object);emit('PRIVATE_GET',{name:n.name},n);break;
         case 'PrivateHas':expr(n.object);emit('PRIVATE_HAS',{name:n.name},n);break;
         case 'Yield':expr(n.argument);emit('YIELD',null,n);break;
+        case 'TaggedTemplate':
+          if(n.tag.type==='PrivateMember'){expr(n.tag.object);emit('PRIVATE_GET_METHOD',{name:n.tag.name},n.tag);}
+          else if(n.tag.type==='Member'){expr(n.tag.object);expr(n.tag.property);emit('GET_METHOD',null,n.tag);}
+          else expr(n.tag);
+          emit('GET_TEMPLATE_OBJECT',{cooked:n.cooked,raw:n.raw},n);
+          for(const expression of n.expressions)expr(expression);
+          emit('CALL',n.expressions.length+1,n);break;
         case 'Template':
           for(const expression of n.expressions)expr(expression);
           emit('TEMPLATE',{quasis:n.quasis,count:n.expressions.length},n);

@@ -154,6 +154,10 @@ export function parseTraining(source) {
           reject(n,'unhandled template literal escape');
         return {...loc,type:'Template',quasis:n.quasis.map(q=>q.value.cooked),
           expressions:n.expressions.map(expr)};
+      case 'TaggedTemplateExpression':
+        return {...loc,type:'TaggedTemplate',tag:expr(n.tag),
+          cooked:n.quasi.quasis.map(q=>q.value.cooked===null?['undefined']:['str',q.value.cooked]),
+          raw:n.quasi.quasis.map(q=>q.value.raw),expressions:n.quasi.expressions.map(expr)};
       case 'YieldExpression':
         if(n.delegate)reject(n,'yield delegation requires the delegated generator profile');
         return {...loc,type:'Yield',argument:n.argument?expr(n.argument):{...loc,type:'Literal',value:['undefined']}};
@@ -373,6 +377,7 @@ export function parseTraining(source) {
         }
         case 'PrivateMember':case 'PrivateHas':value(n.object,e);break;
         case 'Template':n.expressions.forEach(x=>value(x,e));break;
+        case 'TaggedTemplate':value(n.tag,e);n.expressions.forEach(x=>value(x,e));break;
         case 'Yield':value(n.argument,e);break;
         case 'FunctionExpr':scope(n.body.body,n.name?{names:new Set([n.name]),parent:e}:e,
           n.parameterNames??n.params,n.async,true,n.defaults,n.parameterPatterns);break;

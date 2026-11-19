@@ -1,5 +1,6 @@
 import {validateGeneratorState} from './generator-validation.js';
 import {validatePrivateEvent} from './private-validation.js';
+import {validateTemplateEvent} from './template-validation.js';
 // Read-only validation. Does not import the evaluator or call its mutation routines.
 import { readFileSync } from 'node:fs';
 import {validateSymbolReferences,validateSymbolAllocation} from './symbol-validation.js';
@@ -130,6 +131,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
       fail('Completion metadata without an owned completion operation',e.eventId);
     validateSpecEvent(state,e,fail);
     validatePrivateEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
+    validateTemplateEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     for(const p of e.stateChanges) {
       validateSymbolAllocation(p,e,message=>fail(message,e.eventId));
       if(patched.has(`${p.table}:${p.id}`))fail('Double application of mutation',e.eventId);
