@@ -27,6 +27,7 @@ try{
       operator==='&&'?!value:operator==='||'?Boolean(value):value!==null&&value!==undefined]});return value;},
     [COMPLETION_HOOK]:(...values)=>{try{return completion.capture(...values);}catch(error){failures.push(error.message);throw error;}}
   },{codeGeneration:{strings:false,wasm:false}});
+  completion.setIntrinsicPrototypes(vm.runInContext('[Object.prototype,Array.prototype,Function.prototype]',context));
   phase='instrumentation';
   const source=mode==='operations'?instrumentOperationSource(input.source):
     mode==='branches'?instrumentBranchSource(input.source):
@@ -39,6 +40,6 @@ try{
   phase='observe';
   const outcome={kind:context.__kind,graph:describeCompletionGraph(args,context.__result,context.__kind)};
   process.stdout.write(JSON.stringify({schema:'protocol-source-reference/1',mode,outcome,
-    operations,decisions,completions:completion.observations})+'\n');
+    operations,decisions,completions:completion.observations,metadata:completion.metadata})+'\n');
 }catch(error){process.stdout.write(JSON.stringify({schema:'protocol-source-reference/1',error:String(error.message),
   category:error.code==='ERR_SCRIPT_EXECUTION_TIMEOUT'?'resource_limited':'unsupported.protocol-reference',mode,phase})+'\n');process.exitCode=1;}

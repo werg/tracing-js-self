@@ -232,3 +232,34 @@ state exists, generic calls use protocol records; root-level detailed completion
 is still valid after all scoped calls have ended, which permits an ordinary
 compact return. Detailed allocations cannot reuse a Symbol identity. An explicit
 null prototype remains null across lookup, description and JSON checkpointing.
+
+## Independent metadata gate
+
+Matching a scalar result is insufficient evidence for object descriptors or
+prototypes. The completion-instrumented reference now also produces private
+`source-protocol-metadata/1` receipts. At each observed initialization, mutation,
+call, statement, return, throw, or cleanup boundary, the observer snapshots every
+ordinary object or Symbol reached by the observed values so far. It reads own
+property descriptors and prototype identities, without invoking accessor bodies.
+Data values, accessor identities, flags, integer/string/Symbol key order,
+extensibility, and Symbol descriptions/registry membership are compared with
+metadata extracted at the same owned source boundaries. Intrinsic Object and
+Array prototypes remain distinct. Proxies are rejected before reflection can
+invoke any trap.
+
+These snapshots are **private source evidence**, not target records, selected
+state replacement, or model-visible futures. A metadata receipt uses its own
+observation identities rather than trusting the teacher's object IDs. The full
+source gate requires metadata agreement in addition to original outcomes,
+operations, branches, and completion identity. Receipt growth is bounded to
+8,192 snapshots and 4 MiB in total, with at most 1 MiB per snapshot; exceeding a
+bound refuses the source case.
+
+The regression suite injects consistent enumerable/prototype bugs into both the
+teacher and its owned replay. Those faulty executions still return the same
+scalar and produce self-consistent public property claims, but independent V8
+metadata rejects them. Separate readonly, intrinsic-prototype and Symbol
+metadata mutations preserve every scalar/reference completion receipt and also
+fail the metadata comparison. Function own-state, private brands, generators,
+and Proxies remain outside this metadata profile until their distinct observer
+contracts are implemented.
