@@ -32,6 +32,20 @@ const protocolFixtures=JSON.parse(await readFile(new URL('../test/fixtures/seman
 const protocolSources=JSON.parse(await readFile(new URL('../test/fixtures/semantic-protocol-region-v8.json',import.meta.url),'utf8'));
 if(protocolSources.schema!=='semantic-protocol-region-fixtures/1'||!Array.isArray(protocolSources.cases)||!protocolSources.cases.length)
   throw new Error('Missing source-qualified protocol interoperability fixtures');
+// A manifest digest proves only that bytes were pinned. Before pinning those
+// bytes, independently rebuild every source-bound artifact and every public
+// context; a stale or forged artifact must not become the release contract.
+const {recheckProtocolRegionEvidence}=await import('../src/semantic/protocol-source-v8.js');
+const ids=new Set(examples.map(row=>row.id).concat('protocol-machine'));
+for(const row of protocolSources.cases){
+  const id='protocol-region:'+row?.id;
+  if(typeof row?.id!=='string'||!row.id||ids.has(id))
+    throw new Error('Duplicate or invalid source-qualified protocol fixture id: '+id);
+  ids.add(id);
+  const verified=await recheckProtocolRegionEvidence(row.artifact);
+  if(!verified.valid||!verified.sourceValidated||!verified.projectionValidated||!verified.replayValidated)
+    throw new Error('Source-qualified protocol fixture failed independent recheck: '+id);
+}
 const manifest=[...examples.map(row=>({id:row.id,publicDigest:hashAlgorithmData(row.public),contextDigest:hashAlgorithmData(row.contexts)})),
   {id:'protocol-machine',schema:protocolFixtures.schema,fixtureDigest:hashAlgorithmData(protocolFixtures)},
   ...protocolSources.cases.map(row=>({id:'protocol-region:'+row.id,
