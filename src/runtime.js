@@ -1195,7 +1195,7 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
             properties:{},propertyVersions:{},shapeVersion:0,version:0};
           return {...operands(target,handler),...result(['ref',id])};
         }
-        case 'NEW_OBJECT':case 'NEW_ARRAY':{const id=this.next(s,'obj');s.heap[id]={id,kind:op==='NEW_ARRAY'?'array':'object',properties:{},propertyVersions:{},shapeVersion:0,version:0};if(op==='NEW_ARRAY'){s.heap[id].properties.length=token(['num',0],eventId);s.heap[id].propertyVersions.length=0;}return result(['ref',id]);}
+        case 'NEW_OBJECT':case 'NEW_ARRAY':{const id=this.next(s,'obj');s.heap[id]={id,kind:op==='NEW_ARRAY'?'array':'object',properties:{},propertyVersions:{},shapeVersion:0,version:0};if(op==='NEW_ARRAY'){s.heap[id].properties.length=token(['num',arg?.length??0],eventId);s.heap[id].propertyVersions.length=0;}return result(['ref',id]);}
         case 'SPREAD':{
           const source=pop(),snapshot=spreadSnapshot(s.heap,source);
           return {...operands(source,...snapshot.values),
@@ -1211,7 +1211,8 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
           const values=arg.spread?item.value[1]:[item.value],start=decode(obj.properties.length.value);
           if(!Number.isSafeInteger(start)||start<0||start+values.length>10000)
             throw new RangeError('Owned array literal length budget exceeded');
-          for(let i=0;i<values.length;i++)putOwn(obj,String(start+i),values[i],eventId);
+          if(arg.hole)putOwn(obj,'length',['num',start+1],eventId);
+          else for(let i=0;i<values.length;i++)putOwn(obj,String(start+i),values[i],eventId);
           return {...operands(base,item),...result(base.value)};
         }
         case 'GET_PROP':case 'GET_METHOD':{

@@ -106,7 +106,6 @@ test('holes, accessors, custom prototypes and other iterators remain explicit re
     assert.match(result.reason,/spread|Spread|accessor descriptors/);
   }
   for(const source of [
-    '"use strict";function run(){return [,...[]];}',
     '"use strict";function run(){return [...[],...[],...[],...[],...[]];}'
   ])assert.equal(verifyOwnedSourceCase({source,entry:'run'}).status,'unsupported');
 });

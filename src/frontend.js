@@ -311,18 +311,21 @@ export function compile(ast) {
             n.args.length,n);break;
         case 'Proxy':expr(n.target);expr(n.handler);emit('NEW_PROXY',null,n);break;
         case 'Array':
-          emit('NEW_ARRAY',null,n);
-          if(n.elements.some(element=>element.type==='Spread')){
+          emit('NEW_ARRAY',n.elements.includes(null)&&!n.elements.some(element=>element?.type==='Spread')?
+            {length:n.elements.length}:null,n);
+          if(n.elements.some(element=>element?.type==='Spread')){
             // Commit each spread before evaluating the following element.
             // In particular, a later call may mutate the spread's source.
             for(const element of n.elements){
               emit('DUP',null,n);
-              expr(element.type==='Spread'?element.argument:element);
-              if(element.type==='Spread')emit('SPREAD',null,element);
-              emit('APPEND_ARRAY',{spread:element.type==='Spread'},n);
+              if(element===null)emit('CONST',{value:['undefined']},n);
+              else expr(element.type==='Spread'?element.argument:element);
+              if(element?.type==='Spread')emit('SPREAD',null,element);
+              emit('APPEND_ARRAY',{spread:element?.type==='Spread',...(element===null?{hole:true}:{})},n);
               emit('POP',null,n);
             }
           }else for(let i=0;i<n.elements.length;i++){
+            if(n.elements[i]===null)continue;
             emit('DUP',null,n);emit('CONST',{value:['str',String(i)]},n);
             expr(n.elements[i]);emit('PUT_PROP',null,n);emit('POP',null,n);
           }

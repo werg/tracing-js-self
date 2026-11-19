@@ -13,6 +13,9 @@ const logical=new Set(['&&','||','??']);
 const assignments=new Set(['=','&&=','||=','??=','+=','-=','*=','/=','%=','**=',
   '&=','|=','^=','<<=','>>=','>>>=']);
 const unary=new Set(['!','-','+','typeof','void','~']);
+const ownedConstructors=new Set(['Set','Error','TypeError','Promise','SharedArrayBuffer','DataView',
+  'Int8Array','Uint8Array','Int16Array','Uint16Array','Int32Array','Uint32Array',
+  'BigInt64Array','BigUint64Array','Float32Array','Float64Array']);
 const reject=(node,why) => {throw new SyntaxError(
   'Unsupported training-js/1 '+why+' at '+(node.start ?? '?')+':'+(node.end ?? '?'));};
 
@@ -161,10 +164,13 @@ export function parseTraining(source) {
         return {...loc,type:'Member',object:expr(n.object),property:n.computed?expr(n.property):
           {...span(n.property),type:'Literal',value:encode(n.property.name)}};
       case 'NewExpression':
-        if(n.callee.type!=='Identifier' ||
-           !['Set','Error','TypeError','SharedArrayBuffer','Int32Array'].includes(n.callee.name) ||
-           n.arguments.some(a=>a.type==='SpreadElement') || n.arguments.length>1)
-          reject(n,'NewExpression');
+        if(n.callee.type!=='Identifier'||n.arguments.some(a=>a.type==='SpreadElement')||
+           n.arguments.length>3)reject(n,'NewExpression');
+        if(n.callee.name==='Proxy'){
+          if(n.arguments.length!==2)reject(n,'Proxy requires target and handler');
+          return {...loc,type:'Proxy',target:expr(n.arguments[0]),handler:expr(n.arguments[1])};
+        }
+        if(!ownedConstructors.has(n.callee.name))reject(n,'NewExpression');
         return {...loc,type:'Construct',callee:n.callee.name,args:n.arguments.map(expr)};
       case 'CallExpression':
         if(n.optional || n.arguments.filter(a=>a.type==='SpreadElement').length>4)
@@ -175,10 +181,9 @@ export function parseTraining(source) {
           args:n.arguments.map(a=>a.type==='SpreadElement'?
             {...span(a),type:'Spread',argument:expr(a.argument)}:expr(a))};
       case 'ArrayExpression':
-        if(n.elements.some(e=>!e))reject(n,'sparse array literal');
-        if(n.elements.filter(e=>e.type==='SpreadElement').length>4)
+        if(n.elements.filter(e=>e?.type==='SpreadElement').length>4)
           reject(n,'array literal spread budget');
-        return {...loc,type:'Array',elements:n.elements.map(e=>e.type==='SpreadElement'?
+        return {...loc,type:'Array',elements:n.elements.map(e=>e===null?null:e.type==='SpreadElement'?
           {...span(e),type:'Spread',argument:expr(e.argument)}:expr(e))};
       case 'ObjectExpression':
         return {...loc,type:'Object',properties:n.properties.map(p=>{
@@ -401,7 +406,8 @@ export function parseTraining(source) {
         case 'Construct':if(!has(n.callee,e))reject(n,'unbound constructor');
           n.args.forEach(x=>value(x,e));break;
         case 'DeferredRegExp':case 'OwnedPinnedRegExp':break;
-        case 'Array':n.elements.forEach(x=>value(x.type==='Spread'?x.argument:x,e));break;
+        case 'Array':n.elements.forEach(x=>{if(x)value(x.type==='Spread'?x.argument:x,e);});break;
+        case 'Proxy':value(n.target,e);value(n.handler,e);break;
         case 'Object':n.properties.forEach(p=>value(p.value,e));break;
         case 'Assign':value(n.left,e);value(n.right,e);break;
         case 'Literal':case 'This':break;
@@ -504,6 +510,6 @@ export function parseTraining(source) {
     });
     statements.forEach(n=>statement(n,env));
   }
-  scope(body,{names:new Set(['undefined','Object','Array','Number','BigInt','String','Math','Promise','Set','Error','TypeError','Date','console','host','NaN','Infinity','parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval','SharedArrayBuffer','Int32Array','Atomics']),parent:null},[],false,true);
+  scope(body,{names:new Set(['undefined','Object','Array','Number','BigInt','String','Math','Promise','Set','Error','TypeError','Date','console','host','NaN','Infinity','parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval','SharedArrayBuffer','DataView',...ownedConstructors,'Atomics']),parent:null},[],false,true);
   return {type:'Program',body,start:0,end:source.length,profile:TRAINING_PROFILE};
 }
