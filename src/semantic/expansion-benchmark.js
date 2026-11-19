@@ -12,6 +12,7 @@ import {compareObservableGraphs} from './observables.js';
 import {hashAlgorithmData,defineAlgorithmProgram} from './program.js';
 import {buildSemanticFamilyRegistry} from './family-registry.js';
 import {tryLowerJavaScriptV8} from './lower-v8.js';
+import {SEMANTIC_GALLERY_FIXTURES} from '../training/semantic-trace-gallery.js';
 
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const status=row=>['return','throw'].includes(row?.kind);
@@ -57,6 +58,17 @@ export function expansionSourceCases({allInputs=true,includeInteractions=true,in
   if(includeInteractions)cases.push(...expansionInteractionCases().filter(row=>row.source));
   if(includeRealSource)cases.push(...expansionRealSourceSlice().cases);
   return cases;
+}
+
+export function expansionCoveragePopulation({population='all',allInputs=true}={}){
+  if(!['all','families','interactions','real-source','gallery'].includes(population))
+    throw new TypeError('Unknown expansion population');
+  if(population==='gallery')return {scripts:SEMANTIC_GALLERY_FIXTURES.map(row=>structuredClone(row)),modules:[]};
+  if(population==='real-source')return {scripts:expansionRealSourceSlice().cases,modules:[]};
+  const interactions=population==='all'||population==='interactions';
+  let scripts=expansionSourceCases({allInputs,includeInteractions:interactions,includeRealSource:population==='all'});
+  if(population==='interactions')scripts=scripts.filter(row=>row.family.startsWith('interaction:'));
+  return {scripts,modules:interactions?expansionInteractionCases().filter(row=>row.modules):[]};
 }
 export function expansionManifest(){
   const real=expansionRealSourceSlice();

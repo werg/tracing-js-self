@@ -1,22 +1,23 @@
 #!/usr/bin/env node
 // A new output directory preserves prior population/result identities.
-import {mkdirSync,writeFileSync,appendFileSync} from 'node:fs';
+import {mkdirSync,readFileSync,writeFileSync,appendFileSync} from 'node:fs';
 import {resolve,dirname,join} from 'node:path';
 import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {expansionManifest,expansionFamilyRegistry,validateExpansionReferencePopulation,
-  expansionSourceCases,expansionRealSourceSlice} from '../src/semantic/expansion-benchmark.js';
+  expansionCoveragePopulation} from '../src/semantic/expansion-benchmark.js';
 import {LANGUAGE_EXPANSION_BENCHMARK} from '../fixtures/language-expansion/benchmark.js';
 import {LANGUAGE_EXPANSION_COMPREHENSION_TASKSET as taskset} from '../fixtures/language-expansion/comprehension.js';
 import {comprehensionTasksetDigest,scoreComprehensionResponses} from '../src/semantic/comprehension.js';
 import {buildCapabilityLedger} from '../src/training/capability-ledger.js';
-import {SEMANTIC_GALLERY_FIXTURES} from '../src/training/semantic-trace-gallery.js';
 import {auditRegionServingCosts} from '../src/semantic/causal-lm-v8.js';
 import {SEMANTIC_V8_DEFINITION} from '../src/semantic/contract-v8.js';
 import {renderAlgorithmV8} from '../src/semantic/render-v8.js';
 import {auditFlatServingCosts} from '../src/semantic/serving-costs.js';
 import {notationViews} from '../src/semantic/notation-experiment.js';
-import {runGenerationProcess} from '../src/corpus/generation-process.mjs';
+import {encodeGenerationTask,runGenerationProcess} from '../src/corpus/generation-process.mjs';
+import {hashAlgorithmData} from '../src/semantic/program.js';
 const allowed=new Set(['--out','--mode','--inputs','--population','--trace-version','--tokenizer-module','--max-context-tokens','--worker-timeout-ms','--worker-memory-mb']),flags=new Map();
 for(let i=2;i<process.argv.length;i+=2){
   const key=process.argv[i],value=process.argv[i+1];
@@ -32,7 +33,12 @@ if(!['reference','coverage'].includes(mode)||!['all','first'].includes(inputs)||
   !Number.isSafeInteger(maxContextTokens)||maxContextTokens<2)throw new Error('Invalid benchmark mode, inputs, population, version or context budget');
 const output=resolve(flags.get('--out')),root=fileURLToPath(new URL('..',import.meta.url));
 mkdirSync(dirname(output),{recursive:true});mkdirSync(output,{recursive:false});
-const write=(name,value)=>writeFileSync(join(output,name),JSON.stringify(value,null,2)+'\n',{flag:'wx'});
+const artifacts={};
+const write=(name,value)=>{
+  const text=JSON.stringify(value,null,2)+'\n';
+  writeFileSync(join(output,name),text,{flag:'wx'});
+  artifacts[name]=createHash('sha256').update(text).digest('hex');
+};
 const producerRevision=execFileSync('git',['-C',root,'rev-parse','HEAD'],{encoding:'utf8'}).trim();
 const sourceChanges=execFileSync('git',['-C',root,'status','--porcelain','--untracked-files=no'],{encoding:'utf8'}).trim();
 if(sourceChanges)throw new Error('Retained benchmark evidence requires a committed producer; commit source changes first');
@@ -47,19 +53,31 @@ write('comprehension-lock.json',{schema:'semantic-comprehension-lock/1',id:tasks
   families:new Set(taskset.tasks.map(row=>row.family)).size,measurement:'unmeasured',
   responseCount:0,model:null,reason:'No external evaluator responses have been collected; reference answer keys are not model responses'});
 const reference=validateExpansionReferencePopulation({traceVersion});write('reference-report.json',{producerRevision,...reference});
-let coverage=null,moduleResults=[];
+let coverage=null,moduleResults=[],populationDigest=null;
 if(mode==='coverage'){
-  let cases=population==='gallery'?SEMANTIC_GALLERY_FIXTURES:population==='real-source'?expansionRealSourceSlice().cases:
-    expansionSourceCases({allInputs:inputs==='all',includeInteractions:population==='all'||population==='interactions',
-      includeRealSource:population==='all'});
-  if(population==='interactions')cases=cases.filter(row=>row.family.startsWith('interaction:'));
+  const {scripts:cases,modules}=expansionCoveragePopulation({population,allInputs:inputs==='all'});
+  const taskFor=fixture=>({kind:fixture.modules?'module':'source',fixture,traceVersion,producerRevision});
+  const tasks=new Map([...cases,...modules].map(fixture=>[fixture.id,taskFor(fixture)]));
+  if(tasks.size!==cases.length+modules.length)throw new Error('Expansion population contains duplicate case identities');
+  const inventory={schema:'semantic-expansion-population/1',producerRevision,traceVersion,population,inputs,
+    scriptCount:cases.length,moduleCount:modules.length,tasks:[...tasks.values()].map(task=>encodeGenerationTask(task))};
+  populationDigest=hashAlgorithmData(inventory);write('population.json',{...inventory,digest:populationDigest});
+  const executionStats=new Map();
+  const recordAttempt=(row,{result})=>{
+    const stats=executionStats.get(row.id),status=row.disposition??row.status;
+    appendFileSync(join(output,'attempts.jsonl'),JSON.stringify({id:row.id,status,
+      phase:result?.phase??(status==='frontend-refused'?'frontend':null),reason:row.reason??null,
+      durationMs:stats?.durationMs??0,peakRssBytes:stats?.peakRssBytes??null,
+      sourceResult:stats?.sourceResult??null,
+      identityDigest:result?.exported?.sidecar?.sourceArtifactDigest??result?.exported?.sidecar?.identityDigest??null})+'\n');
+    process.stderr.write(JSON.stringify({id:row.id,status})+'\n');
+  };
   const costs=[],notation=[],verifier=async fixture=>{
-    const execution=await runGenerationProcess({kind:fixture.modules?'module':'source',fixture,traceVersion,producerRevision},
+    const execution=await runGenerationProcess(tasks.get(fixture.id),
       {outputDirectory:join(output,'workers'),timeoutMs:workerTimeoutMs,memoryMb:workerMemoryMb});
     const result=execution.result;
-    appendFileSync(join(output,'attempts.jsonl'),JSON.stringify({id:fixture.id,status:result.status,phase:result.phase??null,
-      reason:result.reason??null,durationMs:execution.durationMs,peakRssBytes:execution.peakRssBytes,
-      identityDigest:result.exported?.sidecar?.sourceArtifactDigest??result.exported?.sidecar?.identityDigest??null})+'\n');
+    const sourceResult='source-'+fixture.id+'.json';write(sourceResult,result);
+    executionStats.set(fixture.id,{durationMs:execution.durationMs,peakRssBytes:execution.peakRssBytes,sourceResult});
     if(result.exported){
       let cost;
       try {cost=traceVersion===8?await auditRegionServingCosts(result.exported,{tokenizer:tokenModule?.tokenizer??null,
@@ -75,7 +93,8 @@ if(mode==='coverage'){
       // Preserve exact serializer bytes separately, avoiding giant duplicate
       // prompt/definition fields inside the small aggregate coverage report.
       write('serving-'+fixture.id+'.json',cost);
-      costs.push({id:fixture.id,sourceProfile:fixture.sourceProfile??'training-js/1',
+      costs.push({id:fixture.id,sourceProfile:result.sourceProfile??fixture.sourceProfile??'training-js/1',
+        executionProfile:result.exported.sidecar?.protocolProfile??result.exported.sidecar?.profile??null,
         representation:cost.representation,status:cost.status??'passed',reason:cost.reason??null,predictions:cost.predictions,
         bytes:cost.bytes,tokens:cost.tokens,measurement:cost.measurement});
       if(result.exported.public.representation==='algorithm'){
@@ -88,18 +107,20 @@ if(mode==='coverage'){
           .map(style=>[style,renderAlgorithmV8(core,{style})]))});
       }
     }
-    process.stderr.write(JSON.stringify({id:fixture.id,status:result.status})+'\n');return result;
+    return result;
   };
   coverage=await buildCapabilityLedger({producerRevision,cases,verifyCase:verifier,traceVersion,
     contracts:traceVersion===8?Object.fromEntries(['execution','trace','context','continuation'].map(key=>[key,SEMANTIC_V8_DEFINITION[key]])):null,
-    population:'expansion-v1:'+population+':inputs-'+inputs});
-  if(['all','interactions'].includes(population))for(const fixture of LANGUAGE_EXPANSION_BENCHMARK.interactions.filter(row=>row.modules)){
-    if(traceVersion!==8){moduleResults.push({id:fixture.id,profile:fixture.sourceProfile,status:'unsupported',
-      reason:'The module source adapter publishes the versioned v8 region contract only',native:'untested'});continue;}
+    population:'expansion-v1:'+population+':inputs-'+inputs,onProgress:recordAttempt});
+  for(const fixture of modules){
+    if(traceVersion!==8){const row={id:fixture.id,profile:fixture.sourceProfile,status:'unsupported',
+      reason:'The module source adapter publishes the versioned v8 region contract only',native:'untested'};
+      moduleResults.push(row);recordAttempt(row,{result:null});continue;}
     const result=await verifier(fixture);
-    moduleResults.push({id:fixture.id,profile:result.sourceProfile??fixture.sourceProfile,status:result.status,
+    const row={id:fixture.id,profile:result.sourceProfile??fixture.sourceProfile,status:result.status,
       reason:result.reason??null,source:result.exported?'passed':result.status,
-      regionCoverage:result.exported?.sidecar.regionCoverage??null,native:'untested'});
+      regionCoverage:result.exported?.sidecar.regionCoverage??null,native:'untested'};
+    moduleResults.push(row);recordAttempt(row,{result});
   }
   write('module-coverage.json',{producerRevision,traceVersion,declared:moduleResults.length,rows:moduleResults,
     scope:'Original module graphs are checked by the evaluated-module adapter, separately from strict script parsing'});
@@ -110,8 +131,9 @@ if(mode==='coverage'){
     tokenizerEvidence:tokenModule?.tokenizerEvidence??null,rows:costs});
   write('notation.json',{producerRevision,manifestDigest:manifest.digest,arms:['canonical','formal','hybrid','prose'],
     scope:'Same certified operations and public facts; rendering does not change abstraction',tokenStatus:'untested',rows:notation});
+  artifacts['attempts.jsonl']=createHash('sha256').update(readFileSync(join(output,'attempts.jsonl'))).digest('hex');
 }
-const report={schema:'semantic-expansion-run/1',producerRevision,traceVersion,mode,population,inputs,manifestDigest:manifest.digest,
+const report={schema:'semantic-expansion-run/1',producerRevision,traceVersion,mode,population,inputs,manifestDigest:manifest.digest,populationDigest,
   workerBounds:{timeoutMs:workerTimeoutMs,memoryMb:workerMemoryMb},
   registryDigest:registry.digest,families:manifest.families.length,interactionGroups:manifest.interactions.length,
   realSource:manifest.realSource,reference:reference.totals,
@@ -121,7 +143,9 @@ const report={schema:'semantic-expansion-run/1',producerRevision,traceVersion,mo
     declaredInteractionGroups:manifest.interactions.length},
   coverage:coverage?.coverage??null,comprehension:{tasks:taskset.tasks.length,status:scoreComprehensionResponses(taskset,[]).status},
   native:'untested',modelExecution:'untested',standardPromotion:'not-qualified'};
-write('report.json',report);console.log(JSON.stringify({output,producerRevision,reference:reference.totals,
+write('report.json',report);write('artifacts.json',{schema:'semantic-expansion-artifacts/1',producerRevision,populationDigest,
+  digestEncoding:'sha256 of exact UTF-8 file bytes',artifacts:{...artifacts}});
+console.log(JSON.stringify({output,producerRevision,reference:reference.totals,
   families:report.families,interactions:report.interactionGroups,realSources:manifest.realSource.selectedDenominator,
   tasks:taskset.tasks.length,coverage:report.coverage}));
 if(reference.totals.positivePassed!==reference.totals.positiveInputs||reference.totals.distinguishingPassed!==reference.totals.distinguishingPairs||

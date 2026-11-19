@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {LANGUAGE_EXPANSION_FAMILIES,LANGUAGE_EXPANSION_INTERACTIONS} from '../fixtures/language-expansion/benchmark.js';
 import {expansionManifest,validateExpansionManifest,validateExpansionReferencePopulation,expansionRealSourceSlice,
-  expansionFamilyRegistry,expansionInteractionCases} from '../src/semantic/expansion-benchmark.js';
+  expansionFamilyRegistry,expansionInteractionCases,expansionCoveragePopulation} from '../src/semantic/expansion-benchmark.js';
 import {encodeGenerationTask} from '../src/corpus/generation-process.mjs';
 
 test('frozen benchmark has semantic breadth and independent executable near misses',()=>{
@@ -40,6 +40,26 @@ test('interaction admission materializes mutable guest inputs from frozen declar
     assert.equal(again.find(row=>row.id===id).args[0].changed,undefined);
   }
   assert.equal(cases.filter(row=>row.modules).length,2);
+});
+
+test('run population retains exact source, input and module denominators before results',()=>{
+  const all=expansionCoveragePopulation();
+  assert.equal(all.scripts.length,624+12+27);
+  assert.equal(all.modules.length,2);
+  assert.equal(new Set([...all.scripts,...all.modules].map(row=>row.id)).size,665);
+  for(const fixture of [...all.scripts,...all.modules]){
+    const encoded=encodeGenerationTask({kind:fixture.modules?'module':'source',traceVersion:8,fixture});
+    assert.equal(encoded.fixture.source,fixture.source);
+    assert.deepEqual(encoded.fixture.modules,fixture.modules);
+    assert.equal(encoded.fixture.args,undefined);
+    assert.equal(encoded.fixture.argsGraph.roots.length,fixture.args.length);
+  }
+  assert.equal(expansionCoveragePopulation({population:'families',allInputs:false}).scripts.length,78);
+  assert.equal(expansionCoveragePopulation({population:'families'}).modules.length,0);
+  assert.equal(expansionCoveragePopulation({population:'interactions'}).scripts.length,12);
+  assert.equal(expansionCoveragePopulation({population:'gallery'}).scripts.length,11);
+  assert.equal(expansionCoveragePopulation({population:'real-source'}).scripts.length,27);
+  assert.throws(()=>expansionCoveragePopulation({population:'successful-only'}),/Unknown/);
 });
 
 test('v8 reference reports check current /2 cores and preserve all executed distinguishing pairs',()=>{

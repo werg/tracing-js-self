@@ -54,6 +54,22 @@ node tools/language-expansion-benchmark.mjs --out coverage/new-gallery --mode co
 node tools/language-expansion-benchmark.mjs --out coverage/new-expansion --mode coverage --population all --inputs all
 ```
 
+Select `--trace-version 8` for the compositional candidate. The runner defaults
+to v7 so historical commands retain their original contract. An all-input v8
+run declares 663 script attempts (624 family inputs, 12 script interactions,
+and 27 real-source functions) plus two module interactions. The unchanged
+11-case gallery is a separate population.
+
+Before execution, `population.json` retains each exact source/module task,
+canonical input graph, fixture plan, profile, and producer revision. Every
+completed attempt, including a frontend refusal, is appended to
+`attempts.jsonl`; unrecorded tasks in an interrupted run remain untested.
+`source-CASE.json` preserves the complete worker result and source evidence,
+while `serving-CASE.json` preserves the exact serializer inputs and costs.
+`artifacts.json` hashes the final files' exact UTF-8 bytes. These artifacts
+allow a completed population to be checked without regenerating its teacher
+or treating a short progress log as the full evidence.
+
 `--inputs first` is a smaller diagnostic, explicitly labeled as such. It does
 not replace the all-input release population. Every source attempt stays in
 its coverage denominator, including unsupported syntax, independent-reference
