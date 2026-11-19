@@ -1,9 +1,24 @@
-// Read-only linkage checks for retained owned generator continuations.
+// Read-only linkage checks for retained owned generator continuations. This
+// validator does not call the generator initializer or property resolver.
+const intrinsicPrototypes=new Set(['Object.prototype','Array.prototype','Function.prototype',
+  'GeneratorFunction.prototype','Generator.prototype','Iterator.prototype']);
+const validPrototype=(heap,value)=>value===null||intrinsicPrototypes.has(value)||
+  typeof value==='string'&&['object','array','function','generator'].includes(heap[value]?.kind);
 export function validateGeneratorState(state,programs,fail,ids=null){
   for(const generator of ids?[...ids].map(id=>state.heap[id]):Object.values(state.heap)){
+    if(generator.kind==='function'&&programs[generator.codeId]?.generator){
+      if(generator.generatorFunction!==true||generator.nonConstructible!==true||
+         !Object.hasOwn(generator,'prototype')||!validPrototype(state.heap,generator.prototype)||
+         !generator.properties?.prototype||!same(generator.dataAttributes?.prototype,{writable:true,enumerable:false,configurable:false}))
+        fail('Generator function lost its real prototype descriptor');
+      continue;
+    }
     if(generator.kind!=='generator')continue;
     const frame=state.frames[generator.frameId],program=programs[frame?.codeId];
+    const fn=state.heap[generator.functionId];
     if(!frame||!program?.generator||frame.generatorId!==generator.id||frame.asyncPromiseId!==null||
+       fn?.kind!=='function'||fn.generatorFunction!==true||fn.codeId!==frame.codeId||
+       !Object.hasOwn(generator,'prototype')||!validPrototype(state.heap,generator.prototype)||
        !['initializing','executing','suspendedStart','suspendedYield','completed'].includes(generator.state))
       fail('Invalid owned generator continuation identity');
     if(['suspendedStart','suspendedYield'].includes(generator.state)){
@@ -26,6 +41,45 @@ const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 export function validateGeneratorEvent(state,event,programs,fail){
   const frame=state.frames[event.invocationId],instruction=programs[frame?.codeId]?.instructions[frame?.pc];
   const after=id=>event.stateChanges.find(p=>p.table==='frames'&&p.id===id)?.after;
+  for(const patch of event.stateChanges){
+    if(patch.table!=='heap'||patch.before!==null)continue;
+    const node=patch.after;
+    if(node?.kind==='function'&&programs[node.codeId]?.generator){
+      if(!['MAKE_FUNCTION','DEF_FN'].includes(instruction?.op)||instruction.arg.codeId!==node.codeId)
+        fail('Generator function allocation has no source definition');
+      const arg=instruction.arg,raw=arg.name?['str',arg.name]:arg.inferredName?.stack?frame.stack.at(-1)?.value:['str',arg.inferredName??''];
+      let name;
+      if(raw?.[0]==='symbol'){
+        const description=raw[1].startsWith('well-known:')?['str','Symbol.'+raw[1].slice(11)]:state.heap[raw[1]]?.description;
+        if(!description)fail('Generator inferred Symbol name lost its description');
+        name=description[0]==='undefined'?'':'['+description[1]+']';
+      }else if(raw?.[0]==='num')name=raw[1]==='-0'?'0':String(raw[1]);
+      else if(raw?.[0]==='null'||raw?.[0]==='undefined')name=raw[0];
+      else name=String(raw?.[1]);
+      const protoId=node.properties?.prototype?.value?.[1],prototype=event.stateChanges.find(p=>p.table==='heap'&&p.id===protoId);
+      if(node.generatorFunction!==true||node.nonConstructible!==true||node.prototype!=='GeneratorFunction.prototype'||
+         !same(node.properties?.name?.value,['str',name])||
+         !same(node.properties?.length?.value,['num',programs[node.codeId].functionLength??programs[node.codeId].params.length])||
+         !same(node.propertyOrder,['length','name','prototype'])||
+         !same(node.dataAttributes,{length:{writable:false,enumerable:false,configurable:true},name:{writable:false,enumerable:false,configurable:true},prototype:{writable:true,enumerable:false,configurable:false}})||
+         node.properties?.prototype?.value?.[0]!=='ref'||prototype?.before!==null||
+         prototype.after?.kind!=='object'||prototype.after.prototype!=='Generator.prototype'||
+         Object.keys(prototype.after.properties??{}).length!==0||Object.keys(prototype.after.accessors??{}).length!==0)
+        fail('Generator function allocation lost name length or per-function prototype state');
+    }
+    if(node?.kind==='generator'){
+      const fn=state.heap[node.functionId],created=after(node.frameId),env=event.stateChanges.find(p=>p.table==='envs'&&p.id===created?.envId)?.after;
+      const supplied=fn?.properties?.prototype?.value??['undefined'];
+      const prototype=supplied[0]==='ref'||supplied[0]==='intrinsic'?supplied[1]:'Generator.prototype';
+      if(fn?.generatorFunction!==true||created?.codeId!==fn.codeId||env?.parent!==fn.closureEnvId||
+         Object.hasOwn(fn.accessors??{},'prototype')||node.prototype!==prototype||node.state!=='initializing')
+        fail('Generator allocation lost its exact callee and current prototype');
+      if(instruction?.op==='CALL'){
+        const callable=event.operands[0]?.[0]==='method'?event.operands[0][1]:event.operands[0];
+        if(callable?.[0]==='ref'&&callable[1]!==node.functionId)fail('Generator allocation changed the actual called identity');
+      }
+    }
+  }
   if(instruction?.op==='DELEGATE_YIELD'){
     const value=frame.stack.at(-1)?.value,next=after(frame.id);
     if(!next?.delegateYield||next.status!=='suspended-generator'||next.callerFrameId!==null||

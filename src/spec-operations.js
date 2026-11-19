@@ -3,6 +3,7 @@
 // References and domain limits are recorded in docs/OWNED_ARITHMETIC.md.
 import { encode, decode, token } from './values.js';
 import {symbolPropertyKey} from './property-keys.js';
+import {GENERATOR_INTRINSIC_PROTOTYPES,generatorIntrinsicProperty} from './owned-generator-objects.js';
 import { ARITHMETIC_OPERATORS, specStep } from './spec-schema.js';
 
 const primitives = new Set(['undefined', 'null', 'bool', 'str', 'num', 'bigint', 'symbol']);
@@ -86,6 +87,10 @@ export function ordinaryGet(heap, receiver, name) {
       return {method,observation:observation(method)};
     }
     const proto=objectPrototype(current);
+    if(GENERATOR_INTRINSIC_PROTOTYPES.includes(proto)){
+      const method=token(generatorIntrinsicProperty(proto,name).value);
+      return {method,observation:observation(method)};
+    }
     if(proto===null){
       const method=token(['undefined']);
       return {method,observation:observation(method)};

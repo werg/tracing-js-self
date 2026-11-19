@@ -20,7 +20,8 @@ running generator produces a guest TypeError. Completed next/return/throw
 behavior is handled without resuming its body. A generator is its own iterable,
 so the separately tested `for…of` closing path invokes its return behavior.
 
-The owned heap record links `frameId` to a generator frame. Its state is one of
+The owned heap record links `frameId` to a generator frame and `functionId` to
+the exact called function identity. Its state is one of
 `initializing`, `suspendedStart`, `executing`, `suspendedYield` or `completed`.
 The read-only validator checks the frame linkage, status and suspension cursor.
 The full operand stack, environment/capture links and handler stack remain
@@ -32,8 +33,44 @@ counter proving completed work was not repeated.
 outcomes, source operations/branches, source completion identity receipts,
 callback use, reentrancy and generator cleanup. The runtime profile remains
 bounded: async generators are explicitly rejected; direct generator
-entry requires an ordinary consumer wrapper. General generator prototype
-reflection and host transport are not implemented.
+entry requires an ordinary consumer wrapper. Host transport, dynamic
+`GeneratorFunction` construction and unowned exotic prototype access remain
+explicitly outside this profile.
+
+## Function and instance prototype identity
+
+A generator function owns actual `length`, `name`, and `prototype` properties
+in that order. Name and length are nonenumerable, nonwritable and configurable;
+prototype is nonenumerable, writable and nonconfigurable. Declared and inferred
+names, Symbol method names, default/rest arity and class/private method naming
+come from source evaluation. `generatorFunction:true` and
+`nonConstructible:true` describe the function's callable capability, and its
+initial internal prototype is `GeneratorFunction.prototype`.
+
+Each function gets a distinct ordinary prototype object, initially empty and
+inheriting `Generator.prototype`. It has no constructor backlink. Each call
+reads the function's current own `prototype` value and stores the resulting
+prototype identity on the new generator. An object replacement is retained by
+identity; a primitive replacement uses the intrinsic `Generator.prototype`.
+Existing instances retain their earlier prototype when the function property
+changes. Unsupported exotic replacements and prototype accessor continuations
+refuse explicitly. Property lookup follows the actual chain, so replacing it
+with an unrelated ordinary object can remove `next`; inherited ordinary getters
+run through the same owned call mechanism with the original receiver.
+
+The intrinsic chain is explicit: `GeneratorFunction.prototype` inherits
+`Function.prototype`, while `Generator.prototype` inherits `Iterator.prototype`,
+which inherits `Object.prototype`. The first two generator intrinsic objects
+are ordinary noncallable objects. The iterator identity method is shared with
+builtin array/string iterators. `Object.getPrototypeOf`, own keys, own
+descriptors, `instanceof`, and nonconstructibility checks observe this state.
+No host generator object supplies any owned step.
+
+`test/training-generator-prototypes.test.js` compares these behaviors with
+independent V8 execution and source operation/branch receipts. Mutation tests
+reject changed descriptor flags, an invented instance prototype, and a lost
+callee identity. Generator source/public admission remains separate until its
+typed continuation component and independent metadata observer are qualified.
 
 Existing detailed/native formats explicitly refuse generator identities and
 continuations. Public followup requires typed retained-frame/continuation state,

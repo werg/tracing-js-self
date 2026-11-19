@@ -24,7 +24,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
   if(bundle.manifest?.schema!=='semantic-tracing-run/2')fail('Unknown run schema');
   const state=clone(bundle.initialState);
   validateSymbolReferences(state,state.heap,fail);
-  const generatorIds=new Set(Object.values(state.heap).filter(entity=>entity.kind==='generator').map(entity=>entity.id));
+  const generatorIds=new Set(Object.values(state.heap).filter(entity=>entity.kind==='generator'||entity.kind==='function'&&bundle.programs[entity.codeId]?.generator).map(entity=>entity.id));
   validateGeneratorState(state,bundle.programs,fail,generatorIds);
   const binaryIds=new Set(Object.values(state.heap).filter(entity=>isBinaryMemoryKind(entity.kind)).map(entity=>entity.id));
   validateBinaryMemoryState(state,fail,binaryIds);
@@ -169,7 +169,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
       if(p.after && p.after.version!==(p.before?.version??0)+1)fail('Invalid record version',e.eventId);
       if(p.after===null)delete state[p.table][p.id];else state[p.table][p.id]=clone(p.after);
     }
-    for(const patch of e.stateChanges)if(patch.table==='heap'&&patch.after?.kind==='generator')generatorIds.add(patch.id);
+    for(const patch of e.stateChanges)if(patch.table==='heap'&&(patch.after?.kind==='generator'||patch.after?.kind==='function'&&bundle.programs[patch.after.codeId]?.generator))generatorIds.add(patch.id);
     validateGeneratorState(state,bundle.programs,message=>fail(message,e.eventId),generatorIds);
     for(const patch of e.stateChanges)if(patch.table==='heap'&&isBinaryMemoryKind(patch.after?.kind))binaryIds.add(patch.id);
     validateBinaryMemoryState(state,message=>fail(message,e.eventId),binaryIds);
