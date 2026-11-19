@@ -112,5 +112,31 @@ body. Private accessor classes are excluded from synthetic membership until
 their separate protocol is implemented. The native consumer must check the same
 source membership in addition to ordinary call and constructor-state guards.
 
+## Independent class and private metadata evidence
+
+The construction observation adapter inserts a leading static block that
+registers the actual native constructor, its prototype and lexical private
+brand/read functions. These readers inspect declared private fields and methods
+without adding own properties or calling guest getters. Private accessors and
+Proxy receivers are refused. Ordinary descriptor inspection still reports the
+actual native key order, flags, values, prototype and extensibility; it does not
+invent missing names, lengths or prototype identities. Anonymous declarator
+class names are preserved through NamedEvaluation before static initialization.
+
+Class, home-object and private-element annotations share the same independent
+identity table as ordinary descriptor values. Each private element records its
+declaring class identity, spelling, kind, placement and actual value. Repeated
+evaluation of one class source and identical private spellings in different
+classes remain distinct. The owned observer reads committed heap values and
+class registration order from the archive without executing the runtime or
+public protocol machine. The source compiler must separately validate private
+versions and all retained constructor continuations.
+
+The observer tests compare native and owned receipts for base/derived classes,
+private methods, repeated class evaluation and inferred names. A changed owned
+private field with unchanged completion receipts is rejected by the independent
+metadata comparison. This observer is an evidence component; full source/native
+qualification still requires the source adapter and registered public machine.
+
 Pinned semantics: [ECMAScript 2026 class evaluation](https://tc39.es/ecma262/2026/multipage/ecmascript-language-functions-and-classes.html#sec-runtime-semantics-classdefinitionevaluation)
 and [private element operations](https://tc39.es/ecma262/2026/multipage/abstract-operations.html#sec-privatefieldadd).
