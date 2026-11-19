@@ -407,3 +407,11 @@ export function protocolOrdinaryHeapViewV8(controller,{roots=null}={}){
   }
   return controller.heap;
 }
+
+/** Descriptor-only inspection for source certification and state diagnostics. */
+export function describeProtocolObjectV8(controller,id){
+  const node=heapNode(controller,id);
+  return {kind:node.kind,prototype:copy(node.prototype??'ordinary'),extensible:node.extensible!==false,
+    properties:order(node).map(key=>({key:publicKey(key),descriptor:ownDescriptor(node,publicKey(key))})),
+    ...(node.kind==='closure'?{code:node.code,functionKind:node.functionKind??'ordinary',lexicalReceiver:node.lexicalReceiver??null}:{})};
+}

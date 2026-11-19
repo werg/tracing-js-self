@@ -138,3 +138,43 @@ versioned source-to-protocol evidence path, original independent execution,
 operation/branch/completion audits, and replay of all emitted public records.
 Native production admission remains a separate gate pinned to the exact producer
 and independent consumer revisions.
+
+## Direct source compiler and independent observations
+
+The new compiler `protocol-source-compiler-v8.js` consumes the owned archive
+without using the historical v6 projection. It publishes source-known closures,
+initialized live capture cells, Symbol declarations, ordinary tagged-key reads
+and writes, descriptors, reflective key enumeration, prototype changes, and
+scoped accessor calls. After every published heap transition it compares the
+complete descriptor/prototype/key-order view with the committed owned state.
+Unknown heap metadata or an unprojected allocation refuses the case even if its
+final scalar happens to agree.
+
+Scalar computations and ordinary cells use detailed records, allowing existing
+compact local arithmetic to compose with the protocol. Symbol computations and
+rich property operations use the new record family. Source offsets and journal
+certificates remain private evidence; they are absent from canonical targets.
+
+`protocol-source-reference-v8.js` runs four separate independent V8 processes:
+original source, executed operation observations, branch observations, and
+completion observations. The last has its own
+`source-protocol-completions/1` identity vocabulary. Distinct Symbols with equal
+descriptions remain distinct, and rereading the same Symbol preserves its
+observation identity. The historical completion observer remains unchanged and
+still refuses Symbol values. Instrumented outcomes must equal the original
+outcome, and the owned operation, decision, and completion receipts must match
+independently observed receipts.
+
+The first direct source profile requires strict synchronous functions and simple
+parameters. It explicitly refuses asynchronous state, classes, constructors,
+generators, completion handlers, unknown builtins, and rich values escaping the
+ordinary observable graph boundary. This is the declared scope of this slice,
+not a claim that those JavaScript features are interchangeable with ordinary
+values. Their runtime implementations require later protocol operations before
+this source path can qualify them.
+
+`test/fixtures/semantic-protocol-source-v8.json` contains actual source-produced
+canonical claims for a Symbol-keyed getter bracketed by arithmetic. Its
+qualification is owned execution plus independent source checking. Full v8
+context/continuation/native admission is represented by the outer region
+artifact and remains independently required.
