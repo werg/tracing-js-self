@@ -137,7 +137,8 @@ rejects a teacher metadata mutation with an unchanged final scalar result.
   reservedIdentities(controller), // optional extra identities, e.g. private brands
   hasRichState(node), // optional; excludes the node from ordinary compact/detail access
   assertNext(controller, record, api), // optional, true after continuation checks
-  assertCall(controller, callee, internalOptions, api) // optional, true after capability checks
+  assertCall(controller, callee, internalOptions, api), // optional, true after capability checks
+  hasSourceCallable(source, code) // optional exact source inventory for synthetic callables
 }
 ```
 
@@ -148,6 +149,10 @@ heap, cells, receiver, capture aliases and stack; a failure commits nothing.
 pending constructor or iterator continuation from being skipped. `assertCall`
 also runs for accessor calls and internal component calls. Its options are an
 internal interface only: no public record can inject a construction capability.
+`hasSourceCallable` supplements ordinary source function membership for explicit
+class constructor or field-initializer identities. It must parse the immutable
+source and check the exact declared code identity; it cannot consult teacher
+archives or treat an arbitrary code string as an executable function.
 
 `PROTOCOL_MACHINE_API_V8` supplies the existing raw operations, whose controller
 argument is explicit: `require`, `fail`, `copy`, `eq`, `state`, `known`,
