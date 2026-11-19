@@ -428,8 +428,8 @@ See [integration boundaries](docs/NATLANG_INTEGRATION.md) and
 
 For mutable ESM exports, import-cell aliasing, dependency initialization and
 bounded top-level `await`, the separate opt-in
-`tracing-js-self/evaluated-modules` entry point executes an explicit **acyclic**
-in-memory source graph through the owned interpreter. Optional versioned native
+`tracing-js-self/evaluated-modules` entry point executes an explicit
+in-memory source graph, including synchronous cycles and live imported cells, through the owned interpreter. Optional versioned native
 services record guest input arrival and delivery; replay invokes no native
 service. This is neither a persistent ESM realm nor a general module loader.
 See [evaluated module profile](docs/EVALUATED_MODULES.md).
@@ -467,3 +467,14 @@ pins its original three tested implementations; it does not qualify v5 artifacts
 or certify learned model quality.
 
 
+
+## Language coverage expansion
+
+The [coverage plan](docs/LANGUAGE_COVERAGE_PLAN.md) distinguishes parser acceptance,
+owned execution, independent source checks, compact recognition, detailed
+fallback, native admission, and actual model success. Generate a fresh v7
+report with `npm run coverage:current -- --out coverage/current-v7.json`; add
+`--population gallery` for the unchanged eleven-case regression gallery.
+`--version 6` explicitly selects the historical producer. A historical receipt
+is not a result for the current revision. Unconfigured native, tokenizer, and
+model stages remain untested; bytes are never reported as token estimates.
