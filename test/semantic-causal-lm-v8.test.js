@@ -137,3 +137,28 @@ test('in-flight v8 model generation cannot cross a fresh checkpoint initializati
   await assert.rejects(pending,/initialization changed during generation/);
   assert.equal(selector.metrics().failedAttempts,1);
 });
+
+test('v8 selector refuses otherwise valid tokens when the causal prefix changes during inference',async()=>{
+  const artifact=example('ordered-map'),target=artifact.public.timeline.find(row=>row.kind==='algorithm'),
+    prefix={...artifact.public,timeline:artifact.public.timeline.slice(0,target.sequence-1)},
+    harness=RegionExecutionHarness.replay(prefix,{requireTerminal:false}),
+    invocationId=target.fields.invocationId,checkpointIdentity='c'.repeat(64);
+  const before=harness.modelContext(invocationId);
+  const runtime={
+    initialize:async request=>request,
+    generate:async()=>{
+      // A concurrent producer commits the same valid record while the model
+      // is still selecting it. Replaying its bytes cannot authorize a second
+      // commit from a context that is no longer the actual public prefix.
+      harness.select(invocationId,target.fields.line,{entry:target.fields.entry});
+      return {tokenIds:[...Buffer.from(target.fields.line),256],stopReason:'eos'};
+    }
+  };
+  const selector=createCausalLmV8Selector({...options,runtime,checkpointIdentity,maxNewTokens:2048});
+  await selector.initialize({checkpointIdentity,seed:1});
+  await assert.rejects(selector.selectInto(harness,invocationId),/public context changed during generation/);
+  assert.notDeepEqual(harness.modelContext(invocationId),before);
+  assert.equal(harness.timeline.length,target.sequence);
+  assert.equal(selector.metrics().semanticallyAccepted,0);
+  assert.equal(selector.metrics().failedAttempts,1);
+});
