@@ -174,7 +174,7 @@ function proxyRoute(heap,receiver,operation) {
       throw new TypeError('Unsupported proxy handler identity');
     const trap=ordinaryGet(heap,['ref',handler.id],operation);
     if(!trap)throw new TypeError('Proxy handler accessor trap unmodeled');
-    if(trap.method.value[0]!=='undefined')
+    if(!['undefined','null'].includes(trap.method.value[0]))
       return {kind:'trap',method:trap.method.value,observation:trap.observation,
         target:['ref',obj.targetId],handler:['ref',handler.id],receiver};
     obj=heap[obj.targetId];
@@ -775,6 +775,30 @@ export class Runtime {
       const pending=caller.pendingProperty;
       if(pending?.waitingFrameId===frame.id){
         caller.pendingProperty=null;
+        if(pending.proxy){
+          // Proxy invariants inspect the target after the trap has returned:
+          // the callback may have changed its descriptor in the meantime.
+          // The trap frame still completed normally; any invariant failure
+          // belongs to the waiting property access in its caller.
+          const target=draft.heap[pending.proxy.target[1]],key=pending.proxy.key,
+            data=target.properties[key],attributes=target.dataAttributes?.[key],
+            accessor=target.accessors?.[key];
+          let message=null;
+          if(pending.kind==='set'&&!truthy(value)){
+            if(pending.proxy.strict)message="'set' on proxy: trap returned falsish for property '"+key+"'";
+          }else if(data&&attributes?.configurable===false&&attributes.writable===false&&
+              !ownedSameValue(data.value,pending.kind==='get'?value:pending.value))
+            message='Proxy '+pending.kind+' trap contradicted a non-configurable, non-writable target property';
+          else if(accessor?.configurable===false&&accessor[pending.kind].value[0]==='undefined'&&
+              (pending.kind==='set'||value[0]!=='undefined'))
+            message='Proxy '+pending.kind+' trap contradicted a non-configurable target accessor';
+          if(message){
+            const completion={type:'throw',errorType:'TypeError',message,origin};
+            completion.value=this.caughtError(draft,completion,origin);
+            draft.control.a0.activeFrameId=caller.id;
+            this.routeCompletion(draft,caller,completion,origin);return;
+          }
+        }
         if(pending.kind==='get'&&pending.method)value=['method',value,pending.receiver];
         if(pending.kind==='set')value=pending.value;
       }
@@ -1828,15 +1852,16 @@ if(obj.kind==='set'){
                {kind:'ordinary',target:base.value,receiver:base.value};
              if(route.kind==='trap'){
                const target=s.heap[route.target[1]];
-               if(Object.hasOwn(target?.accessors??{},property)&&!target.accessors[property].configurable)
-                 throw new TypeError('Proxy get invariant for non-configurable accessor not modeled');
+               if(!['object','array'].includes(target?.kind))
+                 throw new TypeError('Proxy trap target invariants require ordinary storage');
                const trap=route.method;
                if(!this.callableGuest(s,trap)||s.heap[trap[1]].async)
                  throw new TypeError('Proxy get trap must be synchronous guest function');
                const fn=s.heap[trap[1]];
                const id=this.newFrame(s,fn.codeId,fn.closureEnvId,
                  f.id,null,[token(route.target),key,token(base.value)],this.functionThis(fn,route.handler),fn.id);
-               f.pendingProperty={kind:'get',receiver:base.value,method:op==='GET_METHOD',waitingFrameId:id};
+               f.pendingProperty={kind:'get',receiver:base.value,method:op==='GET_METHOD',waitingFrameId:id,
+                 proxy:{target:route.target,key:property,strict:!!this.programs[f.codeId].strict}};
                s.control.a0.activeFrameId=id;
                return {...operands(base,key),causes:[{kind:'invocation',frameId:id}],
                  reads:[route.observation]};
@@ -2172,14 +2197,15 @@ if(object.kind==='regexp'){
             {kind:'ordinary',target:base.value,receiver:base.value};
           if(route.kind==='trap'){
             const target=s.heap[route.target[1]];
-            if(Object.hasOwn(target?.accessors??{},property)&&!target.accessors[property].configurable)
-              throw new TypeError('Proxy set invariant for non-configurable accessor not modeled');
+            if(!['object','array'].includes(target?.kind))
+              throw new TypeError('Proxy trap target invariants require ordinary storage');
             if(!this.callableGuest(s,route.method)||s.heap[route.method[1]].async)
               throw new TypeError('Proxy set trap must be synchronous guest function');
             const fn=s.heap[route.method[1]];
             const id=this.newFrame(s,fn.codeId,fn.closureEnvId,
               f.id,null,[token(route.target),key,v,token(base.value)],this.functionThis(fn,route.handler),fn.id);
-            f.pendingProperty={kind:'set',value:v.value,waitingFrameId:id};
+            f.pendingProperty={kind:'set',value:v.value,waitingFrameId:id,
+              proxy:{target:route.target,key:property,strict:!!this.programs[f.codeId].strict}};
             s.control.a0.activeFrameId=id;
             return {...operands(base,key,v),causes:[{kind:'invocation',frameId:id}],
               reads:[route.observation]};
