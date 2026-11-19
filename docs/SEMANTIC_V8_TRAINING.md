@@ -73,6 +73,10 @@ const fixture = {
 const candidate = { ...fixture, ...await verifyRegionTrainingCase(fixture) };
 ```
 
+For bare source failures, the exporter verifies the failure payload hash and
+reads exact source and lineage from `failure.original`. Wrapper labels cannot
+replace that original evidence.
+
 For qualified artifacts, the authoritative source, entry, family, and ancestors
 come from `sidecar.sourceArtifact.sidecar`. Labels on a wrapper must agree with
 that evidence. A failure that contains no exact source metadata still gets a
