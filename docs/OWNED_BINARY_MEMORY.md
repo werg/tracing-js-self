@@ -40,7 +40,22 @@ bounded DataView, subarray, slice, growth, or single-agent atomic operation.
 Buffers and views inhabit the same controller heap as ordinary objects. Fresh
 backing identities are explicit, false results are rejected transactionally,
 and public restoration rejects invalid bytes, aliases, bounds, and extra metadata.
-This component is not yet source/native-qualified by its isolated tests.
+The direct source adapter now qualifies the frozen `typed-views-shared-backing`
+interaction and conversion, alias/copy, BigInt, floating-point, shared-growth and
+single-agent atomic cases. The independent V8 observer reads actual backing bytes,
+view aliases and builtin prototype identities without invoking guest getters. Its
+metadata receipts catch byte changes that leave the returned scalar unchanged.
+The source-qualified interaction is retained as an interoperability golden;
+compact regions before and after memory operations and exact checkpoint resumption
+are covered as well. Typed-array assignment completion preserves the original RHS
+even when storage conversion changes it (for example, storing 257 into a Uint8 view).
+
+Native training admission remains a separate gate tied to the exact expanded
+contract, source fixture and consumer revision. Public component tests and source
+qualification do not by themselves satisfy that gate. The public source profile
+currently represents successful memory operations; abrupt binary operations and
+the capabilities excluded above remain explicit refusals until their public
+completion records are qualified.
 
 The conversion and indexed-access rules follow the pinned
 [ECMAScript 2026 conversion operations](https://tc39.es/ecma262/2026/multipage/abstract-operations.html#sec-toindex),

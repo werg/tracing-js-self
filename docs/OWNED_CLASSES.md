@@ -23,6 +23,17 @@ the outer class declaration initializes. Constructor `.prototype` is readonly
 and nonconfigurable. Class bodies are strict, class calls reject without `new`,
 and concise methods/accessors are not constructors.
 
+Class constructors and public/private methods/accessors now materialize their
+actual `length` and `name` data descriptors, with readonly, nonenumerable,
+configurable flags and native property creation order. Length stops before the
+first default or rest parameter. Names preserve getter/setter prefixes,
+private spelling, and Symbol description formatting. Anonymous classes receive
+their inferred name before static initialization in bindings, assignments,
+object properties, class fields and default initializers. This class profile
+supports own-key and descriptor reflection; unrelated ordinary function
+reflection remains separately bounded. These are owned properties, not names
+invented by the public metadata observer.
+
 Construction allocates the receiver using the live owned prototype. Private
 methods are installed before fields; then fields initialize in source order,
 before constructor parameter defaults and body execution. Field initialization

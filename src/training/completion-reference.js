@@ -124,7 +124,7 @@ export function createCompletionCapture({limit=32768,initialValues=[]}={}){
   return {observations,capture};
 }
 
-export function ownedCompletionObservations(bundle,source,{onObservation=null}={}){
+export function ownedCompletionObservations(bundle,source,{onObservation=null,assignmentValue=null}={}){
   const plan=completionObservationPlan(source),siteById=new Map(bundle.sites.map(x=>[x.siteId,x]));
   const identities=new Map(),pending=new Map(),observations=[];let next=0;
   const state={heap:{...bundle.initialState.heap},envs:{...bundle.initialState.envs},frames:{...bundle.initialState.frames}};
@@ -207,7 +207,12 @@ export function ownedCompletionObservations(bundle,source,{onObservation=null}={
           const key=property[0]==='symbol'?symbolPropertyKey(property[1]):stringPropertyKey(String(decode(property)));
           // A successful ordinary assignment must leave its stored value in
           // the receiver. Looking only at changed patches misses dropped writes.
-          stored=object.properties?.[key]?.value??['missing-storage'];
+          // Exotic assignment completion may differ from the stored lane (for
+          // example, Uint8Array assignment returns 257 while storing 1). A
+          // separately qualified observer checks that storage in its metadata
+          // receipts; ordinary writes retain this direct stored-value audit.
+          const projected=assignmentValue?.({event,instruction,object,key,state});
+          stored=projected??object.properties?.[key]?.value??['missing-storage'];
         }
         emit(key,'assign',stored);
       }

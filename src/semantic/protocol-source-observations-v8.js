@@ -9,7 +9,7 @@ export const PROTOCOL_METADATA_LIMITS=Object.freeze({snapshots:8192,bytes:419430
 /** Trusted, statically registered producer extensions; never serving input. */
 export function prepareProtocolObservationExtensionsV8({source,mode='completions',side='native',bundle=null,
   adapters=PROTOCOL_OBSERVATION_ADAPTERS_V8}={}){
-  if(mode!=='completions')return {ids:[],globals:{},metadataAdapters:[],instrument:text=>text};
+  if(mode!=='completions')return {ids:[],globals:{},metadataAdapters:[],instrument:text=>text,initializeRealm(){}};
   const selected=adapters.map(adapter=>typeof adapter==='function'?adapter({source,mode,side,bundle}):adapter).filter(Boolean);
   const globals={},metadataAdapters=[],ids=[];
   for(const adapter of selected){
@@ -22,7 +22,13 @@ export function prepareProtocolObservationExtensionsV8({source,mode='completions
     }
     if(adapter.metadataAdapter)metadataAdapters.push(adapter.metadataAdapter);
   }
-  return {ids,globals,metadataAdapters,instrument(text){
+  return {ids,globals,metadataAdapters,assignmentValue(observation){
+    for(const adapter of selected){const value=adapter.ownedAssignmentValue?.(observation);if(value!==undefined&&value!==null)return value;}
+    return undefined;
+  },initializeRealm(evaluate){
+    if(typeof evaluate!=='function')throw new TypeError('Independent realm initializer requires an evaluator');
+    for(const adapter of selected)adapter.initializeRealm?.(evaluate);
+  },instrument(text){
     for(const adapter of selected)if(adapter.instrument){text=adapter.instrument(text);
       if(typeof text!=='string')throw new TypeError('Observation instrumentation must return source text');}
     return text;
@@ -42,7 +48,8 @@ export function createProtocolCompletionCapture(options){
 export function ownedProtocolSourceObservations(bundle,source,{adapters=PROTOCOL_OBSERVATION_ADAPTERS_V8}={}){
   const extensions=prepareProtocolObservationExtensionsV8({source,side:'owned',bundle,adapters});
   const observer=createOwnedProtocolMetadata(bundle,{adapters:extensions.metadataAdapters}),bounded=boundedMetadata(),metadata=bounded.receipts;
-  const completions=ownedCompletionObservations(bundle,source,{onObservation:observation=>bounded.append(observer.observe(observation))});
+  const completions=ownedCompletionObservations(bundle,source,{assignmentValue:extensions.assignmentValue,
+    onObservation:observation=>bounded.append(observer.observe(observation))});
   return {completions,metadata};
 }
 export function ownedProtocolCompletionObservations(bundle,source){return ownedProtocolSourceObservations(bundle,source).completions;}

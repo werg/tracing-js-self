@@ -117,6 +117,14 @@ sites. Reserved observer globals must start `__tracingProtocol` and must be
 distinct. They cannot replace operation, branch, completion, argument, or result
 hooks. Source programs are already forbidden from naming the reserved namespace.
 
+An optional `initializeRealm(evaluate)` captures independent VM intrinsic
+identities before guest code runs. The callback is available only to statically
+registered trusted observer code. An optional
+`ownedAssignmentValue({event,instruction,object,key,state})` supplies exotic
+assignment-expression values when storage conversion changes the stored value;
+the adapter must independently observe and compare that storage in metadata.
+Ordinary assignments retain the existing direct stored-value check.
+
 This interface permits lexical private-field readers or backing-memory observers
 without adding guest object properties. Each extension still has to prove that
 its observer does not invoke guest getters/methods, and that the source gate

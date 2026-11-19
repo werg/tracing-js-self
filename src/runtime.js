@@ -1,7 +1,7 @@
 import { encode, decode, U, token, truthy, primitiveBinary, primitiveUnary } from './values.js';
 import {WELL_KNOWN_SYMBOLS,wellKnownSymbol,stringPropertyKey,symbolPropertyKey,isSymbolPropertyKey,propertyKeyValue} from './property-keys.js';
 import {SHARED_TYPES,SHARED_TYPE_NAMES,newArrayBuffer,isOwnedBuffer,isOwnedTypedView,isOwnedDataView,newSharedBuffer,newSharedView,newSharedDataView,effectiveDataViewLength,DATA_VIEW_GETTERS,DATA_VIEW_SETTERS,readSharedDataView,writeSharedDataView,growSharedBuffer,effectiveSharedLength,readSharedElement,writeSharedElement,atomicSharedElement} from './owned-shared-memory.js';
-import {BinaryProfileError,binaryIndex,binaryInteger,binaryElement,binaryNumericKey,binaryValidIndex} from './owned-binary-coercion.js';
+import {BinaryProfileError,BinaryResourceError,binaryIndex,binaryInteger,binaryElement,binaryNumericKey,binaryValidIndex} from './owned-binary-coercion.js';
 import { parse, compile } from './frontend.js';
 import { importGraph } from './training/graph.js';
 import { parseTraining, TRAINING_PARSER } from './training/profile.js';
@@ -355,8 +355,9 @@ export class Runtime {
   functionProperties(draft,fn,eventId,{prototype=false}={}){
     fn.properties??={};fn.propertyVersions??={};fn.shapeVersion??=0;
     if(!prototype)return;
-    if(fn.arrow||fn.async||fn.nonConstructible)return;
+    if(fn.arrow||fn.async)return;
     if(this.programs[fn.codeId].generator)throw new TypeError('Generator function prototype reflection is outside the profile');
+    if(fn.nonConstructible)return;
     if(fn.prototypeInitialized)return;
     fn.prototypeInitialized=true;
     if(Object.hasOwn(fn.properties,'prototype'))return;
@@ -366,6 +367,17 @@ export class Runtime {
       propertyOrder:['constructor'],shapeVersion:1,version:0};
     putOwn(fn,'prototype',['ref',id],eventId);
     fn.dataAttributes??={};fn.dataAttributes.prototype={enumerable:false,writable:true,configurable:false};
+  }
+  classFunctionProperties(draft,fn,name,eventId,prefix=null){
+    this.functionProperties(draft,fn,eventId);
+    if(name[0]==='symbol'){
+      const description=this.symbolDescription(draft,name);name=['str',description[0]==='undefined'?'':'['+description[1]+']'];
+    }else name=['str',String(decode(name))];
+    if(prefix!==null)name=['str',prefix+' '+name[1]];
+    for(const [key,value] of [['length',['num',this.programs[fn.codeId].functionLength??this.programs[fn.codeId].params.length]],['name',name]]){
+      if(Object.hasOwn(fn.properties,key))throw new Error('Class function metadata initialized twice');
+      putOwn(fn,key,value,eventId);(fn.dataAttributes??={})[key]={writable:false,enumerable:false,configurable:true};
+    }
   }
   ordinaryHasInstance(draft,constructor,candidate,eventId){
     const target=constructor[0]==='ref'?draft.heap[constructor[1]]:null;
@@ -1450,31 +1462,27 @@ export class Runtime {
            }
           if(fn.value[0]==='intrinsic'&&fn.value[1]==='ArrayBuffer'){
             const length=binaryGuest(()=>binaryIndex(args[0]?.value));
-            if(length>1024)throw new BinaryProfileError('ArrayBuffer exceeds the 1024-byte owned profile');
+            if(length>1024)throw new BinaryResourceError('ArrayBuffer exceeds the 1024-byte owned profile');
             if(args[1]?.value[0]!==undefined&&args[1].value[0]!=='undefined')
               throw new BinaryProfileError('Resizable ArrayBuffer options require their own profile');
             const id=this.next(s,'obj');s.heap[id]=newArrayBuffer(id,length);
             return {...operands(fn,...args),...result(['ref',id])};
           }
            if(fn.value[0]==='intrinsic'&&fn.value[1]==='SharedArrayBuffer'){
-  const length=args.length===0?0:args[0]?.value[0]==='num'?decode(args[0].value):NaN;
-  if(!Number.isSafeInteger(length)||length<0||length>1024)
-    guestFault('RangeError','SharedArrayBuffer byteLength out of bounds');
-  if(args.length>2)guestFault('TypeError','SAB takes at most two arguments');
+  const length=binaryGuest(()=>binaryIndex(args[0]?.value));
+  if(length>1024)throw new BinaryResourceError('SharedArrayBuffer exceeds the 1024-byte owned profile');
   let max;
-  if(args.length===2){
+  if(args[1]?.value[0]!==undefined&&args[1].value[0]!=='undefined'){
     const opts=args[1]?.value[0]==='ref'?s.heap[args[1].value[1]]:null;
     if(opts?.kind!=='object'||Object.keys(opts.accessors??{}).length)
-      guestFault('TypeError','SAB options require owned data object');
+      throw new BinaryProfileError('SAB options require an owned data-object profile');
     const supplied=opts.properties.maxByteLength?.value;
     if(supplied&&supplied[0]!=='undefined'){
-      if(supplied[0]!=='num'||!Number.isSafeInteger(decode(supplied)))
-        guestFault('RangeError','SAB maxByteLength requires bounded integer');
-      max=decode(supplied);
+      max=binaryGuest(()=>binaryIndex(supplied));
     }
   }
-  if(max!==undefined&&(max<length||max>1024))
-    guestFault('RangeError','Invalid maxByteLength');
+  if(max!==undefined&&max<length)guestFault('RangeError','Invalid maxByteLength');
+  if(max>1024)throw new BinaryResourceError('SharedArrayBuffer maximum exceeds the 1024-byte owned profile');
   const id=this.next(s,'obj');s.heap[id]=newSharedBuffer(id,length,max);
   return {...operands(fn,...args),...result(['ref',id])};
 }
@@ -1501,7 +1509,7 @@ if(fn.value[0]==='intrinsic'&&Object.hasOwn(SHARED_TYPES,fn.value[1])){
     if(input[0]==='ref')throw new BinaryProfileError('Typed-array iterable/array-like construction requires its own profile');
     length=binaryGuest(()=>binaryIndex(input));offset=0;
     const bytes=length*SHARED_TYPES[fn.value[1]].bytes;
-    if(bytes>1024)throw new BinaryProfileError('Typed-array storage exceeds the 1024-byte owned profile');
+    if(bytes>1024)throw new BinaryResourceError('Typed-array storage exceeds the 1024-byte owned profile');
     const bufferId=this.next(s,'obj');b=s.heap[bufferId]=newArrayBuffer(bufferId,bytes);
   }
   const id=this.next(s,'obj');
@@ -1717,7 +1725,7 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
     const method=['builtinfn','SharedArrayBuffer.prototype.slice'];
     return {...operands(base,key),...result(op==='GET_METHOD'?['method',method,base.value]:method)};
   }
-  guestFault('TypeError','Unmodeled SAB property');
+  throw new BinaryProfileError('Unmodeled SharedArrayBuffer property profile');
 }
 if(isOwnedDataView(obj)){
   const length=effectiveDataViewLength(s.heap[obj.bufferId],obj);
@@ -1728,7 +1736,7 @@ if(isOwnedDataView(obj)){
     const method=['builtinfn','DataView.prototype.'+property];
     return {...operands(base,key),...result(op==='GET_METHOD'?['method',method,base.value]:method)};
   }
-  guestFault('TypeError','Unmodeled shared DataView property');
+  throw new BinaryProfileError('Unmodeled DataView property profile');
 }
 if(isOwnedTypedView(obj)){
   const bytes=SHARED_TYPES[obj.elementType].bytes;
@@ -1845,7 +1853,12 @@ if(obj.kind==='set'){
         }
         case 'SET_HOME_OBJECT':{
           const value=pop(),home=arg.name?lookup(s,f.envId,arg.name).cell.token:f.stack.at(-arg.offset);
-          this.setHomeObject(s,s.heap[value.value[1]],home.value,eventId);
+          const fn=s.heap[value.value[1]];
+          if(arg.methodName){
+            const name=arg.methodName.privateName?['str',arg.methodName.privateName]:lookup(s,f.envId,arg.methodName.binding).cell.token.value;
+            this.classFunctionProperties(s,fn,name,eventId,arg.methodName.prefix??null);
+          }
+          this.setHomeObject(s,fn,home.value,eventId);
           return {...operands(value,home),...result(value.value)};
         }
         case 'SUPER_REFERENCE':{
@@ -1923,9 +1936,10 @@ if(obj.kind==='set'){
           return {...operands(value),...result(value.value)};
         }
         case 'CLASS_CREATE':{
-          const heritage=arg.derived?pop():null,value=pop(),klass=value.value[0]==='ref'?s.heap[value.value[1]]:null;
+          const name=arg.named?pop():null,heritage=arg.derived?pop():null,value=pop(),klass=value.value[0]==='ref'?s.heap[value.value[1]]:null;
           if(klass?.kind!=='function')throw new Error('Class constructor function missing');
           klass.classConstructor=true;
+          if(name)this.classFunctionProperties(s,klass,name.value,eventId);
           this.functionProperties(s,klass,eventId,{prototype:true});
           this.setHomeObject(s,klass,klass.properties.prototype.value,eventId);
           klass.dataAttributes.prototype.writable=false;
@@ -1954,7 +1968,7 @@ if(obj.kind==='set'){
             environment.bindings['[[private '+name+']]']={kind:'const',initialized:true,
               token:token(['str','private:'+klass.id+':'+index],eventId),version:0};
           });
-          return {...operands(value,...(heritage?[heritage]:[])),...result(value.value)};
+          return {...operands(value,...(heritage?[heritage]:[]),...(name?[name]:[])),...result(value.value)};
         }
         case 'CLASS_INITIALIZER':{
           const initializer=pop(),value=pop(),klass=s.heap[value.value[1]];
@@ -2050,7 +2064,7 @@ if(obj.kind==='set'){
            if(base.value[0]!=='ref'||!s.heap[base.value[1]])throw new TypeError('Not a writable guest object');
           const object=s.heap[base.value[1]];
           if(object.kind==='function'){
-            if(['arguments','caller','name','length'].includes(property))throw new TypeError('Function descriptor assignment outside profile');
+            if(['arguments','caller'].includes(property)||['name','length'].includes(property)&&!Object.hasOwn(object.properties??{},property))throw new TypeError('Function descriptor assignment outside profile');
             this.functionProperties(s,object,eventId);
             const found=functionProperty(s.heap,object,property);
             if(found.attributes?.writable===false)guestFault('TypeError','Cannot assign inherited readonly function property');
@@ -2757,7 +2771,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               });
               return {...operands(fn,...args),...result(['bool',!!frozen])};
             }
-            if(!object||!['object','array'].includes(object.kind))
+            if(!object||!['object','array'].includes(object.kind)&&!(object.kind==='function'&&object.properties?.name&&object.properties?.length&&!this.programs[object.codeId].generator))
               throw new TypeError('Own descriptor reflection requires owned ordinary storage');
             const key=valueKey(args[1]?.value??U),accessor=object.accessors?.[key],slot=object.properties[key];
             if(!accessor&&!slot)return {...operands(fn,...args),...result(U)};
@@ -2770,7 +2784,8 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
           }
           if(callable[0]==='builtinfn' && ['Object.hasOwn','Object.keys','Object.values','Object.entries','Object.getOwnPropertySymbols','Object.getOwnPropertyNames','Reflect.ownKeys'].includes(callable[1])){
             const base=args[0]?.value??U,obj=base[0]==='ref'?s.heap[base[1]]:null;
-            if(obj?.kind==='function'&&!['Object.keys','Object.values','Object.entries'].includes(callable[1]))
+            if(obj?.kind==='function'&&!['Object.keys','Object.values','Object.entries'].includes(callable[1])&&
+               !(obj.properties?.name&&obj.properties?.length&&!this.programs[obj.codeId].generator))
               throw new TypeError('Function descriptor reflection requires the complete Function profile');
             if(!obj||!['object','array','function'].includes(obj.kind))
               throw new TypeError('Object builtin requires an owned ordinary reference');
