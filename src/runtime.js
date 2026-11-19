@@ -174,9 +174,10 @@ function ownPropertyKeys(obj){
 }
 function enumerableOwn(obj,key){
   return Object.hasOwn(obj.accessors??{},key)?obj.accessors[key].enumerable:
-    Object.hasOwn(obj.properties??{},key)&&!(obj.kind==='array'&&key==='length');
+    Object.hasOwn(obj.properties??{},key)&&obj.dataAttributes?.[key]?.enumerable!==false&&!(obj.kind==='array'&&key==='length');
 }
 function putOwn(obj,key,value,eventId,{literal=false}={}) {
+  if(!literal&&obj.dataAttributes?.[key]?.writable===false)guestFault('TypeError','Cannot assign to read only property');
   if(obj.declaredError)
     throw new TypeError('Declared error mutation is outside the bounded error profile');
   if (key === '__proto__'&&!literal) throw new TypeError('Prototype mutation is not implemented by the bounded profile');
@@ -268,6 +269,21 @@ export class Runtime {
     const entity=draft.heap[value[1]];
     if(entity?.kind!=='symbol')throw new TypeError('Unknown owned symbol');
     return entity.description;
+  }
+  functionProperties(draft,fn,eventId,{prototype=false}={}){
+    fn.properties??={};fn.propertyVersions??={};fn.shapeVersion??=0;
+    if(!prototype)return;
+    if(fn.arrow||fn.async)return;
+    if(this.programs[fn.codeId].generator)throw new TypeError('Generator function prototype reflection is outside the profile');
+    if(fn.prototypeInitialized)return;
+    fn.prototypeInitialized=true;
+    if(Object.hasOwn(fn.properties,'prototype'))return;
+    const id=this.next(draft,'obj');
+    draft.heap[id]={id,kind:'object',properties:{constructor:token(['ref',fn.id],eventId)},
+      propertyVersions:{constructor:1},dataAttributes:{constructor:{enumerable:false,writable:true,configurable:true}},
+      propertyOrder:['constructor'],shapeVersion:1,version:0};
+    putOwn(fn,'prototype',['ref',id],eventId);
+    fn.dataAttributes??={};fn.dataAttributes.prototype={enumerable:false,writable:true,configurable:false};
   }
   newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,observers:[],adopters:[],adopting:null,resolverCalled:false,thenableSerial:0,thenableLocked:false,thenableSeen:[],version:0};return id;}
   newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[],thisValue=U) {
@@ -427,6 +443,7 @@ export class Runtime {
   completeFrame(draft,frame,value,origin) {
     frame.status='completed';
     frame.completion={type:'return',value:token(value,origin)};
+    if(frame.constructReceiver&&!['ref','promise','intrinsic','builtinfn','hostfn'].includes(value[0]))value=frame.constructReceiver;
     if(frame.generatorId){
       draft.heap[frame.generatorId].state='completed';
       value=this.iteratorResult(draft,value,true,origin);
@@ -1001,7 +1018,7 @@ export class Runtime {
           if(arg.name)s.envs[closureEnvId].bindings[arg.name]={kind:'const',
             initialized:true,token:token(['ref',id],eventId),version:0};
           s.heap[id]={id,kind:'function',codeId:arg.codeId,
-            closureEnvId,async:arg.async===true,arrow:arg.arrow===true,
+            closureEnvId,async:arg.async===true,arrow:arg.arrow===true,nonConstructible:arg.nonConstructible===true,
             lexicalThis:arg.arrow?f.thisValue:null,version:0};
           return result(['ref',id]);
         }
@@ -1162,6 +1179,22 @@ export class Runtime {
         case 'CONSTRUCT':{
           const args=[];for(let i=0;i<arg;i++)args.unshift(pop());
           const fn=pop();
+          if(fn.value[0]==='ref'&&s.heap[fn.value[1]]?.kind==='function'){
+            const target=s.heap[fn.value[1]];
+            if(target.arrow||target.async||this.programs[target.codeId].generator||target.nonConstructible)
+              guestFault('TypeError','Function is not a constructor');
+            this.functionProperties(s,target,eventId,{prototype:true});
+            const supplied=target.properties.prototype?.value??U;
+            const prototype=supplied[0]==='ref'?s.heap[supplied[1]]:null;
+            if(prototype&&!['object','array'].includes(prototype.kind))
+              throw new TypeError('Constructor prototype outside owned ordinary object profile');
+            const receiver=this.next(s,'obj');s.heap[receiver]={id:receiver,kind:'object',
+              prototype:prototype?.id??'Object.prototype',properties:{},propertyVersions:{},shapeVersion:0,version:0};
+            const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,null,args,['ref',receiver]);
+            s.frames[id].constructReceiver=['ref',receiver];s.frames[id].newTarget=fn.value;
+            s.control.a0.activeFrameId=id;
+            return {...operands(fn,...args),causes:[{kind:'invocation',frameId:id}]};
+          }
           if(fn.value[0]==='intrinsic'&&fn.value[1]==='Symbol')guestFault('TypeError','Symbol is not a constructor');
           if(fn.value[0]==='intrinsic'&&['Error','TypeError'].includes(fn.value[1])){
             if(args.length>1)throw new TypeError('Error options are outside the bounded error profile');
@@ -1238,6 +1271,7 @@ if(fn.value[0]==='intrinsic'&&Object.hasOwn(SHARED_TYPES,fn.value[1])){
   return {...operands(fn,...args),...result(['ref',id])};
 }
 if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
+            if(!['ref','intrinsic'].includes(fn.value[0])||fn.value[0]==='ref'&&s.heap[fn.value[1]]?.kind!=='proxy')guestFault('TypeError','Value is not a constructor');
             const completion={type:'unsupported',feature:'Constructor requires owned semantics: '+String(fn.value[1])};
             this.failFrame(s,f,completion);return {...operands(fn,...args),completion};
           }
@@ -1366,6 +1400,16 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
            else if(base.value[0]==='ref'){
              const obj=s.heap[base.value[1]];
              if(!obj)throw new ReferenceError('Unknown guest identity');
+             if(obj.kind==='function'){
+               this.functionProperties(s,obj,eventId,{prototype:property==='prototype'});
+               if(['name','length','constructor','__proto__','toString','valueOf','call','apply','bind'].includes(property)&&
+                  !Object.hasOwn(obj.properties,property))throw new TypeError('Unmodeled function prototype reflection or call adapter');
+               if(['arguments','caller'].includes(property))guestFault('TypeError','Restricted strict function property');
+               const slot=obj.properties[property];v=slot?.value??U;
+               return {...operands(base,key),...result(op==='GET_METHOD'?['method',v,base.value]:v),reads:[{
+                 kind:'property',objectId:obj.id,key:property,present:!!slot,version:obj.propertyVersions[property]??0,
+                 shapeVersion:obj.shapeVersion,value:v,supplyingEvent:slot?.origin??null}]};
+             }
              if(obj.declaredError&&!['name','message'].includes(property))
                throw new TypeError('Declared error exposes only name and message');
              if(obj.kind==='generator'){
@@ -1569,8 +1613,14 @@ if(obj.kind==='set'){
           const v=pop(),key=pop(),base=pop(),property=valueKey(key.value);
           if(['null','undefined'].includes(base.value[0]))
              guestFault('TypeError',`Cannot set properties of ${base.value[0]}`);
-           if(base.value[0]!=='ref'||!s.heap[base.value[1]]||s.heap[base.value[1]].kind==='function')throw new TypeError('Not a writable guest object');
+           if(base.value[0]!=='ref'||!s.heap[base.value[1]])throw new TypeError('Not a writable guest object');
           const object=s.heap[base.value[1]];
+          if(object.kind==='function'){
+            if(['arguments','caller','name','length'].includes(property))throw new TypeError('Function descriptor assignment outside profile');
+            this.functionProperties(s,object,eventId);
+            if(property==='prototype')object.prototypeInitialized=true;
+            putOwn(object,property,v.value,eventId);return {...operands(base,key,v),...result(v.value)};
+          }
           if(object.kind==='shared-int32-view'){
   if(!arrayIndex(property)||Number(property)>=effectiveSharedLength(s.heap[object.bufferId],object))
     guestFault('TypeError','Unmodeled typed-array property assignment');

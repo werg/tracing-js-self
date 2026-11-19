@@ -196,14 +196,12 @@ export function parseTraining(source) {
         return {...loc,type:'Member',object:expr(n.object),property:n.computed?expr(n.property):
           {...span(n.property),type:'Literal',value:encode(n.property.name)}};
       case 'NewExpression':
-        if(n.callee.type!=='Identifier'||n.arguments.some(a=>a.type==='SpreadElement')||
-           n.arguments.length>3)reject(n,'NewExpression');
-        if(n.callee.name==='Proxy'){
+        if(n.arguments.some(a=>a.type==='SpreadElement')||n.arguments.length>64)reject(n,'constructor spread/argument budget');
+        if(n.callee.type==='Identifier'&&n.callee.name==='Proxy'){
           if(n.arguments.length!==2)reject(n,'Proxy requires target and handler');
           return {...loc,type:'Proxy',target:expr(n.arguments[0]),handler:expr(n.arguments[1])};
         }
-        if(!ownedConstructors.has(n.callee.name))reject(n,'NewExpression');
-        return {...loc,type:'Construct',callee:n.callee.name,args:n.arguments.map(expr)};
+        return {...loc,type:'Construct',callee:expr(n.callee),args:n.arguments.map(expr)};
       case 'CallExpression':
         if(n.optional || n.arguments.filter(a=>a.type==='SpreadElement').length>4)
           reject(n,'spread/optional call');
@@ -227,7 +225,7 @@ export function parseTraining(source) {
           if(!p.computed&&key===null)reject(p,'object property key');
           const kind=key==='__proto__'&&!p.computed&&!p.shorthand&&!p.method&&p.kind==='init'
             ?'prototype':p.kind;
-          return {...span(p),key,computedKey:p.computed?expr(p.key):null,kind,value:expr(p.value)};
+          return {...span(p),key,computedKey:p.computed?expr(p.key):null,kind,value:{...expr(p.value),...(p.method||p.kind==='get'||p.kind==='set'?{nonConstructible:true}:{})}};
         })};
       case 'AssignmentExpression':
         if(n.operator==='='&&['ArrayPattern','ObjectPattern'].includes(n.left.type))
@@ -377,8 +375,7 @@ export function parseTraining(source) {
           break;
         case 'Member':value(n.object,e);value(n.property,e);break;
         case 'Call':value(n.callee,e);n.args.forEach(x=>value(x.type==='Spread'?x.argument:x,e));break;
-        case 'Construct':if(!has(n.callee,e))reject(n,'unbound constructor');
-          n.args.forEach(x=>value(x,e));break;
+        case 'Construct':value(n.callee,e);n.args.forEach(x=>value(x,e));break;
         case 'DeferredRegExp':case 'OwnedPinnedRegExp':break;
         case 'Array':n.elements.forEach(x=>{if(x)value(x.type==='Spread'?x.argument:x,e);});break;
         case 'Proxy':value(n.target,e);value(n.handler,e);break;

@@ -223,12 +223,12 @@ export function compile(ast) {
         case 'DeferredRegExp':
           emit('UNSUPPORTED_EXPRESSION','RegExp execution requires owned matching semantics',n);break;
         case 'Construct':
-          emit('GET',n.callee,n);
+          if(typeof n.callee==='string')emit('GET',n.callee,n);else expr(n.callee);
           for(const a of n.args)expr(a);
           emit('CONSTRUCT',n.args.length,n);break;
         case 'FunctionExpr':{
           const codeId=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites,n.parameterPatterns,n.generator);
-          emit('MAKE_FUNCTION',{codeId,arrow:n.arrow,async:n.async,...(n.name?{name:n.name}:{})},n);
+          emit('MAKE_FUNCTION',{codeId,arrow:n.arrow,async:n.async,nonConstructible:n.nonConstructible===true,...(n.name?{name:n.name}:{})},n);
           break;
         }
         case 'Yield':expr(n.argument);emit('YIELD',null,n);break;

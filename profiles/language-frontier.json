@@ -191,6 +191,17 @@
       "native": "unsupported",
       "reason": "Symbol-keyed hook identities require the public protocol interface; old ordinary conversion path remains separately qualified",
       "tests": "test/training-symbol-coercion.test.js"
+    },
+    {
+      "id": "ordinary-user-constructors",
+      "domain": "ordinary function constructors with live owned prototype identity, receivers, parameter defaults, inherited methods/accessors, explicit object returns and abrupt completion; nonconstructible functions reject; spread/new.target/prototype reflection outside this slice",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Function prototype state and construction receiver completion need a public construction representation",
+      "tests": "test/training-constructors.test.js"
     }
   ]
 }
