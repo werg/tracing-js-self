@@ -310,15 +310,15 @@ export function parseTraining(source) {
         consequent:stmt(n.consequent),alternate:n.alternate?stmt(n.alternate):null};
       case 'WhileStatement':return {...loc,type:'While',test:expr(n.test),body:stmt(n.body)};
       case 'DoWhileStatement':return {...loc,type:'DoWhile',test:expr(n.test),body:stmt(n.body)};
-      case 'ForOfStatement':{
+      case 'ForInStatement':case 'ForOfStatement':{
         if(n.await || n.left?.type!=='VariableDeclaration' ||
            !['const','let','var'].includes(n.left.kind) ||
            n.left.declarations.length!==1 ||n.left.declarations[0].init)
-          reject(n,'for-of requires one simple declared binding');
+          reject(n,'for-in/of requires one declared binding');
         const target=n.left.declarations[0].id;
         if(!['Identifier','ArrayPattern','ObjectPattern'].includes(target.type))reject(target,'for-of binding form');
         const parsedPattern=target.type==='Identifier'?null:patternTree(target);
-        return {...loc,type:'ForOf',kind:n.left.kind,id:parsedPattern?null:target.name,
+        return {...loc,type:n.type==='ForInStatement'?'ForIn':'ForOf',kind:n.left.kind,id:parsedPattern?null:target.name,
           ...(parsedPattern??{bindings:null}),iterable:expr(n.right),body:stmt(n.body)};
       }
       case 'ForStatement':{
@@ -466,7 +466,7 @@ export function parseTraining(source) {
           break;
         case 'While':case 'DoWhile':
           value(n.test,e);statement(n.body,e);break;
-        case 'ForOf':{
+        case 'ForIn':case 'ForOf':{
           const loopEnv=n.kind==='var'?e:{
             names:new Set(n.bindings?n.bindings.map(x=>x.name):[n.id]),parent:e
           };

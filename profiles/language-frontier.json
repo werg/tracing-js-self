@@ -246,6 +246,17 @@
       "native": "unsupported",
       "reason": "General Symbol hook and constructor prototype state requires the public protocol/construction representation",
       "tests": "test/training-instanceof.test.js"
+    },
+    {
+      "id": "ordinary-for-in-enumeration",
+      "domain": "own/inherited enumerable string keys, integer index ordering, nonenumerable shadowing, symbol exclusion, primitives/string code-unit indices, fresh lexical/var/pattern bindings, labels/finally, stable key/descriptor/prototype graph with live value writes; no iterator hooks/close; exotic and shape mutations explicitly refused",
+      "frontend": "passed",
+      "owned": "passed",
+      "independent": "passed",
+      "detailed": "unsupported",
+      "native": "unsupported",
+      "reason": "Owned enumerator identity and retained key/prototype snapshot require an explicit public enumeration representation",
+      "tests": "test/training-for-in.test.js"
     }
   ]
 }

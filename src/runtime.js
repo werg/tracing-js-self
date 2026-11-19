@@ -46,6 +46,7 @@ const opNames = {
   GET_TEMPLATE_OBJECT:'array.allocate', PROPERTY_KEY:'property.read', CLASS_CONSTRUCTOR_GUARD:'call.enter', CLASS_CREATE:'object.construct', CLASS_INITIALIZER:'property.write', CLASS_FINISH:'call.enter', PRIVATE_GET:'property.read', PRIVATE_GET_METHOD:'property.read', PRIVATE_HAS:'primitive.binary', PRIVATE_DEFINE:'property.write', PRIVATE_SET:'property.write', PRIVATE_UPDATE:'property.update',
   DELEGATE_YIELD:'continuation.yield', DELEGATE_RESUME_KIND:'completion.pending.read', DELEGATE_RESUME_VALUE:'completion.pending.read', ITERATOR_THROW_MISSING:'call.enter',
   INSTANCEOF_DEFAULT:'primitive.binary', INSTANCEOF_RESULT:'primitive.binary',
+  FOR_IN_CREATE:'object.allocate', FOR_IN_NEXT:'property.read',
   GET_PROP:'property.read', GET_METHOD:'property.read', SPREAD:'property.read', PUT_PROP:'property.write', DEFINE_LITERAL_PROP:'property.write', COPY_KEYS:'array.allocate', HAS_ENUMERABLE_OWN:'property.read', REQUIRE_COERCIBLE:'property.read', REQUIRE_OBJECT:'property.read', ITERATOR_ARRAY_GUARD:'property.read', PENDING_THROW:'completion.pending.read', APPEND_ARRAY:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
   LEAVE_SCOPE:'environment.leave', CLONE_LOOP_ENV:'environment.iteration', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
   TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
@@ -178,6 +179,28 @@ function ownPropertyKeys(obj){
 function enumerableOwn(obj,key){
   return Object.hasOwn(obj.accessors??{},key)?obj.accessors[key].enumerable:
     Object.hasOwn(obj.properties??{},key)&&obj.dataAttributes?.[key]?.enumerable!==false&&!(obj.kind==='array'&&key==='length');
+}
+function enumerationSnapshot(heap,source){
+  const chain=[],keys=[],visited=new Set(),objects=new Set();
+  if(source[0]==='str')return {chain,keys:Array.from({length:source[1].length},(_,i)=>String(i))};
+  if(['undefined','null','bool','num','bigint','symbol'].includes(source[0]))return {chain,keys};
+  if(source[0]!=='ref')throw new TypeError('For-in requires owned ordinary storage');
+  let object=heap[source[1]];
+  while(object){
+    if(!['object','array','function'].includes(object.kind))throw new TypeError('For-in exotic enumeration is outside the ordinary profile');
+    if(objects.has(object.id)||chain.length===128)throw new TypeError('For-in prototype chain exceeds owned budget');objects.add(object.id);
+    const own=ownPropertyKeys(object).filter(key=>!isSymbolPropertyKey(key)).map(key=>[key,!!enumerableOwn(object,key)]);
+    if(object.kind==='function')for(const key of ['name','length','prototype','caller','arguments'])
+      if(!own.some(row=>row[0]===key))own.push([key,false]);
+    const prototype=objectPrototype(object);chain.push({id:object.id,prototype,keys:own});
+    for(const [key,enumerable] of own)if(!visited.has(key)){
+      visited.add(key);if(enumerable)keys.push(propertyKeyValue(key)[1]);
+      if(visited.size>10000)throw new RangeError('For-in key budget exceeded');
+    }
+    if(prototype===null||['Object.prototype','Array.prototype'].includes(prototype))break;
+    object=heap[prototype];if(!object)throw new Error('For-in prototype identity missing');
+  }
+  return {chain,keys};
 }
 function putOwn(obj,key,value,eventId,{literal=false}={}) {
   if(!literal&&obj.dataAttributes?.[key]?.writable===false)guestFault('TypeError','Cannot assign to read only property');
@@ -951,6 +974,21 @@ export class Runtime {
       const operands=(...t)=>({operands:t.map(x=>x.value),origins:t.map(x=>x.origin)});
       try { switch(op){
         case 'CONST':return result(arg.value);
+        case 'FOR_IN_CREATE':{
+          const source=pop(),snapshot=enumerationSnapshot(s.heap,source.value),id=this.next(s,'obj');
+          s.heap[id]={id,kind:'enumerator',source:source.value,...snapshot,nextIndex:0,done:false,
+            properties:{},propertyVersions:{},shapeVersion:0,version:0};
+          return {...operands(source),...result(['ref',id])};
+        }
+        case 'FOR_IN_NEXT':{
+          const value=pop(),cursor=value.value[0]==='ref'?s.heap[value.value[1]]:null;
+          if(cursor?.kind!=='enumerator')throw new Error('For-in cursor identity missing');
+          if(!equal(enumerationSnapshot(s.heap,cursor.source).chain,cursor.chain))
+            throw new TypeError('For-in key descriptor or prototype mutation outside the stable enumeration profile');
+          const key=cursor.keys[cursor.nextIndex];
+          cursor.done=cursor.nextIndex>=cursor.keys.length;if(!cursor.done)cursor.nextIndex++;
+          return {...operands(value),...result(this.iteratorResult(s,cursor.done?U:['str',key],cursor.done,eventId))};
+        }
         case 'INSTANCEOF_RESULT':{const value=pop();return {...operands(value),...result(['bool',truthy(value.value)])};}
         case 'INSTANCEOF_DEFAULT':{
           const constructor=pop(),value=pop(),target=constructor.value[0]==='ref'?s.heap[constructor.value[1]]:null;
