@@ -141,5 +141,32 @@ private field with unchanged completion receipts is rejected by the independent
 metadata comparison. This observer is an evidence component; full source/native
 qualification still requires the source adapter and registered public machine.
 
+## Qualified source adapter
+
+`createConstructionSourceAdapterV8` lowers class declarations, actual function
+name/length descriptors, method home objects, initializer ownership and private
+identities to the shared public component. Its constructor operations retain
+the original arguments and actual newTarget through base field initialization,
+derived super calls, derived field initialization and body completion. Every
+added heap field and retained frame field is compared against public state;
+private brands, values and versions are checked after each mutation.
+
+The source tests independently execute original source and operation, branch,
+completion and metadata instrumentation. They then select the emitted public
+records and restore checkpoints during constructor continuations. Qualified
+cases cover base and derived fields, explicit and default constructors,
+primitive-return receiver substitution, newTarget inheritance, private methods,
+same-spelled distinct private brands, static private fields, Symbol method keys,
+and class getter/setter calls. Unused class declarations still receive metadata
+evidence. This is local source/public qualification; native consumer admission
+is a separate required gate.
+
+The initial adapter explicitly refuses private accessors and private update
+conversion, constructor arrows, abrupt initializers, ordinary/exotic
+constructors, uninitialized closure captures and super-property references.
+These refusals do not remove the corresponding owned runtime support. They
+identify the additional public continuation or source proof required before
+the cases can receive full source/native admission.
+
 Pinned semantics: [ECMAScript 2026 class evaluation](https://tc39.es/ecma262/2026/multipage/ecmascript-language-functions-and-classes.html#sec-runtime-semantics-classdefinitionevaluation)
 and [private element operations](https://tc39.es/ecma262/2026/multipage/abstract-operations.html#sec-privatefieldadd).
