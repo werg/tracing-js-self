@@ -53,7 +53,7 @@ export const SEMANTIC_EQUIVALENCE_NEGATIVES=Object.freeze([
   {id:'loop-extra-index-update',source:source('function run(xs){let s=0;for(let i=0;i<xs.length;i++){s+=xs[i];i++;}return s;}'),expect:'refused'},
   {id:'loop-reset-accumulator',source:source('function run(xs){let s=0;for(const x of xs){s=0;s+=x;}return s;}'),expect:'refused'},
   {id:'loop-wrong-accumulator',source:source('function run(xs){let s=0;let z=0;for(const x of xs){s=z+x;}return s;}'),expect:'refused'},
-  {id:'reduce-not-certified',source:source('function run(xs){return xs.reduce((a,b)=>a+b,0);}'),expect:'refused'},
+  {id:'reduce-without-initial',source:source('function run(xs){return xs.reduce((a,b)=>a+b);}'),expect:'refused'},
   {id:'returned-private-object',source:source('function run(){const box={n:2};box.n++;return box;}'),expect:'refused'},
   {id:'input-object-write',source:source('function run(box){box.n++;return box.n;}'),expect:'refused'},
   {id:'effect-exposed-object',source:source('function run(){const box={n:2};host.store("box",box);return box.n;}'),expect:'refused'},
