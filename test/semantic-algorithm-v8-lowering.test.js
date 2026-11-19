@@ -152,6 +152,25 @@ test('v8 search loops and multiple private accumulators preserve ordered results
   for(const body of bodies)for(const xs of [[],[2,3,4],[-2,0,3]])check(body,[xs],{owned:xs[0]===2});
 });
 
+test('v8 unused or overwritten scalar folds retain throwing iteration work',()=>{
+  for(const body of [
+    'function run(xs){let s=0;for(const x of xs)s+=null.x;return 1;}',
+    'function run(xs){let s=0;for(const x of xs){null.x;s+=x;}return 1;}',
+    'function run(xs){let s=0;for(const x of xs)s+=null.x;s=1;return s;}',
+    'function run(xs){let s=0;for(let i=0;i<xs.length;i++)s+=null.x;return 1;}',
+    'function run(xs){let s=0;let i=0;while(i<xs.length){null.x;s+=xs[i];i++;}return 1;}'
+  ]){
+    check(body,[[]]);
+    assert.throws(()=>vm.runInNewContext(source(body)+';run([1])',{}, {timeout:1000}),error=>error.name==='TypeError');
+    const lowered=lowerJavaScriptV8({source:source(body),entry:'run'});
+    assert.throws(()=>evaluateAlgorithmV8(lowered.core,null,{inputGraph:graph([[1]])}),/ordinary object projection requires identity/,body);
+  }
+  const body='function run(){let s=0;for(const x of [null.x])s+=x;return 1;}';
+  assert.throws(()=>vm.runInNewContext(source(body)+';run()',{}, {timeout:1000}),error=>error.name==='TypeError');
+  const lowered=lowerJavaScriptV8({source:source(body),entry:'run'});
+  assert.throws(()=>evaluateAlgorithmV8(lowered.core,[]),/ordinary object projection requires identity/);
+});
+
 test('v8 source recognition refuses shared mutation, receivers, holes and unsupported completion',()=>{
   for(const body of [
     'function run(xs){let count=0;return xs.map(x=>{count++;return x;});}',

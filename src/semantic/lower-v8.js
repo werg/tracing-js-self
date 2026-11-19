@@ -507,7 +507,9 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
     for(const [binding,value] of before)binding.value=value;
     const term={op:'traverse',mode:'fold',input:input.term,initial,
       callback:{params,body:wrap(loopCtx,result)},profile:'dense-primitive-array/1',order:'ascending'};
-    const folded=multi?pin({term,type:'object'},ctx,node):{term,type:changed[0].value.type,total:true};
+    // Even an unobserved accumulator can execute throwing callback work.
+    // Retain the traversal in source order before later overwrites or returns.
+    const folded=pin({term,type:multi?'object':changed[0].value.type},ctx,node);
     for(const [i,binding] of changed.entries())binding.value=multi?{term:{op:'project',object:folded.term,key:'s'+i},type:before.get(binding).type}:folded;
     if(node.type==='WhileStatement')scope.resolve(indexName).value={term:{op:'project',object:input.term,key:'length'},type:'number',total:true};
     rule('ordered-structured-fold',node,['Ascending dense numeric input; finite bounds.','Checked step and explicit initial state.','One or several private accumulators; state joins remain lazy.']);
