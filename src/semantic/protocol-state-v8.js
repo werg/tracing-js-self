@@ -220,8 +220,9 @@ function apply(controller,record){
     require(adapter.assertNext(controller,record,PROTOCOL_MACHINE_API_V8)===true,'extension continuation guard: '+adapter.id);
   if(pending&&!controller.stack.includes(pending.child))require(record.kind==='property.finish','property call completion must be consumed first');
   require(controller.completion===null||controller.completion===undefined,'record after terminal completion');
-  require(controller.stack.length||record.kind==='end','protocol work requires an active invocation');
   const adapter=PROTOCOL_MACHINE_ADAPTERS_V8.find(adapter=>Object.hasOwn(adapter.recordFields,record.kind));
+  require(controller.stack.length||record.kind==='end'||adapter?.allowsWithoutStack?.(controller,record)===true,
+    'protocol work requires an active invocation');
   if(adapter){require(adapter.applyRecord(controller,record,PROTOCOL_MACHINE_API_V8)===true,'extension did not apply its declared record');return;}
   if(record.kind==='symbol.create'||record.kind==='symbol.for'){
     if(record.kind==='symbol.for'){
@@ -323,7 +324,8 @@ function apply(controller,record){
 export function applyProtocolRecordV8(controller,record){
   validateProtocolRecordV8(record);
   if(!controller.protocol)require(controller.stack.length===1,'first protocol transition cannot inherit an unmodeled nested call scope');
-  const fields=['heap','locals','receiver','captureAliases','stack','frameFunctions','pending','lastReturn','completion','protocol'];
+  const fields=['heap','locals','receiver','captureAliases','stack','frameFunctions','pending','lastReturn','completion','protocol',
+    'jobs','ready','scheduler','continuations'];
   const staged=Object.assign(Object.create(Object.getPrototypeOf(controller)),controller);
   for(const field of fields)staged[field]=copy(field==='protocol'?controller.protocol??createProtocolStateV8():controller[field]);
   require(staged.protocol.sequence<PROTOCOL_V8_LIMITS.steps,'protocol step bound');
