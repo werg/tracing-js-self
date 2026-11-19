@@ -27,8 +27,8 @@ Fourteen interaction groups include getters with computed destructuring,
 iterator exits with cleanup, generator delegation, asynchronous captures,
 private class state with conversion, module live cells and top-level await,
 shared typed views, RegExp replacement state, and closure aliases. Two module
-interactions require a module adapter and are reported as untested by the
-strict script runner. They remain visible in the declared interaction count.
+interactions run through the original-module-graph adapter when v8 is selected.
+The v7 run records them as unsupported. They remain visible in both denominators.
 
 A frozen real-source slice selects 27 functions from the existing 78-function
 pinned utility inventory: eight Lodash entries, eight VS Code array entries,
@@ -80,6 +80,24 @@ accepts v8 only with its actual source verifier and declared v8 contracts. Mixed
 coverage reads the v8 producer's certified `sidecar.regionCoverage`, including
 compact/detailed region and record counts. It never manufactures v8 coverage by
 changing a version label. Native and model stages require their own evidence.
+
+The native qualification runner uses the same frozen population:
+
+```sh
+node tools/qualify-semantic-v8.mjs --out ../v8-native-interoperability \
+  --population interoperability --megatoken CONSUMER --tokenizer TOKENIZER_JSON \
+  --python PYTHON --native-policy POLICY_JSON
+node tools/qualify-semantic-v8.mjs --out ../v8-native-all \
+  --population all --inputs all --megatoken CONSUMER --tokenizer TOKENIZER_JSON \
+  --python PYTHON --native-policy POLICY_JSON
+```
+
+`interoperability` includes the original three mixed examples and every source
+golden in `test/fixtures/semantic-protocol-region-v8.json`. It is not an alias
+for three examples. The runner saves exact graph-encoded input tasks before
+execution and appends completed attempts, including refusals. Native admission
+rechecks source correspondence in the exact clean producer checkout and checks
+that the returned receipt binds that source, public execution and every context.
 
 ## Notation and comprehension
 
@@ -140,6 +158,16 @@ The meter requires the existing exact tokenizer policy and lossless round-trip
 checks. Without that adapter, exact bytes are retained and all token fields
 are null. Native framing, fragmentation, caching and serving latency have their
 own untested receipt; flat JSON or prompt counts do not stand in for them.
+
+To meter both v7 and v8 with the same real tokenizer, set `MEGATOKEN_ROOT`,
+`MEGATOKEN_TOKENIZER_JSON`, and `MEGATOKEN_PYTHON`, and set
+`SEMANTIC_V8_TOKENIZER_POLICY` to a JSON file containing `consumerRevision`,
+`tokenizerIdentity`, and `tokenizerSha256`. Add
+`--tokenizer-module tools/semantic-v8-tokenizer-adapter.mjs` to the benchmark
+command for either trace version. This adapter supplies both serializer
+interfaces; the tokenizer and exact byte checks are identical. The separate
+`serving-costs.json` reports actual measured token totals even though the
+source-only capability ladder itself makes no token measurement claim.
 
 The actual v7 selector also records submitted prompt tokens, peak context,
 generation/verification time, failed attempts and retries. A runtime failure

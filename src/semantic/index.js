@@ -31,8 +31,8 @@ export {auditAlgorithmCosts,compareSemanticRepresentations} from './evaluation.j
 export {createAlgorithmTokenizer,validateAlgorithmTokenizerEvidence} from './tokenizer.js';
 export {publicComprehensionTasks,scoreComprehensionResponses,validateComprehensionTaskset,
   comprehensionTasksetDigest} from './comprehension.js';
-// Explicit v8 candidate; historical v7 admission and production defaults retain
-// their original identities until the coordinated promotion gates pass.
+// Explicit pre-release v8 candidate. Existing command defaults are separate;
+// these format definitions may evolve in place with their consumer and fixtures.
 export {ALGORITHM_V8_SCHEMA,ALGORITHM_V8_PROFILE,ALGORITHM_V8_LIMITS,ALGORITHM_V8_OPERATION_METADATA,
   validateAlgorithmV8,validateTermV8,evaluateAlgorithmV8,evaluateTermV8,checkAlgorithmV8Claims} from './algorithm-v8.js';
 export {lowerJavaScriptV8,tryLowerJavaScriptV8} from './lower-v8.js';
@@ -70,3 +70,7 @@ export {ITERATOR_PROFILE_V8,ITERATOR_RECORD_FIELDS,ITERATOR_HEAP_FIELDS} from '.
 export {CONSTRUCTION_STATE_V8_SCHEMA,CONSTRUCTION_RECORD_FIELDS,CONSTRUCTION_STATE_V8_FIELDS,
   CALLABLE_STATE_V8_FIELDS,CONSTRUCTION_FRAME_V8_FIELDS} from './protocol-construction-v8.js';
 export {CONSTRUCTION_SOURCE_PROFILE_V8} from './protocol-construction-source-v8.js';
+export {NUMBER_STATE_V8_SCHEMA,NUMBER_RECORD_FIELDS,NUMBER_OPERATION_FIELDS} from './protocol-number-v8.js';
+export {GENERATOR_PROFILE_V8,GENERATOR_RECORD_FIELDS,GENERATOR_HEAP_FIELDS} from './protocol-generator-v8.js';
+export {PROMISE_JOIN_PROFILE_V8,PROMISE_JOIN_STATE_V8,PROMISE_JOIN_RECORD_FIELDS} from './protocol-promise-join-v8.js';
+export {PROXY_PROFILE_V8,PROXY_STATE_V8_SCHEMA,PROXY_RECORD_FIELDS,PROXY_HEAP_FIELDS} from './protocol-proxy-v8.js';

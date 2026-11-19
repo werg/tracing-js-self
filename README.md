@@ -4,12 +4,55 @@ An **experimental, owned-machine JavaScript semantic tracing runtime**, bootstra
 
 This is a working **bounded prototype**, **not** a complete JavaScript interpreter or complete Node/browser runtime. Unsupported language features fail explicitly rather than running guest JavaScript outside the tracer. See [current semantic-execution scope](docs/SEMANTIC_REASONING_TRACE.md) and [coverage ledger](coverage/required.json).
 
+## Current pre-release candidate
+
+This repository and its companion, `werg/megatoken`, are pre-release. APIs and
+saved formats change in place; affected producers, consumers and fixtures are
+updated together. Existing numeric labels identify implementation paths and
+do not promise compatibility. See the [development instructions](AGENTS.md).
+
+The [compositional v8 candidate](docs/SEMANTIC_REGIONS_V8.md) combines compact
+calculations with checked property access, calls, cleanup and suspension in one
+shared state. Its bounded source profiles cover Symbols and ordinary properties,
+shared binary views, construction and private fields, Number conversion,
+builtin iterators, synchronous generators and delegation, Promise joins, and
+ordinary Proxy get/set traps. Each profile documents its supported boundaries;
+the candidate does not claim unrestricted ECMAScript coverage.
+
+```js
+import {verifyRegionTrainingCase} from 'tracing-js-self/semantic';
+
+const checked = await verifyRegionTrainingCase({
+  id: 'double-elements', family: 'ordered-map', entry: 'run',
+  source: '"use strict";function run(xs){return xs.map(x=>x*2);}',
+  args: [[2, 3, 4]], fixture: {calls: []}
+});
+console.log(checked.status, checked.exported?.sidecar.regionCoverage);
+```
+
+```sh
+npm run test:semantic-v8
+npm run contracts:check
+node tools/language-expansion-benchmark.mjs --out ../v8-coverage \
+  --mode coverage --population all --inputs all --trace-version 8
+node tools/qualify-semantic-v8.mjs --out ../v8-source-check \
+  --population interoperability --prepare-only
+```
+
+The interoperability command includes every declared protocol source example.
+The full benchmark retains all 665 attempts, including refusals; the original
+11-case gallery is a separate population. [Evaluation instructions](docs/LANGUAGE_EXPANSION_EVALUATION.md)
+cover exact token measurements and independent native admission. Source checks,
+native replay and token accounting do not establish model comprehension or
+learned execution; those measurements remain separate. The existing default
+command path is v6, and v8 is selected explicitly through these APIs and tools.
+
 The [algorithm representation refactor](docs/SEMANTIC_ALGORITHM_IMPLEMENTATION.md)
 builds on the v6 baseline: several certified source forms should share a typed
 core that states the computation and relevant effects. Its
 [semantic and observation contract](docs/SEMANTIC_ALGORITHM_CONTRACT.md)
 defines the bounded equivalences, causal boundaries, and qualification gates.
-The ledger separates completed work from release evidence; historical artifacts
+The ledger separates completed work from validation evidence; historical artifacts
 keep their original versions.
 
 The current v6 pipeline includes bounded synchronous and asynchronous
