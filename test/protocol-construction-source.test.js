@@ -85,10 +85,16 @@ test('primitive constructor returns keep the receiver and unused classes keep in
   }
 });
 
+test('private prefix and postfix updates convert scalar values and verify the actual stored result',async()=>{
+  for(const source of [
+    '"use strict";function run(){class C{#x="2";m(){const old=this.#x++;return old+ ++this.#x;}}const o=new C();return o.m();}',
+    '"use strict";function run(){class C{#x=4n;m(){const old=this.#x--;return old+ --this.#x;}}const o=new C();return o.m();}'
+  ]){const {compiled}=await checked(source);replay(compiled);assert.equal(compiled.claims.filter(row=>row.record.kind==='private.set').length,2);}
+});
+
 test('unmodeled class continuations remain explicit source refusals even with a scalar result',()=>{
   for(const [source,reason]of [
     ['"use strict";function run(){class C{get #x(){return 1;}}return 3;}',/private accessor/i],
-    ['"use strict";function run(){class C{#x=1;m(){return this.#x++;}}const o=new C();return o.m();}',/private update conversion/],
     ['"use strict";function run(){class C{constructor(){this.f=()=>new.target;}}const o=new C();return 3;}',/heap kind or metadata|lexical constructor/],
     ['"use strict";function run(){class A{m(){return 1;}}class B extends A{m(){return super.m();}}const o=new B();return o.m();}',/super property references/],
     ['"use strict";function run(){class C{static{throw 1;}}return 3;}',/abrupt initializer/],

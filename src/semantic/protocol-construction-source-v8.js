@@ -1,6 +1,7 @@
 // Teacher-only lowering of owned class transitions to explicit public records.
 // The serving machine receives no owned frames, bytecode, patches or journal.
 import {propertyKeyValue,stringPropertyKey,symbolPropertyKey} from '../property-keys.js';
+import {decode,encode} from '../values.js';
 import {constructionSourceInventoryV8} from './protocol-construction-source-inventory-v8.js';
 import {describeConstructionObjectV8} from './protocol-construction-v8.js';
 
@@ -191,7 +192,18 @@ export function createConstructionSourceAdapterV8({bundle,source}){
         else if(op==='PRIVATE_HAS')emit(ctx,{kind:'private.has',object:object[1],privateId,result:event.result[1]},event);
         else if(op==='PRIVATE_GET'||op==='PRIVATE_GET_METHOD')emit(ctx,{kind:'private.get',object:object[1],privateId,
           result:ctx.tag(event.result[0]==='method'?event.result[1]:event.result,event)},event);
-        else ctx.refuse('construction: private update conversion needs its public operation');
+        else{
+          const old=ctx.state.heap[object[1]]?.privateSlots?.[privateId]?.value,
+            next=after(ctx,event,'heap',object[1])?.privateSlots?.[privateId]?.value;
+          require(ctx,old&&['undefined','null','bool','str','num','bigint'].includes(old[0]),'private update object conversion requires its public operation');
+          emit(ctx,{kind:'private.get',object:object[1],privateId,result:ctx.tag(old,event)},event);
+          const numeric=old[0]==='bigint'?old:encode(Number(decode(old)));
+          if(old[0]!=='bigint')emit(ctx,{kind:'compute',expr:{op:'unary',operator:'+',arg:literal(old)},result:numeric,bind:null},event);
+          emit(ctx,{kind:'compute',expr:{op:'binary',operator:inst.arg.operator==='++'?'+':'-',left:literal(numeric),
+            right:literal(old[0]==='bigint'?['bigint','1']:['num',1])},result:ctx.tag(next,event),bind:null},event);
+          emit(ctx,{kind:'private.set',object:object[1],privateId,value:ctx.tag(next,event)},event);
+          require(ctx,ctx.eq(event.result,inst.arg.prefix?next:numeric),'private update expression completion');
+        }
       }else if(op==='DEFINE_LITERAL_PROP'){
         const object=event.operands[0],node=after(ctx,event,'heap',object[1]);
         require(ctx,node.kind!=='array','ArraySetLength descriptor protocol is separate');
