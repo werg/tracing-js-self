@@ -3,7 +3,7 @@
 import {isDeepStrictEqual} from 'node:util';
 import {validateGraph} from '../training/format.js';
 import {prepareHostRequest,hostOperation} from '../host/operations.js';
-import {assertAlgorithmValue,stableAlgorithmJSON} from './ir.js';
+import {assertAlgorithmFields,assertAlgorithmDataArray,assertAlgorithmValue,stableAlgorithmJSON} from './ir.js';
 import {validateAlgorithmInputs,evaluateTerm} from './operations.js';
 import {encodeAlgorithmRecord,decodeAlgorithmRecord} from './trace-codec.js';
 import {validateAlgorithmProgram,hashAlgorithmData,ALGORITHM_CONTINUATION_VERSION,
@@ -177,11 +177,15 @@ export class AlgorithmController {
     return {...body,integrity:hashAlgorithmData(body)};
   }
   static restore(packet){
+    assertAlgorithmFields(packet,['schema','program','inputGraph','capabilities','invocationId','sessionId',
+      'history','state','integrity'],'algorithm continuation');
     const {integrity,...body}=packet??{};
     if(body.schema!==ALGORITHM_CONTINUATION_VERSION||hashAlgorithmData(body)!==integrity)
       fail('Algorithm continuation version or integrity mismatch');
     const controller=new AlgorithmController(body);
+    assertAlgorithmDataArray(body.history,'continuation history');
     for(const row of body.history){
+      assertAlgorithmFields(row,['mode','line'],'continuation history row');
       if(row.mode==='generated')controller.commit(row.line);
       else if(row.mode==='observed')controller.observe(row.line);
       else fail('Invalid continuation authority');

@@ -3,6 +3,8 @@
 import {isDeepStrictEqual} from 'node:util';
 import {encodeNativeGraph} from '../host/graph-codec.js';
 import {decodeHostPayload} from '../host/materialize.js';
+import {prepareHostRequest} from '../host/operations.js';
+import {assertAlgorithmFields,assertAlgorithmDataArray} from './ir.js';
 import {encodeAlgorithmScalar} from './operations.js';
 import {AlgorithmController} from './controller.js';
 import {defineAlgorithmProgram,hashAlgorithmData,ALGORITHM_EXECUTION_VERSION} from './program.js';
@@ -115,6 +117,7 @@ export class AlgorithmExecutionHarness {
     return AlgorithmExecutionHarness.restore(JSON.parse(bytes.toString('utf8')),{journal});
   }
   static restore(packet,{journal=null}={}){
+    assertAlgorithmFields(packet,['schema','controller','timeline','intents','integrity'],'algorithm checkpoint');
     const {integrity,...body}=packet??{};
     if(body.schema!==checkpointVersion||hashAlgorithmData(body)!==integrity)
       reject('Algorithm checkpoint version or integrity mismatch');
@@ -124,35 +127,72 @@ export class AlgorithmExecutionHarness {
       invocationId:controller.invocationId,journal});
     harness.controller=controller;
     if(!Array.isArray(body.timeline)||!Array.isArray(body.intents))reject('Incomplete algorithm checkpoint');
+    assertAlgorithmDataArray(body.timeline,'checkpoint timeline');
+    assertAlgorithmDataArray(body.intents,'checkpoint intents');
+    for(const pair of body.intents){
+      assertAlgorithmDataArray(pair,'checkpoint intent pair');
+      if(pair.length!==2)reject('Checkpoint intent pair arity');
+    }
+    if(!isDeepStrictEqual(body.timeline.slice(0,2),harness.timeline))
+      reject('Checkpoint program or input authority changed');
     // Rebuild the transport lifecycle from the checked transcript; a checksum
     // alone cannot certify selected requests or settled observations.
-    const records=body.timeline.filter(row=>row.kind==='semantic'||row.kind==='observation')
-      .map(row=>({mode:row.mode,line:row.line}));
-    if(!isDeepStrictEqual(records,controller.history))reject('Checkpoint timeline differs from checked claims');
-    const requests=new Map();
-    for(const row of controller.history){
-      const record=decodeAlgorithmRecord(row.line);
-      if(record.kind==='request')requests.set(record.id,{record,line:row.line,observed:false});
-      if(record.kind==='observe')requests.get(record.request).observed=record;
+    const records=[],requests=new Map();
+    for(const row of body.timeline.slice(2)){
+      if(row.kind==='semantic'){
+        assertAlgorithmFields(row,['mode','kind','line'],'generated timeline row');
+        if(row.mode!=='generated')reject('Checkpoint generated authority changed');
+        const record=decodeAlgorithmRecord(row.line,{role:'generated'});
+        records.push({mode:row.mode,line:row.line});
+        if(record.kind==='request'){
+          if(requests.has(record.id))reject('Duplicate selected request');
+          requests.set(record.id,{record,line:row.line,observed:false,dispatched:false,reconciliation:null});
+        }
+      }else if(row.kind==='dispatch'){
+        assertAlgorithmFields(row,['mode','kind','request','key','attempt'],'dispatch timeline row');
+        const request=requests.get(row.request);
+        if(row.mode!=='observed'||!request||request.observed||request.dispatched||
+          row.key!==controller.invocationId+'/'+row.request||row.attempt!==1)
+          reject('Checkpoint dispatch order, multiplicity or identity changed');
+        request.dispatched=true;
+      }else if(row.kind==='observation'){
+        assertAlgorithmFields(row,['mode','kind','line',...(Object.hasOwn(row,'reconciliation')?['reconciliation']:[])],
+          'observation timeline row');
+        const record=decodeAlgorithmRecord(row.line,{role:'observed'}),request=requests.get(record.request);
+        if(row.mode!=='observed'||!request||request.observed||Object.hasOwn(row,'reconciliation')&&
+          (typeof row.reconciliation!=='string'||!row.reconciliation))
+          reject('Checkpoint observation correlation or authority changed');
+        request.observed=record;request.reconciliation=row.reconciliation??null;
+        records.push({mode:row.mode,line:row.line});
+      }else reject('Unknown checkpoint timeline row');
     }
+    if(!isDeepStrictEqual(records,controller.history))reject('Checkpoint timeline differs from checked claims');
     if(body.intents.length!==requests.size||new Set(body.intents.map(([id])=>id)).size!==requests.size)
       reject('Checkpoint request identities changed');
     for(const [id,intent] of body.intents){
       const selected=requests.get(id),record=selected?.record;
+      assertAlgorithmFields(intent,['id','boundary','operation','arguments','payload','codec','payloadDigest',
+        'key','status','attempt','witness',...(intent.status==='settled'?['observation']:[]),
+        ...(selected?.reconciliation?['reconciliation']:[])],'checkpoint intent');
       if(!record||intent.id!==id||intent.operation!==record.operation||intent.boundary!==record.boundary||
         !isDeepStrictEqual(intent.arguments,record.arguments)||intent.witness!==selected.line||
         intent.key!==controller.invocationId+'/'+id||intent.attempt!==1||
         hashAlgorithmData(intent.payload)!==intent.payloadDigest||
         !['selected','committing','dispatched','uncertain','settled'].includes(intent.status)||
         Boolean(selected.observed)!==(intent.status==='settled')||
-        selected.observed&&!isDeepStrictEqual(selected.observed,intent.observation))
+        selected.observed&&!isDeepStrictEqual(selected.observed,intent.observation)||
+        selected.reconciliation!==(intent.reconciliation??null)||
+        selected.dispatched&&['selected','committing'].includes(intent.status)||
+        !selected.dispatched&&intent.status==='dispatched')
         reject('Checkpoint intent differs from certified request');
       // Independently derive transport from committed arguments again.
-      const args=decodeHostPayload(intent.payload,intent.codec);
-      if(!isDeepStrictEqual(args.map(encodeAlgorithmScalar),record.arguments))
+      const transport=prepareHostRequest({},record.operation,record.arguments);
+      if(intent.codec!==transport.codec||intent.payload!==transport.payload||
+        intent.payloadDigest!==hashAlgorithmData(transport.payload))
         reject('Checkpoint transport differs from selected arguments');
       const restored=copy(intent);
-      if(['committing','dispatched'].includes(restored.status))restored.status='uncertain';
+      if(['committing','dispatched'].includes(restored.status)||restored.status==='selected'&&!journal)
+        restored.status='uncertain';
       harness.intents.set(id,restored);
     }
     harness.timeline=copy(body.timeline);

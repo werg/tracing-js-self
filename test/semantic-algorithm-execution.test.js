@@ -8,6 +8,7 @@ import {defineAlgorithmProgram,validateAlgorithmProgram,hashAlgorithmData} from 
 import {evaluateTerm} from '../src/semantic/operations.js';
 import {decodeAlgorithmRecord,encodeAlgorithmRecord} from '../src/semantic/trace-codec.js';
 import {SelectedIntentJournal} from '../src/training/intent-journal.js';
+import {encodeNativeGraph} from '../src/host/graph-codec.js';
 
 const source='"use strict";async function run(){const current=await host.readAsync("counter");const next=current+1;host.store("counter",next);return next;}';
 const capabilities=['demo.readAsync','demo.store'];
@@ -218,6 +219,36 @@ test('a durable intent makes an older selected checkpoint uncertain and requires
   selectNext(restored);assert.equal(calls,2);
 });
 
+test('persisted checkpoints restore selected work and preserve settled dispatch deduplication',async t=>{
+  const directory=await mkdtemp(join(process.cwd(),'.algorithm-checkpoints-'));
+  t.after(()=>rm(directory,{recursive:true,force:true}));
+  const journal=new SelectedIntentJournal({directory}),harness=fresh({journal,sessionId:'persisted1'});
+  selectNext(harness);
+  const selectedReceipt=await harness.persistCheckpoint();
+  assert.match(selectedReceipt.key,/^[a-f0-9]{64}$/);
+  assert.equal(selectedReceipt.checkpointSchema,'semantic-algorithm-checkpoint/1');
+  assert(selectedReceipt.bytes>0);
+  let calls=0;
+  const selected=await AlgorithmExecutionHarness.restoreFromJournal({journal,key:selectedReceipt.key});
+  assert.equal(selected.intents.get('r0').status,'selected');
+  assert.deepEqual(selected.controller.pending,harness.controller.pending);
+  assert.equal(calls,0,'restoring durable state does not invoke an adapter');
+  await selected.dispatch('r0',async args=>{calls++;assert.deepEqual(args,['counter']);return 7;});
+  const settledReceipt=await selected.persistCheckpoint();
+  assert.notEqual(settledReceipt.key,selectedReceipt.key);
+  const settled=await AlgorithmExecutionHarness.restoreFromJournal({journal,key:settledReceipt.key});
+  await settled.dispatch('r0',async()=>{calls++;return 99;});
+  assert.equal(calls,1,'a settled result is returned from durable state without another read');
+  selectNext(settled);selectNext(settled);
+  await settled.dispatch('r1',async args=>{calls++;assert.deepEqual(args,['counter',8]);});
+  selectNext(settled);
+  const completedReceipt=await settled.persistCheckpoint();
+  const completed=await AlgorithmExecutionHarness.restoreFromJournal({journal,key:completedReceipt.key});
+  assert.deepEqual(completed.controller.completion,{kind:'return',value:['num',8]});
+  await completed.dispatch('r1',async()=>{calls++;});
+  assert.equal(calls,2,'the settled store is not duplicated after a complete durable restore');
+});
+
 test('an in-flight checkpoint restores as uncertain and cannot silently redispatch',async()=>{
   const harness=fresh();selectNext(harness);
   let complete,started;
@@ -230,6 +261,63 @@ test('an in-flight checkpoint restores as uncertain and cannot silently redispat
   complete(7);await pending;
   restored.deliver(observation(restored,['num',7]),{evidence:'observed-original-completion'});
   assert.deepEqual(restored.controller.values.get('v0'),['num',7]);
+});
+
+test('a selected checkpoint without durable dispatch evidence restores conservatively as uncertain',async()=>{
+  const harness=fresh();selectNext(harness);
+  const restored=AlgorithmExecutionHarness.restore(harness.checkpoint());let calls=0;
+  assert.equal(restored.intents.get('r0').status,'uncertain');
+  await assert.rejects(()=>restored.dispatch('r0',async()=>{calls++;return 7;}),/uncertain/);
+  assert.equal(calls,0);
+  assert.throws(()=>restored.deliver(observation(restored,['num',7])),/reconciliation evidence/);
+});
+
+test('checkpoint lifecycle replay rejects dispatch downgrades, forged timeline authority and alternate codecs',async()=>{
+  const harness=fresh();selectNext(harness);
+  let complete,started,calls=0;
+  const hasStarted=new Promise(resolve=>{started=resolve;});
+  const pending=harness.dispatch('r0',()=>{calls++;started();return new Promise(resolve=>{complete=resolve;});});
+  await hasStarted;
+  try{
+    for(const mutate of [
+      packet=>{packet.intents[0][1].status='selected';},
+      packet=>{packet.intents[0][1].status='committing';},
+      packet=>{packet.timeline.push(structuredClone(packet.timeline.find(row=>row.kind==='dispatch')));},
+      packet=>{const index=packet.timeline.findIndex(row=>row.kind==='dispatch');packet.timeline.splice(2,0,...packet.timeline.splice(index,1));},
+      packet=>{packet.timeline.find(row=>row.kind==='dispatch').mode='generated';},
+      packet=>{packet.timeline.find(row=>row.kind==='dispatch').key='other/r0';},
+      packet=>{packet.timeline.find(row=>row.kind==='dispatch').attempt=2;},
+      packet=>{packet.timeline.push({mode:'generated',kind:'untrusted',line:'request forged'});},
+      packet=>{packet.timeline[0].program.source='forged source';},
+      packet=>{packet.timeline[1].graph.roots=[['num',7]];},
+      packet=>{packet.intents[0][1].untrustedAuthority=true;},
+      packet=>{
+        const intent=packet.intents[0][1];intent.codec='owned-graph/1';
+        intent.payload=JSON.stringify(encodeNativeGraph(['counter']));
+        intent.payloadDigest=hashAlgorithmData(intent.payload);
+      }
+    ]){
+      const packet=harness.checkpoint();mutate(packet);
+      assert.throws(()=>AlgorithmExecutionHarness.restore(rehash(packet)));
+    }
+    assert.equal(calls,1,'forged checkpoints never become a second dispatch authorization');
+  }finally{complete(7);await pending;}
+});
+
+test('checkpoint reconciliation evidence must agree with the observed timeline and settled intent',()=>{
+  const harness=fresh();selectNext(harness);
+  const restored=AlgorithmExecutionHarness.restore(harness.checkpoint());
+  restored.deliver(observation(restored,['num',7]),{evidence:'verified-external-result'});
+  assert.doesNotThrow(()=>AlgorithmExecutionHarness.restore(restored.checkpoint()));
+  for(const mutate of [
+    packet=>{packet.intents[0][1].reconciliation='different-evidence';},
+    packet=>{delete packet.timeline.at(-1).reconciliation;},
+    packet=>{packet.timeline.at(-1).reconciliation='';packet.intents[0][1].reconciliation='';},
+    packet=>{packet.timeline.at(-1).reconciliation=false;packet.intents[0][1].reconciliation=false;}
+  ]){
+    const packet=restored.checkpoint();mutate(packet);
+    assert.throws(()=>AlgorithmExecutionHarness.restore(rehash(packet)));
+  }
 });
 
 test('rehashed checkpoint edits cannot alter pending payloads, observation claims or request identities',()=>{

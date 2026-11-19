@@ -5,7 +5,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {lowerJavaScript} from './lower-js.js';
 import {lowerEffectfulJavaScript} from './lower-effects.js';
 import {normalizeAlgorithm} from './normalize-algorithm.js';
-import {algorithmDigest,stableAlgorithmJSON,validateAlgorithm} from './ir.js';
+import {algorithmDigest,stableAlgorithmJSON,validateAlgorithm,assertAlgorithmFields} from './ir.js';
 
 export const ALGORITHM_PROGRAM_VERSION='semantic-algorithm-program/1';
 export const ALGORITHM_EXECUTION_VERSION='semantic-execution/7';
@@ -34,6 +34,8 @@ export function defineAlgorithmProgram({source,entry}={}){
     provenance:structuredClone(lowered.provenance)};
 }
 export function validateAlgorithmProgram(program){
+  assertAlgorithmFields(program,['schema','traceFormat','source','entry','sourceDigest','core','coreDigest',
+    'boundaries','profile','definitionDigest'],'algorithm program');
   if(!program||program.schema!==ALGORITHM_PROGRAM_VERSION)throw new TypeError('Algorithm program version');
   const expected=defineAlgorithmProgram({source:program.source,entry:program.entry}).program;
   if(!isDeepStrictEqual(program,expected))throw new TypeError('Algorithm source, definition or boundary authorization changed');
