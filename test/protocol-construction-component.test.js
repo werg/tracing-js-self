@@ -51,6 +51,12 @@ test('construction records have exact fields and no opaque bytecode or whole-sta
   assert.throws(()=>validateConstructionRecordV8({kind:'callable.define',object:'C',constructorKind:'derived',classConstructor:false},{value:validateProtocolValueV8}),/capability/);
   assert.throws(()=>validateConstructionRecordV8({kind:'private.get',object:'o',privateId:'p',result:['num',1],targetState:{}},{value:validateProtocolValueV8}),/field/i);
 });
+test('empty registered construction state cannot hide rich callable or private heap metadata',()=>{
+  const {controller,api,klass}=fixture();
+  assert.deepEqual(restoreConstructionStateV8(controller,null,api),{valid:true,privateNames:0});
+  klass('C');
+  assert.throws(()=>restoreConstructionStateV8(controller,null,api),/requires declared construction state/);
+});
 test('class linking installs real descriptor and prototype distinctions',()=>{
   const {controller,klass}=fixture();klass('Base');klass('Derived',['ref','Base']);klass('Null',['null']);
   class Base{}class Derived extends Base{}class Null extends null{}

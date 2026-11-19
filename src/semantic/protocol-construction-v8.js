@@ -264,6 +264,10 @@ export function applyConstructionRecordV8(controller,record,api){
 
 /** Additional state is validated separately from ordinary descriptors. */
 export function restoreConstructionStateV8(controller,snapshot,api){
+  if(snapshot===null){
+    api.require(![...controller.heap.values()].some(hasConstructionStateV8),'construction heap metadata requires declared construction state');
+    return {valid:true,privateNames:0};
+  }
   assertAlgorithmFields(snapshot,CONSTRUCTION_STATE_V8_FIELDS,'construction protocol state');
   api.require(snapshot.schema===CONSTRUCTION_STATE_V8_SCHEMA,'construction state schema');
   assertAlgorithmDataArray(snapshot.privateNames,'private identities');assertAlgorithmDataArray(snapshot.frames,'construction frames');
