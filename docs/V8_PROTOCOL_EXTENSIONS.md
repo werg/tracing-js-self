@@ -1,6 +1,11 @@
 # V8 protocol extension interfaces
 
-`protocol-extensions-v8.js` is a static producer registry. Registering a source,
+Three separate static registries preserve the independent worker boundary:
+`protocol-source-extensions-v8.js`, `protocol-machine-extensions-v8.js`, and
+`protocol-observation-extensions-v8.js`. The last contains metadata and source
+observers only and cannot import the owned runtime or public evaluator. The
+`protocol-extensions-v8.js` facade is for administration; execution paths import
+their specific registry. Registering a source,
 observation, or machine adapter is a reviewed code change, accompanied by an
 explicit public operation domain and an independent native implementation.
 An artifact or model response cannot install an adapter. Empty registries retain
@@ -116,3 +121,50 @@ This interface permits lexical private-field readers or backing-memory observers
 without adding guest object properties. Each extension still has to prove that
 its observer does not invoke guest getters/methods, and that the source gate
 rejects a teacher metadata mutation with an unchanged final scalar result.
+
+## Public machine adapters
+
+`PROTOCOL_MACHINE_ADAPTERS_V8` contains statically pinned objects:
+
+```js
+{
+  id,
+  recordFields, // exact kind -> field-name array, cannot override a base kind
+  validateRecord(record, {value}), // true only for a valid declared record
+  applyRecord(controller, record, api), // true after executing its checked meaning
+  stateField, // optional; initialized to null in every protocol state
+  restoreState(controller, snapshotOrNull, api), // must return {valid:true}
+  reservedIdentities(controller), // optional extra identities, e.g. private brands
+  hasRichState(node), // optional; excludes the node from ordinary compact/detail access
+  assertNext(controller, record, api), // optional, true after continuation checks
+  assertCall(controller, callee, internalOptions, api) // optional, true after capability checks
+}
+```
+
+The codec validates a record's exact data fields before calling its validator.
+The machine executes each operation on a staged copy of the same controller
+heap, cells, receiver, capture aliases and stack; a failure commits nothing.
+`assertNext` runs before both protocol and detailed transitions, preventing a
+pending constructor or iterator continuation from being skipped. `assertCall`
+also runs for accessor calls and internal component calls. Its options are an
+internal interface only: no public record can inject a construction capability.
+
+`PROTOCOL_MACHINE_API_V8` supplies the existing raw operations, whose controller
+argument is explicit: `require`, `fail`, `copy`, `eq`, `state`, `known`,
+`knownKey`, `heapNode`, `ownDescriptor`, `installDescriptor`, `order`, `fresh`,
+`call`, `allocate`, `setLocal`, and `truthy`. `heapNode` deliberately accepts only
+ordinary objects, arrays and owned closures. A specialized memory or iterator
+component validates its own heap kinds before accessing them.
+
+An adapter with a `stateField` must validate its non-null snapshot. Null state
+cannot accompany heap nodes for which that adapter reports rich state.
+Adapters without a state field still validate their heap representation during
+restore. All extension-reserved identities share the object/Symbol namespace;
+duplicates across extensions are rejected. Unknown heap kinds cannot be silently
+restored. The independent source worker's static dependency graph is tested to
+exclude source compilers, machine registries, and public protocol evaluators.
+
+Registering a nonempty state extension changes activated protocol contexts even
+before its first operation (`construction:null`, for example). That requires a
+new pinned contract digest, regenerated fixtures, and native consumer parity.
+An empty registry leaves the existing Symbol/profile artifacts unchanged.

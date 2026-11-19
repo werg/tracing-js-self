@@ -4,7 +4,7 @@ import {types,isDeepStrictEqual} from 'node:util';
 import {encode} from '../values.js';
 import {propertyKeyValue,WELL_KNOWN_SYMBOLS} from '../property-keys.js';
 import {assertAlgorithmFields,assertAlgorithmDataArray,stableAlgorithmJSON} from './ir.js';
-import {PROTOCOL_METADATA_ADAPTERS_V8} from './protocol-extensions-v8.js';
+import {PROTOCOL_METADATA_ADAPTERS_V8} from './protocol-observation-extensions-v8.js';
 export const PROTOCOL_METADATA_SCHEMA='source-protocol-metadata/1';
 const copy=structuredClone;
 const fail=message=>{throw new TypeError('Protocol metadata observation: '+message);};
