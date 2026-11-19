@@ -99,7 +99,8 @@
           "pendingCalls": [],
           "callFrames": [],
           "sequence": 0,
-          "construction": null
+          "construction": null,
+          "numberConversions": null
         }
       },
       "lines": [
@@ -447,7 +448,8 @@
           "pendingCalls": [],
           "callFrames": [],
           "sequence": 14,
-          "construction": null
+          "construction": null,
+          "numberConversions": null
         }
       }
     },
@@ -548,7 +550,8 @@
           "pendingCalls": [],
           "callFrames": [],
           "sequence": 0,
-          "construction": null
+          "construction": null,
+          "numberConversions": null
         }
       },
       "lines": [
@@ -824,7 +827,8 @@
           "pendingCalls": [],
           "callFrames": [],
           "sequence": 7,
-          "construction": null
+          "construction": null,
+          "numberConversions": null
         }
       }
     },
@@ -925,7 +929,8 @@
           "pendingCalls": [],
           "callFrames": [],
           "sequence": 0,
-          "construction": null
+          "construction": null,
+          "numberConversions": null
         }
       },
       "lines": [
@@ -1231,7 +1236,8 @@
           "pendingCalls": [],
           "callFrames": [],
           "sequence": 12,
-          "construction": null
+          "construction": null,
+          "numberConversions": null
         }
       }
     }

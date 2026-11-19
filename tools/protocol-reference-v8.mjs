@@ -20,7 +20,7 @@ try{
   if(input.awaitReturnedPromise!==undefined&&typeof input.awaitReturnedPromise!=='boolean')
     throw new TypeError('Explicit returned Promise completion policy required');
   const args=decodeOwnedGraph(JSON.stringify(input.inputGraph)),operations=[],decisions=[],failures=[];
-  const extensions=prepareProtocolObservationExtensionsV8({source:input.source,mode,side:'native'});
+  const extensions=prepareProtocolObservationExtensionsV8({source:input.source,mode,side:'native',initialValues:args});
   const completion=createProtocolCompletionCapture({initialValues:args,adapters:extensions.metadataAdapters});
   function bounded(list,row){if(list.length>=32768)throw new RangeError('Independent protocol observation cap');list.push(row);}
   const context=vm.createContext({...extensions.globals,__args:args,__result:undefined,__kind:'return',

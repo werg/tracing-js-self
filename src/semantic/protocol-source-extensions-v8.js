@@ -4,4 +4,5 @@ import {memorySourceAdapterV8} from './protocol-memory-source-v8.js';
 import {createConstructionSourceAdapterV8} from './protocol-construction-source-v8.js';
 import {createIteratorSourceAdapterV8} from './protocol-iterator-source-v8.js';
 import {createPromiseJoinSourceAdapterV8} from './protocol-promise-join-source-v8.js';
-export const PROTOCOL_SOURCE_ADAPTERS_V8=Object.freeze([memorySourceAdapterV8,createConstructionSourceAdapterV8,createIteratorSourceAdapterV8,createPromiseJoinSourceAdapterV8]);
+import {createNumberSourceAdapterV8} from './protocol-number-source-v8.js';
+export const PROTOCOL_SOURCE_ADAPTERS_V8=Object.freeze([memorySourceAdapterV8,createConstructionSourceAdapterV8,createIteratorSourceAdapterV8,createPromiseJoinSourceAdapterV8,createNumberSourceAdapterV8]);

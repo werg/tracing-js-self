@@ -10,6 +10,7 @@ import {ITERATOR_PROFILE_V8,ITERATOR_RECORD_FIELDS,validateIteratorRecordV8,appl
 import {PROMISE_JOIN_PROFILE_V8,PROMISE_JOIN_RECORD_FIELDS,validatePromiseJoinRecordV8,
   applyPromiseJoinRecordV8,restorePromiseJoinStateV8,assertPromiseJoinNextV8,
   allowsPromiseJoinInternalSchedulerV8,allowsPromiseJoinWithoutStackV8,allowsPromiseJoinDetailedCallV8} from './protocol-promise-join-v8.js';
+import {NUMBER_RECORD_FIELDS,validateNumberRecordV8,applyNumberRecordV8,restoreNumberStateV8,assertNumberNextV8} from './protocol-number-v8.js';
 export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   id:MEMORY_PROFILE_V8,recordFields:MEMORY_RECORD_FIELDS,validateRecord:validateMemoryRecordV8,applyRecord:applyMemoryRecordV8,
   hasRichState:node=>isBinaryMemoryKind(node.kind),
@@ -30,4 +31,7 @@ export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   allowsInternalScheduler:allowsPromiseJoinInternalSchedulerV8,allowsWithoutStack:allowsPromiseJoinWithoutStackV8,
   allowsDetailedCall:allowsPromiseJoinDetailedCallV8,
   restoreState:(controller,_snapshot,api)=>restorePromiseJoinStateV8(controller,api)
+}),Object.freeze({
+  id:'number-conversion/1',recordFields:NUMBER_RECORD_FIELDS,validateRecord:validateNumberRecordV8,
+  applyRecord:applyNumberRecordV8,stateField:'numberConversions',restoreState:restoreNumberStateV8,assertNext:assertNumberNextV8
 })]);

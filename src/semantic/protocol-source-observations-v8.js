@@ -8,10 +8,10 @@ import {stableAlgorithmJSON,assertAlgorithmDataArray} from './ir.js';
 export const PROTOCOL_COMPLETION_OBSERVATION_SCHEMA='source-protocol-completions/1';
 export const PROTOCOL_METADATA_LIMITS=Object.freeze({snapshots:8192,bytes:4194304,snapshotBytes:1048576});
 /** Trusted, statically registered producer extensions; never serving input. */
-export function prepareProtocolObservationExtensionsV8({source,mode='completions',side='native',bundle=null,
+export function prepareProtocolObservationExtensionsV8({source,mode='completions',side='native',bundle=null,initialValues=[],
   adapters=PROTOCOL_OBSERVATION_ADAPTERS_V8}={}){
   if(mode!=='completions')return {ids:[],globals:{},metadataAdapters:[],instrument:text=>text,initializeRealm(){},observations:()=>[]};
-  const selected=adapters.map(adapter=>typeof adapter==='function'?adapter({source,mode,side,bundle}):adapter).filter(Boolean);
+  const selected=adapters.map(adapter=>typeof adapter==='function'?adapter({source,mode,side,bundle,initialValues}):adapter).filter(Boolean);
   const globals={},metadataAdapters=[],ids=[];
   for(const adapter of selected){
     if(typeof adapter.id!=='string'||!adapter.id||ids.includes(adapter.id))throw new TypeError('Distinct observation extension identity required');

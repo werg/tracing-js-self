@@ -559,6 +559,38 @@
             "error",
             "status",
             "value"
+          ],
+          "number.begin": [
+            "kind",
+            "id",
+            "value"
+          ],
+          "number.select": [
+            "kind",
+            "id",
+            "key",
+            "method",
+            "builtin"
+          ],
+          "number.call": [
+            "kind",
+            "id",
+            "child"
+          ],
+          "number.builtin": [
+            "kind",
+            "id",
+            "result"
+          ],
+          "number.return": [
+            "kind",
+            "id",
+            "value"
+          ],
+          "number.finish": [
+            "kind",
+            "id",
+            "result"
           ]
         },
         "profile": "symbols-ordinary-properties/1",
@@ -1385,7 +1417,8 @@
         "pendingCalls",
         "callFrames",
         "sequence",
-        "construction"
+        "construction",
+        "numberConversions"
       ],
       "initial": null,
       "heap": "Existing heap nodes with property, descriptor and private-element Maps serialized as entry arrays; Symbol keys remain tagged pairs.",
@@ -1567,7 +1600,7 @@
       "default": "not promoted by engineering receipts alone"
     }
   },
-  "digest": "a21100d11a4b5a2c6da47905cff4ca9100edd01ce4e085b1557909c03fd21719",
+  "digest": "bfeed6247643c78d4d0791c53abd2da5158cff7c78bc1790c8a6077f04bebc50",
   "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
   "fixtures": [
     {
@@ -1592,7 +1625,7 @@
       "reason": "old artifacts require their original contract"
     }
   ],
-  "interoperabilityDigest": "643a74ddb62cfd753b9e98fe848189300c2f28792e111ca243403a5a7b6cdba4",
+  "interoperabilityDigest": "f06ae69da9e760a6f7059d14ff004920d1fff43be8da1bd3603793a6ad3d013b",
   "interoperability": [
     {
       "id": "ordered-map",
@@ -1612,42 +1645,47 @@
     {
       "id": "protocol-machine",
       "schema": "semantic-protocol-fixtures/1",
-      "fixtureDigest": "d345ef84cb001f56f63363d2e0ba16cf6ad101c9739ffb089599c965e613acd4"
+      "fixtureDigest": "6aa46b0a560d64a931888dc5f5b6b1b8a1c8b9fd2111d6c9162884965a70c434"
     },
     {
       "id": "iterator-machine",
       "schema": "semantic-protocol-fixtures/1",
-      "fixtureDigest": "c99e3489c40cea267517269a93d2f3cd4ab076202c7f890147e6f15745b0c783"
+      "fixtureDigest": "d7b6039b6396e0a3dd814989e59f36b58782f10eb09c8c8293a75edfa5fb0ea9"
     },
     {
       "id": "protocol-region:source-symbol-getter-arithmetic",
-      "publicDigest": "f0f48dc8fcdc5e97e03334dc19d7f076f02f9f9c39095603070af4a0b2fc6c30",
-      "contextDigest": "00a245053b8a2c70089a755792a5149637afa9dadd59c2480bb10c4f3255c55a"
+      "publicDigest": "26eae2e3a8dc66e0fd5f8caaa5a2b78be897a41f88418224a472a7f0a0b7e75d",
+      "contextDigest": "48df66aa2c4af26a31f4ed9cd46db2eba3e0f7e99a74902828b33c3ee23de12f"
     },
     {
       "id": "protocol-region:typed-views-shared-backing",
       "publicDigest": "bf88479ca947f7ae6250c493e458db1edac052b1ecd3ebdb8f8fe4f8b52e86d9",
-      "contextDigest": "519dce4e0d95f63c1070ec27c7d1c6f977110fb543f44b790b476006509def23"
+      "contextDigest": "a66b479dce3e7d65fe12b1a198302d6708ed717de99cb6b52832a971d7366e58"
     },
     {
       "id": "protocol-region:source-derived-private-arithmetic",
-      "publicDigest": "ea92a427b7c99365502f6b1df70d5bc60241079b987aea6695457187debb8f2d",
-      "contextDigest": "72825d06e63761462e0f00f01575bfa7d8126d20e3078a2e2c31a88f3a5cf80a"
+      "publicDigest": "c56274119db5df82f258278b140746ce4759513f1f8137062e04b69a0fbc324a",
+      "contextDigest": "04e3254248fe429e02d6eb93d36a97b18085b73e8737555d2b179426155b152c"
     },
     {
       "id": "protocol-region:builtin-iterator-mixed-arithmetic",
-      "publicDigest": "a2e355eed02c63c41850dbff17cac4d5c8fc07b71ae5fccf214ab4d4b9de5c33",
-      "contextDigest": "9f0bc0d24903e7f3a1390745b5f59b6a41b76320d453709d677713bd76e03d8e"
+      "publicDigest": "81ff2fa30daea3949ef96e2351972f06238a165cee606c585aa281c8f098023d",
+      "contextDigest": "59e1101c459e1ea5f12a2d1e369d8adec1431edd01ef8a7d4a38f8c69f8bacfe"
     },
     {
       "id": "protocol-region:source-promise-all-reaction-arithmetic",
-      "publicDigest": "9e08c5348024e3b613a5e4c6807d1c62d97f8603cde3ec8afdba0b3d99dc77dd",
-      "contextDigest": "6f6405581d606f69a712da43294329d9f353a9e04c8c33e8e217a4d11341bc6b"
+      "publicDigest": "15f12691999b7c8ab6ce72abc02e6a89f7f95eb3a52fe82d6df45baf2a37a52c",
+      "contextDigest": "9f75965ee24d6c1a970893f2c2577782213433ad8aef2dbe8993f5b74dc10e48"
     },
     {
       "id": "protocol-region:source-promise-join-rejection-finally",
       "publicDigest": "7d7365fa0f71e2301434f05bc1da3766e09f85588b76d12f94fc4380d5687001",
-      "contextDigest": "029c507d4a57126395c1b3cce6f516f51ed9d6614c93b1e3a556aafaeeb8629e"
+      "contextDigest": "e7c08310b7a7f3bcb65c37f7810d4db3a8602743b240a55864a90c18a9dc373b"
+    },
+    {
+      "id": "protocol-region:source-number-private-arithmetic",
+      "publicDigest": "6547d546916967dcd983d3b4af8905b102e2f0a6f8106a598998d3db9a8ccdec",
+      "contextDigest": "5ddee894a3f56d223a0f4a0320df1240fedd2604cba0a02f5e9ab76c4e23b66f"
     }
   ]
 }

@@ -46,9 +46,9 @@ The component tests compare real native conversion results and invocation
 behavior, including number hints, receiver identity, noncallable fallback,
 StringNumericLiteral parsing, signed zero and BigInt rounding. They reject false
 method selections, result claims, phase order and malformed retained state.
-Source projection, owned continuation integration and independent native
-consumer admission are separate gates; component tests alone do not establish
-those qualifications.
+Source projection and owned continuation integration now have the separately
+checked source slice below. Independent native-consumer admission remains a
+separate gate; component tests alone do not establish those qualifications.
 
 ## Owned runtime continuation
 
@@ -70,6 +70,44 @@ callback throws from an unsupported accessor, exotic or asynchronous callback
 profile. Existing projection formats explicitly refuse the added continuation
 state; an identical final scalar does not establish those formats can preserve
 the operation.
+
+## Qualified source slice
+
+`number-conversion-source/1` projects direct synchronous `Number(value)` calls
+into the shared protocol state. It publishes each selected data method, enters
+the real owned callback, checks its receiver and source identity, retains its
+returned primitive, and completes scalar conversion before subsequent source
+work. The public state checks the exact original caller and conversion cursor
+after each owned frame change. Nested conversions and private class callbacks
+share the existing heap, capture cells and completion state. `Number()` uses
+its distinct zero-argument result; extra arguments are outside this initial
+source slice.
+
+The independent V8 worker also records
+`number-conversion-observations/1`: conversion entry, data-method selection,
+callback receiver and arguments, callback return, intrinsic fallback result,
+and final Number result. These private receipts preserve input-rooted object
+and function identities and compare the full dynamic order. They supplement
+the existing independent operation, branch, completion and descriptor/private
+state observations.
+
+The native observer runs the actual V8 Number algorithm through a private
+observation proxy. Its data lookups target the original object, and each
+selected method is called with that original receiver. The observer never
+stores the proxy in guest state, changes a guest property, or exposes a proxy
+to a conversion callback. This preserves private brands, frozen data-method
+descriptors, aliases and live fallback-method changes. Original uninstrumented
+execution remains an independent outcome check. Source-visible Proxies and
+accessors are refused before observation can invoke their traps or getters.
+
+The source tests cover compact computation on both sides, repeated private
+state updates, ordinary fallback and live method mutation, nested conversions,
+BigInt rounding, signed zero, JSON checkpoints at pending callbacks, and
+forged method-selection receipts. Checkpoint continuation produces exactly the
+same public records without repeating a conversion callback. Abrupt conversion
+results, accessor selection, array stringification and asynchronous/exotic
+callbacks remain explicit unqualified profiles. No external native or model
+admission follows from these source tests.
 
 Pinned algorithms: [ECMAScript 2026 Number](https://tc39.es/ecma262/2026/multipage/numbers-and-dates.html#sec-number-constructor-number-value),
 [ToNumeric](https://tc39.es/ecma262/2026/multipage/abstract-operations.html#sec-tonumeric),
