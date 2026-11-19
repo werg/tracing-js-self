@@ -12,6 +12,7 @@ import {hostOperation,prepareHostRequest,HOST_METHODS,SUBSCRIPTION_CLOSERS} from
 import {encodeNativeGraph,validateOwnedGraph} from './host/graph-codec.js';
 import { specStep, ENGINE_REVISION } from './spec-schema.js';
 import {supportsPinnedRegExp,testPinnedRegExp,scanPinnedReplacement} from './owned-pinned-regexp.js';
+import {createNumberConversion,advanceNumberConversion} from './owned-number-conversion.js';
 
 class GuestFault extends Error {constructor(name,message){super(message);this.name=name;}}
 const guestFault=(name,message)=>{throw new GuestFault(name,message);};
@@ -639,6 +640,20 @@ export class Runtime {
     this.events.push(event);return event;
   }
   stackPush(frame,value,origin){frame.stack.push(token(value,origin));}
+  advanceNumberConversion(draft,frame,eventId){
+    const outcome=advanceNumberConversion(frame.pendingNumberConversion,{heap:draft.heap,
+      invoke:(method,receiver,args)=>{
+        const fn=draft.heap[method[1]];
+        if(fn.async||this.programs[fn.codeId].generator)
+          throw new TypeError('Async/generator Number conversion callback requires its owned profile');
+        const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,frame.id,null,
+          args.map(value=>token(value,eventId)),this.functionThis(fn,receiver),fn.id);
+        draft.control.a0.activeFrameId=child;return child;
+      }});
+    if(outcome.fault){delete frame.pendingNumberConversion;guestFault(outcome.fault.name,outcome.fault.message);}
+    if(outcome.done){delete frame.pendingNumberConversion;this.stackPush(frame,outcome.value,eventId);}
+    return {reads:outcome.reads,...(outcome.done?{result:outcome.value}:{causes:[{kind:'invocation',frameId:outcome.child}]})};
+  }
   completeFrame(draft,frame,value,origin) {
     frame.status='completed';
     frame.completion={type:'return',value:token(value,origin)};
@@ -684,6 +699,12 @@ export class Runtime {
     if(frame.reactionPromiseId)this.resolvePromise(draft,frame.reactionPromiseId,value,origin);
     if(frame.callerFrameId){
       const caller=draft.frames[frame.callerFrameId];
+      if(caller.pendingNumberConversion?.waitingFrameId===frame.id){
+        const pending=caller.pendingNumberConversion;
+        if(pending.phase!=='waiting')throw new Error('Number conversion callback returned twice');
+        pending.phase='returned';pending.result=copy(value);
+        draft.control.a0.activeFrameId=caller.id;return;
+      }
       if(caller.pendingPromiseExecutor?.waitingFrameId===frame.id){
         const pending=caller.pendingPromiseExecutor;delete caller.pendingPromiseExecutor;
         this.stackPush(caller,['promise',pending.promiseId],origin);
@@ -1040,6 +1061,7 @@ export class Runtime {
            draft.control.a0.activeFrameId=caller.id;return;
          }
          if(caller.pendingProperty?.waitingFrameId===frame.id)caller.pendingProperty=null;
+         if(caller.pendingNumberConversion?.waitingFrameId===frame.id)delete caller.pendingNumberConversion;
          if(caller.pendingArrayMethod?.waitingFrameId===frame.id)delete caller.pendingArrayMethod;
         draft.control.a0.activeFrameId=caller.id;
         const waiting=caller.operationId&&draft.operations[caller.operationId]?.coercion?.waitingFrameId;
@@ -1086,6 +1108,19 @@ export class Runtime {
     const c=this.state.control.a0,frame=c.activeFrameId&&this.state.frames[c.activeFrameId];
     if(!frame||frame.status!=='running')return null;
     if(frame.operationId)return this.stepArithmetic(frame);
+    if(frame.pendingNumberConversion?.phase==='returned'){
+      const siteId=frame.pendingNumberConversion.siteId;
+      return this.commit('intrinsic.number.resume',(s,eventId)=>{
+        const parent=s.frames[frame.id];
+        try{return this.advanceNumberConversion(s,parent,eventId);}
+        catch(error){
+          if(!(error instanceof GuestFault))throw error;
+          const completion={type:'throw',errorType:error.name,message:error.message,origin:eventId};
+          completion.value=this.caughtError(s,completion,eventId);this.routeCompletion(s,parent,completion,eventId);
+          return {completion};
+        }
+      },{siteId,sourceId:frame.codeId.split(':')[0],codeId:frame.codeId,invocationId:frame.id});
+    }
     if(frame.pendingStringReplace?.waitingFrameId===null){
       const siteId=frame.pendingStringReplace.siteId;
       return this.commit('call.enter',(s)=>{
@@ -2309,6 +2344,13 @@ if(object.kind==='regexp'){
           }
           if(callable[0]==='intrinsic'&&['Number','BigInt','String'].includes(callable[1])){
             const value=args[0]?.value??U;
+            if(callable[1]==='Number'&&value[0]==='ref'){
+              if(!['object','array'].includes(s.heap[value[1]]?.kind))
+                throw new TypeError('Number object conversion requires an owned ordinary object');
+              if(f.pendingNumberConversion)throw new Error('Number conversion already active in this frame');
+              f.pendingNumberConversion=createNumberConversion(value,inst.siteId);
+              return {...operands(fn,...args),...this.advanceNumberConversion(s,f,eventId)};
+            }
             if(value[0]==='symbol'){
               if(callable[1]!=='String')guestFault('TypeError','Cannot convert a Symbol value to a number');
               const description=this.symbolDescription(s,value);

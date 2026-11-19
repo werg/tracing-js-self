@@ -30,7 +30,7 @@ export function checkEffectfulProjectionState(bundle){
   let snapshots=0;
   for(const node of Object.values(bundle.initialState?.heap??{})){inspectHeap(node,null,{boundary:true});snapshots++;}
   for(const frame of Object.values(bundle.initialState?.frames??{}))
-    if(frame.constructReceiver||frame.newTarget||frame.afterInstanceInitialization||frame.classStaticResult)
+    if(frame.constructReceiver||frame.newTarget||frame.afterInstanceInitialization||frame.classStaticResult||frame.pendingNumberConversion)
       reject('construction completion state requires an explicit v8 protocol profile');
   for(const control of Object.values(bundle.initialState?.control??{}))
     if(Object.keys(control.templateObjects??{}).length)
@@ -40,7 +40,7 @@ export function checkEffectfulProjectionState(bundle){
       inspectHeap(change.after,change.before,{boundary:change.before===null&&event.operation==='external.input.deliver'});snapshots++;
     }
     if(change.table==='frames'&&change.after&&(change.after.constructReceiver||change.after.newTarget||
-      change.after.afterInstanceInitialization||change.after.classStaticResult))
+      change.after.afterInstanceInitialization||change.after.classStaticResult||change.after.pendingNumberConversion))
       reject('construction completion state requires an explicit v8 protocol profile');
     if(change.table==='control'&&Object.keys(change.after?.templateObjects??{}).length)
       reject('template site identity cache requires an explicit v8 protocol profile');

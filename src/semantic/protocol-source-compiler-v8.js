@@ -290,7 +290,15 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
           refuse('primitive/intrinsic property needs its own protocol');
       }else if(event.operation==='property.write'){
         if(row.operands[0]?.[0]!=='ref')refuse('ordinary write receiver required');
-        emit({kind:'property.set',object:row.operands[0][1],key:key(row.operands[1]),receiver:tag(row.operands[0],event),value:tag(row.operands[2],event),success:true},event,'owned-source-property-write/1');
+        const owner=state.frames[event.invocationId],instruction=bundle.programs[owner?.codeId]?.instructions[owner?.pc];
+        if(instruction?.op==='DEFINE_LITERAL_PROP'&&instruction.siteId===event.siteId){
+          const object=row.operands[0][1],node=heapChanges.find(change=>change.id===object)?.after??state.heap[object];
+          if(instruction.arg.kind==='prototype')emit({kind:'property.prototype',object,prototype:prototype(node),success:true},event,'owned-source-literal-prototype/1');
+          else{
+            const property=key(row.operands[1]),storage=property[0]==='str'?stringPropertyKey(property[1]):symbolPropertyKey(property[1]);
+            emit({kind:'property.define',object,key:property,descriptor:descriptor(node,storage),success:true},event,'owned-source-literal-definition/1');
+          }
+        }else emit({kind:'property.set',object:row.operands[0][1],key:key(row.operands[1]),receiver:tag(row.operands[0],event),value:tag(row.operands[2],event),success:true},event,'owned-source-property-write/1');
       }else if(row.arithmetic){
         const node=inventory.nodes.get(row.source?.start+':'+row.source?.end);
         compute({op:'binary',operator:row.arithmetic.operator,left:operand(row.operands[0],node?.left,event),right:operand(row.operands[1],node?.right,event)},row.result,event);

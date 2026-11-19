@@ -39,10 +39,10 @@ test('primitive Number calls pass independent source, intermediate and public re
   }
 });
 
-test('Number object coercion remains an explicit unsupported operation',()=>{
-  for(const value of ['{}','[1]','{valueOf:()=>7}']){
+test('Number accessor and exotic conversion profiles remain explicit refusals',()=>{
+  for(const value of ['{get [Symbol.toPrimitive](){return ()=>7;}}','new Proxy({}, {})']){
     const runtime=createRuntime().startEntry({text:'"use strict";function run(){return Number('+value+');}',functionName:'run'});
-    assert.throws(()=>runtime.drive(),/Number conversion requires a primitive/);
+    assert.throws(()=>runtime.drive(),/Number .*requires/);
     assert.equal(Object.keys(runtime.state.effects).length,0);
   }
 });
