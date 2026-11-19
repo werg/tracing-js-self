@@ -39,7 +39,7 @@ export function completionObservationPlan(source){
         }
       }
       if(node.type==='AssignmentExpression'&&!['&&=','||=','??='].includes(node.operator))add(node,'assign',node,2);
-      if(['CallExpression','TaggedTemplateExpression'].includes(node.type)&&!node.optional)add(node,'call',node,3);
+      if(['CallExpression','TaggedTemplateExpression'].includes(node.type))add(node,'call',node,3);
       if(node.type==='ArrowFunctionExpression'&&node.body.type!=='BlockStatement')add(node.body,'return',node.body,-1);
       if(node.type==='ExpressionStatement'&&!node.directive)add(node,'statement',node.expression,-1);
       if(node.type==='ReturnStatement'||node.type==='ThrowStatement'){
@@ -134,6 +134,12 @@ export function createCompletionCapture({limit=32768,initialValues=[]}={}){
 export function ownedCompletionObservations(bundle,source,{onObservation=null,assignmentValue=null}={}){
   const plan=completionObservationPlan(source),siteById=new Map(bundle.sites.map(x=>[x.siteId,x]));
   const identities=new Map(),pending=new Map(),observations=[];let next=0;
+  const calls=new Set();
+  const hasOptionalChain=node=>{
+    if(!node||typeof node!=='object')return false;
+    if(node.type==='ChainExpression'||node.optional===true)return true;
+    return hasOptionalChain(node.callee)||hasOptionalChain(node.object);
+  };
   const state={heap:{...bundle.initialState.heap},envs:{...bundle.initialState.envs},frames:{...bundle.initialState.frames}};
   const seed=tag=>{
     if(!Array.isArray(tag)||tag[0]!=='ref'||identities.has(JSON.stringify(tag)))return;
@@ -179,6 +185,19 @@ export function ownedCompletionObservations(bundle,source,{onObservation=null,as
     const instructions=bundle.programs[event.codeId]?.instructions;
     const instruction=instructions?.find(x=>x.siteId===event.siteId);
     const abrupt=event.completion?.type==='throw';
+    // An optional chain can finish with undefined before CALL executes. The
+    // independent source observer wraps the whole CallExpression and still
+    // records that expression completion. Match it at the owned undefined
+    // short-circuit literal, before any enclosing initializer completes.
+    if(!abrupt&&event.operation==='literal.materialize'&&instruction?.op==='CONST'&&
+      instruction.arg?.value?.[0]==='undefined'&&location){
+      for(const [identity,node] of plan.sites){
+        if(!identity.startsWith('call:')||calls.has(identity.slice('call:'.length))||!hasOptionalChain(node))continue;
+        if(node.start===location.start&&node.end>=location.end){
+          emit(identity.slice('call:'.length),'call',['undefined']);calls.add(identity.slice('call:'.length));
+        }
+      }
+    }
     if(!abrupt&&['binding.initialize','binding.write'].includes(event.operation)&&plan.sites.has('initialize:'+key)){
       const declaration=plan.sites.get('initialize:'+key);
       // Class lowering initializes private compiler cells at the same source
@@ -231,7 +250,7 @@ export function ownedCompletionObservations(bundle,source,{onObservation=null,as
       }
     }
     if(!abrupt&&event.operation==='call.enter'&&plan.sites.has('call:'+key)&&!pending.has(event.invocationId)){
-      if(!event.causes.some(c=>c.kind==='invocation')&&Array.isArray(event.result))emit(key,'call',event.result);
+      if(!event.causes.some(c=>c.kind==='invocation')&&Array.isArray(event.result)){emit(key,'call',event.result);calls.add(key);}
       else if(patch?.after)pending.set(event.invocationId,{site:key,kind:'call',depth:patch.after.stack.length,pc:patch.after.pc});
     }
     if(event.operation==='stack.pop'&&plan.sites.has('statement:'+key))emit(key,'statement',event.operands[0]);
@@ -247,7 +266,9 @@ export function ownedCompletionObservations(bundle,source,{onObservation=null,as
       const waiting=pending.get(change.id);
       if(waiting&&change.before.pc===waiting.pc){
         if(change.after.pc===waiting.pc&&change.after.stack.length>waiting.depth&&change.before.stack.length<=waiting.depth){
-          emit(waiting.site,waiting.kind,change.after.stack[waiting.depth].value);pending.delete(change.id);
+          emit(waiting.site,waiting.kind,change.after.stack[waiting.depth].value);
+          if(waiting.kind==='call')calls.add(waiting.site);
+          pending.delete(change.id);
         }else if(change.after.pc!==waiting.pc||['thrown','unsupported'].includes(change.after.status))pending.delete(change.id);
       }
       for(const handler of change.after.handlers??[]){
