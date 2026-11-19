@@ -125,3 +125,61 @@ test('v8 source recognition refuses shared mutation, receivers, holes and unsupp
     'function run(xs){let s=0;for(const x of xs){try{s+=x;}finally{s++;}}return s;}'
   ])assert.equal(tryLowerJavaScriptV8({source:source(body),entry:'run'}).status,'refused',body);
 });
+
+test('v8 map, filter and scan builders converge across builtin, for-of, indexed and while idioms',()=>{
+  const families=[
+    [
+      'function run(xs){return xs.map(x=>x*2);}',
+      'function run(xs){const out=[];for(const x of xs)out.push(x*2);return out;}',
+      'function run(xs){const out=[];for(let i=0;i<xs.length;i++){const x=xs[i];out.push(x*2);}return out;}',
+      'function run(xs){const out=[];let i=0;while(i<xs.length){out.push(xs[i]*2);i++;}return out;}'
+    ],[
+      'function run(xs){return xs.filter(x=>x>2);}',
+      'function run(xs){const out=[];for(const x of xs)if(x>2)out.push(x);return out;}',
+      'function run(xs){const out=[];for(let i=0;i<xs.length;i++)if(xs[i]>2)out.push(xs[i]);return out;}',
+      'function run(xs){const out=[];let i=0;while(i<xs.length){if(xs[i]>2)out.push(xs[i]);i++;}return out;}'
+    ],[
+      'function run(xs){let sum=0;const out=[];for(const x of xs){sum+=x;out.push(sum);}return out;}',
+      'function run(xs){let sum=0;const out=[];for(let i=0;i<xs.length;i++){sum+=xs[i];out.push(sum);}return out;}',
+      'function run(xs){let sum=0;const out=[];let i=0;while(i<xs.length){sum+=xs[i];out.push(sum);i++;}return out;}'
+    ]
+  ];
+  for(const variants of families){
+    const cores=variants.map(body=>check(body,[[2,3,4]],{owned:true,inputTypes:['dense-number-array']}).core);
+    assert.equal(new Set(cores.map(canonicalAlgorithmV8)).size,1);
+    for(const body of variants)for(const xs of [[],[-0],[1e16,1,-1e16]])check(body,[xs],{inputTypes:['dense-number-array']});
+  }
+  for(const xs of [[],[2,3],[-0]])check('function run(xs){let s=-0;const out=[];for(const x of xs){s+=x;out.push(s);}return [s,out];}',[xs]);
+});
+
+test('new traversal normalizations keep two executed distinguishing pairs per rule separate',()=>{
+  const map='function run(xs){return xs.map(x=>x*2);}',filter='function run(xs){return xs.filter(x=>x>2);}',
+    scan='function run(xs){let s=0;const out=[];for(const x of xs){s+=x;out.push(s);}return out;}';
+  const pairs=[
+    [map,'function run(xs){return xs.map((x,i)=>x*2+i);}'],
+    [map,'function run(xs){const out=[];for(let i=xs.length-1;i>=0;i--)out.push(xs[i]*2);return out;}'],
+    [filter,'function run(xs){return xs.map(x=>x>2);}'],
+    [filter,'function run(xs){return xs.filter(x=>x>=2);}'],
+    [scan,'function run(xs){let s=0;const out=[];for(const x of xs){out.push(s);s+=x;}return out;}'],
+    [scan,'function run(xs){let s=0;const out=[];for(let i=xs.length-1;i>=0;i--){s+=xs[i];out.push(s);}return out;}']
+  ];
+  for(const [left,right] of pairs){
+    const native=body=>JSON.stringify(vm.runInNewContext(source(body)+';run([2,3,4])',{}, {timeout:1000}));
+    assert.notEqual(native(left),native(right));
+    const a=tryLowerJavaScriptV8({source:source(left),entry:'run'}),b=tryLowerJavaScriptV8({source:source(right),entry:'run'});
+    assert(a.status==='refused'||b.status==='refused'||canonicalAlgorithmV8(a.core)!==canonicalAlgorithmV8(b.core));
+    for(const body of [left,right]){
+      const checked=verifyOwnedSourceCase({source:source(body),entry:'run',args:[[2,3,4]],maxSteps:25000,maxGenerated:2048});
+      assert.equal(checked.status,'locally_verified',body+' '+checked.reason);
+    }
+  }
+});
+
+test('builder normalization refuses earlier observers and escaping aliases',()=>{
+  for(const body of [
+    'function run(xs){const out=[];const alias=out;for(const x of xs)out.push(x*2);return [out,alias];}',
+    'function run(xs){const out=[];const n=out.length;for(const x of xs)out.push(x*2);return [out,n];}',
+    'function run(xs){const out=[];function size(){return out.length;}for(const x of xs)out.push(x*2);return size();}',
+    'function run(xs){const out=[];for(const x of xs)out.push(out.length);return out;}'
+  ])assert.equal(tryLowerJavaScriptV8({source:source(body),entry:'run'}).status,'refused',body);
+});

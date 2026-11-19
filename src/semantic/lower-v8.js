@@ -267,7 +267,7 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
     }
     if(node.type==='ArrayExpression'){
       ensure(node.elements.every(x=>x&&x.type!=='SpreadElement'),'dense literals without spread required',node);
-      return {term:{op:'array',items:node.elements.map(x=>scalarValue(expression(x,scope,ctx),x).term)},type:'array'};
+      return {term:{op:'array',items:node.elements.map(x=>scalarValue(expression(x,scope,ctx),x).term)},type:'array',emptyArray:node.elements.length===0};
     }
     if(node.type==='ObjectExpression'){
       const properties=[],keys=new Set();
@@ -392,6 +392,67 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
       rule('ordered-'+mode,node,['Early return only on predicate match; matching absent result.','Ascending dense numeric traversal.']);
       return {returned:true,value:{term:{op:'traverse',mode,input:input.term,initial:null,
         callback:{params:params.slice(0,3),body:rename(predicate.term)},profile:'dense-primitive-array/1',order:'ascending'},type:found.type}};
+    }
+    // Recognize fresh private output builders before considering a scalar fold.
+    // The builder has no alias, escaped reference, earlier read, or captured
+    // observer, so its allocation/push bookkeeping can become one traversal.
+    const pushNode=statement=>statement?.type==='ExpressionStatement'&&statement.expression.type==='CallExpression'&&
+      !statement.expression.optional&&statement.expression.callee.type==='MemberExpression'&&
+      !statement.expression.callee.computed&&named(statement.expression.callee.property,'push')&&
+      statement.expression.callee.object.type==='Identifier'&&statement.expression.arguments.length===1?
+        statement.expression:null;
+    const filter=only.length===1&&only[0].type==='IfStatement'&&!only[0].alternate&&
+      statements(only[0].consequent).length===1?only[0]:null;
+    const push=pushNode(filter?statements(filter.consequent)[0]:only.at(-1));
+    const output=push?scope.resolve(push.callee.object.name):null;
+    if(output?.value.emptyArray){
+      const builder=output.value,allocationIndex=builder.term.op==='lexical'?ctx.names.indexOf(builder.term.token):-1,
+        aliases=bindings(scope).filter(binding=>binding!==output&&binding.value.term&&equal(binding.value.term,builder.term));
+      const mentions=(term,name)=>term&&typeof term==='object'&&(term.op==='lexical'&&term.token===name||
+        Object.values(term).some(child=>Array.isArray(child)?child.some(item=>mentions(item,name)):mentions(child,name)));
+      ensure(allocationIndex>=0&&!aliases.length&&!bindings(scope).some(binding=>binding.value.fn)&&
+        ctx.bindings.every((term,index)=>index===allocationIndex||!mentions(term,builder.term.token)),
+        'array builder escaped, aliased, captured or was observed before traversal',node);
+      const before=new Map(bindings(scope).map(binding=>[binding,binding.value])),prelude=filter?[]:only.slice(0,-1);
+      const assigned=new Set();
+      const scan=n=>{if(!n||typeof n!=='object')return;
+        if(['AssignmentExpression','UpdateExpression'].includes(n.type)&&(n.left??n.argument).type==='Identifier')assigned.add((n.left??n.argument).name);
+        for(const child of Object.values(n))if(Array.isArray(child))child.forEach(scan);else if(child&&typeof child==='object')scan(child);};
+      prelude.forEach(scan);
+      const accumulators=bindings(scope).filter(binding=>binding.mutable&&binding.name!==indexName&&assigned.has(binding.name));
+      ensure(accumulators.length<=1,'scan needs one scalar accumulator',node);
+      const accumulator=accumulators[0];
+      if(accumulator){number(accumulator.value,node);accumulator.value={term:{op:'lexical',token:params[0]},type:'number',total:true};}
+      ensure(!run(prelude,local,loopCtx),'builder step cannot complete early',node);
+      const predicate=filter?expression(filter.test,local,loopCtx):null,result=expression(push.arguments[0],local,loopCtx);
+      let mode=filter?'filter':accumulator?'scan':'map',callback=result.term;
+      if(filter){ensure(equal(result.term,element.term),'filter must retain the original element',push);callback=predicate.term;}
+      if(accumulator)ensure(equal(result.term,accumulator.value.term),'scan pushes its updated accumulator',push);
+      for(const [binding,value] of before)ensure(binding===accumulator||binding.value===value,
+        'builder callback changes an external private binding',node);
+      const initial=accumulator?before.get(accumulator).term:null;
+      for(const [binding,value] of before)binding.value=value;
+      let callbackParams=params;
+      if(mode!=='scan'){
+        const mapping=new Map([[params[1],params[0]],[params[2],params[1]],[params[3],params[2]]]);
+        const rename=value=>Array.isArray(value)?value.map(rename):value&&typeof value==='object'?
+          value.op==='lexical'?{...value,token:mapping.get(value.token)??value.token}:
+            Object.fromEntries(Object.entries(value).map(([key,child])=>[key,rename(child)])):value;
+        callback=rename(wrap(loopCtx,callback));callbackParams=params.slice(0,3);
+      }else callback=wrap(loopCtx,callback);
+      const traversal={term:{op:'traverse',mode,input:input.term,initial,
+        callback:{params:callbackParams,body:callback},profile:'dense-primitive-array/1',order:'ascending'},type:'array'};
+      ctx.names.splice(allocationIndex,1);ctx.bindings.splice(allocationIndex,1);
+      output.value=pin(traversal,ctx,node);
+      if(accumulator){
+        const length={op:'project',object:output.value.term,key:'length'};
+        accumulator.value={term:op('select',length,
+          {op:'get',object:output.value.term,key:op('subtract',length,literal(1).term)},initial),type:'number',total:true};
+      }
+      if(node.type==='WhileStatement')scope.resolve(indexName).value={term:{op:'project',object:input.term,key:'length'},type:'number',total:true};
+      rule('ordered-'+mode+'-builder',node,['Fresh unaliased output array; no earlier observations or captures.',
+        'Ascending dense numeric input; pure checked step.','Canonical traversal preserves result allocation and final accumulator.']);
+      return null;
     }
     const original=bindings(scope).filter(binding=>binding.mutable&&binding.name!==indexName&&binding.value.term),
       before=new Map(original.map(binding=>[binding,binding.value]));
