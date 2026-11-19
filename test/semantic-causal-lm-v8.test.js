@@ -1,0 +1,78 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {causalLmV8Prompt,encodeCausalLmV8Example,validateRegionTrainingContexts,
+  createCausalLmV8Selector,auditRegionServingCosts} from '../src/semantic/causal-lm-v8.js';
+import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
+import {encodePureRegionRecord,decodePureRegionRecord} from '../src/semantic/pure-region-v8.js';
+
+const fixtures=JSON.parse(await readFile(new URL('./fixtures/semantic-regions-v8.json',import.meta.url)));
+const example=id=>fixtures.examples.find(row=>row.id===id);
+const tokenizer={identity:'e'.repeat(64),encode:text=>[...Buffer.from(text)],decode:ids=>Buffer.from(ids)};
+const options={tokenizer,eosTokenId:256,maxContextTokens:1000000};
+
+test('v8 masks include only generated line and EOS, with full published state in the actual prompt',async()=>{
+  const artifact=example('ordered-map'),context=artifact.contexts[0],
+    row=artifact.public.timeline.find(row=>row.mode==='generated');
+  const encoded=await encodeCausalLmV8Example(context,row.fields.line,options);
+  assert.equal(encoded.prompt,causalLmV8Prompt(context));
+  assert.match(encoded.prompt,/semantic-algorithm\/2/);
+  assert.match(encoded.prompt,/captureAliases/);
+  assert.equal(encoded.prompt.includes('sourceArtifact'),false);
+  assert.equal(encoded.prompt.includes('reference.outcome'),false);
+  assert.deepEqual(encoded.labels.slice(0,encoded.boundaries.promptTokens),
+    Array(encoded.boundaries.promptTokens).fill(-100));
+  assert.deepEqual(encoded.labels.slice(encoded.boundaries.promptTokens),[...Buffer.from(row.fields.line),256]);
+  assert.equal(encoded.inputIds.length,encoded.costs.flatContextTokens);
+  assert.equal(encoded.inputIds.length,Buffer.byteLength(encoded.prompt)+Buffer.byteLength(row.fields.line)+1);
+  await assert.rejects(encodeCausalLmV8Example(context,row.fields.line,{...options,maxContextTokens:2}),/budget/);
+  const result=example('causal-counter').public.timeline.find(row=>row.kind==='result');
+  await assert.rejects(encodeCausalLmV8Example(context,result.fields.line,options),/generated|result|observation/);
+});
+
+test('every v8 training context must equal its reconstructed causal prefix',()=>{
+  for(const fixture of fixtures.examples)assert.equal(validateRegionTrainingContexts(fixture).length,fixture.contexts.length);
+  const changed=structuredClone(example('shared-getter'));
+  changed.contexts[0].state.locals.push(['future',['num',200]]);
+  assert.throws(()=>validateRegionTrainingContexts(changed),/already published state/);
+  const extra=structuredClone(example('ordered-map').contexts[0]);extra.futureOutcome=['num',18];
+  assert.throws(()=>causalLmV8Prompt(extra),/fields|unknown/);
+  const privateState=structuredClone(example('ordered-map').contexts[0]);privateState.state.sourceArchive={};
+  assert.throws(()=>causalLmV8Prompt(privateState),/fields|unknown/);
+  const legacy=structuredClone(example('ordered-map').contexts[0]);legacy.schema='semantic-context/7';
+  assert.throws(()=>causalLmV8Prompt(legacy),/v8 context/);
+});
+
+test('v8 cost meter measures expanded physical prompts and targets including repeated definitions',async()=>{
+  const artifact=example('ordered-map'),unmeasured=await auditRegionServingCosts(artifact);
+  assert.equal(unmeasured.measurement,'untested');assert.equal(unmeasured.tokens.total,null);
+  const measured=await auditRegionServingCosts(artifact,options);
+  assert.equal(measured.predictions,2);assert.equal(measured.rows.length,artifact.contexts.length);
+  assert.equal(measured.tokens.total,measured.rows.reduce((sum,row)=>sum+row.inputIds.length,0));
+  assert.equal(measured.tokens.terminal,2);assert.equal(measured.bytes.cumulativeContext,
+    measured.rows.reduce((sum,row)=>sum+Buffer.byteLength(row.prompt),0));
+  for(const row of measured.rows)assert.match(row.prompt,/semantic-algorithm\/2/);
+  assert.equal(measured.rows[0].detail,false);assert.equal(measured.rows[1].detail,true);
+  assert.equal(measured.model.status,'untested');assert.equal(measured.native.status,'untested');
+});
+
+test('serving checks original model bytes against shared state and counts rejected attempts and retries',async()=>{
+  const artifact=example('ordered-map'),target=artifact.public.timeline.find(row=>row.kind==='algorithm');
+  const falseRecord=decodePureRegionRecord(target.fields.line);
+  falseRecord.allocations[0].properties[0].value=['num',999];
+  const emitted=[encodePureRegionRecord(falseRecord),target.fields.line];
+  const runtime={initialize:async request=>request,generate:async()=>({tokenIds:[...Buffer.from(emitted.shift()),256],stopReason:'eos'})};
+  const selector=createCausalLmV8Selector({...options,runtime,checkpointIdentity:'c'.repeat(64),maxNewTokens:2048});
+  await selector.initialize({checkpointIdentity:'c'.repeat(64),seed:17});
+  const prefix={...artifact.public,timeline:artifact.public.timeline.slice(0,target.sequence-1)},
+    harness=RegionExecutionHarness.replay(prefix,{requireTerminal:false}),before=harness.modelContext(target.fields.invocationId);
+  await assert.rejects(selector.selectInto(harness,target.fields.invocationId),/false algorithm/);
+  assert.deepEqual(harness.modelContext(target.fields.invocationId),before);
+  const accepted=await selector.selectInto(harness,target.fields.invocationId);
+  assert.equal(accepted.record,target.fields.line);assert.equal(accepted.selection.status,'accepted');
+  const metrics=selector.metrics();assert.equal(metrics.predictionAttempts,2);assert.equal(metrics.retries,1);
+  assert.equal(metrics.failedAttempts,1);assert.equal(metrics.semanticallyAccepted,1);
+  assert.equal(metrics.emissions[0].prompt,metrics.emissions[1].prompt);
+  assert.equal(metrics.promptTokens,2*Buffer.byteLength(causalLmV8Prompt(before)));
+  assert.equal(metrics.nativeAdmissionClaim,false);
+});

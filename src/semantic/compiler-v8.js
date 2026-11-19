@@ -10,6 +10,7 @@ import {defineRegionProgram,sharedRegionState,evaluateLocalRegion,REGION_TRACE_V
 import {hashAlgorithmData} from './program.js';
 import {evaluatePureRegion} from './pure-region-v8.js';
 import {compareObservableGraphs} from './observables.js';
+import {validateV8NativePolicy,validateV8NativeReceipt} from './native-v8.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual;
 const clean=value=>JSON.parse(JSON.stringify(value));
@@ -155,7 +156,7 @@ export async function verifyRegionTrainingCase(fixture){
     category:error.category??'unsupported.region-projection',reason:error.message};}
 }
 
-export async function recheckRegionEvidence(exported,{nativeConsumer=null,requireNative=false}={}){
+export async function recheckRegionEvidence(exported,{nativeConsumer=null,nativePolicy=null,requireNative=false}={}){
   const side=exported?.sidecar;
   if(side?.schema!=='semantic-region-evidence/1'||side.representation!==REGION_TRACE_VERSION||
     side.referenceStatus!=='agreed'||side.sourceArtifactDigest!==digest(side.sourceArtifact)||
@@ -166,11 +167,20 @@ export async function recheckRegionEvidence(exported,{nativeConsumer=null,requir
   for(const key of ['receipts','refusals','regionCoverage','publicDigest','contextDigest'])
     if(!eq(rebuilt.sidecar[key],side[key]))fail('changed region evidence: '+key);
   const replay=RegionExecutionHarness.replay(exported);
-  let native={status:'untested'};
-  if(nativeConsumer)native=await nativeConsumer(exported);
-  if(requireNative&&native.admitted!==true)fail('exact v8 native admission is required');
+  let native={status:'untested',admitted:false};
+  if(nativeConsumer){
+    validateV8NativePolicy(nativePolicy);native=await nativeConsumer(exported);
+    validateV8NativeReceipt(exported,native,nativePolicy);
+  }else if(requireNative)fail('exact v8 native admission must be rechecked by the pinned consumer');
   return {valid:true,sourceValidated:true,projectionValidated:true,replayValidated:true,
     source,native,regionCoverage:copy(side.regionCoverage),completed:replay.invocations.size};
+}
+
+export async function admitRegionEvidence(exported,{nativeConsumer,nativePolicy}={}){
+  if(typeof nativeConsumer!=='function')fail('exact v8 native consumer is required');
+  const checked=await recheckRegionEvidence(exported,{nativeConsumer,nativePolicy,requireNative:true});
+  return {valid:true,admitted:true,native:checked.native,exported:{...copy(exported),sidecar:{
+    ...copy(exported.sidecar),admission:'admitted',nativeAdmission:copy(checked.native)}}};
 }
 
 export async function checkRegionCounterfactualPrefixes(fixtures){
