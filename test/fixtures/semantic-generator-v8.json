@@ -1,0 +1,1239 @@
+{
+  "schema": "semantic-protocol-fixtures/1",
+  "profile": "synchronous-generator/1",
+  "cases": [
+    {
+      "id": "normal-sent-value-and-completion",
+      "qualification": "controller-contract-fixture",
+      "source": null,
+      "entry": "run",
+      "args": [],
+      "initialState": {
+        "heap": [],
+        "locals": [],
+        "captureAliases": [],
+        "receiver": [
+          "undefined"
+        ],
+        "stack": [
+          "invocation1"
+        ],
+        "frameFunctions": [
+          [
+            "invocation1",
+            "run"
+          ]
+        ],
+        "pending": null,
+        "lastReturn": null,
+        "completion": null,
+        "protocol": {
+          "schema": "semantic-protocol-state/1",
+          "symbols": [
+            {
+              "id": "well-known:iterator",
+              "kind": "well-known",
+              "name": "iterator"
+            },
+            {
+              "id": "well-known:asyncIterator",
+              "kind": "well-known",
+              "name": "asyncIterator"
+            },
+            {
+              "id": "well-known:toPrimitive",
+              "kind": "well-known",
+              "name": "toPrimitive"
+            },
+            {
+              "id": "well-known:hasInstance",
+              "kind": "well-known",
+              "name": "hasInstance"
+            },
+            {
+              "id": "well-known:species",
+              "kind": "well-known",
+              "name": "species"
+            },
+            {
+              "id": "well-known:isConcatSpreadable",
+              "kind": "well-known",
+              "name": "isConcatSpreadable"
+            },
+            {
+              "id": "well-known:match",
+              "kind": "well-known",
+              "name": "match"
+            },
+            {
+              "id": "well-known:matchAll",
+              "kind": "well-known",
+              "name": "matchAll"
+            },
+            {
+              "id": "well-known:replace",
+              "kind": "well-known",
+              "name": "replace"
+            },
+            {
+              "id": "well-known:search",
+              "kind": "well-known",
+              "name": "search"
+            },
+            {
+              "id": "well-known:split",
+              "kind": "well-known",
+              "name": "split"
+            },
+            {
+              "id": "well-known:toStringTag",
+              "kind": "well-known",
+              "name": "toStringTag"
+            },
+            {
+              "id": "well-known:unscopables",
+              "kind": "well-known",
+              "name": "unscopables"
+            }
+          ],
+          "pendingCalls": [],
+          "callFrames": [],
+          "sequence": 0,
+          "construction": null
+        }
+      },
+      "lines": [
+        "protocol {\"captures\":[],\"code\":\"g\",\"functionKind\":\"ordinary\",\"kind\":\"allocate\",\"length\":null,\"lexicalReceiver\":null,\"name\":\"fn\",\"objectKind\":\"closure\",\"properties\":[]}",
+        "protocol {\"kind\":\"generator.function\",\"length\":1,\"name\":\"g\",\"object\":\"fn\",\"prototype\":\"proto\"}",
+        "protocol {\"arguments\":[[\"num\",3]],\"callee\":[\"ref\",\"fn\"],\"child\":\"generator1\",\"kind\":\"generator.create\",\"name\":\"it\",\"receiver\":[\"undefined\"]}",
+        "protocol {\"kind\":\"generator.start\",\"object\":\"it\"}",
+        "protocol {\"argument\":[\"num\",99],\"kind\":\"generator.resume\",\"method\":\"next\",\"object\":\"it\"}",
+        "protocol {\"bind\":null,\"kind\":\"generator.receive\",\"object\":\"it\"}",
+        "protocol {\"kind\":\"generator.yield\",\"name\":\"yielded\",\"object\":\"it\",\"value\":[\"num\",3]}",
+        "protocol {\"argument\":[\"num\",7],\"kind\":\"generator.resume\",\"method\":\"next\",\"object\":\"it\"}",
+        "protocol {\"bind\":\"sent\",\"kind\":\"generator.receive\",\"object\":\"it\"}",
+        "protocol {\"bind\":\"answer\",\"expr\":{\"left\":{\"name\":\"sent\",\"op\":\"local\"},\"op\":\"binary\",\"operator\":\"+\",\"right\":{\"op\":\"literal\",\"value\":[\"num\",1]}},\"kind\":\"compute\",\"result\":[\"num\",8]}",
+        "protocol {\"completion\":{\"kind\":\"return\",\"value\":[\"num\",8]},\"kind\":\"generator.finish\",\"name\":\"returned\",\"object\":\"it\"}",
+        "protocol {\"argument\":[\"undefined\"],\"kind\":\"generator.completed\",\"method\":\"next\",\"name\":\"done\",\"object\":\"it\"}",
+        "protocol {\"invocation\":\"invocation1\",\"kind\":\"return\",\"value\":[\"num\",3]}",
+        "protocol {\"completion\":\"return\",\"kind\":\"end\"}"
+      ],
+      "checkpoints": [
+        4,
+        7,
+        8
+      ],
+      "expected": {
+        "heap": [
+          [
+            "fn",
+            {
+              "kind": "closure",
+              "code": "g",
+              "captures": [],
+              "functionKind": "ordinary",
+              "lexicalReceiver": null,
+              "prototype": "GeneratorFunction.prototype",
+              "properties": [
+                [
+                  "length",
+                  [
+                    "num",
+                    1
+                  ]
+                ],
+                [
+                  "name",
+                  [
+                    "str",
+                    "g"
+                  ]
+                ],
+                [
+                  "prototype",
+                  [
+                    "ref",
+                    "proto"
+                  ]
+                ]
+              ],
+              "generatorFunction": true,
+              "keyOrder": [
+                "length",
+                "name",
+                "prototype"
+              ],
+              "descriptors": [
+                [
+                  "length",
+                  {
+                    "kind": "data",
+                    "writable": false,
+                    "enumerable": false,
+                    "configurable": true
+                  }
+                ],
+                [
+                  "name",
+                  {
+                    "kind": "data",
+                    "writable": false,
+                    "enumerable": false,
+                    "configurable": true
+                  }
+                ],
+                [
+                  "prototype",
+                  {
+                    "kind": "data",
+                    "writable": true,
+                    "enumerable": false,
+                    "configurable": false
+                  }
+                ]
+              ],
+              "extensible": true
+            }
+          ],
+          [
+            "proto",
+            {
+              "kind": "object",
+              "code": null,
+              "captures": [],
+              "prototype": "Generator.prototype",
+              "properties": []
+            }
+          ],
+          [
+            "it",
+            {
+              "kind": "generator",
+              "callee": [
+                "ref",
+                "fn"
+              ],
+              "invocation": "generator1",
+              "receiver": [
+                "undefined"
+              ],
+              "arguments": [
+                [
+                  "num",
+                  3
+                ]
+              ],
+              "phase": "completed",
+              "resume": null,
+              "yielded": 1,
+              "handlers": [],
+              "delegation": null,
+              "prototype": [
+                "ref",
+                "proto"
+              ],
+              "properties": []
+            }
+          ],
+          [
+            "yielded",
+            {
+              "kind": "object",
+              "code": null,
+              "captures": [],
+              "prototype": "ordinary",
+              "properties": [
+                [
+                  "value",
+                  [
+                    "num",
+                    3
+                  ]
+                ],
+                [
+                  "done",
+                  [
+                    "bool",
+                    false
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "returned",
+            {
+              "kind": "object",
+              "code": null,
+              "captures": [],
+              "prototype": "ordinary",
+              "properties": [
+                [
+                  "value",
+                  [
+                    "num",
+                    8
+                  ]
+                ],
+                [
+                  "done",
+                  [
+                    "bool",
+                    true
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "done",
+            {
+              "kind": "object",
+              "code": null,
+              "captures": [],
+              "prototype": "ordinary",
+              "properties": [
+                [
+                  "value",
+                  [
+                    "undefined"
+                  ]
+                ],
+                [
+                  "done",
+                  [
+                    "bool",
+                    true
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        "locals": [
+          [
+            "generator1:this",
+            [
+              "undefined"
+            ]
+          ],
+          [
+            "generator1:argument:0",
+            [
+              "num",
+              3
+            ]
+          ],
+          [
+            "sent",
+            [
+              "num",
+              7
+            ]
+          ],
+          [
+            "answer",
+            [
+              "num",
+              8
+            ]
+          ]
+        ],
+        "captureAliases": [],
+        "receiver": [
+          "undefined"
+        ],
+        "stack": [],
+        "frameFunctions": [
+          [
+            "invocation1",
+            "run"
+          ],
+          [
+            "generator1",
+            "g"
+          ]
+        ],
+        "pending": {
+          "kind": "return",
+          "value": [
+            "num",
+            3
+          ]
+        },
+        "lastReturn": {
+          "kind": "return",
+          "value": [
+            "ref",
+            "done"
+          ]
+        },
+        "completion": {
+          "kind": "return",
+          "value": [
+            "num",
+            3
+          ]
+        },
+        "protocol": {
+          "schema": "semantic-protocol-state/1",
+          "symbols": [
+            {
+              "id": "well-known:iterator",
+              "kind": "well-known",
+              "name": "iterator"
+            },
+            {
+              "id": "well-known:asyncIterator",
+              "kind": "well-known",
+              "name": "asyncIterator"
+            },
+            {
+              "id": "well-known:toPrimitive",
+              "kind": "well-known",
+              "name": "toPrimitive"
+            },
+            {
+              "id": "well-known:hasInstance",
+              "kind": "well-known",
+              "name": "hasInstance"
+            },
+            {
+              "id": "well-known:species",
+              "kind": "well-known",
+              "name": "species"
+            },
+            {
+              "id": "well-known:isConcatSpreadable",
+              "kind": "well-known",
+              "name": "isConcatSpreadable"
+            },
+            {
+              "id": "well-known:match",
+              "kind": "well-known",
+              "name": "match"
+            },
+            {
+              "id": "well-known:matchAll",
+              "kind": "well-known",
+              "name": "matchAll"
+            },
+            {
+              "id": "well-known:replace",
+              "kind": "well-known",
+              "name": "replace"
+            },
+            {
+              "id": "well-known:search",
+              "kind": "well-known",
+              "name": "search"
+            },
+            {
+              "id": "well-known:split",
+              "kind": "well-known",
+              "name": "split"
+            },
+            {
+              "id": "well-known:toStringTag",
+              "kind": "well-known",
+              "name": "toStringTag"
+            },
+            {
+              "id": "well-known:unscopables",
+              "kind": "well-known",
+              "name": "unscopables"
+            }
+          ],
+          "pendingCalls": [],
+          "callFrames": [],
+          "sequence": 14,
+          "construction": null
+        }
+      }
+    },
+    {
+      "id": "return-before-body-start",
+      "qualification": "controller-contract-fixture",
+      "source": null,
+      "entry": "run",
+      "args": [],
+      "initialState": {
+        "heap": [],
+        "locals": [],
+        "captureAliases": [],
+        "receiver": [
+          "undefined"
+        ],
+        "stack": [
+          "invocation1"
+        ],
+        "frameFunctions": [
+          [
+            "invocation1",
+            "run"
+          ]
+        ],
+        "pending": null,
+        "lastReturn": null,
+        "completion": null,
+        "protocol": {
+          "schema": "semantic-protocol-state/1",
+          "symbols": [
+            {
+              "id": "well-known:iterator",
+              "kind": "well-known",
+              "name": "iterator"
+            },
+            {
+              "id": "well-known:asyncIterator",
+              "kind": "well-known",
+              "name": "asyncIterator"
+            },
+            {
+              "id": "well-known:toPrimitive",
+              "kind": "well-known",
+              "name": "toPrimitive"
+            },
+            {
+              "id": "well-known:hasInstance",
+              "kind": "well-known",
+              "name": "hasInstance"
+            },
+            {
+              "id": "well-known:species",
+              "kind": "well-known",
+              "name": "species"
+            },
+            {
+              "id": "well-known:isConcatSpreadable",
+              "kind": "well-known",
+              "name": "isConcatSpreadable"
+            },
+            {
+              "id": "well-known:match",
+              "kind": "well-known",
+              "name": "match"
+            },
+            {
+              "id": "well-known:matchAll",
+              "kind": "well-known",
+              "name": "matchAll"
+            },
+            {
+              "id": "well-known:replace",
+              "kind": "well-known",
+              "name": "replace"
+            },
+            {
+              "id": "well-known:search",
+              "kind": "well-known",
+              "name": "search"
+            },
+            {
+              "id": "well-known:split",
+              "kind": "well-known",
+              "name": "split"
+            },
+            {
+              "id": "well-known:toStringTag",
+              "kind": "well-known",
+              "name": "toStringTag"
+            },
+            {
+              "id": "well-known:unscopables",
+              "kind": "well-known",
+              "name": "unscopables"
+            }
+          ],
+          "pendingCalls": [],
+          "callFrames": [],
+          "sequence": 0,
+          "construction": null
+        }
+      },
+      "lines": [
+        "protocol {\"captures\":[],\"code\":\"g\",\"functionKind\":\"ordinary\",\"kind\":\"allocate\",\"length\":null,\"lexicalReceiver\":null,\"name\":\"fn\",\"objectKind\":\"closure\",\"properties\":[]}",
+        "protocol {\"kind\":\"generator.function\",\"length\":1,\"name\":\"g\",\"object\":\"fn\",\"prototype\":\"proto\"}",
+        "protocol {\"arguments\":[[\"num\",3]],\"callee\":[\"ref\",\"fn\"],\"child\":\"generator1\",\"kind\":\"generator.create\",\"name\":\"it\",\"receiver\":[\"undefined\"]}",
+        "protocol {\"kind\":\"generator.start\",\"object\":\"it\"}",
+        "protocol {\"argument\":[\"num\",9],\"kind\":\"generator.completed\",\"method\":\"return\",\"name\":\"returned\",\"object\":\"it\"}",
+        "protocol {\"invocation\":\"invocation1\",\"kind\":\"return\",\"value\":[\"num\",3]}",
+        "protocol {\"completion\":\"return\",\"kind\":\"end\"}"
+      ],
+      "checkpoints": [
+        4
+      ],
+      "expected": {
+        "heap": [
+          [
+            "fn",
+            {
+              "kind": "closure",
+              "code": "g",
+              "captures": [],
+              "functionKind": "ordinary",
+              "lexicalReceiver": null,
+              "prototype": "GeneratorFunction.prototype",
+              "properties": [
+                [
+                  "length",
+                  [
+                    "num",
+                    1
+                  ]
+                ],
+                [
+                  "name",
+                  [
+                    "str",
+                    "g"
+                  ]
+                ],
+                [
+                  "prototype",
+                  [
+                    "ref",
+                    "proto"
+                  ]
+                ]
+              ],
+              "generatorFunction": true,
+              "keyOrder": [
+                "length",
+                "name",
+                "prototype"
+              ],
+              "descriptors": [
+                [
+                  "length",
+                  {
+                    "kind": "data",
+                    "writable": false,
+                    "enumerable": false,
+                    "configurable": true
+                  }
+                ],
+                [
+                  "name",
+                  {
+                    "kind": "data",
+                    "writable": false,
+                    "enumerable": false,
+                    "configurable": true
+                  }
+                ],
+                [
+                  "prototype",
+                  {
+                    "kind": "data",
+                    "writable": true,
+                    "enumerable": false,
+                    "configurable": false
+                  }
+                ]
+              ],
+              "extensible": true
+            }
+          ],
+          [
+            "proto",
+            {
+              "kind": "object",
+              "code": null,
+              "captures": [],
+              "prototype": "Generator.prototype",
+              "properties": []
+            }
+          ],
+          [
+            "it",
+            {
+              "kind": "generator",
+              "callee": [
+                "ref",
+                "fn"
+              ],
+              "invocation": "generator1",
+              "receiver": [
+                "undefined"
+              ],
+              "arguments": [
+                [
+                  "num",
+                  3
+                ]
+              ],
+              "phase": "completed",
+              "resume": null,
+              "yielded": 0,
+              "handlers": [],
+              "delegation": null,
+              "prototype": [
+                "ref",
+                "proto"
+              ],
+              "properties": []
+            }
+          ],
+          [
+            "returned",
+            {
+              "kind": "object",
+              "code": null,
+              "captures": [],
+              "prototype": "ordinary",
+              "properties": [
+                [
+                  "value",
+                  [
+                    "num",
+                    9
+                  ]
+                ],
+                [
+                  "done",
+                  [
+                    "bool",
+                    true
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        "locals": [
+          [
+            "generator1:this",
+            [
+              "undefined"
+            ]
+          ],
+          [
+            "generator1:argument:0",
+            [
+              "num",
+              3
+            ]
+          ]
+        ],
+        "captureAliases": [],
+        "receiver": [
+          "undefined"
+        ],
+        "stack": [],
+        "frameFunctions": [
+          [
+            "invocation1",
+            "run"
+          ],
+          [
+            "generator1",
+            "g"
+          ]
+        ],
+        "pending": {
+          "kind": "return",
+          "value": [
+            "num",
+            3
+          ]
+        },
+        "lastReturn": {
+          "kind": "return",
+          "value": [
+            "ref",
+            "returned"
+          ]
+        },
+        "completion": {
+          "kind": "return",
+          "value": [
+            "num",
+            3
+          ]
+        },
+        "protocol": {
+          "schema": "semantic-protocol-state/1",
+          "symbols": [
+            {
+              "id": "well-known:iterator",
+              "kind": "well-known",
+              "name": "iterator"
+            },
+            {
+              "id": "well-known:asyncIterator",
+              "kind": "well-known",
+              "name": "asyncIterator"
+            },
+            {
+              "id": "well-known:toPrimitive",
+              "kind": "well-known",
+              "name": "toPrimitive"
+            },
+            {
+              "id": "well-known:hasInstance",
+              "kind": "well-known",
+              "name": "hasInstance"
+            },
+            {
+              "id": "well-known:species",
+              "kind": "well-known",
+              "name": "species"
+            },
+            {
+              "id": "well-known:isConcatSpreadable",
+              "kind": "well-known",
+              "name": "isConcatSpreadable"
+            },
+            {
+              "id": "well-known:match",
+              "kind": "well-known",
+              "name": "match"
+            },
+            {
+              "id": "well-known:matchAll",
+              "kind": "well-known",
+              "name": "matchAll"
+            },
+            {
+              "id": "well-known:replace",
+              "kind": "well-known",
+              "name": "replace"
+            },
+            {
+              "id": "well-known:search",
+              "kind": "well-known",
+              "name": "search"
+            },
+            {
+              "id": "well-known:split",
+              "kind": "well-known",
+              "name": "split"
+            },
+            {
+              "id": "well-known:toStringTag",
+              "kind": "well-known",
+              "name": "toStringTag"
+            },
+            {
+              "id": "well-known:unscopables",
+              "kind": "well-known",
+              "name": "unscopables"
+            }
+          ],
+          "pendingCalls": [],
+          "callFrames": [],
+          "sequence": 7,
+          "construction": null
+        }
+      }
+    },
+    {
+      "id": "throw-after-yield",
+      "qualification": "controller-contract-fixture",
+      "source": null,
+      "entry": "run",
+      "args": [],
+      "initialState": {
+        "heap": [],
+        "locals": [],
+        "captureAliases": [],
+        "receiver": [
+          "undefined"
+        ],
+        "stack": [
+          "invocation1"
+        ],
+        "frameFunctions": [
+          [
+            "invocation1",
+            "run"
+          ]
+        ],
+        "pending": null,
+        "lastReturn": null,
+        "completion": null,
+        "protocol": {
+          "schema": "semantic-protocol-state/1",
+          "symbols": [
+            {
+              "id": "well-known:iterator",
+              "kind": "well-known",
+              "name": "iterator"
+            },
+            {
+              "id": "well-known:asyncIterator",
+              "kind": "well-known",
+              "name": "asyncIterator"
+            },
+            {
+              "id": "well-known:toPrimitive",
+              "kind": "well-known",
+              "name": "toPrimitive"
+            },
+            {
+              "id": "well-known:hasInstance",
+              "kind": "well-known",
+              "name": "hasInstance"
+            },
+            {
+              "id": "well-known:species",
+              "kind": "well-known",
+              "name": "species"
+            },
+            {
+              "id": "well-known:isConcatSpreadable",
+              "kind": "well-known",
+              "name": "isConcatSpreadable"
+            },
+            {
+              "id": "well-known:match",
+              "kind": "well-known",
+              "name": "match"
+            },
+            {
+              "id": "well-known:matchAll",
+              "kind": "well-known",
+              "name": "matchAll"
+            },
+            {
+              "id": "well-known:replace",
+              "kind": "well-known",
+              "name": "replace"
+            },
+            {
+              "id": "well-known:search",
+              "kind": "well-known",
+              "name": "search"
+            },
+            {
+              "id": "well-known:split",
+              "kind": "well-known",
+              "name": "split"
+            },
+            {
+              "id": "well-known:toStringTag",
+              "kind": "well-known",
+              "name": "toStringTag"
+            },
+            {
+              "id": "well-known:unscopables",
+              "kind": "well-known",
+              "name": "unscopables"
+            }
+          ],
+          "pendingCalls": [],
+          "callFrames": [],
+          "sequence": 0,
+          "construction": null
+        }
+      },
+      "lines": [
+        "protocol {\"captures\":[],\"code\":\"g\",\"functionKind\":\"ordinary\",\"kind\":\"allocate\",\"length\":null,\"lexicalReceiver\":null,\"name\":\"fn\",\"objectKind\":\"closure\",\"properties\":[]}",
+        "protocol {\"kind\":\"generator.function\",\"length\":1,\"name\":\"g\",\"object\":\"fn\",\"prototype\":\"proto\"}",
+        "protocol {\"arguments\":[[\"num\",3]],\"callee\":[\"ref\",\"fn\"],\"child\":\"generator1\",\"kind\":\"generator.create\",\"name\":\"it\",\"receiver\":[\"undefined\"]}",
+        "protocol {\"kind\":\"generator.start\",\"object\":\"it\"}",
+        "protocol {\"argument\":[\"undefined\"],\"kind\":\"generator.resume\",\"method\":\"next\",\"object\":\"it\"}",
+        "protocol {\"bind\":null,\"kind\":\"generator.receive\",\"object\":\"it\"}",
+        "protocol {\"kind\":\"generator.yield\",\"name\":\"yielded\",\"object\":\"it\",\"value\":[\"num\",1]}",
+        "protocol {\"argument\":[\"num\",4],\"kind\":\"generator.resume\",\"method\":\"throw\",\"object\":\"it\"}",
+        "protocol {\"completion\":{\"kind\":\"throw\",\"value\":[\"num\",4]},\"kind\":\"generator.finish\",\"name\":null,\"object\":\"it\"}",
+        "protocol {\"argument\":[\"undefined\"],\"kind\":\"generator.completed\",\"method\":\"next\",\"name\":\"done\",\"object\":\"it\"}",
+        "protocol {\"invocation\":\"invocation1\",\"kind\":\"return\",\"value\":[\"num\",3]}",
+        "protocol {\"completion\":\"return\",\"kind\":\"end\"}"
+      ],
+      "checkpoints": [
+        7,
+        8
+      ],
+      "expected": {
+        "heap": [
+          [
+            "fn",
+            {
+              "kind": "closure",
+              "code": "g",
+              "captures": [],
+              "functionKind": "ordinary",
+              "lexicalReceiver": null,
+              "prototype": "GeneratorFunction.prototype",
+              "properties": [
+                [
+                  "length",
+                  [
+                    "num",
+                    1
+                  ]
+                ],
+                [
+                  "name",
+                  [
+                    "str",
+                    "g"
+                  ]
+                ],
+                [
+                  "prototype",
+                  [
+                    "ref",
+                    "proto"
+                  ]
+                ]
+              ],
+              "generatorFunction": true,
+              "keyOrder": [
+                "length",
+                "name",
+                "prototype"
+              ],
+              "descriptors": [
+                [
+                  "length",
+                  {
+                    "kind": "data",
+                    "writable": false,
+                    "enumerable": false,
+                    "configurable": true
+                  }
+                ],
+                [
+                  "name",
+                  {
+                    "kind": "data",
+                    "writable": false,
+                    "enumerable": false,
+                    "configurable": true
+                  }
+                ],
+                [
+                  "prototype",
+                  {
+                    "kind": "data",
+                    "writable": true,
+                    "enumerable": false,
+                    "configurable": false
+                  }
+                ]
+              ],
+              "extensible": true
+            }
+          ],
+          [
+            "proto",
+            {
+              "kind": "object",
+              "code": null,
+              "captures": [],
+              "prototype": "Generator.prototype",
+              "properties": []
+            }
+          ],
+          [
+            "it",
+            {
+              "kind": "generator",
+              "callee": [
+                "ref",
+                "fn"
+              ],
+              "invocation": "generator1",
+              "receiver": [
+                "undefined"
+              ],
+              "arguments": [
+                [
+                  "num",
+                  3
+                ]
+              ],
+              "phase": "completed",
+              "resume": null,
+              "yielded": 1,
+              "handlers": [],
+              "delegation": null,
+              "prototype": [
+                "ref",
+                "proto"
+              ],
+              "properties": []
+            }
+          ],
+          [
+            "yielded",
+            {
+              "kind": "object",
+              "code": null,
+              "captures": [],
+              "prototype": "ordinary",
+              "properties": [
+                [
+                  "value",
+                  [
+                    "num",
+                    1
+                  ]
+                ],
+                [
+                  "done",
+                  [
+                    "bool",
+                    false
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "done",
+            {
+              "kind": "object",
+              "code": null,
+              "captures": [],
+              "prototype": "ordinary",
+              "properties": [
+                [
+                  "value",
+                  [
+                    "undefined"
+                  ]
+                ],
+                [
+                  "done",
+                  [
+                    "bool",
+                    true
+                  ]
+                ]
+              ]
+            }
+          ]
+        ],
+        "locals": [
+          [
+            "generator1:this",
+            [
+              "undefined"
+            ]
+          ],
+          [
+            "generator1:argument:0",
+            [
+              "num",
+              3
+            ]
+          ]
+        ],
+        "captureAliases": [],
+        "receiver": [
+          "undefined"
+        ],
+        "stack": [],
+        "frameFunctions": [
+          [
+            "invocation1",
+            "run"
+          ],
+          [
+            "generator1",
+            "g"
+          ]
+        ],
+        "pending": {
+          "kind": "return",
+          "value": [
+            "num",
+            3
+          ]
+        },
+        "lastReturn": {
+          "kind": "return",
+          "value": [
+            "ref",
+            "done"
+          ]
+        },
+        "completion": {
+          "kind": "return",
+          "value": [
+            "num",
+            3
+          ]
+        },
+        "protocol": {
+          "schema": "semantic-protocol-state/1",
+          "symbols": [
+            {
+              "id": "well-known:iterator",
+              "kind": "well-known",
+              "name": "iterator"
+            },
+            {
+              "id": "well-known:asyncIterator",
+              "kind": "well-known",
+              "name": "asyncIterator"
+            },
+            {
+              "id": "well-known:toPrimitive",
+              "kind": "well-known",
+              "name": "toPrimitive"
+            },
+            {
+              "id": "well-known:hasInstance",
+              "kind": "well-known",
+              "name": "hasInstance"
+            },
+            {
+              "id": "well-known:species",
+              "kind": "well-known",
+              "name": "species"
+            },
+            {
+              "id": "well-known:isConcatSpreadable",
+              "kind": "well-known",
+              "name": "isConcatSpreadable"
+            },
+            {
+              "id": "well-known:match",
+              "kind": "well-known",
+              "name": "match"
+            },
+            {
+              "id": "well-known:matchAll",
+              "kind": "well-known",
+              "name": "matchAll"
+            },
+            {
+              "id": "well-known:replace",
+              "kind": "well-known",
+              "name": "replace"
+            },
+            {
+              "id": "well-known:search",
+              "kind": "well-known",
+              "name": "search"
+            },
+            {
+              "id": "well-known:split",
+              "kind": "well-known",
+              "name": "split"
+            },
+            {
+              "id": "well-known:toStringTag",
+              "kind": "well-known",
+              "name": "toStringTag"
+            },
+            {
+              "id": "well-known:unscopables",
+              "kind": "well-known",
+              "name": "unscopables"
+            }
+          ],
+          "pendingCalls": [],
+          "callFrames": [],
+          "sequence": 12,
+          "construction": null
+        }
+      }
+    }
+  ]
+}

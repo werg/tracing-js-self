@@ -4,6 +4,12 @@ import {assertAlgorithmFields,assertAlgorithmDataArray,assertAlgorithmValue,
   stableAlgorithmJSON,isAlgorithmDataRecord} from './ir.js';
 import {PROTOCOL_MACHINE_ADAPTERS_V8} from './protocol-machine-extensions-v8.js';
 
+export const PROTOCOL_INTRINSIC_PROTOTYPES_V8=Object.freeze([
+  ...new Set(PROTOCOL_MACHINE_ADAPTERS_V8.flatMap(adapter=>adapter.intrinsicPrototypes??[]))
+]);
+if(PROTOCOL_INTRINSIC_PROTOTYPES_V8.some(name=>typeof name!=='string'||!name||name==='ordinary'))
+  throw new TypeError('Protocol intrinsic prototype names must be explicit strings');
+
 export const PROTOCOL_RECORD_V8_SCHEMA='semantic-protocol-record/1';
 export const PROTOCOL_RECORD_V8_PREFIX='protocol ';
 const baseFields={
@@ -129,7 +135,7 @@ export function validateProtocolRecordV8(record){
     if(!['own','strings','symbols','enumerable-strings'].includes(record.mode))fail('own-key mode');
     list(record.keys,'own keys');record.keys.forEach(validateProtocolKeyV8);
   }
-  if(record.kind==='property.prototype'&&record.prototype!==null&&record.prototype!=='ordinary'){
+  if(record.kind==='property.prototype'&&record.prototype!==null&&record.prototype!=='ordinary'&&!PROTOCOL_INTRINSIC_PROTOTYPES_V8.includes(record.prototype)){
     validateProtocolValueV8(record.prototype);if(record.prototype[0]!=='ref')fail('prototype');
   }
   if(record.kind==='property.finish')completion(record.completion);

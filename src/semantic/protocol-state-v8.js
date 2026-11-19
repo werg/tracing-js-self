@@ -7,11 +7,12 @@ import {analyzeSemanticProgram} from '../training/semantic-program.js';
 import {validateProtocolSymbols} from './protocol-values.js';
 import {assertAlgorithmFields,assertAlgorithmDataArray,isAlgorithmDataRecord} from './ir.js';
 import {validateProtocolRecordV8,validateProtocolValueV8,validateProtocolKeyV8,
-  validateProtocolDescriptorV8} from './protocol-codec-v8.js';
+  validateProtocolDescriptorV8,PROTOCOL_INTRINSIC_PROTOTYPES_V8} from './protocol-codec-v8.js';
 import {PROTOCOL_MACHINE_ADAPTERS_V8} from './protocol-machine-extensions-v8.js';
 
 export const PROTOCOL_STATE_V8_SCHEMA='semantic-protocol-state/1';
 const baseStateFields=['schema','symbols','pendingCalls','callFrames','sequence'];
+const ordinaryHeapKinds=new Set(['object','array','closure',...PROTOCOL_MACHINE_ADAPTERS_V8.flatMap(adapter=>adapter.ordinaryHeapKinds??[])]);
 const extensionStateFields=PROTOCOL_MACHINE_ADAPTERS_V8.filter(adapter=>adapter.stateField!==undefined).map(adapter=>adapter.stateField);
 if(extensionStateFields.some(field=>typeof field!=='string'||!field||baseStateFields.includes(field))||
   new Set(extensionStateFields).size!==extensionStateFields.length)throw new TypeError('Distinct protocol extension state fields required');
@@ -45,7 +46,7 @@ function known(controller,value,self=null){
 }
 function knownKey(controller,key){validateProtocolKeyV8(key);if(key[0]==='symbol')symbol(controller,key[1]);return key;}
 function heapNode(controller,id){const node=controller.heap.get(id);
-  require(node&&['object','array','closure'].includes(node.kind),'ordinary object or owned closure required');
+  require(node&&ordinaryHeapKinds.has(node.kind),'ordinary object or owned closure required');
   require(node.properties instanceof Map,'ordinary property map required');return node;}
 function mapKey(map,key){
   if(!map)return undefined;
@@ -118,6 +119,12 @@ function resolveProperty(controller,object,key){
       require(!missingIntrinsic(node,key),'inherited intrinsic property requires its callable protocol');
       return {owner:null,node:null,descriptor:null};
     }
+    if(PROTOCOL_INTRINSIC_PROTOTYPES_V8.includes(prototype)){
+      const adapter=PROTOCOL_MACHINE_ADAPTERS_V8.find(item=>item.intrinsicPrototypes?.includes(prototype));
+      const result=adapter?.resolveIntrinsicProperty?.(controller,prototype,key,PROTOCOL_MACHINE_API_V8);
+      require(result&&Object.hasOwn(result,'descriptor'),'intrinsic property requires its declared protocol');
+      return {owner:null,node:null,descriptor:result.descriptor};
+    }
     known(controller,prototype);require(prototype[0]==='ref','prototype identity');current=prototype[1];
   }
 }
@@ -159,7 +166,9 @@ function call(controller,record,options={}){
   for(const adapter of PROTOCOL_MACHINE_ADAPTERS_V8)if(adapter.assertCall)
     require(adapter.assertCall(controller,record.callee,options,PROTOCOL_MACHINE_API_V8)===true,'extension callable guard: '+adapter.id);
   const node=callable(controller,record.callee);known(controller,record.receiver);record.arguments.forEach(value=>known(controller,value));
-  require(!controller.frameFunctions.has(record.child),'duplicate invocation');
+  if(options.resume===true)require(controller.frameFunctions.get(record.child)===node.code&&!controller.stack.includes(record.child),
+    'resumed invocation must be inactive and retain the same source callable');
+  else require(!controller.frameFunctions.has(record.child),'duplicate invocation');
   const protocol=state(controller);require(protocol.callFrames.length<PROTOCOL_V8_LIMITS.calls,'call stack bound');
   protocol.callFrames.push({child:record.child,parent:controller.stack.at(-1),
     priorReceiver:copy(controller.receiver??['undefined']),priorAliases:[...(controller.captureAliases??new Map())],
@@ -169,6 +178,19 @@ function call(controller,record,options={}){
   controller.locals.set(record.child+':this',copy(controller.receiver));
   record.arguments.forEach((value,index)=>controller.locals.set(record.child+':argument:'+index,copy(value)));
   controller.frameFunctions.set(record.child,node.code);controller.stack.push(record.child);
+}
+function complete(controller,record){
+  const protocol=state(controller);
+  require(['return','throw'].includes(record.kind),'call completion kind');
+  require(controller.stack.at(-1)===record.invocation,'completion has wrong active invocation');known(controller,record.value);
+  require(!controller.activeJob,'job completion needs its declared scheduler profile');
+  if(controller.stack.length>1){
+    const frame=protocol.callFrames.at(-1);
+    require(frame?.child===record.invocation&&frame.parent===controller.stack.at(-2),'call scope completion mismatch');
+    controller.stack.pop();protocol.callFrames.pop();
+    controller.receiver=copy(frame.priorReceiver);controller.captureAliases=new Map(frame.priorAliases);
+    controller.lastReturn={kind:record.kind,value:copy(record.value)};
+  }else{controller.stack.pop();controller.pending={kind:record.kind,value:copy(record.value)};}
 }
 function allocate(controller,record){
   fresh(controller,record.name);const node={kind:record.objectKind,code:record.code,
@@ -247,16 +269,7 @@ function apply(controller,record){
     if(record.kind==='choose')require(['then','use-left'].includes(record.path)===truthy(record.decision),'false protocol choice');
   }else if(record.kind==='call')call(controller,record);
   else if(record.kind==='return'||record.kind==='throw'){
-    require(controller.stack.at(-1)===record.invocation,'completion has wrong active invocation');known(controller,record.value);
-    require(!controller.activeJob,'job completion needs its declared scheduler profile');
-    if(controller.stack.length>1){
-      const frame=protocol.callFrames.at(-1);
-      require(frame?.child===record.invocation&&frame.parent===controller.stack.at(-2),'call scope completion mismatch');
-      controller.stack.pop();protocol.callFrames.pop();
-      controller.receiver=copy(frame.priorReceiver);controller.captureAliases=new Map(frame.priorAliases);
-      controller.lastReturn={kind:record.kind,value:copy(record.value)};
-    }
-    else{controller.stack.pop();controller.pending={kind:record.kind,value:copy(record.value)};}
+    complete(controller,record);
   }else if(record.kind==='end'){
     require(!controller.stack.length&&!protocol.pendingCalls.length&&!protocol.callFrames.length&&controller.pending?.kind===record.completion,'terminal completion or obligations differ');
     require(!(controller.ready?.length)&&!(controller.effects?.size)&&!(controller.jobs?.size),'effect/job completion requires its scheduler profile');
@@ -367,7 +380,7 @@ export function restoreProtocolStateV8(controller,snapshot){
   }
   for(const row of snapshot.symbols)require(!controller.heap.has(row.id),'Symbol/object identity collision');
   for(const [id,node]of controller.heap){
-    if(!['object','array','closure'].includes(node.kind)){
+    if(!ordinaryHeapKinds.has(node.kind)){
       require(PROTOCOL_MACHINE_ADAPTERS_V8.some(adapter=>adapter.hasRichState?.(node)),'undeclared protocol heap kind');continue;
     }
     heapNode(temporary,id);const keys=[];
@@ -390,7 +403,7 @@ export function restoreProtocolStateV8(controller,snapshot){
         require(!ordered.some(other=>keyEqual(other,key))&&ownDescriptor(node,publicKey(key)),'invalid or duplicate property order');ordered.push(key);}
       require([...keys,...described].every(key=>ordered.some(other=>keyEqual(other,key))),'property creation order is incomplete');}
     if(node.extensible!==undefined)require(typeof node.extensible==='boolean','extensible flag');
-    const prototype=node.prototype===undefined?'ordinary':node.prototype;if(prototype!==null&&prototype!=='ordinary'){
+    const prototype=node.prototype===undefined?'ordinary':node.prototype;if(prototype!==null&&prototype!=='ordinary'&&!PROTOCOL_INTRINSIC_PROTOTYPES_V8.includes(prototype)){
       known(temporary,prototype);require(prototype[0]==='ref','prototype reference');heapNode(temporary,prototype[1]);}
   }
   const extensionIdentities=new Set([...controller.heap.keys(),...snapshot.symbols.map(row=>row.id)]);
@@ -453,4 +466,4 @@ export function describeProtocolObjectV8(controller,id){
 
 /** Trusted component interface. Public records never carry options or adapters. */
 export const PROTOCOL_MACHINE_API_V8=Object.freeze({require,fail,copy,eq,state,known,knownKey,heapNode,
-  ownDescriptor,installDescriptor,order,fresh,call,allocate,setLocal,truthy});
+  ownDescriptor,installDescriptor,order,fresh,call,complete,allocate,setLocal,truthy});
