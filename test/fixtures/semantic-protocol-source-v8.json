@@ -168,6 +168,25 @@
             "implicit-call-throws-without-a-catch-or-finally",
             "Promise-job-internals"
           ]
+        },
+        "metadataAudit": {
+          "schema": "source-protocol-metadata/1",
+          "status": "agreed",
+          "checked": 11,
+          "coverage": [
+            "ordinary-own-key-order",
+            "data-descriptor-values-and-flags",
+            "accessor-identities-and-flags",
+            "prototype-identity",
+            "extensibility",
+            "Symbol-identity-description-registry"
+          ],
+          "unsupported": [
+            "Proxy-metadata",
+            "function-own-state",
+            "private-brands",
+            "generator-continuations"
+          ]
         }
       }
     }

@@ -124,7 +124,7 @@ export function createCompletionCapture({limit=32768,initialValues=[]}={}){
   return {observations,capture};
 }
 
-export function ownedCompletionObservations(bundle,source){
+export function ownedCompletionObservations(bundle,source,{onObservation=null}={}){
   const plan=completionObservationPlan(source),siteById=new Map(bundle.sites.map(x=>[x.siteId,x]));
   const identities=new Map(),pending=new Map(),observations=[];let next=0;
   const state={heap:{...bundle.initialState.heap},envs:{...bundle.initialState.envs},frames:{...bundle.initialState.frames}};
@@ -157,8 +157,9 @@ export function ownedCompletionObservations(bundle,source){
       tag[0]==='builtinfn'||tag[0]==='intrinsic'&&tag[1]!=='Math'&&tag[1]!=='Atomics'?'function':'object';
     return ['identity',kind,identities.get(key)];
   };
-  const emit=(key,kind,tag)=>observations.push({site:key,kind,
-    ...(!['finally','break','continue'].includes(kind)?{value:value(tag)}:{})});
+  const emit=(key,kind,tag)=>{const row={site:key,kind,
+    ...(!['finally','break','continue'].includes(kind)?{value:value(tag)}:{})};
+    observations.push(row);if(onObservation)onObservation({row,tag,state});};
   for(const event of bundle.events){
     const previousFrame=state.frames[event.invocationId];
     for(const change of event.stateChanges){

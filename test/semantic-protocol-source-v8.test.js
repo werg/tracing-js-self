@@ -117,3 +117,64 @@ test('committed source-region fixture rechecks its full public contexts and priv
   assert.equal(fixtures.schema,'semantic-protocol-region-fixtures/1');
   for(const row of fixtures.cases)assert.equal((await recheckProtocolRegionEvidence(row.artifact)).valid,true,row.id);
 });
+
+test('independent metadata receipts reject descriptor, prototype and Symbol mutants with an identical scalar result',async()=>{
+  const {ownedProtocolSourceObservations}=await import('../src/semantic/protocol-source-observations-v8.js');
+  const {compareProtocolMetadata}=await import('../src/semantic/protocol-metadata-v8.js');
+  const {ownedEffectfulOutcome}=await import('../src/training/effectful-compiler.js');
+  const source='"use strict";function run(){const s=Symbol("key");const o={};o[s]=3;return 7;}';
+  const {bundle,compiled,audit}=await checked(source);
+  assert.equal(audit.metadataAudit.status,'agreed');assert(audit.metadataAudit.checked>0);
+  const target=Object.values(bundle.finalState.heap).find(node=>Object.keys(node.properties??{}).some(key=>key.startsWith('\0symbol:'))).id;
+  const symbol=Object.values(bundle.finalState.heap).find(node=>node.kind==='symbol').id;
+  const transforms=[
+    node=>{if(node.id===target)for(const key of Object.keys(node.properties??{})){node.dataAttributes??={};node.dataAttributes[key]={writable:false,enumerable:true,configurable:true};}},
+    node=>{if(node.id===target)node.prototype=null;},
+    node=>{if(node.id===target)node.prototype='Array.prototype';},
+    node=>{if(node.id===symbol)node.description=['str','different'];}
+  ];
+  for(const transform of transforms){
+    const mutant=structuredClone(bundle);
+    for(const state of [mutant.initialState,mutant.finalState])for(const node of Object.values(state.heap))transform(node);
+    for(const event of mutant.events)for(const change of event.stateChanges.filter(change=>change.table==='heap'))
+      for(const node of [change.before,change.after])if(node)transform(node);
+    assert.deepEqual(ownedEffectfulOutcome(mutant),compiled.outcome,'scalar outcome alone must not detect this mutant');
+    const observed=ownedProtocolSourceObservations(mutant,source);
+    assert.deepEqual(observed.completions,audit.observations.completions,'identity/scalar receipts alone must not detect this mutant');
+    assert.equal(compareProtocolMetadata(observed.metadata,audit.observations.metadata).status,'mismatch');
+  }
+});
+
+test('independent metadata inspection never invokes getters and rejects Proxy traps before observation',()=>{
+  const {capture,metadata}=createProtocolCompletionCapture();let getters=0,traps=0;
+  const object={get x(){getters++;return 3;}};capture('one','initialize',object);
+  assert.equal(getters,0);assert.equal(metadata[0].objects[0].properties[0].descriptor.kind,'accessor');
+  const proxy=new Proxy({}, {ownKeys(){traps++;return [];},getPrototypeOf(){traps++;return Object.prototype;},getOwnPropertyDescriptor(){traps++;return undefined;}});
+  assert.throws(()=>capture('two','initialize',proxy),/Proxy metadata/);assert.equal(traps,0);
+});
+
+test('a consistently faulty teacher can replay its metadata bug, but the independent source gate rejects it',async()=>{
+  const {Runtime}=await import('../src/runtime.js');
+  const source='"use strict";function run(){const s=Symbol("key");const o={};Object.defineProperty(o,s,{get:function(){return 3;},enumerable:false});return 7;}';
+  for(const mode of ['enumerable','prototype']){
+    const original=Runtime.prototype.commit,seen=new WeakSet();let mutant;
+    try{
+      Runtime.prototype.commit=function(operation,callback,options){return original.call(this,operation,(draft,eventId)=>{
+        const result=callback(draft,eventId);
+        if(mode==='prototype'&&operation==='object.allocate'&&!seen.has(this)){
+          draft.heap[result.result[1]].prototype=null;seen.add(this);
+        }
+        const callee=result?.operands?.[0],name=callee?.[0]==='method'?callee[1]?.[1]:null;
+        if(mode==='enumerable'&&operation==='call.enter'&&name==='Object.defineProperty'){
+          const target=draft.heap[result.operands[1][1]];
+          for(const descriptor of Object.values(target.accessors??{}))descriptor.enumerable=true;
+        }
+        return result;
+      },options);};
+      mutant=build(source); // Includes validateBundle, exact owned replay, and public machine claims.
+    }finally{Runtime.prototype.commit=original;}
+    assert.deepEqual(mutant.compiled.outcome.graph.roots.at(-1),['num',7]);
+    await assert.rejects(()=>auditProtocolSourceV8({bundle:mutant.bundle,
+      referenceInput:{source,entry:'run',inputGraph:encodeNativeGraph([])},outcome:mutant.compiled.outcome}),/metadataAudit.*mismatch/);
+  }
+});
