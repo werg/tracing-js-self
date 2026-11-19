@@ -6,6 +6,7 @@ import {encode} from '../src/values.js';
 import {validateBundle} from '../src/validation.js';
 import {replayExact} from '../src/replay.js';
 import {verifyEffectfulTrainingCase} from '../src/training/effectful-admit.js';
+import {decodeWitness} from '../src/training/format.js';
 
 const strict=body=>'"use strict";function run(){'+body+'}';
 const declaration=inherited=>inherited?
@@ -22,8 +23,8 @@ async function certified(source){
   return result.exported;
 }
 const records=exported=>exported.public.timeline.filter(x=>x.line).map(x=>{
-  const split=x.line.indexOf(' ');
-  return {kind:x.line.slice(0,split),...JSON.parse(x.line.slice(split+1))};
+  const {kind,fields}=decodeWitness(x.line);
+  return {kind,...fields};
 });
 
 test('strict own and inherited getter-only writes enter catch before returning',async()=>{

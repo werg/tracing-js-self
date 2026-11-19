@@ -1,4 +1,4 @@
-# CPython 3.12, Linux x86_64; paired with contracts/native-admission-policy-v5.json.
+# CPython 3.12, Linux x86_64; paired with contracts/native-admission-policy-v6.json.
 # Regenerate using pip-compile --generate-hashes --allow-unsafe --strip-extras.
 --extra-index-url https://download.pytorch.org/whl/cpu
 

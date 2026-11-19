@@ -7,7 +7,7 @@ import {admissionEnvironment} from './admission-identity.js';
 
 export const CAPABILITY_STAGES=Object.freeze([
   'frontend','ownedEvaluation','independentOutcome','independentIntermediate',
-  'v5ProjectionAndPublicReplay','nativeAdmission','modelEvaluation'
+  'v6ProjectionAndPublicReplay','nativeAdmission','modelEvaluation'
 ]);
 export const CAPABILITY_STATUSES=Object.freeze(['passed','failed','unsupported','resource_limited','untested']);
 const pure=(id,body,args=[])=>({id,feature:id,source:'"use strict";'+body,entry:'run',args,fixture:{calls:[]}});
@@ -34,6 +34,9 @@ export const CAPABILITY_CASES=Object.freeze([
   pure('array-some-short-circuit','function run(){let seen=0;const found=[1,2,3].some(function(n){seen++;return n===2;});return [found,seen];}'),
   pure('array-for-each-owned-callback','function run(){let total=0;const result=[1,2,3].forEach(function(n){total+=n;});return [result,total];}'),
   pure('sparse-array-fill','function run(){return Array(3).fill(7);}'),
+  pure('array-literal-spread','function run(){const xs=[1,2];return [0,...xs,xs.push(3),...xs];}'),
+  pure('string-code-point-spread','function run(){return [..."A𝄞é"];}'),
+  pure('call-spread-evaluation-order','function run(){const collect=(...ys)=>ys;const xs=[1,2];return collect(...xs,xs.push(3));}'),
   pure('input-graph-mutation','function run(a){a[0]=a[0]+1;return a;}',[[0,1]]),
   pure('alias-preserving-mutation','function run(){const a={n:1};const b=a;b.n=4;return [a,b];}'),
   pure('input-array-mutation','function run(values){values[0]=values[1];values.pop();return values.length;}',[[3,5,7]]),
@@ -89,7 +92,7 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
       result.status==='unsupported'?'unsupported':'failed';
     if(afterTeacher){
       const projected=success||['reference','native-consumer'].includes(result.phase);
-      stages.v5ProjectionAndPublicReplay=projected?'passed':result.status==='projection_refused'?'unsupported':'failed';
+      stages.v6ProjectionAndPublicReplay=projected?'passed':result.status==='projection_refused'?'unsupported':'failed';
       if(projected){
         const referenced=success||result.phase==='native-consumer';
         const intermediateMismatch=['reference_operation_mismatch','reference_branch_mismatch'].includes(result.status);
@@ -105,9 +108,9 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
     }
     rows.push(row);
   }
-  return {schema:'semantic-capability-ledger/1',producerRevision,
-    contracts:{execution:'semantic-execution/5',trace:'semantic-trace/5',context:'semantic-context/5',
-      continuation:'semantic-continuation/5',harness:'selected-harness/2'},
+  return {schema:'semantic-capability-ledger/2',producerRevision,
+    contracts:{execution:'semantic-execution/6',trace:'semantic-trace/6',context:'semantic-context/6',
+      continuation:'semantic-continuation/6',harness:'selected-harness/2'},
     environment:admissionEnvironment(),nativePolicy,unit:'declared source/input/fixture probe',rows,
     totals:summarizeCapabilityRows(rows),
     otherProfiles:['bounded-js-subset/2','static-module/1','evaluated-module/1'].map(profile=>({

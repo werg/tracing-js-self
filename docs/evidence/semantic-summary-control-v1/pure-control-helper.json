@@ -1,0 +1,4740 @@
+{
+  "predictionOrigin": "authored-diagnostic",
+  "candidate": {
+    "id": "pure-control-helper",
+    "context": {
+      "schema": "experimental-summary-context/1",
+      "profile": "pure-control-helper/1",
+      "source": "\"use strict\";function select(x,flag,fallback){return x<0?(flag&&(-x)):(fallback??3);}",
+      "sourceDigest": "f54e714b39109802ebd95cadad7013ac1cb95625397ee482cbcb25f97622a7fb",
+      "entry": "select",
+      "region": {
+        "start": 13,
+        "end": 85
+      },
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "num",
+            -4
+          ],
+          [
+            "bool",
+            true
+          ],
+          [
+            "num",
+            0
+          ]
+        ],
+        "objects": []
+      },
+      "inputDigest": "a944327283659dd9d3951b85795052fca03cbcbeb05c41b71f38c8663b24fa91",
+      "maxIterations": 128,
+      "decisionSites": [
+        {
+          "site": {
+            "start": 53,
+            "end": 56
+          },
+          "kind": "conditional"
+        },
+        {
+          "site": {
+            "start": 58,
+            "end": 68
+          },
+          "kind": "logical",
+          "operator": "&&"
+        },
+        {
+          "site": {
+            "start": 71,
+            "end": 82
+          },
+          "kind": "logical",
+          "operator": "??"
+        }
+      ]
+    },
+    "summary": {
+      "schema": "experimental-semantic-summary/1",
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          4
+        ]
+      },
+      "inputUnchanged": true,
+      "decisions": [
+        {
+          "site": {
+            "start": 53,
+            "end": 56
+          },
+          "selected": "consequent"
+        },
+        {
+          "site": {
+            "start": 58,
+            "end": 68
+          },
+          "selected": "right"
+        }
+      ]
+    },
+    "family": "summary-prototype-pure-control",
+    "expected": "experimental_verified"
+  },
+  "result": {
+    "schema": "semantic-summary-experiment/1",
+    "status": "experimental_verified",
+    "public": {
+      "context": {
+        "schema": "experimental-summary-context/1",
+        "profile": "pure-control-helper/1",
+        "source": "\"use strict\";function select(x,flag,fallback){return x<0?(flag&&(-x)):(fallback??3);}",
+        "sourceDigest": "f54e714b39109802ebd95cadad7013ac1cb95625397ee482cbcb25f97622a7fb",
+        "entry": "select",
+        "region": {
+          "start": 13,
+          "end": 85
+        },
+        "inputGraph": {
+          "schema": "owned-graph/1",
+          "roots": [
+            [
+              "num",
+              -4
+            ],
+            [
+              "bool",
+              true
+            ],
+            [
+              "num",
+              0
+            ]
+          ],
+          "objects": []
+        },
+        "inputDigest": "a944327283659dd9d3951b85795052fca03cbcbeb05c41b71f38c8663b24fa91",
+        "maxIterations": 128,
+        "decisionSites": [
+          {
+            "site": {
+              "start": 53,
+              "end": 56
+            },
+            "kind": "conditional"
+          },
+          {
+            "site": {
+              "start": 58,
+              "end": 68
+            },
+            "kind": "logical",
+            "operator": "&&"
+          },
+          {
+            "site": {
+              "start": 71,
+              "end": 82
+            },
+            "kind": "logical",
+            "operator": "??"
+          }
+        ]
+      },
+      "raw": "summary {\"schema\":\"experimental-semantic-summary/1\",\"completion\":{\"kind\":\"return\",\"value\":[\"num\",4]},\"inputUnchanged\":true,\"decisions\":[{\"site\":{\"start\":53,\"end\":56},\"selected\":\"consequent\"},{\"site\":{\"start\":58,\"end\":68},\"selected\":\"right\"}]}",
+      "summary": {
+        "schema": "experimental-semantic-summary/1",
+        "completion": {
+          "kind": "return",
+          "value": [
+            "num",
+            4
+          ]
+        },
+        "inputUnchanged": true,
+        "decisions": [
+          {
+            "site": {
+              "start": 53,
+              "end": 56
+            },
+            "selected": "consequent"
+          },
+          {
+            "site": {
+              "start": 58,
+              "end": 68
+            },
+            "selected": "right"
+          }
+        ]
+      }
+    },
+    "private": {
+      "certificate": {
+        "status": "verified",
+        "schema": "experimental-summary-certificate/1",
+        "authority": "independent-node-v8-source",
+        "contextDigest": "e45bf5ad84d18e599627dab99ef0d3d13be23b0f0cb1c7d7aedd47d30aae4b73",
+        "summaryDigest": "488c96bc47ece2335d3f7ebf99f7845206338c32baab47b86d832b16f821cecf",
+        "references": {
+          "original": {
+            "schema": "effectful-reference/4",
+            "exceptionProfile": "declared-error/name-message/1",
+            "outcome": {
+              "kind": "return",
+              "graph": {
+                "roots": [
+                  [
+                    "num",
+                    -4
+                  ],
+                  [
+                    "bool",
+                    true
+                  ],
+                  [
+                    "num",
+                    0
+                  ],
+                  [
+                    "num",
+                    4
+                  ]
+                ],
+                "objects": []
+              }
+            },
+            "effects": [],
+            "operations": [],
+            "decisions": [],
+            "completions": [],
+            "callbackFailures": [],
+            "unhandledRejections": []
+          },
+          "branches": {
+            "schema": "effectful-reference/4",
+            "exceptionProfile": "declared-error/name-message/1",
+            "outcome": {
+              "kind": "return",
+              "graph": {
+                "roots": [
+                  [
+                    "num",
+                    -4
+                  ],
+                  [
+                    "bool",
+                    true
+                  ],
+                  [
+                    "num",
+                    0
+                  ],
+                  [
+                    "num",
+                    4
+                  ]
+                ],
+                "objects": []
+              }
+            },
+            "effects": [],
+            "operations": [],
+            "decisions": [
+              {
+                "site": "53:56",
+                "decision": [
+                  "bool",
+                  false
+                ]
+              },
+              {
+                "site": "58:68",
+                "decision": [
+                  "bool",
+                  false
+                ]
+              }
+            ],
+            "completions": [],
+            "callbackFailures": [],
+            "unhandledRejections": []
+          }
+        },
+        "nativeAdmission": false,
+        "learningStatus": "untested",
+        "claimsChecked": {
+          "completion": true,
+          "inputState": true,
+          "iterations": false,
+          "controlDecisions": 2,
+          "intermediateCheckpoints": 0
+        }
+      },
+      "detailedEpisode": {
+        "public": {
+          "schema": "semantic-execution/5",
+          "profile": "selected-harness/2",
+          "traceFormat": "semantic-trace/5",
+          "contextFormat": "semantic-context/5",
+          "timeline": [
+            {
+              "schema": "semantic-execution/5",
+              "session": "teacher1",
+              "sequence": 1,
+              "ownerSequence": 1,
+              "track": "host",
+              "mode": "observed",
+              "kind": "program",
+              "programId": "program1",
+              "digest": "f54e714b39109802ebd95cadad7013ac1cb95625397ee482cbcb25f97622a7fb",
+              "entry": "select",
+              "source": "\"use strict\";function select(x,flag,fallback){return x<0?(flag&&(-x)):(fallback??3);}",
+              "sites": [
+                {
+                  "id": "s1",
+                  "start": 0,
+                  "end": 12,
+                  "role": "Literal"
+                },
+                {
+                  "id": "s2",
+                  "start": 13,
+                  "end": 85,
+                  "role": "FunctionDeclaration"
+                },
+                {
+                  "id": "s3",
+                  "start": 22,
+                  "end": 28,
+                  "role": "Identifier"
+                },
+                {
+                  "id": "s4",
+                  "start": 29,
+                  "end": 30,
+                  "role": "Identifier"
+                },
+                {
+                  "id": "s5",
+                  "start": 31,
+                  "end": 35,
+                  "role": "Identifier"
+                },
+                {
+                  "id": "s6",
+                  "start": 36,
+                  "end": 44,
+                  "role": "Identifier"
+                },
+                {
+                  "id": "s7",
+                  "start": 46,
+                  "end": 84,
+                  "role": "ReturnStatement"
+                },
+                {
+                  "id": "s8",
+                  "start": 53,
+                  "end": 54,
+                  "role": "Identifier"
+                },
+                {
+                  "id": "s9",
+                  "start": 53,
+                  "end": 56,
+                  "role": "BinaryExpression"
+                },
+                {
+                  "id": "s10",
+                  "start": 53,
+                  "end": 83,
+                  "role": "ConditionalExpression"
+                },
+                {
+                  "id": "s11",
+                  "start": 55,
+                  "end": 56,
+                  "role": "Literal"
+                },
+                {
+                  "id": "s12",
+                  "start": 58,
+                  "end": 62,
+                  "role": "Identifier"
+                },
+                {
+                  "id": "s13",
+                  "start": 58,
+                  "end": 68,
+                  "role": "LogicalExpression"
+                },
+                {
+                  "id": "s14",
+                  "start": 65,
+                  "end": 67,
+                  "role": "UnaryExpression"
+                },
+                {
+                  "id": "s15",
+                  "start": 66,
+                  "end": 67,
+                  "role": "Identifier"
+                },
+                {
+                  "id": "s16",
+                  "start": 71,
+                  "end": 79,
+                  "role": "Identifier"
+                },
+                {
+                  "id": "s17",
+                  "start": 71,
+                  "end": 82,
+                  "role": "LogicalExpression"
+                },
+                {
+                  "id": "s18",
+                  "start": 81,
+                  "end": 82,
+                  "role": "Literal"
+                }
+              ],
+              "functions": [
+                {
+                  "start": 13,
+                  "end": 85,
+                  "name": "select",
+                  "params": [
+                    "x",
+                    "flag",
+                    "fallback"
+                  ]
+                }
+              ],
+              "capabilities": [],
+              "dependencies": [],
+              "sourceMap": null,
+              "languageProfile": "owned-javascript/1",
+              "module": false,
+              "sourceMetadata": null
+            },
+            {
+              "schema": "semantic-execution/5",
+              "session": "teacher1",
+              "sequence": 2,
+              "ownerSequence": 1,
+              "track": "worker1",
+              "mode": "observed",
+              "kind": "invocation",
+              "programId": "program1",
+              "invocationId": "invocation1",
+              "realmId": "realm1",
+              "triggerId": "teacher-entry",
+              "completionPolicy": "await-returned-promise",
+              "realmPolicy": "retained",
+              "inputGraph": {
+                "roots": [
+                  [
+                    "num",
+                    -4
+                  ],
+                  [
+                    "bool",
+                    true
+                  ],
+                  [
+                    "num",
+                    0
+                  ]
+                ],
+                "objects": []
+              },
+              "entry": "select",
+              "sourceDigest": "f54e714b39109802ebd95cadad7013ac1cb95625397ee482cbcb25f97622a7fb",
+              "receiver": [
+                "undefined"
+              ],
+              "closureId": null,
+              "activation": "call",
+              "parentInvocationId": null,
+              "taskRevision": 1,
+              "deadline": null,
+              "bindings": {},
+              "ingressKey": "teacher-entry"
+            },
+            {
+              "schema": "semantic-execution/5",
+              "session": "teacher1",
+              "sequence": 3,
+              "ownerSequence": 2,
+              "track": "worker1",
+              "mode": "generated",
+              "kind": "semantic",
+              "invocationId": "invocation1",
+              "traceFormat": "semantic-trace/5",
+              "line": "bind {\"name\":\"x\",\"value\":[\"num\",-4]}"
+            },
+            {
+              "schema": "semantic-execution/5",
+              "session": "teacher1",
+              "sequence": 4,
+              "ownerSequence": 3,
+              "track": "worker1",
+              "mode": "generated",
+              "kind": "semantic",
+              "invocationId": "invocation1",
+              "traceFormat": "semantic-trace/5",
+              "line": "bind {\"name\":\"flag\",\"value\":[\"bool\",true]}"
+            },
+            {
+              "schema": "semantic-execution/5",
+              "session": "teacher1",
+              "sequence": 5,
+              "ownerSequence": 4,
+              "track": "worker1",
+              "mode": "generated",
+              "kind": "semantic",
+              "invocationId": "invocation1",
+              "traceFormat": "semantic-trace/5",
+              "line": "bind {\"name\":\"fallback\",\"value\":[\"num\",0]}"
+            },
+            {
+              "schema": "semantic-execution/5",
+              "session": "teacher1",
+              "sequence": 6,
+              "ownerSequence": 5,
+              "track": "worker1",
+              "mode": "generated",
+              "kind": "semantic",
+              "invocationId": "invocation1",
+              "traceFormat": "semantic-trace/5",
+              "line": "choose {\"expr\":{\"op\":\"binary\",\"operator\":\"<\",\"left\":{\"op\":\"local\",\"name\":\"x\"},\"right\":{\"op\":\"literal\",\"value\":[\"num\",0]}},\"decision\":[\"bool\",true],\"path\":\"then\",\"invocation\":\"invocation1\"}"
+            },
+            {
+              "schema": "semantic-execution/5",
+              "session": "teacher1",
+              "sequence": 7,
+              "ownerSequence": 6,
+              "track": "worker1",
+              "mode": "generated",
+              "kind": "semantic",
+              "invocationId": "invocation1",
+              "traceFormat": "semantic-trace/5",
+              "line": "choose {\"expr\":{\"op\":\"literal\",\"value\":[\"bool\",true]},\"decision\":[\"bool\",true],\"path\":\"evaluate-right\",\"invocation\":\"invocation1\"}"
+            },
+            {
+              "schema": "semantic-execution/5",
+              "session": "teacher1",
+              "sequence": 8,
+              "ownerSequence": 7,
+              "track": "worker1",
+              "mode": "generated",
+              "kind": "semantic",
+              "invocationId": "invocation1",
+              "traceFormat": "semantic-trace/5",
+              "line": "return {\"value\":[\"num\",4],\"invocation\":\"invocation1\"}"
+            },
+            {
+              "schema": "semantic-execution/5",
+              "session": "teacher1",
+              "sequence": 9,
+              "ownerSequence": 8,
+              "track": "worker1",
+              "mode": "generated",
+              "kind": "semantic",
+              "invocationId": "invocation1",
+              "traceFormat": "semantic-trace/5",
+              "line": "end {\"kind\":\"return\"}"
+            }
+          ]
+        },
+        "sidecar": {
+          "schema": "semantic-supervision/2",
+          "admission": "locally_verified",
+          "representation": "compact",
+          "referenceStatus": "agreed",
+          "sourceLineage": "summary-prototype-pure-control",
+          "split": "train",
+          "selectionOrigin": "owned-interpreter-teacher",
+          "compiler": {
+            "schema": "semantic-effectful-compiler/4",
+            "certificates": [
+              {
+                "sequence": 3,
+                "rule": "owned-parameter-binding/4",
+                "journalEvents": [],
+                "source": null,
+                "digest": "816a7f59acdc5f00e2bf381be3eefa6103306413b0e881ac60df20cd8e1514a2"
+              },
+              {
+                "sequence": 4,
+                "rule": "owned-parameter-binding/4",
+                "journalEvents": [],
+                "source": null,
+                "digest": "81d6f33fa91646579756f2b89e70357a21691416cc058514a7fe12ead3c75bb2"
+              },
+              {
+                "sequence": 5,
+                "rule": "owned-parameter-binding/4",
+                "journalEvents": [],
+                "source": null,
+                "digest": "e2da1c0d3c74d23b22ba4887c454aba4f46c107c39655f3aee72c4937ccb3a3e"
+              },
+              {
+                "sequence": 6,
+                "rule": "owned-branch/4",
+                "journalEvents": [
+                  "a0:e4"
+                ],
+                "source": {
+                  "sourceId": "src1",
+                  "siteId": "src1:s4"
+                },
+                "digest": "9b0e767250ee1f70253195aecd2f4e27d2dd31d7b2a78e9c456537feac08d2b3"
+              },
+              {
+                "sequence": 7,
+                "rule": "owned-branch/4",
+                "journalEvents": [
+                  "a0:e6"
+                ],
+                "source": {
+                  "sourceId": "src1",
+                  "siteId": "src1:s6"
+                },
+                "digest": "8600e72a63a4877271abcfd8e78be9742d102ebce0c51e8e0548237548ec3ff5"
+              },
+              {
+                "sequence": 8,
+                "rule": "owned-completion/4",
+                "journalEvents": [
+                  "a0:e11"
+                ],
+                "source": {
+                  "sourceId": "src1",
+                  "siteId": "src1:s15"
+                },
+                "digest": "a79e5aac7f511a34d312f3a41d633c1311d57a2ede9a5af9e51a548e13bdb42d"
+              },
+              {
+                "sequence": 9,
+                "rule": "owned-completion/4",
+                "journalEvents": [
+                  "a0:e11"
+                ],
+                "source": {
+                  "sourceId": "src1",
+                  "siteId": "src1:s15"
+                },
+                "digest": "46fdec95f0f71f09a443caac98175c868070c30a932d94e3a449658e95db68bc"
+              }
+            ],
+            "elided": [
+              {
+                "journalEvent": "a0:e2",
+                "operation": "literal.materialize",
+                "reason": "private-machine-transition"
+              },
+              {
+                "journalEvent": "a0:e7",
+                "operation": "stack.pop",
+                "reason": "private-machine-transition"
+              },
+              {
+                "journalEvent": "a0:e10",
+                "operation": "control.jump",
+                "reason": "private-machine-transition"
+              }
+            ],
+            "checkpoints": [],
+            "exceptionProfile": "declared-error/name-message/1",
+            "sourceDigest": "f54e714b39109802ebd95cadad7013ac1cb95625397ee482cbcb25f97622a7fb",
+            "archiveDigest": "21afce81a7e16d442f460bcd558ad426c765d34ea5463e86e35f3c3e11e7da54",
+            "capabilities": [],
+            "representation": "compact",
+            "compaction": {
+              "maxOperators": 8,
+              "maxNodes": 32,
+              "removedComputations": 0,
+              "foldedConditions": 0,
+              "fusedBindings": 0
+            },
+            "generatedRecords": 7,
+            "publicDigest": "3d6ceface51c45812ffe0de193ced76d278539da497489b04e0d5781f4847269"
+          },
+          "splitIdentity": {
+            "schema": "semantic-split-identity/1",
+            "policy": "family-hash/1",
+            "seed": 17,
+            "componentId": "summary-prototype-pure-control",
+            "members": [
+              "summary-prototype-pure-control"
+            ],
+            "split": "train",
+            "registryDigest": null,
+            "holdout": null
+          },
+          "sourceFamily": "summary-prototype-pure-control",
+          "fixtureFamily": "summary-prototype-pure-control",
+          "ancestorIds": [
+            "summary-prototype-pure-control"
+          ],
+          "taskId": "summary-prototype-pure-control",
+          "producerRevision": null,
+          "license": "repository-fixture",
+          "trustTier": "repository-fixture",
+          "nativePolicy": null,
+          "capabilityProfile": [],
+          "sourceProvenance": {
+            "family": "summary-prototype-pure-control",
+            "license": "repository-fixture",
+            "trustTier": "repository-fixture",
+            "sourceDigest": "f54e714b39109802ebd95cadad7013ac1cb95625397ee482cbcb25f97622a7fb",
+            "fixtureDigest": "88eda9256df24f8acf4a6051ec324c08c93a77621e62116997f3a8748de778f9",
+            "seed": 17,
+            "upstream": {}
+          },
+          "executionLimits": {
+            "maxSteps": 100000,
+            "timeoutMs": 5000,
+            "maxGenerated": 16384,
+            "maxOperators": 8
+          },
+          "seeds": {
+            "generation": null,
+            "input": null,
+            "schedule": null,
+            "optimizer": null,
+            "guestRng": null,
+            "split": 17
+          },
+          "environment": {
+            "schema": "semantic-execution-environment/1",
+            "node": "24.22.3",
+            "v8": "13.6.233.17-node.63",
+            "platform": "linux",
+            "arch": "x64",
+            "timezone": "Europe/Berlin",
+            "parser": "8.15.0",
+            "typescript": "5.9.3",
+            "packageLockDigest": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88",
+            "implementationDigest": "c43f40878b58d9d4642548d4eb4150f430da4642f80451dd4a656482c89c5d7c",
+            "locale": "en-US",
+            "referenceIsolation": {
+              "schema": "semantic-reference-isolation/1",
+              "mode": "trusted-process",
+              "launcherSha256": "b9d3bd23d092083173508fd570c3d5b6dc4e0e98fc9814e3df543e634351ea24"
+            }
+          },
+          "archive": {
+            "manifest": {
+              "schema": "semantic-tracing-run/2",
+              "profile": "training-js/1",
+              "completeSemanticTrace": false,
+              "completeEcma262": false,
+              "completeHostIntegration": false,
+              "coverage": "docs/STATUS.md",
+              "chunkPolicy": "accumulate-until-wait/1",
+              "eventVersion": 2,
+              "operationVersion": 2,
+              "mutationSchema": "owned-spec-commands/2",
+              "ownedArithmetic": {
+                "revision": 2,
+                "referenceEngineRevision": "2d7d8d988c77e94473ba0377122cdfccdfe243ba",
+                "operators": [
+                  "+",
+                  "-",
+                  "*",
+                  "/",
+                  "%",
+                  "**"
+                ],
+                "domain": "primitives-and-bounded-ordinary-data-objects"
+              },
+              "guestExecution": "owned-bytecode-and-spec-phase-machine",
+              "replay": "bounded-deterministic-reexecution/2"
+            },
+            "sources": [
+              {
+                "sourceId": "src1",
+                "text": "\"use strict\";function select(x,flag,fallback){return x<0?(flag&&(-x)):(fallback??3);}",
+                "url": "<native-entry>",
+                "goal": "script",
+                "entry": "src1:code1",
+                "parser": "acorn/8.15.0:training-js/1"
+              }
+            ],
+            "sites": [
+              {
+                "siteId": "src1:s1",
+                "start": 53,
+                "end": 54,
+                "op": "GET",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s2",
+                "start": 55,
+                "end": 56,
+                "op": "CONST",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s3",
+                "start": 53,
+                "end": 56,
+                "op": "BINARY",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s4",
+                "start": 53,
+                "end": 56,
+                "op": "JUMP_IF_FALSE",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s5",
+                "start": 58,
+                "end": 62,
+                "op": "GET",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s6",
+                "start": 58,
+                "end": 68,
+                "op": "LOGICAL_JUMP",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s7",
+                "start": 58,
+                "end": 68,
+                "op": "POP",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s8",
+                "start": 66,
+                "end": 67,
+                "op": "GET",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s9",
+                "start": 65,
+                "end": 67,
+                "op": "UNARY",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s10",
+                "start": 53,
+                "end": 83,
+                "op": "JUMP",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s11",
+                "start": 71,
+                "end": 79,
+                "op": "GET",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s12",
+                "start": 71,
+                "end": 82,
+                "op": "LOGICAL_JUMP",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s13",
+                "start": 71,
+                "end": 82,
+                "op": "POP",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s14",
+                "start": 81,
+                "end": 82,
+                "op": "CONST",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s15",
+                "start": 46,
+                "end": 84,
+                "op": "RETURN",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s16",
+                "start": 0,
+                "end": 85,
+                "op": "CONST",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s17",
+                "start": 0,
+                "end": 85,
+                "op": "RETURN",
+                "codeId": "src1:code2",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s18",
+                "start": 13,
+                "end": 85,
+                "op": "DEF_FN",
+                "codeId": "src1:code1",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s19",
+                "start": 0,
+                "end": 12,
+                "op": "CONST",
+                "codeId": "src1:code1",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s20",
+                "start": 0,
+                "end": 13,
+                "op": "POP",
+                "codeId": "src1:code1",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s21",
+                "start": 0,
+                "end": 85,
+                "op": "CONST",
+                "codeId": "src1:code1",
+                "sourceId": "src1"
+              },
+              {
+                "siteId": "src1:s22",
+                "start": 0,
+                "end": 85,
+                "op": "RETURN",
+                "codeId": "src1:code1",
+                "sourceId": "src1"
+              }
+            ],
+            "programs": {
+              "src1:code2": {
+                "id": "src1:code2",
+                "params": [
+                  "x",
+                  "flag",
+                  "fallback"
+                ],
+                "restIndex": -1,
+                "async": false,
+                "strict": true,
+                "parameterExpressions": false,
+                "varNames": [],
+                "instructions": [
+                  {
+                    "op": "GET",
+                    "arg": "x",
+                    "siteId": "src1:s1",
+                    "start": 53,
+                    "end": 54
+                  },
+                  {
+                    "op": "CONST",
+                    "arg": {
+                      "value": [
+                        "num",
+                        0
+                      ],
+                      "raw": "0"
+                    },
+                    "siteId": "src1:s2",
+                    "start": 55,
+                    "end": 56
+                  },
+                  {
+                    "op": "BINARY",
+                    "arg": "<",
+                    "siteId": "src1:s3",
+                    "start": 53,
+                    "end": 56
+                  },
+                  {
+                    "op": "JUMP_IF_FALSE",
+                    "arg": 10,
+                    "siteId": "src1:s4",
+                    "start": 53,
+                    "end": 56
+                  },
+                  {
+                    "op": "GET",
+                    "arg": "flag",
+                    "siteId": "src1:s5",
+                    "start": 58,
+                    "end": 62
+                  },
+                  {
+                    "op": "LOGICAL_JUMP",
+                    "arg": {
+                      "operator": "&&",
+                      "to": 9
+                    },
+                    "siteId": "src1:s6",
+                    "start": 58,
+                    "end": 68
+                  },
+                  {
+                    "op": "POP",
+                    "arg": null,
+                    "siteId": "src1:s7",
+                    "start": 58,
+                    "end": 68
+                  },
+                  {
+                    "op": "GET",
+                    "arg": "x",
+                    "siteId": "src1:s8",
+                    "start": 66,
+                    "end": 67
+                  },
+                  {
+                    "op": "UNARY",
+                    "arg": "-",
+                    "siteId": "src1:s9",
+                    "start": 65,
+                    "end": 67
+                  },
+                  {
+                    "op": "JUMP",
+                    "arg": 14,
+                    "siteId": "src1:s10",
+                    "start": 53,
+                    "end": 83
+                  },
+                  {
+                    "op": "GET",
+                    "arg": "fallback",
+                    "siteId": "src1:s11",
+                    "start": 71,
+                    "end": 79
+                  },
+                  {
+                    "op": "LOGICAL_JUMP",
+                    "arg": {
+                      "operator": "??",
+                      "to": 14
+                    },
+                    "siteId": "src1:s12",
+                    "start": 71,
+                    "end": 82
+                  },
+                  {
+                    "op": "POP",
+                    "arg": null,
+                    "siteId": "src1:s13",
+                    "start": 71,
+                    "end": 82
+                  },
+                  {
+                    "op": "CONST",
+                    "arg": {
+                      "value": [
+                        "num",
+                        3
+                      ],
+                      "raw": "3"
+                    },
+                    "siteId": "src1:s14",
+                    "start": 81,
+                    "end": 82
+                  },
+                  {
+                    "op": "RETURN",
+                    "arg": null,
+                    "siteId": "src1:s15",
+                    "start": 46,
+                    "end": 84
+                  },
+                  {
+                    "op": "CONST",
+                    "arg": {
+                      "value": [
+                        "undefined"
+                      ]
+                    },
+                    "siteId": "src1:s16",
+                    "start": 0,
+                    "end": 85
+                  },
+                  {
+                    "op": "RETURN",
+                    "arg": null,
+                    "siteId": "src1:s17",
+                    "start": 0,
+                    "end": 85
+                  }
+                ]
+              },
+              "src1:code1": {
+                "id": "src1:code1",
+                "params": [],
+                "restIndex": -1,
+                "async": false,
+                "strict": true,
+                "parameterExpressions": false,
+                "varNames": [],
+                "instructions": [
+                  {
+                    "op": "DEF_FN",
+                    "arg": {
+                      "name": "select",
+                      "codeId": "src1:code2",
+                      "params": [
+                        "x",
+                        "flag",
+                        "fallback"
+                      ],
+                      "async": false
+                    },
+                    "siteId": "src1:s18",
+                    "start": 13,
+                    "end": 85
+                  },
+                  {
+                    "op": "CONST",
+                    "arg": {
+                      "value": [
+                        "str",
+                        "use strict"
+                      ],
+                      "raw": "\"use strict\""
+                    },
+                    "siteId": "src1:s19",
+                    "start": 0,
+                    "end": 12
+                  },
+                  {
+                    "op": "POP",
+                    "arg": null,
+                    "siteId": "src1:s20",
+                    "start": 0,
+                    "end": 13
+                  },
+                  {
+                    "op": "CONST",
+                    "arg": {
+                      "value": [
+                        "undefined"
+                      ]
+                    },
+                    "siteId": "src1:s21",
+                    "start": 0,
+                    "end": 85
+                  },
+                  {
+                    "op": "RETURN",
+                    "arg": null,
+                    "siteId": "src1:s22",
+                    "start": 0,
+                    "end": 85
+                  }
+                ]
+              }
+            },
+            "entrySpec": {
+              "kind": "function",
+              "sourceId": "src1",
+              "functionName": "select",
+              "arguments": [
+                [
+                  "num",
+                  -4
+                ],
+                [
+                  "bool",
+                  true
+                ],
+                [
+                  "num",
+                  0
+                ]
+              ]
+            },
+            "initialState": {
+              "counters": {
+                "ids": {
+                  "version": 0,
+                  "env": 2,
+                  "obj": 1,
+                  "promise": 0,
+                  "frame": 1,
+                  "effect": 0,
+                  "input": 0,
+                  "operation": 0
+                }
+              },
+              "envs": {
+                "e1": {
+                  "id": "e1",
+                  "parent": null,
+                  "bindings": {
+                    "undefined": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "undefined"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "NaN": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "num",
+                          "NaN"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Infinity": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "num",
+                          "+Infinity"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "host": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "host",
+                          "demo"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Date": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Date"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "console": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "host",
+                          "platform.console"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "parseInt": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "parseInt"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "isNaN": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "isNaN"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "queueMicrotask": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "queueMicrotask"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "setTimeout": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "setTimeout"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "clearTimeout": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "clearTimeout"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "setInterval": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "setInterval"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "clearInterval": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "clearInterval"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Object": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Object"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Number": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Number"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "BigInt": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "BigInt"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "String": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "String"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Math": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Math"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Promise": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Promise"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Set": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Set"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Error": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Error"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "TypeError": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "TypeError"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "SharedArrayBuffer": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "SharedArrayBuffer"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "DataView": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "DataView"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Int8Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Int8Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Uint8Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Uint8Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Int16Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Int16Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Uint16Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Uint16Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Int32Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Int32Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Uint32Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Uint32Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "BigInt64Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "BigInt64Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "BigUint64Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "BigUint64Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Float32Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Float32Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Float64Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Float64Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Atomics": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Atomics"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "select": {
+                      "kind": "function",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "ref",
+                          "o1"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    }
+                  },
+                  "version": 0
+                },
+                "e2": {
+                  "id": "e2",
+                  "parent": "e1",
+                  "bindings": {
+                    "x": {
+                      "kind": "parameter",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "num",
+                          -4
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "flag": {
+                      "kind": "parameter",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "bool",
+                          true
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "fallback": {
+                      "kind": "parameter",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "num",
+                          0
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    }
+                  },
+                  "version": 0
+                }
+              },
+              "heap": {
+                "o1": {
+                  "id": "o1",
+                  "kind": "function",
+                  "codeId": "src1:code2",
+                  "closureEnvId": "e1",
+                  "async": false,
+                  "version": 0
+                }
+              },
+              "promises": {},
+              "frames": {
+                "f1": {
+                  "id": "f1",
+                  "codeId": "src1:code2",
+                  "pc": 0,
+                  "stack": [],
+                  "envId": "e2",
+                  "callerFrameId": null,
+                  "asyncPromiseId": null,
+                  "status": "running",
+                  "blockedOn": null,
+                  "awaiting": null,
+                  "operationId": null,
+                  "pendingCoercionThrow": null,
+                  "handlers": [],
+                  "loops": [],
+                  "thisValue": [
+                    "undefined"
+                  ],
+                  "version": 0
+                }
+              },
+              "effects": {},
+              "inputs": {},
+              "operations": {},
+              "control": {
+                "a0": {
+                  "version": 0,
+                  "activeFrameId": "f1",
+                  "queue": [],
+                  "timers": [],
+                  "now": 0,
+                  "nextTimerId": 0,
+                  "timerTurns": 0,
+                  "status": "running",
+                  "globalEnvId": "e1"
+                }
+              }
+            },
+            "finalState": {
+              "counters": {
+                "ids": {
+                  "version": 0,
+                  "env": 2,
+                  "obj": 1,
+                  "promise": 0,
+                  "frame": 1,
+                  "effect": 0,
+                  "input": 0,
+                  "operation": 0
+                }
+              },
+              "envs": {
+                "e1": {
+                  "id": "e1",
+                  "parent": null,
+                  "bindings": {
+                    "undefined": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "undefined"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "NaN": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "num",
+                          "NaN"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Infinity": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "num",
+                          "+Infinity"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "host": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "host",
+                          "demo"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Date": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Date"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "console": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "host",
+                          "platform.console"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "parseInt": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "parseInt"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "isNaN": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "isNaN"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "queueMicrotask": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "queueMicrotask"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "setTimeout": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "setTimeout"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "clearTimeout": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "clearTimeout"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "setInterval": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "setInterval"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "clearInterval": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "builtinfn",
+                          "clearInterval"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Object": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Object"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Number": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Number"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "BigInt": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "BigInt"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "String": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "String"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Math": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Math"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Promise": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Promise"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Set": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Set"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Error": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Error"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "TypeError": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "TypeError"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "SharedArrayBuffer": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "SharedArrayBuffer"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "DataView": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "DataView"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Int8Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Int8Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Uint8Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Uint8Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Int16Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Int16Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Uint16Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Uint16Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Int32Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Int32Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Uint32Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Uint32Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "BigInt64Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "BigInt64Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "BigUint64Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "BigUint64Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Float32Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Float32Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Float64Array": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Float64Array"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "Atomics": {
+                      "kind": "const",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "intrinsic",
+                          "Atomics"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "select": {
+                      "kind": "function",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "ref",
+                          "o1"
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    }
+                  },
+                  "version": 0
+                },
+                "e2": {
+                  "id": "e2",
+                  "parent": "e1",
+                  "bindings": {
+                    "x": {
+                      "kind": "parameter",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "num",
+                          -4
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "flag": {
+                      "kind": "parameter",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "bool",
+                          true
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    },
+                    "fallback": {
+                      "kind": "parameter",
+                      "initialized": true,
+                      "token": {
+                        "value": [
+                          "num",
+                          0
+                        ],
+                        "origin": null
+                      },
+                      "version": 0
+                    }
+                  },
+                  "version": 0
+                }
+              },
+              "heap": {
+                "o1": {
+                  "id": "o1",
+                  "kind": "function",
+                  "codeId": "src1:code2",
+                  "closureEnvId": "e1",
+                  "async": false,
+                  "version": 0
+                }
+              },
+              "promises": {},
+              "frames": {
+                "f1": {
+                  "id": "f1",
+                  "codeId": "src1:code2",
+                  "pc": 15,
+                  "stack": [],
+                  "envId": "e2",
+                  "callerFrameId": null,
+                  "asyncPromiseId": null,
+                  "status": "completed",
+                  "blockedOn": null,
+                  "awaiting": null,
+                  "operationId": null,
+                  "pendingCoercionThrow": null,
+                  "handlers": [],
+                  "loops": [],
+                  "thisValue": [
+                    "undefined"
+                  ],
+                  "version": 11,
+                  "completion": {
+                    "type": "return",
+                    "value": {
+                      "value": [
+                        "num",
+                        4
+                      ],
+                      "origin": "a0:e9"
+                    }
+                  }
+                }
+              },
+              "effects": {},
+              "inputs": {},
+              "operations": {},
+              "control": {
+                "a0": {
+                  "version": 1,
+                  "activeFrameId": null,
+                  "queue": [],
+                  "timers": [],
+                  "now": 0,
+                  "nextTimerId": 0,
+                  "timerTurns": 0,
+                  "status": "completed",
+                  "globalEnvId": "e1",
+                  "completion": {
+                    "kind": "return",
+                    "value": [
+                      "num",
+                      4
+                    ]
+                  }
+                }
+              }
+            },
+            "events": [
+              {
+                "eventId": "a0:e1",
+                "agentId": "a0",
+                "sequence": 1,
+                "operation": "binding.read",
+                "catalogRef": "binding.read/1",
+                "siteId": "src1:s1",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [],
+                "operandOrigins": [
+                  null
+                ],
+                "result": [
+                  "num",
+                  -4
+                ],
+                "readObservations": [
+                  {
+                    "kind": "binding",
+                    "envId": "e2",
+                    "name": "x",
+                    "version": 0,
+                    "value": [
+                      "num",
+                      -4
+                    ],
+                    "supplyingEvent": null
+                  }
+                ],
+                "causes": [],
+                "stateChanges": [
+                  {
+                    "kind": "frames.replace",
+                    "table": "frames",
+                    "id": "f1",
+                    "before": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 0,
+                      "stack": [],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 0
+                    },
+                    "after": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 1,
+                      "stack": [
+                        {
+                          "value": [
+                            "num",
+                            -4
+                          ],
+                          "origin": "a0:e1"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 1
+                    }
+                  }
+                ],
+                "before": "q0",
+                "after": "q1"
+              },
+              {
+                "eventId": "a0:e2",
+                "agentId": "a0",
+                "sequence": 2,
+                "operation": "literal.materialize",
+                "catalogRef": "literal.materialize/1",
+                "siteId": "src1:s2",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [],
+                "operandOrigins": [],
+                "result": [
+                  "num",
+                  0
+                ],
+                "readObservations": [],
+                "causes": [],
+                "stateChanges": [
+                  {
+                    "kind": "frames.replace",
+                    "table": "frames",
+                    "id": "f1",
+                    "before": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 1,
+                      "stack": [
+                        {
+                          "value": [
+                            "num",
+                            -4
+                          ],
+                          "origin": "a0:e1"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 1
+                    },
+                    "after": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 2,
+                      "stack": [
+                        {
+                          "value": [
+                            "num",
+                            -4
+                          ],
+                          "origin": "a0:e1"
+                        },
+                        {
+                          "value": [
+                            "num",
+                            0
+                          ],
+                          "origin": "a0:e2"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 2
+                    }
+                  }
+                ],
+                "before": "q1",
+                "after": "q2"
+              },
+              {
+                "eventId": "a0:e3",
+                "agentId": "a0",
+                "sequence": 3,
+                "operation": "primitive.binary",
+                "catalogRef": "primitive.binary/1",
+                "siteId": "src1:s3",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "num",
+                    -4
+                  ],
+                  [
+                    "num",
+                    0
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e1",
+                  "a0:e2"
+                ],
+                "result": [
+                  "bool",
+                  true
+                ],
+                "readObservations": [],
+                "causes": [],
+                "stateChanges": [
+                  {
+                    "kind": "frames.replace",
+                    "table": "frames",
+                    "id": "f1",
+                    "before": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 2,
+                      "stack": [
+                        {
+                          "value": [
+                            "num",
+                            -4
+                          ],
+                          "origin": "a0:e1"
+                        },
+                        {
+                          "value": [
+                            "num",
+                            0
+                          ],
+                          "origin": "a0:e2"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 2
+                    },
+                    "after": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 3,
+                      "stack": [
+                        {
+                          "value": [
+                            "bool",
+                            true
+                          ],
+                          "origin": "a0:e3"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 3
+                    }
+                  }
+                ],
+                "before": "q2",
+                "after": "q3"
+              },
+              {
+                "eventId": "a0:e4",
+                "agentId": "a0",
+                "sequence": 4,
+                "operation": "control.branch",
+                "catalogRef": "control.branch/1",
+                "siteId": "src1:s4",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "bool",
+                    true
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e3"
+                ],
+                "result": [
+                  "bool",
+                  false
+                ],
+                "readObservations": [],
+                "causes": [],
+                "stateChanges": [
+                  {
+                    "kind": "frames.replace",
+                    "table": "frames",
+                    "id": "f1",
+                    "before": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 3,
+                      "stack": [
+                        {
+                          "value": [
+                            "bool",
+                            true
+                          ],
+                          "origin": "a0:e3"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 3
+                    },
+                    "after": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 4,
+                      "stack": [],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 4
+                    }
+                  }
+                ],
+                "before": "q3",
+                "after": "q4"
+              },
+              {
+                "eventId": "a0:e5",
+                "agentId": "a0",
+                "sequence": 5,
+                "operation": "binding.read",
+                "catalogRef": "binding.read/1",
+                "siteId": "src1:s5",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [],
+                "operandOrigins": [
+                  null
+                ],
+                "result": [
+                  "bool",
+                  true
+                ],
+                "readObservations": [
+                  {
+                    "kind": "binding",
+                    "envId": "e2",
+                    "name": "flag",
+                    "version": 0,
+                    "value": [
+                      "bool",
+                      true
+                    ],
+                    "supplyingEvent": null
+                  }
+                ],
+                "causes": [],
+                "stateChanges": [
+                  {
+                    "kind": "frames.replace",
+                    "table": "frames",
+                    "id": "f1",
+                    "before": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 4,
+                      "stack": [],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 4
+                    },
+                    "after": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 5,
+                      "stack": [
+                        {
+                          "value": [
+                            "bool",
+                            true
+                          ],
+                          "origin": "a0:e5"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 5
+                    }
+                  }
+                ],
+                "before": "q4",
+                "after": "q5"
+              },
+              {
+                "eventId": "a0:e6",
+                "agentId": "a0",
+                "sequence": 6,
+                "operation": "control.branch",
+                "catalogRef": "control.branch/1",
+                "siteId": "src1:s6",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "bool",
+                    true
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e5"
+                ],
+                "result": [
+                  "bool",
+                  false
+                ],
+                "readObservations": [],
+                "causes": [],
+                "stateChanges": [
+                  {
+                    "kind": "frames.replace",
+                    "table": "frames",
+                    "id": "f1",
+                    "before": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 5,
+                      "stack": [
+                        {
+                          "value": [
+                            "bool",
+                            true
+                          ],
+                          "origin": "a0:e5"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 5
+                    },
+                    "after": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 6,
+                      "stack": [
+                        {
+                          "value": [
+                            "bool",
+                            true
+                          ],
+                          "origin": "a0:e5"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 6
+                    }
+                  }
+                ],
+                "before": "q5",
+                "after": "q6"
+              },
+              {
+                "eventId": "a0:e7",
+                "agentId": "a0",
+                "sequence": 7,
+                "operation": "stack.pop",
+                "catalogRef": "stack.pop/1",
+                "siteId": "src1:s7",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "bool",
+                    true
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e5"
+                ],
+                "result": null,
+                "readObservations": [],
+                "causes": [],
+                "stateChanges": [
+                  {
+                    "kind": "frames.replace",
+                    "table": "frames",
+                    "id": "f1",
+                    "before": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 6,
+                      "stack": [
+                        {
+                          "value": [
+                            "bool",
+                            true
+                          ],
+                          "origin": "a0:e5"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 6
+                    },
+                    "after": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 7,
+                      "stack": [],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 7
+                    }
+                  }
+                ],
+                "before": "q6",
+                "after": "q7"
+              },
+              {
+                "eventId": "a0:e8",
+                "agentId": "a0",
+                "sequence": 8,
+                "operation": "binding.read",
+                "catalogRef": "binding.read/1",
+                "siteId": "src1:s8",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [],
+                "operandOrigins": [
+                  null
+                ],
+                "result": [
+                  "num",
+                  -4
+                ],
+                "readObservations": [
+                  {
+                    "kind": "binding",
+                    "envId": "e2",
+                    "name": "x",
+                    "version": 0,
+                    "value": [
+                      "num",
+                      -4
+                    ],
+                    "supplyingEvent": null
+                  }
+                ],
+                "causes": [],
+                "stateChanges": [
+                  {
+                    "kind": "frames.replace",
+                    "table": "frames",
+                    "id": "f1",
+                    "before": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 7,
+                      "stack": [],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 7
+                    },
+                    "after": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 8,
+                      "stack": [
+                        {
+                          "value": [
+                            "num",
+                            -4
+                          ],
+                          "origin": "a0:e8"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 8
+                    }
+                  }
+                ],
+                "before": "q7",
+                "after": "q8"
+              },
+              {
+                "eventId": "a0:e9",
+                "agentId": "a0",
+                "sequence": 9,
+                "operation": "primitive.unary",
+                "catalogRef": "primitive.unary/1",
+                "siteId": "src1:s9",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "num",
+                    -4
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e8"
+                ],
+                "result": [
+                  "num",
+                  4
+                ],
+                "readObservations": [],
+                "causes": [],
+                "stateChanges": [
+                  {
+                    "kind": "frames.replace",
+                    "table": "frames",
+                    "id": "f1",
+                    "before": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 8,
+                      "stack": [
+                        {
+                          "value": [
+                            "num",
+                            -4
+                          ],
+                          "origin": "a0:e8"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 8
+                    },
+                    "after": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 9,
+                      "stack": [
+                        {
+                          "value": [
+                            "num",
+                            4
+                          ],
+                          "origin": "a0:e9"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 9
+                    }
+                  }
+                ],
+                "before": "q8",
+                "after": "q9"
+              },
+              {
+                "eventId": "a0:e10",
+                "agentId": "a0",
+                "sequence": 10,
+                "operation": "control.jump",
+                "catalogRef": "control.jump/1",
+                "siteId": "src1:s10",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [],
+                "operandOrigins": [],
+                "result": null,
+                "readObservations": [],
+                "causes": [],
+                "stateChanges": [
+                  {
+                    "kind": "frames.replace",
+                    "table": "frames",
+                    "id": "f1",
+                    "before": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 9,
+                      "stack": [
+                        {
+                          "value": [
+                            "num",
+                            4
+                          ],
+                          "origin": "a0:e9"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 9
+                    },
+                    "after": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 14,
+                      "stack": [
+                        {
+                          "value": [
+                            "num",
+                            4
+                          ],
+                          "origin": "a0:e9"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 10
+                    }
+                  }
+                ],
+                "before": "q9",
+                "after": "q10"
+              },
+              {
+                "eventId": "a0:e11",
+                "agentId": "a0",
+                "sequence": 11,
+                "operation": "call.return",
+                "catalogRef": "call.return/1",
+                "siteId": "src1:s15",
+                "sourceId": "src1",
+                "codeId": "src1:code2",
+                "invocationId": "f1",
+                "operands": [
+                  [
+                    "num",
+                    4
+                  ]
+                ],
+                "operandOrigins": [
+                  "a0:e9"
+                ],
+                "result": [
+                  "num",
+                  4
+                ],
+                "readObservations": [],
+                "causes": [],
+                "stateChanges": [
+                  {
+                    "kind": "frames.replace",
+                    "table": "frames",
+                    "id": "f1",
+                    "before": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 14,
+                      "stack": [
+                        {
+                          "value": [
+                            "num",
+                            4
+                          ],
+                          "origin": "a0:e9"
+                        }
+                      ],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "running",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 10
+                    },
+                    "after": {
+                      "id": "f1",
+                      "codeId": "src1:code2",
+                      "pc": 15,
+                      "stack": [],
+                      "envId": "e2",
+                      "callerFrameId": null,
+                      "asyncPromiseId": null,
+                      "status": "completed",
+                      "blockedOn": null,
+                      "awaiting": null,
+                      "operationId": null,
+                      "pendingCoercionThrow": null,
+                      "handlers": [],
+                      "loops": [],
+                      "thisValue": [
+                        "undefined"
+                      ],
+                      "version": 11,
+                      "completion": {
+                        "type": "return",
+                        "value": {
+                          "value": [
+                            "num",
+                            4
+                          ],
+                          "origin": "a0:e9"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "kind": "control.replace",
+                    "table": "control",
+                    "id": "a0",
+                    "before": {
+                      "version": 0,
+                      "activeFrameId": "f1",
+                      "queue": [],
+                      "timers": [],
+                      "now": 0,
+                      "nextTimerId": 0,
+                      "timerTurns": 0,
+                      "status": "running",
+                      "globalEnvId": "e1"
+                    },
+                    "after": {
+                      "version": 1,
+                      "activeFrameId": null,
+                      "queue": [],
+                      "timers": [],
+                      "now": 0,
+                      "nextTimerId": 0,
+                      "timerTurns": 0,
+                      "status": "completed",
+                      "globalEnvId": "e1",
+                      "completion": {
+                        "kind": "return",
+                        "value": [
+                          "num",
+                          4
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "before": "q10",
+                "after": "q11"
+              }
+            ],
+            "chunks": [
+              {
+                "chunkId": "a0:c1",
+                "agentId": "a0",
+                "policy": "accumulate-until-wait/1",
+                "before": "q0",
+                "after": "q11",
+                "firstEvent": 1,
+                "lastEvent": 11,
+                "eventIds": [
+                  "a0:e1",
+                  "a0:e2",
+                  "a0:e3",
+                  "a0:e4",
+                  "a0:e5",
+                  "a0:e6",
+                  "a0:e7",
+                  "a0:e8",
+                  "a0:e9",
+                  "a0:e10",
+                  "a0:e11"
+                ],
+                "effects": [],
+                "inputs": [],
+                "exit": {
+                  "kind": "terminated",
+                  "pendingEffects": [],
+                  "waitingOn": []
+                }
+              }
+            ],
+            "checkpoints": {
+              "q0": {
+                "counters": {
+                  "ids": {
+                    "version": 0,
+                    "env": 2,
+                    "obj": 1,
+                    "promise": 0,
+                    "frame": 1,
+                    "effect": 0,
+                    "input": 0,
+                    "operation": 0
+                  }
+                },
+                "envs": {
+                  "e1": {
+                    "id": "e1",
+                    "parent": null,
+                    "bindings": {
+                      "undefined": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "undefined"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "NaN": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "num",
+                            "NaN"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Infinity": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "num",
+                            "+Infinity"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "host": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "host",
+                            "demo"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Date": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Date"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "console": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "host",
+                            "platform.console"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "parseInt": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "parseInt"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "isNaN": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "isNaN"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "queueMicrotask": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "queueMicrotask"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "setTimeout": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "setTimeout"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "clearTimeout": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "clearTimeout"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "setInterval": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "setInterval"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "clearInterval": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "clearInterval"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Object": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Object"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Number": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Number"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "BigInt": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "BigInt"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "String": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "String"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Math": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Math"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Promise": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Promise"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Set": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Set"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Error": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Error"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "TypeError": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "TypeError"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "SharedArrayBuffer": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "SharedArrayBuffer"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "DataView": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "DataView"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Int8Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Int8Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Uint8Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Uint8Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Int16Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Int16Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Uint16Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Uint16Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Int32Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Int32Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Uint32Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Uint32Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "BigInt64Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "BigInt64Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "BigUint64Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "BigUint64Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Float32Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Float32Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Float64Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Float64Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Atomics": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Atomics"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "select": {
+                        "kind": "function",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "ref",
+                            "o1"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      }
+                    },
+                    "version": 0
+                  },
+                  "e2": {
+                    "id": "e2",
+                    "parent": "e1",
+                    "bindings": {
+                      "x": {
+                        "kind": "parameter",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "num",
+                            -4
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "flag": {
+                        "kind": "parameter",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "bool",
+                            true
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "fallback": {
+                        "kind": "parameter",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "num",
+                            0
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      }
+                    },
+                    "version": 0
+                  }
+                },
+                "heap": {
+                  "o1": {
+                    "id": "o1",
+                    "kind": "function",
+                    "codeId": "src1:code2",
+                    "closureEnvId": "e1",
+                    "async": false,
+                    "version": 0
+                  }
+                },
+                "promises": {},
+                "frames": {
+                  "f1": {
+                    "id": "f1",
+                    "codeId": "src1:code2",
+                    "pc": 0,
+                    "stack": [],
+                    "envId": "e2",
+                    "callerFrameId": null,
+                    "asyncPromiseId": null,
+                    "status": "running",
+                    "blockedOn": null,
+                    "awaiting": null,
+                    "operationId": null,
+                    "pendingCoercionThrow": null,
+                    "handlers": [],
+                    "loops": [],
+                    "thisValue": [
+                      "undefined"
+                    ],
+                    "version": 0
+                  }
+                },
+                "effects": {},
+                "inputs": {},
+                "operations": {},
+                "control": {
+                  "a0": {
+                    "version": 0,
+                    "activeFrameId": "f1",
+                    "queue": [],
+                    "timers": [],
+                    "now": 0,
+                    "nextTimerId": 0,
+                    "timerTurns": 0,
+                    "status": "running",
+                    "globalEnvId": "e1"
+                  }
+                }
+              },
+              "q11": {
+                "counters": {
+                  "ids": {
+                    "version": 0,
+                    "env": 2,
+                    "obj": 1,
+                    "promise": 0,
+                    "frame": 1,
+                    "effect": 0,
+                    "input": 0,
+                    "operation": 0
+                  }
+                },
+                "envs": {
+                  "e1": {
+                    "id": "e1",
+                    "parent": null,
+                    "bindings": {
+                      "undefined": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "undefined"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "NaN": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "num",
+                            "NaN"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Infinity": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "num",
+                            "+Infinity"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "host": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "host",
+                            "demo"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Date": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Date"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "console": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "host",
+                            "platform.console"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "parseInt": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "parseInt"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "isNaN": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "isNaN"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "queueMicrotask": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "queueMicrotask"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "setTimeout": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "setTimeout"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "clearTimeout": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "clearTimeout"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "setInterval": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "setInterval"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "clearInterval": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "builtinfn",
+                            "clearInterval"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Object": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Object"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Number": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Number"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "BigInt": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "BigInt"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "String": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "String"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Math": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Math"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Promise": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Promise"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Set": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Set"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Error": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Error"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "TypeError": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "TypeError"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "SharedArrayBuffer": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "SharedArrayBuffer"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "DataView": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "DataView"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Int8Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Int8Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Uint8Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Uint8Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Int16Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Int16Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Uint16Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Uint16Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Int32Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Int32Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Uint32Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Uint32Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "BigInt64Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "BigInt64Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "BigUint64Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "BigUint64Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Float32Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Float32Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Float64Array": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Float64Array"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "Atomics": {
+                        "kind": "const",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "intrinsic",
+                            "Atomics"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "select": {
+                        "kind": "function",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "ref",
+                            "o1"
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      }
+                    },
+                    "version": 0
+                  },
+                  "e2": {
+                    "id": "e2",
+                    "parent": "e1",
+                    "bindings": {
+                      "x": {
+                        "kind": "parameter",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "num",
+                            -4
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "flag": {
+                        "kind": "parameter",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "bool",
+                            true
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      },
+                      "fallback": {
+                        "kind": "parameter",
+                        "initialized": true,
+                        "token": {
+                          "value": [
+                            "num",
+                            0
+                          ],
+                          "origin": null
+                        },
+                        "version": 0
+                      }
+                    },
+                    "version": 0
+                  }
+                },
+                "heap": {
+                  "o1": {
+                    "id": "o1",
+                    "kind": "function",
+                    "codeId": "src1:code2",
+                    "closureEnvId": "e1",
+                    "async": false,
+                    "version": 0
+                  }
+                },
+                "promises": {},
+                "frames": {
+                  "f1": {
+                    "id": "f1",
+                    "codeId": "src1:code2",
+                    "pc": 15,
+                    "stack": [],
+                    "envId": "e2",
+                    "callerFrameId": null,
+                    "asyncPromiseId": null,
+                    "status": "completed",
+                    "blockedOn": null,
+                    "awaiting": null,
+                    "operationId": null,
+                    "pendingCoercionThrow": null,
+                    "handlers": [],
+                    "loops": [],
+                    "thisValue": [
+                      "undefined"
+                    ],
+                    "version": 11,
+                    "completion": {
+                      "type": "return",
+                      "value": {
+                        "value": [
+                          "num",
+                          4
+                        ],
+                        "origin": "a0:e9"
+                      }
+                    }
+                  }
+                },
+                "effects": {},
+                "inputs": {},
+                "operations": {},
+                "control": {
+                  "a0": {
+                    "version": 1,
+                    "activeFrameId": null,
+                    "queue": [],
+                    "timers": [],
+                    "now": 0,
+                    "nextTimerId": 0,
+                    "timerTurns": 0,
+                    "status": "completed",
+                    "globalEnvId": "e1",
+                    "completion": {
+                      "kind": "return",
+                      "value": [
+                        "num",
+                        4
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "effects": {},
+            "inputs": {}
+          },
+          "projectionOptions": {
+            "sourceLineage": "summary-prototype-pure-control"
+          },
+          "referenceInput": {
+            "source": "\"use strict\";function select(x,flag,fallback){return x<0?(flag&&(-x)):(fallback??3);}",
+            "entry": "select",
+            "inputGraph": {
+              "schema": "owned-graph/1",
+              "roots": [
+                [
+                  "num",
+                  -4
+                ],
+                [
+                  "bool",
+                  true
+                ],
+                [
+                  "num",
+                  0
+                ]
+              ],
+              "objects": []
+            },
+            "fixture": {
+              "calls": [],
+              "settlementOrder": null
+            },
+            "randomSeed": null
+          },
+          "reference": {
+            "schema": "effectful-reference/4",
+            "exceptionProfile": "declared-error/name-message/1",
+            "outcome": {
+              "kind": "return",
+              "graph": {
+                "roots": [
+                  [
+                    "num",
+                    -4
+                  ],
+                  [
+                    "bool",
+                    true
+                  ],
+                  [
+                    "num",
+                    0
+                  ],
+                  [
+                    "num",
+                    4
+                  ]
+                ],
+                "objects": []
+              }
+            },
+            "effects": [],
+            "operations": [],
+            "decisions": [],
+            "completions": [],
+            "callbackFailures": [],
+            "unhandledRejections": [],
+            "sourceChecks": {
+              "schema": "effectful-source-checks/5",
+              "status": "agreed",
+              "computations": 2,
+              "branches": 2,
+              "completions": {
+                "schema": "source-completions/1",
+                "status": "agreed",
+                "checked": 1,
+                "counts": {
+                  "return": 1
+                },
+                "referenceValues": "scalars-and-input-rooted-reference-identity",
+                "uncovered": [
+                  "intermediate-reference-property-snapshots",
+                  "implicit-parameter-initialization",
+                  "implicit-call-throws-without-a-catch-or-finally",
+                  "Promise-job-internals"
+                ]
+              }
+            }
+          },
+          "effects": [],
+          "replay": {
+            "valid": true,
+            "publicDigest": "3d6ceface51c45812ffe0de193ced76d278539da497489b04e0d5781f4847269",
+            "certificates": 7,
+            "generatedRecords": 7,
+            "nativeReplayDispatches": 0
+          },
+          "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+          "evidenceKind": "deterministic-engineering",
+          "optimizerSteps": 0,
+          "identity": {
+            "schema": "semantic-candidate-identity/1",
+            "episodeDigest": "3d6ceface51c45812ffe0de193ced76d278539da497489b04e0d5781f4847269",
+            "source": {
+              "provenance": {
+                "family": "summary-prototype-pure-control",
+                "license": "repository-fixture",
+                "trustTier": "repository-fixture",
+                "sourceDigest": "f54e714b39109802ebd95cadad7013ac1cb95625397ee482cbcb25f97622a7fb",
+                "fixtureDigest": "88eda9256df24f8acf4a6051ec324c08c93a77621e62116997f3a8748de778f9",
+                "seed": 17,
+                "upstream": {}
+              },
+              "referenceInputDigest": "12f826b0d1fa8baa21995aa464a892fa59c40e150dc4f2fc04af2e908dd754ff"
+            },
+            "lineage": {
+              "sourceFamily": "summary-prototype-pure-control",
+              "sourceLineage": "summary-prototype-pure-control",
+              "fixtureFamily": "summary-prototype-pure-control",
+              "taskId": "summary-prototype-pure-control",
+              "ancestorIds": [
+                "summary-prototype-pure-control"
+              ]
+            },
+            "split": {
+              "schema": "semantic-split-identity/1",
+              "policy": "family-hash/1",
+              "seed": 17,
+              "componentId": "summary-prototype-pure-control",
+              "members": [
+                "summary-prototype-pure-control"
+              ],
+              "split": "train",
+              "registryDigest": null,
+              "holdout": null
+            },
+            "execution": {
+              "profile": "training-js/1",
+              "parser": "acorn/8.15.0:training-js/1",
+              "execution": "semantic-execution/5",
+              "trace": "semantic-trace/5",
+              "context": "semantic-context/5",
+              "harness": "selected-harness/2",
+              "representation": "compact",
+              "capabilities": [],
+              "limits": {
+                "maxSteps": 100000,
+                "timeoutMs": 5000,
+                "maxGenerated": 16384,
+                "maxOperators": 8
+              },
+              "projectionOptions": {
+                "sourceLineage": "summary-prototype-pure-control"
+              },
+              "completionPolicy": "complete-root-and-observed-callbacks/1"
+            },
+            "seeds": {
+              "generation": null,
+              "input": null,
+              "schedule": null,
+              "optimizer": null,
+              "guestRng": null,
+              "split": 17
+            },
+            "environment": {
+              "schema": "semantic-execution-environment/1",
+              "node": "24.22.3",
+              "v8": "13.6.233.17-node.63",
+              "platform": "linux",
+              "arch": "x64",
+              "timezone": "Europe/Berlin",
+              "parser": "8.15.0",
+              "typescript": "5.9.3",
+              "packageLockDigest": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88",
+              "implementationDigest": "c43f40878b58d9d4642548d4eb4150f430da4642f80451dd4a656482c89c5d7c",
+              "locale": "en-US",
+              "referenceIsolation": {
+                "schema": "semantic-reference-isolation/1",
+                "mode": "trusted-process",
+                "launcherSha256": "b9d3bd23d092083173508fd570c3d5b6dc4e0e98fc9814e3df543e634351ea24"
+              }
+            },
+            "certification": {
+              "producerRevision": null,
+              "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+              "evidenceKind": "deterministic-engineering",
+              "optimizerSteps": 0,
+              "learnedSuccess": null,
+              "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+              "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+              "archiveDigest": "21afce81a7e16d442f460bcd558ad426c765d34ea5463e86e35f3c3e11e7da54",
+              "referenceDigest": "6bdae397efc5622644bf83cc34d2e0e57d7a4411c7b753d6eb0ae9c22299538d",
+              "effectsDigest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+              "compilerDigest": "504903687726a612f29606556381f8bfddb39b09102988bbf4230d33d766ca22",
+              "replayDigest": "6ddd3c005a3229d0516e970aa9b77c3a8b9d47a049eab655654fc95e8977cc10",
+              "componentIdentities": [],
+              "nativePolicy": null
+            }
+          },
+          "identityDigest": "509cb499d7d4ae2d7e62f75a1fe502fcbd3f0fe50c759c153ec000524eba68a7"
+        }
+      }
+    },
+    "sourceLineage": "summary-prototype-pure-control",
+    "splitIdentity": {
+      "schema": "semantic-split-identity/1",
+      "policy": "family-hash/1",
+      "seed": 17,
+      "componentId": "summary-prototype-pure-control",
+      "members": [
+        "summary-prototype-pure-control"
+      ],
+      "split": "train",
+      "registryDigest": null,
+      "holdout": null
+    },
+    "metrics": {
+      "detailedRecords": 7,
+      "detailedBytes": 512,
+      "summaryRecords": 1,
+      "summaryBytes": 242,
+      "nativeTokens": null
+    },
+    "nativeAdmission": false,
+    "learningStatus": "untested",
+    "boundary": "A separately provided region endpoint, not a v5 selected-execution record or native consumer qualification."
+  }
+}

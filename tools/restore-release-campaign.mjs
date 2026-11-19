@@ -65,7 +65,7 @@ export async function replayRestoredCampaign({tracerRoot,releaseRoot,producerRev
   if(megatoken){
     const {loadNativeSettings,createNativeConsumer}=await load('src/corpus/native-admission-client.mjs');
     settings=loadNativeSettings({megatoken,tokenizer,python,
-      policyFile:join(tracerRoot,'contracts/native-admission-policy-v5.json'),
+      policyFile:join(tracerRoot,'contracts/native-admission-policy-v6.json'),
       temporaryDirectory:join(output,'native-temporary')});
     nativeConsumer=createNativeConsumer(settings);
   }

@@ -21,16 +21,27 @@ if(options.demo){
   const sum=createSemanticSummaryContext({profile:'dense-array-sum/1',
     source:'"use strict";function sum(xs){let total=0;for(let i=0;i<xs.length;i++){total+=xs[i];}return total;}',
     entry:'sum',inputGraph:encodeNativeGraph([[2,3,4]])});
+  const control=createSemanticSummaryContext({profile:'pure-control-helper/1',
+    source:'"use strict";function select(x,flag,fallback){return x<0?(flag&&(-x)):(fallback??3);}',
+    entry:'select',inputGraph:encodeNativeGraph([-4,true,0])});
   const returned=value=>({schema:'experimental-semantic-summary/1',completion:{kind:'return',value:['num',value]},inputUnchanged:true});
   const summed=checkpoints=>({...returned(9),iterations:3,
     stateDelta:{binding:'total',before:['num',0],after:['num',9]},checkpoints});
+  const controlSummary={...returned(4),decisions:[
+    {site:control.decisionSites[0].site,selected:'consequent'},
+    {site:control.decisionSites[1].site,selected:'right'}]};
   candidates.push({id:'pure-helper',context:helper,summary:returned(5),family:'summary-prototype-pure-helper',expected:'experimental_verified'},
     {id:'dense-sum-coarse',context:sum,summary:summed([]),family:'summary-prototype-dense-sum',expected:'experimental_verified'},
     {id:'dense-sum-checkpoints',context:sum,summary:summed([
       {iteration:1,total:['num',2]},{iteration:2,total:['num',5]},{iteration:3,total:['num',9]}]),
       family:'summary-prototype-dense-sum',expected:'experimental_verified'},
     {id:'false-intermediate',context:sum,summary:summed([{iteration:1,total:['num',99]}]),
-      family:'summary-prototype-dense-sum',expected:'rejected'});
+      family:'summary-prototype-dense-sum',expected:'rejected'},
+    {id:'pure-control-helper',context:control,summary:controlSummary,
+      family:'summary-prototype-pure-control',expected:'experimental_verified'},
+    {id:'false-control-with-correct-result',context:control,
+      summary:{...controlSummary,decisions:[{site:control.decisionSites[0].site,selected:'alternate'}]},
+      family:'summary-prototype-pure-control',expected:'rejected'});
 }else{
   if(!options.context||!options.summary||!options.family)throw Error('Context, summary and lineage are all required');
   candidates.push({id:'supplied',context:JSON.parse(await readFile(resolve(options.context),'utf8')),

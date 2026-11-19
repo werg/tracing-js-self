@@ -11,7 +11,7 @@
   "producerDependencies": "package-lock.json",
   "oracleDependencies": "tools/spec-oracle/package-lock.json",
   "consumerDependencies": "tools/native-consumer/requirements.lock",
-  "consumerPolicy": "contracts/native-admission-policy-v5.json",
+  "consumerPolicy": "contracts/native-admission-policy-v6.json",
   "tokenizer": {
     "repository": "inclusionAI/Ling-3.0-tiny",
     "revision": "9a98e35fe1c9ee255f78dd64771c7ae15a799481",

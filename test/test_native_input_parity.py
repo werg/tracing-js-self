@@ -117,7 +117,7 @@ writeFileSync(process.argv[1],JSON.stringify(result.exported)+'\\n');
 @unittest.skipUnless(os.environ.get('MEGATOKEN_REPOSITORY'),
                      'Set MEGATOKEN_REPOSITORY to the current pinned companion checkout')
 class ActualCurrentBoundaryTests(unittest.TestCase):
-    expected_pin = json.loads((ROOT/'contracts/native-admission-policy-v5.json').read_text())['consumerRevision']
+    expected_pin = json.loads((ROOT/'contracts/native-admission-policy-v6.json').read_text())['consumerRevision']
     # Share only source certification/setup; historical mismatch assertions
     # remain attached to their original revision in the preceding class.
     setUpClass = classmethod(ActualPinnedBoundaryTests.setUpClass.__func__)
@@ -128,11 +128,20 @@ class ActualCurrentBoundaryTests(unittest.TestCase):
         self.assertTrue(report['controlBytesMatch'])
         self.assertTrue(report['observedRecordBytesMatch'])
         self.assertEqual(report['training']['control']['bytes'], 580)
-        self.assertEqual(len(report['training']['observedRecords']), 2)
-        self.assertEqual(len(report['serving']['observedRecords']), 2)
+        self.assertEqual(len(report['training']['observedRecords']), 3)
+        self.assertEqual(len(report['serving']['observedRecords']), 3)
         event = report['training']['event']
         track = next(row for row in report['training']['tracks'] if row['track_id'] == event['track_id'])
-        self.assertEqual(track['description'], report['serving']['generation']['trackDescriptions'][0]['purpose'])
+        self.assertEqual(track['description'], '')
+        revision = report['training']['availableTrackRevisions'][0]
+        self.assertEqual(revision['track_id'], event['track_id'])
+        self.assertEqual(revision['purpose'], report['serving']['generation']['trackDescriptions'][0]['purpose'])
+        self.assertTrue(report['nativeTrackIdentityMatch'])
+        # Source-certified local fixtures have not passed native admission;
+        # they qualify byte identity, not a training continuation claim.
+        self.assertFalse(report['continuationModeComparable'])
+        self.assertIsNone(report['continuationModeMatch'])
+        self.assertEqual(report['serving']['generation']['continuationMode'], 'encoded_text')
         self.assertEqual(report['modelSelections'], 0)
         self.assertEqual(report['optimizerSteps'], 0)
         self.assertIn('checkpoint identity and conditional logits', report['unmeasured'])

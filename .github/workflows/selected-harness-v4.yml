@@ -1,4 +1,4 @@
-name: Selected semantic v5 runtime and real browser
+name: Selected semantic v6 runtime and real browser
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

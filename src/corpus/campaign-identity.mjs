@@ -37,5 +37,5 @@ export function generationIdentity(root,{producerRevision,recipe,native=null,bou
       locale:Intl.DateTimeFormat().resolvedOptions().locale},
     nativePolicy:native?.policy??null,consumerEnvironment,bounds,registryDigest,
     referenceIsolation:referenceIsolationIdentity(),
-    trace:'semantic-trace/5',profile:'training-js/1',trust:'authored-or-pinned-reviewed-source-only'};
+    trace:'semantic-trace/6',profile:'training-js/1',trust:'authored-or-pinned-reviewed-source-only'};
 }

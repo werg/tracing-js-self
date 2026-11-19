@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "identity": {
+    "checkpointStateSha256": "a84da6f63c67dcf84a3db09617a278d383dfc455887f1675f885eccad3def54c",
+    "servedModelSha256": "df2726f03886ffb07148e8ab62feccf9b402e551b87431af7c996e394166323e",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "publicPrefixSha256": "6e03059d325d9ffbf80595a32e3b639ad1a04bcbe348cbd266d7f4813b1720e4",
+    "firstTargetSha256": "e58bb21cddc3d3b1e1858421f6b01ae41ecbc98734f2ac666141feed7e243fd5"
+  },
+  "absoluteTolerance": 1e-06,
+  "relativeTolerance": 1e-05,
+  "comparedCoordinates": 256,
+  "maximumAbsoluteDifference": 0.0,
+  "firstDivergence": null,
+  "encoderCallAuditIdentical": true,
+  "scope": "Only the first-event native policy Gaussian for this exact checkpoint and public prefix",
+  "downstreamLexicalAndActionParity": "unmeasured",
+  "interpretation": "A Gaussian mismatch establishes divergent native conditional state. Agreement does not establish equal lexical/terminal decoding or learned execution."
+}

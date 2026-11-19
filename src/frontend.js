@@ -182,7 +182,7 @@ export function parse(source) {
 let site=0;
 export function compile(ast) {
   site=0;const programs={};let next=0;
-  function bodyProgram(body,params=[],async=false,defaults=[],restIndex=-1,inheritedStrict=false) {
+  function bodyProgram(body,params=[],async=false,defaults=[],restIndex=-1,inheritedStrict=false,parameterSites=[]) {
     // Strictness belongs to the lexical code, not to the caller. Only an
     // unescaped, unparenthesized string in the directive prologue enables it;
     // nested functions (including arrows/default initializers) inherit it.
@@ -207,7 +207,7 @@ export function compile(ast) {
         for(const d of declarations)if(d.kind!=='var')emit('DECLARE',{name:d.id,kind:d.kind},d);
       }
       for(const n of nodes)if(n.type==='Function'){
-        const fid=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict);
+        const fid=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites);
         emit('DEF_FN',{name:n.id,codeId:fid,params:n.params,async:n.async},n);
       }
       for(const n of nodes)if(n.type!=='Function')stmt(n);
@@ -225,7 +225,7 @@ export function compile(ast) {
           for(const a of n.args)expr(a);
           emit('CONSTRUCT',n.args.length,n);break;
         case 'FunctionExpr':{
-          const codeId=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict);
+          const codeId=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites);
           emit('MAKE_FUNCTION',{codeId,arrow:n.arrow,async:n.async},n);
           break;
         }
@@ -286,7 +286,10 @@ export function compile(ast) {
               expr(step.property);
               emit(n.steps[i+1]?.type==='call'?'GET_METHOD':'GET_PROP',null,step);
             }else{
-              for(const a of step.args)expr(a.type==='Spread'?a.argument:a);
+              for(const a of step.args){
+                expr(a.type==='Spread'?a.argument:a);
+                if(a.type==='Spread')emit('SPREAD',null,a);
+              }
               emit('CALL',step.args.some(a=>a.type==='Spread')?
                 {count:step.args.length,
                   spread:step.args.flatMap((a,j)=>a.type==='Spread'?[j]:[])}:
@@ -299,12 +302,31 @@ export function compile(ast) {
         case 'Member':expr(n.object);expr(n.property);emit('GET_PROP',null,n);break;
         case 'Call':
           if(n.callee.type==='Member'){expr(n.callee.object);expr(n.callee.property);emit('GET_METHOD',null,n.callee);}else expr(n.callee);
-          for(const a of n.args)expr(a.type==='Spread'?a.argument:a);
+          for(const a of n.args){
+            expr(a.type==='Spread'?a.argument:a);
+            if(a.type==='Spread')emit('SPREAD',null,a);
+          }
           emit('CALL',n.args.some(a=>a.type==='Spread')?
             {count:n.args.length,spread:n.args.flatMap((a,i)=>a.type==='Spread'?[i]:[])}:
             n.args.length,n);break;
         case 'Proxy':expr(n.target);expr(n.handler);emit('NEW_PROXY',null,n);break;
-        case 'Array':emit('NEW_ARRAY',null,n);for(let i=0;i<n.elements.length;i++){emit('DUP',null,n);emit('CONST',{value:['str',String(i)]},n);expr(n.elements[i]);emit('PUT_PROP',null,n);emit('POP',null,n);}break;
+        case 'Array':
+          emit('NEW_ARRAY',null,n);
+          if(n.elements.some(element=>element.type==='Spread')){
+            // Commit each spread before evaluating the following element.
+            // In particular, a later call may mutate the spread's source.
+            for(const element of n.elements){
+              emit('DUP',null,n);
+              expr(element.type==='Spread'?element.argument:element);
+              if(element.type==='Spread')emit('SPREAD',null,element);
+              emit('APPEND_ARRAY',{spread:element.type==='Spread'},n);
+              emit('POP',null,n);
+            }
+          }else for(let i=0;i<n.elements.length;i++){
+            emit('DUP',null,n);emit('CONST',{value:['str',String(i)]},n);
+            expr(n.elements[i]);emit('PUT_PROP',null,n);emit('POP',null,n);
+          }
+          break;
         case 'Object':emit('NEW_OBJECT',null,n);for(const item of n.properties){emit('DUP',null,n);emit('CONST',{value:['str',item.key]},n);expr(item.value);emit('PUT_PROP',null,n);emit('POP',null,n);}break;
         case 'Assign':
           if(['&&=','||=','??='].includes(n.operator)){
@@ -639,13 +661,18 @@ export function compile(ast) {
     if(parameterExpressions){
       params.forEach((name,i)=>{
         const initializer=defaults[i];
-        if(!initializer){emit('PARAM_INIT',name,body[0]);return;}
+        const parameter=parameterSites[i];
+        if(!parameter)throw new TypeError('Missing source location for parameter initialization');
+        // Supplied arguments initialize at their parameter, never at the first
+        // body declaration. A shared body span would invent a second source
+        // declaration receipt for this implicit binding operation.
+        if(!initializer){emit('PARAM_INIT',name,parameter);return;}
         const guard=emit('DEFAULT_GUARD',{name,skipPc:null},initializer);
         expr(initializer);
         emit('INIT',name,initializer);
         const done=emit('JUMP',null,initializer);
         instructions[guard].arg.skipPc=instructions.length;
-        emit('PARAM_INIT',name,initializer);
+        emit('PARAM_INIT',name,parameter);
         instructions[done].arg=instructions.length;
       });
       emit('ENTER_BODY_ENV',null,body[0]);

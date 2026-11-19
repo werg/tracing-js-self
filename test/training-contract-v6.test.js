@@ -18,18 +18,18 @@ const rehash=packet=>{
   return packet;
 };
 
-test('current public artifacts reject version four even when no random seed is used',()=>{
+test('current public artifacts reject versions four and five even without a random seed',()=>{
   const h=new SelectedExecutionHarness();
   h.publishProgram({programId:'plain',source:'function run(){return 1;}',entry:'run'});
   h.admitInvocation({programId:'plain',invocationId:'call',realmId:'realm',trackId:'worker',triggerId:'outside'});
   finish(h,'call',num(1));
   const current=h.exportEpisode();
-  assert.equal(current.public.schema,'semantic-execution/5');
-  assert.equal(current.public.traceFormat,'semantic-trace/5');
-  assert.equal(current.public.contextFormat,'semantic-context/5');
-  for(const field of ['schema','traceFormat','contextFormat']){
+  assert.equal(current.public.schema,'semantic-execution/6');
+  assert.equal(current.public.traceFormat,'semantic-trace/6');
+  assert.equal(current.public.contextFormat,'semantic-context/6');
+  for(const version of [4,5])for(const field of ['schema','traceFormat','contextFormat']){
     const old=structuredClone(current);
-    old.public[field]=old.public[field].replace('/5','/4');
+    old.public[field]=old.public[field].replace('/6','/'+version);
     assert.throws(()=>SelectedExecutionHarness.replay(old),/version|contract|format/i);
   }
   const oldProgram={...current.public.timeline[0],schema:'semantic-execution/4'};
@@ -46,7 +46,7 @@ test('unseeded selected state explicitly carries null and rejects missing or mal
   h.admitInvocation({programId:'plain',invocationId:'call',realmId:'realm',trackId:'worker',triggerId:'outside'});
   h.restoreSource('worker','plain');
   const receipt=h.recordModelContext('call',[],{includeState:true});
-  assert.equal(receipt.selectedState.schema,'semantic-continuation/5');
+  assert.equal(receipt.selectedState.schema,'semantic-continuation/6');
   assert.equal(receipt.selectedState.randomState,null);
   for(const value of [undefined,true,-1,4294967296,0.5]){
     const invalid=structuredClone(receipt);

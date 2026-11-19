@@ -22,7 +22,7 @@ const examples=await buildCausalLmExamples(exported,{tokenizer,eosTokenId,
   maxContextTokens:Number(args.get('--max-context'))});
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const payload=examples.map(row=>JSON.stringify(row)).join('\n')+'\n';
-const manifest={schema:CAUSAL_LM_BRIDGE_VERSION,traceFormat:'semantic-trace/5',
+const manifest={schema:CAUSAL_LM_BRIDGE_VERSION,traceFormat:'semantic-trace/6',
   inputSha256:sha(raw),tokenizerModuleSha256:sha(readFileSync(modulePath)),
   tokenizerIdentity:tokenizer.identity,eosTokenId,encoding:'independent-prefix-and-target-segments',
   examples:examples.length,generatedTokens:examples.reduce((n,row)=>n+row.boundaries.targetTokens,0),

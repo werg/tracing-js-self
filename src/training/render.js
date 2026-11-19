@@ -31,6 +31,9 @@ function renderOne(kind,f) {
     case 'code':return 'source '+f.entry+' ('+f.sites.length+' static semantic sites)';
     case 'input':return 'initial graph '+f.graph.objects.length+' identities; '+
       f.graph.roots.map(show).join(', ');
+    case 'summarize':return 'evaluate '+f.entry+'('+f.arguments.map(show).join(', ')+') => '+show(f.result)+
+      (f.profile==='dense-array-sum/1'?' over '+f.iterations+' items into '+f.accumulator:'')+
+      (f.decisions?' choosing '+f.decisions.map(row=>row.site.start+'..'+row.site.end+':'+row.selected).join(', '):'');
     case 'compute':return (f.bind?f.bind+' = ':'compute ')+
       expr(f.expr)+' -> '+show(f.result);
     case 'choose':return 'choose '+expr(f.expr)+' = '+show(f.decision)+' -> '+f.path;

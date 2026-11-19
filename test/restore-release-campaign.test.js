@@ -58,12 +58,12 @@ function restoreFailure(error,output){
 async function fixture({corruptAdmission=false}={}){
   const directory=mkdtempSync(join(temporary,'fixture-')),corpus=join(directory,'corpus');
   mkdirSync(corpus);
-  const policy=JSON.parse(readFileSync(join(producer,'contracts/native-admission-policy-v5.json')));
+  const policy=JSON.parse(readFileSync(join(producer,'contracts/native-admission-policy-v6.json')));
   const result=await verifyEffectfulTrainingCase({source:'"use strict";function run(x){return x+1;}',
     entry:'run',args:[3],fixture:{calls:[]},family:'restore-regression',producerRevision:revision,nativePolicy:policy});
   assert.equal(result.status,'locally_verified',result.reason);
   const local=result.exported,admitted=structuredClone(local);
-  const contract=JSON.parse(readFileSync(join(producer,'contracts/semantic-harness-v5.json')));
+  const contract=JSON.parse(readFileSync(join(producer,'contracts/semantic-harness-v6.json')));
   // Shape-only original admission fixture: this exercises receipt preservation
   // and source replay. No native consumer/model execution is claimed.
   bindNativeAdmission(admitted,{schema:'semantic-native-admission/4',componentGate:'native-consumer-only',admitted:true,
@@ -146,7 +146,7 @@ test('archive drill extracts to a new tree, runs the original producer, and pres
 from pathlib import Path
 spec=importlib.util.spec_from_file_location('release',sys.argv[1]);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 root,producer,archive=map(Path,sys.argv[2:])
-locks={'locks/environment.json':'profiles/release-environment.lock.json','locks/native-policy.json':'contracts/native-admission-policy-v5.json','locks/requirements.lock':'tools/native-consumer/requirements.lock','locks/producer-package-lock.json':'package-lock.json','locks/oracle-package-lock.json':'tools/spec-oracle/package-lock.json'}
+locks={'locks/environment.json':'profiles/release-environment.lock.json','locks/native-policy.json':'contracts/native-admission-policy-v6.json','locks/requirements.lock':'tools/native-consumer/requirements.lock','locks/producer-package-lock.json':'package-lock.json','locks/oracle-package-lock.json':'tools/spec-oracle/package-lock.json'}
 rows,sources=m.inventory({'corpus':root/'corpus',**{name:producer/path for name,path in locks.items()}})
 payload=json.loads((root/'release-manifest.json').read_text());payload['files']=rows
 m.write_archive(archive,payload,sources)

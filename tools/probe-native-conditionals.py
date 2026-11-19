@@ -4,8 +4,9 @@
 Use --initialize-tiny with one CURRENT natively admitted episode to prepare and
 save an actual zero-update diagnostic checkpoint, or supply --checkpoint and its
 --prepared corpus. No optimizer update or returned semantic selection occurs.
-Both paths stop before the first Gaussian facet draw; serving has already
-executed its internal text-only modality categorical.
+With --execute-decoder, each path also draws the actual policy facets and runs
+the actual first decoder emission before the capture stops without returning or
+committing the semantic selection.
 """
 from __future__ import annotations
 
@@ -21,8 +22,9 @@ import sys
 import time
 import traceback
 
-from native_conditional_probe import (capture_prior, compare_priors, decoder_support_comparison,
+from native_conditional_probe import (capture_prior, compare_priors, compare_recurrent_states, decoder_support_comparison,
                                       digest, require_checkpoint_hash)
+from native_decoder_capture import compare_output_support
 
 SPEC = importlib.util.spec_from_file_location('optimization_smoke', Path(__file__).with_name('run-optimization-smoke.py'))
 SMOKE = importlib.util.module_from_spec(SPEC)
@@ -32,13 +34,21 @@ SPEC.loader.exec_module(SMOKE)
 def read_json(path): return json.loads(Path(path).read_text())
 
 
+def validate_semantic_v6_emission(payload):
+    """Ask the current production parser to validate these exact emitted bytes."""
+    script = Path(__file__).with_name('validate-semantic-v6-emission.mjs')
+    result = subprocess.run(['node', str(script)], input=payload, capture_output=True,
+                            check=True, timeout=15)
+    return json.loads(result.stdout)
+
+
 def prepared_identity(episode):
     data = episode.to_dict()
     return digest({key: value for key, value in data.items() if key not in ('lineage', 'supervision')})
 
 
 def source_bindings(consumer):
-    files = ['src/megatoken/data/semantic_harness_v5.py', 'src/megatoken/data/semantic_physical.py',
+    files = ['src/megatoken/data/semantic_harness_v6.py', 'src/megatoken/data/semantic_physical.py',
              'src/megatoken/controls.py', 'src/megatoken/semantic_model_adapter.py',
              'src/megatoken/data/schema.py', 'src/megatoken/data/storage.py',
              'src/megatoken/training/meridians.py', 'src/megatoken/training/engine.py',
@@ -48,14 +58,56 @@ def source_bindings(consumer):
     return [{'path': name, 'sha256': SMOKE.sha256(consumer/name)} for name in files]
 
 
-def training_capture(checkpoint, prepared, packet, *, identity, seed):
+def supervision_audit_summary(audit):
+    records = audit['episodeRecords']
+    generated = [row for row in records if row['mode'] == 'generated' and row['tokenTargets']]
+    observed = [row for row in records if row['mode'] == 'observed' and row['tokenTargets']]
+    decoder_groups = [decision['decoderEmission'] for decision in audit['decisions']]
+    emitted = [event for group in decoder_groups for event in group['events']]
+    parser_results = [row.get('semanticParserValid') for row in emitted]
+    return {
+        'status': audit['status'],
+        'semanticOutcome': 'not-evaluated',
+        'generatedTextRecords': len(generated),
+        'generatedTokens': sum(len(row['tokenTargets']) for row in generated),
+        'observedTextRecords': len(observed),
+        'observedTokens': sum(len(row['tokenTargets']) for row in observed),
+        'allGeneratedTokensScored': audit['allGeneratedTokensScored'],
+        'allObservedTokensUnscored': audit['allObservedTokensUnscored'],
+        'decisionCount': audit['decisionCount'],
+        'actualDecoderGroupsEmitted': len(decoder_groups),
+        'decoderContinuationMode': audit['decoderContinuationMode'],
+        'decoderContinuationModeSource': audit['decoderContinuationModeSource'],
+        'futureObservationCanary': audit['futureObservationCanary']['status'],
+        'decoderEmissions': {
+            'count': len(decoder_groups),
+            'completeValidGroups': sum(bool(row.get('completeValidGroup')) for row in decoder_groups),
+            'status': 'complete-valid' if decoder_groups and
+                all(row.get('completeValidGroup') for row in decoder_groups) else 'invalid-or-incomplete',
+            'completeNativeRecords': sum(bool(row.get('completeNativeRecord')) for row in emitted),
+            'completeGeneratedRecords': sum(bool(row.get('completeGeneratedRecord')) for row in emitted),
+            'completeNativeRecordStatus': audit['completeNativeRecordStatus'],
+            'completeGeneratedRecordStatus': audit['completeGeneratedRecordStatus'],
+            'semanticParserValidRecords': sum(value is True for value in parser_results),
+            'semanticParserInvalidRecords': sum(value is False for value in parser_results),
+            'semanticParserStatus': ('measured-all-valid' if parser_results and all(value is True for value in parser_results)
+                                     else 'measured-with-invalid-emissions' if parser_results
+                                     else 'unmeasured'),
+            'semanticCorrectness': 'not-evaluated',
+        },
+        'optimizerSteps': audit['optimizerSteps'],
+    }
+
+
+def training_capture(checkpoint, prepared, packet, *, identity, seed, execute_decoder=False,
+                     audit_supervision=False, supervision_audit_path=None):
     from megatoken.loading import load_trained
     trained = load_trained(checkpoint, device='cpu')
     require_checkpoint_hash(trained.metadata.get('state_sha256'), identity['checkpointStateSha256'],
                             origin='Actual training reload')
     import torch
     from megatoken.data.storage import PreparedCorpus
-    from megatoken.data.semantic_harness_v5 import adapt_selected_harness_v5
+    from megatoken.data.semantic_harness_v6 import adapt_selected_harness_v6
     from megatoken.runtime import seed_everything
     from megatoken.training.config import TrainConfig
     from megatoken.training.engine import prepare_batches, window_config
@@ -66,7 +118,7 @@ def training_capture(checkpoint, prepared, packet, *, identity, seed):
     model, codec = trained.model, trained.codec
     model.eval()
     config = TrainConfig.from_dict(trained.payload['train_config'], expand_data=False)
-    expected, _ = adapt_selected_harness_v5(packet['exported'], codec=codec,
+    expected, _ = adapt_selected_harness_v6(packet['exported'], codec=codec,
         max_positions=model.config.max_capacity, max_history=model.config.max_history_chunks,
         allow_local=False, admission_verifier=lambda document:
             document['sidecar']['identityDigest'] == packet['sourceAdmission']['identityDigest'])
@@ -101,7 +153,26 @@ def training_capture(checkpoint, prepared, packet, *, identity, seed):
         seed_everything(seed, True)
         result = capture_prior(lambda: forward_meridian_batch(model, batch, ledger, config,
             torch.device('cpu'), trained.payload['global_step'], differentiate=False, transducer=transducer),
-            model, path='training', identity=identity)
+            model, path='training', identity=identity, execute_decoder=execute_decoder)
+        if audit_supervision:
+            if supervision_audit_path is None:
+                raise ValueError('A separate supervision-audit artifact path is required')
+            from native_supervision_audit import capture_native_supervision_audit
+
+            audit = capture_native_supervision_audit(
+                model, batch, codec=codec, config=config, device=torch.device('cpu'),
+                model_version=trained.payload['global_step'], transducer=transducer,
+                checkpoint_sha256=identity['checkpointStateSha256'], decoder_seed=seed,
+                record_validator=validate_semantic_v6_emission,
+            )
+            SMOKE.write_json(supervision_audit_path, audit)
+            result['supervisionAudit'] = {
+                **supervision_audit_summary(audit),
+                'artifact': Path(supervision_audit_path).name,
+                'artifactSha256': SMOKE.sha256(supervision_audit_path),
+                'tokenizerIdentity': audit['tokenizerIdentity'],
+                'checkpointSha256': audit['checkpointSha256'],
+            }
         result.update(preparedCorpusIdentity=corpus.identity, preparedEpisodeId=episode.episode_id,
             preparedInputIdentity=expected_identity, nativeWindow={'start': item.window.start, 'end': item.window.end},
             firstPhysicalTarget={'recordId': first.record.record_id, 'payloadHex': first.record.payload.hex(),
@@ -117,7 +188,7 @@ def training_capture(checkpoint, prepared, packet, *, identity, seed):
     return result
 
 
-def serving_capture(bundle_path, packet, *, identity, seed, max_tokens):
+def serving_capture(bundle_path, packet, *, identity, seed, max_tokens, execute_decoder=False):
     from megatoken.served import ServedBundle
     served = ServedBundle(bundle_path, device='cpu')
     require_checkpoint_hash(served.manifest.get('checkpoint_sha256'), identity['checkpointStateSha256'],
@@ -133,7 +204,7 @@ def serving_capture(bundle_path, packet, *, identity, seed, max_tokens):
     initialization = adapter.initialize(seed=seed, checkpointIdentity=identity['servedModelSha256'])
     try:
         result = capture_prior(lambda: adapter.select(packet['prefix']), model,
-                               path='serving', identity=identity)
+                               path='serving', identity=identity, execute_decoder=execute_decoder)
         result['initialization'] = initialization
         result['sourceVisibilityVerification'] = 'real native runtime enabled'
         result['actualServedTensorIdentity'] = before
@@ -170,6 +241,10 @@ def main():
     parser.add_argument('--max-tokens', type=int, default=128)
     parser.add_argument('--atol', type=float, default=1e-6)
     parser.add_argument('--rtol', type=float, default=1e-5)
+    parser.add_argument('--execute-decoder', action='store_true',
+                        help='Execute and compare real decoder heads as well as the recurrent Gaussian')
+    parser.add_argument('--audit-supervision', action='store_true',
+                        help='Capture actual per-token masks, targets, contexts, gradients, and decoder emissions')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     if args.initialize_tiny and (args.tokenizer_json is None or args.prepared is not None):
@@ -180,9 +255,12 @@ def main():
     if not 0 <= args.atol <= .001 or not 0 <= args.rtol <= .001: parser.error('Numeric tolerance must be 0..0.001')
     root = args.output.resolve(); root.mkdir(parents=True, exist_ok=False)
     report = {'schema': 'semantic-native-conditional-parity/1', 'status': 'running',
-              'modelSelections': 0, 'optimizerSteps': 0, 'learnedSuccess': None,
+              'modelSelections': 0, 'modelSelectionsMeaning': 'returned-or-committed semantic selections',
+              'returnedSemanticSelections': 0, 'actualPolicySampleCount': 0,
+              'actualDecoderEmissionCount': 0, 'optimizerSteps': 0, 'learnedSuccess': None,
               'scope': 'First generated native Gaussian prior, with real prefix reconstruction and dropout disabled',
-              'downstreamLexicalAndActionParity': 'unmeasured'}
+              'downstreamLexicalAndActionParity': 'unmeasured',
+              'supervisionAuditStatus': 'not-requested' if not args.audit_supervision else 'pending'}
     started = time.monotonic()
 
     def record(**changes):
@@ -231,7 +309,7 @@ def main():
                 device='cpu', precision='fp32', seed=args.seed, max_steps=1, microbatch_episodes=1,
                 max_accumulation_windows=1, accumulate_scored=1, accumulate_ingested=16384,
                 max_history_tokens=16384, max_window_records=64, scored_decisions=64,
-                max_record_bytes=16384, generated_capacity=1024,
+                max_record_bytes=16384, generated_capacity=args.max_tokens,
                 model_overrides={'vocab_size': codec.vocab_size, 'max_capacity': 1024, 'max_history_chunks': 1024},
                 effort=1, gradient_checkpointing=False, eval_every=0, deterministic=True,
                 use_stage_mixture=False, use_effort_mixture=False)
@@ -260,35 +338,73 @@ def main():
         record(phase='training-native-conditional', checkpoint=str(checkpoint), checkpointGlobalStep=checkpoint_step,
                identity=identity, servedReloadExact=bundle['servedReloadExact'], seed=args.seed)
         gc.collect()
-        training = training_capture(checkpoint, prepared, packet, identity=identity, seed=args.seed)
+        decoder_options = {'execute_decoder': True} if args.execute_decoder else {}
+        audit_options = ({'audit_supervision': True,
+                          'supervision_audit_path': root/'training-supervision-audit.json'}
+                         if args.audit_supervision else {})
+        training = training_capture(checkpoint, prepared, packet, identity=identity, seed=args.seed,
+                                    **audit_options, **decoder_options)
         SMOKE.write_json(root/'training-conditional.json', training)
+        audit_summary = training.get('supervisionAudit')
+        if audit_summary:
+            record(supervisionAuditStatus=audit_summary['status'],
+                   supervisionAudit=audit_summary)
         record(phase='serving-native-conditional', trainingCaptureSha256=SMOKE.sha256(root/'training-conditional.json'))
         gc.collect()
-        serving = serving_capture(root/'served-exact', packet, identity=identity, seed=args.seed, max_tokens=args.max_tokens)
+        serving = serving_capture(root/'served-exact', packet, identity=identity, seed=args.seed,
+                                  max_tokens=args.max_tokens, **decoder_options)
         SMOKE.write_json(root/'serving-conditional.json', serving)
         comparison = compare_priors(training, serving, atol=args.atol, rtol=args.rtol)
-        supports = decoder_support_comparison(consumer/'src/megatoken/generation/decoder.py', serving)
+        recurrent = compare_recurrent_states(training, serving, atol=args.atol, rtol=args.rtol)
+        supports = (compare_output_support(training, serving) if args.execute_decoder else
+                    decoder_support_comparison(consumer/'src/megatoken/generation/decoder.py', serving))
+        replay = serving.get('decoderScoringReplay', {})
+        captures = (training, serving)
+        actual_policy_samples = sum('actualSampledFacets' in value for value in captures)
+        actual_decoder_emissions = sum('originalEmission' in value.get('decoderExecution', {})
+                                       for value in captures)
+        support_mismatch = supports['status'] in ('failed', 'source-defined-mismatch')
         mismatch = (comparison['status'] == 'failed' or not comparison['encoderCallAuditIdentical'] or
-                    supports['status'] == 'source-defined-mismatch')
+                    recurrent['status'] == 'failed' or
+                    support_mismatch)
         SMOKE.write_json(root/'comparison.json', comparison)
+        SMOKE.write_json(root/'recurrent-comparison.json', recurrent)
         SMOKE.require_clean_checkout(tracer); SMOKE.require_clean_checkout(consumer)
         if (source_bindings(consumer) != report['boundarySourceBindings'] or
                 SMOKE.sha256(args.episode) != packet['episodeSha256']):
             raise ValueError('Bound source or native implementation changed during capture')
         record(status='failed' if mismatch else 'measured', phase='complete', comparison=comparison,
                gaussianConditionalStatus=comparison['status'],
-               trainingServingParityStatus='failed' if mismatch else 'unmeasured',
+               recurrentStateComparison=recurrent,
+               modelSelections=0, modelSelectionsMeaning='returned-or-committed semantic selections',
+               returnedSemanticSelections=0, actualPolicySampleCount=actual_policy_samples,
+               actualDecoderEmissionCount=actual_decoder_emissions,
+               selectionBoundary=('actual policy draws and decoder emissions were measured, but no semantic selection was returned or committed'
+                                  if args.execute_decoder else
+                                  'capture stopped before the Gaussian policy draw'),
+               trainingServingParityStatus=('failed' if mismatch else
+                   'partial-measured' if args.execute_decoder else 'unmeasured'),
                fullConditionalParityClaim=False, decoderSupportComparison=supports,
+               decoderScoringReplayStatus=replay.get('status', 'unmeasured'),
+               decoderScoringReplayScope=replay.get('comparison', {}).get('scope'),
                servingCaptureSha256=SMOKE.sha256(root/'serving-conditional.json'),
                comparisonSha256=SMOKE.sha256(root/'comparison.json'), wallSeconds=time.monotonic()-started,
-               limitations=['Measurement covers the first event Gaussian; serving also executes its prior text-only modality categorical. Downstream lexical/length/terminal realization is not executed.',
+               limitations=(['Measurement covers the first event Gaussian and the actual decoder support at that event. The teacher-scoring replay of the actual serving emission is reported separately. It does not establish semantic correctness or full conditional parity.',
+                            'Serving also executes its prior text-only modality categorical; the first Gaussian comparison does not claim that earlier categorical is equal.',
+                            'The trainer uses its real eval-mode prefix reconstruction; no synthetic serving state is substituted.',
+                            'A match at an untrained checkpoint does not establish equivalence after learning or across other prefixes.']
+                           if args.execute_decoder else
+                           ['Measurement covers the first event Gaussian; serving also executes its prior text-only modality categorical. Downstream lexical/length/terminal realization is not executed.',
                             'The trainer uses its real eval-mode prefix reconstruction; no synthetic serving state is substituted.',
                             'A match at an untrained checkpoint does not establish equivalence after learning or across other prefixes.',
-                            'Categorical decoder supports remain a distinct check; native alphabets and head sizes are retained.'])
+                            'Categorical decoder supports remain a distinct check; native alphabets and head sizes are retained.']))
         print(json.dumps({'report': str(root/'report.json'), 'status': report['status'],
                           'gaussianConditionalStatus': comparison['status'],
                           'maxAbsoluteDifference': comparison['maximumAbsoluteDifference'],
-                          'modelSelections': 0, 'optimizerSteps': 0}))
+                          'modelSelections': 0, 'returnedSemanticSelections': 0,
+                          'actualPolicySampleCount': actual_policy_samples,
+                          'actualDecoderEmissionCount': actual_decoder_emissions,
+                          'optimizerSteps': 0}))
         return 1 if mismatch else 0
     except BaseException as error:
         record(status='unmeasured', phase='capture-incomplete',

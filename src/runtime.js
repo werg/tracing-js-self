@@ -42,7 +42,7 @@ const opNames = {
   DEFAULT_GUARD:'binding.default.guard', PARAM_INIT:'binding.initialize', ENTER_BODY_ENV:'environment.enter', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
   CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
-  GET_PROP:'property.read', GET_METHOD:'property.read', PUT_PROP:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
+  GET_PROP:'property.read', GET_METHOD:'property.read', SPREAD:'property.read', PUT_PROP:'property.write', APPEND_ARRAY:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
   LEAVE_SCOPE:'environment.leave', CLONE_LOOP_ENV:'environment.iteration', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
   TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
   BIND_CATCH:'completion.catch.bind', END_FINALLY:'completion.finally.end',
@@ -73,6 +73,40 @@ function valueKey(tagged) {
 }
 function arrayIndex(key) {
   return /^(0|[1-9]\d*)$/.test(key) && Number(key) < 4294967295;
+}
+// A bounded owned iterator slice. Capture now, before later arguments/elements
+// can mutate the input. The private snapshot preserves reference identities;
+// it is never a guest value or a public semantic record.
+function spreadSnapshot(heap,source) {
+  const value=source.value,values=[],reads=[];
+  if(value[0]==='str'){
+    const text=value[1];
+    for(let offset=0;offset<text.length;){
+      if(values.length===10000)throw new RangeError('Owned spread length budget exceeded');
+      const first=text.charCodeAt(offset),next=text.charCodeAt(offset+1);
+      const width=first>=0xd800&&first<=0xdbff&&next>=0xdc00&&next<=0xdfff?2:1;
+      values.push(token(['str',text.slice(offset,offset+width)],source.origin));
+      offset+=width;
+    }
+  }else{
+    const obj=value[0]==='ref'?heap[value[1]]:null;
+    if(obj?.kind!=='array'||objectPrototype(obj)!=='Array.prototype'||
+       Object.keys(obj.accessors??{}).length)
+      throw new TypeError('Spread requires an ordinary dense array or primitive string');
+    const length=decode(obj.properties.length.value);
+    if(!Number.isSafeInteger(length)||length<0||length>10000)
+      throw new RangeError('Owned spread length budget exceeded');
+    const read=(key,slot)=>reads.push({kind:'property',objectId:obj.id,key,
+      version:obj.propertyVersions?.[key]??0,shapeVersion:obj.shapeVersion??0,
+      present:true,value:copy(slot.value),supplyingEvent:slot.origin??null});
+    read('length',obj.properties.length);
+    for(let i=0;i<length;i++){
+      const slot=obj.properties[String(i)];
+      if(!slot)throw new TypeError('Sparse spread is outside the bounded iterator profile');
+      values.push(copy(slot));read(String(i),slot);
+    }
+  }
+  return {values,reads};
 }
 // ES SameValue/SameValueZero over the owned value codec. Never use JS object
 // equality for guest reference identities; they live in the serializable heap.
@@ -1156,6 +1190,24 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
           return {...operands(target,handler),...result(['ref',id])};
         }
         case 'NEW_OBJECT':case 'NEW_ARRAY':{const id=this.next(s,'obj');s.heap[id]={id,kind:op==='NEW_ARRAY'?'array':'object',properties:{},propertyVersions:{},shapeVersion:0,version:0};if(op==='NEW_ARRAY'){s.heap[id].properties.length=token(['num',0],eventId);s.heap[id].propertyVersions.length=0;}return result(['ref',id]);}
+        case 'SPREAD':{
+          const source=pop(),snapshot=spreadSnapshot(s.heap,source);
+          return {...operands(source,...snapshot.values),
+            ...result(['spread',snapshot.values.map(item=>copy(item.value))]),reads:snapshot.reads};
+        }
+        case 'APPEND_ARRAY':{
+          const item=pop(),base=pop(),obj=base.value[0]==='ref'?s.heap[base.value[1]]:null;
+          if(obj?.kind!=='array'||objectPrototype(obj)!=='Array.prototype'||
+             Object.keys(obj.accessors??{}).length)
+            throw new TypeError('Array literal append requires an owned result array');
+          if(arg.spread&&(item.value[0]!=='spread'||!Array.isArray(item.value[1])))
+            throw new Error('Array literal spread lacks its evaluated snapshot');
+          const values=arg.spread?item.value[1]:[item.value],start=decode(obj.properties.length.value);
+          if(!Number.isSafeInteger(start)||start<0||start+values.length>10000)
+            throw new RangeError('Owned array literal length budget exceeded');
+          for(let i=0;i<values.length;i++)putOwn(obj,String(start+i),values[i],eventId);
+          return {...operands(base,item),...result(base.value)};
+        }
         case 'GET_PROP':case 'GET_METHOD':{
           const key=pop(),base=pop(),property=valueKey(key.value);let v,read=null;
           if(base.value[0]==='intrinsic'&&base.value[1]==='Math'&&property==='random' &&
@@ -1404,13 +1456,10 @@ if(object.kind==='regexp'){
           const args=[];
           for(let i=0;i<raw.length;i++){
             if(!arg?.spread?.includes(i)){args.push(raw[i]);continue;}
-            const value=raw[i].value,obj=value[0]==='ref'?s.heap[value[1]]:null;
-            if(obj?.kind!=='array'||Object.keys(obj.accessors??{}).length)
-              throw new TypeError('Only ordinary array spread is owned');
-            const len=decode(obj.properties.length.value);
-            if(!Number.isSafeInteger(len)||len<0||len>10000)
-              throw new RangeError('Owned spread length budget exceeded');
-            for(let j=0;j<len;j++)args.push(obj.properties[String(j)]??token(U));
+            const value=raw[i].value;
+            if(value[0]!=='spread'||!Array.isArray(value[1]))
+              throw new Error('Call spread lacks its evaluated snapshot');
+            for(const member of value[1])args.push(token(member,raw[i].origin));
           }
           if(args.length>10000)throw new RangeError('Owned call argument budget exceeded');
           const fn=pop();let callable=fn.value;

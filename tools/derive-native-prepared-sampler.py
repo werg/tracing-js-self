@@ -19,7 +19,7 @@ import native_prepared_sampler as S
 
 
 NATIVE_MODULES = ("megatoken.data.storage", "megatoken.data.schema", "megatoken.data.semantic_corpus",
-    "megatoken.data.semantic_admission", "megatoken.data.semantic_harness_v5", "megatoken.generation.codec")
+    "megatoken.data.semantic_admission", "megatoken.data.semantic_harness_v6", "megatoken.generation.codec")
 NATIVE_FILES = ("src/megatoken/controls.py", "src/megatoken/data/semantic_physical.py",
     "src/megatoken/data/semantic_context.py", "src/megatoken/data/semantic_contract.py",
     "src/megatoken/data/host_operations.py", "src/megatoken/data/dedup.py",
@@ -106,7 +106,7 @@ def reconstruct_rows(prepared_root, database_rows, index_rows, source, native, a
                     producer_revision=source["producerRevision"], consumer_revision=policy["consumerRevision"], codec=codec)
                 S.require(S.canonical(fresh) == S.canonical(audit_row["native"]),
                     "Recomputed native admission differs from the sealed preparation audit")
-                regenerated, _ = adapter.adapt_selected_harness_v5(document, codec=codec,
+                regenerated, _ = adapter.adapt_selected_harness_v6(document, codec=codec,
                     max_positions=native["maxPositions"], max_history=native["maxHistory"],
                     admission_verifier=lambda _: True)  # The exact document was verified immediately above.
                 stored_value = json.loads(row["episode_json"])
@@ -153,7 +153,7 @@ def derive(args, staging):
         bind(S.inside(campaign, name))
     producer_revision = S.checkout(producer, source["producerRevision"])
     tool_revision = S.checkout(S.ROOT)
-    policy_path = bind(S.inside(producer, "contracts/native-admission-policy-v5.json"))
+    policy_path = bind(S.inside(producer, "contracts/native-admission-policy-v6.json"))
     policy = S.read(policy_path)
     S.checkout(consumer, policy["consumerRevision"])
     tokenizer_path = bind(args.tokenizer.resolve())

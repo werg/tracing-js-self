@@ -1,0 +1,681 @@
+{
+  "bestNativeTeacherLoss": 0.616847813129425,
+  "firstStrictValidStep": 16,
+  "history": [
+    {
+      "actualRecord": null,
+      "actualRecordHex": null,
+      "actualServiceError": "SemanticSelectionError: Model did not render one complete valid text action",
+      "actualServiceErrorEvidence": {
+        "eventIds": [
+          "selected:11:track:0"
+        ],
+        "fragments": [
+          {
+            "emittedTokenIds": [
+              127356,
+              126062,
+              53351,
+              151069,
+              40112
+            ],
+            "meridian": 11,
+            "modelTrack": "track:0",
+            "payloadHex": "20ec9786e5ada6e4b9a0e8808520467573696f6e90d79cd79420426f6f6c",
+            "selectedEventId": "selected:11:track:0"
+          }
+        ],
+        "meridian": 11,
+        "payloadHex": [
+          "20ec9786e5ada6e4b9a0e8808520467573696f6e90d79cd79420426f6f6c"
+        ],
+        "reason": "Model did not render one complete valid text action",
+        "valid": [
+          false
+        ]
+      },
+      "actualServingEventIds": [
+        [
+          "selected:11:track:0"
+        ]
+      ],
+      "actualServingSamples": [
+        "192375c2990838e49232864dc9bddab8fe3225725ac8f620749bd88fcc5a85af"
+      ],
+      "actualServingTracks": [
+        [
+          "track:0"
+        ]
+      ],
+      "elapsedSeconds": 1.073,
+      "firstSampleBitwiseMatchesTrainer": false,
+      "firstSampleDifference": {
+        "coordinates": 128,
+        "maximumAbsoluteDifference": 8.344650268554688e-07,
+        "status": "different"
+      },
+      "gradientNorm": 3.071655035018921,
+      "lossComponents": {
+        "binding": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "lexical": {
+          "count": 5,
+          "sum": 61.927242279052734
+        },
+        "placement": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "structure": {
+          "count": 4,
+          "sum": 9.544208526611328
+        },
+        "terminal": {
+          "count": 2,
+          "sum": 1.5052871704101562
+        }
+      },
+      "nativeSampleEventIds": [
+        "0d1233aca4ea3da90a693f8041bc9f8ee6403f3b2c8c79fbf2e951881f5afcc1"
+      ],
+      "nativeSampleSha256": "c9e0c94e006d0626326ae3106a2f0379ed593d99867578ee4a10a51b1b24a6bf",
+      "nativeTeacherLoss": 13.057226181030273,
+      "recordMatchesTarget": false,
+      "singleCompleteNativeRecord": false,
+      "step": 1,
+      "strictFields": null,
+      "strictKind": null,
+      "trainingTracks": [
+        "track:0"
+      ]
+    },
+    {
+      "elapsedSeconds": 1.735,
+      "gradientNorm": 2.776501178741455,
+      "lossComponents": {
+        "binding": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "lexical": {
+          "count": 5,
+          "sum": 55.949012756347656
+        },
+        "placement": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "structure": {
+          "count": 4,
+          "sum": 9.413642883300781
+        },
+        "terminal": {
+          "count": 2,
+          "sum": 1.4506769180297852
+        }
+      },
+      "nativeSampleEventIds": [
+        "0d1233aca4ea3da90a693f8041bc9f8ee6403f3b2c8c79fbf2e951881f5afcc1"
+      ],
+      "nativeSampleSha256": "c9e0c94e006d0626326ae3106a2f0379ed593d99867578ee4a10a51b1b24a6bf",
+      "nativeTeacherLoss": 11.850689888000488,
+      "step": 2,
+      "trainingTracks": [
+        "track:0"
+      ]
+    },
+    {
+      "elapsedSeconds": 1.86,
+      "gradientNorm": 2.755068778991699,
+      "lossComponents": {
+        "binding": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "lexical": {
+          "count": 5,
+          "sum": 50.78406524658203
+        },
+        "placement": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "structure": {
+          "count": 4,
+          "sum": 8.93609619140625
+        },
+        "terminal": {
+          "count": 2,
+          "sum": 1.2355002164840698
+        }
+      },
+      "nativeSampleEventIds": [
+        "0d1233aca4ea3da90a693f8041bc9f8ee6403f3b2c8c79fbf2e951881f5afcc1"
+      ],
+      "nativeSampleSha256": "c9e0c94e006d0626326ae3106a2f0379ed593d99867578ee4a10a51b1b24a6bf",
+      "nativeTeacherLoss": 10.777094841003418,
+      "step": 3,
+      "trainingTracks": [
+        "track:0"
+      ]
+    },
+    {
+      "elapsedSeconds": 1.987,
+      "gradientNorm": 2.9370012283325195,
+      "lossComponents": {
+        "binding": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "lexical": {
+          "count": 5,
+          "sum": 46.007572174072266
+        },
+        "placement": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "structure": {
+          "count": 4,
+          "sum": 8.91073226928711
+        },
+        "terminal": {
+          "count": 2,
+          "sum": 1.240612506866455
+        }
+      },
+      "nativeSampleEventIds": [
+        "0d1233aca4ea3da90a693f8041bc9f8ee6403f3b2c8c79fbf2e951881f5afcc1"
+      ],
+      "nativeSampleSha256": "c9e0c94e006d0626326ae3106a2f0379ed593d99867578ee4a10a51b1b24a6bf",
+      "nativeTeacherLoss": 9.820466041564941,
+      "step": 4,
+      "trainingTracks": [
+        "track:0"
+      ]
+    },
+    {
+      "elapsedSeconds": 2.112,
+      "gradientNorm": 3.23995304107666,
+      "lossComponents": {
+        "binding": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "lexical": {
+          "count": 5,
+          "sum": 41.28618240356445
+        },
+        "placement": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "structure": {
+          "count": 4,
+          "sum": 9.072441101074219
+        },
+        "terminal": {
+          "count": 2,
+          "sum": 1.159902811050415
+        }
+      },
+      "nativeSampleEventIds": [
+        "0d1233aca4ea3da90a693f8041bc9f8ee6403f3b2c8c79fbf2e951881f5afcc1"
+      ],
+      "nativeSampleSha256": "c9e0c94e006d0626326ae3106a2f0379ed593d99867578ee4a10a51b1b24a6bf",
+      "nativeTeacherLoss": 8.882259368896484,
+      "step": 5,
+      "trainingTracks": [
+        "track:0"
+      ]
+    },
+    {
+      "elapsedSeconds": 2.235,
+      "gradientNorm": 3.5964548587799072,
+      "lossComponents": {
+        "binding": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "lexical": {
+          "count": 5,
+          "sum": 36.417259216308594
+        },
+        "placement": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "structure": {
+          "count": 4,
+          "sum": 8.943639755249023
+        },
+        "terminal": {
+          "count": 2,
+          "sum": 1.095308780670166
+        }
+      },
+      "nativeSampleEventIds": [
+        "0d1233aca4ea3da90a693f8041bc9f8ee6403f3b2c8c79fbf2e951881f5afcc1"
+      ],
+      "nativeSampleSha256": "c9e0c94e006d0626326ae3106a2f0379ed593d99867578ee4a10a51b1b24a6bf",
+      "nativeTeacherLoss": 7.897194862365723,
+      "step": 6,
+      "trainingTracks": [
+        "track:0"
+      ]
+    },
+    {
+      "elapsedSeconds": 2.36,
+      "gradientNorm": 3.934558153152466,
+      "lossComponents": {
+        "binding": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "lexical": {
+          "count": 5,
+          "sum": 31.330949783325195
+        },
+        "placement": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "structure": {
+          "count": 4,
+          "sum": 8.822311401367188
+        },
+        "terminal": {
+          "count": 2,
+          "sum": 1.0193500518798828
+        }
+      },
+      "nativeSampleEventIds": [
+        "0d1233aca4ea3da90a693f8041bc9f8ee6403f3b2c8c79fbf2e951881f5afcc1"
+      ],
+      "nativeSampleSha256": "c9e0c94e006d0626326ae3106a2f0379ed593d99867578ee4a10a51b1b24a6bf",
+      "nativeTeacherLoss": 6.868552207946777,
+      "step": 7,
+      "trainingTracks": [
+        "track:0"
+      ]
+    },
+    {
+      "actualRecord": "，墨 create @，但其1",
+      "actualRecordHex": "efbc8ce5a2a8206372656174652040efbc8ce4bd86e585b631",
+      "actualServiceError": null,
+      "actualServiceErrorEvidence": null,
+      "actualServingEventIds": [
+        [
+          "selected:11:track:0"
+        ]
+      ],
+      "actualServingSamples": [
+        "192375c2990838e49232864dc9bddab8fe3225725ac8f620749bd88fcc5a85af"
+      ],
+      "actualServingTracks": [
+        [
+          "track:0"
+        ]
+      ],
+      "elapsedSeconds": 2.483,
+      "firstSampleBitwiseMatchesTrainer": false,
+      "firstSampleDifference": {
+        "coordinates": 128,
+        "maximumAbsoluteDifference": 8.344650268554688e-07,
+        "status": "different"
+      },
+      "gradientNorm": 4.114284038543701,
+      "lossComponents": {
+        "binding": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "lexical": {
+          "count": 5,
+          "sum": 26.120529174804688
+        },
+        "placement": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "structure": {
+          "count": 4,
+          "sum": 8.770732879638672
+        },
+        "terminal": {
+          "count": 2,
+          "sum": 0.9565877914428711
+        }
+      },
+      "nativeSampleEventIds": [
+        "0d1233aca4ea3da90a693f8041bc9f8ee6403f3b2c8c79fbf2e951881f5afcc1"
+      ],
+      "nativeSampleSha256": "c9e0c94e006d0626326ae3106a2f0379ed593d99867578ee4a10a51b1b24a6bf",
+      "nativeTeacherLoss": 5.820106029510498,
+      "recordMatchesTarget": false,
+      "singleCompleteNativeRecord": true,
+      "step": 8,
+      "strictFields": null,
+      "strictKind": null,
+      "trainingTracks": [
+        "track:0"
+      ]
+    },
+    {
+      "elapsedSeconds": 3.202,
+      "gradientNorm": 4.130570888519287,
+      "lossComponents": {
+        "binding": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "lexical": {
+          "count": 5,
+          "sum": 21.087947845458984
+        },
+        "placement": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "structure": {
+          "count": 4,
+          "sum": 8.617766380310059
+        },
+        "terminal": {
+          "count": 2,
+          "sum": 0.9042294025421143
+        }
+      },
+      "nativeSampleEventIds": [
+        "0d1233aca4ea3da90a693f8041bc9f8ee6403f3b2c8c79fbf2e951881f5afcc1"
+      ],
+      "nativeSampleSha256": "c9e0c94e006d0626326ae3106a2f0379ed593d99867578ee4a10a51b1b24a6bf",
+      "nativeTeacherLoss": 4.8014116287231445,
+      "step": 9,
+      "trainingTracks": [
+        "track:0"
+      ]
+    },
+    {
+      "elapsedSeconds": 3.326,
+      "gradientNorm": 4.205430507659912,
+      "lossComponents": {
+        "binding": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "lexical": {
+          "count": 5,
+          "sum": 16.377323150634766
+        },
+        "placement": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "structure": {
+          "count": 4,
+          "sum": 7.896432876586914
+        },
+        "terminal": {
+          "count": 2,
+          "sum": 0.6839606165885925
+        }
+      },
+      "nativeSampleEventIds": [
+        "0d1233aca4ea3da90a693f8041bc9f8ee6403f3b2c8c79fbf2e951881f5afcc1"
+      ],
+      "nativeSampleSha256": "c9e0c94e006d0626326ae3106a2f0379ed593d99867578ee4a10a51b1b24a6bf",
+      "nativeTeacherLoss": 3.803189754486084,
+      "step": 10,
+      "trainingTracks": [
+        "track:0"
+      ]
+    },
+    {
+      "elapsedSeconds": 3.453,
+      "gradientNorm": 4.159085750579834,
+      "lossComponents": {
+        "binding": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "lexical": {
+          "count": 5,
+          "sum": 11.90237808227539
+        },
+        "placement": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "structure": {
+          "count": 4,
+          "sum": 7.8963751792907715
+        },
+        "terminal": {
+          "count": 2,
+          "sum": 0.6979135274887085
+        }
+      },
+      "nativeSampleEventIds": [
+        "0d1233aca4ea3da90a693f8041bc9f8ee6403f3b2c8c79fbf2e951881f5afcc1"
+      ],
+      "nativeSampleSha256": "c9e0c94e006d0626326ae3106a2f0379ed593d99867578ee4a10a51b1b24a6bf",
+      "nativeTeacherLoss": 2.9088950157165527,
+      "step": 11,
+      "trainingTracks": [
+        "track:0"
+      ]
+    },
+    {
+      "elapsedSeconds": 3.58,
+      "gradientNorm": 3.773668050765991,
+      "lossComponents": {
+        "binding": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "lexical": {
+          "count": 5,
+          "sum": 7.833736419677734
+        },
+        "placement": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "structure": {
+          "count": 4,
+          "sum": 8.219079971313477
+        },
+        "terminal": {
+          "count": 2,
+          "sum": 0.7490437030792236
+        }
+      },
+      "nativeSampleEventIds": [
+        "0d1233aca4ea3da90a693f8041bc9f8ee6403f3b2c8c79fbf2e951881f5afcc1"
+      ],
+      "nativeSampleSha256": "c9e0c94e006d0626326ae3106a2f0379ed593d99867578ee4a10a51b1b24a6bf",
+      "nativeTeacherLoss": 2.117892026901245,
+      "step": 12,
+      "trainingTracks": [
+        "track:0"
+      ]
+    },
+    {
+      "elapsedSeconds": 3.707,
+      "gradientNorm": 2.9323041439056396,
+      "lossComponents": {
+        "binding": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "lexical": {
+          "count": 5,
+          "sum": 4.730257034301758
+        },
+        "placement": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "structure": {
+          "count": 4,
+          "sum": 8.027565956115723
+        },
+        "terminal": {
+          "count": 2,
+          "sum": 0.7356741428375244
+        }
+      },
+      "nativeSampleEventIds": [
+        "0d1233aca4ea3da90a693f8041bc9f8ee6403f3b2c8c79fbf2e951881f5afcc1"
+      ],
+      "nativeSampleSha256": "c9e0c94e006d0626326ae3106a2f0379ed593d99867578ee4a10a51b1b24a6bf",
+      "nativeTeacherLoss": 1.4845579862594604,
+      "step": 13,
+      "trainingTracks": [
+        "track:0"
+      ]
+    },
+    {
+      "elapsedSeconds": 3.832,
+      "gradientNorm": 2.6545536518096924,
+      "lossComponents": {
+        "binding": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "lexical": {
+          "count": 5,
+          "sum": 2.840677261352539
+        },
+        "placement": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "structure": {
+          "count": 4,
+          "sum": 7.837294578552246
+        },
+        "terminal": {
+          "count": 2,
+          "sum": 0.6925293803215027
+        }
+      },
+      "nativeSampleEventIds": [
+        "0d1233aca4ea3da90a693f8041bc9f8ee6403f3b2c8c79fbf2e951881f5afcc1"
+      ],
+      "nativeSampleSha256": "c9e0c94e006d0626326ae3106a2f0379ed593d99867578ee4a10a51b1b24a6bf",
+      "nativeTeacherLoss": 1.0925928354263306,
+      "step": 14,
+      "trainingTracks": [
+        "track:0"
+      ]
+    },
+    {
+      "elapsedSeconds": 3.957,
+      "gradientNorm": 2.4010493755340576,
+      "lossComponents": {
+        "binding": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "lexical": {
+          "count": 5,
+          "sum": 1.5296258926391602
+        },
+        "placement": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "structure": {
+          "count": 4,
+          "sum": 7.760847091674805
+        },
+        "terminal": {
+          "count": 2,
+          "sum": 0.6674156188964844
+        }
+      },
+      "nativeSampleEventIds": [
+        "0d1233aca4ea3da90a693f8041bc9f8ee6403f3b2c8c79fbf2e951881f5afcc1"
+      ],
+      "nativeSampleSha256": "c9e0c94e006d0626326ae3106a2f0379ed593d99867578ee4a10a51b1b24a6bf",
+      "nativeTeacherLoss": 0.8243489265441895,
+      "step": 15,
+      "trainingTracks": [
+        "track:0"
+      ]
+    },
+    {
+      "actualRecord": "promise create @p1",
+      "actualRecordHex": "70726f6d6973652063726561746520407031",
+      "actualServiceError": null,
+      "actualServiceErrorEvidence": null,
+      "actualServingEventIds": [
+        [
+          "selected:11:track:0"
+        ]
+      ],
+      "actualServingSamples": [
+        "192375c2990838e49232864dc9bddab8fe3225725ac8f620749bd88fcc5a85af"
+      ],
+      "actualServingTracks": [
+        [
+          "track:0"
+        ]
+      ],
+      "elapsedSeconds": 4.084,
+      "firstSampleBitwiseMatchesTrainer": false,
+      "firstSampleDifference": {
+        "coordinates": 128,
+        "maximumAbsoluteDifference": 8.344650268554688e-07,
+        "status": "different"
+      },
+      "gradientNorm": 1.4797378778457642,
+      "lossComponents": {
+        "binding": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "lexical": {
+          "count": 5,
+          "sum": 0.5875988006591797
+        },
+        "placement": {
+          "count": 0,
+          "sum": 0.0
+        },
+        "structure": {
+          "count": 4,
+          "sum": 7.489316940307617
+        },
+        "terminal": {
+          "count": 2,
+          "sum": 0.6249155402183533
+        }
+      },
+      "nativeSampleEventIds": [
+        "0d1233aca4ea3da90a693f8041bc9f8ee6403f3b2c8c79fbf2e951881f5afcc1"
+      ],
+      "nativeSampleSha256": "c9e0c94e006d0626326ae3106a2f0379ed593d99867578ee4a10a51b1b24a6bf",
+      "nativeTeacherLoss": 0.616847813129425,
+      "recordMatchesTarget": true,
+      "singleCompleteNativeRecord": true,
+      "step": 16,
+      "strictFields": {
+        "action": "create",
+        "promise": "p1"
+      },
+      "strictKind": "promise",
+      "trainingTracks": [
+        "track:0"
+      ]
+    }
+  ],
+  "optimizerStep": 16,
+  "report": "report.json",
+  "schema": "semantic-native-decoder-fit-progress/1",
+  "status": "passed"
+}

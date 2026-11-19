@@ -1,4 +1,4 @@
-name: Paired native training and serving input parity
+name: Paired native computation and supervision
 
 on:
   pull_request:
@@ -29,9 +29,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: werg/megatoken
-          # A distinct, unmerged diagnostic contract; never silently substitute
-          # the current production consumer or reinterpret historical receipts.
-          ref: 9a9dd3593c6887d63012dd5c953e914557dca386
+          # Exact paired consumer; old checkpoint and prepared formats are rejected.
+          ref: d644e3dfc01a22a14f039a9c063d7b65937d8e8f
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -42,9 +41,35 @@ jobs:
           python-version: '3.12.14'
       - name: Install immutable producer and companion prerequisites
         run: |
+          npm install --global "npm@$(node -p "require('./profiles/release-environment.lock.json').npm")" --ignore-scripts --no-audit --no-fund
           npm ci --ignore-scripts --no-audit --no-fund
           python -m pip install --require-hashes -r tools/native-consumer/requirements.lock
           python -m pip install --no-deps --no-build-isolation -e ./megatoken
+      - name: Verify the pinned production tokenizer and native environment
+        run: |
+          python - <<'PY'
+          import hashlib, os, shutil
+          from pathlib import Path
+          from huggingface_hub import hf_hub_download
+          from megatoken.generation.codec import LING_REPOSITORY, LING_REVISION, LING_TOKENIZER_SHA256
+          source = hf_hub_download(LING_REPOSITORY, 'tokenizer.json', revision=LING_REVISION)
+          target = Path(os.environ['RUNNER_TEMP']) / 'tokenizer.json'
+          shutil.copyfile(source, target)
+          assert hashlib.sha256(target.read_bytes()).hexdigest() == LING_TOKENIZER_SHA256
+          PY
+          python tools/native-consumer/check_environment.py --megatoken megatoken \
+            --tokenizer "$RUNNER_TEMP/tokenizer.json" --out "$RUNNER_TEMP/native-environment.json"
+      - name: Check native diagnostic regressions
+        env:
+          MEGATOKEN_REPOSITORY: ${{ github.workspace }}/megatoken
+        run: |
+          python -m py_compile tools/fit-native-semantic-record.py tools/native_two_boundary_probe.py tools/native_supervision_audit.py
+          python -m unittest discover -s test -p 'test_native_input_parity.py' -v
+          python -m unittest discover -s test -p 'test_native_conditional_probe.py' -v
+          python -m unittest discover -s test -p 'test_native_decoder_fit.py' -v
+          python -m unittest discover -s test -p 'test_native_two_boundary_probe.py' -v
+          python -m unittest discover -s test -p 'test_native_supervision_audit.py' -v
+          node --test test/semantic-v6-emission-validator.test.js
       - name: Freshly verify one direct execution and save its original candidate
         run: |
           node --input-type=module <<'JS'
@@ -76,6 +101,79 @@ jobs:
           assert not row['nativeAdmissionClaim']
           print('Repaired first-decision byte/control/track-purpose parity passed; model conditionals remain unmeasured.')
           PY
+      - name: Recollect an independently admitted asynchronous training episode
+        run: |
+          node tools/generate-effectful-training.mjs --out "$RUNNER_TEMP/native-corpus" --limit 1 --jobs 1 \
+            --megatoken megatoken --python python --tokenizer "$RUNNER_TEMP/tokenizer.json" \
+            --native-policy contracts/native-admission-policy-v6.json --require-native
+      - name: Compare actual checkpoint conditionals and audit every native target
+        run: |
+          python tools/probe-native-conditionals.py --consumer-root megatoken \
+            --episode "$RUNNER_TEMP/native-corpus/counter-0.json" \
+            --initialize-tiny --tokenizer-json "$RUNNER_TEMP/tokenizer.json" \
+            --execute-decoder --audit-supervision --output "$RUNNER_TEMP/native-conditionals"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP']) / 'native-conditionals'
+          report = json.loads((root / 'report.json').read_text())
+          audit = json.loads((root / 'training-supervision-audit.json').read_text())
+          assert report['gaussianConditionalStatus'] == 'passed'
+          assert report['recurrentStateComparison']['status'] == 'passed'
+          assert report['decoderSupportComparison']['status'] == 'passed'
+          assert audit['status'] == 'passed'
+          assert audit['allGeneratedTokensScored'] and audit['allObservedTokensUnscored']
+          assert audit['futureObservationCanary']['status'] == 'passed'
+          print(json.dumps({'checkpoint': report['identity'], 'supervision': audit['status'],
+                            'futureObservationCanary': audit['futureObservationCanary']}))
+          PY
+      - name: Fit one actual semantic record and save a complete native checkpoint
+        run: |
+          python tools/fit-native-semantic-record.py --consumer-root megatoken \
+            --episode "$RUNNER_TEMP/native-corpus/counter-0.json" \
+            --checkpoint "$RUNNER_TEMP/native-conditionals/initialization/initialized-untrained" \
+            --prepared "$RUNNER_TEMP/native-conditionals/prepared" \
+            --max-steps 256 --output "$RUNNER_TEMP/native-decoder-fit"
+      - name: Compare the next prediction after an actual committed model record
+        run: |
+          python - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          fit = json.loads((root / 'native-decoder-fit/report.json').read_text())
+          assert fit['status'] == 'passed'
+          subprocess.run([
+              'python', 'tools/native_two_boundary_probe.py', '--consumer-root', 'megatoken',
+              '--episode', str(root / 'native-corpus/counter-0.json'),
+              '--checkpoint', fit['savedCheckpoint'],
+              '--prepared', str(root / 'native-conditionals/prepared'),
+              '--served-bundle', fit['servedBundle'],
+              '--output', str(root / 'native-two-boundaries'),
+          ], check=True)
+          subprocess.run([
+              'python', 'tools/probe-native-conditionals.py', '--consumer-root', 'megatoken',
+              '--episode', str(root / 'native-corpus/counter-0.json'),
+              '--checkpoint', fit['savedCheckpoint'],
+              '--prepared', str(root / 'native-conditionals/prepared'),
+              '--execute-decoder', '--audit-supervision',
+              '--output', str(root / 'native-fitted-audit'),
+          ], check=True)
+          audit = json.loads((root / 'native-fitted-audit/training-supervision-audit.json').read_text())
+          assert audit['status'] == 'passed'
+          mutation = audit['futureObservationCanary']['mutation']
+          assert mutation['mutationType'] == 'semantic-numeric-result-value'
+          assert mutation['semanticValueChanged'] and mutation['valueBefore'] == 7 and mutation['valueAfter'] == 8
+          assert audit['allGeneratedTokensScored'] and audit['allObservedTokensUnscored']
+          PY
+      - name: Qualify the current v6 source capability ledger
+        run: |
+          node tools/generate-capability-ledger.mjs --out "$RUNNER_TEMP/current-v6-capabilities.json" \
+            --megatoken megatoken --python python --tokenizer "$RUNNER_TEMP/tokenizer.json" \
+            --native-policy contracts/native-admission-policy-v6.json --require-native
+      - name: Retain machine-readable evidence in the run log
+        if: always()
+        run: |
+          python tools/emit-native-ci-evidence.py --root "$RUNNER_TEMP"
       - name: Preserve original candidate and both actual adapter inputs
         if: always()
         uses: actions/upload-artifact@v4
@@ -86,3 +184,10 @@ jobs:
           path: |
             ${{ runner.temp }}/candidate.json
             ${{ runner.temp }}/native-input-parity.json
+            ${{ runner.temp }}/native-environment.json
+            ${{ runner.temp }}/native-corpus/
+            ${{ runner.temp }}/native-conditionals/
+            ${{ runner.temp }}/native-decoder-fit/
+            ${{ runner.temp }}/native-two-boundaries/
+            ${{ runner.temp }}/native-fitted-audit/
+            ${{ runner.temp }}/current-v6-capabilities.json

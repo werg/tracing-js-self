@@ -1,232 +1,138 @@
 # Source-grounded semantic reasoning traces
 
-**Authoritative production contracts:** `semantic-execution/5`,
-`semantic-trace/5`, `semantic-context/5`, `semantic-continuation/5`
-and `selected-harness/2`.
+The current production contracts are `semantic-execution/6`,
+`semantic-trace/6`, `semantic-context/6`, `semantic-continuation/6` and
+`selected-harness/2`. The [language specification](PRODUCTION_TRACE_V6.md)
+defines the bytes that both training and serving actually use.
 
-The model's task is to **execute the supplied program**, not reproduce a
-particular compiler's instruction list. The independently checked observable
-contract is terminal completion, returned/reachable data graph, ordered effects,
-delivered events, external results and required pending work. The witness is
-an optional explanatory derivation that the model may express differently.
+The model predicts a compact account of executing the supplied program.
+Admission checks terminal completion, returned and reachable data, ordered
+effects, delivered observations, callback execution and pending work. A valid
+alternative account need not reproduce a teacher's internal instruction list.
 
-## One simple convention: expression -> value
+## Predict useful semantic steps
 
-A pure, anonymous computation should **not** allocate a synthetic temporary:
-
-```text
-((a + b) * (c + d)) -> 21
-```
-
-An actual source binding can attach directly to the computation:
+The production compiler combines a bounded, source-proven pure region into one
+result. These exact generated lines come from the checked
+[target gallery](evidence/semantic-target-gallery-v2/gallery.md):
 
 ```text
-next = (current + 1) -> 8
-```
-
-The right side is the ground value **at that execution point**, not a promise
-to re-evaluate the expression later. If `a[0]` is observed as `4` and a later
-write changes it to `7`, the two grounded observations are both valid when
-placed on the correct sides of that write. The witness checker always uses
-previously **committed** state, never a future private snapshot.
-
-A source name means a source lexical cell. It is not an invented explanation
-or an identity for the computed value. The compiler retains unambiguous source
-spellings (`key`, `current`, `next`, `seen`, `n`). Distinct shadowed
-or independent lexical cells get minimal suffixes. References to shared
-objects, closures, promises, jobs and continuations still need persistent
-identities to preserve aliases, live captures and scheduling.
-
-## Observed facts versus generated reasoning
-
-* **Observed**: program/source, input graphs, external arrivals/results,
-  callback/event activation and public continuation state refresh.
-* **Generated**: checked arithmetic/choices, ordinary data mutations,
-  actual external requests and their exact evaluated arguments, calls,
-  Promise/job/await transitions and completion.
-
-An effectful source expression cannot simply become a pure fact. Getter,
-proxy, coercion and callback behavior is represented by its executed
-subcomputations and concrete effects when supported, otherwise refused.
-The source AST only **suggests** an explanation. Emission requires a
-matching visible lexical cell or already-present ordinary own data slot,
-an independently verified claim, and exact source/operand dependencies for
-combining computations. No implicit future value or same-number coincidence
-is enough.
-
-Pure nested expressions are combined up to the existing eight-operator and
-32-node budget. A source calculation may directly bind its result to its
-source cell if the observed initializer consumes the actual producer.
-A choice may replace its preceding pure test only when source, decision,
-producer, and lack of intervening effects are established. All private
-provenance stays on the non-model-visible certificate sidecar.
-
-## Actual independently checked execution examples
-
-These are condensed **real output** from
-`node tools/inspect-semantic-reasoning.mjs` on pinned source/fixture inputs.
-They are not invented desired traces. All cases also pass source reference,
-selected controller replay and effect checks.
-
-### Async read, calculation and write
-
-Source:
-```js
-async function run(key) {
-  const current = await host.readAsync(key);
-  const next = current + 1;
-  host.store(key, next);
-  return next;
-}
-```
-
-Model-facing sequence, omitting only the outer source publication and
-coordinator bookkeeping:
-
-```text
-bind key = "counter"
-request e1 demo.readAsync("counter") -> Promise &p2
-await Promise &p2
-observe e1 fulfilled 7
-resume with fulfilled 7
-bind current = 7
-next = (current + 1) -> 8
-request e2 demo.store("counter", 8)
-observe e2 fulfilled undefined
-resolve Promise &p1 8
-return &p1
+evaluate run(1, 2, 3, 4) => 22
 end return
 ```
 
-The exact source-certified selected trace has 11 semantic records, one
-`compute` with its attached binding, two external requests, and two
-independently delivered observations. The previous step-by-step rendering
-had separate `compute` and `bind` records for `next`.
+Its source is `function run(a,b,c,d){return (a+b)*(c+d)+1;}` under strict mode.
+An acyclic pure helper is included in the same region:
 
-### Source-checked branch
+```js
+"use strict";
+function increment(value) { return value + 1; }
+function run(n) { return increment(n); }
+```
+
+For input `4`, the production targets are:
 
 ```text
-observe e1 fulfilled 8
-bind n = 8
-choose (n > 3) = true -> then
-request e2 demo.store("chosen", 8)
-observe e2 fulfilled undefined
+evaluate run(4) => 5
+end return
 ```
 
-The branch is an independently checked predicate using committed `n`;
-the model need not separately emit `8 > 3 -> true` followed by `choose
-true`. A side-effectful branch predicate is never dropped.
-
-### Live captured state and events
+A dense numeric sum over three items is:
 
 ```text
-bind seen = 0
-event teacherevent1 -> event1
-bind n = 3
-seen = (seen + n) -> 3
-request e2 demo.store("callback", 3)
-event teacherevent2 -> event2
-bind n_1 = 4
-seen = (seen + n_1) -> 7
-request e3 demo.store("callback", 7)
-request e4 demo.store("result", 7)
+evaluate run(@o2) => 9 over 3 items into total
+end return
 ```
 
-Each callback mutates the **same** captured `seen` cell while its own `n`
-parameter is a different source cell. The two writes and the last result
-are exact observable boundaries. The extra parameter suffix is necessary
-for distinct live invocation cells, not for an anonymous arithmetic result.
+The object reference identifies the already observed array; its elements are
+not hidden labels. The public checker proves the supported loop shape from
+immutable source and the current ordinary input array. It checks the claimed
+result, iteration count and accumulator. Conditional regions also predict the
+exact ordered branch decisions, so the same final value cannot conceal the
+wrong executed branch.
 
-### Rejection and cleanup
+These summaries are enabled by default, with explicit bounds: at most four
+acyclic named helper calls, eight expression operators, 32 expression nodes,
+and 128 iterations for dense sums. Unsupported shapes use detailed v6 semantic
+steps when the underlying language operation is supported. Mutation, ambient
+state, getters, recursion, exceptions and external effects are not silently
+absorbed into a pure region.
+
+## Keep state changes and observations explicit
+
+A source variable uses its actual name. Ordinary values do not acquire
+synthetic temporary identities. References remain where aliases matter. This
+is the complete generated sequence for the gallery's shared-object example:
 
 ```text
-observe e1 rejected "missing"
-resume with rejected "missing"
-bind error = "missing"
-request e2 demo.store("error", "missing")
-transfer return 11 via finally
-request e3 demo.store("cleanup", 1)
-observe e3 fulfilled undefined
-resolve Promise &p1 11
+new @o2 object {}
+write @o2["n"] = 2
+box = @o2
+alias = @o2
+read @o2["n"] => 2
+compute (2 + 1) => 3 in @invocation1
+write @o2["n"] = 3
+read @o2["n"] => 3
+return 3 in @invocation1
+end return
 ```
 
-The cleanup write is not a reasoning detail; it is mandatory observable
-behavior. Catch/finally control transfer is explicit.
+Both names refer to the same owned object. The reads remain on their actual
+sides of the mutation. Repeated lexical writes of the already committed exact
+value can be omitted, with a private certificate; property writes, distinct
+aliases and intervening changes remain visible.
 
-### Own-property choices and named helpers
-
-The `property-helper` inspection case starts with the ordinary input
-`{count: 4}`, tests `box.count > 3`, writes `box.count = 2`, tests the
-same property again, and calls the declared `helper` function. Its actual
-selected sequence includes:
+An asynchronous request crosses an authority boundary. The following excerpt
+comes from the real counter fixture:
 
 ```text
-bind box = &o3
-read &o3["count"] -> 4
-choose (&o3["count"] > 3) = true -> then
-write &o3["count"] = 2
-read &o3["count"] -> 2
-choose (&o3["count"] > 3) = false -> else
-call helper(2) -> guest1
-compute (2 + 1) -> 3
+request @e1 demo.readAsync("counter") payload ["counter"] promise @p2 in @invocation1 at 57..76
+await @p2 as @continuation1 returns @p1 in @invocation1
+observe @e1 fulfilled 7
+resume @continuation1 fulfilled 7 in @invocation1
+current = 7
+compute (current + 1) => 8 as next in @invocation1
 ```
 
-The property operand refers to the already-published input graph and prior
-committed writes. Both choices remain valid at their respective execution
-points; inspecting the final heap cannot justify the first one. The source
-rewriter reads only certified ordinary own data slots. Missing or inherited
-slots, getters, proxies and dynamic property expressions are not guessed;
-supported effectful reads retain their executed effects. A statically known
-literal property key can be checked under the same own-data rule.
+The `observe` line is supplied by the environment and is never a prediction
+target. The generated `resume` line may use the result only after that
+observation has arrived. Source offsets identify the exact authorized external
+call; they do not authorize an effect by themselves. The complete gallery
+retains every source, input, target, observation and boundary rather than
+presenting this excerpt as the entire episode.
 
-The helper label comes from its source declaration. Persistent invocation,
-closure and object identities still distinguish separate activations and
-aliases, and private certificates retain the actual dynamic call evidence.
-These readability conventions do not broaden source admission.
+## Compact language, strict meaning
 
-### Deterministic randomness
+The surface language uses ordinary literals and short verbs. It is still a
+canonical protocol: two independent parsers must agree on the complete typed
+meaning, and malformed or ambiguous lines are rejected. The canonical grammar
+covers strings, Unicode source names, exceptional numbers, bigints, aliases,
+captures, external requests, promises, jobs and completion. Generated records
+no longer use kind-plus-JSON envelopes. Observed source and input graphs retain
+their explicit data structure and ownership checks.
 
-A seeded fixture publishes its unsigned 32-bit `randomSeed` on the observed
-program before the first selection. Every actual `Math.random()` call emits
-a standalone checked `random` computation, including discarded samples and
-calls made inside helpers. The `seeded-random` inspection case starts at zero
-and emits `0.23606797284446657`, `0.278566908556968` and
-`0.8195337599609047` in that order. The stream follows
-`state = (1664525 * state + 1013904223) mod 2^32`, with each result equal to
-`state / 2^32`.
+The syntax-only constrained decoder describes forms and tokens; it contains no
+source-specific result, preferred branch, expected object identity or teacher
+answer. Parsing establishes well-formedness. The selected controller separately
+checks the claim against prior committed public state. It never substitutes a
+correct teacher answer for a wrong prediction.
 
-Retained invocations and callbacks use the realm's continuing stream;
-checkpoint restoration verifies it against public replay. A different seed
-therefore changes the observed context, and an incorrect random result is
-diagnosed without replacing the model's selected bytes. Random transitions
-cannot be folded into pure compound expressions. Unseeded fixture randomness
-is refused.
+Private interpreter journals and independent V8 operation/branch/completion
+receipts certify the teacher. They are not model targets. Native admission
+additionally verifies production tokenization, causal track/context visibility,
+action ownership and supervision masks. Old v5 artifacts are rejected and must
+be recollected and prepared under the new paired versions.
 
-## How to reproduce and test
+## Measure the actual target
 
-```sh
-npm ci
-node --test test/training-semantic-source.test.js test/training-semantic-projection.test.js test/training-generator.test.js
-node tools/inspect-semantic-reasoning.mjs
-npm run training:generate -- --out /tmp/semantic-v4
-```
+Across the same eleven gallery inputs, v6 has 107 generated records, 3,861 UTF-8
+target bytes and 1,307 production-tokenizer tokens. The unchanged archived v5
+control has 145 records, 12,345 bytes and 3,784 tokens. Both raw target sets use
+the same pinned tokenizer, with an exact token/byte round trip for every line.
+These counts exclude native framing and observed context.
 
-The inspection command refuses to print a case that fails independent local
-source verification. It emits a compact per-family accounting of generated
-records, bindings, choices, effects, observations, callback events and fused
-source calculations. CI runs the same fixture collection on PRs.
-
-## Correctness and training claims
-
-1. **Observable outcome/effects** are the primary evaluation metric. Equivalent
-   correct derivations need not agree in text or intermediate cell identities.
-2. **Witness consistency** checks every explicit claim, with no oracle
-   substitution or repairs.
-3. **Artifact integrity** checks source execution, exact private replay,
-   transformation receipts, serialization, admission gates and the native
-   consumer. A local source-validated example is not automatically admitted.
-4. **Model quality** must be established by actual held-out, fixed-budget
-   training/serving comparisons. Fewer records are evidence about compactness,
-   not evidence of learning improvement.
-
-The only supported public execution witness is semantic-trace/5. Previous v2/v3 group formats, explicit/compact selection switches and outcome-only generation have been removed. The private journal, selected replay and independent V8 reference are correctness evidence, not alternative model targets.
+The result is about 65% fewer target tokens on this engineering gallery.
+Whether this improves learned execution remains a separate measured question.
+The native conditional and supervision audits must exercise the actual saved
+checkpoint, recurrent transitions, decoder output support and token losses;
+equal input bytes or a shorter target alone do not establish equal predictions.

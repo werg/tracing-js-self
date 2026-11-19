@@ -1,9 +1,39 @@
-# Semantic trace abstraction experiments
+# Semantic trace abstraction experiments and production promotion
 
-The production `semantic-trace/5` codec and default compiler remain the control.
-This work inspects actual predicted records and adds a deliberately narrow,
-opt-in compatible reduction. A readable rendering is never counted as the
-model's target, and byte savings are not described as token or learning gains.
+The bounded profiles below have now been promoted into the production
+[`semantic-trace/6` language](PRODUCTION_TRACE_V6.md). Its actual model targets
+use source-shaped statements, production region claims run through the selected
+controller, and idempotent lexical-write reduction is enabled by default.
+The sections and checked-in v5 evidence below document the earlier experiments;
+they are historical comparisons, not a current production contract. Fresh
+episodes must be generated and admitted under v6. Byte savings alone are not
+described as token or learning gains.
+
+## Current v6 target gallery
+
+The current paired gallery is
+[`evidence/semantic-target-gallery-v2/gallery.md`](evidence/semantic-target-gallery-v2/gallery.md).
+It retains every actual v6 target line unchanged and records the source claim,
+public-prefix digest, exact UTF-8 byte count, and production-token count. The
+archived v5 records are compared as stored raw lines; no v5 record is decoded
+with the v6 grammar.
+
+```sh
+node tools/semantic-trace-gallery.mjs \
+  --out /tmp/semantic-gallery-v6 \
+  --tokenizer-json <tokenizer.json> \
+  --consumer-root <megatoken> \
+  --python <python>
+node --test test/semantic-trace-gallery.test.js
+```
+
+Across the eleven verified fixtures, v6 emits **107 records, 3,861 UTF-8
+bytes, and 1,307 production-token IDs**, compared with **145 records, 12,345
+bytes, and 3,784 tokens** for archived v5. The same pinned tokenizer is applied
+to both raw target sets, with byte-exact round-trip checks. Counts encode each
+target line independently and exclude native transport, recurrent context, and
+training masks. This is teacher-target and tokenizer evidence; it does not
+measure model-selected output quality, learning, or native admission.
 
 ## Reproduce the paired gallery
 
@@ -162,3 +192,29 @@ Production promotion requires coordinated codec, controller, source-certificate,
 native-consumer and loss/visibility support, independent adversarial checks,
 actual token/comprehension measurements, and a separate learning comparison.
 None of those later gates is implied by this gallery or compatible reduction.
+
+## Checked conditional and short-circuit summaries
+
+The additional `pure-control-helper/1` experimental profile admits a single
+scalar return expression containing conditional (`?:`) and short-circuit
+(`&&`, `||`, `??`) expressions within the existing eight-operator/32-node
+bound. Its public context identifies the source decision sites. Its generated
+summary must predict the result and the exact ordered sequence of decisions
+that actually executed: `consequent`/`alternate` for conditionals and
+`left`/`right` for short-circuit expressions. An unexecuted alternative must not
+appear as though it ran.
+
+An independent instrumented V8 execution checks every stated decision against
+the original execution, including its order, and checks that instrumentation
+did not change the result or effects. A correct final result does not excuse a
+wrong branch, a missing decision, a reordered decision, or an invented visit
+to a skipped expression. Calls, property access, assignment, object coercion,
+and other effects remain outside this pure profile, including in unreachable
+branches. Nullish selection preserves the distinction between `0` and a
+missing value.
+
+The [expanded diagnostic gallery](evidence/semantic-summary-control-v1/README.md)
+retains the original authored predictions, a detailed production-v5 control,
+and independent completion and decision receipts. These new summaries remain
+experimental region tasks. They are not accepted by the production-v5
+controller or native consumer and are not evidence of learned model outputs.

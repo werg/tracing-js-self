@@ -48,7 +48,7 @@ test('model initialization attests checkpoint and seed before semantic selection
       const result=request.op==='initialize'?{schema:'semantic-inference-identity/4',
         seed:request.seed,checkpointIdentity:'a'.repeat(64),tokenizerIdentity:'actual-tokenizer'}:
         {schema:'selected-model-output/2',representation:'compact',
-          record:'return {"value":["num",7]}',selection:{modelSelected:true,
+          record:'return 7',selection:{modelSelected:true,
           ownerTrack:request.prefix.trackId,selectedEventId:'m1'}};
       process.stdout.write(JSON.stringify({id:request.id,ok:true,result})+'\\n');
     }});
@@ -57,7 +57,7 @@ test('model initialization attests checkpoint and seed before semantic selection
   try{
     const receipt=await select.initialize({seed:29,checkpointIdentity:'a'.repeat(64)});
     assert.equal(receipt.seed,29);
-    assert.equal((await select(prefix)).record,'return {"value":["num",7]}');
+    assert.equal((await select(prefix)).record,"return 7");
     await assert.rejects(select.initialize({seed:29,checkpointIdentity:'b'.repeat(64)}),/attest/);
   }finally{select.close();}
 });
@@ -72,7 +72,7 @@ test('model process bridge uses stable JSONL action identities and terminal ackn
         const line=JSON.parse(buffer.slice(0,n));buffer=buffer.slice(n+1);
         const result=line.op==='select'?{
           schema:'selected-model-output/2',
-          record:'return {"value":["num",7]}',
+          record:'return 7',
           selection:{modelSelected:true,modelTrack:'track:0',
             ownerTrack:line.prefix.trackId,selectedEventId:'m1'}
         }:null;
@@ -83,7 +83,7 @@ test('model process bridge uses stable JSONL action identities and terminal ackn
   const select=mockProcess(script);
   try{
     const results=await Promise.all([select(prefix),select(prefix)]);
-    assert.equal(results[0].record,'return {"value":["num",7]}');
+    assert.equal(results[0].record,"return 7");
     assert.deepEqual(results[0],results[1]);
     await select.complete(prefix);
     await select.cancel(prefix);
@@ -149,7 +149,7 @@ test('compact inference sends its declared representation to the actual process'
 });
 
 test('UTF-8 response fragments preserve original selected witness bytes',async()=>{
-  const record='return {"value":["str","🙂 café"]}';
+  const record="return \"🙂 café\"";
   const script=`
     process.stdin.once('data',data=>{
       const request=JSON.parse(data.toString());
@@ -174,7 +174,7 @@ test('native request commitment binds original selected bytes and fragments with
         actionKey:'m1:event2',ownerTrack:request.selection.ownerTrack,modelTrack:request.selection.modelTrack};
       process.stdout.write(JSON.stringify({id:request.id,ok:true,result})+'\\n');
     });`;
-  const record='request {"effect":"read","operation":"demo.readAsync","arguments":[["str","key"]],"invocation":"call1","site":{"start":0,"end":20},"payload":"[\\"key\\"]","promise":"p"}';
+  const record="request @read demo.readAsync(\"key\") payload [\"key\"] promise @p in @call1 at 0..20";
   const select=mockProcess(script);
   try{
     const result=await select.commitRequest(prefix,{record,selection:{ownerTrack:'worker1',modelTrack:'track:1',
@@ -227,7 +227,7 @@ test('orchestration transport preserves explicit fixture authority within one na
     const state=await select.openOrchestration({session:'fixture',proposals:[],origin:'controlled'});
     const decision=await select.stepOrchestration({session:'fixture',track:state.track,controlledRecord:record});
     assert.equal(decision.decision.record,record);assert.equal(decision.decision.selection.modelSelected,false);
-    const actual=await select.selectControlled({...prefix,committed:[{session:'fixture'}]},'return {"value":["num",7]}');
+    const actual=await select.selectControlled({...prefix,committed:[{session:'fixture'}]},"return 7");
     assert.equal(actual.selection.origin,'controlled-test-injected');assert.equal(actual.selection.modelSelected,false);
     assert.equal((await select.statusOrchestration({session:'fixture',track:state.track})).steps,1);
     assert.equal((await select.cancelOrchestration({session:'fixture',track:state.track,reason:'done'})).status,'cancelled');
@@ -256,7 +256,7 @@ test('orchestration rejects replaced lifecycle bytes and relabeled controlled ch
       if(options.substituteRecord)await assert.rejects(select.stepOrchestration({session:'fixture',track:state.track,
         controlledRecord:'{"name":"track_complete","arguments":{}}'}),/original committed native/);
       else await assert.rejects(select.selectControlled({...prefix,committed:[{session:'fixture'}]},
-        'return {"value":["num",7]}'),/original native fixture/);
+        "return 7"),/original native fixture/);
     }finally{select.close();}
   }
 });

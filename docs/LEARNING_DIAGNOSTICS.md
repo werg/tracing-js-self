@@ -53,6 +53,88 @@ captured. The public-record inventory is not a claim that every preceding record
 is visible: use [the native context meter](NATIVE_CONTEXT_COSTS.md) for recurrent
 visibility, reconstruction and event/facet costs.
 
+## One native episode, token by token
+
+`capture_native_supervision_audit` in `tools/native_supervision_audit.py` runs
+the already prepared one-episode batch through the companion's real native
+forward path. Call it with the restored model, that episode's prepared native
+batch, actual codec, training config, and the run's transducer trainer. It
+does not change model weights or `.grad` slots, take an optimizer step, invent
+targets, or patch the loss weights. It uses the supplied batch's denominators
+and config weights, including the trainer's existing zero weight for router
+balance. For one window the global denominators equal that window's actual
+counts; pass the actual `window_scale` if the audit is embedded in an
+accumulated training transaction.
+
+```python
+from native_supervision_audit import capture_native_supervision_audit
+
+audit = capture_native_supervision_audit(
+    model, prepared_batch,
+    codec=codec,
+    config=train_config,
+    device=device,
+    model_version=current_step,
+    transducer=transducer_trainer,
+    checkpoint_sha256=checkpoint_sha256,
+    decoder_seed=17,
+    record_validator=optional_native_record_validator,
+)
+```
+
+For each generated decision, the report binds actual target token IDs and
+lexical masks to the physical record and its fragment boundary. It records the
+pre-decision recurrent state fingerprint, earlier physical event IDs, reserved
+native control IDs, separate structure and terminal targets, actual loss sums
+and counts, and gradients to explicitly enumerated lexical, structure,
+terminal, encoder, context, control and shared parameter owners. Each target
+must have nonzero gradients at its direct lexical, structure and terminal
+heads; the reconstruction target must reach the native input encoder. A
+generated record whose policy mask is only partly scored, an observed record
+with any lexical loss, a missing structural/terminal gradient, or a state that
+contains a current or later physical record fails the audit.
+
+The report retains exact token IDs and Boolean supervision masks for every
+physical text record. For each target decision it also records hashes of the
+actual modality logits and Gaussian mean/scale used by the native decoder, the
+selected action log probability, and per-owner exact gradient tensor hashes
+alongside norms. These hashes keep large distributions and gradient tensors
+bounded in the artifact while allowing exact same-run canary comparisons.
+
+The helper also runs the native decoder from the same pre-target state using
+the declared decoder seed. It preserves the decoder's emitted token IDs and
+bytes, requires an exact token-to-byte round trip, and reports the decoder's
+own validity and completeness flags separately from the supervision-audit
+status. The native tape's valid flag, terminal boundary, complete byte-exact
+record status, and v6 parser status are separate fields. The production v6
+parser is run on each actual native emission in the CLI; parse validity is not
+semantic correctness. A random emission can be invalid or incomplete while
+the mask, context, loss, and gradient checks still pass.
+For any episode on the `semantic_execution` stream, the emission uses native
+`encoded_text` continuation, matching `SelectedSemanticInference` regardless
+of whether the input provenance is `teacher_conditioned` or `recorded`. The
+provenance and exact mode from the produced tape are both reported. Other
+streams keep the diagnostic's default sampled continuation.
+
+When a later observed text record exists in the same episode, the helper
+changes one byte of that later row in a counterfactual copy, replays the same
+native forward at the same random state, then compares every earlier target's
+recurrent state, IDs, masks, structure and terminal labels, losses, gradients,
+full earlier modality/Gaussian prior fingerprints, selected action log
+probabilities, exact per-owner gradient values, and actual decoder output. This
+numerical canary complements the hard check that no current or future physical
+record ID is present in the pre-target state. If there is no later observed
+text row, the canary is explicitly `unmeasured` and the result is incomplete.
+
+The local byte-model regression exercises masks, boundaries, gradients, the
+no-future canary and the actual decoder. It is infrastructure evidence only;
+the native result must come from the real selected episode and restored
+checkpoint:
+
+```sh
+.venv/bin/python test/test_native_supervision_audit.py
+```
+
 ## Same-checkpoint conditionals
 
 `compare_conditioning_probes` in `tools/learning_diagnostics.py` accepts the two

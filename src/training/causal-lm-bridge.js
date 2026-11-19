@@ -1,4 +1,4 @@
-// Experimental conventional causal-LM bridge over unchanged certified v5 bytes.
+// Experimental conventional causal-LM bridge over certified production V6 bytes.
 // The selector sees only the production driver's public prefix. Independent
 // expectations and source admission receipts remain outside its request.
 import {createHash} from 'node:crypto';
@@ -6,7 +6,9 @@ import {TextDecoder} from 'node:util';
 import {SelectedExecutionHarness} from './harness-v4.js';
 import {SelectedModelDriver} from './model-driver.js';
 import {recheckEffectfulAdmission} from './effectful-admit.js';
-import {decodeWitness,validateHarnessRecord,WITNESS_KINDS,WITNESS_VERSION} from './format.js';
+import {decodeWitness,validateHarnessRecord,WITNESS_VERSION} from './format.js';
+import {syntaxOnlyV6Grammar} from './trace-gbnf.js';
+export {syntaxOnlyV6Grammar} from './trace-gbnf.js';
 
 export const CAUSAL_LM_BRIDGE_VERSION='semantic-causal-lm/1';
 const PREFIX_FIELDS=['schema','programId','entry','source','sourceDigest','invocationId','trackId',
@@ -34,7 +36,7 @@ export function causalLmPrompt(prefix){
   require(program?.source===prefix.source&&program?.digest===prefix.sourceDigest,
     'source context differs from its committed program');
   const publicPrefix=Object.fromEntries(PREFIX_FIELDS.map(key=>[key,structuredClone(prefix[key])]));
-  return 'Predict one complete semantic-trace/5 record from this public execution context.\n'+
+  return 'Predict one complete semantic-trace/6 record from this public execution context.\n'+
     JSON.stringify(publicPrefix)+'\nNext record:\n';
 }
 
@@ -76,7 +78,7 @@ export function encodeCausalLmExample(prefix,target,{tokenizer,eosTokenId,maxCon
 }
 
 export async function buildCausalLmExamples(exported,options={}){
-  require(exported?.public?.traceFormat===WITNESS_VERSION,'frozen v5 training data required');
+  require(exported?.public?.traceFormat===WITNESS_VERSION,'frozen V6 training data required');
   require(exported?.sidecar?.split==='train','training bridge never moves evaluation or quarantine rows');
   const receipt=await recheckEffectfulAdmission(exported,{requireAdmitted:false});
   const side=exported.sidecar;
@@ -106,21 +108,6 @@ export async function buildCausalLmExamples(exported,options={}){
   return result;
 }
 
-// Framing and JSON syntax only. No expected operation, value, branch, source
-// site, effect payload or return value appears in this grammar. Semantic field
-// schemas and canonical encoding are still checked by the unchanged controller.
-export function syntaxOnlyV5Grammar(){
-  const kinds=WITNESS_KINDS.filter(kind=>!['code','input','observe','value-open','value-part','value-close'].includes(kind));
-  return 'root ::= kind " " object\n'+
-    'kind ::= '+kinds.map(kind=>JSON.stringify(kind)).join(' | ')+'\n'+
-    'object ::= "{" (string ":" value ("," string ":" value)*)? "}"\n'+
-    'array ::= "[" (value ("," value)*)? "]"\n'+
-    'value ::= object | array | string | number | "true" | "false" | "null"\n'+
-    'string ::= "\\\"" char* "\\\""\n'+
-    'char ::= [^"\\\\\\x00-\\x1F] | "\\\\" (["\\\\/bfnrt] | "u" [0-9a-fA-F]{4})\n'+
-    'number ::= "-"? ("0" | [1-9] [0-9]*) ("." [0-9]+)? ([eE] [+-]? [0-9]+)?\n';
-}
-
 export function createCausalLmSelector({runtime,tokenizer,checkpointIdentity,eosTokenId,
     maxContextTokens,maxNewTokens=512,arm='unconstrained'}={}){
   codecContract(tokenizer,eosTokenId);
@@ -132,7 +119,7 @@ export function createCausalLmSelector({runtime,tokenizer,checkpointIdentity,eos
     maxContextTokens>maxNewTokens,'explicit generation and context budgets required');
   let initialized=false;
   const emissions=[];
-  const grammar=arm==='syntax-only'?syntaxOnlyV5Grammar():null;
+  const grammar=arm==='syntax-only'?syntaxOnlyV6Grammar():null;
   const grammarDigest=grammar===null?null:hash(grammar);
   const select=async prefix=>{
     require(initialized,'runtime has not attested its loaded checkpoint');

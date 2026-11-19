@@ -62,10 +62,10 @@ export function parseTraining(source) {
   function parameters(n){
     return n.params.map((p,i)=>{
       if(p.type==='RestElement' && p.argument?.type==='Identifier' && i===n.params.length-1)
-        return {name:p.argument.name,default:null,rest:true};
-      if(p.type==='Identifier')return {name:p.name,default:null};
+        return {...span(p),name:p.argument.name,default:null,rest:true};
+      if(p.type==='Identifier')return {...span(p),name:p.name,default:null};
       if(p.type==='AssignmentPattern'&&p.left.type==='Identifier')
-        return {name:p.left.name,default:expr(p.right)};
+        return {...span(p),name:p.left.name,default:expr(p.right)};
       reject(p,'parameter pattern (identifier or scalar default required)');
     });
   }
@@ -96,6 +96,7 @@ export function parseTraining(source) {
         return {...loc,type:'FunctionExpr',
           arrow:n.type==='ArrowFunctionExpression',async:n.async,
           params:parsedParams.map(p=>p.name),defaults:parsedParams.map(p=>p.default),
+          parameterSites:parsedParams.map(span),
           restIndex:parsedParams.findIndex(p=>p.rest),body};
       }
       case 'TemplateLiteral':
@@ -173,8 +174,11 @@ export function parseTraining(source) {
           args:n.arguments.map(a=>a.type==='SpreadElement'?
             {...span(a),type:'Spread',argument:expr(a.argument)}:expr(a))};
       case 'ArrayExpression':
-        if(n.elements.some(e=>!e || e.type==='SpreadElement'))reject(n,'sparse/spread array');
-        return {...loc,type:'Array',elements:n.elements.map(expr)};
+        if(n.elements.some(e=>!e))reject(n,'sparse array literal');
+        if(n.elements.filter(e=>e.type==='SpreadElement').length>4)
+          reject(n,'array literal spread budget');
+        return {...loc,type:'Array',elements:n.elements.map(e=>e.type==='SpreadElement'?
+          {...span(e),type:'Spread',argument:expr(e.argument)}:expr(e))};
       case 'ObjectExpression':
         return {...loc,type:'Object',properties:n.properties.map(p=>{
           if(p.type!=='Property' || p.kind!=='init' || p.method || p.computed)
@@ -257,6 +261,7 @@ export function parseTraining(source) {
         const parsedParams=parameters(n);
         return {...loc,type:'Function',id:n.id.name,
           params:parsedParams.map(x=>x.name),defaults:parsedParams.map(x=>x.default),
+          parameterSites:parsedParams.map(span),
           restIndex:parsedParams.findIndex(p=>p.rest),async:n.async,body:stmt(n.body)};
       }
       case 'ReturnStatement':return {...loc,type:'Return',argument:n.argument?expr(n.argument):null};
@@ -394,7 +399,7 @@ export function parseTraining(source) {
         case 'Construct':if(!has(n.callee,e))reject(n,'unbound constructor');
           n.args.forEach(x=>value(x,e));break;
         case 'DeferredRegExp':case 'OwnedPinnedRegExp':break;
-        case 'Array':n.elements.forEach(x=>value(x,e));break;
+        case 'Array':n.elements.forEach(x=>value(x.type==='Spread'?x.argument:x,e));break;
         case 'Object':n.properties.forEach(p=>value(p.value,e));break;
         case 'Assign':value(n.left,e);value(n.right,e);break;
         case 'Literal':break;

@@ -268,7 +268,7 @@ def check_environment_receipt(environment: dict, policy: dict, tracer: Path):
         raise ValueError("Native environment receipt differs from the release policy")
     if environment.get("requirementsLockSha256") != file_receipt(tracer / "tools/native-consumer/requirements.lock")["sha256"]:
         raise ValueError("Native environment receipt uses a different dependency lock")
-    if environment.get("nativePolicySha256") != file_receipt(tracer / "contracts/native-admission-policy-v5.json")["sha256"]:
+    if environment.get("nativePolicySha256") != file_receipt(tracer / "contracts/native-admission-policy-v6.json")["sha256"]:
         raise ValueError("Native environment receipt uses different policy bytes")
 
 
@@ -660,7 +660,7 @@ def package_release(args) -> dict:
     manifest = read_json(inside(corpus, "manifest.json"))
     if input_manifest["producerRevision"] != manifest["producerRevision"]:
         raise ValueError("Selected input changed its producing revision")
-    policy = read_json(tracer / "contracts/native-admission-policy-v5.json")
+    policy = read_json(tracer / "contracts/native-admission-policy-v6.json")
     git = lambda path, *argv: subprocess.check_output(["git", "-C", str(path), *argv], text=True).strip()
     if git(tracer, "rev-parse", "HEAD") != manifest["producerRevision"]:
         raise ValueError("Use the exact producing checkout to recheck and release this corpus")
@@ -694,7 +694,7 @@ def package_release(args) -> dict:
                         actual_environment, policy)
     from megatoken.data.semantic_admission import native_admission
     from megatoken.data.semantic_corpus import prepare_semantic_corpus, public_digest, source_verifier_for_checkout, verify_admission
-    from megatoken.data.semantic_harness_v5 import adapt_selected_harness_v5
+    from megatoken.data.semantic_harness_v6 import adapt_selected_harness_v6
     from megatoken.generation.codec import ByteCodec
     codec = ByteCodec.from_tokenizer_json(args.tokenizer, expected_sha256=policy["tokenizerSha256"])
     if codec.fingerprint != policy["tokenizerIdentity"]:
@@ -707,7 +707,7 @@ def package_release(args) -> dict:
         codec=codec, producer_revision=manifest["producerRevision"], consumer_revision=policy["consumerRevision"],
         source_verifier=source_verifier_for_checkout(tracer, manifest["producerRevision"]),
         native_admission=native_admission, verify_admission=verify_admission,
-        adapt_selected=adapt_selected_harness_v5, public_digest=public_digest)
+        adapt_selected=adapt_selected_harness_v6, public_digest=public_digest)
     qualification_summary = output / "native-qualification-summary.json"
     write_json(qualification_summary, {"schema": "semantic-release-native-qualification/1", "status": "verified",
         "producerRevision": manifest["producerRevision"], "consumerRevision": policy["consumerRevision"],
@@ -746,7 +746,7 @@ def package_release(args) -> dict:
              "prepared-training-selection.json": output / "prepared-training-selection.json",
              "supplied-native-environment.json": args.environment_receipt.resolve(),
              "locks/environment.json": tracer / "profiles/release-environment.lock.json",
-             "locks/native-policy.json": tracer / "contracts/native-admission-policy-v5.json",
+             "locks/native-policy.json": tracer / "contracts/native-admission-policy-v6.json",
              "locks/requirements.lock": tracer / "tools/native-consumer/requirements.lock",
              "locks/producer-package-lock.json": tracer / "package-lock.json",
              "locks/oracle-package-lock.json": tracer / "tools/spec-oracle/package-lock.json"}
@@ -792,7 +792,7 @@ def package_release(args) -> dict:
         "publicRedistributionApproved": False,
         "licensePolicy": "Retain exact upstream notices; repository-fixture is provenance, not an SPDX license. Owner approval is needed for public corpus distribution.",
         "optimizerSteps": 0, "learnedSuccess": None, "files": files}
-    archive = output / "semantic-v5-release.tar.gz"
+    archive = output / "semantic-v6-release.tar.gz"
     write_archive(archive, payload, sources)
     verified = verify_archive(archive)
     write_json(output / "archive-receipt.json", verified)

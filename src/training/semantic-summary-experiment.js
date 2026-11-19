@@ -1,4 +1,4 @@
-// Experimental region endpoint. These summaries are NOT semantic-trace/5
+// Experimental region endpoint. These summaries are NOT semantic-trace/6
 // records and cannot be fed into the production selected controller/consumer.
 // V8 independently executes the source; no owned transition computes a verdict.
 import {parse} from 'acorn';
@@ -23,7 +23,7 @@ const canonicalScalar=value=>{
     isDeepStrictEqual(encode(decode(value)),value);}catch{return false;}
 };
 
-function pureExpression(node,names,budget={nodes:0,operators:0}){
+function pureExpression(node,names,budget={nodes:0,operators:0},decisions=null){
   ensure(++budget.nodes<=32,'Pure helper expression exceeds node bound');
   if(node?.type==='Literal'){
     ensure(!node.regex&&!node.bigint&&(node.value===null||['number','boolean','string'].includes(typeof node.value)),
@@ -32,11 +32,22 @@ function pureExpression(node,names,budget={nodes:0,operators:0}){
   if(node?.type==='Identifier'){ensure(names.has(node.name),'Pure helper reads uncommitted state');return;}
   if(node?.type==='UnaryExpression'&&unary.has(node.operator)&&node.prefix){
     ensure(++budget.operators<=8,'Pure helper expression exceeds operator bound');
-    pureExpression(node.argument,names,budget);return;
+    pureExpression(node.argument,names,budget,decisions);return;
   }
   if(node?.type==='BinaryExpression'&&binary.has(node.operator)){
     ensure(++budget.operators<=8,'Pure helper expression exceeds operator bound');
-    pureExpression(node.left,names,budget);pureExpression(node.right,names,budget);return;
+    pureExpression(node.left,names,budget,decisions);pureExpression(node.right,names,budget,decisions);return;
+  }
+  if(decisions&&node?.type==='ConditionalExpression'){
+    ensure(++budget.operators<=8,'Pure helper expression exceeds operator bound');
+    decisions.push({site:span(node.test),kind:'conditional'});
+    for(const child of [node.test,node.consequent,node.alternate])pureExpression(child,names,budget,decisions);
+    return;
+  }
+  if(decisions&&node?.type==='LogicalExpression'&&['&&','||','??'].includes(node.operator)){
+    ensure(++budget.operators<=8,'Pure helper expression exceeds operator bound');
+    decisions.push({site:span(node),kind:'logical',operator:node.operator});
+    pureExpression(node.left,names,budget,decisions);pureExpression(node.right,names,budget,decisions);return;
   }
   throw new TypeError('Pure helper cannot summarize calls, reads, writes, coercion hooks or control effects');
 }
@@ -61,13 +72,15 @@ function inspectProfile({source,entry,inputGraph,profile,maxIterations=128}){
   ensure(new Set(params).size===params.length&&args.length===params.length,
     'Exact declared parameter inputs are required');
   const body=fn.body.body.filter(node=>node.directive!=='use strict');
-  if(profile==='pure-helper/1'){
+  if(['pure-helper/1','pure-control-helper/1'].includes(profile)){
     ensure(inputGraph.objects.length===0&&inputGraph.roots.every(canonicalScalar),
       'Pure helpers accept committed scalar inputs only');
     ensure(body.length===1&&body[0].type==='ReturnStatement'&&body[0].argument,
       'Pure helper body must be one expression return');
-    pureExpression(body[0].argument,new Set(params));
-    return {source,entry,inputGraph,args,profile,region:span(fn),loop:null};
+    const decisions=profile==='pure-control-helper/1'?[]:null;
+    pureExpression(body[0].argument,new Set(params),{nodes:0,operators:0},decisions);
+    if(decisions)ensure(decisions.length>0,'Pure control helper requires a conditional or short-circuit expression');
+    return {source,entry,inputGraph,args,profile,region:span(fn),loop:null,decisions};
   }
   ensure(profile==='dense-array-sum/1','Unknown experimental summary profile');
   ensure(params.length===1&&inputGraph.objects.length===1&&Array.isArray(args[0]),
@@ -113,6 +126,7 @@ export function createSemanticSummaryContext(input){
     source:inspected.source,sourceDigest:digest(inspected.source),entry:inspected.entry,
     region:inspected.region,inputGraph:structuredClone(inspected.inputGraph),
     inputDigest:digest(inspected.inputGraph),maxIterations:input.maxIterations??128,
+    ...(inspected.decisions?{decisionSites:inspected.decisions}:{}),
     ...(inspected.loop?{loop:{start:inspected.loop.start,end:inspected.loop.end,
       accumulator:inspected.loop.accumulator}}:{})};
 }
@@ -126,11 +140,27 @@ export async function verifySemanticSummary({context,summary,timeoutMs=5000}){
     ensure(isDeepStrictEqual(createSemanticSummaryContext(context),context),'Summary context identity changed');
     const required=['schema','completion','inputUnchanged'];
     if(inspected.loop)required.push('iterations','stateDelta','checkpoints');
+    if(inspected.decisions)required.push('decisions');
     ensure(keys(summary,required)&&summary.schema==='experimental-semantic-summary/1',
       'Summary fields do not match the experimental contract');
     ensure(keys(summary.completion,['kind','value'])&&summary.completion.kind==='return'&&
       canonicalScalar(summary.completion.value),'A predicted scalar return completion is required');
     ensure(summary.inputUnchanged===true,'Summary must explicitly claim unchanged input state');
+    if(inspected.decisions){
+      ensure(Array.isArray(summary.decisions)&&summary.decisions.length<=inspected.decisions.length,
+        'Control summary needs a bounded sequence of executed decisions');
+      const seen=new Set();
+      for(const decision of summary.decisions){
+        ensure(keys(decision,['site','selected'])&&keys(decision.site,['start','end']),
+          'Control decisions must state an exact source site and selected branch');
+        const definition=inspected.decisions.find(item=>isDeepStrictEqual(item.site,decision.site));
+        const identity=JSON.stringify(decision.site);
+        ensure(definition&&!seen.has(identity),'Control decision site is unknown or repeated');
+        seen.add(identity);
+        ensure((definition.kind==='conditional'?['consequent','alternate']:['left','right']).includes(decision.selected),
+          'Control decision names a branch outside its source expression');
+      }
+    }
     if(inspected.loop){
       ensure(Number.isSafeInteger(summary.iterations)&&summary.iterations===inspected.loop.length,
         'Claimed iteration count differs from the bounded input');
@@ -159,6 +189,23 @@ export async function verifySemanticSummary({context,summary,timeoutMs=5000}){
     ensure(original.effects.length===0&&original.callbackFailures.length===0&&original.unhandledRejections.length===0,
       'Summary cannot hide effects, callbacks or rejected work');
     const references={original};
+    if(inspected.decisions){
+      const branches=await independentEffectfulReference({...input,mode:'branches'},{timeoutMs});
+      ensure(isDeepStrictEqual(branches.outcome,original.outcome)&&
+        isDeepStrictEqual(branches.effects,original.effects)&&branches.callbackFailures.length===0&&
+        branches.unhandledRejections.length===0,'Instrumented reference changed source behavior');
+      const expected=branches.decisions.map(row=>{
+        const definition=inspected.decisions.find(item=>item.site.start+':'+item.site.end===row.site);
+        ensure(definition&&Array.isArray(row.decision)&&row.decision[0]==='bool'&&typeof row.decision[1]==='boolean',
+          'Independent control observation lacks a supported source site');
+        const selected=definition.kind==='conditional'
+          ?(row.decision[1]?'alternate':'consequent'):(row.decision[1]?'left':'right');
+        return {site:definition.site,selected};
+      });
+      ensure(isDeepStrictEqual(summary.decisions,expected),
+        'Predicted control decisions differ from independently observed execution order or branch');
+      references.branches=branches;
+    }
     if(inspected.loop){
       const branches=await independentEffectfulReference({...input,mode:'branches'},{timeoutMs});
       const operations=await independentEffectfulReference({...input,mode:'operations'},{timeoutMs});
@@ -181,6 +228,7 @@ export async function verifySemanticSummary({context,summary,timeoutMs=5000}){
       authority:'independent-node-v8-source',contextDigest:digest(context),summaryDigest:digest(summary),
       references,nativeAdmission:false,learningStatus:'untested',
       claimsChecked:{completion:true,inputState:true,iterations:Boolean(inspected.loop),
+        controlDecisions:summary.decisions?.length??0,
         intermediateCheckpoints:summary.checkpoints?.length??0}};
   }catch(error){return {status:'rejected',phase:'independent-reference',reason:error.message};}
 }
@@ -191,7 +239,7 @@ export async function buildSemanticSummaryExperiment({context,summary,family,tim
   if(certificate.status!=='verified')return certificate;
   const args=decodeOwnedGraph(JSON.stringify(context.inputGraph));
   const detailed=await verifyEffectfulTrainingCase({source:context.source,entry:context.entry,args,
-    family,fixture:{calls:[]},timeoutMs});
+    family,fixture:{calls:[]},timeoutMs,projectionOptions:{semanticRegions:false,localStateCompaction:false}});
   if(detailed.status!=='locally_verified')return {status:'rejected',phase:'detailed-control',reason:detailed.reason};
   const raw='summary '+JSON.stringify(summary);
   const detailedLines=detailed.exported.public.timeline.filter(row=>row.kind==='semantic').map(row=>row.line);

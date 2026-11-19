@@ -39,7 +39,7 @@ if(flags.has('--reference-isolation')){
   process.env.TRACING_REFERENCE_ISOLATION=mode;
 }
 const root=fileURLToPath(new URL('..',import.meta.url));
-const output=resolve(flags.get('--out')??'corpus/out/semantic-v5');
+const output=resolve(flags.get('--out')??'corpus/out/semantic-v6');
 const recipe=flags.get('--recipe')??'engineering';
 if(!SOURCE_RECIPES.includes(recipe))throw new Error('Unknown source recipe');
 if(flags.has('--case-ids')&&recipe!=='real-source')

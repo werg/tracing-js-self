@@ -10,7 +10,7 @@ import {CampaignStore,atomicWrite,sha256} from '../src/corpus/campaign-store.mjs
 import {balanceFamilyTokens} from '../src/corpus/source-registry.mjs';
 import {verifyNativeBinding} from '../src/training/effectful-admit.js';
 
-// Every private input consumed by semantic_harness_v5, except lineage.task_id.
+// Every private input consumed by semantic_harness_v6, except lineage.task_id.
 // The complete public document and native codec/physical limits are bound
 // separately. Ancestor order is deliberately retained: the native Lineage
 // tuple preserves it, so sorting here would hide changed episode metadata.

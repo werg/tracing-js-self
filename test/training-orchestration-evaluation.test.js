@@ -166,7 +166,7 @@ test('whole-task graph scoring normalizes child identity while retaining exact n
 test('a rejected selected child preserves original evidence and cancels the joined coordinator',async()=>{
   const fixture=controlledOrchestrationCase(await pure);
   fixture.request.controlledSelectionsByRepresentation.compact[fixture.request.invocations[0].invocationId]=[
-    'return {"value":["ref","missing"]}'];
+    "return @missing"];
   const select=fakeNativeSelector(),actual=await evaluateOrchestrationCase(envelope(fixture),{select});
   assert(actual.failure);
   assert.equal(actual.outcome.cleanup.pendingTracks,0);
@@ -175,7 +175,7 @@ test('a rejected selected child preserves original evidence and cancels the join
   assert.equal(actual.costs.dispatches,0);
   assert.equal(actual.rejections[0].phase,'semantic-validation');
   assert.equal(actual.rejections[0].selection.origin,'controlled-test-injected');
-  assert.equal(actual.orchestration.childSelections[0].record,'return {"value":["ref","missing"]}');
+  assert.equal(actual.orchestration.childSelections[0].record,"return @missing");
 });
 
 test('orchestration deadlines cancel an unresponsive selection without polling',async()=>{
@@ -230,7 +230,7 @@ function observedBootstrap(actual,selection){
   const rows=actual.orchestration.finalState.observations.filter(item=>ids.has(item.eventId));
   assert.equal(rows.length,ids.size,'Every current-state bootstrap fragment must exist in native observations');
   const packet=JSON.parse(Buffer.concat(rows.map(item=>Buffer.from(item.payloadHex,'hex'))).toString('utf8'));
-  if(packet.schema==='semantic-execution/5'&&packet.kind==='model-context'){
+  if(packet.schema==='semantic-execution/6'&&packet.kind==='model-context'){
     assert.equal(packet.mode,'observed');assert.equal(packet.sequence,receipt.publicSequence);
     assert.equal(packet.realmPrefixDigest,receipt.prefixDigest);assert.equal(packet.visibleThrough,receipt.visibleThrough);
     return {...packet,state:packet.selectedState,reason:receipt.reason};
@@ -344,7 +344,7 @@ test('native coordinator budget cancellation leaves no selected guest, effect, o
 
 test('native rejected semantic child preserves its committed bytes and cancels its waiting parent',nativeOptions,async()=>{
   const fixture=controlledOrchestrationCase(await pure,{sessionId:'native-invalid-child'});
-  const record='return {"value":["ref","missing"]}';
+  const record="return @missing";
   fixture.request.controlledSelectionsByRepresentation.compact[fixture.request.invocations[0].invocationId]=[record];
   const select=nativeSelector();
   try{

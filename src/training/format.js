@@ -1,9 +1,10 @@
 // Strict public witness language. This grammar does not expose VM frames,
 // property versions, journal origins, or the normalized teacher event stream.
-export const WITNESS_VERSION='semantic-trace/5';
-export const CONTEXT_VERSION='semantic-context/5';
-export const EXECUTION_VERSION='semantic-execution/5';
-export const CONTINUATION_VERSION='semantic-continuation/5';
+import {encodeTraceText,decodeTraceText} from './trace-text.js';
+export const WITNESS_VERSION='semantic-trace/6';
+export const CONTEXT_VERSION='semantic-context/6';
+export const EXECUTION_VERSION='semantic-execution/6';
+export const CONTINUATION_VERSION='semantic-continuation/6';
 export const HARNESS_PROFILE='selected-harness/2';
 export const COMPLETION_POLICIES=Object.freeze([
   'call-return','await-returned-promise','owned-quiescence'
@@ -37,6 +38,7 @@ const schema=Object.freeze({
   await:['promise','continuation','invocation','returnPromise'],
   resume:['continuation','invocation','result','status'],
   end:['kind'],
+  summarize:['entry','arguments','result','profile','decisions','iterations','accumulator','invocation'],
   'value-open':['id','type'],
   'value-part':['id','data'],
   'value-close':['id']
@@ -52,6 +54,7 @@ export const WITNESS_REQUIRED=Object.freeze(Object.fromEntries(Object.entries({
   transfer:['kind','value','handler'],return:['value'],throw:['value'],
   request:['effect','operation','arguments','invocation','site','payload'],observe:['effect','result','status'],
   job:['action','job','owner'],end:['kind'],promise:['action','promise'],
+  summarize:['entry','arguments','result','profile'],
   await:['promise','continuation','invocation'],resume:['continuation','invocation','result','status'],
   'value-open':['id','type'],'value-part':['id','data'],'value-close':['id']
 }).map(([kind,fields])=>[kind,Object.freeze(fields)])));
@@ -86,7 +89,8 @@ export function validateHarnessRecord(record){
      !Number.isSafeInteger(record.ownerSequence)||record.ownerSequence<1)
     throw new TypeError('Invalid harness sequence');
   if(record.kind==='program'&&Object.hasOwn(record,'randomSeed')&&
-     (!Number.isInteger(record.randomSeed)||record.randomSeed<0||record.randomSeed>0xffffffff))
+     (!Number.isInteger(record.randomSeed)||Object.is(record.randomSeed,-0)||
+      record.randomSeed<0||record.randomSeed>0xffffffff))
     throw new TypeError('Invalid program deterministic seed');
   if(record.kind==='model-context'){
     const stateFields=['selectedState','realmPrefixDigest','visibleThrough'];
@@ -126,6 +130,29 @@ const identity=/^[a-z][a-z0-9]*$/;
 // Guest source identifiers use ECMAScript spelling; witness identities do not.
 const sourceIdentifier=/^[$_\p{ID_Start}][$_\u200C\u200D\p{ID_Continue}]*$/u;
 function fail(message){throw new TypeError('Invalid '+WITNESS_VERSION+': '+message);}
+function assertSite(site){
+  if(!object(site)||Object.keys(site).sort().join(',')!=='end,start'||
+     !Number.isSafeInteger(site.start)||Object.is(site.start,-0)||site.start<0||
+     !Number.isSafeInteger(site.end)||site.end<=site.start)fail('source site');
+}
+// Structured observed context and opaque host metadata must survive the JSON
+// portion of the wire without dropping fields or silently changing scalars.
+function assertJSONData(value,ancestors=new Set(),depth=0){
+  if(value===null||typeof value==='string'||typeof value==='boolean')return;
+  if(typeof value==='number'&&Number.isFinite(value)&&!Object.is(value,-0))return;
+  if(typeof value!=='object'||depth>256||ancestors.has(value)||
+     (!Array.isArray(value)&&![Object.prototype,null].includes(Object.getPrototypeOf(value))))
+    fail('noncanonical structured data');
+  ancestors.add(value);
+  if(Array.isArray(value)){
+    if(Object.keys(value).length!==value.length)fail('noncanonical structured array');
+    for(let i=0;i<value.length;i++){
+      if(!has(value,i))fail('sparse structured array');
+      assertJSONData(value[i],ancestors,depth+1);
+    }
+  }else for(const child of Object.values(value))assertJSONData(child,ancestors,depth+1);
+  ancestors.delete(value);
+}
 export function assertValue(v){
   if(!Array.isArray(v))fail('untagged value');
   const [tag,arg]=v;
@@ -225,8 +252,9 @@ export function validateWitness(kind,fields){
      typeof fields.source!=='string'||!fields.source.length||!Array.isArray(fields.sites)))
     fail('source context');
   if(kind==='code'&&fields.randomSeed!==undefined&&
-     (!Number.isInteger(fields.randomSeed)||fields.randomSeed<0||
+     (!Number.isInteger(fields.randomSeed)||Object.is(fields.randomSeed,-0)||fields.randomSeed<0||
       fields.randomSeed>0xffffffff))fail('unsupported deterministic seed');
+  if(kind==='code')assertJSONData(fields.sites);
   if(kind==='compute'||kind==='choose'){
     validateExpression(fields.expr);
     assertValue(kind==='compute'?fields.result:fields.decision);
@@ -238,6 +266,19 @@ export function validateWitness(kind,fields){
   if(kind==='allocate' && (!identity.test(fields.name) ||
       !['array','object','closure','set','regexp'].includes(fields.kind)||!Array.isArray(fields.properties)))
     fail('allocation identity');
+  if(kind==='allocate'){
+    const keys=new Set();
+    for(const property of fields.properties){
+      if(!object(property)||Object.keys(property).sort().join(',')!=='key,value'||
+         typeof property.key!=='string'||keys.has(property.key))fail('allocation property');
+      keys.add(property.key);assertValue(property.value);
+    }
+    if(has(fields,'length')&&(fields.kind!=='array'||!Number.isSafeInteger(fields.length)||Object.is(fields.length,-0)||
+       fields.length<0||fields.length>4096))fail('allocation length');
+    if(has(fields,'code')&&(fields.kind!=='closure'||typeof fields.code!=='string'||!fields.code))
+      fail('allocation source code');
+    if(has(fields,'captures')&&fields.kind!=='closure')fail('captures require a closure');
+  }
   if(kind==='allocate'&&fields.kind==='closure'){
     if(!Array.isArray(fields.captures??[]))fail('closure capture contract');
     const bindings=new Set();
@@ -253,6 +294,41 @@ export function validateWitness(kind,fields){
   if(kind==='bind'&&fields.from!==undefined&&
      (typeof fields.from!=='string'||!sourceIdentifier.test(fields.from)||
       fields.from===fields.name))fail('invalid source cell relation');
+  if(kind==='transfer'){
+    if(!['return','throw','cleanup'].includes(fields.kind))fail('completion transfer');
+    assertJSONData(fields.handler);
+  }
+  if(kind==='summarize'){
+    if(typeof fields.entry!=='string'||!sourceIdentifier.test(fields.entry)||
+       !Array.isArray(fields.arguments)||fields.arguments.length>32||
+       !['pure-helper/1','pure-control-helper/1','dense-array-sum/1'].includes(fields.profile))
+      fail('semantic region');
+    for(const value of fields.arguments)assertValue(value);
+    assertValue(fields.result);
+    const allowed={
+      'pure-helper/1':[],
+      'pure-control-helper/1':['decisions'],
+      'dense-array-sum/1':['iterations','accumulator']
+    }[fields.profile];
+    for(const field of ['decisions','iterations','accumulator'])
+      if(has(fields,field)!==allowed.includes(field))fail('semantic region profile fields');
+    if(fields.profile==='pure-control-helper/1'){
+      if(!Array.isArray(fields.decisions)||!fields.decisions.length||fields.decisions.length>32)
+        fail('semantic region decisions');
+      // Calls to the same helper may visit one source span more than once.
+      // Preserve the exact execution sequence; source proof checks its truth.
+      for(const decision of fields.decisions){
+        if(!object(decision)||Object.keys(decision).sort().join(',')!=='selected,site'||
+           !['consequent','alternate','left','right'].includes(decision.selected))
+          fail('semantic region decision');
+        assertSite(decision.site);
+      }
+    }
+    if(fields.profile==='dense-array-sum/1'&&
+       (!Number.isSafeInteger(fields.iterations)||Object.is(fields.iterations,-0)||fields.iterations<0||fields.iterations>1024||
+        typeof fields.accumulator!=='string'||!sourceIdentifier.test(fields.accumulator)))
+      fail('semantic region loop');
+  }
   if(kind==='request'){
     const site=fields.site;
     if(typeof fields.operation!=='string'||!fields.operation||
@@ -310,7 +386,11 @@ export function validateWitness(kind,fields){
   }
   if(kind==='job'&&!['enqueue','dispatch','complete'].includes(fields.action))fail('job action');
   if(kind==='job'&&fields.closure!==undefined&&fields.action!=='enqueue')fail('closure belongs to job registration');
-  for(const key of ['object','promise','target','continuation','closure','rejectionClosure','returnPromise','job']){
+  if(kind==='job'&&has(fields,'result'))assertJSONData(fields.result);
+  if(kind==='value-open'&&(typeof fields.type!=='string'||!fields.type))fail('fragment type');
+  if(kind==='value-part'&&typeof fields.data!=='string')fail('fragment data');
+  if(has(fields,'site'))assertSite(fields.site);
+  for(const key of ['object','effect','promise','target','continuation','closure','rejectionClosure','returnPromise','job','id']){
     if(has(fields,key)&&(typeof fields[key]!=='string'||!identity.test(fields[key])))
       fail('malformed witness identity '+key);
   }
@@ -325,17 +405,11 @@ export function validateWitness(kind,fields){
 }
 export function encodeWitness(kind,fields){
   validateWitness(kind,fields);
-  // JSON insertion order is a deliberate part of this codec; the parser
-  // rejects alternate field order, duplicate keys, and non-JSON scalar tokens.
-  return kind+' '+JSON.stringify(fields);
+  return encodeTraceText(kind,fields);
 }
 export function decodeWitness(line){
   if(typeof line!=='string'||/[\r\n]/.test(line))fail('multiline record');
-  const split=line.indexOf(' ');
-  if(split<1)fail('missing record separator');
-  const kind=line.slice(0,split);
-  let fields;
-  try{fields=JSON.parse(line.slice(split+1));}catch{fail('JSON syntax');}
+  const {kind,fields}=decodeTraceText(line);
   if(encodeWitness(kind,fields)!==line)fail('noncanonical bytes');
   return {kind,fields};
 }

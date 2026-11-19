@@ -27,7 +27,7 @@ def main():
     if not 1 <= args.max_tokens <= 1024:
         parser.error('Token budget must be 1..1024')
     consumer = args.consumer_root.resolve()
-    policy = json.loads((Path(__file__).resolve().parent.parent / 'contracts/native-admission-policy-v5.json').read_text())
+    policy = json.loads((Path(__file__).resolve().parent.parent / 'contracts/native-admission-policy-v6.json').read_text())
     revision = subprocess.check_output(['git', '-C', str(consumer), 'rev-parse', 'HEAD'], text=True).strip()
     if revision != policy['consumerRevision'] or subprocess.check_output(
             ['git', '-C', str(consumer), 'status', '--porcelain', '--untracked-files=no'], text=True).strip():

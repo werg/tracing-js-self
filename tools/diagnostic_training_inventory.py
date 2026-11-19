@@ -48,7 +48,7 @@ def inspect_training_inventory(training_run, consumer_root, tokenizer_json):
     if revision != report['consumerRevision'] or file_sha256(tokenizer) != report['tokenizerSha256']:
         raise ValueError('Actual inventory consumer or tokenizer differs from the optimization run')
     sys.path.insert(0, str(consumer / 'src'))
-    from megatoken.data.semantic_harness_v5 import adapt_selected_harness_v5
+    from megatoken.data.semantic_harness_v6 import adapt_selected_harness_v6
     from megatoken.data.storage import PreparedCorpus
     from megatoken.generation.codec import ByteCodec
     from megatoken.training.checkpoint import load_checkpoint
@@ -128,7 +128,7 @@ def inspect_training_inventory(training_run, consumer_root, tokenizer_json):
         # The caller independently authenticates each producer admission identity.
         # This native adaptation binds its exact full episode, including family and
         # ancestry, to what the checkpoint actually consumed. It is not admission.
-        episode, _ = adapt_selected_harness_v5(document, codec=codec,
+        episode, _ = adapt_selected_harness_v6(document, codec=codec,
             max_positions=pins['maxPositions'], max_history=pins['maxHistory'], admission_verifier=lambda _: True)
         if episode.episode_id in declared:
             raise ValueError('Declared native training episode identity is duplicated')

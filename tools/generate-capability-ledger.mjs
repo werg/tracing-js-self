@@ -22,7 +22,7 @@ if(new Set(selected).size!==selected.length||selected.some(id=>!CAPABILITY_CASES
 const requested=['--megatoken','--tokenizer','--native-policy'].some(key=>flags.has(key));
 const native=loadNativeSettings({megatoken:flags.get('--megatoken'),tokenizer:flags.get('--tokenizer'),
   python:flags.get('--python')??'python3',temporaryDirectory:output+'.native',
-  policyFile:requested?(flags.get('--native-policy')??resolve(root,'contracts/native-admission-policy-v5.json')):undefined});
+  policyFile:requested?(flags.get('--native-policy')??resolve(root,'contracts/native-admission-policy-v6.json')):undefined});
 if(flags.has('--require-native')&&!native)throw new Error('--require-native needs a pinned native consumer');
 const report=await buildCapabilityLedger({producerRevision,cases:CAPABILITY_CASES.filter(row=>selected.includes(row.id)),nativeConsumer:createNativeConsumer(native),nativePolicy:native?.policy??null});
 mkdirSync(dirname(output),{recursive:true});writeFileSync(output,JSON.stringify(report,null,2)+'\n');

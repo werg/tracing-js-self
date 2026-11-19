@@ -1,0 +1,9 @@
+{
+  "status": "passed",
+  "comparedCoordinates": 1837,
+  "maximumAbsoluteDifference": 0.0,
+  "firstDivergence": null,
+  "absoluteTolerance": 1e-06,
+  "relativeTolerance": 1e-05,
+  "scope": "Actual frontier, history, adapter, and prospective prediction tensors"
+}

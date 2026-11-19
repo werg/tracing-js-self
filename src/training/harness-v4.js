@@ -1056,7 +1056,7 @@ export class SelectedExecutionHarness {
   }
   /** No service code executes during state restoration or trace inspection. */
   checkpoint(){
-    const packet={schema:'semantic-checkpoint/5',profile:HARNESS_PROFILE,sessionId:this.sessionId,
+    const packet={schema:'semantic-checkpoint/6',profile:HARNESS_PROFILE,sessionId:this.sessionId,
       callbacks:[...this.callbacks],nextCallback:this.nextCallback,
       programs:[...this.programs],realms:[...this.realms].map(([key,realm])=>[key,{
         ...realm,heap:[...realm.heap].map(([id,node])=>[id,{...node,properties:[...node.properties]}]),
@@ -1078,7 +1078,7 @@ export class SelectedExecutionHarness {
   }
   static restore(packet,{services={},journal=null,grants=null,now=Date.now,
       materializeCallbackResult=null,prepareCallbackInput=null}={}){
-    demand(packet?.schema==='semantic-checkpoint/5'&&packet.profile===HARNESS_PROFILE,'Wrong checkpoint version');
+    demand(packet?.schema==='semantic-checkpoint/6'&&packet.profile===HARNESS_PROFILE,'Wrong checkpoint version');
     const {integrity,...body}=packet;
     demand(integrity===createHash('sha256').update(JSON.stringify(body)).digest('hex'),
       'Checkpoint integrity mismatch');

@@ -114,7 +114,7 @@ def exact_record_audit(encoded, codec, *, byte_categories=None):
             'Lexical masks must have one Boolean per actual likelihood position')
     require(codec.decode(ids) == payload, 'Actual token IDs do not reconstruct target bytes')
     require(not any(masks) if not record.policy_mask else bool(ids) and all(masks),
-            'Observed content must be masked; generated v5 text must be fully supervised')
+            'Observed content must be masked; generated native text must be fully supervised')
     labels = byte_categories if byte_categories is not None else target_byte_categories(payload)
     require(len(labels) == len(payload), 'Category accounting does not span the exact payload')
     offset, tokens = 0, []

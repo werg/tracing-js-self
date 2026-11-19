@@ -2,16 +2,25 @@
 
 `tools/probe-native-conditionals.py` executes the real native training and
 serving paths at the same saved checkpoint and the same first public prefix.
-It captures each path's already computed Gaussian policy mean and log-scale,
-then stops **before** the Gaussian facet draw. Serving has already evaluated
-and drawn its text-only modality categorical. No semantic selection is returned,
-no optimizer update runs, and no learned execution success is claimed.
+It captures each path's computed Gaussian policy mean/log-scale and recurrent
+state. By default it stops before the Gaussian draw. With `--execute-decoder`
+it also performs the genuine native draw and decoder computation, then stops
+before returning a semantic selection. With `--audit-supervision` it exercises
+the full short training window and its loss/gradient checks. No optimizer update
+runs in this probe and no learned execution success is claimed.
 
-The implementation is runnable in the existing qualified native environment.
-The current local workspace has no PyTorch runtime; its numerical execution
-has therefore not been measured locally. The optional real-model hook test is
-skipped explicitly when PyTorch or the companion checkout is missing. Synthetic
-comparison tests are not substituted for the missing native result.
+The paired workflow executes this probe with the locked native environment and
+production tokenizer. Its reports retain the exact producer, consumer, checkpoint,
+prefix and tokenizer identities; they are measurements of those revisions.
+The [v6 qualification evidence](evidence/native-v6-qualification-20261118/README.md)
+contains the executed first-boundary and per-token audit reports.
+
+The [two-boundary diagnostic](NATIVE_TWO_BOUNDARY_PROBE.md) additionally fits one
+complete native record, reloads the saved checkpoint, commits the actual model
+output through the public controller and measures the next prediction. It
+compares actual sampled facets, all permitted lexical probabilities, length and
+terminal probabilities, and verifies the actual text-only mode/modality supports.
+Neither probe establishes held-out learned execution quality.
 
 ## Fresh zero-update diagnostic
 

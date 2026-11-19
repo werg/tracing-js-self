@@ -54,6 +54,50 @@ test('observations preserve return ASI, bare returns, nested wrappers and loop t
   }
 });
 
+test('supplied parameters beside a default closure never borrow a body declaration source site',async()=>{
+  const body='const seen=new Set();return array.filter(element=>{'+
+    'const key=keyFn(element);if(seen.has(key))return false;seen.add(key);return true;});';
+  const cases=[
+    'function run(array,keyFn=value=>value){'+body+'}',
+    'function run(array){const select=(array,keyFn=value=>value)=>{'+body+'};return select(array);}',
+    'function run(array){const select=function(array,keyFn=value=>value){'+body+'};return select(array);}',
+    'function run(value,read=()=>value){var value=value;return read();}'
+  ];
+  for(const [index,code] of cases.entries()){
+    const source='"use strict";'+code;
+    const result=await verifyEffectfulTrainingCase({source,entry:'run',args:index===3?[9]:[[1,2,1]],
+      family:'completion-parameter-location',fixture:{calls:[]}});
+    assert.equal(result.status,'locally_verified',result.reason+' '+JSON.stringify(result.failure?.original.error.details));
+    const archive=result.exported.sidecar.archive;
+    const parameterInstructions=Object.values(archive.programs).flatMap(program=>program.instructions)
+      .filter(instruction=>instruction.op==='PARAM_INIT');
+    assert(parameterInstructions.length>=2);
+    for(const instruction of parameterInstructions)
+      assert.match(source.slice(instruction.start,instruction.end),new RegExp('^'+instruction.arg+'(?:=|$)'));
+    const observed=ownedCompletionObservations(archive,source);
+    const seenStart=source.indexOf('seen=new Set()');
+    if(seenStart>=0){
+      const initializations=observed.filter(row=>row.site===seenStart+':'+(seenStart+'seen=new Set()'.length));
+      assert.equal(initializations.length,1,'the source declaration executes once');
+      assert.equal(initializations[0].kind,'initialize');
+    }
+  }
+});
+
+test('completion evidence still rejects an initialization attributed to a different source binding',async()=>{
+  const source='"use strict";function run(array,keyFn=value=>value){const seen=new Set();return array.length;}';
+  const result=await verifyEffectfulTrainingCase({source,entry:'run',args:[[1,2]],
+    family:'completion-binding-site',fixture:{calls:[]}});
+  assert.equal(result.status,'locally_verified',result.reason);
+  const altered=structuredClone(result.exported.sidecar.archive);
+  const bodyInitialization=altered.events.find(event=>event.operation==='binding.initialize'&&
+    altered.programs[event.codeId].instructions.some(instruction=>
+      instruction.siteId===event.siteId&&instruction.op==='INIT'&&instruction.arg==='seen'));
+  altered.programs[bodyInitialization.codeId].instructions.find(instruction=>
+    instruction.siteId===bodyInitialization.siteId).arg='array';
+  assert.throws(()=>ownedCompletionObservations(altered,source),/different committed binding/);
+});
+
 test('independent observation disagreement reports the first divergence and exact denominator',()=>{
   assert.deepEqual(compareCompletionObservations([{site:'1:2',kind:'assign',value:['num',1]}],[]),{
     schema:'source-completions/1',status:'mismatch',checked:0,index:0,

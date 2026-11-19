@@ -44,7 +44,7 @@ test('real-source CI selects exact public representatives and packages the compl
   assert.equal(flag(pack,'--max-family-tokens'),'10000');
   assert.equal(flag(pack,'--max-family-share'),'0.2');
   assert.deepEqual(calls[2].args,['tools/package-semantic-release.py','--verify',
-    join(runner,'release/semantic-v5-release.tar.gz')]);
+    join(runner,'release/semantic-v6-release.tar.gz')]);
   assert.match(workflow,/\$\{\{ runner.temp \}\}\/selected-corpus\//);
 });
 

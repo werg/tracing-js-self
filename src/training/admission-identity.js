@@ -117,7 +117,7 @@ function identityPayload(exported){
       fail('source bytes absent from frozen family');
   }
   if(!isDeepStrictEqual(side.environment,admissionEnvironment()))fail('runtime, dependency or verifier environment');
-  const contract=JSON.parse(readFileSync(new URL('../../contracts/semantic-harness-v5.json',import.meta.url),'utf8'));
+  const contract=JSON.parse(readFileSync(new URL('../../contracts/semantic-harness-v6.json',import.meta.url),'utf8'));
   return {schema:'semantic-candidate-identity/1',episodeDigest:exactHash(exported.public),
     source:{provenance:side.sourceProvenance,referenceInputDigest:identityDigest(side.referenceInput)},
     lineage:{sourceFamily:side.sourceFamily,sourceLineage:side.sourceLineage,fixtureFamily:side.fixtureFamily,

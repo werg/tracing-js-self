@@ -95,7 +95,7 @@
     "training:session-campaign": "node tools/semantic-session-campaign.mjs",
     "contracts:check": "node tools/generate-host-contract.mjs --check && node tools/generate-semantic-contract.mjs --check",
     "test:browser": "node --test test/browser/selected-dom.test.mjs",
-    "baseline:v5": "node tools/current-v5-baseline.mjs",
+    "baseline:v6": "node tools/current-v6-baseline.mjs",
     "coverage:current": "node tools/generate-capability-ledger.mjs",
     "oracle:install": "npm ci --prefix tools/spec-oracle --ignore-scripts --no-audit --no-fund"
   },

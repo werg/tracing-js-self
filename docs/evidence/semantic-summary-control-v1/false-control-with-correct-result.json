@@ -1,0 +1,89 @@
+{
+  "predictionOrigin": "authored-diagnostic",
+  "candidate": {
+    "id": "false-control-with-correct-result",
+    "context": {
+      "schema": "experimental-summary-context/1",
+      "profile": "pure-control-helper/1",
+      "source": "\"use strict\";function select(x,flag,fallback){return x<0?(flag&&(-x)):(fallback??3);}",
+      "sourceDigest": "f54e714b39109802ebd95cadad7013ac1cb95625397ee482cbcb25f97622a7fb",
+      "entry": "select",
+      "region": {
+        "start": 13,
+        "end": 85
+      },
+      "inputGraph": {
+        "schema": "owned-graph/1",
+        "roots": [
+          [
+            "num",
+            -4
+          ],
+          [
+            "bool",
+            true
+          ],
+          [
+            "num",
+            0
+          ]
+        ],
+        "objects": []
+      },
+      "inputDigest": "a944327283659dd9d3951b85795052fca03cbcbeb05c41b71f38c8663b24fa91",
+      "maxIterations": 128,
+      "decisionSites": [
+        {
+          "site": {
+            "start": 53,
+            "end": 56
+          },
+          "kind": "conditional"
+        },
+        {
+          "site": {
+            "start": 58,
+            "end": 68
+          },
+          "kind": "logical",
+          "operator": "&&"
+        },
+        {
+          "site": {
+            "start": 71,
+            "end": 82
+          },
+          "kind": "logical",
+          "operator": "??"
+        }
+      ]
+    },
+    "summary": {
+      "schema": "experimental-semantic-summary/1",
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          4
+        ]
+      },
+      "inputUnchanged": true,
+      "decisions": [
+        {
+          "site": {
+            "start": 53,
+            "end": 56
+          },
+          "selected": "alternate"
+        }
+      ]
+    },
+    "family": "summary-prototype-pure-control",
+    "expected": "rejected"
+  },
+  "result": {
+    "status": "rejected",
+    "phase": "independent-reference",
+    "reason": "Predicted control decisions differ from independently observed execution order or branch"
+  }
+}

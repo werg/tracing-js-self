@@ -9,6 +9,7 @@ import {realizeGraph} from '../src/training/graph.js';
 import {EFFECTFUL_ENGINEERING_FIXTURES} from '../src/training/engineering-fixtures.js';
 import {verifyEffectfulTrainingCase,recheckEffectfulAdmission} from '../src/training/effectful-admit.js';
 import {compileEffectfulWitness} from '../src/training/effectful-compiler.js';
+import {decodeWitness} from '../src/training/format.js';
 
 const fail=message=>{throw new Error(message);};
 test('declared native result graphs enter only at delivery and preserve cycles and mutable aliases',async()=>{
@@ -72,7 +73,8 @@ test('graph-result teacher survives independent source admission and serialized 
   const receipt=await recheckEffectfulAdmission(JSON.parse(JSON.stringify(result.exported)),{requireAdmitted:false});
   assert.equal(receipt.effectsValidated,true);assert.equal(receipt.sourceValidated,true);
   const observed=result.exported.public.timeline.find(item=>item.kind==='result'&&item.result[0]==='ref');
-  assert.match(observed.line,/"graph"/);
+  assert.equal(decodeWitness(observed.line).kind,'observe');
+  assert.ok(decodeWitness(observed.line).fields.graph);
   const object=result.exported.sidecar.reference.outcome.graph.objects.find(item=>item.properties.some(([key])=>key==='n'));
   assert.deepEqual(object.properties,[['n',['num',4]]]);
 });

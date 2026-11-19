@@ -10,7 +10,7 @@ import {EXECUTION_VERSION,WITNESS_VERSION,CONTEXT_VERSION,CONTINUATION_VERSION,H
 import {SelectedExecutionHarness} from '../src/training/harness-v4.js';
 
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
-const definition={schema:'semantic-harness-contract/5',execution:EXECUTION_VERSION,trace:WITNESS_VERSION,
+const definition={schema:'semantic-harness-contract/6',execution:EXECUTION_VERSION,trace:WITNESS_VERSION,
   context:CONTEXT_VERSION,continuation:CONTINUATION_VERSION,profile:HARNESS_PROFILE,
   completionPolicies:COMPLETION_POLICIES,commonFields:HARNESS_COMMON_FIELDS,
   witness:{allowed:WITNESS_SCHEMA,required:WITNESS_REQUIRED},envelope:HARNESS_RECORD_SCHEMAS,
@@ -22,7 +22,9 @@ const definition={schema:'semantic-harness-contract/5',execution:EXECUTION_VERSI
     arrayLength:4096,generatedRecordBytes:65536},
   authority:{generated:['semantic'],observed:Object.keys(HARNESS_RECORD_SCHEMAS).filter(kind=>kind!=='semantic'),
     observationLoss:0,transportCreatesGuestBoundary:false,requestsPerCommittedSelection:1}};
+const golden=JSON.parse(await readFile(new URL('../test/fixtures/semantic-trace-v6.json',import.meta.url),'utf8'));
 const validWitness=[
+  ...golden.canonical.map(row=>row.line),
   w('code',{entry:'run',source:'function run(){return Math.random();}',sites:[],randomSeed:0}),
   w('compute',{expr:{op:'random'},result:['num',1013904223/4294967296]}),
   w('input',{graph:{roots:[['ref','retained']],objects:[]},retained:['retained']}),
@@ -37,6 +39,7 @@ const validWitness=[
     objects:[{id:'o0',kind:'object',properties:[{key:'self',value:['ref','o0']}]}]}})
 ];
 const invalidWitness=[
+  ...golden.invalid,
   'compute {"expr":{"op":"binary","operator":"+","left":{"op":"random"},"right":{"op":"random"}},"result":["num",0]}',
   'request {"effect":"effect","operation":"demo.readAsync","arguments":[],"invocation":"i1","payload":"[]"}',
   'promise {"action":"react","promise":"p","reaction":"catch","job":"j","rejectionClosure":"f"}',
@@ -54,6 +57,14 @@ h.admitInvocation({programId:'identity',invocationId:'outside:1',trackId:'worker
   triggerId:'caller',args:[7],completionPolicy:'call-return'});
 h.selected('outside:1',w('return',{value:['num',7]}));h.selected('outside:1',w('end',{kind:'return'}));
 const validEnvelope=h.exportEpisode();
+const summarized=new SelectedExecutionHarness({sessionId:'regioncontract'});
+summarized.publishProgram({programId:'sum',source:'"use strict";function sum(xs){let total=0;for(let i=0;i<xs.length;i++){total+=xs[i];}return total;}',entry:'sum'});
+summarized.admitInvocation({programId:'sum',invocationId:'sum:1',trackId:'worker:1',realmId:'sumrealm',
+  triggerId:'caller',args:[[2,3,4]],completionPolicy:'call-return'});
+summarized.selected('sum:1',w('summarize',{entry:'sum',arguments:summarized.invocations.get('sum:1').controller.input.graph.roots,
+  result:['num',9],profile:'dense-array-sum/1',iterations:3,accumulator:'total'}));
+summarized.selected('sum:1',w('end',{kind:'return'}));
+const validRegion=summarized.exportEpisode();
 const invalidEnvelope=[structuredClone(validEnvelope),structuredClone(validEnvelope),structuredClone(validEnvelope)];
 invalidEnvelope[0].public.traceFormat='semantic-trace/3';
 invalidEnvelope[1].public.timeline[1].mode='generated';
@@ -104,17 +115,17 @@ for(const seed of [-1,4294967296,0.5,true,null]){
   const invalid=structuredClone(validSeed);invalid.public.timeline[0].randomSeed=seed;
   invalidEnvelope.push(invalid);
 }
-for(const document of [validEnvelope,validContext,validSeed]){
+for(const document of [validEnvelope,validContext,validSeed,validRegion]){
   for(const record of document.public.timeline)validateHarnessRecord(record);
   SelectedExecutionHarness.replay(document);
 }
 for(const document of invalidEnvelope){let rejected=false;try{SelectedExecutionHarness.replay(document);}catch{rejected=true;}
   if(!rejected)throw new Error('Invalid envelope fixture was accepted');}
 const fixtures={witness:{valid:validWitness,invalid:invalidWitness},
-  envelope:{valid:[validEnvelope,validContext,validSeed],invalid:invalidEnvelope}};
+  envelope:{valid:[validEnvelope,validContext,validSeed,validRegion],invalid:invalidEnvelope}};
 const artifact={definition,digest:digest(definition),fixtureDigest:digest(fixtures),fixtures};
 const bytes=JSON.stringify(artifact,null,2)+'\n';
-const destination=new URL('../contracts/semantic-harness-v5.json',import.meta.url);
+const destination=new URL('../contracts/semantic-harness-v6.json',import.meta.url);
 if(process.argv.includes('--check')){
   if(await readFile(destination,'utf8')!==bytes)throw new Error('Shared semantic contract needs regeneration');
 }else await writeFile(destination,bytes);
