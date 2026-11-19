@@ -2824,11 +2824,11 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                 throw new TypeError('Object.assign source requires an owned data object');
               if(item===target)
                 throw new TypeError('Object.assign self-source requires ordered reentrant property semantics');
-              for(const [key,record] of Object.entries(item.properties)){
-                if(item.kind==='array'&&key==='length')continue;
+              for(const key of ownPropertyKeys(item)){
+                if(!enumerableOwn(item,key))continue;
                 if(key==='__proto__')
                   throw new TypeError('Object.assign prototype setter not modeled');
-                copies.push([key,record.value]);
+                copies.push([key,item.properties[key].value]);
               }
             }
             for(const [key,value] of copies)putOwn(target,key,value,eventId);
