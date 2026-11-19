@@ -167,9 +167,10 @@ export function createCausalLmV8Selector({runtime,tokenizer,checkpointIdentity,e
     'initialized generation runtime required');
   require(Number.isSafeInteger(maxNewTokens)&&maxNewTokens>0&&Number.isSafeInteger(maxContextTokens)&&
     maxContextTokens>maxNewTokens,'explicit generation and context budgets required');
-  const emissions=[];let initialized=false;
+  const emissions=[];let initialized=false,initializationEpoch=0;
   const select=async context=>{
     require(initialized,'runtime has not attested its checkpoint');
+    const epoch=initializationEpoch;
     const prompt=causalLmV8Prompt(context),inputIds=await segment(tokenizer,prompt,eosTokenId);
     require(inputIds.length+maxNewTokens<=maxContextTokens,'generation budget exceeded; truncation is forbidden');
     const promptSha256=sha(prompt),previous=emissions.findLast(row=>row.promptSha256===promptSha256&&row.status!=='accepted');
@@ -187,6 +188,7 @@ export function createCausalLmV8Selector({runtime,tokenizer,checkpointIdentity,e
     const refuse=message=>{evidence.status='rejected';evidence.verificationMs=performance.now()-verifying;
       evidence.failure=message;const error=new Error('Causal LM v8: '+message);
       error.category='causal-lm-emission';error.evidence=structuredClone(evidence);throw error;};
+    if(!initialized||epoch!==initializationEpoch)refuse('model initialization changed during generation');
     if(!Array.isArray(ids)||!ids.length||ids.length>maxNewTokens||ids.some(id=>!Number.isSafeInteger(id)||id<0))
       refuse('invalid original emitted token sequence');
     let payload;try{payload=Buffer.from(await tokenizer.decode(ids.at(-1)===eosTokenId?ids.slice(0,-1):ids));}
@@ -200,17 +202,22 @@ export function createCausalLmV8Selector({runtime,tokenizer,checkpointIdentity,e
     return {record,selection:{causalLmSelected:true,...structuredClone(evidence)}};
   };
   select.initialize=async request=>{
+    // Any reinitialization invalidates the old attestation immediately, even
+    // if this attempt fails or races with an earlier in-flight initialization.
+    const epoch=++initializationEpoch;initialized=false;
     require(request?.checkpointIdentity===checkpointIdentity,'requested checkpoint differs from frozen weights');
     const receipt=await runtime.initialize({...request,tokenizerIdentity:tokenizer.identity,representation:'mixed'});
+    require(epoch===initializationEpoch,'superseded checkpoint attestation');
     require(receipt?.checkpointIdentity===checkpointIdentity&&receipt?.tokenizerIdentity===tokenizer.identity&&
       receipt.seed===request.seed,'loaded checkpoint/tokenizer/seed attestation differs');
     initialized=true;return {schema:'semantic-inference-identity/8',checkpointIdentity,
       tokenizerIdentity:tokenizer.identity,seed:request.seed,adapter:CAUSAL_LM_V8_BRIDGE_VERSION,nativeAdmissionClaim:false};
   };
   select.selectInto=async(harness,invocationId)=>{
-    const context=harness.modelContext(invocationId),candidate=await select(context),
+    const context=harness.modelContext(invocationId),epoch=initializationEpoch,candidate=await select(context),
       evidence=emissions[candidate.selection.attempt],started=performance.now();
     try{
+      require(initialized&&epoch===initializationEpoch,'model initialization changed before semantic commit');
       const decoded=decodeCausalLmV8Target(candidate.record),entry=decoded.kind==='region'?
         harness.entry(invocationId,decoded.record.region):decoded.kind==='algorithm'?
           pureRegionEntry(harness.program(invocationId),harness.activation(invocationId).controller,harness.timeline.length):null;
