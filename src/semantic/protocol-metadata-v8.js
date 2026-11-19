@@ -114,7 +114,7 @@ export function createOwnedProtocolMetadata(bundle,{adapters=[]}={}){
       ['Object.prototype','Array.prototype','Function.prototype'].includes(node.prototype)?node.prototype:
       node.prototype===null?null:typeof node.prototype==='string'?['ref',node.prototype]:fail('unmodeled owned prototype');
     return {kind:node.kind,prototype,extensible:node.extensible!==false,properties:ownedKeys(node).map(key=>{
-      const accessor=node.accessors?.[key];
+      const accessor=Object.hasOwn(node.accessors??{},key)?node.accessors[key]:null;
       const descriptor=accessor?{kind:'accessor',get:accessor.get?.value??['undefined'],set:accessor.set?.value??['undefined'],
         enumerable:accessor.enumerable,configurable:accessor.configurable}:
         {kind:'data',value:node.properties[key].value,writable:true,enumerable:!(node.kind==='array'&&key==='length'),
