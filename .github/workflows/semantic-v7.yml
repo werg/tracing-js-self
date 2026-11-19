@@ -1,0 +1,111 @@
+name: Independent v7 native execution and training export
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: semantic-v7-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  paired-v7:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      TRACING_JS_SELF_ROOT: ${{ github.workspace }}/tracing-js-self
+      MEGATOKEN_TOKENIZER_JSON: ${{ github.workspace }}/tokenizer.json
+      MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
+      MEGATOKEN_PYTHON: python
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: tracing-js-self
+          persist-credentials: false
+      - id: policy
+        name: Read the exact independent consumer pin
+        working-directory: tracing-js-self
+        run: |
+          node --input-type=module <<'JS'
+          import {readFileSync,appendFileSync} from 'node:fs';
+          const policy=JSON.parse(readFileSync('contracts/semantic-native-policy-v7.json'));
+          if(!/^[0-9a-f]{40}$/.test(policy.consumerRevision))throw new Error('Exact consumer commit required');
+          appendFileSync(process.env.GITHUB_OUTPUT,`consumer=${policy.consumerRevision}\n`);
+          JS
+      - uses: actions/checkout@v4
+        with:
+          repository: werg/megatoken
+          ref: ${{ steps.policy.outputs.consumer }}
+          path: megatoken
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: tracing-js-self/.nvmrc
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.14'
+      - name: Install pinned native dependencies and producer
+        run: |
+          npm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund
+          python -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock
+          python -m pip install --no-deps --no-build-isolation -e ./megatoken
+      - name: Acquire the exact production tokenizer
+        run: |
+          python - <<'PY'
+          import hashlib, os, shutil
+          from pathlib import Path
+          from huggingface_hub import hf_hub_download
+          from megatoken.generation.codec import LING_REPOSITORY, LING_REVISION, LING_TOKENIZER_SHA256
+          path = Path(os.environ['MEGATOKEN_TOKENIZER_JSON'])
+          shutil.copyfile(hf_hub_download(LING_REPOSITORY, 'tokenizer.json', revision=LING_REVISION), path)
+          assert hashlib.sha256(path.read_bytes()).hexdigest() == LING_TOKENIZER_SHA256
+          PY
+      - name: Check identical contracts and independent native semantics
+        run: |
+          npm run semantic:contract --prefix tracing-js-self
+          cmp tracing-js-self/contracts/semantic-execution-v7.json megatoken/src/megatoken/data/contracts/semantic-execution-v7.json
+          cd megatoken
+          python -m pytest -q tests/test_algorithm_v7.py tests/test_algorithm_harness_v7.py tests/test_detailed_v7.py tests/test_detailed_model_adapter_v7.py tests/test_semantic_family_v7.py tests/test_semantic_v7_pipeline.py --junitxml="$RUNNER_TEMP/semantic-v7-tests.xml"
+      - name: Recollect fresh source and native receipts for both v7 representations
+        working-directory: tracing-js-self
+        run: |
+          node tools/qualify-semantic-v7.mjs --out "$RUNNER_TEMP/v7-admitted" \
+            --megatoken ../megatoken --python python --tokenizer "$MEGATOKEN_TOKENIZER_JSON" \
+            --native-policy contracts/semantic-native-policy-v7.json --max-positions 1024 --max-history 1024 \
+            --holdout-family async-cleanup
+      - name: Prepare actual native shards and check the training gate
+        run: |
+          producer_revision="$(git -C tracing-js-self rev-parse HEAD)"
+          consumer_revision="$(git -C megatoken rev-parse HEAD)"
+          python megatoken/scripts/prepare_semantic_v7.py --input "$RUNNER_TEMP/v7-admitted/admitted.jsonl" \
+            --output "$RUNNER_TEMP/v7-prepared" --tracer-root tracing-js-self \
+            --producer-revision "$producer_revision" --consumer-revision "$consumer_revision" \
+            --tokenizer-json "$MEGATOKEN_TOKENIZER_JSON" --max-positions 1024 --max-history 1024
+          python megatoken/scripts/check_semantic_v7_training.py --prepared "$RUNNER_TEMP/v7-prepared" \
+            --producer-revision "$producer_revision" --consumer-revision "$consumer_revision" \
+            --tokenizer-json "$MEGATOKEN_TOKENIZER_JSON" --max-positions 1024 --max-history 1024
+      - name: Export admitted conventional language-model data with the same frozen families
+        working-directory: tracing-js-self
+        run: |
+          node tools/export-algorithm-training.mjs --input "$RUNNER_TEMP/v7-admitted/admitted.jsonl" \
+            --tokenizer-module tools/semantic-v7-tokenizer-adapter.mjs --max-context 32768 --seed 17 \
+            --out "$RUNNER_TEMP/v7-causal"
+          python tools/check-semantic-v7-causal-export.py --corpus "$RUNNER_TEMP/v7-causal" \
+            --tokenizer-json "$MEGATOKEN_TOKENIZER_JSON"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: semantic-v7-native-training-evidence
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            ${{ runner.temp }}/semantic-v7-tests.xml
+            ${{ runner.temp }}/v7-admitted/
+            ${{ runner.temp }}/v7-prepared/
+            ${{ runner.temp }}/v7-causal/

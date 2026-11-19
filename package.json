@@ -14,6 +14,7 @@
     "./replay": "./src/replay.js",
     "./causal": "./src/causal.js",
     "./training": "./src/training/index.js",
+    "./semantic": "./src/semantic/index.js",
     "./natlang-selected": {
       "types": "./src/natlang-selected.d.ts",
       "default": "./src/natlang-selected.js"
@@ -93,9 +94,15 @@
     "training:recheck": "node tools/verify-effectful-admission.mjs",
     "training:inspect": "node tools/inspect-selected-harness.mjs",
     "training:session-campaign": "node tools/semantic-session-campaign.mjs",
-    "contracts:check": "node tools/generate-host-contract.mjs --check && node tools/generate-semantic-contract.mjs --check",
+    "contracts:check": "node tools/generate-host-contract.mjs --check && node tools/generate-semantic-contract.mjs --check && node tools/generate-semantic-algorithm-contract.mjs --check && node tools/generate-semantic-execution-contract.mjs --check",
     "test:browser": "node --test test/browser/selected-dom.test.mjs",
     "baseline:v6": "node tools/current-v6-baseline.mjs",
+    "semantic:compare": "node tools/compare-semantic-representations.mjs",
+    "semantic:contract": "node tools/generate-semantic-algorithm-contract.mjs --check && node tools/generate-semantic-execution-contract.mjs --check",
+    "semantic:v7:admit": "node tools/qualify-semantic-v7.mjs",
+    "semantic:v7:export": "node tools/export-algorithm-training.mjs",
+    "semantic:v7:recheck": "node tools/verify-algorithm-admission.mjs",
+    "test:semantic-algorithm": "node --test test/semantic-algorithm-*.test.js",
     "coverage:current": "node tools/generate-capability-ledger.mjs",
     "oracle:install": "npm ci --prefix tools/spec-oracle --ignore-scripts --no-audit --no-fund"
   },

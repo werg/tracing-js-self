@@ -25,3 +25,7 @@ export {SelectedExecutionHarness,HARNESS_ENVELOPE_VERSION,
 export {SelectedModelDriver,selectedWitnessFromGroup} from './model-driver.js';
 
 export {createMegatokenProcessSelector,createMegatokenPythonSelector} from './megatoken-process.js';
+
+// Version-separated algorithm candidate. Old native receipts do not admit it.
+export {compileAlgorithmWitness,verifyAlgorithmProjection,verifyAlgorithmTrainingCase,
+  recheckAlgorithmEvidence,checkAlgorithmCounterfactualPrefixes} from '../semantic/compiler.js';

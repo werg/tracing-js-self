@@ -1,5 +1,10 @@
 # Version 5 semantic artifact boundary
 
+> **Historical contract.** The v5 identities and behavior below apply to their
+> original artifacts. See the [v6 baseline language](PRODUCTION_TRACE_V6.md) and
+> [algorithm implementation ledger](SEMANTIC_ALGORITHM_IMPLEMENTATION.md) for
+> subsequent work; qualification is not transferred to successor artifacts.
+
 The current public execution envelope and witness are `semantic-execution/5`
 and `semantic-trace/5`. The shared declaration is
 `contracts/semantic-harness-v5.json` with schema `semantic-harness-contract/5`.

@@ -35,7 +35,7 @@ export function loadNativeSettings({megatoken,tokenizer,python='python3',policyF
   return {megatoken:resolve(megatoken),tokenizer:resolve(tokenizer),python,policy,timeoutMs,maxOutputBytes,
     temporaryDirectory:resolve(temporaryDirectory)};
 }
-export function createNativeConsumer(settings){
+export function createNativeConsumer(settings,{script='scripts/admit_semantic_harness.py',extraArguments=[]}={}){
   if(!settings)return null;
   return async exported=>{
     const directory=settings.temporaryDirectory;mkdirSync(directory,{recursive:true});
@@ -43,8 +43,8 @@ export function createNativeConsumer(settings){
     atomicWrite(input,JSON.stringify(exported)+'\n');
     try{
       await new Promise((resolveRun,reject)=>{
-        const child=spawn(settings.python,[resolve(settings.megatoken,'scripts/admit_semantic_harness.py'),
-          '--input',input,'--output',receipt,'--tokenizer-json',settings.tokenizer],
+        const child=spawn(settings.python,[resolve(settings.megatoken,script),
+          '--input',input,'--output',receipt,'--tokenizer-json',settings.tokenizer,...extraArguments],
         {stdio:['ignore','pipe','pipe'],shell:false,env:generationEnvironment()});
         let error='',bytes=0,done=false;
         const finish=problem=>{if(done)return;done=true;clearTimeout(timer);

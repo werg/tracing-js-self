@@ -1,5 +1,10 @@
 # Selected semantic execution v5
 
+> **Historical v5 interface.** Production/current claims below describe that
+> version. See the [v6 baseline language](PRODUCTION_TRACE_V6.md) and
+> [algorithm implementation ledger](SEMANTIC_ALGORITHM_IMPLEMENTATION.md)
+> for subsequent work. Original identities and evidence remain unchanged.
+
 The production selected interface uses `semantic-execution/5`,
 `semantic-trace/5`, `semantic-context/5`, `semantic-continuation/5`, and
 `selected-harness/2`. Old envelopes and continuation versions fail closed.

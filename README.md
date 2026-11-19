@@ -4,6 +4,14 @@ An **experimental, owned-machine JavaScript semantic tracing runtime**, bootstra
 
 This is a working **bounded prototype**, **not** a complete JavaScript interpreter or complete Node/browser runtime. Unsupported language features fail explicitly rather than running guest JavaScript outside the tracer. See [current semantic-execution scope](docs/SEMANTIC_REASONING_TRACE.md) and [coverage ledger](coverage/required.json).
 
+The [algorithm representation refactor](docs/SEMANTIC_ALGORITHM_IMPLEMENTATION.md)
+builds on the v6 baseline: several certified source forms should share a typed
+core that states the computation and relevant effects. Its
+[semantic and observation contract](docs/SEMANTIC_ALGORITHM_CONTRACT.md)
+defines the bounded equivalences, causal boundaries, and qualification gates.
+The ledger separates completed work from release evidence; historical artifacts
+keep their original versions.
+
 The current v6 pipeline includes bounded synchronous and asynchronous
 execution, explicit guest throws, independent source verification, immutable
 candidate identities, frozen source components, resumable generation and
@@ -25,6 +33,91 @@ trace-abstraction experiments and coverage-aware sampling. Its ledger separates
 implemented tools from the learning and release gates still awaiting evidence.
 See [owned arithmetic and evidence](docs/OWNED_ARITHMETIC.md) for the earlier
 spec-operation milestone.
+
+## Algorithm trace candidate
+
+The bounded algorithm pipeline is available through `tracing-js-self/semantic`.
+It lowers lexical renaming, private temporaries, bounded pure helpers, private
+ordinary-object state, pure selections, and certified ordered numeric folds to
+one typed core. Indexed `for`, matching `while`, and eligible `for...of` sums
+share this explanation:
+
+```text
+v0 = fold_left($a0, 0, add) => 9
+return 9
+```
+
+The serial counter profile exposes its actual interaction:
+
+```text
+request r0 b0: demo.readAsync("counter")
+observe r0 as v0: fulfilled 7
+v1 = add(%v0, 1) => 8
+request r1 b1: demo.store("counter", 8)
+observe r1 as v2: fulfilled undefined
+return 8
+```
+
+Observations are environment-supplied and receive zero native prediction loss.
+The independent v7 consumer checks the actual encoded masks and visible context.
+The trusted source definition binds
+`b0` and `b1` to capability authorization; the selected request supplies evaluated
+arguments once, and the host codec derives its payload. Cleanup, callbacks,
+concurrent outstanding requests, escaping identities, and other unproved forms
+use the independently checked detailed representation inside the same v7 contract.
+`result.exported` explicitly declares `representation: 'algorithm'` or
+`representation: 'detailed'`; unsupported compact lowering no longer drops a
+source-qualified example from v7 training.
+
+```js
+import {verifyAlgorithmTrainingCase} from 'tracing-js-self/semantic';
+
+const checked = await verifyAlgorithmTrainingCase({
+  family: 'ordered-sum-example', entry: 'run', args: [[2, 3, 4]],
+  source: '"use strict";function run(xs){let sum=0;for(const x of xs){sum+=x;}return sum;}',
+  fixture: {calls: []}
+});
+console.log(checked.status);
+console.log(checked.exported?.public.timeline);
+```
+
+`AlgorithmController` checks canonical or truthfully decomposed claims against
+committed state. `AlgorithmExecutionHarness` provides definition/input caching,
+live context, exact host routing, checkpoints, and durable intent handling.
+`persistCheckpoint()` and `restoreFromJournal()` use `SelectedIntentJournal`;
+restoration never dispatches automatically, and uncertain effects require
+explicit reconciliation.
+
+```sh
+npm run test:semantic-algorithm
+npm run semantic:contract
+npm run semantic:compare -- --out ../algorithm-comparison
+```
+
+For real pinned-tokenizer counts, add `--python PYTHON --consumer-root DIR
+--tokenizer-json FILE` to the comparison command. Reports keep target,
+observation, framing, and actual JavaScript context costs separate. Byte counts
+are never substituted for missing token measurements.
+
+The candidate uses `semantic-trace/7`, `semantic-execution/7`,
+`semantic-context/7`, and `semantic-continuation/7`. The independent companion
+now implements both representations, native admission, model serving, and the
+prepared-training gate. Each production candidate still requires fresh source
+and native receipts under the exact committed policy. The production default
+remains v6 pending the separate serving-cost and comprehension qualification.
+No old-format decoder or checkpoint migration was added. See the
+[native integration](docs/SEMANTIC_V7_NATIVE_INTEGRATION.md),
+[v7 training and export commands](docs/SEMANTIC_V7_TRAINING.md),
+[implementation ledger](docs/SEMANTIC_ALGORITHM_IMPLEMENTATION.md) and
+[comparison evidence](docs/evidence/semantic-algorithm-v7/README.md).
+
+The earlier [paired run](docs/evidence/semantic-algorithm-v7/paired-e96dd4e/MEASUREMENTS.md)
+retained all 98 declared executions: 93 normalized and five detailed fallbacks,
+with zero execution failures. All 87 equivalence-family executions converged
+and all 28 negative checks passed. On the unchanged eleven-case gallery,
+generated targets used 1,154 tokens versus 1,307 for v6 with the exact pinned
+tokenizer. These are generated-target counts; native serving cost and reader
+comprehension remain unqualified.
 
 ## Reproduce the current baseline
 
