@@ -87,11 +87,20 @@ const limited=result=>/limit|timeout|deadline|bound.exceeded/.test(result.status
 const disposition=result=>limited(result)?'resource_limited':
   /unsupported|refused/.test(result.status)?'unsupported':'failed';
 const generatedRows=exported=>(exported?.public?.timeline??[]).filter(row=>row.mode==='generated');
+const targetLine=row=>row.line??row.fields?.line??'';
 function regionCoverage(exported){
   const representation=exported.public.representation;
   // An episode is the only abstraction unit in v7. Never call its individual
   // arithmetic records independently certified regions.
   const regions=representation==='mixed'?exported.public.regions:null;
+  const measured=exported.sidecar?.regionCoverage;
+  if(representation==='mixed'&&measured){
+    if(!['compactRegions','detailedRegions','compactRecords','detailedRecords'].every(key=>
+      Number.isSafeInteger(measured[key])&&measured[key]>=0))throw new TypeError('Invalid certified mixed-region counts');
+    return {status:'passed',unit:'certified region',compact:measured.compactRegions,
+      detailed:measured.detailedRegions,total:measured.compactRegions+measured.detailedRegions,
+      compactRecords:measured.compactRecords,detailedRecords:measured.detailedRecords};
+  }
   if(representation==='mixed'&&!Array.isArray(regions))return {
     status:'untested',reason:'The producer did not publish a certified region inventory',
     compact:null,detailed:null,total:null};
@@ -162,9 +171,9 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
         stages.compactRecognition=row.regions.compact>0?'passed':'unsupported';
         stages.detailedFallback=row.regions.detailed>0?'passed':'untested';
         row.domain=side.provenance?.inputGuards??side.provenance?.preconditions??null;
-        const records=generatedRows(artifact),allBytes=records.reduce((n,item)=>n+Buffer.byteLength(item.line??''),0);
+        const records=generatedRows(artifact),allBytes=records.reduce((n,item)=>n+Buffer.byteLength(targetLine(item)),0);
         const detailBytes=records.filter(item=>row.representation==='detailed'||item.representation==='detailed'||
-          item.line?.startsWith('detail ')).reduce((n,item)=>n+Buffer.byteLength(item.line??''),0);
+          targetLine(item).startsWith('detail ')).reduce((n,item)=>n+Buffer.byteLength(targetLine(item)),0);
         row.publicCost={generatedRecords:records.length,generatedBytes:allBytes,detailedBytes:detailBytes,
           detailedByteShare:allBytes?detailBytes/allBytes:0,generatedTokens:null,detailedTokenShare:null,
           tokenStatus:'untested',reason:'No actual serving tokenizer measurement is supplied to this ledger'};
