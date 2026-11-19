@@ -9,7 +9,7 @@ import {describeCompletionGraph} from '../src/training/exception-profile.js';
 import {instrumentOperationSource} from '../src/training/operation-reference.js';
 import {instrumentBranchSource} from '../src/training/branch-reference.js';
 import {instrumentCompletionSource,COMPLETION_HOOK} from '../src/training/completion-reference.js';
-import {createProtocolCompletionCapture} from '../src/semantic/protocol-source-observations-v8.js';
+import {createProtocolCompletionCapture,prepareProtocolObservationExtensionsV8} from '../src/semantic/protocol-source-observations-v8.js';
 import {encode} from '../src/values.js';
 
 let mode='original',phase='input';
@@ -18,9 +18,10 @@ try{
   if(!['original','operations','branches','completions'].includes(mode)||
     !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(input.entry??''))throw new TypeError('Invalid reference mode or entry');
   const args=decodeOwnedGraph(JSON.stringify(input.inputGraph)),operations=[],decisions=[],failures=[];
-  const completion=createProtocolCompletionCapture({initialValues:args});
+  const extensions=prepareProtocolObservationExtensionsV8({source:input.source,mode,side:'native'});
+  const completion=createProtocolCompletionCapture({initialValues:args,adapters:extensions.metadataAdapters});
   function bounded(list,row){if(list.length>=32768)throw new RangeError('Independent protocol observation cap');list.push(row);}
-  const context=vm.createContext({__args:args,__result:undefined,__kind:'return',
+  const context=vm.createContext({...extensions.globals,__args:args,__result:undefined,__kind:'return',
     __tracingCapture:(site,value)=>{try{bounded(operations,{site,value:encode(value)});}catch(error){failures.push(error.message);throw error;}return value;},
     __tracingBranch:(site,value)=>{bounded(decisions,{site,decision:['bool',!Boolean(value)]});return value;},
     __tracingLogical:(site,operator,value)=>{bounded(decisions,{site,decision:['bool',
@@ -31,7 +32,7 @@ try{
   phase='instrumentation';
   const source=mode==='operations'?instrumentOperationSource(input.source):
     mode==='branches'?instrumentBranchSource(input.source):
-    mode==='completions'?instrumentCompletionSource(input.source):input.source;
+    mode==='completions'?extensions.instrument(instrumentCompletionSource(input.source)):input.source;
   phase='compile';const script=new vm.Script(source+'\ntry { __result = '+input.entry+
     '.apply(undefined,__args); } catch (__guestThrown) { __kind="throw"; __result=__guestThrown; }',
     {filename:'independent-protocol-reference-v8.js'});

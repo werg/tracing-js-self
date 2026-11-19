@@ -14,6 +14,7 @@ import {encodeWitness} from '../training/format.js';
 import {encodeDetailedRecord} from './detailed-v7.js';
 import {RegionExecutionHarness} from './region-harness.js';
 import {encodeProtocolRecordV8,validateProtocolValueV8} from './protocol-codec-v8.js';
+import {PROTOCOL_SOURCE_ADAPTERS_V8} from './protocol-extensions-v8.js';
 import {applyProtocolRecordV8,describeProtocolObjectV8,assertProtocolDetailCompatible} from './protocol-state-v8.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual,lit=value=>({op:'literal',value:copy(value)});
@@ -23,11 +24,12 @@ const ordinaryFields=new Set(['id','kind','properties','propertyVersions','shape
 const functionFields=new Set([...ordinaryFields,'codeId','closureEnvId','async','arrow','lexicalThis','nonConstructible']);
 const symbolFields=new Set(['id','kind','description','registeredKey','properties','propertyVersions','shapeVersion','version']);
 const frameFields=new Set(['id','codeId','pc','stack','envId','callerFrameId','asyncPromiseId','status','blockedOn','awaiting','operationId','pendingCoercionThrow','handlers','loops','thisValue','version','pendingProperty','completion']);
-function guardHeap(node){
+function guardHeap(node,{extraFields=[],allowUnknown=false,allowFunctionMetadata=false}={}){
   const fields=node.kind==='symbol'?symbolFields:node.kind==='function'?functionFields:
     ['object','array'].includes(node.kind)?ordinaryFields:null;
-  if(!fields||Object.keys(node).some(key=>!fields.has(key)))refuse('heap kind or metadata needs a declared protocol: '+node.kind);
-  if(node.nonConstructible===true&&!node.arrow)refuse('method construction capability requires explicit function metadata');
+  const allowed=fields?new Set([...fields,...extraFields]):allowUnknown?new Set(['id','kind','version',...extraFields]):null;
+  if(!allowed||Object.keys(node).some(key=>!allowed.has(key)))refuse('heap kind or metadata needs a declared protocol: '+node.kind);
+  if(node.nonConstructible===true&&!node.arrow&&!allowFunctionMetadata)refuse('method construction capability requires explicit function metadata');
   if(node.kind==='function'&&node.async)refuse('async function state needs the scheduler protocol');
 }
 function prototype(node){const p=node.prototype;
@@ -50,12 +52,12 @@ function orderedKeys(node){
   return [...keys.filter(integer).sort((a,b)=>Number(a)-Number(b)),
     ...keys.filter(key=>!integer(key)&&propertyKeyValue(key)[0]==='str'),...keys.filter(key=>propertyKeyValue(key)[0]==='symbol')];
 }
-function sourceInventory(source){const functions=new Map(),nodes=new Map();
+function sourceInventory(source,admitSyntax=()=>false){const functions=new Map(),nodes=new Map();
   function visit(node){if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(visit);return;}
     if(typeof node.type==='string')nodes.set(node.start+':'+node.end,node);
     if(node.type==='Identifier'&&(/^__tracing/.test(node.name)||['__args','__result','__kind'].includes(node.name)))refuse('reserved independent observation name');
     if(['FunctionDeclaration','FunctionExpression','ArrowFunctionExpression'].includes(node.type))functions.set(node.start,node);
-    if(['AwaitExpression','YieldExpression','ClassDeclaration','ClassExpression','NewExpression','TaggedTemplateExpression'].includes(node.type))refuse(node.type+' requires its own protocol profile');
+    if(['AwaitExpression','YieldExpression','ClassDeclaration','ClassExpression','NewExpression','TaggedTemplateExpression'].includes(node.type)&&!admitSyntax(node))refuse(node.type+' requires its own protocol profile');
     for(const [key,child]of Object.entries(node))if(!['start','end','loc','raw'].includes(key))visit(child);
   }visit(parse(source,{ecmaVersion:'latest',sourceType:'script'}));return {functions,nodes};
 }
@@ -66,15 +68,28 @@ function referencedNames(node){const names=new Set();
     for(const [key,child]of Object.entries(value))if(!['start','end','loc','raw'].includes(key))visit(child,value,key);
   }visit(node.body);return names;
 }
-export function compileProtocolSourceV8(bundle,{maxGenerated=16384}={}){
+export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROTOCOL_SOURCE_ADAPTERS_V8}={}){
   if(validateBundle(bundle).valid!==true||replayExact(bundle).valid!==true)refuse('invalid owned archive');
   const entry=bundle.entrySpec;if(entry?.kind!=='function')refuse('explicit function entry required');
   const source=bundle.sources.find(row=>row.sourceId===entry.sourceId)?.text;
-  const inventory=sourceInventory(source),semantic=normalizeJournal(bundle),rows=new Map(semantic.events.map(row=>[row.journalEvent,row]));
+  adapters=adapters.map(adapter=>typeof adapter==='function'?adapter({bundle,source}):adapter).filter(Boolean);
+  if(adapters.some(adapter=>typeof adapter.id!=='string'||!adapter.id||adapter.id.length>128)||
+    new Set(adapters.map(adapter=>adapter.id)).size!==adapters.length)refuse('distinct versioned extension identities required');
+  const usedAdapters=new Set(),heapOwners=new Map(),frameOwners=new Map();
+  const use=adapter=>{if(typeof adapter.id!=='string'||!adapter.id)refuse('extension requires a stable profile identity');usedAdapters.add(adapter.id);};
+  function extension(method,...args){for(const adapter of adapters){const result=adapter[method]?.(...args);
+    if(result!==undefined&&result!==null&&result!==false){use(adapter);return result;}}return null;}
+  function guardedHeap(node){const owners=adapters.filter(adapter=>adapter.heapFields?.(node)!=null),extraFields=[];
+    for(const adapter of owners){const fields=adapter.heapFields(node);if(!Array.isArray(fields)||typeof adapter.checkHeap!=='function')refuse('heap extension requires fields and a complete state check');
+      extraFields.push(...fields);use(adapter);}
+    if(owners.length)heapOwners.set(node.id,owners);
+    guardHeap(node,{extraFields,allowUnknown:owners.length>0,allowFunctionMetadata:owners.length>0});
+  }
+  const inventory=sourceInventory(source,node=>extension('syntax',node)),semantic=normalizeJournal(bundle),rows=new Map(semantic.events.map(row=>[row.journalEvent,row]));
   for(const program of Object.values(bundle.programs))if(!program.strict||program.async||program.generator||program.parameterExpressions||program.restIndex>=0)
-    refuse('first protocol source profile requires strict synchronous functions with simple parameters');
+    if(!extension('program',program))refuse('first protocol source profile requires strict synchronous functions with simple parameters');
   for(const table of ['effects','promises','inputs'])if(Object.keys(bundle.finalState[table]??{}).length)refuse('effects/jobs require their declared protocol profile');
-  for(const node of Object.values(bundle.initialState.heap))guardHeap(node);
+  for(const node of Object.values(bundle.initialState.heap))guardedHeap(node);
   const ownedInitial=describeOwnedGraph(bundle.initialState.heap,entry.arguments);
   const inputGraph={roots:copy(ownedInitial.roots),objects:ownedInitial.objects.map(node=>({id:node.id,kind:node.kind,
     ...(node.prototype===null?{prototype:null}:{}),properties:node.properties.map(({key,value})=>({key,value}))}))};
@@ -88,7 +103,9 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384}={}){
   for(const program of Object.values(bundle.programs))for(const instruction of program.instructions)
     if(instruction.arg?.codeId&&['DEF_FN','MAKE_FUNCTION'].includes(instruction.op)){
       functionCodes.set(instruction.arg.codeId,instruction.op==='DEF_FN'?instruction.arg.name:'function:'+instruction.start);
-      const node=inventory.functions.get(instruction.start);if(!node)refuse('missing exact source function');functionNodes.set(instruction.arg.codeId,node);
+      const custom=extension('functionDefinition',instruction,inventory),node=custom?.node??inventory.functions.get(instruction.start);
+      if(custom?.code)functionCodes.set(instruction.arg.codeId,custom.code);
+      if(!node)refuse('missing exact source function');functionNodes.set(instruction.arg.codeId,node);
     }
   const frame=id=>{if(!frames.has(id))frames.set(id,'guest'+(++frameCounter));return frames.get(id);};
   const cell=(env,name)=>{const key=env+':'+name;if(!names.has(key)){
@@ -116,7 +133,10 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384}={}){
     value=tag(value,event);emit(value[0]==='symbol'?{kind:'bind',name,value}:{kind:'bind',fields:{name,value}},event,'owned-source-cell/1',{detail:value[0]!=='symbol'});
   };
   function publish(node,event){
-    guardHeap(node);if(published.has(node.id))return;if(publishing.has(node.id))refuse('recursive unpublished closure capture');publishing.add(node.id);
+    guardedHeap(node);if(extension('allocate',context,node,event)){published.add(node.id);return;}return baseAllocate(node,event);
+  }
+  function baseAllocate(node,event){
+    guardedHeap(node);if(published.has(node.id))return;if(publishing.has(node.id))refuse('recursive unpublished closure capture');publishing.add(node.id);
     if(node.kind==='symbol'){
       emit(node.registeredKey===undefined?{kind:'symbol.create',id:node.id,description:copy(node.description)}:
         {kind:'symbol.for',id:node.id,key:node.registeredKey},event,'owned-source-symbol/1');published.add(node.id);publishing.delete(node.id);return;
@@ -155,7 +175,12 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384}={}){
     }else emit({kind:'compute',expr,result,bind:name},event,'owned-source-computation/1');
   }
   function key(value){if(value?.[0]==='symbol')return copy(value);if(!['undefined','null','str','num','bool','bigint'].includes(value?.[0]))refuse('observable ToPropertyKey requires a coercion protocol');return ['str',String(decode(value))];}
-  function checkNode(node){guardHeap(node);if(node.kind==='symbol'){
+  function checkNode(node){guardedHeap(node);
+    for(const adapter of heapOwners.get(node.id)??[])if(adapter.checkHeap(context,node)!==true)refuse('extension failed its complete heap comparison: '+adapter.id);
+    if(!['object','array','function','symbol'].includes(node.kind))return;
+    return baseCheckHeap(node);
+  }
+  function baseCheckHeap(node){if(node.kind==='symbol'){
       const row=controller.protocol?.symbols.find(row=>row.id===node.id);if(!row||!eq(row.description,node.description)||
         (node.registeredKey===undefined?row.kind!=='unique':row.kind!=='registry'||row.key!==node.registeredKey))refuse('Symbol declaration differs from owned identity');return;}
     const expected={kind:node.kind==='function'?'closure':node.kind,prototype:prototype(node),extensible:node.extensible!==false,
@@ -200,17 +225,31 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384}={}){
     }
     refuse('builtin call needs a declared protocol operation: '+name);
   }
+  const context={bundle,source,inventory,state,beforeState:state,controller,claims,
+    emit,bind,tag,cell,frame,codeFor,publish,baseAllocate,baseCheckHeap,
+    functionCodes,functionNodes,published,pendingAccessors,
+    key,descriptor,prototype,orderedKeys,refuse,copy,eq,
+    markPublished(id){published.add(id);},
+    get publicInvocation(){return controller.stack.at(-1);},
+    getOwnedFrame(id){return state.frames[id];},
+    extensionState:new Map()};
+  for(const adapter of adapters)adapter.setup?.(context);
   const entryEnv=state.frames[semantic.rootInvocation].envId;
   for(const [name,binding]of Object.entries(state.envs[entryEnv]?.bindings??{}))if(binding.initialized)bind(cell(entryEnv,name),binding.token.value);
   for(const event of bundle.events){
     const row=rows.get(event.eventId),heapChanges=event.stateChanges.filter(change=>change.table==='heap');
-    for(const change of heapChanges)if(change.after)guardHeap(change.after);else refuse('heap deletion needs a protocol');
+    for(const change of heapChanges)if(change.after)guardedHeap(change.after);else refuse('heap deletion needs a protocol');
     for(const change of event.stateChanges)if(change.table==='frames'&&change.after){
-      if(Object.keys(change.after).some(key=>!frameFields.has(key))||change.after.asyncPromiseId||change.after.awaiting||change.after.handlers?.length)
-        refuse('frame continuation needs its declared protocol');
+      const owners=adapters.filter(adapter=>adapter.frameFields?.(change.after)!=null),allowed=new Set(frameFields);
+      for(const adapter of owners){const fields=adapter.frameFields(change.after);if(!Array.isArray(fields)||typeof adapter.checkFrame!=='function')refuse('frame extension requires fields and state checking');
+        fields.forEach(key=>allowed.add(key));use(adapter);}
+      if(owners.length)frameOwners.set(change.id,owners);
+      if(Object.keys(change.after).some(key=>!allowed.has(key))||
+        !owners.length&&(change.after.asyncPromiseId||change.after.awaiting||change.after.handlers?.length))refuse('frame continuation needs its declared protocol');
     }
-    if(!row&&heapChanges.length)refuse('unprojected owned heap transition: '+event.operation);
-    if(row){
+    const handled=extension('event',context,event,row);
+    if(!row&&!handled&&heapChanges.length)refuse('unprojected owned heap transition: '+event.operation);
+    if(row&&!handled){
       if(row.child){
         if(!['property.read','property.write','call.enter'].includes(event.operation))refuse('implicit callback dispatch needs its declared protocol');
         for(const change of heapChanges.filter(change=>change.before===null))publish(change.after,event);
@@ -284,6 +323,7 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384}={}){
       !['completed','thrown'].includes(change.before.status)&&['completed','thrown'].includes(change.after.status));
     finished.sort((a,b)=>controller.stack.indexOf(frame(b.id))-controller.stack.indexOf(frame(a.id)));
     for(const change of finished){
+      if(extension('completeFrame',context,change,event))continue;
       const invocation=frame(change.id),completion=change.after.completion;
       if(!completion?.value?.value)refuse('completed frame lacks a value');
       const kind=completion.type==='throw'?'throw':'return',value=tag(completion.value.value,event);
@@ -295,6 +335,8 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384}={}){
       }
     }
     for(const change of heapChanges)if(published.has(change.id))checkNode(change.after);
+    for(const change of event.stateChanges.filter(change=>change.table==='frames'&&change.after))
+      for(const adapter of frameOwners.get(change.id)??[])if(adapter.checkFrame(context,change.after,event)!==true)refuse('extension failed its complete frame comparison: '+adapter.id);
     for(const change of event.stateChanges)if(state[change.table]){
       if(change.after===null)delete state[change.table][change.id];else if(change.after!==undefined)state[change.table][change.id]=copy(change.after);
     }
@@ -303,6 +345,6 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384}={}){
   emit({kind:'end',completion:controller.pending.kind},null,'owned-source-terminal/1');
   const outcome=ownedEffectfulOutcome(bundle);
   return {schema:'semantic-protocol-source-projection/1',source,entry:entry.functionName,inputGraph,claims,outcome,
-    sourceProfile:'symbols-ordinary-properties/1',protocolRecords:claims.filter(row=>row.kind==='protocol').length,
+    sourceProfile:usedAdapters.size?'protocol-source-extensions/1':'symbols-ordinary-properties/1',extensions:[...usedAdapters].sort(),protocolRecords:claims.filter(row=>row.kind==='protocol').length,
     detailedRecords:claims.filter(row=>row.kind==='detail').length};
 }

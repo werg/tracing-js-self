@@ -3,8 +3,31 @@
 import {createCompletionCapture,ownedCompletionObservations,compareCompletionObservations}
   from '../training/completion-reference.js';
 import {createNativeProtocolMetadata,createOwnedProtocolMetadata} from './protocol-metadata-v8.js';
+import {PROTOCOL_OBSERVATION_ADAPTERS_V8} from './protocol-extensions-v8.js';
 export const PROTOCOL_COMPLETION_OBSERVATION_SCHEMA='source-protocol-completions/1';
 export const PROTOCOL_METADATA_LIMITS=Object.freeze({snapshots:8192,bytes:4194304,snapshotBytes:1048576});
+/** Trusted, statically registered producer extensions; never serving input. */
+export function prepareProtocolObservationExtensionsV8({source,mode='completions',side='native',bundle=null,
+  adapters=PROTOCOL_OBSERVATION_ADAPTERS_V8}={}){
+  if(mode!=='completions')return {ids:[],globals:{},metadataAdapters:[],instrument:text=>text};
+  const selected=adapters.map(adapter=>typeof adapter==='function'?adapter({source,mode,side,bundle}):adapter).filter(Boolean);
+  const globals={},metadataAdapters=[],ids=[];
+  for(const adapter of selected){
+    if(typeof adapter.id!=='string'||!adapter.id||ids.includes(adapter.id))throw new TypeError('Distinct observation extension identity required');
+    ids.push(adapter.id);
+    for(const [name,value]of Object.entries(adapter.globals??{})){
+      if(!/^__tracingProtocol[A-Za-z0-9_$]+$/.test(name)||Object.hasOwn(globals,name))
+        throw new TypeError('Observation extension global must have a distinct reserved name');
+      globals[name]=value;
+    }
+    if(adapter.metadataAdapter)metadataAdapters.push(adapter.metadataAdapter);
+  }
+  return {ids,globals,metadataAdapters,instrument(text){
+    for(const adapter of selected)if(adapter.instrument){text=adapter.instrument(text);
+      if(typeof text!=='string')throw new TypeError('Observation instrumentation must return source text');}
+    return text;
+  }};
+}
 function boundedMetadata(){let bytes=0;const receipts=[];return {receipts,append(row){
   const size=Buffer.byteLength(JSON.stringify(row),'utf8');
   if(receipts.length>=PROTOCOL_METADATA_LIMITS.snapshots||size>PROTOCOL_METADATA_LIMITS.snapshotBytes||bytes+size>PROTOCOL_METADATA_LIMITS.bytes)
@@ -16,8 +39,9 @@ export function createProtocolCompletionCapture(options){
   return {...completion,metadata:receipts,setIntrinsicPrototypes:metadata.setIntrinsicPrototypes,
     capture(site,kind,value){const result=completion.capture(site,kind,value);bounded.append(metadata.observe(site,kind,value));return result;}};
 }
-export function ownedProtocolSourceObservations(bundle,source){
-  const observer=createOwnedProtocolMetadata(bundle),bounded=boundedMetadata(),metadata=bounded.receipts;
+export function ownedProtocolSourceObservations(bundle,source,{adapters=PROTOCOL_OBSERVATION_ADAPTERS_V8}={}){
+  const extensions=prepareProtocolObservationExtensionsV8({source,side:'owned',bundle,adapters});
+  const observer=createOwnedProtocolMetadata(bundle,{adapters:extensions.metadataAdapters}),bounded=boundedMetadata(),metadata=bounded.receipts;
   const completions=ownedCompletionObservations(bundle,source,{onObservation:observation=>bounded.append(observer.observe(observation))});
   return {completions,metadata};
 }
