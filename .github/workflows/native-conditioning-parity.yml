@@ -167,7 +167,7 @@ jobs:
           PY
       - name: Qualify the current v6 source capability ledger
         run: |
-          node tools/generate-capability-ledger.mjs --out "$RUNNER_TEMP/current-v6-capabilities.json" \
+          node tools/generate-capability-ledger.mjs --version 6 --out "$RUNNER_TEMP/current-v6-capabilities.json" \
             --megatoken megatoken --python python --tokenizer "$RUNNER_TEMP/tokenizer.json" \
             --native-policy contracts/native-admission-policy-v6.json --require-native
       - name: Retain machine-readable evidence in the run log

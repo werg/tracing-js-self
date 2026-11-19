@@ -70,6 +70,22 @@ and source/continuation qualification for the declared slice.
 
 ## Producer and evidence
 
+`verifyRegionTrainingCase` is the common v8 source entry point. When historical
+detailed projection or its completion observer cannot represent a supported
+protocol, it tries the independently checked direct protocol compiler. Each
+attempt has an explicit disposition. Existing reference disagreements and
+resource failures retain their original evidence. The direct path independently
+checks source outcomes, operations, branches, completions and behavioral metadata
+before constructing public records and contexts.
+
+`recheckRegionEvidence`, native admission, family binding and dataset export
+dispatch on the exact evidence schema and repeat those source checks. Symbol,
+descriptor and binary-memory episodes therefore use the same family split,
+causal serializer and generated-only training masks as other v8 episodes.
+Public APIs, including explicit direct-protocol verification and profile field
+tables, are exported from `tracing-js-self/semantic`. Adding a public operation
+does not by itself qualify its source adapter or matching native consumer.
+
 `verifyRegionTrainingCase` first runs the owned interpreter and the existing
 independent outcome, operation, branch and completion audits with whole-episode
 summaries disabled. `projectRegionWitness` uses private source/journal

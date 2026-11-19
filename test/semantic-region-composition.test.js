@@ -80,3 +80,15 @@ test('future replies leave the earlier mixed public prefix unchanged and stay ob
   assert(result.exported.public.timeline.filter(row=>row.kind==='result').every(row=>row.mode==='observed'));
   assert.deepEqual(RegionExecutionHarness.replay(result.exported).controller.completion,{kind:'return',value:['num',8]});
 });
+
+test('oversized compact blocks refuse before changing live cells or publishing a region',()=>{
+  const h=fresh('"use strict";function run(x){const a="'+ 'x'.repeat(1024) +'";return a;}'),
+    candidate=h.preview('i','r0'),before=h.exportEpisode(),state=sharedRegionState(h.controller);
+  const entryBytes=Math.max(Buffer.byteLength(JSON.stringify(h.controller.segmentPacket()),'utf8'),
+    Buffer.byteLength(JSON.stringify(state),'utf8'));
+  h.controller.maxPacketBytes=entryBytes+1;
+  assert.throws(()=>h.select('i',candidate),/packet budget|continuation byte bound/);
+  assert.equal(h.controller.generated,0);
+  assert.deepEqual(sharedRegionState(h.controller),state);
+  assert.deepEqual(h.exportEpisode(),before);
+});
