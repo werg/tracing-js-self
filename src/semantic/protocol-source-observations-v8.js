@@ -4,12 +4,13 @@ import {createCompletionCapture,ownedCompletionObservations,compareCompletionObs
   from '../training/completion-reference.js';
 import {createNativeProtocolMetadata,createOwnedProtocolMetadata} from './protocol-metadata-v8.js';
 import {PROTOCOL_OBSERVATION_ADAPTERS_V8} from './protocol-observation-extensions-v8.js';
+import {stableAlgorithmJSON,assertAlgorithmDataArray} from './ir.js';
 export const PROTOCOL_COMPLETION_OBSERVATION_SCHEMA='source-protocol-completions/1';
 export const PROTOCOL_METADATA_LIMITS=Object.freeze({snapshots:8192,bytes:4194304,snapshotBytes:1048576});
 /** Trusted, statically registered producer extensions; never serving input. */
 export function prepareProtocolObservationExtensionsV8({source,mode='completions',side='native',bundle=null,
   adapters=PROTOCOL_OBSERVATION_ADAPTERS_V8}={}){
-  if(mode!=='completions')return {ids:[],globals:{},metadataAdapters:[],instrument:text=>text,initializeRealm(){}};
+  if(mode!=='completions')return {ids:[],globals:{},metadataAdapters:[],instrument:text=>text,initializeRealm(){},observations:()=>[]};
   const selected=adapters.map(adapter=>typeof adapter==='function'?adapter({source,mode,side,bundle}):adapter).filter(Boolean);
   const globals={},metadataAdapters=[],ids=[];
   for(const adapter of selected){
@@ -22,7 +23,27 @@ export function prepareProtocolObservationExtensionsV8({source,mode='completions
     }
     if(adapter.metadataAdapter)metadataAdapters.push(adapter.metadataAdapter);
   }
-  return {ids,globals,metadataAdapters,assignmentValue(observation){
+  // All source wrappers share one invocation chain. Observers see the actual
+  // callee/receiver/arguments once; an unrelated observer delegates unchanged.
+  const invoke=call=>{
+    let index=0;
+    const next=()=>{while(index<selected.length){const observer=selected[index++];
+      if(observer.observeCall)return observer.observeCall(call,next);}
+      return Reflect.apply(call.callee,call.receiver,call.arguments);};
+    return next();
+  };
+  for(const adapter of selected)adapter.setCallObserver?.(invoke);
+  return {ids,globals,metadataAdapters,observations(){
+    const results=[];
+    for(const adapter of selected)if(adapter.observations){
+      const rows=adapter.observations();assertAlgorithmDataArray(rows,'independent protocol observations');
+      if(rows.length>32768)throw new RangeError('Independent protocol observation bound');
+      if(rows.length)results.push({profile:adapter.id,rows:JSON.parse(stableAlgorithmJSON(rows))});
+    }
+    if(Buffer.byteLength(JSON.stringify(results))>PROTOCOL_METADATA_LIMITS.bytes)
+      throw new RangeError('Independent protocol observation byte bound');
+    return results;
+  },assignmentValue(observation){
     for(const adapter of selected){const value=adapter.ownedAssignmentValue?.(observation);if(value!==undefined&&value!==null)return value;}
     return undefined;
   },initializeRealm(evaluate){
@@ -50,7 +71,7 @@ export function ownedProtocolSourceObservations(bundle,source,{adapters=PROTOCOL
   const observer=createOwnedProtocolMetadata(bundle,{adapters:extensions.metadataAdapters}),bounded=boundedMetadata(),metadata=bounded.receipts;
   const completions=ownedCompletionObservations(bundle,source,{assignmentValue:extensions.assignmentValue,
     onObservation:observation=>bounded.append(observer.observe(observation))});
-  return {completions,metadata};
+  return {completions,metadata,extensionObservations:extensions.observations()};
 }
 export function ownedProtocolCompletionObservations(bundle,source){return ownedProtocolSourceObservations(bundle,source).completions;}
 export function compareProtocolCompletionObservations(expected,observed){

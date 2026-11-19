@@ -49,7 +49,9 @@ try{
   if(failures.length)throw new TypeError(failures[0]);
   phase='observe';
   const outcome={kind:context.__kind,graph:describeCompletionGraph(args,context.__result,context.__kind)};
+  const extensionObservations=extensions.observations();
   process.stdout.write(JSON.stringify({schema:'protocol-source-reference/1',mode,outcome,
-    operations,decisions,completions:completion.observations,metadata:completion.metadata})+'\n');
+    operations,decisions,completions:completion.observations,metadata:completion.metadata,
+    ...(extensionObservations.length?{extensionObservations}:{})})+'\n');
 }catch(error){process.stdout.write(JSON.stringify({schema:'protocol-source-reference/1',error:String(error.message),
   category:error.code==='ERR_SCRIPT_EXECUTION_TIMEOUT'?'resource_limited':'unsupported.protocol-reference',mode,phase})+'\n');process.exitCode=1;}

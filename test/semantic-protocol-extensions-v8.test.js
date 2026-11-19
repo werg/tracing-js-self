@@ -66,6 +66,20 @@ test('observation extensions only instrument completion mode and cannot overwrit
   assert.throws(()=>prepareProtocolObservationExtensionsV8({adapters:[adapter,adapter]}),/Distinct observation extension/);
 });
 
+test('independent call observers compose once and retain bounded private observation receipts',()=>{
+  const rows=[],receiver={},fn=function(value){assert.equal(this,receiver);rows.push('call');return value+1;};let invoke;
+  const extension=prepareProtocolObservationExtensionsV8({source:'',adapters:[
+    {id:'first/1',setCallObserver(value){invoke=value;},observeCall(call,next){assert.equal(call.callee,fn);rows.push('first');return next();},
+      observations:()=>rows.map(kind=>({kind}))},
+    {id:'second/1',observeCall(call,next){rows.push('second');return next();}}
+  ]});
+  assert.equal(invoke({callee:fn,receiver,arguments:[3]}),4);
+  assert.deepEqual(rows,['first','second','call']);
+  assert.deepEqual(extension.observations(),[{profile:'first/1',rows:rows.map(kind=>({kind}))}]);
+  const invalid=prepareProtocolObservationExtensionsV8({adapters:[{id:'bad/1',observations:()=>[{get value(){throw Error('must not execute');}}]}]});
+  assert.throws(()=>invalid.observations(),/non-data JSON object/);
+});
+
 test('trusted machine components share the authoritative heap and reserved identity checks',()=>{
   const c={heap:new Map(),locals:new Map(),captureAliases:new Map(),receiver:['undefined'],stack:['root'],
     frameFunctions:new Map([['root','run']]),pending:null,lastReturn:null,completion:null,protocol:createProtocolStateV8()};

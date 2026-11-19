@@ -80,9 +80,16 @@ export async function auditProtocolSourceV8({bundle,referenceInput,outcome,timeo
   const operationAudit=compareOperationObservations(expectedOperations,operations.operations),
     branchAudit=compareBranchObservations(expectedBranches,branches.decisions),
     completionAudit=compareProtocolCompletionObservations(ownedObservations.completions,completions.completions),
-    metadataAudit=compareProtocolMetadata(ownedObservations.metadata,completions.metadata);
-  if([operationAudit,branchAudit,completionAudit,metadataAudit].some(result=>result.status!=='agreed'))
-    fail('independent operation/branch/completion observations differ: '+JSON.stringify({operationAudit,branchAudit,completionAudit,metadataAudit}));
+    metadataAudit=compareProtocolMetadata(ownedObservations.metadata,completions.metadata),
+    extensionObservations=completions.extensionObservations??[],expectedExtensions=ownedObservations.extensionObservations??[],
+    extensionAudit={schema:'source-protocol-extension-checks/1',
+      status:isDeepStrictEqual(expectedExtensions,extensionObservations)?'agreed':'mismatch',
+      expected:expectedExtensions.reduce((sum,item)=>sum+item.rows.length,0),
+      observed:extensionObservations.reduce((sum,item)=>sum+item.rows.length,0)};
+  if([operationAudit,branchAudit,completionAudit,metadataAudit,extensionAudit].some(result=>result.status!=='agreed'))
+    fail('independent operation/branch/completion observations differ: '+JSON.stringify({operationAudit,branchAudit,completionAudit,metadataAudit,extensionAudit}));
   return {schema:'semantic-protocol-source-checks/1',status:'agreed',original,operationAudit,branchAudit,completionAudit,metadataAudit,
-    observations:{operations:operations.operations,decisions:branches.decisions,completions:completions.completions,metadata:completions.metadata}};
+    ...(extensionObservations.length?{extensionAudit}:{}),
+    observations:{operations:operations.operations,decisions:branches.decisions,completions:completions.completions,metadata:completions.metadata,
+      ...(extensionObservations.length?{extensions:extensionObservations}:{})}};
 }
