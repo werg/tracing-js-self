@@ -100,7 +100,7 @@ function ownedKeys(node){
     ...keys.filter(key=>!integer(key)&&propertyKeyValue(key)[0]==='str'),...keys.filter(key=>propertyKeyValue(key)[0]==='symbol')];
 }
 export function createOwnedProtocolMetadata(bundle,{adapters=[]}={}){
-  let currentState=bundle.initialState;
+  let currentState=bundle.initialState,currentObservation=null;
   adapters=instantiate([...PROTOCOL_METADATA_ADAPTERS_V8,...adapters],{side:'owned',bundle});
   function defaultNode(value,{includeFunctions=false}={}){
     if(value[0]!=='ref')return {kind:'function'};
@@ -122,7 +122,7 @@ export function createOwnedProtocolMetadata(bundle,{adapters=[]}={}){
       return {key:propertyKeyValue(key),descriptor};
     })};
   }
-  const context={bundle,get state(){return currentState;},defaultNode,fail};
+  const context={bundle,get state(){return currentState;},get observation(){return currentObservation;},defaultNode,fail};
   const metadata=tracker({
     type(value){if(!Array.isArray(value))fail('missing owned observation value');
       if(value[0]==='symbol')return 'symbol';
@@ -141,7 +141,7 @@ export function createOwnedProtocolMetadata(bundle,{adapters=[]}={}){
     }
   });
   for(const value of bundle.entrySpec.arguments)metadata.value(value);metadata.snapshot();
-  return {observe({row,tag,state}){currentState=state;if(!['finally','break','continue'].includes(row.kind))metadata.value(tag);
+  return {observe(observation){const {row,tag,state}=observation;currentObservation=observation;currentState=state;if(!['finally','break','continue'].includes(row.kind))metadata.value(tag);
     return {schema:PROTOCOL_METADATA_SCHEMA,site:row.site,kind:row.kind,...metadata.snapshot()};}};
 }
 export function compareProtocolMetadata(expected,observed){

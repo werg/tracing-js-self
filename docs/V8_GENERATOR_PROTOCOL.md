@@ -33,8 +33,11 @@ An instance is a heap node with these exact fields:
     from: 'suspendedStart' | 'suspendedYield',
     value
   },
+  pending: null | {kind: 'return' | 'throw', value},
   yielded: integer,
-  handlers: [],
+  handlers: [{name, catch: boolean, finally: boolean,
+    phase: 'try' | 'catch' | 'finally', caught: null | value,
+    pending: null | {kind: 'normal' | 'return' | 'throw', value}}],
   delegation: null,
   prototype: ['ref', prototypeId] | 'Generator.prototype',
   properties: Map
@@ -43,9 +46,9 @@ An instance is a heap node with these exact fields:
 
 Common descriptor metadata (`descriptors`, `keyOrder`, `extensible`) can be
 present on the same node. There is no second generator heap or top-level
-generator state table. The initial component requires empty handlers and null
-delegation; general cleanup and delegated continuations require their explicit
-follow-on transitions before source admission. Unknown state fields fail
+generator state table. Handler records retain exact thrown values and pending
+cleanup completions, including when a `finally` body yields. Delegation still
+requires its explicit follow-on transitions before source admission. Unknown state fields fail
 restoration. The function's prototype property is read on each creation; a
 primitive property value selects the intrinsic fallback, while an ordinary
 reference preserves the actual identity.
@@ -57,6 +60,10 @@ reference preserves the actual identity.
 | `generator.start` | Suspend before body evaluation and return the instance identity. |
 | `generator.resume` | Reactivate the same retained invocation with next, return or throw input. |
 | `generator.receive` | Consume a normal sent value, optionally binding an existing public cell name; the initial next argument is ignored. |
+| `generator.handler.enter` | Enter a distinct catch/finally obligation. |
+| `generator.handler.route` | Select the catch or cleanup continuation for an exact normal, return or throw completion. |
+| `generator.handler.catch` | Consume the selected thrown value, optionally binding its public catch cell. |
+| `generator.handler.leave` | Finish cleanup and resume its retained completion, preserving outer obligations. |
 | `generator.yield` | Allocate a fresh `{value,done:false}`, suspend, and restore the caller's receiver and capture aliases. |
 | `generator.finish` | Complete the retained invocation with a fresh done result or exact thrown value. |
 | `generator.completed` | Handle completed next/return/throw, including return/throw before the body starts. |
@@ -96,9 +103,38 @@ replacement, reentry, transactional rejection, and malformed restoration.
 for normal sent values, return before body execution, and thrown resumption.
 These are explicitly component fixtures, not source/native admission receipts.
 
+`synchronous-generator-source/1` now projects strict source generators with
+simple parameters through that same machine. It checks exact callable,
+prototype, retained invocation, original receiver/arguments, capture aliases,
+sent values, yield-result identities, nested catch/finally obligations, terminal
+return/throw and permanent completion. A cleanup body may yield repeatedly;
+its pending completion remains checked until resumed or overridden by a new
+explicit return/throw. Compact arithmetic can run before and after suspension. Public
+contexts and JSON checkpoints replay the retained invocation without entering
+the generator body again.
+
+The independent V8 observer intercepts only the calls selected by the source;
+it neither advances a generator to inspect it nor substitutes an owned result.
+It records actual creation, resume, suspension and completion state together
+with callee/receiver/argument identity and own descriptors. Iterator and Number
+call observers compose through one shared invocation dispatcher. Hidden
+lifecycle mutants with unchanged scalar outcomes fail the metadata audit.
+Independent creation and resume receipts also compare the actual invocation
+arguments, including ignored first-next inputs and abrupt inputs later
+overridden by cleanup. They remain private reference evidence and do not
+replace any public continuation transition.
+Native consumer qualification remains a separate exact-contract gate.
+
+The source adapter explicitly refuses delegation, loop-target cleanup,
+generator own-property mutation, parameter expressions and async generators.
+Implicit exotic failures require their separately checked abrupt continuations.
+Hoisted captures which are still uninitialized at publication keep
+the common source compiler's explicit refusal; an initialized lexical closure
+can retain live capture cells across suspension.
+
 The public machine is bounded to 4,096 generator allocations, yields and
 arguments, with the enclosing protocol's call-depth and record-count limits.
-Async generators, general handler/delegation state, builtin function values,
+Async generators, delegation state, builtin function values,
 exotic prototype getters and host transport require separately qualified
 profiles. Existing v6/v7 value and continuation contracts remain unchanged.
 

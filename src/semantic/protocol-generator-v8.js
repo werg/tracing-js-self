@@ -10,6 +10,10 @@ export const GENERATOR_RECORD_FIELDS=Object.freeze(Object.fromEntries(Object.ent
   'generator.start':['kind','object'],
   'generator.resume':['kind','object','method','argument'],
   'generator.receive':['kind','object','bind'],
+  'generator.handler.enter':['kind','object','name','catch','finally'],
+  'generator.handler.route':['kind','object','completion'],
+  'generator.handler.catch':['kind','object','name','bind'],
+  'generator.handler.leave':['kind','object','name'],
   'generator.yield':['kind','object','value','name'],
   'generator.finish':['kind','object','completion','name'],
   'generator.completed':['kind','object','method','argument','name'],
@@ -17,14 +21,16 @@ export const GENERATOR_RECORD_FIELDS=Object.freeze(Object.fromEntries(Object.ent
   'generator.read':['kind','object','key','result'],
   'generator.identity':['kind','object','result']
 }).map(([kind,fields])=>[kind,Object.freeze(fields)])));
-export const GENERATOR_HEAP_FIELDS=Object.freeze(['kind','callee','invocation','receiver','arguments','phase','resume','yielded',
+export const GENERATOR_HEAP_FIELDS=Object.freeze(['kind','callee','invocation','receiver','arguments','phase','resume','pending','yielded',
   'handlers','delegation','prototype','properties']);
 const phases=new Set(['initializing','suspendedStart','executing','suspendedYield','completed']),methods=new Set(['next','return','throw']);
 const builtins=new Set(['Generator.next','Generator.return','Generator.throw','Iterator.identity']);
 const bound=4096,ref=id=>['ref',id],U=()=>['undefined'];
 function id(value){if(typeof value!=='string'||!value||value.length>256)throw new TypeError('Generator identity');}
 function key(value){assertAlgorithmDataArray(value,'generator key');if(value.length!==2||!['str','symbol'].includes(value[0])||typeof value[1]!=='string')throw new TypeError('Generator property key');}
-function completion(record,value){assertAlgorithmFields(record,['kind','value'],'generator completion');if(!['return','throw'].includes(record.kind))throw new TypeError('Generator completion kind');value(record.value);}
+function completion(record,value,{normal=false}={}){assertAlgorithmFields(record,['kind','value'],'generator completion');
+  if(!['return','throw',...(normal?['normal']:[])].includes(record.kind))throw new TypeError('Generator completion kind');value(record.value);
+  if(record.kind==='normal'&&record.value[0]!=='undefined')throw new TypeError('Normal generator handler completion has no value');}
 export function validateGeneratorRecordV8(record,{value}){
   if(!isAlgorithmDataRecord(record))throw new TypeError('Generator record must be ordinary data');
   const fields=GENERATOR_RECORD_FIELDS[record?.kind];if(!fields)return false;assertAlgorithmFields(record,fields,'generator record');
@@ -41,6 +47,9 @@ export function validateGeneratorRecordV8(record,{value}){
   if(['generator.resume','generator.completed'].includes(record.kind)&&!methods.has(record.method))throw new TypeError('Generator resume kind');
   if(record.kind==='generator.lookup'&&!builtins.has(record.method))throw new TypeError('Generator builtin selection');
   if(record.kind==='generator.finish')completion(record.completion,value);
+  if(record.kind==='generator.handler.route')completion(record.completion,value,{normal:true});
+  if(record.kind==='generator.handler.enter'&&(typeof record.catch!=='boolean'||typeof record.finally!=='boolean'||!record.catch&&!record.finally))
+    throw new TypeError('Generator handler needs catch or finally');
   return true;
 }
 const data=(value,{writable=true,enumerable=false,configurable=true}={})=>({kind:'data',value,writable,enumerable,configurable});
@@ -102,11 +111,36 @@ export function assertGeneratorNextV8(controller,record,api){
   api.require(!['return','throw'].includes(record.kind),'generator completion requires its retained continuation protocol');
   if(current.resume?.kind==='next')api.require(record.kind==='generator.receive'&&record.object===currentId(controller,current),
     'normal generator resume input must be consumed before body work');
-  if(current.resume&&current.resume.kind!=='next')api.require(record.kind==='generator.finish'&&record.object===currentId(controller,current),
+  if(current.resume&&current.resume.kind!=='next')api.require(['generator.finish','generator.handler.route'].includes(record.kind)&&record.object===currentId(controller,current),
     'abrupt generator resume requires its handler continuation or completion');
+  if(current.pending)api.require(record.kind==='generator.finish'&&record.object===currentId(controller,current),
+    'generator pending terminal completion cannot be discarded');
+  if(current.handlers.at(-1)?.caught!==null&&current.handlers.at(-1)?.caught!==undefined)
+    api.require(record.kind==='generator.handler.catch'&&record.object===currentId(controller,current),
+      'generator catch must consume the exact thrown value');
   return true;
 }
 function currentId(controller,value){for(const [id,node]of controller.heap)if(node===value)return id;return null;}
+function route(controller,object,completion,api){
+  api.known(controller,completion.value);
+  if(completion.kind==='normal'){
+    const handler=object.handlers.at(-1);
+    api.require(handler&&handler.phase!=='finally'&&handler.caught===null,'normal generator handler completion');
+    if(handler.finally){handler.phase='finally';handler.pending=api.copy(completion);}
+    else object.handlers.pop();return;
+  }
+  while(object.handlers.length){
+    const handler=object.handlers.at(-1);
+    if(completion.kind==='throw'&&handler.phase==='try'&&handler.catch){
+      handler.phase='catch';handler.caught=api.copy(completion.value);return;
+    }
+    if(handler.phase!=='finally'&&handler.finally){
+      handler.phase='finally';handler.caught=null;handler.pending=api.copy(completion);return;
+    }
+    object.handlers.pop();
+  }
+  object.pending=api.copy(completion);
+}
 export function applyGeneratorRecordV8(controller,record,api){
   if(!Object.hasOwn(GENERATOR_RECORD_FIELDS,record.kind))return false;
   if(record.kind==='generator.function'){
@@ -122,7 +156,7 @@ export function applyGeneratorRecordV8(controller,record,api){
     const parent=prototype(controller,fn,api);
     api.call(controller,{child:record.child,callee:record.callee,receiver:record.receiver,arguments:record.arguments},{generator:true});
     controller.heap.set(record.name,{kind:'generator',callee:api.copy(record.callee),invocation:record.child,receiver:api.copy(record.receiver),arguments:api.copy(record.arguments),
-      phase:'initializing',resume:null,yielded:0,handlers:[],delegation:null,prototype:parent,properties:new Map()});
+      phase:'initializing',resume:null,pending:null,yielded:0,handlers:[],delegation:null,prototype:parent,properties:new Map()});
   }else if(record.kind==='generator.lookup'){
     api.require(lookup(controller,record.receiver,record.key,api).builtin===record.method,'false generator builtin selection');
   }else{
@@ -145,23 +179,44 @@ export function applyGeneratorRecordV8(controller,record,api){
       active(controller,object,api);api.require(object.phase==='executing'&&object.resume?.kind==='next','generator has no normal sent value');
       api.require(record.bind===null||object.resume.from==='suspendedYield','initial next argument is ignored');
       if(record.bind!==null)api.setLocal(controller,record.bind,object.resume.value);object.resume=null;
+    }else if(record.kind==='generator.handler.enter'){
+      active(controller,object,api);api.require(object.phase==='executing'&&!object.resume&&!object.pending&&object.handlers.length<64,
+        'generator handler entry has an outstanding completion or exceeds its bound');
+      api.require(!object.handlers.some(handler=>handler.name===record.name),'duplicate active generator handler');
+      object.handlers.push({name:record.name,catch:record.catch,finally:record.finally,phase:'try',caught:null,pending:null});
+    }else if(record.kind==='generator.handler.route'){
+      active(controller,object,api);api.require(object.phase==='executing'&&!object.pending,'generator completion routing is not active');
+      api.known(controller,record.completion.value);
+      if(object.resume){api.require(object.resume.kind!=='next'&&api.eq(record.completion,{kind:object.resume.kind,value:object.resume.value}),
+        'generator handler changed its abrupt resume');object.resume=null;}
+      route(controller,object,record.completion,api);
+    }else if(record.kind==='generator.handler.catch'){
+      active(controller,object,api);const handler=object.handlers.at(-1);
+      api.require(handler?.name===record.name&&handler.phase==='catch'&&handler.caught!==null,'generator catch has no thrown value');
+      if(record.bind!==null)api.setLocal(controller,record.bind,handler.caught);handler.caught=null;
+    }else if(record.kind==='generator.handler.leave'){
+      active(controller,object,api);const handler=object.handlers.at(-1);
+      api.require(handler?.name===record.name&&handler.phase==='finally'&&handler.pending!==null&&!object.pending,
+        'generator cleanup must finish its exact active obligation');
+      object.handlers.pop();if(handler.pending.kind!=='normal')route(controller,object,handler.pending,api);
     }else if(record.kind==='generator.yield'){
-      active(controller,object,api);api.require(object.phase==='executing'&&object.resume===null&&!object.handlers.length&&!object.delegation,'generator suspension has an outstanding continuation');
+      active(controller,object,api);api.require(object.phase==='executing'&&object.resume===null&&object.pending===null&&!object.delegation,'generator suspension has an outstanding continuation');
       api.require(object.yielded<bound,'generator yield bound');api.known(controller,record.value);
       const result=allocateResult(controller,record.name,record.value,false,api);object.phase='suspendedYield';object.yielded++;
       api.complete(controller,{kind:'return',invocation:object.invocation,value:result});
     }else if(record.kind==='generator.finish'){
       active(controller,object,api);api.require(['initializing','executing'].includes(object.phase)&&!object.handlers.length&&!object.delegation,'generator completion has an outstanding continuation');
       api.known(controller,record.completion.value);
+      if(object.pending)api.require(api.eq(object.pending,record.completion),'generator cleanup changed its pending completion');
       if(object.phase==='initializing')api.require(record.completion.kind==='throw','parameter initialization cannot return a body result');
       if(object.resume)api.require(object.resume.kind!=='next'&&record.completion.kind===object.resume.kind&&api.eq(record.completion.value,object.resume.value),'abrupt resume completion changed');
-      object.phase='completed';object.resume=null;
+      object.phase='completed';object.resume=null;object.pending=null;
       if(record.completion.kind==='return')api.complete(controller,{kind:'return',invocation:object.invocation,
         value:allocateResult(controller,record.name,record.completion.value,true,api)});
       else{api.require(record.name===null,'thrown generator completion cannot allocate a result');api.complete(controller,{kind:'throw',invocation:object.invocation,value:record.completion.value});}
     }else if(record.kind==='generator.completed'){
       api.known(controller,record.argument);api.require(object.phase==='completed'||object.phase==='suspendedStart'&&record.method!=='next','generator body still needs a resume');
-      api.require(!controller.stack.includes(object.invocation),'completed generator frame is active');object.phase='completed';object.resume=null;
+      api.require(!controller.stack.includes(object.invocation),'completed generator frame is active');object.phase='completed';object.resume=null;object.pending=null;
       if(record.method==='throw'){api.require(record.name===null,'throw cannot allocate a generator result');controller.lastReturn={kind:'throw',value:api.copy(record.argument)};}
       else controller.lastReturn={kind:'return',value:allocateResult(controller,record.name,record.method==='return'?record.argument:U(),true,api)};
     }else return false;
@@ -184,7 +239,21 @@ export function restoreGeneratorStateV8(controller,api){let count=0;const invoca
     api.require(object.arguments.length<=bound&&typeof object.invocation==='string'&&!invocations.has(object.invocation)&&
       controller.frameFunctions.get(object.invocation)===controller.heap.get(object.callee[1]).code,'generator retained invocation');invocations.add(object.invocation);
     api.require(phases.has(object.phase)&&Number.isSafeInteger(object.yielded)&&object.yielded>=0&&object.yielded<=bound&&object.properties instanceof Map,'generator state or yield bound');
-    assertAlgorithmDataArray(object.handlers,'generator handlers');api.require(object.handlers.length===0&&object.delegation===null,'generator handler/delegation profile is not declared');
+    assertAlgorithmDataArray(object.handlers,'generator handlers');api.require(object.handlers.length<=64&&object.delegation===null,'generator handler bound/delegation profile');
+    const handlerNames=new Set();
+    for(const handler of object.handlers){
+      assertAlgorithmFields(handler,['name','catch','finally','phase','caught','pending'],'generator handler');
+      api.require(typeof handler.name==='string'&&handler.name.length>0&&handler.name.length<=256&&!handlerNames.has(handler.name)&&typeof handler.catch==='boolean'&&typeof handler.finally==='boolean'&&
+        (handler.catch||handler.finally)&&['try','catch','finally'].includes(handler.phase),'generator handler identity/capability');handlerNames.add(handler.name);
+      api.require(handler.phase!=='catch'||handler.catch,'generator catch has no source capability');
+      api.require(handler.phase!=='finally'||handler.finally,'generator finally has no source capability');
+      if(handler.caught!==null){api.known(controller,handler.caught);api.require(handler.phase==='catch','caught value outside catch');}
+      if(handler.pending!==null){completion(handler.pending,value=>api.known(controller,value),{normal:true});api.require(handler.phase==='finally','pending completion outside cleanup');}
+      api.require(handler.phase==='finally'?handler.pending!==null:handler.pending===null,'generator handler completion state');
+    }
+    if(object.pending!==null){completion(object.pending,value=>api.known(controller,value));
+      api.require(object.phase==='executing'&&object.handlers.length===0&&object.resume===null,'generator terminal completion state');}
+    api.require(!['suspendedStart','completed'].includes(object.phase)||object.handlers.length===0,'inactive generator has entered handler obligations');
     const isActive=controller.stack.includes(object.invocation);api.require(isActive===['initializing','executing'].includes(object.phase),'generator suspension and shared call stack disagree');
     if(object.resume!==null){assertAlgorithmFields(object.resume,['kind','from','value'],'generator resume');
       api.require(object.phase==='executing'&&methods.has(object.resume.kind)&&['suspendedStart','suspendedYield'].includes(object.resume.from),'generator resume state');api.known(controller,object.resume.value);

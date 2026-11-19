@@ -90,6 +90,34 @@ test('generator transitions reject reentry duplicate identities and continuation
   f.yielded(num(1));f.apply({kind:'generator.resume',object:'it',method:'next',argument:num(7)});
   assert.throws(()=>f.yielded(num(2),'r1'),/consumed/);f.apply({kind:'generator.receive',object:'it',bind:'sent'});f.finish(num(7));
 });
+
+test('generator cleanup retains and checks the pending completion across another yield',()=>{
+  const f=fixture();f.define();f.create();f.start();f.resume();
+  const native=(function*(){try{yield 1;}finally{yield 3;}})();
+  f.apply({kind:'generator.handler.enter',object:'it',name:'cleanup',catch:false,finally:true});
+  f.yielded(encode(native.next().value));f.resume(num(7),{method:'return'});
+  f.apply({kind:'generator.handler.route',object:'it',completion:{kind:'return',value:num(7)}});
+  f.yielded(encode(native.return(7).value),'cleanup-result');f.resume();
+  f.apply({kind:'generator.handler.leave',object:'it',name:'cleanup'});
+  const before=structuredClone(f.controller);assert.throws(()=>f.finish(num(9)),/pending completion/);assert.deepEqual(f.controller,before);
+  f.finish(encode(native.next().value));assert.equal(f.controller.heap.get('it').phase,'completed');
+});
+
+test('generator handler selection consumes a thrown value and preserves outer obligations',()=>{
+  const f=fixture();f.define();f.create();f.start();f.resume();
+  f.apply({kind:'generator.handler.enter',object:'it',name:'outer',catch:false,finally:true});
+  f.apply({kind:'generator.handler.enter',object:'it',name:'inner',catch:true,finally:true});
+  f.apply({kind:'generator.handler.route',object:'it',completion:{kind:'throw',value:num(2)}});
+  assert.throws(()=>f.yielded(num(2)),/catch must consume/);
+  f.apply({kind:'generator.handler.catch',object:'it',name:'inner',bind:'caught'});
+  assert.deepEqual(f.controller.locals.get('caught'),num(2));
+  f.apply({kind:'generator.handler.route',object:'it',completion:{kind:'normal',value:U}});
+  f.apply({kind:'generator.handler.leave',object:'it',name:'inner'});
+  assert.equal(f.controller.heap.get('it').handlers.at(-1).name,'outer');
+  assert.equal(f.controller.heap.get('it').handlers.at(-1).phase,'try');
+  f.apply({kind:'generator.handler.route',object:'it',completion:{kind:'return',value:num(4)}});
+  f.apply({kind:'generator.handler.leave',object:'it',name:'outer'});f.finish(num(4));
+});
 test('generator checkpoint restoration rejects fabricated continuation and unknown state fields',()=>{
   const f=fixture();f.define();f.create();f.start();f.resume();f.yielded(num(1));
   for(const mutate of [node=>node.invocation='invented',node=>node.phase='executing',node=>node.resume={kind:'next',from:'suspendedYield',value:num(3)},node=>node.pc=42,

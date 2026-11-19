@@ -13,7 +13,7 @@ import {ownedEffectfulOutcome} from '../training/effectful-compiler.js';
 import {encodeWitness} from '../training/format.js';
 import {encodeDetailedRecord} from './detailed-v7.js';
 import {RegionExecutionHarness} from './region-harness.js';
-import {encodeProtocolRecordV8,validateProtocolValueV8} from './protocol-codec-v8.js';
+import {encodeProtocolRecordV8,validateProtocolValueV8,PROTOCOL_INTRINSIC_PROTOTYPES_V8} from './protocol-codec-v8.js';
 import {PROTOCOL_SOURCE_ADAPTERS_V8} from './protocol-source-extensions-v8.js';
 import {applyProtocolRecordV8,describeProtocolObjectV8,assertProtocolDetailCompatible} from './protocol-state-v8.js';
 
@@ -34,6 +34,7 @@ function guardHeap(node,{extraFields=[],allowUnknown=false,allowFunctionMetadata
 }
 function prototype(node){const p=node.prototype;
   if(p===undefined||['Object.prototype','Array.prototype','Function.prototype'].includes(p))return 'ordinary';
+  if(PROTOCOL_INTRINSIC_PROTOTYPES_V8.includes(p))return p;
   if(p===null)return null;if(typeof p==='string')return ['ref',p];
   refuse('unrecognized owned prototype representation');
 }

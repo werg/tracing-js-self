@@ -5,4 +5,5 @@ import {createConstructionSourceAdapterV8} from './protocol-construction-source-
 import {createIteratorSourceAdapterV8} from './protocol-iterator-source-v8.js';
 import {createPromiseJoinSourceAdapterV8} from './protocol-promise-join-source-v8.js';
 import {createNumberSourceAdapterV8} from './protocol-number-source-v8.js';
-export const PROTOCOL_SOURCE_ADAPTERS_V8=Object.freeze([memorySourceAdapterV8,createConstructionSourceAdapterV8,createIteratorSourceAdapterV8,createPromiseJoinSourceAdapterV8,createNumberSourceAdapterV8]);
+import {createGeneratorSourceAdapterV8} from './protocol-generator-source-v8.js';
+export const PROTOCOL_SOURCE_ADAPTERS_V8=Object.freeze([memorySourceAdapterV8,createGeneratorSourceAdapterV8,createConstructionSourceAdapterV8,createIteratorSourceAdapterV8,createPromiseJoinSourceAdapterV8,createNumberSourceAdapterV8]);

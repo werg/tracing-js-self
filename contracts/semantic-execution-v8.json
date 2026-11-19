@@ -591,6 +591,95 @@
             "kind",
             "id",
             "result"
+          ],
+          "generator.function": [
+            "kind",
+            "object",
+            "prototype",
+            "name",
+            "length"
+          ],
+          "generator.create": [
+            "kind",
+            "name",
+            "child",
+            "callee",
+            "receiver",
+            "arguments"
+          ],
+          "generator.start": [
+            "kind",
+            "object"
+          ],
+          "generator.resume": [
+            "kind",
+            "object",
+            "method",
+            "argument"
+          ],
+          "generator.receive": [
+            "kind",
+            "object",
+            "bind"
+          ],
+          "generator.handler.enter": [
+            "kind",
+            "object",
+            "name",
+            "catch",
+            "finally"
+          ],
+          "generator.handler.route": [
+            "kind",
+            "object",
+            "completion"
+          ],
+          "generator.handler.catch": [
+            "kind",
+            "object",
+            "name",
+            "bind"
+          ],
+          "generator.handler.leave": [
+            "kind",
+            "object",
+            "name"
+          ],
+          "generator.yield": [
+            "kind",
+            "object",
+            "value",
+            "name"
+          ],
+          "generator.finish": [
+            "kind",
+            "object",
+            "completion",
+            "name"
+          ],
+          "generator.completed": [
+            "kind",
+            "object",
+            "method",
+            "argument",
+            "name"
+          ],
+          "generator.lookup": [
+            "kind",
+            "receiver",
+            "key",
+            "method"
+          ],
+          "generator.read": [
+            "kind",
+            "object",
+            "key",
+            "result"
+          ],
+          "generator.identity": [
+            "kind",
+            "object",
+            "result"
           ]
         },
         "profile": "symbols-ordinary-properties/1",
@@ -1600,7 +1689,7 @@
       "default": "not promoted by engineering receipts alone"
     }
   },
-  "digest": "bfeed6247643c78d4d0791c53abd2da5158cff7c78bc1790c8a6077f04bebc50",
+  "digest": "84dc778917b6f58c9c1e4383b1ff3daa3c07548be11e18638e87425465cbe4d4",
   "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
   "fixtures": [
     {
@@ -1625,7 +1714,7 @@
       "reason": "old artifacts require their original contract"
     }
   ],
-  "interoperabilityDigest": "f06ae69da9e760a6f7059d14ff004920d1fff43be8da1bd3603793a6ad3d013b",
+  "interoperabilityDigest": "442046accf41e8680887451176271911fec68f7817afe9b9471e266e6f4f86aa",
   "interoperability": [
     {
       "id": "ordered-map",
@@ -1686,6 +1775,11 @@
       "id": "protocol-region:source-number-private-arithmetic",
       "publicDigest": "6547d546916967dcd983d3b4af8905b102e2f0a6f8106a598998d3db9a8ccdec",
       "contextDigest": "5ddee894a3f56d223a0f4a0320df1240fedd2604cba0a02f5e9ab76c4e23b66f"
+    },
+    {
+      "id": "protocol-region:source-generator-cleanup-suspension",
+      "publicDigest": "afd8010d455b42109bfd3bdc369a8011a6d2f463669125b19ba9cf0392cfd197",
+      "contextDigest": "3a748c68d975051a9fa4c5c694bafc21f27e61cb639b7e0cefb67eb03934b84e"
     }
   ]
 }

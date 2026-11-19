@@ -171,10 +171,12 @@ export function ownedCompletionObservations(bundle,source,{onObservation=null,as
       tag[0]==='builtinfn'||tag[0]==='intrinsic'&&tag[1]!=='Math'&&tag[1]!=='Atomics'?'function':'object';
     return ['identity',kind,identities.get(key)];
   };
+  let observationEvent=null;
   const emit=(key,kind,tag)=>{const row={site:key,kind,
     ...(!['finally','break','continue'].includes(kind)?{value:value(tag)}:{})};
-    observations.push(row);if(onObservation)onObservation({row,tag,state});};
+    observations.push(row);if(onObservation)onObservation({row,tag,state,event:observationEvent});};
   for(const event of bundle.events){
+    observationEvent=event;
     const previousFrame=state.frames[event.invocationId];
     for(const change of event.stateChanges){
       if(!state[change.table])continue;
@@ -250,7 +252,11 @@ export function ownedCompletionObservations(bundle,source,{onObservation=null,as
         emit(key,'assign',stored);
       }
     }
-    if(!abrupt&&event.operation==='call.enter'&&plan.sites.has('call:'+key)&&!pending.has(event.invocationId)){
+    // Generator.throw injects an abrupt completion into the retained frame.
+    // If that frame catches it or enters cleanup, the caller still awaits the
+    // eventual yield/result; the injection is not the call's final completion.
+    const resumedInvocation=abrupt&&event.causes.some(c=>c.kind==='invocation'&&state.frames[c.frameId]?.status==='running');
+    if((!abrupt||resumedInvocation)&&event.operation==='call.enter'&&plan.sites.has('call:'+key)&&!pending.has(event.invocationId)){
       if(!event.causes.some(c=>c.kind==='invocation')&&Array.isArray(event.result)){emit(key,'call',event.result);calls.add(key);}
       else if(patch?.after)pending.set(event.invocationId,{site:key,kind:'call',depth:patch.after.stack.length,pc:patch.after.pc});
     }
