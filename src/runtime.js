@@ -347,8 +347,9 @@ export class Runtime {
   functionProperties(draft,fn,eventId,{prototype=false}={}){
     fn.properties??={};fn.propertyVersions??={};fn.shapeVersion??=0;
     if(!prototype)return;
-    if(fn.arrow||fn.async||fn.nonConstructible)return;
+    if(fn.arrow||fn.async)return;
     if(this.programs[fn.codeId].generator)throw new TypeError('Generator function prototype reflection is outside the profile');
+    if(fn.nonConstructible)return;
     if(fn.prototypeInitialized)return;
     fn.prototypeInitialized=true;
     if(Object.hasOwn(fn.properties,'prototype'))return;
@@ -358,6 +359,17 @@ export class Runtime {
       propertyOrder:['constructor'],shapeVersion:1,version:0};
     putOwn(fn,'prototype',['ref',id],eventId);
     fn.dataAttributes??={};fn.dataAttributes.prototype={enumerable:false,writable:true,configurable:false};
+  }
+  classFunctionProperties(draft,fn,name,eventId,prefix=null){
+    this.functionProperties(draft,fn,eventId);
+    if(name[0]==='symbol'){
+      const description=this.symbolDescription(draft,name);name=['str',description[0]==='undefined'?'':'['+description[1]+']'];
+    }else name=['str',String(decode(name))];
+    if(prefix!==null)name=['str',prefix+' '+name[1]];
+    for(const [key,value] of [['length',['num',this.programs[fn.codeId].functionLength??this.programs[fn.codeId].params.length]],['name',name]]){
+      if(Object.hasOwn(fn.properties,key))throw new Error('Class function metadata initialized twice');
+      putOwn(fn,key,value,eventId);(fn.dataAttributes??={})[key]={writable:false,enumerable:false,configurable:true};
+    }
   }
   ordinaryHasInstance(draft,constructor,candidate,eventId){
     const target=constructor[0]==='ref'?draft.heap[constructor[1]]:null;
@@ -1811,7 +1823,12 @@ if(obj.kind==='set'){
         }
         case 'SET_HOME_OBJECT':{
           const value=pop(),home=arg.name?lookup(s,f.envId,arg.name).cell.token:f.stack.at(-arg.offset);
-          this.setHomeObject(s,s.heap[value.value[1]],home.value,eventId);
+          const fn=s.heap[value.value[1]];
+          if(arg.methodName){
+            const name=arg.methodName.privateName?['str',arg.methodName.privateName]:lookup(s,f.envId,arg.methodName.binding).cell.token.value;
+            this.classFunctionProperties(s,fn,name,eventId,arg.methodName.prefix??null);
+          }
+          this.setHomeObject(s,fn,home.value,eventId);
           return {...operands(value,home),...result(value.value)};
         }
         case 'SUPER_REFERENCE':{
@@ -1889,9 +1906,10 @@ if(obj.kind==='set'){
           return {...operands(value),...result(value.value)};
         }
         case 'CLASS_CREATE':{
-          const heritage=arg.derived?pop():null,value=pop(),klass=value.value[0]==='ref'?s.heap[value.value[1]]:null;
+          const name=arg.named?pop():null,heritage=arg.derived?pop():null,value=pop(),klass=value.value[0]==='ref'?s.heap[value.value[1]]:null;
           if(klass?.kind!=='function')throw new Error('Class constructor function missing');
           klass.classConstructor=true;
+          if(name)this.classFunctionProperties(s,klass,name.value,eventId);
           this.functionProperties(s,klass,eventId,{prototype:true});
           this.setHomeObject(s,klass,klass.properties.prototype.value,eventId);
           klass.dataAttributes.prototype.writable=false;
@@ -1920,7 +1938,7 @@ if(obj.kind==='set'){
             environment.bindings['[[private '+name+']]']={kind:'const',initialized:true,
               token:token(['str','private:'+klass.id+':'+index],eventId),version:0};
           });
-          return {...operands(value,...(heritage?[heritage]:[])),...result(value.value)};
+          return {...operands(value,...(heritage?[heritage]:[]),...(name?[name]:[])),...result(value.value)};
         }
         case 'CLASS_INITIALIZER':{
           const initializer=pop(),value=pop(),klass=s.heap[value.value[1]];
@@ -2016,7 +2034,7 @@ if(obj.kind==='set'){
            if(base.value[0]!=='ref'||!s.heap[base.value[1]])throw new TypeError('Not a writable guest object');
           const object=s.heap[base.value[1]];
           if(object.kind==='function'){
-            if(['arguments','caller','name','length'].includes(property))throw new TypeError('Function descriptor assignment outside profile');
+            if(['arguments','caller'].includes(property)||['name','length'].includes(property)&&!Object.hasOwn(object.properties??{},property))throw new TypeError('Function descriptor assignment outside profile');
             this.functionProperties(s,object,eventId);
             const found=functionProperty(s.heap,object,property);
             if(found.attributes?.writable===false)guestFault('TypeError','Cannot assign inherited readonly function property');
@@ -2711,7 +2729,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               });
               return {...operands(fn,...args),...result(['bool',!!frozen])};
             }
-            if(!object||!['object','array'].includes(object.kind))
+            if(!object||!['object','array'].includes(object.kind)&&!(object.kind==='function'&&object.properties?.name&&object.properties?.length&&!this.programs[object.codeId].generator))
               throw new TypeError('Own descriptor reflection requires owned ordinary storage');
             const key=valueKey(args[1]?.value??U),accessor=object.accessors?.[key],slot=object.properties[key];
             if(!accessor&&!slot)return {...operands(fn,...args),...result(U)};
@@ -2724,7 +2742,8 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
           }
           if(callable[0]==='builtinfn' && ['Object.hasOwn','Object.keys','Object.values','Object.entries','Object.getOwnPropertySymbols','Object.getOwnPropertyNames','Reflect.ownKeys'].includes(callable[1])){
             const base=args[0]?.value??U,obj=base[0]==='ref'?s.heap[base[1]]:null;
-            if(obj?.kind==='function'&&!['Object.keys','Object.values','Object.entries'].includes(callable[1]))
+            if(obj?.kind==='function'&&!['Object.keys','Object.values','Object.entries'].includes(callable[1])&&
+               !(obj.properties?.name&&obj.properties?.length&&!this.programs[obj.codeId].generator))
               throw new TypeError('Function descriptor reflection requires the complete Function profile');
             if(!obj||!['object','array','function'].includes(obj.kind))
               throw new TypeError('Object builtin requires an owned ordinary reference');
