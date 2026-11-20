@@ -347,6 +347,10 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       }
       for(const child of Object.values(value))publish(child);
     };publish(fields);
+    if(kind==='allocate'){
+      const record=regionAdapter?.allocation?.(extensionContext,event,fields);
+      if(record)return emitProtocol(owner,record,event,'source-owned-closure/1');
+    }
     // Canonical production reduction over an already committed local cell.
     // A normal assignment to an already published lexical cell is idempotent
     // only when the exact cell and tagged value already match. This cannot
@@ -630,7 +634,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     }
   }
   const extensionContext={bundle,source,semantic,state,controller,identity,tag,frameId,rootFor,cell,
-    emit,emitProtocol,allocations,writes,refuse,copy,
+    emit,emitProtocol,allocations,writes,publishInitialClosure,refuse,copy,
     registerFrame(frame,owner){roots.set(frame,owner);return frameId(frame);},
     get harness(){return harness;},
     claimDataIdentity(id){certifiedDataIdentities.add(identity(id));},
@@ -936,8 +940,13 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       }
       handled=true;
     }
-    const handledCompletion=regionAdapter?.completion?.(extensionContext,event,row,fact)===true;
-    if(handledCompletion)handled=true;
+    // One owned throw may close helper and executor scopes before reaching an
+    // ordinary root/job completion. Extensions consume only their exact exits;
+    // the remaining lifecycle stays with the shared completion projector.
+    const completionResult=regionAdapter?.completion?.(extensionContext,event,row,fact),
+      handledCompletion=completionResult===true,
+      completedInvocations=new Set(completionResult?.invocations??[]);
+    if(handledCompletion||completedInvocations.size)handled=true;
     // Promise resolution is generated exactly where the journal changes it;
     // externally caused settlements have already entered as observations.
     for(const change of promiseChanges){
@@ -966,8 +975,9 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       emit(owner,'transfer',{kind:fact.kind,value:tag(fact.value),handler:fact.handler,
         invocation:frameId(fact.invocation)},event,'completion-transfer');handled=true;
     }else if(!handledCompletion&&['return','throw','unhandled-throw'].includes(fact?.operation)){
-      if(row)writes(row,owner,event);
+      if(row&&!completedInvocations.size)writes(row,owner,event);
       for(const exit of [fact,...(fact.unwound??[])]){
+        if(completedInvocations.has(exit.invocation))continue;
         const frame=state.frames[exit.invocation],asyncResult=frame?.asyncPromiseId;
         const value=asyncResult?['ref',asyncResult]:tag(exit.value??event.operands?.[0]);
         const kind=asyncResult?'return':exit.operation==='return'?'return':'throw';

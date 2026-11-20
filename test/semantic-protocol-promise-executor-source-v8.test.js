@@ -8,6 +8,7 @@ import {decodeProtocolRecordV8,encodeProtocolRecordV8} from '../src/semantic/pro
 import {ownedProtocolSourceObservations} from '../src/semantic/protocol-source-observations-v8.js';
 const fixture=body=>({source:'"use strict";async function run(){'+body+'}',entry:'run',args:[],family:'promise-executor-source'});
 const first='const a=2+3;const p=new Promise((resolve,reject)=>{resolve(3);reject(9);});const values=[await p];const b=a*2;return values[0]+b;';
+const reactionHelper='let pending;await Promise.resolve(1).then(x=>{pending=new Promise(resolve=>{function helper(){return x+2;}resolve(helper());});});return await pending;';
 
 test('source executors independently qualify first resolution, throws, captures, retained capabilities and joins',async()=>{
   for(const body of [first,
@@ -33,11 +34,51 @@ test('executor Promise adoption is refused before an incorrect FIFO schedule can
   for(const body of [
     'const p=new Promise(resolve=>resolve(Promise.resolve(5)));return await p;',
     'let done;const a=new Promise(resolve=>{done=resolve;});const b=new Promise(resolve=>resolve(a));done(7);return await b;',
-    'let order="";const p=new Promise(resolve=>resolve(Promise.resolve(1)));p.then(()=>{order+="p";});Promise.resolve().then(()=>{order+="q";}).then(()=>{order+="r";});await p;return order;'
+    'let order="";const p=new Promise(resolve=>resolve(Promise.resolve(1)));p.then(()=>{order+="p";});Promise.resolve().then(()=>{order+="q";}).then(()=>{order+="r";});await p;return order;',
+    'return new Promise(resolve=>resolve(3));',
+    'let order="";const p=Promise.resolve(1).then(x=>new Promise(resolve=>resolve(x)));p.then(()=>{order+="p";});Promise.resolve().then(()=>{order+="a";}).then(()=>{order+="b";}).then(()=>{order+="c";});await p;return order;'
   ]){
     const result=await verifyProtocolRegionTrainingCase(fixture(body));
     assert.equal(result.exported,undefined);assert.match(result.reason,/adoption.*job protocol/);
   }
+});
+test('executor helpers retain receiver and captures across synchronous returns, throws and reaction jobs',async()=>{
+  for(const body of [
+    'let total=1;const p=new Promise(resolve=>{function f(){total+=2;return total;}resolve(f());});total+=4;return [await p,total];',
+    'const o={x:3,m(){const read=()=>this.x;return new Promise(resolve=>resolve(read()));}};return await o.m();',
+    'const p=new Promise(resolve=>{function fail(){throw 7;}fail();});try{return await p;}catch(e){return e;}',
+    'const p=new Promise(resolve=>{function fail(){throw 7;}try{fail();}catch(e){resolve(e);}});return await p;',
+    'const p=new Promise(resolve=>{function fail(){throw 7;}resolve(3);fail();});return await p;',
+    reactionHelper,
+    'let pending;await Promise.resolve(1).then(x=>{pending=new Promise(resolve=>{throw x+2;});});try{return await pending;}catch(e){return e+1;}',
+    'let done;const p=new Promise(resolve=>{done=resolve;});Promise.resolve(2).then(x=>done(x+1));return await p;',
+    'const p=new Promise(resolve=>resolve(1));function fail(){throw 7;}fail();return await p;'
+  ]){
+    const result=await verifyProtocolRegionTrainingCase(fixture(body));assert(result.exported,result.reason);
+    const replay=RegionExecutionHarness.replay(result.exported),restored=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(replay.checkpoint())));
+    assert.deepEqual(sharedRegionState(restored.controller),sharedRegionState(replay.controller));
+    assert.equal(result.exported.sidecar.sourceArtifact.sidecar.reference.extensionAudit.status,'agreed');
+  }
+  const source='"use strict";function run(){function make(){return new Promise(resolve=>resolve(4));}return make();}',
+    result=await verifyProtocolRegionTrainingCase({source,entry:'run',args:[],family:'executor-sync-helper'});
+  assert(result.exported,result.reason);
+  assert.deepEqual(RegionExecutionHarness.replay(result.exported).controller.completion.value,['num',4]);
+});
+test('checkpoint inside a reaction executor helper restores the same job and nested call scopes',async()=>{
+  const result=await verifyProtocolRegionTrainingCase(fixture(reactionHelper));assert(result.exported,result.reason);
+  const timeline=result.exported.public.timeline,
+    cut=timeline.findIndex(row=>row.kind==='protocol'&&decodeProtocolRecordV8(row.fields.line).kind==='call')+1;
+  assert(cut>0);
+  const prefix=RegionExecutionHarness.replay({...result.exported.public,timeline:timeline.slice(0,cut)},{requireTerminal:false}),
+    resumed=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(prefix.checkpoint()))),controller=resumed.controller,
+    executor=controller.protocol.promiseExecutors.executors[0],before=sharedRegionState(controller);
+  assert(controller.activeJob);assert.equal(controller.protocol.callFrames.length,2);
+  assert.equal(controller.stack.at(-2),executor.child);
+  assert.throws(()=>resumed.select('invocation1',encodeProtocolRecordV8({kind:'promise.executor.finish',promise:executor.promise,
+    invocation:executor.child,completion:{kind:'return',value:['undefined']}})),/active call/);
+  assert.deepEqual(sharedRegionState(controller),before);
+  for(const row of timeline.slice(cut))resumed.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
+  assert.deepEqual(sharedRegionState(resumed.controller),sharedRegionState(RegionExecutionHarness.replay(result.exported).controller));
 });
 test('common v8 admission routes executors and rechecks each source/context authority',async()=>{
   const result=await verifyRegionTrainingCase(fixture(first));assert(result.exported,result.reason);

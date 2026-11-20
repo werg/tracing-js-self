@@ -45,7 +45,6 @@ export function applyPromiseExecutorRecordV8(controller,record,api){
     const target=promise(controller,record.promise,api),existing=controller.protocol?.promiseExecutors;
     api.require(target.state==='pending'&&target.adopted===null&&!target.join&&
       !existing?.capabilities.some(row=>row.promise===record.promise),'executor requires a fresh pending Promise');
-    api.require(!controller.activeJob,'executor inside an active reaction needs its scheduler call profile');
     api.require((existing?.capabilities.length??0)<bound,'capability count bound');
     api.fresh(controller,record.resolve);api.fresh(controller,record.reject);api.known(controller,record.executor);
     const executor=controller.heap.get(record.executor[1]);
@@ -87,8 +86,15 @@ export function applyPromiseExecutorRecordV8(controller,record,api){
   return true;
 }
 export function assertPromiseExecutorNextV8(controller,record,api){
+  const fields=record.fields??record;
+  if(record.kind==='job'&&fields.action==='complete'){
+    const job=controller.jobs.get(fields.job),returned=job?.returned;
+    api.require(!(job?.target&&returned?.kind==='return'&&returned.value[0]==='ref'&&
+      controller.heap.get(returned.value[1])?.kind==='promise'),
+      'Promise reaction adoption requires its resolving-function job protocol');
+  }
   const data=controller.protocol?.promiseExecutors;if(!data)return true;
-  const fields=record.fields??record,active=data.executors.find(row=>row.phase==='running'&&row.child===controller.stack.at(-1));
+  const active=data.executors.find(row=>row.phase==='running'&&row.child===controller.stack.at(-1));
   if(active&&['return','throw'].includes(record.kind))return false;
   if(record.kind==='end'&&data.executors.some(row=>row.phase==='running'))return false;
   if(record.kind==='promise'&&['resolve','reject','adopt'].includes(fields.action)&&data.capabilities.some(row=>row.promise===fields.promise))return false;
@@ -100,7 +106,11 @@ export function assertPromiseExecutorCallV8(controller,callee,_options,api){
   api.require(!controller.heap.get(callee[1])?.promiseResolver,'resolving functions require their explicit settlement record');return true;
 }
 export function allowsPromiseExecutorInternalSchedulerV8(controller,record){
-  return record?.kind==='promise.executor.enter'||controller.protocol?.promiseExecutors!==undefined&&controller.protocol.promiseExecutors!==null;
+  if(controller.effects?.size)return false;
+  const fields=record?.fields??record;
+  return record?.kind==='promise.executor.enter'||controller.protocol?.promiseExecutors!==undefined&&controller.protocol.promiseExecutors!==null||
+    record?.kind==='promise'&&fields.action==='create'||
+    [...(controller.heap?.values?.()??[])].some(node=>node.kind==='promise'&&node.external===null);
 }
 export function allowsPromiseExecutorDetailedCallV8(controller,record){
   const fields=record.fields??record;

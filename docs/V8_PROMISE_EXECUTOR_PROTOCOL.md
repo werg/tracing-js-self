@@ -20,6 +20,10 @@ They can only be invoked through `promise.resolver.call`; ordinary call and
 property operations cannot substitute for their protocol. The constructor
 record itself calls the executor through the shared receiver and capture
 scope and contributes the same continuation state as an ordinary public call.
+Nested synchronous helpers use those same scoped calls, including inside an
+active reaction job. Arrow closures retain their lexical receiver; ordinary
+methods retain the receiver of their own call. Helper throws unwind each exact
+scope before the executor turns an uncaught throw into rejection.
 
 ## Shared state and restoration
 
@@ -60,13 +64,15 @@ is detectable even when the final result is unchanged.
 The source tests cover synchronous execution order, scalar resolution and
 rejection, pre-resolution throws, throws after resolution, retained resolving
 functions, closure cells, ignored later calls with owned Promise arguments,
-composition with `Promise.all`, and compact arithmetic around executor work.
-JSON checkpoint tests resume before resolution and reject altered capability,
-resolver and continuation state.
+composition with `Promise.all`, synchronous helpers, executors created inside
+reaction callbacks, and compact arithmetic around executor work. JSON
+checkpoint tests resume before resolution and inside a reaction executor's
+nested helper, preserving the active job, receiver, capture aliases and call
+arguments. They reject altered capability, resolver and continuation state.
 
 The currently declared source profile uses direct `new Promise` constructors,
 synchronous source executors and direct identifier calls of resolving functions.
-Async executor bodies, executor calls inside active Promise reaction callbacks,
+Async executor and helper bodies,
 thenable/object resolution, owned Promise adoption, Promise self resolution, modified resolver
 properties, and external effects are explicit refusals. They do not become
 successful guest behavior or implicit host execution. Independent native
@@ -79,3 +85,14 @@ transition omits those jobs, so this profile rejects adoption before consuming
 the first-call cell. A regression with competing reaction chains distinguishes
 the native FIFO order from direct synchronous adoption. Supporting adoption
 requires the same explicit jobs in the owned runtime and both public consumers.
+The same boundary applies when a reaction callback or async function returns
+a Promise: those implicit resolving calls also need assimilation jobs. A
+callback can construct and store a Promise in a shared cell, return a scalar,
+and let its caller await the stored Promise. Public reaction completion refuses
+an unmodeled Promise return before changing the job or its result Promise.
+
+The internal scheduler can also operate before the first executor is entered:
+source closure allocation or a synchronous helper call may precede construction.
+This permission comes from an already declared internal Promise or an explicit
+first `promise create` record, and requires no external effects. Every Promise,
+reaction, await and job record still passes its ordinary shared scheduler checks.

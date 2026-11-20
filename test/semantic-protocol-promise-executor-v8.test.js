@@ -93,3 +93,18 @@ test('restoration cannot invent adopted or object-valued executor resolution',()
     assert.throws(()=>restoreProtocolStateV8(c,c.protocol),/first-call state contradicts/);
   }
 });
+
+test('reaction completion cannot implicitly adopt a returned Promise without assimilation jobs',()=>{
+  const h=setup();enter(h);call(h,'resolve',['num',2]);finish(h);
+  const detail=(kind,fields)=>h.select('invocation1',encodeDetailedRecord({kind,fields},{role:'generated'}));
+  detail('promise',{action:'react',promise:'p2',job:'reaction1',reaction:'then',target:'p3',closure:'o1'});
+  detail('promise',{action:'resolve',promise:'p2',value:['num',3]});
+  detail('return',{value:['undefined'],invocation:'invocation1'});
+  detail('job',{action:'dispatch',job:'reaction1',owner:'invocation1'});
+  detail('return',{value:['ref','p1'],invocation:'job:reaction1'});
+  const before=sharedRegionState(h.controller);
+  assert.throws(()=>detail('job',{action:'complete',job:'reaction1',owner:'invocation1'}),/adoption.*job protocol/);
+  assert.deepEqual(sharedRegionState(h.controller),before);
+  assert.equal(h.controller.jobs.get('reaction1').status,'running');
+  assert.equal(h.controller.heap.get('p3').state,'pending');
+});
