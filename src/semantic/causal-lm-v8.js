@@ -3,8 +3,9 @@
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual,TextDecoder} from 'node:util';
 import {stableAlgorithmJSON,assertAlgorithmFields} from './ir.js';
-import {validateRegionProgram,decodeRegionRecord,REGION_CONTEXT_VERSION,
+import {validateRegionProgram,decodeRegionRecord,cloneRegionController,REGION_CONTEXT_VERSION,
   REGION_TRACE_VERSION,REGION_PROFILE} from './regions.js';
+import {encodeWitness} from '../training/format.js';
 import {decodePureRegionRecord,pureRegionEntry} from './pure-region-v8.js';
 import {decodeDetailedRecord} from './detailed-v7.js';
 import {decodeProtocolRecordV8} from './protocol-codec-v8.js';
@@ -157,6 +158,28 @@ export async function buildCausalLmV8Examples(exported,{tokenizer,eosTokenId,max
   return rows;
 }
 
+/** Commit original model bytes only after public-state consistency checks.
+ * Detailed/protocol consistency does not establish correspondence to the source;
+ * that remains an independent qualification, never a serving receipt claim. */
+export function commitCausalLmV8Selection(harness,invocationId,record,{context=null}={}){
+  if(context!==null)require(isDeepStrictEqual(context,harness.modelContext(invocationId)),
+    'public context changed during generation');
+  const decoded=decodeCausalLmV8Target(record),activation=harness.activation(invocationId),
+    controller=activation.controller;
+  require(!controller.firstWitnessViolation,'selected prefix contains a false witness claim');
+  if(decoded.kind==='semantic'){
+    // Diagnostic replay deliberately retains incorrect claims and their supplied
+    // values. Live serving rejects them before changing the shared machine.
+    const staged=cloneRegionController(controller),{kind,fields}=decoded.record;
+    staged.commit(encodeWitness(kind,fields),{mode:'generated',track:activation.trackId});
+    require(!staged.firstWitnessViolation,'false detailed computation, branch, or summary claim');
+  }
+  const entry=decoded.kind==='region'?harness.entry(invocationId,decoded.record.region):
+    decoded.kind==='algorithm'?pureRegionEntry(harness.program(invocationId),controller,harness.timeline.length):null;
+  // Entry hashes are host authority and never repaired/generated target text.
+  return harness.select(invocationId,record,{entry});
+}
+
 /** The selector retains original emitted bytes. Semantic acceptance is separate
  * from syntax and is measured when selectInto commits through the live harness. */
 export function createCausalLmV8Selector({runtime,tokenizer,checkpointIdentity,eosTokenId,
@@ -175,6 +198,7 @@ export function createCausalLmV8Selector({runtime,tokenizer,checkpointIdentity,e
     require(inputIds.length+maxNewTokens<=maxContextTokens,'generation budget exceeded; truncation is forbidden');
     const promptSha256=sha(prompt),previous=emissions.findLast(row=>row.promptSha256===promptSha256&&row.status!=='accepted');
     const evidence={adapter:CAUSAL_LM_V8_BRIDGE_VERSION,checkpointIdentity,tokenizerIdentity:tokenizer.identity,
+      sourceAdmissionClaim:false,
       prompt,promptSha256,promptBytes:bytes(prompt),promptTokens:inputIds.length,
       attempt:emissions.length,retryOf:previous?.attempt??null,status:'submitted',emittedTokenIds:null,
       generationMs:null,verificationMs:null,stopReason:null,payloadHex:null};
@@ -211,7 +235,8 @@ export function createCausalLmV8Selector({runtime,tokenizer,checkpointIdentity,e
     require(receipt?.checkpointIdentity===checkpointIdentity&&receipt?.tokenizerIdentity===tokenizer.identity&&
       receipt.seed===request.seed,'loaded checkpoint/tokenizer/seed attestation differs');
     initialized=true;return {schema:'semantic-inference-identity/8',checkpointIdentity,
-      tokenizerIdentity:tokenizer.identity,seed:request.seed,adapter:CAUSAL_LM_V8_BRIDGE_VERSION,nativeAdmissionClaim:false};
+      tokenizerIdentity:tokenizer.identity,seed:request.seed,adapter:CAUSAL_LM_V8_BRIDGE_VERSION,
+      nativeAdmissionClaim:false,sourceAdmissionClaim:false};
   };
   select.selectInto=async(harness,invocationId)=>{
     const context=harness.modelContext(invocationId),epoch=initializationEpoch,candidate=await select(context),
@@ -220,12 +245,7 @@ export function createCausalLmV8Selector({runtime,tokenizer,checkpointIdentity,e
       require(initialized&&epoch===initializationEpoch,'model initialization changed before semantic commit');
       // The host may publish another transition while inference is awaiting
       // tokens. A prediction for an older causal prefix cannot commit into it.
-      require(isDeepStrictEqual(context,harness.modelContext(invocationId)),'public context changed during generation');
-      const decoded=decodeCausalLmV8Target(candidate.record),entry=decoded.kind==='region'?
-        harness.entry(invocationId,decoded.record.region):decoded.kind==='algorithm'?
-          pureRegionEntry(harness.program(invocationId),harness.activation(invocationId).controller,harness.timeline.length):null;
-      // Entry hashes are host authority and never repaired/generated target text.
-      const result=harness.select(invocationId,candidate.record,{entry});
+      const result=commitCausalLmV8Selection(harness,invocationId,candidate.record,{context});
       evidence.status='accepted';evidence.verificationMs+=performance.now()-started;
       return {result,record:candidate.record,selection:{causalLmSelected:true,...structuredClone(evidence)}};
     }catch(error){evidence.status='semantic-rejected';evidence.failure=String(error.message);
@@ -240,7 +260,7 @@ export function createCausalLmV8Selector({runtime,tokenizer,checkpointIdentity,e
     failedAttempts:emissions.filter(row=>!['accepted','decoded'].includes(row.status)).length,
     generationMs:sum(emissions.map(row=>row.generationMs??0)),verificationMs:sum(emissions.map(row=>row.verificationMs??0)),
     unknownGenerationCostAttempts:emissions.filter(row=>row.emittedTokenIds===null).length,
-    contextAccounting:'submitted-flat-token-sequences',nativeAdmissionClaim:false});
+    contextAccounting:'submitted-flat-token-sequences',nativeAdmissionClaim:false,sourceAdmissionClaim:false});
   if(typeof runtime.close==='function')select.close=()=>runtime.close();
   return select;
 }

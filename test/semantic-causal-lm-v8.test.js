@@ -5,6 +5,7 @@ import {causalLmV8Prompt,encodeCausalLmV8Example,validateRegionTrainingContexts,
   createCausalLmV8Selector,auditRegionServingCosts} from '../src/semantic/causal-lm-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {encodePureRegionRecord,decodePureRegionRecord} from '../src/semantic/pure-region-v8.js';
+import {encodeDetailedRecord} from '../src/semantic/detailed-v7.js';
 import {verifyRegionTrainingCase} from '../src/semantic/compiler-v8.js';
 import {SEMANTIC_GALLERY_FIXTURES} from '../src/training/semantic-trace-gallery.js';
 
@@ -93,7 +94,67 @@ test('serving checks original model bytes against shared state and counts reject
   assert.equal(metrics.failedAttempts,1);assert.equal(metrics.semanticallyAccepted,1);
   assert.equal(metrics.emissions[0].prompt,metrics.emissions[1].prompt);
   assert.equal(metrics.promptTokens,2*Buffer.byteLength(causalLmV8Prompt(before)));
-  assert.equal(metrics.nativeAdmissionClaim,false);
+  assert.equal(metrics.nativeAdmissionClaim,false);assert.equal(metrics.sourceAdmissionClaim,false);
+});
+
+test('live detailed selection rejects false claims atomically and keeps the original failed emission',async()=>{
+  const compute={kind:'compute',fields:{expr:{op:'binary',operator:'+',left:{op:'local',name:'x'},
+    right:{op:'literal',value:['num',1]}},result:['num',4],bind:'n',invocation:'i'}};
+  const choose={kind:'choose',fields:{expr:{op:'literal',value:['bool',false]},decision:['bool',false],
+    path:'else',invocation:'i'}};
+  const summarize={kind:'summarize',fields:{entry:'run',arguments:[['num',3]],result:['num',4],profile:'pure-helper/1'}};
+  const cases=[
+    {valid:compute,invalid:{...compute,fields:{...compute.fields,result:['num',999]}}},
+    {valid:compute,invalid:{...compute,fields:{...compute.fields,expr:{op:'local',name:'missing'}}}},
+    {valid:choose,invalid:{...choose,fields:{...choose.fields,decision:['bool',true],path:'then'}}},
+    {valid:choose,invalid:{...choose,fields:{...choose.fields,path:'then'}}},
+    {valid:summarize,invalid:{...summarize,fields:{...summarize.fields,result:['num',999]}}}
+  ];
+  for(const {valid,invalid} of cases){
+    const harness=new RegionExecutionHarness({sessionId:'detailed-claims'});
+    harness.publishProgram({programId:'p',source:'"use strict";function run(x){return x+1;}',entry:'run'});
+    harness.admitInvocation({programId:'p',invocationId:'i',trackId:'t',realmId:'r',triggerId:'entry',args:[3]});
+    const before=harness.checkpoint(),rejected=encodeDetailedRecord(invalid,{role:'generated'}),
+      accepted=encodeDetailedRecord(valid,{role:'generated'}),emitted=[rejected,accepted];
+    const runtime={initialize:async request=>request,
+      generate:async()=>({tokenIds:[...Buffer.from(emitted.shift()),256],stopReason:'eos'})};
+    const selector=createCausalLmV8Selector({...options,runtime,checkpointIdentity:'c'.repeat(64),maxNewTokens:2048});
+    await selector.initialize({checkpointIdentity:'c'.repeat(64),seed:17});
+    await assert.rejects(selector.selectInto(harness,'i'),/false detailed/);
+    assert.deepEqual(harness.checkpoint(),before,invalid.kind+' changed the live machine');
+    assert.equal(harness.controller.firstWitnessViolation,null);
+    const failure=selector.metrics();
+    assert.equal(failure.failedAttempts,1);assert.equal(failure.semanticallyAccepted,0);
+    assert.equal(failure.emissions[0].status,'semantic-rejected');
+    assert.deepEqual(failure.emissions[0].emittedTokenIds,[...Buffer.from(rejected),256]);
+    assert.equal(failure.emissions[0].payloadHex,Buffer.from(rejected).toString('hex'));
+    const selection=await selector.selectInto(harness,'i');
+    assert.equal(selection.record,accepted);assert.equal(selection.selection.sourceAdmissionClaim,false);
+    const metrics=selector.metrics();
+    assert.equal(metrics.semanticallyAccepted,1);assert.equal(metrics.failedAttempts,1);assert.equal(metrics.retries,1);
+    assert.equal(metrics.emissions[0].prompt,metrics.emissions[1].prompt);
+    assert.equal(harness.controller.firstWitnessViolation,null);
+  }
+});
+
+test('a live selector cannot accept later work on a diagnostically false prefix',async()=>{
+  const harness=new RegionExecutionHarness({sessionId:'false-prefix'});
+  harness.publishProgram({programId:'p',source:'"use strict";function run(x){return x+1;}',entry:'run'});
+  harness.admitInvocation({programId:'p',invocationId:'i',trackId:'t',realmId:'r',triggerId:'entry',args:[3]});
+  // Direct diagnostic replay still preserves the supplied false value; live
+  // model serving must not turn a later well-formed record into an acceptance.
+  harness.select('i',{kind:'compute',fields:{expr:{op:'literal',value:['num',4]},result:['num',999],bind:'n'}});
+  assert.equal(harness.controller.firstWitnessViolation.consistent,false);
+  assert.deepEqual(harness.controller.visibleLocals().get('n'),['num',999]);
+  const before=harness.checkpoint(),record=encodeDetailedRecord({kind:'return',fields:{value:['num',4]}},{role:'generated'});
+  const runtime={initialize:async request=>request,
+    generate:async()=>({tokenIds:[...Buffer.from(record),256],stopReason:'eos'})};
+  const selector=createCausalLmV8Selector({...options,runtime,checkpointIdentity:'c'.repeat(64),maxNewTokens:2048});
+  await selector.initialize({checkpointIdentity:'c'.repeat(64),seed:17});
+  await assert.rejects(selector.selectInto(harness,'i'),/prefix contains a false witness/);
+  assert.deepEqual(harness.checkpoint(),before);
+  assert.equal(selector.metrics().semanticallyAccepted,0);
+  assert.equal(selector.metrics().failedAttempts,1);
 });
 
 test('failed v8 checkpoint attestation invalidates earlier model selection',async()=>{
