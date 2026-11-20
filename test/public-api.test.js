@@ -141,4 +141,7 @@ test('semantic package entry publishes the implemented protocol source profile i
   assert.equal(typeof semantic.commitCausalLmV8Selection,'function');
   assert.equal(typeof semantic.createNativeV8ProcessSelector,'function');
   assert.equal(typeof semantic.createNativeV8PythonSelector,'function');
+  for(const name of ['runSelectedRegionExecution','prepareRegionExecutionCase','freezeRegionExecutionStudy',
+    'validateRegionExecutionStudy','scoreSelectedRegionExecution','runFrozenRegionExecutionStudy'])
+    assert.equal(typeof semantic[name],'function',name+' is available through the public semantic entry');
 });

@@ -111,6 +111,7 @@
     "coverage:v8": "node tools/generate-capability-ledger.mjs --version 8",
     "semantic:v8:admit": "node tools/qualify-semantic-v8.mjs",
     "semantic:v8:costs": "node tools/measure-semantic-v8.mjs",
+    "semantic:v8:experiment": "node tools/run-semantic-v8-experiment.mjs",
     "semantic:retained-costs": "node tools/measure-retained-serving.mjs",
     "semantic:compare-costs": "node tools/compare-serving-costs.mjs"
   },
