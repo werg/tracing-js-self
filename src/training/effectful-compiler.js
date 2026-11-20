@@ -228,6 +228,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   const publicIdentities=new Map();
   const emittedPromises=new Set(),settledPromises=new Set(),returnedPromises=new Set(),reactionJobs=new Map();
   const reactionFrames=new Map(),reactionTargets=new Set(),microtasks=new Map(),privatePromises=new Set();
+  const adoptionJobs=new Map(),forwardingJobs=new Map();
   const awaitingCompletion=new Map();
   const deferredClosures=new Map();
   const publishingInitialClosures=new Set();
@@ -668,9 +669,6 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     const promiseChanges=event.stateChanges.filter(change=>change.table==='promises');
     const effectCreated=event.stateChanges.find(change=>change.table==='effects'&&change.before===null);
     const queued=state.control.a0.queue?.[0];
-    if(event.operation==='job.enter'&&queued?.kind==='reaction'&&queued.reaction.kind==='finally')
-      for(const change of promiseChanges)if(change.before===null&&
-        change.after.observers?.some(observer=>observer.kind==='finally-pass'))privatePromises.add(change.id);
     const declaredTargets=new Set();
     if(event.operation!=='job.enter'){
       for(const change of promiseChanges)for(const observer of change.after?.observers??[])
@@ -693,9 +691,19 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       const closure=isFinally?reaction.onFinally:fields.reaction==='catch'?reaction.onRejected:reaction.onFulfilled;
       if(closure?.[0]==='ref')fields.closure=identity(closure[1]);
       if(fields.reaction==='then'&&reaction.onRejected?.[0]==='ref')fields.rejectionClosure=identity(reaction.onRejected[1]);
+      // A callable finally does not settle its result when the callback returns.
+      // The owned journal publishes cleanup, forwarding and adoption as separate
+      // jobs, including when the callback returns a primitive. Keep that target
+      // separate from the historical direct-completion reaction shortcut.
+      const deferredFinally=isFinally&&closure?.[0]==='ref';
+      if(deferredFinally){
+        if(regionAdapter)refuse('Normal Promise finally completion requires explicit cleanup jobs');
+        delete fields.target;promise(reaction.resultId,owner,event);
+      }
       emit(owner,'promise',fields,event,'promise-reaction');
       emittedPromises.add(reaction.resultId);
-      reactionTargets.add(reaction.resultId);reactionJobs.set(reaction.resultId,{job,owner,target:reaction.resultId});
+      if(!deferredFinally)reactionTargets.add(reaction.resultId);
+      reactionJobs.set(reaction.resultId,{job,owner,target:reaction.resultId});
     }
     if(event.operation!=='job.enter'){
       for(const change of promiseChanges)for(const observer of change.after?.observers??[])
@@ -712,6 +720,24 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
         }
       }
     }
+    // Forwarding registration occurs at the source event that subscribes to
+    // its dependency, never by peeking at a later settlement. A public reaction
+    // without a callback keeps the dependency and FIFO position independently
+    // checkable; its actual settlement is emitted at its own dispatch below.
+    function registerForwarding(promiseId,observer){
+      if(!['adoption','finally-pass'].includes(observer.kind))return;
+      const key=observer.kind+':'+observer.resultId;
+      if(forwardingJobs.has(key))return;
+      if(regionAdapter)refuse(observer.kind==='adoption'?
+        'Promise adoption requires explicit assimilation jobs':'Normal Promise finally completion requires explicit cleanup jobs');
+      const job='forward'+(++jobOrdinal);
+      emit(owner,'promise',{action:'react',promise:promiseId,job,reaction:'then'},event,'promise-forwarding-register');
+      forwardingJobs.set(key,{job,owner,promise:promiseId,target:observer.resultId});
+    }
+    for(const change of promiseChanges)for(const observer of change.after?.observers??[])
+      registerForwarding(change.id,observer);
+    for(const job of event.stateChanges.find(change=>change.table==='control')?.after?.queue??[])
+      registerForwarding(job.promiseId,job);
     if(regionAdapter?.event?.(extensionContext,event,row)===true){handled=true;
     }else if(event.operation==='external.callback.enqueue'){
       const queue=event.stateChanges.find(change=>change.table==='control')?.after?.queue??[];
@@ -840,11 +866,22 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
         owner=registration.owner;
         emit(owner,'job',{action:'dispatch',job:registration.job,owner},event,'job-dispatch');
         emit(owner,'job',{action:'complete',job:registration.job,owner},event,'job-complete');
-      }else if(!changed&&queue?.kind==='finally-pass'){
-        // The selected job's cleanup/adoption rule already retains the original
-        // outcome or the cleanup failure. This private forwarding job has no
-        // independent guest code, new effect or observation.
-        handled=true;
+      }else if(!changed&&queue?.kind==='promise-adopt'){
+        const registration=adoptionJobs.get(queue.promiseId);
+        if(!registration||registration.target!==queue.targetId)refuse('adoption job lacks its source registration');
+        owner=registration.owner;
+        emit(owner,'job',{action:'dispatch',job:registration.job,owner},event,'promise-adoption-dispatch');
+        emit(owner,'job',{action:'complete',job:registration.job,owner},event,'promise-adoption-complete');
+      }else if(!changed&&['adoption','finally-pass'].includes(queue?.kind)){
+        const registration=forwardingJobs.get(queue.kind+':'+queue.resultId);
+        if(!registration||registration.promise!==queue.promiseId)refuse('forwarding job lacks its source dependency');
+        owner=registration.owner;
+        emit(owner,'job',{action:'dispatch',job:registration.job,owner},event,'promise-forwarding-dispatch');
+        if(queue.kind==='adoption'){
+          emit(owner,'promise',{action:'adopt',promise:queue.resultId,target:queue.promiseId},event,'promise-adoption');
+          settledPromises.add(queue.resultId);
+        }
+        emit(owner,'job',{action:'complete',job:registration.job,owner},event,'promise-forwarding-complete');
       }else refuse('unknown owned job activation');
       handled=true;
     }else if(row?.op==='call'){
@@ -961,13 +998,26 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       if(['fulfilled','rejected'].includes(change.after?.status)&&publicPromise?.state===change.after.status&&
         isDeepStrictEqual(publicPromise.result,tag(change.after.value.value))){settledPromises.add(change.id);continue;}
       if(change.after?.adopting&&change.before?.adopting!==change.after.adopting&&publicPromise?.adopted!==change.after.adopting){
-        emit(owner,'promise',{action:'adopt',promise:change.id,target:change.after.adopting},event,'promise-adoption');
+        if(regionAdapter)refuse('Promise adoption requires explicit assimilation jobs');
+        // The operation queues an adoption job; it does not yet observe or
+        // settle its target. Publish that job after any same-event settlements
+        // below, in the source queue order.
       }else if(['fulfilled','rejected'].includes(change.after?.status)&&
           change.before?.status!==change.after.status&&!settledPromises.has(change.id)){
         emit(owner,'promise',{action:change.after.status==='fulfilled'?'resolve':'reject',
           promise:change.id,value:tag(change.after.value.value)},event,'promise-settlement');
         settledPromises.add(change.id);
       }
+    }
+    const previousQueue=event.stateChanges.find(change=>change.table==='control')?.before?.queue??[],
+      currentQueue=event.stateChanges.find(change=>change.table==='control')?.after?.queue??[];
+    for(const job of currentQueue)if(job.kind==='promise-adopt'&&!adoptionJobs.has(job.promiseId)){
+      if(previousQueue.some(prior=>prior.kind==='promise-adopt'&&prior.promiseId===job.promiseId))
+        refuse('adoption job appeared without its source enqueue event');
+      if(regionAdapter)refuse('Promise adoption requires explicit assimilation jobs');
+      const id='adopt'+(++jobOrdinal);
+      emit(owner,'job',{action:'enqueue',job:id,owner},event,'promise-adoption-enqueue');
+      adoptionJobs.set(job.promiseId,{job:id,owner,target:job.targetId});
     }
     if(!handledCompletion&&fact?.operation==='catch-bind'){
       const env=event.stateChanges.find(change=>change.table==='envs'&&change.before===null)?.id;
