@@ -1,0 +1,229 @@
+{
+  "schema": "semantic-v8-dataset-run/1",
+  "status": "passed",
+  "startedAt": "2026-11-20T17:35:17.721009+00:00",
+  "pinsBefore": {
+    "producer": {
+      "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+      "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+      "trackedChanges": ""
+    },
+    "consumer": {
+      "revision": "39c4036564428e44cc89caf261f517d856482695",
+      "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+      "trackedChanges": ""
+    }
+  },
+  "environmentOverrides": {
+    "TRACING_JS_SELF_ROOT": "/workspace/scratch/d11743e0247b/v8-final-producer",
+    "MEGATOKEN_ROOT": "/workspace/scratch/d11743e0247b/v8-final-native",
+    "MEGATOKEN_PYTHON": "/workspace/scratch/d11743e0247b/native-venv/bin/python",
+    "MEGATOKEN_TOKENIZER_JSON": "/workspace/scratch/d11743e0247b/tokenizer.json",
+    "MEGATOKEN_NATIVE_SOURCE_PRODUCER": "/workspace/scratch/d11743e0247b/v8-final-producer",
+    "PYTHONPATH": "/workspace/scratch/d11743e0247b/v8-final-native/src",
+    "SEMANTIC_V8_NATIVE_POLICY": "/workspace/scratch/d11743e0247b/v8-final-producer/contracts/semantic-native-policy-v8.json",
+    "V8_DATASET_CAPTURE": "/workspace/scratch/d11743e0247b/v8-final-dataset-run-012c9fe/v8-dataset-final-012c9fe/native-inputs",
+    "TMPDIR": "/workspace/scratch/d11743e0247b/v8-final-dataset-run-012c9fe/tmp",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1"
+  },
+  "commands": [
+    {
+      "name": "prepare",
+      "command": [
+        "node",
+        "/workspace/scratch/d11743e0247b/v8-final-dataset-tools/prepare-v8-dataset.mjs",
+        "/workspace/scratch/d11743e0247b/v8-final-producer",
+        "/workspace/scratch/d11743e0247b/v8-final-dataset-run-012c9fe/v8-dataset-final-012c9fe",
+        "/workspace/scratch/d11743e0247b/v8-final-qualification-012c9fe/native-interoperability",
+        "/workspace/scratch/d11743e0247b/v8-final-qualification-012c9fe/native-gallery"
+      ],
+      "cwd": "/workspace/scratch/d11743e0247b/v8-final-producer",
+      "startedAt": "2026-11-20T17:35:17.868509+00:00",
+      "status": "passed",
+      "finishedAt": "2026-11-20T17:35:21.793575+00:00",
+      "durationSeconds": 3.9186963100000867,
+      "exitCode": 0,
+      "stdout": {
+        "path": "dataset-prepare.stdout.log",
+        "sha256": "1d4609958a42078e645eb8be39a3b0e9b0c832209fa21c9066fe06eb60f82116",
+        "bytes": 555
+      },
+      "stderr": {
+        "path": "dataset-prepare.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "name": "export",
+      "command": [
+        "node",
+        "/workspace/scratch/d11743e0247b/v8-final-producer/tools/export-semantic-v8.mjs",
+        "--input",
+        "/workspace/scratch/d11743e0247b/v8-final-dataset-run-012c9fe/v8-dataset-final-012c9fe/candidates.jsonl",
+        "--tokenizer-module",
+        "/workspace/scratch/d11743e0247b/v8-final-producer/tools/semantic-v8-tokenizer-adapter.mjs",
+        "--native-module",
+        "/workspace/scratch/d11743e0247b/v8-final-dataset-run-012c9fe/v8-dataset-final-012c9fe/v8-native-capture.mjs",
+        "--max-context",
+        "1048576",
+        "--max-examples",
+        "4096",
+        "--seed",
+        "17",
+        "--out",
+        "/workspace/scratch/d11743e0247b/v8-final-dataset-run-012c9fe/v8-dataset-final-012c9fe/dataset"
+      ],
+      "cwd": "/workspace/scratch/d11743e0247b/v8-final-producer",
+      "startedAt": "2026-11-20T17:35:21.815687+00:00",
+      "status": "passed",
+      "finishedAt": "2026-11-20T18:00:43.301604+00:00",
+      "durationSeconds": 1521.4858758499977,
+      "exitCode": 0,
+      "stdout": {
+        "path": "dataset-export.stdout.log",
+        "sha256": "ff6d3e3d281dda7f1a81e5ea56b4de1b66fcc793815cea440dfb0699e95c2509",
+        "bytes": 491
+      },
+      "stderr": {
+        "path": "dataset-export.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "name": "verify",
+      "command": [
+        "/workspace/scratch/d11743e0247b/native-venv/bin/python",
+        "/workspace/scratch/d11743e0247b/v8-final-dataset-tools/verify.py",
+        "/workspace/scratch/d11743e0247b/v8-final-dataset-run-012c9fe/v8-dataset-final-012c9fe",
+        "--producer-revision",
+        "012c9fe49a082319bf98ac0c571596da925741a4",
+        "--consumer-revision",
+        "39c4036564428e44cc89caf261f517d856482695",
+        "--codec-source",
+        "/workspace/scratch/d11743e0247b/v8-final-native/src/megatoken/generation/codec.py",
+        "--tokenizer-json",
+        "/workspace/scratch/d11743e0247b/tokenizer.json"
+      ],
+      "cwd": "/workspace/scratch/d11743e0247b/v8-final-producer",
+      "startedAt": "2026-11-20T18:00:43.322336+00:00",
+      "status": "passed",
+      "finishedAt": "2026-11-20T18:01:14.310543+00:00",
+      "durationSeconds": 30.987746913000592,
+      "exitCode": 0,
+      "stdout": {
+        "path": "dataset-verification.json",
+        "sha256": "5223a15eb852fe07b103e298958fd7f8ec1ec2736b51cd12f20e5bbd5c63a834",
+        "bytes": 1158
+      },
+      "stderr": {
+        "path": "dataset-verify.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "name": "check-inputs",
+      "command": [
+        "/workspace/scratch/d11743e0247b/native-venv/bin/python",
+        "/workspace/scratch/d11743e0247b/v8-final-dataset-tools/verify-qualification-inputs.py",
+        "/workspace/scratch/d11743e0247b/v8-final-dataset-run-012c9fe/v8-dataset-final-012c9fe",
+        "--qualification",
+        "/workspace/scratch/d11743e0247b/v8-final-qualification-012c9fe/native-interoperability",
+        "--qualification",
+        "/workspace/scratch/d11743e0247b/v8-final-qualification-012c9fe/native-gallery",
+        "--producer-revision",
+        "012c9fe49a082319bf98ac0c571596da925741a4",
+        "--consumer-revision",
+        "39c4036564428e44cc89caf261f517d856482695"
+      ],
+      "cwd": "/workspace/scratch/d11743e0247b/v8-final-producer",
+      "startedAt": "2026-11-20T18:01:14.315953+00:00",
+      "status": "passed",
+      "finishedAt": "2026-11-20T18:01:18.316574+00:00",
+      "durationSeconds": 3.997981325002911,
+      "exitCode": 0,
+      "stdout": {
+        "path": "dataset-input-check.json",
+        "sha256": "3d950d6b3db0d4562e9e2d7a0a611132915608568df296dd1f1382c13cecc209",
+        "bytes": 9565
+      },
+      "stderr": {
+        "path": "dataset-check-inputs.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "name": "pack",
+      "command": [
+        "/workspace/scratch/d11743e0247b/native-venv/bin/python",
+        "/workspace/scratch/d11743e0247b/v8-final-dataset-tools/pack-retained-dataset.py",
+        "--run",
+        "/workspace/scratch/d11743e0247b/v8-final-dataset-run-012c9fe/v8-dataset-final-012c9fe",
+        "--output",
+        "/workspace/scratch/d11743e0247b/tracing-js-self/coverage/language-expansion/dataset-v8-012c9fe",
+        "--prefix",
+        "v8-dataset-final-012c9fe",
+        "--interoperability-report",
+        "/workspace/scratch/d11743e0247b/v8-final-qualification-012c9fe/native-interoperability/report.json",
+        "--gallery-report",
+        "/workspace/scratch/d11743e0247b/v8-final-qualification-012c9fe/native-gallery/report.json",
+        "--verification",
+        "/workspace/scratch/d11743e0247b/v8-final-dataset-run-012c9fe/dataset-verification.json",
+        "--input-check",
+        "/workspace/scratch/d11743e0247b/v8-final-dataset-run-012c9fe/dataset-input-check.json",
+        "--helpers",
+        "/workspace/scratch/d11743e0247b/v8-final-dataset-tools",
+        "--producer-revision",
+        "012c9fe49a082319bf98ac0c571596da925741a4",
+        "--consumer-revision",
+        "39c4036564428e44cc89caf261f517d856482695"
+      ],
+      "cwd": "/workspace/scratch/d11743e0247b/v8-final-producer",
+      "startedAt": "2026-11-20T18:01:18.425452+00:00",
+      "status": "passed",
+      "finishedAt": "2026-11-20T18:02:02.890150+00:00",
+      "durationSeconds": 44.45986278000055,
+      "exitCode": 0,
+      "stdout": {
+        "path": "dataset-pack.stdout.log",
+        "sha256": "0a874ae9cfc83865ac165b5d9f0481ee3ae5e2c5b9a306a60c6d0199e15fdd7c",
+        "bytes": 390
+      },
+      "stderr": {
+        "path": "dataset-pack.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    }
+  ],
+  "scope": "Fresh production dataset admission after global split binding; zero optimizer steps.",
+  "pinsAfterExport": {
+    "producer": {
+      "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+      "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+      "trackedChanges": ""
+    },
+    "consumer": {
+      "revision": "39c4036564428e44cc89caf261f517d856482695",
+      "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+      "trackedChanges": ""
+    }
+  },
+  "finishedAt": "2026-11-20T18:02:02.931366+00:00",
+  "pinsAfter": {
+    "producer": {
+      "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+      "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+      "trackedChanges": ""
+    },
+    "consumer": {
+      "revision": "39c4036564428e44cc89caf261f517d856482695",
+      "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+      "trackedChanges": ""
+    }
+  }
+}
