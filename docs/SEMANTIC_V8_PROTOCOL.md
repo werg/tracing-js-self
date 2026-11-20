@@ -20,7 +20,9 @@ its mutations, checks every supplied result, and commits atomically. An incorrec
 claim leaves the actual controller unchanged.
 
 The additional field `controller.protocol` has schema
-`semantic-protocol-state/1` and exactly these fields:
+`semantic-protocol-state/1`. Its exact fields are exported as
+`PROTOCOL_STATE_V8_FIELDS`: these base fields plus the state fields of statically
+registered extensions. Each extension state field starts as null.
 
 | Field | Meaning |
 | --- | --- |
@@ -141,9 +143,12 @@ before enforcing the continuation byte bound, and updates the existing realm's
 heap and cells only after validation. The causal serializer supervises protocol
 target bytes exactly and counts these records in the remaining detailed share.
 
-The first integrated lifecycle allows one fresh synchronous invocation. Host
-work, asynchronous observations, and new invocations after a protocol operation
-are explicit refusals. A protocol checkpoint uses
+The base property lifecycle allows one fresh synchronous invocation. Registered
+[Promise joins](V8_PROMISE_JOIN_PROTOCOL.md) and
+[executors](V8_PROMISE_EXECUTOR_PROTOCOL.md) additionally admit their checked
+internal scheduler transitions. Host work, external asynchronous observations,
+and new host invocations after a protocol operation remain explicit refusals.
+A protocol checkpoint uses
 `semantic-protocol-continuation/1` inside the v8 envelope. Restoration replays the
 complete public history, compares every stored shared-state field, and validates
 the retained protocol scope; it never passes incomplete protocol history to the
@@ -155,8 +160,12 @@ executions/contexts and the independent protocol-machine fixture corpus. A nativ
 receipt must match this digest in addition to the malformed-fixture digest. The
 historical base admission receipt does not qualify this changed contract.
 
-The bounded contract allows 4,096 Symbols, properties per record, and array
-length, 64 active calls, and 32,768 protocol operations. The canonical line bound
+The bounded contract allows 4,096 Symbols, 4,096 properties per ordinary object,
+array length 4,096, 64 active calls, and 32,768 protocol operations. Property
+capacity counts the union of data and descriptor keys, counting an accessor
+once and array length as one property. It is checked on allocation, growth and
+restoration, including detailed writes while protocol state is active. Detailed
+writes cannot bypass descriptor or key-order metadata. The canonical line bound
 is 65,536 UTF-8 bytes. Resource limits and unsupported operations are explicit
 refusals rather than fabricated JavaScript exceptions.
 

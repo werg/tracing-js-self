@@ -42,13 +42,16 @@ private identity separation and updates, failed-transition rollback, and
 forged-state rejection. The component's host interface is intentionally small;
 the production shared machine supplies its own transactional staging.
 
-## Integration gates still open
+## Qualification layers
 
-This first component is not yet a source/native qualification claim. The shared
-codec/state dispatch hooks, source compiler handlers, independent source metadata
-audit and C++ consumer must all be wired and exercised. Private accessor
-continuations and guest brand-error completions require their own checked operations; failed
-component preconditions are not substituted for guest exceptions.
+The shared codec/state dispatch, source compiler and independent metadata audit
+are integrated for the bounded cases in the qualified source adapter below.
+Component tests, source qualification and exact native-consumer admission remain
+separate gates; their current status is recorded in the
+[v8 profile matrix](SEMANTIC_REGIONS_V8.md#current-bounded-coverage-and-qualification).
+Private accessor continuations and guest brand-error completions require their
+own checked operations; failed component preconditions are not substituted for
+guest exceptions.
 
 ## Constructor continuation component
 
