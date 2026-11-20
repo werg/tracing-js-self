@@ -138,4 +138,5 @@ test('semantic package entry publishes the implemented protocol source profile i
     generator:'synchronous-generator-source/1',proxy:'ordinary-data-proxy-source/1'
   });
   assert.equal(typeof semantic.verifyProtocolRegionTrainingCase,'function');
+  assert.equal(typeof semantic.commitCausalLmV8Selection,'function');
 });

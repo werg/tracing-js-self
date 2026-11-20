@@ -45,7 +45,7 @@ export {encodePureRegionRecord,decodePureRegionRecord} from './pure-region-v8.js
 export {verifyRegionTrainingCase,projectRegionWitness,recheckRegionEvidence,admitRegionEvidence,checkRegionCounterfactualPrefixes} from './compiler-v8.js';
 export {CAUSAL_LM_V8_BRIDGE_VERSION,validateRegionContext,decodeCausalLmV8Target,causalLmV8Prompt,
   encodeCausalLmV8Example,validateRegionTrainingContexts,buildCausalLmV8Examples,createCausalLmV8Selector,
-  auditRegionServingCosts} from './causal-lm-v8.js';
+  commitCausalLmV8Selection,auditRegionServingCosts} from './causal-lm-v8.js';
 export {V8_CONTRACT_DIGEST,V8_FIXTURE_DIGEST,V8_INTEROPERABILITY_DIGEST,V8_NATIVE_CHECKS,validateV8NativePolicy,
   loadV8NativePolicy,validateV8NativeReceipt} from './native-v8.js';
 export {SEMANTIC_V8_DEFINITION,semanticV8Contract} from './contract-v8.js';
