@@ -15,21 +15,25 @@ The [compositional v8 candidate](docs/SEMANTIC_REGIONS_V8.md) combines compact
 calculations with checked property access, calls, cleanup and suspension in one
 shared state. Its bounded source profiles cover Symbols and ordinary properties,
 ordinary `for…in` enumeration, shared binary views, construction and private fields,
-Number conversion, builtin iterators, synchronous generators and delegation,
+Number conversion and ordinary cleanup, builtin and bounded custom iterators,
+flat iterable declarations, synchronous generators and delegation,
 Promise joins/executors, and ordinary Proxy get/set traps. Each profile documents its supported boundaries;
 the candidate does not claim unrestricted ECMAScript coverage. The
 [Promise scheduling profile](docs/V8_PROMISE_SCHEDULER.md) documents the resolution
 and cleanup jobs that require separate checked protocols.
 
-The [complete-population engineering qualification](coverage/language-expansion/native-v8-b66c19b-all/README.md)
-passes all 665 expansion cases, 23 interoperability cases and 11 original-gallery
+The [complete-population engineering qualification](coverage/language-expansion/native-v8-012c9fe-all/README.md)
+passes all 665 expansion cases, 26 interoperability cases and 11 original-gallery
 cases through source/native admission and exact token metering at producer
-`b66c19b` / consumer `6adf99f`. The
-[latest verified dataset](coverage/language-expansion/dataset-v8-492328f/README.md)
-contains 34 freshly admitted episodes and 898 complete examples at producer
-`492328f` / consumer `cb311db`. Full producer
-regression and independent consumer validation are retained with their exact
-revisions. Model-learning and default-promotion gates remain separate.
+`012c9fe` / consumer `39c4036`. The
+[latest verified dataset](coverage/language-expansion/dataset-v8-012c9fe/README.md)
+contains 37 freshly admitted episodes and 1,021 complete examples at the same
+pair, with exact prompt/target tokens, masks and frozen component splits checked.
+An [independent export](coverage/language-expansion/dataset-v8-012c9fe-independent/README.md)
+reproduced the complete dataset and all 37 native input/receipt pairs byte for byte.
+The [completion ledger](docs/LANGUAGE_COVERAGE_STATUS.md) links the full producer,
+native and integration regressions, current profile evidence and bounded actual
+model diagnostics. Model-quality and default-promotion gates remain separate.
 
 ```js
 import {verifyRegionTrainingCase} from 'tracing-js-self/semantic';

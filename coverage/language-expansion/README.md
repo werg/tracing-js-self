@@ -2,20 +2,21 @@
 
 ## Current v8 qualification
 
-Evidence directories name their exact measured revisions. The latest retained
-complete-population run measured producer `b66c19be960f114b69787746b2487e6f23a73577`
-and consumer `6adf99f1301557ee5b95269581a3acd4162496b4`. The later production
-dataset independently readmits its complete inventory at producer
-`492328fe387e99487285984b782cd3b402990e2c` and consumer
-`cb311dba6af44ef241450a87ef530a66aa55c7a3`. Neither evidence set qualifies
-unmeasured later implementation changes.
+Evidence directories name their exact measured revisions. The current complete
+population, physical-cost, component and split-bound dataset gates use producer
+`012c9fe49a082319bf98ac0c571596da925741a4` and consumer
+`39c4036564428e44cc89caf261f517d856482695`, with the expanded 26-case
+interoperability contract. Both frozen checkouts remained clean. The independent
+reference benchmark checks the producer only; native component, corpus and
+model results keep their separate scopes.
 
 | Evidence | Measured result | Scope |
 | --- | --- | --- |
-| [Complete source/native populations and exact costs](native-v8-b66c19b-all/README.md) | 665/665 expansion, 23/23 interoperability and 11/11 gallery cases passed source/native admission and exact token metering | All source/admitted artifacts, native receipts, exact inputs, serializer/token records, reference evidence and paired historical comparison retained |
+| [Complete source/native populations and exact costs](native-v8-012c9fe-all/README.md) | 665/665 expansion, 26/26 interoperability and 11/11 gallery cases passed source/native admission and exact token metering; 244 native component tests passed without skips | All source/admitted artifacts, exact native inputs/receipts, serializer/token records, reference evidence and matched historical costs retained. Ordinary and independent streaming costs agree byte-for-byte across all 665 expansion artifacts. |
 | [Current complete Node 24 producer CI](ci-node24-7855394/README.md) | 1,836 passes, eight explicit skips, zero failures/cancellations out of 1,844 tests; all subsequent contract/fixture/demo checks passed | PR head `7855394` and actual merge checkout `e461fab` have identical complete trees; source tree equals qualification producer `012c9fe`. Includes both timing fixes and the expanded 26-case inventory test. |
+| [Isolated real native coordinator follow-up](native-orchestration-isolated-012c9fe/README.md) | All five optional real native coordinator gates passed, with zero failures/cancellations/skips and every original deadline unchanged | Exact clean `012c9fe` / `39c4036`, one test process after the six broad-admission workers exited. Retains the exact compatible served bundle and original-failure analysis; it does not relabel the original failed full regression or establish learned success. |
 | [Expanded-contract targeted checks](producer-contract-012c9fe/README.md) | Original six-file run: 42 passes, one timing failure, one timeout cancellation; all 5 contract checks passed. Separate two-file timing follow-up: 24/24 passed. | Original clean `012c9fe` failure retained. Follow-up identity is coordinator-reported patch subsequently published as `c0524b4`, not an instrumented clean-commit run. |
-| [Latest production dataset](dataset-v8-492328f/README.md) | 34 freshly admitted episodes and 898 complete examples, with actual tokenizer re-encoding, masks, EOS and frozen component splits checked | Producer `492328f`, consumer `cb311db`; fresh 23-case interoperability and 11-case gallery admission; zero optimizer steps |
+| [Current production dataset](dataset-v8-012c9fe/README.md) and [independent replication](dataset-v8-012c9fe-independent/README.md) | 37 freshly admitted episodes, 1,021 complete examples and 33,850 generated tokens including EOS; actual tokenizer re-encoding, masks and frozen component splits checked | Exact `012c9fe` / `39c4036`; both separate fresh exports retain their own qualification reports and execution receipts. Candidates, datasets and all 37 native input/receipt pairs are byte-identical. This is one 37-episode inventory, not 74 episodes; zero optimizer steps. |
 
 Focused protocol populations have separate exact receipts and do not change
 those corpus denominators. The current rows below were freshly measured under
@@ -29,13 +30,15 @@ the final expanded contract:
 | [Synchronous custom iterators](custom-iterator-012c9fe/README.md) | 20 declared: 16 fresh source/native/token admissions and four explicit source refusals | Producer `012c9fe`, consumer `39c4036`; exact acquisition/cached-next/close behavior, nested labeled cleanup and completion precedence; explicit 300-second native bound |
 
 All eight former enumeration refusals and the previous generator continuation
-failure pass in this new full run. The independent consumer passed 214 focused
-tests without skips. Expansion coverage contains 458 compact-containing episodes
-and 207 wholly detailed episodes; detailed targets remain 86.58% of generated
+failure pass in the final full run. The independent consumer passed 244 component
+tests without skips at the same exact pair. Expansion coverage contains 458
+compact-containing episodes and 207 wholly detailed episodes; detailed targets
+remain 86.58% of generated
 tokens. On 42 exactly matched historical cases, total flat tokens decrease
-90.21% and generated tokens decrease 4.12%. Eight individual cases cost more;
-the full comparison preserves them. The population denominators are separate
-and may contain overlapping source cases.
+90.21% (13,139,870 to 1,286,652) and generated tokens decrease 4.12%
+(34,554 to 33,132). Eight individual cases cost more; the full comparison
+preserves them. The population denominators are separate and may contain
+overlapping source cases.
 
 These source/native/data receipts do not establish learned generalization,
 broader accuracy, serving efficiency or default promotion. Model experiments
@@ -76,6 +79,9 @@ measured pins describe those runs; the newer qualification does not rewrite them
 
 | Evidence | Measured result | Scope |
 | --- | --- | --- |
+| [Original zero-skip producer regression](producer-regression-012c9fe/README.md) | Original `012c9fe` run: 1,840 passes, three failures and one cancellation, zero skips; all five contracts and eight references passed | Preserves the stale 23-case inventory assertion, callback timeout and two optional native lifecycle deadline outcomes. Passing current CI and scoped follow-ups do not rewrite this failed full run. |
+| [Earlier complete source/native populations](native-v8-b66c19b-all/README.md) | 665/665 expansion, 23/23 interoperability and 11/11 gallery admissions and physical costs | Exact producer `b66c19b` / consumer `6adf99f`; separate from the final expanded contract and current whole-population rerun |
+| [Earlier 34-episode production dataset](dataset-v8-492328f/README.md) | 34 freshly admitted episodes and 898 complete examples | Producer `492328f`, consumer `cb311db`; earlier split-bound admissions are not assigned to the current 37-episode export |
 | [Previous-contract qualification and components](native-v8-562f6f2-superseded/README.md) | Producer `562f6f2` / consumer `d26afd9`: 168/665 expansion admissions before interruption, complete original 23+11 populations/costs; partial supplements and earlier 220/221/242/244-test native runs retained | Four verified archives preserve all original scopes; the final expanded contract requires new 26+11 qualification |
 | [Superseded qualification attempts](native-v8-3a1992b-interrupted/README.md) | Producer `3a1992b` / consumer `418385b`: complete 23-case interoperability and 11-case gallery admissions/costs; 594/665 expansion admissions before interruption, with 71 untested or uncommitted | Retains exact artifacts/inputs, original failures and supersession receipts; the custom-iterator timeout and other earlier prefixes are separate historical scopes |
 | [Complete earlier local producer regression](producer-regression-9d4f6b3/README.md) | 1,834 passed, six conditional skips, zero failures; 5/5 contracts and 8/8 references passed | Exact `9d4f6b3`; separate targeted 24/24 checks at `562f6f2` and interrupted 800 history retained |

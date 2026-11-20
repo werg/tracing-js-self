@@ -251,10 +251,12 @@ fixture; that fixture is not an independent native-consumer execution and
 does not produce a retained admission artifact. Actual native qualification
 and model execution require their own pinned run evidence.
 
-The [complete-population source/native qualification](../coverage/language-expansion/native-v8-b66c19b-all/README.md)
+The [complete-population source/native qualification](../coverage/language-expansion/native-v8-012c9fe-all/README.md)
 retains actual production-tokenizer and native-packing receipts for all 665
-expansion cases, 23 interoperability cases and 11 original-gallery cases at
-producer `b66c19b` / consumer `6adf99f`.
+expansion cases, 26 interoperability cases and 11 original-gallery cases at
+producer `012c9fe` / consumer `39c4036`. Every physical expansion-cost artifact
+also agrees byte for byte between complete ordinary and independent streaming
+measurements at that pair.
 
 The independently verified
 [current production dataset](../coverage/language-expansion/dataset-v8-012c9fe/README.md)
@@ -281,6 +283,13 @@ No optimizer steps were performed on this dataset, so this export makes no
 learned-success claim. The separately retained
 [bounded native model experiment](../coverage/language-expansion/native-v8-fit-39c4036/README.md)
 used its own declared one-input training slice and separate evaluation input.
+
+A second [independent export](../coverage/language-expansion/dataset-v8-012c9fe-independent/README.md)
+repeated all 37 fresh source/native admissions after split binding. Its entire
+dataset, registry, candidates and all 37 native input/receipt pairs are
+byte-identical to the first export. Both original execution receipts and
+prerequisite qualification hashes remain separate. This is reproducibility
+evidence for the same 37 episodes, not a larger training population.
 
 Earlier [34-episode export at `492328f`](../coverage/language-expansion/dataset-v8-492328f/README.md),
 [34-episode export at `b66c19b`](../coverage/language-expansion/dataset-v8-b66c19b/README.md),

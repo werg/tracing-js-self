@@ -1,0 +1,251 @@
+{
+  "schema": "v8-dataset-qualification-input-check/1",
+  "passed": true,
+  "producerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+  "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+  "inputCandidates": 37,
+  "qualificationReportsChecked": 2,
+  "sourceArtifactsChecked": 37,
+  "sources": [
+    {
+      "population": "interoperability",
+      "declared": 26,
+      "reportSha256": "e85bb884c22f8e8195581adf0f7409a6f9bb045e62155d76770f123b52b21878",
+      "populationDigest": "5483980d920420a327a7d131d60b871f9e226d334f234a7af3e47e298db1893f"
+    },
+    {
+      "population": "gallery",
+      "declared": 11,
+      "reportSha256": "f70d5ae9d4154c129fe0e885389ca6f0ccafab64e77eefc59fdeb2377d750a63",
+      "populationDigest": "f30dbb5ee22582ef77e9e24f925964c47cea5db5947eb63d7a19649f5c65fbd4"
+    }
+  ],
+  "sourceArtifacts": [
+    {
+      "population": "interoperability",
+      "id": "ordered-map",
+      "artifact": "ordered-map.source.json",
+      "sha256": "06ee275f1f5e9cc1ae9ce7f66138b28ee192cda11d27c169ec7e3103222c0fe6"
+    },
+    {
+      "population": "interoperability",
+      "id": "shared-getter",
+      "artifact": "shared-getter.source.json",
+      "sha256": "95d386f9b8156b3ba1863e3549806b21e2f676c9469cb7e2b45bb21b52a2a5bb"
+    },
+    {
+      "population": "interoperability",
+      "id": "causal-counter",
+      "artifact": "causal-counter.source.json",
+      "sha256": "e28af38a0c16aa3856207cccdb3486595329b62fdfd3889eb0fb2ef0dca68eba"
+    },
+    {
+      "population": "interoperability",
+      "id": "number-callback-cleanup",
+      "artifact": "number-callback-cleanup.source.json",
+      "sha256": "29808be82d64e687a7b22879ee87b31c5ee11196d6763b526871383bf3940cfd"
+    },
+    {
+      "population": "interoperability",
+      "id": "custom-iterator-close",
+      "artifact": "custom-iterator-close.source.json",
+      "sha256": "2b5d2faed82ee4518af1104c64b3b6d36e5222be20146af8dd22ed0f122019ac"
+    },
+    {
+      "population": "interoperability",
+      "id": "iterable-binding-close",
+      "artifact": "iterable-binding-close.source.json",
+      "sha256": "38a9e9686f40c78deec3616bb10d955e1025785238cf4f2e8331619003c9c845"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-symbol-getter-arithmetic",
+      "artifact": "source-symbol-getter-arithmetic.source.json",
+      "sha256": "fdb8ca8996a54cc7bce3ac44fe2ce1667a665877f34866057d00bd6461277adc"
+    },
+    {
+      "population": "interoperability",
+      "id": "typed-views-shared-backing",
+      "artifact": "typed-views-shared-backing.source.json",
+      "sha256": "dd61009d3d7d39facf05d504a7b85a5fffb3576174c31afd4539fc2652874a3d"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-derived-private-arithmetic",
+      "artifact": "source-derived-private-arithmetic.source.json",
+      "sha256": "95bedef0486ad820b740546b49fff81f3014144a4ff1c840a255e7bc0cdd4948"
+    },
+    {
+      "population": "interoperability",
+      "id": "builtin-iterator-mixed-arithmetic",
+      "artifact": "builtin-iterator-mixed-arithmetic.source.json",
+      "sha256": "37d2fd3a5526028a6e3c6cd2e4b20c049fcaa8697175ad2b48dd99a6c643b7f8"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-promise-all-reaction-arithmetic",
+      "artifact": "source-promise-all-reaction-arithmetic.source.json",
+      "sha256": "82732f392b5ca43bdc69cf9d938e021e58076ce6ae92ec99ae8d2ee4cf86f085"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-promise-join-rejection-finally",
+      "artifact": "source-promise-join-rejection-finally.source.json",
+      "sha256": "c33a2a4824d8973d0c2e4fea11dc2f13696bbdf60f704a1da2e84129bedbe489"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-number-private-arithmetic",
+      "artifact": "source-number-private-arithmetic.source.json",
+      "sha256": "22ff2bdcda195fd9ee079ec446b02d2f8dd3a718c8ea7c19383a5a5b1e8326b2"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-generator-cleanup-suspension",
+      "artifact": "source-generator-cleanup-suspension.source.json",
+      "sha256": "857423f2769006f89268c71d8ee77371324f70c4055cfcf127a876720513baa0"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-generator-delegated-cleanup",
+      "artifact": "source-generator-delegated-cleanup.source.json",
+      "sha256": "34439dd5971974c153f1b98b122d740b7b1819d33feaa84168300ecaeaba83b8"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-proxy-traps-arithmetic",
+      "artifact": "source-proxy-traps-arithmetic.source.json",
+      "sha256": "3a99cff19d7dd3b9a95f522341604f8a3fa47ac9680c0ce222cf38acd6403226"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-base-initializer-throw",
+      "artifact": "source-base-initializer-throw.source.json",
+      "sha256": "1c2657def457db5998e43b7bc7b0709724ada17da6c46348cbaaf7fcb340ddb8"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-derived-initializer-throw",
+      "artifact": "source-derived-initializer-throw.source.json",
+      "sha256": "bc67f86002aa72406f89bd8fd6511e39ff6bd08aa5c0997f2e4d87e06fe41270"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-promise-executor-first-call",
+      "artifact": "source-promise-executor-first-call.source.json",
+      "sha256": "9059f5dbfa0718fb72849bb6e709ddc42369bd906f821d403ea84511e3326618"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-promise-executor-retained-resolution",
+      "artifact": "source-promise-executor-retained-resolution.source.json",
+      "sha256": "e6fed013ed674eefdafe277f0e22dd217782287f6da20196e95948b147b48eaf"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-promise-executor-abrupt",
+      "artifact": "source-promise-executor-abrupt.source.json",
+      "sha256": "bed689d9dec0a964fbd9046abf8858c140740a02724777e9f6bb32490592d698"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-ordinary-constructor-prototype",
+      "artifact": "source-ordinary-constructor-prototype.source.json",
+      "sha256": "2f3e8e68fcda3625bcf49e9b14e51afe14772666d23a8ba87dc42bd72898cf0a"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-enumeration-map-callback",
+      "artifact": "source-enumeration-map-callback.source.json",
+      "sha256": "0b6da28fb71e4f15529e1d5a6cae6d9f004e0cc1fdd443676147c251736f528b"
+    },
+    {
+      "population": "interoperability",
+      "id": "generator-own-symbol-alias",
+      "artifact": "generator-own-symbol-alias.source.json",
+      "sha256": "9450c2eaa25aa8063ead43234dd05b61b6e99dbe2e5261a22d72605cf1db1edb"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-logical-left-operands",
+      "artifact": "source-logical-left-operands.source.json",
+      "sha256": "dad19e5968af83affe1f750db9aa2575e9d4d059069d7f889861027918e09a93"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-for-in-own-keys",
+      "artifact": "source-for-in-own-keys.source.json",
+      "sha256": "470de662ab0c965159c90d9a07441d4f1ce5cf51e3be02c5bf0f3610361d9185"
+    },
+    {
+      "population": "gallery",
+      "id": "compound-pure",
+      "artifact": "compound-pure.source.json",
+      "sha256": "c372af466f69ef7e4d302468281a8aec6887561ce172d79f3221e8051372f95e"
+    },
+    {
+      "population": "gallery",
+      "id": "branch-1",
+      "artifact": "branch-1.source.json",
+      "sha256": "1ada8fd28387b9d13d43d5fe8ec85fb27e799d320640473fce3c701a3ddaae00"
+    },
+    {
+      "population": "gallery",
+      "id": "object-alias",
+      "artifact": "object-alias.source.json",
+      "sha256": "352b7248bc2f53af2d725d80b502d7c071f3891bd514160b7da29d41d36eccdb"
+    },
+    {
+      "population": "gallery",
+      "id": "pure-helper",
+      "artifact": "pure-helper.source.json",
+      "sha256": "70b79fb1d932165dbaac54391bd951cf3e50062af1bf8f0d34643071054b9f89"
+    },
+    {
+      "population": "gallery",
+      "id": "dense-loop",
+      "artifact": "dense-loop.source.json",
+      "sha256": "1aaa819c3546124985eace5705206e6ec22fe66214386f0710d9c830903dc745"
+    },
+    {
+      "population": "gallery",
+      "id": "throw-finally",
+      "artifact": "throw-finally.source.json",
+      "sha256": "2f722dfa1c7ebfd1d5b580f257848a1e82c77fec64a98583eeb0ab5d83712d63"
+    },
+    {
+      "population": "gallery",
+      "id": "counter-0",
+      "artifact": "counter-0.source.json",
+      "sha256": "91bb2c694c3521c8e20c2f62a8e46345f24d5cd6cc5c6ccfd582624abfb072a4"
+    },
+    {
+      "population": "gallery",
+      "id": "rejection-finally",
+      "artifact": "rejection-finally.source.json",
+      "sha256": "a188bcbdea073395e2a3b825255ee4bcffcd3f9b8f30588c0618b889c6f9cfb2"
+    },
+    {
+      "population": "gallery",
+      "id": "callback-captured-write",
+      "artifact": "callback-captured-write.source.json",
+      "sha256": "9207ae9443577f92385e86317525728555be44ff2977cfe6ca07b3895e8faf83"
+    },
+    {
+      "population": "gallery",
+      "id": "persistent-external-trigger",
+      "artifact": "persistent-external-trigger.source.json",
+      "sha256": "560e791262b75031aa2c53507a319f6feea1b609f87ce234f9ff0d80624a2811"
+    },
+    {
+      "population": "gallery",
+      "id": "redundant-cell-write",
+      "artifact": "redundant-cell-write.source.json",
+      "sha256": "1273c0234242fd3cf2103f1daab64f44d7f56dd4412669f7457d2721a2284e8b"
+    }
+  ],
+  "exactCandidateEquality": true,
+  "freshNativeExecution": false,
+  "optimizerSteps": 0,
+  "learningClaim": null
+}

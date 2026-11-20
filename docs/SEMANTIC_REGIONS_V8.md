@@ -14,14 +14,16 @@ work proposed in [the language coverage plan](LANGUAGE_COVERAGE_PLAN.md).
 against independent source observations and validates its public projection.
 Recognition by a parser or pure lowerer alone does not satisfy that gate.
 
-The complete-population [source/native qualification and exact costs](../coverage/language-expansion/native-v8-b66c19b-all/README.md)
-measure producer `b66c19b` and consumer `6adf99f`. All **665 expansion cases,
-23 interoperability cases and 11 original-gallery cases** passed source and
-independent native admission. Every case also has exact production-tokenizer
-costs and native packing receipts. The expanded enumeration profile closes the
-eight previously refused cases; the repaired consumer admits the previously
-failing generator-delegation continuation. Earlier receipts retain their own
-original failures and pins.
+The complete-population [source/native qualification and exact costs](../coverage/language-expansion/native-v8-012c9fe-all/README.md)
+measure producer `012c9fe` and consumer `39c4036`. All **665 expansion cases,
+26 interoperability cases and 11 original-gallery cases** passed fresh source
+and independent native admission under the final expanded contract. Every case
+also has exact production-tokenizer costs and native packing receipts. The
+ordinary cost CLI and independent streaming meter produced byte-identical
+physical artifacts for all 665 expansion cases. The expanded enumeration
+profile closes the eight formerly refused cases; the repaired consumer admits
+the formerly failing generator-delegation continuation. Earlier receipts retain
+their original failures and pins.
 
 The [current complete Node 24 producer CI](../coverage/language-expansion/ci-node24-7855394/README.md)
 passed **1,836 of 1,844 tests**, with eight explicit skips and zero failures or
@@ -32,12 +34,26 @@ two unavailable OS-namespace checks, one unconfigured external codec check and
 five optional native-coordinator checks. The separate
 [local 9d regression](../coverage/language-expansion/producer-regression-9d4f6b3/README.md)
 retains 1,834 passes and six conditional skips at its original revision.
-The independent consumer passed **214 tests without skips** at the earlier `b66c19b` / `6adf99f` pair. The later [production dataset](../coverage/language-expansion/dataset-v8-492328f/README.md)
-freshly admitted all **34 episodes and 898 complete examples** at producer
-`492328f` and consumer `cb311db` after binding component splits, with
-independently re-encoded tokens and generated-only masks. Its receipts come
-from fresh 23-case interoperability and 11-case gallery qualifications; the
-older complete-population results are not assigned to those later pins.
+
+The [original zero-skip `012c9fe` regression](../coverage/language-expansion/producer-regression-012c9fe/README.md)
+retains 1,840 passes, three failures and one cancellation. Its stale inventory
+assertion and callback test timing have separate fixes. All five optional
+real native coordinator gates passed in the later [isolated follow-up](../coverage/language-expansion/native-orchestration-isolated-012c9fe/README.md)
+at exact `012c9fe` / `39c4036`, with original deadlines unchanged and the exact
+compatible served bundle retained. These scoped results preserve the original
+full-run failure and do not infer a zero-skip full-regression pass.
+
+The independent consumer passed **244 tests without skips** at the current
+`012c9fe` / `39c4036` pair, with clean before/after identities, Ruff and workflow
+checks and exact shared-contract equality. The [production dataset](../coverage/language-expansion/dataset-v8-012c9fe/README.md)
+and its [independent replication](../coverage/language-expansion/dataset-v8-012c9fe-independent/README.md)
+freshly admitted all **37 episodes and 1,021 complete examples** after binding
+component splits. Every prompt and target was re-encoded with the actual
+production tokenizer; generated-only masks and all **33,850 generated tokens
+including EOS** were checked. Both exports preserve their own independently
+executed source/native qualification reports and run receipts; candidates,
+dataset bytes and all native input/receipt pairs agree exactly. Replication
+does not double the 37-episode inventory.
 
 These finite engineering and data-admission gates passed for the declared
 bounded candidate at the listed revisions. Later implementation changes require
@@ -200,7 +216,7 @@ universal equivalence or a measured model-comprehension improvement.
 
 The complete expansion, interoperability and gallery populations have retained
 source/native admission, exact tokenizer costs and native packing at producer
-`b66c19b` and consumer `6adf99f`. In the 665-case expansion population,
+`012c9fe` and consumer `39c4036`. In the 665-case expansion population,
 **458 episodes contain compact regions** and
 **207 remain wholly detailed**; detailed targets still
 account for **86.58% of generated tokens**. The 42 matched historical cases
@@ -211,10 +227,11 @@ cover the matched source/entry/input cases, not unmeasured historical population
 
 The [evaluation protocol](LANGUAGE_EXPANSION_EVALUATION.md) defines the frozen
 populations and reproduction commands. The combined
-[production dataset](../coverage/language-expansion/dataset-v8-492328f/README.md)
-contains all 34 gallery/interoperability episodes and 898 complete examples,
-with fresh source/native admission after split binding at producer `492328f`
-and consumer `cb311db`, and zero optimizer steps.
+[production dataset](../coverage/language-expansion/dataset-v8-012c9fe/README.md)
+contains all 37 gallery/interoperability episodes and 1,021 complete examples,
+with fresh source/native admission after split binding at producer `012c9fe`
+and consumer `39c4036`. Its independently repeated export has identical data
+and fresh admission receipts. Both exports perform zero optimizer steps.
 
 Separate model experiments now have measured outcomes. The
 [four-step native fitting diagnostics](evidence/semantic-v8-diagnostic-pilot/2026-11-20/README.md)

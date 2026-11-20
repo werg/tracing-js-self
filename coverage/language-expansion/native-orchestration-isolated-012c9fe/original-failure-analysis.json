@@ -1,0 +1,98 @@
+{
+  "schema": "retained-native-orchestration-failure-analysis/1",
+  "originalEvidenceCommit": "2030f0d85a51bcbc10efa0a7c6565f849006285c",
+  "producerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+  "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+  "findings": [
+    {
+      "archiveMember": "native-orchestration/native-services-compact.json",
+      "bytes": 88922,
+      "sha256": "55662464ef101539a045158a3a4ceb0d330e8ddee42a164e661f98e95532db42",
+      "failure": {
+        "category": "Error",
+        "message": "Megatoken selected RPC deadline exceeded",
+        "evidence": null
+      },
+      "cleanupFailure": null,
+      "nativeMetrics": {
+        "schema": "semantic-inference-metrics/4",
+        "rpcCalls": 0,
+        "computeSeconds": 0,
+        "peakMemoryBytes": 0
+      },
+      "costs": {
+        "computeSeconds": 30.004350475,
+        "peakMemoryBytes": 124665856,
+        "dispatches": 0,
+        "queueDepth": 0,
+        "leakedResources": 0
+      },
+      "semanticInconsistency": null,
+      "decisionCount": 0,
+      "childSelectionCount": 0,
+      "childrenCompleted": 0,
+      "finalStateStatus": null,
+      "tracks": [],
+      "validation": {
+        "semanticReplay": false,
+        "lifecycle": false,
+        "complete": false
+      }
+    },
+    {
+      "archiveMember": "native-orchestration/native-invalid-child.json",
+      "bytes": 93779,
+      "sha256": "05099d111135aa893ff68a605560f5a5d6a3ac4ac8edc5a594c67c1d200ab62c",
+      "failure": {
+        "category": "identity",
+        "message": "Selected value refers to an unallocated owned identity",
+        "evidence": null
+      },
+      "cleanupFailure": {
+        "category": "Error",
+        "message": "Native orchestration cleanup deadline exceeded",
+        "evidence": null
+      },
+      "nativeMetrics": {
+        "schema": "semantic-inference-metrics/4",
+        "rpcCalls": 5,
+        "computeSeconds": 9.48551380498975,
+        "peakMemoryBytes": 525668352
+      },
+      "costs": {
+        "computeSeconds": 22.192901201,
+        "peakMemoryBytes": 726061056,
+        "dispatches": 0,
+        "queueDepth": 1,
+        "leakedResources": 2
+      },
+      "semanticInconsistency": null,
+      "decisionCount": 2,
+      "childSelectionCount": 1,
+      "childrenCompleted": 0,
+      "finalStateStatus": "waiting",
+      "tracks": [
+        {
+          "address": "track:0",
+          "parent": null,
+          "status": "waiting"
+        },
+        {
+          "address": "track:1",
+          "parent": "track:0",
+          "status": "active"
+        }
+      ],
+      "validation": {
+        "semanticReplay": true,
+        "lifecycle": false,
+        "complete": false
+      }
+    }
+  ],
+  "interpretation": {
+    "services": "The first RPC expired after30 seconds before any native response, coordinator observation or child selection. Controlled mode does not initialize separately; the first open request includes cold Python/bundle startup plus initial proposal prefill. The retained evidence cannot split those stages. This failure does not demonstrate an async/callback/throw semantic mismatch.",
+    "invalidChild": "The deliberately invalid record was rejected for its missing owned identity and retained unchanged. Coordinator cleanup did not acknowledge within the default1000ms cleanup window. The last acknowledged state is preserved and reports two pending tracks; it is not a post-cancellation state. The transport was closed on cleanup failure. A successful cancellation receipt was not retained, so completed cleanup must not be claimed from this failed run.",
+    "nextStep": "Run only the five unchanged real native gates serially on the same clean code pair after the known six qualification workers stop. Keep all original deadlines and expected outcomes; preserve original failures and exact compatible-bundle substitution. Investigate behavior only if failures persist."
+  }
+}

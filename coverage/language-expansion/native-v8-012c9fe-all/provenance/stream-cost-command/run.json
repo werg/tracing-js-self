@@ -1,0 +1,78 @@
+{
+  "schema": "semantic-v8-stream-cost-command/1",
+  "status": "passed",
+  "startedAt": "2026-11-20T17:53:02.352908+00:00",
+  "pinsBefore": {
+    "producer": {
+      "path": "/workspace/scratch/754a49249d01/qualification-producer-012c9fe",
+      "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+      "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+      "trackedChanges": "",
+      "untrackedChanges": ""
+    },
+    "consumer": {
+      "path": "/workspace/scratch/754a49249d01/qualification-consumer-39c4036",
+      "revision": "39c4036564428e44cc89caf261f517d856482695",
+      "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+      "trackedChanges": "",
+      "untrackedChanges": ""
+    }
+  },
+  "command": [
+    "node",
+    "/workspace/scratch/754a49249d01/qualification-cost-stream-012c9fe-39c4036-run/stream_qualification_costs.mjs",
+    "/workspace/scratch/754a49249d01/qualification-producer-012c9fe",
+    "/workspace/scratch/754a49249d01/qualification-012c9fe-39c4036/native-all",
+    "/workspace/scratch/754a49249d01/qualification-cost-stream-012c9fe-39c4036"
+  ],
+  "cwd": "/workspace/scratch/754a49249d01/qualification-producer-012c9fe",
+  "environmentOverrides": {
+    "TRACING_JS_SELF_ROOT": "/workspace/scratch/754a49249d01/qualification-producer-012c9fe",
+    "MEGATOKEN_NATIVE_SOURCE_PRODUCER": "/workspace/scratch/754a49249d01/qualification-producer-012c9fe",
+    "MEGATOKEN_ROOT": "/workspace/scratch/754a49249d01/qualification-consumer-39c4036",
+    "MEGATOKEN_PYTHON": "/workspace/scratch/754a49249d01/native-v8-venv/bin/python",
+    "PYTHONPATH": "/workspace/scratch/754a49249d01/qualification-consumer-39c4036/src",
+    "MEGATOKEN_TOKENIZER_JSON": "/workspace/scratch/754a49249d01/native-v8-tokenizer.json",
+    "SEMANTIC_V8_NATIVE_POLICY": "/workspace/scratch/754a49249d01/qualification-producer-012c9fe/contracts/semantic-native-policy-v8.json",
+    "TMPDIR": "/workspace/scratch/754a49249d01/qualification-cost-stream-012c9fe-39c4036-run/tmp",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1"
+  },
+  "helperSha256": "36ea6d1eed27abf398ef7ab8f6032aecfe568e38ebbfeda3be4a6c1207a857d1",
+  "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+  "meterWorkers": 1,
+  "sourceAdmissionsPerformed": 0,
+  "nativeAdmissionsPerformed": 0,
+  "exitCode": 0,
+  "streamReceiptSha256": "f6518faa5cedd6d188e29860223684e81bd99341c908fe19b08ee5807eb60008",
+  "normalReportSha256": "c4af76b531d31bbc1ecba13a0c54b9aa54a49a67184405385e4fce9546296c56",
+  "durationSeconds": 1347.6286776070046,
+  "finishedAt": "2026-11-20T18:15:30.082299+00:00",
+  "pinsAfter": {
+    "producer": {
+      "path": "/workspace/scratch/754a49249d01/qualification-producer-012c9fe",
+      "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+      "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+      "trackedChanges": "",
+      "untrackedChanges": ""
+    },
+    "consumer": {
+      "path": "/workspace/scratch/754a49249d01/qualification-consumer-39c4036",
+      "revision": "39c4036564428e44cc89caf261f517d856482695",
+      "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+      "trackedChanges": "",
+      "untrackedChanges": ""
+    }
+  },
+  "identityUnchanged": true,
+  "stdout": {
+    "path": "stdout.log",
+    "bytes": 63511,
+    "sha256": "931b9d0d801f23a06cd2420900cf6a83d11dc31d1e9de3a222359082bedca9e3"
+  },
+  "stderr": {
+    "path": "stderr.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}
