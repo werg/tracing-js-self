@@ -60,6 +60,10 @@ export function validateNumberRecordV8(record,{value}){
 export function assertNumberNextV8(controller,record,api){
   const pending=controller.protocol?.numberConversions?.operations.findLast(row=>!['complete','abrupt'].includes(row.phase));
   if(!pending)return true;
+  // A source-checked handler-scope transfer changes only the shared pending
+  // completion. The conversion still requires its next semantic operation.
+  if(['select','convert'].includes(pending.phase)&&record.kind==='transfer'&&record.fields?.kind==='cleanup'&&
+    api.eq(record.fields.value,['undefined'])&&record.fields.handler?.schema==='semantic-handler-scopes/1')return true;
   if(pending.phase==='waiting'&&controller.stack.includes(pending.child))return true;
   api.require(controller.stack.at(-1)===pending.parent,'Number conversion continuation owner');
   const expected={select:'number.select',call:'number.call',builtin:'number.builtin',waiting:controller.lastReturn?.kind==='throw'?'number.throw':'number.return',convert:'number.finish'}[pending.phase];

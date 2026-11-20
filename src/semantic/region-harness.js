@@ -12,7 +12,7 @@ import {defineRegionProgram,validateRegionProgram,sharedRegionState,cloneRegionC
   REGION_CONTEXT_VERSION,REGION_CONTINUATION_VERSION,REGION_PROFILE} from './regions.js';
 import {pureRegionEntry,evaluatePureRegion,encodePureRegionRecord,decodePureRegionRecord} from './pure-region-v8.js';
 import {encodeProtocolRecordV8,decodeProtocolRecordV8} from './protocol-codec-v8.js';
-import {applyProtocolRecordV8,assertProtocolDetailCompatible,restoreProtocolStateV8,allowsProtocolInternalSchedulerV8} from './protocol-state-v8.js';
+import {applyProtocolRecordV8,assertProtocolDetailCompatible,restoreProtocolStateV8,allowsProtocolInternalSchedulerV8,allowsProtocolCompletionDetailV8} from './protocol-state-v8.js';
 import {assertPlainPromiseResolutionV8,assertObservedPromiseResolutionV8} from './scheduler-boundaries-v8.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual;
@@ -99,9 +99,9 @@ export class RegionExecutionHarness {
         encodeProtocolRecordV8(selected):encodeDetailedRecord(selected,{role:'generated'});
     if(line.startsWith('detail ')){
       const record=decodeDetailedRecord(line,{role:'generated'});
-      const controller=this.activation(invocationId).controller;
+      const controller=this.activation(invocationId).controller,completionDetail=allowsProtocolCompletionDetailV8(controller,record);
       if(controller.protocol){
-        if(!protocolDetailKinds.has(record.kind)&&!(internalSchedulerDetailKinds.has(record.kind)&&
+        if(!protocolDetailKinds.has(record.kind)&&!completionDetail&&!(internalSchedulerDetailKinds.has(record.kind)&&
           allowsProtocolInternalSchedulerV8(controller,record)))fail('asynchronous or external work requires an extended protocol profile');
         assertProtocolDetailCompatible(controller,record);
       }

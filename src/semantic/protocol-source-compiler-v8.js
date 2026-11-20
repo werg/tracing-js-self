@@ -463,6 +463,7 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
         emit({kind:'property.finish',id:pending.id,completion:{kind:kind==='throw'?'throw':'normal',value:kind==='throw'||pending.operation==='get'?value:pending.value}},event,'owned-source-accessor-completion/1');pendingAccessors.delete(invocation);
       }
     }
+    for(const adapter of adapters)if(adapter.afterEvent)adapter.afterEvent(context,event,row);
     for(const change of heapChanges)if(published.has(change.id))checkNode(change.after);
     for(const change of event.stateChanges.filter(change=>change.table==='frames'&&change.after))
       for(const adapter of frameOwners.get(change.id)??[])if(adapter.checkFrame(context,change.after,event)!==true)refuse('extension failed its complete frame comparison: '+adapter.id);

@@ -91,7 +91,9 @@ export function createNumberSourceAdapterV8(){
     },
     checkFrame(ctx,node){
       const pending=node.pendingNumberConversion;if(pending===undefined)return true;
-      require(ctx,!node.handlers?.length&&!node.awaiting&&!node.asyncPromiseId,'cleanup or async conversion needs its own profile');
+      require(ctx,!node.awaiting&&!node.asyncPromiseId,'async conversion needs its own profile');
+      require(ctx,!node.handlers?.length||ctx.extensionState.has('ordinary-completions-source/1')||node.generatorId,
+        'cleanup conversion needs its declared completion profile');
       const entry=active.get(node.id),current=entry&&operation(ctx,entry.id);
       require(ctx,current&&current.parent===ctx.frame(node.id)&&ctx.eq(current.input,pending.input)&&
         pending.operation==='Number'&&pending.index===entry.index&&pending.waitingFrameId===entry.child&&ctx.eq(pending.method,entry.method),

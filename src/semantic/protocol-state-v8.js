@@ -461,7 +461,44 @@ export function restoreProtocolStateV8(controller,snapshot){
 function rich(node){return [...(node.descriptors??[])].some(([key,metadata])=>metadata.kind!=='data'||!eq(metadata,defaultMetadata(node,key)))||node.extensible===false||
   ![undefined,null,'ordinary'].includes(node.prototype)||[...node.properties.keys()].some(symbolic)||
   PROTOCOL_MACHINE_ADAPTERS_V8.some(adapter=>adapter.hasRichState?.(node));}
+/** Ordinary source cleanup uses the existing detailed transfer boundary. Its
+ * bounded payload exposes retained obligations, never executable handler code. */
+export function allowsProtocolCompletionDetailV8(controller,record){
+  const fields=record?.fields,scope=fields?.handler;
+  if(record?.kind!=='transfer'||scope?.schema!=='semantic-handler-scopes/1')return false;
+  require(fields.kind==='cleanup'&&eq(fields.value,['undefined']),'ordinary handler-scope transfer kind/value');
+  assertAlgorithmFields(scope,['schema','frames'],'ordinary handler scopes');
+  assertAlgorithmDataArray(scope.frames,'ordinary handler frames');
+  require(scope.frames.length<=64,'ordinary handler frame bound');
+  const ids=new Set();let previous=-1;
+  const value=tag=>{known(controller,tag);require(tag[0]!=='symbol','Symbol cleanup needs protocol transfer');};
+  for(const frame of scope.frames){
+    assertAlgorithmFields(frame,['invocation','handlers'],'ordinary handler frame');
+    const index=controller.stack.indexOf(frame.invocation);
+    require(index>previous&&controller.frameFunctions.has(frame.invocation),'ordinary handler frame is not active in stack order');previous=index;
+    assertAlgorithmDataArray(frame.handlers,'ordinary handlers');
+    require(frame.handlers.length>0&&frame.handlers.length<=64,'ordinary handler bound');
+    for(const handler of frame.handlers){
+      assertAlgorithmFields(handler,['id','catch','finally','phase','caught','pending'],'ordinary handler');
+      require(typeof handler.id==='string'&&handler.id.length>0&&handler.id.length<=256&&!ids.has(handler.id),
+        'ordinary handler identity');ids.add(handler.id);
+      require(typeof handler.catch==='boolean'&&typeof handler.finally==='boolean'&&(handler.catch||handler.finally)&&
+        ['try','catch','finally'].includes(handler.phase)&&(handler.phase!=='catch'||handler.catch)&&
+        (handler.phase!=='finally'||handler.finally),'ordinary handler phase/capability');
+      if(handler.caught!==null){require(handler.phase==='catch','caught value outside catch');value(handler.caught);}
+      require(handler.phase==='finally'?handler.pending!==null:handler.pending===null,'ordinary cleanup pending completion');
+      if(handler.pending!==null){
+        assertAlgorithmFields(handler.pending,['kind','value'],'ordinary pending completion');
+        require(['normal','return','throw'].includes(handler.pending.kind),'ordinary completion kind');value(handler.pending.value);
+        require(handler.pending.kind!=='normal'||eq(handler.pending.value,['undefined']),'normal cleanup has no return value');
+      }
+    }
+  }
+  return true;
+}
+
 export function assertProtocolDetailCompatible(controller,record){
+  allowsProtocolCompletionDetailV8(controller,record);
   for(const adapter of PROTOCOL_MACHINE_ADAPTERS_V8)if(adapter.assertNext)
     require(adapter.assertNext(controller,record,PROTOCOL_MACHINE_API_V8)===true,'extension detailed continuation guard: '+adapter.id);
   const pending=controller.protocol?.pendingCalls.at(-1);
