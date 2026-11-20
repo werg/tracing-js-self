@@ -91,11 +91,21 @@ test('Proxy nested callbacks retain selected source identities, arrow receivers 
   assert.equal(restore(f.controller).calls,2);
   const forged=structuredClone(f.controller);forged.protocol.proxyCalls.pending[0].callee=ref('target');
   assert.throws(()=>restore(forged),/source identity/);
+  const reordered=structuredClone(f.controller);reordered.protocol.proxyCalls.pending.reverse();
+  assert.throws(()=>restore(reordered),/stack relationship\/order/);
   f.apply({kind:'throw',invocation:'innerTrap',value:['str','thrown']});
   f.apply({kind:'proxy.finish',id:'inner',completion:{kind:'throw',value:['str','thrown']}});
   f.apply({kind:'throw',invocation:'outerTrap',value:['str','thrown']});
   f.apply({kind:'proxy.finish',id:'outer',completion:{kind:'throw',value:['str','thrown']}});
   assert.equal(restore(f.controller).calls,0);
+});
+test('Proxy set traps accept declared Symbols as truthy without storing the trap result',()=>{
+  const f=fixture();trap(f,'set');
+  f.apply({kind:'proxy.set.call',id:'write',object:'proxy',key:key('x'),value:['num',7],child:'writer'});
+  f.apply({kind:'return',invocation:'writer',value:['symbol','well-known:iterator']});
+  f.apply({kind:'proxy.finish',id:'write',completion:{kind:'normal',value:['num',7]}});
+  assert.equal(restore(f.controller).calls,0);
+  assert.deepEqual(f.controller.heap.get('target').properties.get('x'),['num',2]);
 });
 test('Proxy completion checks reject false setters and honor SameValue for frozen live target data',()=>{
   for(const value of [['num','-0'],['num','NaN'],ref('handler')]){

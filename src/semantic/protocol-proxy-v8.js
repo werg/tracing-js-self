@@ -122,7 +122,7 @@ export function restoreProxyStateV8(controller,snapshot,api){
   assertAlgorithmFields(snapshot,['schema','pending'],'Proxy call state');
   api.require(snapshot.schema===PROXY_STATE_V8_SCHEMA,'Proxy call state schema');
   assertAlgorithmDataArray(snapshot.pending,'pending Proxy calls');api.require(snapshot.pending.length<=64,'Proxy call bound');
-  const seen=new Set();
+  const seen=new Set();let priorDepth=-1;
   for(const row of snapshot.pending){
     assertAlgorithmFields(row,PROXY_CALL_FIELDS,'Proxy pending call');
     for(const identity of [row.id,row.parent,row.child,row.object])id(identity);
@@ -137,7 +137,9 @@ export function restoreProxyStateV8(controller,snapshot,api){
     api.require(api.eq(controller.locals.get(row.child+':this'),callee.functionKind==='arrow'?callee.lexicalReceiver:row.handler),
       'Proxy callback retained receiver');
     if(controller.stack.includes(row.child)){
-      api.require(controller.stack.indexOf(row.child)===controller.stack.indexOf(row.parent)+1,'Proxy callback stack relationship');
+      const depth=controller.stack.indexOf(row.child);
+      api.require(depth===controller.stack.indexOf(row.parent)+1&&depth>priorDepth,'Proxy callback stack relationship/order');
+      priorDepth=depth;
       const call=controller.protocol.callFrames.find(call=>call.child===row.child);
       api.require(call&&api.eq(call.arguments,argumentsFor(row)),'Proxy callback retained arguments');
     }else api.require(row===snapshot.pending.at(-1)&&controller.stack.at(-1)===row.parent&&
