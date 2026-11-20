@@ -213,6 +213,31 @@ test('property capacity counts data, accessors and array length while allowing e
   assert.deepEqual(wire(array),arrayBefore);
 });
 
+test('detailed writes cannot bypass protocol property capacity or leave descriptor order stale',()=>{
+  const c=controller();apply(c,allocation('object'),define('object',['str','x'],data(['num',1])));
+  const before=wire(c);
+  for(const fields of [
+    {object:'object',key:'x',present:false,value:['undefined']},
+    {object:'object',key:'x',present:true,value:['num',2]},
+    {object:'object',key:'y',present:true,value:['num',2]}
+  ])assert.throws(()=>assertProtocolDetailCompatible(c,{kind:'write',fields}),/descriptor\/order/);
+  assert.deepEqual(wire(c),before);
+  apply(c,set('object',['str','y'],['num',2]),{kind:'property.delete',object:'object',key:['str','x'],success:true});
+  assert.deepEqual(wire(restore(wire(c))),wire(c));
+
+  const ordered=controller();apply(ordered,allocation('ordered'));
+  ordered.heap.get('ordered').keyOrder=[];
+  assert.deepEqual(wire(restore(wire(ordered))),wire(ordered));
+  assert.throws(()=>assertProtocolDetailCompatible(ordered,{kind:'write',fields:{object:'ordered',key:'x',present:true,value:['num',1]}}),/descriptor\/order/);
+
+  const count=PROTOCOL_V8_LIMITS.properties,full=controller(),properties=Array.from({length:count},(_,i)=>({key:['str','p'+i],value:['num',i]}));
+  apply(full,allocation('full',properties));
+  assert.equal(assertProtocolDetailCompatible(full,{kind:'write',fields:{object:'full',key:'p0',present:true,value:['num',9]}}),true);
+  assert.throws(()=>assertProtocolDetailCompatible(full,{kind:'write',fields:{object:'full',key:'extra',present:true,value:['num',9]}}),/property count bound/);
+  assert.throws(()=>assertProtocolDetailCompatible(full,{kind:'allocate',fields:{name:'new',kind:'array',length:count,
+    properties:properties.map(({key,value})=>({key:key[1],value}))}}),/property count bound/);
+});
+
 test('versioned protocol fixtures replay through canonical bytes and retain checkpoint identity',()=>{
   const fixture=JSON.parse(readFileSync(new URL('./fixtures/semantic-protocol-v8.json',import.meta.url),'utf8'));
   assert.equal(fixture.schema,'semantic-protocol-fixtures/1');

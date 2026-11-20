@@ -460,7 +460,12 @@ export function assertProtocolDetailCompatible(controller,record){
     if(value.op==='read')require(!rich(heapNode(controller,value.object)),'detailed read bypasses descriptor/prototype protocol');
     for(const child of Object.values(value))inspect(child);
   }
-  if(controller.protocol&&record.kind==='allocate')require(!protocolReservedIdentitiesV8(controller).has(record.fields.name),'detailed allocation collides with a reserved Symbol/object identity');
+  if(controller.protocol&&record.kind==='allocate'){
+    require(!protocolReservedIdentitiesV8(controller).has(record.fields.name),'detailed allocation collides with a reserved Symbol/object identity');
+    const keys=new Set((record.fields.properties??[]).map(property=>property.key));
+    if(record.fields.kind==='array')keys.add('length');
+    require(keys.size<=PROTOCOL_V8_LIMITS.properties,'ordinary property count bound');
+  }
   if(controller.protocol&&(record.kind==='call'||['return','throw'].includes(record.kind)&&(controller.protocol.callFrames.length||controller.stack.length>1))){
     const scheduler=allowsProtocolInternalSchedulerV8(controller,record)&&!controller.protocol.callFrames.length&&
       !controller.protocol.pendingCalls.length;
@@ -470,6 +475,12 @@ export function assertProtocolDetailCompatible(controller,record){
   }
   inspect(record.fields);
   if(['read','write'].includes(record.kind))require(!rich(heapNode(controller,record.fields.object)),'detailed property transition bypasses rich state');
+  if(record.kind==='write'){
+    const node=heapNode(controller,record.fields.object);
+    require(node.descriptors===undefined&&node.keyOrder===undefined,'detailed property write bypasses descriptor/order state');
+    if(record.fields.present&&!node.properties.has(record.fields.key))
+      require(propertyCount(node)<PROTOCOL_V8_LIMITS.properties,'ordinary property count bound');
+  }
   if(record.kind==='end')require(!controller.protocol?.pendingCalls.length,'unfinished protocol call');
   return true;
 }
