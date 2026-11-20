@@ -50,6 +50,35 @@ test('direct V8 lifecycle retains callbacks across restore without replaying reg
   assert(!/semantic-(?:execution|trace|context|continuation|checkpoint)\/6/.test(JSON.stringify(restored.checkpoint())));
 });
 
+test('public replay retires call callbacks and failed subscriptions at the result boundary',async()=>{
+  for(const operation of ['demo.withCallback','demo.listen'])for(const status of ['fulfilled','rejected']){
+    const name=operation.slice('demo.'.length);
+    const source='"use strict";function run(){return host.'+name+'("tick",handler);}function handler(value){return value;}';
+    let calls=0;
+    const h=new SelectedExecutionLifecycleV8({services:{[operation]:()=>{
+      calls++;if(status==='rejected')throw new Error('registration failed');return undefined;
+    }}});
+    begin(h,source,[operation],'retained');
+    h.selected('call',w('allocate',{name:'fn',kind:'closure',code:'handler',captures:[],properties:[]}));
+    h.selected('call',w('request',{effect:'registration',operation,invocation:'call',
+      arguments:[['str','tick'],['ref','fn']],site:site(source,operation),
+      payload:'["tick",{"$ownedCallback":"fn"}]',promise:'registration'}));
+    await h.dispatch('call','registration');
+    const retained=operation==='demo.listen'&&status==='fulfilled';
+    const exported=h.exportEpisode(),resultIndex=exported.public.timeline.findIndex(row=>row.kind==='result');
+    assert(resultIndex>=0);
+    const prefix=structuredClone(exported);prefix.public.timeline.length=resultIndex+1;
+    const boundary=SelectedExecutionLifecycleV8.replay(prefix,{requireTerminal:false});
+    assert.equal(boundary.callbacks.get('call/registration/1').state,retained?'active':'revoked');
+    assert.equal(boundary.handlers.get('callback1').state,retained?'active':'closing');
+    assert.equal(boundary.timeline.length,resultIndex+1,'replay must not invent queued arrivals or closure');
+    const replayed=SelectedExecutionLifecycleV8.replay(exported,{requireTerminal:false});
+    assert.deepEqual([...replayed.callbacks],[...h.callbacks]);
+    assert.deepEqual([...replayed.handlers],[...h.handlers]);
+    assert.equal(calls,1,'replay must not register native callbacks again');
+  }
+});
+
 test('direct V8 effects require durable intent acknowledgment and restore never redispatches uncertain work',async()=>{
   const source='"use strict";function run(){return host.readNumber("x");}';
   let calls=0,acknowledged=false,resolve;

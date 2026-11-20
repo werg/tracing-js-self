@@ -734,13 +734,8 @@ export class SelectedExecutionCore {
       if(ready)for(const listener of this.runnableListeners)listener(ready);
     }
     this.wake();
-    const callbacks=[...this.callbacks].filter(([callbackKey])=>callbackKey.startsWith(key+'/'));
-    for(const [callbackKey,callback] of callbacks){
+    for(const callback of this.settleCallbackCapabilities(key,status)){
       const handler=this.handlers.get(callback.subscriptionId);
-      if(status!=='fulfilled'||callback.lifetime!=='subscription'){
-        callback.state='revoked';
-        if(handler)handler.state='closing';
-      }else callback.state='active';
       for(const event of callback.queued)this.postEvent({
         subscriptionId:callback.subscriptionId,eventId:event.eventId,args:event.args});
       callback.queued.length=0;
@@ -751,6 +746,20 @@ export class SelectedExecutionCore {
         this.closeEventHandler(callback.subscriptionId);
     }
     return receipt;
+  }
+  // Retirement is part of the result transition itself. Public replay applies
+  // it too, but consumes queued arrivals and handler closure only as receipts.
+  settleCallbackCapabilities(key,status){
+    const callbacks=[...this.callbacks].filter(([callbackKey])=>callbackKey.startsWith(key+'/'))
+      .map(([,callback])=>callback);
+    for(const callback of callbacks){
+      const handler=this.handlers.get(callback.subscriptionId);
+      if(status!=='fulfilled'||callback.lifetime!=='subscription'){
+        callback.state='revoked';
+        if(handler)handler.state='closing';
+      }else callback.state='active';
+    }
+    return callbacks;
   }
   evictSource(trackId,programId){
     const program=this.programs.get(programId);demand(program,'Unknown source');
@@ -1034,6 +1043,7 @@ export class SelectedExecutionCore {
         intent.result=h.record('observed','result',activation.trackId,
           {invocationId:item.invocationId,effectId:item.effectId,
             status:item.status,result:item.result,line:item.line,errorOrigin:item.errorOrigin});
+        h.settleCallbackCapabilities(key,item.status);
         for(const other of h.invocations.values())if(other.realmId===activation.realmId)
           other.controller.refreshReady();
       }else if(item.kind==='source-evict')h.evictSource(item.track,item.programId);

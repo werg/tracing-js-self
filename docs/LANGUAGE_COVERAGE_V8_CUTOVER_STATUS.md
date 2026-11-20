@@ -18,26 +18,30 @@ must name executable evidence; historical receipts retain their original pins.
 
 ## Current checkpoint and active implementation
 
-The work remains incomplete and both PRs remain drafts. The user's current
-instruction is **small fixes, cleanup and edge cases first, then harder work**;
-this supersedes the historical hardest-first ordering in the design documents.
+The work remains incomplete and both PRs remain drafts. The current user
+instruction is **small fixes, cleanup and edge cases first, then harder work**.
+The 17 full acceptance packages remain open; increments below do not narrow them.
 
-- Both published branches are available in working checkouts. New remote commits
-  are preserved before integrating local changes; publication is working.
-- Initial hosted failures were reproduced: stale source-bound protocol fixtures,
-  an obsolete Number-accessor refusal assertion, and consumer formatting.
-  Fixture regeneration must retain the independent source/replay checks.
-- The Number regression now distinguishes supported owned getter execution from
-  still-unqualified training projection, and keeps exotic-object refusals.
-  Nine focused conversion checks pass; broader qualification remains separate.
-- The published training-to-serving identity binding is retained. Training/serving
-  history parity, callback/host composition, and cyclic async modules are next
-  after the small regression repairs.
-- Every implementation increment is committed and pushed promptly. Current
-  results below are separate from historical local-only `d9a3ce4` evidence.
-- The [recovery handoff](docs/IMPLEMENTATION_RECOVERY_2026_11_20.md) records the
-  earlier interruption and unfinished designs. All 17 full acceptance packages
-  remain open until their complete exit gates have executable evidence.
+- The obsolete Number-conversion assertion and conformance resource/scope edge
+  cases are repaired. Twenty protocol source cases, the iterator case and six
+  base region examples were freshly regenerated with the original validators.
+- Pairing the regenerated artifacts exposed two additional small mismatches:
+  result replay omitted callback retirement, and producer Promise joins lacked
+  the invocation ownership already required by the native consumer. These are
+  being repaired with state/forgery controls before final fixture/policy pairing.
+- Concurrent published changes are retained, including cyclic async-module
+  recovery, global native readiness, normal training/serving chunk parity and
+  corrected native microtask boundaries. These are separate bounded results.
+- The actual pinned-tokenizer ordinary lifecycle has retained evidence for exact
+  producer `a4d0a56` / consumer `7da2150`: admission, optimizer update,
+  fresh-process resume, export/reload and selection recovery. Its generated
+  semantic output failed; learned quality remains unqualified. The new combined
+  contract still requires fresh exact-pair qualification.
+- Mixed source/native composition, complete edition coverage, production parity,
+  held-out model studies and final default cutover remain unfinished.
+- Every increment is committed and published promptly. The
+  [recovery handoff](docs/IMPLEMENTATION_RECOVERY_2026_11_20.md) and the detailed
+  ledger distinguish published evidence from historical local-only work.
 
 ## Overall progress
 
@@ -408,24 +412,93 @@ serving, and measured learned success.
   replay checks, while retaining the separate training-projection refusal and
   unsupported Proxy conversion boundary. `node --test
   test/training-number-conversion.test.js test/owned-primitive-conversion.test.js`:
-  9 passed, zero failed/skipped. This does not widen public/native admission.
+  9 passed, zero failed/skipped. Published producer: `ef4be405c8a41f06eb053c0cf21c9246da7ad219`. This does not widen public/native admission.
 
-- Conformance accounting edge cases: original-byte resource limits now apply
-  before reference parsing, including expected parse errors, and the injected
-  strict directive does not consume the source budget. Capability analysis keeps
-  parameter initializers outside body variable scope, switch discriminants
-  outside case scope, static-block variables inside the block, and computed class
-  names in their surrounding receiver context. Fifteen runner/capability checks
-  and seventeen campaign/catalog checks pass, zero failed/skipped in each suite.
-  These are runner qualification controls, not a full Test262 campaign result.
+- Conformance accounting edge cases (`6cedbe4ee6f34b85d7dc588d23942f7a104217c3`):
+  original-byte limits apply before reference parsing, including expected parse
+  errors, and the strict directive does not consume the input budget. Capability
+  analysis preserves parameter/body, switch/case, static-block and computed-class
+  receiver scopes. Fifteen runner/capability checks and seventeen campaign/catalog
+  checks pass, zero failed/skipped in each suite. No full-suite conformance claim.
 
-- Source-fixture repair: freshly regenerated all twenty protocol source cases,
-  the separately retained iterator case, six base region examples and their
-  contract/interoperability manifest. The original validators are unchanged.
-  Source and iterator regression suites: 24 passed, zero failed/skipped;
-  protocol-source generation and V8 contract checks both pass. This repairs
-  stale source-evidence failures; paired native fixtures and policy pins still
-  require their own fresh checks before this is an admitted release pair.
+- Cyclic owned module evaluation: `ce1df94b601a4c95429a15b49597f3333b8df366`
+  retains DFS indices, SCC roots, dependency order, per-module evaluation state
+  and abrupt completion. `e6b9d9150897f3547c714a6010704329617460a6` adds
+  JSON suspension and both sibling host-result delivery orders. All 26 scheduler controls pass, including the cyclic, unresolved-evaluation,
+  suspension and host-result recovery cases; no failures or skips. Public/native cyclic scheduler projection remains explicitly refused.
+
+- Native mixed-controller and readiness increments: consumer
+  `53208e9fe0bf1b5ce3c36010144f98fb361df325` retains callback controllers
+  and exact host/callback obligations; `ce3f4304a7b5328d926dc2680257dde6fe327e6e`
+  orders shared-realm dependency readiness and enforces the active turn.
+  Forty-six focused native controls pass, including shared-readiness and callback
+  retirement controls. Two current mixed source examples independently match all
+  46 and 43 contexts respectively; this diagnostic excludes tokenizer/mask/source
+  admission and does not yet qualify the final three-case artifact.
+
+- Training/serving chunk parity: consumer
+  `7da2150adaf5501338d73f82a41a9058a5bd1937` uses the prepared chunk
+  policy when serving observations, even when the model has greater capacity.
+  An actual CPU comparison with prepared chunks of 128 positions and model
+  capacity 512 matches history IDs/tracks, controls and internal state tensors.
+  Twenty related model/policy/chunk controls pass; this is distinct from learned
+  semantic correctness.
+
+- Native host/microtask ordering: producer
+  `892932b56c806a532bba66aaae2a616b0e569ad1` yields between guest
+  microtask groups while preserving a current job across synchronous native
+  transport. Twenty-three native/callback/subscription and 57 affected
+  runtime/replay/source/session controls pass. The original callback-owned join
+  correctly returns 0 before its later callback stores 6; explicitly awaiting
+  that callback's Promise returns 6. The independent original-source oracle was
+  unchanged.
+
+- Direct host-source admission: consumer
+  `05dd2f049d5ebf5c828a41b1c1bdecb8e372d624` carries direct source
+  identity through ordinary preparation, native admission and the normal loader.
+  Rehashed/missing authority and relabelled identities are refused. Twenty-two
+  focused metadata/admission/training controls pass; two live-source controls
+  were explicitly skipped pending the clean final paired producer. Injected
+  verification boundaries in unit fixtures remain labelled.
+
+- Actual pinned-asset ordinary lifecycle: consumer collector
+  `ba598055a04c58df020fe3f567698e4e8983ac73` and retained evidence
+  `e84027df26943f045fd771831add6cf5f6b9b155` qualify exact producer
+  `a4d0a56` / consumer `7da2150`. One family is independently admitted
+  with the actual pinned tokenizer, normal diagnostic-purpose training advances
+  optimizer step 1 to 2 in separate processes, and ordinary export/reload binds
+  the saved lineage. All 315 optimizer moment owners advance and 303 weight
+  tensors change. Real service identity controls and fresh-process next-selection
+  recovery pass. One attempted paired model execution is rejected; zero executions
+  complete or source-validate. Complete transcripts, manifests and reproduction
+  commands are committed in
+  [the consumer evidence directory](https://github.com/werg/megatoken/tree/e84027df26943f045fd771831add6cf5f6b9b155/docs/evidence/semantic-v8-ordinary-a4d0a56-7da2150).
+  This is not held-out quality evidence. The 102.1 MiB complete local binary
+  bundles still need durable external publication, and the combined new contract
+  needs its own exact-pair qualification.
+
+- Source-fixture repair: producer
+  `756251ebcb302d72219e84c342273f7b5abf2929` freshly regenerates all
+  twenty protocol source cases, the separate iterator case, six base examples
+  and their contract/interoperability manifest without weakening the original
+  validators. Source/iterator suites: 24 passed, zero failed/skipped. Full
+  `npm run contracts:check` passes in a clean checkout of that revision.
+  Paired native fixtures and policy pins require separate current evidence.
+
+- Consumer CI selector repair: `6c6779597d0cf62d385112705b05804e788de970`
+  replaces a removed V6 test selector with the existing V8 history parity
+  regression. Three parity/chunk controls pass. The unit fixture explicitly
+  injects source/tokenizer verification; this selector repair is not new
+  actual-asset or learned-quality evidence.
+
+- Callback replay retirement repair: result receipts now apply the same
+  capability retirement as live execution. Call callbacks and failed
+  subscriptions become revoked/closing; successful subscriptions stay active.
+  Replay does not invent queued arrivals, handler-close receipts or native
+  registration. Seven direct V8/callback checks and 29 historical lifecycle
+  checks pass, zero failed/skipped in both suites. The callback interoperability
+  fixture is freshly rebuilt from the original source and independently replayed.
+  Paired native fixture verification is being completed.
 
 ## Paired consumer PR
 
@@ -433,12 +506,18 @@ https://github.com/werg/megatoken/pull/38
 
 ## Latest published branch heads
 
-- Producer: `a4d0a56ef5b5b0ab1c1768ed16b15194630a0e89`.
-- Consumer: `c4900205dd625bef8ba21e36ff21e1f48e832688`.
+- Producer: `892932b56c806a532bba66aaae2a616b0e569ad1`.
+- Consumer: `e84027df26943f045fd771831add6cf5f6b9b155`.
 
 These are incremental checkpoints, not a final qualified release pair. Both PRs
 remain drafts. Historical local-only composition results are not current evidence.
 
 ## Latest hosted-check observation
 
-At consumer `9c83827a269965c76e341ae2afd8e53fdbe66680`, lint/format/shell checks and distribution build/install passed on Python 3.11 and 3.12. The complete CPU suites are still running. The selected-harness bridge and locale tests passed. This does not close the known mixed-callback admission, training/serving history, fresh data, or final paired-qualification gates.
+At producer `892932b`, pinned spec/oracle, trace inspection and selected runtime/
+browser lanes passed. The paired V8 lane correctly refused unequal producer/
+pinned-consumer contract snapshots; the ongoing mixed-contract publication will
+refresh the exact consumer pin. Other lanes were still running at inspection.
+At consumer `e84027d`, the controlled selected-harness bridge passed and the
+remaining runs were in progress. These are partial observations, not an all-green
+final-head or release qualification.
