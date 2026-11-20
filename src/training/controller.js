@@ -9,6 +9,10 @@ import {hostOperation} from '../host/operations.js';
 import {checkSemanticRegionClaim} from './semantic-regions.js';
 
 const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+function arrayIndex(key){
+  if(typeof key!=='string'||!/^(0|[1-9][0-9]{0,9})$/.test(key))return null;
+  const index=Number(key);return index<4294967295?index:null;
+}
 function fail(category,message) {
   const error=new Error(message);error.category=category;throw error;
 }
@@ -296,14 +300,14 @@ export class SemanticController {
           if(!f.present||f.value[0]!=='num'||!Number.isSafeInteger(f.value[1])||
              f.value[1]<0||f.value[1]>4096)fail('array','Invalid length mutation');
           for(const key of obj.properties.keys())
-            if(/^(0|[1-9][0-9]*)$/.test(key)&&Number(key)>=f.value[1])
+            if(arrayIndex(key)!==null&&arrayIndex(key)>=f.value[1])
               obj.properties.delete(key);
         }
         if(f.present)obj.properties.set(f.key,structuredClone(f.value));
         else obj.properties.delete(f.key);
-        if(obj.kind==='array'&&/^(0|[1-9][0-9]*)$/.test(f.key)&&
-           Number(f.key)>=obj.properties.get('length')[1])
-          obj.properties.set('length',['num',Number(f.key)+1]);
+        const index=arrayIndex(f.key);
+        if(obj.kind==='array'&&f.present&&index!==null&&index>=obj.properties.get('length')[1])
+          obj.properties.set('length',['num',index+1]);
       }else if(kind==='call'){
         if(typeof f.child!=='string'||this.frameFunctions.has(f.child))
           fail('invocation','Duplicate child invocation');
