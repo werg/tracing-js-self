@@ -1,74 +1,61 @@
-// Read-only checks for archived Number callback continuations. This validator
-// does not import or execute the owned conversion mutation helper.
+// Number is a static client of the shared, independently checked conversion
+// protocol. Its original eight-field callback record and ordinary event bytes
+// stay unchanged; getters add explicit retained return phases.
+import {conversionWaiting,conversionReturned,validatePrimitiveConversionRecord,
+  validatePrimitiveConversionAdvance,validatePrimitiveConversionReturn} from './primitive-conversion-validation.js';
+
 const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
-const fields=['operation','input','siteId','index','method','phase','waitingFrameId','result'];
 export function validateNumberConversionState(state,programs,sites,fail){
   for(const frame of Object.values(state.frames)){
-    const pending=frame.pendingNumberConversion;if(pending===undefined)continue;
-    if(!pending||Object.keys(pending).length!==fields.length||fields.some(key=>!Object.hasOwn(pending,key))||
-      pending.operation!=='Number'||!sites.has(pending.siteId)||![-1,0,1].includes(pending.index)||
-      !['waiting','returned'].includes(pending.phase)||pending.input?.[0]!=='ref'||
-      !['object','array'].includes(state.heap[pending.input[1]]?.kind)||pending.method?.[0]!=='ref')
-      fail('Invalid Number conversion continuation fields');
-    const method=state.heap[pending.method[1]],child=state.frames[pending.waitingFrameId];
-    if(method?.kind!=='function'||method.async||programs[method.codeId]?.generator||
-      !child||child.callerFrameId!==frame.id||child.codeId!==method.codeId||
-      !eq(child.thisValue,method.arrow?method.lexicalThis:pending.input))
-      fail('Number conversion callback identity or receiver mismatch');
-    if(pending.phase==='waiting'?(pending.result!==null||['completed','thrown','unsupported'].includes(child.status)):
-      (child.status!=='completed'||!Array.isArray(pending.result)||!eq(child.completion?.value?.value,pending.result)))
-      fail('Number conversion callback completion phase mismatch');
+    const pending=frame.pendingNumberConversion;
+    if(pending!==undefined)validatePrimitiveConversionRecord(pending,'Number',frame,state,programs,sites,fail);
   }
 }
+function sourceCall(frame,instruction){
+  if(instruction?.op!=='CALL')return null;
+  const count=typeof instruction.arg==='number'?instruction.arg:instruction.arg.count,
+    callee=frame.stack.at(-count-1)?.value,fn=callee?.[0]==='method'?callee[1]:callee;
+  if(!eq(fn,['intrinsic','Number']))return null;
+  const raw=frame.stack.slice(frame.stack.length-count),args=[];
+  for(const [index,item] of raw.entries()){
+    if(instruction.arg?.spread?.includes(index)){
+      if(item.value[0]!=='spread')return null;
+      args.push(...item.value[1]);
+    }else args.push(item.value);
+  }
+  if(args[0]?.[0]!=='ref')return null;
+  return {input:args[0],prefix:frame.stack.slice(0,frame.stack.length-count-1)};
+}
 export function validateNumberConversionEvent(state,event,programs,fail){
-  const changes=event.stateChanges.filter(change=>change.table==='frames'&&
-    !eq(change.before?.pendingNumberConversion,change.after?.pendingNumberConversion));
-  const sourceFrame=state.frames[event.invocationId],instruction=programs[sourceFrame?.codeId]?.instructions[sourceFrame?.pc];
-  for(const change of changes){
-    const before=change.before?.pendingNumberConversion,after=change.after?.pendingNumberConversion;
-    if(!before){
-      const raw=event.operands[0],callee=raw?.[0]==='method'?raw[1]:raw;
-      if(event.operation!=='call.enter'||instruction?.op!=='CALL'||change.id!==event.invocationId||
-        !eq(callee,['intrinsic','Number'])||!eq(after.input,event.operands[1])||after.siteId!==event.siteId||after.phase!=='waiting')
-        fail('Number continuation was created outside its source call');
-    }else if(before.phase==='waiting'&&after){
-      const child=event.stateChanges.find(patch=>patch.table==='frames'&&patch.id===before.waitingFrameId)?.after;
-      if(after.phase!=='returned'||!eq({...after,phase:'waiting',result:null},before)||
-        child?.status!=='completed'||!eq(child.completion?.value?.value,after.result))
-        fail('Number callback did not retain its actual return value');
-    }else if(before.phase==='waiting'){
-      const child=event.stateChanges.find(patch=>patch.table==='frames'&&patch.id===before.waitingFrameId)?.after;
-      if(child?.status!=='thrown')fail('Number callback continuation disappeared before completion');
-    }else{
-      if(event.operation!=='intrinsic.number.resume'||event.invocationId!==change.id||event.siteId!==before.siteId)
-        fail('Number continuation resumed outside its source operation');
-      if(after&&(!eq(after.input,before.input)||after.siteId!==before.siteId||after.phase!=='waiting'||
-        before.index!==0||after.index!==1||after.waitingFrameId===before.waitingFrameId))
-        fail('Number fallback selected an invalid successor callback');
-    }
-    if(after?.phase==='waiting'){
-      const childPatch=event.stateChanges.find(patch=>patch.table==='frames'&&patch.id===after.waitingFrameId),
-        child=childPatch?.after,program=programs[child?.codeId],
-        environment=event.stateChanges.find(patch=>patch.table==='envs'&&patch.id===child?.envId)?.after,
-        args=after.index===-1?[['str','number']]:[];
-      if(childPatch?.before!==null||!program||!environment||
-        !event.causes.some(cause=>cause.kind==='invocation'&&cause.frameId===child.id))
-        fail('Number callback did not enter a fresh invocation');
-      for(const [index,name] of program.params.entries()){
-        const binding=environment.bindings[name],expected=args[index]??['undefined'];
-        if(binding?.kind!=='parameter'||binding.initialized===!!program.parameterExpressions)
-          fail('Number callback parameter initialization mismatch');
-        if(index===(program.restIndex??-1)){
-          const tag=binding.token?.value,array=tag?.[0]==='ref'&&event.stateChanges.find(patch=>patch.table==='heap'&&patch.id===tag[1])?.after,
-            extras=args.slice(index);
-          if(array?.kind!=='array'||!eq(array.properties.length?.value,['num',extras.length])||
-            extras.some((value,i)=>!eq(array.properties[String(i)]?.value,value)))
-            fail('Number callback rest arguments mismatch');
-        }else if(!eq(binding.token?.value,expected))fail('Number callback arguments or conversion hint mismatch');
-      }
+  const sourceFrame=state.frames[event.invocationId],instruction=programs[sourceFrame?.codeId]?.instructions[sourceFrame?.pc],
+    call=event.operation==='call.enter'&&sourceFrame?sourceCall(sourceFrame,instruction):null,
+    resumed=event.operation==='intrinsic.number.resume';
+  let ownChange=null;
+  if(call||resumed){
+    const prior=sourceFrame?.pendingNumberConversion;
+    if(state.control.a0.activeFrameId!==sourceFrame?.id||sourceFrame?.status!=='running'||
+      resumed&&!conversionReturned(prior)||call&&prior)
+      fail('Number conversion has no active source call or returned callback');
+    ownChange=event.stateChanges.find(change=>change.table==='frames'&&change.id===sourceFrame.id);
+    const before=call?{operation:'Number',input:call.input,siteId:instruction.siteId,index:-1,
+      method:null,phase:'select',waitingFrameId:null,result:null}:prior;
+    if(!ownChange?.after||event.siteId!==before.siteId)
+      fail('Number conversion lost its source continuation');
+    const expected=validatePrimitiveConversionAdvance(before,ownChange.after.pendingNumberConversion,
+      sourceFrame.id,state,event,programs,fail);
+    if(!expected.fault){
+      const stack=call?call.prefix:sourceFrame.stack,
+        nextStack=expected.method?stack:[...stack,{value:expected.value,origin:event.eventId}];
+      if(ownChange.after.pc!==sourceFrame.pc+(call?1:0)||!eq(ownChange.after.stack,nextStack))
+        fail('Number conversion changed its suspended operand stack or source pc');
     }
   }
-  if(event.operation==='intrinsic.number.resume'&&
-    (!sourceFrame?.pendingNumberConversion||sourceFrame.pendingNumberConversion.phase!=='returned'))
-    fail('Number resume has no returned callback');
+  for(const change of event.stateChanges){
+    if(change.table!=='frames'||eq(change.before?.pendingNumberConversion,change.after?.pendingNumberConversion)||change===ownChange)continue;
+    const before=change.before?.pendingNumberConversion,after=change.after?.pendingNumberConversion;
+    if(!conversionWaiting(before))fail('Number continuation changed outside its source operation');
+    validatePrimitiveConversionReturn(before,after,state,event,fail);
+    if(after&&(change.before.pc!==change.after.pc||!eq(change.before.stack,change.after.stack)))
+      fail('Number callback changed its caller operand stack');
+  }
 }

@@ -811,8 +811,8 @@ export class Runtime {
       const caller=draft.frames[frame.callerFrameId];
       if(caller.pendingNumberConversion?.waitingFrameId===frame.id){
         const pending=caller.pendingNumberConversion;
-        if(pending.phase!=='waiting')throw new Error('Number conversion callback returned twice');
-        pending.phase='returned';pending.result=copy(value);
+        if(!['waiting','getter-waiting'].includes(pending.phase))throw new Error('Number conversion callback returned twice');
+        pending.phase=pending.phase==='getter-waiting'?'getter-returned':'returned';pending.result=copy(value);
         draft.control.a0.activeFrameId=caller.id;return;
       }
       if(caller.pendingPromiseExecutor?.waitingFrameId===frame.id){
@@ -1371,7 +1371,7 @@ export class Runtime {
     const c=this.state.control.a0,frame=c.activeFrameId&&this.state.frames[c.activeFrameId];
     if(!frame||frame.status!=='running')return null;
     if(frame.operationId)return this.stepArithmetic(frame);
-    if(frame.pendingNumberConversion?.phase==='returned'){
+    if(['returned','getter-returned'].includes(frame.pendingNumberConversion?.phase)){
       const siteId=frame.pendingNumberConversion.siteId;
       return this.commit('intrinsic.number.resume',(s,eventId)=>{
         const parent=s.frames[frame.id];

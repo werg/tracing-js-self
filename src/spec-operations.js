@@ -64,7 +64,7 @@ export function objectPrototype(obj) {
   return Object.hasOwn(obj,'prototype')?obj.prototype:
     obj.kind==='array'?'Array.prototype':obj.kind==='function'?'Function.prototype':'Object.prototype';
 }
-export function ordinaryGet(heap, receiver, name) {
+export function ordinaryGet(heap, receiver, name, {accessors=false}={}) {
   const original=receiver[0]==='ref'?heap[receiver[1]]:null;
   if(!original||!['object','array'].includes(original.kind))return null;
   const observation=value=>({
@@ -80,7 +80,11 @@ export function ordinaryGet(heap, receiver, name) {
     visited.add(current.id);
     // Accessor [[Get]] needs a guest callback continuation, never silently
     // skip a getter and fall back to an inherited/default conversion method.
-    if(Object.hasOwn(current.accessors??{},name))return null;
+    if(Object.hasOwn(current.accessors??{},name)){
+      const accessor=current.accessors[name];
+      return accessors&&accessor?.get?.value?
+        {accessor,observation:observation(accessor.get)}:null;
+    }
     if(Object.hasOwn(current.properties,name)){
       const method=current.properties[name];
       if(!method||!Array.isArray(method.value))return null;

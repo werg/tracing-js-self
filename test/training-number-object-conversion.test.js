@@ -24,7 +24,7 @@ test('Number ordinary fallback observes live method mutation and skips noncallab
   runtimeDifferential('const proto={valueOf(){return 6;}};const o=Object.create(proto);return Number(o);');
 });
 
-test('Number distinguishes guest conversion failures from unsupported callable or accessor profiles',()=>{
+test('Number distinguishes guest conversion failures from unsupported callable profiles',()=>{
   for(const body of [
     'const o={[Symbol.toPrimitive](){return {};}};try{Number(o);}catch(e){return e.name;}',
     'const o={[Symbol.toPrimitive]:1};try{Number(o);}catch(e){return e.name;}',
@@ -33,7 +33,6 @@ test('Number distinguishes guest conversion failures from unsupported callable o
     'const o={valueOf(){throw 7;}};try{Number(o);}catch(e){return e+1;}'
   ])runtimeDifferential(body);
   for(const body of [
-    'const o={get [Symbol.toPrimitive](){return ()=>1;}};return Number(o);',
     'const o={valueOf:async()=>1};return Number(o);'
   ]){
     const runtime=createRuntime().startEntry({text:'"use strict";function run(){'+body+'}',functionName:'run',args:[]});
