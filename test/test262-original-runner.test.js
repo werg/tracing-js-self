@@ -129,6 +129,13 @@ test('resource bounds and corrupt trace validation never satisfy a runtime-negat
   assert.equal(bad.status,'infrastructure_error');assert.equal(bad.phase,'verification');
 });
 
+test('both authorities apply the original byte budget before parse-negative success',()=>{
+  statuses(both('var = ;',{metadata:'flags: [raw]\nnegative:\n  phase: parse\n  type: SyntaxError\n',
+    profile:ownedTest262Profile({maxSourceBytes:50})}),'resource_limited');
+  const body='/*'+'x'.repeat(20000)+'*/assert.sameValue(1,1);';
+  statuses(both(body,{profile:ownedTest262Profile({maxSourceBytes:Buffer.byteLength(source(body))})}),'passed');
+});
+
 test('unimplemented declared Error mutations and async generators refuse instead of forging conformance',()=>{
   for(const body of ['var error=new TypeError();error.constructor=RangeError;',
     'Object.defineProperty(new TypeError(),"constructor",{value:RangeError});','async function* values(){}'])

@@ -410,6 +410,15 @@ serving, and measured learned success.
   test/training-number-conversion.test.js test/owned-primitive-conversion.test.js`:
   9 passed, zero failed/skipped. This does not widen public/native admission.
 
+- Conformance accounting edge cases: original-byte resource limits now apply
+  before reference parsing, including expected parse errors, and the injected
+  strict directive does not consume the source budget. Capability analysis keeps
+  parameter initializers outside body variable scope, switch discriminants
+  outside case scope, static-block variables inside the block, and computed class
+  names in their surrounding receiver context. Fifteen runner/capability checks
+  and seventeen campaign/catalog checks pass, zero failed/skipped in each suite.
+  These are runner qualification controls, not a full Test262 campaign result.
+
 ## Paired consumer PR
 
 https://github.com/werg/megatoken/pull/38

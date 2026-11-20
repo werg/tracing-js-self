@@ -27,10 +27,25 @@ export function freeTest262Identifiers(ast){
       environment=scope(environment,true);
       if(node.type==='FunctionExpression')declare(node.id,environment);
       node.params.forEach(parameter=>declare(parameter,environment));
+      locations.set(node,environment);
+      for(const parameter of node.params)assign(parameter,environment);
+      // Initializers run outside the body variable environment. A body var
+      // cannot hide a global used by a default parameter or binding pattern.
+      assign(node.body,node.params.some(parameter=>parameter.type!=='Identifier')?
+        scope(environment,true):environment);
+      return;
     }else if(['ClassDeclaration','ClassExpression'].includes(node.type)){
       if(node.type==='ClassDeclaration')declare(node.id,environment);
       environment=scope(environment);declare(node.id,environment);
-    }else if(['BlockStatement','ForStatement','ForInStatement','ForOfStatement','SwitchStatement','CatchClause'].includes(node.type)){
+    }else if(node.type==='SwitchStatement'){
+      locations.set(node,environment);assign(node.discriminant,environment);
+      const cases=scope(environment);
+      node.cases.forEach(item=>assign(item,cases));
+      return;
+    }else if(node.type==='StaticBlock'){
+      // Static initialization blocks have their own var declaration scope.
+      environment=scope(environment,true);
+    }else if(['BlockStatement','ForStatement','ForInStatement','ForOfStatement','CatchClause'].includes(node.type)){
       environment=scope(environment);
       if(node.type==='CatchClause')declare(node.param,environment);
     }
@@ -73,7 +88,15 @@ export function requiresScriptGlobalThis(ast){
     if(node.type==='ThisExpression'&&globalReceiver)required=true;
     if(['FunctionDeclaration','FunctionExpression'].includes(node.type))globalReceiver=false;
     if(['ClassDeclaration','ClassExpression'].includes(node.type)){
-      visit(node.superClass,globalReceiver);visit(node.body,false);return;
+      visit(node.superClass,globalReceiver);
+      for(const element of node.body.body){
+        // Computed names run while defining the class, with the surrounding
+        // receiver. Method bodies, fields and static blocks have class receivers.
+        if(element.computed)visit(element.key,globalReceiver);
+        if(element.type==='StaticBlock')visit(element,false);
+        else visit(element.value,false);
+      }
+      return;
     }
     for(const [key,value] of Object.entries(node)){
       if(['loc','start','end'].includes(key))continue;

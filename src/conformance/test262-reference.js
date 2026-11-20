@@ -13,6 +13,12 @@ export function executeOfficialTest262Reference(options={}){
   let prepared;
   try{prepared=prepareOfficialTest262Variant(options);}
   catch(error){return answer('infrastructure_error',error.message,{phase:'input'});}
+  // Bind the budget to the original inputs, as the owned runner does. The
+  // strict-mode prefix is an execution adapter, not additional source bytes.
+  // Check before parsing so an oversized parse-negative cannot become a pass.
+  if(Buffer.byteLength(prepared.source)>profile.resourcePolicy.maxSourceBytes||
+     prepared.harness?.some(file=>Buffer.byteLength(file.text)>profile.resourcePolicy.maxSourceBytes))
+    return answer('resource_limited','Source exceeds the pinned byte budget',{phase:'input'});
   const negative=variant.metadata.negative;
   if(variant.mode==='module')return answer('environment_unavailable','Original module reference adapter is not connected',{phase:'environment'});
   if(negative?.phase==='early')return answer('unsupported','V8 Script cannot independently certify a distinct early-error phase',{phase:'parse'});
@@ -31,9 +37,6 @@ export function executeOfficialTest262Reference(options={}){
   const missing=requiredOriginalHostCapabilities(ast,variant);
   if(prepared.missingHarness)missing.push(prepared.missingHarness);
   if(missing.length)return answer('environment_unavailable','Unavailable reference capabilities: '+missing.join(', '),{phase:'environment'});
-  if(Buffer.byteLength(code)>profile.resourcePolicy.maxSourceBytes||
-     prepared.harness.some(file=>Buffer.byteLength(file.text)>profile.resourcePolicy.maxSourceBytes))
-    return answer('resource_limited','Source exceeds the pinned byte budget',{phase:'input'});
   const output=[],timeout=profile.hostProfile.reference.timeoutMs;
   const context=createContext(Object.create(null),{codeGeneration:{strings:true,wasm:false},microtaskMode:'afterEvaluate'});
   Object.defineProperty(context,'print',{value:message=>{
