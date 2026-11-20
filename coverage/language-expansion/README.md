@@ -23,7 +23,7 @@ under the final expanded contract:
 | Supplementary evidence | Measured result | Scope |
 | --- | --- | --- |
 | [Direct and nested Number callback throws](number-abrupt-012c9fe/README.md) | 2/2 fresh source/native/token admissions | Producer `012c9fe`, consumer `39c4036`; final contract, exact abrupt completions and suppressed fallback. The earlier [3a1992b pair](number-abrupt-3a1992b/README.md) retains its own historical receipts. |
-| [Number callback catch/finally](number-completion-ddaac82/README.md) | 14 declared: 12 source/native/token admissions and two explicit source refusals | Producer `ddaac82`, consumer `91aea0d`; preserves the failed admission attempt at consumer `1967695` separately |
+| [Number callback catch/finally](number-completion-012c9fe/README.md) | 13 declared: 12 fresh source/native/token admissions and one explicit Symbol cleanup refusal | Producer `012c9fe`, consumer `39c4036`; the current suite removes the former loop-target refusal. The earlier [14-case ddaac82 population](number-completion-ddaac82/README.md) remains historical. |
 
 All eight former enumeration refusals and the previous generator continuation
 failure pass in this new full run. The independent consumer passed 214 focused
@@ -51,6 +51,7 @@ measured pins describe those runs; the newer qualification does not rewrite them
 
 | Evidence | Measured result | Scope |
 | --- | --- | --- |
+| [Previous-contract qualification and components](native-v8-562f6f2-superseded/README.md) | Producer `562f6f2` / consumer `d26afd9`: 168/665 expansion admissions before interruption, complete original 23+11 populations/costs; partial supplements and earlier 220/221/242/244-test native runs retained | Four verified archives preserve all original scopes; the final expanded contract requires new 26+11 qualification |
 | [Superseded qualification attempts](native-v8-3a1992b-interrupted/README.md) | Producer `3a1992b` / consumer `418385b`: complete 23-case interoperability and 11-case gallery admissions/costs; 594/665 expansion admissions before interruption, with 71 untested or uncommitted | Retains exact artifacts/inputs, original failures and supersession receipts; the custom-iterator timeout and other earlier prefixes are separate historical scopes |
 | [Earlier producer regression](producer-regression-3a1992b/README.md) | 1,794 passed, six conditional skips, zero failures; 5/5 contracts and 8/8 references passed | Exact producer `3a1992b`; original logs, identities and interrupted predecessor retained |
 | [Earlier producer regression](producer-regression-b66c19b/README.md) | 1,778 passed, six conditional skips, zero failures; 5/5 contracts and 8/8 references passed | Exact producer `b66c19b`; original logs and identities retained |

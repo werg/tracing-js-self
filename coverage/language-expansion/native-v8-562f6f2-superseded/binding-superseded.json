@@ -1,0 +1,17 @@
+{
+  "schema": "semantic-v8-superseded-supplement/1",
+  "status": "interrupted-superseded",
+  "finishedAt": "2026-11-20T17:24:13.850714+00:00",
+  "exitCode": 130,
+  "reason": "Stopped on coordinator request to repeat the declared suite under the synchronized final contract producer012c9fe/consumer39c4036. The existing source/native/cost receipts remain historical.",
+  "producerRevision": "562f6f2e8e63a0be775acf2e0be145dc6f9f264c",
+  "consumerRevision": "d26afd9d7a901e740cf29d4bce610be755cac640",
+  "replacementProducerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+  "replacementConsumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+  "declared": 17,
+  "sourceQualified": 7,
+  "nativeAdmitted": 7,
+  "tokenMeasured": 7,
+  "reportSha256": "5d8a581d82c2f85a97a13bef3e6ab37a5c95ee7fe3eb2b182fb242bc454a7569",
+  "scope": "Partial original-contract supplement only; no complete-suite pass or unexecuted refusal is claimed."
+}
