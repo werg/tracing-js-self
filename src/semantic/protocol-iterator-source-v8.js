@@ -22,7 +22,8 @@ export function createIteratorSourceAdapterV8(){const arrayLoops=new Set();retur
     if(instruction(ctx,event)?.op==='ITERATOR_ARRAY_GUARD'){
       if(event.result?.[0]!=='bool')ctx.refuse('iterator selection guard must be boolean');
       const source=ctx.bundle.sites.find(site=>site.siteId===event.siteId),node=ctx.inventory.nodes.get(source?.start+':'+source?.end);
-      if(node?.type!=='ForOfStatement'||node.await)ctx.refuse('array iteration guard lacks its synchronous source loop');
+      const pattern=node?.type==='ArrayPattern'&&ctx.extensionState.get('custom-iterator-source/1')?.patterns.has(source.start+':'+source.end);
+      if((node?.type!=='ForOfStatement'||node.await)&&!pattern)ctx.refuse('array iteration guard lacks its qualified synchronous loop or binding pattern');
       ctx.emit({kind:'iterator.arrayGuard',iterated:ctx.tag(event.operands[0],event),result:event.result[1]},event,'source-iterator-array-selection/1');
       if(event.result[1])arrayLoops.add(event.invocationId+':'+source.start+':'+source.end);
       return true;

@@ -77,6 +77,20 @@ test('an array with null prototype cannot claim inherited builtin iteration',()=
   ]){assert.throws(()=>applyProtocolRecordV8(c,record));assert.deepEqual(c,before);}
 });
 
+test('writable Array iterator selection can be shadowed without fabricating inherited intrinsic values',()=>{
+  const c=controller();array(c,'array',0);const before=structuredClone(c);
+  for(const key of [['str','values'],['symbol','well-known:iterator'],['str','toString']]){
+    assert.throws(()=>applyProtocolRecordV8(c,{kind:'property.get',object:'array',key,receiver:['ref','array'],result:['undefined']}),/inherited intrinsic/);
+    assert.deepEqual(c,before);
+  }
+  applyProtocolRecordV8(c,{kind:'property.set',object:'array',key:['symbol','well-known:iterator'],receiver:['ref','array'],value:['num',3],success:true});
+  applyProtocolRecordV8(c,{kind:'property.get',object:'array',key:['symbol','well-known:iterator'],receiver:['ref','array'],result:['num',3]});
+  apply(c,{kind:'iterator.arrayGuard',iterated:['ref','array'],result:false});
+  const overridden=structuredClone(c);
+  assert.throws(()=>applyProtocolRecordV8(c,{kind:'property.set',object:'array',key:['symbol','well-known:unscopables'],
+    receiver:['ref','array'],value:['num',3],success:true}),/inherited intrinsic/);assert.deepEqual(c,overridden);
+});
+
 test('failed iterator claims commit no cursor or allocation changes and restore rejects hidden state',()=>{
   const c=controller();array(c,'array',1,[{key:['str','0'],value:['num',7]}]);
   apply(c,{kind:'iterator.create',name:'iterator',iterated:['ref','array'],iterationKind:'values'});

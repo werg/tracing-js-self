@@ -123,7 +123,8 @@ function resolveProperty(controller,object,key,{forSet=false}={}){
       // OrdinarySet needs only writability here. Do not invent the inherited
       // function's value or expose it through Get. __proto__ remains an
       // accessor requiring its separately modeled invocation.
-      if(forSet&&key[0]==='str'&&key[1]!=='__proto__'&&objectIntrinsicNames.includes(key[1]))
+      if(forSet&&(key[0]==='str'&&key[1]!=='__proto__'&&objectIntrinsicNames.includes(key[1])||
+        node.kind==='array'&&key[0]==='symbol'&&key[1]==='well-known:iterator'))
         return {owner:null,node:null,descriptor:{kind:'data',writable:true}};
       require(!missingIntrinsic(node,key),'inherited intrinsic property requires its callable protocol');
       return {owner:null,node:null,descriptor:null};

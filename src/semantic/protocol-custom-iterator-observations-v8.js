@@ -11,12 +11,15 @@ const reference=value=>value!==null&&['object','function'].includes(typeof value
 function loops(source){const rows=[];
   function visit(node){if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(visit);return;}
     if(node.type==='ForOfStatement'&&!node.await)rows.push(node);
+    if(node.type==='VariableDeclarator'&&node.init&&node.id.type==='ArrayPattern'&&node.id.elements.every(element=>element===null||
+      element.type==='Identifier'||element.type==='AssignmentPattern'&&element.left.type==='Identifier'||
+      element.type==='RestElement'&&element.argument.type==='Identifier'))rows.push({...node.id,right:node.init});
     for(const [key,value]of Object.entries(node))if(!['start','end','loc','raw'].includes(key))visit(value);
   }visit(parse(source,{ecmaVersion:'latest',sourceType:'script'}));return rows;
 }
 function ownedObservations(bundle,nodes){
   const sites=new Set(nodes.map(node=>node.start+':'+node.end)),siteById=new Map(bundle.sites.map(row=>[row.siteId,row.start+':'+row.end])),
-    rows=[],identities=new Map(),state=structuredClone(bundle.initialState),active=new Map(),children=new Map();let next=0;
+    rows=[],identities=new Map(),state=structuredClone(bundle.initialState),active=new Map(),children=new Map(),cached=new Set();let next=0;
   const fail=message=>{throw new TypeError('Owned custom iterator observation: '+message);};
   function value(tag){
     if(!Array.isArray(tag))fail('missing value');
@@ -51,7 +54,14 @@ function ownedObservations(bundle,nodes){
         else finishRead(entry,event.result?.[0]==='method'?event.result[1]:event.result,false);
       }
     }
-    if(owner&&inst?.op==='GET'&&/^\[\[iterator next /.test(inst.arg))owner.selected='next';
+    if(owner&&inst?.op==='INIT'&&event.result?.[0]==='method'&&owner.selected==='next'){
+      const environment=event.stateChanges.find(row=>row.table==='envs'&&row.after?.bindings?.[inst.arg]?.initialized)?.after;
+      if(!environment)fail('cached next binding is absent');cached.add(environment.id+':'+inst.arg);
+    }
+    if(owner&&inst?.op==='GET'){
+      const read=event.readObservations.find(row=>row.kind==='binding'&&row.name===inst.arg);
+      if(cached.has(read?.envId+':'+inst.arg))owner.selected='next';
+    }
     if(owner&&inst?.op==='CALL'&&event.operation==='call.enter'){
       const raw=event.operands[0],operation=owner.selected,child=event.causes.find(row=>row.kind==='invocation')?.frameId;
       if(raw?.[0]!=='method'||!['iterator','next','return'].includes(operation)||!child)fail('implicit call lacks its selected guest method');
