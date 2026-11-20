@@ -763,13 +763,22 @@
           ]
         },
         "profile": "symbols-ordinary-properties/1",
+        "extensions": [
+          "owned-binary-memory/1",
+          "class-construction/1",
+          "builtin-iterator/1",
+          "promise-join/1",
+          "number-conversion/1",
+          "synchronous-generator/1",
+          "ordinary-data-proxy/1"
+        ],
         "limits": {
           "symbols": 4096,
           "properties": 4096,
           "calls": 64,
           "steps": 32768
         },
-        "meaning": "Checked Symbol identities, descriptors, receiver-aware access, scoped calls and completion in the same authoritative heap."
+        "meaning": "Checked Symbol identities, descriptors, receiver-aware access, scoped calls, construction, iterators, generators, Number conversion, Promise joins, Proxy traps and binary memory in the same authoritative heap."
       }
     },
     "algorithm": {
@@ -1675,6 +1684,115 @@
         ],
         "capabilities": "Ordered Promise dependencies, FIFO internal jobs, first settlement and explicit late no-op steps; fresh result arrays are named only when allocated."
       },
+      "numberConversions": {
+        "profile": "number-conversion/1",
+        "schema": "semantic-number-conversion-state/1",
+        "fields": [
+          "schema",
+          "operations"
+        ],
+        "initial": null,
+        "operationFields": [
+          "id",
+          "parent",
+          "input",
+          "index",
+          "method",
+          "builtin",
+          "child",
+          "phase",
+          "primitive",
+          "result"
+        ],
+        "phases": [
+          "select",
+          "call",
+          "builtin",
+          "waiting",
+          "convert",
+          "complete"
+        ],
+        "capabilities": "Live data-method selection, original receiver and number hint, shared callback scopes, ordered ordinary fallback and checked primitive conversion. Accessor selection and abrupt conversion need explicit profiles."
+      },
+      "generators": {
+        "profile": "synchronous-generator/1",
+        "heapFields": [
+          "kind",
+          "callee",
+          "invocation",
+          "receiver",
+          "arguments",
+          "phase",
+          "resume",
+          "pending",
+          "yielded",
+          "handlers",
+          "delegation",
+          "prototype",
+          "properties"
+        ],
+        "intrinsicPrototypes": [
+          "GeneratorFunction.prototype",
+          "Generator.prototype",
+          "Iterator.prototype"
+        ],
+        "phases": [
+          "initializing",
+          "suspendedStart",
+          "executing",
+          "suspendedYield",
+          "completed"
+        ],
+        "methods": [
+          "next",
+          "return",
+          "throw"
+        ],
+        "handlerFields": [
+          "name",
+          "catch",
+          "finally",
+          "phase",
+          "caught",
+          "pending"
+        ],
+        "delegationFields": [
+          "iterator",
+          "next",
+          "request",
+          "phase",
+          "result"
+        ],
+        "capabilities": "Retained invocations, receivers, arguments and captures; sent values, catch/finally cleanup, suspension and cached-next delegation through declared builtin iterators and synchronous generators."
+      },
+      "proxyCalls": {
+        "profile": "ordinary-data-proxy/1",
+        "schema": "semantic-proxy-call-state/1",
+        "fields": [
+          "schema",
+          "pending"
+        ],
+        "initial": null,
+        "heapFields": [
+          "kind",
+          "target",
+          "handler",
+          "properties"
+        ],
+        "callFields": [
+          "id",
+          "operation",
+          "parent",
+          "child",
+          "object",
+          "target",
+          "handler",
+          "key",
+          "value",
+          "callee"
+        ],
+        "capabilities": "Distinct Proxy, target and handler identities; ordinary data forwarding and synchronous owned get/set traps with live target invariants and exact pending callback completion. Callable or revoked proxies and other traps require explicit profiles."
+      },
       "binaryMemory": {
         "profile": "owned-binary-memory/1",
         "heapFields": {
@@ -1770,7 +1888,7 @@
       "default": "not promoted by engineering receipts alone"
     }
   },
-  "digest": "f91f67ae280bddc99b8dde278acc43b2754c40829e8ebccc0084c6a29f35bfe3",
+  "digest": "174ee07d7f2c6d1601332c23f9cb9e53b8233cad908b5abff995dcd3b10dc1e6",
   "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
   "fixtures": [
     {

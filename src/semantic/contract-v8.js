@@ -11,6 +11,10 @@ import {CONSTRUCTION_STATE_V8_SCHEMA,CONSTRUCTION_STATE_V8_FIELDS,CALLABLE_STATE
   CONSTRUCTION_FRAME_V8_FIELDS} from './protocol-construction-v8.js';
 import {ITERATOR_PROFILE_V8,ITERATOR_HEAP_FIELDS} from './protocol-iterator-v8.js';
 import {PROMISE_JOIN_PROFILE_V8,PROMISE_JOIN_STATE_V8} from './protocol-promise-join-v8.js';
+import {NUMBER_STATE_V8_SCHEMA,NUMBER_OPERATION_FIELDS} from './protocol-number-v8.js';
+import {GENERATOR_PROFILE_V8,GENERATOR_HEAP_FIELDS,GENERATOR_INTRINSICS_V8} from './protocol-generator-v8.js';
+import {PROXY_PROFILE_V8,PROXY_STATE_V8_SCHEMA,PROXY_HEAP_FIELDS,PROXY_CALL_FIELDS} from './protocol-proxy-v8.js';
+import {PROTOCOL_MACHINE_ADAPTERS_V8} from './protocol-machine-extensions-v8.js';
 
 export const SEMANTIC_V8_DEFINITION=Object.freeze({
   execution:REGION_EXECUTION_VERSION,trace:REGION_TRACE_VERSION,context:REGION_CONTEXT_VERSION,
@@ -29,8 +33,8 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
     detail:{prefix:'detail ',fields:['kind','fields'],witnessSchema:WITNESS_SCHEMA,
       meaning:'Existing checked selected-detailed/1 transitions, committed into the same shared machine.'},
     protocol:{schema:PROTOCOL_RECORD_V8_SCHEMA,prefix:'protocol ',fieldsByKind:PROTOCOL_RECORD_V8_FIELDS,
-      profile:'symbols-ordinary-properties/1',limits:PROTOCOL_V8_LIMITS,
-      meaning:'Checked Symbol identities, descriptors, receiver-aware access, scoped calls and completion in the same authoritative heap.'}
+      profile:'symbols-ordinary-properties/1',extensions:PROTOCOL_MACHINE_ADAPTERS_V8.map(adapter=>adapter.id),limits:PROTOCOL_V8_LIMITS,
+      meaning:'Checked Symbol identities, descriptors, receiver-aware access, scoped calls, construction, iterators, generators, Number conversion, Promise joins, Proxy traps and binary memory in the same authoritative heap.'}
   },
   algorithm:{schema:ALGORITHM_V8_SCHEMA,profile:ALGORITHM_V8_PROFILE,limits:ALGORITHM_V8_LIMITS,
     inputTypes:ALGORITHM_V8_INPUT_TYPES,traversalModes:TRAVERSAL_MODES,operations:ALGORITHM_V8_OPERATION_METADATA},
@@ -50,6 +54,17 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
       fields:['schema','mode','inputs','jobs','observed','values','settled','output','error'],
       jobFields:['status','owner','promise','reaction','closure','rejectionClosure','target','sequence','joinResult','joinIndex','readySequence'],
       capabilities:'Ordered Promise dependencies, FIFO internal jobs, first settlement and explicit late no-op steps; fresh result arrays are named only when allocated.'},
+    numberConversions:{profile:'number-conversion/1',schema:NUMBER_STATE_V8_SCHEMA,fields:['schema','operations'],initial:null,
+      operationFields:NUMBER_OPERATION_FIELDS,phases:['select','call','builtin','waiting','convert','complete'],
+      capabilities:'Live data-method selection, original receiver and number hint, shared callback scopes, ordered ordinary fallback and checked primitive conversion. Accessor selection and abrupt conversion need explicit profiles.'},
+    generators:{profile:GENERATOR_PROFILE_V8,heapFields:GENERATOR_HEAP_FIELDS,intrinsicPrototypes:GENERATOR_INTRINSICS_V8,
+      phases:['initializing','suspendedStart','executing','suspendedYield','completed'],methods:['next','return','throw'],
+      handlerFields:['name','catch','finally','phase','caught','pending'],
+      delegationFields:['iterator','next','request','phase','result'],
+      capabilities:'Retained invocations, receivers, arguments and captures; sent values, catch/finally cleanup, suspension and cached-next delegation through declared builtin iterators and synchronous generators.'},
+    proxyCalls:{profile:PROXY_PROFILE_V8,schema:PROXY_STATE_V8_SCHEMA,fields:['schema','pending'],initial:null,
+      heapFields:PROXY_HEAP_FIELDS,callFields:PROXY_CALL_FIELDS,
+      capabilities:'Distinct Proxy, target and handler identities; ordinary data forwarding and synchronous owned get/set traps with live target invariants and exact pending callback completion. Callable or revoked proxies and other traps require explicit profiles.'},
     binaryMemory:{profile:MEMORY_PROFILE_V8,heapFields:MEMORY_HEAP_FIELDS_V8,maxBufferBytes:1024,
       typedArrayByteOrder:'little-endian',dataViewByteOrder:'explicit per operation',
       capabilities:'Fixed ordinary buffers and fixed/growable shared buffers; scalar conversions; shared view identities; bounded single-agent atomic operations. No detach, transfer, host buffers or cross-agent scheduling.'},
