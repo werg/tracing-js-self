@@ -6,7 +6,7 @@ import {tmpdir} from 'node:os';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {hashAlgorithmData} from '../src/semantic/program.js';
-import {readRetainedServingInputs,retainedServingSourceIdentity,meterRetainedServingCase,
+import {readRetainedServingInputs,retainedServingSourceIdentity,rootedInputGraphIdentity,meterRetainedServingCase,
   summarizeRetainedServingCosts} from '../src/semantic/retained-serving-costs.js';
 
 const source='"use strict";function run(x){return x;}',input={roots:[['str','café']],objects:[]},
@@ -96,4 +96,18 @@ test('retained summary keeps missing serializers and failed measurements in its 
   assert.equal(summary.declared,3);assert.equal(summary.serializerRetained,2);assert.equal(summary.tokenMeasured,1);
   assert.equal(summary.unmeasured,2);assert.equal(summary.tokens.total,cost.tokens.total);
   assert.deepEqual(summary.sourceDispositions,{locally_verified:2,'frontend-refused':1});
+});
+
+test('initial input pairing renames identities without losing aliases cycles order or null prototypes',()=>{
+  const graph={roots:[['ref','original'],['ref','original']],objects:[{id:'original',kind:'object',prototype:null,
+    properties:[{key:'self',value:['ref','original']},{key:'n',value:['num',3]}]},
+  {id:'unused',kind:'object',properties:[]}]},renamed=structuredClone(graph);
+  renamed.objects.shift();renamed.objects=[{id:'o7',kind:'object',prototype:null,
+    properties:[{key:'self',value:['ref','o7']},{key:'n',value:['num',3]}]}];renamed.roots=[['ref','o7'],['ref','o7']];
+  const before=rootedInputGraphIdentity(graph),after=rootedInputGraphIdentity(renamed);
+  assert.equal(before.digest,after.digest);assert.equal(before.unreachableObjects,1);assert.equal(after.unreachableObjects,0);
+  for(const mutate of [g=>{delete g.objects[0].prototype;},g=>{g.objects[0].properties.reverse();},
+    g=>{g.roots[1]=['num',3];},g=>{g.objects[0].properties[1].value=['num',4];}]){
+    const changed=structuredClone(renamed);mutate(changed);assert.notEqual(rootedInputGraphIdentity(changed).digest,before.digest);
+  }
 });

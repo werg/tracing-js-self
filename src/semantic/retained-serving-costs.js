@@ -5,12 +5,29 @@ import {resolve,join} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {hashAlgorithmData} from './program.js';
+import {validateOwnedGraph} from '../host/graph-codec.js';
 
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const fail=message=>{throw new TypeError('Retained serving costs: '+message);};
 const require=(condition,message)=>{if(!condition)fail(message);};
 const safe=name=>typeof name==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(name);
 const sum=(rows,key)=>rows.reduce((total,row)=>total+row[key],0);
+
+export function rootedInputGraphIdentity(input){
+  const graph={schema:'owned-graph/1',roots:input?.roots,objects:input?.objects};validateOwnedGraph(graph);
+  const nodes=new Map(graph.objects.map(node=>[node.id,node])),seen=new Map(),objects=[];
+  function value(tag){
+    if(tag[0]!=='ref')return structuredClone(tag);
+    if(seen.has(tag[1]))return ['ref',seen.get(tag[1])];
+    const original=nodes.get(tag[1]),id='o'+seen.size;seen.set(tag[1],id);
+    const node={id,kind:original.kind,...(original.prototype===null?{prototype:null}:{}),properties:[]};objects.push(node);
+    node.properties=original.properties.map(property=>({key:property.key,value:value(property.value)}));
+    return ['ref',id];
+  }
+  const roots=graph.roots.map(value);
+  return {digest:hashAlgorithmData({roots,objects}),reachableObjects:objects.length,
+    unreachableObjects:graph.objects.length-objects.length};
+}
 
 export function readRetainedServingInputs(directory,{population='all'}={}){
   directory=resolve(directory);
@@ -73,7 +90,8 @@ export function retainedServingSourceIdentity(report){
     'source, entry or initial input graph absent from retained serializer');
   return {sourceDigest:hashAlgorithmData(program.source),sourceUtf8Sha256:sha(program.source),entry:program.entry,
     initialInputGraphDigest:hashAlgorithmData({roots:input.roots,objects:input.objects}),
-    scope:'Exact source, entry and initial graph from the retained prompt; this does not independently reconstruct the entire host fixture schedule.'};
+    rootedInputGraph:rootedInputGraphIdentity(input),
+    scope:'Exact source and entry; rooted initial values retain aliases, cycles, property order and null prototypes under identity renaming. The exact full graph digest is also retained. Unreachable internal allocations and the complete host fixture schedule are not used as initial-input equivalence claims.'};
 }
 
 export async function meterRetainedServingCase(report,{tokenizer,eosTokenId,maxContextTokens=1048576}={}){
