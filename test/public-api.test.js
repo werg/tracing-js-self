@@ -139,4 +139,6 @@ test('semantic package entry publishes the implemented protocol source profile i
   });
   assert.equal(typeof semantic.verifyProtocolRegionTrainingCase,'function');
   assert.equal(typeof semantic.commitCausalLmV8Selection,'function');
+  assert.equal(typeof semantic.createNativeV8ProcessSelector,'function');
+  assert.equal(typeof semantic.createNativeV8PythonSelector,'function');
 });
