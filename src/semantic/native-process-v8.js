@@ -127,6 +127,25 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       if(output!==null)error.evidence={schema:'semantic-native-selection-failure/1',
         record:evidence.record,selection:copy(evidence.selection),provenanceValidated,
         nativeFailure:copy(error.evidence??null)};
+      else if(error.evidence){
+        const partial=copy(error.evidence),fragments=partial.fragments;
+        const bound=partial.modelSelected===true&&partial.origin==='actual-model-selected'&&
+          typeof partial.selectionId==='string'&&partial.selectionId.length>0&&
+          partial.session===input.session&&partial.invocationId===input.context.invocationId&&
+          partial.checkpointIdentity===capturedIdentity.checkpointIdentity&&
+          partial.tokenizerIdentity===capturedIdentity.tokenizerIdentity&&
+          partial.prefixDigest===input.context.prefixDigest&&partial.contextDigest===contextDigest&&
+          typeof partial.payloadHex==='string'&&/^(?:[0-9a-f]{2})*$/.test(partial.payloadHex)&&
+          Array.isArray(fragments)&&fragments.length>0&&fragments.every(fragment=>
+            Array.isArray(fragment?.tokenIds)&&fragment.tokenIds.length>0&&
+            fragment.tokenIds.every(id=>Number.isSafeInteger(id)&&id>=0)&&
+            typeof fragment.payloadHex==='string'&&/^(?:[0-9a-f]{2})*$/.test(fragment.payloadHex))&&
+          fragments.map(fragment=>fragment.payloadHex).join('')===partial.payloadHex;
+        evidence.selection=partial;
+        error.evidence={schema:'semantic-native-selection-failure/1',record:null,
+          rawPayloadHex:typeof partial.payloadHex==='string'?partial.payloadHex:null,
+          selection:partial,provenanceValidated:Boolean(bound)};
+      }
       evidence.failureEvidence=copy(error.evidence??null);throw error;}
     finally{evidence.elapsedMs=performance.now()-started;}
   };

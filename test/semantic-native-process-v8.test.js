@@ -111,6 +111,22 @@ test('native malformed semantic output retains original bytes and token evidence
   }finally{select.close();}
 });
 
+test('native partial binary failures retain authenticated original tokens without inventing a record',async()=>{
+  const select=selector({alter:`const evidence={...result.selection,session:request.session,
+    invocationId:request.context.invocationId,payloadHex:'ff00',fragments:[{tokenIds:[17,23],payloadHex:'ff00'}]};
+    process.stdout.write(JSON.stringify({id:request.id,ok:false,error:{message:'fragment budget exhausted',evidence}})+'\\n');continue;`});
+  try{
+    await select.initialize(identity);
+    await assert.rejects(select(boundary().input),error=>{
+      assert.equal(error.evidence.record,null);assert.equal(error.evidence.rawPayloadHex,'ff00');
+      assert.equal(error.evidence.provenanceValidated,true);
+      assert.deepEqual(error.evidence.selection.fragments[0].tokenIds,[17,23]);return true;
+    });
+    const metrics=select.metrics();assert.equal(metrics.failedAttempts,1);
+    assert.equal(metrics.attempts[0].record,null);assert.equal(metrics.unknownGenerationCostAttempts,0);
+  }finally{select.close();}
+});
+
 test('native v8 transport rejects current-context leakage, stale prefixes and changed commit bytes',async()=>{
   const select=selector(),{input}=boundary();
   try{
