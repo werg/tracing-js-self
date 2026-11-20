@@ -184,7 +184,7 @@ export class SemanticController {
   }
   commit(line,{mode='generated',track=this.trackId}={}){
     const prior=structuredClone({
-      heap:this.heap,locals:this.locals,stack:this.stack,completion:this.completion,
+      heap:this.heap,locals:this.locals,stack:this.stack,completion:this.completion,receiver:this.receiver,
       effects:this.effects,jobs:this.jobs,ready:this.ready,
       pending:this.pending,lastReturn:this.lastReturn,fixtureReplies:this.fixtureReplies,
       claims:this.claims,generated:this.generated,history:this.history,
@@ -441,9 +441,12 @@ export class SemanticController {
           fail('continuation','Duplicate continuation identity');
         this.continuations.set(f.continuation,{state:'waiting',promise:f.promise,
           invocation:this.stack.pop(),sequence:++this.scheduler.registration,
-          activeJob:this.activeJob,captureAliases:[...this.captureAliases]});
+          activeJob:this.activeJob,captureAliases:[...this.captureAliases],
+          ...(this.protocol?{receiver:structuredClone(this.receiver)}:{})});
         if(this.activeJob){
-          this.captureAliases=new Map(this.jobs.get(this.activeJob).priorAliases);
+          const job=this.jobs.get(this.activeJob);
+          this.captureAliases=new Map(job.priorAliases);
+          if(Object.hasOwn(job,'priorReceiver'))this.receiver=structuredClone(job.priorReceiver);
           this.activeJob=null;
         }
         this.refreshReady();
@@ -459,6 +462,7 @@ export class SemanticController {
         this.stack.push(continuation.invocation);
         this.activeJob=continuation.activeJob;
         this.captureAliases=new Map(continuation.captureAliases);
+        if(Object.hasOwn(continuation,'receiver'))this.receiver=structuredClone(continuation.receiver);
       }else if(kind==='job'){
         if(f.action==='enqueue'){
           if(this.jobs.has(f.job)||this.continuations.has(f.job))fail('job','Duplicate scheduled job');
@@ -486,6 +490,10 @@ export class SemanticController {
           if(callback){
               const closure=this.heap.get(callback);
               job.priorAliases=[...this.captureAliases];
+              if(this.protocol){
+                job.priorReceiver=structuredClone(this.receiver);
+                this.receiver=structuredClone(closure.functionKind==='arrow'?closure.lexicalReceiver:['undefined']);
+              }
               this.captureAliases=new Map((closure.captures??[]).map(c=>[c.binding,c.cell]));
               const fn=analyzeSemanticProgram(this.source.source).functions.find(fn=>
                 fn.name===closure.code||'function:'+fn.start===closure.code);
@@ -509,7 +517,9 @@ export class SemanticController {
             fail('job','Cannot complete a running callback frame');
           job.status='completed';
           if(this.activeJob===f.job){
-            this.captureAliases=new Map(job.priorAliases);this.activeJob=null;
+            this.captureAliases=new Map(job.priorAliases);
+            if(Object.hasOwn(job,'priorReceiver'))this.receiver=structuredClone(job.priorReceiver);
+            this.activeJob=null;
           }
           if(job.promise){
             const returned=job.returned;
