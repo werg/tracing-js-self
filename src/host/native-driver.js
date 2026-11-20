@@ -32,9 +32,12 @@ export async function executeWithNativeServices({text,entry=null,services={},max
      typeof signal.removeEventListener!=='function'))
     throw new TypeError('signal must be an AbortSignal');
   if(signal?.aborted)throw signal.reason??new Error('Native driver aborted');
+  if(!Number.isSafeInteger(maxSteps)||maxSteps<1)
+    throw new RangeError('Native execution step budget must be a positive safe integer');
   const owner=new AbortController();
-  const pending=new Set(),arrivals=[];
+  const pending=new Set(),arrivals=[],deliveries=[];
   let wake=null,active=true;
+  let inJobGroup=false,remainingJobs=0;
   const enqueue=item=>{
     if(!active||owner.signal.aborted)return;
     arrivals.push(item);
@@ -111,25 +114,55 @@ export async function executeWithNativeServices({text,entry=null,services={},max
   try{
     for(;;){
       if(signal?.aborted)throw signal.reason??new Error('Native driver aborted');
-      // Arrival is committed independently before any guest-visible delivery.
-      // One environment event, then owned scheduler. Native callback
-      // reentry cannot skip ahead of an earlier queued callback or run guest
-      // source in V8, even when the service settles in the same microtask.
-      if(arrivals.length){
+      // Preserve the FIFO prefix that was already ready when this native turn
+      // began. Jobs created by that prefix belong to a later native microtask
+      // turn, after already-scheduled service settlements. A synchronous host
+      // call can suspend transport but cannot end its current guest job; retain
+      // that prefix and postpone unrelated delivery until the job group ends.
+      while(arrivals.length){
         const next=arrivals.shift();
-        if(next.kind==='callback'){
-          runtime.recordExternalCallback(next);
-        }else{
+        if(next.kind==='callback')deliveries.push(next);
+        else{
           const {effectId,value,graph,abrupt}=next;
-          if(!pending.delete(effectId))throw new Error('Unexpected duplicate service completion');
+          if(!pending.has(effectId))throw new Error('Unexpected duplicate service completion');
           const effect=runtime.state.effects[effectId];
           if(!effect)throw new Error('Unknown native completion effect');
           const received=runtime.recordInputArrival({effectId,
             kind:effect.kind==='promise'?'completion':'immediate',value,graph,abrupt});
-          runtime.deliverInput(received.inputId);
+          deliveries.push({kind:'delivery',effectId,inputId:received.inputId});
         }
       }
-      const progress=runtime.drive();
+      const activeBefore=runtime.state.frames[runtime.state.control.a0.activeFrameId];
+      for(let index=0;index<deliveries.length;){
+        const next=deliveries[index];
+        const unblocks=next.kind==='delivery'&&activeBefore?.status==='blocked'&&
+          activeBefore.blockedOn===next.effectId;
+        if(inJobGroup&&!unblocks){index++;continue;}
+        deliveries.splice(index,1);
+        if(next.kind==='callback')runtime.recordExternalCallback(next);
+        else{
+          if(!pending.delete(next.effectId))throw new Error('Unexpected duplicate service delivery');
+          runtime.deliverInput(next.inputId);
+        }
+      }
+      // Yield boundaries must not reset the resource limit. Count committed
+      // work across this collection, including deliveries and job entries.
+      if(!inJobGroup){remainingJobs=runtime.state.control.a0.queue.length;inJobGroup=true;}
+      let progress;
+      for(let index=0;;index++){
+        if(runtime.events.length>=maxSteps)
+          throw new Error('Native driver safety limit ('+maxSteps+' committed steps) exceeded');
+        if(index>0){runtime.enterQueuedJob();remainingJobs--;}
+        const remaining=maxSteps-runtime.events.length;
+        if(remaining<1)throw new Error('Native driver safety limit ('+maxSteps+' committed steps) exceeded');
+        progress=runtime.drive({yieldBeforeJob:true,stepLimit:remaining});
+        if(progress.kind!=='yield'||remainingJobs===0)break;
+      }
+      if(progress.kind==='yield'){
+        inJobGroup=false;
+        await Promise.resolve();
+        continue;
+      }
       if(progress.kind!=='waiting'){
         if(progress.kind==='unsupported'){
           const error=new Error('Unsupported owned execution: '+
@@ -147,7 +180,11 @@ export async function executeWithNativeServices({text,entry=null,services={},max
         replayExact(bundle); // Recorded outcomes, never native service execution.
         return {progress,bundle,runtime};
       }
-      if(arrivals.length)continue;
+      const activeAfter=runtime.state.frames[runtime.state.control.a0.activeFrameId];
+      if(activeAfter?.status!=='blocked')inJobGroup=false;
+      if(arrivals.length||!inJobGroup&&deliveries.length)continue;
+      if(activeAfter?.status==='blocked'&&!pending.has(activeAfter.blockedOn))
+        throw new Error('Guest is waiting for an external effect without a registered native service');
       if(!pending.size&&!Object.values(runtime.state.effects).some(effect=>effect.subscription?.state==='active'))
         throw new Error('Guest is waiting for an external effect without a registered native service');
       await new Promise(resolve=>{wake=resolve;});
@@ -163,6 +200,7 @@ export async function executeWithNativeServices({text,entry=null,services={},max
     // append an arrival to an exported archive or wake another invocation.
     pending.clear();
     arrivals.length=0;
+    deliveries.length=0;
     wake=null;
   }
 }

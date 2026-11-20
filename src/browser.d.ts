@@ -9,7 +9,7 @@ export interface BrowserRuntime {
   registerSource(source:BrowserSource):unknown;
   start(source:string|unknown):this;
   startEntry(entry:{source:unknown;functionName:string;args?:unknown[];allowAsync?:boolean}):this;
-  drive():{kind:string;[key:string]:unknown};
+  drive(options?:{yieldBeforeJob?:boolean;stepLimit?:number}):{kind:string;[key:string]:unknown};
   exportRun():Record<string,unknown>;
   readonly state:Record<string,unknown>;
 }

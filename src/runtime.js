@@ -4061,10 +4061,18 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
       exit:{kind,pendingEffects:pending,waitingOn:waitingOn.filter(Boolean)}});
     this.chunkStart=last;this.chunkBefore=after;
   }
-  drive() {
+  // Native hosts can stop between owned jobs to preserve microtask ordering.
+  // Yielding
+  // leaves the next job and the open archive chunk intact; it is not a wait,
+  // completion, or an implicit checkpoint. The ordinary driver still drains
+  // the queue. Callers resuming a yielded turn retain their remaining budget.
+  drive({yieldBeforeJob=false,stepLimit=this.maxSteps}={}) {
+    if(typeof yieldBeforeJob!=='boolean')throw new TypeError('Job yielding policy must be boolean');
+    if(!Number.isSafeInteger(stepLimit)||stepLimit<1||stepLimit>this.maxSteps)
+      throw new RangeError('Driver step limit must be positive and within its configured budget');
     if(!this.started)throw new Error('Start first');
     let steps=0;
-    while(steps++<this.maxSteps) {
+    while(steps++<stepLimit) {
       const terminal=this.state.control.a0.status;
       if(terminal==='failed'||terminal==='unsupported') {
         const kind=terminal==='failed'?'runtime.failure':'unsupported';this.seal(kind);
@@ -4076,7 +4084,10 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
       const active=c.activeFrameId&&this.state.frames[c.activeFrameId];
       if(active?.status==='running') {this.step();continue;}
       if(active?.status==='blocked'){this.seal('waiting');return {kind:'waiting',waitingOn:active.blockedOn,pendingEffects:this.chunks.at(-1).exit.pendingEffects};}
-      if(c.queue.length){this.enterQueuedJob();continue;}
+      if(c.queue.length){
+        if(yieldBeforeJob)return {kind:'yield',steps:steps-1};
+        this.enterQueuedJob();continue;
+      }
       if(c.scriptSequence&&c.scriptSequence.nextIndex<c.scriptSequence.sourceIds.length){this.enterNextScript();continue;}
       if(c.timers.length){this.enterTimerTask();continue;}
       const pendingPromises=Object.values(this.state.promises).some(p=>p.status==='pending');
@@ -4085,7 +4096,7 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
       const kind=pendingPromises||pendingEffects||subscriptions?'waiting':'terminated';
       this.seal(kind);return {kind,waitingOn:this.chunks.at(-1)?.exit.waitingOn??[],pendingEffects:this.chunks.at(-1)?.exit.pendingEffects??[]};
     }
-    throw new Error(`Driver safety limit (${this.maxSteps} steps); no chunk has been misreported as complete`);
+    throw new Error(`Driver safety limit (${stepLimit} steps); no chunk has been misreported as complete`);
   }
   checkpoint() {return {stateRoot:`q${this.events.length}`,state:copy(this.state)};}
   inspectState() {return copy(this.state);}
