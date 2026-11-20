@@ -82,3 +82,66 @@ test('false method result ordering and forged retained state fail without commit
   state.operations[0].primitive=null;assert.throws(()=>restoreNumberStateV8(f.controller,state,f.api),/primitive is absent/);
   assert.throws(()=>f.apply({kind:'number.finish',id:'conversion',result:['num',99]}),/false Number scalar/);
 });
+
+test('rejected direct Number entries never initialize conversion state',()=>{
+  for(const [record,emptyStack,reason]of [
+    [{kind:'number.begin',id:'conversion',value:['ref','missing']},false,/unallocated reference/],
+    [{kind:'number.begin',id:'conversion',value:['num',3]},true,/active invocation/],
+    [{kind:'number.finish',id:'missing',result:['num',3]},false,/unknown Number conversion/]
+  ]){
+    const f=fixture();if(emptyStack)f.controller.stack=[];
+    const before=structuredClone(f.controller);
+    assert.throws(()=>applyNumberRecordV8(f.controller,record,f.api),reason);
+    assert.deepEqual(f.controller,before);
+  }
+});
+
+test('Number scalar work bounds apply before retaining inputs and callback results',()=>{
+  for(const tag of ['str','bigint']){
+    const f=fixture(),oversized=[tag,'1'.repeat(10001)],before=structuredClone(f.controller);
+    assert.throws(()=>applyNumberRecordV8(f.controller,{kind:'number.begin',id:'conversion',value:oversized},f.api),/scalar conversion bound/);
+    assert.deepEqual(f.controller,before);
+    const atLimit=[tag,'1'.repeat(10000)];
+    f.apply({kind:'number.begin',id:'conversion',value:atLimit});
+    assert.equal(restoreNumberStateV8(f.controller,f.controller.protocol.numberConversions,f.api).valid,true);
+    f.apply({kind:'number.finish',id:'conversion',result:['num','+Infinity']});
+  }
+  const f=fixture();f.object('object');f.object('method','closure');f.define('object',['symbol','well-known:toPrimitive'],['ref','method']);
+  f.apply({kind:'number.begin',id:'conversion',value:['ref','object']});
+  f.apply({kind:'number.select',id:'conversion',key:['symbol','well-known:toPrimitive'],method:['ref','method'],builtin:null});
+  f.apply({kind:'number.call',id:'conversion',child:'callback'});
+  const value=['str','1'.repeat(10001)];f.returned(value);
+  const before=structuredClone(f.controller);
+  assert.throws(()=>applyNumberRecordV8(f.controller,{kind:'number.return',id:'conversion',value},f.api),/scalar conversion bound/);
+  assert.deepEqual(f.controller,before);
+});
+
+test('ordinary Number conversion skips noncallable Promise values but rejects exotic toPrimitive',()=>{
+  const f=fixture();f.object('object');f.object('text','closure');
+  f.controller.heap.set('promise',{kind:'promise',properties:new Map(),state:'fulfilled',result:['num',1],reactions:[]});
+  f.define('object',['str','valueOf'],['ref','promise']);f.define('object',['str','toString'],['ref','text']);
+  f.apply({kind:'number.begin',id:'conversion',value:['ref','object']});
+  f.apply({kind:'number.select',id:'conversion',key:['symbol','well-known:toPrimitive'],method:['undefined'],builtin:null});
+  f.apply({kind:'number.select',id:'conversion',key:['str','valueOf'],method:['ref','promise'],builtin:null});
+  f.apply({kind:'number.select',id:'conversion',key:['str','toString'],method:['ref','text'],builtin:null});
+  f.apply({kind:'number.call',id:'conversion',child:'callback'});f.returned(['str','3']);
+  f.apply({kind:'number.return',id:'conversion',value:['str','3']});
+  f.apply({kind:'number.finish',id:'conversion',result:['num',3]});
+  assert.equal(f.controller.lastReturn.value[1],Number({valueOf:Promise.resolve(1),toString(){return '3';}}));
+
+  f.define('object',['symbol','well-known:toPrimitive'],['ref','promise']);
+  f.apply({kind:'number.begin',id:'abrupt',value:['ref','object']});
+  const before=structuredClone(f.controller);
+  assert.throws(()=>applyNumberRecordV8(f.controller,{kind:'number.select',id:'abrupt',
+    key:['symbol','well-known:toPrimitive'],method:['ref','promise'],builtin:null},f.api),/noncallable Symbol.toPrimitive/);
+  assert.deepEqual(f.controller,before);
+});
+
+test('Number restore requires a live parent until conversion completes',()=>{
+  const f=fixture();f.apply({kind:'number.begin',id:'conversion',value:['str','3']});
+  f.controller.stack=[];
+  assert.throws(()=>restoreNumberStateV8(f.controller,f.controller.protocol.numberConversions,f.api),/live parent/);
+  f.controller.stack=['root'];f.apply({kind:'number.finish',id:'conversion',result:['num',3]});
+  f.controller.stack=[];
+  assert.equal(restoreNumberStateV8(f.controller,f.controller.protocol.numberConversions,f.api).valid,true);
+});

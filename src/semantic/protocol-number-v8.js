@@ -17,7 +17,10 @@ const primitive=value=>['undefined','null','bool','str','num','bigint','symbol']
 const numeric=value=>['undefined','null','bool','str','num','bigint'].includes(value?.[0]);
 const id=value=>{if(typeof value!=='string'||!value||value.length>256)throw new TypeError('Number conversion identity');};
 function state(controller,api){return api.state(controller).numberConversions??={schema:NUMBER_STATE_V8_SCHEMA,operations:[]};}
-function operation(controller,id,api){const row=state(controller,api).operations.find(row=>row.id===id);api.require(row,'unknown Number conversion');return row;}
+function operation(controller,id,api){const row=controller.protocol?.numberConversions?.operations.find(row=>row.id===id);api.require(row,'unknown Number conversion');return row;}
+function scalarBound(value,api){
+  if(['str','bigint'].includes(value?.[0]))api.require(value[1].length<=10000,'Number scalar conversion bound');
+}
 const keyFor=index=>index===-1?['symbol','well-known:toPrimitive']:['str',index===0?'valueOf':'toString'];
 function lookup(controller,input,key,api){
   let current=input[1];const seen=new Set();
@@ -38,7 +41,7 @@ function lookup(controller,input,key,api){
   }
 }
 function acceptPrimitive(row,value,api){
-  if(primitive(value)){row.primitive=api.copy(value);row.phase='convert';return;}
+  if(primitive(value)){scalarBound(value,api);row.primitive=api.copy(value);row.phase='convert';return;}
   api.require(row.index!==-1,'Symbol.toPrimitive object result requires a guest abrupt-conversion record');
   api.require(row.index===0,'OrdinaryToPrimitive exhaustion requires a guest abrupt-conversion record');
   row.index=1;row.method=null;row.builtin=null;row.child=null;row.phase='select';
@@ -65,12 +68,14 @@ export function applyNumberRecordV8(controller,record,api){
   if(!NUMBER_RECORD_FIELDS[record.kind])return false;
   const {require,copy,eq,known}=api;
   if(record.kind==='number.begin'){
-    const conversions=state(controller,api);known(controller,record.value);
-    require(conversions.operations.length<4096&&!conversions.operations.some(row=>row.id===record.id),'Number operation identity/bound');
+    known(controller,record.value);
+    const conversions=controller.protocol?.numberConversions;
+    require((conversions?.operations.length??0)<4096&&!conversions?.operations.some(row=>row.id===record.id),'Number operation identity/bound');
     require(controller.stack.length,'Number conversion requires an active invocation');
     const scalar=primitive(record.value);
-    if(!scalar)require(record.value[0]==='ref'&&['object','array'].includes(api.heapNode(controller,record.value[1]).kind),'Number conversion requires ordinary object state');
-    conversions.operations.push({id:record.id,parent:controller.stack.at(-1),input:copy(record.value),index:-1,method:null,builtin:null,child:null,
+    if(scalar)scalarBound(record.value,api);
+    else require(record.value[0]==='ref'&&['object','array'].includes(api.heapNode(controller,record.value[1]).kind),'Number conversion requires ordinary object state');
+    state(controller,api).operations.push({id:record.id,parent:controller.stack.at(-1),input:copy(record.value),index:-1,method:null,builtin:null,child:null,
       phase:scalar?'convert':'select',primitive:scalar?copy(record.value):null,result:null});return true;
   }
   const row=operation(controller,record.id,api);
@@ -80,16 +85,17 @@ export function applyNumberRecordV8(controller,record,api){
     api.knownKey(controller,record.key);known(controller,record.method);
     const found=lookup(controller,row.input,record.key,api);
     require(eq(found,{method:record.method,builtin:record.builtin}),'false Number conversion method selection');
-    row.method=copy(record.method);row.builtin=record.builtin;
-    if(record.builtin!==null)row.phase='builtin';
+    let index=row.index,method=copy(record.method),phase;
+    if(record.builtin!==null)phase='builtin';
     else if(row.index===-1&&['undefined','null'].includes(record.method[0])){
-      row.index=0;row.method=null;row.phase='select';
-    }else if(record.method[0]==='ref'&&api.heapNode(controller,record.method[1]).kind==='closure')row.phase='call';
+      index=0;method=null;phase='select';
+    }else if(record.method[0]==='ref'&&controller.heap.get(record.method[1]).kind==='closure')phase='call';
     else{
       require(row.index!==-1,'noncallable Symbol.toPrimitive requires a guest abrupt-conversion record');
       require(row.index===0,'OrdinaryToPrimitive exhaustion requires a guest abrupt-conversion record');
-      row.index=1;row.method=null;row.phase='select';
+      index=1;method=null;phase='select';
     }
+    Object.assign(row,{index,method,builtin:record.builtin,phase});
   }else if(record.kind==='number.call'){
     require(row.phase==='call','Number callback requires a captured callable');
     api.call(controller,{child:record.child,callee:row.method,receiver:row.input,
@@ -109,7 +115,7 @@ export function applyNumberRecordV8(controller,record,api){
     known(controller,record.value);acceptPrimitive(row,record.value,api);
   }else{
     require(row.phase==='convert'&&numeric(row.primitive),'Number conversion abrupt result requires its own protocol');
-    if(['str','bigint'].includes(row.primitive[0]))require(row.primitive[1].length<=10000,'Number scalar conversion bound');
+    scalarBound(row.primitive,api);
     const expected=encode(Number(decode(row.primitive)));known(controller,record.result);
     require(eq(record.result,expected),'false Number scalar conversion');row.result=copy(expected);row.phase='complete';
     controller.lastReturn={kind:'return',value:copy(expected)};
@@ -127,6 +133,7 @@ export function restoreNumberStateV8(controller,snapshot,api){
     api.require(!seen.has(row.id),'duplicate Number operation');seen.add(row.id);
     api.require(controller.frameFunctions.has(row.parent)&&[-1,0,1].includes(row.index)&&
       ['select','call','builtin','waiting','convert','complete'].includes(row.phase),'Number continuation phase/owner');
+    if(row.phase!=='complete')api.require(controller.stack.includes(row.parent),'unfinished Number conversion requires a live parent');
     api.known(controller,row.input);
     for(const value of [row.method,row.primitive,row.result])if(value!==null)api.known(controller,value);
     if(['str','bigint'].includes(row.primitive?.[0]))api.require(row.primitive[1].length<=10000,'Number retained scalar bound');
