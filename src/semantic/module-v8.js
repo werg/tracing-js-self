@@ -83,7 +83,7 @@ function moduleProjectionRefusal(linked){
     moduleLink:'passed',ownedRuntimeProfile:linked.profile,
     evaluationStrategy:linked.metadata.evaluationStrategy,moduleReference:'untested',
     publicProjection:'unqualified',nativeQualification:'unqualified',
-    reason:'Owned parallel top-level-await module scheduling has no qualified public/native module-state projection'};
+    reason:'Owned parallel top-level-await or cyclic async module scheduling has no qualified public/native module-state projection'};
 }
 
 export async function verifyRegionModuleTrainingCase(fixture){

@@ -69,7 +69,12 @@ test('module proof tampering, exotic namespace receivers and asynchronous cycles
   const cycle=await verifyRegionModuleTrainingCase({id:'async-cycle',family:'async-cycle',modules:{
     'a.js':'import {b} from "./b.js";export const a=await Promise.resolve(1);export function run(){return b;}',
     'b.js':'import {a} from "./a.js";export const b=2;'},entryModule:'a.js'});
-  assert.equal(cycle.status,'unsupported');assert.match(cycle.reason,/async ESM/);
+  assert.equal(cycle.status,'projection_refused');
+  assert.equal(cycle.phase,'module-projection');
+  assert.equal(cycle.moduleLink,'passed');
+  assert.equal(cycle.nativeQualification,'unqualified');
+  assert.equal(cycle.exported,undefined);
+  assert.match(cycle.reason,/cyclic async module scheduling/);
   let reads=0;
   const modules=Object.defineProperty({},'main.js',{enumerable:true,get(){reads++;return 'export function run(){return 1;}';}});
   const hooked=await verifyRegionModuleTrainingCase({id:'hooked-module',family:'hooked-module',modules,entryModule:'main.js'});
@@ -94,14 +99,19 @@ test('parallel TLA links and runs in owned state while public/native module proj
 });
 
 test('module rechecking derives the scheduler refusal from source even when proof metadata lies',async()=>{
-  const linked=linkEvaluatedModules(siblingSchedulerFixture);
-  const artifact={sidecar:{sourceProvenance:{upstream:{moduleEvidence:{
-    schema:'semantic-module-evidence/1',profile:MODULE_REGION_PROFILE,
-    request:{modules:siblingSchedulerFixture.modules,entryModule:'main.js',exportName:'run',
-      inputGraph:encodeNativeGraph([linked.entryInput]),calls:null},
-    metadata:{...linked.metadata,evaluationStrategy:'dependency-concatenation'}
-  }}}}};
-  await assert.rejects(recheckModuleRegionEvidence(artifact),error=>
-    error.status==='projection_refused'&&error.phase==='module-projection'&&
-    error.moduleLink==='passed'&&error.evaluationStrategy==='async-dependency-scheduler');
+  for(const fixture of [siblingSchedulerFixture,{modules:{
+    'main.js':`import './cycle.js';await 0;export function run(){return 1;}`,
+    'cycle.js':`import './main.js';`
+  },entryModule:'main.js',exportName:'run'}]){
+    const linked=linkEvaluatedModules(fixture);
+    const artifact={sidecar:{sourceProvenance:{upstream:{moduleEvidence:{
+      schema:'semantic-module-evidence/1',profile:MODULE_REGION_PROFILE,
+      request:{modules:fixture.modules,entryModule:'main.js',exportName:'run',
+        inputGraph:encodeNativeGraph([linked.entryInput]),calls:null},
+      metadata:{...linked.metadata,evaluationStrategy:'dependency-concatenation'}
+    }}}}};
+    await assert.rejects(recheckModuleRegionEvidence(artifact),error=>
+      error.status==='projection_refused'&&error.phase==='module-projection'&&
+      error.moduleLink==='passed'&&error.evaluationStrategy==='async-dependency-scheduler');
+  }
 });

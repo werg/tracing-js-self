@@ -4,6 +4,7 @@ import {mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,dirname} from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {spawnSync} from 'node:child_process';
 import {createRuntime} from '../src/runtime.js';
 import {linkEvaluatedModules,executeEvaluatedModules} from '../src/evaluated-modules.js';
 import {validateBundle} from '../src/validation.js';
@@ -330,11 +331,168 @@ test('pending sibling host reads restore retained module state without executing
   assert.equal(restoredDispatches,0);
 });
 
-test('async cycles, for-await iteration and generated scheduler identifiers remain explicit boundaries',()=>{
-  assert.throws(()=>linkEvaluatedModules({modules:{
-    'main.js':`import './a.js';export function run(){return 1;}await 0;`,
-    'a.js':`import './main.js';`
-  },entryModule:'main.js',exportName:'run'}),/cyclic module initialization with await/);
+test('self-import and cyclic graphs retain separate DFS and body completion state',async()=>{
+  const self=await differential({
+    'state.js':stateSource,
+    'main.js':`import './main.js';import {add,log} from './state.js';
+      add('m');await 0;add('M');export function run(){return log;}`
+  });
+  assert.equal(self.outcome.value,'mM');
+  assert.equal(self.linked.metadata.cycles.length,1);
+  for(const [a,b,expected] of [
+    [`add('a');await 0;add('A');`,`add('b');`,'baAm'],
+    [`add('a');`,`add('b');await 0;add('B');`,'bBam'],
+    [`add('a');await 0;add('A');`,`add('b');await 0;add('B');`,'bBaAm']
+  ]){
+    const run=await differential({
+      'state.js':stateSource,
+      'a.js':`import './b.js';import {add} from './state.js';${a}`,
+      'b.js':`import './a.js';import {add} from './state.js';${b}`,
+      'main.js':`import './a.js';import {add,log} from './state.js';
+        add('m');export function run(){return log;}`
+    });
+    assert.equal(run.outcome.value,expected);
+    const modules=records(run.runtime),index=file=>run.linked.metadata.evaluationOrder.indexOf(file);
+    assert.equal(modules[index('a.js')].cycleRoot[1],index('a.js'));
+    assert.equal(modules[index('b.js')].cycleRoot[1],index('a.js'));
+    assert(modules.every(record=>record.status[1]==='evaluated'&&record.started[1]));
+  }
+});
+
+test('an outside import of an already-executed non-root cycle member waits for the cycle root',async()=>{
+  const run=await differential({
+    'state.js':stateSource,
+    'a.js':`import './b.js';import {add} from './state.js';add('a');await 0;add('A');`,
+    'b.js':`import './a.js';import {add} from './state.js';add('b');export let value=1;`,
+    'outside.js':`import {value} from './b.js';import {add} from './state.js';add('c'+value);`,
+    'main.js':`import './a.js';import './outside.js';import {add,log} from './state.js';
+      add('m');export function run(){return log;}`
+  });
+  assert.equal(run.outcome.value,'baAc1m');
+});
+
+test('cyclic synchronous bodies retain hoisted functions, live cells and lexical TDZ with TLA',async()=>{
+  const modules={
+    'state.js':stateSource,
+    'a.js':`import {fromB} from './b.js';import {add} from './state.js';
+      export let value=1;export function read(){return value;}
+      add('a');await 0;value=3;add(fromB());`,
+    'b.js':`import {read} from './a.js';import {add} from './state.js';
+      try{read();}catch(error){add(error.name);}export function fromB(){return read();}`,
+    'main.js':`import './a.js';import {log} from './state.js';export function run(){return log;}`
+  };
+  const run=await differential(modules);
+  assert.equal(run.outcome.value,'ReferenceErrora3');
+});
+
+test('untaken awaits in an SCC retain async completion jobs and sibling order',async()=>{
+  const run=await differential({
+    'state.js':stateSource,
+    'a.js':`import './b.js';import {add} from './state.js';add('a');`,
+    'b.js':`import './a.js';import {add} from './state.js';
+      add('b');if(false){await 0;}add('B');queueMicrotask(()=>add('q'));`,
+    'sibling.js':`import {add} from './state.js';add('s');await 0;add('S');`,
+    'main.js':`import './a.js';import './sibling.js';import {add,log} from './state.js';
+      add('m');const observed=log;export function run(){return observed;}`
+  });
+  assert.equal(run.outcome.value,'bBsqaSm');
+});
+
+test('async SCC errors before and after await retain one rejection and allow started siblings to finish',async()=>{
+  for(const pause of ['',`await 0;add('B');`]){
+    const run=await differential({
+      'state.js':stateSource,
+      'a.js':`import './b.js';import {add} from './state.js';add('a');`,
+      'b.js':`import './a.js';import {add} from './state.js';
+        add('b');${pause}throw new TypeError('cycle failure');await 0;`,
+      'sibling.js':`import {add} from './state.js';add('s');await 0;add('S');`,
+      'main.js':`import './a.js';import './sibling.js';import {add,log} from './state.js';
+        add('m');export function run(){return log;}`
+    });
+    assert.equal(run.outcome.status,'rejected');
+    assert.deepEqual(run.outcome.value,{name:'TypeError'});
+    assert(!run.outcome.log.includes('a')&&!run.outcome.log.includes('m'));
+    assert(run.outcome.log.includes('S'));
+    const failed=records(run.runtime).filter(record=>record.failed[1]);
+    assert.equal(failed.length,3);
+    assert(failed.every(record=>record.error[1]===failed[0].error[1]),
+      'all rejected parents retain the original guest error identity');
+  }
+});
+
+test('a failed cycle root prevents waiting members starting without suppressing unrelated ready work',async()=>{
+  const run=await differential({
+    'state.js':stateSource,
+    'a.js':`import './b.js';import './fail.js';import {add} from './state.js';add('a');`,
+    'b.js':`import './a.js';import './base.js';import {add} from './state.js';add('b');`,
+    'base.js':`import {add} from './state.js';add('x');await 0;await 0;add('X');`,
+    'fail.js':`import {add} from './state.js';add('f');throw 7;await 0;`,
+    'good.js':`import './base.js';import {add} from './state.js';add('g');`,
+    'main.js':`import './a.js';import './good.js';import {log} from './state.js';
+      export function run(){return log;}`
+  });
+  assert.deepEqual(run.outcome,{status:'rejected',value:7,log:'xfXg'});
+  const b=records(run.runtime)[run.linked.metadata.evaluationOrder.indexOf('b.js')];
+  assert.equal(b.started[1],false);
+  assert.equal(b.pending[1],1);
+});
+
+test('a synchronous DFS failure in an open SCC preserves its error while started async members finish',async()=>{
+  const run=await differential({
+    'state.js':stateSource,
+    'a.js':`import './b.js';import './fail.js';import {add} from './state.js';add('a');`,
+    'b.js':`import './a.js';import {add} from './state.js';add('b');await 0;add('B');`,
+    'fail.js':`import {add} from './state.js';add('f');throw 7;`,
+    'later.js':`import {add} from './state.js';add('z');await 0;add('Z');`,
+    'main.js':`import './a.js';import './later.js';import {log} from './state.js';
+      export function run(){return log;}`
+  });
+  assert.deepEqual(run.outcome,{status:'rejected',value:7,log:'bfB'});
+  const later=records(run.runtime)[run.linked.metadata.evaluationOrder.indexOf('later.js')];
+  assert.equal(later.status[1],'linked');
+  assert.equal(later.started[1],false);
+});
+
+test('an unresolved cyclic evaluation stays pending across JSON restore without inventing an error',()=>{
+  const modules={
+    'state.js':stateSource,
+    'a.js':`import './b.js';import {add} from './state.js';add('a');`,
+    'b.js':`import './a.js';import {add} from './state.js';add('b');await new Promise(()=>{});add('B');`,
+    'main.js':`import './a.js';import {log} from './state.js';export function run(){return log;}`
+  };
+  // Original ESM in an isolated native VM, with fully linked modules before
+  // evaluation. The observation turn drains ready jobs without awaiting the
+  // deliberately unresolved top-level capability or inventing a timeout pass.
+  const oracle=spawnSync(process.execPath,['--experimental-vm-modules','--input-type=module','-e',`
+    import vm from 'node:vm';
+    const sources=JSON.parse(await new Promise(resolve=>{let data='';
+      process.stdin.on('data',part=>data+=part);process.stdin.on('end',()=>resolve(data));}));
+    const context=vm.createContext({});
+    const modules=new Map(Object.entries(sources).map(([file,source])=>
+      [file,new vm.SourceTextModule(source,{context,identifier:file})]));
+    const entry=modules.get('main.js');
+    await entry.link(specifier=>modules.get(specifier.slice(2)));
+    let status='pending';entry.evaluate().then(()=>status='fulfilled',()=>status='rejected');
+    await new Promise(resolve=>setImmediate(resolve));
+    console.log(JSON.stringify({status,log:modules.get('state.js').namespace.log}));
+  `],{input:JSON.stringify(modules),encoding:'utf8',timeout:10000});
+  assert.equal(oracle.status,0,oracle.stderr);
+  assert.deepEqual(JSON.parse(oracle.stdout),{status:'pending',log:'b'});
+  const run=startOwned(modules),runtime=run.runtime;
+  assert.equal(runtime.drive().kind,'waiting');
+  const root=runtime.initialState.control.a0.activeFrameId;
+  assert.equal(runtime.state.promises[runtime.initialState.frames[root].asyncPromiseId].status,'pending');
+  const saved=wire(Object.fromEntries(Object.entries(runtime).filter(([key])=>key!=='adapters')));
+  const restored=Object.assign(createRuntime(),saved);
+  assert.equal(restored.drive().kind,'waiting');
+  assert.deepEqual(wire(restored.exportRun()),wire(runtime.exportRun()));
+  assert.equal(validateBundle(restored.exportRun()).valid,true);
+  assert.equal(replayExact(restored.exportRun()).valid,true);
+  assert(records(restored).filter(record=>record.asyncOrder[1]>0)
+    .every(record=>record.status[1]==='evaluating-async'&&!record.failed[1]));
+});
+
+test('for-await iteration and generated scheduler identifiers remain explicit boundaries',()=>{
   assert.throws(()=>linkEvaluatedModules({modules:siblings(`{for await(const item of []){add(item);}}`,
     `add('b');`),entryModule:'main.js',exportName:'run'}),/for-await module iteration/);
   assert.throws(()=>linkEvaluatedModules({modules:siblings(`await 0;`,

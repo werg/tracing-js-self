@@ -404,11 +404,6 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     const active=stack.indexOf(file);
     if(active>=0){
       const members=stack.slice(active);
-      // Cyclic module async execution has separate ESM dependency promises
-      // and possible deadlocks. Never replace that scheduler with a flat
-      // approximation: admit only syntactically synchronous cycles.
-      if(members.some(name=>get(name).hasTLA))
-        reject('cyclic module initialization with await requires owned async ESM dependency scheduling');
       const marker=members.join(' -> ')+' -> '+file;
       if(!cycles.some(c=>c.path===marker))
         cycles.push({path:marker,members:[...members]});
@@ -431,10 +426,11 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
   // A later module that does not depend on an earlier async module must
   // start while that module is suspended. Flattening the postorder would
   // serialize sibling bodies, including a synchronous sibling after TLA.
-  const scheduled=order.some((file,index)=>order.slice(0,index).some(prior=>
-    get(prior).hasTLA&&!dependsOn(file,prior)));
-  if(scheduled&&cycles.length)
-    reject('cyclic module graphs with parallel await require owned async ESM dependency scheduling');
+  // Async cyclic graphs additionally need DFS/SCC records even when their
+  // syntactic postorder happens to resemble a single dependency chain.
+  const scheduled=cycles.length>0&&order.some(file=>get(file).hasTLA)||
+    order.some((file,index)=>order.slice(0,index).some(prior=>
+      get(prior).hasTLA&&!dependsOn(file,prior)));
   const renamed=new Map();
   for(const [index,file] of order.entries()){
     const names=new Map();
@@ -566,7 +562,8 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
       append(file,'module-record','__traced_eval_modules['+index+']={'+
         'index:'+index+',entry:'+(file===entryModule)+',hasTLA:'+module.hasTLA+
         ',dependencies:'+JSON.stringify(module.deps.map(from=>indices.get(from)))+
-        ',parents:[],pending:0,asyncOrder:0,status:"linked",failed:false,'+
+        ',parents:[],pending:0,asyncOrder:0,dfsIndex:-1,ancestorIndex:-1,'+
+        'cycleRoot:-1,started:false,status:"linked",failed:false,'+
         'error:undefined,execution:undefined,iterator:__traced_eval_module_'+index+'()};');
     }
     for(const file of order){

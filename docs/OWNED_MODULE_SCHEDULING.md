@@ -15,7 +15,8 @@ A synchronous sibling must also start before the first dependency resumes.
 
 The linker chooses `metadata.evaluationStrategy =
 "async-dependency-scheduler"` whenever a later module does not depend on an
-earlier module with syntactic top-level await. Such graphs use one retained
+earlier module with syntactic top-level await, or a reachable cyclic graph
+contains top-level await. Such graphs use one retained
 generator environment per module. All generators are instantiated and primed
 before evaluation. Their initial yield publishes getters for lexical cells;
 creating those getters does not read uninitialized `let` or `const` bindings.
@@ -31,8 +32,9 @@ generator continuations, including synchronous then-getter lookup, thenable
 assimilation, and catch/finally unwinding.
 
 Every module has an owned record containing its status, dependencies, async
-parent indices, pending dependency count, async evaluation order, generator,
-execution Promise, and failure value. Completion of an async driver runs one
+parent indices, pending dependency count, async evaluation order, DFS and
+ancestor indices, cycle root, started flag, generator, execution Promise, and
+failure value. Completion of an async driver runs one
 Promise reaction. That reaction gathers ready ancestors before executing them
 in DFS async order. Synchronous ancestors run in that same reaction; each async
 ancestor starts its own driver. There are no extra Promise jobs per dependency
@@ -40,13 +42,37 @@ edge. Shared dependencies execute once. An async rejection skips its dependent
 ancestors while already-started independent siblings continue. A synchronous
 throw during the initial DFS stops evaluation of later, unvisited siblings.
 
-The dependency and completion rules follow the acyclic part of ECMA-262 2026
+The dependency and completion rules follow ECMA-262 2026
 [InnerModuleEvaluation, ExecuteAsyncModule, GatherAvailableAncestors, and
-AsyncModuleExecutionFulfilled/Rejected](https://tc39.es/ecma262/2026/multipage/ecmascript-language-scripts-and-modules.html#sec-innermoduleevaluation).
+AsyncModuleExecutionFulfilled/Rejected](https://tc39.es/ecma262/2026/multipage/ecmascript-language-scripts-and-modules.html#sec-innermoduleevaluation),
+checked against [specification source revision
+`d89c03f2db8a597bc915b363a6518d0cc8acdbc0`](https://github.com/tc39/ecma262/blob/d89c03f2db8a597bc915b363a6518d0cc8acdbc0/spec.html).
+
+## Cyclic async components
+
+DFS keeps each module on its stack in `evaluating` state until its strongly
+connected component closes. A synchronous body finishing during DFS does not
+change that status prematurely. At component closure each member names the
+same cycle root and becomes either `evaluated` or `evaluating-async`, depending
+on whether it has asynchronous work remaining.
+
+An import of a closed component depends on its root, including an import of a
+member whose own synchronous body already ran. This prevents an outside module
+from overtaking unfinished work elsewhere in that cycle. An active DFS
+back-edge instead updates the ancestor index without inventing a dependency
+on a module that has not yet been assigned async work.
+
+Async completion gathers the entire available ancestor set before running any
+member, checks errors on each ancestor's cycle root, and executes the set in
+ascending async evaluation order. Rejections retain their original guest value
+and propagate to async parents. Already-started unrelated work can still finish;
+an unresolved await leaves evaluation pending rather than creating an artificial
+cycle error. Every body has an explicit started flag to prevent a second start.
 
 ## Existing synchronous and single-chain graphs
 
-Graphs whose evaluation does not require concurrent branches retain the
+All-synchronous graphs, and acyclic single-chain graphs whose evaluation does
+not require concurrent branches, retain the
 `dependency-concatenation` representation used by the already-qualified module
 source fixtures. Syntactically async modules now have an explicit completion
 job before dependent bodies execute. This boundary exists even when an await
@@ -113,10 +139,10 @@ No test count here represents general Test262 or full ESM conformance.
 
 ## Remaining boundaries
 
-- Cycles containing top-level await remain refused. Cyclic graphs combined
-  with parallel await scheduling are also refused; full async SCC scheduling,
-  cycle roots, deadlock behavior, and module evaluation capabilities need their
-  own implementation and evidence.
+- The SCC scheduler is owned execution only. Its public module transitions,
+  independently implemented native semantics, and data admission remain
+  unqualified; the module source adapter explicitly refuses promotion even if
+  saved proof metadata claims a different evaluation strategy.
 - Module namespace exotic objects, namespace receiver calls, dynamic imports,
   top-level classes, general module declarations, import attributes, package
   resolution, and a native host loader remain outside this bounded profile.

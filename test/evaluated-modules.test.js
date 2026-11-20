@@ -397,14 +397,16 @@ test('cycles that observe an uninitialized lexical binding throw like native ESM
   }),/Owned module evaluation rejected:|not defined|before initialization/);
 });
 
-test('cycles with top-level await fail link before native effects dispatch',()=>{
+test('cycles with top-level await use the owned SCC scheduler',async()=>{
   const modules={
     'a.js':"import {value} from './b.js';export const x=await Promise.resolve(3);",
     'b.js':"import {x} from './a.js';export const value=4;"
   };
-  assert.throws(()=>linkEvaluatedModules({
+  const run=await verified({
     modules,entryModule:'a.js',exportName:'x'
-  }),/cyclic module initialization with await/);
+  });
+  assert.equal(run.result,3);
+  assert.equal(run.metadata.evaluationStrategy,'async-dependency-scheduler');
 });
 
 test('same-origin cyclic ESM function behavior agrees with independent native Node ESM',async()=>{

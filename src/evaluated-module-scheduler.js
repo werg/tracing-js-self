@@ -1,4 +1,4 @@
-// Source generation for the bounded, acyclic owned ESM scheduler. This file
+// Source generation for the bounded owned ESM dependency/SCC scheduler. This file
 // never evaluates guest JavaScript: every emitted function runs in Runtime.
 // Module environments are retained generator frames; their first yield only
 // publishes live-binding getters, before any initializer executes.
@@ -51,15 +51,19 @@ export function lowerModuleAwaits(fragment){
 // async driver's completion reaction is the module-completion job. Readying
 // synchronous ancestors does not add per-edge Promise reactions.
 //
-// The dependency algorithm follows ECMA-262 2026, 16.2.1.6.1.3.1-.5, for
-// acyclic graphs. Cyclic async graphs are rejected by the linker beforehand.
-// Record indices are the dependency DFS postorder, which is also the relative
-// order in which AsyncEvaluationOrder is assigned. Gather marks the complete
-// ready ancestor set before execution, then visits it in that order.
+// The dependency algorithm follows ECMA-262 2026, 16.2.1.6.1.3.1-.5. DFS
+// status is distinct from body completion: members remain evaluating until
+// their SCC root closes the component. Imports from outside that component
+// wait for its cycle root, even when the imported member has already finished.
+// Gather marks the complete ready ancestor set before execution, then sorts
+// by actual AsyncEvaluationOrder. These fields are ordinary retained VM state;
+// a source assignment may span several steps and is not an atomic snapshot.
 export const ownedModuleSchedulerSource=`
   let __traced_eval_resolve;
   let __traced_eval_reject;
   let __traced_eval_async_order=0;
+  let __traced_eval_dfs_index=0;
+  const __traced_eval_stack=[];
   const __traced_eval_completion=new Promise(function(resolve,reject){
     __traced_eval_resolve=resolve;
     __traced_eval_reject=reject;
@@ -75,14 +79,15 @@ export const ownedModuleSchedulerSource=`
     record.asyncOrder=-1;
     record.failed=true;
     record.error=error;
+    if(record.entry)__traced_eval_reject(error);
     for(let i=0;i<record.parents.length;i++)
       __traced_eval_failed(__traced_eval_modules[record.parents[i]],error);
-    if(record.entry)__traced_eval_reject(error);
   }
   function __traced_eval_gather(record,ready){
     for(let i=0;i<record.parents.length;i++){
       const parent=__traced_eval_modules[record.parents[i]];
-      if(!ready[parent.index]&&!parent.failed){
+      if(!ready[parent.index]&&!parent.failed&&
+          !__traced_eval_modules[parent.cycleRoot].failed){
         parent.pending-=1;
         if(parent.pending===0){
           ready[parent.index]=true;
@@ -92,21 +97,29 @@ export const ownedModuleSchedulerSource=`
     }
   }
   function __traced_eval_sync(record){
+    if(record.started)throw new TypeError('Module body already started');
+    record.started=true;
     const step=record.iterator.next();
     if(!step.done)throw new TypeError('Synchronous module unexpectedly suspended');
-    __traced_eval_complete(record);
   }
   function __traced_eval_fulfilled(record){
     if(record.failed)return;
     __traced_eval_complete(record);
     const ready=[];
     __traced_eval_gather(record,ready);
-    for(let i=0;i<__traced_eval_modules.length;i++){
-      const next=__traced_eval_modules[i];
-      if(ready[i]&&!next.failed){
+    for(let count=0;count<__traced_eval_modules.length;count++){
+      let next=null;
+      for(let i=0;i<__traced_eval_modules.length;i++){
+        const candidate=__traced_eval_modules[i];
+        if(ready[i]&&(next===null||candidate.asyncOrder<next.asyncOrder))
+          next=candidate;
+      }
+      if(next===null)break;
+      ready[next.index]=false;
+      if(!next.failed){
         if(next.hasTLA)__traced_eval_start_async(next);
         else{
-          try{__traced_eval_sync(next);}
+          try{__traced_eval_sync(next);__traced_eval_complete(next);}
           catch(error){__traced_eval_failed(next,error);}
         }
       }
@@ -122,6 +135,8 @@ export const ownedModuleSchedulerSource=`
     }
   }
   function __traced_eval_start_async(record){
+    if(record.started)throw new TypeError('Module body already started');
+    record.started=true;
     record.execution=__traced_eval_async(record);
     record.execution.then(function(){__traced_eval_fulfilled(record);},
       function(error){__traced_eval_failed(record,error);});
@@ -132,9 +147,20 @@ export const ownedModuleSchedulerSource=`
       return;
     }
     record.status='evaluating';
+    record.dfsIndex=__traced_eval_dfs_index;
+    record.ancestorIndex=__traced_eval_dfs_index;
+    __traced_eval_dfs_index+=1;
+    __traced_eval_stack.push(record.index);
     for(let i=0;i<record.dependencies.length;i++){
-      const dependency=__traced_eval_modules[record.dependencies[i]];
+      let dependency=__traced_eval_modules[record.dependencies[i]];
       __traced_eval_visit(dependency);
+      if(dependency.status==='evaluating'){
+        if(dependency.ancestorIndex<record.ancestorIndex)
+          record.ancestorIndex=dependency.ancestorIndex;
+      }else{
+        dependency=__traced_eval_modules[dependency.cycleRoot];
+        if(dependency.failed)throw dependency.error;
+      }
       if(dependency.asyncOrder>0){
         record.pending+=1;
         dependency.parents.push(record.index);
@@ -143,18 +169,26 @@ export const ownedModuleSchedulerSource=`
     if(record.pending>0||record.hasTLA){
       __traced_eval_async_order+=1;
       record.asyncOrder=__traced_eval_async_order;
-      record.status='evaluating-async';
       if(record.pending===0)__traced_eval_start_async(record);
     }else __traced_eval_sync(record);
+    if(record.ancestorIndex===record.dfsIndex){
+      let done=false;
+      while(!done){
+        const member=__traced_eval_modules[__traced_eval_stack.pop()];
+        member.status=member.asyncOrder===0?'evaluated':'evaluating-async';
+        member.cycleRoot=record.index;
+        done=member.index===record.index;
+      }
+    }
   }
   try{
-    __traced_eval_visit(__traced_eval_modules[__traced_eval_entry_index]);
+    const entry=__traced_eval_modules[__traced_eval_entry_index];
+    __traced_eval_visit(entry);
+    if(entry.status==='evaluated')__traced_eval_resolve(undefined);
   }catch(error){
-    for(let i=0;i<__traced_eval_modules.length;i++){
-      const record=__traced_eval_modules[i];
-      if(record.status==='evaluating'){
-        record.status='evaluated';record.failed=true;record.error=error;
-      }
+    for(let i=0;i<__traced_eval_stack.length;i++){
+      const record=__traced_eval_modules[__traced_eval_stack[i]];
+      record.status='evaluated';record.failed=true;record.error=error;
     }
     __traced_eval_reject(error);
   }
