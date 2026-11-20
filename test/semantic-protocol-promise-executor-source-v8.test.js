@@ -13,6 +13,7 @@ const reactionHelper='let pending;await Promise.resolve(1).then(x=>{pending=new 
 test('source executors independently qualify first resolution, throws, captures, retained capabilities and joins',async()=>{
   for(const body of [first,
     'const p=new Promise((resolve,reject)=>{throw 9;});try{return await p;}catch(e){return e;}',
+    'let done,fail;const p=new Promise((resolve,reject)=>{done=resolve;fail=reject;throw 9;});done(4);fail(7);try{return await p;}catch(e){return e;}',
     'const p=new Promise(resolve=>{resolve(3);throw 9;});return await p;',
     'let done;const p=new Promise(resolve=>{done=resolve;});done(4);done(7);return await p;',
     'const p=new Promise(resolve=>resolve());return await p;',

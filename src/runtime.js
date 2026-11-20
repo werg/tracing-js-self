@@ -1127,6 +1127,9 @@ export class Runtime {
            const p=draft.promises[pending.promiseId];
            if(p.status==='pending'&&!p.resolverCalled){
              const reason=this.caughtError(draft,completion,eventId);
+             // Promise construction rejects through the same resolving pair,
+             // consuming its shared first-call cell before publishing rejection.
+             p.resolverCalled=true;
              this.rejectPromise(draft,p.id,reason.value,reason.origin);
            }
            this.stackPush(caller,['promise',p.id],eventId);
