@@ -10,6 +10,7 @@ import {propertyKeyValue,symbolPropertyKey,stringPropertyKey} from '../property-
 import {decode,encode,truthy} from '../values.js';
 import {describeOwnedGraph} from '../training/graph.js';
 import {ownedEffectfulOutcome} from './source-projection.js';
+import {compilePromiseSourceProjectionV8} from './protocol-promise-join-source-v8.js';
 import {encodeDetailedRecord} from './detail-v8.js';
 import {RegionExecutionHarness} from './region-harness.js';
 import {encodeProtocolRecordV8,validateProtocolValueV8,PROTOCOL_INTRINSIC_PROTOTYPES_V8} from './protocol-codec-v8.js';
@@ -91,9 +92,11 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
   adapters=adapters.map(adapter=>typeof adapter==='function'?adapter({bundle,source}):adapter).filter(Boolean);
   if(adapters.some(adapter=>typeof adapter.id!=='string'||!adapter.id||adapter.id.length>128)||
     new Set(adapters.map(adapter=>adapter.id)).size!==adapters.length)refuse('distinct versioned extension identities required');
-  const projectors=adapters.filter(adapter=>typeof adapter.compile==='function');
-  if(projectors.length>1)refuse('source profile selects more than one complete event projector');
-  if(projectors.length)return projectors[0].compile({bundle,source,maxGenerated});
+  const components=adapters.filter(adapter=>adapter.sourceComponent).sort((a,b)=>a.id.localeCompare(b.id));
+  if(components.length)return compilePromiseSourceProjectionV8(bundle,{maxGenerated,
+    extensions:components.map(adapter=>adapter.sourceComponent),extensionIds:components.map(adapter=>adapter.id),
+    sourceProfile:components.some(adapter=>adapter.id==='promise-executor/1')?
+      'promise-executors-source/1':'promise-joins-source/1'});
   const usedAdapters=new Set(),heapOwners=new Map(),frameOwners=new Map();
   const use=adapter=>{if(typeof adapter.id!=='string'||!adapter.id)refuse('extension requires a stable profile identity');usedAdapters.add(adapter.id);};
   function extension(method,...args){for(const adapter of adapters){const result=adapter[method]?.(...args);

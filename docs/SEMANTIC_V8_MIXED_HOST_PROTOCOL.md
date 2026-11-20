@@ -90,8 +90,10 @@ the main implementation ledger records their current qualification status.
 
 ## Remaining acceptance work
 
-- Replace exclusive whole-episode source projectors and mutating first-match
-  handlers with complete, unique event/slot ownership checked before mutation.
+- Extend the new [unique source event ownership](SEMANTIC_V8_SOURCE_OWNERSHIP.md)
+  beyond the executor, join and ordinary-source components. Those components
+  now reserve all slots and stage each event before publication; the remaining
+  protocol-family source projector still needs the same migration.
 - Complete broader Promise adoption, finally, thenable, async-function,
   async-generator and module source/public/native transitions.
 - Qualify reentrant effects, cancellation, delayed callbacks, durable ingress,

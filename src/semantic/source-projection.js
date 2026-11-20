@@ -158,7 +158,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
   // The admitted entry graph is descriptor-inspected ordinary data. A guest
   // allocation can have a getter or proxy-like behavior not encoded by the
   // public heap's basic property map; do not reconstruct it as a pure read.
-  const certifiedDataIdentities=new Set(inputGraph.objects.map(node=>node.id));
+  let certifiedDataIdentities=new Set(inputGraph.objects.map(node=>node.id));
   harness.admitInvocation({programId,invocationId,trackId,realmId,triggerId,
     inputGraph,realmPolicy,completionPolicy:'await-returned-promise'});
   // Production whole-region explanations are selected only from a bounded
@@ -224,18 +224,20 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
       graph:replayed.observedGraph()},expected))refuse('public region replay differs from owned outcome');
     return {exported,semantic,certificates,outcome:expected};
   }
-  const certificates=[],elided=[],checkpoints=[],rows=new Map(semantic.events.map(row=>[row.journalEvent,row]));
-  const facts=normalizeCompletionFacts(bundle),state=copy(bundle.initialState);
-  const roots=new Map([[semantic.rootInvocation,invocationId]]),frames=new Map([[semantic.rootInvocation,invocationId]]);
-  const cellNames=new Map(),usedCellNames=new Set(),functionNames=new Map(),pendingAwaits=new Map(),callbackArrivals=[];
-  const publicIdentities=new Map();
-  const emittedPromises=new Set(),settledPromises=new Set(),returnedPromises=new Set(),reactionJobs=new Map();
-  const reactionFrames=new Map(),reactionTargets=new Set(),microtasks=new Map(),privatePromises=new Set();
-  const adoptionJobs=new Map(),forwardingJobs=new Map();
-  const awaitingCompletion=new Map();
-  const deferredClosures=new Map();
-  const publishingInitialClosures=new Set();
-  const pendingComputations=[];
+  let certificates=[],elided=[],checkpoints=[];
+  const rows=new Map(semantic.events.map(row=>[row.journalEvent,row])),facts=normalizeCompletionFacts(bundle);
+  let state=copy(bundle.initialState);
+  let roots=new Map([[semantic.rootInvocation,invocationId]]),frames=new Map([[semantic.rootInvocation,invocationId]]);
+  const functionNames=new Map();
+  let cellNames=new Map(),usedCellNames=new Set(),pendingAwaits=new Map(),callbackArrivals=[];
+  let publicIdentities=new Map();
+  let emittedPromises=new Set(),settledPromises=new Set(),returnedPromises=new Set(),reactionJobs=new Map();
+  let reactionFrames=new Map(),reactionTargets=new Set(),microtasks=new Map(),privatePromises=new Set();
+  let adoptionJobs=new Map(),forwardingJobs=new Map();
+  let awaitingCompletion=new Map();
+  let deferredClosures=new Map();
+  let publishingInitialClosures=new Set();
+  let pendingComputations=[];
   let fusedComputations=0,foldedComputations=0,fusedBindings=0,removedCellWrites=0;
   let cellOrdinal=0,frameOrdinal=0,continuationOrdinal=0,eventOrdinal=0,generated=0,jobOrdinal=0;
   for(const program of Object.values(bundle.programs))for(const instruction of program.instructions)
@@ -638,22 +640,60 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
       deferredClosures.delete(identity);
     }
   }
-  const extensionContext={bundle,source,semantic,state,controller,identity,tag,frameId,rootFor,cell,
+  const extensionContext={bundle,source,semantic,controller,identity,tag,frameId,rootFor,cell,
+    get state(){return state;},
+    componentState:id=>regionAdapter.componentState(id),
     emit,emitProtocol,allocations,writes,publishInitialClosure,refuse,copy,
     registerFrame(frame,owner){roots.set(frame,owner);return frameId(frame);},
     get harness(){return harness;},
     claimDataIdentity(id){certifiedDataIdentities.add(identity(id));},
     get rootInvocation(){return invocationId;}};
+  // Every adapter event runs on detached teacher and public state. A rejected
+  // owner, handler or observer cannot publish a prefix, consume an identity or
+  // leave a partially changed capture/scheduler behind.
+  const projectionState=()=>({state,certificates,elided,checkpoints,roots,frames,
+    cellNames,usedCellNames,pendingAwaits,callbackArrivals,publicIdentities,
+    emittedPromises,settledPromises,returnedPromises,reactionJobs,reactionFrames,
+    reactionTargets,microtasks,privatePromises,adoptionJobs,forwardingJobs,
+    awaitingCompletion,deferredClosures,publishingInitialClosures,pendingComputations,
+    certifiedDataIdentities,fusedComputations,foldedComputations,fusedBindings,removedCellWrites,
+    cellOrdinal,frameOrdinal,continuationOrdinal,eventOrdinal,generated,jobOrdinal});
+  function selectProjectionState(selected){
+    ({state,certificates,elided,checkpoints,roots,frames,
+      cellNames,usedCellNames,pendingAwaits,callbackArrivals,publicIdentities,
+      emittedPromises,settledPromises,returnedPromises,reactionJobs,reactionFrames,
+      reactionTargets,microtasks,privatePromises,adoptionJobs,forwardingJobs,
+      awaitingCompletion,deferredClosures,publishingInitialClosures,pendingComputations,
+      certifiedDataIdentities,fusedComputations,foldedComputations,fusedBindings,removedCellWrites,
+      cellOrdinal,frameOrdinal,continuationOrdinal,eventOrdinal,generated,jobOrdinal}=selected);
+  }
+  function transaction(event,row,fact,run){
+    if(!regionAdapter)return run();
+    const liveHarness=harness,liveProjection=projectionState(),
+      stagedHarness=liveHarness.fork(),stagedProjection=copy(liveProjection);
+    harness=stagedHarness;selectProjectionState(stagedProjection);
+    try{
+      regionAdapter.beginEvent(event,row,fact);
+      run();
+      regionAdapter.checkEvent?.(extensionContext,event,row);
+      liveHarness.commitPrepared(harness);harness=liveHarness;
+      regionAdapter.endEvent();
+    }catch(error){
+      harness=liveHarness;selectProjectionState(liveProjection);
+      regionAdapter.abortEvent();throw error;
+    }
+  }
   regionAdapter?.setup?.(extensionContext);
   // Initial owned result Promises are part of entering an async function, not
   // external observations or values taken from its eventual final heap.
-  for(const id of Object.keys(bundle.initialState.promises))promise(id,invocationId);
-  seedBindings(semantic.rootInvocation,invocationId);
-  for(const event of bundle.events){
+  transaction(null,null,null,()=>{
+    for(const id of Object.keys(bundle.initialState.promises))promise(id,invocationId);
+    seedBindings(semantic.rootInvocation,invocationId);
+  });
+  function projectEvent(event,row,fact){
     // Private housekeeping can separate adjacent semantic computations, but
     // mutation, control, observation, call/job activation and cleanup cannot.
     // These boundaries flush even when they have no standalone public row.
-    const row=rows.get(event.eventId),fact=facts.get(event.eventId);
     guardDeferredClosures(row,event);
     const pureTransition=['binding.read','literal.materialize','primitive.binary'].includes(event.operation)||
       event.operation.startsWith('spec.');
@@ -1047,7 +1087,6 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
       if(row)refuse('unprojected semantic family '+row.op);
       elided.push({journalEvent:event.eventId,operation:event.operation,reason:'private-machine-transition'});
     }
-    regionAdapter?.checkEvent?.(extensionContext,event,row);
     for(const change of event.stateChanges){
       if(change.after===null)delete state[change.table][change.id];
       else state[change.table][change.id]=copy(change.after);
@@ -1064,6 +1103,10 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
         [...c.effects.values()].some(effect=>effect.status==='requested'))continue;
       emit(pendingOwner,'end',{kind},event,'completion');awaitingCompletion.delete(pendingOwner);
     }
+  }
+  for(const event of bundle.events){
+    const row=rows.get(event.eventId),fact=facts.get(event.eventId);
+    transaction(event,row,fact,()=>projectEvent(event,row,fact));
   }
   if(deferredClosures.size)refuse('unresolved parameter closure at final snapshot');
   flushComputations();

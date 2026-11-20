@@ -40,7 +40,7 @@ test('executor Promise adoption is refused before an incorrect FIFO schedule can
     'let order="";const p=Promise.resolve(1).then(x=>new Promise(resolve=>resolve(x)));p.then(()=>{order+="p";});Promise.resolve().then(()=>{order+="a";}).then(()=>{order+="b";}).then(()=>{order+="c";});await p;return order;'
   ]){
     const result=await verifyProtocolRegionTrainingCase(fixture(body));
-    assert.equal(result.exported,undefined);assert.match(result.reason,/adoption.*job protocol/);
+    assert.equal(result.exported,undefined);assert.match(result.reason,/adoption.*(?:job protocol|assimilation jobs)/);
   }
 });
 test('executor helpers retain receiver and captures across synchronous returns, throws and reaction jobs',async()=>{
