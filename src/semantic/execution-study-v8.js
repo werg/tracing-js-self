@@ -144,6 +144,7 @@ export async function runFrozenRegionExecutionStudy(study,{cases,select,caseIds=
       predictionAttempts:rows.reduce((sum,row)=>sum+(row.result?.costs.predictionAttempts??0),0),
       rejectedPredictions:rows.reduce((sum,row)=>sum+(row.result?.costs.rejected??0),0),
       staleRetries:rows.reduce((sum,row)=>sum+(row.result?.costs.staleRetries??0),0),
+      stalePredictions:rows.reduce((sum,row)=>sum+(row.result?.costs.stalePredictions??0),0),
       generatedBytes:rows.reduce((sum,row)=>sum+(row.result?.costs.generatedBytes??0),0),
       generatedTokens:rows.reduce((sum,row)=>sum+(row.result?.costs.generatedTokens??0),0),
       unverifiedClaimedTokens:rows.reduce((sum,row)=>sum+(row.result?.costs.unverifiedClaimedTokens??0),0),

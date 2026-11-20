@@ -11,8 +11,8 @@ import {hashAlgorithmData} from './program.js';
 const copy=structuredClone,HASH=/^[a-f0-9]{64}$/;
 const demand=(value,message)=>{if(!value)throw new TypeError('Selected v8: '+message);};
 const positive=(value,maximum)=>Number.isSafeInteger(value)&&value>0&&value<=maximum;
-const originalFragments=(record,selection)=>typeof record==='string'&&selection?.fragments?.length>0&&
-  selection.fragments.every(fragment=>Array.isArray(fragment.tokenIds)&&fragment.tokenIds.length>0&&
+const originalFragments=(record,selection)=>typeof record==='string'&&Array.isArray(selection?.fragments)&&
+  selection.fragments.length>0&&selection.fragments.every(fragment=>Array.isArray(fragment?.tokenIds)&&fragment.tokenIds.length>0&&
     fragment.tokenIds.every(id=>Number.isSafeInteger(id)&&id>=0)&&typeof fragment.payloadHex==='string'&&
     /^(?:[0-9a-f]{2})*$/.test(fragment.payloadHex))&&
   Buffer.concat(selection.fragments.map(fragment=>Buffer.from(fragment.payloadHex,'hex')))
@@ -121,8 +121,16 @@ export class RegionSelectedModelDriver extends SelectedModelDriver {
       finally{attempt.commitMs=performance.now()-start;release();}
     };
     const onRejected=async({invocationId,selection,error})=>{
-      if(error.category!=='causal-lm-stale-context'||staleRetries>=maxStaleRetries)return false;
-      const attempt=attempts.at(-1);attempt.status='stale';attempt.failure=String(error.message);
+      const attempt=attempts.at(-1);
+      // Only a refused preflight can retry. An acknowledgement failure occurs
+      // after local commitment and must stop even if it names a stale context.
+      if(error.category!=='causal-lm-stale-context'||attempt?.status!=='decoded'||!predictions.has(invocationId))return false;
+      if(staleRetries>=maxStaleRetries){
+        const exhausted=new RangeError('Selected v8: stale prediction retry budget exhausted');
+        exhausted.category='causal-lm-stale-retry-budget';attempt.status='stale-limit';attempt.failure=exhausted.message;
+        throw exhausted;
+      }
+      attempt.status='stale';attempt.failure=String(error.message);
       predictions.delete(invocationId);staleRetries++;
       try{
         if(selection?.modelSelected)demand(typeof select.reject==='function','native stale prediction requires rejection acknowledgement');
@@ -174,6 +182,7 @@ export class RegionSelectedModelDriver extends SelectedModelDriver {
     return {predictionAttempts:rows.length,accepted:rows.filter(row=>row.status==='accepted').length,
       rejected:rows.filter(row=>!['accepted','submitted','decoded'].includes(row.status)).length,
       staleRetries:rows.filter(row=>row.status==='stale').length,
+      stalePredictions:rows.filter(row=>['stale','stale-limit'].includes(row.status)).length,
       generatedBytes:rows.reduce((sum,row)=>sum+(typeof row.record==='string'?Buffer.byteLength(row.record):0),0),
       generatedTokens:rows.filter(knownTokens).reduce((sum,row)=>sum+tokenCount(row),0),
       unverifiedClaimedTokens:rows.filter(row=>originalFragments(row.record,row.selection)&&!knownTokens(row))

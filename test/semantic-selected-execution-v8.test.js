@@ -85,16 +85,32 @@ test('v8 runner drives causal fixture observations without giving future replies
 test('native acknowledgement failure stops continuation and prevents a committed request from dispatching',async()=>{
   const fixture=SEMANTIC_GALLERY_FIXTURES.find(row=>row.id==='counter-0'),verified=await verifyRegionTrainingCase(fixture);
   assert(verified.exported,verified.reason);
-  const adapter=fixtureSelector(verified.exported,{commit:request=>{
-    if(request.record.includes('"kind":"request"'))throw new Error('native acknowledgement failed');
-    return {committed:true};
-  }});
+  for(const category of [undefined,'causal-lm-stale-context']){
+    const adapter=fixtureSelector(verified.exported,{commit:request=>{
+      if(request.record.includes('"kind":"request"')){
+        const error=new Error('native acknowledgement failed');error.category=category;throw error;
+      }
+      return {committed:true};
+    }});
+    const result=await runSelectedRegionExecution({initialPublic:input(verified.exported),fixture:fixture.fixture,
+      select:adapter.select,...pin,origin:'engineering'});
+    assert.equal(result.status,'failed');assert.match(result.failure.message,/native acknowledgement/);
+    assert.equal(result.costs.hostDispatches,0);assert.equal(result.effects.length,0);
+    assert.equal(adapter.requests.length,adapter.commits.length);
+    assert.equal(result.attempts.at(-1).status,'commit-failed');assert.equal(result.costs.staleRetries,0);
+  }
+});
+
+test('stale-context retries consume the global budget and exhausting their bound is a resource limit',async()=>{
+  const fixture=SEMANTIC_GALLERY_FIXTURES.find(row=>row.id==='callback-captured-write'),
+    verified=await verifyRegionTrainingCase(fixture),adapter=fixtureSelector(verified.exported);
   const result=await runSelectedRegionExecution({initialPublic:input(verified.exported),fixture:fixture.fixture,
-    select:adapter.select,...pin,origin:'engineering'});
-  assert.equal(result.status,'failed');assert.match(result.failure.message,/native acknowledgement/);
-  assert.equal(result.costs.hostDispatches,0);assert.equal(result.effects.length,0);
-  assert.equal(adapter.requests.length,adapter.commits.length);
-  assert.equal(result.attempts.at(-1).status,'commit-failed');
+    select:adapter.select,...pin,origin:'engineering',maxStaleRetries:0});
+  assert.equal(result.status,'resource_limited');assert.equal(result.publicCompleted,false);
+  assert.equal(result.failure.category,'causal-lm-stale-retry-budget');
+  assert.equal(result.attempts.at(-1).status,'stale-limit');assert.equal(result.costs.staleRetries,0);
+  assert.equal(result.costs.stalePredictions,1);assert.equal(result.costs.predictionAttempts,adapter.requests.length);
+  assert.equal(result.costs.rejected,1);assert.equal(result.sourceValidated,false);
 });
 
 test('v8 execution failures preserve original bytes and do not claim complete source execution',async()=>{
@@ -173,6 +189,22 @@ test('unverified transport failure provenance retains claimed costs without auth
   assert.equal(result.attempts[0].provenanceValidated,false);assert.equal(result.costs.generatedTokens,0);
   assert.equal(result.costs.unverifiedClaimedTokens,3);assert.equal(result.costs.unknownGenerationCostAttempts,1);
   assert.equal(result.qualification.modelMeasurement,'unmeasured');
+});
+
+test('malformed native fragment evidence cannot erase the original failed attempt during cost aggregation',async()=>{
+  const artifact=golden.examples.find(row=>row.id==='ordered-map'),record='detail invalid original output';
+  for(const fragments of [{length:1},[null],[{tokenIds:[-1],payloadHex:'00'}]]){
+    const select=async()=>{
+      const error=new Error('native fragment evidence refused');
+      error.evidence={schema:'semantic-native-selection-failure/1',record,provenanceValidated:false,
+        selection:{fragments}};throw error;
+    };
+    select.initialize=async identity=>identity;
+    const result=await runSelectedRegionExecution({initialPublic:input(artifact),select,...pin,origin:'engineering'});
+    assert.equal(result.status,'failed');assert.equal(result.attempts[0].record,record);
+    assert.deepEqual(result.attempts[0].selection.fragments,fragments);
+    assert.equal(result.costs.generatedTokens,0);assert.equal(result.costs.unknownGenerationCostAttempts,1);
+  }
 });
 
 test('frozen execution deadlines bound initialization, native acknowledgement and final cleanup',async()=>{
