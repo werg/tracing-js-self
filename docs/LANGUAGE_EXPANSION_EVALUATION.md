@@ -187,6 +187,28 @@ interfaces; the tokenizer and exact byte checks are identical. The separate
 `serving-costs.json` reports actual measured token totals even though the
 source-only capability ladder itself makes no token measurement claim.
 
+To measure a completed v8 qualification population without executing its
+sources again, run from that same clean producer revision:
+
+```sh
+node tools/measure-semantic-v8.mjs --qualification ../v8-native-all \
+  --out ../v8-costs-all --tokenizer-module tools/semantic-v8-tokenizer-adapter.mjs
+```
+
+The cost runner checks the frozen input inventory and exact artifact bytes,
+replays every published context through the actual serializer, and retains the
+physical prompt/target/EOS token sequences and generated-only masks. It supports
+`--resume` with unchanged qualification, tokenizer and context budget. Omit the
+tokenizer module for explicitly labeled byte-only diagnostics. Outputs retain
+all source refusals and cost limits in the denominator; aggregate detail shares
+are weighted by measured bytes/tokens, not averaged across episodes.
+
+The report separately sums physical records and observed/generated tokens from
+validated native packing receipts, when present. Native physical record counts
+include inserted contexts and framing and must not be interpreted as latency,
+cache savings, or successful model execution. Those serving/model measurements
+remain unmeasured until their own actual runs are supplied.
+
 The actual v7 selector also records submitted prompt tokens, peak context,
 generation/verification time, failed attempts and retries. A runtime failure
 with no returned token sequence records unknown generation cost instead of
