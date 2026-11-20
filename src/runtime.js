@@ -265,6 +265,21 @@ function functionProperty(heap,object,key){
   }
   return {};
 }
+// Ordinary [[Set]] reports failure; the source reference's strictness decides
+// whether PutValue throws. Internal builtin writes keep putOwn's throwing
+// contract, so Object.assign and array methods cannot silently ignore errors.
+function ordinaryDataWriteFailure(heap,object,key,attributes){
+  if(attributes?.writable===false){
+    const property=propertyKeyValue(key),description=property[0]==='symbol'?
+      (property[1].startsWith('well-known:')?['str','Symbol.'+property[1].slice(11)]:heap[property[1]]?.description):null,
+      name=property[0]==='str'?property[1]:'Symbol('+(description?.[0]==='str'?description[1]:'')+')',
+      receiver=object.kind==='array'?'[object Array]':objectPrototype(object)===null?'[object Object]':'#<Object>';
+    return `Cannot assign to read only property '${name}' of object '${receiver}'`;
+  }
+  if(object.extensible===false&&!Object.hasOwn(object.properties,key)&&!Object.hasOwn(object.accessors??{},key))
+    return 'Cannot add property to non-extensible object';
+  return null;
+}
 function superProperty(heap,base,key){
   let current=base[0]==='ref'?base[1]:base[0]==='intrinsic'?base[1]:null;
   if(current===null)guestFault('TypeError','Super base is null');
@@ -1356,13 +1371,20 @@ export class Runtime {
           const obj=s.heap[base.value[1]];
           if(!obj||!['object','array'].includes(obj.kind))
             throw new TypeError('Proxy, function and exotic updates require owned internal methods');
-          if(propertyAccessor(s.heap,base.value,property))
+          const described=functionProperty(s.heap,obj,property);
+          if(described.accessor)
             throw new TypeError('Accessor updates need an owned getter/setter continuation');
           const found=ordinaryGet(s.heap,base.value,property);
           if(!found)throw new TypeError('Unowned update property read');
           const old=found.method;
           const {next,oldNumeric}=scalarUpdate(old.value,arg.operator);
           const returned=arg.prefix?next:oldNumeric;
+          const failure=ordinaryDataWriteFailure(s.heap,obj,property,described.attributes);
+          if(failure&&this.programs[f.codeId].strict)guestFault('TypeError',failure);
+          if(failure){
+            this.stackPush(f,returned,eventId);
+            return {...operands(base,key,old),result:returned,reads:[found.observation]};
+          }
           if(this.entrySpec && obj.kind==='array'){
             if(arrayIndex(property) &&
                Number(property)>decode(obj.properties.length.value))
@@ -2244,7 +2266,8 @@ if(object.kind==='regexp'){
               reads:[route.observation]};
           }
           const obj=s.heap[route.target[1]];
-          const accessor=propertyAccessor(s.heap,route.target,property);
+          const described=['object','array'].includes(obj.kind)?functionProperty(s.heap,obj,property):null,
+            accessor=described?.accessor??propertyAccessor(s.heap,route.target,property);
           if(accessor){
             const setter=accessor.set.value;
             if(setter[0]==='undefined'){
@@ -2266,6 +2289,11 @@ if(object.kind==='regexp'){
             f.pendingProperty={kind:'set',value:v.value,waitingFrameId:id};
             s.control.a0.activeFrameId=id;
             return {...operands(base,key,v),causes:[{kind:'invocation',frameId:id}]};
+          }
+          const failure=ordinaryDataWriteFailure(s.heap,obj,property,described?.attributes);
+          if(failure){
+            if(this.programs[f.codeId].strict)guestFault('TypeError',failure);
+            return {...operands(base,key,v),...result(v.value)};
           }
           if(this.entrySpec && obj.kind==='array') {
             const oldLength=decode(obj.properties.length.value);
